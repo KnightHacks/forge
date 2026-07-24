@@ -9,6 +9,7 @@ import { MemberCard } from "../app/_components/member-card";
 const profile: GuildProfile = {
   about: "Builds community tools.",
   company: "Knight Hacks",
+  employmentHistory: [],
   firstName: "Casey",
   githubProfileUrl: null,
   gradDate: "2027-05-02",

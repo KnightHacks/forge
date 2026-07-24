@@ -127,6 +127,13 @@
       "when": 1784847052872,
       "tag": "0017_nice_vulture",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784924054400,
+      "tag": "0018_guild_career_network",
+      "breakpoints": true
     }
   ]
 }

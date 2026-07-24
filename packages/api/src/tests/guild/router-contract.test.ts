@@ -19,9 +19,12 @@ describe("Guild public router contract", () => {
     expect(Object.keys(guildRouter).sort()).toEqual([
       "getFilterOptions",
       "getProfile",
+      "getPublicCompany",
+      "getPublicGlobeLocations",
       "getResumeUrl",
       "getSitemapProfiles",
       "listProfiles",
+      "listPublicCompanies",
     ]);
   });
 

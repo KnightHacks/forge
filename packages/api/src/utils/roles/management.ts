@@ -24,16 +24,14 @@ export interface RoleUserCandidate {
 }
 
 function permissionData(key: PERMISSIONS.PermissionKey) {
-  const permission = PERMISSIONS.PERMISSION_DATA[key];
-  if (!permission) throw new Error(`Unknown permission: ${key}`);
-  return permission;
+  return PERMISSIONS.PERMISSION_DATA[key];
 }
 
 export function permissionKeysToBitstring(
   keys: readonly PERMISSIONS.PermissionKey[],
 ) {
   const bits = Array.from(
-    { length: Object.keys(PERMISSIONS.PERMISSION_DATA).length },
+    { length: PERMISSIONS.PERMISSION_KEYS.length },
     () => "0",
   );
   for (const key of keys) {
@@ -46,12 +44,9 @@ export function permissionKeysToBitstring(
 export function permissionBitstringToKeys(
   bitstring: string,
 ): PERMISSIONS.PermissionKey[] {
-  const keys = Object.keys(PERMISSIONS.PERMISSION_DATA);
-  return keys
-    .filter((key) => bitstring.at(permissionData(key).idx) === "1")
-    .sort(
-      (left, right) => permissionData(left).idx - permissionData(right).idx,
-    );
+  return PERMISSIONS.PERMISSION_KEYS.filter(
+    (key) => bitstring.at(permissionData(key).idx) === "1",
+  ).sort((left, right) => permissionData(left).idx - permissionData(right).idx);
 }
 
 export function isCosmeticPermissionString(bitstring: string) {

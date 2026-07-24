@@ -108,6 +108,54 @@ a {
   box-shadow: 0 24px 64px hsl(0 0% 0% / 0.25);
 }
 
+.guild-company-card,
+.guild-person-row,
+.guild-company-hero,
+.guild-globe-layout {
+  background: hsl(var(--card) / 0.94);
+  box-shadow: 0 20px 48px hsl(0 0% 0% / 0.22);
+}
+
+.guild-company-card,
+.guild-person-row {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.guild-company-card:hover,
+.guild-person-row:hover {
+  border-color: hsl(var(--primary) / 0.38);
+  background: hsl(var(--card));
+  box-shadow:
+    0 24px 56px hsl(0 0% 0% / 0.3),
+    0 0 0 1px hsl(var(--primary) / 0.07);
+  transform: translateY(-2px);
+}
+
+.guild-company-hero {
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      hsl(var(--guild-blue) / 0.12),
+      transparent 22rem
+    ),
+    linear-gradient(120deg, hsl(var(--primary) / 0.12), transparent 55%),
+    hsl(var(--card) / 0.96);
+}
+
+.guild-globe-layout {
+  background:
+    radial-gradient(
+      circle at 38% 48%,
+      hsl(var(--primary) / 0.14),
+      transparent 30rem
+    ),
+    hsl(var(--card) / 0.94);
+}
+
 .guild-search-surface {
   transition:
     border-color 180ms ease,
@@ -317,6 +365,8 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .guild-card,
   .guild-card-image,
+  .guild-company-card,
+  .guild-person-row,
   .guild-profile-fact,
   .guild-profile-section,
   .guild-search-surface {

@@ -51,6 +51,8 @@ import {
   memberFormSchema,
 } from "@forge/validators";
 
+import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
+import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
@@ -170,6 +172,8 @@ function getDefaultValues(): MemberFormValues {
     gradTerm: "Spring",
     gradYear: new Date().getFullYear() + 1,
     company: "",
+    currentCityKey: "",
+    employmentHistory: [],
     githubProfileUrl: "",
     linkedinProfileUrl: "",
     websiteUrl: "",
@@ -178,6 +182,7 @@ function getDefaultValues(): MemberFormValues {
     tagline: "",
     about: "",
     guildProfileVisible: true,
+    guildLocationVisible: true,
     guildResumeVisible: true,
     guildOpportunityStatuses: [],
     codeOfConductAccepted: false,
@@ -361,6 +366,8 @@ export function MemberSignupForm({
   const router = useRouter();
   const apiUtils = api.useUtils();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [careerHistory, setCareerHistory] = useState<CareerHistoryDraft[]>([]);
+  const [currentCityLabel, setCurrentCityLabel] = useState<string | null>(null);
 
   const fieldsBySection = useMemo(
     () =>
@@ -543,6 +550,55 @@ export function MemberSignupForm({
                           />
                         ))}
                       </div>
+                      {section === "Guild" && (
+                        <div className="border-t border-white/10 pt-5">
+                          <EmploymentHistoryEditor
+                            currentCityKey={
+                              form.watch("currentCityKey") || null
+                            }
+                            currentCityLabel={currentCityLabel}
+                            guildLocationVisible={
+                              form.watch("guildLocationVisible") ?? true
+                            }
+                            history={careerHistory}
+                            onCurrentCityChange={(city) => {
+                              setCurrentCityLabel(city?.label ?? null);
+                              form.setValue("currentCityKey", city?.key ?? "", {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                            }}
+                            onGuildLocationVisibleChange={(visible) =>
+                              form.setValue("guildLocationVisible", visible, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              })
+                            }
+                            onHistoryChange={(history) => {
+                              setCareerHistory(history);
+                              form.setValue(
+                                "employmentHistory",
+                                history.map(
+                                  ({
+                                    cityLabel: _cityLabel,
+                                    companyLabel: _companyLabel,
+                                    ...employment
+                                  }) => ({
+                                    ...employment,
+                                    experienceType:
+                                      employment.experienceType ?? "other",
+                                    state: employment.state as
+                                      | "current"
+                                      | "past",
+                                    title: employment.title ?? "",
+                                  }),
+                                ),
+                                { shouldDirty: true, shouldValidate: true },
+                              );
+                            }}
+                          />
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </RevealOnView>

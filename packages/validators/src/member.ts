@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
 
+import { employmentHistorySchema, usCityKeySchema } from "./career";
 import {
   dateString,
   emptyToNull,
@@ -105,6 +106,9 @@ export const memberProfileFormSchema = z.object({
     .min(1900, "Graduation year is too early.")
     .max(2100, "Graduation year is too far in the future."),
   company: optionalText("Company", 255),
+  employmentHistory: employmentHistorySchema.optional(),
+  currentCityKey: usCityKeySchema.nullable().or(z.literal("")).optional(),
+  guildLocationVisible: z.boolean().optional(),
   githubProfileUrl: optionalUrl("GitHub profile URL"),
   linkedinProfileUrl: optionalUrl("LinkedIn profile URL"),
   websiteUrl: optionalUrl("Website URL"),
@@ -121,6 +125,9 @@ export const memberFormSchema = memberProfileFormSchema.extend({
   codeOfConductAccepted: z.boolean().refine((accepted) => accepted, {
     message: "You must accept the Knight Hacks Code of Conduct.",
   }),
+  employmentHistory: employmentHistorySchema.default([]),
+  currentCityKey: usCityKeySchema.nullable().or(z.literal("")).default(""),
+  guildLocationVisible: z.boolean().default(true),
 });
 
 function toMemberInput(input: z.output<typeof memberProfileFormSchema>) {
@@ -138,6 +145,14 @@ function toMemberInput(input: z.output<typeof memberProfileFormSchema>) {
     shirtSize: input.shirtSize,
     gradDate: graduationDateFromTerm(input.gradTerm, input.gradYear),
     company: emptyToNull(input.company),
+    employmentHistory: input.employmentHistory,
+    currentCityKey:
+      input.currentCityKey === undefined
+        ? undefined
+        : input.currentCityKey === ""
+          ? null
+          : input.currentCityKey,
+    guildLocationVisible: input.guildLocationVisible,
     githubProfileUrl: emptyToNull(input.githubProfileUrl),
     linkedinProfileUrl: emptyToNull(input.linkedinProfileUrl),
     websiteUrl: emptyToNull(input.websiteUrl),
@@ -151,9 +166,12 @@ function toMemberInput(input: z.output<typeof memberProfileFormSchema>) {
   };
 }
 
-export const memberSchema = memberFormSchema.transform((input) =>
-  toMemberInput(input),
-);
+export const memberSchema = memberFormSchema.transform((input) => ({
+  ...toMemberInput(input),
+  currentCityKey: input.currentCityKey === "" ? null : input.currentCityKey,
+  employmentHistory: input.employmentHistory,
+  guildLocationVisible: input.guildLocationVisible,
+}));
 
 export const memberUpdateFormSchema = memberProfileFormSchema;
 export const memberUpdateSchema = memberUpdateFormSchema.transform((input) =>
@@ -185,7 +203,9 @@ export function memberResponseDataFromInput(
     shirtSize: input.shirtSize,
     gradTerm,
     gradYear,
-    company: input.company ?? "",
+    employmentHistory: input.employmentHistory,
+    currentCityKey: input.currentCityKey ?? "",
+    guildLocationVisible: input.guildLocationVisible,
     githubProfileUrl: input.githubProfileUrl ?? "",
     linkedinProfileUrl: input.linkedinProfileUrl ?? "",
     websiteUrl: input.websiteUrl ?? "",
@@ -390,13 +410,6 @@ export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
     description: "Upload a JPEG, PNG, GIF, or WebP image, up to 2MB.",
   },
   {
-    name: "company",
-    label: "Current or most recent company",
-    kind: "text",
-    section: "Guild",
-    placeholder: "Knight Hacks, UCF, a company, or self-employed",
-  },
-  {
     name: "tagline",
     label: "Tagline",
     kind: "text",
@@ -483,11 +496,36 @@ export const memberSignupFormData = {
   })),
 } satisfies FORMS.FormType;
 
-export const memberSignupCallbackConnections = memberSignupFields.map(
-  (field) => ({
+export const memberSignupCallbackConnections = [
+  ...memberSignupFields.map((field) => ({
     formField: field.name,
     procField: field.name,
-  }),
+  })),
+  {
+    formField: "employmentHistory",
+    procField: "employmentHistory",
+  },
+  {
+    formField: "currentCityKey",
+    procField: "currentCityKey",
+  },
+  {
+    formField: "guildLocationVisible",
+    procField: "guildLocationVisible",
+  },
+];
+
+const memberSignupFieldJsonProperties = Object.fromEntries(
+  memberSignupFields.map(
+    (field): [string, { type: "boolean" | "number" | "string" }] => [
+      field.name,
+      field.kind === "boolean" || field.kind === "checkbox"
+        ? { type: "boolean" }
+        : field.kind === "number"
+          ? { type: "number" }
+          : { type: "string" },
+    ],
+  ),
 );
 
 export const memberSignupFormJsonSchema = {
@@ -495,16 +533,31 @@ export const memberSignupFormJsonSchema = {
   required: memberSignupFields
     .filter((field) => field.required)
     .map((field) => field.name),
-  properties: Object.fromEntries(
-    memberSignupFields.map((field) => [
-      field.name,
-      field.kind === "boolean" || field.kind === "checkbox"
-        ? { type: "boolean" }
-        : field.kind === "number"
-          ? { type: "number" }
-          : { type: "string" },
-    ]),
-  ),
+  properties: {
+    ...memberSignupFieldJsonProperties,
+    employmentHistory: {
+      type: "array",
+      maxItems: 50,
+      items: {
+        type: "object",
+        properties: {
+          cityKey: { type: ["string", "null"] },
+          companyId: { type: ["string", "null"] },
+          endMonth: { type: ["string", "null"] },
+          experienceType: { type: "string" },
+          guildVisible: { type: "boolean" },
+          proposedCompanyName: { type: ["string", "null"] },
+          startMonth: { type: ["string", "null"] },
+          state: { type: "string" },
+          title: { type: "string" },
+        },
+        required: ["experienceType", "guildVisible", "state", "title"],
+        additionalProperties: false,
+      },
+    },
+    currentCityKey: { type: ["string", "null"] },
+    guildLocationVisible: { type: "boolean" },
+  },
   additionalProperties: false,
 } as const;
 

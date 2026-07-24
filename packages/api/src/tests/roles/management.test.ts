@@ -20,9 +20,7 @@ const SECOND_ROLE_ID = "00000000-0000-4000-8000-000000000002";
 const USER_ID = "00000000-0000-4000-8000-000000000003";
 
 function permissionIndex(key: PERMISSIONS.PermissionKey) {
-  const permission = PERMISSIONS.PERMISSION_DATA[key];
-  if (!permission) throw new Error(`Unknown permission: ${key}`);
-  return permission.idx;
+  return PERMISSIONS.PERMISSION_DATA[key].idx;
 }
 
 describe("role management data behavior", () => {

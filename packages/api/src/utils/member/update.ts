@@ -14,6 +14,7 @@ import {
   memberResponseDataFromInput,
 } from "@forge/validators";
 
+import { replaceEmploymentHistory } from "../career/employment";
 import { codeOwnedFormConfigs } from "../forms/config";
 import { updateResponse } from "../forms/manager";
 import { isUniqueViolation } from "./profile";
@@ -31,7 +32,13 @@ function getCodeOfConductAccepted(responseData: unknown) {
   return true;
 }
 
-function memberInputFromRow(member: SelectMember) {
+function memberInputFromRow(
+  member: SelectMember,
+  input: Pick<
+    MemberUpdateInput,
+    "currentCityKey" | "employmentHistory" | "guildLocationVisible"
+  >,
+) {
   return {
     firstName: member.firstName,
     lastName: member.lastName,
@@ -46,6 +53,10 @@ function memberInputFromRow(member: SelectMember) {
     shirtSize: member.shirtSize,
     gradDate: member.gradDate,
     company: member.company,
+    employmentHistory: input.employmentHistory ?? [],
+    currentCityKey: input.currentCityKey ?? member.currentCityKey,
+    guildLocationVisible:
+      input.guildLocationVisible ?? member.guildLocationVisible,
     githubProfileUrl: member.githubProfileUrl,
     linkedinProfileUrl: member.linkedinProfileUrl,
     websiteUrl: member.websiteUrl,
@@ -109,7 +120,12 @@ export async function updateMemberProfile({
       websiteUrl: input.websiteUrl,
       dob: input.dob,
       gradDate: input.gradDate,
-      company: input.company,
+      ...(input.currentCityKey === undefined
+        ? {}
+        : { currentCityKey: input.currentCityKey }),
+      ...(input.guildLocationVisible === undefined
+        ? {}
+        : { guildLocationVisible: input.guildLocationVisible }),
       ...(points === undefined ? {} : { points }),
     } satisfies Partial<InsertMember>;
 
@@ -140,6 +156,15 @@ export async function updateMemberProfile({
       throw error;
     }
 
+    if (input.employmentHistory !== undefined) {
+      await replaceEmploymentHistory({
+        database: tx,
+        employmentHistory: input.employmentHistory,
+        memberId: updatedMember.id,
+        userId,
+      });
+    }
+
     const existingResponse = await tx.query.FormResponse.findFirst({
       where: and(
         eq(FormResponse.userId, userId),
@@ -158,7 +183,7 @@ export async function updateMemberProfile({
       input: {
         form: MEMBER_SIGNUP_FORM_ID,
         responseData: memberResponseDataFromInput(
-          memberInputFromRow(updatedMember),
+          memberInputFromRow(updatedMember, input),
           { codeOfConductAccepted },
         ),
         upsert: true,

@@ -135,3 +135,5 @@ export const PERMISSIONS = Object.fromEntries(
 
 export type PermissionKey = keyof typeof PERMISSION_DATA;
 export type PermissionIndex = (typeof PERMISSION_DATA)[PermissionKey]["idx"];
+
+export const PERMISSION_KEYS = Object.keys(PERMISSION_DATA) as PermissionKey[];

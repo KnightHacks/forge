@@ -18,7 +18,6 @@ function bits(...keys: PERMISSIONS.PermissionKey[]) {
   );
   for (const key of keys) {
     const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (!permission) throw new Error(`Unknown permission ${key}`);
     value[permission.idx] = "1";
   }
   return value.join("");

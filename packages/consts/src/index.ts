@@ -10,3 +10,4 @@ export * as MINIO from "./minio";
 export * as PERMISSIONS from "./permissions";
 export * as TEAM from "./team";
 export * as ISSUE from "./issue";
+export * as CAREER from "./career";

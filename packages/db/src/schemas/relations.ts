@@ -2,6 +2,8 @@ import { relations } from "drizzle-orm";
 
 import { Account, Permissions, Roles, Session, User } from "./auth";
 import {
+  Company,
+  Employment,
   Event,
   EventAttendee,
   Issue,
@@ -112,6 +114,32 @@ export const AccountRelations = relations(Account, ({ one }) => ({
 export const MemberRelations = relations(Member, ({ many, one }) => ({
   user: one(User, { fields: [Member.userId], references: [User.id] }),
   eventAttendance: many(EventAttendee),
+  employment: many(Employment),
+}));
+
+export const CompanyRelations = relations(Company, ({ many, one }) => ({
+  createdBy: one(User, {
+    fields: [Company.createdByUserId],
+    references: [User.id],
+  }),
+  employment: many(Employment),
+  mergedInto: one(Company, {
+    fields: [Company.mergedIntoCompanyId],
+    references: [Company.id],
+    relationName: "companyMerge",
+  }),
+  mergedCompanies: many(Company, { relationName: "companyMerge" }),
+}));
+
+export const EmploymentRelations = relations(Employment, ({ one }) => ({
+  company: one(Company, {
+    fields: [Employment.companyId],
+    references: [Company.id],
+  }),
+  member: one(Member, {
+    fields: [Employment.memberId],
+    references: [Member.id],
+  }),
 }));
 
 export const EventRelations = relations(Event, ({ many }) => ({

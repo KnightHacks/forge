@@ -175,17 +175,18 @@ export function GuildDirectory({
         <SiteHeader />
         <main>
           <section>
-            <div className="container py-8 md:py-10">
+            <div className="container pb-0 pt-10 sm:pt-14">
               <motion.div
                 className="max-w-3xl"
                 initial={{ opacity: 0, translateY: 14 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
               >
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+                <p className="text-sm font-medium text-primary">People</p>
+                <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
                   Guild <span className="guild-title-accent">Collective</span>
                 </h1>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+                <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                   Find collaborators, mentors, and the people shaping Knight
                   Hacks, on campus and beyond.
                 </p>
@@ -193,7 +194,7 @@ export function GuildDirectory({
             </div>
           </section>
 
-          <section className="container py-5 md:py-7">
+          <section className="container pb-16 pt-6">
             <motion.div
               className="guild-search-surface mb-6 rounded-lg p-3 md:p-4"
               initial={{ opacity: 0, translateY: 10 }}

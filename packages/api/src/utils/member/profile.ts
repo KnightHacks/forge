@@ -8,6 +8,7 @@ import { Member } from "@forge/db/schemas/knight-hacks";
 import { calculateMemberAge } from "@forge/validators";
 
 import type { WriteDb } from "../db";
+import { createEmploymentHistory } from "../career/employment";
 import { normalizeProfilePictureObjectNameForPersistence } from "../profile-picture/storage";
 import { normalizeResumeObjectNameForPersistence } from "../resume/storage";
 
@@ -77,7 +78,8 @@ export async function createMemberProfile({
     ),
     dob: input.dob,
     gradDate: input.gradDate,
-    company: input.company,
+    currentCityKey: input.currentCityKey,
+    guildLocationVisible: input.guildLocationVisible,
   };
 
   try {
@@ -89,6 +91,13 @@ export async function createMemberProfile({
         message: "Member profile could not be created.",
       });
     }
+
+    await createEmploymentHistory({
+      database,
+      employmentHistory: input.employmentHistory,
+      memberId: member.id,
+      userId: session.user.id,
+    });
 
     return member;
   } catch (error) {

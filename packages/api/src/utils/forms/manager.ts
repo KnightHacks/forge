@@ -323,6 +323,15 @@ function createZodSchemaFromJsonSchema(jsonSchema: unknown): z.ZodType {
     });
   }
   const schema = jsonSchema as JSONSchema7;
+  if (Array.isArray(schema.type)) {
+    const alternatives = schema.type.map((type) =>
+      createZodSchemaFromJsonSchema({ ...schema, type }),
+    );
+    const [first, second, ...rest] = alternatives;
+    if (!first) return z.unknown();
+    if (!second) return first;
+    return z.union([first, second, ...rest]);
+  }
   if (Array.isArray(schema.enum)) {
     const values = schema.enum;
     return z
@@ -372,50 +381,43 @@ function createZodSchemaFromJsonSchema(jsonSchema: unknown): z.ZodType {
   if (schema.type === "boolean") return z.boolean();
   if (schema.type === "null") return z.null();
 
-  if (schema.type === "string" || schema.type === undefined) {
-    let string = z.string();
-    if (schema.minLength !== undefined) string = string.min(schema.minLength);
-    if (schema.maxLength !== undefined) string = string.max(schema.maxLength);
-    if (schema.format === "email") {
-      string = string.refine(
-        (value) => z.email().safeParse(value).success,
-        "Enter a valid email address.",
-      );
-    }
-    if (schema.format === "uri") {
-      string = string.refine(
-        (value) => z.url().safeParse(value).success,
-        "Enter a valid URL.",
-      );
-    }
-    if (schema.format === "date") {
-      string = string.refine(
-        (value) => z.iso.date().safeParse(value).success,
-        "Enter a valid date.",
-      );
-    }
-    if (schema.pattern) {
-      const approvedPattern =
-        schema.pattern === "^\\+?\\d{7,15}$"
-          ? /^\+?\d{7,15}$/
-          : schema.pattern === "^([01]\\d|2[0-3]):([0-5]\\d)$"
-            ? /^([01]\d|2[0-3]):([0-5]\d)$/
-            : null;
-      if (!approvedPattern) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Stored form validation uses an unsupported pattern.",
-        });
-      }
-      string = string.regex(approvedPattern);
-    }
-    return string;
+  let string = z.string();
+  if (schema.minLength !== undefined) string = string.min(schema.minLength);
+  if (schema.maxLength !== undefined) string = string.max(schema.maxLength);
+  if (schema.format === "email") {
+    string = string.refine(
+      (value) => z.email().safeParse(value).success,
+      "Enter a valid email address.",
+    );
   }
-
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: "Stored form validation uses an unsupported type.",
-  });
+  if (schema.format === "uri") {
+    string = string.refine(
+      (value) => z.url().safeParse(value).success,
+      "Enter a valid URL.",
+    );
+  }
+  if (schema.format === "date") {
+    string = string.refine(
+      (value) => z.iso.date().safeParse(value).success,
+      "Enter a valid date.",
+    );
+  }
+  if (schema.pattern) {
+    const approvedPattern =
+      schema.pattern === "^\\+?\\d{7,15}$"
+        ? /^\+?\d{7,15}$/
+        : schema.pattern === "^([01]\\d|2[0-3]):([0-5]\\d)$"
+          ? /^([01]\d|2[0-3]):([0-5]\d)$/
+          : null;
+    if (!approvedPattern) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Stored form validation uses an unsupported pattern.",
+      });
+    }
+    string = string.regex(approvedPattern);
+  }
+  return string;
 }
 
 function validateResponseData(

@@ -2,9 +2,17 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Github, Globe2, Linkedin } from "lucide-react";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  Github,
+  Globe2,
+  Linkedin,
+  MapPin,
+} from "lucide-react";
 
-import { GUILD } from "@forge/consts";
+import { CAREER, GUILD } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 
@@ -12,6 +20,9 @@ import { ProfileMotion } from "~/app/_components/profile-motion";
 import { ResumeActions } from "~/app/_components/resume-button";
 import { SiteHeader } from "~/app/_components/site-header";
 import { api } from "~/trpc/server";
+
+const employmentExperienceLabels: Readonly<Record<string, string>> =
+  CAREER.EMPLOYMENT_EXPERIENCE_LABELS;
 
 interface ProfilePageProps {
   params: Promise<{ memberId: string }>;
@@ -78,7 +89,13 @@ function memberSinceLabel(memberSinceDate: string) {
 
 function guildReturnPath(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
-  if (candidate === "/" || candidate?.startsWith("/?")) return candidate;
+  if (
+    candidate?.startsWith("/") &&
+    !candidate.startsWith("//") &&
+    !candidate.includes("\\")
+  ) {
+    return candidate;
+  }
   return "/";
 }
 
@@ -225,6 +242,75 @@ export default async function GuildProfilePage({
                   <p className="mt-3 whitespace-pre-wrap text-base leading-7 text-foreground/90">
                     {profile.about}
                   </p>
+                </section>
+              ) : null}
+
+              {profile.employmentHistory.length > 0 ? (
+                <section
+                  className="guild-profile-section mt-4 rounded-lg p-4 sm:p-5"
+                  aria-labelledby="experience-title"
+                >
+                  <h2
+                    id="experience-title"
+                    className="flex items-center gap-2 font-semibold"
+                  >
+                    <BriefcaseBusiness
+                      className="h-4 w-4 text-primary"
+                      aria-hidden="true"
+                    />
+                    Experience
+                  </h2>
+                  <div className="mt-4 divide-y divide-white/10">
+                    {profile.employmentHistory.map((employment) => (
+                      <div
+                        key={employment.id}
+                        className="grid gap-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto]"
+                      >
+                        <div className="min-w-0">
+                          <Link
+                            href={`/companies/${employment.company.id}`}
+                            className="inline-flex items-center gap-2 font-medium hover:text-primary"
+                          >
+                            <Building2
+                              className="h-4 w-4 shrink-0 text-primary"
+                              aria-hidden="true"
+                            />
+                            {employment.company.displayName}
+                          </Link>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {employment.title ?? "Guild member"}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                            {employment.experienceType ? (
+                              <span>
+                                {
+                                  employmentExperienceLabels[
+                                    employment.experienceType
+                                  ]
+                                }
+                              </span>
+                            ) : null}
+                            {employment.city ? (
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
+                                {employment.city.label}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground sm:text-right">
+                          {employment.state === "current"
+                            ? "Current"
+                            : employment.state === "past"
+                              ? "Former"
+                              : null}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               ) : null}
 

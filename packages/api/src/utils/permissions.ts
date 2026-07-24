@@ -3,9 +3,11 @@ import { PERMISSIONS } from "@forge/consts";
 export type PermissionMap = Record<PERMISSIONS.PermissionKey, boolean>;
 
 export function createEmptyPermissionMap(): PermissionMap {
-  return Object.fromEntries(
-    Object.keys(PERMISSIONS.PERMISSION_DATA).map((key) => [key, false]),
-  );
+  const permissionMap = {} as PermissionMap;
+  for (const key of PERMISSIONS.PERMISSION_KEYS) {
+    permissionMap[key] = false;
+  }
+  return permissionMap;
 }
 
 export function mergePermissionBitstrings(
@@ -13,10 +15,8 @@ export function mergePermissionBitstrings(
 ): PermissionMap {
   const result = createEmptyPermissionMap();
 
-  const permissionKeys = Object.keys(PERMISSIONS.PERMISSION_DATA);
-  for (const key of permissionKeys) {
+  for (const key of PERMISSIONS.PERMISSION_KEYS) {
     const permission = PERMISSIONS.PERMISSION_DATA[key];
-    if (!permission) throw new Error(`Unknown permission: ${key}`);
     result[key] = bitstrings.some(
       (bitstring) => bitstring.at(permission.idx) === "1",
     );

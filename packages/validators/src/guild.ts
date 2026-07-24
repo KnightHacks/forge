@@ -30,6 +30,29 @@ export const guildRoleCalloutSchema = z.object({
     .nullable(),
 });
 
+export const guildPublicEmploymentSchema = z.object({
+  city: z
+    .object({
+      key: z.string(),
+      label: z.string(),
+      latitude: z.number(),
+      longitude: z.number(),
+      name: z.string(),
+      state: z.string(),
+    })
+    .nullable(),
+  company: z.object({
+    displayName: z.string(),
+    id: z.string().uuid(),
+  }),
+  endMonth: z.string().nullable(),
+  experienceType: z.string().nullable(),
+  id: z.string().uuid(),
+  startMonth: z.string().nullable(),
+  state: z.enum(["current", "past", "unknown"]),
+  title: z.string().nullable(),
+});
+
 export const guildProfileSchema = z
   .object({
     id: z.string().uuid(),
@@ -50,6 +73,7 @@ export const guildProfileSchema = z
     opportunityStatuses: guildOpportunityStatusesSchema,
     memberStatus: guildMemberStatusSchema,
     roleCallout: guildRoleCalloutSchema.nullable(),
+    employmentHistory: z.array(guildPublicEmploymentSchema).default([]),
   })
   .strict();
 

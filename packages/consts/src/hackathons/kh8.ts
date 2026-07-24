@@ -1,7 +1,3 @@
-// Because @forge/db requires @forge/consts we can't import @forge/db right
-// here. Ideally there is another way but im not too sure.
-// TODO: look into not doing this
-import type { HackerClass } from "../../../db/src/schemas/knight-hacks";
 import { IS_PROD } from "../util";
 
 export const PROD_DISCORD_ROLE_KNIGHT_HACKS_8 = "1408025502119231498";
@@ -31,7 +27,13 @@ export const DEV_DISCORD_ROLE_ALCHEMIST = "1420819309965611140";
 export const PROD_DISCORD_SUPERADMIN = "486629374758748180";
 export const DEV_DISCORD_SUPERADMIN = "1246637685011906560";
 
-export type AssignableHackerClass = Exclude<HackerClass, "VIP">;
+export type AssignableHackerClass =
+  | "Operator"
+  | "Mechanist"
+  | "Sentinel"
+  | "Harbinger"
+  | "Monstologist"
+  | "Alchemist";
 
 export const CLASS_ROLE_ID: Record<AssignableHackerClass, string> = {
   Operator: IS_PROD ? PROD_DISCORD_ROLE_OPERATORS : DEV_DISCORD_ROLE_OPERATORS,

@@ -11,7 +11,6 @@ function roleHasPermission(
   key: PERMISSIONS.PermissionKey,
 ) {
   const permission = PERMISSIONS.PERMISSION_DATA[key];
-  if (!permission) throw new Error(`Unknown permission: ${key}`);
   return role.permissions.at(permission.idx) === "1";
 }
 

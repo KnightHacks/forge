@@ -199,19 +199,23 @@ function RoleFiltersDialog({
                 Granted permissions
               </legend>
               <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-white/10 bg-background/45 p-2">
-                {Object.entries(PERMISSIONS.PERMISSION_DATA)
-                  .sort(([, left], [, right]) => left.idx - right.idx)
-                  .map(([key, permission]) => {
-                    const typedKey = key;
+                {PERMISSIONS.PERMISSION_KEYS.map((key) => ({
+                  key,
+                  permission: PERMISSIONS.PERMISSION_DATA[key],
+                }))
+                  .sort(
+                    (left, right) => left.permission.idx - right.permission.idx,
+                  )
+                  .map(({ key, permission }) => {
                     return (
                       <label
                         key={key}
                         className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-white/10 bg-background/60 px-3 py-2"
                       >
                         <Checkbox
-                          checked={permissionKeys.includes(typedKey)}
+                          checked={permissionKeys.includes(key)}
                           onCheckedChange={(checked) =>
-                            togglePermission(typedKey, checked === true)
+                            togglePermission(key, checked === true)
                           }
                         />
                         <span className="min-w-0">
@@ -490,7 +494,7 @@ function RoleList({
               ))}
               {input.permissionKeys.map((permission) => (
                 <Badge key={permission} variant="outline" className="gap-1">
-                  {PERMISSIONS.PERMISSION_DATA[permission]?.name ?? permission}
+                  {PERMISSIONS.PERMISSION_DATA[permission].name}
                   <button
                     type="button"
                     aria-label={`Remove ${permission} permission filter`}

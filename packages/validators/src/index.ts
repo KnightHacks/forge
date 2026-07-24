@@ -11,6 +11,7 @@ export * from "./event-management";
 export * from "./analytics";
 export * from "./issues";
 export * from "./guild";
+export * from "./career";
 
 export const unused = z.string().describe(
   `This lib is currently not used as we use drizzle-zod for simple schemas

@@ -19,6 +19,20 @@ vi.mock("~/app/_components/auth/sign-out-flow", () => ({
 
 vi.mock("~/trpc/react", () => ({
   api: {
+    career: {
+      replaceMyEmploymentHistory: {
+        useMutation: vi.fn(() => ({
+          isPending: false,
+          mutateAsync: vi.fn(),
+        })),
+      },
+      updateMyCurrentCity: {
+        useMutation: vi.fn(() => ({
+          isPending: false,
+          mutateAsync: vi.fn(),
+        })),
+      },
+    },
     member: {
       deleteMember: {
         useMutation: vi.fn(() => ({
@@ -35,6 +49,17 @@ vi.mock("~/trpc/react", () => ({
       },
     },
     useUtils: vi.fn(() => ({
+      career: {
+        listMyEmployment: {
+          invalidate: vi.fn(),
+        },
+        searchCompanies: {
+          fetch: vi.fn(),
+        },
+        searchUsCities: {
+          fetch: vi.fn(),
+        },
+      },
       member: {
         getMember: {
           invalidate: vi.fn(),
@@ -65,6 +90,7 @@ const member: CurrentMember = {
   about: "I like building member tools.",
   age: 24,
   company: "Knight Hacks",
+  currentCityKey: null,
   dateCreated: "2025-05-26",
   discordUser: "casey-member",
   dob: "2000-02-03",
@@ -74,6 +100,7 @@ const member: CurrentMember = {
   githubProfileUrl: "https://github.com/knighthacks",
   gradDate: "2027-05-02",
   guildProfileVisible: true,
+  guildLocationVisible: true,
   guildResumeVisible: true,
   guildOpportunityStatuses: [],
   id: "member-id",
@@ -94,10 +121,19 @@ const member: CurrentMember = {
   websiteUrl: "https://knighthacks.org",
 };
 
+const careerData = {
+  currentLocation: {
+    city: null,
+    currentCityKey: null,
+    guildLocationVisible: true,
+  },
+  employment: [],
+};
+
 describe("MemberProfileSettingsForm", () => {
   it("renders member settings sections from the member row without signup-only fields", () => {
     const html = renderToStaticMarkup(
-      createElement(MemberProfileSettingsForm, { member }),
+      createElement(MemberProfileSettingsForm, { careerData, member }),
     );
 
     expect(html).toContain("Edit member profile");
@@ -105,6 +141,7 @@ describe("MemberProfileSettingsForm", () => {
     expect(html).toContain("Your details");
     expect(html).toContain("Academics");
     expect(html).toContain("Guild profile");
+    expect(html).toContain("Career and location");
     expect(html).toContain("Profile picture widget for Casey Member");
     expect(html).toContain("Resume widget for user-id/Resume.pdf");
     expect(html).toContain("Save changes");

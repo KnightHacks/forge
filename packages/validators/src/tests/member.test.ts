@@ -56,6 +56,42 @@ describe("member onboarding validation", () => {
     expect(result.company).toBeNull();
     expect(result.resumeUrl).toBeNull();
     expect(result.profilePictureUrl).toBeNull();
+    expect(result.employmentHistory).toEqual([]);
+    expect(result.currentCityKey).toBeNull();
+    expect(result.guildLocationVisible).toBe(true);
+  });
+
+  it("TC-001 accepts complete career history and an explicit current city", () => {
+    const result = memberSchema.parse({
+      ...validResponse,
+      currentCityKey: "12-53000",
+      employmentHistory: [
+        {
+          cityKey: "12-53000",
+          companyId: "00000000-0000-4000-8000-000000000001",
+          experienceType: "full_time",
+          guildVisible: true,
+          startMonth: "2025-06",
+          state: "current",
+          title: "Software Engineer",
+        },
+        {
+          cityKey: "06-44000",
+          experienceType: "internship",
+          guildVisible: false,
+          proposedCompanyName: "New Employer",
+          startMonth: "2024-05",
+          endMonth: "2024-08",
+          state: "past",
+          title: "Software Engineering Intern",
+        },
+      ],
+      guildLocationVisible: false,
+    });
+
+    expect(result.currentCityKey).toBe("12-53000");
+    expect(result.guildLocationVisible).toBe(false);
+    expect(result.employmentHistory).toHaveLength(2);
   });
 
   it("keeps an uploaded resume object path", () => {
@@ -167,15 +203,24 @@ describe("member onboarding validation", () => {
     expect(memberSignupFormDefinition.completionRedirectUrl).toBe(
       MEMBER_DASHBOARD_PATH,
     );
-    expect(memberSignupCallbackConnections).toHaveLength(
-      memberSignupFields.length,
-    );
-    expect(memberSignupCallbackConnections).toEqual(
-      memberSignupFields.map((field) => ({
+    expect(memberSignupCallbackConnections).toEqual([
+      ...memberSignupFields.map((field) => ({
         formField: field.name,
         procField: field.name,
       })),
-    );
+      {
+        formField: "employmentHistory",
+        procField: "employmentHistory",
+      },
+      {
+        formField: "currentCityKey",
+        procField: "currentCityKey",
+      },
+      {
+        formField: "guildLocationVisible",
+        procField: "guildLocationVisible",
+      },
+    ]);
   });
 
   it("requires Code of Conduct acceptance in the form definition", () => {

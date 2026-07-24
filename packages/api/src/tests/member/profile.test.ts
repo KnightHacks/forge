@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Company, Employment, Member } from "@forge/db/schemas/knight-hacks";
 import { memberSchema } from "@forge/validators";
 
 import { createMemberProfile } from "../../utils/member/profile";
@@ -130,6 +131,84 @@ describe("createMemberProfile", () => {
     expect(
       mocks.normalizeProfilePictureObjectNameForPersistence,
     ).toHaveBeenCalledWith(validInput.profilePictureUrl, userId);
+  });
+
+  it("TC-001 creates inline companies and complete employment with the member", async () => {
+    const careerInput = {
+      ...validInput,
+      currentCityKey: "12-53000",
+      employmentHistory: [
+        {
+          cityKey: "12-53000",
+          companyId: null,
+          endMonth: null,
+          experienceType: "full_time",
+          guildVisible: true,
+          proposedCompanyName: "Knight Hacks Labs",
+          startMonth: "2025-06",
+          state: "current",
+          title: "Software Engineer",
+        },
+      ],
+      guildLocationVisible: false,
+    } satisfies typeof validInput;
+    const insertValues: { table: unknown; values: unknown }[] = [];
+    const database = {
+      insert: vi.fn((table: unknown) => ({
+        values: vi.fn((values: unknown) => {
+          insertValues.push({ table, values });
+          return {
+            returning: vi.fn().mockResolvedValue(
+              table === Member
+                ? [{ id: "member-id" }]
+                : table === Company
+                  ? [
+                      {
+                        createdByUserId: userId,
+                        displayName: "Knight Hacks Labs",
+                        id: "company-id",
+                        reviewState: "pending",
+                      },
+                    ]
+                  : [{ id: "employment-id" }],
+            ),
+          };
+        }),
+      })),
+      query: {
+        Company: {
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
+        Member: {
+          findFirst: vi.fn().mockResolvedValue(null),
+        },
+      },
+      select: vi.fn(),
+    } as unknown as Parameters<typeof createMemberProfile>[0]["database"];
+
+    await createMemberProfile({
+      database,
+      input: careerInput,
+      session,
+    });
+
+    expect(insertValues.map(({ table }) => table)).toEqual([
+      Member,
+      Company,
+      Employment,
+    ]);
+    expect(insertValues[0]?.values).toMatchObject({
+      currentCityKey: "12-53000",
+      guildLocationVisible: false,
+    });
+    expect(insertValues[0]?.values).not.toHaveProperty("company");
+    expect(insertValues[2]?.values).toEqual([
+      expect.objectContaining({
+        companyId: "company-id",
+        memberId: "member-id",
+        title: "Software Engineer",
+      }),
+    ]);
   });
 
   it("rejects duplicate member profiles for the same user", async () => {

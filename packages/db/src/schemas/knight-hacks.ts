@@ -11,7 +11,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-import { EVENTS, FORMS, GUILD, ISSUE } from "@forge/consts";
+import { CAREER, EVENTS, FORMS, GUILD, ISSUE } from "@forge/consts";
 
 import { Roles, User } from "./auth";
 
@@ -64,6 +64,18 @@ export const hackathonApplicationStateEnum = pgEnum(
 );
 export const issueStatus = pgEnum("issue_status", ISSUE.ISSUE_STATUS);
 export const issuePriority = pgEnum("issue_priority", ISSUE.PRIORITY);
+export const companyReviewStateEnum = pgEnum(
+  "company_review_state",
+  CAREER.COMPANY_REVIEW_STATES,
+);
+export const employmentStateEnum = pgEnum(
+  "employment_state",
+  CAREER.EMPLOYMENT_STATES,
+);
+export const employmentExperienceTypeEnum = pgEnum(
+  "employment_experience_type",
+  CAREER.EMPLOYMENT_EXPERIENCE_TYPES,
+);
 
 export const Hackathon = createTable(
   "hackathon",
@@ -89,6 +101,60 @@ export const Hackathon = createTable(
 
 export type InsertHackathon = typeof Hackathon.$inferInsert;
 export type SelectHackathon = typeof Hackathon.$inferSelect;
+
+export const Company = createTable(
+  "company",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    displayName: t.varchar({ length: 120 }).notNull(),
+    normalizedDisplayName: t.varchar({ length: 120 }).notNull(),
+    legalName: t.varchar({ length: 120 }),
+    domain: t.varchar({ length: 253 }),
+    aliases: t
+      .text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    reviewState: companyReviewStateEnum().notNull().default("pending"),
+    mergedIntoCompanyId: t.uuid(),
+    createdByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    normalizedNameUnique: unique(
+      "knight_hacks_company_normalized_display_name_unique",
+    ).on(table.normalizedDisplayName),
+    reviewStateIdx: index("knight_hacks_company_review_state_idx").on(
+      table.reviewState,
+    ),
+    domainIdx: index("knight_hacks_company_domain_idx").on(table.domain),
+    creatorIdx: index("knight_hacks_company_created_by_user_idx").on(
+      table.createdByUserId,
+    ),
+    mergedIntoReference: foreignKey({
+      columns: [table.mergedIntoCompanyId],
+      foreignColumns: [table.id],
+      name: "knight_hacks_company_merged_into_fk",
+    }).onDelete("restrict"),
+    mergedStateConsistency: check(
+      "knight_hacks_company_merged_state_consistency",
+      sql`(${table.reviewState} = 'merged') = (${table.mergedIntoCompanyId} IS NOT NULL)`,
+    ),
+  }),
+);
+
+export type InsertCompany = typeof Company.$inferInsert;
+export type SelectCompany = typeof Company.$inferSelect;
 
 export const Member = createTable(
   "member",
@@ -129,6 +195,8 @@ export const Member = createTable(
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
     company: t.varchar({ length: 255 }),
+    currentCityKey: t.varchar({ length: 8 }),
+    guildLocationVisible: t.boolean().notNull().default(true),
     points: t.integer().notNull().default(0),
     dateCreated: t.date().notNull().defaultNow(),
     timeCreated: t.time().notNull().defaultNow(),
@@ -198,6 +266,70 @@ export type SelectMember = typeof Member.$inferSelect;
 
 export const InsertMemberSchema = createInsertSchema(Member);
 export const InsertHackerSchema = createInsertSchema(Hacker);
+
+export const Employment = createTable(
+  "employment",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => Member.id, { onDelete: "cascade" }),
+    companyId: t
+      .uuid()
+      .notNull()
+      .references(() => Company.id, { onDelete: "restrict" }),
+    title: t.varchar({ length: 120 }),
+    experienceType: employmentExperienceTypeEnum(),
+    state: employmentStateEnum().notNull(),
+    startMonth: t.varchar({ length: 7 }),
+    endMonth: t.varchar({ length: 7 }),
+    cityKey: t.varchar({ length: 8 }),
+    guildVisible: t.boolean().notNull().default(true),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    memberIdx: index("knight_hacks_employment_member_idx").on(table.memberId),
+    companyIdx: index("knight_hacks_employment_company_idx").on(
+      table.companyId,
+    ),
+    companyStateIdx: index("knight_hacks_employment_company_state_idx").on(
+      table.companyId,
+      table.state,
+    ),
+    currentHasNoEnd: check(
+      "knight_hacks_employment_current_has_no_end",
+      sql`${table.state} <> 'current' OR ${table.endMonth} IS NULL`,
+    ),
+    startMonthShape: check(
+      "knight_hacks_employment_start_month_shape",
+      sql`${table.startMonth} IS NULL OR ${table.startMonth} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`,
+    ),
+    endMonthShape: check(
+      "knight_hacks_employment_end_month_shape",
+      sql`${table.endMonth} IS NULL OR ${table.endMonth} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`,
+    ),
+    dateOrder: check(
+      "knight_hacks_employment_date_order",
+      sql`${table.startMonth} IS NULL OR ${table.endMonth} IS NULL OR ${table.endMonth} >= ${table.startMonth}`,
+    ),
+    cityKeyShape: check(
+      "knight_hacks_employment_city_key_shape",
+      sql`${table.cityKey} IS NULL OR ${table.cityKey} ~ '^[0-9]{2}-[0-9]{5}$'`,
+    ),
+  }),
+);
+
+export type InsertEmployment = typeof Employment.$inferInsert;
+export type SelectEmployment = typeof Employment.$inferSelect;
 
 export const Sponsor = createTable("sponsor", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),

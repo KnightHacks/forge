@@ -6,8 +6,9 @@ import { TEAM } from "@forge/consts";
 import { and, asc, desc, eq, inArray, isNotNull, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
-import { Member } from "@forge/db/schemas/knight-hacks";
+import { Company, Employment, Member } from "@forge/db/schemas/knight-hacks";
 import {
+  companyIdInputSchema,
   guildFilterOptionsSchema,
   guildListProfilesInputSchema,
   guildProfileInputSchema,
@@ -17,6 +18,7 @@ import {
 
 import type { GuildRoleCallout } from "../utils/guild/role-callout";
 import { publicProcedure } from "../trpc";
+import { getUsCity } from "../utils/career/us-cities";
 import {
   normalizePublicGuildText,
   normalizePublicGuildUrl,
@@ -102,7 +104,18 @@ function getCompletenessOrder() {
     (CASE WHEN ${nonEmpty(Member.profilePictureUrl)} THEN 1 ELSE 0 END) +
     (CASE WHEN ${nonEmpty(Member.tagline)} THEN 1 ELSE 0 END) +
     (CASE WHEN ${nonEmpty(Member.about)} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${nonEmpty(Member.company)} THEN 1 ELSE 0 END) +
+    (CASE WHEN
+      ${nonEmpty(Member.company)}
+      OR EXISTS (
+        SELECT 1
+        FROM ${Employment} guild_employment
+        INNER JOIN ${Company} guild_company
+          ON guild_company.id = guild_employment.company_id
+        WHERE guild_employment.member_id = ${Member.id}
+          AND guild_employment.guild_visible = true
+          AND guild_company.review_state = 'approved'
+      )
+      THEN 1 ELSE 0 END) +
     (CASE WHEN
       ${nonEmpty(Member.githubProfileUrl)}
       OR ${nonEmpty(Member.linkedinProfileUrl)}
@@ -139,7 +152,17 @@ function getSearchRank(query: string) {
         OR lower(${Member.firstName}) LIKE ${prefix}
         OR lower(${Member.lastName}) LIKE ${prefix} THEN 2
       WHEN lower(coalesce(${Member.tagline}, '')) LIKE ${prefix}
-        OR lower(coalesce(${Member.company}, '')) LIKE ${prefix} THEN 3
+        OR lower(coalesce(${Member.company}, '')) LIKE ${prefix}
+        OR EXISTS (
+          SELECT 1
+          FROM ${Employment} guild_employment
+          INNER JOIN ${Company} guild_company
+            ON guild_company.id = guild_employment.company_id
+          WHERE guild_employment.member_id = ${Member.id}
+            AND guild_employment.guild_visible = true
+            AND guild_company.review_state = 'approved'
+            AND lower(guild_company.display_name) LIKE ${prefix}
+        ) THEN 3
       WHEN ${fullName} LIKE ${contains} THEN 4
       ELSE 5
     END
@@ -155,6 +178,24 @@ function getSearchFilter(query: string) {
     sql`${Member.school} ILIKE ${pattern}`,
     sql`${Member.major} ILIKE ${pattern}`,
     sql`${Member.company} ILIKE ${pattern}`,
+    sql`EXISTS (
+      SELECT 1
+      FROM ${Employment} guild_employment
+      INNER JOIN ${Company} guild_company
+        ON guild_company.id = guild_employment.company_id
+      WHERE guild_employment.member_id = ${Member.id}
+        AND guild_employment.guild_visible = true
+        AND guild_company.review_state = 'approved'
+        AND (
+          guild_company.display_name ILIKE ${pattern}
+          OR guild_company.legal_name ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1
+            FROM unnest(guild_company.aliases) AS company_alias
+            WHERE company_alias ILIKE ${pattern}
+          )
+        )
+    )`,
     sql`${opportunitySearchText()} ILIKE ${pattern}`,
   );
 }
@@ -298,6 +339,7 @@ async function getPublicProfilePictureUrl(row: PublicMemberRow) {
 async function toPublicProfile(
   row: PublicMemberRow,
   roleCallout: ReturnType<typeof getGuildRoleCallout>,
+  currentCompany?: string | null,
 ) {
   return guildProfileSchema.parse({
     id: row.id,
@@ -310,7 +352,7 @@ async function toPublicProfile(
     major: row.major,
     gradDate: row.gradDate,
     memberSinceDate: row.memberSinceDate,
-    company: row.company,
+    company: currentCompany ?? row.company,
     githubProfileUrl: normalizePublicGuildUrl(row.githubProfileUrl),
     linkedinProfileUrl: normalizePublicGuildUrl(row.linkedinProfileUrl),
     websiteUrl: normalizePublicGuildUrl(row.websiteUrl),
@@ -327,7 +369,190 @@ async function toPublicProfile(
   });
 }
 
+async function getCurrentCompanyNames(memberIds: readonly string[]) {
+  if (memberIds.length === 0) return new Map<string, string>();
+  const rows = await db
+    .select({
+      companyName: Company.displayName,
+      memberId: Employment.memberId,
+      startMonth: Employment.startMonth,
+    })
+    .from(Employment)
+    .innerJoin(Company, eq(Company.id, Employment.companyId))
+    .where(
+      and(
+        inArray(Employment.memberId, [...memberIds]),
+        eq(Employment.state, "current"),
+        eq(Employment.guildVisible, true),
+        eq(Company.reviewState, "approved"),
+      ),
+    )
+    .orderBy(desc(Employment.startMonth), asc(Company.displayName));
+  const companyByMember = new Map<string, string>();
+  for (const row of rows) {
+    if (!companyByMember.has(row.memberId)) {
+      companyByMember.set(row.memberId, row.companyName);
+    }
+  }
+  return companyByMember;
+}
+
 export const guildRouter = {
+  listPublicCompanies: publicProcedure.query(async () => {
+    return await db
+      .select({
+        currentMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'current')::int`,
+        displayName: Company.displayName,
+        domain: Company.domain,
+        formerMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'past')::int`,
+        id: Company.id,
+        unconfirmedMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'unknown')::int`,
+      })
+      .from(Company)
+      .innerJoin(Employment, eq(Employment.companyId, Company.id))
+      .innerJoin(Member, eq(Member.id, Employment.memberId))
+      .where(
+        and(
+          eq(Company.reviewState, "approved"),
+          eq(Employment.guildVisible, true),
+          eq(Member.guildProfileVisible, true),
+        ),
+      )
+      .groupBy(Company.id)
+      .orderBy(
+        desc(sql`count(DISTINCT ${Employment.memberId})`),
+        asc(Company.displayName),
+      );
+  }),
+
+  getPublicCompany: publicProcedure
+    .input(companyIdInputSchema)
+    .query(async ({ input }) => {
+      const company = await db.query.Company.findFirst({
+        where: and(
+          eq(Company.id, input.companyId),
+          eq(Company.reviewState, "approved"),
+        ),
+        columns: {
+          displayName: true,
+          domain: true,
+          id: true,
+          legalName: true,
+        },
+      });
+      if (!company) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Company not found.",
+        });
+      }
+
+      const rows = await db
+        .select({
+          ...publicMemberColumns,
+          cityKey: Employment.cityKey,
+          employmentId: Employment.id,
+          endMonth: Employment.endMonth,
+          experienceType: Employment.experienceType,
+          startMonth: Employment.startMonth,
+          state: Employment.state,
+          title: Employment.title,
+        })
+        .from(Employment)
+        .innerJoin(Member, eq(Member.id, Employment.memberId))
+        .where(
+          and(
+            eq(Employment.companyId, company.id),
+            eq(Employment.guildVisible, true),
+            eq(Member.guildProfileVisible, true),
+          ),
+        )
+        .orderBy(
+          asc(
+            sql<number>`CASE ${Employment.state} WHEN 'current' THEN 0 WHEN 'past' THEN 1 ELSE 2 END`,
+          ),
+          asc(Member.firstName),
+          asc(Member.lastName),
+        );
+      const callouts = await getRoleCalloutsByUserId(
+        rows.map((row) => row.userId),
+      );
+      const currentCompanies = await getCurrentCompanyNames(
+        rows.map((row) => row.id),
+      );
+      const relationships = await Promise.all(
+        rows.map(async (row) => ({
+          city: row.cityKey ? getUsCity(row.cityKey) : null,
+          employmentId: row.employmentId,
+          endMonth: row.endMonth,
+          experienceType: row.experienceType,
+          profile: await toPublicProfile(
+            row,
+            callouts.get(row.userId) ?? null,
+            currentCompanies.get(row.id),
+          ),
+          startMonth: row.startMonth,
+          state: row.state,
+          title: row.title,
+        })),
+      );
+      return { company, relationships };
+    }),
+
+  getPublicGlobeLocations: publicProcedure.query(async () => {
+    const rows = await db
+      .select({
+        ...publicMemberColumns,
+        currentCityKey: Member.currentCityKey,
+      })
+      .from(Member)
+      .where(
+        and(
+          eq(Member.guildProfileVisible, true),
+          eq(Member.guildLocationVisible, true),
+          isNotNull(Member.currentCityKey),
+        ),
+      )
+      .orderBy(asc(Member.firstName), asc(Member.lastName));
+    const callouts = await getRoleCalloutsByUserId(
+      rows.map((row) => row.userId),
+    );
+    const currentCompanies = await getCurrentCompanyNames(
+      rows.map((row) => row.id),
+    );
+    const grouped = new Map<
+      string,
+      {
+        city: NonNullable<ReturnType<typeof getUsCity>>;
+        profiles: Awaited<ReturnType<typeof toPublicProfile>>[];
+      }
+    >();
+    for (const row of rows) {
+      if (!row.currentCityKey) continue;
+      const city = getUsCity(row.currentCityKey);
+      if (!city) continue;
+      const group = grouped.get(city.key) ?? { city, profiles: [] };
+      group.profiles.push(
+        await toPublicProfile(
+          row,
+          callouts.get(row.userId) ?? null,
+          currentCompanies.get(row.id),
+        ),
+      );
+      grouped.set(city.key, group);
+    }
+    return [...grouped.values()]
+      .map((group) => ({
+        ...group.city,
+        count: group.profiles.length,
+        profiles: group.profiles,
+      }))
+      .sort(
+        (first, second) =>
+          second.count - first.count || first.label.localeCompare(second.label),
+      );
+  }),
+
   listProfiles: publicProcedure
     .input(guildListProfilesInputSchema)
     .query(async ({ input }) => {
@@ -361,9 +586,16 @@ export const guildRouter = {
       const callouts = await getRoleCalloutsByUserId(
         pageRows.map((row) => row.userId),
       );
+      const currentCompanies = await getCurrentCompanyNames(
+        pageRows.map((row) => row.id),
+      );
       const profiles = await Promise.all(
         pageRows.map((row) =>
-          toPublicProfile(row, callouts.get(row.userId) ?? null),
+          toPublicProfile(
+            row,
+            callouts.get(row.userId) ?? null,
+            currentCompanies.get(row.id),
+          ),
         ),
       );
 
@@ -397,8 +629,56 @@ export const guildRouter = {
         });
       }
 
+      const employment = await db
+        .select({
+          cityKey: Employment.cityKey,
+          companyDisplayName: Company.displayName,
+          companyId: Company.id,
+          endMonth: Employment.endMonth,
+          experienceType: Employment.experienceType,
+          id: Employment.id,
+          startMonth: Employment.startMonth,
+          state: Employment.state,
+          title: Employment.title,
+        })
+        .from(Employment)
+        .innerJoin(Company, eq(Company.id, Employment.companyId))
+        .where(
+          and(
+            eq(Employment.memberId, row.id),
+            eq(Employment.guildVisible, true),
+            eq(Company.reviewState, "approved"),
+          ),
+        )
+        .orderBy(
+          asc(
+            sql<number>`CASE ${Employment.state} WHEN 'current' THEN 0 WHEN 'past' THEN 1 ELSE 2 END`,
+          ),
+          desc(Employment.startMonth),
+        );
       const callouts = await getRoleCalloutsByUserId([row.userId]);
-      return await toPublicProfile(row, callouts.get(row.userId) ?? null);
+      const profile = await toPublicProfile(
+        row,
+        callouts.get(row.userId) ?? null,
+        employment.find((item) => item.state === "current")?.companyDisplayName,
+      );
+
+      return guildProfileSchema.parse({
+        ...profile,
+        employmentHistory: employment.map((item) => ({
+          city: item.cityKey ? getUsCity(item.cityKey) : null,
+          company: {
+            displayName: item.companyDisplayName,
+            id: item.companyId,
+          },
+          endMonth: item.endMonth,
+          experienceType: item.experienceType,
+          id: item.id,
+          startMonth: item.startMonth,
+          state: item.state,
+          title: item.title,
+        })),
+      });
     }),
 
   getResumeUrl: publicProcedure

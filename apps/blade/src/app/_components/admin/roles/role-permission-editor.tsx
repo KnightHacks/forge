@@ -58,9 +58,7 @@ const permissionGroups = [
 const allPermissionKeys = permissionGroups.flatMap((group) => group.keys);
 
 function permissionData(key: PERMISSIONS.PermissionKey) {
-  const permission = PERMISSIONS.PERMISSION_DATA[key];
-  if (!permission) throw new Error(`Unknown permission: ${key}`);
-  return permission;
+  return PERMISSIONS.PERMISSION_DATA[key];
 }
 
 export function RolePermissionEditor({

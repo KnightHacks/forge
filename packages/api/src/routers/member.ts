@@ -32,11 +32,14 @@ export const memberRouter = {
   createMember: protectedProcedure
     .input(memberSchema)
     .mutation(async ({ ctx, input }) => {
-      return await createMemberProfile({
-        database: db,
-        input,
-        session: ctx.session,
-      });
+      return await db.transaction(
+        async (tx) =>
+          await createMemberProfile({
+            database: tx,
+            input,
+            session: ctx.session,
+          }),
+      );
     }),
 
   updateMember: protectedProcedure

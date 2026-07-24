@@ -25,8 +25,9 @@ export default async function MemberSettingsPage({
   if (!session) redirect("/");
 
   const debugLatencyMs = getMemberDebugLatencyMs(await searchParams);
-  const [member, effectivePermissions] = await Promise.all([
+  const [member, careerData, effectivePermissions] = await Promise.all([
     api.member.getMember(),
+    api.career.listMyEmployment(),
     api.roles.getPermissions(),
   ]);
 
@@ -40,6 +41,7 @@ export default async function MemberSettingsPage({
       >
         <MemberProfileSettingsForm
           member={member}
+          careerData={careerData}
           debugLatencyMs={debugLatencyMs}
         />
       </AuthenticatedShell>

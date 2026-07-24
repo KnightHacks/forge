@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
+  BriefcaseBusiness,
   GraduationCap,
   Loader2,
   RotateCcw,
@@ -15,6 +16,7 @@ import {
   UserRound,
 } from "lucide-react";
 
+import type { RouterOutputs } from "@forge/api";
 import type {
   MemberSettingsFieldDefinition,
   MemberUpdateFormValues,
@@ -69,8 +71,10 @@ import {
   memberUpdateFormSchema,
 } from "@forge/validators";
 
+import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
 import type { CurrentMember } from "~/hooks/use-member";
 import { signOutFromBlade } from "~/app/_components/auth/sign-out-flow";
+import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
@@ -79,9 +83,12 @@ import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { api } from "~/trpc/react";
 
 type SettingsSection = MemberSettingsFieldDefinition["section"];
+type CareerData = RouterOutputs["career"]["listMyEmployment"];
 type MemberProfileFormSource = Omit<
   CurrentMember,
+  | "currentCityKey"
   | "gender"
+  | "guildLocationVisible"
   | "levelOfStudy"
   | "major"
   | "raceOrEthnicity"
@@ -302,9 +309,11 @@ function UploadSettings({ member }: { member: CurrentMember }) {
 }
 
 export function MemberProfileSettingsForm({
+  careerData,
   debugLatencyMs = 0,
   member,
 }: {
+  careerData: CareerData;
   debugLatencyMs?: number;
   member: CurrentMember;
 }) {
@@ -314,7 +323,9 @@ export function MemberProfileSettingsForm({
     return <MemberProfileSettingsSkeleton />;
   }
 
-  return <MemberProfileSettingsEditor member={member} />;
+  return (
+    <MemberProfileSettingsEditor careerData={careerData} member={member} />
+  );
 }
 
 function MemberProfileSettingsSkeleton() {
@@ -394,7 +405,13 @@ function MemberProfileSettingsSkeleton() {
   );
 }
 
-function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
+function MemberProfileSettingsEditor({
+  careerData,
+  member,
+}: {
+  careerData: CareerData;
+  member: CurrentMember;
+}) {
   const router = useRouter();
   const apiUtils = api.useUtils();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -403,6 +420,32 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
     useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [careerHistory, setCareerHistory] = useState<CareerHistoryDraft[]>(
+    careerData.employment.map((employment) => ({
+      cityKey: employment.cityKey,
+      cityLabel: employment.city?.label ?? null,
+      companyId: employment.company.id,
+      companyLabel: employment.company.displayName,
+      endMonth: employment.endMonth,
+      experienceType: employment.experienceType,
+      guildVisible: employment.guildVisible,
+      proposedCompanyName: null,
+      startMonth: employment.startMonth,
+      state: employment.state,
+      title: employment.title,
+    })),
+  );
+  const [currentCityKey, setCurrentCityKey] = useState(
+    careerData.currentLocation.currentCityKey,
+  );
+  const [currentCityLabel, setCurrentCityLabel] = useState(
+    careerData.currentLocation.city?.label ?? null,
+  );
+  const [guildLocationVisible, setGuildLocationVisible] = useState(
+    careerData.currentLocation.guildLocationVisible,
+  );
+  const [careerMessage, setCareerMessage] = useState<string | null>(null);
+  const [careerError, setCareerError] = useState<string | null>(null);
   const initialValues = useMemo(
     () => memberProfileFormDefaults(member),
     [member],
@@ -438,8 +481,64 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
     },
   });
   const deleteMember = api.member.deleteMember.useMutation();
+  const replaceEmployment = api.career.replaceMyEmploymentHistory.useMutation();
+  const updateCurrentCity = api.career.updateMyCurrentCity.useMutation();
   const isDeleting = deleteMember.isPending;
   const isSaving = updateMember.isPending || isSavingBeforeNavigation;
+  const isSavingCareer =
+    replaceEmployment.isPending || updateCurrentCity.isPending;
+
+  const saveCareer = async () => {
+    setCareerMessage(null);
+    setCareerError(null);
+    const unconfirmed = careerHistory.find(
+      (employment) =>
+        employment.state === "unknown" || !employment.experienceType,
+    );
+    if (unconfirmed) {
+      setCareerError(
+        "Confirm whether each legacy entry is current or former before saving career history.",
+      );
+      return;
+    }
+
+    try {
+      await Promise.all([
+        replaceEmployment.mutateAsync(
+          careerHistory.map(
+            ({
+              cityLabel: _cityLabel,
+              companyLabel: _companyLabel,
+              ...employment
+            }) => {
+              const experienceType = employment.experienceType;
+              if (!experienceType) {
+                throw new Error("Choose an experience type.");
+              }
+              return {
+                ...employment,
+                experienceType,
+                state: employment.state as "current" | "past",
+                title: employment.title ?? "",
+              };
+            },
+          ),
+        ),
+        updateCurrentCity.mutateAsync({
+          currentCityKey,
+          guildLocationVisible,
+        }),
+      ]);
+      setCareerMessage("Career history saved.");
+      await apiUtils.career.listMyEmployment.invalidate();
+    } catch (error) {
+      setCareerError(
+        error instanceof Error
+          ? error.message
+          : "Career history could not be saved.",
+      );
+    }
+  };
 
   const handleDashboardNavigation = () => {
     if (isDeleting || isSaving) return false;
@@ -680,6 +779,75 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                 </Card>
               );
             })}
+
+            <Card className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20">
+              <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">
+                    <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg md:text-xl">
+                      Career and location
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-sm">
+                      Professional history and the explicit city used by Guild.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5 px-4 py-4 md:px-6">
+                <EmploymentHistoryEditor
+                  currentCityKey={currentCityKey}
+                  currentCityLabel={currentCityLabel}
+                  guildLocationVisible={guildLocationVisible}
+                  history={careerHistory}
+                  onCurrentCityChange={(city) => {
+                    setCurrentCityKey(city?.key ?? null);
+                    setCurrentCityLabel(city?.label ?? null);
+                    setCareerMessage(null);
+                  }}
+                  onGuildLocationVisibleChange={(visible) => {
+                    setGuildLocationVisible(visible);
+                    setCareerMessage(null);
+                  }}
+                  onHistoryChange={(history) => {
+                    setCareerHistory(history);
+                    setCareerMessage(null);
+                  }}
+                />
+                {careerError && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                    {careerError}
+                  </div>
+                )}
+                <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p
+                    className="text-sm text-muted-foreground"
+                    aria-live="polite"
+                  >
+                    {careerMessage ??
+                      "Career changes save independently from profile details."}
+                  </p>
+                  <Button
+                    type="button"
+                    className="min-h-11 gap-2"
+                    disabled={isSavingCareer}
+                    onClick={() => void saveCareer()}
+                  >
+                    {isSavingCareer ? (
+                      <Loader2
+                        className="size-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Save className="size-4" aria-hidden="true" />
+                    )}
+                    {isSavingCareer ? "Saving career" : "Save career"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {submitError && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
