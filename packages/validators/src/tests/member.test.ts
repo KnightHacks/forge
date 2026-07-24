@@ -41,6 +41,8 @@ const validResponse = {
   tagline: "Builder",
   about: "",
   guildProfileVisible: true,
+  guildResumeVisible: true,
+  guildOpportunityStatuses: [],
   codeOfConductAccepted: true,
 };
 
@@ -124,6 +126,7 @@ describe("member onboarding validation", () => {
 
     expect(fieldNames).toContain("firstName");
     expect(fieldNames).toContain("guildProfileVisible");
+    expect(fieldNames).toContain("guildResumeVisible");
     expect(fieldNames).toContain("profilePictureUrl");
     expect(fieldNames).toContain("resumeUrl");
 
@@ -147,6 +150,7 @@ describe("member onboarding validation", () => {
 
     expect(fieldNames).toContain("firstName");
     expect(fieldNames).toContain("guildProfileVisible");
+    expect(fieldNames).toContain("guildResumeVisible");
     expect(fieldNames).not.toContain("codeOfConductAccepted");
     expect(fieldNames).not.toContain("profilePictureUrl");
     expect(fieldNames).not.toContain("resumeUrl");

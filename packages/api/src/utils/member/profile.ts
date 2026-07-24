@@ -59,6 +59,8 @@ export async function createMemberProfile({
     gender: input.gender,
     raceOrEthnicity: input.raceOrEthnicity,
     guildProfileVisible: input.guildProfileVisible,
+    guildResumeVisible: input.guildResumeVisible,
+    guildOpportunityStatuses: input.guildOpportunityStatuses,
     tagline: input.tagline,
     about: input.about,
     profilePictureUrl: normalizeProfilePictureObjectNameForPersistence(

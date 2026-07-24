@@ -1,4 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+
+import { cn } from "@forge/ui";
 
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -6,11 +10,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://guild.knighthacks.org"),
-  title: "The Guild | Knight Hacks",
+  title: {
+    default: "Guild Collective | Knight Hacks",
+    template: "%s | Guild Collective",
+  },
   description:
     "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
   openGraph: {
-    title: "Knight Hacks",
+    title: "Guild Collective | Knight Hacks",
     description:
       "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
     url: "https://guild.knighthacks.org",
@@ -24,14 +31,24 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#030712",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`antialiased`}>
+    <html lang="en" className="dark">
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans text-foreground antialiased",
+          GeistSans.variable,
+          GeistMono.variable,
+        )}
+      >
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

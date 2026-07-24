@@ -1,0 +1,3 @@
+ALTER TABLE "knight_hacks_member" ADD COLUMN "guild_resume_visible" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_member" ADD COLUMN "guild_opportunity_statuses" text[] DEFAULT ARRAY[]::text[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_member" ADD CONSTRAINT "knight_hacks_member_valid_guild_opportunity_statuses" CHECK ("knight_hacks_member"."guild_opportunity_statuses" <@ ARRAY['internships', 'full-time', 'freelance-contract', 'project-collaboration', 'offering-mentorship', 'seeking-mentorship']::text[] AND cardinality("knight_hacks_member"."guild_opportunity_statuses") <= 3);

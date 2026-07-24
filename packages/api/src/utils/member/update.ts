@@ -54,6 +54,8 @@ function memberInputFromRow(member: SelectMember) {
     tagline: member.tagline,
     about: member.about,
     guildProfileVisible: member.guildProfileVisible,
+    guildResumeVisible: member.guildResumeVisible,
+    guildOpportunityStatuses: member.guildOpportunityStatuses,
   };
 }
 
@@ -97,6 +99,8 @@ export async function updateMemberProfile({
       gender: input.gender,
       raceOrEthnicity: input.raceOrEthnicity,
       guildProfileVisible: input.guildProfileVisible,
+      guildResumeVisible: input.guildResumeVisible,
+      guildOpportunityStatuses: input.guildOpportunityStatuses,
       tagline: input.tagline,
       about: input.about,
       shirtSize: input.shirtSize,

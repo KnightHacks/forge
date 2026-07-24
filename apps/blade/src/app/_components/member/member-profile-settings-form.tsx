@@ -19,6 +19,7 @@ import type {
   MemberSettingsFieldDefinition,
   MemberUpdateFormValues,
 } from "@forge/validators";
+import { GUILD } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import {
@@ -28,6 +29,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@forge/ui/card";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -145,6 +147,8 @@ export function memberProfileFormDefaults(
     tagline: member.tagline ?? "",
     about: member.about ?? "",
     guildProfileVisible: member.guildProfileVisible,
+    guildResumeVisible: member.guildResumeVisible,
+    guildOpportunityStatuses: member.guildOpportunityStatuses,
   };
 }
 
@@ -154,8 +158,10 @@ export function MemberSettingsFieldControl({
   value,
 }: {
   fieldConfig: MemberSettingsFieldDefinition;
-  onChange: (value: boolean | number | string) => void;
-  value: boolean | number | string | undefined;
+  onChange: (
+    value: MemberUpdateFormValues[keyof MemberUpdateFormValues],
+  ) => void;
+  value: MemberUpdateFormValues[keyof MemberUpdateFormValues];
 }) {
   const stringValue = typeof value === "string" ? value : "";
 
@@ -223,9 +229,7 @@ export function MemberSettingsFieldControl({
           </div>
           {fieldConfig.description && (
             <p className="text-sm leading-5 text-muted-foreground">
-              {isVisible
-                ? "Public profiles can be seen by other members on guild.knighthacks.org and by sponsors."
-                : fieldConfig.description}
+              {fieldConfig.description}
             </p>
           )}
         </div>
@@ -605,6 +609,72 @@ function MemberProfileSettingsEditor({ member }: { member: CurrentMember }) {
                           )}
                         />
                       ))}
+                      {section === "Guild" ? (
+                        <FormField
+                          control={form.control}
+                          name="guildOpportunityStatuses"
+                          render={({ field }) => {
+                            const selected = field.value ?? [];
+
+                            return (
+                              <FormItem className="md:col-span-2">
+                                <FormLabel>Opportunity status</FormLabel>
+                                <FormDescription>
+                                  Choose up to{" "}
+                                  {GUILD.GUILD_MAX_OPPORTUNITY_STATUSES}. These
+                                  public labels help members and recruiters find
+                                  the right people.
+                                </FormDescription>
+                                <FormControl>
+                                  <div className="grid gap-2 pt-1 sm:grid-cols-2">
+                                    {GUILD.GUILD_OPPORTUNITY_STATUS_OPTIONS.map(
+                                      (status) => {
+                                        const checked =
+                                          selected.includes(status);
+                                        const disabled =
+                                          !checked &&
+                                          selected.length >=
+                                            GUILD.GUILD_MAX_OPPORTUNITY_STATUSES;
+
+                                        return (
+                                          <label
+                                            key={status}
+                                            className="flex cursor-pointer items-start gap-3 rounded-md border border-white/10 bg-background/70 p-3 text-sm has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
+                                          >
+                                            <Checkbox
+                                              checked={checked}
+                                              disabled={disabled}
+                                              onCheckedChange={() =>
+                                                field.onChange(
+                                                  checked
+                                                    ? selected.filter(
+                                                        (candidate) =>
+                                                          candidate !== status,
+                                                      )
+                                                    : [...selected, status],
+                                                )
+                                              }
+                                            />
+                                            <span className="leading-5">
+                                              {
+                                                GUILD
+                                                  .GUILD_OPPORTUNITY_STATUS_LABELS[
+                                                  status
+                                                ]
+                                              }
+                                            </span>
+                                          </label>
+                                        );
+                                      },
+                                    )}
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ) : null}
                     </div>
                   </CardContent>
                 </Card>

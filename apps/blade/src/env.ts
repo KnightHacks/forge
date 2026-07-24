@@ -16,7 +16,6 @@ export const env = createEnv({
   server: {
     BLADE_E2E_AUTH: z.enum(["true", "false"]).optional(),
     BLADE_E2E_DEFAULT_USER_ID: z.string().uuid().optional(),
-    ISSUES_FEATURE_ENABLED: z.enum(["true", "false"]).default("false"),
     STRIPE_SECRET_WEBHOOK_KEY: z.string().min(1),
   },
   client: {

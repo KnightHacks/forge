@@ -13,6 +13,7 @@ import { memberSignupFormConfig } from "../../utils/member/onboarding";
 const mocks = vi.hoisted(() => ({
   db: {
     transaction: vi.fn(),
+    update: vi.fn(),
   },
   normalizeProfilePictureObjectNameForPersistence: vi.fn(),
   normalizeResumeObjectNameForPersistence: vi.fn(),
@@ -252,6 +253,67 @@ function createCaller() {
     source: "member-router-test",
   });
 }
+
+describe("member.updateGuildPreferences", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("updates only the authenticated member's Guild preference fields", async () => {
+    const returning = vi.fn().mockResolvedValue([
+      {
+        guildOpportunityStatuses: ["internships"],
+        guildProfileVisible: true,
+        guildResumeVisible: false,
+      },
+    ]);
+    const where = vi.fn(() => ({ returning }));
+    const set = vi.fn(() => ({ where }));
+    mocks.db.update.mockReturnValue({ set });
+
+    await expect(
+      createCaller().member.updateGuildPreferences({
+        guildOpportunityStatuses: ["internships"],
+        guildResumeVisible: false,
+      }),
+    ).resolves.toEqual({
+      guildOpportunityStatuses: ["internships"],
+      guildProfileVisible: true,
+      guildResumeVisible: false,
+    });
+
+    expect(set).toHaveBeenCalledWith({
+      guildOpportunityStatuses: ["internships"],
+      guildResumeVisible: false,
+    });
+    expect(where).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects invalid preference selections before writing", async () => {
+    await expect(
+      createCaller().member.updateGuildPreferences({
+        guildOpportunityStatuses: ["internships", "internships"],
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(mocks.db.update).not.toHaveBeenCalled();
+  });
+
+  it("does not reveal whether a member exists to an anonymous writer", async () => {
+    const anonymousCaller = callerFactory({
+      headers: new Headers(),
+      session: null,
+      source: "member-router-test",
+    });
+
+    await expect(
+      anonymousCaller.member.updateGuildPreferences({
+        guildResumeVisible: false,
+      }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(mocks.db.update).not.toHaveBeenCalled();
+  });
+});
 
 describe("member.updateMember", () => {
   beforeEach(() => {

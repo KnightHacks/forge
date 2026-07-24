@@ -1,54 +1,83 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import { Download, ExternalLink, Loader2 } from "lucide-react";
+
+import { Button } from "@forge/ui/button";
 
 import { api } from "~/trpc/react";
 
-interface Props {
-  memberId: string;
-}
-
-export function ResumeButton({ memberId }: Props) {
+export function ResumeActions({ memberId }: { memberId: string }) {
   const utils = api.useUtils();
-  const [isLoading, setIsLoading] = useState(false);
+  const [pending, setPending] = useState<"attachment" | "inline" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleClick = async () => {
+  const openResume = async (disposition: "attachment" | "inline") => {
+    const tab =
+      disposition === "inline" ? window.open("about:blank", "_blank") : null;
+    if (tab) tab.opener = null;
+
+    setPending(disposition);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      const { url } = await utils.guild.getGuildResume.fetch({ memberId });
-      if (!url) throw new Error("No resume URL from server");
-
-      const tab = window.open(url, "_blank", "noopener,noreferrer");
-      if (!tab) {
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+      const { url } = await utils.guild.getResumeUrl.fetch({
+        disposition,
+        memberId,
+      });
+      if (disposition === "inline" && tab) {
+        tab.location.replace(url);
+      } else {
+        window.location.assign(url);
       }
-    } catch (error) {
-      alert(
-        `Failed to download Resume. Please try again later: ${error as string}`,
+    } catch (resumeError) {
+      tab?.close();
+      setError(
+        resumeError instanceof Error
+          ? resumeError.message
+          : "The resume could not be opened.",
       );
     } finally {
-      setIsLoading(false);
+      setPending(null);
     }
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className="text-slate-500 transition hover:text-violet-400 disabled:opacity-50"
-      aria-label="View résumé"
-    >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <FileText size={20} />
-      )}
+    <div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          className="gap-2"
+          disabled={pending !== null}
+          onClick={() => openResume("inline")}
+        >
+          {pending === "inline" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          )}
+          Preview resume
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2"
+          disabled={pending !== null}
+          onClick={() => openResume("attachment")}
+        >
+          {pending === "attachment" ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Download className="h-4 w-4" aria-hidden="true" />
+          )}
+          Download
+        </Button>
+      </div>
+      {error ? (
+        <p className="mt-3 text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

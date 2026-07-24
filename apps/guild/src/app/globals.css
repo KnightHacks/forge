@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "../../../../packages/ui/src";
@@ -8,115 +6,324 @@
 
 @utility container {
   margin-inline: auto;
-  padding-inline: 2rem;
+  padding-inline: clamp(1rem, 3vw, 2rem);
   max-width: 1400px;
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --radius: 0.5rem;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 45% 8%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 45% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 24% 14%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 223 25% 20%;
+    --input: 223 25% 20%;
+    --ring: 263.4 70% 50.4%;
+    --radius: 0.5rem;
+    --guild-gold: 48 65% 57%;
+    --guild-blue: 217 91% 60%;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    color-scheme: dark;
+    background: hsl(var(--background));
+  }
+
+  body {
+    margin: 0;
+    background: hsl(var(--background));
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+a {
+  color: inherit;
 }
 
-input[type="checkbox"].custom-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+.guild-shell {
   position: relative;
-
-  background-color: #f4f4ed;
-  border: 1px solid #000000;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  filter: saturate(200%);
+  isolation: isolate;
+  min-height: 100svh;
+  background:
+    linear-gradient(
+      to right,
+      hsl(var(--muted-foreground) / 0.085) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      hsl(var(--muted-foreground) / 0.085) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 16% 4rem,
+      hsl(var(--primary) / 0.2),
+      transparent 31rem
+    ),
+    radial-gradient(
+      circle at 88% 12rem,
+      hsl(var(--guild-blue) / 0.115),
+      transparent 32rem
+    ),
+    hsl(var(--background));
+  background-attachment: fixed;
+  background-size:
+    14px 24px,
+    14px 24px,
+    auto,
+    auto,
+    auto;
 }
 
-input[type="checkbox"].custom-checkbox:checked {
-  background-color: #2563eb;
-  border-color: #2563eb;
+.guild-site-header {
+  background: hsl(var(--background) / 0.82);
+  box-shadow: 0 1px 0 hsl(var(--foreground) / 0.025);
 }
 
-input[type="checkbox"].custom-checkbox:checked::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-@media (min-width: 1024px) {
-  input[type="checkbox"].custom-checkbox:checked::after {
-    width: 6px;
-    height: 12px;
-    border-width: 0 3px 3px 0;
-    top: 3px;
-    left: 8px;
-  }
+.guild-title-accent {
+  color: hsl(var(--primary));
 }
 
-@keyframes flicker {
-  0%,
-  19%,
-  21%,
-  23%,
-  25%,
-  30%,
-  32%,
-  54%,
-  55%,
-  58%,
-  100% {
-    opacity: 1;
-  }
-  20%,
-  24%,
-  31%,
-  54.9%,
-  57% {
-    opacity: 0.6;
-  }
-}
-.flicker {
-  animation: flicker 10s infinite;
-}
-.glow {
-  color: #c084fc;
-  text-shadow:
-    0 0 2px #c084fc,
-    0 0 4px #c084fc,
-    0 0 7px #9333ea,
-    0 0 17px #9333ea,
-    0 0 25px #9333ea,
-    0 0 38px #9333ea,
-    0 0 46px #9333ea,
-    0 0 68px #9333ea;
+.guild-search-surface,
+.guild-profile-card {
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  background: hsl(var(--card) / 0.95);
+  box-shadow: 0 24px 64px hsl(0 0% 0% / 0.25);
 }
 
-/* abstract shape area 60% */
-.bg-contact-gradient {
-  background: linear-gradient(
-    to bottom,
-    rgba(15, 23, 42, 0) 0%,
-    rgba(15, 23, 42, 0.52) 30%,
-    rgba(107, 33, 168, 0.3) 47%,
-    rgba(61, 28, 105, 0.75) 60%,
-    rgba(15, 23, 42, 1) 72%,
-    rgba(15, 23, 42, 0) 100%
+.guild-search-surface {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.guild-search-surface:focus-within {
+  border-color: hsl(var(--primary) / 0.38);
+  box-shadow:
+    0 24px 64px hsl(0 0% 0% / 0.3),
+    0 0 0 1px hsl(var(--primary) / 0.08);
+}
+
+.guild-card {
+  background: hsl(var(--card) / 0.95);
+  box-shadow: 0 20px 48px hsl(0 0% 0% / 0.24);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+  will-change: transform;
+}
+
+.guild-card:hover {
+  border-color: hsl(var(--primary) / 0.36);
+  box-shadow:
+    0 26px 60px hsl(0 0% 0% / 0.34),
+    0 0 0 1px hsl(var(--primary) / 0.08);
+}
+
+.guild-card[data-team-member="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--role-accent, hsl(var(--guild-blue))) 32%,
+    hsl(var(--foreground) / 0.1)
   );
+  box-shadow:
+    inset 0 2px 0
+      color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 72%,
+        transparent
+      ),
+    0 20px 48px hsl(0 0% 0% / 0.24);
+}
+
+.guild-card[data-team-member="true"]:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--role-accent, hsl(var(--guild-blue))) 54%,
+    hsl(var(--foreground) / 0.12)
+  );
+  box-shadow:
+    inset 0 2px 0
+      color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 88%,
+        transparent
+      ),
+    0 26px 60px hsl(0 0% 0% / 0.34);
+}
+
+.guild-card[data-member-status="alumni"] {
+  border-color: hsl(var(--guild-gold) / 0.44);
+  box-shadow:
+    inset 0 2px 0 hsl(var(--guild-gold) / 0.72),
+    0 20px 48px hsl(0 0% 0% / 0.24);
+}
+
+.guild-card[data-member-status="alumni"]:hover {
+  border-color: hsl(var(--guild-gold) / 0.68);
+  box-shadow:
+    inset 0 2px 0 hsl(var(--guild-gold) / 0.88),
+    0 26px 60px hsl(0 0% 0% / 0.34);
+}
+
+.guild-card-image {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.guild-card:hover .guild-card-image {
+  box-shadow: 0 10px 24px hsl(0 0% 0% / 0.25);
+  transform: scale(1.015);
+}
+
+.guild-team-callout {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--role-accent, hsl(var(--guild-blue))) 54%,
+      hsl(var(--foreground) / 0.08)
+    );
+  background: linear-gradient(
+    90deg,
+    color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 22%,
+        hsl(var(--card))
+      )
+      0%,
+    color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 7%,
+        hsl(var(--background))
+      )
+      100%
+  );
+  box-shadow: inset 3px 0 0
+    color-mix(
+      in srgb,
+      var(--role-accent, hsl(var(--guild-blue))) 88%,
+      transparent
+    );
+}
+
+.guild-role-marker {
+  box-shadow:
+    0 0 0 3px
+      color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 15%,
+        transparent
+      ),
+    0 0 12px
+      color-mix(
+        in srgb,
+        var(--role-accent, hsl(var(--guild-blue))) 34%,
+        transparent
+      );
+}
+
+.guild-card-grad-meta {
+  color: hsl(var(--muted-foreground) / 0.8);
+}
+
+.guild-card-grad-meta-alumni {
+  color: hsl(var(--guild-gold));
+}
+
+.guild-card-tenure-meta {
+  color: hsl(var(--muted-foreground) / 0.72);
+}
+
+.guild-alumni-pill {
+  border: 1px solid hsl(var(--guild-gold) / 0.46);
+  color: hsl(var(--guild-gold));
+  background: linear-gradient(
+    90deg,
+    hsl(var(--guild-gold) / 0.16),
+    hsl(var(--guild-gold) / 0.07)
+  );
+  box-shadow: inset 3px 0 0 hsl(var(--guild-gold) / 0.82);
+}
+
+.guild-alumni-marker {
+  background: hsl(var(--guild-gold));
+  box-shadow:
+    0 0 0 3px hsl(var(--guild-gold) / 0.14),
+    0 0 12px hsl(var(--guild-gold) / 0.3);
+}
+
+.guild-card-action:focus-visible {
+  position: relative;
+  z-index: 20;
+}
+
+.guild-status-surface,
+.guild-profile-fact,
+.guild-profile-section {
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  background: hsl(var(--background) / 0.6);
+}
+
+.guild-team-status {
+  border-color: color-mix(
+    in srgb,
+    var(--role-accent, hsl(var(--primary))) 34%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--role-accent, hsl(var(--primary))) 8%,
+    hsl(var(--background) / 0.6)
+  );
+}
+
+.guild-alumni-badge {
+  border: 1px solid hsl(var(--guild-gold) / 0.34);
+  color: hsl(var(--guild-gold));
+  background: hsl(var(--guild-gold) / 0.11);
+}
+
+.guild-profile-fact,
+.guild-profile-section {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.guild-profile-fact:hover,
+.guild-profile-section:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  background: hsl(var(--primary) / 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guild-card,
+  .guild-card-image,
+  .guild-profile-fact,
+  .guild-profile-section,
+  .guild-search-surface {
+    transition: none;
+  }
+
+  .guild-card:hover .guild-card-image {
+    transform: none;
+  }
 }

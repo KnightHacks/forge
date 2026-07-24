@@ -30,7 +30,6 @@ export default defineConfig({
         command: [
           "BLADE_E2E_AUTH=true",
           "NEXT_PUBLIC_BLADE_E2E_AUTH=true",
-          "ISSUES_FEATURE_ENABLED=true",
           `BLADE_E2E_DEFAULT_USER_ID=${defaultE2EUserId}`,
           `NEXT_PUBLIC_BLADE_URL=${baseURL}`,
           `BLADE_URL=${baseURL}`,

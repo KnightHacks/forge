@@ -74,6 +74,8 @@ const member: CurrentMember = {
   githubProfileUrl: "https://github.com/knighthacks",
   gradDate: "2027-05-02",
   guildProfileVisible: true,
+  guildResumeVisible: true,
+  guildOpportunityStatuses: [],
   id: "member-id",
   lastName: "Member",
   levelOfStudy: "Undergraduate University (3+ year)",

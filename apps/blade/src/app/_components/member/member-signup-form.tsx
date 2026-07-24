@@ -178,6 +178,8 @@ function getDefaultValues(): MemberFormValues {
     tagline: "",
     about: "",
     guildProfileVisible: true,
+    guildResumeVisible: true,
+    guildOpportunityStatuses: [],
     codeOfConductAccepted: false,
   };
 }
@@ -188,8 +190,8 @@ function FieldControl({
   onChange,
 }: {
   fieldConfig: SignupField;
-  onChange: (value: boolean | number | string) => void;
-  value: boolean | number | string | undefined;
+  onChange: (value: MemberFormValues[keyof MemberFormValues]) => void;
+  value: MemberFormValues[keyof MemberFormValues];
 }) {
   const stringValue = typeof value === "string" ? value : "";
 
@@ -244,7 +246,9 @@ function FieldControl({
   }
 
   if (fieldConfig.kind === "boolean") {
-    const isGuildVisibility = fieldConfig.name === "guildProfileVisible";
+    const isGuildVisibility =
+      fieldConfig.name === "guildProfileVisible" ||
+      fieldConfig.name === "guildResumeVisible";
     const isVisible = Boolean(value);
 
     return (
@@ -260,9 +264,7 @@ function FieldControl({
           </div>
           {fieldConfig.description && (
             <p className="text-sm leading-5 text-muted-foreground">
-              {isGuildVisibility && isVisible
-                ? "Public profiles can be seen by other members on guild.knighthacks.org and by sponsors."
-                : fieldConfig.description}
+              {fieldConfig.description}
             </p>
           )}
         </div>

@@ -11,7 +11,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
-import { EVENTS, FORMS, ISSUE } from "@forge/consts";
+import { EVENTS, FORMS, GUILD, ISSUE } from "@forge/consts";
 
 import { Roles, User } from "./auth";
 
@@ -112,6 +112,12 @@ export const Member = createTable(
       .default("Prefer not to answer")
       .notNull(),
     guildProfileVisible: t.boolean().notNull().default(true),
+    guildResumeVisible: t.boolean().notNull().default(true),
+    guildOpportunityStatuses: t
+      .text({ enum: GUILD.GUILD_OPPORTUNITY_STATUS_OPTIONS })
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
     tagline: t.varchar("tagline", { length: 80 }),
     about: t.varchar("about", { length: 500 }),
     profilePictureUrl: t.varchar("profile_picture_url", { length: 512 }),
@@ -130,6 +136,10 @@ export const Member = createTable(
   (t) => ({
     uniqueEmail: unique().on(t.email),
     uniquePhoneNumber: unique().on(t.phoneNumber),
+    validGuildOpportunityStatuses: check(
+      "knight_hacks_member_valid_guild_opportunity_statuses",
+      sql`${t.guildOpportunityStatuses} <@ ARRAY['internships', 'full-time', 'freelance-contract', 'project-collaboration', 'offering-mentorship', 'seeking-mentorship']::text[] AND cardinality(${t.guildOpportunityStatuses}) <= 3`,
+    ),
   }),
 );
 

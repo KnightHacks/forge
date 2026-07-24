@@ -9,6 +9,7 @@ import {
   MEMBER_SIGNUP_FORM_ID,
   memberSchema,
   memberUpdateSchema,
+  updateGuildPreferencesSchema,
 } from "@forge/validators";
 
 import { protectedProcedure } from "../trpc";
@@ -47,6 +48,29 @@ export const memberRouter = {
         input,
         userId: ctx.session.user.id,
       });
+    }),
+
+  updateGuildPreferences: protectedProcedure
+    .input(updateGuildPreferencesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const [member] = await db
+        .update(Member)
+        .set(input)
+        .where(eq(Member.userId, ctx.session.user.id))
+        .returning({
+          guildOpportunityStatuses: Member.guildOpportunityStatuses,
+          guildProfileVisible: Member.guildProfileVisible,
+          guildResumeVisible: Member.guildResumeVisible,
+        });
+
+      if (!member) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Create a member profile before editing Guild preferences.",
+        });
+      }
+
+      return member;
     }),
 
   deleteMember: protectedProcedure.mutation(async ({ ctx }) => {

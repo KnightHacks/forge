@@ -55,6 +55,10 @@ vi.mock("~/app/_components/member/member-event-feedback", () => ({
     ),
 }));
 
+vi.mock("~/app/_components/member/guild-preferences-dialog", () => ({
+  GuildPreferencesDialog: () => "Guild preferences",
+}));
+
 const member: CurrentMember = {
   about:
     "My name is Dylan Vidal, and I am the Dev Lead of Knight Hacks. My messages are always open.",
@@ -69,6 +73,8 @@ const member: CurrentMember = {
   githubProfileUrl: "https://github.com/DVidal1205",
   gradDate: "2027-05-02",
   guildProfileVisible: true,
+  guildResumeVisible: true,
+  guildOpportunityStatuses: [],
   id: "member-id",
   lastName: "Vidal",
   levelOfStudy: "Undergraduate University (3+ year)",
@@ -205,7 +211,8 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Welcome, Dylan");
     expect(html).toContain("Dylan Vidal");
     expect(html).toContain("Nvidia");
-    expect(html).toContain("Members + sponsors");
+    expect(html).toContain("Public on Guild");
+    expect(html).toContain("Guild preferences");
     expect(html).toContain("GitHub");
     expect(html).toContain("LinkedIn");
     expect(html).toContain("Portfolio");
@@ -244,7 +251,7 @@ describe("MemberDashboard", () => {
     expect(html).toContain("My name is Dylan Vidal");
   });
 
-  it("renders private Guild visibility with sponsor-only dashboard copy", () => {
+  it("renders a hidden Guild profile without implying private sponsor access", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {
         duesStatus: paidDuesStatus,
@@ -255,8 +262,8 @@ describe("MemberDashboard", () => {
     );
 
     expect(html).toContain("Private");
-    expect(html).toContain("Sponsors only");
-    expect(html).not.toContain("Members + sponsors");
+    expect(html).toContain("Hidden from Guild");
+    expect(html).not.toContain("Sponsors only");
   });
 
   it("keeps the dashboard usable when event information is unavailable", () => {

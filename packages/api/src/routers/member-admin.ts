@@ -68,7 +68,9 @@ export interface AdminMemberRecord {
   gender: string;
   githubProfileUrl: string | null;
   gradDate: string;
+  guildOpportunityStatuses: SelectMember["guildOpportunityStatuses"];
   guildProfileVisible: boolean;
+  guildResumeVisible: boolean;
   id: string;
   lastName: string;
   levelOfStudy: string;

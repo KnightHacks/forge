@@ -3,6 +3,7 @@ import { authRouter } from "./routers/auth";
 import { duesRouter } from "./routers/dues";
 import { eventRouter } from "./routers/event";
 import { formsRouter } from "./routers/forms";
+import { guildRouter } from "./routers/guild";
 import { issuesRouter } from "./routers/issues";
 import { memberRouter } from "./routers/member";
 import { profilePictureRouter } from "./routers/profile-picture";
@@ -22,6 +23,7 @@ export interface AppRouterShape {
   dues: typeof duesRouter;
   event: typeof eventRouter;
   forms: typeof formsRouter;
+  guild: typeof guildRouter;
   health: typeof healthProcedure;
   issues: typeof issuesRouter;
   member: typeof memberRouter;
@@ -41,6 +43,7 @@ const appRouterRecord: AppRouterRecord = {
   dues: duesRouter,
   event: eventRouter,
   forms: formsRouter,
+  guild: guildRouter,
   health: healthProcedure,
   issues: issuesRouter,
   member: memberRouter,

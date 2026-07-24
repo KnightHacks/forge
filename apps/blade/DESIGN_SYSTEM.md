@@ -358,6 +358,47 @@ Prefer `flex` / `grid` plus `gap` for sibling groups so spacing survives reorder
 - Successful modal submissions close the overlay, toast the outcome, and
   invalidate the source data so the completed state appears immediately.
 
+#### Guild Public Surfaces
+
+- Guild is the public, editorial counterpart to Blade member settings. Reuse
+  Blade tokens, typography, controls, border hierarchy, and focus behavior so
+  both products feel related without turning Guild into an admin dashboard.
+- Directory cards stay compact and link to semantic profile pages. Do not use
+  card-detail dialogs, numbered pagination, decorative ambient motion, or
+  staggered entrance animation.
+- Keep the directory masthead shallow enough that member results remain visible
+  at laptop height. Search is primary; bounded filters belong in a dialog.
+- Use the same dark card, inset surface, purple accent, and shadow hierarchy as
+  the Blade member dashboard. Carry Blade's fine, low-contrast grid and
+  restrained purple/blue canvas depth across the public Guild shell, but avoid
+  floating pills, orbiting graphics, and glass-sheen effects.
+- Public-facing motion belongs on page entrance and direct interaction. Prefer
+  short opacity/transform transitions through Framer Motion, keep hover travel
+  subtle, and honor the user's reduced-motion preference. A restrained,
+  time-capped stagger is appropriate for a large directory grid so the entrance
+  reads as one coordinated sequence rather than unrelated card animations.
+- Use a member's configured role color as a restrained callout accent, never as
+  the card background or the sole carrier of meaning.
+- Keep profile photos and names aligned across directory cards. Team identity
+  belongs in a larger fixed-height band that contains only the role; organizer
+  callouts should not shift the identity row. Graduation year belongs directly
+  above the affiliation slot in a fixed metadata row, independent of whether
+  the clamped tagline uses one or two lines; use reserved gold for alumni.
+  Public join tenure sits beside it as subdued `Since YYYY` history metadata
+  backed by the legacy member-created date. Do not render an empty role band for
+  non-team profiles. Keep the card and footer heights stable while allowing
+  academic content to move up into that space.
+- Preserve identity inside that standardized geometry: configured role color
+  appears across the team band's restrained surface, edge, and marker while
+  alumni uses the reserved gold treatment on both the card edge and a dedicated
+  full-width status band in the affiliation slot. If an alumni profile also has
+  a role, the role and alumni treatments share the row and remain separate.
+- Public profiles use a readable editorial column with clear sections for
+  identity, biography, academic/work context, opportunities, links, and resume
+  actions. Avoid a SaaS settings rail.
+- At 320px, cards, dialogs, profile metadata, and link rows must wrap without
+  document-level horizontal overflow.
+
 For profile/dashboard layouts:
 
 - Top-align primary panel content unless the panel is intentionally centered around one object.

@@ -12,20 +12,14 @@ function permissions(
   return values as EffectivePermissions;
 }
 
-describe("Issues rollout gate", () => {
-  it("TC-MIG-004 keeps the route unavailable while rollout is disabled", () => {
-    expect(canAccessIssues(permissions({ IS_OFFICER: true }), false)).toBe(
-      false,
-    );
-    expect(canAccessIssues(permissions({ EDIT_ISSUES: true }), false)).toBe(
-      false,
-    );
+describe("Issues permission gate", () => {
+  it("allows officers and explicitly authorized members without a rollout flag", () => {
+    expect(canAccessIssues(permissions({ IS_OFFICER: true }))).toBe(true);
+    expect(canAccessIssues(permissions({ EDIT_ISSUES: true }))).toBe(true);
+    expect(canAccessIssues(permissions({ READ_ISSUES: true }))).toBe(true);
   });
 
-  it("allows authorized members only after rollout is enabled", () => {
-    expect(canAccessIssues(permissions({ READ_ISSUES: true }), true)).toBe(
-      true,
-    );
-    expect(canAccessIssues(permissions({}), true)).toBe(false);
+  it("rejects members without an Issues permission", () => {
+    expect(canAccessIssues(permissions({}))).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ import {
   requiredOption,
   requiredText,
 } from "./forms";
+import { guildOpportunityStatusesSchema } from "./guild";
 
 export const MEMBER_SIGNUP_FORM_ID = "f0000000-0000-4000-8000-000000000001";
 export const MEMBER_SIGNUP_CONNECTION_ID =
@@ -112,6 +113,8 @@ export const memberProfileFormSchema = z.object({
   tagline: optionalText("Tagline", 80),
   about: optionalText("About", 500),
   guildProfileVisible: z.boolean().default(true),
+  guildResumeVisible: z.boolean().default(true),
+  guildOpportunityStatuses: guildOpportunityStatusesSchema.default([]),
 });
 
 export const memberFormSchema = memberProfileFormSchema.extend({
@@ -143,6 +146,8 @@ function toMemberInput(input: z.output<typeof memberProfileFormSchema>) {
     tagline: emptyToNull(input.tagline),
     about: emptyToNull(input.about),
     guildProfileVisible: input.guildProfileVisible,
+    guildResumeVisible: input.guildResumeVisible,
+    guildOpportunityStatuses: input.guildOpportunityStatuses,
   };
 }
 
@@ -189,6 +194,7 @@ export function memberResponseDataFromInput(
     tagline: input.tagline ?? "",
     about: input.about ?? "",
     guildProfileVisible: input.guildProfileVisible,
+    guildResumeVisible: input.guildResumeVisible,
     codeOfConductAccepted: options.codeOfConductAccepted,
   } satisfies MemberFormValues;
 }
@@ -201,7 +207,7 @@ export interface GuildProfileLinks {
 
 // Guild profile is still persisted on Member in the legacy schema. Keeping this
 // as a distinct type gives Guild room to become its own model later.
-export interface GuildProfile extends Pick<
+export interface EditableGuildProfile extends Pick<
   MemberInput,
   "about" | "company" | "guildProfileVisible" | "profilePictureUrl" | "tagline"
 > {
@@ -362,11 +368,19 @@ export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
   },
   {
     name: "guildProfileVisible",
-    label: "Guild profile visibility",
+    label: "Show my profile on Guild",
     kind: "boolean",
     section: "Guild",
     description:
-      "Private profiles are still visible to sponsors. Public profiles are also visible to other members on guild.knighthacks.org.",
+      "Guild is public. Turn this off to remove your profile from the public directory and profile pages.",
+  },
+  {
+    name: "guildResumeVisible",
+    label: "Make my resume public on Guild",
+    kind: "boolean",
+    section: "Guild",
+    description:
+      "Anyone can preview or download your uploaded resume from your public Guild profile. You can turn this off any time.",
   },
   {
     name: "profilePictureUrl",

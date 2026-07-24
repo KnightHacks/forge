@@ -32,6 +32,7 @@ import type {
   MemberEventItem,
 } from "~/app/_components/member/member-events-dashboard";
 import type { CurrentMember } from "~/hooks/use-member";
+import { GuildPreferencesDialog } from "~/app/_components/member/guild-preferences-dialog";
 import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
@@ -474,10 +475,12 @@ function GuildProfileCard({
               Visibility
             </div>
             <p className="text-sm font-medium">
-              {isPublic ? "Members + sponsors" : "Sponsors only"}
+              {isPublic ? "Public on Guild" : "Hidden from Guild"}
             </p>
           </div>
         </DashboardContent>
+
+        <GuildPreferencesDialog member={member} />
 
         <DashboardContent className="space-y-2">
           <p className="text-xs uppercase text-muted-foreground">Links</p>

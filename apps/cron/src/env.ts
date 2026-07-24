@@ -9,7 +9,6 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: z.string(),
     DISCORD_WEBHOOK_REMINDERS_PRE: z.string(),
     DISCORD_WEBHOOK_REMINDERS_HACK: z.string(),
-    ISSUES_FEATURE_ENABLED: z.enum(["true", "false"]).default("false"),
     BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
@@ -19,7 +18,6 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS: process.env.DISCORD_WEBHOOK_REMINDERS,
     DISCORD_WEBHOOK_REMINDERS_PRE: process.env.DISCORD_WEBHOOK_REMINDERS_PRE,
     DISCORD_WEBHOOK_REMINDERS_HACK: process.env.DISCORD_WEBHOOK_REMINDERS_HACK,
-    ISSUES_FEATURE_ENABLED: process.env.ISSUES_FEATURE_ENABLED,
     BLADE_URL: process.env.BLADE_URL,
   },
   skipValidation:
