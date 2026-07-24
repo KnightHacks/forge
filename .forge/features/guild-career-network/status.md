@@ -35,6 +35,9 @@ Current phase: Complete — live review
   Globe page. All three use the same compact page-intro rhythm.
 - 2026-07-24: The Globe renders truthfully with zero markers when nobody has
   shared a city; no synthetic member data ships.
+- 2026-07-24: Employment editor cards use immutable client-only draft IDs so
+  editing company, title, date, or location fields never remounts the card or
+  drops keyboard focus.
 
 ## Open questions
 
@@ -77,6 +80,8 @@ Current phase: Complete — live review
   navigation, People header/search placement, company search and dynamic
   re-staggering, best-effort logos, the empty Three.js globe, horizontal
   overflow, and browser console/page errors.
+- Employment draft identity regression coverage, Blade typecheck, Blade lint,
+  and all 141 Blade tests pass after the focus-retention fix.
 
 ## Links
 

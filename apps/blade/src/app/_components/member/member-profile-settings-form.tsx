@@ -426,6 +426,7 @@ function MemberProfileSettingsEditor({
       cityLabel: employment.city?.label ?? null,
       companyId: employment.company.id,
       companyLabel: employment.company.displayName,
+      draftId: employment.id,
       endMonth: employment.endMonth,
       experienceType: employment.experienceType,
       guildVisible: employment.guildVisible,
@@ -509,6 +510,7 @@ function MemberProfileSettingsEditor({
             ({
               cityLabel: _cityLabel,
               companyLabel: _companyLabel,
+              draftId: _draftId,
               ...employment
             }) => {
               const experienceType = employment.experienceType;

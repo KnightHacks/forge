@@ -36,6 +36,7 @@ export interface CareerHistoryDraft extends Omit<
 > {
   cityLabel: string | null;
   companyLabel: string;
+  draftId: string;
   experienceType: EmploymentInput["experienceType"] | null;
   state: EmploymentInput["state"] | "unknown";
   title: string | null;
@@ -56,6 +57,7 @@ const blankExperience = (): CareerHistoryDraft => ({
   cityLabel: null,
   companyId: null,
   companyLabel: "",
+  draftId: crypto.randomUUID(),
   endMonth: null,
   experienceType: "full_time",
   guildVisible: true,
@@ -332,7 +334,8 @@ export function EmploymentHistoryEditor({
         <div className="space-y-3">
           {history.map((entry, index) => (
             <section
-              key={`${entry.companyId ?? entry.proposedCompanyName ?? "new"}-${index}`}
+              key={entry.draftId}
+              data-career-draft-id={entry.draftId}
               className="rounded-md border border-white/10 bg-background/60 p-4"
               aria-label={`Employment experience ${index + 1}`}
             >

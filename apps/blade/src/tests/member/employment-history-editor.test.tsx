@@ -21,6 +21,7 @@ const history = [
     cityLabel: "Orlando, FL",
     companyId: "00000000-0000-4000-8000-000000000001",
     companyLabel: "Knight Hacks",
+    draftId: "employment-draft-one",
     endMonth: null,
     experienceType: "full_time" as const,
     guildVisible: true,
@@ -34,6 +35,7 @@ const history = [
     cityLabel: null,
     companyId: "00000000-0000-4000-8000-000000000002",
     companyLabel: "AMD",
+    draftId: "employment-draft-two",
     endMonth: null,
     experienceType: null,
     guildVisible: true,
@@ -69,5 +71,6 @@ describe("EmploymentHistoryEditor", () => {
     expect(html).toContain('type="month"');
     expect(html).toContain("Move experience up");
     expect(html).toContain("Remove experience");
+    expect(html).toContain('data-career-draft-id="employment-draft-one"');
   });
 });

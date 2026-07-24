@@ -582,6 +582,7 @@ export function MemberSignupForm({
                                   ({
                                     cityLabel: _cityLabel,
                                     companyLabel: _companyLabel,
+                                    draftId: _draftId,
                                     ...employment
                                   }) => ({
                                     ...employment,
