@@ -79,6 +79,7 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
                   <CompanyMark
                     displayName={company.displayName}
                     domain={company.domain}
+                    imageUrl={company.logoUrl}
                   />
                   <ArrowUpRight
                     className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"

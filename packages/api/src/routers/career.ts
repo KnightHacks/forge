@@ -21,12 +21,18 @@ import {
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
+import {
+  getCompanyImageUrl,
+  removeCompanyImage,
+  uploadCompanyImage as uploadCompanyImageObject,
+} from "../utils/career/company-image";
 import { replaceEmploymentHistory } from "../utils/career/employment";
 import {
   getUsCity,
   hasUsCity,
   searchUsCities,
 } from "../utils/career/us-cities";
+import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 
 const readMemberPermissions = ["READ_MEMBERS", "EDIT_MEMBERS"] as const;
 const editMemberPermissions = ["EDIT_MEMBERS"] as const;
@@ -277,7 +283,7 @@ export const careerRouter = {
 
   listAdminCompanies: permProcedure.query(async ({ ctx }) => {
     assertCanReadMembers(ctx);
-    return await db
+    const companies = await db
       .select({
         aliases: Company.aliases,
         cities: sql<
@@ -292,6 +298,7 @@ export const careerRouter = {
         formerMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'past')::int`,
         id: Company.id,
         legalName: Company.legalName,
+        logoObjectName: Company.logoObjectName,
         reviewState: Company.reviewState,
         unconfirmedMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'unknown')::int`,
         updatedAt: Company.updatedAt,
@@ -305,6 +312,13 @@ export const careerRouter = {
         ),
         asc(Company.displayName),
       );
+
+    return await Promise.all(
+      companies.map(async (company) => ({
+        ...company,
+        logoUrl: await getCompanyImageUrl(company.id, company.logoObjectName),
+      })),
+    );
   }),
 
   getAdminCompany: permProcedure
@@ -347,7 +361,10 @@ export const careerRouter = {
         );
 
       return {
-        company,
+        company: {
+          ...company,
+          logoUrl: await getCompanyImageUrl(company.id, company.logoObjectName),
+        },
         employment: employment.map((row) => ({
           ...row,
           city: row.cityKey ? getUsCity(row.cityKey) : null,
@@ -389,6 +406,80 @@ export const careerRouter = {
         });
       }
       return company;
+    }),
+
+  uploadCompanyImage: permProcedure
+    .input(
+      z
+        .object({
+          companyId: z.string().uuid(),
+          fileContent: z.string().max(MAX_PROFILE_PICTURE_DATA_URL_LENGTH),
+        })
+        .strict(),
+    )
+    .mutation(async ({ ctx, input }) => {
+      assertCanEditMembers(ctx);
+      const company = await db.query.Company.findFirst({
+        where: eq(Company.id, input.companyId),
+        columns: { id: true, logoObjectName: true },
+      });
+      if (!company) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Company not found.",
+        });
+      }
+
+      const objectName = await uploadCompanyImageObject({
+        companyId: company.id,
+        fileContent: input.fileContent,
+      });
+      try {
+        const [updatedCompany] = await db
+          .update(Company)
+          .set({ logoObjectName: objectName, updatedAt: new Date() })
+          .where(eq(Company.id, company.id))
+          .returning({ id: Company.id });
+        if (!updatedCompany) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Company not found.",
+          });
+        }
+      } catch (error) {
+        await removeCompanyImage(company.id, objectName);
+        throw error;
+      }
+
+      await removeCompanyImage(company.id, company.logoObjectName);
+      return {
+        logoObjectName: objectName,
+        logoUrl: await getCompanyImageUrl(company.id, objectName),
+      };
+    }),
+
+  removeCompanyImage: permProcedure
+    .input(companyIdInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanEditMembers(ctx);
+      const company = await db.query.Company.findFirst({
+        where: eq(Company.id, input.companyId),
+        columns: { id: true, logoObjectName: true },
+      });
+      if (!company) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Company not found.",
+        });
+      }
+
+      await db
+        .update(Company)
+        .set({ logoObjectName: null, updatedAt: new Date() })
+        .where(eq(Company.id, input.companyId));
+
+      await removeCompanyImage(company.id, company.logoObjectName);
+      return { logoObjectName: null, logoUrl: null };
     }),
 
   approveCompany: permProcedure

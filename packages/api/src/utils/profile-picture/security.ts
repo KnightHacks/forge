@@ -20,7 +20,11 @@ const extensionByContentType = {
   "image/webp": "webp",
 } as const;
 
-function assertImageMagic(fileBuffer: Buffer, contentType: string) {
+function assertImageMagic(
+  fileBuffer: Buffer,
+  contentType: string,
+  subject: string,
+) {
   const hasJpegMagic =
     fileBuffer.length >= 3 &&
     fileBuffer[0] === 0xff &&
@@ -45,7 +49,7 @@ function assertImageMagic(fileBuffer: Buffer, contentType: string) {
 
   throw new TRPCError({
     code: "BAD_REQUEST",
-    message: "Profile picture must be a valid image.",
+    message: `${subject} must be a valid image.`,
   });
 }
 
@@ -130,11 +134,14 @@ export function isServerGeneratedProfilePictureObjectName(
   return SERVER_GENERATED_PROFILE_PICTURE_FILE_NAME.test(fileName);
 }
 
-export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
+export function decodeAndValidateImageDataUrl(
+  fileContent: string,
+  subject: string,
+) {
   if (fileContent.length > MAX_PROFILE_PICTURE_DATA_URL_LENGTH) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Profile picture must be 2MB or smaller.",
+      message: `${subject} must be 2MB or smaller.`,
     });
   }
 
@@ -146,7 +153,7 @@ export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
   if (!contentType || !(contentType in extensionByContentType)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Profile picture must be a JPEG, PNG, GIF, or WebP image.",
+      message: `${subject} must be a JPEG, PNG, GIF, or WebP image.`,
     });
   }
 
@@ -158,7 +165,7 @@ export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
   ) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Profile picture data is missing or invalid.",
+      message: `${subject} data is missing or invalid.`,
     });
   }
 
@@ -169,11 +176,15 @@ export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
   ) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Profile picture must be 2MB or smaller.",
+      message: `${subject} must be 2MB or smaller.`,
     });
   }
 
-  assertImageMagic(fileBuffer, contentType);
+  assertImageMagic(fileBuffer, contentType, subject);
 
   return { contentType, fileBuffer };
+}
+
+export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
+  return decodeAndValidateImageDataUrl(fileContent, "Profile picture");
 }

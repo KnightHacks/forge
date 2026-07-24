@@ -110,6 +110,7 @@ export const Company = createTable(
     normalizedDisplayName: t.varchar({ length: 120 }).notNull(),
     legalName: t.varchar({ length: 120 }),
     domain: t.varchar({ length: 253 }),
+    logoObjectName: t.varchar({ length: 255 }),
     aliases: t
       .text()
       .array()

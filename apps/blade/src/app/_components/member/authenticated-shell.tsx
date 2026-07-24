@@ -13,6 +13,7 @@ import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-nav
 
 type NavigationItem =
   | "analytics"
+  | "companies"
   | "dashboard"
   | "eventCheckIn"
   | "events"
@@ -37,17 +38,19 @@ export function AuthenticatedShell({
     sectionLabel ??
     (activeNavigation === "analytics"
       ? "Club analytics"
-      : activeNavigation === "members"
-        ? "Member admin"
-        : activeNavigation === "eventCheckIn"
-          ? "Event check-in"
-          : activeNavigation === "events"
-            ? "Event admin"
-            : activeNavigation === "forms"
-              ? "Form admin"
-              : activeNavigation === "roles"
-                ? "Role admin"
-                : "Member dashboard");
+      : activeNavigation === "companies"
+        ? "Company admin"
+        : activeNavigation === "members"
+          ? "Member admin"
+          : activeNavigation === "eventCheckIn"
+            ? "Event check-in"
+            : activeNavigation === "events"
+              ? "Event admin"
+              : activeNavigation === "forms"
+                ? "Form admin"
+                : activeNavigation === "roles"
+                  ? "Role admin"
+                  : "Member dashboard");
   const hasAdminNavigation =
     adminNavigation?.analytics === true ||
     adminNavigation?.eventCheckIn === true ||

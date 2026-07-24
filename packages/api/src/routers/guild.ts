@@ -18,6 +18,7 @@ import {
 
 import type { GuildRoleCallout } from "../utils/guild/role-callout";
 import { publicProcedure } from "../trpc";
+import { getCompanyImageUrl } from "../utils/career/company-image";
 import { getUsCity } from "../utils/career/us-cities";
 import {
   normalizePublicGuildText,
@@ -399,13 +400,14 @@ async function getCurrentCompanyNames(memberIds: readonly string[]) {
 
 export const guildRouter = {
   listPublicCompanies: publicProcedure.query(async () => {
-    return await db
+    const companies = await db
       .select({
         currentMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'current')::int`,
         displayName: Company.displayName,
         domain: Company.domain,
         formerMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'past')::int`,
         id: Company.id,
+        logoObjectName: Company.logoObjectName,
         unconfirmedMembers: sql<number>`count(DISTINCT ${Employment.memberId}) FILTER (WHERE ${Employment.state} = 'unknown')::int`,
       })
       .from(Company)
@@ -423,6 +425,13 @@ export const guildRouter = {
         desc(sql`count(DISTINCT ${Employment.memberId})`),
         asc(Company.displayName),
       );
+
+    return await Promise.all(
+      companies.map(async ({ logoObjectName, ...company }) => ({
+        ...company,
+        logoUrl: await getCompanyImageUrl(company.id, logoObjectName),
+      })),
+    );
   }),
 
   getPublicCompany: publicProcedure
@@ -438,6 +447,7 @@ export const guildRouter = {
           domain: true,
           id: true,
           legalName: true,
+          logoObjectName: true,
         },
       });
       if (!company) {
@@ -496,7 +506,14 @@ export const guildRouter = {
           title: row.title,
         })),
       );
-      return { company, relationships };
+      const { logoObjectName, ...publicCompany } = company;
+      return {
+        company: {
+          ...publicCompany,
+          logoUrl: await getCompanyImageUrl(company.id, logoObjectName),
+        },
+        relationships,
+      };
     }),
 
   getPublicGlobeLocations: publicProcedure.query(async () => {

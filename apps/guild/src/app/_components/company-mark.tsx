@@ -35,17 +35,19 @@ export function CompanyMark({
   className,
   displayName,
   domain,
+  imageUrl,
   large = false,
 }: {
   className?: string;
   displayName: string;
   domain: string | null;
+  imageUrl: string | null;
   large?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const logoUrl = useMemo(
-    () => companyLogoUrl(displayName, domain),
-    [displayName, domain],
+    () => imageUrl ?? companyLogoUrl(displayName, domain),
+    [displayName, domain, imageUrl],
   );
   const initials = displayName
     .split(/\s+/)
@@ -73,8 +75,8 @@ export function CompanyMark({
           src={logoUrl}
           alt=""
           className={cn(
-            "max-h-[62%] max-w-[68%] object-contain",
-            large && "max-h-[64%] max-w-[72%]",
+            "max-h-[72%] max-w-[76%] object-contain",
+            large && "max-h-[76%] max-w-[80%]",
           )}
           onError={() => setFailed(true)}
         />

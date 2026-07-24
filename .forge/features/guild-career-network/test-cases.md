@@ -8,8 +8,8 @@ These cases cover company identity and review, complete employment history,
 current U.S. city selection, admin relationship intelligence, public company
 discovery, the current-city globe, permissions, privacy, and legacy migration.
 
-International cities, addresses, company logos, external enrichment, sponsor
-CRM behavior, and Discord behavior are excluded.
+International cities, addresses, automatic image enrichment, sponsor CRM
+behavior, and Discord behavior are excluded.
 
 ## Test placement plan
 
@@ -273,6 +273,24 @@ Expected observations:
 - No title, type, dates, state, or city are invented.
 - Re-running validation does not create duplicates.
 
+### TC-015: Officer manages a company image
+
+Setup:
+
+- An authorized officer opens a canonical company record.
+
+Action:
+
+- The officer uploads a valid image, replaces it, and then removes it.
+
+Expected observations:
+
+- Blade previews the current image without exposing an object-storage key.
+- Public Guild company cards and detail prefer the officer-managed image.
+- Replacing or removing the image cleans up the superseded object.
+- Invalid formats and files larger than 2MB are rejected without changing the
+  saved image.
+
 ## Negative / regression cases
 
 ### TC-NEG-001: Invalid employment dates are rejected
@@ -330,7 +348,7 @@ Setup:
 
 Action:
 
-- They invoke approve, reject, edit, or merge.
+- They invoke approve, reject, edit, merge, image upload, or image removal.
 
 Expected observations:
 

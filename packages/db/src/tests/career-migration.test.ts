@@ -5,6 +5,10 @@ const migration = new URL(
   "../../drizzle/0018_guild_career_network.sql",
   import.meta.url,
 );
+const companyImageMigration = new URL(
+  "../../drizzle/0019_panoramic_silk_fever.sql",
+  import.meta.url,
+);
 
 describe("Guild Career Network migration contract", () => {
   it("TC-014 preserves legacy company values as approved unconfirmed employment", async () => {
@@ -38,5 +42,14 @@ describe("Guild Career Network migration contract", () => {
 
     expect(sql).toContain("knight_hacks_employment_current_has_no_end");
     expect(sql).toContain("knight_hacks_employment_date_order");
+  });
+
+  it("adds optional company image storage without changing existing companies", async () => {
+    const sql = await readFile(companyImageMigration, "utf8");
+
+    expect(sql).toContain(
+      `ALTER TABLE "knight_hacks_company" ADD COLUMN "logo_object_name" varchar(255)`,
+    );
+    expect(sql).not.toContain("NOT NULL");
   });
 });

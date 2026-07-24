@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_company" ADD COLUMN "logo_object_name" varchar(255);

@@ -54,7 +54,7 @@ describe("Guild globe fallback", () => {
     expect(html).toContain(
       'href="/members/00000000-0000-4000-8000-000000000456?from=/globe"',
     );
-    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain("Current location");
     expect(html).toContain("Plotting the Guild");
   });
 
@@ -64,7 +64,6 @@ describe("Guild globe fallback", () => {
     );
 
     expect(html).toContain("Plotting the Guild");
-    expect(html).toContain("Across the country");
-    expect(html).toContain("The first city will appear here.");
+    expect(html).not.toContain("<aside");
   });
 });

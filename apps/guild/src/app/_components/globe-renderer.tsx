@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { mesh } from "topojson-client";
+import worldTopologySource from "world-atlas/countries-110m.json";
 
 import type { GlobeCluster } from "./guild-globe";
 
@@ -12,6 +14,39 @@ function globePosition(latitude: number, longitude: number, radius: number) {
     -(radius * Math.sin(phi) * Math.cos(theta)),
     radius * Math.cos(phi),
     radius * Math.sin(phi) * Math.sin(theta),
+  );
+}
+
+type WorldTopology = Parameters<typeof mesh>[0];
+type WorldGeometry = NonNullable<Parameters<typeof mesh>[1]>;
+
+const worldTopology = worldTopologySource as unknown as WorldTopology;
+const countryGeometry = worldTopology.objects.countries as WorldGeometry;
+const landGeometry = worldTopology.objects.land as WorldGeometry;
+const coastlines = mesh(worldTopology, landGeometry).coordinates;
+const countryBoundaries = mesh(
+  worldTopology,
+  countryGeometry,
+  (left, right) => left !== right,
+).coordinates;
+
+function latitudeLine(latitude: number, radius: number) {
+  return Array.from({ length: 121 }, (_, index) =>
+    globePosition(latitude, -180 + index * 3, radius),
+  );
+}
+
+function longitudeLine(longitude: number, radius: number) {
+  return Array.from({ length: 81 }, (_, index) =>
+    globePosition(-80 + index * 2, longitude, radius),
+  );
+}
+
+function geographicLine(coordinates: number[][], radius: number) {
+  return coordinates.flatMap(([longitude, latitude]) =>
+    longitude === undefined || latitude === undefined
+      ? []
+      : [globePosition(latitude, longitude, radius)],
   );
 }
 
@@ -63,33 +98,105 @@ export default function GlobeRenderer({
     root.rotation.y = -0.45;
     scene.add(root);
 
+    const globe = new THREE.Mesh(
+      trackGeometry(new THREE.SphereGeometry(2, 72, 72)),
+      trackMaterial(
+        new THREE.MeshPhongMaterial({
+          color: 0x10182b,
+          emissive: 0x070b18,
+          opacity: 0.98,
+          shininess: 24,
+          transparent: true,
+        }),
+      ),
+    );
+    root.add(globe);
+
     root.add(
       new THREE.Mesh(
-        trackGeometry(new THREE.SphereGeometry(2, 64, 64)),
+        trackGeometry(new THREE.SphereGeometry(2.075, 64, 64)),
         trackMaterial(
-          new THREE.MeshPhongMaterial({
-            color: 0x10172c,
-            emissive: 0x080d1d,
-            opacity: 0.92,
-            shininess: 28,
+          new THREE.MeshBasicMaterial({
+            blending: THREE.AdditiveBlending,
+            color: 0x6f55d9,
+            opacity: 0.08,
+            side: THREE.BackSide,
             transparent: true,
           }),
         ),
       ),
     );
-    const gridSource = trackGeometry(new THREE.SphereGeometry(2.012, 28, 18));
-    root.add(
-      new THREE.LineSegments(
-        trackGeometry(new THREE.WireframeGeometry(gridSource)),
-        trackMaterial(
-          new THREE.LineBasicMaterial({
-            color: 0x713cf0,
-            opacity: 0.16,
-            transparent: true,
-          }),
-        ),
-      ),
+
+    const gridMaterial = trackMaterial(
+      new THREE.LineBasicMaterial({
+        color: 0x6172a8,
+        opacity: 0.13,
+        transparent: true,
+      }),
     );
+    for (let latitude = -60; latitude <= 60; latitude += 20) {
+      root.add(
+        new THREE.Line(
+          trackGeometry(
+            new THREE.BufferGeometry().setFromPoints(
+              latitudeLine(latitude, 2.012),
+            ),
+          ),
+          gridMaterial,
+        ),
+      );
+    }
+    for (let longitude = -150; longitude <= 180; longitude += 30) {
+      root.add(
+        new THREE.Line(
+          trackGeometry(
+            new THREE.BufferGeometry().setFromPoints(
+              longitudeLine(longitude, 2.012),
+            ),
+          ),
+          gridMaterial,
+        ),
+      );
+    }
+
+    const coastlineMaterial = trackMaterial(
+      new THREE.LineBasicMaterial({
+        color: 0xa394eb,
+        opacity: 0.72,
+        transparent: true,
+      }),
+    );
+    const countryMaterial = trackMaterial(
+      new THREE.LineBasicMaterial({
+        color: 0x796da8,
+        opacity: 0.28,
+        transparent: true,
+      }),
+    );
+    for (const outline of coastlines) {
+      root.add(
+        new THREE.Line(
+          trackGeometry(
+            new THREE.BufferGeometry().setFromPoints(
+              geographicLine(outline, 2.022),
+            ),
+          ),
+          coastlineMaterial,
+        ),
+      );
+    }
+    for (const outline of countryBoundaries) {
+      root.add(
+        new THREE.Line(
+          trackGeometry(
+            new THREE.BufferGeometry().setFromPoints(
+              geographicLine(outline, 2.021),
+            ),
+          ),
+          countryMaterial,
+        ),
+      );
+    }
 
     scene.add(new THREE.AmbientLight(0x8997c6, 1.4));
     const keyLight = new THREE.DirectionalLight(0x9c7cff, 3.2);
@@ -202,6 +309,8 @@ export default function GlobeRenderer({
       const height = Math.max(mount.clientHeight, 1);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
+      camera.position.z =
+        camera.aspect < 1 ? Math.min(6.2 / camera.aspect, 8.4) : 6.2;
       camera.updateProjectionMatrix();
     };
     const resizeObserver = new ResizeObserver(resize);
@@ -212,7 +321,7 @@ export default function GlobeRenderer({
       frame = window.requestAnimationFrame(render);
       const delta = Math.min(clock.getDelta(), 0.05);
       if (visible) {
-        if (!reduceMotion && !dragging) root.rotation.y += delta * 0.045;
+        if (!reduceMotion && !dragging) root.rotation.y += delta * 0.025;
         renderer.render(scene, camera);
       }
     };
@@ -237,7 +346,7 @@ export default function GlobeRenderer({
   return (
     <div
       ref={mountRef}
-      className="h-full min-h-[28rem] w-full"
+      className="h-full min-h-[30rem] w-full cursor-grab touch-none sm:min-h-[34rem]"
       aria-hidden="true"
     />
   );

@@ -1,4 +1,5 @@
 import {
+  Building2,
   CalendarDays,
   ChartNoAxesCombined,
   ClipboardList,
@@ -63,6 +64,13 @@ export const adminNavigationItems = [
   },
   {
     access: "members",
+    href: "/admin/companies",
+    icon: Building2,
+    id: "companies",
+    label: "Companies",
+  },
+  {
+    access: "members",
     href: "/admin/members",
     icon: UsersRound,
     id: "members",
@@ -89,6 +97,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "forms") return pathname.startsWith("/admin/forms");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
+  if (id === "companies") return pathname.startsWith("/admin/companies");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");
   return !pathname.startsWith("/admin/");

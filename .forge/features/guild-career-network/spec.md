@@ -51,16 +51,18 @@ which companies already employ Knight Hacks members and alumni.
 - Guild never infers a member's location from a company headquarters, school,
   or address.
 
-### Blade Member Admin
+### Blade Company Admin
 
-- Member Admin offers People and Companies views.
-- The Companies view shows each company, distinct current/former/unconfirmed
+- Companies is a top-level administration destination beside Members.
+- The Companies workspace shows each company, distinct
+  current/former/unconfirmed
   member counts, represented experience types, represented cities, and review
   status.
 - Officers can open a company to see current and past employees and their
   positions, dates, and cities.
 - Officers can approve or reject pending companies, change display and legal
-  names, maintain aliases and domains, or merge duplicates.
+  names, maintain aliases and domains, upload a company image, or merge
+  duplicates.
 - The review queue makes pending companies prominent and reports safe,
   actionable success and error states.
 
@@ -74,6 +76,7 @@ which companies already employ Knight Hacks members and alumni.
   state, per-entry visibility, and U.S. city selection.
 - An explicit current city and current-location visibility preference.
 - Officer company review, editing, rejection, and duplicate merging.
+- Optional officer-managed company images, with a generated mark fallback.
 - Company relationship counts and member drill-down in Blade.
 - Public company discovery and public company profile pages in Guild.
 - A single-layer, current-city Guild globe.
@@ -84,7 +87,6 @@ which companies already employ Knight Hacks members and alumni.
 
 - International cities.
 - Street addresses, office addresses, or precise personal coordinates.
-- Company logos.
 - Company contacts, sponsorship pipeline stages, outreach notes, or a general
   sponsor CRM.
 - Automatic company enrichment from an external service.
@@ -114,6 +116,7 @@ which companies already employ Knight Hacks members and alumni.
 - Pending companies stay off public Guild company and employment surfaces until
   approved.
 - Officers can review, approve, reject, edit, alias, and merge companies.
+- Officers can upload, replace, or remove an optional company image.
 - Company counts use distinct members rather than raw employment rows.
 - Public company pages and member histories honor profile, employment, company,
   and current-city visibility rules.

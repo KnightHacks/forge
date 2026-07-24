@@ -46,7 +46,8 @@ contracts in `@forge/validators`.
 - `READ_MEMBERS` or `EDIT_MEMBERS` can read company intelligence and member
   relationships.
 - `EDIT_MEMBERS` can approve, reject, edit, alias, and merge companies and can
-  correct member employment through the existing admin member capability.
+  upload company images, and can correct member employment through the existing
+  admin member capability.
 - Existing officer bypass behavior remains authoritative through the control
   permissions router. Client-side navigation is not an authorization boundary.
 
@@ -61,6 +62,7 @@ Add exactly two domain tables.
 - UUID primary key.
 - Display name and normalized display name.
 - Optional legal name and domain.
+- Optional object-storage reference for an officer-managed company image.
 - Aliases as a text array.
 - Review state: `pending`, `approved`, `rejected`, or `merged`.
 - Optional self-reference to the canonical company after a merge.
@@ -170,6 +172,8 @@ Expected permission-aware procedures:
 - `approveCompany`
 - `rejectCompany`
 - `mergeCompanies`
+- `uploadCompanyImage`
+- `removeCompanyImage`
 
 All reusable procedure inputs and outputs belong in `@forge/validators`.
 Mutations return canonical identifiers and enough normalized state for clients
@@ -194,6 +198,8 @@ the existing permissions behavior.
 - City queries are trimmed and bounded; search results are capped.
 - Current-city and employment city keys must exist in the generated Census
   catalog.
+- Company images accept validated JPEG, PNG, GIF, or WebP data no larger than
+  2MB. Object names are generated server-side and scoped to the company.
 
 ## Data / migration / compatibility
 
@@ -239,13 +245,15 @@ Would this require a developer change next year?
   interaction in client components.
 - Reuse one employment-history editor across membership and Member Settings
   without duplicating mutation or validation behavior.
-- Follow the Blade top-level and nested surface hierarchy. Member Admin keeps
-  People and Companies at equal navigational weight rather than nesting company
-  intelligence inside a filter dialog.
-- Guild Companies uses the established Guild visual language and card rhythm
-  without company logos.
-- Add `three` to Guild for a custom client-only globe. Do not ship a generic map
-  or default third-party globe presentation.
+- Follow the Blade top-level and nested surface hierarchy. Companies is a
+  dedicated admin destination beside Members; metadata, moderation, image
+  management, and career evidence share one full-width workflow.
+- Guild Companies uses the established Guild visual language and card rhythm,
+  preferring officer-managed company images and falling back to supported
+  vector marks, domain favicons, or monograms.
+- Add `three` to Guild for a custom client-only globe, with lightweight
+  Natural Earth topology from `world-atlas` rendered through `topojson-client`.
+  Do not ship a generic map or default third-party globe presentation.
 - Lazy-load the WebGL renderer. Render an immediate static placeholder and an
   accessible city/profile list when WebGL is unavailable.
 - Respect reduced motion, stop idle animation while hidden, and preserve

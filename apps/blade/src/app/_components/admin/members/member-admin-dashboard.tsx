@@ -46,7 +46,6 @@ import { adminMemberPageSizes } from "@forge/validators";
 
 import { api } from "~/trpc/react";
 import { InvalidateDuesDialog } from "./invalidate-dues-dialog";
-import { MemberAdminViewNav } from "./member-admin-view-nav";
 import { MemberDetailDialog } from "./member-detail-dialog";
 import { MemberFilters } from "./member-filters";
 import { buildAdminMemberSearchParams } from "./params";
@@ -403,8 +402,6 @@ export function MemberAdminDashboard({
             {isOfficer && <InvalidateDuesDialog onComplete={refresh} />}
           </div>
         </div>
-
-        <MemberAdminViewNav active="people" />
 
         <Card className="w-full min-w-0 gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
           <CardHeader className="min-w-0 border-b border-border/70 px-3 py-3 sm:px-4 sm:py-4 md:px-6">

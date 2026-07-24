@@ -24,6 +24,7 @@ describe("Guild Career Network additive storage", () => {
         "domain",
         "id",
         "legalName",
+        "logoObjectName",
         "mergedIntoCompanyId",
         "normalizedDisplayName",
         "reviewState",

@@ -2,23 +2,26 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Building2,
-  CheckCircle2,
-  CircleDashed,
-  Search,
-  UsersRound,
-} from "lucide-react";
+import { ArrowUpRight, Building2, CheckCircle2, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
+import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
-import { MemberAdminViewNav } from "./member-admin-view-nav";
+import { CompanyAdminMark } from "./company-admin-mark";
 
 type Company = RouterOutputs["career"]["listAdminCompanies"][number];
+type ReviewFilter = "all" | "approved" | "pending" | "rejected";
+
+const reviewFilters: { label: string; value: ReviewFilter }[] = [
+  { label: "All", value: "all" },
+  { label: "Needs review", value: "pending" },
+  { label: "Approved", value: "approved" },
+  { label: "Rejected", value: "rejected" },
+];
 
 function reviewBadgeClass(state: string) {
   switch (state) {
@@ -35,7 +38,10 @@ function reviewBadgeClass(state: string) {
 
 function ReviewBadge({ state }: { state: string }) {
   return (
-    <Badge variant="outline" className={reviewBadgeClass(state)}>
+    <Badge
+      variant="outline"
+      className={cn("w-fit capitalize", reviewBadgeClass(state))}
+    >
       {state}
     </Badge>
   );
@@ -43,18 +49,22 @@ function ReviewBadge({ state }: { state: string }) {
 
 export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
   const [query, setQuery] = useState("");
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return companies;
-    return companies.filter((company) =>
-      [
+    return companies.filter((company) => {
+      if (reviewFilter !== "all" && company.reviewState !== reviewFilter) {
+        return false;
+      }
+      if (!normalized) return true;
+      return [
         company.displayName,
         company.legalName,
         company.domain,
         ...company.aliases,
-      ].some((value) => value?.toLowerCase().includes(normalized)),
-    );
-  }, [companies, query]);
+      ].some((value) => value?.toLowerCase().includes(normalized));
+    });
+  }, [companies, query, reviewFilter]);
   const pendingCount = companies.filter(
     (company) => company.reviewState === "pending",
   ).length;
@@ -70,47 +80,64 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
   return (
     <main className="container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10">
       <div className="min-w-0 space-y-6">
-        <header>
-          <div className="flex items-center gap-2 text-sm font-medium text-primary">
-            <Building2 className="h-4 w-4" aria-hidden="true" />
-            Member intelligence
+        <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+              Company intelligence
+            </div>
+            <h1 className="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
+              Companies
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+              Review company records and see where Knight Hacks members have
+              worked.
+            </p>
           </div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
-            Companies
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-            See the organizations across member career histories and clean up
-            new community submissions before sponsorship season.
-          </p>
+
+          <dl className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-card/90">
+            <Metric label="Companies" value={companies.length} />
+            <Metric label="Needs review" value={pendingCount} />
+            <Metric label="Career records" value={relationshipCount} />
+          </dl>
         </header>
 
-        <MemberAdminViewNav active="companies" />
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Metric icon={Building2} label="Companies" value={companies.length} />
-          <Metric
-            icon={CircleDashed}
-            label="Pending review"
-            value={pendingCount}
-          />
-          <Metric
-            icon={UsersRound}
-            label="Career records"
-            value={relationshipCount}
-          />
-        </div>
-
         <Card className="gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
-          <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
-            <div className="relative max-w-xl">
+          <CardHeader className="gap-3 border-b border-border/70 px-4 py-4 md:px-6">
+            <div className="relative max-w-2xl">
               <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
               <Input
                 aria-label="Search companies"
                 className="h-11 bg-background/70 pl-9"
-                placeholder="Search display name, legal name, domain, or alias"
+                placeholder="Search company, domain, or alias"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
+            </div>
+            <div
+              className="flex flex-wrap gap-2"
+              aria-label="Filter companies by review status"
+            >
+              {reviewFilters.map((filter) => (
+                <Button
+                  key={filter.value}
+                  type="button"
+                  size="sm"
+                  variant={
+                    reviewFilter === filter.value ? "secondary" : "ghost"
+                  }
+                  className="h-9 rounded-md px-3"
+                  aria-pressed={reviewFilter === filter.value}
+                  onClick={() => setReviewFilter(filter.value)}
+                >
+                  {filter.label}
+                  {filter.value === "pending" && pendingCount > 0 ? (
+                    <span className="ml-1.5 text-amber-300">
+                      {pendingCount}
+                    </span>
+                  ) : null}
+                </Button>
+              ))}
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -124,23 +151,29 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
                   return (
                     <Link
                       key={company.id}
-                      href={`/admin/members/companies/${company.id}`}
+                      href={`/admin/companies/${company.id}`}
                       className="group grid min-h-24 gap-4 px-4 py-4 transition-colors hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center md:px-6"
                     >
-                      <span className="min-w-0">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="truncate font-semibold">
-                            {company.displayName}
+                      <span className="flex min-w-0 items-center gap-3">
+                        <CompanyAdminMark
+                          displayName={company.displayName}
+                          imageUrl={company.logoUrl}
+                        />
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="truncate font-semibold">
+                              {company.displayName}
+                            </span>
+                            <ReviewBadge state={company.reviewState} />
                           </span>
-                          <ReviewBadge state={company.reviewState} />
-                        </span>
-                        <span className="mt-1 block truncate text-sm text-muted-foreground">
-                          {company.domain ??
-                            company.legalName ??
-                            "Community submitted"}
+                          <span className="mt-1 block truncate text-sm text-muted-foreground">
+                            {company.domain ??
+                              company.legalName ??
+                              "No company details yet"}
+                          </span>
                         </span>
                       </span>
-                      <span className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
                         <span>
                           <strong className="font-semibold text-foreground">
                             {company.currentMembers}
@@ -161,7 +194,7 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
                             unconfirmed
                           </span>
                         ) : null}
-                        <span className="inline-flex items-center gap-1 text-foreground">
+                        <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                           {total} total
                           <ArrowUpRight
                             className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
@@ -181,7 +214,7 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
                 />
                 <h2 className="mt-3 font-semibold">No companies found</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Try a broader name, domain, or alias.
+                  Try a broader search or another review status.
                 </p>
               </div>
             )}
@@ -192,26 +225,11 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Building2;
-  label: string;
-  value: number;
-}) {
+function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <Card className="gap-0 border-white/10 bg-card/90 py-0">
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <span>
-          <span className="block text-xl font-semibold">{value}</span>
-          <span className="block text-xs text-muted-foreground">{label}</span>
-        </span>
-      </CardContent>
-    </Card>
+    <div className="min-w-24 border-l border-border/70 px-4 py-3 first:border-l-0 sm:min-w-32">
+      <dd className="text-xl font-semibold">{value}</dd>
+      <dt className="mt-0.5 text-xs text-muted-foreground">{label}</dt>
+    </div>
   );
 }

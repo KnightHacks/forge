@@ -93,6 +93,7 @@ export default async function GuildCompanyPage({ params }: CompanyPageProps) {
               <CompanyMark
                 displayName={company.displayName}
                 domain={company.domain}
+                imageUrl={company.logoUrl}
                 large
               />
               <h1 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl">
