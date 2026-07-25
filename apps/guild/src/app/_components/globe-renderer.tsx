@@ -748,9 +748,9 @@ export default function GlobeRenderer({
       />
       <div
         className={cn(
-          "absolute inset-0 transition-opacity duration-300 motion-reduce:transition-none",
+          "pointer-events-none absolute inset-0 transition-opacity duration-300 motion-reduce:transition-none",
           projectionMode === "map"
-            ? "pointer-events-none opacity-0"
+            ? "opacity-0"
             : "opacity-100",
         )}
       >
