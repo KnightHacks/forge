@@ -21,6 +21,9 @@ const GlobeRenderer = dynamic(() => import("./globe-renderer"), {
 export function GuildGlobe({ clusters }: { clusters: GlobeCluster[] }) {
   const [selectedKey, setSelectedKey] = useState(clusters[0]?.key ?? null);
   const [rendererReady, setRendererReady] = useState(false);
+  const [projectionMode, setProjectionMode] = useState<"globe" | "map">(
+    "globe",
+  );
   const selected = useMemo(
     () => clusters.find((cluster) => cluster.key === selectedKey) ?? null,
     [clusters, selectedKey],
@@ -46,15 +49,18 @@ export function GuildGlobe({ clusters }: { clusters: GlobeCluster[] }) {
             rendererReady ? "opacity-100" : "pointer-events-none opacity-0"
           }
           onReady={showRenderer}
+          onProjectionChange={setProjectionMode}
           onSelect={selectCluster}
           onUnavailable={showFallback}
         />
 
         <p className="pointer-events-none absolute bottom-4 left-4 rounded-md border border-white/10 bg-background/75 px-3 py-2 text-xs text-muted-foreground backdrop-blur sm:bottom-5 sm:left-5">
           {rendererReady
-            ? clusters.length > 0
-              ? "Drag · scroll or pinch · select a member"
-              : "Drag · scroll or pinch to explore"
+            ? projectionMode === "map"
+              ? "Drag · scroll or pinch · zoom out to return to the globe"
+              : clusters.length > 0
+                ? "Drag · scroll or pinch · select a member"
+                : "Drag · scroll or pinch to explore"
             : clusters.length > 0
               ? "Member locations"
               : "World map preview"}
