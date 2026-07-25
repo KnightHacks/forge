@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import * as THREE from "three";
-import { mesh } from "topojson-client";
-import worldTopologySource from "world-atlas/countries-110m.json";
+
+import { cn } from "@forge/ui";
 
 import type { GlobeCluster } from "./guild-globe";
+import { globeCoastlines, globeCountryBoundaries } from "./globe-geography";
 
 function globePosition(latitude: number, longitude: number, radius: number) {
   const phi = THREE.MathUtils.degToRad(90 - latitude);
@@ -16,19 +18,6 @@ function globePosition(latitude: number, longitude: number, radius: number) {
     radius * Math.sin(phi) * Math.sin(theta),
   );
 }
-
-type WorldTopology = Parameters<typeof mesh>[0];
-type WorldGeometry = NonNullable<Parameters<typeof mesh>[1]>;
-
-const worldTopology = worldTopologySource as unknown as WorldTopology;
-const countryGeometry = worldTopology.objects.countries as WorldGeometry;
-const landGeometry = worldTopology.objects.land as WorldGeometry;
-const coastlines = mesh(worldTopology, landGeometry).coordinates;
-const countryBoundaries = mesh(
-  worldTopology,
-  countryGeometry,
-  (left, right) => left !== right,
-).coordinates;
 
 function latitudeLine(latitude: number, radius: number) {
   return Array.from({ length: 121 }, (_, index) =>
@@ -50,14 +39,113 @@ function geographicLine(coordinates: number[][], radius: number) {
   );
 }
 
-export default function GlobeRenderer({
-  clusters,
+function GlobePhotoMarker({
+  cluster,
+  markerRef,
   onSelect,
 }: {
-  clusters: GlobeCluster[];
+  cluster: GlobeCluster;
+  markerRef: (element: HTMLButtonElement | null) => void;
   onSelect: (key: string) => void;
 }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const picturedProfiles = cluster.profiles.filter(
+    (profile) => profile.profilePictureUrl,
+  );
+  const profiles =
+    picturedProfiles.length > 0 ? picturedProfiles : cluster.profiles;
+  const profile = profiles[activeIndex % Math.max(profiles.length, 1)];
+
+  useEffect(() => {
+    if (profiles.length < 2) return;
+    let interval: number | undefined;
+    const offset =
+      [...cluster.key].reduce((total, character) => {
+        return total + character.charCodeAt(0);
+      }, 0) % 1800;
+    const timeout = window.setTimeout(() => {
+      setActiveIndex((current) => current + 1);
+      interval = window.setInterval(
+        () => setActiveIndex((current) => current + 1),
+        4200,
+      );
+    }, 2400 + offset);
+    return () => {
+      window.clearTimeout(timeout);
+      if (interval) window.clearInterval(interval);
+    };
+  }, [cluster.key, markerRef, profiles.length]);
+
+  if (!profile) return null;
+
+  return (
+    <button
+      ref={markerRef}
+      type="button"
+      data-globe-photo-marker={cluster.key}
+      className="group absolute left-0 top-0 z-10 grid h-10 w-10 place-items-center rounded-full border-2 border-[#b99cff] bg-[#16112a] text-[10px] font-semibold text-white opacity-0 shadow-[0_0_0_3px_rgba(12,9,26,0.72),0_0_22px_rgba(151,111,255,0.55)] will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:h-11 sm:w-11"
+      onClick={() => onSelect(cluster.key)}
+      aria-label={`Show ${cluster.label}: ${cluster.count} ${
+        cluster.count === 1 ? "member" : "members"
+      }`}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={profile.id}
+          className="absolute inset-0 overflow-hidden rounded-full"
+          initial={{ opacity: 0, scale: 0.82 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.08 }}
+          transition={{ duration: 0.32, ease: "easeOut" }}
+        >
+          {profile.profilePictureUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.profilePictureUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="grid h-full w-full place-items-center bg-primary/25">
+              {profile.firstName.at(0)}
+              {profile.lastName.at(0)}
+            </span>
+          )}
+        </motion.span>
+      </AnimatePresence>
+      {cluster.count > 1 ? (
+        <span className="absolute -bottom-1 -right-1 z-10 grid min-h-4 min-w-4 place-items-center rounded-full border border-[#0c091a] bg-[#8f6cff] px-1 text-[9px] leading-none text-white">
+          {cluster.count}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+export default function GlobeRenderer({
+  className,
+  clusters,
+  onReady,
+  onSelect,
+  onUnavailable,
+}: {
+  className?: string;
+  clusters: GlobeCluster[];
+  onReady: () => void;
+  onSelect: (key: string) => void;
+  onUnavailable: () => void;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const markerRefs = useRef(new Map<string, HTMLButtonElement>());
+  const zoomInRef = useRef<() => void>(() => undefined);
+  const zoomOutRef = useRef<() => void>(() => undefined);
+  const setMarkerRef = useCallback(
+    (key: string, element: HTMLButtonElement | null) => {
+      if (element) markerRefs.current.set(key, element);
+      else markerRefs.current.delete(key);
+    },
+    [],
+  );
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -67,19 +155,38 @@ export default function GlobeRenderer({
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     camera.position.set(0, 0, 6.2);
 
+    const canvas = document.createElement("canvas");
+    const contextAttributes: WebGLContextAttributes = {
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance",
+    };
+    const context =
+      canvas.getContext("webgl2", contextAttributes) ??
+      canvas.getContext("webgl", contextAttributes);
+    if (!context) {
+      mount.dataset.failed = "true";
+      onUnavailable();
+      return;
+    }
+
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
         alpha: true,
         antialias: true,
+        canvas,
+        context,
         powerPreference: "high-performance",
       });
     } catch {
       mount.dataset.failed = "true";
+      onUnavailable();
       return;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
+    renderer.domElement.className = "block h-full w-full";
     mount.appendChild(renderer.domElement);
 
     const geometries: THREE.BufferGeometry[] = [];
@@ -173,7 +280,7 @@ export default function GlobeRenderer({
         transparent: true,
       }),
     );
-    for (const outline of coastlines) {
+    for (const outline of globeCoastlines) {
       root.add(
         new THREE.Line(
           trackGeometry(
@@ -185,7 +292,7 @@ export default function GlobeRenderer({
         ),
       );
     }
-    for (const outline of countryBoundaries) {
+    for (const outline of globeCountryBoundaries) {
       root.add(
         new THREE.Line(
           trackGeometry(
@@ -211,8 +318,9 @@ export default function GlobeRenderer({
       THREE.SphereGeometry,
       THREE.MeshBasicMaterial
     >[] = [];
+    const markerPositions = new Map<string, THREE.Vector3>();
     for (const cluster of clusters) {
-      const size = 0.045 + Math.min(cluster.count, 12) * 0.008;
+      const size = 0.026 + Math.min(cluster.count, 12) * 0.004;
       const marker = new THREE.Mesh(
         trackGeometry(new THREE.SphereGeometry(size, 18, 18)),
         trackMaterial(new THREE.MeshBasicMaterial({ color: 0xb396ff })),
@@ -220,6 +328,7 @@ export default function GlobeRenderer({
       marker.position.copy(
         globePosition(cluster.latitude, cluster.longitude, 2.055),
       );
+      markerPositions.set(cluster.key, marker.position.clone());
       marker.userData.key = cluster.key;
       markerMeshes.push(marker);
       markerGroup.add(marker);
@@ -258,17 +367,62 @@ export default function GlobeRenderer({
     renderer.domElement.addEventListener("pointermove", selectAtPointer);
     renderer.domElement.addEventListener("click", selectAtPointer);
 
+    const pointers = new Map<number, { x: number; y: number }>();
     let dragging = false;
     let previousX = 0;
     let previousY = 0;
+    let pinchDistance = 0;
+    let pinchZoomScale = 1;
+    let zoomScale = 1;
+    let targetZoomScale = 1;
+    const changeZoom = (change: number) => {
+      targetZoomScale = THREE.MathUtils.clamp(
+        targetZoomScale + change,
+        0.72,
+        1.38,
+      );
+    };
+    zoomInRef.current = () => changeZoom(-0.14);
+    zoomOutRef.current = () => changeZoom(0.14);
+
     const onPointerDown = (event: PointerEvent) => {
-      dragging = true;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       previousX = event.clientX;
       previousY = event.clientY;
       renderer.domElement.setPointerCapture(event.pointerId);
-      renderer.domElement.style.cursor = "grabbing";
+      if (pointers.size === 1) {
+        dragging = true;
+        renderer.domElement.style.cursor = "grabbing";
+      } else if (pointers.size === 2) {
+        dragging = false;
+        const [first, second] = [...pointers.values()];
+        if (first && second) {
+          pinchDistance = Math.hypot(second.x - first.x, second.y - first.y);
+          pinchZoomScale = targetZoomScale;
+        }
+      }
     };
     const onPointerMove = (event: PointerEvent) => {
+      if (pointers.has(event.pointerId)) {
+        pointers.set(event.pointerId, {
+          x: event.clientX,
+          y: event.clientY,
+        });
+      }
+      if (pointers.size >= 2) {
+        const [first, second] = [...pointers.values()];
+        if (first && second) {
+          const distance = Math.hypot(second.x - first.x, second.y - first.y);
+          if (pinchDistance > 0) {
+            targetZoomScale = THREE.MathUtils.clamp(
+              pinchZoomScale * (pinchDistance / Math.max(distance, 1)),
+              0.72,
+              1.38,
+            );
+          }
+        }
+        return;
+      }
       if (!dragging) return;
       root.rotation.y += (event.clientX - previousX) * 0.006;
       root.rotation.x = THREE.MathUtils.clamp(
@@ -280,15 +434,29 @@ export default function GlobeRenderer({
       previousY = event.clientY;
     };
     const onPointerUp = (event: PointerEvent) => {
-      dragging = false;
+      pointers.delete(event.pointerId);
       if (renderer.domElement.hasPointerCapture(event.pointerId)) {
         renderer.domElement.releasePointerCapture(event.pointerId);
       }
-      renderer.domElement.style.cursor = "grab";
+      const remaining = [...pointers.values()][0];
+      if (remaining) {
+        dragging = true;
+        previousX = remaining.x;
+        previousY = remaining.y;
+      } else {
+        dragging = false;
+        renderer.domElement.style.cursor = "grab";
+      }
+    };
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      changeZoom(event.deltaY * 0.001);
     };
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     renderer.domElement.addEventListener("pointermove", onPointerMove);
     renderer.domElement.addEventListener("pointerup", onPointerUp);
+    renderer.domElement.addEventListener("pointercancel", onPointerUp);
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
 
     let visible = true;
     const observer = new IntersectionObserver(
@@ -301,34 +469,86 @@ export default function GlobeRenderer({
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const clock = new THREE.Clock();
-    let frame = 0;
-
+    let fitDistance = 6.2;
     const resize = () => {
       const width = Math.max(mount.clientWidth, 1);
       const height = Math.max(mount.clientHeight, 1);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
-      camera.position.z =
+      root.position.x =
+        camera.aspect > 2 ? 0.55 : camera.aspect > 1.4 ? 0.28 : 0;
+      fitDistance =
         camera.aspect < 1 ? Math.min(6.2 / camera.aspect, 8.4) : 6.2;
+      camera.position.z = fitDistance * zoomScale;
       camera.updateProjectionMatrix();
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(mount);
     resize();
 
-    const render = () => {
-      frame = window.requestAnimationFrame(render);
-      const delta = Math.min(clock.getDelta(), 0.05);
-      if (visible) {
-        if (!reduceMotion && !dragging) root.rotation.y += delta * 0.025;
-        renderer.render(scene, camera);
+    let previousTime = performance.now();
+    const projectedPosition = new THREE.Vector3();
+    const worldPosition = new THREE.Vector3();
+    const positionPhotoMarkers = () => {
+      root.updateMatrixWorld(true);
+      for (const [key, position] of markerPositions) {
+        const element = markerRefs.current.get(key);
+        if (!element) continue;
+        worldPosition.copy(position).applyMatrix4(root.matrixWorld);
+        const isVisible = worldPosition.z > 0.32;
+        if (!isVisible) {
+          element.style.opacity = "0";
+          element.style.pointerEvents = "none";
+          continue;
+        }
+        projectedPosition.copy(worldPosition).project(camera);
+        const x = (projectedPosition.x * 0.5 + 0.5) * mount.clientWidth;
+        const y = (-projectedPosition.y * 0.5 + 0.5) * mount.clientHeight;
+        const scale = THREE.MathUtils.clamp(
+          0.82 + worldPosition.z * 0.085,
+          0.82,
+          1.08,
+        );
+        element.style.opacity = "1";
+        element.style.pointerEvents = "auto";
+        element.style.zIndex = String(Math.round(20 + worldPosition.z * 10));
+        element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale})`;
       }
     };
-    render();
+    const render = (time: number) => {
+      const delta = Math.min((time - previousTime) / 1000, 0.05);
+      previousTime = time;
+      if (visible) {
+        if (!reduceMotion && !dragging) root.rotation.y += delta * 0.025;
+        zoomScale = THREE.MathUtils.lerp(
+          zoomScale,
+          targetZoomScale,
+          Math.min(delta * 10, 1),
+        );
+        mount.dataset.zoomScale = zoomScale.toFixed(3);
+        camera.position.z = fitDistance * zoomScale;
+        renderer.render(scene, camera);
+        positionPhotoMarkers();
+      }
+    };
+    renderer.render(scene, camera);
+    positionPhotoMarkers();
+    onReady();
+    renderer.setAnimationLoop(render);
+
+    const onContextLost = (event: Event) => {
+      event.preventDefault();
+      onUnavailable();
+    };
+    const onContextRestored = () => onReady();
+    renderer.domElement.addEventListener("webglcontextlost", onContextLost);
+    renderer.domElement.addEventListener(
+      "webglcontextrestored",
+      onContextRestored,
+    );
 
     return () => {
-      window.cancelAnimationFrame(frame);
+      renderer.setAnimationLoop(null);
       observer.disconnect();
       resizeObserver.disconnect();
       renderer.domElement.removeEventListener("pointermove", selectAtPointer);
@@ -336,18 +556,60 @@ export default function GlobeRenderer({
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
       renderer.domElement.removeEventListener("pointerup", onPointerUp);
+      renderer.domElement.removeEventListener("pointercancel", onPointerUp);
+      renderer.domElement.removeEventListener("wheel", onWheel);
+      renderer.domElement.removeEventListener(
+        "webglcontextlost",
+        onContextLost,
+      );
+      renderer.domElement.removeEventListener(
+        "webglcontextrestored",
+        onContextRestored,
+      );
       geometries.forEach((geometry) => geometry.dispose());
       materials.forEach((material) => material.dispose());
+      zoomInRef.current = () => undefined;
+      zoomOutRef.current = () => undefined;
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [clusters, onSelect]);
+  }, [clusters, onReady, onSelect, onUnavailable]);
 
   return (
     <div
       ref={mountRef}
-      className="h-full min-h-[30rem] w-full cursor-grab touch-none sm:min-h-[34rem]"
-      aria-hidden="true"
-    />
+      className={cn(
+        "absolute inset-0 cursor-grab touch-none transition-opacity duration-500 motion-reduce:transition-none",
+        className,
+      )}
+      aria-label="Interactive Guild member globe"
+    >
+      {clusters.map((cluster) => (
+        <GlobePhotoMarker
+          key={cluster.key}
+          cluster={cluster}
+          markerRef={(element) => setMarkerRef(cluster.key, element)}
+          onSelect={onSelect}
+        />
+      ))}
+      <div className="absolute right-3 top-3 z-30 flex overflow-hidden rounded-md border border-white/10 bg-background/80 shadow-lg backdrop-blur sm:right-4 sm:top-4">
+        <button
+          type="button"
+          className="grid h-10 w-10 place-items-center border-r border-white/10 text-lg text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          onClick={() => zoomInRef.current()}
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="grid h-10 w-10 place-items-center text-xl text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          onClick={() => zoomOutRef.current()}
+          aria-label="Zoom out"
+        >
+          −
+        </button>
+      </div>
+    </div>
   );
 }

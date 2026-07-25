@@ -19,6 +19,7 @@ import {
 import type { GuildRoleCallout } from "../utils/guild/role-callout";
 import { publicProcedure } from "../trpc";
 import { getCompanyImageUrl } from "../utils/career/company-image";
+import { getGlobeCity } from "../utils/career/globe-cities";
 import { getUsCity } from "../utils/career/us-cities";
 import {
   normalizePublicGuildText,
@@ -540,13 +541,13 @@ export const guildRouter = {
     const grouped = new Map<
       string,
       {
-        city: NonNullable<ReturnType<typeof getUsCity>>;
+        city: NonNullable<ReturnType<typeof getGlobeCity>>;
         profiles: Awaited<ReturnType<typeof toPublicProfile>>[];
       }
     >();
     for (const row of rows) {
       if (!row.currentCityKey) continue;
-      const city = getUsCity(row.currentCityKey);
+      const city = getGlobeCity(row.currentCityKey);
       if (!city) continue;
       const group = grouped.get(city.key) ?? { city, profiles: [] };
       group.profiles.push(

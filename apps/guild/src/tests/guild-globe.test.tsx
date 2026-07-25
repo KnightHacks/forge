@@ -55,7 +55,8 @@ describe("Guild globe fallback", () => {
       'href="/members/00000000-0000-4000-8000-000000000456?from=/globe"',
     );
     expect(html).toContain("Current location");
-    expect(html).toContain("Plotting the Guild");
+    expect(html).toContain('data-globe-placeholder="true"');
+    expect(html).toContain('data-renderer-ready="false"');
   });
 
   it("keeps the globe surface visible before members share a city", () => {
@@ -63,7 +64,8 @@ describe("Guild globe fallback", () => {
       createElement(GuildGlobe, { clusters: [] }),
     );
 
-    expect(html).toContain("Plotting the Guild");
+    expect(html).toContain('data-globe-placeholder="true"');
+    expect(html).toContain('data-renderer-ready="false"');
     expect(html).not.toContain("<aside");
   });
 });
