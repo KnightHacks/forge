@@ -22,6 +22,14 @@ function relationshipLabel(company: Company) {
 
 export function CompanyDirectory({ companies }: { companies: Company[] }) {
   const [query, setQuery] = useState("");
+  const relationshipCount = companies.reduce(
+    (count, company) =>
+      count +
+      company.currentMembers +
+      company.formerMembers +
+      company.unconfirmedMembers,
+    0,
+  );
   const filteredCompanies = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return companies;
@@ -48,7 +56,7 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
 
   return (
     <PageSurfaceMotion>
-      <div className="guild-search-surface mb-6 rounded-lg p-3">
+      <div className="guild-search-surface mb-6 rounded-lg p-3 md:p-4">
         <div className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -65,51 +73,63 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
       </div>
 
       {filteredCompanies.length > 0 ? (
-        <CollectionMotion
-          key={query.trim().toLowerCase() || "all"}
-          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          {filteredCompanies.map((company) => (
-            <CollectionMotionItem key={company.id} className="h-full">
-              <Link
-                href={`/companies/${company.id}`}
-                className="guild-company-card group flex h-full min-h-40 flex-col rounded-xl border border-white/10 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-48"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <CompanyMark
-                    displayName={company.displayName}
-                    domain={company.domain}
-                    imageUrl={company.logoUrl}
-                  />
-                  <ArrowUpRight
-                    className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
-                    aria-hidden="true"
-                  />
-                </div>
-                <h2 className="mt-5 text-xl font-semibold tracking-tight">
-                  {company.displayName}
-                </h2>
-                <p className="mt-1 min-h-5 truncate text-sm text-muted-foreground">
-                  {company.domain}
-                </p>
-                <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
-                  <Badge
-                    variant="outline"
-                    className="gap-1.5 border-white/10 bg-background/55"
-                  >
-                    <UsersRound className="h-3.5 w-3.5" aria-hidden="true" />
-                    {relationshipLabel(company)}
-                  </Badge>
-                  {company.currentMembers > 0 ? (
-                    <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
-                      {company.currentMembers} current
+        <>
+          <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
+            <p aria-live="polite">
+              Showing {filteredCompanies.length}{" "}
+              {filteredCompanies.length === 1 ? "company" : "companies"}
+            </p>
+            <p>
+              {relationshipCount} Guild{" "}
+              {relationshipCount === 1 ? "connection" : "connections"}
+            </p>
+          </div>
+          <CollectionMotion
+            key={query.trim().toLowerCase() || "all"}
+            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {filteredCompanies.map((company) => (
+              <CollectionMotionItem key={company.id} className="h-full">
+                <Link
+                  href={`/companies/${company.id}`}
+                  className="guild-company-card group flex h-full min-h-40 flex-col rounded-xl border border-white/10 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-48"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <CompanyMark
+                      displayName={company.displayName}
+                      domain={company.domain}
+                      imageUrl={company.logoUrl}
+                    />
+                    <ArrowUpRight
+                      className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <h2 className="mt-5 text-xl font-semibold tracking-tight">
+                    {company.displayName}
+                  </h2>
+                  <p className="mt-1 min-h-5 truncate text-sm text-muted-foreground">
+                    {company.domain}
+                  </p>
+                  <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                    <Badge
+                      variant="outline"
+                      className="gap-1.5 border-white/10 bg-background/55"
+                    >
+                      <UsersRound className="h-3.5 w-3.5" aria-hidden="true" />
+                      {relationshipLabel(company)}
                     </Badge>
-                  ) : null}
-                </div>
-              </Link>
-            </CollectionMotionItem>
-          ))}
-        </CollectionMotion>
+                    {company.currentMembers > 0 ? (
+                      <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
+                        {company.currentMembers} current
+                      </Badge>
+                    ) : null}
+                  </div>
+                </Link>
+              </CollectionMotionItem>
+            ))}
+          </CollectionMotion>
+        </>
       ) : (
         <div className="rounded-xl border border-dashed border-white/15 bg-card/40 px-6 py-14 text-center">
           <h2 className="font-semibold">No companies found</h2>
