@@ -122,6 +122,14 @@ const DEVELOPMENT_GLOBE_CITIES: readonly GlobeCity[] = [
     name: "Sydney",
     state: "Australia",
   },
+  {
+    key: "99-00015",
+    label: "San Francisco, CA",
+    latitude: 37.7749,
+    longitude: -122.4194,
+    name: "San Francisco",
+    state: "CA",
+  },
 ] as const;
 
 const developmentCitiesByKey = new Map(

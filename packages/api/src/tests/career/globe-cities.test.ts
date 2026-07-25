@@ -23,4 +23,14 @@ describe("Guild globe cities", () => {
       longitude: 139.6503,
     });
   });
+
+  it("includes nearby Bay Area cities for semantic-zoom previews", () => {
+    expect(
+      getGlobeCity("99-00015", { includeDevelopmentPreview: true }),
+    ).toMatchObject({
+      label: "San Francisco, CA",
+      latitude: 37.7749,
+      longitude: -122.4194,
+    });
+  });
 });

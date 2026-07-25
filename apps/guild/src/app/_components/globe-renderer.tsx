@@ -6,7 +6,13 @@ import * as THREE from "three";
 
 import { cn } from "@forge/ui";
 
+import type { GlobeMarkerGroup } from "./globe-clustering";
 import type { GlobeCluster } from "./guild-globe";
+import {
+  GLOBE_MAX_ZOOM_SCALE,
+  GLOBE_MIN_ZOOM_SCALE,
+  groupGlobeClusters,
+} from "./globe-clustering";
 import { globeCoastlines, globeCountryBoundaries } from "./globe-geography";
 
 function globePosition(latitude: number, longitude: number, radius: number) {
@@ -40,27 +46,27 @@ function geographicLine(coordinates: number[][], radius: number) {
 }
 
 function GlobePhotoMarker({
-  cluster,
+  group,
   markerRef,
   onSelect,
 }: {
-  cluster: GlobeCluster;
+  group: GlobeMarkerGroup;
   markerRef: (element: HTMLButtonElement | null) => void;
-  onSelect: (key: string) => void;
+  onSelect: (group: GlobeMarkerGroup) => void;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const picturedProfiles = cluster.profiles.filter(
+  const picturedProfiles = group.profiles.filter(
     (profile) => profile.profilePictureUrl,
   );
   const profiles =
-    picturedProfiles.length > 0 ? picturedProfiles : cluster.profiles;
+    picturedProfiles.length > 0 ? picturedProfiles : group.profiles;
   const profile = profiles[activeIndex % Math.max(profiles.length, 1)];
 
   useEffect(() => {
     if (profiles.length < 2) return;
     let interval: number | undefined;
     const offset =
-      [...cluster.key].reduce((total, character) => {
+      [...group.key].reduce((total, character) => {
         return total + character.charCodeAt(0);
       }, 0) % 1800;
     const timeout = window.setTimeout(() => {
@@ -74,7 +80,7 @@ function GlobePhotoMarker({
       window.clearTimeout(timeout);
       if (interval) window.clearInterval(interval);
     };
-  }, [cluster.key, markerRef, profiles.length]);
+  }, [group.key, markerRef, profiles.length]);
 
   if (!profile) return null;
 
@@ -82,11 +88,17 @@ function GlobePhotoMarker({
     <button
       ref={markerRef}
       type="button"
-      data-globe-photo-marker={cluster.key}
-      className="group absolute left-0 top-0 z-10 grid h-10 w-10 place-items-center rounded-full border-2 border-[#b99cff] bg-[#16112a] text-[10px] font-semibold text-white opacity-0 shadow-[0_0_0_3px_rgba(12,9,26,0.72),0_0_22px_rgba(151,111,255,0.55)] will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:h-11 sm:w-11"
-      onClick={() => onSelect(cluster.key)}
-      aria-label={`Show ${cluster.label}: ${cluster.count} ${
-        cluster.count === 1 ? "member" : "members"
+      data-globe-photo-marker={group.key}
+      data-globe-marker-cities={group.cityKeys.length}
+      className={cn(
+        "group absolute left-0 top-0 z-10 grid place-items-center rounded-full border-[#b99cff] bg-[#16112a] text-[10px] font-semibold text-white opacity-0 shadow-[0_0_0_3px_rgba(12,9,26,0.72),0_0_22px_rgba(151,111,255,0.55)] transition-[opacity,box-shadow] duration-200 will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none",
+        group.cityKeys.length > 1
+          ? "h-12 w-12 border-[3px] sm:h-14 sm:w-14"
+          : "h-10 w-10 border-2 sm:h-11 sm:w-11",
+      )}
+      onClick={() => onSelect(group)}
+      aria-label={`Show ${group.label}: ${group.count} ${
+        group.count === 1 ? "member" : "members"
       }`}
     >
       <AnimatePresence mode="popLayout" initial={false}>
@@ -113,9 +125,9 @@ function GlobePhotoMarker({
           )}
         </motion.span>
       </AnimatePresence>
-      {cluster.count > 1 ? (
+      {group.count > 1 ? (
         <span className="absolute -bottom-1 -right-1 z-10 grid min-h-4 min-w-4 place-items-center rounded-full border border-[#0c091a] bg-[#8f6cff] px-1 text-[9px] leading-none text-white">
-          {cluster.count}
+          {group.count}
         </span>
       ) : null}
     </button>
@@ -139,6 +151,10 @@ export default function GlobeRenderer({
   const markerRefs = useRef(new Map<string, HTMLButtonElement>());
   const zoomInRef = useRef<() => void>(() => undefined);
   const zoomOutRef = useRef<() => void>(() => undefined);
+  const [markerGroups, setMarkerGroups] = useState(() =>
+    groupGlobeClusters(clusters, 1),
+  );
+  const markerGroupsRef = useRef(markerGroups);
   const setMarkerRef = useCallback(
     (key: string, element: HTMLButtonElement | null) => {
       if (element) markerRefs.current.set(key, element);
@@ -318,7 +334,6 @@ export default function GlobeRenderer({
       THREE.SphereGeometry,
       THREE.MeshBasicMaterial
     >[] = [];
-    const markerPositions = new Map<string, THREE.Vector3>();
     for (const cluster of clusters) {
       const size = 0.026 + Math.min(cluster.count, 12) * 0.004;
       const marker = new THREE.Mesh(
@@ -328,7 +343,6 @@ export default function GlobeRenderer({
       marker.position.copy(
         globePosition(cluster.latitude, cluster.longitude, 2.055),
       );
-      markerPositions.set(cluster.key, marker.position.clone());
       marker.userData.key = cluster.key;
       markerMeshes.push(marker);
       markerGroup.add(marker);
@@ -378,12 +392,12 @@ export default function GlobeRenderer({
     const changeZoom = (change: number) => {
       targetZoomScale = THREE.MathUtils.clamp(
         targetZoomScale + change,
-        0.72,
-        1.38,
+        GLOBE_MIN_ZOOM_SCALE,
+        GLOBE_MAX_ZOOM_SCALE,
       );
     };
-    zoomInRef.current = () => changeZoom(-0.14);
-    zoomOutRef.current = () => changeZoom(0.14);
+    zoomInRef.current = () => changeZoom(-0.16);
+    zoomOutRef.current = () => changeZoom(0.16);
 
     const onPointerDown = (event: PointerEvent) => {
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -416,8 +430,8 @@ export default function GlobeRenderer({
           if (pinchDistance > 0) {
             targetZoomScale = THREE.MathUtils.clamp(
               pinchZoomScale * (pinchDistance / Math.max(distance, 1)),
-              0.72,
-              1.38,
+              GLOBE_MIN_ZOOM_SCALE,
+              GLOBE_MAX_ZOOM_SCALE,
             );
           }
         }
@@ -485,19 +499,36 @@ export default function GlobeRenderer({
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(mount);
     resize();
+    mount.dataset.markerGroups = String(markerGroupsRef.current.length);
 
     let previousTime = performance.now();
+    let lastGroupedZoom = 1;
+    let markerGroupSignature = markerGroupsRef.current
+      .map((group) => group.key)
+      .join("|");
     const projectedPosition = new THREE.Vector3();
     const worldPosition = new THREE.Vector3();
     const positionPhotoMarkers = () => {
       root.updateMatrixWorld(true);
-      for (const [key, position] of markerPositions) {
-        const element = markerRefs.current.get(key);
+      const positionedKeys = new Set<string>();
+      const projectedMarkers: {
+        element: HTMLButtonElement;
+        group: GlobeMarkerGroup;
+        scale: number;
+        worldDepth: number;
+        x: number;
+        y: number;
+      }[] = [];
+      for (const group of markerGroupsRef.current) {
+        const element = markerRefs.current.get(group.key);
         if (!element) continue;
-        worldPosition.copy(position).applyMatrix4(root.matrixWorld);
+        positionedKeys.add(group.key);
+        worldPosition
+          .copy(globePosition(group.latitude, group.longitude, 2.055))
+          .applyMatrix4(root.matrixWorld);
         const isVisible = worldPosition.z > 0.32;
         if (!isVisible) {
-          element.style.opacity = "0";
+          if (element.style.opacity !== "0") element.style.opacity = "0";
           element.style.pointerEvents = "none";
           continue;
         }
@@ -509,10 +540,106 @@ export default function GlobeRenderer({
           0.82,
           1.08,
         );
-        element.style.opacity = "1";
-        element.style.pointerEvents = "auto";
-        element.style.zIndex = String(Math.round(20 + worldPosition.z * 10));
-        element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${scale})`;
+        projectedMarkers.push({
+          element,
+          group,
+          scale,
+          worldDepth: worldPosition.z,
+          x,
+          y,
+        });
+      }
+      for (const [key, element] of markerRefs.current) {
+        if (positionedKeys.has(key)) continue;
+        if (element.style.opacity !== "0") element.style.opacity = "0";
+        element.style.pointerEvents = "none";
+      }
+
+      const parents = projectedMarkers.map((_, index) => index);
+      const find = (index: number): number => {
+        const parent = parents[index];
+        if (parent === undefined || parent === index) return index;
+        const rootIndex = find(parent);
+        parents[index] = rootIndex;
+        return rootIndex;
+      };
+      const union = (first: number, second: number) => {
+        const firstRoot = find(first);
+        const secondRoot = find(second);
+        if (firstRoot !== secondRoot) parents[secondRoot] = firstRoot;
+      };
+      for (let first = 0; first < projectedMarkers.length; first += 1) {
+        for (
+          let second = first + 1;
+          second < projectedMarkers.length;
+          second += 1
+        ) {
+          const firstMarker = projectedMarkers[first];
+          const secondMarker = projectedMarkers[second];
+          if (
+            firstMarker &&
+            secondMarker &&
+            Math.hypot(
+              secondMarker.x - firstMarker.x,
+              secondMarker.y - firstMarker.y,
+            ) < 48
+          ) {
+            union(first, second);
+          }
+        }
+      }
+      const collisionGroups = new Map<
+        number,
+        (typeof projectedMarkers)[number][]
+      >();
+      projectedMarkers.forEach((marker, index) => {
+        const rootIndex = find(index);
+        const collisionGroup = collisionGroups.get(rootIndex) ?? [];
+        collisionGroup.push(marker);
+        collisionGroups.set(rootIndex, collisionGroup);
+      });
+      for (const collisionGroup of collisionGroups.values()) {
+        const ordered = collisionGroup.sort((first, second) =>
+          first.group.key.localeCompare(second.group.key),
+        );
+        const center = ordered.reduce(
+          (point, marker) => ({
+            x: point.x + marker.x / ordered.length,
+            y: point.y + marker.y / ordered.length,
+          }),
+          { x: 0, y: 0 },
+        );
+        const signature = ordered.map((marker) => marker.group.key).join("|");
+        const angleOffset =
+          ([...signature].reduce(
+            (total, character) => total + character.charCodeAt(0),
+            0,
+          ) %
+            360) *
+          (Math.PI / 180);
+        const spreadRadius =
+          ordered.length > 1 ? 28 + Math.max(ordered.length - 2, 0) * 4 : 0;
+
+        ordered.forEach((marker, index) => {
+          const angle =
+            angleOffset + (index / Math.max(ordered.length, 1)) * Math.PI * 2;
+          const x = spreadRadius
+            ? center.x + Math.cos(angle) * spreadRadius
+            : marker.x;
+          const y = spreadRadius
+            ? center.y + Math.sin(angle) * spreadRadius
+            : marker.y;
+          if (marker.element.style.opacity !== "1") {
+            marker.element.style.opacity = "1";
+          }
+          marker.element.style.pointerEvents = "auto";
+          marker.element.style.zIndex = String(
+            Math.round(20 + marker.worldDepth * 10),
+          );
+          marker.element.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${marker.scale})`;
+          marker.element.dataset.globeSpread =
+            ordered.length > 1 ? "true" : "false";
+        });
       }
     };
     const render = (time: number) => {
@@ -525,6 +652,17 @@ export default function GlobeRenderer({
           targetZoomScale,
           Math.min(delta * 10, 1),
         );
+        if (Math.abs(zoomScale - lastGroupedZoom) >= 0.005) {
+          const nextGroups = groupGlobeClusters(clusters, zoomScale);
+          const nextSignature = nextGroups.map((group) => group.key).join("|");
+          lastGroupedZoom = zoomScale;
+          mount.dataset.markerGroups = String(nextGroups.length);
+          if (nextSignature !== markerGroupSignature) {
+            markerGroupSignature = nextSignature;
+            markerGroupsRef.current = nextGroups;
+            setMarkerGroups(nextGroups);
+          }
+        }
         mount.dataset.zoomScale = zoomScale.toFixed(3);
         camera.position.z = fitDistance * zoomScale;
         renderer.render(scene, camera);
@@ -584,12 +722,15 @@ export default function GlobeRenderer({
       )}
       aria-label="Interactive Guild member globe"
     >
-      {clusters.map((cluster) => (
+      {markerGroups.map((group) => (
         <GlobePhotoMarker
-          key={cluster.key}
-          cluster={cluster}
-          markerRef={(element) => setMarkerRef(cluster.key, element)}
-          onSelect={onSelect}
+          key={group.key}
+          group={group}
+          markerRef={(element) => setMarkerRef(group.key, element)}
+          onSelect={(selectedGroup) => {
+            onSelect(selectedGroup.primaryKey);
+            if (selectedGroup.cityKeys.length > 1) zoomInRef.current();
+          }}
         />
       ))}
       <div className="absolute right-3 top-3 z-30 flex overflow-hidden rounded-md border border-white/10 bg-background/80 shadow-lg backdrop-blur sm:right-4 sm:top-4">
