@@ -4,6 +4,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import type { AuditActionKey, AuditResultOutcome } from "@forge/validators";
 import { and, eq, inArray, isNull, ne, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
@@ -39,6 +40,7 @@ import {
 import type { EventGatewayBundle } from "../utils/events/gateway-resolver";
 import type { EventWorkflowRecord } from "../utils/events/orchestration";
 import { permProcedure, protectedProcedure, publicProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import {
   requireEventCheckIn,
   requireEventEdit,
@@ -420,6 +422,156 @@ function blankProjection() {
   };
 }
 
+type EventAuditSnapshot = Pick<
+  typeof Event.$inferSelect,
+  | "deletionIntentAt"
+  | "discordAppliedRevision"
+  | "discordId"
+  | "discordSyncState"
+  | "end_datetime"
+  | "googleAppliedRevision"
+  | "googleId"
+  | "googleSyncState"
+  | "id"
+  | "legacy"
+  | "location"
+  | "name"
+  | "points"
+  | "roles"
+  | "start_datetime"
+>;
+
+async function loadEventAuditSnapshot(eventId: string) {
+  return (
+    (await db.query.Event.findFirst({
+      columns: {
+        deletionIntentAt: true,
+        discordAppliedRevision: true,
+        discordId: true,
+        discordSyncState: true,
+        end_datetime: true,
+        googleAppliedRevision: true,
+        googleId: true,
+        googleSyncState: true,
+        id: true,
+        legacy: true,
+        location: true,
+        name: true,
+        points: true,
+        roles: true,
+        start_datetime: true,
+      },
+      where: and(eq(Event.id, eventId), isNull(Event.hackathonId)),
+    })) ?? null
+  );
+}
+
+function projectionResult(
+  state: EventAuditSnapshot["discordSyncState"],
+): AuditResultOutcome {
+  if (state === "synced") return "succeeded";
+  if (state === "error" || state === "unknown") return "failed_external";
+  return "skipped";
+}
+
+function projectionChanged(
+  before: EventAuditSnapshot,
+  after: EventAuditSnapshot | null,
+) {
+  if (!after) return true;
+  return (
+    before.discordId !== after.discordId ||
+    before.discordSyncState !== after.discordSyncState ||
+    before.discordAppliedRevision !== after.discordAppliedRevision ||
+    before.googleId !== after.googleId ||
+    before.googleSyncState !== after.googleSyncState ||
+    before.googleAppliedRevision !== after.googleAppliedRevision ||
+    before.deletionIntentAt?.getTime() !== after.deletionIntentAt?.getTime()
+  );
+}
+
+function eventUpdateAuditChanges(
+  before: EventAuditSnapshot,
+  after: EventAuditSnapshot,
+) {
+  const values = [
+    ["name", before.name, after.name],
+    [
+      "startAt",
+      before.start_datetime.toISOString(),
+      after.start_datetime.toISOString(),
+    ],
+    [
+      "endAt",
+      before.end_datetime.toISOString(),
+      after.end_datetime.toISOString(),
+    ],
+    ["location", before.location, after.location],
+    ["points", before.points, after.points],
+    ["roles", [...before.roles].sort(), [...after.roles].sort()],
+  ] as const;
+  return values.flatMap(([field, beforeValue, afterValue]) =>
+    JSON.stringify(beforeValue) === JSON.stringify(afterValue)
+      ? []
+      : [{ after: afterValue, before: beforeValue, field }],
+  );
+}
+
+async function auditEventProviderOperation(input: {
+  actionKey: Extract<
+    AuditActionKey,
+    | "event.created"
+    | "event.deleted"
+    | "event.integration.repaired"
+    | "event.updated"
+  >;
+  actor: Parameters<typeof createAdminAuditEvent>[0]["actor"];
+  changes?: Parameters<typeof createAdminAuditEvent>[0]["changes"];
+  deleted?: boolean;
+  event: EventAuditSnapshot;
+  metadata?: Parameters<typeof createAdminAuditEvent>[0]["metadata"];
+  providers: readonly ("discord" | "google")[];
+  resultSnapshot?: EventAuditSnapshot | null;
+}) {
+  const snapshot = input.resultSnapshot ?? input.event;
+  const providerResults = input.providers.map((provider) => {
+    const absentAfterDelete =
+      input.actionKey === "event.deleted" &&
+      (input.deleted ||
+        (snapshot[`${provider}Id`] === null &&
+          snapshot[`${provider}SyncState`] !== "unknown"));
+    return {
+      relation: "result" as const,
+      resultOutcome: absentAfterDelete
+        ? ("succeeded" as const)
+        : projectionResult(snapshot[`${provider}SyncState`]),
+      targetId: provider,
+      targetLabel: `${provider === "discord" ? "Discord" : "Google Calendar"} projection`,
+      targetType: "provider" as const,
+    };
+  });
+  const partial = providerResults.some(
+    ({ resultOutcome }) => resultOutcome !== "succeeded",
+  );
+  await createAdminAuditEvent({
+    actionKey: input.actionKey,
+    actor: input.actor,
+    changes: input.changes,
+    metadata: input.metadata,
+    operationId: randomUUID(),
+    outcome: partial ? "partial_external" : "committed",
+    subjects: [
+      {
+        relation: "primary",
+        targetId: input.event.id,
+        targetLabel: input.event.name,
+        targetType: "event",
+      },
+      ...providerResults,
+    ],
+  });
+}
+
 function submittedCreationHash(input: z.infer<typeof eventCreateSchema>) {
   return createHash("sha256")
     .update(
@@ -659,8 +811,14 @@ export const eventRouter = {
     .query(async ({ ctx, input }) => {
       requireEventRead(ctx);
       await assertClubEventId(input.eventId);
-      const rows = await loadMinimalAttendees(input.eventId);
-      return serializeAttendanceCsv(
+      const [rows, event] = await Promise.all([
+        loadMinimalAttendees(input.eventId),
+        loadEventAuditSnapshot(input.eventId),
+      ]);
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+      const content = serializeAttendanceCsv(
         rows.map((row) => ({
           checkedInAt: row.checkedInAt,
           discordUsername: row.discordUsername,
@@ -672,6 +830,20 @@ export const eventRouter = {
           pointsAwardedEstimated: row.pointsAwardedEstimated,
         })),
       );
+      await createAdminAuditEvent({
+        actionKey: "event.attendance.exported",
+        actor: ctx.session.user,
+        metadata: { rowCount: rows.length },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: event.id,
+            targetLabel: event.name,
+            targetType: "event",
+          },
+        ],
+      });
+      return content;
     }),
 
   /** Returns deterministic event feedback metrics with a strict raw-data split. */
@@ -744,34 +916,59 @@ export const eventRouter = {
       if (!ctx.session.permissions.IS_OFFICER) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const template = await getGlobalFeedbackTemplate();
-      const core = input.definition.questions.slice(
-        0,
-        feedbackDefinition.questions.length,
-      );
-      if (
-        JSON.stringify(core) !== JSON.stringify(feedbackDefinition.questions)
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Core comparable feedback questions are locked.",
-        });
-      }
-      const [saved] = await db
-        .update(FormsSchemas)
-        .set({
-          formData: input.definition,
-          revision: sql`${FormsSchemas.revision} + 1`,
-        })
-        .where(
-          and(
-            eq(FormsSchemas.id, template.id),
-            eq(FormsSchemas.revision, input.expectedRevision),
-          ),
-        )
-        .returning({ revision: FormsSchemas.revision });
-      if (!saved) throw new TRPCError({ code: "CONFLICT" });
-      return saved;
+      return db.transaction(async (tx) => {
+        const template = await getGlobalFeedbackTemplate(tx);
+        const core = input.definition.questions.slice(
+          0,
+          feedbackDefinition.questions.length,
+        );
+        if (
+          JSON.stringify(core) !== JSON.stringify(feedbackDefinition.questions)
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Core comparable feedback questions are locked.",
+          });
+        }
+        const [saved] = await tx
+          .update(FormsSchemas)
+          .set({
+            formData: input.definition,
+            revision: sql`${FormsSchemas.revision} + 1`,
+          })
+          .where(
+            and(
+              eq(FormsSchemas.id, template.id),
+              eq(FormsSchemas.revision, input.expectedRevision),
+            ),
+          )
+          .returning({ revision: FormsSchemas.revision });
+        if (!saved) throw new TRPCError({ code: "CONFLICT" });
+        await createAdminAuditEvent(
+          {
+            actionKey: "event.feedback_template.updated",
+            actor: ctx.session.user,
+            metadata: {
+              questionIds: input.definition.questions.map(({ id }) => id),
+              questionTypes: input.definition.questions.map(
+                ({ type }) => type,
+              ),
+              revisionAfter: saved.revision,
+              revisionBefore: input.expectedRevision,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: template.id,
+                targetLabel: "Global event feedback template",
+                targetType: "feedback_template",
+              },
+            ],
+          },
+          tx,
+        );
+        return saved;
+      });
     }),
 
   addEventFeedbackQuestion: permProcedure
@@ -810,6 +1007,11 @@ export const eventRouter = {
           .where(eq(FormsSchemas.id, config.formId))
           .for("update");
         if (!form) throw new TRPCError({ code: "NOT_FOUND" });
+        const event = await tx.query.Event.findFirst({
+          columns: { id: true, name: true },
+          where: eq(Event.id, input.eventId),
+        });
+        if (!event) throw new TRPCError({ code: "NOT_FOUND" });
         const definition = formDefinitionSchema.parse(form.formData);
         if (definition.questions.some(({ id }) => id === input.question.id)) {
           throw new TRPCError({
@@ -844,13 +1046,43 @@ export const eventRouter = {
               eq(FormsSchemas.revision, form.revision),
             ),
           )
-          .returning({ id: FormsSchemas.id });
+          .returning({
+            id: FormsSchemas.id,
+            revision: FormsSchemas.revision,
+          });
         if (!savedConfig || !savedForm) {
           throw new TRPCError({
             code: "CONFLICT",
             message: "Event feedback changed while saving the question.",
           });
         }
+        await createAdminAuditEvent(
+          {
+            actionKey: "event.feedback_question.added",
+            actor: ctx.session.user,
+            metadata: {
+              questionId: input.question.id,
+              questionType: input.question.type,
+              revisionAfter: savedForm.revision,
+              revisionBefore: form.revision,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: event.id,
+                targetLabel: event.name,
+                targetType: "event",
+              },
+              {
+                relation: "secondary",
+                targetId: input.question.id,
+                targetLabel: `${input.question.type} feedback question`,
+                targetType: "feedback_question",
+              },
+            ],
+          },
+          tx,
+        );
       });
       return { status: "saved" as const };
     }),
@@ -867,10 +1099,34 @@ export const eventRouter = {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       await assertClubEventId(input.eventId);
-      return (await createDbEventFeedbackService()).exportCsv({
-        access: "responses",
-        eventId: input.eventId,
+      const [content, event] = await Promise.all([
+        (await createDbEventFeedbackService()).exportCsv({
+          access: "responses",
+          eventId: input.eventId,
+        }),
+        loadEventAuditSnapshot(input.eventId),
+      ]);
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+      const lines = content.length === 0 ? [] : content.split("\n");
+      await createAdminAuditEvent({
+        actionKey: "event.feedback.exported",
+        actor: ctx.session.user,
+        metadata: {
+          questionCount: input.eventId ? Math.max(0, lines[0]?.split(",").length ?? 0) : 0,
+          rowCount: Math.max(0, lines.length - 1),
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: event.id,
+            targetLabel: event.name,
+            targetType: "event",
+          },
+        ],
       });
+      return content;
     }),
 
   /** Deletes feedback answers while deliberately preserving reward history. */
@@ -884,7 +1140,61 @@ export const eventRouter = {
       ) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      return (await createDbEventFeedbackService()).deleteResponse(input);
+      const [response] = await db
+        .select({
+          eventId: EventFeedbackConfig.eventId,
+          eventName: Event.name,
+          memberFirstName: Member.firstName,
+          memberId: Member.id,
+          memberLastName: Member.lastName,
+          responseId: FormResponse.id,
+        })
+        .from(FormResponse)
+        .innerJoin(
+          EventFeedbackConfig,
+          eq(FormResponse.form, EventFeedbackConfig.formId),
+        )
+        .innerJoin(Event, eq(Event.id, EventFeedbackConfig.eventId))
+        .innerJoin(Member, eq(Member.userId, FormResponse.userId))
+        .where(eq(FormResponse.id, input.responseId));
+      const result = await (
+        await createDbEventFeedbackService()
+      ).deleteResponse(input);
+      if (!response) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Feedback response not found.",
+        });
+      }
+      await createAdminAuditEvent({
+        actionKey: "event.feedback_response.deleted",
+        actor: ctx.session.user,
+        metadata: { rewardHistoryPreserved: true },
+        subjects: [
+          {
+            memberId: response.memberId,
+            relation: "primary",
+            targetId: response.responseId,
+            targetLabel: `Feedback response for ${response.eventName}`,
+            targetType: "form_response",
+          },
+          {
+            relation: "secondary",
+            targetId: response.eventId,
+            targetLabel: response.eventName,
+            targetType: "event",
+          },
+          {
+            memberId: response.memberId,
+            relation: "secondary",
+            targetId: response.memberId,
+            targetLabel:
+              `${response.memberFirstName} ${response.memberLastName}`.trim(),
+            targetType: "member",
+          },
+        ],
+      });
+      return result;
     }),
 
   /** Creates an idempotently reserved Club event and starts provider sync. */
@@ -979,7 +1289,7 @@ export const eventRouter = {
       if (event.discordChannel) {
         channelTypes.set(event.discordChannel.id, event.discordChannel.type);
       }
-      return (
+      const result = await (
         await createOrchestrator(ctx.session, channelTypes, {
           pointsOverride: input.pointsOverride ?? null,
           roleIds,
@@ -989,6 +1299,26 @@ export const eventRouter = {
         actorId: ctx.session.user.id,
         payloadHash,
       });
+      const snapshot = await loadEventAuditSnapshot(result.eventId);
+      if (!snapshot) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+      await auditEventProviderOperation({
+        actionKey: "event.created",
+        actor: ctx.session.user,
+        event: snapshot,
+        metadata: {
+          creationSource: "new",
+          discordStatus: snapshot.discordSyncState,
+          endAt: snapshot.end_datetime.toISOString(),
+          googleStatus: snapshot.googleSyncState,
+          startAt: snapshot.start_datetime.toISOString(),
+          tagId: input.tagId,
+        },
+        providers: ["discord", "google"],
+        resultSnapshot: snapshot,
+      });
+      return result;
     }),
 
   /** Commits a Club event edit before reconciling provider projections. */
@@ -1110,7 +1440,7 @@ export const eventRouter = {
           const feedback = await createDbEventFeedbackService(tx);
           await feedback.provisionForEvent({ eventId: existing.id });
           await feedback.recomputeWindowForEvent({ eventId: existing.id });
-          return { changed: false, row: existing };
+          return { before: existing, changed: false, row: existing };
         }
 
         const [saved] = await tx
@@ -1145,7 +1475,7 @@ export const eventRouter = {
           await feedback.provisionForEvent({ eventId: saved.id });
           await feedback.recomputeWindowForEvent({ eventId: saved.id });
         }
-        return { changed: true, row: saved };
+        return { before: existing, changed: true, row: saved };
       });
       if (!updated.row) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const channelTypes = new Map<string, "stage" | "voice">();
@@ -1166,12 +1496,64 @@ export const eventRouter = {
         } catch {
           logger.warn("Legacy event audit transport failed.");
         }
+        const snapshot = await loadEventAuditSnapshot(updated.row.id);
+        if (!snapshot) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Event not found.",
+          });
+        }
+        await createAdminAuditEvent({
+          actionKey: "event.updated",
+          actor: ctx.session.user,
+          changes: eventUpdateAuditChanges(updated.before, snapshot),
+          subjects: [
+            {
+              relation: "primary",
+              targetId: snapshot.id,
+              targetLabel: snapshot.name,
+              targetType: "event",
+            },
+          ],
+        });
         return { eventId: updated.row.id, status: "legacy_updated" as const };
       }
-      return orchestrator.sync(updated.row.id, {
+      const result = await orchestrator.sync(updated.row.id, {
         actorId: ctx.session.user.id,
         auditAction: "update",
       });
+      const snapshot = await loadEventAuditSnapshot(updated.row.id);
+      if (!snapshot) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
+      if (updated.changed) {
+        await auditEventProviderOperation({
+          actionKey: "event.updated",
+          actor: ctx.session.user,
+          changes: eventUpdateAuditChanges(updated.before, snapshot),
+          event: snapshot,
+          metadata: {
+            discordStatus: snapshot.discordSyncState,
+            googleStatus: snapshot.googleSyncState,
+          },
+          providers: ["discord", "google"],
+          resultSnapshot: snapshot,
+        });
+      } else if (projectionChanged(updated.before, snapshot)) {
+        await auditEventProviderOperation({
+          actionKey: "event.integration.repaired",
+          actor: ctx.session.user,
+          event: snapshot,
+          metadata: {
+            discordStatus: snapshot.discordSyncState,
+            googleStatus: snapshot.googleSyncState,
+            providerScope: "failed",
+          },
+          providers: ["discord", "google"],
+          resultSnapshot: snapshot,
+        });
+      }
+      return result;
     }),
 
   /** Resumes synchronization for a recoverable Club event. */

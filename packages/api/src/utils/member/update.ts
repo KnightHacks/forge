@@ -17,6 +17,7 @@ import {
 import { replaceEmploymentHistory } from "../career/employment";
 import { codeOwnedFormConfigs } from "../forms/config";
 import { updateResponse } from "../forms/manager";
+import type { TransactionDb } from "../db";
 import { isUniqueViolation } from "./profile";
 
 function getCodeOfConductAccepted(responseData: unknown) {
@@ -71,6 +72,7 @@ function memberInputFromRow(
 }
 
 export async function updateMemberProfile({
+  afterUpdate,
   database,
   discordUser,
   input,
@@ -78,6 +80,13 @@ export async function updateMemberProfile({
   points,
   userId,
 }: {
+  afterUpdate?: (context: {
+    after: SelectMember;
+    before: SelectMember;
+    database: TransactionDb;
+    employmentCountAfter: number | null;
+    employmentCountBefore: number | null;
+  }) => Promise<void>;
   database: typeof forgeDb;
   discordUser?: string | null;
   input: MemberUpdateInput;
@@ -96,6 +105,16 @@ export async function updateMemberProfile({
         message: "Member profile does not exist.",
       });
     }
+    const employmentCountBefore =
+      afterUpdate && input.employmentHistory !== undefined
+        ? (
+            await tx.query.Employment.findMany({
+              where: (employment, { eq }) =>
+                eq(employment.memberId, existingMember.id),
+              columns: { id: true },
+            })
+          ).length
+        : null;
 
     const values = {
       firstName: input.firstName,
@@ -189,6 +208,16 @@ export async function updateMemberProfile({
         upsert: true,
       },
       session: { user: { id: userId } },
+    });
+    await afterUpdate?.({
+      after: updatedMember,
+      before: existingMember,
+      database: tx,
+      employmentCountAfter:
+        input.employmentHistory === undefined
+          ? null
+          : input.employmentHistory.length,
+      employmentCountBefore,
     });
 
     return updatedMember;

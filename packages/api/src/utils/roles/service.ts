@@ -11,6 +11,7 @@ import {
   FormSectionRoles,
   Issue,
   IssuesToTeamsVisibility,
+  Member,
 } from "@forge/db/schemas/knight-hacks";
 
 import type { RoleDiscordGateway } from "./discord-gateway";
@@ -194,7 +195,15 @@ export async function syncLinkedRole(
     .where(eq(Roles.id, role.id));
 
   const [users, assignmentRows] = await Promise.all([
-    db.select().from(User),
+    db
+      .select({
+        discordUserId: User.discordUserId,
+        id: User.id,
+        memberId: Member.id,
+        name: User.name,
+      })
+      .from(User)
+      .leftJoin(Member, eq(Member.userId, User.id)),
     db
       .select({ id: Permissions.id, userId: Permissions.userId })
       .from(Permissions)
@@ -215,6 +224,13 @@ export async function syncLinkedRole(
     skipped: 0,
     unchanged: 0,
   };
+  const results: {
+    effect: "added" | "removed" | "unchanged";
+    memberId: string | null;
+    outcome: "failed_external" | "failed_internal" | "skipped" | "succeeded";
+    userId: string;
+    userLabel: string;
+  }[] = [];
   for (const user of users) {
     const assignments = assignmentsByUser.get(user.id) ?? [];
     let member: APIGuildMember;
@@ -225,8 +241,25 @@ export async function syncLinkedRole(
       });
       summary.checked += 1;
     } catch (error) {
-      if (isDiscordNotFound(error)) summary.skipped += 1;
-      else summary.failed += 1;
+      if (isDiscordNotFound(error)) {
+        summary.skipped += 1;
+        results.push({
+          effect: "unchanged",
+          memberId: user.memberId,
+          outcome: "skipped",
+          userId: user.id,
+          userLabel: user.name ?? user.discordUserId,
+        });
+      } else {
+        summary.failed += 1;
+        results.push({
+          effect: "unchanged",
+          memberId: user.memberId,
+          outcome: "failed_external",
+          userId: user.id,
+          userLabel: user.name ?? user.discordUserId,
+        });
+      }
       continue;
     }
 
@@ -237,6 +270,13 @@ export async function syncLinkedRole(
             .insert(Permissions)
             .values({ roleId: role.id, userId: user.id });
           summary.added += 1;
+          results.push({
+            effect: "added",
+            memberId: user.memberId,
+            outcome: "succeeded",
+            userId: user.id,
+            userLabel: user.name ?? user.discordUserId,
+          });
         } else {
           const duplicates = assignments.slice(1);
           if (duplicates.length > 0) {
@@ -246,6 +286,13 @@ export async function syncLinkedRole(
             summary.removed += duplicates.length;
           }
           summary.unchanged += 1;
+          results.push({
+            effect: duplicates.length > 0 ? "removed" : "unchanged",
+            memberId: user.memberId,
+            outcome: duplicates.length > 0 ? "succeeded" : "skipped",
+            userId: user.id,
+            userLabel: user.name ?? user.discordUserId,
+          });
         }
       } else if (assignments.length > 0) {
         if (
@@ -256,17 +303,45 @@ export async function syncLinkedRole(
           ))
         ) {
           summary.failed += 1;
+          results.push({
+            effect: "unchanged",
+            memberId: user.memberId,
+            outcome: "failed_internal",
+            userId: user.id,
+            userLabel: user.name ?? user.discordUserId,
+          });
           continue;
         }
         await db
           .delete(Permissions)
           .where(inArray(Permissions.id, assignments));
         summary.removed += assignments.length;
+        results.push({
+          effect: "removed",
+          memberId: user.memberId,
+          outcome: "succeeded",
+          userId: user.id,
+          userLabel: user.name ?? user.discordUserId,
+        });
       } else {
         summary.unchanged += 1;
+        results.push({
+          effect: "unchanged",
+          memberId: user.memberId,
+          outcome: "skipped",
+          userId: user.id,
+          userLabel: user.name ?? user.discordUserId,
+        });
       }
     } catch {
       summary.failed += 1;
+      results.push({
+        effect: "unchanged",
+        memberId: user.memberId,
+        outcome: "failed_internal",
+        userId: user.id,
+        userLabel: user.name ?? user.discordUserId,
+      });
     }
   }
 
@@ -277,6 +352,7 @@ export async function syncLinkedRole(
       name: liveRole.name,
       teamHexcodeColor: roleColorToHex(liveRole.color),
     },
+    results,
     summary,
   };
 }

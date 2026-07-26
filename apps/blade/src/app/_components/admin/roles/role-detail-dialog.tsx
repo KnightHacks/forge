@@ -38,10 +38,12 @@ import { RolePermissionEditor } from "./role-permission-editor";
 type RoleDetail = RouterOutputs["roles"]["getRole"];
 
 export function RoleDetailDialog({
+  canManageOfficer = false,
   detail,
   onChanged,
   onClose,
 }: {
+  canManageOfficer?: boolean;
   detail: RoleDetail;
   onChanged: () => void;
   onClose: () => void;
@@ -328,6 +330,7 @@ export function RoleDetailDialog({
               </p>
             </div>
             <RolePermissionEditor
+              canManageOfficer={canManageOfficer}
               selected={permissions}
               onChange={setPermissions}
             />
@@ -337,7 +340,11 @@ export function RoleDetailDialog({
             <Button
               type="button"
               variant="outline"
-              disabled={detail.isMissing || sync.isPending}
+              disabled={
+                detail.isMissing ||
+                sync.isPending ||
+                (!canManageOfficer && detail.permissions.includes("IS_OFFICER"))
+              }
               onClick={() => sync.mutate({ roleId: detail.id })}
             >
               {sync.isPending ? (
@@ -351,7 +358,12 @@ export function RoleDetailDialog({
               <Button
                 type="button"
                 variant="destructive"
-                disabled={hasDependencies || !detail.canRemoveAdmin}
+                disabled={
+                  hasDependencies ||
+                  !detail.canRemoveAdmin ||
+                  (!canManageOfficer &&
+                    detail.permissions.includes("IS_OFFICER"))
+                }
                 onClick={() => setUnlinkOpen(true)}
               >
                 <Trash2 className="h-4 w-4" /> Unlink role

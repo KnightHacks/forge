@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
@@ -5,6 +6,7 @@ import { DISCORD } from "@forge/consts";
 import { and, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import { Member } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
 import {
   discordRoleIdSchema,
@@ -19,14 +21,20 @@ import {
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
+import {
+  appendAdminAuditResults,
+  createAdminAuditEvent,
+} from "../utils/audit/service";
 import { loadPermissionsForUser } from "../utils/permissions-db";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 import {
   filterDiscordRolesForLinking,
   filterRoleUsers,
   isAdministrativePermissionString,
+  permissionBitstringToKeys,
   permissionKeysToBitstring,
   retainsAssignedRoleAdministratorAfterRevocations,
+  roleHasPermission,
   runRoleAssignmentBatch,
 } from "../utils/roles/management";
 import {
@@ -64,6 +72,17 @@ function canConfigureRole(
     ctx.session.permissions.IS_OFFICER === true ||
     ctx.session.permissions.CONFIGURE_ROLES === true
   );
+}
+
+function requireOfficerForOfficerEscalation(
+  ctx: Parameters<typeof permissions.controlPerms.or>[1],
+) {
+  if (ctx.session.permissions.IS_OFFICER !== true) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only an existing officer may grant or remove officer access.",
+    });
+  }
 }
 
 const eventFeedbackExcludedRoleNames = new Set([
@@ -205,34 +224,77 @@ export const rolesRouter = {
     .input(roleCreateSchema)
     .mutation(async ({ ctx, input }) => {
       requireConfigure(ctx);
+      if (input.permissions.includes("IS_OFFICER")) {
+        requireOfficerForOfficerEscalation(ctx);
+      }
       const gateway = await resolveRoleDiscordGateway(ctx.session);
       const discordRole = assertEligibleDiscordRole(
         await getDiscordRole(gateway, input.discordRoleId),
       );
       await assertUniqueDiscordRole(discordRole);
-      const [created] = await db
-        .insert(Roles)
-        .values({
-          discordRoleId: discordRole.id,
-          eventFeedbackExcluded: eventFeedbackExcludedRoleNames.has(
-            discordRole.name,
-          ),
-          name: discordRole.name,
-          permissions: permissionKeysToBitstring(input.permissions),
-          teamHexcodeColor: roleColorToHex(discordRole.color),
-        })
-        .returning();
-      if (!created) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "The role link could not be created.",
-        });
-      }
+      const operationId = randomUUID();
+      const { auditEventId, created } = await db.transaction(async (tx) => {
+        const [createdRole] = await tx
+          .insert(Roles)
+          .values({
+            discordRoleId: discordRole.id,
+            eventFeedbackExcluded: eventFeedbackExcludedRoleNames.has(
+              discordRole.name,
+            ),
+            name: discordRole.name,
+            permissions: permissionKeysToBitstring(input.permissions),
+            teamHexcodeColor: roleColorToHex(discordRole.color),
+          })
+          .returning();
+        if (!createdRole) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "The role link could not be created.",
+          });
+        }
+        const audit = await createAdminAuditEvent(
+          {
+            actionKey: "role.linked",
+            actor: ctx.session.user,
+            metadata: {
+              discordRoleId: discordRole.id,
+              discordRoleName: discordRole.name,
+              permissionKeys: input.permissions,
+            },
+            operationId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: createdRole.id,
+                targetLabel: createdRole.name,
+                targetType: "role",
+              },
+              {
+                relation: "secondary",
+                targetId: discordRole.id,
+                targetLabel: discordRole.name,
+                targetType: "discord_role",
+              },
+            ],
+          },
+          tx,
+        );
+        return { auditEventId: audit.id, created: createdRole };
+      });
       let sync;
       try {
         sync = await syncLinkedRole(created, gateway);
       } catch {
         sync = {
+          results: [
+            {
+              effect: "unchanged" as const,
+              memberId: null,
+              outcome: "failed_external" as const,
+              userId: discordRole.id,
+              userLabel: "Discord role synchronization",
+            },
+          ],
           role: {
             discordRoleId: created.discordRoleId,
             id: created.id,
@@ -249,6 +311,19 @@ export const rolesRouter = {
           },
         };
       }
+      await appendAdminAuditResults({
+        actionKey: "role.linked",
+        eventId: auditEventId,
+        results: sync.results.map((result) => ({
+          memberId: result.memberId,
+          metadata: { effect: result.effect },
+          resultOutcome: result.outcome,
+          targetId: result.userId,
+          targetLabel: result.userLabel,
+          targetType:
+            result.userId === discordRole.id ? "provider" : ("user" as const),
+        })),
+      });
       return { created, sync };
     }),
 
@@ -269,6 +344,12 @@ export const rolesRouter = {
       await assertUniqueDiscordRole(live, role.id);
       const nextPermissions = permissionKeysToBitstring(input.permissions);
       if (
+        roleHasPermission(role.permissions, "IS_OFFICER") !==
+        roleHasPermission(nextPermissions, "IS_OFFICER")
+      ) {
+        requireOfficerForOfficerEscalation(ctx);
+      }
+      if (
         isAdministrativePermissionString(role.permissions) &&
         !isAdministrativePermissionString(nextPermissions) &&
         !(await retainsAdministratorAfter(role.id, nextPermissions))
@@ -278,16 +359,46 @@ export const rolesRouter = {
           message: "This change would remove the final role administrator.",
         });
       }
-      const [updated] = await db
-        .update(Roles)
-        .set({
-          name: live.name,
-          permissions: nextPermissions,
-          teamHexcodeColor: roleColorToHex(live.color),
-        })
-        .where(eq(Roles.id, role.id))
-        .returning();
-      return updated;
+      return db.transaction(async (tx) => {
+        const [updated] = await tx
+          .update(Roles)
+          .set({
+            name: live.name,
+            permissions: nextPermissions,
+            teamHexcodeColor: roleColorToHex(live.color),
+          })
+          .where(eq(Roles.id, role.id))
+          .returning();
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.permissions.updated",
+            actor: ctx.session.user,
+            changes: [
+              {
+                after: permissionBitstringToKeys(nextPermissions),
+                before: permissionBitstringToKeys(role.permissions),
+                field: "permissionKeys",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: live.name,
+                targetType: "role",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
     }),
 
   updateIssueReminders: permProcedure
@@ -305,22 +416,60 @@ export const rolesRouter = {
             "Choose a writable text channel from this Discord server or enter its channel ID.",
         });
       }
-      const [updated] = await db
-        .update(Roles)
-        .set({
-          issueReminderChannel: input.channelId,
-          issueRemindersEnabled: input.enabled,
-        })
-        .where(eq(Roles.id, input.roleId))
-        .returning({
-          channelId: Roles.issueReminderChannel,
-          enabled: Roles.issueRemindersEnabled,
-          roleId: Roles.id,
-        });
-      if (!updated) {
+      const role = await db.query.Roles.findFirst({
+        where: eq(Roles.id, input.roleId),
+      });
+      if (!role) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
       }
-      return updated;
+      return db.transaction(async (tx) => {
+        const [updated] = await tx
+          .update(Roles)
+          .set({
+            issueReminderChannel: input.channelId,
+            issueRemindersEnabled: input.enabled,
+          })
+          .where(eq(Roles.id, input.roleId))
+          .returning({
+            channelId: Roles.issueReminderChannel,
+            enabled: Roles.issueRemindersEnabled,
+            roleId: Roles.id,
+          });
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.issue_reminders.updated",
+            actor: ctx.session.user,
+            changes: [
+              {
+                after: input.enabled,
+                before: role.issueRemindersEnabled,
+                field: "enabled",
+              },
+              {
+                after: input.channelId,
+                before: role.issueReminderChannel,
+                field: "channelId",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: role.name,
+                targetType: "role",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
     }),
 
   syncRole: permProcedure
@@ -334,7 +483,43 @@ export const rolesRouter = {
       if (!role) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
       }
-      return syncLinkedRole(role, gateway);
+      if (roleHasPermission(role.permissions, "IS_OFFICER")) {
+        requireOfficerForOfficerEscalation(ctx);
+      }
+      const operationId = randomUUID();
+      const result = await syncLinkedRole(role, gateway);
+      await createAdminAuditEvent({
+        actionKey: "role.synced",
+        actor: ctx.session.user,
+        metadata: {
+          addedCount: result.summary.added,
+          checkedCount: result.summary.checked,
+          failedCount: result.summary.failed,
+          removedCount: result.summary.removed,
+          skippedCount: result.summary.skipped,
+          unchangedCount: result.summary.unchanged,
+        },
+        operationId,
+        outcome: result.summary.failed > 0 ? "partial_external" : "committed",
+        subjects: [
+          {
+            relation: "primary",
+            targetId: role.id,
+            targetLabel: result.role.name,
+            targetType: "role",
+          },
+          ...result.results.map((syncResult) => ({
+            memberId: syncResult.memberId,
+            metadata: { effect: syncResult.effect },
+            relation: "result" as const,
+            resultOutcome: syncResult.outcome,
+            targetId: syncResult.userId,
+            targetLabel: syncResult.userLabel,
+            targetType: "user" as const,
+          })),
+        ],
+      });
+      return result;
     }),
 
   batchAssign: permProcedure
@@ -342,10 +527,14 @@ export const rolesRouter = {
     .mutation(async ({ ctx, input }) => {
       requireAssign(ctx);
       const gateway = await resolveRoleDiscordGateway(ctx.session);
-      const [roleRows, userRows, assignmentRows, discordRoles] =
+      const [roleRows, userRows, memberRows, assignmentRows, discordRoles] =
         await Promise.all([
           db.select().from(Roles).where(inArray(Roles.id, input.roleIds)),
           db.select().from(User).where(inArray(User.id, input.userIds)),
+          db
+            .select({ id: Member.id, userId: Member.userId })
+            .from(Member)
+            .where(inArray(Member.userId, input.userIds)),
           db
             .select({ roleId: Permissions.roleId, userId: Permissions.userId })
             .from(Permissions)
@@ -365,6 +554,13 @@ export const rolesRouter = {
           code: "NOT_FOUND",
           message: "One or more selected users or roles no longer exist.",
         });
+      }
+      if (
+        roleRows.some((role) =>
+          roleHasPermission(role.permissions, "IS_OFFICER"),
+        )
+      ) {
+        requireOfficerForOfficerEscalation(ctx);
       }
       if (
         input.action === "revoke" &&
@@ -402,7 +598,7 @@ export const rolesRouter = {
           message: "One or more selected Discord roles are unavailable.",
         });
       }
-      return runRoleAssignmentBatch({
+      const result = await runRoleAssignmentBatch({
         action: input.action,
         existingPairs: new Set(
           assignmentRows.map((row) => `${row.userId}:${row.roleId}`),
@@ -425,6 +621,74 @@ export const rolesRouter = {
         roles: roleRows,
         users: userRows,
       });
+      const operationId = randomUUID();
+      const usersById = new Map(userRows.map((user) => [user.id, user]));
+      const rolesById = new Map(roleRows.map((role) => [role.id, role]));
+      const memberIdsByUserId = new Map(
+        memberRows.map((member) => [member.userId, member.id]),
+      );
+      const resultSubject = (
+        pair: (typeof result.succeeded)[number],
+        resultOutcome:
+          | "compensated"
+          | "failed_external"
+          | "failed_internal"
+          | "skipped"
+          | "succeeded",
+      ) => {
+        const user = usersById.get(pair.userId);
+        const role = rolesById.get(pair.roleId);
+        return {
+          memberId: memberIdsByUserId.get(pair.userId) ?? null,
+          metadata: {
+            compensated: "compensated" in pair && pair.compensated === true,
+            roleId: pair.roleId,
+            roleName: role?.name ?? "Unknown role",
+            stage: "stage" in pair ? (pair.stage ?? null) : null,
+          },
+          relation: "result" as const,
+          resultOutcome,
+          targetId: pair.userId,
+          targetLabel: `${user?.name ?? user?.discordUserId ?? "Unknown user"} · ${role?.name ?? "Unknown role"}`,
+          targetType: "user" as const,
+        };
+      };
+      await createAdminAuditEvent({
+        actionKey:
+          input.action === "grant"
+            ? "role.assignments.granted"
+            : "role.assignments.revoked",
+        actor: ctx.session.user,
+        metadata: {
+          failedCount: result.failed.length,
+          selectedCount: input.userIds.length * input.roleIds.length,
+          skippedCount: result.skipped.length,
+          succeededCount: result.succeeded.length,
+        },
+        operationId,
+        outcome: result.failed.length > 0 ? "partial_external" : "committed",
+        subjects: [
+          {
+            relation: "primary",
+            targetId: operationId,
+            targetLabel: `${input.action === "grant" ? "Grant" : "Revoke"} ${input.userIds.length} user${input.userIds.length === 1 ? "" : "s"} × ${input.roleIds.length} role${input.roleIds.length === 1 ? "" : "s"}`,
+            targetType: "role_assignment_batch",
+          },
+          ...result.succeeded.map((pair) => resultSubject(pair, "succeeded")),
+          ...result.skipped.map((pair) => resultSubject(pair, "skipped")),
+          ...result.failed.map((pair) =>
+            resultSubject(
+              pair,
+              pair.compensated
+                ? "compensated"
+                : pair.stage === "discord"
+                  ? "failed_external"
+                  : "failed_internal",
+            ),
+          ),
+        ],
+      });
+      return result;
     }),
 
   unlinkRole: permProcedure
@@ -437,6 +701,9 @@ export const rolesRouter = {
       if (!role) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
       }
+      if (roleHasPermission(role.permissions, "IS_OFFICER")) {
+        requireOfficerForOfficerEscalation(ctx);
+      }
       if (
         isAdministrativePermissionString(role.permissions) &&
         !(await retainsAdministratorAfter(role.id, null))
@@ -446,6 +713,7 @@ export const rolesRouter = {
           message: "This role is the final assigned role administrator.",
         });
       }
+      const operationId = randomUUID();
       await db.transaction(async (tx) => {
         const [lockedRole] = await tx
           .select({ id: Roles.id })
@@ -465,10 +733,49 @@ export const rolesRouter = {
             message: "This role is still used by another Blade feature.",
           });
         }
+        const assignments = await tx
+          .select({
+            memberId: Member.id,
+            userId: User.id,
+            userLabel: User.name,
+          })
+          .from(Permissions)
+          .innerJoin(User, eq(User.id, Permissions.userId))
+          .leftJoin(Member, eq(Member.userId, User.id))
+          .where(eq(Permissions.roleId, lockedRole.id));
         await tx
           .delete(Permissions)
           .where(eq(Permissions.roleId, lockedRole.id));
         await tx.delete(Roles).where(eq(Roles.id, lockedRole.id));
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.unlinked",
+            actor: ctx.session.user,
+            metadata: {
+              permissionKeys: permissionBitstringToKeys(role.permissions),
+              removedAssignmentCount: assignments.length,
+            },
+            operationId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: role.name,
+                targetType: "role",
+              },
+              ...assignments.map((assignment) => ({
+                memberId: assignment.memberId,
+                metadata: { effect: "removed" },
+                relation: "result" as const,
+                resultOutcome: "succeeded" as const,
+                targetId: assignment.userId,
+                targetLabel: assignment.userLabel ?? assignment.userId,
+                targetType: "user" as const,
+              })),
+            ],
+          },
+          tx,
+        );
       });
       return { id: role.id };
     }),

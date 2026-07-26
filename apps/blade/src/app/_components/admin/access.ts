@@ -53,6 +53,10 @@ export function canAccessIssues(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessAdminLogs(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true;
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     analytics: canAccessAnalytics(permissions),
@@ -60,6 +64,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),
     issues: canAccessIssues(permissions),
+    logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),
   };

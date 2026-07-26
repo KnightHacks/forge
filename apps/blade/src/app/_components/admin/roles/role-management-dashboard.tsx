@@ -73,6 +73,7 @@ type RoleUser = RoleUsers["users"][number];
 interface RoleManagementAccess {
   canAssign: boolean;
   canConfigure: boolean;
+  isOfficer?: boolean;
 }
 
 function roleManagementHref(input: RoleManagementInput) {
@@ -354,12 +355,14 @@ function AssignmentRoleFilters({
 }
 
 function RoleList({
+  canManageOfficer,
   input,
   isNavigating,
   onNavigate,
   onRefresh,
   roles,
 }: {
+  canManageOfficer: boolean;
   input: RoleManagementInput;
   isNavigating: boolean;
   onNavigate: (next: RoleManagementInput) => void;
@@ -583,7 +586,12 @@ function RoleList({
                               size="sm"
                               variant="outline"
                               aria-label={`Sync ${role.name}`}
-                              disabled={role.isMissing || sync.isPending}
+                              disabled={
+                                role.isMissing ||
+                                sync.isPending ||
+                                (!canManageOfficer &&
+                                  role.permissions.includes("IS_OFFICER"))
+                              }
                               onClick={() => {
                                 setSyncingRoleId(role.id);
                                 sync.mutate({ roleId: role.id });
@@ -634,7 +642,12 @@ function RoleList({
                         variant="outline"
                         className="min-w-0 px-2"
                         aria-label={`Sync ${role.name}`}
-                        disabled={role.isMissing || sync.isPending}
+                        disabled={
+                          role.isMissing ||
+                          sync.isPending ||
+                          (!canManageOfficer &&
+                            role.permissions.includes("IS_OFFICER"))
+                        }
                         onClick={() => {
                           setSyncingRoleId(role.id);
                           sync.mutate({ roleId: role.id });
@@ -666,6 +679,7 @@ function RoleList({
         </CardContent>
       </Card>
       <CreateRoleDialog
+        canManageOfficer={canManageOfficer}
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={onRefresh}
@@ -675,6 +689,7 @@ function RoleList({
 }
 
 function AssignmentPanel({
+  canManageOfficer,
   input,
   isNavigating,
   onNavigate,
@@ -682,6 +697,7 @@ function AssignmentPanel({
   roles,
   users,
 }: {
+  canManageOfficer: boolean;
   input: RoleManagementInput;
   isNavigating: boolean;
   onNavigate: (next: RoleManagementInput) => void;
@@ -714,7 +730,11 @@ function AssignmentPanel({
     },
   });
   const pairCount = selectedUsers.length * selectedRoles.length;
-  const availableRoles = roles.filter((role) => !role.isMissing);
+  const availableRoles = roles.filter(
+    (role) =>
+      !role.isMissing &&
+      (canManageOfficer || !role.permissions.includes("IS_OFFICER")),
+  );
   const { page, pageCount, pageSize, totalCount } = users.pagination;
   const firstResult = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastResult = Math.min(page * pageSize, totalCount);
@@ -1220,6 +1240,7 @@ export function RoleManagementDashboard({
 
       {effectiveView === "roles" && access.canConfigure ? (
         <RoleList
+          canManageOfficer={access.isOfficer === true}
           input={input}
           isNavigating={isNavigating}
           onNavigate={navigate}
@@ -1228,6 +1249,7 @@ export function RoleManagementDashboard({
         />
       ) : users ? (
         <AssignmentPanel
+          canManageOfficer={access.isOfficer === true}
           input={input}
           isNavigating={isNavigating}
           onNavigate={navigate}
@@ -1250,6 +1272,7 @@ export function RoleManagementDashboard({
 
       {detail && access.canConfigure && (
         <RoleDetailDialog
+          canManageOfficer={access.isOfficer === true}
           key={detail.id}
           detail={detail}
           onChanged={refresh}

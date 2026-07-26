@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -28,6 +30,7 @@ import {
 } from "@forge/validators";
 
 import { permProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
@@ -138,6 +141,105 @@ async function auditAdminMutation({
   } catch (error) {
     logger.warn(`Unable to deliver Blade audit log for ${title}:`, error);
   }
+}
+
+function memberAuditLabel(member: {
+  discordUser: string;
+  firstName: string;
+  lastName: string;
+}) {
+  return (
+    `${member.firstName} ${member.lastName}`.trim() ||
+    member.discordUser ||
+    "Unknown member"
+  );
+}
+
+function memberAuditSubject(member: {
+  discordUser: string;
+  firstName: string;
+  id: string;
+  lastName: string;
+}) {
+  return {
+    memberId: member.id,
+    relation: "primary" as const,
+    targetId: member.id,
+    targetLabel: memberAuditLabel(member),
+    targetType: "member" as const,
+  };
+}
+
+function dataUrlByteSize(fileContent: string) {
+  const payload = fileContent.slice(fileContent.indexOf(",") + 1);
+  return Buffer.from(payload, "base64").byteLength;
+}
+
+function dataUrlMimeType(fileContent: string) {
+  const separatorIndex = fileContent.indexOf(";");
+  return separatorIndex > 5
+    ? fileContent.slice("data:".length, separatorIndex)
+    : "application/octet-stream";
+}
+
+function activeMemberFilterFacets(input: AdminMemberListInput) {
+  return [
+    input.query ? "query" : null,
+    input.duesStatuses.length > 0 ? "duesStatuses" : null,
+    input.schools.length > 0 ? "schools" : null,
+    input.majors.length > 0 ? "majors" : null,
+    input.levelsOfStudy.length > 0 ? "levelsOfStudy" : null,
+    input.graduationYears.length > 0 ? "graduationYears" : null,
+    input.companies.length > 0 ? "companies" : null,
+    input.guildVisibilities.length > 0 ? "guildVisibilities" : null,
+    input.genders.length > 0 ? "genders" : null,
+    input.racesOrEthnicities.length > 0 ? "racesOrEthnicities" : null,
+    input.joinedFrom ? "joinedFrom" : null,
+    input.joinedTo ? "joinedTo" : null,
+  ].filter((facet): facet is string => facet !== null);
+}
+
+function memberProfileAuditChanges({
+  after,
+  before,
+  employmentCountAfter,
+  employmentCountBefore,
+}: {
+  after: SelectMember;
+  before: SelectMember;
+  employmentCountAfter: number | null;
+  employmentCountBefore: number | null;
+}) {
+  const fields = [
+    "points",
+    "firstName",
+    "lastName",
+    "major",
+    "school",
+    "gradDate",
+    "shirtSize",
+    "gender",
+    "raceOrEthnicity",
+  ] as const;
+  const changes = fields.flatMap((field) =>
+    before[field] === after[field]
+      ? []
+      : [{ after: after[field], before: before[field], field }],
+  );
+
+  if (
+    employmentCountBefore !== null &&
+    employmentCountAfter !== null &&
+    employmentCountBefore !== employmentCountAfter
+  ) {
+    changes.push({
+      after: employmentCountAfter,
+      before: employmentCountBefore,
+      field: "employmentCount",
+    });
+  }
+
+  return changes;
 }
 
 function structuredMemberConditions(input: AdminMemberListInput) {
@@ -491,17 +593,35 @@ export const adminMemberProcedures = {
       assertCanReadMembers(ctx);
       const member = await findMemberOrThrow(input.memberId);
       const duesRows = await getDuesRows([member.id]);
-      const [profilePicture, resume] = await Promise.all([
-        getProfilePictureDownloadUrlForUser(member.userId),
-        getMemberResumeDownloadUrlForUser(member.userId),
-      ]);
+      const profilePicture = await getProfilePictureDownloadUrlForUser(
+        member.userId,
+      );
 
       return {
         member: toAdminMemberRecord(member),
         duesStatus: buildDuesStatus({ duesRows }),
         profilePictureUrl: profilePicture.url,
-        resumeUrl: resume.url,
       };
+    }),
+
+  accessAdminMemberResume: permProcedure
+    .input(adminMemberIdSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanReadMembers(ctx);
+      const member = await findMemberOrThrow(input.memberId);
+      const resume = await getMemberResumeDownloadUrlForUser(member.userId);
+      if (!resume.url) return { url: null };
+
+      await createAdminAuditEvent({
+        actionKey: "member.resume.accessed",
+        actor: ctx.session.user,
+        metadata: {
+          accessMechanism: "signed_url",
+          filename: "Resume.pdf",
+        },
+        subjects: [memberAuditSubject(member)],
+      });
+      return resume;
     }),
 
   exportAdminMembers: permProcedure
@@ -523,6 +643,24 @@ export const adminMemberProcedures = {
             .join(","),
         ),
       ];
+      await createAdminAuditEvent({
+        actionKey: "member.directory.exported",
+        actor: ctx.session.user,
+        metadata: {
+          filterFacets: activeMemberFilterFacets(input),
+          rowCount: members.length,
+          sortDirection: input.sortDirection,
+          sortKey: input.sortField,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: "member-directory",
+            targetLabel: "Member directory",
+            targetType: "member_directory",
+          },
+        ],
+      });
 
       return {
         content: `${lines.join("\r\n")}\r\n`,
@@ -542,6 +680,28 @@ export const adminMemberProcedures = {
           resumeUrl: member.resumeUrl ?? "",
         });
         const updated = await updateMemberProfile({
+          afterUpdate: async ({
+            after,
+            before,
+            database,
+            employmentCountAfter,
+            employmentCountBefore,
+          }) => {
+            await createAdminAuditEvent(
+              {
+                actionKey: "member.profile.updated",
+                actor: ctx.session.user,
+                changes: memberProfileAuditChanges({
+                  after,
+                  before,
+                  employmentCountAfter,
+                  employmentCountBefore,
+                }),
+                subjects: [memberAuditSubject(after)],
+              },
+              database,
+            );
+          },
           database: db,
           input: normalizedProfile,
           memberId: member.id,
@@ -573,14 +733,32 @@ export const adminMemberProcedures = {
       try {
         const member = await findMemberOrThrow(input.memberId);
         await db.transaction(async (tx) => {
-          await tx
+          const deletedResponses = await tx
             .delete(FormResponse)
             .where(
               and(
                 eq(FormResponse.userId, member.userId),
                 eq(FormResponse.form, MEMBER_SIGNUP_FORM_ID),
               ),
-            );
+            )
+            .returning({ id: FormResponse.id });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.profile.deleted",
+              actor: ctx.session.user,
+              metadata: {
+                deletedObjectCount: deletedResponses.length + 1,
+                deletedObjectTypes: [
+                  "member",
+                  ...(deletedResponses.length > 0
+                    ? ["signup_response"]
+                    : []),
+                ],
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
           await tx.delete(Member).where(eq(Member.id, member.id));
         });
         await Promise.all([
@@ -613,7 +791,12 @@ export const adminMemberProcedures = {
         await db.transaction(async (tx) => {
           const member = await tx.query.Member.findFirst({
             where: eq(Member.id, input.memberId),
-            columns: { id: true },
+            columns: {
+              discordUser: true,
+              firstName: true,
+              id: true,
+              lastName: true,
+            },
           });
           if (!member) {
             throw new TRPCError({
@@ -657,6 +840,19 @@ export const adminMemberProcedures = {
                 )
                 .returning();
               if (!reactivated) throw new TRPCError({ code: "CONFLICT" });
+              await createAdminAuditEvent(
+                {
+                  actionKey: "member.dues.granted",
+                  actor: ctx.session.user,
+                  metadata: {
+                    academicYear: status.payableAcademicYear.shortLabel,
+                    created: false,
+                    reactivated: true,
+                  },
+                  subjects: [memberAuditSubject(member)],
+                },
+                tx,
+              );
               return reactivated;
             }
             const [created] = await tx
@@ -671,6 +867,19 @@ export const adminMemberProcedures = {
               })
               .returning();
             if (!created) throw new TRPCError({ code: "CONFLICT" });
+            await createAdminAuditEvent(
+              {
+                actionKey: "member.dues.granted",
+                actor: ctx.session.user,
+                metadata: {
+                  academicYear: status.payableAcademicYear.shortLabel,
+                  created: true,
+                  reactivated: false,
+                },
+                subjects: [memberAuditSubject(member)],
+              },
+              tx,
+            );
             return created;
           }
 
@@ -694,6 +903,20 @@ export const adminMemberProcedures = {
           if (revoked.length === 0) {
             throw new TRPCError({ code: "CONFLICT" });
           }
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.dues.revoked",
+              actor: ctx.session.user,
+              metadata: {
+                academicYears: [
+                  ...new Set(revoked.map((payment) => payment.year)),
+                ].sort(),
+                affectedPaymentCount: revoked.length,
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
           return revoked;
         });
 
@@ -727,6 +950,7 @@ export const adminMemberProcedures = {
     .mutation(async ({ ctx }) => {
       permissions.controlPerms.or(["IS_OFFICER"], ctx);
       try {
+        const operationId = randomUUID();
         const affected = await db.transaction(async (tx) => {
           const rows = await tx
             .select({
@@ -747,19 +971,69 @@ export const adminMemberProcedures = {
             byMember.set(row.memberId, memberRows);
           }
           const referenceDate = new Date();
+          const referenceAcademicYear = buildDuesStatus({
+            duesRows: [],
+            referenceDate,
+          }).currentAcademicYear;
           const effectiveIds = [...byMember.values()].flatMap((memberRows) =>
             getDuesPaymentIdsToInvalidate({
               duesRows: memberRows,
               referenceDate,
             }),
           );
-          if (effectiveIds.length === 0) return 0;
-          const updated = await tx
-            .update(DuesPayment)
-            .set({ active: false })
-            .where(inArray(DuesPayment.id, effectiveIds))
-            .returning({ memberId: DuesPayment.memberId });
-          return new Set(updated.map((row) => row.memberId)).size;
+          const updated =
+            effectiveIds.length === 0
+              ? []
+              : await tx
+                  .update(DuesPayment)
+                  .set({ active: false })
+                  .where(inArray(DuesPayment.id, effectiveIds))
+                  .returning({ memberId: DuesPayment.memberId });
+          const affectedMemberIds = [
+            ...new Set(updated.map((row) => row.memberId)),
+          ];
+          const affectedMembers =
+            affectedMemberIds.length === 0
+              ? []
+              : await tx.query.Member.findMany({
+                  where: inArray(Member.id, affectedMemberIds),
+                  columns: {
+                    discordUser: true,
+                    firstName: true,
+                    id: true,
+                    lastName: true,
+                  },
+                });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.dues.invalidated_bulk",
+              actor: ctx.session.user,
+              metadata: {
+                affectedMemberCount: affectedMemberIds.length,
+                referenceAcademicYear: referenceAcademicYear.shortLabel,
+                referenceDate: referenceDate.toISOString(),
+              },
+              operationId,
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: referenceAcademicYear.shortLabel,
+                  targetLabel: `${referenceAcademicYear.shortLabel} effective dues`,
+                  targetType: "dues_population",
+                },
+                ...affectedMembers.map((member) => ({
+                  memberId: member.id,
+                  relation: "result" as const,
+                  resultOutcome: "succeeded" as const,
+                  targetId: member.id,
+                  targetLabel: memberAuditLabel(member),
+                  targetType: "member" as const,
+                })),
+              ],
+            },
+            tx,
+          );
+          return affectedMemberIds.length;
         });
         await auditAdminMutation({
           color: "uhoh_red",
@@ -793,10 +1067,25 @@ export const adminMemberProcedures = {
           fileContent: input.fileContent,
           userId: member.userId,
         });
-        await saveMemberProfilePictureForUser({
-          database: db,
-          profilePictureUrl: objectName,
-          userId: member.userId,
+        await db.transaction(async (tx) => {
+          await saveMemberProfilePictureForUser({
+            database: tx,
+            profilePictureUrl: objectName,
+            userId: member.userId,
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.profile_picture.replaced",
+              actor: ctx.session.user,
+              metadata: {
+                byteSize: dataUrlByteSize(input.fileContent),
+                hadPrevious: Boolean(member.profilePictureUrl),
+                mimeType: dataUrlMimeType(input.fileContent),
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
         });
         await removeProfilePictureObjectsForUser(member.userId, [objectName]);
         await auditAdminMutation({
@@ -829,10 +1118,23 @@ export const adminMemberProcedures = {
       assertCanEditMembers(ctx);
       try {
         const member = await findMemberOrThrow(input.memberId);
-        await saveMemberProfilePictureForUser({
-          database: db,
-          profilePictureUrl: null,
-          userId: member.userId,
+        await db.transaction(async (tx) => {
+          await saveMemberProfilePictureForUser({
+            database: tx,
+            profilePictureUrl: null,
+            userId: member.userId,
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.profile_picture.removed",
+              actor: ctx.session.user,
+              metadata: {
+                hadPrevious: Boolean(member.profilePictureUrl),
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
         });
         await removeProfilePictureObjectsForUser(member.userId);
         await auditAdminMutation({
@@ -865,10 +1167,25 @@ export const adminMemberProcedures = {
           fileContent: input.fileContent,
           userId: member.userId,
         });
-        await saveMemberResumeForUser({
-          database: db,
-          resumeUrl: objectName,
-          userId: member.userId,
+        await db.transaction(async (tx) => {
+          await saveMemberResumeForUser({
+            database: tx,
+            resumeUrl: objectName,
+            userId: member.userId,
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.resume.replaced",
+              actor: ctx.session.user,
+              metadata: {
+                byteSize: dataUrlByteSize(input.fileContent),
+                filename: input.fileName,
+                hadPrevious: Boolean(member.resumeUrl),
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
         });
         await removeUnreferencedResumeObjectsForUser(member.userId);
         await auditAdminMutation({
@@ -898,10 +1215,23 @@ export const adminMemberProcedures = {
       assertCanEditMembers(ctx);
       try {
         const member = await findMemberOrThrow(input.memberId);
-        await saveMemberResumeForUser({
-          database: db,
-          resumeUrl: null,
-          userId: member.userId,
+        await db.transaction(async (tx) => {
+          await saveMemberResumeForUser({
+            database: tx,
+            resumeUrl: null,
+            userId: member.userId,
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.resume.removed",
+              actor: ctx.session.user,
+              metadata: {
+                hadPrevious: Boolean(member.resumeUrl),
+              },
+              subjects: [memberAuditSubject(member)],
+            },
+            tx,
+          );
         });
         await removeUnreferencedResumeObjectsForUser(member.userId);
         await auditAdminMutation({

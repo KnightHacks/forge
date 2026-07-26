@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 
 import { env } from "./env";
+import * as auditSchema from "./schemas/audit";
 import * as authSchema from "./schemas/auth";
 import * as knightHacksSchema from "./schemas/knight-hacks";
 import * as relations from "./schemas/relations";
@@ -12,13 +13,22 @@ const pool = new Pool({
 });
 
 type AuthSchema = typeof authSchema;
+type AuditSchema = typeof auditSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
 type RelationsSchema = typeof relations;
 
-type DatabaseSchema = AuthSchema & KnightHacksSchema & RelationsSchema;
+type DatabaseSchema = AuditSchema &
+  AuthSchema &
+  KnightHacksSchema &
+  RelationsSchema;
 
 export const db: NodePgDatabase<DatabaseSchema> = drizzle({
   client: pool,
-  schema: { ...authSchema, ...knightHacksSchema, ...relations },
+  schema: {
+    ...auditSchema,
+    ...authSchema,
+    ...knightHacksSchema,
+    ...relations,
+  },
   casing: "snake_case",
 });

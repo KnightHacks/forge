@@ -1,4 +1,5 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -21,6 +22,7 @@ import {
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import {
   getCompanyImageUrl,
   removeCompanyImage,
@@ -379,15 +381,69 @@ export const careerRouter = {
       const { companyId, ...metadata } = input;
       let company: typeof Company.$inferSelect | undefined;
       try {
-        [company] = await db
-          .update(Company)
-          .set({
-            ...metadata,
-            normalizedDisplayName: normalizeCompanyName(metadata.displayName),
-            updatedAt: new Date(),
-          })
-          .where(eq(Company.id, companyId))
-          .returning();
+        company = await db.transaction(async (tx) => {
+          const [before] = await tx
+            .select()
+            .from(Company)
+            .where(eq(Company.id, companyId))
+            .for("update");
+          if (!before) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Company not found.",
+            });
+          }
+          const [updated] = await tx
+            .update(Company)
+            .set({
+              ...metadata,
+              normalizedDisplayName: normalizeCompanyName(
+                metadata.displayName,
+              ),
+              updatedAt: new Date(),
+            })
+            .where(eq(Company.id, companyId))
+            .returning();
+          if (!updated) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Company not found.",
+            });
+          }
+          const changeFields = [
+            "displayName",
+            "legalName",
+            "domain",
+            "aliases",
+          ] as const;
+          await createAdminAuditEvent(
+            {
+              actionKey: "company.updated",
+              actor: ctx.session.user,
+              changes: changeFields.flatMap((field) =>
+                JSON.stringify(before[field]) === JSON.stringify(updated[field])
+                  ? []
+                  : [
+                      {
+                        after: updated[field],
+                        before: before[field],
+                        field,
+                      },
+                    ],
+              ),
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: updated.id,
+                  targetLabel: updated.displayName,
+                  targetType: "company",
+                },
+              ],
+            },
+            tx,
+          );
+          return updated;
+        });
       } catch (error) {
         if (isUniqueViolation(error)) {
           throw new TRPCError({
@@ -421,7 +477,7 @@ export const careerRouter = {
       assertCanEditMembers(ctx);
       const company = await db.query.Company.findFirst({
         where: eq(Company.id, input.companyId),
-        columns: { id: true, logoObjectName: true },
+        columns: { displayName: true, id: true, logoObjectName: true },
       });
       if (!company) {
         throw new TRPCError({
@@ -435,17 +491,35 @@ export const careerRouter = {
         fileContent: input.fileContent,
       });
       try {
-        const [updatedCompany] = await db
-          .update(Company)
-          .set({ logoObjectName: objectName, updatedAt: new Date() })
-          .where(eq(Company.id, company.id))
-          .returning({ id: Company.id });
-        if (!updatedCompany) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Company not found.",
-          });
-        }
+        await db.transaction(async (tx) => {
+          const [updatedCompany] = await tx
+            .update(Company)
+            .set({ logoObjectName: objectName, updatedAt: new Date() })
+            .where(eq(Company.id, company.id))
+            .returning({ id: Company.id });
+          if (!updatedCompany) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Company not found.",
+            });
+          }
+          await createAdminAuditEvent(
+            {
+              actionKey: "company.image.replaced",
+              actor: ctx.session.user,
+              metadata: { hadPrevious: Boolean(company.logoObjectName) },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: company.id,
+                  targetLabel: company.displayName,
+                  targetType: "company",
+                },
+              ],
+            },
+            tx,
+          );
+        });
       } catch (error) {
         await removeCompanyImage(company.id, objectName);
         throw error;
@@ -464,7 +538,7 @@ export const careerRouter = {
       assertCanEditMembers(ctx);
       const company = await db.query.Company.findFirst({
         where: eq(Company.id, input.companyId),
-        columns: { id: true, logoObjectName: true },
+        columns: { displayName: true, id: true, logoObjectName: true },
       });
       if (!company) {
         throw new TRPCError({
@@ -473,10 +547,28 @@ export const careerRouter = {
         });
       }
 
-      await db
-        .update(Company)
-        .set({ logoObjectName: null, updatedAt: new Date() })
-        .where(eq(Company.id, input.companyId));
+      await db.transaction(async (tx) => {
+        await tx
+          .update(Company)
+          .set({ logoObjectName: null, updatedAt: new Date() })
+          .where(eq(Company.id, input.companyId));
+        await createAdminAuditEvent(
+          {
+            actionKey: "company.image.removed",
+            actor: ctx.session.user,
+            metadata: { hadPrevious: Boolean(company.logoObjectName) },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: company.id,
+                targetLabel: company.displayName,
+                targetType: "company",
+              },
+            ],
+          },
+          tx,
+        );
+      });
 
       await removeCompanyImage(company.id, company.logoObjectName);
       return { logoObjectName: null, logoUrl: null };
@@ -486,46 +578,114 @@ export const careerRouter = {
     .input(companyIdInputSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanEditMembers(ctx);
-      const [company] = await db
-        .update(Company)
-        .set({ reviewState: "approved", updatedAt: new Date() })
-        .where(
-          and(
-            eq(Company.id, input.companyId),
-            inArray(Company.reviewState, ["pending", "rejected"]),
-          ),
-        )
-        .returning();
-      if (!company) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only pending or rejected companies can be approved.",
-        });
-      }
-      return company;
+      return db.transaction(async (tx) => {
+        const [before] = await tx
+          .select()
+          .from(Company)
+          .where(eq(Company.id, input.companyId))
+          .for("update");
+        if (
+          !before ||
+          (before.reviewState !== "pending" &&
+            before.reviewState !== "rejected")
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Only pending or rejected companies can be approved.",
+          });
+        }
+        const [company] = await tx
+          .update(Company)
+          .set({ reviewState: "approved", updatedAt: new Date() })
+          .where(eq(Company.id, input.companyId))
+          .returning();
+        if (!company) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Company not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "company.approved",
+            actor: ctx.session.user,
+            changes: [
+              {
+                after: "approved",
+                before: before.reviewState,
+                field: "reviewState",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: company.id,
+                targetLabel: company.displayName,
+                targetType: "company",
+              },
+            ],
+          },
+          tx,
+        );
+        return company;
+      });
     }),
 
   rejectCompany: permProcedure
     .input(companyIdInputSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanEditMembers(ctx);
-      const [company] = await db
-        .update(Company)
-        .set({ reviewState: "rejected", updatedAt: new Date() })
-        .where(
-          and(
-            eq(Company.id, input.companyId),
-            inArray(Company.reviewState, ["pending", "approved"]),
-          ),
-        )
-        .returning();
-      if (!company) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Only pending or approved companies can be rejected.",
-        });
-      }
-      return company;
+      return db.transaction(async (tx) => {
+        const [before] = await tx
+          .select()
+          .from(Company)
+          .where(eq(Company.id, input.companyId))
+          .for("update");
+        if (
+          !before ||
+          (before.reviewState !== "pending" &&
+            before.reviewState !== "approved")
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Only pending or approved companies can be rejected.",
+          });
+        }
+        const [company] = await tx
+          .update(Company)
+          .set({ reviewState: "rejected", updatedAt: new Date() })
+          .where(eq(Company.id, input.companyId))
+          .returning();
+        if (!company) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Company not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "company.rejected",
+            actor: ctx.session.user,
+            changes: [
+              {
+                after: "rejected",
+                before: before.reviewState,
+                field: "reviewState",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: company.id,
+                targetLabel: company.displayName,
+                targetType: "company",
+              },
+            ],
+          },
+          tx,
+        );
+        return company;
+      });
     }),
 
   mergeCompanies: permProcedure
@@ -534,6 +694,7 @@ export const careerRouter = {
       assertCanEditMembers(ctx);
 
       return await db.transaction(async (tx) => {
+        const operationId = randomUUID();
         const [canonical, duplicate] = await Promise.all([
           tx.query.Company.findFirst({
             where: eq(Company.id, input.canonicalCompanyId),
@@ -576,6 +737,17 @@ export const careerRouter = {
           })
           .slice(0, CAREER.MAX_COMPANY_ALIASES);
 
+        const movedEmployment = await tx
+          .select({
+            employmentId: Employment.id,
+            firstName: Member.firstName,
+            lastName: Member.lastName,
+            memberId: Member.id,
+          })
+          .from(Employment)
+          .innerJoin(Member, eq(Member.id, Employment.memberId))
+          .where(eq(Employment.companyId, duplicate.id));
+
         await tx
           .update(Employment)
           .set({
@@ -596,6 +768,53 @@ export const careerRouter = {
             updatedAt: new Date(),
           })
           .where(eq(Company.id, duplicate.id));
+
+        if (!updatedCanonical) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "The canonical company could not be updated.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "company.merged",
+            actor: ctx.session.user,
+            metadata: {
+              affectedMemberCount: new Set(
+                movedEmployment.map((row) => row.memberId),
+              ).size,
+              aliasesAfter: aliases,
+              aliasesBefore: canonical.aliases,
+              movedEmploymentCount: movedEmployment.length,
+            },
+            operationId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: canonical.id,
+                targetLabel: canonical.displayName,
+                targetType: "company",
+              },
+              {
+                relation: "secondary",
+                targetId: duplicate.id,
+                targetLabel: duplicate.displayName,
+                targetType: "company",
+              },
+              ...movedEmployment.map((employment) => ({
+                memberId: employment.memberId,
+                metadata: { effect: "moved" },
+                relation: "result" as const,
+                resultOutcome: "succeeded" as const,
+                targetId: employment.employmentId,
+                targetLabel:
+                  `${employment.firstName} ${employment.lastName}`.trim(),
+                targetType: "employment" as const,
+              })),
+            ],
+          },
+          tx,
+        );
 
         return updatedCanonical;
       });

@@ -60,7 +60,11 @@ export default async function AdminRolesPage({
     <HydrateClient>
       <RoleManagementDashboard
         key={JSON.stringify(input)}
-        access={{ canAssign, canConfigure }}
+        access={{
+          canAssign,
+          canConfigure,
+          isOfficer: effectivePermissions.IS_OFFICER === true,
+        }}
         detail={detail}
         input={input}
         roles={roles}

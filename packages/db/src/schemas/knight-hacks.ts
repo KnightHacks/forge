@@ -1041,6 +1041,10 @@ export const FormAttachment = createTable(
     fileName: t.varchar({ length: 255 }).notNull(),
     contentType: t.varchar({ length: 255 }).notNull(),
     size: t.integer().notNull(),
+    purpose: t
+      .text({ enum: ["instruction", "response"] })
+      .notNull()
+      .default("response"),
     finalizedAt: t.timestamp({ mode: "date", withTimezone: true }),
     createdAt: t
       .timestamp({ mode: "date", withTimezone: true })

@@ -17,8 +17,12 @@ import {
   FormsSchemas,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { callbackConfigurationSchema } from "@forge/validators";
+import {
+  callbackConfigurationSchema,
+  formDefinitionSchema,
+} from "@forge/validators";
 
+import { createAdminAuditEvent } from "../audit/service";
 import type { PermissionMap } from "../permissions";
 import { buildDuesStatus } from "../dues/status";
 import { evaluateFormSectionAccess, requireFormCapability } from "./access";
@@ -35,6 +39,8 @@ import {
 } from "./legacy";
 
 export interface PlatformFormActor {
+  discordUserId?: string | null;
+  name?: string | null;
   permissions: PermissionMap;
   roleIds: string[];
   userId: string;
@@ -48,9 +54,28 @@ export async function loadPlatformFormActor(
     .from(Permissions)
     .where(eq(Permissions.userId, session.user.id));
   return {
+    discordUserId: session.user.discordUserId,
+    name: session.user.name,
     permissions: session.permissions,
     roleIds: [...new Set(rows.map(({ roleId }) => roleId))],
     userId: session.user.id,
+  };
+}
+
+function auditActor(actor: PlatformFormActor) {
+  return {
+    discordUserId: actor.discordUserId,
+    id: actor.userId,
+    name: actor.name,
+  };
+}
+
+function safeDefinitionSummary(value: unknown) {
+  const parsed = formDefinitionSchema.parse(value);
+  return {
+    questionCount: parsed.questions.length,
+    questionIds: parsed.questions.map(({ id }) => id),
+    questionTypes: parsed.questions.map(({ type }) => type),
   };
 }
 
@@ -244,7 +269,7 @@ export async function deletePlatformResponse(input: {
   if (form.kind !== "general") throw new TRPCError({ code: "BAD_REQUEST" });
   const result = await db.transaction(async (tx) => {
     const response = await tx.query.FormResponse.findFirst({
-      columns: { id: true },
+      columns: { createdAt: true, id: true },
       where: and(
         eq(FormResponse.id, input.responseId),
         eq(FormResponse.form, input.formId),
@@ -272,6 +297,32 @@ export async function deletePlatformResponse(input: {
       .delete(FormAttachment)
       .where(eq(FormAttachment.responseId, response.id));
     await tx.delete(FormResponse).where(eq(FormResponse.id, response.id));
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.response.deleted",
+        actor: auditActor(input.actor),
+        metadata: {
+          attachmentCount: attachments.length,
+          callbackEffectsPreserved: true,
+          submittedAt: response.createdAt.toISOString(),
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: response.id,
+            targetLabel: `Response ${response.id}`,
+            targetType: "form_response",
+          },
+          {
+            relation: "secondary",
+            targetId: form.id,
+            targetLabel: form.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
     return {
       id: response.id,
       objectNames: attachments.map(({ objectName }) => objectName),
@@ -307,7 +358,28 @@ export async function deletePlatformForm(input: {
     .select({ objectName: FormAttachment.objectName })
     .from(FormAttachment)
     .where(eq(FormAttachment.formId, form.id));
-  await db.delete(FormsSchemas).where(eq(FormsSchemas.id, form.id));
+  await db.transaction(async (tx) => {
+    await tx.delete(FormsSchemas).where(eq(FormsSchemas.id, form.id));
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.deleted",
+        actor: auditActor(input.actor),
+        metadata: {
+          attachmentCount: objects.length,
+          priorState: form.state,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: form.id,
+            targetLabel: form.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
+  });
   await removeFormAttachmentObjects(
     objects.map(({ objectName }) => objectName),
   );
@@ -360,6 +432,30 @@ export async function createPlatformForm(input: {
         })),
       );
     }
+    const definition = safeDefinitionSummary(input.definition);
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.created",
+        actor: auditActor(input.actor),
+        metadata: {
+          name: created.name,
+          questionCount: definition.questionCount,
+          responseMode: created.responseMode,
+          sectionId: created.sectionId,
+          slug: created.slugName,
+          state: created.state,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: created.id,
+            targetLabel: created.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
     return created;
   });
 }
@@ -438,23 +534,65 @@ export async function updatePlatformForm(input: {
       slug: input.slugName,
     },
   });
-  const [saved] = await db
-    .update(FormsSchemas)
-    .set({
-      formData: next.definition,
-      name: input.name,
-      revision: next.revision,
-      slugName: next.slug,
-    })
-    .where(
-      and(
-        eq(FormsSchemas.id, current.id),
-        eq(FormsSchemas.revision, input.expectedRevision),
-      ),
-    )
-    .returning();
-  if (!saved) throw new TRPCError({ code: "CONFLICT" });
-  return saved;
+  return db.transaction(async (tx) => {
+    const [saved] = await tx
+      .update(FormsSchemas)
+      .set({
+        formData: next.definition,
+        name: input.name,
+        revision: next.revision,
+        slugName: next.slug,
+      })
+      .where(
+        and(
+          eq(FormsSchemas.id, current.id),
+          eq(FormsSchemas.revision, input.expectedRevision),
+        ),
+      )
+      .returning();
+    if (!saved) throw new TRPCError({ code: "CONFLICT" });
+    const definition = safeDefinitionSummary(next.definition);
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.definition.updated",
+        actor: auditActor(input.actor),
+        changes: [
+          ...(current.name === saved.name
+            ? []
+            : [{ after: saved.name, before: current.name, field: "name" }]),
+          ...(current.slugName === saved.slugName
+            ? []
+            : [
+                {
+                  after: saved.slugName,
+                  before: current.slugName,
+                  field: "slug",
+                },
+              ]),
+          ...(JSON.stringify(current.formData) ===
+          JSON.stringify(saved.formData)
+            ? []
+            : [{ field: "definition" }]),
+        ],
+        metadata: {
+          questionCount: definition.questionCount,
+          questionIds: definition.questionIds,
+          questionTypes: definition.questionTypes,
+          revision: saved.revision,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: saved.id,
+            targetLabel: saved.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
+    return saved;
+  });
 }
 
 export async function updatePlatformFormSettings(input: {

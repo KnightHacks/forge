@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import QRCode from "qrcode";
@@ -20,6 +21,7 @@ import {
 import { formDefinitionSchema } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import {
   createFormAttachmentUpload,
   finalizeFormAttachment,
@@ -194,14 +196,30 @@ export const formsRouter = {
       });
     }),
 
-  finalizeUpload: protectedProcedure
+  finalizeUpload: permProcedure
     .input(z.object({ attachmentId: z.string().uuid() }))
-    .mutation(({ ctx, input }) =>
-      finalizeFormAttachment({
+    .mutation(async ({ ctx, input }) => {
+      const attachment = await db.query.FormAttachment.findFirst({
+        columns: { formId: true, ownerUserId: true, purpose: true },
+        where: eq(FormAttachment.id, input.attachmentId),
+      });
+      if (!attachment || attachment.ownerUserId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      if (attachment.purpose === "instruction") {
+        await requirePlatformFormCapability(
+          await loadPlatformFormActor(ctx.session),
+          attachment.formId,
+          "edit_definition",
+        );
+      }
+      return finalizeFormAttachment({
+        auditActor:
+          attachment.purpose === "instruction" ? ctx.session.user : undefined,
         attachmentId: input.attachmentId,
         ownerUserId: ctx.session.user.id,
-      }),
-    ),
+      });
+    }),
 
   getAttachmentDownload: permProcedure
     .input(z.object({ attachmentId: z.string().uuid() }))
@@ -210,6 +228,7 @@ export const formsRouter = {
         where: eq(FormAttachment.id, input.attachmentId),
       });
       if (!attachment) throw new Error("Attachment not found.");
+      let adminAccess = false;
       if (attachment.ownerUserId !== ctx.session.user.id) {
         const form = await db.query.FormsSchemas.findFirst({
           where: eq(FormsSchemas.id, attachment.formId),
@@ -232,9 +251,36 @@ export const formsRouter = {
             attachment.formId,
             "read_responses",
           );
+          adminAccess = true;
         }
       }
       const result = await getFormAttachmentDownloadUrl(input.attachmentId);
+      if (adminAccess) {
+        await createAdminAuditEvent({
+          actionKey: "form.response_attachment.accessed",
+          actor: ctx.session.user,
+          metadata: {
+            byteSize: attachment.size,
+            filename: attachment.fileName,
+            mimeType: attachment.contentType,
+            storageKind: "platform",
+          },
+          subjects: [
+            {
+              relation: "primary",
+              targetId: attachment.id,
+              targetLabel: attachment.fileName,
+              targetType: "attachment",
+            },
+            {
+              relation: "secondary",
+              targetId: attachment.formId,
+              targetLabel: "Form",
+              targetType: "form",
+            },
+          ],
+        });
+      }
       return { url: result.url };
     }),
 
@@ -265,14 +311,44 @@ export const formsRouter = {
         containsExactValue(responseData, input.objectName),
       );
       if (references.length === 0) throw new TRPCError({ code: "NOT_FOUND" });
-      if (!references.some(({ userId }) => userId === ctx.session.user.id)) {
+      const adminAccess = !references.some(
+        ({ userId }) => userId === ctx.session.user.id,
+      );
+      if (adminAccess) {
         await requirePlatformFormCapability(
           await loadPlatformFormActor(ctx.session),
           input.formId,
           "read_responses",
         );
       }
-      return { url: await getLegacyFormFileDownloadUrl(input.objectName) };
+      const url = await getLegacyFormFileDownloadUrl(input.objectName);
+      if (adminAccess) {
+        const digest = createHash("sha256")
+          .update(input.objectName)
+          .digest("hex")
+          .slice(0, 24);
+        const filename = input.objectName.split("/").at(-1) ?? "Attachment";
+        await createAdminAuditEvent({
+          actionKey: "form.response_attachment.accessed",
+          actor: ctx.session.user,
+          metadata: { filename, storageKind: "legacy" },
+          subjects: [
+            {
+              relation: "primary",
+              targetId: `legacy:${digest}`,
+              targetLabel: filename,
+              targetType: "attachment",
+            },
+            {
+              relation: "secondary",
+              targetId: input.formId,
+              targetLabel: "Form",
+              targetType: "form",
+            },
+          ],
+        });
+      }
+      return { url };
     }),
 
   searchCatalog: protectedProcedure

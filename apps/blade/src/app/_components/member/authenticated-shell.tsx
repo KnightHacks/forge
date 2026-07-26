@@ -18,6 +18,7 @@ type NavigationItem =
   | "eventCheckIn"
   | "events"
   | "forms"
+  | "logs"
   | "members"
   | "roles"
   | "settings";
@@ -51,9 +52,11 @@ export function AuthenticatedShell({
                 ? "Form admin"
                 : activeNavigation === "roles"
                   ? "Role admin"
-                  : activeNavigation === "settings"
-                    ? "Member settings"
-                    : "Member dashboard");
+                  : activeNavigation === "logs"
+                    ? "Admin logs"
+                    : activeNavigation === "settings"
+                      ? "Member settings"
+                      : "Member dashboard");
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">

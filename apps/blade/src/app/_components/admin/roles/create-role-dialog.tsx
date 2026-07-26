@@ -23,10 +23,12 @@ import { RolePermissionEditor } from "./role-permission-editor";
 const discordRolePattern = /^\d{17,20}$/;
 
 export function CreateRoleDialog({
+  canManageOfficer,
   onCreated,
   onOpenChange,
   open,
 }: {
+  canManageOfficer: boolean;
   onCreated: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -236,6 +238,7 @@ export function CreateRoleDialog({
               </p>
             </div>
             <RolePermissionEditor
+              canManageOfficer={canManageOfficer}
               selected={selectedPermissions}
               onChange={setSelectedPermissions}
             />

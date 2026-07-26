@@ -62,9 +62,11 @@ function permissionData(key: PERMISSIONS.PermissionKey) {
 }
 
 export function RolePermissionEditor({
+  canManageOfficer = false,
   onChange,
   selected,
 }: {
+  canManageOfficer?: boolean;
   onChange: (permissions: PERMISSIONS.PermissionKey[]) => void;
   selected: readonly PERMISSIONS.PermissionKey[];
 }) {
@@ -73,6 +75,7 @@ export function RolePermissionEditor({
   const normalizedQuery = query.trim().toLocaleLowerCase("en-US");
 
   const toggle = (key: PERMISSIONS.PermissionKey, checked: boolean) => {
+    if (key === "IS_OFFICER" && !canManageOfficer) return;
     const next = new Set(selected);
     if (checked) next.add(key);
     else next.delete(key);
@@ -100,7 +103,13 @@ export function RolePermissionEditor({
             type="button"
             variant="outline"
             className="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
-            onClick={() => onChange([])}
+            onClick={() =>
+              onChange(
+                !canManageOfficer && selectedSet.has("IS_OFFICER")
+                  ? ["IS_OFFICER"]
+                  : [],
+              )
+            }
           >
             Clear all
           </Button>
@@ -108,7 +117,13 @@ export function RolePermissionEditor({
             type="button"
             variant="outline"
             className="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
-            onClick={() => onChange([...allPermissionKeys])}
+            onClick={() =>
+              onChange(
+                allPermissionKeys.filter(
+                  (key) => canManageOfficer || key !== "IS_OFFICER",
+                ),
+              )
+            }
           >
             Select all
           </Button>
@@ -169,6 +184,7 @@ export function RolePermissionEditor({
                       <Checkbox
                         id={id}
                         checked={selectedSet.has(key)}
+                        disabled={key === "IS_OFFICER" && !canManageOfficer}
                         onCheckedChange={(checked) =>
                           toggle(key, checked === true)
                         }
@@ -180,6 +196,9 @@ export function RolePermissionEditor({
                         </span>
                         <span className="mt-0.5 block text-sm font-normal leading-5 text-muted-foreground">
                           {permission.desc}
+                          {key === "IS_OFFICER" && !canManageOfficer
+                            ? " Only an existing officer can change this permission."
+                            : ""}
                         </span>
                       </Label>
                     </div>

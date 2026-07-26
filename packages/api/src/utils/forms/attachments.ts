@@ -12,6 +12,8 @@ import {
 import { formDefinitionSchema, validateFormUpload } from "@forge/validators";
 
 import type { WriteDb } from "../db";
+import type { AuditActor } from "../audit/service";
+import { createAdminAuditEvent } from "../audit/service";
 import { selectAbandonedFormAttachments } from "./attachment-cleanup";
 
 const UPLOAD_EXPIRY_SECONDS = 15 * 60;
@@ -122,6 +124,7 @@ export async function createFormAttachmentUpload(input: {
   fileName: string;
   formId: string;
   ownerUserId: string;
+  purpose: "instruction" | "response";
   size: number;
 }) {
   const validation = validateFormUpload(input);
@@ -148,6 +151,7 @@ export async function createFormAttachmentUpload(input: {
       id,
       objectName,
       ownerUserId: input.ownerUserId,
+      purpose: input.purpose,
       size: input.size,
     })
     .returning();
@@ -164,6 +168,7 @@ export async function createFormAttachmentUpload(input: {
 }
 
 export async function finalizeFormAttachment(input: {
+  auditActor?: AuditActor;
   attachmentId: string;
   ownerUserId: string;
 }) {
@@ -173,6 +178,9 @@ export async function finalizeFormAttachment(input: {
   });
   if (attachment?.ownerUserId !== input.ownerUserId) {
     throw new TRPCError({ code: "NOT_FOUND" });
+  }
+  if (attachment.purpose === "instruction" && !input.auditActor) {
+    throw new TRPCError({ code: "FORBIDDEN" });
   }
   let stat;
   try {
@@ -217,12 +225,44 @@ export async function finalizeFormAttachment(input: {
       message: "The uploaded file does not match the approved metadata.",
     });
   }
-  const [saved] = await db
-    .update(FormAttachment)
-    .set({ finalizedAt: new Date() })
-    .where(eq(FormAttachment.id, attachment.id))
-    .returning();
-  return saved;
+  return db.transaction(async (tx) => {
+    const [saved] = await tx
+      .update(FormAttachment)
+      .set({ finalizedAt: new Date() })
+      .where(eq(FormAttachment.id, attachment.id))
+      .returning();
+    if (!saved) throw new TRPCError({ code: "NOT_FOUND" });
+    if (saved.purpose === "instruction" && input.auditActor) {
+      await createAdminAuditEvent(
+        {
+          actionKey: "form.instruction_attachment.uploaded",
+          actor: input.auditActor,
+          metadata: {
+            attachmentId: saved.id,
+            byteSize: saved.size,
+            filename: saved.fileName,
+            mimeType: saved.contentType,
+          },
+          subjects: [
+            {
+              relation: "primary",
+              targetId: saved.id,
+              targetLabel: saved.fileName,
+              targetType: "attachment",
+            },
+            {
+              relation: "secondary",
+              targetId: saved.formId,
+              targetLabel: "Form",
+              targetType: "form",
+            },
+          ],
+        },
+        tx,
+      );
+    }
+    return saved;
+  });
 }
 
 export async function assertAndAttachResponseFiles(input: {

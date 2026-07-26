@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ListTodo,
   QrCode,
+  ScrollText,
   Settings,
   ShieldCheck,
   UsersRound,
@@ -19,6 +20,7 @@ export interface AdminNavigationAccess {
   events?: boolean;
   forms?: boolean;
   issues?: boolean;
+  logs?: boolean;
   members?: boolean;
   roles?: boolean;
 }
@@ -96,6 +98,13 @@ export const adminNavigationItems = [
     id: "roles",
     label: "Roles",
   },
+  {
+    access: "logs",
+    href: "/admin/logs",
+    icon: ScrollText,
+    id: "logs",
+    label: "Admin logs",
+  },
 ] as const;
 
 export const settingsNavigationItem = {
@@ -118,6 +127,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "companies") return pathname.startsWith("/admin/companies");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");
+  if (id === "logs") return pathname.startsWith("/admin/logs");
   if (id === "settings") return pathname.startsWith("/member/settings");
   if (id === "dashboard") {
     return (

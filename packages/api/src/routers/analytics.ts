@@ -15,6 +15,7 @@ import {
 
 import type { ClubAnalyticsReport } from "../utils/analytics/report";
 import { createTRPCRouter, permProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import { requireClubAnalyticsRead } from "../utils/analytics/access";
 import {
   serializeInternalAnalyticsCsv,
@@ -488,6 +489,31 @@ export const analyticsRouter = createTRPCRouter({
               metadata,
               rows: internalRows(kind, report),
             });
+      await createAdminAuditEvent({
+        actionKey: "analytics.report.exported",
+        actor: ctx.session.user,
+        metadata: {
+          dateFrom:
+            reportInput.period.kind === "custom"
+              ? reportInput.period.from.toISOString()
+              : null,
+          dateTo:
+            reportInput.period.kind === "custom"
+              ? reportInput.period.to.toISOString()
+              : null,
+          eventIds: reportInput.eventId ? [reportInput.eventId] : [],
+          kind,
+          rowCount: Math.max(0, content.split(/\r?\n/).length - 1),
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: kind,
+            targetLabel: `${kind} analytics report`,
+            targetType: "analytics_report",
+          },
+        ],
+      });
       return {
         content,
         fileName: `club-analytics-${kind}-${safeFileToken(report.metadata.period.label)}.csv`,

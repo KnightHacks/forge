@@ -53,6 +53,13 @@ export function isCosmeticPermissionString(bitstring: string) {
   return permissionBitstringToKeys(bitstring).length === 0;
 }
 
+export function roleHasPermission(
+  bitstring: string,
+  key: PERMISSIONS.PermissionKey,
+) {
+  return bitstring.at(permissionData(key).idx) === "1";
+}
+
 function discordRoleColorToHex(color: number) {
   if (color <= 0) return null;
   return `#${color.toString(16).padStart(6, "0")}`;
