@@ -14,11 +14,13 @@ import { api } from "~/trpc/react";
 import { EmailPortalWorkspace } from "./email-portal-workspace";
 
 export function EmailPortalAdmin({
+  campaignDeliveryEnabled,
   initialAudienceOptions,
   initialSends,
   initialTab,
   initialTemplates,
 }: {
+  campaignDeliveryEnabled: boolean;
   initialAudienceOptions: RouterOutputs["email"]["listAudienceOptions"];
   initialSends: RouterOutputs["email"]["listSends"];
   initialTab: EmailPortalTab;
@@ -101,6 +103,7 @@ export function EmailPortalAdmin({
   return (
     <EmailPortalWorkspace
       audienceOptions={audiences.data}
+      campaignDeliveryEnabled={campaignDeliveryEnabled}
       initialTab={initialTab}
       isConfirming={confirmSend.isPending}
       isPreviewing={previewSend.isPending}
@@ -119,7 +122,7 @@ export function EmailPortalAdmin({
         toast.success("Send cancelled.");
       }}
       onConfirm={
-        preview?.sendId
+        campaignDeliveryEnabled && preview?.sendId
           ? async () => {
               const sendId = preview.sendId;
               if (!sendId) return;

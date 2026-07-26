@@ -57,10 +57,25 @@ describe("email delivery mode boundary", () => {
   });
 
   it("TC-032 permits exactly the dedicated directors test-send operation", async () => {
-    const transport = vi.fn().mockResolvedValue({
-      data: { id: 123, status: "success" },
+    const transport = vi.fn((request: { method: string; path: string }) => {
+      if (
+        request.method === "GET" &&
+        request.path.startsWith("/api/templates")
+      ) {
+        return Promise.resolve({
+          data: [
+            {
+              id: 123,
+              name: "Forge raw-content transactional wrapper",
+              type: "tx",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ data: true });
     });
     const gateway = createEmailProviderGateway({
+      fromEmail: "Knight Hacks <hello@knighthacks.org>",
       mode: "test",
       transport,
     });
@@ -68,12 +83,17 @@ describe("email delivery mode boundary", () => {
     await expect(gateway.sendTest(content)).resolves.toEqual(
       expect.objectContaining({ recipient: "directors@knighthacks.org" }),
     );
-    expect(transport).toHaveBeenCalledTimes(1);
+    expect(transport).toHaveBeenCalledTimes(2);
     expect(transport).toHaveBeenCalledWith(
       expect.objectContaining({
         body: expect.objectContaining({
+          data: { body: "<p>Hello directors</p>" },
           subscriber_email: "directors@knighthacks.org",
+          subscriber_mode: "external",
+          template_id: 123,
         }),
+        method: "POST",
+        path: "/api/tx",
       }),
     );
   });

@@ -241,6 +241,32 @@ const DEFAULT_VISUAL_DOCUMENT = {
   version: 1,
 };
 
+const recipientNameCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: "base",
+});
+
+function recipientFirstName(name: string, email: string) {
+  return name.trim().split(/\s+/)[0] || email;
+}
+
+function compareRecipientsByFirstName(
+  left: EmailAudienceResolution["recipients"][number],
+  right: EmailAudienceResolution["recipients"][number],
+) {
+  return (
+    recipientNameCollator.compare(
+      recipientFirstName(left.name, left.email),
+      recipientFirstName(right.name, right.email),
+    ) ||
+    recipientNameCollator.compare(
+      left.name || left.email,
+      right.name || right.email,
+    ) ||
+    recipientNameCollator.compare(left.email, right.email)
+  );
+}
+
 function statusLabel(status: string) {
   return status.replaceAll("_", " ");
 }
@@ -597,6 +623,7 @@ function CountPreflight({
 
 export function EmailPortalWorkspace({
   audienceOptions,
+  campaignDeliveryEnabled = true,
   initialTab,
   isConfirming = false,
   isPreviewing = false,
@@ -619,6 +646,7 @@ export function EmailPortalWorkspace({
   templates,
 }: {
   audienceOptions: EmailAudienceOptions | [];
+  campaignDeliveryEnabled?: boolean;
   initialTab: EmailPortalTab;
   isConfirming?: boolean;
   isPreviewing?: boolean;
@@ -706,12 +734,14 @@ export function EmailPortalWorkspace({
   const visibleRecipients = useMemo(() => {
     const query = recipientSearch.trim().toLowerCase();
     const recipients = audienceResolution?.recipients ?? [];
-    if (!query) return recipients;
-    return recipients.filter(
-      ({ email, name }) =>
-        email.toLowerCase().includes(query) ||
-        name.toLowerCase().includes(query),
-    );
+    return recipients
+      .filter(
+        ({ email, name }) =>
+          !query ||
+          email.toLowerCase().includes(query) ||
+          name.toLowerCase().includes(query),
+      )
+      .sort(compareRecipientsByFirstName);
   }, [audienceResolution, recipientSearch]);
   const selectedRecipientCount =
     (audienceResolution?.recipients.length ?? 0) - excludedRecipients.size;
@@ -1014,6 +1044,12 @@ export function EmailPortalWorkspace({
                   confirmation.
                 </p>
               </div>
+              {!campaignDeliveryEnabled && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+                  Audience delivery is disabled in this environment. Use “Send
+                  test to directors” to exercise Listmonk safely.
+                </div>
+              )}
               <div className="grid gap-2">
                 <Label htmlFor="email-subject">Subject</Label>
                 <Input
@@ -1757,14 +1793,23 @@ export function EmailPortalWorkspace({
               </Button>
               <Button
                 type="button"
-                disabled={preview.blockers.length > 0 || isConfirming}
+                disabled={
+                  !campaignDeliveryEnabled ||
+                  !onConfirm ||
+                  preview.blockers.length > 0 ||
+                  isConfirming
+                }
                 onClick={async () => {
                   await onConfirm?.();
                   setConfirmationOpen(false);
                 }}
               >
                 {isConfirming && <Loader2 className="h-4 w-4 animate-spin" />}
-                {scheduleMode === "schedule" ? "Schedule email" : "Send email"}
+                {!campaignDeliveryEnabled
+                  ? "Audience delivery disabled"
+                  : scheduleMode === "schedule"
+                    ? "Schedule email"
+                    : "Send email"}
               </Button>
             </DialogFooter>
           </DialogContent>

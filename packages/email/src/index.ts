@@ -43,6 +43,26 @@ export const listmonkHttpTransport: EmailHttpTransport = async (
     method: request.method,
   });
   if (!response.ok) {
+    let providerMessage: string | undefined;
+    try {
+      const payload: unknown = await response.clone().json();
+      if (
+        typeof payload === "object" &&
+        payload !== null &&
+        "message" in payload &&
+        typeof payload.message === "string"
+      ) {
+        providerMessage = payload.message.slice(0, 500);
+      }
+    } catch {
+      // The provider did not return a JSON error body.
+    }
+    logger.error("Listmonk request failed.", {
+      method: request.method,
+      path: request.path.split("?")[0],
+      providerMessage,
+      status: response.status,
+    });
     throw new Error(`Email provider request failed with ${response.status}.`);
   }
   const payload: unknown = await response.json();
@@ -55,14 +75,6 @@ export const listmonkHttpTransport: EmailHttpTransport = async (
 let defaultGateway: ReturnType<typeof createEmailProviderGateway> | undefined;
 
 export function getDefaultEmailProviderGateway() {
-  if (
-    env.EMAIL_DELIVERY_MODE === "production" &&
-    !env.LISTMONK_CAMPAIGN_TEMPLATE_ID
-  ) {
-    throw new Error(
-      "LISTMONK_CAMPAIGN_TEMPLATE_ID is required for production email delivery.",
-    );
-  }
   defaultGateway ??= createEmailProviderGateway({
     campaignTemplateId: env.LISTMONK_CAMPAIGN_TEMPLATE_ID,
     fromEmail: env.LISTMONK_FROM_EMAIL,

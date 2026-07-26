@@ -1,6 +1,6 @@
 # Email Portal Status
 
-Current phase: Review revisions complete / live review server running
+Current phase: Listmonk wiring corrected / live review server running
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -32,6 +32,12 @@ Current phase: Review revisions complete / live review server running
 - 2026-07-25: The Blade implementation uses the React Email rich editor for visual drafts and Monaco for the safe TSX dialect. The compiler remains the authority for allowed components, merge-field inference, preview output, and safety limits.
 - 2026-07-25: The shared mock database already contained a different, out-of-branch migration at slot `0021`. The Email Portal migration was advanced to `0022` with a newer journal timestamp, applied successfully, and then exercised by the synthetic browser flow.
 - 2026-07-25: Listmonk subscriber synchronization uses bounded batches of 20. Plain-text campaigns use Listmonk's native `plain` campaign content type, while compiled templates use `html` with an alternate text body.
+- 2026-07-26: The deployed Listmonk is v6.0.0 and requires `/api/tx` calls to reference a transactional template. Forge now discovers or creates one shared raw-content wrapper (`Forge raw-content transactional wrapper`, currently Listmonk template `23`) and supplies rendered HTML through `Tx.Data.body`; the portal test target remains hard-coded to `directors@knighthacks.org`.
+- 2026-07-26: The refreshed Listmonk token passed health plus list, subscriber, campaign, and template reads. Invalid create probes reached ordinary validation for lists, subscribers, and campaigns, confirming the required manage gates without creating provider objects.
+- 2026-07-26: Forge no longer depends on Listmonk's `subscribers:sql_query` permission. Exact subscriber-state and namespace lookups use ordinary subscriber reads followed by normalized exact-email filtering.
+- 2026-07-26: An explicitly authorized one-recipient reachability check was accepted by Listmonk for `dylan@knighthacks.org`; no other live recipient was used. The previously queued seven-recipient review send was cancelled in Forge with no provider campaign and cannot retry.
+- 2026-07-26: The port-3000 review server remains intentionally in `EMAIL_DELIVERY_MODE=test`. The UI disables audience confirmation in that mode, and the provider/API boundary now treats any bypassed bulk handoff as terminal rather than scheduling retries that could become live after an environment change.
+- 2026-07-26: The compose recipient panel sorts by first name, then full name/email for deterministic ties.
 
 ## Open questions
 
@@ -57,6 +63,7 @@ Current phase: Review revisions complete / live review server running
 - [x] Run Blade browser QA on an alternate port and inspect desktop/mobile screenshots.
 - [x] Apply review feedback for Blade layout consistency, recipient-level deselection, send details, and directors-only test delivery.
 - [x] Validate the Listmonk connection read-only and return the review server to port 3000 in test-only delivery mode.
+- [x] Correct Listmonk v6 transactional test delivery, validate the refreshed token, remove the SQL-query permission dependency, and prevent test-mode audience retries.
 
 ## Validation / commands
 
@@ -105,6 +112,14 @@ Current phase: Review revisions complete / live review server running
 - Authenticated `GET /api/health` through the configured Listmonk transport: passed without sending or mutating email data.
 - Fake-provider Playwright follow-up: passed default Templates landing, one manual recipient deselection, exact adjusted confirmation count, send-detail sender/body/recipient audit, cancellation, and mobile layout. Desktop/mobile screenshots were visually inspected.
 - Port 3000 is running this worktree under `EMAIL_DELIVERY_MODE=test`; the portal test button can contact Listmonk only for `directors@knighthacks.org`, while bulk and arbitrary transactional operations fail closed.
+- Refreshed-token permission probes: `GET /api/health`, lists, subscribers, campaigns, and templates returned `200`; invalid `POST` probes returned validation `400` for lists, subscribers, and campaigns, with no provider object created.
+- One explicitly authorized `/api/tx` reachability request to `dylan@knighthacks.org` returned `200`; no audience campaign was started.
+- Follow-up email provider tests: 3 files / 38 tests passed, including the Listmonk v6 transactional wrapper, dynamic default campaign template discovery, and no-SQL subscriber lookup.
+- Follow-up Blade workspace tests: 1 file / 4 tests passed, including test-mode audience delivery disablement.
+- Follow-up `@forge/email`, `@forge/api`, and `@forge/blade` typechecks passed after rebuilding the email declarations.
+- Follow-up targeted ESLint passed for email and API changes and for the Blade email portal files after using the validated email environment module.
+- `git diff --check`: passed.
+- Port 3000 was restarted from this worktree with the refreshed main-worktree environment and `EMAIL_DELIVERY_MODE=test`; `/` returns `200` and unauthenticated `/admin/email?tab=templates` returns the expected auth redirect.
 
 ## Links
 

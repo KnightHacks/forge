@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { env as emailEnv } from "@forge/email/env";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { EmailPortalTab } from "~/app/_components/admin/email/email-portal-workspace";
@@ -40,6 +41,7 @@ export default async function EmailPortalPage({
   return (
     <HydrateClient>
       <EmailPortalAdmin
+        campaignDeliveryEnabled={emailEnv.EMAIL_DELIVERY_MODE === "production"}
         initialAudienceOptions={audienceOptions}
         initialSends={sends}
         initialTab={tab}

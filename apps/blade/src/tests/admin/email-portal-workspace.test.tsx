@@ -128,4 +128,34 @@ describe("Email Portal workspace", () => {
     expect(html).toContain("recipient.firstName");
     expect(html).toMatch(/disabled[^>]*>[^<]*(confirm|send)/i);
   });
+
+  it("disables audience delivery when Blade is running in test mode", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmailPortalWorkspace, {
+        audienceOptions: [],
+        campaignDeliveryEnabled: false,
+        initialTab: "compose",
+        preview: {
+          blockers: [],
+          counts: {
+            duplicatesCollapsed: 0,
+            excludedBlocklisted: 0,
+            excludedInvalid: 0,
+            excludedMissingFields: 0,
+            excludedUnsubscribed: 0,
+            finalUnique: 7,
+            rawMatches: 7,
+          },
+          expiresAt: "2026-07-25T18:15:00.000Z",
+          version: "pv_01J00000000000000000000000",
+        },
+        sends: [],
+        templates: [],
+      }),
+    );
+
+    expect(html).toContain("Audience delivery is disabled in this environment");
+    expect(html).toMatch(/disabled[^>]*>Review &amp; confirm/i);
+    expect(html).toContain("Send test to directors");
+  });
 });

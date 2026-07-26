@@ -35,6 +35,7 @@ import {
 import {
   compileCodeEmailTemplate,
   compileVisualEmailTemplate,
+  EmailProviderError,
   getDefaultEmailProviderGateway,
 } from "@forge/email";
 import {
@@ -864,7 +865,23 @@ export async function processEmailSend(sendId: string) {
     });
     await reconcileEmailSend(sendId);
     return { campaignId: campaign.campaignId, status: nextStatus };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof EmailProviderError &&
+      error.code === "TEST_DELIVERY_ONLY"
+    ) {
+      await db
+        .update(EmailSend)
+        .set({
+          nextRetryAt: null,
+          retryLeaseExpiresAt: null,
+          safeError: "Audience delivery is disabled in this environment.",
+          status: "failed",
+          terminalAt: new Date(),
+        })
+        .where(eq(EmailSend.id, sendId));
+      return { campaignId: null, status: "failed" as const };
+    }
     const attempt = claimed.retryAttemptCount + 1;
     const terminal = attempt >= 5;
     await db

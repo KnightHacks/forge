@@ -1,5 +1,8 @@
 export const DIRECTORS_TEST_RECIPIENT = "directors@knighthacks.org";
 
+const RAW_CONTENT_TEMPLATE_BODY = "{{ Safe .Tx.Data.body }}";
+const RAW_CONTENT_TEMPLATE_NAME = "Forge raw-content transactional wrapper";
+
 export type EmailDeliveryMode = "disabled" | "fake" | "production" | "test";
 
 export interface EmailHttpRequest {
@@ -240,6 +243,9 @@ function disabledGateway(): EmailProviderGateway {
 
 function testGateway(
   transport: EmailHttpTransport | undefined,
+  config: {
+    fromEmail?: string;
+  },
 ): EmailProviderGateway {
   return {
     createCampaign() {
@@ -257,21 +263,8 @@ function testGateway(
     setCampaignStatus() {
       return Promise.reject(testDeliveryOnlyError());
     },
-    async sendTest(input) {
-      const response = await safeRequest(transportOrFail(transport), {
-        body: {
-          altbody: input.text,
-          body: input.html,
-          subscriber_email: DIRECTORS_TEST_RECIPIENT,
-          subject: input.subject,
-        },
-        method: "POST",
-        path: "/api/tx",
-      });
-      return {
-        providerId: numericId(response.data),
-        recipient: DIRECTORS_TEST_RECIPIENT,
-      };
+    sendTest(input) {
+      return sendDirectorsTransactionalTest(transport, config, input);
     },
     sendTransactional() {
       return Promise.reject(testDeliveryOnlyError());
@@ -326,9 +319,22 @@ function subscriberResults(value: unknown): ListmonkSubscriber[] {
     .filter((subscriber) => subscriber !== undefined);
 }
 
-function escapedEmailQuery(email: string) {
-  const escaped = email.trim().toLowerCase().replaceAll("'", "''");
-  return `LOWER(subscribers.email) = '${escaped}'`;
+async function findSubscribersByEmails(
+  client: EmailHttpTransport,
+  emails: string[],
+) {
+  const targets = new Set(emails.map((email) => email.trim().toLowerCase()));
+  if (targets.size === 0) return [];
+  const onlyEmail = targets.size === 1 ? [...targets][0] : undefined;
+  const response = await safeRequest(client, {
+    method: "GET",
+    path: onlyEmail
+      ? `/api/subscribers?per_page=all&search=${encodeURIComponent(onlyEmail)}`
+      : "/api/subscribers?per_page=all",
+  });
+  return subscriberResults(response.data).filter(({ email }) =>
+    targets.has(email.trim().toLowerCase()),
+  );
 }
 
 function recipientPayload(input: CampaignContent, email: string) {
@@ -340,6 +346,136 @@ function recipientPayload(input: CampaignContent, email: string) {
     attributes: recipient?.attributes ?? {},
     email,
     name: recipient?.name ?? "",
+  };
+}
+
+function responseRows(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value as unknown[];
+  const data = record(value);
+  return Array.isArray(data?.results) ? (data.results as unknown[]) : [];
+}
+
+function rawContentTemplateId(value: unknown): number | undefined {
+  for (const result of responseRows(value)) {
+    const candidate = record(result);
+    if (
+      candidate?.name === RAW_CONTENT_TEMPLATE_NAME &&
+      candidate.type === "tx" &&
+      typeof candidate.id === "number"
+    ) {
+      return candidate.id;
+    }
+  }
+  return undefined;
+}
+
+function defaultCampaignTemplateId(value: unknown): number | undefined {
+  for (const result of responseRows(value)) {
+    const candidate = record(result);
+    if (
+      candidate?.type === "campaign" &&
+      candidate.is_default === true &&
+      typeof candidate.id === "number"
+    ) {
+      return candidate.id;
+    }
+  }
+  return undefined;
+}
+
+async function resolveCampaignTemplateId(
+  client: EmailHttpTransport,
+  configuredId: number | undefined,
+) {
+  if (configuredId) return configuredId;
+  const response = await safeRequest(client, {
+    method: "GET",
+    path: "/api/templates?per_page=all",
+  });
+  const templateId = defaultCampaignTemplateId(response.data);
+  if (!templateId) {
+    throw providerFailure("EMAIL_PROVIDER_INVALID_RESPONSE");
+  }
+  return templateId;
+}
+
+async function ensureRawContentTemplate(client: EmailHttpTransport) {
+  const findExisting = async () => {
+    const response = await safeRequest(client, {
+      method: "GET",
+      path: "/api/templates?per_page=all",
+    });
+    return rawContentTemplateId(response.data);
+  };
+  const existingId = await findExisting();
+  if (existingId) return existingId;
+  try {
+    const created = await safeRequest(client, {
+      body: {
+        body: RAW_CONTENT_TEMPLATE_BODY,
+        name: RAW_CONTENT_TEMPLATE_NAME,
+        subject: "Forge email",
+        type: "tx",
+      },
+      method: "POST",
+      path: "/api/templates",
+    });
+    const createdId =
+      rawContentTemplateId(created.data) ??
+      (typeof record(created.data)?.id === "number"
+        ? (record(created.data)?.id as number)
+        : undefined);
+    if (createdId) return createdId;
+  } catch {
+    // A concurrent request may have created the shared wrapper.
+  }
+  const adoptedId = await findExisting();
+  if (!adoptedId) throw providerFailure("EMAIL_PROVIDER_UNAVAILABLE");
+  return adoptedId;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function rawContentHtml(input: TestEmailContent) {
+  if (input.html.trim()) return input.html;
+  return `<pre style="white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(input.text)}</pre>`;
+}
+
+async function sendDirectorsTransactionalTest(
+  transport: EmailHttpTransport | undefined,
+  config: {
+    fromEmail?: string;
+  },
+  input: TestEmailContent,
+): Promise<{
+  providerId: number;
+  recipient: typeof DIRECTORS_TEST_RECIPIENT;
+}> {
+  const client = transportOrFail(transport);
+  const templateId = await ensureRawContentTemplate(client);
+  await safeRequest(client, {
+    body: {
+      content_type: "html",
+      data: { body: rawContentHtml(input) },
+      from_email: config.fromEmail,
+      subscriber_email: DIRECTORS_TEST_RECIPIENT,
+      subscriber_mode: "external",
+      subject: input.subject,
+      template_id: templateId,
+    },
+    method: "POST",
+    path: "/api/tx",
+  });
+  return {
+    providerId: templateId,
+    recipient: DIRECTORS_TEST_RECIPIENT,
   };
 }
 
@@ -357,30 +493,23 @@ function productionGateway(
       email: string;
       status: "blocklisted" | "enabled" | "unsubscribed";
     }[] = [];
-    for (let index = 0; index < emails.length; index += 100) {
-      const chunk = emails.slice(index, index + 100);
-      const query = chunk
-        .map((email) => `'${email.trim().toLowerCase().replaceAll("'", "''")}'`)
-        .join(",");
-      const response = await safeRequest(getTransport(), {
-        method: "GET",
-        path: `/api/subscribers?per_page=all&query=${encodeURIComponent(`LOWER(subscribers.email) IN (${query})`)}`,
+    for (const subscriber of await findSubscribersByEmails(
+      getTransport(),
+      emails,
+    )) {
+      const unsubscribed = subscriber.lists.some((list) => {
+        const subscription = record(list);
+        return subscription?.subscription_status === "unsubscribed";
       });
-      for (const subscriber of subscriberResults(response.data)) {
-        const unsubscribed = subscriber.lists.some((list) => {
-          const subscription = record(list);
-          return subscription?.subscription_status === "unsubscribed";
-        });
-        results.push({
-          email: subscriber.email,
-          status:
-            subscriber.status === "blocklisted"
-              ? "blocklisted"
-              : unsubscribed
-                ? "unsubscribed"
-                : "enabled",
-        });
-      }
+      results.push({
+        email: subscriber.email,
+        status:
+          subscriber.status === "blocklisted"
+            ? "blocklisted"
+            : unsubscribed
+              ? "unsubscribed"
+              : "enabled",
+      });
     }
     return results;
   };
@@ -451,11 +580,7 @@ function productionGateway(
           ) {
             throw error;
           }
-          const existingResponse = await safeRequest(client, {
-            method: "GET",
-            path: `/api/subscribers?per_page=all&query=${encodeURIComponent(escapedEmailQuery(email))}`,
-          });
-          const existing = subscriberResults(existingResponse.data)[0];
+          const existing = (await findSubscribersByEmails(client, [email]))[0];
           if (!existing) throw providerFailure("EMAIL_PROVIDER_UNAVAILABLE");
           const unsubscribed = existing.lists.some((list) => {
             const subscription = record(list);
@@ -498,6 +623,10 @@ function productionGateway(
       }
 
       const hasHtmlBody = input.html.trim().length > 0;
+      const templateId = await resolveCampaignTemplateId(
+        client,
+        config.campaignTemplateId,
+      );
       const body = {
         ...(hasHtmlBody ? { altbody: input.text } : {}),
         body: hasHtmlBody ? input.html : input.text,
@@ -509,7 +638,7 @@ function productionGateway(
         status: "draft",
         subject: input.subject,
         tags: [tag],
-        template_id: config.campaignTemplateId,
+        template_id: templateId,
         type: "regular",
       };
       let campaignId: number;
@@ -564,33 +693,24 @@ function productionGateway(
     },
     lookupSubscriberStates,
     async removeRecipientNamespace(sendId, emails) {
-      for (let index = 0; index < emails.length; index += 100) {
-        const chunk = emails.slice(index, index + 100);
-        const query = chunk
-          .map(
-            (email) => `'${email.trim().toLowerCase().replaceAll("'", "''")}'`,
-          )
-          .join(",");
-        const response = await safeRequest(getTransport(), {
-          method: "GET",
-          path: `/api/subscribers?per_page=all&query=${encodeURIComponent(`LOWER(subscribers.email) IN (${query})`)}`,
-        });
-        for (const subscriber of subscriberResults(response.data)) {
-          const forge = record(subscriber.attribs.forge) ?? {};
-          if (!(sendId in forge)) continue;
-          const remainingForge = { ...forge };
-          delete remainingForge[sendId];
-          await safeRequest(getTransport(), {
-            body: {
-              attribs: {
-                ...subscriber.attribs,
-                forge: remainingForge,
-              },
+      for (const subscriber of await findSubscribersByEmails(
+        getTransport(),
+        emails,
+      )) {
+        const forge = record(subscriber.attribs.forge) ?? {};
+        if (!(sendId in forge)) continue;
+        const remainingForge = { ...forge };
+        delete remainingForge[sendId];
+        await safeRequest(getTransport(), {
+          body: {
+            attribs: {
+              ...subscriber.attribs,
+              forge: remainingForge,
             },
-            method: "PATCH",
-            path: `/api/subscribers/${subscriber.id}`,
-          });
-        }
+          },
+          method: "PATCH",
+          path: `/api/subscribers/${subscriber.id}`,
+        });
       }
     },
     async setCampaignStatus(campaignId, status) {
@@ -600,44 +720,28 @@ function productionGateway(
         path: `/api/campaigns/${campaignId}/status`,
       });
     },
-    async sendTest(input) {
-      const response = await safeRequest(getTransport(), {
+    sendTest(input) {
+      return sendDirectorsTransactionalTest(transport, config, input);
+    },
+    async sendTransactional(input) {
+      const client = getTransport();
+      const templateId =
+        input.templateId ?? (await ensureRawContentTemplate(client));
+      await safeRequest(client, {
         body: {
-          altbody: input.text,
-          body: input.html,
-          subscriber_email: DIRECTORS_TEST_RECIPIENT,
+          data: input.templateId
+            ? (input.data ?? {})
+            : { body: rawContentHtml(input) },
+          from_email: input.from,
           subject: input.subject,
+          subscriber_emails: input.recipients,
+          subscriber_mode: "external",
+          template_id: templateId,
         },
         method: "POST",
         path: "/api/tx",
       });
-      return {
-        providerId: numericId(response.data),
-        recipient: DIRECTORS_TEST_RECIPIENT,
-      };
-    },
-    async sendTransactional(input) {
-      const response = await safeRequest(getTransport(), {
-        body: input.templateId
-          ? {
-              data: input.data ?? {},
-              from_email: input.from,
-              subject: input.subject,
-              subscriber_emails: input.recipients,
-              subscriber_mode: "external",
-              template_id: input.templateId,
-            }
-          : {
-              altbody: input.text,
-              body: input.html,
-              subject: input.subject,
-              subscriber_emails: input.recipients,
-              subscriber_mode: "external",
-            },
-        method: "POST",
-        path: "/api/tx",
-      });
-      return { providerId: numericId(response.data) };
+      return { providerId: templateId };
     },
   };
 }
@@ -661,6 +765,8 @@ export function createEmailProviderGateway({
   }
   if (mode === "disabled") return disabledGateway();
   if (mode === "fake") return fakeGateway();
-  if (mode === "test") return testGateway(transport);
+  if (mode === "test") {
+    return testGateway(transport, { fromEmail });
+  }
   return productionGateway(transport, { campaignTemplateId, fromEmail });
 }
