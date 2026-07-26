@@ -125,6 +125,11 @@ export const PERMISSION_DATA = {
     name: "Read Issue Templates",
     desc: "Grants access to issue templates.",
   },
+  MANAGE_ALUMNI_DASHBOARD: {
+    idx: 24,
+    name: "Manage Alumni Dashboard",
+    desc: "Allows managing and publishing alumni bulletin content.",
+  },
 } as const satisfies Record<string, PermissionDataObj>;
 
 export const PERMISSIONS = Object.fromEntries(

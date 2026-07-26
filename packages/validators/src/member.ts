@@ -42,7 +42,7 @@ export function calculateMemberAge(dob: string, referenceDate = new Date()) {
   return age;
 }
 
-function graduationDateFromTerm(
+export function graduationDateFromTerm(
   term: (typeof GRAD_TERMS)[number],
   year: number,
 ) {

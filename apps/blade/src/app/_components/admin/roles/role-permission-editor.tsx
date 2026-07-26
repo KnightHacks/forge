@@ -19,6 +19,10 @@ const permissionGroups = [
     label: "Members",
   },
   {
+    keys: ["MANAGE_ALUMNI_DASHBOARD"],
+    label: "Alumni",
+  },
+  {
     keys: ["READ_HACKERS", "EDIT_HACKERS", "READ_HACK_DATA"],
     label: "Hackers",
   },

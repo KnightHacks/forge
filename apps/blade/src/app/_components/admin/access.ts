@@ -53,8 +53,16 @@ export function canAccessIssues(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessAlumniAdmin(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.MANAGE_ALUMNI_DASHBOARD === true
+  );
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
+    alumni: canAccessAlumniAdmin(permissions),
     analytics: canAccessAnalytics(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
