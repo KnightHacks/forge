@@ -43,6 +43,7 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
+import { adminPageClassName } from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";
 
@@ -221,7 +222,7 @@ export function CompanyAdminDetail({
   };
 
   return (
-    <main className="container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10">
+    <main className={adminPageClassName}>
       <Button asChild variant="ghost" className="-ml-3 gap-2">
         <Link href="/admin/companies">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -229,7 +230,7 @@ export function CompanyAdminDetail({
         </Link>
       </Button>
 
-      <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <CompanyAdminMark
             displayName={detail.company.displayName}
@@ -237,16 +238,22 @@ export function CompanyAdminDetail({
             large
           />
           <div className="min-w-0">
-            <Badge
-              variant="outline"
-              className={cn(
-                "w-fit capitalize",
-                reviewClass(detail.company.reviewState),
-              )}
-            >
-              {detail.company.reviewState}
-            </Badge>
-            <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight sm:text-4xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-primary">
+                <BriefcaseBusiness className="size-4" aria-hidden="true" />
+                Company record
+              </span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "w-fit capitalize",
+                  reviewClass(detail.company.reviewState),
+                )}
+              >
+                {detail.company.reviewState}
+              </Badge>
+            </div>
+            <h1 className="mt-2 break-words text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
               {detail.company.displayName}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">

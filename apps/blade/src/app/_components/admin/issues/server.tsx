@@ -32,26 +32,30 @@ function listFilters(input: ReturnType<typeof parseIssueSearchParams>) {
 async function loadKanban(input: ReturnType<typeof parseIssueSearchParams>) {
   const statuses =
     input.statuses.length > 0 ? input.statuses : [...ISSUE.ISSUE_STATUS];
-  const rows: IssueWorkspaceData["issues"] = [];
-  let totalCount = 0;
-  const counts: IssueWorkspaceData["counts"] = { finished: 0, open: 0 };
-  for (const status of statuses) {
-    for (let page = 1; ; page += 1) {
-      const result = await api.issues.list({
-        ...listFilters(input),
-        page,
-        pageSize: 100,
-        statuses: [status],
-        view: "kanban",
-      });
-      rows.push(...result.rows);
-      if (page === 1) {
-        counts.finished += result.counts.finished;
-        counts.open += result.counts.open;
+  const columns = await Promise.all(
+    statuses.map(async (status) => {
+      const rows: IssueWorkspaceData["issues"] = [];
+      let counts: IssueWorkspaceData["counts"] = { finished: 0, open: 0 };
+      for (let page = 1; ; page += 1) {
+        const result = await api.issues.list({
+          ...listFilters(input),
+          page,
+          pageSize: 100,
+          statuses: [status],
+          view: "kanban",
+        });
+        rows.push(...result.rows);
+        if (page === 1) counts = result.counts;
+        if (page >= result.pagination.pageCount) break;
       }
-      totalCount += result.rows.length;
-      if (page >= result.pagination.pageCount) break;
-    }
+      return { counts, rows };
+    }),
+  );
+  const rows = columns.flatMap((column) => column.rows);
+  const counts: IssueWorkspaceData["counts"] = { finished: 0, open: 0 };
+  for (const column of columns) {
+    counts.finished += column.counts.finished;
+    counts.open += column.counts.open;
   }
   return {
     counts,
@@ -59,7 +63,7 @@ async function loadKanban(input: ReturnType<typeof parseIssueSearchParams>) {
       page: 1,
       pageCount: 1,
       pageSize: 100 as const,
-      totalCount,
+      totalCount: rows.length,
     },
     rows,
   };
@@ -78,16 +82,20 @@ async function loadCalendar(input: ReturnType<typeof parseIssueSearchParams>) {
     view: "calendar",
   });
   const rows: IssueWorkspaceData["issues"] = [...firstPage.rows];
-  for (let page = 2; page <= firstPage.pagination.pageCount; page += 1) {
-    const result = await api.issues.list({
-      ...listFilters(input),
-      ...window,
-      page,
-      pageSize: 100,
-      view: "calendar",
-    });
-    rows.push(...result.rows);
-  }
+  const remainingPages = await Promise.all(
+    Array.from(
+      { length: Math.max(0, firstPage.pagination.pageCount - 1) },
+      (_, index) =>
+        api.issues.list({
+          ...listFilters(input),
+          ...window,
+          page: index + 2,
+          pageSize: 100,
+          view: "calendar",
+        }),
+    ),
+  );
+  rows.push(...remainingPages.flatMap((result) => result.rows));
   return {
     counts: firstPage.counts,
     pagination: {

@@ -11,6 +11,7 @@ import {
   ExternalLink,
   History,
   Link2,
+  ListTodo,
   Loader2,
   Pencil,
   RotateCcw,
@@ -37,6 +38,7 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
+import { adminPageClassName } from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 
 type Detail = RouterOutputs["issues"]["get"];
@@ -480,7 +482,9 @@ export function IssueDetail({
   }
 
   return (
-    <main className="container min-w-0 space-y-4 pb-16 pt-5 sm:space-y-6 sm:pt-8 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2">
+    <main
+      className={`${adminPageClassName} space-y-4 sm:space-y-6 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
+    >
       <Button variant="ghost" className="-ml-3" asChild>
         <Link href="/admin/issues/calendar">
           <ArrowLeft className="h-4 w-4" />
@@ -494,6 +498,10 @@ export function IssueDetail({
         />
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+              <ListTodo className="size-4" aria-hidden="true" />
+              Issue record
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">{detail.team.name}</Badge>
               <Badge variant="outline">{detail.priority}</Badge>
@@ -501,7 +509,7 @@ export function IssueDetail({
                 <Badge variant="destructive">Archived</Badge>
               )}
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="mt-3 break-words text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
               {detail.name}
             </h1>
             <p className="mt-2 font-mono text-xs text-muted-foreground">

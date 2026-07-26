@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  ScrollText,
   Search,
 } from "lucide-react";
 
@@ -50,6 +51,10 @@ import {
   AUDIT_TARGET_TYPES,
 } from "@forge/validators";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 
 type AuditEvent = RouterOutputs["audit"]["list"]["items"][number];
@@ -347,7 +352,13 @@ function EventRow({
   );
 }
 
-export function AdminLogsDashboard() {
+export function AdminLogsDashboard({
+  initialEvents,
+  initialMembers,
+}: {
+  initialEvents?: RouterOutputs["audit"]["list"];
+  initialMembers?: RouterOutputs["audit"]["searchMembers"];
+}) {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search.trim());
   const [memberSearch, setMemberSearch] = useState("");
@@ -391,13 +402,27 @@ export function AdminLogsDashboard() {
       to,
     ],
   );
+  const isDefaultEventQuery =
+    !actionKey &&
+    !actorUserId &&
+    !cursorStack[page] &&
+    !deferredSearch &&
+    !from &&
+    !memberId &&
+    !outcome &&
+    !targetType &&
+    !to;
   const events = api.audit.list.useQuery(queryInput, {
+    initialData: isDefaultEventQuery ? initialEvents : undefined,
     placeholderData: (previous) => previous,
   });
-  const members = api.audit.searchMembers.useQuery({
-    limit: 20,
-    search: deferredMemberSearch,
-  });
+  const members = api.audit.searchMembers.useQuery(
+    {
+      limit: 20,
+      search: deferredMemberSearch,
+    },
+    { initialData: deferredMemberSearch ? undefined : initialMembers },
+  );
 
   const resetPagination = () => {
     setCursorStack([undefined]);
@@ -418,25 +443,19 @@ export function AdminLogsDashboard() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-[96rem] space-y-6 p-4 sm:p-6 lg:p-8">
-      <header>
-        <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary">
-          Officer access
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          Admin action logs
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Search privileged actions by the administrator, action, affected
-          member, or target. History is append-only and begins at deployment.
-        </p>
-      </header>
+    <main className={adminPageLayoutClassName}>
+      <AdminPageHeader
+        description="Search privileged actions by the administrator, action, affected member, or target. History is append-only and begins at deployment."
+        eyebrow="Officer access"
+        icon={ScrollText}
+        title="Admin action logs"
+      />
 
-      <Card className="border-white/10 bg-card/85">
-        <CardHeader className="pb-4">
+      <Card className="gap-0 border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
+        <CardHeader className="border-b border-border/70 px-4 py-4 sm:px-6">
           <CardTitle className="text-base">Search and filters</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-4 p-4 sm:p-6">
           <div>
             <Label htmlFor="audit-search">Search</Label>
             <div className="relative mt-2">
@@ -632,7 +651,7 @@ export function AdminLogsDashboard() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border-white/10 bg-card/85">
+      <Card className="gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
         <CardContent className="p-0">
           {events.error ? (
             <div className="flex gap-3 p-6 text-sm text-destructive-foreground">

@@ -44,6 +44,11 @@ import {
 import { toast } from "@forge/ui/toast";
 import { adminMemberPageSizes } from "@forge/validators";
 
+import {
+  adminPageClassName,
+  AdminPageHeader,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { InvalidateDuesDialog } from "./invalidate-dues-dialog";
 import { MemberDetailDialog } from "./member-detail-dialog";
@@ -368,40 +373,33 @@ export function MemberAdminDashboard({
   const lastResult = Math.min(page * pageSize, totalCount);
 
   return (
-    <main className="container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10">
-      <div className="min-w-0 space-y-4 sm:space-y-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <UsersRound className="h-4 w-4" />
-              Club operations
-            </div>
-            <h1 className="text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
-              Members
-            </h1>
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-              Find member records, manage current dues, and keep profile data
-              accurate.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 gap-2"
-              disabled={exportQuery.isFetching}
-              onClick={() => void downloadCsv()}
-            >
-              {exportQuery.isFetching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-              Export CSV
-            </Button>
-            {isOfficer && <InvalidateDuesDialog onComplete={refresh} />}
-          </div>
-        </div>
+    <main className={adminPageClassName}>
+      <div className={adminPageStackClassName}>
+        <AdminPageHeader
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 gap-2"
+                disabled={exportQuery.isFetching}
+                onClick={() => void downloadCsv()}
+              >
+                {exportQuery.isFetching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Export CSV
+              </Button>
+              {isOfficer && <InvalidateDuesDialog onComplete={refresh} />}
+            </>
+          }
+          description="Find member records, manage current dues, and keep profile data accurate."
+          eyebrow="Club operations"
+          icon={UsersRound}
+          title="Members"
+        />
 
         <Card className="w-full min-w-0 gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
           <CardHeader className="min-w-0 border-b border-border/70 px-3 py-3 sm:px-4 sm:py-4 md:px-6">

@@ -36,6 +36,11 @@ import { Textarea } from "@forge/ui/textarea";
 import { alumniBulletinPostSchema } from "@forge/validators";
 
 import type { AlumniBulletinCardData } from "~/app/_components/member/alumni-dashboard";
+import {
+  adminPageClassName,
+  AdminPageHeader,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 import { AlumniBulletinCard } from "~/app/_components/member/alumni-dashboard";
 
 export interface AlumniBulletinWorkspacePost extends AlumniBulletinCardData {
@@ -572,53 +577,43 @@ export function AlumniBulletinWorkspace({
   };
 
   return (
-    <main
-      data-alumni-admin-layout="full-width"
-      className="container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-8"
-    >
-      <div className="space-y-5">
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <CalendarClock className="h-4 w-4" aria-hidden="true" />
-              Alumni communications
-            </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Alumni bulletin
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Publish focused opportunities and calls to action for confirmed
-              alumni.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <dl className="flex overflow-hidden rounded-md border border-white/10 bg-card/90">
-              {[
-                ["Published", publishedCount],
-                ["Scheduled", scheduledCount],
-                ["Drafts", draftCount],
-              ].map(([label, value]) => (
-                <div
-                  key={label}
-                  className="border-l border-border/70 px-3 py-2 first:border-l-0"
-                >
-                  <dd className="text-sm font-semibold">{value}</dd>
-                  <dt className="text-xs text-muted-foreground">{label}</dt>
-                </div>
-              ))}
-            </dl>
-            <Button
-              type="button"
-              className="min-h-11 gap-2"
-              onClick={() => setEditor({ kind: "create" })}
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Create bulletin post
-            </Button>
-          </div>
-        </header>
+    <main data-alumni-admin-layout="full-width" className={adminPageClassName}>
+      <div className={adminPageStackClassName}>
+        <AdminPageHeader
+          actions={
+            <>
+              <dl className="flex overflow-hidden rounded-md border border-white/10 bg-card/90">
+                {[
+                  ["Published", publishedCount],
+                  ["Scheduled", scheduledCount],
+                  ["Drafts", draftCount],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="border-l border-border/70 px-3 py-2 first:border-l-0"
+                  >
+                    <dd className="text-sm font-semibold">{value}</dd>
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                  </div>
+                ))}
+              </dl>
+              <Button
+                type="button"
+                className="min-h-11 gap-2"
+                onClick={() => setEditor({ kind: "create" })}
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Create bulletin post
+              </Button>
+            </>
+          }
+          description="Publish focused opportunities and calls to action for confirmed alumni."
+          eyebrow="Alumni communications"
+          icon={CalendarClock}
+          title="Alumni bulletin"
+        />
 
-        <section className="overflow-hidden rounded-xl border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
+        <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
           <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-2">
               <Button
@@ -758,7 +753,7 @@ export function AlumniBulletinWorkspace({
           )}
         </section>
 
-        <section className="overflow-hidden rounded-xl border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
+        <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
           <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="flex items-center gap-2 font-semibold">

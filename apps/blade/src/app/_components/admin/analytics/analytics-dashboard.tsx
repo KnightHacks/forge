@@ -76,6 +76,10 @@ import {
   TooltipTrigger,
 } from "@forge/ui/tooltip";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { buildAnalyticsSearchParams } from "./params";
 
@@ -1947,30 +1951,22 @@ export function AnalyticsDashboard({
     reports: <ReportsSection input={input} />,
   };
   return (
-    <main className="container min-w-0 space-y-4 pb-16 pt-5 sm:space-y-5 sm:pt-8">
-      <header className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-            <ChartNoAxesCombined className="size-4" aria-hidden="true" />
-            Club intelligence
+    <main className={adminPageLayoutClassName}>
+      <AdminPageHeader
+        actions={
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <Badge variant="outline">{report.metadata.period.label}</Badge>
+            <Badge variant="outline">
+              {report.metadata.comparisonPeriod?.label ?? "No comparison"}
+            </Badge>
+            <Badge variant="outline">{report.metadata.metricVersion}</Badge>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Analytics
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Turnout, audience, dues, and feedback from retained non-hackathon
-            Club records. Metrics show associations and coverage without
-            inventing causes.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline">{report.metadata.period.label}</Badge>
-          <Badge variant="outline">
-            {report.metadata.comparisonPeriod?.label ?? "No comparison"}
-          </Badge>
-          <Badge variant="outline">{report.metadata.metricVersion}</Badge>
-        </div>
-      </header>
+        }
+        description="Turnout, audience, dues, and feedback from retained non-hackathon Club records. Metrics show associations and coverage without inventing causes."
+        eyebrow="Club intelligence"
+        icon={ChartNoAxesCombined}
+        title="Analytics"
+      />
       <AnalyticsFilters input={input} report={report} />
       <SectionNavigation input={input} />
       {content[input.section]}

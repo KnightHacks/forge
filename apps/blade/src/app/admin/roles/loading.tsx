@@ -1,13 +1,14 @@
 import { Skeleton } from "@forge/ui/skeleton";
 
+import {
+  AdminPageHeaderSkeleton,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
+
 export default function AdminRolesLoading() {
   return (
-    <main className="container min-w-0 space-y-5 pb-16 pt-6 md:pt-10">
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-32" />
-        <Skeleton className="h-11 w-64 max-w-full" />
-        <Skeleton className="h-5 w-full max-w-2xl" />
-      </div>
+    <main className={adminPageLayoutClassName}>
+      <AdminPageHeaderSkeleton actions={1} />
       <Skeleton className="h-11 w-64 max-w-full" />
       <div className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25">
         <div className="space-y-4 border-b border-border/70 p-4 sm:p-6">

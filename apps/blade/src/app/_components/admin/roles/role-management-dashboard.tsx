@@ -59,6 +59,10 @@ import {
 import { toast } from "@forge/ui/toast";
 import { roleManagementPageSizes } from "@forge/validators";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { CreateRoleDialog } from "./create-role-dialog";
 import { buildRoleManagementSearchParams } from "./params";
@@ -1165,25 +1169,21 @@ export function RoleManagementDashboard({
 
   return (
     <main
-      className="container min-w-0 space-y-5 pb-16 pt-6 md:pt-10"
+      className={adminPageLayoutClassName}
       data-role-management-layout="responsive"
     >
-      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-primary">Administration</p>
-          <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
-            Role management
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Link Discord roles to Blade access and keep user assignments in
-            sync.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-          <span className="h-2 w-2 rounded-full bg-[hsl(var(--chart-2))]" />
-          {roleRows.length} linked roles
-        </div>
-      </div>
+      <AdminPageHeader
+        actions={
+          <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-[hsl(var(--chart-2))]" />
+            {roleRows.length} linked roles
+          </div>
+        }
+        description="Link Discord roles to Blade access and keep user assignments in sync."
+        eyebrow="Access control"
+        icon={ShieldCheck}
+        title="Role management"
+      />
 
       <nav
         aria-label="Role management sections"

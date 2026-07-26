@@ -11,6 +11,11 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
+import {
+  adminPageClassName,
+  AdminPageHeader,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 import { CompanyAdminMark } from "./company-admin-mark";
 
 type Company = RouterOutputs["career"]["listAdminCompanies"][number];
@@ -78,29 +83,21 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
   );
 
   return (
-    <main className="container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10">
-      <div className="min-w-0 space-y-6">
-        <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <Building2 className="h-4 w-4" aria-hidden="true" />
-              Company intelligence
-            </div>
-            <h1 className="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
-              Companies
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-              Review company records and see where Knight Hacks members have
-              worked.
-            </p>
-          </div>
-
-          <dl className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-card/90">
-            <Metric label="Companies" value={companies.length} />
-            <Metric label="Needs review" value={pendingCount} />
-            <Metric label="Career records" value={relationshipCount} />
-          </dl>
-        </header>
+    <main className={adminPageClassName}>
+      <div className={adminPageStackClassName}>
+        <AdminPageHeader
+          actions={
+            <dl className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-card/90">
+              <Metric label="Companies" value={companies.length} />
+              <Metric label="Needs review" value={pendingCount} />
+              <Metric label="Career records" value={relationshipCount} />
+            </dl>
+          }
+          description="Review company records and see where Knight Hacks members have worked."
+          eyebrow="Company intelligence"
+          icon={Building2}
+          title="Companies"
+        />
 
         <Card className="gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
           <CardHeader className="gap-3 border-b border-border/70 px-4 py-4 md:px-6">

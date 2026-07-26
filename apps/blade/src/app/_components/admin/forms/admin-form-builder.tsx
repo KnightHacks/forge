@@ -28,6 +28,7 @@ import {
   ArrowUp,
   CheckSquare2,
   Circle,
+  FilePenLine,
   FileUp,
   GripVertical,
   Loader2,
@@ -42,6 +43,7 @@ import {
   X,
 } from "lucide-react";
 
+import type { RouterOutputs } from "@forge/api";
 import type { FormDefinition, FormQuestion } from "@forge/validators";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -71,6 +73,10 @@ import {
   formDefinitionSchema,
 } from "@forge/validators";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { FormShareActions } from "./form-share-actions";
 
@@ -788,6 +794,7 @@ export function AdminFormBuilder({
   callbacks,
   configuredCallbacks = [],
   initial,
+  initialShareAssets,
   readOnly = false,
   respondentRoles,
   sections,
@@ -795,6 +802,7 @@ export function AdminFormBuilder({
   callbacks: CallbackCatalogItem[];
   configuredCallbacks?: { active: boolean; callbackSlug: string; id: string }[];
   initial?: BuilderInitial;
+  initialShareAssets?: RouterOutputs["forms"]["getShareAssets"];
   readOnly?: boolean;
   respondentRoles: { id: string; name: string }[];
   sections: { id: string; name: string }[];
@@ -885,7 +893,7 @@ export function AdminFormBuilder({
   const finalizeUpload = api.forms.finalizeUpload.useMutation();
   const share = api.forms.getShareAssets.useQuery(
     { formId: initial?.id ?? "00000000-0000-0000-0000-000000000000" },
-    { enabled: Boolean(initial?.id) },
+    { enabled: Boolean(initial?.id), initialData: initialShareAssets },
   );
   const shareOpen = searchParams.get("dialog") === "share";
 
@@ -1112,102 +1120,101 @@ export function AdminFormBuilder({
   const busy = create.isPending || update.isPending || updateSettings.isPending;
 
   return (
-    <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:pt-8">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Button asChild variant="ghost" className="-ml-3 min-h-11 gap-2">
-            <Link href="/admin/forms">
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Forms
-            </Link>
-          </Button>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <h1 className="text-3xl font-semibold sm:text-4xl">
-              {readOnly ? "View form" : initial ? "Edit form" : "Create form"}
-            </h1>
+    <main className={adminPageLayoutClassName}>
+      <Button asChild variant="ghost" className="-ml-3 min-h-11 w-fit gap-2">
+        <Link href="/admin/forms">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Forms
+        </Link>
+      </Button>
+      <AdminPageHeader
+        actions={
+          <>
             {initial && <Badge variant="outline">{initial.state}</Badge>}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {!readOnly && (
-            <Button
-              variant="outline"
-              className="min-h-11 gap-2"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings2 className="h-4 w-4" aria-hidden="true" /> Settings
-            </Button>
-          )}
-          {initial && !readOnly && (
-            <Button
-              variant="outline"
-              className="min-h-11 gap-2"
-              onClick={() => setCallbacksOpen(true)}
-            >
-              <Workflow className="h-4 w-4" aria-hidden="true" /> Callbacks
-            </Button>
-          )}
-          {initial && !readOnly && (
-            <Button
-              variant="outline"
-              className="min-h-11 gap-2"
-              disabled={!share.data}
-              onClick={() => setShareOpen(true)}
-            >
-              <Share2 className="h-4 w-4" aria-hidden="true" /> Share
-            </Button>
-          )}
-          {initial && (
-            <Button
-              variant="outline"
-              className="min-h-11 gap-2"
-              aria-label="More form actions"
-              onClick={() => setActionsOpen(true)}
-            >
-              <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> More
-            </Button>
-          )}
-          {!readOnly && initial?.state === "draft" && (
-            <Button
-              className="min-h-11 gap-2"
-              onClick={() => void transition("published")}
-            >
-              <Send className="h-4 w-4" aria-hidden="true" /> Publish
-            </Button>
-          )}
-          {!readOnly && initial?.state === "published" && (
-            <Button
-              variant="outline"
-              className="min-h-11 gap-2"
-              onClick={() => void transition("archived")}
-            >
-              <Archive className="h-4 w-4" aria-hidden="true" /> Archive
-            </Button>
-          )}
-          {!readOnly && initial?.state === "archived" && (
-            <Button
-              className="min-h-11"
-              onClick={() => void transition("published")}
-            >
-              Republish
-            </Button>
-          )}
-          {!readOnly && (
-            <Button
-              className="min-h-11 gap-2"
-              disabled={busy}
-              onClick={() => void save()}
-            >
-              {busy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Save
-            </Button>
-          )}
-        </div>
-      </header>
+            {!readOnly && (
+              <Button
+                variant="outline"
+                className="min-h-11 gap-2"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings2 className="h-4 w-4" aria-hidden="true" /> Settings
+              </Button>
+            )}
+            {initial && !readOnly && (
+              <Button
+                variant="outline"
+                className="min-h-11 gap-2"
+                onClick={() => setCallbacksOpen(true)}
+              >
+                <Workflow className="h-4 w-4" aria-hidden="true" /> Callbacks
+              </Button>
+            )}
+            {initial && !readOnly && (
+              <Button
+                variant="outline"
+                className="min-h-11 gap-2"
+                disabled={!share.data}
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className="h-4 w-4" aria-hidden="true" /> Share
+              </Button>
+            )}
+            {initial && (
+              <Button
+                variant="outline"
+                className="min-h-11 gap-2"
+                aria-label="More form actions"
+                onClick={() => setActionsOpen(true)}
+              >
+                <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> More
+              </Button>
+            )}
+            {!readOnly && initial?.state === "draft" && (
+              <Button
+                className="min-h-11 gap-2"
+                onClick={() => void transition("published")}
+              >
+                <Send className="h-4 w-4" aria-hidden="true" /> Publish
+              </Button>
+            )}
+            {!readOnly && initial?.state === "published" && (
+              <Button
+                variant="outline"
+                className="min-h-11 gap-2"
+                onClick={() => void transition("archived")}
+              >
+                <Archive className="h-4 w-4" aria-hidden="true" /> Archive
+              </Button>
+            )}
+            {!readOnly && initial?.state === "archived" && (
+              <Button
+                className="min-h-11"
+                onClick={() => void transition("published")}
+              >
+                Republish
+              </Button>
+            )}
+            {!readOnly && (
+              <Button
+                className="min-h-11 gap-2"
+                disabled={busy}
+                onClick={() => void save()}
+              >
+                {busy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Save
+              </Button>
+            )}
+          </>
+        }
+        description="Define the form, respondent experience, publishing state, and delivery behavior."
+        eyebrow="Form administration"
+        icon={FilePenLine}
+        title={readOnly ? "View form" : initial ? "Edit form" : "Create form"}
+      />
 
       <div
         className="flex flex-wrap gap-2"

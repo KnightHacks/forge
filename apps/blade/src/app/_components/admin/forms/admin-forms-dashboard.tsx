@@ -13,6 +13,10 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { AdminFormsSectionSelect } from "./admin-forms-section-select";
 
 interface AdminFormsAccess {
@@ -106,41 +110,38 @@ export function AdminFormsDashboard({
   return (
     <main
       data-forms-admin-layout="responsive"
-      className="container min-w-0 space-y-5 pb-16 pt-5 sm:space-y-6 sm:pt-8"
+      className={adminPageLayoutClassName}
     >
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-primary">Administration</p>
-          <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
-            Form administration
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Build, publish, share, and review identified member forms.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {canManageSections && (
-            <Button
-              asChild
-              variant="outline"
-              className="min-h-11 gap-2 focus-visible:ring-2"
-            >
-              <Link href="/admin/forms/sections">
-                <Settings2 className="h-4 w-4" aria-hidden="true" />
-                Manage sections
-              </Link>
-            </Button>
-          )}
-          {canEdit && (
-            <Button asChild className="min-h-11 gap-2 focus-visible:ring-2">
-              <Link href="/admin/forms/new">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Create form
-              </Link>
-            </Button>
-          )}
-        </div>
-      </header>
+      <AdminPageHeader
+        actions={
+          <>
+            {canManageSections && (
+              <Button
+                asChild
+                variant="outline"
+                className="min-h-11 gap-2 focus-visible:ring-2"
+              >
+                <Link href="/admin/forms/sections">
+                  <Settings2 className="h-4 w-4" aria-hidden="true" />
+                  Manage sections
+                </Link>
+              </Button>
+            )}
+            {canEdit && (
+              <Button asChild className="min-h-11 gap-2 focus-visible:ring-2">
+                <Link href="/admin/forms/new">
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Create form
+                </Link>
+              </Button>
+            )}
+          </>
+        }
+        description="Build, publish, share, and review identified member forms."
+        eyebrow="Member workflows"
+        icon={FileText}
+        title="Form administration"
+      />
 
       <nav
         aria-label="Form views"

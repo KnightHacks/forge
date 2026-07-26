@@ -1,11 +1,17 @@
 "use client";
 
+import { QrCode } from "lucide-react";
+
 import type {
   CheckInMemberChoice,
   CheckInRequest,
   CheckInResult,
 } from "./event-check-in-panel";
 import type { CheckInEventGroups } from "./types";
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { EventCheckInPanel } from "./event-check-in-panel";
 
@@ -90,16 +96,14 @@ export function EventCheckInPage({
     <main
       data-testid="event-check-in-workspace"
       data-check-in-layout="streamlined"
-      className="min-h-[calc(100dvh-4rem)] min-w-0 pb-0 sm:container sm:space-y-6 sm:pb-16 sm:pt-8"
+      className={adminPageLayoutClassName}
     >
-      <header className="px-4 pb-3 pt-4 sm:p-0">
-        <p className="hidden text-sm font-medium text-primary sm:block">
-          Administration
-        </p>
-        <h1 className="text-2xl font-semibold sm:mt-1 sm:text-4xl">
-          Event check-in
-        </h1>
-      </header>
+      <AdminPageHeader
+        description="Scan a member pass or search the directory to record attendance."
+        eyebrow="Event operations"
+        icon={QrCode}
+        title="Event check-in"
+      />
 
       <EventCheckInPanel
         groups={groups}

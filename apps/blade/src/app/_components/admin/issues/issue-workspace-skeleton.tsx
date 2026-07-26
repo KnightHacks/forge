@@ -1,14 +1,20 @@
 import { Skeleton } from "@forge/ui/skeleton";
 
-type IssueLoadingView = "calendar" | "kanban" | "list";
+import { adminPageClassName } from "~/app/_components/admin/admin-page";
+
+type IssueLoadingView = "archive" | "calendar" | "kanban" | "list";
 
 function WorkspaceDockSkeleton({ view }: { view: IssueLoadingView }) {
   return (
     <header className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10">
       <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <Skeleton className="h-8 w-36" />
-          <Skeleton className="mt-2 h-4 w-72 max-w-full" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-4" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <Skeleton className="mt-2 h-10 w-36 sm:h-12" />
+          <Skeleton className="mt-2 h-5 w-72 max-w-full" />
         </div>
         <div className="grid grid-cols-3 overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
           {Array.from({ length: 3 }, (_, index) => (
@@ -148,7 +154,7 @@ function ListSkeleton() {
 export function IssueWorkspaceSkeleton({ view }: { view: IssueLoadingView }) {
   return (
     <main
-      className="container min-w-0 space-y-3 pb-8 pt-3 sm:pt-4"
+      className={`${adminPageClassName} space-y-3`}
       data-issue-loading-view={view}
       aria-busy="true"
       aria-label={`Loading issue ${view}`}

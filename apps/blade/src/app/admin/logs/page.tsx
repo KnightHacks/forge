@@ -19,12 +19,17 @@ export default async function AdminLogsPage() {
   const permissions = await api.roles.getPermissions();
   if (permissions.IS_OFFICER !== true) redirect(MEMBER_DASHBOARD_PATH);
 
-  void api.audit.list.prefetch({ limit: 50 });
-  void api.audit.searchMembers.prefetch({ limit: 20, search: "" });
+  const [initialEvents, initialMembers] = await Promise.all([
+    api.audit.list({ limit: 50 }),
+    api.audit.searchMembers({ limit: 20, search: "" }),
+  ]);
 
   return (
     <HydrateClient>
-      <AdminLogsDashboard />
+      <AdminLogsDashboard
+        initialEvents={initialEvents}
+        initialMembers={initialMembers}
+      />
     </HydrateClient>
   );
 }

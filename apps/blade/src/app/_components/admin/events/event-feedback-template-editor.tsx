@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, LockKeyhole, Plus, Save, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  LockKeyhole,
+  MessageSquareText,
+  Plus,
+  Save,
+  Trash2,
+} from "lucide-react";
 
 import type { FormDefinition, FormQuestion } from "@forge/validators";
 import { Badge } from "@forge/ui/badge";
@@ -10,6 +17,10 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 
 const CORE_COUNT = 6;
@@ -57,45 +68,42 @@ export function EventFeedbackTemplateEditor({
   }
 
   return (
-    <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:pt-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Button asChild variant="ghost" className="-ml-3 min-h-11 gap-2">
-            <Link href="/admin/events">
-              <ArrowLeft className="h-4 w-4" /> Events
-            </Link>
+    <main className={adminPageLayoutClassName}>
+      <Button asChild variant="ghost" className="-ml-3 min-h-11 w-fit gap-2">
+        <Link href="/admin/events">
+          <ArrowLeft className="h-4 w-4" /> Events
+        </Link>
+      </Button>
+      <AdminPageHeader
+        actions={
+          <Button
+            className="min-h-11 gap-2"
+            disabled={save.isPending}
+            onClick={() =>
+              void save
+                .mutateAsync({
+                  definition,
+                  expectedRevision: currentRevision,
+                })
+                .then((saved) => {
+                  setCurrentRevision(saved.revision);
+                  setMessage("Template saved for future events.");
+                })
+                .catch((cause) =>
+                  setMessage(
+                    cause instanceof Error ? cause.message : "Save failed.",
+                  ),
+                )
+            }
+          >
+            <Save className="h-4 w-4" /> Save template
           </Button>
-          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">
-            Event feedback template
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Changes apply to future qualifying events. Comparable core questions
-            remain locked.
-          </p>
-        </div>
-        <Button
-          className="min-h-11 gap-2"
-          disabled={save.isPending}
-          onClick={() =>
-            void save
-              .mutateAsync({
-                definition,
-                expectedRevision: currentRevision,
-              })
-              .then((saved) => {
-                setCurrentRevision(saved.revision);
-                setMessage("Template saved for future events.");
-              })
-              .catch((cause) =>
-                setMessage(
-                  cause instanceof Error ? cause.message : "Save failed.",
-                ),
-              )
-          }
-        >
-          <Save className="h-4 w-4" /> Save template
-        </Button>
-      </header>
+        }
+        description="Changes apply to future qualifying events. Comparable core questions remain locked."
+        eyebrow="Event configuration"
+        icon={MessageSquareText}
+        title="Event feedback template"
+      />
 
       {message && (
         <p

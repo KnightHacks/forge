@@ -19,12 +19,14 @@ export default async function EditFormPage({
   const session = await auth();
   if (!session) redirect("/");
   const { formId } = await params;
-  const [result, workspace, callbacks, respondentRoles] = await Promise.all([
-    api.forms.getAdminForm({ formId }),
-    api.forms.listAdmin(),
-    api.forms.listCallbacks(),
-    api.forms.listRespondentRoles(),
-  ]);
+  const [result, workspace, callbacks, respondentRoles, initialShareAssets] =
+    await Promise.all([
+      api.forms.getAdminForm({ formId }),
+      api.forms.listAdmin(),
+      api.forms.listCallbacks(),
+      api.forms.listRespondentRoles(),
+      api.forms.getShareAssets({ formId }),
+    ]);
   const definition = formDefinitionSchema.parse(result.form.formData);
 
   return (
@@ -47,6 +49,7 @@ export default async function EditFormPage({
           slugName: result.form.slugName,
           state: result.form.state,
         }}
+        initialShareAssets={initialShareAssets}
         readOnly={!result.access.canEdit}
         respondentRoles={respondentRoles}
         sections={workspace.sections}

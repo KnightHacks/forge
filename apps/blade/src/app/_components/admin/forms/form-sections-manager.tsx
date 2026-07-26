@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Save, Search } from "lucide-react";
+import { ArrowLeft, Plus, Save, Search, Settings2 } from "lucide-react";
 
+import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardHeader, CardTitle } from "@forge/ui/card";
@@ -19,6 +20,10 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 
 interface SectionDraft {
@@ -78,9 +83,15 @@ function RolePicker({
   );
 }
 
-export function FormSectionsManager() {
+export function FormSectionsManager({
+  initialProvisioning,
+}: {
+  initialProvisioning?: RouterOutputs["forms"]["sectionProvisioning"];
+}) {
   const utils = api.useUtils();
-  const provisioning = api.forms.sectionProvisioning.useQuery();
+  const provisioning = api.forms.sectionProvisioning.useQuery(undefined, {
+    initialData: initialProvisioning,
+  });
   const create = api.forms.createSection.useMutation({
     async onSuccess() {
       await utils.forms.sectionProvisioning.invalidate();
@@ -120,29 +131,26 @@ export function FormSectionsManager() {
   }
 
   return (
-    <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:pt-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Button asChild variant="ghost" className="-ml-3 min-h-11 gap-2">
-            <Link href="/admin/forms">
-              <ArrowLeft className="h-4 w-4" /> Forms
-            </Link>
+    <main className={adminPageLayoutClassName}>
+      <Button asChild variant="ghost" className="-ml-3 min-h-11 w-fit gap-2">
+        <Link href="/admin/forms">
+          <ArrowLeft className="h-4 w-4" /> Forms
+        </Link>
+      </Button>
+      <AdminPageHeader
+        actions={
+          <Button
+            className="min-h-11 gap-2"
+            onClick={() => setDraft(emptyDraft())}
+          >
+            <Plus className="h-4 w-4" /> Create section
           </Button>
-          <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">
-            Form sections
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Officers define separate viewer and editor role groups. Editors also
-            receive view access.
-          </p>
-        </div>
-        <Button
-          className="min-h-11 gap-2"
-          onClick={() => setDraft(emptyDraft())}
-        >
-          <Plus className="h-4 w-4" /> Create section
-        </Button>
-      </header>
+        }
+        description="Officers define separate viewer and editor role groups. Editors also receive view access."
+        eyebrow="Form administration"
+        icon={Settings2}
+        title="Form sections"
+      />
 
       <section
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"

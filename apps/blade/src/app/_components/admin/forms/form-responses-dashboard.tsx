@@ -26,6 +26,7 @@ import {
   YAxis,
 } from "recharts";
 
+import type { RouterOutputs } from "@forge/api";
 import type { ChartConfig } from "@forge/ui/chart";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -53,6 +54,10 @@ import {
 } from "@forge/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { FormResponseValue } from "~/app/_components/forms/form-response-value";
 import { api } from "~/trpc/react";
 
@@ -859,7 +864,17 @@ function workspaceHref(
   return query ? `${pathname}?${query}` : pathname;
 }
 
-export function FormResponsesDashboard({ formId }: { formId: string }) {
+export function FormResponsesDashboard({
+  formId,
+  initialCallbacks,
+  initialFormName,
+  initialResponses,
+}: {
+  formId: string;
+  initialCallbacks?: RouterOutputs["forms"]["listCallbackExecutions"];
+  initialFormName?: string;
+  initialResponses?: RouterOutputs["forms"]["listResponses"];
+}) {
   const utils = api.useUtils();
   const pathname = usePathname();
   const router = useRouter();
@@ -869,8 +884,14 @@ export function FormResponsesDashboard({ formId }: { formId: string }) {
     requestedView === "responses" || requestedView === "delivery"
       ? requestedView
       : "analytics";
-  const responses = api.forms.listResponses.useQuery({ formId });
-  const callbacks = api.forms.listCallbackExecutions.useQuery({ formId });
+  const responses = api.forms.listResponses.useQuery(
+    { formId },
+    { initialData: initialResponses },
+  );
+  const callbacks = api.forms.listCallbackExecutions.useQuery(
+    { formId },
+    { initialData: initialCallbacks },
+  );
   const exportQuery = api.forms.exportResponses.useQuery(
     { formId },
     { enabled: false },
@@ -902,32 +923,30 @@ export function FormResponsesDashboard({ formId }: { formId: string }) {
   }
 
   return (
-    <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:pt-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <Button asChild variant="ghost" className="-ml-3 min-h-11 gap-2">
-            <Link href={`/admin/forms/${formId}`}>
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Form builder
-            </Link>
+    <main className={adminPageLayoutClassName}>
+      <Button asChild variant="ghost" className="-ml-3 min-h-11 w-fit gap-2">
+        <Link href={`/admin/forms/${formId}`}>
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Form builder
+        </Link>
+      </Button>
+      <AdminPageHeader
+        actions={
+          <Button
+            className="min-h-11 gap-2"
+            disabled={exportQuery.isFetching}
+            onClick={() => void exportCsv()}
+            variant="outline"
+          >
+            <Download className="size-4" aria-hidden="true" /> Export CSV
           </Button>
-          <h1 className="mt-2 break-words text-3xl font-semibold sm:text-4xl">
-            {responses.data?.form.name ?? "Form responses"}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Review aggregate trends, individual submissions, and callback
-            delivery.
-          </p>
-        </div>
-        <Button
-          className="min-h-11 gap-2"
-          disabled={exportQuery.isFetching}
-          onClick={() => void exportCsv()}
-          variant="outline"
-        >
-          <Download className="size-4" aria-hidden="true" /> Export CSV
-        </Button>
-      </header>
+        }
+        description="Review aggregate trends, individual submissions, and callback delivery."
+        eyebrow="Form intelligence"
+        icon={BarChart3}
+        title={responses.data?.form.name ?? initialFormName ?? "Form responses"}
+        titleClassName="break-words"
+      />
 
       {responses.isLoading ? (
         <p

@@ -14,6 +14,7 @@ import {
   LayoutTemplate,
   Link2,
   List,
+  ListTodo,
   Loader2,
   Plus,
   Search,
@@ -45,6 +46,7 @@ import { defaultIssueDueAt } from "@forge/validators";
 import type { EventFormValue } from "../events/event-form-dialog";
 import type { IssueSearchInput } from "./params";
 import type { IssueWorkspaceData } from "./types";
+import { adminPageClassName } from "~/app/_components/admin/admin-page";
 import { localNewYorkDateTime } from "~/lib/event-dates";
 import { api } from "~/trpc/react";
 import { EventFormDialog } from "../events/event-form-dialog";
@@ -1140,7 +1142,9 @@ export function IssueWorkspace({
           }).format(calendarFocus);
 
   return (
-    <main className="container min-w-0 space-y-3 pb-8 pt-3 sm:pt-4 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2">
+    <main
+      className={`${adminPageClassName} space-y-3 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
+    >
       <header
         className="relative overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10"
         data-issue-dock
@@ -1151,13 +1155,14 @@ export function IssueWorkspace({
         />
         <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <div className="flex items-baseline gap-3">
-              <h1 className="text-2xl font-semibold sm:text-3xl">Issues</h1>
-              <span className="hidden text-sm font-medium text-primary sm:inline">
-                Club operations
-              </span>
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              <ListTodo className="size-4" aria-hidden="true" />
+              Club operations
             </div>
-            <p className="mt-1 truncate text-sm text-muted-foreground">
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
+              Issues
+            </h1>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
               Shared work from planning through completion.
             </p>
           </div>

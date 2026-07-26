@@ -31,6 +31,10 @@ import type {
   EventListItem,
   EventTagItem,
 } from "./types";
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { EventCalendar } from "./event-calendar";
 import { EventDetailDialog } from "./event-detail-dialog";
@@ -746,37 +750,34 @@ export function EventAdminDashboard({
   }
 
   return (
-    <main className="container min-w-0 space-y-4 pb-16 pt-5 sm:space-y-6 sm:pt-8">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-primary">Administration</p>
-          <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
-            Event management
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Manage club events, provider health, tags, and attendance records.
-          </p>
-        </div>
-        {canEdit && (
-          <div className="flex flex-wrap gap-2 self-start lg:self-auto">
-            {access.isOfficer && (
-              <Button asChild variant="outline" className="min-h-11">
-                <Link href="/admin/events/feedback-template">
-                  Feedback template
-                </Link>
+    <main className={adminPageLayoutClassName}>
+      <AdminPageHeader
+        actions={
+          canEdit ? (
+            <>
+              {access.isOfficer && (
+                <Button asChild variant="outline" className="min-h-11">
+                  <Link href="/admin/events/feedback-template">
+                    Feedback template
+                  </Link>
+                </Button>
+              )}
+              <Button
+                type="button"
+                className="min-h-11 gap-2 self-start lg:self-auto"
+                onClick={() => openForm("create")}
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Create event
               </Button>
-            )}
-            <Button
-              type="button"
-              className="min-h-11 gap-2 self-start lg:self-auto"
-              onClick={() => openForm("create")}
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Create event
-            </Button>
-          </div>
-        )}
-      </header>
+            </>
+          ) : undefined
+        }
+        description="Manage club events, provider health, tags, and attendance records."
+        eyebrow="Club operations"
+        icon={CalendarDays}
+        title="Event management"
+      />
 
       <EventSections access={access} input={input} />
 
