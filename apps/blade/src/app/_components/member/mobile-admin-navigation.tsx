@@ -50,14 +50,6 @@ export function MobileAdminNavigation({
           <Icon className="size-4" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
-        {active && (
-          <span
-            className="rounded-full bg-primary/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-primary"
-            aria-hidden="true"
-          >
-            Current
-          </span>
-        )}
       </>
     );
     const className = cn(
