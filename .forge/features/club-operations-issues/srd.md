@@ -249,9 +249,19 @@ authorization and partial-write flaws.
   creates a new schedule identity; title, priority, assignment, or other
   ordinary revisions do not.
 - Mention all assigned Discord users when assignments exist; otherwise mention
-  the owning Discord role. Use explicit `allowed_mentions`, sanitize issue
-  titles, group by destination and reminder window, sort deterministically, and
-  split at Discord's message-size limit.
+  the owning Discord role. Send one Components V2 message per owning team: a
+  role-colored container holds compact overdue, 1-day, 3-day, 7-day, and 14-day
+  sections separated by native dividers, and a final text display holds the
+  concise `cc:` notification below the container. Each issue row links its
+  title and short due date, encodes priority with one through four exclamation
+  points, and lists assignee first names (or the team name when unassigned).
+  Sort each window by priority, due date, title, and ID. Use explicit
+  `allowed_mentions`, sanitize issue and audience text, and split at Discord's
+  component-text, component-count, container-child, content, and mention
+  limits. Build issue links from the cron service's required `BLADE_URL`. Only
+  `NODE_ENV=production` may send mention-bearing `cc:` content; development and
+  test replace it with a plain notification-disabled line and
+  `allowed_mentions.parse: []`.
 - Reminder deliveries do not create issue-history entries. No TK interface is
   added or changed.
 

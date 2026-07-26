@@ -3,6 +3,9 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     DISCORD_BOT_TOKEN: z.string(),
     DISCORD_WEBHOOK_ANIMAL: z.string(),
     DISCORD_WEBHOOK_LEETCODE: z.string(),
@@ -12,6 +15,7 @@ export const env = createEnv({
     BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
+    NODE_ENV: process.env.NODE_ENV,
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
     DISCORD_WEBHOOK_ANIMAL: process.env.DISCORD_WEBHOOK_ANIMAL,
     DISCORD_WEBHOOK_LEETCODE: process.env.DISCORD_WEBHOOK_LEETCODE,
