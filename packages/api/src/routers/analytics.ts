@@ -15,13 +15,13 @@ import {
 
 import type { ClubAnalyticsReport } from "../utils/analytics/report";
 import { createTRPCRouter, permProcedure } from "../trpc";
-import { createAdminAuditEvent } from "../utils/audit/service";
 import { requireClubAnalyticsRead } from "../utils/analytics/access";
 import {
   serializeInternalAnalyticsCsv,
   serializeSponsorAnalyticsCsv,
 } from "../utils/analytics/export";
 import { buildClubAnalyticsReport } from "../utils/analytics/report";
+import { createAdminAuditEvent } from "../utils/audit/service";
 
 const CSV_MIME_TYPE = "text/csv;charset=utf-8";
 

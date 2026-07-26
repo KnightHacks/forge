@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  AUDIT_ACTION_CATALOG,
+  AUDIT_ACTION_KEYS,
+  auditListInputSchema,
+  auditSubjectInputSchema,
+} from "../audit";
+
+describe("admin audit contracts", () => {
+  it("keeps stable action keys unique with bounded allowlists", () => {
+    expect(new Set(AUDIT_ACTION_KEYS).size).toBe(AUDIT_ACTION_KEYS.length);
+    expect(AUDIT_ACTION_KEYS.length).toBeGreaterThanOrEqual(70);
+
+    for (const [actionKey, policy] of Object.entries(AUDIT_ACTION_CATALOG)) {
+      expect(actionKey).toMatch(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/);
+      expect(new Set(policy.metadataKeys).size).toBe(
+        policy.metadataKeys.length,
+      );
+      expect(new Set(policy.changeFields).size).toBe(
+        policy.changeFields.length,
+      );
+    }
+  });
+
+  it("applies the 30-day query surface defaults without inventing filters", () => {
+    expect(auditListInputSchema.parse({})).toEqual({ limit: 50 });
+  });
+
+  it("rejects inverted dates, oversized search, and malformed result subjects", () => {
+    expect(() =>
+      auditListInputSchema.parse({
+        from: new Date("2026-07-26T00:00:00.000Z"),
+        to: new Date("2026-07-25T00:00:00.000Z"),
+      }),
+    ).toThrow(/start date/i);
+    expect(() =>
+      auditListInputSchema.parse({ search: "x".repeat(101) }),
+    ).toThrow();
+    expect(() =>
+      auditSubjectInputSchema.parse({
+        relation: "result",
+        targetId: "target",
+        targetLabel: "Target",
+        targetType: "member",
+      }),
+    ).toThrow(/result outcome/i);
+  });
+});

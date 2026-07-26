@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
@@ -38,6 +39,10 @@ import {
   listActiveBulletinPosts,
   listCurrentAlumniOfficers,
 } from "../utils/alumni/dashboard";
+import {
+  appendAdminAuditResults,
+  createAdminAuditEvent,
+} from "../utils/audit/service";
 import {
   PROFILE_PICTURE_BUCKET_NAME,
   resolveProfilePictureObjectName,
@@ -423,21 +428,47 @@ export const alumniRouter = {
         })
         .from(AlumniBulletinPost);
       const nextOrder = orderRow?.nextOrder ?? 0;
-      const [created] = await db
-        .insert(AlumniBulletinPost)
-        .values({
-          ...input,
-          createdByUserId: ctx.session.user.id,
-          displayOrder: input.displayOrder ?? nextOrder,
-          updatedByUserId: ctx.session.user.id,
-        })
-        .returning();
-      if (!created) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Bulletin post could not be created.",
-        });
-      }
+      const created = await db.transaction(async (tx) => {
+        const [nextPost] = await tx
+          .insert(AlumniBulletinPost)
+          .values({
+            ...input,
+            createdByUserId: ctx.session.user.id,
+            displayOrder: input.displayOrder ?? nextOrder,
+            updatedByUserId: ctx.session.user.id,
+          })
+          .returning();
+        if (!nextPost) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Bulletin post could not be created.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "alumni.bulletin.created",
+            actor: ctx.session.user,
+            metadata: {
+              expiresAt: nextPost.expiresAt?.toISOString() ?? null,
+              formId: nextPost.formId,
+              hasExternalUrl: Boolean(nextPost.externalUrl),
+              hasImage: Boolean(nextPost.imageObjectName),
+              publishAt: nextPost.publishAt?.toISOString() ?? null,
+              state: nextPost.state,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: nextPost.id,
+                targetLabel: nextPost.title,
+                targetType: "bulletin_post",
+              },
+            ],
+          },
+          tx,
+        );
+        return nextPost;
+      });
       return await bulletinDto(created);
     }),
 
@@ -450,21 +481,117 @@ export const alumniRouter = {
       });
       if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
       const { postId, ...values } = input;
-      const [updated] = await db
-        .update(AlumniBulletinPost)
-        .set({
-          ...values,
-          archivedAt: values.state === "archived" ? new Date() : null,
-          updatedByUserId: ctx.session.user.id,
-        })
-        .where(eq(AlumniBulletinPost.id, postId))
-        .returning();
-      if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
+      const changedFields = Object.keys(values).filter((field) => {
+        const key = field as keyof typeof values;
+        const before = existing[key as keyof typeof existing];
+        const after = values[key];
+        if (before instanceof Date && after instanceof Date) {
+          return before.getTime() !== after.getTime();
+        }
+        return before !== after;
+      });
+      const cleanupPreviousImage =
+        Boolean(existing.imageObjectName) &&
+        existing.imageObjectName !== values.imageObjectName;
+      const operationId = cleanupPreviousImage ? randomUUID() : undefined;
+      const { auditEventId, updated } = await db.transaction(async (tx) => {
+        const [nextPost] = await tx
+          .update(AlumniBulletinPost)
+          .set({
+            ...values,
+            archivedAt: values.state === "archived" ? new Date() : null,
+            updatedByUserId: ctx.session.user.id,
+          })
+          .where(eq(AlumniBulletinPost.id, postId))
+          .returning();
+        if (!nextPost) throw new TRPCError({ code: "NOT_FOUND" });
+
+        const changes = [
+          {
+            after: nextPost.title,
+            before: existing.title,
+            field: "title",
+          },
+          {
+            after: nextPost.state,
+            before: existing.state,
+            field: "state",
+          },
+          {
+            after: nextPost.publishAt?.toISOString() ?? null,
+            before: existing.publishAt?.toISOString() ?? null,
+            field: "publishAt",
+          },
+          {
+            after: nextPost.expiresAt?.toISOString() ?? null,
+            before: existing.expiresAt?.toISOString() ?? null,
+            field: "expiresAt",
+          },
+          {
+            after: nextPost.ctaLabel,
+            before: existing.ctaLabel,
+            field: "ctaLabel",
+          },
+          {
+            after: nextPost.formId,
+            before: existing.formId,
+            field: "formId",
+          },
+          {
+            after: Boolean(nextPost.externalUrl),
+            before: Boolean(existing.externalUrl),
+            field: "hasExternalUrl",
+          },
+          {
+            after: Boolean(nextPost.imageObjectName),
+            before: Boolean(existing.imageObjectName),
+            field: "hasImage",
+          },
+        ].filter((change) => change.before !== change.after);
+        const auditEvent =
+          changedFields.length === 0
+            ? null
+            : await createAdminAuditEvent(
+                {
+                  actionKey: "alumni.bulletin.updated",
+                  actor: ctx.session.user,
+                  changes,
+                  metadata: { changedFields },
+                  operationId,
+                  subjects: [
+                    {
+                      relation: "primary",
+                      targetId: nextPost.id,
+                      targetLabel: nextPost.title,
+                      targetType: "bulletin_post",
+                    },
+                  ],
+                },
+                tx,
+              );
+        return { auditEventId: auditEvent?.id, updated: nextPost };
+      });
       if (
         existing.imageObjectName &&
         existing.imageObjectName !== updated.imageObjectName
       ) {
-        await removeAlumniBulletinImage(existing.imageObjectName);
+        const cleanupOutcome = await removeAlumniBulletinImage(
+          existing.imageObjectName,
+        );
+        if (auditEventId) {
+          await appendAdminAuditResults({
+            actionKey: "alumni.bulletin.updated",
+            eventId: auditEventId,
+            results: [
+              {
+                resultOutcome: cleanupOutcome,
+                targetId: existing.imageObjectName,
+                targetLabel: "Previous bulletin image",
+                targetType: "bulletin_image",
+              },
+            ],
+          });
+        }
       }
       return await bulletinDto(updated);
     }),
@@ -474,7 +601,11 @@ export const alumniRouter = {
     .mutation(async ({ ctx, input }) => {
       assertCanManageAlumni(ctx);
       const reorderable = await db
-        .select({ id: AlumniBulletinPost.id })
+        .select({
+          displayOrder: AlumniBulletinPost.displayOrder,
+          id: AlumniBulletinPost.id,
+          title: AlumniBulletinPost.title,
+        })
         .from(AlumniBulletinPost)
         .where(ne(AlumniBulletinPost.state, "archived"));
       const expected = new Set(reorderable.map((post) => post.id));
@@ -488,6 +619,7 @@ export const alumniRouter = {
         });
       }
 
+      const operationId = randomUUID();
       await db.transaction(async (tx) => {
         await Promise.all(
           input.postIds.map((postId, displayOrder) =>
@@ -500,6 +632,34 @@ export const alumniRouter = {
               .where(eq(AlumniBulletinPost.id, postId)),
           ),
         );
+        await createAdminAuditEvent(
+          {
+            actionKey: "alumni.bulletin.reordered",
+            actor: ctx.session.user,
+            metadata: { postCount: input.postIds.length },
+            operationId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: "active-bulletin",
+                targetLabel: "Active alumni bulletin",
+                targetType: "alumni_bulletin",
+              },
+              ...input.postIds.map((postId, displayOrder) => {
+                const post = reorderable.find((item) => item.id === postId);
+                return {
+                  metadata: { displayOrder },
+                  relation: "result" as const,
+                  resultOutcome: "succeeded" as const,
+                  targetId: postId,
+                  targetLabel: post?.title ?? postId,
+                  targetType: "bulletin_post" as const,
+                };
+              }),
+            ],
+          },
+          tx,
+        );
       });
       return { reordered: true };
     }),
@@ -508,55 +668,146 @@ export const alumniRouter = {
     .input(alumniBulletinIdSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageAlumni(ctx);
-      const [archived] = await db
-        .update(AlumniBulletinPost)
-        .set({
-          archivedAt: new Date(),
-          state: "archived",
-          updatedByUserId: ctx.session.user.id,
-        })
-        .where(eq(AlumniBulletinPost.id, input.postId))
-        .returning({ id: AlumniBulletinPost.id });
-      if (!archived) throw new TRPCError({ code: "NOT_FOUND" });
-      return archived;
+      return db.transaction(async (tx) => {
+        const existing = await tx.query.AlumniBulletinPost.findFirst({
+          where: eq(AlumniBulletinPost.id, input.postId),
+        });
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+        const [archived] = await tx
+          .update(AlumniBulletinPost)
+          .set({
+            archivedAt: new Date(),
+            state: "archived",
+            updatedByUserId: ctx.session.user.id,
+          })
+          .where(eq(AlumniBulletinPost.id, input.postId))
+          .returning({ id: AlumniBulletinPost.id });
+        if (!archived) throw new TRPCError({ code: "NOT_FOUND" });
+        await createAdminAuditEvent(
+          {
+            actionKey: "alumni.bulletin.archived",
+            actor: ctx.session.user,
+            changes: [
+              { after: "archived", before: existing.state, field: "state" },
+            ],
+            metadata: { priorState: existing.state },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: existing.id,
+                targetLabel: existing.title,
+                targetType: "bulletin_post",
+              },
+            ],
+          },
+          tx,
+        );
+        return archived;
+      });
     }),
 
   restoreBulletinPost: permProcedure
     .input(alumniBulletinIdSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageAlumni(ctx);
-      const [restored] = await db
-        .update(AlumniBulletinPost)
-        .set({
-          archivedAt: null,
-          expiresAt: null,
-          publishAt: null,
-          state: "draft",
-          updatedByUserId: ctx.session.user.id,
-        })
-        .where(eq(AlumniBulletinPost.id, input.postId))
-        .returning({ id: AlumniBulletinPost.id });
-      if (!restored) throw new TRPCError({ code: "NOT_FOUND" });
-      return restored;
+      return db.transaction(async (tx) => {
+        const existing = await tx.query.AlumniBulletinPost.findFirst({
+          where: eq(AlumniBulletinPost.id, input.postId),
+        });
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+        const [restored] = await tx
+          .update(AlumniBulletinPost)
+          .set({
+            archivedAt: null,
+            expiresAt: null,
+            publishAt: null,
+            state: "draft",
+            updatedByUserId: ctx.session.user.id,
+          })
+          .where(eq(AlumniBulletinPost.id, input.postId))
+          .returning({ id: AlumniBulletinPost.id });
+        if (!restored) throw new TRPCError({ code: "NOT_FOUND" });
+        await createAdminAuditEvent(
+          {
+            actionKey: "alumni.bulletin.restored",
+            actor: ctx.session.user,
+            changes: [
+              { after: "draft", before: existing.state, field: "state" },
+            ],
+            metadata: { priorState: existing.state },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: existing.id,
+                targetLabel: existing.title,
+                targetType: "bulletin_post",
+              },
+            ],
+          },
+          tx,
+        );
+        return restored;
+      });
     }),
 
   uploadBulletinImage: permProcedure
     .input(alumniBulletinImageUploadSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageAlumni(ctx);
-      return {
-        objectName: await uploadAlumniBulletinImage({
-          fileContent: input.fileContent,
-          userId: ctx.session.user.id,
-        }),
-      };
+      const objectName = await uploadAlumniBulletinImage({
+        fileContent: input.fileContent,
+        userId: ctx.session.user.id,
+      });
+      try {
+        await createAdminAuditEvent({
+          actionKey: "alumni.bulletin_image.uploaded",
+          actor: ctx.session.user,
+          subjects: [
+            {
+              relation: "primary",
+              targetId: objectName,
+              targetLabel: "Alumni bulletin image",
+              targetType: "bulletin_image",
+            },
+          ],
+        });
+      } catch (error) {
+        await removeAlumniBulletinImage(objectName);
+        throw error;
+      }
+      return { objectName };
     }),
 
   removeBulletinImage: permProcedure
     .input(alumniBulletinImageRemoveSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageAlumni(ctx);
-      await removeAlumniBulletinImage(input.objectName);
+      const operationId = randomUUID();
+      const removalOutcome = await removeAlumniBulletinImage(input.objectName);
+      await createAdminAuditEvent({
+        actionKey: "alumni.bulletin_image.removed",
+        actor: ctx.session.user,
+        operationId,
+        outcome:
+          removalOutcome === "failed_external"
+            ? "partial_external"
+            : "committed",
+        subjects: [
+          {
+            relation: "primary",
+            targetId: input.objectName,
+            targetLabel: "Alumni bulletin image",
+            targetType: "bulletin_image",
+          },
+          {
+            relation: "result",
+            resultOutcome: removalOutcome,
+            targetId: input.objectName,
+            targetLabel: "Bulletin image storage removal",
+            targetType: "provider",
+          },
+        ],
+      });
       return { removed: true };
     }),
 } satisfies TRPCRouterRecord;

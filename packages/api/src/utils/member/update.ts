@@ -14,10 +14,10 @@ import {
   memberResponseDataFromInput,
 } from "@forge/validators";
 
+import type { TransactionDb } from "../db";
 import { replaceEmploymentHistory } from "../career/employment";
 import { codeOwnedFormConfigs } from "../forms/config";
 import { updateResponse } from "../forms/manager";
-import type { TransactionDb } from "../db";
 import { isUniqueViolation } from "./profile";
 
 function getCodeOfConductAccepted(responseData: unknown) {

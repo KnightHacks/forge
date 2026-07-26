@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -29,8 +28,12 @@ import {
   memberUpdateSchema,
 } from "@forge/validators";
 
+import type { AuditChangeInput } from "../utils/audit/service";
 import { permProcedure } from "../trpc";
-import { createAdminAuditEvent } from "../utils/audit/service";
+import {
+  appendAdminAuditResults,
+  createAdminAuditEvent,
+} from "../utils/audit/service";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
@@ -221,7 +224,7 @@ function memberProfileAuditChanges({
     "gender",
     "raceOrEthnicity",
   ] as const;
-  const changes = fields.flatMap((field) =>
+  const changes: AuditChangeInput[] = fields.flatMap((field) =>
     before[field] === after[field]
       ? []
       : [{ after: after[field], before: before[field], field }],
@@ -732,7 +735,8 @@ export const adminMemberProcedures = {
       assertCanEditMembers(ctx);
       try {
         const member = await findMemberOrThrow(input.memberId);
-        await db.transaction(async (tx) => {
+        const operationId = randomUUID();
+        const auditEventId = await db.transaction(async (tx) => {
           const deletedResponses = await tx
             .delete(FormResponse)
             .where(
@@ -742,7 +746,7 @@ export const adminMemberProcedures = {
               ),
             )
             .returning({ id: FormResponse.id });
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "member.profile.deleted",
               actor: ctx.session.user,
@@ -750,21 +754,39 @@ export const adminMemberProcedures = {
                 deletedObjectCount: deletedResponses.length + 1,
                 deletedObjectTypes: [
                   "member",
-                  ...(deletedResponses.length > 0
-                    ? ["signup_response"]
-                    : []),
+                  ...(deletedResponses.length > 0 ? ["signup_response"] : []),
                 ],
               },
+              operationId,
               subjects: [memberAuditSubject(member)],
             },
             tx,
           );
           await tx.delete(Member).where(eq(Member.id, member.id));
+          return auditEvent.id;
         });
-        await Promise.all([
+        const [pictureCleanup, resumeCleanup] = await Promise.all([
           removeProfilePictureObjectsForUser(member.userId),
           removeUnreferencedResumeObjectsForUser(member.userId),
         ]);
+        await appendAdminAuditResults({
+          actionKey: "member.profile.deleted",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: pictureCleanup,
+              targetId: `profile-picture-cleanup:${member.userId}`,
+              targetLabel: "Profile picture storage cleanup",
+              targetType: "provider",
+            },
+            {
+              resultOutcome: resumeCleanup,
+              targetId: `resume-cleanup:${member.userId}`,
+              targetLabel: "Résumé storage cleanup",
+              targetType: "provider",
+            },
+          ],
+        });
         await auditAdminMutation({
           color: "uhoh_red",
           message: `Deleted Member profile ${member.id}.`,
@@ -1067,13 +1089,14 @@ export const adminMemberProcedures = {
           fileContent: input.fileContent,
           userId: member.userId,
         });
-        await db.transaction(async (tx) => {
+        const operationId = randomUUID();
+        const auditEventId = await db.transaction(async (tx) => {
           await saveMemberProfilePictureForUser({
             database: tx,
             profilePictureUrl: objectName,
             userId: member.userId,
           });
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "member.profile_picture.replaced",
               actor: ctx.session.user,
@@ -1082,12 +1105,29 @@ export const adminMemberProcedures = {
                 hadPrevious: Boolean(member.profilePictureUrl),
                 mimeType: dataUrlMimeType(input.fileContent),
               },
+              operationId,
               subjects: [memberAuditSubject(member)],
             },
             tx,
           );
+          return auditEvent.id;
         });
-        await removeProfilePictureObjectsForUser(member.userId, [objectName]);
+        const cleanupOutcome = await removeProfilePictureObjectsForUser(
+          member.userId,
+          [objectName],
+        );
+        await appendAdminAuditResults({
+          actionKey: "member.profile_picture.replaced",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: `profile-picture-cleanup:${member.userId}`,
+              targetLabel: "Previous profile picture cleanup",
+              targetType: "provider",
+            },
+          ],
+        });
         await auditAdminMutation({
           color: "success_green",
           message: `Replaced the profile picture for member ${member.id}.`,
@@ -1118,25 +1158,42 @@ export const adminMemberProcedures = {
       assertCanEditMembers(ctx);
       try {
         const member = await findMemberOrThrow(input.memberId);
-        await db.transaction(async (tx) => {
+        const operationId = randomUUID();
+        const auditEventId = await db.transaction(async (tx) => {
           await saveMemberProfilePictureForUser({
             database: tx,
             profilePictureUrl: null,
             userId: member.userId,
           });
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "member.profile_picture.removed",
               actor: ctx.session.user,
               metadata: {
                 hadPrevious: Boolean(member.profilePictureUrl),
               },
+              operationId,
               subjects: [memberAuditSubject(member)],
             },
             tx,
           );
+          return auditEvent.id;
         });
-        await removeProfilePictureObjectsForUser(member.userId);
+        const cleanupOutcome = await removeProfilePictureObjectsForUser(
+          member.userId,
+        );
+        await appendAdminAuditResults({
+          actionKey: "member.profile_picture.removed",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: `profile-picture-cleanup:${member.userId}`,
+              targetLabel: "Profile picture storage cleanup",
+              targetType: "provider",
+            },
+          ],
+        });
         await auditAdminMutation({
           color: "uhoh_red",
           message: `Removed the profile picture for member ${member.id}.`,
@@ -1167,13 +1224,14 @@ export const adminMemberProcedures = {
           fileContent: input.fileContent,
           userId: member.userId,
         });
-        await db.transaction(async (tx) => {
+        const operationId = randomUUID();
+        const auditEventId = await db.transaction(async (tx) => {
           await saveMemberResumeForUser({
             database: tx,
             resumeUrl: objectName,
             userId: member.userId,
           });
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "member.resume.replaced",
               actor: ctx.session.user,
@@ -1182,12 +1240,28 @@ export const adminMemberProcedures = {
                 filename: input.fileName,
                 hadPrevious: Boolean(member.resumeUrl),
               },
+              operationId,
               subjects: [memberAuditSubject(member)],
             },
             tx,
           );
+          return auditEvent.id;
         });
-        await removeUnreferencedResumeObjectsForUser(member.userId);
+        const cleanupOutcome = await removeUnreferencedResumeObjectsForUser(
+          member.userId,
+        );
+        await appendAdminAuditResults({
+          actionKey: "member.resume.replaced",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: `resume-cleanup:${member.userId}`,
+              targetLabel: "Previous résumé storage cleanup",
+              targetType: "provider",
+            },
+          ],
+        });
         await auditAdminMutation({
           color: "success_green",
           message: `Replaced the resume for member ${member.id}.`,
@@ -1215,25 +1289,42 @@ export const adminMemberProcedures = {
       assertCanEditMembers(ctx);
       try {
         const member = await findMemberOrThrow(input.memberId);
-        await db.transaction(async (tx) => {
+        const operationId = randomUUID();
+        const auditEventId = await db.transaction(async (tx) => {
           await saveMemberResumeForUser({
             database: tx,
             resumeUrl: null,
             userId: member.userId,
           });
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "member.resume.removed",
               actor: ctx.session.user,
               metadata: {
                 hadPrevious: Boolean(member.resumeUrl),
               },
+              operationId,
               subjects: [memberAuditSubject(member)],
             },
             tx,
           );
+          return auditEvent.id;
         });
-        await removeUnreferencedResumeObjectsForUser(member.userId);
+        const cleanupOutcome = await removeUnreferencedResumeObjectsForUser(
+          member.userId,
+        );
+        await appendAdminAuditResults({
+          actionKey: "member.resume.removed",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: `resume-cleanup:${member.userId}`,
+              targetLabel: "Résumé storage cleanup",
+              targetType: "provider",
+            },
+          ],
+        });
         await auditAdminMutation({
           color: "uhoh_red",
           message: `Removed the resume for member ${member.id}.`,

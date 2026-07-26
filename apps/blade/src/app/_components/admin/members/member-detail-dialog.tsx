@@ -171,11 +171,13 @@ function AdminMemberFiles({
   onChanged: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const accessResume = api.member.accessAdminMemberResume.useMutation();
   const uploadPicture = api.member.uploadAdminProfilePicture.useMutation();
   const removePicture = api.member.removeAdminProfilePicture.useMutation();
   const uploadResume = api.member.uploadAdminResume.useMutation();
   const removeResume = api.member.removeAdminResume.useMutation();
   const isPending =
+    accessResume.isPending ||
     uploadPicture.isPending ||
     removePicture.isPending ||
     uploadResume.isPending ||
@@ -196,14 +198,40 @@ function AdminMemberFiles({
     }
   };
 
+  const viewResume = async () => {
+    setError(null);
+    const previewWindow = window.open("about:blank", "_blank");
+    if (previewWindow) previewWindow.opener = null;
+    try {
+      const result = await accessResume.mutateAsync({
+        memberId: detail.member.id,
+      });
+      if (!result.url) {
+        throw new Error("This member no longer has a resume.");
+      }
+      if (previewWindow) {
+        previewWindow.location.replace(result.url);
+      } else {
+        window.open(result.url, "_blank", "noopener,noreferrer");
+      }
+    } catch (operationError) {
+      previewWindow?.close();
+      setError(
+        operationError instanceof Error
+          ? operationError.message
+          : "Resume could not be opened.",
+      );
+    }
+  };
+
   return (
     <DetailSection
       title="Profile files"
       icon={FileText}
       description={
         canEdit
-          ? "Secure previews and target-owned replacements."
-          : "Secure previews expire automatically."
+          ? "On-demand secure previews and target-owned replacements."
+          : "Secure previews are requested on demand and expire automatically."
       }
     >
       <div className="min-w-0 divide-y divide-border/70 md:grid md:grid-cols-2 md:divide-x md:divide-y-0">
@@ -293,11 +321,18 @@ function AdminMemberFiles({
               </p>
             </div>
             <div className="flex min-w-0 flex-wrap gap-2">
-              {detail.resumeUrl && (
-                <Button asChild type="button" size="sm" variant="outline">
-                  <a href={detail.resumeUrl} target="_blank" rel="noreferrer">
-                    View resume
-                  </a>
+              {detail.member.resumeUrl && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => void viewResume()}
+                >
+                  {accessResume.isPending && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  {accessResume.isPending ? "Opening…" : "View resume"}
                 </Button>
               )}
               {canEdit && (

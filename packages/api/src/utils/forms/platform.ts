@@ -22,8 +22,8 @@ import {
   formDefinitionSchema,
 } from "@forge/validators";
 
-import { createAdminAuditEvent } from "../audit/service";
 import type { PermissionMap } from "../permissions";
+import { createAdminAuditEvent } from "../audit/service";
 import { buildDuesStatus } from "../dues/status";
 import { evaluateFormSectionAccess, requireFormCapability } from "./access";
 import { summarizeFormResponses } from "./analytics";
@@ -269,13 +269,17 @@ export async function deletePlatformResponse(input: {
   if (form.kind !== "general") throw new TRPCError({ code: "BAD_REQUEST" });
   const result = await db.transaction(async (tx) => {
     const response = await tx.query.FormResponse.findFirst({
-      columns: { createdAt: true, id: true },
+      columns: { createdAt: true, id: true, userId: true },
       where: and(
         eq(FormResponse.id, input.responseId),
         eq(FormResponse.form, input.formId),
       ),
     });
     if (!response) throw new TRPCError({ code: "NOT_FOUND" });
+    const member = await tx.query.Member.findFirst({
+      columns: { firstName: true, id: true, lastName: true },
+      where: eq(Member.userId, response.userId),
+    });
     await tx
       .update(FormCallbackExecution)
       .set({ responseId: null, status: "cancelled" })
@@ -319,6 +323,17 @@ export async function deletePlatformResponse(input: {
             targetLabel: form.name,
             targetType: "form",
           },
+          ...(member
+            ? [
+                {
+                  memberId: member.id,
+                  relation: "secondary" as const,
+                  targetId: member.id,
+                  targetLabel: `${member.firstName} ${member.lastName}`,
+                  targetType: "member" as const,
+                },
+              ]
+            : []),
         ],
       },
       tx,
@@ -535,6 +550,41 @@ export async function updatePlatformForm(input: {
     },
   });
   return db.transaction(async (tx) => {
+    const previousInstructionIds = new Set(
+      normalizeStoredFormDefinition(current.id, current.formData)
+        .instructions.filter((instruction) => instruction.type !== "text")
+        .map((instruction) => instruction.attachmentId),
+    );
+    const addedInstructionIds = formDefinitionSchema
+      .parse(next.definition)
+      .instructions.filter((instruction) => instruction.type !== "text")
+      .map((instruction) => instruction.attachmentId)
+      .filter((attachmentId) => !previousInstructionIds.has(attachmentId));
+    if (addedInstructionIds.length > 0) {
+      const instructionAttachments = await tx
+        .select({
+          finalizedAt: FormAttachment.finalizedAt,
+          formId: FormAttachment.formId,
+          id: FormAttachment.id,
+          purpose: FormAttachment.purpose,
+        })
+        .from(FormAttachment)
+        .where(inArray(FormAttachment.id, addedInstructionIds));
+      if (
+        instructionAttachments.length !== new Set(addedInstructionIds).size ||
+        instructionAttachments.some(
+          (attachment) =>
+            attachment.formId !== current.id ||
+            attachment.purpose !== "instruction" ||
+            !attachment.finalizedAt,
+        )
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more instruction uploads are invalid.",
+        });
+      }
+    }
     const [saved] = await tx
       .update(FormsSchemas)
       .set({
@@ -634,6 +684,10 @@ export async function updatePlatformFormSettings(input: {
     });
   }
   return db.transaction(async (tx) => {
+    const previousRespondentRoles = await tx
+      .select({ roleId: FormResponseRoles.roleId })
+      .from(FormResponseRoles)
+      .where(eq(FormResponseRoles.formId, form.id));
     const [saved] = await tx
       .update(FormsSchemas)
       .set({
@@ -661,6 +715,83 @@ export async function updatePlatformFormSettings(input: {
         })),
       );
     }
+    if (!saved) throw new TRPCError({ code: "NOT_FOUND" });
+    const previousRoleIds = previousRespondentRoles
+      .map(({ roleId }) => roleId)
+      .sort();
+    const nextRoleIds = [...input.respondentRoleIds].sort();
+    const changes = [
+      ...(form.responseMode === saved.responseMode
+        ? []
+        : [
+            {
+              after: saved.responseMode,
+              before: form.responseMode,
+              field: "responseMode",
+            },
+          ]),
+      ...(form.opensAt?.toISOString() === saved.opensAt?.toISOString()
+        ? []
+        : [
+            {
+              after: saved.opensAt?.toISOString() ?? null,
+              before: form.opensAt?.toISOString() ?? null,
+              field: "opensAt",
+            },
+          ]),
+      ...(form.closesAt?.toISOString() === saved.closesAt?.toISOString()
+        ? []
+        : [
+            {
+              after: saved.closesAt?.toISOString() ?? null,
+              before: form.closesAt?.toISOString() ?? null,
+              field: "closesAt",
+            },
+          ]),
+      ...(form.manuallyClosed === saved.manuallyClosed
+        ? []
+        : [
+            {
+              after: saved.manuallyClosed,
+              before: form.manuallyClosed,
+              field: "manualClosure",
+            },
+          ]),
+      ...(form.sectionId === saved.sectionId
+        ? []
+        : [
+            {
+              after: saved.sectionId,
+              before: form.sectionId,
+              field: "sectionId",
+            },
+          ]),
+      ...(JSON.stringify(previousRoleIds) === JSON.stringify(nextRoleIds)
+        ? []
+        : [
+            {
+              after: nextRoleIds,
+              before: previousRoleIds,
+              field: "respondentRoleIds",
+            },
+          ]),
+    ];
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.settings.updated",
+        actor: auditActor(input.actor),
+        changes,
+        subjects: [
+          {
+            relation: "primary",
+            targetId: saved.id,
+            targetLabel: saved.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
     return saved;
   });
 }
@@ -694,25 +825,53 @@ export async function changePlatformFormState(input: {
     now: new Date(),
     targetState: input.targetState,
   });
-  const [saved] = await db
-    .update(FormsSchemas)
-    .set({
-      archivedAt: next.archivedAt,
-      formData: definition,
-      isClosed: next.state === "archived",
-      publishedAt: next.publishedAt,
-      revision: next.revision,
-      state: next.state,
-    })
-    .where(
-      and(
-        eq(FormsSchemas.id, current.id),
-        eq(FormsSchemas.revision, input.expectedRevision),
-      ),
-    )
-    .returning();
-  if (!saved) throw new TRPCError({ code: "CONFLICT" });
-  return saved;
+  return db.transaction(async (tx) => {
+    const [saved] = await tx
+      .update(FormsSchemas)
+      .set({
+        archivedAt: next.archivedAt,
+        formData: definition,
+        isClosed: next.state === "archived",
+        publishedAt: next.publishedAt,
+        revision: next.revision,
+        state: next.state,
+      })
+      .where(
+        and(
+          eq(FormsSchemas.id, current.id),
+          eq(FormsSchemas.revision, input.expectedRevision),
+        ),
+      )
+      .returning();
+    if (!saved) throw new TRPCError({ code: "CONFLICT" });
+    await createAdminAuditEvent(
+      {
+        actionKey:
+          input.targetState === "published"
+            ? "form.published"
+            : "form.archived",
+        actor: auditActor(input.actor),
+        changes: [
+          {
+            after: saved.state,
+            before: current.state,
+            field: "state",
+          },
+        ],
+        metadata: { revision: saved.revision },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: saved.id,
+            targetLabel: saved.name,
+            targetType: "form",
+          },
+        ],
+      },
+      tx,
+    );
+    return saved;
+  });
 }
 
 export async function memberFormHistory(userId: string) {
@@ -869,7 +1028,7 @@ export async function exportPlatformResponses(
     .innerJoin(Member, eq(FormResponse.userId, Member.userId))
     .where(eq(FormResponse.form, form.id));
   const definition = normalizeStoredFormDefinition(form.id, form.formData);
-  return serializeFormResponsesCsv({
+  const csv = serializeFormResponsesCsv({
     definition,
     responses: rows.map((row) => {
       const normalized = normalizeStoredFormResponse({
@@ -892,6 +1051,24 @@ export async function exportPlatformResponses(
       };
     }),
   });
+  await createAdminAuditEvent({
+    actionKey: "form.responses.exported",
+    actor: auditActor(actor),
+    metadata: {
+      formState: form.state,
+      questionCount: definition.questions.length,
+      responseCount: rows.length,
+    },
+    subjects: [
+      {
+        relation: "primary",
+        targetId: form.id,
+        targetLabel: form.name,
+        targetType: "form",
+      },
+    ],
+  });
+  return csv;
 }
 
 export async function provisionFormSection(input: {
@@ -922,6 +1099,26 @@ export async function provisionFormSection(input: {
           sectionId: section.id,
         })),
       );
+    await createAdminAuditEvent(
+      {
+        actionKey: "form.section.created",
+        actor: auditActor(input.actor),
+        metadata: {
+          editorRoleIds: input.editorRoleIds,
+          name: section.name,
+          viewerRoleIds: input.viewerRoleIds,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: section.id,
+            targetLabel: section.name,
+            targetType: "form_section",
+          },
+        ],
+      },
+      tx,
+    );
     return section;
   });
 }

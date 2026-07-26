@@ -249,17 +249,19 @@ export async function removeUnreferencedResumeObjectsForUser(userId: string) {
       objectsToRemove.push(objectName);
     }
 
-    if (objectsToRemove.length === 0) return;
+    if (objectsToRemove.length === 0) return "skipped" as const;
 
     await Promise.all(
       objectsToRemove.map((objectName) =>
         resumeStorageClient.removeObject(RESUME_BUCKET_NAME, objectName),
       ),
     );
+    return "succeeded" as const;
   } catch (error) {
     logger.warn(
       "Unable to remove unreferenced resume objects; continuing:",
       error,
     );
+    return "failed_external" as const;
   }
 }

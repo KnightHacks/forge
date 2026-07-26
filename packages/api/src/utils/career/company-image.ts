@@ -85,14 +85,18 @@ export async function removeCompanyImage(
   companyId: string,
   objectName: string | null | undefined,
 ) {
-  if (!objectName || !isCompanyImageObjectName(companyId, objectName)) return;
+  if (!objectName || !isCompanyImageObjectName(companyId, objectName)) {
+    return "skipped" as const;
+  }
 
   try {
     await profilePictureStorageClient.removeObject(
       MINIO.PROFILE_PICTURES_BUCKET_NAME,
       objectName,
     );
+    return "succeeded" as const;
   } catch (error) {
     logger.warn("Unable to remove company image; continuing:", error);
+    return "failed_external" as const;
   }
 }

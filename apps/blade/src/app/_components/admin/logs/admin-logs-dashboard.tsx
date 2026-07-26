@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -79,8 +79,9 @@ function formatAuditValue(value: unknown) {
   if (value === undefined) return "—";
   if (Array.isArray(value)) return value.join(", ") || "None";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return value.toLocaleString();
+  return JSON.stringify(value);
 }
 
 function actorStyle(roleColor: string | null): CSSProperties | undefined {
@@ -133,7 +134,7 @@ function DetailSheet({
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {detail.error.message}
           </div>
-        ) : detail.data ? (
+        ) : eventId ? (
           <AuditDetailContent detail={detail.data} />
         ) : null}
       </SheetContent>
@@ -398,19 +399,10 @@ export function AdminLogsDashboard() {
     search: deferredMemberSearch,
   });
 
-  useEffect(() => {
+  const resetPagination = () => {
     setCursorStack([undefined]);
     setPage(0);
-  }, [
-    actionKey,
-    actorUserId,
-    deferredSearch,
-    from,
-    memberId,
-    outcome,
-    targetType,
-    to,
-  ]);
+  };
 
   const resetFilters = () => {
     setSearch("");
@@ -422,6 +414,7 @@ export function AdminLogsDashboard() {
     setOutcome(null);
     setFrom("");
     setTo("");
+    resetPagination();
   };
 
   return (
@@ -454,7 +447,10 @@ export function AdminLogsDashboard() {
               <Input
                 id="audit-search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPagination();
+                }}
                 placeholder="Search actor, action, target, or ID"
                 className="pl-9"
               />
@@ -469,7 +465,10 @@ export function AdminLogsDashboard() {
                 items={members.data ?? []}
                 value={memberId}
                 onSearchValueChange={setMemberSearch}
-                onValueChange={(value) => setMemberId(value)}
+                onValueChange={(value) => {
+                  setMemberId(value);
+                  resetPagination();
+                }}
                 getItemValue={(member) => member.id}
                 getItemLabel={memberLabel}
                 getItemSearchValue={(member) =>
@@ -499,7 +498,10 @@ export function AdminLogsDashboard() {
                   )?.id ?? null
                 }
                 onSearchValueChange={setMemberSearch}
-                onItemSelect={(member) => setActorUserId(member.userId)}
+                onItemSelect={(member) => {
+                  setActorUserId(member.userId);
+                  resetPagination();
+                }}
                 getItemValue={(member) => member.id}
                 getItemLabel={memberLabel}
                 renderItem={(member) => (
@@ -519,9 +521,12 @@ export function AdminLogsDashboard() {
               <Label htmlFor="audit-action">Action</Label>
               <Select
                 value={actionKey ?? ALL}
-                onValueChange={(value) =>
-                  setActionKey(value === ALL ? null : (value as AuditActionKey))
-                }
+                onValueChange={(value) => {
+                  setActionKey(
+                    value === ALL ? null : (value as AuditActionKey),
+                  );
+                  resetPagination();
+                }}
               >
                 <SelectTrigger id="audit-action" className="mt-2">
                   <SelectValue placeholder="Any action" />
@@ -541,9 +546,10 @@ export function AdminLogsDashboard() {
               <Label htmlFor="audit-outcome">Outcome</Label>
               <Select
                 value={outcome ?? ALL}
-                onValueChange={(value) =>
-                  setOutcome(value === ALL ? null : (value as AuditOutcome))
-                }
+                onValueChange={(value) => {
+                  setOutcome(value === ALL ? null : (value as AuditOutcome));
+                  resetPagination();
+                }}
               >
                 <SelectTrigger id="audit-outcome" className="mt-2">
                   <SelectValue placeholder="Any outcome" />
@@ -562,11 +568,12 @@ export function AdminLogsDashboard() {
               <Label htmlFor="audit-target-type">Target type</Label>
               <Select
                 value={targetType ?? ALL}
-                onValueChange={(value) =>
+                onValueChange={(value) => {
                   setTargetType(
                     value === ALL ? null : (value as AuditTargetType),
-                  )
-                }
+                  );
+                  resetPagination();
+                }}
               >
                 <SelectTrigger id="audit-target-type" className="mt-2">
                   <SelectValue placeholder="Any target" />
@@ -589,7 +596,10 @@ export function AdminLogsDashboard() {
                 type="date"
                 className="mt-2"
                 value={from}
-                onChange={(event) => setFrom(event.target.value)}
+                onChange={(event) => {
+                  setFrom(event.target.value);
+                  resetPagination();
+                }}
               />
             </div>
 
@@ -600,7 +610,10 @@ export function AdminLogsDashboard() {
                 type="date"
                 className="mt-2"
                 value={to}
-                onChange={(event) => setTo(event.target.value)}
+                onChange={(event) => {
+                  setTo(event.target.value);
+                  resetPagination();
+                }}
               />
             </div>
 

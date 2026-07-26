@@ -1,11 +1,11 @@
-import type { TRPCRouterRecord } from "@trpc/server";
 import { randomUUID } from "node:crypto";
+import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { SQL } from "@forge/db";
 import { CAREER } from "@forge/consts";
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "@forge/db";
+import { and, asc, desc, eq, ilike, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Company, Employment, Member } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
@@ -22,7 +22,10 @@ import {
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
-import { createAdminAuditEvent } from "../utils/audit/service";
+import {
+  appendAdminAuditResults,
+  createAdminAuditEvent,
+} from "../utils/audit/service";
 import {
   getCompanyImageUrl,
   removeCompanyImage,
@@ -397,9 +400,7 @@ export const careerRouter = {
             .update(Company)
             .set({
               ...metadata,
-              normalizedDisplayName: normalizeCompanyName(
-                metadata.displayName,
-              ),
+              normalizedDisplayName: normalizeCompanyName(metadata.displayName),
               updatedAt: new Date(),
             })
             .where(eq(Company.id, companyId))
@@ -455,12 +456,6 @@ export const careerRouter = {
         throw error;
       }
 
-      if (!company) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Company not found.",
-        });
-      }
       return company;
     }),
 
@@ -490,6 +485,8 @@ export const careerRouter = {
         companyId: company.id,
         fileContent: input.fileContent,
       });
+      const operationId = company.logoObjectName ? randomUUID() : undefined;
+      let auditEventId: string | undefined;
       try {
         await db.transaction(async (tx) => {
           const [updatedCompany] = await tx
@@ -503,11 +500,12 @@ export const careerRouter = {
               message: "Company not found.",
             });
           }
-          await createAdminAuditEvent(
+          const auditEvent = await createAdminAuditEvent(
             {
               actionKey: "company.image.replaced",
               actor: ctx.session.user,
               metadata: { hadPrevious: Boolean(company.logoObjectName) },
+              operationId,
               subjects: [
                 {
                   relation: "primary",
@@ -519,13 +517,31 @@ export const careerRouter = {
             },
             tx,
           );
+          auditEventId = auditEvent.id;
         });
       } catch (error) {
         await removeCompanyImage(company.id, objectName);
         throw error;
       }
 
-      await removeCompanyImage(company.id, company.logoObjectName);
+      if (company.logoObjectName && auditEventId) {
+        const cleanupOutcome = await removeCompanyImage(
+          company.id,
+          company.logoObjectName,
+        );
+        await appendAdminAuditResults({
+          actionKey: "company.image.replaced",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: company.logoObjectName,
+              targetLabel: "Previous company image",
+              targetType: "provider",
+            },
+          ],
+        });
+      }
       return {
         logoObjectName: objectName,
         logoUrl: await getCompanyImageUrl(company.id, objectName),
@@ -547,16 +563,18 @@ export const careerRouter = {
         });
       }
 
-      await db.transaction(async (tx) => {
+      const operationId = company.logoObjectName ? randomUUID() : undefined;
+      const auditEventId = await db.transaction(async (tx) => {
         await tx
           .update(Company)
           .set({ logoObjectName: null, updatedAt: new Date() })
           .where(eq(Company.id, input.companyId));
-        await createAdminAuditEvent(
+        const auditEvent = await createAdminAuditEvent(
           {
             actionKey: "company.image.removed",
             actor: ctx.session.user,
             metadata: { hadPrevious: Boolean(company.logoObjectName) },
+            operationId,
             subjects: [
               {
                 relation: "primary",
@@ -568,9 +586,27 @@ export const careerRouter = {
           },
           tx,
         );
+        return auditEvent.id;
       });
 
-      await removeCompanyImage(company.id, company.logoObjectName);
+      if (company.logoObjectName) {
+        const cleanupOutcome = await removeCompanyImage(
+          company.id,
+          company.logoObjectName,
+        );
+        await appendAdminAuditResults({
+          actionKey: "company.image.removed",
+          eventId: auditEventId,
+          results: [
+            {
+              resultOutcome: cleanupOutcome,
+              targetId: company.logoObjectName,
+              targetLabel: "Removed company image",
+              targetType: "provider",
+            },
+          ],
+        });
+      }
       return { logoObjectName: null, logoUrl: null };
     }),
 

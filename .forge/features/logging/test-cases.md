@@ -14,7 +14,7 @@ Status: Approved
 - Exclusion of ordinary member/self-service actions.
 - Approved logs-page search, filtering, pagination, and detail behavior.
 - Actor role-color snapshot and Guild-priority behavior.
-- Every one of the 62 approved action keys requires direct or table-driven
+- Every one of the 70 approved action keys requires direct or table-driven
   contract coverage during test generation.
 
 ## Test placement plan

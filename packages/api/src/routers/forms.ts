@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
-import { and, eq } from "@forge/db";
+import { and, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import {
@@ -17,12 +17,17 @@ import {
   FormSections,
   FormSectionViewRole,
   FormsSchemas,
+  Member,
 } from "@forge/db/schemas/knight-hacks";
-import { formDefinitionSchema } from "@forge/validators";
+import {
+  callbackConfigurationSchema,
+  formDefinitionSchema,
+} from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 import { createAdminAuditEvent } from "../utils/audit/service";
 import {
+  classifyFormAttachmentAccess,
   createFormAttachmentUpload,
   finalizeFormAttachment,
   getFormAttachmentDownloadUrl,
@@ -203,7 +208,7 @@ export const formsRouter = {
         columns: { formId: true, ownerUserId: true, purpose: true },
         where: eq(FormAttachment.id, input.attachmentId),
       });
-      if (!attachment || attachment.ownerUserId !== ctx.session.user.id) {
+      if (attachment?.ownerUserId !== ctx.session.user.id) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
       if (attachment.purpose === "instruction") {
@@ -233,19 +238,33 @@ export const formsRouter = {
         const form = await db.query.FormsSchemas.findFirst({
           where: eq(FormsSchemas.id, attachment.formId),
         });
-        const definition = formDefinitionSchema.safeParse(form?.formData);
+        if (!form) throw new TRPCError({ code: "NOT_FOUND" });
+        const definition = formDefinitionSchema.safeParse(form.formData);
         const isPublishedInstruction =
+          attachment.purpose === "instruction" &&
           attachment.responseId === null &&
-          form?.state === "published" &&
+          form.state === "published" &&
           definition.success &&
           definition.data.instructions.some(
             (instruction) =>
               instruction.type !== "text" &&
               instruction.attachmentId === attachment.id,
           );
-        if (isPublishedInstruction) {
+        const accessKind = classifyFormAttachmentAccess({
+          isPublishedInstruction,
+          ownerUserId: attachment.ownerUserId,
+          purpose: attachment.purpose,
+          requesterUserId: ctx.session.user.id,
+        });
+        if (accessKind === "published_instruction") {
           await respondentForm(form.slugName, ctx.session.user.id);
-        } else {
+        } else if (accessKind === "admin_instruction") {
+          await requirePlatformFormCapability(
+            await loadPlatformFormActor(ctx.session),
+            attachment.formId,
+            "read_definition",
+          );
+        } else if (accessKind === "admin_response") {
           await requirePlatformFormCapability(
             await loadPlatformFormActor(ctx.session),
             attachment.formId,
@@ -256,6 +275,18 @@ export const formsRouter = {
       }
       const result = await getFormAttachmentDownloadUrl(input.attachmentId);
       if (adminAccess) {
+        const linkedMember = attachment.responseId
+          ? await db
+              .select({
+                firstName: Member.firstName,
+                id: Member.id,
+                lastName: Member.lastName,
+              })
+              .from(FormResponse)
+              .innerJoin(Member, eq(FormResponse.userId, Member.userId))
+              .where(eq(FormResponse.id, attachment.responseId))
+              .then((rows) => rows[0])
+          : null;
         await createAdminAuditEvent({
           actionKey: "form.response_attachment.accessed",
           actor: ctx.session.user,
@@ -278,6 +309,17 @@ export const formsRouter = {
               targetLabel: "Form",
               targetType: "form",
             },
+            ...(linkedMember
+              ? [
+                  {
+                    memberId: linkedMember.id,
+                    relation: "secondary" as const,
+                    targetId: linkedMember.id,
+                    targetLabel: `${linkedMember.firstName} ${linkedMember.lastName}`,
+                    targetType: "member" as const,
+                  },
+                ]
+              : []),
           ],
         });
       }
@@ -328,6 +370,18 @@ export const formsRouter = {
           .digest("hex")
           .slice(0, 24);
         const filename = input.objectName.split("/").at(-1) ?? "Attachment";
+        const linkedMembers = await db
+          .select({
+            firstName: Member.firstName,
+            id: Member.id,
+            lastName: Member.lastName,
+          })
+          .from(Member)
+          .where(
+            inArray(Member.userId, [
+              ...new Set(references.map(({ userId }) => userId)),
+            ]),
+          );
         await createAdminAuditEvent({
           actionKey: "form.response_attachment.accessed",
           actor: ctx.session.user,
@@ -345,6 +399,13 @@ export const formsRouter = {
               targetLabel: "Form",
               targetType: "form",
             },
+            ...linkedMembers.map((member) => ({
+              memberId: member.id,
+              relation: "secondary" as const,
+              targetId: member.id,
+              targetLabel: `${member.firstName} ${member.lastName}`,
+              targetType: "member" as const,
+            })),
           ],
         });
       }
@@ -482,11 +543,47 @@ export const formsRouter = {
       if (form.kind !== "general" || form.responseMode === "single_editable") {
         throw new Error("Callbacks require a locked general form.");
       }
-      return saveFormCallbackConfiguration({
-        ...input,
-        formDefinition: form.formData,
-        permissions: actor.permissions,
-        responseMode: form.responseMode,
+      return db.transaction(async (tx) => {
+        const saved = await saveFormCallbackConfiguration({
+          ...input,
+          database: tx,
+          formDefinition: form.formData,
+          permissions: actor.permissions,
+          responseMode: form.responseMode,
+        });
+        if (!saved) throw new Error("Callback configuration was not saved.");
+        const mappings = callbackConfigurationSchema.shape.mappings.parse(
+          saved.mappings,
+        );
+        const destinationIds = mappings.flatMap(({ source }) =>
+          source.kind === "fixed" &&
+          typeof source.value === "string" &&
+          z.string().uuid().safeParse(source.value).success
+            ? [source.value]
+            : [],
+        );
+        await createAdminAuditEvent(
+          {
+            actionKey: "form.callback.configured",
+            actor: ctx.session.user,
+            metadata: {
+              active: saved.active,
+              callbackSlug: saved.callbackSlug,
+              destinationIds: [...new Set(destinationIds)],
+              mappingFields: mappings.map(({ inputKey }) => inputKey),
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: form.id,
+                targetLabel: form.name,
+                targetType: "form",
+              },
+            ],
+          },
+          tx,
+        );
+        return saved;
       });
     }),
 
@@ -549,7 +646,60 @@ export const formsRouter = {
       const actor = await loadPlatformFormActor(ctx.session);
       await requirePlatformFormCapability(actor, row.formId, "edit_definition");
       requireCallbackPermission(actor.permissions, row.callbackSlug);
-      return dispatchFormCallbackExecution(input.executionId);
+      const result = await dispatchFormCallbackExecution(input.executionId);
+      if (!result) return result;
+      const execution = await db.query.FormCallbackExecution.findFirst({
+        columns: { attempts: true },
+        where: eq(FormCallbackExecution.id, input.executionId),
+      });
+      const linkedMember = await db
+        .select({
+          firstName: Member.firstName,
+          id: Member.id,
+          lastName: Member.lastName,
+        })
+        .from(FormResponse)
+        .innerJoin(Member, eq(FormResponse.userId, Member.userId))
+        .where(eq(FormResponse.id, row.responseId))
+        .then((rows) => rows[0]);
+      await createAdminAuditEvent({
+        actionKey: "form.callback.retried",
+        actor: ctx.session.user,
+        metadata: {
+          attemptNumber: execution?.attempts ?? 0,
+          callbackSlug: row.callbackSlug,
+          destinationType: row.callbackSlug.split(".", 1)[0] ?? "callback",
+          result: result.status,
+        },
+        outcome:
+          result.status === "succeeded" ? "committed" : "partial_external",
+        subjects: [
+          {
+            relation: "primary",
+            targetId: input.executionId,
+            targetLabel: `Callback execution ${input.executionId}`,
+            targetType: "callback_execution",
+          },
+          {
+            relation: "secondary",
+            targetId: row.formId,
+            targetLabel: "Form",
+            targetType: "form",
+          },
+          ...(linkedMember
+            ? [
+                {
+                  memberId: linkedMember.id,
+                  relation: "secondary" as const,
+                  targetId: linkedMember.id,
+                  targetLabel: `${linkedMember.firstName} ${linkedMember.lastName}`,
+                  targetType: "member" as const,
+                },
+              ]
+            : []),
+        ],
+      });
+      return result;
     }),
 
   disableCallback: permProcedure
@@ -561,24 +711,52 @@ export const formsRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       const actor = await loadPlatformFormActor(ctx.session);
-      await requirePlatformFormCapability(
+      const { form } = await requirePlatformFormCapability(
         actor,
         input.formId,
         "edit_definition",
       );
       requireCallbackPermission(actor.permissions, input.callbackSlug);
-      const [saved] = await db
-        .update(FormCallbackConfiguration)
-        .set({ active: false, updatedAt: new Date() })
-        .where(
-          and(
+      return db.transaction(async (tx) => {
+        const existing = await tx.query.FormCallbackConfiguration.findFirst({
+          where: and(
             eq(FormCallbackConfiguration.formId, input.formId),
             eq(FormCallbackConfiguration.callbackSlug, input.callbackSlug),
           ),
-        )
-        .returning();
-      if (!saved) throw new Error("Callback configuration not found.");
-      return saved;
+        });
+        const [saved] = await tx
+          .update(FormCallbackConfiguration)
+          .set({ active: false, updatedAt: new Date() })
+          .where(
+            and(
+              eq(FormCallbackConfiguration.formId, input.formId),
+              eq(FormCallbackConfiguration.callbackSlug, input.callbackSlug),
+            ),
+          )
+          .returning();
+        if (!saved) throw new Error("Callback configuration not found.");
+        await createAdminAuditEvent(
+          {
+            actionKey: "form.callback.disabled",
+            actor: ctx.session.user,
+            metadata: {
+              activeAfter: saved.active,
+              activeBefore: existing?.active ?? true,
+              callbackSlug: saved.callbackSlug,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: form.id,
+                targetLabel: form.name,
+                targetType: "form",
+              },
+            ],
+          },
+          tx,
+        );
+        return saved;
+      });
     }),
 
   createForm: permProcedure
@@ -718,6 +896,20 @@ export const formsRouter = {
         throw new Error("Only officers may provision form sections.");
       }
       return db.transaction(async (tx) => {
+        const [previousSection, previousViewers, previousEditors] =
+          await Promise.all([
+            tx.query.FormSections.findFirst({
+              where: eq(FormSections.id, input.sectionId),
+            }),
+            tx
+              .select({ roleId: FormSectionViewRole.roleId })
+              .from(FormSectionViewRole)
+              .where(eq(FormSectionViewRole.sectionId, input.sectionId)),
+            tx
+              .select({ roleId: FormSectionEditRole.roleId })
+              .from(FormSectionEditRole)
+              .where(eq(FormSectionEditRole.sectionId, input.sectionId)),
+          ]);
         const [section] = await tx
           .update(FormSections)
           .set({ name: input.name })
@@ -748,6 +940,60 @@ export const formsRouter = {
             })),
           );
         }
+        const beforeViewerRoleIds = previousViewers
+          .map(({ roleId }) => roleId)
+          .sort();
+        const beforeEditorRoleIds = previousEditors
+          .map(({ roleId }) => roleId)
+          .sort();
+        const afterViewerRoleIds = [...input.viewerRoleIds].sort();
+        const afterEditorRoleIds = [...input.editorRoleIds].sort();
+        await createAdminAuditEvent(
+          {
+            actionKey: "form.section.updated",
+            actor: ctx.session.user,
+            changes: [
+              ...(previousSection?.name === section.name
+                ? []
+                : [
+                    {
+                      after: section.name,
+                      before: previousSection?.name,
+                      field: "name",
+                    },
+                  ]),
+              ...(JSON.stringify(beforeViewerRoleIds) ===
+              JSON.stringify(afterViewerRoleIds)
+                ? []
+                : [
+                    {
+                      after: afterViewerRoleIds,
+                      before: beforeViewerRoleIds,
+                      field: "viewerRoleIds",
+                    },
+                  ]),
+              ...(JSON.stringify(beforeEditorRoleIds) ===
+              JSON.stringify(afterEditorRoleIds)
+                ? []
+                : [
+                    {
+                      after: afterEditorRoleIds,
+                      before: beforeEditorRoleIds,
+                      field: "editorRoleIds",
+                    },
+                  ]),
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: section.id,
+                targetLabel: section.name,
+                targetType: "form_section",
+              },
+            ],
+          },
+          tx,
+        );
         return section;
       });
     }),

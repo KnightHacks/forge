@@ -11,8 +11,8 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import { formDefinitionSchema, validateFormUpload } from "@forge/validators";
 
-import type { WriteDb } from "../db";
 import type { AuditActor } from "../audit/service";
+import type { WriteDb } from "../db";
 import { createAdminAuditEvent } from "../audit/service";
 import { selectAbandonedFormAttachments } from "./attachment-cleanup";
 
@@ -102,6 +102,19 @@ export function uploadSignatureMatches(contentType: string, prefix: Buffer) {
   return true;
 }
 
+export function classifyFormAttachmentAccess(input: {
+  isPublishedInstruction: boolean;
+  ownerUserId: string;
+  purpose: "instruction" | "response";
+  requesterUserId: string;
+}) {
+  if (input.ownerUserId === input.requesterUserId) return "owner" as const;
+  if (input.purpose === "response") return "admin_response" as const;
+  return input.isPublishedInstruction
+    ? ("published_instruction" as const)
+    : ("admin_instruction" as const);
+}
+
 async function readObjectPrefix(objectName: string, size: number) {
   const minioClient = await storage();
   const stream = await minioClient.getPartialObject(
@@ -182,6 +195,7 @@ export async function finalizeFormAttachment(input: {
   if (attachment.purpose === "instruction" && !input.auditActor) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
+  if (attachment.finalizedAt) return attachment;
   let stat;
   try {
     stat = await minioClient.statObject(
@@ -317,6 +331,7 @@ export async function assertAndAttachResponseFiles(input: {
       (attachment) =>
         attachment.formId !== input.formId ||
         attachment.ownerUserId !== input.userId ||
+        attachment.purpose !== "response" ||
         !attachment.finalizedAt ||
         (attachment.responseId !== null &&
           attachment.responseId !== input.responseId),

@@ -41,6 +41,7 @@ import {
 
 import type { AssignedIssueRole } from "../utils/issues/access";
 import { permProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import {
   issueAccessForRoles,
   roleHasIssueCapability,
@@ -283,6 +284,23 @@ async function validateClubEvent(
 
 function flattenNodes(nodes: readonly CreateNode[]): CreateNode[] {
   return nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
+}
+
+interface TreeShape {
+  children?: readonly TreeShape[];
+}
+
+function treeMetrics(node: TreeShape): { depth: number; nodeCount: number } {
+  const children = node.children ?? [];
+  const childMetrics = children.map(treeMetrics);
+  return {
+    depth:
+      childMetrics.length === 0
+        ? 1
+        : 1 + Math.max(...childMetrics.map((child) => child.depth)),
+    nodeCount:
+      1 + childMetrics.reduce((total, child) => total + child.nodeCount, 0),
+  };
 }
 
 async function validateCreateTree(
@@ -592,15 +610,56 @@ export const issuesRouter = {
       const rootNode: CreateNode = { ...input, children: input.children };
       let created: typeof Issue.$inferSelect;
       try {
-        created = await db.transaction((tx) =>
-          insertIssueNode(tx, rootNode, {
+        created = await db.transaction(async (tx) => {
+          const root = await insertIssueNode(tx, rootNode, {
             actorDisplayName,
             creationHash,
             creationKey: input.creationKey,
             creatorId: ctx.session.user.id,
             parentId: input.parentId,
-          }),
-        );
+          });
+          const createdIds = await collectSubtreeIds(tx, root.id);
+          const createdRows = await tx
+            .select({ id: Issue.id, name: Issue.name })
+            .from(Issue)
+            .where(inArray(Issue.id, createdIds));
+          const metrics = treeMetrics(rootNode);
+          const operationId = randomUUID();
+          await createAdminAuditEvent(
+            {
+              actionKey: "issue.tree.created",
+              actor: ctx.session.user,
+              metadata: {
+                assigneeIds: input.assigneeIds,
+                createdCount: metrics.nodeCount,
+                eventId: input.eventId ?? null,
+                parentId: input.parentId ?? null,
+                priority: input.priority,
+                status: input.status,
+                teamId: input.team,
+                treeDepth: metrics.depth,
+              },
+              operationId,
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: operationId,
+                  targetLabel: `Issue tree: ${root.name}`,
+                  targetType: "issue_tree",
+                },
+                ...createdRows.map((issue) => ({
+                  relation: "result" as const,
+                  resultOutcome: "succeeded" as const,
+                  targetId: issue.id,
+                  targetLabel: issue.name,
+                  targetType: "issue" as const,
+                })),
+              ],
+            },
+            tx,
+          );
+          return root;
+        });
       } catch (error) {
         if (!isUniqueViolation(error)) throw error;
         const raced = await db.query.Issue.findFirst({
@@ -762,6 +821,85 @@ export const issuesRouter = {
           changedFields: changes.changedFields,
           issueId: input.id,
         });
+        const auditChanges = [
+          {
+            after: after.name,
+            before: before.name,
+            field: "name",
+            sourceField: "name",
+          },
+          {
+            after: after.status,
+            before: before.status,
+            field: "status",
+            sourceField: "status",
+          },
+          {
+            after: after.priority,
+            before: before.priority,
+            field: "priority",
+            sourceField: "priority",
+          },
+          {
+            after:
+              after.dueAt instanceof Date
+                ? after.dueAt.toISOString()
+                : after.dueAt
+                  ? new Date(after.dueAt).toISOString()
+                  : null,
+            before: before.dueAt?.toISOString() ?? null,
+            field: "dueAt",
+            sourceField: "dueAt",
+          },
+          {
+            after: after.eventId,
+            before: before.eventId,
+            field: "eventId",
+            sourceField: "eventId",
+          },
+          {
+            after: after.parentId,
+            before: before.parentId,
+            field: "parentId",
+            sourceField: "parentId",
+          },
+          {
+            after: after.assigneeIds,
+            before: before.assigneeIds,
+            field: "assigneeIds",
+            sourceField: "assigneeIds",
+          },
+          {
+            after: after.teamVisibilityIds,
+            before: before.teamVisibilityIds,
+            field: "visibleTeamIds",
+            sourceField: "teamVisibilityIds",
+          },
+        ].filter((change) =>
+          changes.changedFields.includes(change.sourceField),
+        );
+        const statusOnly =
+          changes.changedFields.length === 1 &&
+          changes.changedFields[0] === "status";
+        await createAdminAuditEvent(
+          {
+            actionKey: statusOnly ? "issue.status.changed" : "issue.updated",
+            actor: ctx.session.user,
+            changes: auditChanges.map(
+              ({ sourceField: _sourceField, ...change }) => change,
+            ),
+            metadata: { revision: input.expectedRevision + 1 },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.id,
+                targetLabel: after.name,
+                targetType: "issue",
+              },
+            ],
+          },
+          tx,
+        );
       });
       const updated = await issueRecord(input.id);
       if (!updated) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
@@ -783,7 +921,7 @@ export const issuesRouter = {
       const ids = await db.transaction(async (tx) => {
         const subtreeIds = await collectSubtreeIds(tx, input.id);
         const activeDescendants = await tx
-          .select({ id: Issue.id })
+          .select({ id: Issue.id, name: Issue.name })
           .from(Issue)
           .where(
             and(
@@ -850,6 +988,40 @@ export const issuesRouter = {
             issueId,
           })),
         );
+        await createAdminAuditEvent(
+          {
+            actionKey: "issue.tree.archived",
+            actor: ctx.session.user,
+            metadata: {
+              archiveBatchId: batchId,
+              archivedCount: archivedIds.length,
+            },
+            operationId: batchId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: batchId,
+                targetLabel: `Issue tree: ${root.name}`,
+                targetType: "issue_tree",
+              },
+              {
+                relation: "result",
+                resultOutcome: "succeeded",
+                targetId: root.id,
+                targetLabel: root.name,
+                targetType: "issue",
+              },
+              ...activeDescendants.map((issue) => ({
+                relation: "result" as const,
+                resultOutcome: "succeeded" as const,
+                targetId: issue.id,
+                targetLabel: issue.name,
+                targetType: "issue" as const,
+              })),
+            ],
+          },
+          tx,
+        );
         return archivedIds;
       });
       return { archiveBatchId: batchId, archivedCount: ids.length };
@@ -869,7 +1041,7 @@ export const issuesRouter = {
       const restoredIds = await db.transaction(async (tx) => {
         const subtreeIds = await collectSubtreeIds(tx, input.id);
         const candidates = await tx
-          .select({ id: Issue.id })
+          .select({ id: Issue.id, name: Issue.name })
           .from(Issue)
           .where(
             and(
@@ -929,6 +1101,33 @@ export const issuesRouter = {
             changedFields: ["archivedAt", "archiveBatchId"],
             issueId,
           })),
+        );
+        await createAdminAuditEvent(
+          {
+            actionKey: "issue.archive_batch.restored",
+            actor: ctx.session.user,
+            metadata: {
+              archiveBatchId: input.archiveBatchId,
+              restoredCount: ids.length,
+            },
+            operationId: input.archiveBatchId,
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.archiveBatchId,
+                targetLabel: `Issue archive batch: ${root.name}`,
+                targetType: "issue_tree",
+              },
+              ...candidates.map((issue) => ({
+                relation: "result" as const,
+                resultOutcome: "succeeded" as const,
+                targetId: issue.id,
+                targetLabel: issue.name,
+                targetType: "issue" as const,
+              })),
+            ],
+          },
+          tx,
         );
         return ids;
       });
@@ -1082,16 +1281,39 @@ export const issuesRouter = {
       const roles = await assignedRoles(ctx.session.user.id);
       if (!roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES"))
         throw new TRPCError({ code: "FORBIDDEN" });
-      const [created] = await db
-        .insert(Template)
-        .values({
-          body: input.body,
-          name: input.name,
-          normalizedName: input.normalizedName,
-        })
-        .returning();
-      if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      return created;
+      return db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(Template)
+          .values({
+            body: input.body,
+            name: input.name,
+            normalizedName: input.normalizedName,
+          })
+          .returning();
+        if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const metrics = treeMetrics(input.body);
+        await createAdminAuditEvent(
+          {
+            actionKey: "issue.template.created",
+            actor: ctx.session.user,
+            metadata: {
+              name: created.name,
+              nodeCount: metrics.nodeCount,
+              treeDepth: metrics.depth,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: created.id,
+                targetLabel: created.name,
+                targetType: "issue_template",
+              },
+            ],
+          },
+          tx,
+        );
+        return created;
+      });
     }),
 
   updateTemplate: permProcedure
@@ -1104,20 +1326,54 @@ export const issuesRouter = {
         body: input.body,
         name: input.name,
       });
-      const [updated] = await db
-        .update(Template)
-        .set({
-          body: parsed.body,
-          disabledAt: null,
-          disabledReason: null,
-          name: parsed.name,
-          normalizedName: parsed.normalizedName,
-          updatedAt: new Date(),
-        })
-        .where(eq(Template.id, input.id))
-        .returning();
-      if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
-      return updated;
+      return db.transaction(async (tx) => {
+        const existing = await tx.query.Template.findFirst({
+          where: eq(Template.id, input.id),
+        });
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+        const [updated] = await tx
+          .update(Template)
+          .set({
+            body: parsed.body,
+            disabledAt: null,
+            disabledReason: null,
+            name: parsed.name,
+            normalizedName: parsed.normalizedName,
+            updatedAt: new Date(),
+          })
+          .where(eq(Template.id, input.id))
+          .returning();
+        if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
+        const metrics = treeMetrics(parsed.body);
+        await createAdminAuditEvent(
+          {
+            actionKey: "issue.template.updated",
+            actor: ctx.session.user,
+            changes: [
+              { after: updated.name, before: existing.name, field: "name" },
+              {
+                after: false,
+                before: existing.disabledAt !== null,
+                field: "disabled",
+              },
+            ].filter((change) => change.after !== change.before),
+            metadata: {
+              nodeCount: metrics.nodeCount,
+              treeDepth: metrics.depth,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: updated.id,
+                targetLabel: updated.name,
+                targetType: "issue_template",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
     }),
 
   disableTemplate: permProcedure
@@ -1126,17 +1382,35 @@ export const issuesRouter = {
       const roles = await assignedRoles(ctx.session.user.id);
       if (!roleHasIssueCapability(roles, "EDIT_ISSUE_TEMPLATES"))
         throw new TRPCError({ code: "FORBIDDEN" });
-      const [disabled] = await db
-        .update(Template)
-        .set({
-          disabledAt: new Date(),
-          disabledReason: "Disabled by an authorized Club operator.",
-          normalizedName: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(Template.id, input.id))
-        .returning();
-      if (!disabled) throw new TRPCError({ code: "NOT_FOUND" });
-      return disabled;
+      return db.transaction(async (tx) => {
+        const [disabled] = await tx
+          .update(Template)
+          .set({
+            disabledAt: new Date(),
+            disabledReason: "Disabled by an authorized Club operator.",
+            normalizedName: null,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(Template.id, input.id), isNull(Template.disabledAt)))
+          .returning();
+        if (!disabled) throw new TRPCError({ code: "NOT_FOUND" });
+        await createAdminAuditEvent(
+          {
+            actionKey: "issue.template.disabled",
+            actor: ctx.session.user,
+            changes: [{ after: true, before: false, field: "disabled" }],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: disabled.id,
+                targetLabel: disabled.name,
+                targetType: "issue_template",
+              },
+            ],
+          },
+          tx,
+        );
+        return disabled;
+      });
     }),
 } satisfies TRPCRouterRecord;

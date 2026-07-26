@@ -43,12 +43,14 @@ async function requireAllowedAssignableRole(database: WriteDb, roleId: string) {
 
 export async function saveFormCallbackConfiguration(input: {
   callbackSlug: string;
+  database?: WriteDb;
   formDefinition: unknown;
   formId: string;
   mappings: unknown;
   permissions: PermissionMap;
   responseMode: "multiple_locked" | "single_editable" | "single_locked";
 }) {
+  const database = input.database ?? db;
   const parsed = callbackConfigurationSchema.parse({
     callbackSlug: input.callbackSlug,
     mappings: input.mappings,
@@ -83,12 +85,12 @@ export async function saveFormCallbackConfiguration(input: {
     );
     if (fixedRoleIds.length > 0) {
       for (const roleId of new Set(fixedRoleIds)) {
-        await requireAllowedAssignableRole(db, roleId);
+        await requireAllowedAssignableRole(database, roleId);
       }
     }
   }
 
-  const [saved] = await db
+  const [saved] = await database
     .insert(FormCallbackConfiguration)
     .values({
       callbackSlug: parsed.callbackSlug,

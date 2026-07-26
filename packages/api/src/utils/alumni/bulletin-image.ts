@@ -89,14 +89,18 @@ export async function getAlumniBulletinImageUrl(
 export async function removeAlumniBulletinImage(
   objectName: string | null | undefined,
 ) {
-  if (!objectName || !isBulletinImageObjectName(objectName)) return;
+  if (!objectName || !isBulletinImageObjectName(objectName)) {
+    return "skipped" as const;
+  }
 
   try {
     await profilePictureStorageClient.removeObject(
       MINIO.PROFILE_PICTURES_BUCKET_NAME,
       objectName,
     );
+    return "succeeded" as const;
   } catch (error) {
     logger.warn("Unable to remove alumni bulletin image; continuing:", error);
+    return "failed_external" as const;
   }
 }

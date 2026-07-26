@@ -204,7 +204,7 @@ export async function removeProfilePictureObjectsForUser(
       objectsToRemove.push(objectName);
     }
 
-    if (objectsToRemove.length === 0) return;
+    if (objectsToRemove.length === 0) return "skipped" as const;
 
     await Promise.all(
       objectsToRemove.map((objectName) =>
@@ -214,7 +214,9 @@ export async function removeProfilePictureObjectsForUser(
         ),
       ),
     );
+    return "succeeded" as const;
   } catch (error) {
     logger.warn("Unable to remove profile picture objects; continuing:", error);
+    return "failed_external" as const;
   }
 }

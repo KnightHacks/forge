@@ -201,6 +201,7 @@ export function createAttendanceService({
           };
           await state.insertAttendanceAndIncrementPoints(row, pointsAwarded);
           return {
+            additionalAttendance: existingAttendance !== null,
             attendanceId: row.id,
             member: safeMember,
             pointsAwarded,

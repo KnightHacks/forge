@@ -45,4 +45,21 @@ describe("RolePermissionEditor", () => {
 
     expect(html).toContain("Officer bypasses every normal permission gate");
   });
+
+  it("does not let a non-officer select the officer capability", () => {
+    const html = renderToStaticMarkup(
+      createElement(RolePermissionEditor, {
+        canManageOfficer: false,
+        onChange: vi.fn(),
+        selected: [],
+      }),
+    );
+
+    expect(html).toContain(
+      "Only an existing officer can change this permission",
+    );
+    expect(html).toMatch(
+      /data-disabled="" disabled=""[^>]*id="role-permission-IS_OFFICER"/,
+    );
+  });
 });

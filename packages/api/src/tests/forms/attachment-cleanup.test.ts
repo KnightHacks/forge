@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { selectAbandonedFormAttachments } from "../../utils/forms/attachment-cleanup";
-import { uploadSignatureMatches } from "../../utils/forms/attachments";
+import {
+  classifyFormAttachmentAccess,
+  uploadSignatureMatches,
+} from "../../utils/forms/attachments";
 
 vi.mock("@forge/db/client", () => ({ db: {} }));
 
@@ -77,5 +80,36 @@ describe("form attachment signatures", () => {
         Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
       ),
     ).toBe(true);
+  });
+});
+
+describe("form attachment audit boundary", () => {
+  it("[TC-003, TC-010] audits only role-gated response attachment access", () => {
+    const base = {
+      isPublishedInstruction: false,
+      ownerUserId: "owner",
+      requesterUserId: "admin",
+    };
+
+    expect(classifyFormAttachmentAccess({ ...base, purpose: "response" })).toBe(
+      "admin_response",
+    );
+    expect(
+      classifyFormAttachmentAccess({
+        ...base,
+        requesterUserId: "owner",
+        purpose: "response",
+      }),
+    ).toBe("owner");
+    expect(
+      classifyFormAttachmentAccess({
+        ...base,
+        isPublishedInstruction: true,
+        purpose: "instruction",
+      }),
+    ).toBe("published_instruction");
+    expect(
+      classifyFormAttachmentAccess({ ...base, purpose: "instruction" }),
+    ).toBe("admin_instruction");
   });
 });

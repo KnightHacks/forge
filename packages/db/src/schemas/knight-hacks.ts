@@ -1129,6 +1129,10 @@ export const FormAttachment = createTable(
   }),
   (t) => ({
     formIdx: index("knight_hacks_form_attachment_form_idx").on(t.formId),
+    purposeCheck: check(
+      "knight_hacks_form_attachment_purpose_check",
+      sql`${t.purpose} IN ('instruction', 'response')`,
+    ),
     responseIdx: index("knight_hacks_form_attachment_response_idx").on(
       t.responseId,
     ),

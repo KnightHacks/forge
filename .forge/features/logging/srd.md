@@ -165,8 +165,11 @@ Would this require a developer change next year?
 ## Candidate action catalog
 
 The second-wave UI/backend cross-check normalized the active admin surface into
-62 candidate v1 action keys. These keys describe business actions rather than
-individual buttons, pages, or transport calls.
+62 candidate v1 action keys. During implementation, the alumni-dashboard merge
+added seven permission-gated bulletin/image actions, and the unexposed
+permission-gated feedback-response deletion was brought into policy coverage.
+The resulting v1 catalog contains 70 action keys. These keys describe business
+actions rather than individual buttons, pages, or transport calls.
 
 ### Analytics and sensitive exports
 
@@ -222,6 +225,17 @@ individual buttons, pages, or transport calls.
 - `event.tag.archived`
 - `event.feedback_template.updated`
 - `event.feedback_question.added`
+- `event.feedback_response.deleted`
+
+### Alumni bulletin
+
+- `alumni.bulletin.created`
+- `alumni.bulletin.updated`
+- `alumni.bulletin.reordered`
+- `alumni.bulletin.archived`
+- `alumni.bulletin.restored`
+- `alumni.bulletin_image.uploaded`
+- `alumni.bulletin_image.removed`
 
 ### Forms
 
@@ -276,8 +290,8 @@ individual buttons, pages, or transport calls.
   survive a failed issue create. It remains `event.created`, not an inferred
   issue child action.
 - The server-only `event.deleteEventFeedbackResponse` mutation has no active
-  admin UI control and is excluded from the visible v1 catalog. If exposed, it
-  requires an explicit `event.feedback_response.deleted` policy before release.
+  admin UI control, but it is permission-gated and therefore remains covered by
+  the explicit `event.feedback_response.deleted` policy.
 - Company merge results should be recorded per moved employment, with the
   affected member as a secondary target; this preserves exactness without
   emitting duplicate member-level action results.

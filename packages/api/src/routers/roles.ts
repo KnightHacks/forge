@@ -23,6 +23,7 @@ import {
 import { permProcedure, protectedProcedure } from "../trpc";
 import {
   appendAdminAuditResults,
+  captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { loadPermissionsForUser } from "../utils/permissions-db";
@@ -486,11 +487,12 @@ export const rolesRouter = {
       if (roleHasPermission(role.permissions, "IS_OFFICER")) {
         requireOfficerForOfficerEscalation(ctx);
       }
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
       const operationId = randomUUID();
       const result = await syncLinkedRole(role, gateway);
       await createAdminAuditEvent({
         actionKey: "role.synced",
-        actor: ctx.session.user,
+        actor: auditActor,
         metadata: {
           addedCount: result.summary.added,
           checkedCount: result.summary.checked,
@@ -598,6 +600,7 @@ export const rolesRouter = {
           message: "One or more selected Discord roles are unavailable.",
         });
       }
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
       const result = await runRoleAssignmentBatch({
         action: input.action,
         existingPairs: new Set(
@@ -658,7 +661,7 @@ export const rolesRouter = {
           input.action === "grant"
             ? "role.assignments.granted"
             : "role.assignments.revoked",
-        actor: ctx.session.user,
+        actor: auditActor,
         metadata: {
           failedCount: result.failed.length,
           selectedCount: input.userIds.length * input.roleIds.length,
@@ -713,6 +716,7 @@ export const rolesRouter = {
           message: "This role is the final assigned role administrator.",
         });
       }
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
       const operationId = randomUUID();
       await db.transaction(async (tx) => {
         const [lockedRole] = await tx
@@ -750,7 +754,7 @@ export const rolesRouter = {
         await createAdminAuditEvent(
           {
             actionKey: "role.unlinked",
-            actor: ctx.session.user,
+            actor: auditActor,
             metadata: {
               permissionKeys: permissionBitstringToKeys(role.permissions),
               removedAssignmentCount: assignments.length,

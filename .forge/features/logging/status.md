@@ -1,6 +1,6 @@
 # Admin Action Logging Status
 
-Current phase: Implementation
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -39,8 +39,12 @@ Current phase: Implementation
 - 2026-07-25: A bulk action means one explicit command affecting multiple
   records. It produces a parent action and directly linked per-target results.
   There is no activity window, session inference, or time-based grouping.
-- 2026-07-25: A second-wave cross-check normalized the active admin surface
-  into 62 candidate v1 business action keys after collapsing UI aliases.
+- 2026-07-25: A second-wave cross-check normalized the then-active admin
+  surface into 62 candidate v1 business action keys after collapsing UI
+  aliases.
+- 2026-07-25: `reforge/main` added the alumni dashboard during implementation.
+  Its seven permission-gated bulletin/image actions and the server-only event
+  feedback-response deletion expand the final typed catalog to 70 action keys.
 - 2026-07-25: Résumé access requires a click-time audited endpoint because the
   current member-detail query pre-signs the URL before the user clicks View.
 - 2026-07-25: Existing-form Save remains two precise actions unless both API
@@ -95,11 +99,11 @@ None.
 - [x] Complete reverse-prompting for `srd.md`.
 - [x] Complete reverse-prompting for `test-cases.md`.
 - [x] Human approves artifact bundle before implementation/test generation.
-- [ ] Implement the approved audit persistence and typed action catalog.
-- [ ] Implement officer-only query APIs and the Blade logs page.
-- [ ] Instrument every approved action and sensitive read.
-- [ ] Enforce officer-only officer-permission and officer-role escalation.
-- [ ] Generate and pass the approved automated test coverage.
+- [x] Implement the approved audit persistence and typed action catalog.
+- [x] Implement officer-only query APIs and the Blade logs page.
+- [x] Instrument every approved action and sensitive read.
+- [x] Enforce officer-only officer-permission and officer-role escalation.
+- [x] Generate and pass the approved automated test coverage.
 
 ## Validation / commands
 
@@ -107,7 +111,20 @@ None.
   dependencies installed without changing the lockfile.
 - `pnpm forge:feature logging "Admin Action Logging"`: passed; created the
   four-file feature bundle.
-- Static inventory/research: completed; no product tests run yet.
+- Static inventory/research: completed.
+- Merged `reforge/main` alumni-dashboard commit `46ff212b` into
+  `reforge/logging` as merge commit `33b475be`.
+- `@forge/validators`: typecheck, formatting, lint, and 110 tests passed.
+- `@forge/db`: typecheck, formatting, lint, and 34 tests passed; 9
+  environment-dependent tests skipped. Migration `0021` generation and
+  append-only/purpose-backfill contract tests passed.
+- `@forge/api`: typecheck, formatting, lint, and 284 tests passed.
+- `@forge/blade`: typecheck, formatting, lint, and 154 tests passed with
+  `CI=1` so the environment-independent component suite can run without a
+  copied `.env`.
+- Blade runtime smoke test: Next.js became ready on port `3010`; requesting
+  `/admin/logs` compiled the route and returned the expected unauthenticated
+  `307` redirect without using the other worktree's port.
 
 ## Links
 

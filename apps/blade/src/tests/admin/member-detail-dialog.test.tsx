@@ -43,6 +43,7 @@ vi.mock("~/trpc/react", () => ({
     });
     return {
       member: {
+        accessAdminMemberResume: { useMutation: mutation },
         deleteAdminMember: { useMutation: mutation },
         removeAdminProfilePicture: { useMutation: mutation },
         removeAdminResume: { useMutation: mutation },
@@ -95,7 +96,6 @@ const detail = {
     websiteUrl: "https://knighthacks.org",
   },
   profilePictureUrl: "https://signed.example.test/profile.png",
-  resumeUrl: "https://signed.example.test/resume.pdf",
 } as RouterOutputs["member"]["getAdminMember"];
 
 describe("MemberDetailDialog", () => {
@@ -117,6 +117,7 @@ describe("MemberDetailDialog", () => {
     expect(html).not.toContain("Delete member");
     expect(html).toContain("Profile files");
     expect(html).toContain("View resume");
+    expect(html).not.toContain("signed.example.test/resume.pdf");
     expect(html).not.toContain(">Replace<");
     expect(html).not.toContain(">Upload<");
     expect(html).not.toContain("Remove resume");

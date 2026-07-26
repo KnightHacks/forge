@@ -25,6 +25,11 @@ export interface AuditActor {
   discordUserId?: string | null;
   id: string;
   name?: string | null;
+  snapshot?: {
+    memberId: string | null;
+    roleColor: string | null;
+    roleLabel: string | null;
+  };
 }
 
 export interface AuditChangeInput {
@@ -70,7 +75,7 @@ export interface CreateAdminAuditEventInput {
   subjects: AuditSubjectInput[];
 }
 
-function validateActionPayload(
+export function validateActionPayload(
   actionKey: AuditActionKey,
   metadata: CreateAdminAuditEventInput["metadata"],
   changes: AuditChangeInput[] | undefined,
@@ -102,7 +107,7 @@ function validateActionPayload(
   return { actionPolicy, parsedChanges, parsedMetadata };
 }
 
-function validateSubjects(
+export function validateSubjects(
   actionKey: AuditActionKey,
   subjects: AuditSubjectInput[],
 ) {
@@ -133,6 +138,18 @@ function validateSubjects(
 }
 
 async function resolveActorSnapshot(actor: AuditActor, executor: WriteDb) {
+  const actorLabel = actor.name?.trim();
+  if (actor.snapshot) {
+    return {
+      actorDiscordUserId: actor.discordUserId ?? null,
+      actorLabel: actorLabel?.length ? actorLabel : "Unknown administrator",
+      actorMemberId: actor.snapshot.memberId,
+      actorRoleColor: actor.snapshot.roleColor,
+      actorRoleLabel: actor.snapshot.roleLabel,
+      actorUserId: actor.id,
+    };
+  }
+
   const [member] = await executor
     .select({ id: Member.id })
     .from(Member)
@@ -150,11 +167,29 @@ async function resolveActorSnapshot(actor: AuditActor, executor: WriteDb) {
 
   return {
     actorDiscordUserId: actor.discordUserId ?? null,
-    actorLabel: actor.name?.trim() || "Unknown administrator",
+    actorLabel: actorLabel?.length ? actorLabel : "Unknown administrator",
     actorMemberId: member?.id ?? null,
     actorRoleColor: roleCallout?.color ?? null,
     actorRoleLabel: roleCallout?.label ?? null,
     actorUserId: actor.id,
+  };
+}
+
+export async function captureAdminAuditActor(
+  actor: AuditActor,
+  executor: WriteDb = db,
+): Promise<AuditActor> {
+  const snapshot = await resolveActorSnapshot(
+    { ...actor, snapshot: undefined },
+    executor,
+  );
+  return {
+    ...actor,
+    snapshot: {
+      memberId: snapshot.actorMemberId,
+      roleColor: snapshot.actorRoleColor,
+      roleLabel: snapshot.actorRoleLabel,
+    },
   };
 }
 
@@ -216,10 +251,30 @@ export async function appendAdminAuditResults(
   input: {
     actionKey: AuditActionKey;
     eventId: string;
-    results: Array<Omit<AuditSubjectInput, "relation">>;
+    results: Omit<AuditSubjectInput, "relation">[];
   },
   executor: WriteDb = db,
 ) {
+  const [event] = await executor
+    .select({
+      actionKey: AdminAuditEvent.actionKey,
+      operationId: AdminAuditEvent.operationId,
+    })
+    .from(AdminAuditEvent)
+    .where(eq(AdminAuditEvent.id, input.eventId))
+    .limit(1);
+  if (!event) {
+    throw new Error("Admin audit event not found");
+  }
+  if (event.actionKey !== input.actionKey) {
+    throw new Error("Admin audit action key does not match the parent event");
+  }
+  if (!event.operationId) {
+    throw new Error(
+      "Admin audit result subjects require a parent operation ID",
+    );
+  }
+
   const subjects = validateSubjects(input.actionKey, [
     {
       relation: "primary",
@@ -234,9 +289,15 @@ export async function appendAdminAuditResults(
   ]).slice(1);
 
   const existing = await executor
-    .select({ position: AdminAuditSubject.position })
+    .select({
+      position: AdminAuditSubject.position,
+      relation: AdminAuditSubject.relation,
+    })
     .from(AdminAuditSubject)
     .where(eq(AdminAuditSubject.eventId, input.eventId));
+  if (existing.some((subject) => subject.relation === "result")) {
+    throw new Error("Admin audit results have already been appended");
+  }
   const startingPosition =
     existing.reduce(
       (maximum, subject) => Math.max(maximum, subject.position),

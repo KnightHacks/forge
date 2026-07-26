@@ -58,9 +58,9 @@ export default async function FormPage({
             }
           : result.respondentState.status === "submitted"
             ? {
-                answers: Object.entries(
-                  result.respondentState.answers,
-                ).map(([questionId, value]) => ({ questionId, value })),
+                answers: Object.entries(result.respondentState.answers).map(
+                  ([questionId, value]) => ({ questionId, value }),
+                ),
                 editable: result.respondentState.editable,
                 responseId: result.respondentState.responseId,
                 status: "submitted" as const,
@@ -90,7 +90,7 @@ export default async function FormPage({
                 formId={result.form.id}
                 initialAnswers={
                   result.respondentState.status === "submitted"
-                    ? (result.respondentState.answers)
+                    ? result.respondentState.answers
                     : undefined
                 }
                 mode={

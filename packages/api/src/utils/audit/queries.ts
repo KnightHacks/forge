@@ -16,17 +16,37 @@ import { db } from "@forge/db/client";
 import { AdminAuditEvent, AdminAuditSubject } from "@forge/db/schemas/audit";
 import { User } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
-import { AUDIT_ACTION_CATALOG } from "@forge/validators";
+import { AUDIT_ACTION_CATALOG, AUDIT_ACTION_KEYS } from "@forge/validators";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+function auditActionLabel(actionKey: string) {
+  if (Object.hasOwn(AUDIT_ACTION_CATALOG, actionKey)) {
+    return AUDIT_ACTION_CATALOG[actionKey as AuditActionKey].label;
+  }
+  return actionKey;
+}
+
 function searchCondition(search: string): SQL {
   const pattern = `%${search.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_")}%`;
+  const normalized = search.toLocaleLowerCase("en-US");
+  const matchingActionKeys = AUDIT_ACTION_KEYS.filter((actionKey) => {
+    const policy = AUDIT_ACTION_CATALOG[actionKey];
+    return (
+      actionKey.toLocaleLowerCase("en-US").includes(normalized) ||
+      policy.label.toLocaleLowerCase("en-US").includes(normalized)
+    );
+  });
+  const actionLabelCondition =
+    matchingActionKeys.length > 0
+      ? sql`OR ${inArray(AdminAuditEvent.actionKey, matchingActionKeys)}`
+      : sql``;
   return sql`(
     ${AdminAuditEvent.actorLabel} ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.actionKey} ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.domain} ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.actorUserId}::text ILIKE ${pattern} ESCAPE '\\'
+    ${actionLabelCondition}
     OR EXISTS (
       SELECT 1
       FROM ${AdminAuditSubject} search_subject
@@ -56,7 +76,10 @@ function targetTypeCondition(targetTypes: readonly string[]): SQL {
     SELECT 1
     FROM ${AdminAuditSubject} target_subject
     WHERE target_subject.event_id = ${AdminAuditEvent.id}
-      AND target_subject.target_type IN ${targetTypes}
+      AND target_subject.target_type IN (${sql.join(
+        targetTypes.map((targetType) => sql`${targetType}`),
+        sql`, `,
+      )})
   )`;
 }
 
@@ -109,15 +132,14 @@ export async function listAdminAuditEvents(input: AuditListInput) {
     conditions.push(targetTypeCondition(input.targetTypes));
   }
   if (input.cursor) {
-    conditions.push(
-      or(
-        lt(AdminAuditEvent.occurredAt, input.cursor.occurredAt),
-        and(
-          eq(AdminAuditEvent.occurredAt, input.cursor.occurredAt),
-          lt(AdminAuditEvent.id, input.cursor.id),
-        ),
-      )!,
+    const cursorCondition = or(
+      lt(AdminAuditEvent.occurredAt, input.cursor.occurredAt),
+      and(
+        eq(AdminAuditEvent.occurredAt, input.cursor.occurredAt),
+        lt(AdminAuditEvent.id, input.cursor.id),
+      ),
     );
+    if (cursorCondition) conditions.push(cursorCondition);
   }
 
   const rows = await db
@@ -169,9 +191,7 @@ export async function listAdminAuditEvents(input: AuditListInput) {
 
     return {
       actionKey: event.actionKey as AuditActionKey,
-      actionLabel:
-        AUDIT_ACTION_CATALOG[event.actionKey as AuditActionKey]?.label ??
-        event.actionKey,
+      actionLabel: auditActionLabel(event.actionKey),
       actor: {
         discordUserId: event.actorDiscordUserId,
         label: event.actorLabel,
@@ -236,9 +256,7 @@ export async function getAdminAuditEvent(eventId: string) {
   return {
     ...event,
     actionKey: event.actionKey as AuditActionKey,
-    actionLabel:
-      AUDIT_ACTION_CATALOG[event.actionKey as AuditActionKey]?.label ??
-      event.actionKey,
+    actionLabel: auditActionLabel(event.actionKey),
     outcome,
     subjects,
   };

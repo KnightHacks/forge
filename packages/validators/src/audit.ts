@@ -11,6 +11,7 @@ const policy = <
 ) => ({ changeFields, domain, label, metadataKeys });
 
 export const AUDIT_DOMAINS = [
+  "alumni",
   "analytics",
   "attendance",
   "companies",
@@ -263,6 +264,54 @@ export const AUDIT_ACTION_CATALOG = {
     "Deleted event feedback response",
     ["rewardHistoryPreserved"],
   ),
+  "alumni.bulletin.created": policy("alumni", "Created alumni bulletin post", [
+    "state",
+    "publishAt",
+    "expiresAt",
+    "formId",
+    "hasExternalUrl",
+    "hasImage",
+  ]),
+  "alumni.bulletin.updated": policy(
+    "alumni",
+    "Updated alumni bulletin post",
+    ["changedFields"],
+    [
+      "title",
+      "state",
+      "publishAt",
+      "expiresAt",
+      "ctaLabel",
+      "formId",
+      "hasExternalUrl",
+      "hasImage",
+    ],
+  ),
+  "alumni.bulletin.reordered": policy("alumni", "Reordered alumni bulletin", [
+    "postCount",
+    "displayOrder",
+  ]),
+  "alumni.bulletin.archived": policy(
+    "alumni",
+    "Archived alumni bulletin post",
+    ["priorState"],
+    ["state"],
+  ),
+  "alumni.bulletin.restored": policy(
+    "alumni",
+    "Restored alumni bulletin post",
+    ["priorState"],
+    ["state"],
+  ),
+  "alumni.bulletin_image.uploaded": policy(
+    "alumni",
+    "Uploaded alumni bulletin image",
+    ["mimeType", "byteSize"],
+  ),
+  "alumni.bulletin_image.removed": policy(
+    "alumni",
+    "Removed alumni bulletin image",
+  ),
   "form.created": policy("forms", "Created form", [
     "name",
     "slug",
@@ -414,9 +463,12 @@ export const auditActionKeySchema = z.enum(
 export const auditDomainSchema = z.enum(AUDIT_DOMAINS);
 
 export const AUDIT_TARGET_TYPES = [
+  "alumni_bulletin",
   "analytics_report",
   "attachment",
   "attendance",
+  "bulletin_image",
+  "bulletin_post",
   "callback_execution",
   "company",
   "discord_role",
