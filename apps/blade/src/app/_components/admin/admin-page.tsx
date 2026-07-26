@@ -19,7 +19,7 @@ export const ADMIN_PAGE_EYEBROWS = {
   forms: "Member workflows",
   formSections: "Form organization",
   issueArchive: "Issue archive",
-  issueCalendar: "Issue scheduling",
+  issueCalendar: "Club Operations",
   issueDetail: "Issue record",
   issueKanban: "Issue workflow",
   issueList: "Issue directory",

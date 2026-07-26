@@ -212,7 +212,7 @@ test.describe("Club operations issues visual workflow", () => {
     await signIn(page, "/admin/issues/calendar");
     await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
     await expect(
-      page.getByText("Issue scheduling", { exact: true }),
+      page.getByText("Club Operations", { exact: true }),
     ).toBeVisible();
     await expect(
       page.locator('[data-issue-calendar="month-grid"]'),
