@@ -1,6 +1,6 @@
 # Email Portal Status
 
-Current phase: Listmonk wiring corrected / live review server running
+Current phase: Development team-campaign review / live review server running
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -36,8 +36,11 @@ Current phase: Listmonk wiring corrected / live review server running
 - 2026-07-26: The refreshed Listmonk token passed health plus list, subscriber, campaign, and template reads. Invalid create probes reached ordinary validation for lists, subscribers, and campaigns, confirming the required manage gates without creating provider objects.
 - 2026-07-26: Forge no longer depends on Listmonk's `subscribers:sql_query` permission. Exact subscriber-state and namespace lookups use ordinary subscriber reads followed by normalized exact-email filtering.
 - 2026-07-26: An explicitly authorized one-recipient reachability check was accepted by Listmonk for `dylan@knighthacks.org`; no other live recipient was used. The previously queued seven-recipient review send was cancelled in Forge with no provider campaign and cannot retry.
-- 2026-07-26: The port-3000 review server remains intentionally in `EMAIL_DELIVERY_MODE=test`. The UI disables audience confirmation in that mode, and the provider/API boundary now treats any bypassed bulk handoff as terminal rather than scheduling retries that could become live after an environment change.
+- 2026-07-26: Delivery policy is now derived only from `NODE_ENV`; the deployment-facing `EMAIL_DELIVERY_MODE` flag was removed to prevent a stale test-only value from limiting production. Production uses normal Listmonk delivery, development permits directors tests plus server-verified team-only campaigns, and tests use the network-free fake.
 - 2026-07-26: The compose recipient panel sorts by first name, then full name/email for deterministic ties.
+- 2026-07-26: Compose is again the first and default tab. Its subject, content mode/body/template, audience selections, manual deselections, and schedule fields persist in a validated, versioned seven-day local-storage draft and clear after successful confirmation.
+- 2026-07-26: Development now supports a real Listmonk campaign only for the exact enabled team audience. The UI locks Team members, preview/confirmation reject other definitions, delivery rechecks all retained emails against current enabled roles, and the provider requires a server-issued team scope for campaign creation and start.
+- 2026-07-26: The deployment-facing email mode flag was removed. `NODE_ENV=production` always resolves to normal Listmonk delivery, normal development resolves to directors tests plus team-only campaigns, and unit/test processes resolve to the fake provider. The existing Blade E2E harness marker selects fake delivery under `next dev` and is ignored by the production-first policy.
 
 ## Open questions
 
@@ -64,6 +67,7 @@ Current phase: Listmonk wiring corrected / live review server running
 - [x] Apply review feedback for Blade layout consistency, recipient-level deselection, send details, and directors-only test delivery.
 - [x] Validate the Listmonk connection read-only and return the review server to port 3000 in test-only delivery mode.
 - [x] Correct Listmonk v6 transactional test delivery, validate the refreshed token, remove the SQL-query permission dependency, and prevent test-mode audience retries.
+- [x] Enable server-enforced development team campaigns, restore Compose as the default, and persist unfinished compose drafts across template work.
 
 ## Validation / commands
 
@@ -97,7 +101,7 @@ Current phase: Listmonk wiring corrected / live review server running
 - Affected-workspace lint (`@forge/validators`, `@forge/db`, `@forge/email`, `@forge/api`, `@forge/cron`, and `blade`): passed.
 - `pnpm@9.12.1 lint:ws`: passed with no workspace dependency issues.
 - `drizzle-kit migrate` against the local mock environment: passed after advancing the feature migration to `0022`; `email_template` and `email_send` were confirmed present.
-- `EMAIL_DELIVERY_MODE=fake ... playwright test src/tests/e2e/email-portal.spec.ts`: passed the synthetic create, preview, publish, schedule, and cancel path without network delivery. Desktop confirmation and 390 px mobile history screenshots were visually inspected.
+- Earlier fake-provider Playwright validation passed the synthetic create, preview, publish, schedule, and cancel path without network delivery. Desktop confirmation and 390 px mobile history screenshots were visually inspected.
 - `git diff --check`: passed after implementation.
 - `pnpm analyze:react:changed`: Email Portal files passed; the command retains the repository's existing analyzer failures in `apps/blade/src/trpc/react.tsx` and `legacy/apps/blade/src/trpc/react.tsx`.
 - `pnpm format`: affected feature files pass Prettier; the workspace command retains unrelated formatting failures in `apps/guild/src/app/_components/globe-renderer.tsx` and `apps/blade/src/app/form/[slug]/page.tsx`.
@@ -110,8 +114,8 @@ Current phase: Listmonk wiring corrected / live review server running
 - `drizzle-kit migrate`: applied additive migration `0023_email_manual_exclusions` successfully to the shared mock database.
 - The legacy-derived BloomKnights sample compiled through `compileCodeEmailTemplate` with a derived `recipient.firstName` contract and 2,216-byte HTML output.
 - Authenticated `GET /api/health` through the configured Listmonk transport: passed without sending or mutating email data.
-- Fake-provider Playwright follow-up: passed default Templates landing, one manual recipient deselection, exact adjusted confirmation count, send-detail sender/body/recipient audit, cancellation, and mobile layout. Desktop/mobile screenshots were visually inspected.
-- Port 3000 is running this worktree under `EMAIL_DELIVERY_MODE=test`; the portal test button can contact Listmonk only for `directors@knighthacks.org`, while bulk and arbitrary transactional operations fail closed.
+- Earlier fake-provider Playwright follow-up, before the Compose-default revision, passed the then-default Templates landing, one manual recipient deselection, exact adjusted confirmation count, send-detail sender/body/recipient audit, cancellation, and mobile layout. Desktop/mobile screenshots were visually inspected.
+- Port 3000 is running this worktree under `NODE_ENV=development`; the portal test button can contact Listmonk only for `directors@knighthacks.org`, while campaigns are limited to the current enabled team roster.
 - Refreshed-token permission probes: `GET /api/health`, lists, subscribers, campaigns, and templates returned `200`; invalid `POST` probes returned validation `400` for lists, subscribers, and campaigns, with no provider object created.
 - One explicitly authorized `/api/tx` reachability request to `dylan@knighthacks.org` returned `200`; no audience campaign was started.
 - Follow-up email provider tests: 3 files / 38 tests passed, including the Listmonk v6 transactional wrapper, dynamic default campaign template discovery, and no-SQL subscriber lookup.
@@ -119,7 +123,11 @@ Current phase: Listmonk wiring corrected / live review server running
 - Follow-up `@forge/email`, `@forge/api`, and `@forge/blade` typechecks passed after rebuilding the email declarations.
 - Follow-up targeted ESLint passed for email and API changes and for the Blade email portal files after using the validated email environment module.
 - `git diff --check`: passed.
-- Port 3000 was restarted from this worktree with the refreshed main-worktree environment and `EMAIL_DELIVERY_MODE=test`; `/` returns `200` and unauthenticated `/admin/email?tab=templates` returns the expected auth redirect.
+- Port 3000 was restarted from this worktree with the refreshed main-worktree environment and `NODE_ENV=development`; `/` returns `200` and unauthenticated `/admin/email` returns the expected auth redirect.
+- Environment-policy unit coverage confirms `production → production`, `development → team review`, `test → fake`, and that the Blade E2E marker selects fake only outside production.
+- Follow-up email tests: 3 files / 41 tests passed. API email tests: 3 files / 26 tests passed. Blade workspace/draft tests: 2 files / 7 tests passed.
+- Synthetic Playwright TC-061 passed under the fake E2E harness: Compose landed first, unfinished subject/mode/body survived template creation, the scheduled send appeared in history, and cancellation completed without network delivery.
+- The development team-only implementation did not create or start a live campaign during automated validation; the user retains the first live team-campaign confirmation.
 
 ## Links
 

@@ -85,6 +85,20 @@ export function normalizeRecipientEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function isTeamOnlyAudienceDefinition(value: unknown) {
+  if (!Array.isArray(value) || value.length !== 1) return false;
+  const definition: unknown = value[0];
+  if (
+    typeof definition !== "object" ||
+    definition === null ||
+    Array.isArray(definition)
+  ) {
+    return false;
+  }
+  const record = definition as Record<string, unknown>;
+  return Object.keys(record).length === 1 && record.kind === "team_members";
+}
+
 export function applyManualRecipientExclusions<T extends { email: string }>(
   recipients: T[],
   requestedEmails: string[],

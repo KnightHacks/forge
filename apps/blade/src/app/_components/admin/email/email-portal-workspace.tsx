@@ -45,6 +45,12 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
+import {
+  discardEmailComposeDraft,
+  loadEmailComposeDraft,
+  saveEmailComposeDraft,
+} from "./email-compose-draft-storage";
+
 const CodeEmailEditor = dynamic(
   () => import("./code-email-editor").then((module) => module.CodeEmailEditor),
   {
@@ -71,6 +77,7 @@ const VisualEmailEditor = dynamic(
 );
 
 export type EmailPortalTab = "compose" | "sends" | "templates";
+export type CampaignAudienceMode = "all" | "disabled" | "team_only";
 
 export interface EmailPortalTemplate {
   id: string;
@@ -623,7 +630,7 @@ function CountPreflight({
 
 export function EmailPortalWorkspace({
   audienceOptions,
-  campaignDeliveryEnabled = true,
+  campaignAudienceMode = "all",
   initialTab,
   isConfirming = false,
   isPreviewing = false,
@@ -646,7 +653,7 @@ export function EmailPortalWorkspace({
   templates,
 }: {
   audienceOptions: EmailAudienceOptions | [];
-  campaignDeliveryEnabled?: boolean;
+  campaignAudienceMode?: CampaignAudienceMode;
   initialTab: EmailPortalTab;
   isConfirming?: boolean;
   isPreviewing?: boolean;
@@ -676,6 +683,8 @@ export function EmailPortalWorkspace({
   templates: EmailPortalTemplate[];
 }) {
   const router = useRouter();
+  const campaignDeliveryEnabled = campaignAudienceMode !== "disabled";
+  const teamOnlyCampaign = campaignAudienceMode === "team_only";
   const [tab, setTab] = useState<EmailPortalTab>(initialTab);
   const [editor, setEditor] = useState<TemplateEditorSeed | null>(null);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
@@ -695,6 +704,7 @@ export function EmailPortalWorkspace({
   );
   const [loadingSendId, setLoadingSendId] = useState<string | null>(null);
   const audienceRequest = useRef(0);
+  const skipNextDraftSave = useRef(false);
   const [templatePreview, setTemplatePreview] = useState<{
     result: TemplatePreviewResult;
     templateId: string;
@@ -703,14 +713,71 @@ export function EmailPortalWorkspace({
   const [plainText, setPlainText] = useState("");
   const [templateRevisionId, setTemplateRevisionId] = useState("");
   const [selectedAudiences, setSelectedAudiences] = useState(
-    new Set<string>(["current_members"]),
+    new Set<string>([teamOnlyCampaign ? "team_members" : "current_members"]),
   );
   const [scheduleMode, setScheduleMode] = useState<"now" | "schedule">("now");
   const [scheduledFor, setScheduledFor] = useState("");
+  const [composeDraftReady, setComposeDraftReady] = useState(false);
 
   useEffect(() => {
     if (preview) setConfirmationOpen(true);
   }, [preview]);
+
+  useEffect(() => {
+    try {
+      const draft = loadEmailComposeDraft(window.localStorage);
+      if (draft) {
+        setContentMode(draft.contentMode);
+        setExcludedRecipients(new Set(draft.excludedRecipients));
+        setPlainText(draft.plainText);
+        setScheduleMode(draft.scheduleMode);
+        setScheduledFor(draft.scheduledFor);
+        setSelectedAudiences(
+          new Set(
+            teamOnlyCampaign ? ["team_members"] : draft.selectedAudiences,
+          ),
+        );
+        setSubject(draft.subject);
+        setTemplateRevisionId(draft.templateRevisionId);
+      }
+    } catch {
+      // Storage may be unavailable in hardened browser contexts.
+    } finally {
+      setComposeDraftReady(true);
+    }
+  }, [teamOnlyCampaign]);
+
+  useEffect(() => {
+    if (!composeDraftReady) return;
+    if (skipNextDraftSave.current) {
+      skipNextDraftSave.current = false;
+      return;
+    }
+    try {
+      saveEmailComposeDraft(window.localStorage, {
+        contentMode,
+        excludedRecipients: [...excludedRecipients].sort(),
+        plainText,
+        scheduleMode,
+        scheduledFor,
+        selectedAudiences: [...selectedAudiences].sort(),
+        subject,
+        templateRevisionId,
+      });
+    } catch {
+      // Browsers may deny storage or exhaust their local quota.
+    }
+  }, [
+    composeDraftReady,
+    contentMode,
+    excludedRecipients,
+    plainText,
+    scheduleMode,
+    scheduledFor,
+    selectedAudiences,
+    subject,
+    templateRevisionId,
+  ]);
 
   const options = Array.isArray(audienceOptions)
     ? { hackathons: [], presets: [] }
@@ -798,6 +865,7 @@ export function EmailPortalWorkspace({
   };
 
   const toggleAudience = (key: string) => {
+    if (teamOnlyCampaign) return;
     setSelectedAudiences((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key);
@@ -817,13 +885,32 @@ export function EmailPortalWorkspace({
     });
   };
 
+  const clearComposeDraft = () => {
+    skipNextDraftSave.current = true;
+    try {
+      discardEmailComposeDraft(window.localStorage);
+    } catch {
+      // Storage may be unavailable even though the send succeeded.
+    }
+    setContentMode("template");
+    setExcludedRecipients(new Set());
+    setPlainText("");
+    setScheduleMode("now");
+    setScheduledFor("");
+    setSelectedAudiences(
+      new Set([teamOnlyCampaign ? "team_members" : "current_members"]),
+    );
+    setSubject("");
+    setTemplateRevisionId("");
+  };
+
   const tabs: {
     icon: LucideIcon;
     id: EmailPortalTab;
     label: string;
   }[] = [
-    { icon: Sparkles, id: "templates", label: "Templates" },
     { icon: Send, id: "compose", label: "Compose" },
+    { icon: Sparkles, id: "templates", label: "Templates" },
     { icon: Clock3, id: "sends", label: "Sends" },
   ];
 
@@ -1050,6 +1137,12 @@ export function EmailPortalWorkspace({
                   test to directors” to exercise Listmonk safely.
                 </div>
               )}
+              {teamOnlyCampaign && (
+                <div className="rounded-md border border-violet-500/30 bg-violet-500/10 p-3 text-sm text-violet-100">
+                  Development review mode is live. Campaign delivery is enforced
+                  server-side to enabled Team members only.
+                </div>
+              )}
               <div className="grid gap-2">
                 <Label htmlFor="email-subject">Subject</Label>
                 <Input
@@ -1147,68 +1240,78 @@ export function EmailPortalWorkspace({
                   </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
-                  {options.presets.map((preset) => (
-                    <label
-                      key={preset.kind}
-                      className={cn(
-                        "flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm",
-                        selectedAudiences.has(preset.kind)
-                          ? "border-primary/35 bg-primary/10"
-                          : "border-white/10 bg-background/50",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedAudiences.has(preset.kind)}
-                        onChange={() => toggleAudience(preset.kind)}
-                      />
-                      {preset.label}
-                    </label>
-                  ))}
-                </div>
-                {options.hackathons.map((hackathon) => (
-                  <div
-                    key={hackathon.id}
-                    className="rounded-md border border-white/10 bg-background/45 p-3"
-                  >
-                    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
-                      <input
-                        type="checkbox"
-                        checked={selectedAudiences.has(
-                          `hack:${hackathon.id}:all`,
+                  {options.presets
+                    .filter(
+                      (preset) =>
+                        !teamOnlyCampaign || preset.kind === "team_members",
+                    )
+                    .map((preset) => (
+                      <label
+                        key={preset.kind}
+                        className={cn(
+                          "flex min-h-11 items-center gap-3 rounded-md border px-3 py-2 text-sm",
+                          teamOnlyCampaign
+                            ? "cursor-not-allowed"
+                            : "cursor-pointer",
+                          selectedAudiences.has(preset.kind)
+                            ? "border-primary/35 bg-primary/10"
+                            : "border-white/10 bg-background/50",
                         )}
-                        onChange={() =>
-                          toggleAudience(`hack:${hackathon.id}:all`)
-                        }
-                      />
-                      {hackathon.allLabel}
-                    </label>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {hackathon.statuses.map((status) => {
-                        const key = `hack:${hackathon.id}:${status}`;
-                        return (
-                          <label
-                            key={key}
-                            className={cn(
-                              "cursor-pointer rounded border px-2.5 py-1.5 text-xs capitalize",
-                              selectedAudiences.has(key)
-                                ? "border-primary/35 bg-primary/10"
-                                : "border-white/10",
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              className="sr-only"
-                              checked={selectedAudiences.has(key)}
-                              onChange={() => toggleAudience(key)}
-                            />
-                            {status}
-                          </label>
-                        );
-                      })}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAudiences.has(preset.kind)}
+                          disabled={teamOnlyCampaign}
+                          onChange={() => toggleAudience(preset.kind)}
+                        />
+                        {preset.label}
+                      </label>
+                    ))}
+                </div>
+                {!teamOnlyCampaign &&
+                  options.hackathons.map((hackathon) => (
+                    <div
+                      key={hackathon.id}
+                      className="rounded-md border border-white/10 bg-background/45 p-3"
+                    >
+                      <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          checked={selectedAudiences.has(
+                            `hack:${hackathon.id}:all`,
+                          )}
+                          onChange={() =>
+                            toggleAudience(`hack:${hackathon.id}:all`)
+                          }
+                        />
+                        {hackathon.allLabel}
+                      </label>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {hackathon.statuses.map((status) => {
+                          const key = `hack:${hackathon.id}:${status}`;
+                          return (
+                            <label
+                              key={key}
+                              className={cn(
+                                "cursor-pointer rounded border px-2.5 py-1.5 text-xs capitalize",
+                                selectedAudiences.has(key)
+                                  ? "border-primary/35 bg-primary/10"
+                                  : "border-white/10",
+                              )}
+                            >
+                              <input
+                                type="checkbox"
+                                className="sr-only"
+                                checked={selectedAudiences.has(key)}
+                                onChange={() => toggleAudience(key)}
+                              />
+                              {status}
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
               <div className="space-y-3">
                 <Label>Delivery</Label>
@@ -1800,7 +1903,9 @@ export function EmailPortalWorkspace({
                   isConfirming
                 }
                 onClick={async () => {
-                  await onConfirm?.();
+                  if (!onConfirm) return;
+                  await onConfirm();
+                  clearComposeDraft();
                   setConfirmationOpen(false);
                 }}
               >

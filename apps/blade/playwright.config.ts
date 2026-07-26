@@ -29,13 +29,12 @@ export default defineConfig({
     : {
         command: [
           "BLADE_E2E_AUTH=true",
-          "EMAIL_DELIVERY_MODE=fake",
           "NEXT_PUBLIC_BLADE_E2E_AUTH=true",
           `BLADE_E2E_DEFAULT_USER_ID=${defaultE2EUserId}`,
           `NEXT_PUBLIC_BLADE_URL=${baseURL}`,
           `BLADE_URL=${baseURL}`,
           `PORT=${port}`,
-          "npm exec --yes pnpm@9.12.1 -- with-env next dev --hostname 127.0.0.1 --port",
+          "pnpm with-env next dev --hostname 127.0.0.1 --port",
           String(port),
         ].join(" "),
         reuseExistingServer: !process.env.CI,

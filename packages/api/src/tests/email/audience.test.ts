@@ -4,12 +4,31 @@ import { describe, expect, it } from "vitest";
 import {
   applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
+  isTeamOnlyAudienceDefinition,
   normalizeRecipientEmail,
 } from "../../utils/email/audience";
 
 const HACKATHON_ID = "00000000-0000-4000-8000-000000000012";
 
 describe("Email Portal audience resolution", () => {
+  it("recognizes only the exact team audience for development delivery", () => {
+    expect(isTeamOnlyAudienceDefinition([{ kind: "team_members" }])).toBe(true);
+    expect(
+      isTeamOnlyAudienceDefinition([
+        { kind: "team_members" },
+        { kind: "current_members" },
+      ]),
+    ).toBe(false);
+    expect(isTeamOnlyAudienceDefinition([{ kind: "current_members" }])).toBe(
+      false,
+    );
+    expect(
+      isTeamOnlyAudienceDefinition([
+        { kind: "team_members", status: "confirmed" },
+      ]),
+    ).toBe(false);
+  });
+
   it("TC-017 removes only selected emails from the resolved recipient pool", () => {
     const result = applyManualRecipientExclusions(
       [

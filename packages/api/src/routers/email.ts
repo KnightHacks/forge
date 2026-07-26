@@ -51,11 +51,14 @@ import {
   emailTemplatePreviewSchema,
 } from "@forge/validators";
 
+import { isBladeE2E, nodeEnv } from "../env";
 import { permProcedure } from "../trpc";
 import { requireEmailPortal } from "../utils/email/access";
 import {
   applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
+  isTeamOnlyAudienceDefinition,
+  normalizeRecipientEmail,
 } from "../utils/email/audience";
 import {
   assertConfirmableEmailPreview,
@@ -80,6 +83,57 @@ const DEFAULT_TEMPLATE_SAMPLE = {
 };
 
 type EmailSendStatus = typeof EmailSend.$inferSelect.status;
+type CampaignAudienceScope = "team_members" | undefined;
+
+function developmentTeamCampaignReviewEnabled() {
+  return nodeEnv === "development" && !isBladeE2E;
+}
+
+function campaignAudienceScope(value: unknown): CampaignAudienceScope {
+  return developmentTeamCampaignReviewEnabled() &&
+    isTeamOnlyAudienceDefinition(value)
+    ? "team_members"
+    : undefined;
+}
+
+function teamReviewOnlyError() {
+  return new EmailProviderError(
+    "TEST_DELIVERY_ONLY",
+    "Development campaign delivery is limited to the enabled team roster.",
+  );
+}
+
+async function loadCurrentTeamMemberEmails() {
+  const rows = await db
+    .select({ email: Member.email })
+    .from(Member)
+    .innerJoin(Permissions, eq(Permissions.userId, Member.userId))
+    .innerJoin(
+      Roles,
+      and(
+        eq(Roles.id, Permissions.roleId),
+        eq(Roles.emailAudienceEnabled, true),
+      ),
+    );
+  return new Set(rows.map(({ email }) => normalizeRecipientEmail(email)));
+}
+
+async function assertCurrentTeamRecipients(
+  audienceDefinition: unknown,
+  emails: string[],
+) {
+  if (!isTeamOnlyAudienceDefinition(audienceDefinition)) {
+    throw teamReviewOnlyError();
+  }
+  const currentTeamEmails = await loadCurrentTeamMemberEmails();
+  if (
+    emails.some(
+      (email) => !currentTeamEmails.has(normalizeRecipientEmail(email)),
+    )
+  ) {
+    throw teamReviewOnlyError();
+  }
+}
 
 function hashValue(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -513,6 +567,16 @@ async function previewSend(
   input: ReturnType<typeof emailPreviewSendSchema.parse>,
   actorId: string,
 ) {
+  if (
+    developmentTeamCampaignReviewEnabled() &&
+    !isTeamOnlyAudienceDefinition(input.audiences)
+  ) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Development campaign delivery is limited to the Team members audience.",
+    });
+  }
   const sendId = input.sendId ?? randomUUID();
   if (
     input.scheduledFor &&
@@ -722,6 +786,13 @@ export async function processEmailSend(sendId: string) {
     );
   const gateway = getDefaultEmailProviderGateway();
   try {
+    const audienceScope = campaignAudienceScope(claimed.audienceDefinition);
+    if (developmentTeamCampaignReviewEnabled()) {
+      await assertCurrentTeamRecipients(
+        claimed.audienceDefinition,
+        recipients.map(({ normalizedEmail }) => normalizedEmail),
+      );
+    }
     const providerStates = await gateway.lookupSubscriberStates(
       recipients.map(({ normalizedEmail }) => normalizedEmail),
     );
@@ -792,6 +863,7 @@ export async function processEmailSend(sendId: string) {
       return { campaignId: null, status: "completed" as const };
     }
     const campaign = await gateway.createCampaign({
+      audienceScope,
       html: claimed.compiledHtml ?? "",
       isRetry: claimed.retryAttemptCount > 0,
       recipientData: recipients.map((recipient) => {
@@ -832,7 +904,11 @@ export async function processEmailSend(sendId: string) {
       })
       .where(eq(EmailSend.id, sendId));
     try {
-      await gateway.setCampaignStatus(campaign.campaignId, "running");
+      await gateway.setCampaignStatus(
+        campaign.campaignId,
+        "running",
+        audienceScope,
+      );
     } catch {
       await db
         .update(EmailSend)
@@ -906,6 +982,22 @@ export async function reconcileEmailSend(sendId: string) {
     where: eq(EmailSend.id, sendId),
   });
   if (!send?.listmonkCampaignId) return null;
+  const audienceScope = campaignAudienceScope(send.audienceDefinition);
+  if (developmentTeamCampaignReviewEnabled()) {
+    const recipients = await db
+      .select({ normalizedEmail: EmailSendRecipient.normalizedEmail })
+      .from(EmailSendRecipient)
+      .where(
+        and(
+          eq(EmailSendRecipient.sendId, send.id),
+          isNull(EmailSendRecipient.exclusionReason),
+        ),
+      );
+    await assertCurrentTeamRecipients(
+      send.audienceDefinition,
+      recipients.map(({ normalizedEmail }) => normalizedEmail),
+    );
+  }
   const state = await getDefaultEmailProviderGateway().reconcileCampaign(
     send.listmonkCampaignId,
   );
@@ -917,6 +1009,7 @@ export async function reconcileEmailSend(sendId: string) {
     await getDefaultEmailProviderGateway().setCampaignStatus(
       send.listmonkCampaignId,
       "running",
+      audienceScope,
     );
   }
   const status: EmailSendStatus =
@@ -1109,6 +1202,16 @@ async function confirmSend(
         message: "Email draft not found.",
       });
     }
+    if (
+      developmentTeamCampaignReviewEnabled() &&
+      !isTeamOnlyAudienceDefinition(record.audienceDefinition)
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "Development campaign delivery is limited to the Team members audience.",
+      });
+    }
     try {
       assertConfirmableEmailPreview({
         actual: {
@@ -1204,6 +1307,7 @@ export const emailRouter = {
         await getDefaultEmailProviderGateway().setCampaignStatus(
           send.listmonkCampaignId,
           "draft",
+          campaignAudienceScope(send.audienceDefinition),
         );
       }
       const [updated] = await db

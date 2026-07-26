@@ -146,8 +146,14 @@ test.describe("Email Portal critical flow", () => {
     ).toBeVisible();
     await page.goto("/admin/email");
     await expect(
-      page.getByRole("tab", { name: "Templates", selected: true }),
+      page.getByRole("tab", { name: "Compose", selected: true }),
     ).toBeVisible();
+    await page.getByLabel("Subject").fill("Draft survives template editing");
+    await page.getByRole("button", { name: /Plain text/ }).click();
+    await page
+      .getByLabel("Message")
+      .fill("This unfinished body should survive a tab change.");
+    await page.getByRole("tab", { name: "Templates" }).click();
     await page.getByRole("button", { name: "New template" }).click();
     await page.getByLabel("Template name").fill("E2E Welcome");
     await page.getByRole("tab", { name: "Code" }).click();
@@ -166,6 +172,13 @@ test.describe("Email Portal critical flow", () => {
     await template.getByRole("button", { name: "Publish" }).click();
 
     await page.getByRole("tab", { name: "Compose" }).click();
+    await expect(page.getByLabel("Subject")).toHaveValue(
+      "Draft survives template editing",
+    );
+    await expect(page.getByLabel("Message")).toHaveValue(
+      "This unfinished body should survive a tab change.",
+    );
+    await page.getByRole("button", { name: /React Email template/ }).click();
     await page.getByLabel("Subject").fill("Scheduled E2E welcome");
     await page
       .getByLabel("Email template")

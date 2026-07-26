@@ -15,9 +15,10 @@ const listmonkFromEmailSchema = z
 
 export const env = createEnv({
   server: {
-    EMAIL_DELIVERY_MODE: z
-      .enum(["disabled", "fake", "production", "test"])
-      .default("disabled"),
+    BLADE_E2E_AUTH: z.enum(["true", "false"]).optional(),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     LISTMONK_CAMPAIGN_TEMPLATE_ID: z.coerce
       .number()
       .int()

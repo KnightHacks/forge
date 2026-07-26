@@ -6,6 +6,7 @@ import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
 
 import type {
+  CampaignAudienceMode,
   EmailPortalPreview,
   EmailPortalTab,
   TemplateEditorSeed,
@@ -14,18 +15,19 @@ import { api } from "~/trpc/react";
 import { EmailPortalWorkspace } from "./email-portal-workspace";
 
 export function EmailPortalAdmin({
-  campaignDeliveryEnabled,
+  campaignAudienceMode,
   initialAudienceOptions,
   initialSends,
   initialTab,
   initialTemplates,
 }: {
-  campaignDeliveryEnabled: boolean;
+  campaignAudienceMode: CampaignAudienceMode;
   initialAudienceOptions: RouterOutputs["email"]["listAudienceOptions"];
   initialSends: RouterOutputs["email"]["listSends"];
   initialTab: EmailPortalTab;
   initialTemplates: RouterOutputs["email"]["listTemplates"];
 }) {
+  const campaignDeliveryEnabled = campaignAudienceMode !== "disabled";
   const utils = api.useUtils();
   const [preview, setPreview] = useState<EmailPortalPreview | null>(null);
   const templates = api.email.listTemplates.useQuery(
@@ -103,7 +105,7 @@ export function EmailPortalAdmin({
   return (
     <EmailPortalWorkspace
       audienceOptions={audiences.data}
-      campaignDeliveryEnabled={campaignDeliveryEnabled}
+      campaignAudienceMode={campaignAudienceMode}
       initialTab={initialTab}
       isConfirming={confirmSend.isPending}
       isPreviewing={previewSend.isPending}

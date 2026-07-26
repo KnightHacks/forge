@@ -28,6 +28,7 @@ The Blade admin area provides three connected workspaces:
 
 - Administrators can compose an email from a published template or write a plain-text email.
 - The composer includes the subject, content/template selection, audience selection, immediate-versus-scheduled delivery, rendered preview, and visible validation feedback.
+- Compose is the default portal workspace. Unfinished compose fields are restored from versioned browser-local draft storage when navigation or template editing remounts the workspace, and the draft is cleared after successful confirmation.
 - Built-in audiences include:
   - current, non-alumni members;
   - alumni;
@@ -98,5 +99,6 @@ The Blade admin area provides three connected workspaces:
 - An optional portal test-send action always targets exactly `directors@knighthacks.org` and offers no alternate recipient input.
 - No local preview, retry, scheduled, or normal automated-suite path can deliver an email to another real address.
 - Automated suites use fake delivery. Any separately authorized live automated integration test may target only `donotreply@knighthacks.org`.
+- In `NODE_ENV=development`, live audience campaigns are restricted in the UI, API, current-role recheck, and provider boundary to the enabled team roster. `NODE_ENV=production` uses normal approved audiences, while `NODE_ENV=test` is network-free.
 - Portal-created bulk sends honor unsubscribe and suppression state.
 - Arbitrary SQL audience entry is not present in the portal.

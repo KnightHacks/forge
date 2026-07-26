@@ -173,16 +173,17 @@ Each send uses a tagged private Listmonk list so its frozen audience is explicit
 
 Any Listmonk subscriber that is globally blocklisted or has an unsubscribed Knight Hacks list membership is excluded conservatively from portal sends. The existing MLH consent field is never interpreted as Knight Hacks consent.
 
-### Explicit delivery modes
+### Environment-derived delivery policy
 
-`EMAIL_DELIVERY_MODE` is a required fail-closed runtime policy with these values:
+There is no deployment-facing email delivery mode flag. Runtime behavior is derived from the standard `NODE_ENV`, preventing a stale email-specific flag from accidentally leaving production in a test-only state:
 
-- `disabled`: default; all provider mutations throw before HTTP.
-- `fake`: tests and local UI development; mutations are recorded only by an injected in-memory fake.
-- `test`: only the dedicated portal test-send operation may call the real provider, and the provider boundary targets exactly `directors@knighthacks.org`; audience sends, schedules, cron retries, and arbitrary transactional recipients throw.
-- `production`: authorized portal campaigns and existing transactional behavior may call Listmonk.
+- `production`: approved portal audiences and existing transactional behavior use Listmonk.
+- `development`: the directors-only test action remains available, and live portal campaigns are restricted to the enabled team roster.
+- `test`: the default gateway is an in-memory fake with no network transport.
 
-The policy is checked again at provider execution time, including cron and retry paths. It does not rely solely on `NODE_ENV`. Automated tests fail if they reach an unmocked network gateway.
+The development exception is enforced independently at the UI, preview/confirmation API, delivery-time current-role recheck, and provider campaign/status boundary. The stored audience must be exactly `team_members`, every retained recipient must still have an enabled team role, and the provider request must carry the server-issued team scope. Automated tests fail if they reach an unmocked network gateway.
+
+Because Next forces `next dev` processes to use the development environment, the existing `BLADE_E2E_AUTH` test-harness marker selects the same fake provider for the synthetic Playwright server. Production policy is resolved first, so this test-only marker cannot alter production delivery.
 
 ### Dependencies and environment
 
@@ -197,10 +198,9 @@ The implementation is expected to add or relocate these explicit dependencies:
 
 Environment changes:
 
-- add `EMAIL_DELIVERY_MODE`, defaulting to `disabled`;
 - add `LISTMONK_CAMPAIGN_TEMPLATE_ID` for the approved pass-through Listmonk campaign shell;
 - retain existing Listmonk URL, credential, token, and sender settings; and
-- document that production rollout must provision and verify the pass-through campaign template before enabling `production`.
+- document that production rollout must provision and verify the pass-through campaign template.
 
 The concrete dependency versions must be compatible with the repository's React 19, Next 16, TypeScript, Node, and pnpm constraints and are locked during implementation.
 
@@ -294,16 +294,15 @@ Multi-table preview replacement, confirmation, publish, cancellation, and state 
 - Do not alter or delete the existing issue `Template` table; email tables use distinct names.
 - Existing transactional hackathon template fields and email behavior remain compatible.
 - Port/reconcile production main's direct Listmonk client before removing the deprecated SDK.
-- Deploy schema and code with `EMAIL_DELIVERY_MODE=disabled`.
-- Verify migrations, permission gating, fake-provider E2E, Listmonk API compatibility, pass-through template rendering, unsubscribe behavior, and directors-only portal test send.
-- Enable `test` only for an explicit manual portal smoke test to the directors list.
-- Enable `production` only after the artifact bundle, migration, environment, Listmonk configuration, and smoke-test evidence are approved.
+- Verify migrations, permission gating, fake-provider E2E, Listmonk API compatibility, pass-through template rendering, unsubscribe behavior, and directors-only portal test send before production deployment.
+- Exercise the development campaign flow only with the server-enforced team audience.
+- Deploy production only after the artifact bundle, migration, environment, Listmonk configuration, and smoke-test evidence are approved.
 
 Rollback:
 
-- Set `EMAIL_DELIVERY_MODE=disabled` first.
 - Stop the email cron entries.
 - Roll back application routing/navigation while leaving additive tables and the additive role flag in place.
+- Revoke or rotate the Listmonk API token if provider mutation must be stopped independently of the application rollback.
 - Do not drop tables containing template/history data during an operational rollback.
 
 ### Retention
@@ -337,7 +336,8 @@ Would this require a developer change next year?
 
 - `/admin/email/page.tsx` remains a thin server component responsible for auth, the `EMAIL_PORTAL` gate, stable initial reads, and `HydrateClient`.
 - Add Email Portal to the shared admin-access calculation, layout authorization, navigation model, active-route typing, desktop navigation, and mobile navigation. An `EMAIL_PORTAL`-only user must be able to enter the admin shell.
-- Templates, Compose, and Sends use URL-persisted tabs/workspace state, with Templates as the default landing tab.
+- Compose, Templates, and Sends use URL-persisted tabs/workspace state, with Compose first and the default landing tab.
+- Compose state is stored in a versioned, validated local-storage record with a seven-day lifetime. It includes subject, content mode/body/template revision, audience choices, manual deselections, and schedule fields; invalid/expired records are discarded, and successful confirmation clears the record.
 - Compose resolves the selected groups into a compact searchable recipient list. Eligible recipients start checked; manually unchecked normalized emails are included in the preview hash, excluded before personalization coverage and snapshot persistence, and recorded only as an aggregate manual-exclusion count.
 - Blade-specific composed components live under `apps/blade/src/app/_components/admin/email`.
 - Focused hooks encapsulate template drafts, debounced preview compilation, audience preview, confirmation, and send-status polling.
@@ -406,5 +406,5 @@ Run the targeted Playwright project against an alternate Blade port because the 
 ## Open questions
 
 - Human approval of this SRD explicitly authorizes the proposed additive schema/migration, role classification field/backfill, dependency changes, environment variables, email-provider behavior, cron jobs, and phased deployment plan.
-- Before implementation can enable `EMAIL_DELIVERY_MODE=production`, an integration spike must verify the deployed Listmonk version's campaign/list/subscriber APIs, namespaced attribute rendering, status transitions, and unsubscribe semantics.
+- Before production rollout, an integration spike must verify the deployed Listmonk version's campaign/list/subscriber APIs, namespaced attribute rendering, status transitions, and unsubscribe semantics.
 - The React Email Editor and Monaco dependency versions must be verified against the repository's current React/Next build during the dependency spike; if incompatible, return to SRD review rather than silently replacing the approved editor.

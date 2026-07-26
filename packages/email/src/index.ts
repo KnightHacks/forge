@@ -1,7 +1,11 @@
 import { logger } from "@forge/utils";
 
 import type { BuildHackathonEmailInput } from "./hackathons";
-import type { EmailHttpRequest, EmailHttpTransport } from "./provider";
+import type {
+  EmailDeliveryMode,
+  EmailHttpRequest,
+  EmailHttpTransport,
+} from "./provider";
 import { env } from "./env";
 import { buildHackathonEmail } from "./hackathons";
 import { createEmailProviderGateway } from "./provider";
@@ -74,16 +78,31 @@ export const listmonkHttpTransport: EmailHttpTransport = async (
 
 let defaultGateway: ReturnType<typeof createEmailProviderGateway> | undefined;
 
+export function resolveEmailDeliveryPolicy(
+  nodeEnv: "development" | "production" | "test",
+  bladeE2E = false,
+): {
+  allowTeamCampaigns: boolean;
+  mode: EmailDeliveryMode;
+} {
+  return nodeEnv === "production"
+    ? { allowTeamCampaigns: false, mode: "production" }
+    : nodeEnv === "test" || bladeE2E
+      ? { allowTeamCampaigns: false, mode: "fake" }
+      : { allowTeamCampaigns: true, mode: "test" };
+}
+
 export function getDefaultEmailProviderGateway() {
+  const policy = resolveEmailDeliveryPolicy(
+    env.NODE_ENV,
+    env.BLADE_E2E_AUTH === "true",
+  );
   defaultGateway ??= createEmailProviderGateway({
+    allowTeamCampaigns: policy.allowTeamCampaigns,
     campaignTemplateId: env.LISTMONK_CAMPAIGN_TEMPLATE_ID,
     fromEmail: env.LISTMONK_FROM_EMAIL,
-    mode: env.EMAIL_DELIVERY_MODE,
-    transport:
-      env.EMAIL_DELIVERY_MODE === "fake" ||
-      env.EMAIL_DELIVERY_MODE === "disabled"
-        ? undefined
-        : listmonkHttpTransport,
+    mode: policy.mode,
+    transport: policy.mode === "fake" ? undefined : listmonkHttpTransport,
   });
   return defaultGateway;
 }

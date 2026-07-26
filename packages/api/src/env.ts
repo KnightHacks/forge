@@ -17,3 +17,5 @@ export const nodeEnv = z
   .enum(["development", "production", "test"])
   .default("development")
   .parse(process.env.NODE_ENV);
+
+export const isBladeE2E = process.env.BLADE_E2E_AUTH === "true";

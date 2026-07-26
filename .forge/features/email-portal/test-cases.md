@@ -623,16 +623,37 @@ Expected observations:
 
 Setup:
 
-- Playwright seeds only synthetic `example.test` recipients, a team-classified role, an `EMAIL_PORTAL` user, and a fake provider.
+- Playwright seeds only synthetic `example.test` recipients, a team-classified role, an `EMAIL_PORTAL` user, and uses the existing `BLADE_E2E_AUTH` harness marker to select the fake provider under `next dev`.
 
 Action:
 
-- The administrator creates and publishes a code template, composes a scheduled send, previews the audience, confirms the displayed count, observes it in Sends, and cancels it.
+- Compose is the default tab. The administrator enters unfinished compose content, switches to Templates to create and publish a code template, returns to confirm the compose draft survived, then composes a scheduled send, previews the audience, confirms the displayed count, observes it in Sends, and cancels it.
 
 Expected observations:
 
 - The complete user path succeeds without direct database or Listmonk interaction from the browser.
+- Compose draft storage restores subject, mode, body/template, audience, manual exclusions, and scheduling fields across a workspace remount and clears after successful confirmation.
 - The displayed confirmation count matches the stored unique snapshot.
+
+### TC-062: Development team-only live campaign boundary
+
+Setup:
+
+- Blade runs with `NODE_ENV=development`, valid Listmonk credentials, enabled team-audience roles, and a mixture of team and non-team members.
+
+Action:
+
+- An administrator previews and confirms the locked Team members audience.
+- Bypass attempts submit a non-team audience, add an out-of-roster recipient, omit the provider team scope, or start a campaign without that scope.
+
+Expected observations:
+
+- The UI exposes only the selected, disabled Team members audience.
+- Preview and confirmation reject any stored audience other than exactly `team_members`.
+- Delivery rechecks every retained address against current enabled team roles immediately before provider preparation.
+- The provider creates and starts only a server-scoped team campaign.
+- Every bypass attempt fails before a campaign can start.
+- `NODE_ENV=production` exposes normal approved audiences, and `NODE_ENV=test` remains network-free.
 - The scheduled state and cancellation appear without a full-page client conversion.
 - The fake provider records no real network delivery.
 - Cleanup removes all synthetic fixtures.

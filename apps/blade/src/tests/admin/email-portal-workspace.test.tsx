@@ -133,7 +133,7 @@ describe("Email Portal workspace", () => {
     const html = renderToStaticMarkup(
       createElement(EmailPortalWorkspace, {
         audienceOptions: [],
-        campaignDeliveryEnabled: false,
+        campaignAudienceMode: "disabled",
         initialTab: "compose",
         preview: {
           blockers: [],
@@ -157,5 +157,39 @@ describe("Email Portal workspace", () => {
     expect(html).toContain("Audience delivery is disabled in this environment");
     expect(html).toMatch(/disabled[^>]*>Review &amp; confirm/i);
     expect(html).toContain("Send test to directors");
+  });
+
+  it("shows only the locked team audience in development review mode", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmailPortalWorkspace, {
+        audienceOptions: {
+          hackathons: [
+            {
+              allLabel: "BloomKnights Hackers",
+              displayName: "BloomKnights",
+              id: "00000000-0000-4000-8000-000000000001",
+              name: "bloomknights",
+              statuses: ["confirmed"],
+            },
+          ],
+          presets: [
+            { kind: "current_members", label: "Current members" },
+            { kind: "alumni", label: "Alumni" },
+            { kind: "team_members", label: "Team members" },
+          ],
+        },
+        campaignAudienceMode: "team_only",
+        initialTab: "compose",
+        preview: null,
+        sends: [],
+        templates: [],
+      }),
+    );
+
+    expect(html).toContain("Development review mode is live");
+    expect(html).toContain("Team members");
+    expect(html).not.toContain("Current members");
+    expect(html).not.toContain("BloomKnights Hackers");
+    expect(html).toMatch(/disabled="" checked=""/);
   });
 });

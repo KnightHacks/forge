@@ -16,6 +16,7 @@ export type EmailHttpTransport = (
 ) => Promise<{ data: unknown }>;
 
 export interface CampaignContent {
+  audienceScope?: "team_members";
   html: string;
   isRetry?: boolean;
   recipientData?: {
@@ -47,7 +48,7 @@ export class EmailProviderError extends Error {
   constructor(
     readonly code:
       | "EMAIL_DELIVERY_DISABLED"
-      | "EMAIL_DELIVERY_MODE_REQUIRED"
+      | "EMAIL_DELIVERY_POLICY_REQUIRED"
       | "EMAIL_PROVIDER_INVALID_RESPONSE"
       | "EMAIL_PROVIDER_UNAVAILABLE"
       | "TEST_DELIVERY_ONLY",
@@ -84,6 +85,7 @@ export interface EmailProviderGateway {
   setCampaignStatus(
     campaignId: number,
     status: "cancelled" | "draft" | "running" | "scheduled",
+    audienceScope?: "team_members",
   ): Promise<void>;
   sendTest(input: TestEmailContent): Promise<{
     providerId: number;
@@ -157,7 +159,7 @@ function disabledError() {
 function testDeliveryOnlyError() {
   return new EmailProviderError(
     "TEST_DELIVERY_ONLY",
-    "This delivery mode permits only the dedicated directors test-send operation.",
+    "This delivery mode permits only directors tests and verified development team campaigns.",
   );
 }
 
@@ -244,24 +246,39 @@ function disabledGateway(): EmailProviderGateway {
 function testGateway(
   transport: EmailHttpTransport | undefined,
   config: {
+    allowTeamCampaigns: boolean;
+    campaignTemplateId?: number;
     fromEmail?: string;
   },
 ): EmailProviderGateway {
+  const campaignGateway = productionGateway(transport, config);
+  const permitsTeamCampaign = (audienceScope: "team_members" | undefined) =>
+    config.allowTeamCampaigns && audienceScope === "team_members";
   return {
-    createCampaign() {
-      return Promise.reject(testDeliveryOnlyError());
+    createCampaign(input) {
+      return permitsTeamCampaign(input.audienceScope)
+        ? campaignGateway.createCampaign(input)
+        : Promise.reject(testDeliveryOnlyError());
     },
-    reconcileCampaign() {
-      return Promise.reject(testDeliveryOnlyError());
+    reconcileCampaign(campaignId) {
+      return config.allowTeamCampaigns
+        ? campaignGateway.reconcileCampaign(campaignId)
+        : Promise.reject(testDeliveryOnlyError());
     },
-    lookupSubscriberStates() {
-      return Promise.resolve([]);
+    lookupSubscriberStates(emails) {
+      return config.allowTeamCampaigns
+        ? campaignGateway.lookupSubscriberStates(emails)
+        : Promise.resolve([]);
     },
-    removeRecipientNamespace() {
-      return Promise.reject(testDeliveryOnlyError());
+    removeRecipientNamespace(sendId, emails) {
+      return config.allowTeamCampaigns
+        ? campaignGateway.removeRecipientNamespace(sendId, emails)
+        : Promise.reject(testDeliveryOnlyError());
     },
-    setCampaignStatus() {
-      return Promise.reject(testDeliveryOnlyError());
+    setCampaignStatus(campaignId, status, audienceScope) {
+      return permitsTeamCampaign(audienceScope)
+        ? campaignGateway.setCampaignStatus(campaignId, status, audienceScope)
+        : Promise.reject(testDeliveryOnlyError());
     },
     sendTest(input) {
       return sendDirectorsTransactionalTest(transport, config, input);
@@ -747,11 +764,13 @@ function productionGateway(
 }
 
 export function createEmailProviderGateway({
+  allowTeamCampaigns = false,
   campaignTemplateId,
   fromEmail,
   mode,
   transport,
 }: {
+  allowTeamCampaigns?: boolean;
   campaignTemplateId?: number;
   fromEmail?: string;
   mode: EmailDeliveryMode | undefined;
@@ -759,14 +778,18 @@ export function createEmailProviderGateway({
 }): EmailProviderGateway {
   if (!mode) {
     throw new EmailProviderError(
-      "EMAIL_DELIVERY_MODE_REQUIRED",
-      "An explicit email delivery mode is required.",
+      "EMAIL_DELIVERY_POLICY_REQUIRED",
+      "An explicit email delivery policy is required.",
     );
   }
   if (mode === "disabled") return disabledGateway();
   if (mode === "fake") return fakeGateway();
   if (mode === "test") {
-    return testGateway(transport, { fromEmail });
+    return testGateway(transport, {
+      allowTeamCampaigns,
+      campaignTemplateId,
+      fromEmail,
+    });
   }
   return productionGateway(transport, { campaignTemplateId, fromEmail });
 }

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it, vi } from "vitest";
 
+import { resolveEmailDeliveryPolicy } from "../index";
 import {
   createEmailProviderGateway,
   DIRECTORS_TEST_RECIPIENT,
@@ -13,6 +14,29 @@ const content = {
 };
 
 describe("email delivery mode boundary", () => {
+  it("derives production, development review, and fake policies only from NODE_ENV", () => {
+    expect(resolveEmailDeliveryPolicy("production")).toEqual({
+      allowTeamCampaigns: false,
+      mode: "production",
+    });
+    expect(resolveEmailDeliveryPolicy("development")).toEqual({
+      allowTeamCampaigns: true,
+      mode: "test",
+    });
+    expect(resolveEmailDeliveryPolicy("test")).toEqual({
+      allowTeamCampaigns: false,
+      mode: "fake",
+    });
+    expect(resolveEmailDeliveryPolicy("development", true)).toEqual({
+      allowTeamCampaigns: false,
+      mode: "fake",
+    });
+    expect(resolveEmailDeliveryPolicy("production", true)).toEqual({
+      allowTeamCampaigns: false,
+      mode: "production",
+    });
+  });
+
   it("TC-030 rejects every disabled mutation before transport", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
@@ -122,6 +146,55 @@ describe("email delivery mode boundary", () => {
       expect(transport).not.toHaveBeenCalled();
     },
   );
+
+  it("permits only an explicitly scoped team campaign in development review", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { id: 201 } })
+      .mockResolvedValueOnce({ data: { id: 202 } })
+      .mockResolvedValueOnce({ data: { id: 203 } })
+      .mockResolvedValueOnce({ data: true });
+    const gateway = createEmailProviderGateway({
+      allowTeamCampaigns: true,
+      campaignTemplateId: 1,
+      mode: "test",
+      transport,
+    });
+
+    const campaign = await gateway.createCampaign({
+      ...content,
+      audienceScope: "team_members",
+      recipientSnapshot: ["teammate@example.test"],
+      sendId: "development-team-review",
+    });
+    await expect(
+      gateway.setCampaignStatus(campaign.campaignId, "running", "team_members"),
+    ).resolves.toBeUndefined();
+    expect(campaign).toMatchObject({ campaignId: 203, listId: 201 });
+    expect(transport).toHaveBeenLastCalledWith({
+      body: { status: "running" },
+      method: "PUT",
+      path: "/api/campaigns/203/status",
+    });
+  });
+
+  it("rejects an unscoped campaign even when team review is enabled", async () => {
+    const transport = vi.fn();
+    const gateway = createEmailProviderGateway({
+      allowTeamCampaigns: true,
+      mode: "test",
+      transport,
+    });
+
+    await expect(
+      gateway.createCampaign({
+        ...content,
+        recipientSnapshot: ["teammate@example.test"],
+        sendId: "missing-team-scope",
+      }),
+    ).rejects.toMatchObject({ code: "TEST_DELIVERY_ONLY" });
+    expect(transport).not.toHaveBeenCalled();
+  });
 
   it("TC-NEG-008 rejects a direct recipient-bearing test request", async () => {
     const transport = vi.fn();
