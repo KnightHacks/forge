@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@forge/ui/dropdown-menu";
 
@@ -17,7 +18,14 @@ import type { AdminNavigationAccess } from "./admin-navigation";
 import {
   getVisibleAdminNavigation,
   isAdminNavigationActive,
+  memberNavigationItems,
+  settingsNavigationItem,
 } from "./admin-navigation";
+
+type NavigationItem =
+  | (typeof memberNavigationItems)[number]
+  | ReturnType<typeof getVisibleAdminNavigation>[number]
+  | typeof settingsNavigationItem;
 
 export function MobileAdminNavigation({
   access,
@@ -25,6 +33,44 @@ export function MobileAdminNavigation({
   access: AdminNavigationAccess;
 }) {
   const pathname = usePathname();
+  const renderItem = (item: NavigationItem) => {
+    const Icon = item.icon;
+    const active = isAdminNavigationActive(item.id, pathname);
+    const contents = (
+      <>
+        <Icon
+          className={cn("h-4 w-4", active && "text-primary")}
+          aria-hidden="true"
+        />
+        <span>{item.label}</span>
+        {active && (
+          <span
+            className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+            aria-hidden="true"
+          />
+        )}
+      </>
+    );
+    const className = cn(
+      "h-11 cursor-pointer gap-3 rounded-md px-3 font-medium",
+      active && "bg-primary/15 text-foreground focus:bg-primary/15",
+    );
+
+    return (
+      <DropdownMenuItem key={item.id} asChild className={className}>
+        {"external" in item ? (
+          <a href={item.href} target="_blank" rel="noreferrer">
+            {contents}
+          </a>
+        ) : (
+          <Link href={item.href} aria-current={active ? "page" : undefined}>
+            {contents}
+          </Link>
+        )}
+      </DropdownMenuItem>
+    );
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,34 +90,10 @@ export function MobileAdminNavigation({
         <DropdownMenuLabel className="px-2 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
           Navigate
         </DropdownMenuLabel>
-        {getVisibleAdminNavigation(access).map((item) => {
-          const Icon = item.icon;
-          const active = isAdminNavigationActive(item.id, pathname);
-          return (
-            <DropdownMenuItem
-              key={item.id}
-              asChild
-              className={cn(
-                "h-11 cursor-pointer gap-3 rounded-md px-3 font-medium",
-                active && "bg-primary/15 text-foreground focus:bg-primary/15",
-              )}
-            >
-              <Link href={item.href} aria-current={active ? "page" : undefined}>
-                <Icon
-                  className={cn("h-4 w-4", active && "text-primary")}
-                  aria-hidden="true"
-                />
-                <span>{item.label}</span>
-                {active && (
-                  <span
-                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
-                    aria-hidden="true"
-                  />
-                )}
-              </Link>
-            </DropdownMenuItem>
-          );
-        })}
+        {memberNavigationItems.map(renderItem)}
+        {getVisibleAdminNavigation(access).map(renderItem)}
+        <DropdownMenuSeparator className="my-1.5" />
+        {renderItem(settingsNavigationItem)}
       </DropdownMenuContent>
     </DropdownMenu>
   );

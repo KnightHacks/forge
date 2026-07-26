@@ -18,6 +18,8 @@ import {
   memberSignupFormJsonSchema,
 } from "@forge/validators";
 
+import { GUILD_URL } from "~/lib/guild-urls";
+
 const MOBILE_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000301";
 const MOBILE_NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000302";
 
@@ -189,6 +191,9 @@ test.describe("mobile member experience", () => {
     const viewport = page.viewportSize();
 
     await expect(guildProfile).toBeVisible();
+    await expect(
+      guildProfile.getByRole("link", { name: "View Guild profile" }),
+    ).toHaveAttribute("href", new RegExp(`${GUILD_URL}/members/`));
     const guildProfileBox = await guildProfile.boundingBox();
     expect(guildProfileBox?.height ?? 0).toBeGreaterThan(
       (viewport?.height ?? 0) * 0.8,
@@ -214,6 +219,30 @@ test.describe("mobile member experience", () => {
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "View" })).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    const navigation = page.getByRole("menu");
+    await expect(
+      navigation.getByRole("menuitem", { name: "Dashboard" }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("menuitem", { name: "Guild" }),
+    ).toHaveAttribute("href", GUILD_URL);
+    await expect(
+      navigation.getByRole("menuitem", { name: "Settings" }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("menuitem", { name: "Members" }),
+    ).toHaveCount(0);
+    await expect
+      .poll(() =>
+        navigation.evaluate((element) => getComputedStyle(element).opacity),
+      )
+      .toBe("1");
+    await page.screenshot({
+      path: ".playwright-results/member-dashboard-mobile-navigation.png",
+    });
+    await page.keyboard.press("Escape");
   });
 
   test("keeps desktop dashboard order and profile-attached settings", async ({
@@ -228,10 +257,18 @@ test.describe("mobile member experience", () => {
     const detailsBox = await memberDetails.boundingBox();
 
     expect(detailsBox?.x ?? 0).toBeLessThan(guildBox?.x ?? 0);
+    await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
+    await page.getByTestId("member-navigation-rail").hover();
+    const settingsLink = page.getByRole("link", { name: "Settings" });
+    const settingsBox = await settingsLink.boundingBox();
+    expect(settingsBox?.y ?? 0).toBeGreaterThan(700);
+    await page.screenshot({
+      path: ".playwright-results/member-dashboard-desktop-navigation.png",
+    });
   });
 
   test("keeps signup submit at the bottom and required errors reachable on mobile", async ({
@@ -269,6 +306,19 @@ test.describe("mobile member experience", () => {
     const saveButton = page.getByRole("button", { name: "Save changes" });
 
     await expect(saveButton).toBeInViewport();
+    await expect(
+      page.getByRole("link", { name: "Open Guild" }),
+    ).toHaveAttribute("href", GUILD_URL);
+    await expect(
+      page.getByRole("link", { name: "View public profile" }),
+    ).toHaveAttribute("href", new RegExp(`${GUILD_URL}/members/`));
+    await page
+      .getByText("Guild profile", { exact: true })
+      .last()
+      .scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: ".playwright-results/member-settings-mobile-guild-links.png",
+    });
     await page.getByPlaceholder("Lenny").fill("Maya Edited");
     await expect(saveButton).toBeEnabled();
     await expect(

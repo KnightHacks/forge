@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BriefcaseBusiness,
+  ExternalLink,
   GraduationCap,
   Loader2,
   RotateCcw,
@@ -80,6 +81,7 @@ import { MemberProfilePictureUpload } from "~/app/_components/member/member-prof
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
+import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 
 type SettingsSection = MemberSettingsFieldDefinition["section"];
@@ -631,6 +633,16 @@ function MemberProfileSettingsEditor({
               </p>
             </div>
           </div>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full gap-2 sm:mt-14 sm:w-auto"
+          >
+            <a href={GUILD_URL} target="_blank" rel="noreferrer">
+              Open Guild
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </Button>
         </div>
 
         <Form {...form}>
@@ -653,18 +665,40 @@ function MemberProfileSettingsEditor({
                   className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20"
                 >
                   <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
-                    <div className="flex items-center gap-3 md:gap-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">
-                        <Icon className="h-5 w-5" aria-hidden="true" />
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">
+                          <Icon className="h-5 w-5" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                          <CardTitle className="text-lg md:text-xl">
+                            {meta.title}
+                          </CardTitle>
+                          <CardDescription className="mt-1 text-sm">
+                            {meta.description}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <CardTitle className="text-lg md:text-xl">
-                          {meta.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1 text-sm">
-                          {meta.description}
-                        </CardDescription>
-                      </div>
+                      {section === "Guild" && member.guildProfileVisible ? (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="w-full shrink-0 gap-2 sm:w-auto"
+                        >
+                          <a
+                            href={getGuildMemberUrl(member.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View public profile
+                            <ExternalLink
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
+                          </a>
+                        </Button>
+                      ) : null}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4 px-4 py-4 md:space-y-5 md:px-6">

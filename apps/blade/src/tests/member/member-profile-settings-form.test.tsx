@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberProfileSettingsForm } from "~/app/_components/member/member-profile-settings-form";
+import { getGuildMemberUrl } from "~/lib/guild-urls";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -138,6 +139,9 @@ describe("MemberProfileSettingsForm", () => {
 
     expect(html).toContain("Edit member profile");
     expect(html).toContain('href="/member/dashboard"');
+    expect(html).toContain("Open Guild");
+    expect(html).toContain("View public profile");
+    expect(html).toContain(`href="${getGuildMemberUrl(member.id)}"`);
     expect(html).toContain("Your details");
     expect(html).toContain("Academics");
     expect(html).toContain("Guild profile");

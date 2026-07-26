@@ -531,12 +531,12 @@ test.describe("admin member dashboard", () => {
 
     await signInAs(page, ALICE_USER_ID, "/dashboard");
     await expect(page).toHaveURL(new RegExp(`${MEMBER_DASHBOARD_PATH}$`));
-    await expect(page.getByTestId("admin-navigation-rail")).toBeVisible();
+    await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
     const dashboardHeader = await page
       .getByTestId("blade-shell-header")
       .boundingBox();
     const dashboardRailHeader = await page
-      .getByTestId("admin-navigation-rail-header")
+      .getByTestId("member-navigation-rail-header")
       .boundingBox();
     expect(dashboardRailHeader?.y).toBe(dashboardHeader?.y);
     expect(
@@ -544,7 +544,7 @@ test.describe("admin member dashboard", () => {
     ).toBe((dashboardHeader?.y ?? 0) + (dashboardHeader?.height ?? 0));
     await page.getByRole("link", { name: "Members", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${ADMIN_PATH}$`));
-    await expect(page.getByTestId("admin-navigation-rail")).toBeVisible();
+    await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
     const adminHeader = await page
       .getByTestId("blade-shell-header")
       .boundingBox();

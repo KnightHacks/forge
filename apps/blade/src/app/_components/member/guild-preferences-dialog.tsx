@@ -19,6 +19,7 @@ import {
 import { Switch } from "@forge/ui/switch";
 
 import type { CurrentMember } from "~/hooks/use-member";
+import { getGuildMemberUrl } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 
 type OpportunityStatus = GUILD.GuildOpportunityStatus;
@@ -136,7 +137,7 @@ export function GuildPreferencesDialog({ member }: { member: CurrentMember }) {
 
           {profileVisible ? (
             <a
-              href={`https://guild.knighthacks.org/members/${member.id}`}
+              href={getGuildMemberUrl(member.id)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"

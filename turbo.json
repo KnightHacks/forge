@@ -77,7 +77,8 @@
     "BLADE_E2E_AUTH",
     "BLADE_E2E_DEFAULT_USER_ID",
     "BLADE_URL",
-    "NEXT_PUBLIC_BLADE_E2E_AUTH"
+    "NEXT_PUBLIC_BLADE_E2E_AUTH",
+    "NEXT_PUBLIC_GUILD_URL"
   ],
   "globalPassThroughEnv": ["NODE_ENV", "CI", "npm_lifecycle_event"]
 }

@@ -6,9 +6,12 @@ import {
   LayoutDashboard,
   ListTodo,
   QrCode,
+  Settings,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
+
+import { GUILD_URL } from "~/lib/guild-urls";
 
 export interface AdminNavigationAccess {
   analytics?: boolean;
@@ -16,9 +19,25 @@ export interface AdminNavigationAccess {
   events?: boolean;
   forms?: boolean;
   issues?: boolean;
-  members: boolean;
-  roles: boolean;
+  members?: boolean;
+  roles?: boolean;
 }
+
+export const memberNavigationItems = [
+  {
+    href: "/member/dashboard",
+    icon: LayoutDashboard,
+    id: "dashboard",
+    label: "Dashboard",
+  },
+  {
+    external: true,
+    href: GUILD_URL,
+    icon: UsersRound,
+    id: "guild",
+    label: "Guild",
+  },
+] as const;
 
 export const adminNavigationItems = [
   {
@@ -34,12 +53,6 @@ export const adminNavigationItems = [
     icon: ClipboardList,
     id: "forms",
     label: "Forms",
-  },
-  {
-    href: "/member/dashboard",
-    icon: LayoutDashboard,
-    id: "dashboard",
-    label: "Dashboard",
   },
   {
     access: "events",
@@ -85,10 +98,15 @@ export const adminNavigationItems = [
   },
 ] as const;
 
+export const settingsNavigationItem = {
+  href: "/member/settings",
+  icon: Settings,
+  id: "settings",
+  label: "Settings",
+} as const;
+
 export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
-  return adminNavigationItems.filter(
-    (item) => !("access" in item) || access[item.access],
-  );
+  return adminNavigationItems.filter((item) => access[item.access]);
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
@@ -100,5 +118,12 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "companies") return pathname.startsWith("/admin/companies");
   if (id === "members") return pathname.startsWith("/admin/members");
   if (id === "roles") return pathname.startsWith("/admin/roles");
-  return !pathname.startsWith("/admin/");
+  if (id === "settings") return pathname.startsWith("/member/settings");
+  if (id === "dashboard") {
+    return (
+      !pathname.startsWith("/admin/") &&
+      !pathname.startsWith("/member/settings")
+    );
+  }
+  return false;
 }

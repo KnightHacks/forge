@@ -21,6 +21,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_BLADE_E2E_AUTH: z.enum(["true", "false"]).optional(),
     NEXT_PUBLIC_BLADE_URL: z.string().url(),
+    NEXT_PUBLIC_GUILD_URL: z.string().url(),
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
@@ -31,6 +32,11 @@ export const env = createEnv({
     PORT: process.env.PORT,
     NEXT_PUBLIC_BLADE_URL:
       process.env.NEXT_PUBLIC_BLADE_URL || "http://localhost:3000",
+    NEXT_PUBLIC_GUILD_URL:
+      process.env.NEXT_PUBLIC_GUILD_URL ||
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:3003"
+        : "https://guild.knighthacks.org"),
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

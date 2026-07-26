@@ -33,6 +33,7 @@ vi.mock("@forge/ui/dialog", async () => {
 vi.mock("~/env", () => ({
   env: {
     NEXT_PUBLIC_BLADE_E2E_AUTH: "true",
+    NEXT_PUBLIC_GUILD_URL: "https://guild.knighthacks.org",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_fake",
   },
 }));

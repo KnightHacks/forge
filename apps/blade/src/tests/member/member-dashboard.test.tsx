@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
 import type { CurrentMember } from "~/hooks/use-member";
 import { MemberDashboard } from "~/app/_components/member/member-dashboard";
+import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -214,6 +215,8 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Dylan Vidal");
     expect(html).toContain("Nvidia");
     expect(html).toContain("Public on Guild");
+    expect(html).toContain("View Guild profile");
+    expect(html).toContain(`href="${getGuildMemberUrl(member.id)}"`);
     expect(html).toContain("Guild preferences");
     expect(html).toContain("GitHub");
     expect(html).toContain("LinkedIn");
@@ -265,6 +268,8 @@ describe("MemberDashboard", () => {
 
     expect(html).toContain("Private");
     expect(html).toContain("Hidden from Guild");
+    expect(html).toContain("Explore Guild");
+    expect(html).toContain(`href="${GUILD_URL}"`);
     expect(html).not.toContain("Sponsors only");
   });
 

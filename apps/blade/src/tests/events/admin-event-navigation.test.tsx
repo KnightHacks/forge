@@ -47,7 +47,7 @@ describe("event admin navigation", () => {
       }),
     );
 
-    expect(html).toContain('data-testid="admin-navigation-rail"');
+    expect(html).toContain('data-testid="member-navigation-rail"');
     expect(html).toContain('data-testid="blade-shell-header"');
     expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
     expect(html).toContain('href="/admin/events"');

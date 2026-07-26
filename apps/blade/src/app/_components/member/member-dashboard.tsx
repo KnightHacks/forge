@@ -39,6 +39,7 @@ import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dial
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
 import { formatEventDateTime } from "~/lib/event-dates";
+import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 
 export const dashboardGridClass =
   "grid w-full gap-4 md:gap-6 lg:min-h-[calc(100svh-8rem)] lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_28rem]";
@@ -394,6 +395,21 @@ function GuildProfileCard({
               {member.tagline || <EmptyValue>Add a Guild tagline</EmptyValue>}
             </p>
           </div>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="mt-4 w-full gap-2"
+          >
+            <a
+              href={isPublic ? getGuildMemberUrl(member.id) : GUILD_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {isPublic ? "View Guild profile" : "Explore Guild"}
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </Button>
         </DashboardContent>
 
         <DashboardContent className="lg:hidden">

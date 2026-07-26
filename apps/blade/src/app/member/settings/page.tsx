@@ -36,6 +36,7 @@ export default async function MemberSettingsPage({
   return (
     <HydrateClient>
       <AuthenticatedShell
+        activeNavigation="settings"
         adminNavigation={getAdminNavigationAccess(effectivePermissions)}
         session={session}
       >

@@ -56,6 +56,7 @@ import { EmploymentHistoryEditor } from "~/app/_components/member/employment-his
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
+import { GUILD_URL } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 
 type SignupFormDefinition = typeof memberSignupFormDefinition;
@@ -83,7 +84,7 @@ const sectionMeta = {
         Guild is the Knight Hacks member directory for profiles, links, and
         recruiting context.{" "}
         <a
-          href="https://guild.knighthacks.org"
+          href={GUILD_URL}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"

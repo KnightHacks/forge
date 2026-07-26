@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { Session } from "~/server/auth";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
+import { GUILD_URL } from "~/lib/guild-urls";
 
 vi.mock("next/image", () => ({
   default: ({ priority: _priority, ...props }: Record<string, unknown>) =>
@@ -31,7 +32,7 @@ const session = {
 } as Session;
 
 describe("AuthenticatedShell", () => {
-  it("server-renders the integrated admin rail on member pages for admins", () => {
+  it("server-renders member destinations before permission-gated admin pages", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         activeNavigation: "dashboard",
@@ -41,15 +42,23 @@ describe("AuthenticatedShell", () => {
       }),
     );
 
-    expect(html).toContain('data-testid="admin-navigation-rail"');
-    expect(html).toContain('data-testid="admin-navigation-rail-header"');
+    expect(html).toContain('data-testid="member-navigation-rail"');
+    expect(html).toContain('data-testid="member-navigation-rail-header"');
     expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
     expect(html).toContain('aria-label="Open navigation menu"');
     expect(html).toContain('href="/admin/members"');
     expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/admin/issues/calendar"');
     expect(html).toContain('href="/member/dashboard"');
+    expect(html).toContain(`href="${GUILD_URL}"`);
+    expect(html).toContain('href="/member/settings"');
     expect(html).toContain('aria-current="page"');
+    expect(html.indexOf('href="/member/dashboard"')).toBeLessThan(
+      html.indexOf('href="/admin/members"'),
+    );
+    expect(html.indexOf('href="/admin/roles"')).toBeLessThan(
+      html.indexOf('href="/member/settings"'),
+    );
   });
 
   it("shows only permission-available admin destinations", () => {
@@ -65,7 +74,7 @@ describe("AuthenticatedShell", () => {
     expect(html).not.toContain('href="/admin/members"');
   });
 
-  it("does not expose admin navigation to ordinary members", () => {
+  it("gives ordinary members Dashboard, Guild, and bottom-pinned Settings", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         children: createElement("main", null, "Dashboard content"),
@@ -73,8 +82,12 @@ describe("AuthenticatedShell", () => {
       }),
     );
 
-    expect(html).not.toContain('data-testid="admin-navigation-rail"');
-    expect(html).not.toContain('data-testid="mobile-admin-menu-trigger"');
+    expect(html).toContain('data-testid="member-navigation-rail"');
+    expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
+    expect(html).toContain('href="/member/dashboard"');
+    expect(html).toContain(`href="${GUILD_URL}"`);
+    expect(html).toContain('href="/member/settings"');
     expect(html).not.toContain('href="/admin/members"');
+    expect(html).not.toContain('href="/admin/roles"');
   });
 });
