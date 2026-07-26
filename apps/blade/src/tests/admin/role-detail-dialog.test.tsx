@@ -43,6 +43,9 @@ vi.mock("~/trpc/react", () => ({
       updateIssueReminders: {
         useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
       },
+      updateEmailAudience: {
+        useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
+      },
     },
   },
 }));
@@ -61,6 +64,7 @@ const detail = {
   },
   dependencyCount: 10,
   discordRoleId: "990000000000000001",
+  emailAudienceEnabled: true,
   id: "00000000-0000-4000-8000-000000000001",
   isCosmetic: false,
   isMissing: false,
@@ -94,6 +98,7 @@ describe("RoleDetailDialog", () => {
     expect(html).toContain("Issue visibility rules");
     expect(html).toContain("Blade permissions");
     expect(html).toContain("Issue reminders");
+    expect(html).toContain("Team email audience");
     expect(html).toContain("ops-reminders");
     expect(html).toContain("Sync now");
     expect(html).toContain("Unlink role");

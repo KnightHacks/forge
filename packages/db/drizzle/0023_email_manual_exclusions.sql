@@ -1,0 +1,1 @@
+ALTER TABLE "email_send" ADD COLUMN "excluded_manual_count" integer DEFAULT 0 NOT NULL;

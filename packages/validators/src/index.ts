@@ -13,6 +13,7 @@ export * from "./issues";
 export * from "./guild";
 export * from "./career";
 export * from "./audit";
+export * from "./email";
 export * from "./alumni";
 
 export const unused = z.string().describe(

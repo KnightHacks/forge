@@ -25,14 +25,20 @@
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
     "@forge/utils": "workspace:*",
-    "@maloma/listmonk": "^1.0.1",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@t3-oss/env-core": "^0.13.10",
-    "minimatch": "^10.2.4"
+    "minimatch": "^10.2.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "catalog:"
   },
   "devDependencies": {
     "@forge/eslint-config": "workspace:*",

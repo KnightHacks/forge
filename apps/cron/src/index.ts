@@ -1,6 +1,7 @@
 import { alumniAssign } from "./crons/alumni-assign";
 import { capybara, cat, duck, goat } from "./crons/animals";
 import { backupFilteredDb } from "./crons/backup-filtered-db";
+import { emailDelivery } from "./crons/email-delivery";
 import { formAttachmentCleanup } from "./crons/form-attachment-cleanup";
 import { formCallbacks } from "./crons/form-callbacks";
 import { issueReminders } from "./crons/issue-reminders";
@@ -30,3 +31,4 @@ roleSync.schedule();
 issueReminders.schedule();
 formCallbacks.schedule();
 formAttachmentCleanup.schedule();
+emailDelivery.schedule();

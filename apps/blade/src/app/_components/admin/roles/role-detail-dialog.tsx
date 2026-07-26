@@ -7,6 +7,7 @@ import {
   BellRing,
   Hash,
   Loader2,
+  Mail,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -59,6 +60,9 @@ export function RoleDetailDialog({
   const [remindersEnabled, setRemindersEnabled] = useState(
     detail.issueRemindersEnabled,
   );
+  const [emailAudienceEnabled, setEmailAudienceEnabled] = useState(
+    detail.emailAudienceEnabled,
+  );
   const reminderChannels = api.roles.listReminderChannels.useQuery();
   const update = api.roles.updatePermissions.useMutation({
     onSuccess() {
@@ -88,6 +92,17 @@ export function RoleDetailDialog({
     onError(error) {
       toast.error(
         error.message || "Issue reminder settings could not be saved.",
+      );
+    },
+  });
+  const updateEmailAudience = api.roles.updateEmailAudience.useMutation({
+    onSuccess() {
+      toast.success("Email audience setting saved.");
+      onChanged();
+    },
+    onError(error) {
+      toast.error(
+        error.message || "Email audience setting could not be saved.",
       );
     },
   });
@@ -318,6 +333,51 @@ export function RoleDetailDialog({
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
                 Save reminder settings
+              </Button>
+            </div>
+          </section>
+
+          <section
+            className="space-y-4 rounded-md border border-white/10 bg-background/60 p-3 sm:p-4"
+            aria-labelledby="email-audience-settings"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+                <Mail className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 id="email-audience-settings" className="font-semibold">
+                  Team email audience
+                </h3>
+                <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
+                  Include linked Member profiles assigned this role in the Email
+                  Portal’s Team members audience.
+                </p>
+              </div>
+              <Switch
+                aria-label="Include role in team email audience"
+                checked={emailAudienceEnabled}
+                onCheckedChange={setEmailAudienceEnabled}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                disabled={
+                  emailAudienceEnabled === detail.emailAudienceEnabled ||
+                  updateEmailAudience.isPending
+                }
+                onClick={() =>
+                  updateEmailAudience.mutate({
+                    emailAudienceEnabled,
+                    roleId: detail.id,
+                  })
+                }
+              >
+                {updateEmailAudience.isPending && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Save audience setting
               </Button>
             </div>
           </section>

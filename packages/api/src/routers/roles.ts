@@ -10,6 +10,7 @@ import { Member } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
 import {
   discordRoleIdSchema,
+  emailRoleAudienceSchema,
   permissionExpressionSchema,
   roleBatchAssignmentSchema,
   roleCreateSchema,
@@ -471,6 +472,25 @@ export const rolesRouter = {
         );
         return updated;
       });
+    }),
+
+  updateEmailAudience: permProcedure
+    .input(emailRoleAudienceSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireConfigure(ctx);
+      const [updated] = await db
+        .update(Roles)
+        .set({ emailAudienceEnabled: input.emailAudienceEnabled })
+        .where(eq(Roles.id, input.roleId))
+        .returning({
+          emailAudienceEnabled: Roles.emailAudienceEnabled,
+          id: Roles.id,
+          name: Roles.name,
+        });
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
+      }
+      return updated;
     }),
 
   syncRole: permProcedure
