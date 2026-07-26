@@ -6,6 +6,7 @@ import {
 } from "../../utils/audit/service";
 
 vi.mock("@forge/db/client", () => ({ db: {} }));
+vi.mock("../../env", () => ({ isBladeE2E: false }));
 
 describe("admin audit payload enforcement", () => {
   it("accepts only metadata and changed fields allowlisted for the action", () => {

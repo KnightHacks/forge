@@ -186,7 +186,7 @@ function SearchableRoleMultiSelect({
           {selectedRoles.map((role) => (
             <span
               key={role.id}
-              className="inline-flex min-h-9 items-center gap-1 rounded-full border border-white/10 bg-card/80 pl-3 pr-1 text-sm"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-card/80 pl-3 pr-1 text-sm"
             >
               {role.name}
               <button

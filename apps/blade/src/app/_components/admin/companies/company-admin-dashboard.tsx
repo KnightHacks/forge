@@ -191,7 +191,7 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
                             unconfirmed
                           </span>
                         ) : null}
-                        <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                        <span className="inline-flex items-center gap-2 font-medium text-foreground">
                           {total} total
                           <ArrowUpRight
                             className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"

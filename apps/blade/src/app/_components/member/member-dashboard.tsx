@@ -172,7 +172,7 @@ function EventsOverview({
         </div>
         <MemberRouteTransitionLink
           href="/member/events"
-          className="flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           View all
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -229,7 +229,7 @@ function EventsOverview({
                       <p className="mt-2 text-sm text-muted-foreground">
                         {formatEventDateTime(event.startAt)}
                       </p>
-                      <p className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                      <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                         <MapPin
                           className="h-3.5 w-3.5 shrink-0"
                           aria-hidden="true"
@@ -252,7 +252,7 @@ function EventsOverview({
           <section aria-labelledby="dashboard-recent-events">
             <h3
               id="dashboard-recent-events"
-              className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground"
+              className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
             >
               <History className="h-3.5 w-3.5" aria-hidden="true" />
               Recently attended
@@ -287,7 +287,7 @@ function EventsOverview({
                             )}
                           </p>
                         </div>
-                        <span className="flex shrink-0 items-center gap-1 font-mono text-sm text-primary">
+                        <span className="flex shrink-0 items-center gap-2 font-mono text-sm text-primary">
                           <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
                           {record.pointsAwarded ?? "?"}
                         </span>
@@ -381,7 +381,7 @@ function GuildProfileCard({
               </h2>
               <Badge
                 variant="outline"
-                className="hidden gap-1 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary sm:inline-flex"
+                className="hidden gap-2 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary sm:inline-flex"
               >
                 {isPublic ? (
                   <Eye className="h-3 w-3" aria-hidden="true" />

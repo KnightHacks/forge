@@ -412,7 +412,7 @@ function EventListView({
                           variant="outline"
                           onClick={() => onEdit(event)}
                         >
-                          <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
                           Edit event
                         </Button>
                         <Button
@@ -421,7 +421,7 @@ function EventListView({
                           variant="outline"
                           onClick={() => onDuplicate(event)}
                         >
-                          <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
+                          <Copy className="h-4 w-4" aria-hidden="true" />
                           Duplicate event
                         </Button>
                         {tracksIntegrationHealth &&
@@ -950,7 +950,7 @@ export function EventAdminDashboard({
                   <button
                     key={`audience-${audience}`}
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({
                         ...input,
@@ -967,7 +967,7 @@ export function EventAdminDashboard({
                   <button
                     key={`tag-${tag}`}
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({
                         ...input,
@@ -984,7 +984,7 @@ export function EventAdminDashboard({
                   <button
                     key={`health-${health}`}
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({
                         ...input,
@@ -1001,7 +1001,7 @@ export function EventAdminDashboard({
                   <button
                     key={`role-${roleId}`}
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({
                         ...input,
@@ -1019,7 +1019,7 @@ export function EventAdminDashboard({
                 {input.internal !== "all" && (
                   <button
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({ ...input, internal: "all", page: 1 })
                     }
@@ -1033,7 +1033,7 @@ export function EventAdminDashboard({
                 {input.startDate && (
                   <button
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({ ...input, page: 1, startDate: undefined })
                     }
@@ -1045,7 +1045,7 @@ export function EventAdminDashboard({
                 {input.endDate && (
                   <button
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/10 bg-background/60 px-3 text-sm"
                     onClick={() =>
                       navigate({ ...input, endDate: undefined, page: 1 })
                     }

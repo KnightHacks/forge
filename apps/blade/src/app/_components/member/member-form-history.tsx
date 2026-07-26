@@ -68,7 +68,7 @@ export function MemberFormHistory({
                       aria-hidden="true"
                     />
                     {response.locked && (
-                      <Badge variant="outline" className="gap-1.5">
+                      <Badge variant="outline" className="gap-2">
                         <LockKeyhole className="h-3 w-3" aria-hidden="true" />
                         Locked
                       </Badge>

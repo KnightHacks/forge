@@ -41,7 +41,7 @@ export function FormCallbackCatalog({
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-medium">{callback.label}</h3>
                 {!callback.canConfigure && (
-                  <Badge variant="outline" className="gap-1.5">
+                  <Badge variant="outline" className="gap-2">
                     <LockKeyhole className="h-3 w-3" aria-hidden="true" />
                     Permission required
                   </Badge>

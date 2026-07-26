@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -86,6 +86,12 @@ import { api } from "~/trpc/react";
 
 type SettingsSection = MemberSettingsFieldDefinition["section"];
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
+interface CareerSettingsState {
+  currentCityKey: string | null;
+  currentCityLabel: string | null;
+  guildLocationVisible: boolean;
+  history: CareerHistoryDraft[];
+}
 type MemberProfileFormSource = Omit<
   CurrentMember,
   | "alumniConfirmedAt"
@@ -105,6 +111,21 @@ type MemberProfileFormSource = Omit<
   school: string;
   shirtSize: string;
 };
+
+function careerSettingsSnapshot(state: CareerSettingsState) {
+  return {
+    currentCityKey: state.currentCityKey,
+    guildLocationVisible: state.guildLocationVisible,
+    history: state.history.map(
+      ({
+        cityLabel: _cityLabel,
+        companyLabel: _companyLabel,
+        draftId: _draftId,
+        ...employment
+      }) => employment,
+    ),
+  };
+}
 
 const sectionOrder: SettingsSection[] = ["Personal", "Academics", "Guild"];
 const sectionMeta = {
@@ -244,6 +265,7 @@ export function MemberSettingsFieldControl({
           )}
         </div>
         <Switch
+          aria-label={fieldConfig.label}
           className="shrink-0"
           checked={isVisible}
           onCheckedChange={(checked) => onChange(checked === true)}
@@ -421,34 +443,47 @@ function MemberProfileSettingsEditor({
   const [isDirtyDialogOpen, setIsDirtyDialogOpen] = useState(false);
   const [isSavingBeforeNavigation, setIsSavingBeforeNavigation] =
     useState(false);
+  const [pendingNavigationHref, setPendingNavigationHref] = useState(
+    MEMBER_DASHBOARD_PATH,
+  );
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const initialCareerState = useMemo<CareerSettingsState>(
+    () => ({
+      currentCityKey: careerData.currentLocation.currentCityKey,
+      currentCityLabel: careerData.currentLocation.city?.label ?? null,
+      guildLocationVisible: careerData.currentLocation.guildLocationVisible,
+      history: careerData.employment.map((employment) => ({
+        cityKey: employment.cityKey,
+        cityLabel: employment.city?.label ?? null,
+        companyId: employment.company.id,
+        companyLabel: employment.company.displayName,
+        draftId: employment.id,
+        endMonth: employment.endMonth,
+        experienceType: employment.experienceType,
+        guildVisible: employment.guildVisible,
+        proposedCompanyName: null,
+        startMonth: employment.startMonth,
+        state: employment.state,
+        title: employment.title,
+      })),
+    }),
+    [careerData],
+  );
+  const [savedCareerState, setSavedCareerState] =
+    useState<CareerSettingsState>(initialCareerState);
   const [careerHistory, setCareerHistory] = useState<CareerHistoryDraft[]>(
-    careerData.employment.map((employment) => ({
-      cityKey: employment.cityKey,
-      cityLabel: employment.city?.label ?? null,
-      companyId: employment.company.id,
-      companyLabel: employment.company.displayName,
-      draftId: employment.id,
-      endMonth: employment.endMonth,
-      experienceType: employment.experienceType,
-      guildVisible: employment.guildVisible,
-      proposedCompanyName: null,
-      startMonth: employment.startMonth,
-      state: employment.state,
-      title: employment.title,
-    })),
+    initialCareerState.history,
   );
   const [currentCityKey, setCurrentCityKey] = useState(
-    careerData.currentLocation.currentCityKey,
+    initialCareerState.currentCityKey,
   );
   const [currentCityLabel, setCurrentCityLabel] = useState(
-    careerData.currentLocation.city?.label ?? null,
+    initialCareerState.currentCityLabel,
   );
   const [guildLocationVisible, setGuildLocationVisible] = useState(
-    careerData.currentLocation.guildLocationVisible,
+    initialCareerState.guildLocationVisible,
   );
-  const [careerMessage, setCareerMessage] = useState<string | null>(null);
   const [careerError, setCareerError] = useState<string | null>(null);
   const initialValues = useMemo(
     () => memberProfileFormDefaults(member),
@@ -458,7 +493,20 @@ function MemberProfileSettingsEditor({
     schema: memberUpdateFormSchema,
     defaultValues: initialValues,
   });
-  const isDirty = form.formState.isDirty;
+  const isProfileDirty = form.formState.isDirty;
+  const currentCareerState = useMemo<CareerSettingsState>(
+    () => ({
+      currentCityKey,
+      currentCityLabel,
+      guildLocationVisible,
+      history: careerHistory,
+    }),
+    [careerHistory, currentCityKey, currentCityLabel, guildLocationVisible],
+  );
+  const isCareerDirty =
+    JSON.stringify(careerSettingsSnapshot(currentCareerState)) !==
+    JSON.stringify(careerSettingsSnapshot(savedCareerState));
+  const hasUnsavedChanges = isProfileDirty || isCareerDirty;
 
   const fieldsBySection = useMemo(
     () =>
@@ -471,84 +519,119 @@ function MemberProfileSettingsEditor({
     [],
   );
 
-  const updateMember = api.member.updateMember.useMutation({
-    async onSuccess(updatedMember) {
-      const nextValues = memberProfileFormDefaults(updatedMember);
-      form.reset(nextValues);
-      setSubmitError(null);
-      setSavedMessage("Profile saved.");
-      await apiUtils.member.getMember.invalidate();
-    },
-    onError(error) {
-      setSavedMessage(null);
-      setSubmitError(error.message || "Profile could not be saved.");
-    },
-  });
+  const updateMember = api.member.updateMember.useMutation();
   const deleteMember = api.member.deleteMember.useMutation();
   const replaceEmployment = api.career.replaceMyEmploymentHistory.useMutation();
   const updateCurrentCity = api.career.updateMyCurrentCity.useMutation();
   const isDeleting = deleteMember.isPending;
-  const isSaving = updateMember.isPending || isSavingBeforeNavigation;
   const isSavingCareer =
     replaceEmployment.isPending || updateCurrentCity.isPending;
+  const isSaving =
+    updateMember.isPending || isSavingCareer || isSavingBeforeNavigation;
 
-  const saveCareer = async () => {
-    setCareerMessage(null);
-    setCareerError(null);
+  const careerValidationError = () => {
     const unconfirmed = careerHistory.find(
       (employment) =>
         employment.state === "unknown" || !employment.experienceType,
     );
-    if (unconfirmed) {
-      setCareerError(
-        "Confirm whether each legacy entry is current or former before saving career history.",
-      );
-      return;
+    return unconfirmed
+      ? "Confirm whether each legacy entry is current or former before saving career history."
+      : null;
+  };
+
+  const persistCareer = async () => {
+    await Promise.all([
+      replaceEmployment.mutateAsync(
+        careerHistory.map(
+          ({
+            cityLabel: _cityLabel,
+            companyLabel: _companyLabel,
+            draftId: _draftId,
+            ...employment
+          }) => {
+            const experienceType = employment.experienceType;
+            if (!experienceType) {
+              throw new Error("Choose an experience type.");
+            }
+            return {
+              ...employment,
+              experienceType,
+              state: employment.state as "current" | "past",
+              title: employment.title ?? "",
+            };
+          },
+        ),
+      ),
+      updateCurrentCity.mutateAsync({
+        currentCityKey,
+        guildLocationVisible,
+      }),
+    ]);
+    setSavedCareerState({
+      currentCityKey,
+      currentCityLabel,
+      guildLocationVisible,
+      history: careerHistory.map((employment) => ({ ...employment })),
+    });
+    await apiUtils.career.listMyEmployment.invalidate();
+  };
+
+  const saveAllChanges = async (values: MemberUpdateFormValues) => {
+    const saveProfile = isProfileDirty;
+    const saveCareer = isCareerDirty;
+    const validationError = saveCareer ? careerValidationError() : null;
+    setSavedMessage(null);
+    setSubmitError(null);
+    setCareerError(validationError);
+    if (validationError) return false;
+
+    if (saveProfile) {
+      try {
+        const updatedMember = await updateMember.mutateAsync(values);
+        form.reset(memberProfileFormDefaults(updatedMember));
+        await apiUtils.member.getMember.invalidate();
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Profile could not be saved.",
+        );
+        return false;
+      }
     }
 
-    try {
-      await Promise.all([
-        replaceEmployment.mutateAsync(
-          careerHistory.map(
-            ({
-              cityLabel: _cityLabel,
-              companyLabel: _companyLabel,
-              draftId: _draftId,
-              ...employment
-            }) => {
-              const experienceType = employment.experienceType;
-              if (!experienceType) {
-                throw new Error("Choose an experience type.");
-              }
-              return {
-                ...employment,
-                experienceType,
-                state: employment.state as "current" | "past",
-                title: employment.title ?? "",
-              };
-            },
-          ),
-        ),
-        updateCurrentCity.mutateAsync({
-          currentCityKey,
-          guildLocationVisible,
-        }),
-      ]);
-      setCareerMessage("Career history saved.");
-      await apiUtils.career.listMyEmployment.invalidate();
-    } catch (error) {
-      setCareerError(
-        error instanceof Error
-          ? error.message
-          : "Career history could not be saved.",
-      );
+    if (saveCareer) {
+      try {
+        await persistCareer();
+      } catch (error) {
+        setCareerError(
+          error instanceof Error
+            ? error.message
+            : "Career history could not be saved.",
+        );
+        return false;
+      }
     }
+
+    setSavedMessage("Changes saved.");
+    return true;
+  };
+
+  const resetCareerChanges = () => {
+    setCareerHistory(
+      savedCareerState.history.map((employment) => ({ ...employment })),
+    );
+    setCurrentCityKey(savedCareerState.currentCityKey);
+    setCurrentCityLabel(savedCareerState.currentCityLabel);
+    setGuildLocationVisible(savedCareerState.guildLocationVisible);
+    setCareerError(null);
   };
 
   const handleDashboardNavigation = () => {
     if (isDeleting || isSaving) return false;
-    if (!isDirty) return true;
+    if (!hasUnsavedChanges) return true;
 
+    setPendingNavigationHref(MEMBER_DASHBOARD_PATH);
     setIsDirtyDialogOpen(true);
     return false;
   };
@@ -556,14 +639,12 @@ function MemberProfileSettingsEditor({
   const saveAndNavigateToDashboard = form.handleSubmit(
     async (values) => {
       setIsSavingBeforeNavigation(true);
-      setSavedMessage(null);
-      setSubmitError(null);
-
       try {
-        await updateMember.mutateAsync(values);
-        router.push(MEMBER_DASHBOARD_PATH);
-      } catch {
-        setIsDirtyDialogOpen(false);
+        if (await saveAllChanges(values)) {
+          router.push(pendingNavigationHref);
+        } else {
+          setIsDirtyDialogOpen(false);
+        }
       } finally {
         setIsSavingBeforeNavigation(false);
       }
@@ -574,12 +655,64 @@ function MemberProfileSettingsEditor({
   );
 
   const discardAndNavigateToDashboard = () => {
-    form.reset(initialValues);
+    form.reset();
+    resetCareerChanges();
     setSavedMessage(null);
     setSubmitError(null);
     setIsDirtyDialogOpen(false);
-    router.push(MEMBER_DASHBOARD_PATH);
+    router.push(pendingNavigationHref);
   };
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = true;
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges || isDeleting || isSaving) return;
+    const interceptInternalNavigation = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        !(event.target instanceof Element)
+      ) {
+        return;
+      }
+      const anchor = event.target.closest<HTMLAnchorElement>("a[href]");
+      if (
+        !anchor ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      ) {
+        return;
+      }
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      if (
+        destination.pathname === window.location.pathname &&
+        destination.search === window.location.search
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setPendingNavigationHref(
+        `${destination.pathname}${destination.search}${destination.hash}`,
+      );
+      setIsDirtyDialogOpen(true);
+    };
+    document.addEventListener("click", interceptInternalNavigation, true);
+    return () =>
+      document.removeEventListener("click", interceptInternalNavigation, true);
+  }, [hasUnsavedChanges, isDeleting, isSaving]);
 
   const handleDeleteProfile = async () => {
     setSavedMessage(null);
@@ -650,11 +783,7 @@ function MemberProfileSettingsEditor({
           <form
             className="space-y-4 md:space-y-7"
             noValidate
-            onSubmit={form.handleSubmit((values) => {
-              setSavedMessage(null);
-              setSubmitError(null);
-              updateMember.mutate(values);
-            })}
+            onSubmit={form.handleSubmit((values) => saveAllChanges(values))}
           >
             {fieldsBySection.map(({ section, fields }) => {
               const meta = sectionMeta[section];
@@ -845,15 +974,18 @@ function MemberProfileSettingsEditor({
                   onCurrentCityChange={(city) => {
                     setCurrentCityKey(city?.key ?? null);
                     setCurrentCityLabel(city?.label ?? null);
-                    setCareerMessage(null);
+                    setCareerError(null);
+                    setSavedMessage(null);
                   }}
                   onGuildLocationVisibleChange={(visible) => {
                     setGuildLocationVisible(visible);
-                    setCareerMessage(null);
+                    setCareerError(null);
+                    setSavedMessage(null);
                   }}
                   onHistoryChange={(history) => {
                     setCareerHistory(history);
-                    setCareerMessage(null);
+                    setCareerError(null);
+                    setSavedMessage(null);
                   }}
                 />
                 {careerError && (
@@ -861,31 +993,9 @@ function MemberProfileSettingsEditor({
                     {careerError}
                   </div>
                 )}
-                <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p
-                    className="text-sm text-muted-foreground"
-                    aria-live="polite"
-                  >
-                    {careerMessage ??
-                      "Career changes save independently from profile details."}
-                  </p>
-                  <Button
-                    type="button"
-                    className="min-h-11 gap-2"
-                    disabled={isSavingCareer}
-                    onClick={() => void saveCareer()}
-                  >
-                    {isSavingCareer ? (
-                      <Loader2
-                        className="size-4 animate-spin"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <Save className="size-4" aria-hidden="true" />
-                    )}
-                    {isSavingCareer ? "Saving career" : "Save career"}
-                  </Button>
-                </div>
+                <p className="border-t border-white/10 pt-4 text-sm text-muted-foreground">
+                  Career and location changes are included with Save changes.
+                </p>
               </CardContent>
             </Card>
 
@@ -902,8 +1012,8 @@ function MemberProfileSettingsEditor({
                   aria-live="polite"
                 >
                   {savedMessage ??
-                    (isDirty
-                      ? "You have unsaved profile changes."
+                    (hasUnsavedChanges
+                      ? "You have unsaved changes."
                       : "Your profile is up to date.")}
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -911,9 +1021,10 @@ function MemberProfileSettingsEditor({
                     type="button"
                     variant="outline"
                     className="w-full gap-2 sm:w-auto"
-                    disabled={!isDirty || isSaving || isDeleting}
+                    disabled={!hasUnsavedChanges || isSaving || isDeleting}
                     onClick={() => {
-                      form.reset(initialValues);
+                      form.reset();
+                      resetCareerChanges();
                       setSavedMessage(null);
                       setSubmitError(null);
                     }}
@@ -924,9 +1035,9 @@ function MemberProfileSettingsEditor({
                   <Button
                     type="submit"
                     className="w-full gap-2 sm:w-auto"
-                    disabled={!isDirty || isSaving || isDeleting}
+                    disabled={!hasUnsavedChanges || isSaving || isDeleting}
                   >
-                    {updateMember.isPending ? (
+                    {isSaving ? (
                       <Loader2
                         className="h-4 w-4 animate-spin"
                         aria-hidden="true"
@@ -934,7 +1045,7 @@ function MemberProfileSettingsEditor({
                     ) : (
                       <Save className="h-4 w-4" aria-hidden="true" />
                     )}
-                    {updateMember.isPending ? "Saving" : "Save changes"}
+                    {isSaving ? "Saving" : "Save changes"}
                   </Button>
                 </div>
               </div>
@@ -1027,8 +1138,9 @@ function MemberProfileSettingsEditor({
                 <div>
                   <DialogTitle>Leave with unsaved changes?</DialogTitle>
                   <DialogDescription className="mt-1">
-                    Save your profile before returning to the dashboard, discard
-                    changes, or close this dialog to keep editing.
+                    Save your profile, Guild, and career changes before leaving
+                    settings, discard them, or close this dialog to keep
+                    editing.
                   </DialogDescription>
                 </div>
               </div>

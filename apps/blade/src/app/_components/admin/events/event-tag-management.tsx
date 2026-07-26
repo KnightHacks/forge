@@ -216,7 +216,7 @@ export function EventTagManagement({
                   variant="outline"
                   onClick={() => setEditing(tag)}
                 >
-                  <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
                   Edit {tag.name}
                 </Button>
                 {tag.active && (
@@ -227,7 +227,7 @@ export function EventTagManagement({
                     disabled={archivePendingId !== null}
                     onClick={() => void archive(tag)}
                   >
-                    <Archive className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <Archive className="h-4 w-4" aria-hidden="true" />
                     {archivePendingId === tag.id
                       ? "Archiving..."
                       : "Archive"}{" "}

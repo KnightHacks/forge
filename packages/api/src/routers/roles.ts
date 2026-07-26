@@ -478,19 +478,59 @@ export const rolesRouter = {
     .input(emailRoleAudienceSchema)
     .mutation(async ({ ctx, input }) => {
       requireConfigure(ctx);
-      const [updated] = await db
-        .update(Roles)
-        .set({ emailAudienceEnabled: input.emailAudienceEnabled })
-        .where(eq(Roles.id, input.roleId))
-        .returning({
-          emailAudienceEnabled: Roles.emailAudienceEnabled,
-          id: Roles.id,
-          name: Roles.name,
-        });
-      if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
-      }
-      return updated;
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [role] = await tx
+          .select()
+          .from(Roles)
+          .where(eq(Roles.id, input.roleId))
+          .limit(1)
+          .for("update");
+        if (!role) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        const [updated] = await tx
+          .update(Roles)
+          .set({ emailAudienceEnabled: input.emailAudienceEnabled })
+          .where(eq(Roles.id, input.roleId))
+          .returning({
+            emailAudienceEnabled: Roles.emailAudienceEnabled,
+            id: Roles.id,
+            name: Roles.name,
+          });
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.email_audience.updated",
+            actor: auditActor,
+            changes: [
+              {
+                after: updated.emailAudienceEnabled,
+                before: role.emailAudienceEnabled,
+                field: "enabled",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: role.name,
+                targetType: "role",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
     }),
 
   syncRole: permProcedure

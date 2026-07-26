@@ -129,7 +129,7 @@ export function EventFeedbackTemplateEditor({
                   </CardTitle>
                   <Badge variant="outline">{question.type}</Badge>
                   {core && (
-                    <Badge variant="secondary" className="gap-1">
+                    <Badge variant="secondary" className="gap-2">
                       <LockKeyhole className="h-3 w-3" /> Comparable core
                     </Badge>
                   )}

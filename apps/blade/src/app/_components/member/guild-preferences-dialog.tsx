@@ -184,10 +184,7 @@ export function GuildPreferencesDialog({ member }: { member: CurrentMember }) {
             }}
           >
             {updatePreferences.isPending ? (
-              <Loader2
-                className="mr-2 h-4 w-4 animate-spin"
-                aria-hidden="true"
-              />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : null}
             Save preferences
           </Button>

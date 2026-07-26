@@ -27,6 +27,21 @@ describe("admin audit contracts", () => {
     expect(auditListInputSchema.parse({})).toEqual({ limit: 50 });
   });
 
+  it("exposes email operations as filterable audit actions", () => {
+    expect(AUDIT_ACTION_CATALOG["email.template.published"].domain).toBe(
+      "email",
+    );
+    expect(AUDIT_ACTION_CATALOG["email.send.confirmed"].label).toBe(
+      "Confirmed email campaign",
+    );
+    expect(AUDIT_ACTION_CATALOG["email.test.sent"].metadataKeys).not.toContain(
+      "recipient",
+    );
+    expect(AUDIT_ACTION_CATALOG["role.email_audience.updated"].domain).toBe(
+      "email",
+    );
+  });
+
   it("rejects inverted dates, oversized search, and malformed result subjects", () => {
     expect(() =>
       auditListInputSchema.parse({

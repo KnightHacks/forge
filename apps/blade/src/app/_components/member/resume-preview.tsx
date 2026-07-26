@@ -30,7 +30,7 @@ export function ResumePreview({
           href={src}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-2 rounded-sm px-2 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
         >
           Open
           <ExternalLink className="h-3 w-3" aria-hidden="true" />

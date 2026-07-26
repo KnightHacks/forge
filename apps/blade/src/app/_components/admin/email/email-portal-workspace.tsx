@@ -45,6 +45,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
+import { AdminPageHeader, adminPageLayoutClassName } from "../admin-page";
 import {
   discardEmailComposeDraft,
   loadEmailComposeDraft,
@@ -942,21 +943,14 @@ export function EmailPortalWorkspace({
   return (
     <main
       data-email-portal-layout="responsive"
-      className="container min-w-0 space-y-5 pb-16 pt-6 md:pt-10"
+      className={adminPageLayoutClassName}
     >
-      <header className="min-w-0">
-        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-          <Mail className="h-4 w-4" aria-hidden="true" />
-          Administration
-        </div>
-        <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
-          Email Portal
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-          Build reusable email templates, choose exactly who should receive
-          them, and review every delivery from one place.
-        </p>
-      </header>
+      <AdminPageHeader
+        description="Build reusable email templates, choose exactly who should receive them, and review every delivery from one place."
+        eyebrow="Campaign communications"
+        icon={Mail}
+        title="Email Portal"
+      />
       <div className="overflow-hidden rounded-lg border border-white/10 bg-card shadow-2xl shadow-black/20">
         <div
           role="tablist"

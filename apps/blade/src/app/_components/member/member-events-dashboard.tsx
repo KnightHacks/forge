@@ -141,7 +141,7 @@ export function MemberEventsDashboard({
                       <Badge variant="outline">Internal</Badge>
                     )}
                     {event.locked && (
-                      <Badge variant="outline" className="gap-1.5">
+                      <Badge variant="outline" className="gap-2">
                         <LockKeyhole
                           className="h-3.5 w-3.5"
                           aria-hidden="true"
@@ -197,7 +197,7 @@ export function MemberEventsDashboard({
                         >
                           Open in Discord
                           <ExternalLink
-                            className="ml-2 h-4 w-4"
+                            className="h-4 w-4"
                             aria-hidden="true"
                           />
                         </a>
@@ -215,10 +215,7 @@ export function MemberEventsDashboard({
                         rel="noreferrer"
                       >
                         Add to Google Calendar
-                        <ExternalLink
-                          className="ml-2 h-4 w-4"
-                          aria-hidden="true"
-                        />
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
                       </a>
                     </Button>
                     {event.locked && (

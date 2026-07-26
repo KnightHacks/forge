@@ -147,9 +147,13 @@ describe("MemberProfileSettingsForm", () => {
     expect(html).toContain("Academics");
     expect(html).toContain("Guild profile");
     expect(html).toContain("Career and location");
+    expect(html).toContain(
+      "Career and location changes are included with Save changes.",
+    );
     expect(html).toContain("Profile picture widget for Casey Member");
     expect(html).toContain("Resume widget for user-id/Resume.pdf");
     expect(html).toContain("Save changes");
+    expect(html).not.toContain("Save career");
     expect(html).toContain("Reset");
     expect(html).toContain("Delete profile");
     expect(html).toContain("Permanently remove your member profile");

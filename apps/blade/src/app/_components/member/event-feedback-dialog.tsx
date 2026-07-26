@@ -195,7 +195,7 @@ export function EventFeedbackDialog({
         <DialogHeader className="border-b border-border/70 bg-card/95 px-4 py-4 pr-14 text-left sm:px-6">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">Event feedback</Badge>
-            <Badge variant="secondary" className="gap-1.5">
+            <Badge variant="secondary" className="gap-2">
               <Gift className="h-3.5 w-3.5" aria-hidden="true" />
               {state.rewardAmount} points
             </Badge>

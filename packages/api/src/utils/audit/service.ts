@@ -19,7 +19,10 @@ import {
 } from "@forge/validators";
 
 import type { WriteDb } from "../db";
+import { isBladeE2E } from "../../env";
 import { getGuildRoleCallout } from "../guild/role-callout";
+
+const BLADE_E2E_AUDIT_EVENT_ID = "00000000-0000-4000-8000-000000000000";
 
 export interface AuditActor {
   discordUserId?: string | null;
@@ -210,6 +213,7 @@ export async function createAdminAuditEvent(
   ) {
     throw new Error("Audit result subjects require an explicit operation ID");
   }
+  if (isBladeE2E) return { id: BLADE_E2E_AUDIT_EVENT_ID };
 
   const actorSnapshot = await resolveActorSnapshot(input.actor, executor);
   const [event] = await executor
@@ -255,6 +259,8 @@ export async function appendAdminAuditResults(
   },
   executor: WriteDb = db,
 ) {
+  if (isBladeE2E) return;
+
   const [event] = await executor
     .select({
       actionKey: AdminAuditEvent.actionKey,

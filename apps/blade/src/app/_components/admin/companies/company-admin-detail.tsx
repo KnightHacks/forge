@@ -560,7 +560,7 @@ export function CompanyAdminDetail({
                             {employment.experienceType ? (
                               <Badge
                                 variant="outline"
-                                className="w-fit max-w-full gap-1.5 border-white/10"
+                                className="w-fit max-w-full gap-2 border-white/10"
                               >
                                 <BriefcaseBusiness
                                   className="h-3.5 w-3.5 shrink-0"
@@ -576,7 +576,7 @@ export function CompanyAdminDetail({
                             {employment.city ? (
                               <Badge
                                 variant="outline"
-                                className="w-fit max-w-full gap-1.5 border-white/10"
+                                className="w-fit max-w-full gap-2 border-white/10"
                               >
                                 <MapPin
                                   className="h-3.5 w-3.5 shrink-0"

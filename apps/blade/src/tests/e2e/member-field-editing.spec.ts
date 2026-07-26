@@ -6,6 +6,8 @@ import { and, eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
+  Company,
+  Employment,
   FormResponse,
   FormSections,
   FormsSchemas,
@@ -24,6 +26,7 @@ const EDIT_USER_ID = "00000000-0000-4000-8000-000000000201";
 const BACKFILL_USER_ID = "00000000-0000-4000-8000-000000000202";
 const NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000203";
 const DUPLICATE_USER_ID = "00000000-0000-4000-8000-000000000204";
+const FORGE_LABS_COMPANY_ID = "00000000-0000-4000-8000-000000000205";
 
 const testUsers = [
   {
@@ -164,6 +167,8 @@ async function cleanupE2EData() {
       ),
     );
 
+  await db.delete(Company).where(eq(Company.id, FORGE_LABS_COMPANY_ID));
+
   await db
     .delete(User)
     .where(
@@ -228,6 +233,13 @@ async function seedE2EData() {
     })),
   );
 
+  await db.insert(Company).values({
+    displayName: "Forge Labs",
+    id: FORGE_LABS_COMPANY_ID,
+    normalizedDisplayName: "forge labs",
+    reviewState: "approved",
+  });
+
   await db.insert(Member).values([
     memberValues(EDIT_USER_ID, {
       email: "blade-edit-member@example.test",
@@ -283,6 +295,14 @@ async function getSignupResponse(userId: string) {
   );
 }
 
+async function getEmployment(memberId: string) {
+  return (
+    (await db.query.Employment.findFirst({
+      where: eq(Employment.memberId, memberId),
+    })) ?? null
+  );
+}
+
 async function getUser(userId: string) {
   return (
     (await db.query.User.findFirst({
@@ -299,9 +319,6 @@ async function fillProfileEdits(page: Page) {
   await page.getByPlaceholder("123-456-7890").fill("321-555-0203");
   await page.locator('input[type="number"]').fill("2028");
   await page
-    .getByPlaceholder("Knight Hacks, UCF, a company, or self-employed")
-    .fill("Forge Labs");
-  await page
     .getByPlaceholder("Builder, designer, first-time hacker")
     .fill("Updated Guild tagline");
   await page
@@ -310,12 +327,17 @@ async function fillProfileEdits(page: Page) {
   await page
     .getByPlaceholder("https://knighthacks.org")
     .fill("https://dvidal.dev");
-  await page.getByRole("switch").click();
+  await page.getByRole("switch", { name: "Show my profile on Guild" }).click();
+
+  await page.getByRole("button", { name: "Add experience" }).click();
+  await page.getByPlaceholder("Search companies").fill("Forge Labs");
+  await page.getByRole("option", { name: "Forge Labs" }).click();
+  await page.getByPlaceholder("Software Engineer").fill("Member");
 }
 
 async function saveProfile(page: Page) {
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByText("Profile saved.")).toBeVisible();
+  await expect(page.getByText("Changes saved.")).toBeVisible();
 }
 
 test.describe("member field editing", () => {
@@ -393,17 +415,16 @@ test.describe("member field editing", () => {
     await expect(page).toHaveURL(routeURL(MEMBER_SETTINGS_PATH));
 
     await fillProfileEdits(page);
-    await expect(
-      page.getByText("You have unsaved profile changes."),
-    ).toBeVisible();
+    await expect(page.getByText("You have unsaved changes.")).toBeVisible();
     await saveProfile(page);
 
     const member = await getMember(EDIT_USER_ID);
     const response = await getSignupResponse(EDIT_USER_ID);
+    const employment = member ? await getEmployment(member.id) : null;
 
     expect(member).toMatchObject({
       about: "Updated Guild bio from settings.",
-      company: "Forge Labs",
+      company: "Knight Hacks",
       discordUser: "Blade Edit Member",
       email: "blade-edit-updated@example.test",
       firstName: "Riley",
@@ -421,8 +442,17 @@ test.describe("member field editing", () => {
       gradYear: 2028,
       guildProfileVisible: false,
     });
+    expect(employment).toMatchObject({
+      companyId: FORGE_LABS_COMPANY_ID,
+      experienceType: "full_time",
+      state: "current",
+      title: "Member",
+    });
 
-    await page.getByRole("link", { name: "Dashboard" }).click();
+    await page
+      .getByRole("main")
+      .getByRole("link", { name: "Dashboard" })
+      .click();
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
     await expect(page.getByText("Welcome, Riley")).toBeVisible();
     await expect(page.getByText("Updated Guild tagline")).toBeVisible();
@@ -475,7 +505,10 @@ test.describe("member field editing", () => {
       .toBe("Casey");
 
     await page.getByPlaceholder("Lenny").fill("Unsaved");
-    await page.getByRole("link", { name: "Dashboard" }).click();
+    await page
+      .getByRole("main")
+      .getByRole("link", { name: "Dashboard" })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Leave with unsaved changes?" }),
     ).toBeVisible();

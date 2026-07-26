@@ -52,8 +52,10 @@ import {
   emailTemplatePreviewSchema,
 } from "@forge/validators";
 
+import type { AuditActor } from "../utils/audit/service";
 import { isBladeE2E, nodeEnv } from "../env";
 import { permProcedure } from "../trpc";
+import { createAdminAuditEvent } from "../utils/audit/service";
 import { requireEmailPortal } from "../utils/email/access";
 import {
   applyManualRecipientExclusions,
@@ -285,10 +287,12 @@ async function listTemplateRecords({
 
 async function saveTemplateDraft(
   input: ReturnType<typeof emailSaveTemplateSchema.parse>,
-  actorId: string,
+  actor: AuditActor,
+  duplicateSource?: { id: string; name: string },
 ) {
   const compiled = compileDraft(input);
   const normalizedName = normalizeTemplateName(input.name);
+  const actorId = actor.id;
 
   return db.transaction(async (tx) => {
     const [nameConflict] = await tx
@@ -310,7 +314,22 @@ async function saveTemplateDraft(
     }
 
     let template: typeof EmailTemplate.$inferSelect | undefined;
+    let previousTemplate: typeof EmailTemplate.$inferSelect | undefined;
     if (input.id) {
+      [previousTemplate] = await tx
+        .select()
+        .from(EmailTemplate)
+        .where(
+          and(eq(EmailTemplate.id, input.id), isNull(EmailTemplate.archivedAt)),
+        )
+        .limit(1)
+        .for("update");
+      if (!previousTemplate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Email template not found.",
+        });
+      }
       [template] = await tx
         .update(EmailTemplate)
         .set({
@@ -378,6 +397,70 @@ async function saveTemplateDraft(
         visualDocument: input.kind === "visual" ? input.visualDocument : null,
       })
       .returning();
+    if (!revision) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "The email template revision could not be saved.",
+      });
+    }
+    const actionKey = duplicateSource
+      ? "email.template.duplicated"
+      : previousTemplate
+        ? "email.template.draft_saved"
+        : "email.template.created";
+    await createAdminAuditEvent(
+      {
+        actionKey,
+        actor,
+        changes:
+          actionKey === "email.template.draft_saved" && previousTemplate
+            ? [
+                ...(previousTemplate.name === template.name
+                  ? []
+                  : [
+                      {
+                        after: template.name,
+                        before: previousTemplate.name,
+                        field: "name",
+                      },
+                    ]),
+                ...(previousTemplate.kind === template.kind
+                  ? []
+                  : [
+                      {
+                        after: template.kind,
+                        before: previousTemplate.kind,
+                        field: "kind",
+                      },
+                    ]),
+              ]
+            : undefined,
+        metadata: {
+          kind: template.kind,
+          revisionVersion: revision.version,
+          ...(duplicateSource ? { sourceTemplateId: duplicateSource.id } : {}),
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: template.id,
+            targetLabel: template.name,
+            targetType: "email_template",
+          },
+          ...(duplicateSource
+            ? [
+                {
+                  relation: "secondary" as const,
+                  targetId: duplicateSource.id,
+                  targetLabel: duplicateSource.name,
+                  targetType: "email_template" as const,
+                },
+              ]
+            : []),
+        ],
+      },
+      tx,
+    );
     return { revision, template };
   });
 }
@@ -620,8 +703,9 @@ async function materializeContent(content: EmailSendContent, sendId: string) {
 
 async function previewSend(
   input: ReturnType<typeof emailPreviewSendSchema.parse>,
-  actorId: string,
+  actor: AuditActor,
 ) {
+  const actorId = actor.id;
   if (
     developmentCampaignReviewEnabled() &&
     !isDevelopmentReviewAudienceDefinition(input.audiences)
@@ -783,6 +867,29 @@ async function previewSend(
         })),
       );
     }
+    await createAdminAuditEvent(
+      {
+        actionKey: "email.send.previewed",
+        actor,
+        metadata: {
+          audienceGroupCount: input.audiences.length,
+          contentMode: input.content.mode,
+          excludedManualCount: counts.excludedManual,
+          recipientCount: counts.finalUnique,
+          replacedDraft: Boolean(input.sendId),
+          scheduledFor: input.scheduledFor,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: sendId,
+            targetLabel: content.subject,
+            targetType: "email_send",
+          },
+        ],
+      },
+      tx,
+    );
   });
 
   return {
@@ -1256,8 +1363,9 @@ export async function runEmailDeliveryCycle() {
 
 async function confirmSend(
   input: ReturnType<typeof emailConfirmSendSchema.parse>,
-  actorId: string,
+  actor: AuditActor,
 ) {
+  const actorId = actor.id;
   const send = await db.transaction(async (tx) => {
     const [record] = await tx
       .select()
@@ -1323,6 +1431,26 @@ async function confirmSend(
       toStatus: status,
       type: "confirmed",
     });
+    await createAdminAuditEvent(
+      {
+        actionKey: "email.send.confirmed",
+        actor,
+        changes: [{ after: status, before: "draft", field: "status" }],
+        metadata: {
+          recipientCount: record.finalRecipientCount,
+          scheduledFor: record.scheduledFor?.toISOString() ?? null,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: record.id,
+            targetLabel: record.subject,
+            targetType: "email_send",
+          },
+        ],
+      },
+      tx,
+    );
     return updated;
   });
   if (send?.status === "queued") await processEmailSend(send.id);
@@ -1336,22 +1464,41 @@ export const emailRouter = {
     .input(emailTemplateIdSchema)
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
-      const [template] = await db
-        .update(EmailTemplate)
-        .set({
-          archivedAt: new Date(),
-          normalizedName: sql`'archived:' || ${EmailTemplate.id}::text`,
-          updatedBy: ctx.session.user.id,
-        })
-        .where(eq(EmailTemplate.id, input.templateId))
-        .returning();
-      if (!template) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email template not found.",
-        });
-      }
-      return template;
+      return db.transaction(async (tx) => {
+        const [template] = await tx
+          .update(EmailTemplate)
+          .set({
+            archivedAt: new Date(),
+            normalizedName: sql`'archived:' || ${EmailTemplate.id}::text`,
+            updatedBy: ctx.session.user.id,
+          })
+          .where(eq(EmailTemplate.id, input.templateId))
+          .returning();
+        if (!template) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Email template not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "email.template.archived",
+            actor: ctx.session.user,
+            changes: [{ after: true, before: false, field: "archived" }],
+            metadata: { kind: template.kind },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: template.id,
+                targetLabel: template.name,
+                targetType: "email_template",
+              },
+            ],
+          },
+          tx,
+        );
+        return template;
+      });
     }),
 
   cancelSend: permProcedure
@@ -1378,31 +1525,51 @@ export const emailRouter = {
           campaignAudienceScope(send.audienceDefinition),
         );
       }
-      const [updated] = await db
-        .update(EmailSend)
-        .set({
-          cancelledAt: new Date(),
-          cancelledBy: ctx.session.user.id,
-          status: "cancelled",
-          terminalAt: new Date(),
-        })
-        .where(eq(EmailSend.id, send.id))
-        .returning();
-      await db.insert(EmailSendEvent).values({
-        actorId: ctx.session.user.id,
-        fromStatus: send.status,
-        sendId: send.id,
-        toStatus: "cancelled",
-        type: "cancelled",
+      return db.transaction(async (tx) => {
+        const [updated] = await tx
+          .update(EmailSend)
+          .set({
+            cancelledAt: new Date(),
+            cancelledBy: ctx.session.user.id,
+            status: "cancelled",
+            terminalAt: new Date(),
+          })
+          .where(eq(EmailSend.id, send.id))
+          .returning();
+        await tx.insert(EmailSendEvent).values({
+          actorId: ctx.session.user.id,
+          fromStatus: send.status,
+          sendId: send.id,
+          toStatus: "cancelled",
+          type: "cancelled",
+        });
+        await createAdminAuditEvent(
+          {
+            actionKey: "email.send.cancelled",
+            actor: ctx.session.user,
+            changes: [
+              { after: "cancelled", before: send.status, field: "status" },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: send.id,
+                targetLabel: send.subject,
+                targetType: "email_send",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
       });
-      return updated;
     }),
 
   confirmSend: permProcedure
     .input(emailConfirmSendSchema)
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
-      return confirmSend(input, ctx.session.user.id);
+      return confirmSend(input, ctx.session.user);
     }),
 
   duplicateTemplate: permProcedure
@@ -1433,7 +1600,8 @@ export const emailRouter = {
                 unknown
               >,
             },
-        ctx.session.user.id,
+        ctx.session.user,
+        { id: template.id, name: template.name },
       );
     }),
 
@@ -1602,7 +1770,7 @@ export const emailRouter = {
     .input(emailPreviewSendSchema)
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
-      return previewSend(input, ctx.session.user.id);
+      return previewSend(input, ctx.session.user);
     }),
 
   previewTemplate: permProcedure
@@ -1631,6 +1799,15 @@ export const emailRouter = {
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
       return db.transaction(async (tx) => {
+        const template = await tx.query.EmailTemplate.findFirst({
+          where: eq(EmailTemplate.id, input.templateId),
+        });
+        if (!template) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Email template not found.",
+          });
+        }
         const [draft] = await tx
           .select()
           .from(EmailTemplateRevision)
@@ -1667,6 +1844,26 @@ export const emailRouter = {
           .update(EmailTemplate)
           .set({ updatedBy: ctx.session.user.id })
           .where(eq(EmailTemplate.id, input.templateId));
+        await createAdminAuditEvent(
+          {
+            actionKey: "email.template.published",
+            actor: ctx.session.user,
+            changes: [{ after: "published", before: "draft", field: "state" }],
+            metadata: {
+              kind: template.kind,
+              revisionVersion: draft.version,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: template.id,
+                targetLabel: template.name,
+                targetType: "email_template",
+              },
+            ],
+          },
+          tx,
+        );
         return published;
       });
     }),
@@ -1699,10 +1896,31 @@ export const emailRouter = {
       if (!retry.allowed) {
         throw new TRPCError({ code: "CONFLICT", message: retry.reason });
       }
-      await db
-        .update(EmailSend)
-        .set({ nextRetryAt: new Date(), safeError: null, status: "queued" })
-        .where(eq(EmailSend.id, send.id));
+      await db.transaction(async (tx) => {
+        await tx
+          .update(EmailSend)
+          .set({ nextRetryAt: new Date(), safeError: null, status: "queued" })
+          .where(eq(EmailSend.id, send.id));
+        await createAdminAuditEvent(
+          {
+            actionKey: "email.send.retry_queued",
+            actor: ctx.session.user,
+            changes: [
+              { after: "queued", before: send.status, field: "status" },
+            ],
+            metadata: { retryAttemptCount: send.retryAttemptCount },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: send.id,
+                targetLabel: send.subject,
+                targetType: "email_send",
+              },
+            ],
+          },
+          tx,
+        );
+      });
       return processEmailSend(send.id);
     }),
 
@@ -1710,47 +1928,81 @@ export const emailRouter = {
     .input(emailSaveTemplateSchema)
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
-      return saveTemplateDraft(input, ctx.session.user.id);
+      return saveTemplateDraft(input, ctx.session.user);
     }),
 
   sendTest: permProcedure
     .input(emailSendTestSchema)
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
+      let template: typeof EmailTemplate.$inferSelect | null | undefined = null;
+      const gateway = getDefaultEmailProviderGateway();
+      let result: Awaited<ReturnType<typeof gateway.sendTest>>;
       if (input.content.mode === "plainText") {
-        return getDefaultEmailProviderGateway().sendTest({
+        result = await gateway.sendTest({
           html: "",
           subject: input.content.subject,
           text: input.content.plainText,
         });
-      }
-      const revision = await db.query.EmailTemplateRevision.findFirst({
-        where: and(
-          eq(EmailTemplateRevision.id, input.content.templateRevisionId),
-          eq(EmailTemplateRevision.state, "published"),
-        ),
-      });
-      if (!revision) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Published email template not found.",
+      } else {
+        const revision = await db.query.EmailTemplateRevision.findFirst({
+          where: and(
+            eq(EmailTemplateRevision.id, input.content.templateRevisionId),
+            eq(EmailTemplateRevision.state, "published"),
+          ),
+        });
+        if (!revision) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Published email template not found.",
+          });
+        }
+        template = await findTemplate(revision.templateId);
+        if (!template) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Email template not found.",
+          });
+        }
+        const compiled = compileDraft(revisionSource(template, revision), {
+          ...DEFAULT_TEMPLATE_SAMPLE,
+          ...input.sample,
+        });
+        result = await gateway.sendTest({
+          html: compiled.html,
+          subject: input.content.subject,
+          text: compiled.text,
         });
       }
-      const template = await findTemplate(revision.templateId);
-      if (!template) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email template not found.",
-        });
-      }
-      const compiled = compileDraft(revisionSource(template, revision), {
-        ...DEFAULT_TEMPLATE_SAMPLE,
-        ...input.sample,
+      await createAdminAuditEvent({
+        actionKey: "email.test.sent",
+        actor: ctx.session.user,
+        metadata: {
+          contentMode: input.content.mode,
+          templateRevisionId:
+            input.content.mode === "template"
+              ? input.content.templateRevisionId
+              : null,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: "email-test-delivery",
+            targetLabel: "Email test delivery",
+            targetType: "provider",
+          },
+          ...(template
+            ? [
+                {
+                  relation: "secondary" as const,
+                  targetId: template.id,
+                  targetLabel: template.name,
+                  targetType: "email_template" as const,
+                },
+              ]
+            : []),
+        ],
       });
-      return getDefaultEmailProviderGateway().sendTest({
-        html: compiled.html,
-        subject: input.content.subject,
-        text: compiled.text,
-      });
+      return result;
     }),
 } satisfies TRPCRouterRecord;

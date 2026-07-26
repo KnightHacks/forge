@@ -87,7 +87,7 @@ const sectionMeta = {
           href={GUILD_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-2 font-medium text-primary underline-offset-4 hover:underline"
         >
           Open Guild
           <ExternalLink className="h-3 w-3" aria-hidden="true" />

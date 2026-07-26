@@ -466,7 +466,7 @@ function RoleList({
             input.roleQuery) && (
             <div className="flex flex-wrap gap-2">
               {input.roleQuery && (
-                <Badge variant="secondary" className="gap-1">
+                <Badge variant="secondary" className="gap-2">
                   Search: {input.roleQuery}
                   <button
                     type="button"
@@ -481,7 +481,7 @@ function RoleList({
                 </Badge>
               )}
               {input.roleTypes.map((type) => (
-                <Badge key={type} variant="secondary" className="gap-1">
+                <Badge key={type} variant="secondary" className="gap-2">
                   {type}
                   <button
                     type="button"
@@ -500,7 +500,7 @@ function RoleList({
                 </Badge>
               ))}
               {input.permissionKeys.map((permission) => (
-                <Badge key={permission} variant="outline" className="gap-1">
+                <Badge key={permission} variant="outline" className="gap-2">
                   {PERMISSIONS.PERMISSION_DATA[permission].name}
                   <button
                     type="button"
@@ -839,7 +839,7 @@ function AssignmentPanel({
             {input.userRoleIds.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {input.userRoleIds.map((roleId) => (
-                  <Badge key={roleId} variant="outline" className="gap-1">
+                  <Badge key={roleId} variant="outline" className="gap-2">
                     {roles.find((role) => role.id === roleId)?.name ??
                       "Unknown role"}
                     <button

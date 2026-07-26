@@ -547,6 +547,7 @@ export function EmploymentHistoryEditor({
                 <label className="flex min-h-11 items-center justify-between gap-4 rounded-md border border-white/10 bg-background/70 px-3 py-2 md:col-span-2">
                   <span className="text-sm">Make this experience public</span>
                   <Switch
+                    aria-label="Make this experience public"
                     checked={entry.guildVisible}
                     onCheckedChange={(checked) =>
                       updateEntry(index, {
@@ -589,6 +590,7 @@ export function EmploymentHistoryEditor({
           >
             <span className="text-sm">Show on Guild</span>
             <Switch
+              aria-label="Show location on Guild"
               checked={guildLocationVisible}
               onCheckedChange={onGuildLocationVisibleChange}
             />

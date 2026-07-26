@@ -221,7 +221,7 @@ function SortButton({
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 rounded-sm py-1 text-left font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex items-center gap-2 rounded-sm py-1 text-left font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={onClick}
     >
       {label}
@@ -462,7 +462,7 @@ export function MemberAdminDashboard({
                   <button
                     key={`${filter.field}-${filter.value}`}
                     type="button"
-                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
                     onClick={() => navigate(removeFilter(input, filter), null)}
                   >
                     <span className="max-w-56 truncate">{filter.label}</span>

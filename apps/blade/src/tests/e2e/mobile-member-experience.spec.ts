@@ -321,9 +321,7 @@ test.describe("mobile member experience", () => {
     });
     await page.getByPlaceholder("Lenny").fill("Maya Edited");
     await expect(saveButton).toBeEnabled();
-    await expect(
-      page.getByText("You have unsaved profile changes."),
-    ).toBeVisible();
+    await expect(page.getByText("You have unsaved changes.")).toBeVisible();
 
     await page.getByRole("link", { name: "Dashboard" }).click();
     await expect(

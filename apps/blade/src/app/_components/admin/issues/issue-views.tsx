@@ -561,7 +561,7 @@ export function IssueListView({ issues }: { issues: IssueWorkspaceItem[] }) {
             <span className="hidden truncate text-sm md:block">
               {issue.team.name}
             </span>
-            <span className="hidden items-center gap-1 text-sm md:flex">
+            <span className="hidden items-center gap-2 text-sm md:flex">
               <CircleDot className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate">{issue.status}</span>
               <IssueStatusMenu

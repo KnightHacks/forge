@@ -408,10 +408,7 @@ export function EventDetailDialog({
                               })
                             }
                           >
-                            <RefreshCw
-                              className="mr-2 h-4 w-4"
-                              aria-hidden="true"
-                            />
+                            <RefreshCw className="h-4 w-4" aria-hidden="true" />
                             {integrations.discord.health === "synced"
                               ? "Reapply Discord"
                               : "Repair Discord"}
@@ -436,10 +433,7 @@ export function EventDetailDialog({
                           })
                         }
                       >
-                        <RefreshCw
-                          className="mr-2 h-4 w-4"
-                          aria-hidden="true"
-                        />
+                        <RefreshCw className="h-4 w-4" aria-hidden="true" />
                         {integrations.google.health === "synced"
                           ? "Reapply Google Calendar"
                           : "Repair Google Calendar"}
@@ -609,7 +603,7 @@ export function EventDetailDialog({
                   variant="outline"
                   onClick={() => onExport?.(event.id)}
                 >
-                  <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <Download className="h-4 w-4" aria-hidden="true" />
                   Export attendance
                 </Button>
               )}
@@ -714,7 +708,7 @@ export function EventDetailDialog({
                       })
                     }
                   >
-                    <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
                     {event.deletionPending
                       ? "Retry deletion cleanup"
                       : "Confirm delete event"}

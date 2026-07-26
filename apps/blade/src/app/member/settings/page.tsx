@@ -25,13 +25,14 @@ export default async function MemberSettingsPage({
   if (!session) redirect("/");
 
   const debugLatencyMs = getMemberDebugLatencyMs(await searchParams);
-  const [member, careerData, effectivePermissions] = await Promise.all([
+  const [member, effectivePermissions] = await Promise.all([
     api.member.getMember(),
-    api.career.listMyEmployment(),
     api.roles.getPermissions(),
   ]);
 
   if (!member) redirect(`/form/${MEMBER_SIGNUP_FORM_SLUG}`);
+
+  const careerData = await api.career.listMyEmployment();
 
   return (
     <HydrateClient>

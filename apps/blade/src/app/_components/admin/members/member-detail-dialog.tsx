@@ -141,7 +141,7 @@ function ProfileLink({ href }: { href: string | null }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex min-w-0 items-center gap-1.5 text-primary hover:underline"
+      className="inline-flex min-w-0 items-center gap-2 text-primary hover:underline"
     >
       <span className="min-w-0 break-all">{href}</span>
       <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

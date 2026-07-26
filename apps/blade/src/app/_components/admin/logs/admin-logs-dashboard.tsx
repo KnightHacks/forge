@@ -703,7 +703,7 @@ export function AdminLogsDashboard({
             disabled={page === 0 || events.isFetching}
             onClick={() => setPage((current) => Math.max(0, current - 1))}
           >
-            <ChevronLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             Previous
           </Button>
           <Button
@@ -721,7 +721,7 @@ export function AdminLogsDashboard({
             }}
           >
             Next
-            <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>
