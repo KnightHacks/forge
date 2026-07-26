@@ -47,6 +47,13 @@ export const memberNavigationItems = [
 
 export const adminNavigationItems = [
   {
+    access: "logs",
+    href: "/admin/logs",
+    icon: ScrollText,
+    id: "logs",
+    label: "Admin logs",
+  },
+  {
     access: "alumni",
     href: "/admin/alumni",
     icon: GraduationCap,
@@ -61,11 +68,11 @@ export const adminNavigationItems = [
     label: "Analytics",
   },
   {
-    access: "forms",
-    href: "/admin/forms",
-    icon: ClipboardList,
-    id: "forms",
-    label: "Forms",
+    access: "members",
+    href: "/admin/companies",
+    icon: Building2,
+    id: "companies",
+    label: "Companies",
   },
   {
     access: "email",
@@ -75,20 +82,6 @@ export const adminNavigationItems = [
     label: "Email",
   },
   {
-    access: "events",
-    href: "/admin/events",
-    icon: CalendarDays,
-    id: "events",
-    label: "Events",
-  },
-  {
-    access: "issues",
-    href: "/admin/issues/calendar",
-    icon: ListTodo,
-    id: "issues",
-    label: "Issues",
-  },
-  {
     access: "eventCheckIn",
     href: "/admin/check-in",
     icon: QrCode,
@@ -96,11 +89,25 @@ export const adminNavigationItems = [
     label: "Event Check-in",
   },
   {
-    access: "members",
-    href: "/admin/companies",
-    icon: Building2,
-    id: "companies",
-    label: "Companies",
+    access: "events",
+    href: "/admin/events",
+    icon: CalendarDays,
+    id: "events",
+    label: "Events",
+  },
+  {
+    access: "forms",
+    href: "/admin/forms",
+    icon: ClipboardList,
+    id: "forms",
+    label: "Forms",
+  },
+  {
+    access: "issues",
+    href: "/admin/issues/calendar",
+    icon: ListTodo,
+    id: "issues",
+    label: "Issues",
   },
   {
     access: "members",
@@ -115,13 +122,6 @@ export const adminNavigationItems = [
     icon: ShieldCheck,
     id: "roles",
     label: "Roles",
-  },
-  {
-    access: "logs",
-    href: "/admin/logs",
-    icon: ScrollText,
-    id: "logs",
-    label: "Admin logs",
   },
 ] as const;
 

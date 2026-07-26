@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Session } from "~/server/auth";
+import { getVisibleAdminNavigation } from "~/app/_components/member/admin-navigation";
 import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { GUILD_URL } from "~/lib/guild-urls";
 
@@ -32,6 +33,35 @@ const session = {
 } as Session;
 
 describe("AuthenticatedShell", () => {
+  it("orders permission-gated admin destinations alphabetically", () => {
+    expect(
+      getVisibleAdminNavigation({
+        alumni: true,
+        analytics: true,
+        email: true,
+        eventCheckIn: true,
+        events: true,
+        forms: true,
+        issues: true,
+        logs: true,
+        members: true,
+        roles: true,
+      }).map((item) => item.label),
+    ).toEqual([
+      "Admin logs",
+      "Alumni",
+      "Analytics",
+      "Companies",
+      "Email",
+      "Event Check-in",
+      "Events",
+      "Forms",
+      "Issues",
+      "Members",
+      "Roles",
+    ]);
+  });
+
   it("server-renders member destinations before permission-gated admin pages", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
