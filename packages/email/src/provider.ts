@@ -9,7 +9,7 @@ export type EmailDeliveryMode = "disabled" | "fake" | "production" | "test";
 
 export interface EmailHttpRequest {
   body?: Record<string, unknown>;
-  method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+  method: "DELETE" | "GET" | "POST" | "PUT";
   path: string;
 }
 
@@ -309,6 +309,7 @@ interface ListmonkSubscriber {
   email: string;
   id: number;
   lists: unknown[];
+  name: string;
   status: string;
 }
 
@@ -326,8 +327,16 @@ function parseSubscriber(value: unknown): ListmonkSubscriber | undefined {
     email: subscriber.email,
     id: subscriber.id,
     lists: Array.isArray(subscriber.lists) ? subscriber.lists : [],
+    name: typeof subscriber.name === "string" ? subscriber.name : "",
     status: subscriber.status,
   };
+}
+
+function subscriberListIds(subscriber: ListmonkSubscriber) {
+  return subscriber.lists.flatMap((list) => {
+    const id = record(list)?.id;
+    return typeof id === "number" ? [id] : [];
+  });
 }
 
 function subscriberResults(value: unknown): ListmonkSubscriber[] {
@@ -668,9 +677,12 @@ function productionGateway(
                   [input.sendId]: recipient.attributes,
                 },
               },
-              name: recipient.name,
+              email: existing.email,
+              lists: subscriberListIds(existing),
+              name: recipient.name || existing.name,
+              status: existing.status,
             },
-            method: "PATCH",
+            method: "PUT",
             path: `/api/subscribers/${existing.id}`,
           });
           await safeRequest(client, {
@@ -775,8 +787,12 @@ function productionGateway(
               ...subscriber.attribs,
               forge: remainingForge,
             },
+            email: subscriber.email,
+            lists: subscriberListIds(subscriber),
+            name: subscriber.name,
+            status: subscriber.status,
           },
-          method: "PATCH",
+          method: "PUT",
           path: `/api/subscribers/${subscriber.id}`,
         });
       }

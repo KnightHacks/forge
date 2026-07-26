@@ -136,6 +136,10 @@ Current phase: Development team-campaign review / live review server running
 - Follow-up Validators email tests passed (15), Email package tests passed (41), API email tests passed (27), and Blade workspace/draft tests passed (7).
 - Validators and Email builds, API and Blade typechecks, targeted ESLint, Prettier, and `git diff --check` passed after role audiences and plaintext delivery corrections.
 - Changed-file React analysis passed every Email Portal file; the command retains the two existing `trpc/react.tsx` analyzer failures in the current and legacy Blade trees.
+- 2026-07-26: Two role-audience confirmations resolved the correct 11-recipient snapshots but failed before Listmonk campaign creation. Runtime logs identified the exact cause: duplicate subscribers correctly fell back to lookup, then the deployed Listmonk v6.0 returned `404 unknown endpoint` for `PATCH /api/subscribers/{id}`.
+- 2026-07-26: Existing-subscriber updates and namespace cleanup now use full `PUT` requests that preserve email, name, status, attributes, and list memberships. Queued preparation failures now record activity events, show the automatic retry time, and expose a safe manual Retry action when provider delivery has not started.
+- 2026-07-26: A subsequent user-confirmed one-recipient role campaign exercised the corrected existing-subscriber path and completed 1/1 in Listmonk as campaign `3`, using true plaintext template `24`; no email was initiated by Codex.
+- 2026-07-26: Opening Sends or send details now reconciles only already-created Listmonk campaigns, keeping provider counts/status current in development without preparing queued sends or requiring the cron app.
 
 ## Links
 

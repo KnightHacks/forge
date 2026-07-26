@@ -205,6 +205,133 @@ describe("production Listmonk campaign gateway", () => {
     );
   });
 
+  it("updates an existing subscriber with the v6 PUT endpoint before adding the send list", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { id: 91 } })
+      .mockRejectedValueOnce(new Error("E-mail already exists."))
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              attribs: { existing: true },
+              email: "ada@example.test",
+              id: 41,
+              lists: [
+                {
+                  id: 5,
+                  subscription_status: "confirmed",
+                },
+              ],
+              name: "Ada Existing",
+              status: "enabled",
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({ data: true })
+      .mockResolvedValueOnce({ data: true })
+      .mockResolvedValueOnce({ data: { id: 93 } });
+    const gateway = createEmailProviderGateway({
+      campaignTemplateId: 7,
+      mode: "production",
+      transport,
+    });
+
+    await expect(
+      gateway.createCampaign({
+        html: "<p>Hello</p>",
+        recipientData: [
+          {
+            attributes: { recipient: { firstName: "Ada" } },
+            email: "ada@example.test",
+            name: "Ada Member",
+          },
+        ],
+        recipientSnapshot: ["ada@example.test"],
+        sendId: "existing-subscriber",
+        subject: "Existing subscriber",
+        text: "Hello",
+      }),
+    ).resolves.toMatchObject({ campaignId: 93, listId: 91 });
+
+    expect(transport).toHaveBeenNthCalledWith(4, {
+      body: {
+        attribs: {
+          existing: true,
+          forge: {
+            "existing-subscriber": {
+              recipient: { firstName: "Ada" },
+            },
+          },
+        },
+        email: "ada@example.test",
+        lists: [5],
+        name: "Ada Member",
+        status: "enabled",
+      },
+      method: "PUT",
+      path: "/api/subscribers/41",
+    });
+    expect(transport).toHaveBeenNthCalledWith(5, {
+      body: {
+        action: "add",
+        ids: [41],
+        status: "confirmed",
+        target_list_ids: [91],
+      },
+      method: "PUT",
+      path: "/api/subscribers/lists",
+    });
+  });
+
+  it("preserves subscriber fields and list memberships when removing Forge attributes", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: {
+          results: [
+            {
+              attribs: {
+                forge: {
+                  keep: { recipient: "Keep" },
+                  remove: { recipient: "Remove" },
+                },
+              },
+              email: "ada@example.test",
+              id: 41,
+              lists: [{ id: 5, subscription_status: "confirmed" }],
+              name: "Ada",
+              status: "enabled",
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({ data: true });
+    const gateway = createEmailProviderGateway({
+      mode: "production",
+      transport,
+    });
+
+    await gateway.removeRecipientNamespace("remove", ["ada@example.test"]);
+
+    expect(transport).toHaveBeenNthCalledWith(2, {
+      body: {
+        attribs: {
+          forge: {
+            keep: { recipient: "Keep" },
+          },
+        },
+        email: "ada@example.test",
+        lists: [5],
+        name: "Ada",
+        status: "enabled",
+      },
+      method: "PUT",
+      path: "/api/subscribers/41",
+    });
+  });
+
   it("TC-027 adopts an existing tagged object after an ambiguous timeout", async () => {
     const transport = vi
       .fn()

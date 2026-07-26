@@ -659,6 +659,24 @@ Expected observations:
 - The fake provider records no real network delivery.
 - Cleanup removes all synthetic fixtures.
 
+### TC-063: Existing Listmonk subscribers are updated compatibly
+
+Setup:
+
+- Every resolved campaign recipient already exists in the deployed Listmonk v6.0 service with retained attributes and list memberships.
+
+Action:
+
+- Forge prepares a campaign and receives the expected duplicate-email response from subscriber creation.
+
+Expected observations:
+
+- Forge resolves the existing subscriber by normalized exact email.
+- Subscriber synchronization uses `PUT /api/subscribers/{id}`, preserves all existing fields and list IDs, and adds the namespaced Forge attributes.
+- The subscriber is then confirmed on the send-specific list and campaign creation continues.
+- Namespace cleanup uses the same preserving full-update behavior.
+- Provider preparation failures record an activity event and expose both automatic and manual retry affordances without starting an untracked campaign.
+
 ## Negative / regression cases
 
 ### TC-NEG-001: Unsafe code-template source is rejected

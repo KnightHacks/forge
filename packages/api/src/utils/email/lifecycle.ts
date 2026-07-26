@@ -75,6 +75,7 @@ type RetryableStatus =
   | "cancelled"
   | "completed"
   | "failed"
+  | "queued"
   | "running"
   | "scheduled";
 
@@ -85,7 +86,7 @@ export function canRetryEmailSend({
   providerMayHaveStarted: boolean;
   status: RetryableStatus;
 }): { allowed: true } | { allowed: false; reason: string } {
-  if (status === "failed" && !providerMayHaveStarted) {
+  if ((status === "failed" || status === "queued") && !providerMayHaveStarted) {
     return { allowed: true };
   }
   return {

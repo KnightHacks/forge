@@ -1015,19 +1015,32 @@ export async function processEmailSend(sendId: string) {
     }
     const attempt = claimed.retryAttemptCount + 1;
     const terminal = attempt >= 5;
-    await db
-      .update(EmailSend)
-      .set({
-        nextRetryAt: terminal
-          ? null
-          : new Date(Date.now() + Math.min(60, 2 ** attempt) * 60_000),
-        retryAttemptCount: attempt,
-        retryLeaseExpiresAt: null,
-        safeError: "The email provider could not prepare this campaign.",
-        status: terminal ? "failed" : "queued",
-        terminalAt: terminal ? new Date() : null,
-      })
-      .where(eq(EmailSend.id, sendId));
+    const nextRetryAt = terminal
+      ? null
+      : new Date(Date.now() + Math.min(60, 2 ** attempt) * 60_000);
+    await db.transaction(async (tx) => {
+      await tx
+        .update(EmailSend)
+        .set({
+          nextRetryAt,
+          retryAttemptCount: attempt,
+          retryLeaseExpiresAt: null,
+          safeError: "The email provider could not prepare this campaign.",
+          status: terminal ? "failed" : "queued",
+          terminalAt: terminal ? new Date() : null,
+        })
+        .where(eq(EmailSend.id, sendId));
+      await tx.insert(EmailSendEvent).values({
+        fromStatus: "syncing",
+        metadata: {
+          attempt,
+          nextRetryAt: nextRetryAt?.toISOString() ?? null,
+        },
+        sendId,
+        toStatus: terminal ? "failed" : "queued",
+        type: "provider_prepare_failed",
+      });
+    });
     return { campaignId: null, status: terminal ? "failed" : "queued" };
   }
 }
@@ -1428,12 +1441,26 @@ export const emailRouter = {
     .input(emailSendIdSchema)
     .query(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
-      const send = await db.query.EmailSend.findFirst({
+      const stored = await db.query.EmailSend.findFirst({
         where: eq(EmailSend.id, input.sendId),
       });
-      if (!send) {
+      if (!stored) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Send not found." });
       }
+      if (
+        stored.listmonkCampaignId &&
+        (stored.status === "running" || stored.status === "scheduled")
+      ) {
+        try {
+          await reconcileEmailSend(stored.id);
+        } catch {
+          // Preserve the last known state when Listmonk cannot be read.
+        }
+      }
+      const send =
+        (await db.query.EmailSend.findFirst({
+          where: eq(EmailSend.id, input.sendId),
+        })) ?? stored;
       const [events, recipients, createdBy, cancelledBy] = await Promise.all([
         db
           .select()
@@ -1543,6 +1570,20 @@ export const emailRouter = {
     .input(emailSendListSchema)
     .query(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
+      const sends = await db
+        .select()
+        .from(EmailSend)
+        .orderBy(desc(EmailSend.createdAt))
+        .limit(input.limit);
+      const reconcilable = sends.filter(
+        (send) =>
+          send.listmonkCampaignId &&
+          (send.status === "running" || send.status === "scheduled"),
+      );
+      if (reconcilable.length === 0) return sends;
+      await Promise.allSettled(
+        reconcilable.map(({ id }) => reconcileEmailSend(id)),
+      );
       return db
         .select()
         .from(EmailSend)
@@ -1645,13 +1686,15 @@ export const emailRouter = {
         status:
           send.status === "failed"
             ? "failed"
-            : send.status === "running"
-              ? "running"
-              : send.status === "completed"
-                ? "completed"
-                : send.status === "cancelled"
-                  ? "cancelled"
-                  : "scheduled",
+            : send.status === "queued"
+              ? "queued"
+              : send.status === "running"
+                ? "running"
+                : send.status === "completed"
+                  ? "completed"
+                  : send.status === "cancelled"
+                    ? "cancelled"
+                    : "scheduled",
       });
       if (!retry.allowed) {
         throw new TRPCError({ code: "CONFLICT", message: retry.reason });

@@ -99,7 +99,9 @@ export interface EmailPortalTemplate {
 export interface EmailPortalSend {
   finalRecipientCount?: number;
   id: string;
+  nextRetryAt?: Date | string | null;
   recipientCount?: number;
+  safeError?: string | null;
   scheduledFor?: Date | string | null;
   status: string;
   subject: string;
@@ -174,6 +176,7 @@ export interface EmailPortalSendDetail {
     compiledText?: string | null;
     confirmedAt?: Date | string | null;
     createdAt?: Date | string;
+    nextRetryAt?: Date | string | null;
     plainTextSource?: string | null;
     providerBounceCount?: number;
     providerSentCount?: number;
@@ -1675,7 +1678,8 @@ export function EmailPortalWorkspace({
                           </Button>
                         )}
                         {(send.status === "retryable_failure" ||
-                          send.status === "failed") && (
+                          send.status === "failed" ||
+                          (send.status === "queued" && send.safeError)) && (
                           <Button
                             type="button"
                             size="sm"
@@ -1863,9 +1867,17 @@ export function EmailPortalWorkspace({
                     </div>
                   </dl>
                   {sendDetail.send.safeError && (
-                    <p className="mt-4 rounded border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-                      {sendDetail.send.safeError}
-                    </p>
+                    <div className="mt-4 rounded border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                      <p>{sendDetail.send.safeError}</p>
+                      {sendDetail.send.nextRetryAt && (
+                        <p className="mt-1">
+                          Automatic retry:{" "}
+                          {new Date(
+                            sendDetail.send.nextRetryAt,
+                          ).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </section>
                 <section>

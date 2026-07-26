@@ -131,6 +131,12 @@ describe("Email Portal preview and send lifecycle", () => {
         reason: expect.stringMatching(/reconcil|provider|started/i),
       }),
     );
+    expect(
+      canRetryEmailSend({
+        providerMayHaveStarted: false,
+        status: "queued",
+      }),
+    ).toEqual({ allowed: true });
   });
 
   it.each(["running", "completed", "cancelled"] as const)(

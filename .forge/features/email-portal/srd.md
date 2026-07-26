@@ -187,6 +187,10 @@ The development exception is enforced independently at the UI, preview/confirmat
 
 Plain-text campaigns use Listmonk's `plain` content type and an auto-discovered/created campaign template whose complete body is `{{ template "content" . }}`. This avoids Listmonk's default HTML campaign template while retaining its required content insertion point.
 
+The deployed Listmonk v6.0 instance does not expose partial subscriber updates at `PATCH /api/subscribers/{id}`. Existing-subscriber synchronization and Forge-attribute cleanup therefore use the supported full `PUT` endpoint while explicitly preserving email, name, status, attributes, and every existing list ID before separately confirming the send-list membership.
+
+Sends-list and send-detail reads reconcile already-created nonterminal campaigns before returning their last known state. They never prepare a queued campaign, but this keeps Blade accurate in development even when the separate cron worker is not running.
+
 Because Next forces `next dev` processes to use the development environment, the existing `BLADE_E2E_AUTH` test-harness marker selects the same fake provider for the synthetic Playwright server. Production policy is resolved first, so this test-only marker cannot alter production delivery.
 
 ### Dependencies and environment
