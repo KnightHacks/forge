@@ -145,6 +145,7 @@ async function seedIssuesFixture() {
       id,
       links: index % 5 === 0 ? ["https://example.com/runbook"] : [],
       name: `${titles[index % titles.length]}${index >= titles.length ? ` · ${index + 1}` : ""}`,
+      parent: index === 1 ? ROOT_ISSUE_ID : null,
       priority: priorities[index % priorities.length] ?? "Medium",
       status: statuses[index % statuses.length] ?? "Backlog",
       team: teams[index % teams.length] ?? PROGRAMS_ROLE_ID,
@@ -317,6 +318,25 @@ test.describe("Club operations issues visual workflow", () => {
     await expect(
       page.getByRole("main").getByText("Issue record", { exact: true }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Description" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Back to issues" }),
+    ).toHaveAttribute("href", "/admin/issues/calendar");
+    await page
+      .getByRole("link", { name: /Confirm workshop mentor roster/ })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/admin/issues/${ISSUE_IDS[1]}$`));
+    const parentBackLink = page.getByRole("link", {
+      name: "Back to parent issue",
+    });
+    await expect(parentBackLink).toHaveAttribute(
+      "href",
+      `/admin/issues/${ROOT_ISSUE_ID}`,
+    );
+    await parentBackLink.click();
+    await expect(page).toHaveURL(new RegExp(`/admin/issues/${ROOT_ISSUE_ID}$`));
     await expect(
       page.getByRole("button", { name: "Load older history" }),
     ).toBeVisible();

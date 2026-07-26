@@ -492,9 +492,15 @@ export function IssueDetail({
     >
       <div className={adminPageStackClassName}>
         <Button variant="ghost" className="-ml-3" asChild>
-          <Link href="/admin/issues/calendar">
+          <Link
+            href={
+              detail.parentId
+                ? `/admin/issues/${detail.parentId}`
+                : "/admin/issues/calendar"
+            }
+          >
             <ArrowLeft className="h-4 w-4" />
-            Back to issues
+            {detail.parentId ? "Back to parent issue" : "Back to issues"}
           </Link>
         </Button>
         <AdminPageHeader
@@ -574,7 +580,7 @@ export function IssueDetail({
         <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.75fr)]">
           <div className="min-w-0 space-y-4">
             <section className="rounded-lg border border-white/10 bg-card/95 p-4 sm:p-6">
-              <h2 className="text-lg font-semibold">Operating brief</h2>
+              <h2 className="text-lg font-semibold">Description</h2>
               <MarkdownContent className="mt-4 text-sm leading-7 text-muted-foreground">
                 {detail.description}
               </MarkdownContent>
