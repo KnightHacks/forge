@@ -15,6 +15,7 @@ export * from "./career";
 export * from "./audit";
 export * from "./email";
 export * from "./alumni";
+export * from "./discord-archive";
 
 export const unused = z.string().describe(
   `This lib is currently not used as we use drizzle-zod for simple schemas

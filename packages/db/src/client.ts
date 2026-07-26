@@ -5,6 +5,7 @@ import Pool from "pg-pool";
 import { env } from "./env";
 import * as auditSchema from "./schemas/audit";
 import * as authSchema from "./schemas/auth";
+import * as discordSchema from "./schemas/discord";
 import * as knightHacksSchema from "./schemas/knight-hacks";
 import * as relations from "./schemas/relations";
 
@@ -14,11 +15,13 @@ const pool = new Pool({
 
 type AuthSchema = typeof authSchema;
 type AuditSchema = typeof auditSchema;
+type DiscordSchema = typeof discordSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
 type RelationsSchema = typeof relations;
 
 type DatabaseSchema = AuditSchema &
   AuthSchema &
+  DiscordSchema &
   KnightHacksSchema &
   RelationsSchema;
 
@@ -27,6 +30,7 @@ export const db: NodePgDatabase<DatabaseSchema> = drizzle({
   schema: {
     ...auditSchema,
     ...authSchema,
+    ...discordSchema,
     ...knightHacksSchema,
     ...relations,
   },
