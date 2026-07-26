@@ -18,6 +18,7 @@ describe("RolePermissionEditor", () => {
     for (const heading of [
       "Global",
       "Members",
+      "Alumni",
       "Hackers",
       "Events",
       "Forms",

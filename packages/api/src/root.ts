@@ -1,3 +1,4 @@
+import { alumniRouter } from "./routers/alumni";
 import { analyticsRouter } from "./routers/analytics";
 import { auditRouter } from "./routers/audit";
 import { authRouter } from "./routers/auth";
@@ -20,6 +21,7 @@ const healthProcedure = publicProcedure.query(() => ({
 }));
 
 export interface AppRouterShape {
+  alumni: typeof alumniRouter;
   analytics: typeof analyticsRouter;
   audit: typeof auditRouter;
   auth: typeof authRouter;
@@ -42,6 +44,7 @@ export type AppRouterRecord = {
 };
 
 const appRouterRecord: AppRouterRecord = {
+  alumni: alumniRouter,
   analytics: analyticsRouter,
   audit: auditRouter,
   auth: authRouter,

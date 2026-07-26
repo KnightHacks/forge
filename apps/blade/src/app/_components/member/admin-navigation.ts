@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChartNoAxesCombined,
   ClipboardList,
+  GraduationCap,
   LayoutDashboard,
   ListTodo,
   QrCode,
@@ -15,6 +16,7 @@ import {
 import { GUILD_URL } from "~/lib/guild-urls";
 
 export interface AdminNavigationAccess {
+  alumni?: boolean;
   analytics?: boolean;
   eventCheckIn?: boolean;
   events?: boolean;
@@ -42,6 +44,13 @@ export const memberNavigationItems = [
 ] as const;
 
 export const adminNavigationItems = [
+  {
+    access: "alumni",
+    href: "/admin/alumni",
+    icon: GraduationCap,
+    id: "alumni",
+    label: "Alumni",
+  },
   {
     access: "analytics",
     href: "/admin/analytics",
@@ -119,6 +128,7 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
+  if (id === "alumni") return pathname.startsWith("/admin/alumni");
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "forms") return pathname.startsWith("/admin/forms");

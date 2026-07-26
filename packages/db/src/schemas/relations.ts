@@ -2,10 +2,12 @@ import { relations } from "drizzle-orm";
 
 import { Account, Permissions, Roles, Session, User } from "./auth";
 import {
+  AlumniBulletinPost,
   Company,
   Employment,
   Event,
   EventAttendee,
+  FormsSchemas,
   Issue,
   IssueHistory,
   IssueReminderDelivery,
@@ -24,6 +26,12 @@ export const UserRelations = relations(User, ({ many, one }) => ({
   assignedIssues: many(IssuesToUsersAssignment),
   operatedEventCheckIns: many(EventAttendee, {
     relationName: "eventCheckInOperator",
+  }),
+  createdAlumniBulletinPosts: many(AlumniBulletinPost, {
+    relationName: "alumniBulletinCreatedBy",
+  }),
+  updatedAlumniBulletinPosts: many(AlumniBulletinPost, {
+    relationName: "alumniBulletinUpdatedBy",
   }),
 }));
 
@@ -141,6 +149,26 @@ export const EmploymentRelations = relations(Employment, ({ one }) => ({
     references: [Member.id],
   }),
 }));
+
+export const AlumniBulletinPostRelations = relations(
+  AlumniBulletinPost,
+  ({ one }) => ({
+    createdBy: one(User, {
+      fields: [AlumniBulletinPost.createdByUserId],
+      references: [User.id],
+      relationName: "alumniBulletinCreatedBy",
+    }),
+    form: one(FormsSchemas, {
+      fields: [AlumniBulletinPost.formId],
+      references: [FormsSchemas.id],
+    }),
+    updatedBy: one(User, {
+      fields: [AlumniBulletinPost.updatedByUserId],
+      references: [User.id],
+      relationName: "alumniBulletinUpdatedBy",
+    }),
+  }),
+);
 
 export const EventRelations = relations(Event, ({ many }) => ({
   attendees: many(EventAttendee),

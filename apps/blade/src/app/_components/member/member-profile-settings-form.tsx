@@ -88,6 +88,7 @@ type SettingsSection = MemberSettingsFieldDefinition["section"];
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
 type MemberProfileFormSource = Omit<
   CurrentMember,
+  | "alumniConfirmedAt"
   | "currentCityKey"
   | "gender"
   | "guildLocationVisible"
@@ -816,7 +817,10 @@ function MemberProfileSettingsEditor({
               );
             })}
 
-            <Card className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20">
+            <Card
+              id="career"
+              className="scroll-mt-24 gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20"
+            >
               <CardHeader className="border-b border-border/70 px-4 py-4 md:px-6">
                 <div className="flex items-center gap-3 md:gap-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary md:h-10 md:w-10">

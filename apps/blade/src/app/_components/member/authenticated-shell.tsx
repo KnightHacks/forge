@@ -12,6 +12,7 @@ import { MemberRouteTransitionSurface } from "~/app/_components/member/member-ro
 import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-navigation";
 
 type NavigationItem =
+  | "alumni"
   | "analytics"
   | "companies"
   | "dashboard"
@@ -38,25 +39,27 @@ export function AuthenticatedShell({
 }) {
   const currentSection =
     sectionLabel ??
-    (activeNavigation === "analytics"
-      ? "Club analytics"
-      : activeNavigation === "companies"
-        ? "Company admin"
-        : activeNavigation === "members"
-          ? "Member admin"
-          : activeNavigation === "eventCheckIn"
-            ? "Event check-in"
-            : activeNavigation === "events"
-              ? "Event admin"
-              : activeNavigation === "forms"
-                ? "Form admin"
-                : activeNavigation === "roles"
-                  ? "Role admin"
-                  : activeNavigation === "logs"
-                    ? "Admin logs"
-                    : activeNavigation === "settings"
-                      ? "Member settings"
-                      : "Member dashboard");
+    (activeNavigation === "alumni"
+      ? "Alumni admin"
+      : activeNavigation === "analytics"
+        ? "Club analytics"
+        : activeNavigation === "companies"
+          ? "Company admin"
+          : activeNavigation === "members"
+            ? "Member admin"
+            : activeNavigation === "eventCheckIn"
+              ? "Event check-in"
+              : activeNavigation === "events"
+                ? "Event admin"
+                : activeNavigation === "forms"
+                  ? "Form admin"
+                  : activeNavigation === "roles"
+                    ? "Role admin"
+                    : activeNavigation === "logs"
+                      ? "Admin logs"
+                      : activeNavigation === "settings"
+                        ? "Member settings"
+                        : "Member dashboard");
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">

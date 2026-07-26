@@ -139,6 +139,10 @@ export async function updateMemberProfile({
       websiteUrl: input.websiteUrl,
       dob: input.dob,
       gradDate: input.gradDate,
+      alumniConfirmedAt:
+        existingMember.gradDate === input.gradDate
+          ? existingMember.alumniConfirmedAt
+          : null,
       ...(input.currentCityKey === undefined
         ? {}
         : { currentCityKey: input.currentCityKey }),

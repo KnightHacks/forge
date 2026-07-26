@@ -76,6 +76,11 @@ export const employmentExperienceTypeEnum = pgEnum(
   "employment_experience_type",
   CAREER.EMPLOYMENT_EXPERIENCE_TYPES,
 );
+export const alumniBulletinStateEnum = pgEnum("alumni_bulletin_state", [
+  "draft",
+  "published",
+  "archived",
+]);
 
 export const Hackathon = createTable(
   "hackathon",
@@ -195,6 +200,7 @@ export const Member = createTable(
     resumeUrl: t.varchar({ length: 255 }),
     dob: t.date().notNull(),
     gradDate: t.date().notNull(),
+    alumniConfirmedAt: t.timestamp({ mode: "date", withTimezone: true }),
     company: t.varchar({ length: 255 }),
     currentCityKey: t.varchar({ length: 8 }),
     guildLocationVisible: t.boolean().notNull().default(true),
@@ -934,6 +940,76 @@ export const FormsSchemas = createTable("form_schemas", (t) => ({
 export type Form = typeof FormsSchemas.$inferSelect;
 //Ts so dumb
 export const FormSchemaSchema = createInsertSchema(FormsSchemas);
+
+export const AlumniBulletinPost = createTable(
+  "alumni_bulletin_post",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    title: t.varchar({ length: 120 }).notNull(),
+    body: t.text(),
+    imageObjectName: t.varchar({ length: 255 }),
+    imageAlt: t.varchar({ length: 240 }),
+    ctaLabel: t.varchar({ length: 80 }),
+    externalUrl: t.varchar({ length: 2_048 }),
+    formId: t
+      .uuid()
+      .references(() => FormsSchemas.id, { onDelete: "set null" }),
+    state: alumniBulletinStateEnum().notNull().default("draft"),
+    displayOrder: t.integer().notNull().default(0),
+    publishAt: t.timestamp({ mode: "date", withTimezone: true }),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    archivedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    updatedByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (t) => ({
+    actionExclusive: check(
+      "alumni_bulletin_action_exclusive",
+      sql`NOT (${t.externalUrl} IS NOT NULL AND ${t.formId} IS NOT NULL)`,
+    ),
+    actionPair: check(
+      "alumni_bulletin_action_pair",
+      sql`((${t.externalUrl} IS NULL AND ${t.formId} IS NULL) OR ${t.ctaLabel} IS NOT NULL)`,
+    ),
+    displayOrderNonnegative: check(
+      "alumni_bulletin_display_order_nonnegative",
+      sql`${t.displayOrder} >= 0`,
+    ),
+    imageAltPair: check(
+      "alumni_bulletin_image_alt_pair",
+      sql`((${t.imageObjectName} IS NULL AND ${t.imageAlt} IS NULL) OR (${t.imageObjectName} IS NOT NULL AND ${t.imageAlt} IS NOT NULL))`,
+    ),
+    scheduleOrder: check(
+      "alumni_bulletin_schedule_order",
+      sql`${t.expiresAt} IS NULL OR ${t.publishAt} IS NULL OR ${t.expiresAt} > ${t.publishAt}`,
+    ),
+    stateOrderIdx: index("knight_hacks_alumni_bulletin_state_order_idx").on(
+      t.state,
+      t.displayOrder,
+    ),
+    publicationWindowIdx: index(
+      "knight_hacks_alumni_bulletin_publication_window_idx",
+    ).on(t.publishAt, t.expiresAt),
+  }),
+);
+
+export type InsertAlumniBulletinPost = typeof AlumniBulletinPost.$inferInsert;
+export type SelectAlumniBulletinPost = typeof AlumniBulletinPost.$inferSelect;
 
 export const FormResponseRoles = createTable(
   "form_response_roles",
