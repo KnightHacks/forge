@@ -1,0 +1,115 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  emailAudienceDefinitionSchema,
+  emailConfirmSendSchema,
+  emailPreviewSendSchema,
+  emailSaveTemplateSchema,
+  emailSendTestSchema,
+} from "../email";
+
+const sendContent = {
+  mode: "plainText" as const,
+  plainText: "Hello from Knight Hacks",
+  subject: "A real subject",
+};
+
+describe("Email Portal validators", () => {
+  it("TC-012 accepts stable hackathon IDs and supported statuses", () => {
+    expect(
+      emailAudienceDefinitionSchema.parse({
+        hackathonId: "00000000-0000-4000-8000-000000000012",
+        kind: "hackathon",
+        statuses: ["confirmed", "pending", "withdrawn", "denied"],
+      }),
+    ).toEqual({
+      hackathonId: "00000000-0000-4000-8000-000000000012",
+      kind: "hackathon",
+      statuses: ["confirmed", "pending", "withdrawn", "denied"],
+    });
+  });
+
+  it.each([
+    { kind: "sql", query: "select * from members" },
+    { kind: "hackathon", hackathonId: "not-a-uuid" },
+    {
+      hackathonId: "00000000-0000-4000-8000-000000000012",
+      kind: "hackathon",
+      statuses: ["approved"],
+    },
+    { kind: "current_members", table: "Member" },
+  ])("TC-NEG-004 rejects invalid audience input %#", (input) => {
+    expect(() => emailAudienceDefinitionSchema.parse(input)).toThrow();
+  });
+
+  it("TC-020 validates plain-text composition without requiring HTML", () => {
+    expect(
+      emailPreviewSendSchema.parse({
+        audiences: [{ kind: "current_members" }],
+        content: sendContent,
+        scheduledFor: null,
+      }),
+    ).toMatchObject({ content: sendContent });
+  });
+
+  it("TC-NEG-005 requires the displayed count and preview version at confirm", () => {
+    expect(
+      emailConfirmSendSchema.parse({
+        expectedRecipientCount: 42,
+        previewVersion: "pv_01J00000000000000000000000",
+        sendId: "00000000-0000-4000-8000-000000000005",
+      }),
+    ).toMatchObject({ expectedRecipientCount: 42 });
+    expect(() =>
+      emailConfirmSendSchema.parse({
+        previewVersion: "pv_01J00000000000000000000000",
+        sendId: "00000000-0000-4000-8000-000000000005",
+      }),
+    ).toThrow();
+  });
+
+  it.each(["yesterday", "2026-13-01T00:00:00.000Z", "2026-08-01 12:00"])(
+    "TC-NEG-006 rejects malformed schedules: %s",
+    (scheduledFor) => {
+      expect(() =>
+        emailPreviewSendSchema.parse({
+          audiences: [{ kind: "current_members" }],
+          content: sendContent,
+          scheduledFor,
+        }),
+      ).toThrow();
+    },
+  );
+
+  it("TC-032 exposes no recipient field on the test-send input", () => {
+    expect(
+      emailSendTestSchema.parse({
+        content: sendContent,
+        sample: { recipient: { firstName: "Dylan" } },
+      }),
+    ).not.toHaveProperty("recipient");
+    expect(() =>
+      emailSendTestSchema.parse({
+        content: sendContent,
+        recipient: "person@example.test",
+      }),
+    ).toThrow();
+  });
+
+  it("TC-002 validates code-template drafts as source, not executable functions", () => {
+    expect(
+      emailSaveTemplateSchema.parse({
+        kind: "code",
+        name: "Welcome",
+        source: `export default <Text>Hello</Text>;`,
+      }),
+    ).toMatchObject({ kind: "code", name: "Welcome" });
+    expect(() =>
+      emailSaveTemplateSchema.parse({
+        kind: "code",
+        name: "Welcome",
+        render: () => "arbitrary code",
+      }),
+    ).toThrow();
+  });
+});

@@ -29,6 +29,7 @@ export default defineConfig({
     : {
         command: [
           "BLADE_E2E_AUTH=true",
+          "EMAIL_DELIVERY_MODE=fake",
           "NEXT_PUBLIC_BLADE_E2E_AUTH=true",
           `BLADE_E2E_DEFAULT_USER_ID=${defaultE2EUserId}`,
           `NEXT_PUBLIC_BLADE_URL=${baseURL}`,
