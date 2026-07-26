@@ -358,7 +358,7 @@ export function IssueCalendarView({
     <section className="min-w-0" aria-label="Issue calendar">
       <div
         data-issue-calendar="month-grid"
-        className="hidden h-[calc(100svh-19.5rem)] min-h-[26rem] flex-col overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10 md:flex"
+        className="hidden h-[calc(100svh-23.5rem)] min-h-[23rem] flex-col overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10 md:flex"
       >
         <div className="grid grid-cols-7 border-b border-white/10 bg-background/55">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (

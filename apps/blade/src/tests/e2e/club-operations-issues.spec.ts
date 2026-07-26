@@ -233,7 +233,7 @@ test.describe("Club operations issues visual workflow", () => {
     const calendarBox = await page
       .locator('[data-issue-calendar="month-grid"]')
       .boundingBox();
-    expect(calendarBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(340);
+    expect(calendarBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(390);
     expect(
       (calendarBox?.y ?? 0) + (calendarBox?.height ?? 0),
     ).toBeLessThanOrEqual(768);

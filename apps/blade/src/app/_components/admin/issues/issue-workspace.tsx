@@ -46,7 +46,11 @@ import { defaultIssueDueAt } from "@forge/validators";
 import type { EventFormValue } from "../events/event-form-dialog";
 import type { IssueSearchInput } from "./params";
 import type { IssueWorkspaceData } from "./types";
-import { adminPageClassName } from "~/app/_components/admin/admin-page";
+import {
+  adminPageClassName,
+  AdminPageHeader,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 import { localNewYorkDateTime } from "~/lib/event-dates";
 import { api } from "~/trpc/react";
 import { EventFormDialog } from "../events/event-form-dialog";
@@ -1143,325 +1147,319 @@ export function IssueWorkspace({
 
   return (
     <main
-      className={`${adminPageClassName} space-y-3 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
+      className={`${adminPageClassName} [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
     >
-      <header
-        className="relative overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10"
-        data-issue-dock
-      >
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-primary"
-          aria-hidden="true"
+      <div className={adminPageStackClassName}>
+        <AdminPageHeader
+          actions={
+            <dl className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-card/90">
+              {[
+                { label: "Open", value: data.counts.open },
+                { label: "Finished", value: data.counts.finished },
+                { label: "Visible", value: data.pagination.totalCount },
+              ].map((metric) => (
+                <div
+                  className="min-w-20 border-l border-white/10 px-3 py-2 text-center first:border-l-0 sm:min-w-24"
+                  key={metric.label}
+                >
+                  <dt className="text-xs text-muted-foreground">
+                    {metric.label}
+                  </dt>
+                  <dd className="mt-0.5 font-mono text-base font-semibold">
+                    {metric.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          }
+          description="Shared work from planning through completion."
+          eyebrow="Club operations"
+          icon={ListTodo}
+          title="Issues"
         />
-        <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary">
-              <ListTodo className="size-4" aria-hidden="true" />
-              Club operations
-            </div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
-              Issues
-            </h1>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
-              Shared work from planning through completion.
-            </p>
-          </div>
-          <dl className="flex shrink-0 overflow-hidden rounded-md border border-white/10 bg-background/60">
-            {[
-              { label: "Open", value: data.counts.open },
-              { label: "Finished", value: data.counts.finished },
-              { label: "Visible", value: data.pagination.totalCount },
-            ].map((metric) => (
-              <div
-                className="flex min-w-20 items-baseline justify-center gap-1.5 border-l border-white/10 px-3 py-2 first:border-l-0"
-                key={metric.label}
-              >
-                <dd className="font-mono text-base font-semibold">
-                  {metric.value}
-                </dd>
-                <dt className="text-xs text-muted-foreground">
-                  {metric.label}
-                </dt>
-              </div>
-            ))}
-          </dl>
-        </div>
 
-        <div className="flex min-w-0 flex-col gap-2 border-t border-white/10 bg-background/25 p-2 lg:flex-row lg:items-center lg:justify-between">
-          <nav className="grid grid-cols-3 gap-1" aria-label="Issue views">
-            {(
-              [
-                { icon: CalendarDays, id: "calendar", label: "Calendar" },
-                { icon: Columns3, id: "kanban", label: "Kanban" },
-                { icon: List, id: "list", label: "List" },
-              ] as const
-            ).map((item) => {
-              const Icon = item.icon;
-              return (
-                <Button
-                  key={item.id}
-                  variant={view === item.id ? "secondary" : "ghost"}
-                  className="h-11"
-                  asChild
-                >
-                  <Link
-                    href={viewHref(item.id, input)}
-                    aria-current={view === item.id ? "page" : undefined}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                </Button>
-              );
-            })}
-          </nav>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Button
-              className="h-11 flex-1 sm:flex-none"
-              variant={filtersOpen ? "secondary" : "outline"}
-              onClick={() => setFiltersOpen(true)}
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-              {input.statuses.length + input.teamIds.length > 0 && (
-                <Badge className="ml-1">
-                  {input.statuses.length + input.teamIds.length}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              className="h-11"
-              variant="outline"
-              onClick={() => setTemplatesOpen(true)}
-            >
-              <LayoutTemplate className="h-4 w-4" />
-              Templates
-            </Button>
-            <Button className="h-11" variant="outline" asChild>
-              <Link href={`/admin/issues/archive${query ? `?${query}` : ""}`}>
-                <Archive className="h-4 w-4" />
-                Archive
-              </Link>
-            </Button>
-            <Button
-              className="h-11"
-              disabled={!access.canEdit}
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Create
-            </Button>
-          </div>
-        </div>
-
-        {view === "calendar" && (
-          <div
-            className="flex min-h-[3.75rem] flex-col gap-2 border-t border-white/10 bg-card/30 px-2 py-1.5 sm:h-[3.75rem] sm:flex-row sm:items-center sm:justify-between"
-            data-issue-context
-          >
-            <div className="flex items-center gap-1">
-              <Button size="icon" variant="ghost" asChild>
-                <Link
-                  aria-label={`Previous ${input.calendarMode}`}
-                  href={viewHref("calendar", {
-                    ...input,
-                    calendarDate: previousCalendarDate,
-                  })}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link
-                  href={viewHref("calendar", {
-                    ...input,
-                    calendarDate: parseIssueSearchParams({}).calendarDate,
-                  })}
-                >
-                  Today
-                </Link>
-              </Button>
-              <Button size="icon" variant="ghost" asChild>
-                <Link
-                  aria-label={`Next ${input.calendarMode}`}
-                  href={viewHref("calendar", {
-                    ...input,
-                    calendarDate: nextCalendarDate,
-                  })}
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <p className="ml-2 text-sm font-medium">{calendarPeriodLabel}</p>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">Eastern</p>
-              <div className="grid grid-cols-3 gap-1 rounded-md border border-white/10 bg-background/60 p-1">
-                {(["month", "week", "day"] as const).map((mode) => (
+        <section
+          className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10"
+          data-issue-dock
+        >
+          <div className="flex min-w-0 flex-col gap-2 bg-background/25 p-2 lg:flex-row lg:items-center lg:justify-between">
+            <nav className="grid grid-cols-3 gap-1" aria-label="Issue views">
+              {(
+                [
+                  { icon: CalendarDays, id: "calendar", label: "Calendar" },
+                  { icon: Columns3, id: "kanban", label: "Kanban" },
+                  { icon: List, id: "list", label: "List" },
+                ] as const
+              ).map((item) => {
+                const Icon = item.icon;
+                return (
                   <Button
-                    key={mode}
-                    size="sm"
-                    variant={
-                      input.calendarMode === mode ? "secondary" : "ghost"
-                    }
-                    className="capitalize"
+                    key={item.id}
+                    variant={view === item.id ? "secondary" : "ghost"}
+                    className="h-11"
                     asChild
                   >
                     <Link
-                      href={viewHref("calendar", {
-                        ...input,
-                        calendarMode: mode,
-                        page: 1,
-                      })}
+                      href={viewHref(item.id, input)}
+                      aria-current={view === item.id ? "page" : undefined}
                     >
-                      {mode}
+                      <Icon className="h-4 w-4" />
+                      {item.label}
                     </Link>
                   </Button>
-                ))}
+                );
+              })}
+            </nav>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <Button
+                className="h-11 flex-1 sm:flex-none"
+                variant={filtersOpen ? "secondary" : "outline"}
+                onClick={() => setFiltersOpen(true)}
+              >
+                <Filter className="h-4 w-4" />
+                Filters
+                {input.statuses.length + input.teamIds.length > 0 && (
+                  <Badge className="ml-1">
+                    {input.statuses.length + input.teamIds.length}
+                  </Badge>
+                )}
+              </Button>
+              <Button
+                className="h-11"
+                variant="outline"
+                onClick={() => setTemplatesOpen(true)}
+              >
+                <LayoutTemplate className="h-4 w-4" />
+                Templates
+              </Button>
+              <Button className="h-11" variant="outline" asChild>
+                <Link href={`/admin/issues/archive${query ? `?${query}` : ""}`}>
+                  <Archive className="h-4 w-4" />
+                  Archive
+                </Link>
+              </Button>
+              <Button
+                className="h-11"
+                disabled={!access.canEdit}
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Create
+              </Button>
+            </div>
+          </div>
+
+          {view === "calendar" && (
+            <div
+              className="flex min-h-[3.75rem] flex-col gap-2 border-t border-white/10 bg-card/30 px-2 py-1.5 sm:h-[3.75rem] sm:flex-row sm:items-center sm:justify-between"
+              data-issue-context
+            >
+              <div className="flex items-center gap-1">
+                <Button size="icon" variant="ghost" asChild>
+                  <Link
+                    aria-label={`Previous ${input.calendarMode}`}
+                    href={viewHref("calendar", {
+                      ...input,
+                      calendarDate: previousCalendarDate,
+                    })}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link
+                    href={viewHref("calendar", {
+                      ...input,
+                      calendarDate: parseIssueSearchParams({}).calendarDate,
+                    })}
+                  >
+                    Today
+                  </Link>
+                </Button>
+                <Button size="icon" variant="ghost" asChild>
+                  <Link
+                    aria-label={`Next ${input.calendarMode}`}
+                    href={viewHref("calendar", {
+                      ...input,
+                      calendarDate: nextCalendarDate,
+                    })}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <p className="ml-2 text-sm font-medium">
+                  {calendarPeriodLabel}
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">Eastern</p>
+                <div className="grid grid-cols-3 gap-1 rounded-md border border-white/10 bg-background/60 p-1">
+                  {(["month", "week", "day"] as const).map((mode) => (
+                    <Button
+                      key={mode}
+                      size="sm"
+                      variant={
+                        input.calendarMode === mode ? "secondary" : "ghost"
+                      }
+                      className="capitalize"
+                      asChild
+                    >
+                      <Link
+                        href={viewHref("calendar", {
+                          ...input,
+                          calendarMode: mode,
+                          page: 1,
+                        })}
+                      >
+                        {mode}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(view === "list" || view === "archive") && (
-          <div
-            className="flex min-h-[3.75rem] flex-wrap items-center justify-end gap-2 border-t border-white/10 bg-card/30 px-2 py-1.5 sm:h-[3.75rem]"
-            data-issue-context
-          >
-            <Label className="sr-only" htmlFor="issues-sort-field">
-              Sort issues
-            </Label>
-            <select
-              id="issues-sort-field"
-              aria-label="Sort issues"
-              value={input.sortField}
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-              onChange={(event) =>
-                router.push(
-                  `?${buildIssueSearchParams({ ...input, page: 1, sortField: event.target.value as IssueSearchInput["sortField"] }).toString()}`,
-                )
-              }
+          {(view === "list" || view === "archive") && (
+            <div
+              className="flex min-h-[3.75rem] flex-wrap items-center justify-end gap-2 border-t border-white/10 bg-card/30 px-2 py-1.5 sm:h-[3.75rem]"
+              data-issue-context
             >
-              <option value="dueAt">Due date</option>
-              <option value="updatedAt">Last updated</option>
-              <option value="name">Name</option>
-              <option value="status">Status</option>
-              <option value="priority">Priority</option>
-            </select>
-            <Button
-              className="h-11"
-              variant="outline"
-              onClick={() =>
-                router.push(
-                  `?${buildIssueSearchParams({ ...input, page: 1, sortDirection: input.sortDirection === "asc" ? "desc" : "asc" }).toString()}`,
-                )
-              }
-            >
-              {input.sortDirection === "asc" ? "Ascending" : "Descending"}
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  input.sortDirection === "asc" && "rotate-180",
-                )}
-              />
-            </Button>
-            <Label className="sr-only" htmlFor="issues-page-size">
-              Issues per page
-            </Label>
-            <select
-              id="issues-page-size"
-              aria-label="Issues per page"
-              value={input.pageSize}
-              className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-              onChange={(event) =>
-                router.push(
-                  `?${buildIssueSearchParams({ ...input, page: 1, pageSize: Number(event.target.value) as IssueSearchInput["pageSize"] }).toString()}`,
-                )
-              }
-            >
-              <option value="25">25 / page</option>
-              <option value="50">50 / page</option>
-              <option value="100">100 / page</option>
-            </select>
-          </div>
-        )}
-
-        {view === "kanban" && (
-          <div
-            className="flex min-h-[3.75rem] items-center justify-between gap-3 border-t border-white/10 bg-card/30 px-4 py-1.5 sm:h-[3.75rem]"
-            data-issue-context
-          >
-            <p className="text-sm font-medium">
-              {data.issues.length} issues loaded
-            </p>
-            <p className="text-right text-sm text-muted-foreground">
-              Drag a card or use its status menu
-            </p>
-          </div>
-        )}
-      </header>
-
-      {view === "calendar" ? (
-        <IssueCalendarView
-          issues={data.issues}
-          mode={input.calendarMode}
-          month={calendarFocus}
-        />
-      ) : view === "kanban" ? (
-        <IssueKanbanView issues={data.issues} />
-      ) : (
-        <IssueListView issues={data.issues} />
-      )}
-
-      {(view === "list" || view === "archive") &&
-        data.pagination.pageCount > 1 && (
-          <nav
-            className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-card/95 p-2"
-            aria-label="Issue pages"
-          >
-            <p className="px-2 text-sm text-muted-foreground">
-              Page {data.pagination.page} of {data.pagination.pageCount}
-            </p>
-            <div className="flex gap-2">
-              {data.pagination.page > 1 ? (
-                <Button variant="outline" asChild>
-                  <Link
-                    href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page - 1 }).toString()}`}
-                  >
-                    Previous
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" disabled>
-                  Previous
-                </Button>
-              )}
-              {data.pagination.page < data.pagination.pageCount ? (
-                <Button variant="outline" asChild>
-                  <Link
-                    href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page + 1 }).toString()}`}
-                  >
-                    Next
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" disabled>
-                  Next
-                </Button>
-              )}
+              <Label className="sr-only" htmlFor="issues-sort-field">
+                Sort issues
+              </Label>
+              <select
+                id="issues-sort-field"
+                aria-label="Sort issues"
+                value={input.sortField}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                onChange={(event) =>
+                  router.push(
+                    `?${buildIssueSearchParams({ ...input, page: 1, sortField: event.target.value as IssueSearchInput["sortField"] }).toString()}`,
+                  )
+                }
+              >
+                <option value="dueAt">Due date</option>
+                <option value="updatedAt">Last updated</option>
+                <option value="name">Name</option>
+                <option value="status">Status</option>
+                <option value="priority">Priority</option>
+              </select>
+              <Button
+                className="h-11"
+                variant="outline"
+                onClick={() =>
+                  router.push(
+                    `?${buildIssueSearchParams({ ...input, page: 1, sortDirection: input.sortDirection === "asc" ? "desc" : "asc" }).toString()}`,
+                  )
+                }
+              >
+                {input.sortDirection === "asc" ? "Ascending" : "Descending"}
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    input.sortDirection === "asc" && "rotate-180",
+                  )}
+                />
+              </Button>
+              <Label className="sr-only" htmlFor="issues-page-size">
+                Issues per page
+              </Label>
+              <select
+                id="issues-page-size"
+                aria-label="Issues per page"
+                value={input.pageSize}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                onChange={(event) =>
+                  router.push(
+                    `?${buildIssueSearchParams({ ...input, page: 1, pageSize: Number(event.target.value) as IssueSearchInput["pageSize"] }).toString()}`,
+                  )
+                }
+              >
+                <option value="25">25 / page</option>
+                <option value="50">50 / page</option>
+                <option value="100">100 / page</option>
+              </select>
             </div>
-          </nav>
+          )}
+
+          {view === "kanban" && (
+            <div
+              className="flex min-h-[3.75rem] items-center justify-between gap-3 border-t border-white/10 bg-card/30 px-4 py-1.5 sm:h-[3.75rem]"
+              data-issue-context
+            >
+              <p className="text-sm font-medium">
+                {data.issues.length} issues loaded
+              </p>
+              <p className="text-right text-sm text-muted-foreground">
+                Drag a card or use its status menu
+              </p>
+            </div>
+          )}
+        </section>
+
+        {view === "calendar" ? (
+          <IssueCalendarView
+            issues={data.issues}
+            mode={input.calendarMode}
+            month={calendarFocus}
+          />
+        ) : view === "kanban" ? (
+          <IssueKanbanView issues={data.issues} />
+        ) : (
+          <IssueListView issues={data.issues} />
         )}
 
-      {view === "archive" && data.issues.length === 0 && (
-        <Alert>
-          <Archive className="h-4 w-4" />
-          <AlertTitle>Archive is empty</AlertTitle>
-          <AlertDescription>
-            Archived issue trees remain recoverable here.
-          </AlertDescription>
-        </Alert>
-      )}
+        {(view === "list" || view === "archive") &&
+          data.pagination.pageCount > 1 && (
+            <nav
+              className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-card/95 p-2"
+              aria-label="Issue pages"
+            >
+              <p className="px-2 text-sm text-muted-foreground">
+                Page {data.pagination.page} of {data.pagination.pageCount}
+              </p>
+              <div className="flex gap-2">
+                {data.pagination.page > 1 ? (
+                  <Button variant="outline" asChild>
+                    <Link
+                      href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page - 1 }).toString()}`}
+                    >
+                      Previous
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
+                    Previous
+                  </Button>
+                )}
+                {data.pagination.page < data.pagination.pageCount ? (
+                  <Button variant="outline" asChild>
+                    <Link
+                      href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page + 1 }).toString()}`}
+                    >
+                      Next
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" disabled>
+                    Next
+                  </Button>
+                )}
+              </div>
+            </nav>
+          )}
+
+        {view === "archive" && data.issues.length === 0 && (
+          <Alert>
+            <Archive className="h-4 w-4" />
+            <AlertTitle>Archive is empty</AlertTitle>
+            <AlertDescription>
+              Archived issue trees remain recoverable here.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
         <DialogContent className="max-h-[92svh] max-w-3xl gap-0 overflow-hidden border-white/10 bg-card p-0 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2">

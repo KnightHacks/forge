@@ -1,32 +1,20 @@
 import { Skeleton } from "@forge/ui/skeleton";
 
-import { adminPageClassName } from "~/app/_components/admin/admin-page";
+import {
+  adminPageClassName,
+  AdminPageHeaderSkeleton,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 
 type IssueLoadingView = "archive" | "calendar" | "kanban" | "list";
 
 function WorkspaceDockSkeleton({ view }: { view: IssueLoadingView }) {
   return (
-    <header className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10">
-      <div className="flex flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="size-4" />
-            <Skeleton className="h-5 w-28" />
-          </div>
-          <Skeleton className="mt-2 h-10 w-36 sm:h-12" />
-          <Skeleton className="mt-2 h-5 w-72 max-w-full" />
-        </div>
-        <div className="grid grid-cols-3 overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
-          {Array.from({ length: 3 }, (_, index) => (
-            <div className="min-w-20 px-3 py-1" key={index}>
-              <Skeleton className="mx-auto h-5 w-8" />
-              <Skeleton className="mx-auto mt-1 h-3 w-12" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex min-w-0 flex-col gap-2 border-t border-white/10 bg-background/25 p-2 lg:flex-row lg:items-center lg:justify-between">
+    <section
+      className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/10"
+      data-issue-dock
+    >
+      <div className="flex min-w-0 flex-col gap-2 bg-background/25 p-2 lg:flex-row lg:items-center lg:justify-between">
         <div className="grid grid-cols-3 gap-1">
           {Array.from({ length: 3 }, (_, index) => (
             <Skeleton
@@ -54,14 +42,14 @@ function WorkspaceDockSkeleton({ view }: { view: IssueLoadingView }) {
           <Skeleton className="hidden h-9 w-24 sm:block" />
         </div>
       </div>
-    </header>
+    </section>
   );
 }
 
 function CalendarSkeleton() {
   return (
     <>
-      <section className="hidden h-[calc(100svh-19.5rem)] min-h-[26rem] flex-col overflow-hidden rounded-lg border border-white/10 bg-card/95 md:flex">
+      <section className="hidden h-[calc(100svh-23.5rem)] min-h-[23rem] flex-col overflow-hidden rounded-lg border border-white/10 bg-card/95 md:flex">
         <div className="grid grid-cols-7 gap-px border-b border-white/10 bg-background/55 px-2 py-2">
           {Array.from({ length: 7 }, (_, index) => (
             <Skeleton className="h-3 w-9" key={index} />
@@ -154,21 +142,28 @@ function ListSkeleton() {
 export function IssueWorkspaceSkeleton({ view }: { view: IssueLoadingView }) {
   return (
     <main
-      className={`${adminPageClassName} space-y-3`}
+      className={adminPageClassName}
       data-issue-loading-view={view}
       aria-busy="true"
       aria-label={`Loading issue ${view}`}
       role="status"
     >
       <span className="sr-only">Loading issue {view}</span>
-      <WorkspaceDockSkeleton view={view} />
-      {view === "calendar" ? (
-        <CalendarSkeleton />
-      ) : view === "kanban" ? (
-        <KanbanSkeleton />
-      ) : (
-        <ListSkeleton />
-      )}
+      <div className={adminPageStackClassName}>
+        <AdminPageHeaderSkeleton
+          actions={1}
+          descriptionWidth="max-w-xl"
+          titleWidth="w-40"
+        />
+        <WorkspaceDockSkeleton view={view} />
+        {view === "calendar" ? (
+          <CalendarSkeleton />
+        ) : view === "kanban" ? (
+          <KanbanSkeleton />
+        ) : (
+          <ListSkeleton />
+        )}
+      </div>
     </main>
   );
 }

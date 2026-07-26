@@ -38,7 +38,11 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
-import { adminPageClassName } from "~/app/_components/admin/admin-page";
+import {
+  adminPageClassName,
+  AdminPageHeader,
+  adminPageStackClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 
 type Detail = RouterOutputs["issues"]["get"];
@@ -483,257 +487,261 @@ export function IssueDetail({
 
   return (
     <main
-      className={`${adminPageClassName} space-y-4 sm:space-y-6 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
+      className={`${adminPageClassName} [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2`}
     >
-      <Button variant="ghost" className="-ml-3" asChild>
-        <Link href="/admin/issues/calendar">
-          <ArrowLeft className="h-4 w-4" />
-          Back to issues
-        </Link>
-      </Button>
-      <header className="relative overflow-hidden rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/10 sm:p-6">
-        <div
-          className="absolute inset-y-0 left-0 w-1"
-          style={{ backgroundColor: detail.team.color ?? "#7c3aed" }}
-        />
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-              <ListTodo className="size-4" aria-hidden="true" />
-              Issue record
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">{detail.team.name}</Badge>
-              <Badge variant="outline">{detail.priority}</Badge>
-              {detail.archivedAt && (
-                <Badge variant="destructive">Archived</Badge>
-              )}
-            </div>
-            <h1 className="mt-3 break-words text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
-              {detail.name}
-            </h1>
-            <p className="mt-2 font-mono text-xs text-muted-foreground">
-              Revision {detail.revision} · {detail.id}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {!detail.archivedAt && detail.canEdit && (
-              <select
-                aria-label="Change issue status"
-                className="h-11 rounded-md border border-input bg-background px-3 text-sm font-medium"
-                value={status}
-                onChange={(event) =>
-                  void changeStatus(event.target.value as Detail["status"])
-                }
-              >
-                {ISSUE.ISSUE_STATUS.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            )}
-            {detail.canEdit && !detail.archivedAt && (
-              <Button
-                className="h-11"
-                variant="outline"
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-            {detail.canEdit && (
-              <Button
-                className="h-11"
-                variant="outline"
-                onClick={() =>
-                  setConfirmAction(detail.archivedAt ? "restore" : "archive")
-                }
-              >
-                {detail.archivedAt ? (
-                  <RotateCcw className="h-4 w-4" />
-                ) : (
-                  <Archive className="h-4 w-4" />
+      <div className={adminPageStackClassName}>
+        <Button variant="ghost" className="-ml-3" asChild>
+          <Link href="/admin/issues/calendar">
+            <ArrowLeft className="h-4 w-4" />
+            Back to issues
+          </Link>
+        </Button>
+        <AdminPageHeader
+          eyebrow="Issue record"
+          icon={ListTodo}
+          title={detail.name}
+          titleClassName="break-words"
+          description={
+            <span className="flex flex-col items-start gap-2">
+              <span className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  style={{ borderColor: detail.team.color ?? "#7c3aed" }}
+                >
+                  {detail.team.name}
+                </Badge>
+                <Badge variant="outline">{detail.priority}</Badge>
+                {detail.archivedAt && (
+                  <Badge variant="destructive">Archived</Badge>
                 )}
-                {detail.archivedAt ? "Restore" : "Archive"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+              </span>
+              <span className="font-mono text-xs">
+                Revision {detail.revision} · {detail.id}
+              </span>
+            </span>
+          }
+          actions={
+            <>
+              {!detail.archivedAt && detail.canEdit && (
+                <select
+                  aria-label="Change issue status"
+                  className="h-11 rounded-md border border-input bg-background px-3 text-sm font-medium"
+                  value={status}
+                  onChange={(event) =>
+                    void changeStatus(event.target.value as Detail["status"])
+                  }
+                >
+                  {ISSUE.ISSUE_STATUS.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              )}
+              {detail.canEdit && !detail.archivedAt && (
+                <Button
+                  className="h-11"
+                  variant="outline"
+                  onClick={() => setEditOpen(true)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+              {detail.canEdit && (
+                <Button
+                  className="h-11"
+                  variant="outline"
+                  onClick={() =>
+                    setConfirmAction(detail.archivedAt ? "restore" : "archive")
+                  }
+                >
+                  {detail.archivedAt ? (
+                    <RotateCcw className="h-4 w-4" />
+                  ) : (
+                    <Archive className="h-4 w-4" />
+                  )}
+                  {detail.archivedAt ? "Restore" : "Archive"}
+                </Button>
+              )}
+            </>
+          }
+        />
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.75fr)]">
-        <div className="min-w-0 space-y-4">
-          <section className="rounded-lg border border-white/10 bg-card/95 p-4 sm:p-6">
-            <h2 className="text-lg font-semibold">Operating brief</h2>
-            <MarkdownContent className="mt-4 text-sm leading-7 text-muted-foreground">
-              {detail.description}
-            </MarkdownContent>
-          </section>
-          {detail.children.length > 0 && (
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(19rem,0.75fr)]">
+          <div className="min-w-0 space-y-4">
+            <section className="rounded-lg border border-white/10 bg-card/95 p-4 sm:p-6">
+              <h2 className="text-lg font-semibold">Operating brief</h2>
+              <MarkdownContent className="mt-4 text-sm leading-7 text-muted-foreground">
+                {detail.description}
+              </MarkdownContent>
+            </section>
+            {detail.children.length > 0 && (
+              <section className="rounded-lg border border-white/10 bg-card/95">
+                <header className="border-b border-white/10 px-4 py-3 sm:px-5">
+                  <h2 className="font-semibold">Child issues</h2>
+                </header>
+                <div className="divide-y divide-white/10">
+                  {detail.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={`/admin/issues/${child.id}`}
+                      className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-background/55"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate">
+                        {child.name}
+                      </span>
+                      <Badge variant="outline">{child.status}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
             <section className="rounded-lg border border-white/10 bg-card/95">
-              <header className="border-b border-white/10 px-4 py-3 sm:px-5">
-                <h2 className="font-semibold">Child issues</h2>
+              <header className="flex items-center gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
+                <History className="h-4 w-4 text-primary" />
+                <h2 className="font-semibold">History</h2>
+                <span className="ml-auto font-mono text-xs text-muted-foreground">
+                  {historyRows.length}
+                  {historyCursor ? "+" : ""}
+                </span>
               </header>
-              <div className="divide-y divide-white/10">
-                {detail.children.map((child) => (
-                  <Link
-                    key={child.id}
-                    href={`/admin/issues/${child.id}`}
-                    className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-background/55"
+              <ol className="divide-y divide-white/10">
+                {historyRows.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-5"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">
-                      {child.name}
-                    </span>
-                    <Badge variant="outline">{child.status}</Badge>
-                  </Link>
+                    <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-medium">
+                          {entry.actorDisplayName}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {entry.action.replaceAll("_", " ")}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {entry.changedFields.length > 0
+                          ? entry.changedFields.join(", ")
+                          : "History tracking boundary"}
+                      </p>
+                      <time className="mt-1 block text-xs text-muted-foreground">
+                        {new Intl.DateTimeFormat("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(entry.createdAt)}
+                      </time>
+                    </div>
+                  </li>
                 ))}
+              </ol>
+              {historyCursor && (
+                <div className="border-t border-white/10 p-3">
+                  <Button
+                    className="w-full"
+                    variant="ghost"
+                    disabled={historyLoading}
+                    onClick={() => void loadOlderHistory()}
+                  >
+                    {historyLoading && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Load older history
+                  </Button>
+                </div>
+              )}
+            </section>
+          </div>
+
+          <aside className="min-w-0 space-y-4">
+            <section className="rounded-lg border border-white/10 bg-card/95 p-4">
+              <h2 className="font-semibold">Schedule</h2>
+              <div className="mt-3 flex items-start gap-3">
+                <CalendarClock className="mt-0.5 h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-sm font-medium">
+                    {fullDate(detail.dueAt)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    America/New_York
+                  </p>
+                </div>
+              </div>
+              {detail.eventId && (
+                <Button className="mt-4 w-full" variant="outline" asChild>
+                  <Link href={`/admin/events?event=${detail.eventId}`}>
+                    Open linked event
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+            </section>
+            <section className="rounded-lg border border-white/10 bg-card/95 p-4">
+              <h2 className="font-semibold">People & visibility</h2>
+              <div className="mt-3 flex items-start gap-3">
+                <UsersRound className="mt-0.5 h-4 w-4 text-primary" />
+                <div className="text-sm">
+                  <p className="font-medium">
+                    {detail.assignees.length > 0
+                      ? detail.assignees.map((item) => item.name).join(", ")
+                      : "Owning team"}
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    {detail.visibleTeams.length > 1
+                      ? `Shared with ${detail.visibleTeams
+                          .filter((team) => team.id !== detail.team.id)
+                          .map((team) => team.name)
+                          .join(", ")}`
+                      : "Not shared outside the team"}
+                  </p>
+                </div>
               </div>
             </section>
-          )}
-          <section className="rounded-lg border border-white/10 bg-card/95">
-            <header className="flex items-center gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
-              <History className="h-4 w-4 text-primary" />
-              <h2 className="font-semibold">History</h2>
-              <span className="ml-auto font-mono text-xs text-muted-foreground">
-                {historyRows.length}
-                {historyCursor ? "+" : ""}
-              </span>
-            </header>
-            <ol className="divide-y divide-white/10">
-              {historyRows.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 px-4 py-4 sm:px-5"
-                >
-                  <span className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="font-medium">
-                        {entry.actorDisplayName}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {entry.action.replaceAll("_", " ")}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {entry.changedFields.length > 0
-                        ? entry.changedFields.join(", ")
-                        : "History tracking boundary"}
-                    </p>
-                    <time className="mt-1 block text-xs text-muted-foreground">
-                      {new Intl.DateTimeFormat("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(entry.createdAt)}
-                    </time>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            {historyCursor && (
-              <div className="border-t border-white/10 p-3">
-                <Button
-                  className="w-full"
-                  variant="ghost"
-                  disabled={historyLoading}
-                  onClick={() => void loadOlderHistory()}
-                >
-                  {historyLoading && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  Load older history
-                </Button>
-              </div>
-            )}
-          </section>
-        </div>
-
-        <aside className="min-w-0 space-y-4">
-          <section className="rounded-lg border border-white/10 bg-card/95 p-4">
-            <h2 className="font-semibold">Schedule</h2>
-            <div className="mt-3 flex items-start gap-3">
-              <CalendarClock className="mt-0.5 h-4 w-4 text-primary" />
-              <div>
-                <p className="text-sm font-medium">{fullDate(detail.dueAt)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  America/New_York
-                </p>
-              </div>
-            </div>
-            {detail.eventId && (
-              <Button className="mt-4 w-full" variant="outline" asChild>
-                <Link href={`/admin/events?event=${detail.eventId}`}>
-                  Open linked event
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              </Button>
-            )}
-          </section>
-          <section className="rounded-lg border border-white/10 bg-card/95 p-4">
-            <h2 className="font-semibold">People & visibility</h2>
-            <div className="mt-3 flex items-start gap-3">
-              <UsersRound className="mt-0.5 h-4 w-4 text-primary" />
-              <div className="text-sm">
-                <p className="font-medium">
-                  {detail.assignees.length > 0
-                    ? detail.assignees.map((item) => item.name).join(", ")
-                    : "Owning team"}
-                </p>
+            <section className="rounded-lg border border-white/10 bg-card/95 p-4">
+              <h2 className="font-semibold">Hierarchy</h2>
+              <div className="mt-3 text-sm">
+                {detail.parentId ? (
+                  <Link
+                    className="text-primary hover:underline"
+                    href={`/admin/issues/${detail.parentId}`}
+                  >
+                    Open parent issue
+                  </Link>
+                ) : (
+                  <p className="text-muted-foreground">Root issue</p>
+                )}
                 <p className="mt-1 text-muted-foreground">
-                  {detail.visibleTeams.length > 1
-                    ? `Shared with ${detail.visibleTeams
-                        .filter((team) => team.id !== detail.team.id)
-                        .map((team) => team.name)
-                        .join(", ")}`
-                    : "Not shared outside the team"}
+                  {detail.children.length} direct child
+                  {detail.children.length === 1 ? "" : "ren"}
                 </p>
               </div>
-            </div>
-          </section>
-          <section className="rounded-lg border border-white/10 bg-card/95 p-4">
-            <h2 className="font-semibold">Hierarchy</h2>
-            <div className="mt-3 text-sm">
-              {detail.parentId ? (
-                <Link
-                  className="text-primary hover:underline"
-                  href={`/admin/issues/${detail.parentId}`}
-                >
-                  Open parent issue
-                </Link>
-              ) : (
-                <p className="text-muted-foreground">Root issue</p>
-              )}
-              <p className="mt-1 text-muted-foreground">
-                {detail.children.length} direct child
-                {detail.children.length === 1 ? "" : "ren"}
-              </p>
-            </div>
-          </section>
-          <section className="rounded-lg border border-white/10 bg-card/95 p-4">
-            <h2 className="font-semibold">External work</h2>
-            <div className="mt-3 grid gap-2">
-              {detail.links.map((link) => (
-                <a
-                  key={link}
-                  href={link}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex min-h-11 min-w-0 items-center gap-2 rounded-md border border-white/10 bg-background/60 px-3 text-sm text-primary hover:border-primary/30"
-                >
-                  <Link2 className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{link}</span>
-                  <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0" />
-                </a>
-              ))}
-              {detail.links.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No external systems linked.
-                </p>
-              )}
-            </div>
-          </section>
-        </aside>
+            </section>
+            <section className="rounded-lg border border-white/10 bg-card/95 p-4">
+              <h2 className="font-semibold">External work</h2>
+              <div className="mt-3 grid gap-2">
+                {detail.links.map((link) => (
+                  <a
+                    key={link}
+                    href={link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex min-h-11 min-w-0 items-center gap-2 rounded-md border border-white/10 bg-background/60 px-3 text-sm text-primary hover:border-primary/30"
+                  >
+                    <Link2 className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{link}</span>
+                    <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0" />
+                  </a>
+                ))}
+                {detail.links.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No external systems linked.
+                  </p>
+                )}
+              </div>
+            </section>
+          </aside>
+        </div>
       </div>
 
       {editOpen && (
