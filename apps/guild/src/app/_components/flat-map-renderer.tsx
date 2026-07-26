@@ -141,7 +141,6 @@ export function FlatMapRenderer({
     };
     const handlePointerDown = (event: PointerEvent) => {
       if ((event.target as HTMLElement).closest("[data-map-controls]")) return;
-      stage.setPointerCapture(event.pointerId);
       pointers.set(event.pointerId, {
         clientX: event.clientX,
         clientY: event.clientY,
@@ -161,6 +160,11 @@ export function FlatMapRenderer({
       if (activePointers.length !== 2) return;
       const [first, second] = activePointers;
       if (!first || !second) return;
+      for (const pointerId of pointers.keys()) {
+        if (!stage.hasPointerCapture(pointerId)) {
+          stage.setPointerCapture(pointerId);
+        }
+      }
       const bounds = stage.getBoundingClientRect();
       const midpointX = (first.clientX + second.clientX) / 2;
       const midpointY = (first.clientY + second.clientY) / 2;
@@ -226,6 +230,15 @@ export function FlatMapRenderer({
         return;
       }
       if (!drag) return;
+      if (
+        !stage.hasPointerCapture(event.pointerId) &&
+        Math.hypot(
+          event.clientX - drag.clientX,
+          event.clientY - drag.clientY,
+        ) >= 3
+      ) {
+        stage.setPointerCapture(event.pointerId);
+      }
       const startingView = {
         ...viewRef.current,
         centerLatitude: drag.centerLatitude,
@@ -456,10 +469,6 @@ export function FlatMapRenderer({
         >
           −
         </button>
-      </div>
-
-      <div className="pointer-events-none absolute left-1/2 top-4 z-20 hidden -translate-x-1/2 rounded-full border border-white/10 bg-background/70 px-3 py-1.5 text-[11px] text-muted-foreground backdrop-blur sm:block">
-        Map detail · {Math.round(view.zoom * 10) / 10}×
       </div>
     </motion.div>
   );

@@ -1,22 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  BriefcaseBusiness,
-  MapPin,
-} from "lucide-react";
+import { ArrowLeft, ArrowUpRight, BriefcaseBusiness } from "lucide-react";
 
 import { CAREER } from "@forge/consts";
-import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 
-import {
-  CollectionMotion,
-  CollectionMotionItem,
-} from "~/app/_components/collection-motion";
 import { CompanyMark } from "~/app/_components/company-mark";
+import { MemberCard } from "~/app/_components/member-card";
 import { SiteHeader } from "~/app/_components/site-header";
 import { api } from "~/trpc/server";
 
@@ -92,7 +83,6 @@ export default async function GuildCompanyPage({ params }: CompanyPageProps) {
             <div>
               <CompanyMark
                 displayName={company.displayName}
-                domain={company.domain}
                 imageUrl={company.logoUrl}
                 large
               />
@@ -140,8 +130,8 @@ export default async function GuildCompanyPage({ params }: CompanyPageProps) {
                   {group.items.length}
                 </span>
               </div>
-              <CollectionMotion className="grid gap-3 md:grid-cols-2">
-                {group.items.map((relationship) => {
+              <div className="grid gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {group.items.map((relationship, index) => {
                   const profile = relationship.profile;
                   const dates =
                     relationship.state === "current"
@@ -154,73 +144,39 @@ export default async function GuildCompanyPage({ params }: CompanyPageProps) {
                         ]
                           .filter(Boolean)
                           .join(" – ");
+                  const employmentDetails = [
+                    relationship.title,
+                    relationship.experienceType
+                      ? employmentExperienceLabels[relationship.experienceType]
+                      : null,
+                    relationship.city?.label,
+                    dates,
+                  ].filter((value): value is string => Boolean(value));
                   return (
-                    <CollectionMotionItem key={relationship.employmentId}>
-                      <Link
-                        href={`/members/${profile.id}?from=/companies/${company.id}`}
-                        className="guild-person-row group flex min-h-32 gap-4 rounded-xl border border-white/10 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        {profile.profilePictureUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={profile.profilePictureUrl}
-                            alt=""
-                            className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-white/10"
+                    <div key={relationship.employmentId} className="min-w-0">
+                      <MemberCard
+                        index={index}
+                        profile={profile}
+                        returnTo={`/companies/${company.id}`}
+                      />
+                      {employmentDetails.length > 0 ? (
+                        <p
+                          className="mt-2 flex h-5 min-w-0 items-center gap-2 px-1 text-xs text-muted-foreground"
+                          title={employmentDetails.join(" · ")}
+                        >
+                          <BriefcaseBusiness
+                            className="h-3.5 w-3.5 shrink-0 text-primary"
+                            aria-hidden="true"
                           />
-                        ) : (
-                          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-primary/15 font-semibold text-primary">
-                            {profile.firstName.at(0)}
-                            {profile.lastName.at(0)}
+                          <span className="truncate">
+                            {employmentDetails.join(" · ")}
                           </span>
-                        )}
-                        <span className="min-w-0">
-                          <span className="block truncate text-lg font-semibold group-hover:text-primary">
-                            {profile.firstName} {profile.lastName}
-                          </span>
-                          <span className="mt-1 block text-sm text-muted-foreground">
-                            {relationship.title ?? "Guild member"}
-                          </span>
-                          <span className="mt-3 flex flex-wrap gap-2">
-                            {relationship.experienceType ? (
-                              <Badge
-                                variant="outline"
-                                className="gap-1.5 border-white/10 bg-background/50"
-                              >
-                                <BriefcaseBusiness
-                                  className="h-3.5 w-3.5"
-                                  aria-hidden="true"
-                                />
-                                {
-                                  employmentExperienceLabels[
-                                    relationship.experienceType
-                                  ]
-                                }
-                              </Badge>
-                            ) : null}
-                            {relationship.city ? (
-                              <Badge
-                                variant="outline"
-                                className="gap-1.5 border-white/10 bg-background/50"
-                              >
-                                <MapPin
-                                  className="h-3.5 w-3.5"
-                                  aria-hidden="true"
-                                />
-                                {relationship.city.label}
-                              </Badge>
-                            ) : null}
-                            {dates ? (
-                              <span className="self-center text-xs text-muted-foreground">
-                                {dates}
-                              </span>
-                            ) : null}
-                          </span>
-                        </span>
-                      </Link>
-                    </CollectionMotionItem>
+                        </p>
+                      ) : null}
+                    </div>
                   );
                 })}
-              </CollectionMotion>
+              </div>
             </section>
           ))}
         </div>

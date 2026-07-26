@@ -1,54 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@forge/ui";
-
-const simpleIconSlugs: Record<string, string> = {
-  "advanced micro devices": "amd",
-  amd: "amd",
-  "ford motor": "ford",
-  nvidia: "nvidia",
-  tesla: "tesla",
-};
-
-function normalizedName(value: string) {
-  return value
-    .normalize("NFKD")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function companyLogoUrl(displayName: string, domain: string | null) {
-  const normalized = normalizedName(displayName);
-  const simpleIconSlug = simpleIconSlugs[normalized];
-  if (simpleIconSlug) {
-    return `https://cdn.simpleicons.org/${simpleIconSlug}/_/eee?viewbox=auto`;
-  }
-  if (!domain) return null;
-  const companyUrl = encodeURIComponent(`https://${domain}`);
-  return `https://www.google.com/s2/favicons?domain_url=${companyUrl}&sz=128`;
-}
 
 export function CompanyMark({
   className,
   displayName,
-  domain,
   imageUrl,
   large = false,
 }: {
   className?: string;
   displayName: string;
-  domain: string | null;
   imageUrl: string | null;
   large?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const logoUrl = useMemo(
-    () => imageUrl ?? companyLogoUrl(displayName, domain),
-    [displayName, domain, imageUrl],
-  );
   const initials = displayName
     .split(/\s+/)
     .slice(0, 2)
@@ -65,14 +32,14 @@ export function CompanyMark({
       )}
       aria-hidden="true"
     >
-      {failed || !logoUrl ? (
+      {failed || !imageUrl ? (
         initials
       ) : (
-        // Known vector marks use Simple Icons. The rest use the company's
-        // domain favicon, then fall back to a stable monogram.
+        // Officer-managed images are used when present; every other company
+        // receives the same stable monogram treatment.
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={logoUrl}
+          src={imageUrl}
           alt=""
           className={cn(
             "max-h-[72%] max-w-[76%] object-contain",

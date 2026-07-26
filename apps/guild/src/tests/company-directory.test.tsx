@@ -30,7 +30,8 @@ describe("Guild company directory", () => {
     );
     expect(html).toContain(">AMD<");
     expect(html).toContain("amd.com");
-    expect(html).toContain("cdn.simpleicons.org/amd");
+    expect(html).not.toContain("cdn.simpleicons.org");
+    expect(html).not.toContain("google.com/s2/favicons");
     expect(html).toContain("6 Guild members");
     expect(html).toContain("3 current");
   });
@@ -48,7 +49,7 @@ describe("Guild company directory", () => {
     );
 
     expect(html).toContain("https://objects.example.test/company.png");
-    expect(html).not.toContain("cdn.simpleicons.org/amd");
+    expect(html).not.toContain("cdn.simpleicons.org");
   });
 
   it("provides an explanatory empty state", () => {

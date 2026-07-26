@@ -97,7 +97,6 @@ export function CompanyDirectory({ companies }: { companies: Company[] }) {
                   <div className="flex items-start justify-between gap-4">
                     <CompanyMark
                       displayName={company.displayName}
-                      domain={company.domain}
                       imageUrl={company.logoUrl}
                     />
                     <ArrowUpRight
