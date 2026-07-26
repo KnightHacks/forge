@@ -4,29 +4,74 @@ import { describe, expect, it } from "vitest";
 import {
   applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
-  isTeamOnlyAudienceDefinition,
+  isDevelopmentReviewAudienceDefinition,
   normalizeRecipientEmail,
 } from "../../utils/email/audience";
 
 const HACKATHON_ID = "00000000-0000-4000-8000-000000000012";
 
 describe("Email Portal audience resolution", () => {
-  it("recognizes only the exact team audience for development delivery", () => {
-    expect(isTeamOnlyAudienceDefinition([{ kind: "team_members" }])).toBe(true);
+  it("recognizes only team and role audiences for development delivery", () => {
     expect(
-      isTeamOnlyAudienceDefinition([
+      isDevelopmentReviewAudienceDefinition([{ kind: "team_members" }]),
+    ).toBe(true);
+    expect(
+      isDevelopmentReviewAudienceDefinition([
         { kind: "team_members" },
-        { kind: "current_members" },
+        {
+          kind: "role",
+          roleId: "00000000-0000-4000-8000-000000000013",
+        },
       ]),
-    ).toBe(false);
-    expect(isTeamOnlyAudienceDefinition([{ kind: "current_members" }])).toBe(
-      false,
-    );
+    ).toBe(true);
     expect(
-      isTeamOnlyAudienceDefinition([
+      isDevelopmentReviewAudienceDefinition([{ kind: "current_members" }]),
+    ).toBe(false);
+    expect(
+      isDevelopmentReviewAudienceDefinition([
         { kind: "team_members", status: "confirmed" },
       ]),
     ).toBe(false);
+  });
+
+  it("resolves a role through Member email with auth email as no-profile fallback", () => {
+    const roleId = "00000000-0000-4000-8000-000000000013";
+    const snapshot = buildEmailAudienceSnapshot({
+      currentDate: "2026-07-25",
+      definitions: [{ kind: "role", roleId }],
+      hackers: [],
+      members: [
+        {
+          email: "member-preferred@example.test",
+          graduationDate: "2027-05-01",
+          id: "member-role",
+          name: "Member Preferred",
+          roleIds: [roleId],
+          roleNames: ["Design"],
+        },
+      ],
+      providerStates: [],
+      usersWithoutMember: [
+        {
+          email: "auth-fallback@example.test",
+          name: "Auth Fallback",
+          roleIds: [roleId],
+          roleNames: ["Design"],
+          userId: "user-without-member",
+        },
+      ],
+    });
+
+    expect(snapshot.recipients.map(({ email }) => email).sort()).toEqual([
+      "auth-fallback@example.test",
+      "member-preferred@example.test",
+    ]);
+    expect(snapshot.recipients).toContainEqual(
+      expect.objectContaining({
+        email: "member-preferred@example.test",
+        matchReasons: [`role:${roleId}`],
+      }),
+    );
   });
 
   it("TC-017 removes only selected emails from the resolved recipient pool", () => {
@@ -103,6 +148,7 @@ describe("Email Portal audience resolution", () => {
           graduationDate: "2027-05-01",
           id: "member-1",
           name: "Designer",
+          roleIds: ["role-design"],
           roleNames: ["Design"],
         },
         {
@@ -110,14 +156,16 @@ describe("Email Portal audience resolution", () => {
           graduationDate: "2027-05-01",
           id: "member-2",
           name: "Social",
+          roleIds: ["role-social"],
           roleNames: ["Social"],
         },
       ],
       providerStates: [],
-      teamRoleNames: ["Design"],
+      teamRoleIds: ["role-design"],
       usersWithoutMember: [
         {
           email: "oauth-real-address@example.com",
+          roleIds: ["role-design"],
           roleNames: ["Design"],
           userId: "user-without-member",
         },

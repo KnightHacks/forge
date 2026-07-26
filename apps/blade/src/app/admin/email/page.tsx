@@ -43,7 +43,7 @@ export default async function EmailPortalPage({
       <EmailPortalAdmin
         campaignAudienceMode={
           env.NODE_ENV === "development" && env.BLADE_E2E_AUTH !== "true"
-            ? "team_only"
+            ? "development_review"
             : "all"
         }
         initialAudienceOptions={audienceOptions}

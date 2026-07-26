@@ -159,7 +159,7 @@ describe("Email Portal workspace", () => {
     expect(html).toContain("Send test to directors");
   });
 
-  it("shows only the locked team audience in development review mode", () => {
+  it("shows team and every role in development review mode", () => {
     const html = renderToStaticMarkup(
       createElement(EmailPortalWorkspace, {
         audienceOptions: {
@@ -177,8 +177,14 @@ describe("Email Portal workspace", () => {
             { kind: "alumni", label: "Alumni" },
             { kind: "team_members", label: "Team members" },
           ],
+          roles: [
+            {
+              id: "00000000-0000-4000-8000-000000000020",
+              name: "Design",
+            },
+          ],
         },
-        campaignAudienceMode: "team_only",
+        campaignAudienceMode: "development_review",
         initialTab: "compose",
         preview: null,
         sends: [],
@@ -188,8 +194,10 @@ describe("Email Portal workspace", () => {
 
     expect(html).toContain("Development review mode is live");
     expect(html).toContain("Team members");
+    expect(html).toContain("Design");
     expect(html).not.toContain("Current members");
     expect(html).not.toContain("BloomKnights Hackers");
-    expect(html).toMatch(/disabled="" checked=""/);
+    expect(html).toMatch(/checked=""/);
+    expect(html).not.toMatch(/disabled="" checked=""/);
   });
 });

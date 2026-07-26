@@ -29,9 +29,22 @@ describe("Email Portal validators", () => {
     });
   });
 
+  it("accepts a stable role ID as an audience", () => {
+    expect(
+      emailAudienceDefinitionSchema.parse({
+        kind: "role",
+        roleId: "00000000-0000-4000-8000-000000000013",
+      }),
+    ).toEqual({
+      kind: "role",
+      roleId: "00000000-0000-4000-8000-000000000013",
+    });
+  });
+
   it.each([
     { kind: "sql", query: "select * from members" },
     { kind: "hackathon", hackathonId: "not-a-uuid" },
+    { kind: "role", roleId: "not-a-uuid" },
     {
       hackathonId: "00000000-0000-4000-8000-000000000012",
       kind: "hackathon",

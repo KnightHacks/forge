@@ -635,23 +635,24 @@ Expected observations:
 - Compose draft storage restores subject, mode, body/template, audience, manual exclusions, and scheduling fields across a workspace remount and clears after successful confirmation.
 - The displayed confirmation count matches the stored unique snapshot.
 
-### TC-062: Development team-only live campaign boundary
+### TC-062: Development role-scoped live campaign boundary
 
 Setup:
 
-- Blade runs with `NODE_ENV=development`, valid Listmonk credentials, enabled team-audience roles, and a mixture of team and non-team members.
+- Blade runs with `NODE_ENV=development`, valid Listmonk credentials, enabled team-audience roles, ordinary roles, and a mixture of users with and without Member profiles.
 
 Action:
 
-- An administrator previews and confirms the locked Team members audience.
-- Bypass attempts submit a non-team audience, add an out-of-roster recipient, omit the provider team scope, or start a campaign without that scope.
+- An administrator previews and confirms Team members and an explicit role audience.
+- Bypass attempts submit a non-role preset, add a recipient outside the selected current assignments, omit the provider development scope, or start a campaign without that scope.
 
 Expected observations:
 
-- The UI exposes only the selected, disabled Team members audience.
-- Preview and confirmation reject any stored audience other than exactly `team_members`.
-- Delivery rechecks every retained address against current enabled team roles immediately before provider preparation.
-- The provider creates and starts only a server-scoped team campaign.
+- The UI exposes Team members plus every role, while current-member, alumni, and hackathon presets remain hidden.
+- Preview and confirmation reject any stored audience outside Team members and role definitions.
+- Role audiences prefer `Member.email` and use `User.email` only for users without a Member profile.
+- Delivery rechecks every retained address against the selected current roles immediately before provider preparation.
+- The provider creates and starts only a server-scoped development-review campaign.
 - Every bypass attempt fails before a campaign can start.
 - `NODE_ENV=production` exposes normal approved audiences, and `NODE_ENV=test` remains network-free.
 - The scheduled state and cancellation appear without a full-page client conversion.

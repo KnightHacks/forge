@@ -284,6 +284,8 @@ describe("production Listmonk campaign gateway", () => {
       .fn()
       .mockResolvedValueOnce({ data: { id: 301 } })
       .mockResolvedValueOnce({ data: { id: 302 } })
+      .mockResolvedValueOnce({ data: { results: [] } })
+      .mockResolvedValueOnce({ data: { id: 304 } })
       .mockResolvedValueOnce({ data: { id: 303 } });
     const gateway = createEmailProviderGateway({
       campaignTemplateId: 1,
@@ -300,17 +302,31 @@ describe("production Listmonk campaign gateway", () => {
     });
 
     expect(transport).toHaveBeenNthCalledWith(
-      3,
+      5,
       expect.objectContaining({
         body: expect.objectContaining({
           body: "A complete plain-text message.",
           content_type: "plain",
+          template_id: 304,
         }),
         method: "POST",
         path: "/api/campaigns",
       }),
     );
-    expect(transport.mock.calls[2]?.[0].body).not.toHaveProperty("altbody");
+    expect(transport).toHaveBeenNthCalledWith(3, {
+      method: "GET",
+      path: "/api/templates?per_page=all",
+    });
+    expect(transport).toHaveBeenNthCalledWith(4, {
+      body: {
+        body: '{{ template "content" . }}',
+        name: "Forge plain-text campaign wrapper",
+        type: "campaign",
+      },
+      method: "POST",
+      path: "/api/templates",
+    });
+    expect(transport.mock.calls[4]?.[0].body).not.toHaveProperty("altbody");
   });
 
   it.each([

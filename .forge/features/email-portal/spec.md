@@ -88,7 +88,7 @@ The Blade admin area provides three connected workspaces:
 - A code template can use supported React Email layout components and structured merge, conditional, and repeated-content constructs.
 - The portal identifies required personalization fields and warns when the chosen audience cannot supply them for every recipient without a fallback.
 - An administrator can compose either a templated email or a plain-text email.
-- The audience picker exposes current members, alumni, the existing team roster, every selectable hackathon, all hackers for that hackathon, and each supported hacker status for that hackathon.
+- The audience picker exposes current members, alumni, the existing team roster, every role in `Roles`, every selectable hackathon, all hackers for that hackathon, and each supported hacker status for that hackathon.
 - Selecting overlapping groups never sends more than once to the same normalized email address.
 - An administrator can inspect every eligible recipient in the selected audience and deselect individuals before previewing.
 - The audience preview and final confirmation dialog show the exact unique recipient count and relevant exclusions before accepting the send.
@@ -99,6 +99,7 @@ The Blade admin area provides three connected workspaces:
 - An optional portal test-send action always targets exactly `directors@knighthacks.org` and offers no alternate recipient input.
 - No local preview, retry, scheduled, or normal automated-suite path can deliver an email to another real address.
 - Automated suites use fake delivery. Any separately authorized live automated integration test may target only `donotreply@knighthacks.org`.
-- In `NODE_ENV=development`, live audience campaigns are restricted in the UI, API, current-role recheck, and provider boundary to the enabled team roster. `NODE_ENV=production` uses normal approved audiences, while `NODE_ENV=test` is network-free.
+- In `NODE_ENV=development`, live audience campaigns are restricted in the UI, API, current-role recheck, and provider boundary to Team members and explicit role audiences. `NODE_ENV=production` uses normal approved audiences, while `NODE_ENV=test` is network-free.
+- Plain-text composition produces a real `text/plain` campaign without Listmonk's default HTML wrapper.
 - Portal-created bulk sends honor unsubscribe and suppression state.
 - Arbitrary SQL audience entry is not present in the portal.

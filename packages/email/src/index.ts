@@ -82,14 +82,14 @@ export function resolveEmailDeliveryPolicy(
   nodeEnv: "development" | "production" | "test",
   bladeE2E = false,
 ): {
-  allowTeamCampaigns: boolean;
+  allowDevelopmentCampaigns: boolean;
   mode: EmailDeliveryMode;
 } {
   return nodeEnv === "production"
-    ? { allowTeamCampaigns: false, mode: "production" }
+    ? { allowDevelopmentCampaigns: false, mode: "production" }
     : nodeEnv === "test" || bladeE2E
-      ? { allowTeamCampaigns: false, mode: "fake" }
-      : { allowTeamCampaigns: true, mode: "test" };
+      ? { allowDevelopmentCampaigns: false, mode: "fake" }
+      : { allowDevelopmentCampaigns: true, mode: "test" };
 }
 
 export function getDefaultEmailProviderGateway() {
@@ -98,7 +98,7 @@ export function getDefaultEmailProviderGateway() {
     env.BLADE_E2E_AUTH === "true",
   );
   defaultGateway ??= createEmailProviderGateway({
-    allowTeamCampaigns: policy.allowTeamCampaigns,
+    allowDevelopmentCampaigns: policy.allowDevelopmentCampaigns,
     campaignTemplateId: env.LISTMONK_CAMPAIGN_TEMPLATE_ID,
     fromEmail: env.LISTMONK_FROM_EMAIL,
     mode: policy.mode,

@@ -41,6 +41,8 @@ Current phase: Development team-campaign review / live review server running
 - 2026-07-26: Compose is again the first and default tab. Its subject, content mode/body/template, audience selections, manual deselections, and schedule fields persist in a validated, versioned seven-day local-storage draft and clear after successful confirmation.
 - 2026-07-26: Development now supports a real Listmonk campaign only for the exact enabled team audience. The UI locks Team members, preview/confirmation reject other definitions, delivery rechecks all retained emails against current enabled roles, and the provider requires a server-issued team scope for campaign creation and start.
 - 2026-07-26: The deployment-facing email mode flag was removed. `NODE_ENV=production` always resolves to normal Listmonk delivery, normal development resolves to directors tests plus team-only campaigns, and unit/test processes resolve to the fake provider. The existing Blade E2E harness marker selects fake delivery under `next dev` and is ignored by the production-first policy.
+- 2026-07-26: Every `Roles` row is now an audience option in production and development. Role audiences prefer the linked Member profile email and fall back to the auth-user email only when no Member profile exists. Development permits only Team members and explicit role definitions, with current-assignment revalidation before Listmonk.
+- 2026-07-26: The first live team review campaign completed through Listmonk for 10 recipients. Although the campaign content type was `plain`, Listmonk template `1` wrapped it in the default HTML layout and recipients reported spam placement. Forge now creates/reuses a content-only plaintext campaign wrapper; deliverability authentication still requires checking the received message's Gmail “Show original” results.
 
 ## Open questions
 
@@ -68,6 +70,7 @@ Current phase: Development team-campaign review / live review server running
 - [x] Validate the Listmonk connection read-only and return the review server to port 3000 in test-only delivery mode.
 - [x] Correct Listmonk v6 transactional test delivery, validate the refreshed token, remove the SQL-query permission dependency, and prevent test-mode audience retries.
 - [x] Enable server-enforced development team campaigns, restore Compose as the default, and persist unfinished compose drafts across template work.
+- [x] Add every role as an audience, preserve Member-email authority, and correct Listmonk plaintext wrapping.
 
 ## Validation / commands
 
@@ -127,7 +130,12 @@ Current phase: Development team-campaign review / live review server running
 - Environment-policy unit coverage confirms `production → production`, `development → team review`, `test → fake`, and that the Blade E2E marker selects fake only outside production.
 - Follow-up email tests: 3 files / 41 tests passed. API email tests: 3 files / 26 tests passed. Blade workspace/draft tests: 2 files / 7 tests passed.
 - Synthetic Playwright TC-061 passed under the fake E2E harness: Compose landed first, unfinished subject/mode/body survived template creation, the scheduled send appeared in history, and cancellation completed without network delivery.
-- The development team-only implementation did not create or start a live campaign during automated validation; the user retains the first live team-campaign confirmation.
+- Automated development validation did not create or start a live campaign; the subsequent first live team campaign was explicitly confirmed by the user in Blade.
+- Read-only Listmonk inspection confirmed completed campaign `2` sent 10/10 with `content_type=plain` but default HTML template `1`; no email was sent during the corrective validation.
+- Read-only DNS inspection found Knight Hacks SPF currently authorizes Google, Google DKIM is published, and DMARC is monitoring-only (`p=none`). The received message authentication results are still needed to distinguish authentication failure from reputation/content filtering.
+- Follow-up Validators email tests passed (15), Email package tests passed (41), API email tests passed (27), and Blade workspace/draft tests passed (7).
+- Validators and Email builds, API and Blade typechecks, targeted ESLint, Prettier, and `git diff --check` passed after role audiences and plaintext delivery corrections.
+- Changed-file React analysis passed every Email Portal file; the command retains the two existing `trpc/react.tsx` analyzer failures in the current and legacy Blade trees.
 
 ## Links
 

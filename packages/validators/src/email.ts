@@ -27,6 +27,12 @@ export const emailAudienceDefinitionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("team_members") }).strict(),
   z
     .object({
+      kind: z.literal("role"),
+      roleId: uuidSchema,
+    })
+    .strict(),
+  z
+    .object({
       hackathonId: uuidSchema,
       kind: z.literal("hackathon"),
       statuses: z
@@ -41,7 +47,7 @@ export const emailAudienceDefinitionSchema = z.discriminatedUnion("kind", [
 export const emailAudienceDefinitionsSchema = z
   .array(emailAudienceDefinitionSchema)
   .min(1, "Choose at least one audience.")
-  .max(20)
+  .max(200)
   .superRefine((definitions, ctx) => {
     const identities = definitions.map((definition) =>
       JSON.stringify(definition),

@@ -16,23 +16,23 @@ const content = {
 describe("email delivery mode boundary", () => {
   it("derives production, development review, and fake policies only from NODE_ENV", () => {
     expect(resolveEmailDeliveryPolicy("production")).toEqual({
-      allowTeamCampaigns: false,
+      allowDevelopmentCampaigns: false,
       mode: "production",
     });
     expect(resolveEmailDeliveryPolicy("development")).toEqual({
-      allowTeamCampaigns: true,
+      allowDevelopmentCampaigns: true,
       mode: "test",
     });
     expect(resolveEmailDeliveryPolicy("test")).toEqual({
-      allowTeamCampaigns: false,
+      allowDevelopmentCampaigns: false,
       mode: "fake",
     });
     expect(resolveEmailDeliveryPolicy("development", true)).toEqual({
-      allowTeamCampaigns: false,
+      allowDevelopmentCampaigns: false,
       mode: "fake",
     });
     expect(resolveEmailDeliveryPolicy("production", true)).toEqual({
-      allowTeamCampaigns: false,
+      allowDevelopmentCampaigns: false,
       mode: "production",
     });
   });
@@ -155,7 +155,7 @@ describe("email delivery mode boundary", () => {
       .mockResolvedValueOnce({ data: { id: 203 } })
       .mockResolvedValueOnce({ data: true });
     const gateway = createEmailProviderGateway({
-      allowTeamCampaigns: true,
+      allowDevelopmentCampaigns: true,
       campaignTemplateId: 1,
       mode: "test",
       transport,
@@ -163,12 +163,16 @@ describe("email delivery mode boundary", () => {
 
     const campaign = await gateway.createCampaign({
       ...content,
-      audienceScope: "team_members",
+      audienceScope: "development_review",
       recipientSnapshot: ["teammate@example.test"],
       sendId: "development-team-review",
     });
     await expect(
-      gateway.setCampaignStatus(campaign.campaignId, "running", "team_members"),
+      gateway.setCampaignStatus(
+        campaign.campaignId,
+        "running",
+        "development_review",
+      ),
     ).resolves.toBeUndefined();
     expect(campaign).toMatchObject({ campaignId: 203, listId: 201 });
     expect(transport).toHaveBeenLastCalledWith({
@@ -181,7 +185,7 @@ describe("email delivery mode boundary", () => {
   it("rejects an unscoped campaign even when team review is enabled", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
-      allowTeamCampaigns: true,
+      allowDevelopmentCampaigns: true,
       mode: "test",
       transport,
     });

@@ -20,6 +20,7 @@ interface AudienceMember {
   id: string;
   mlhConsent?: boolean;
   name: string;
+  roleIds?: string[];
   roleNames: string[];
 }
 
@@ -41,6 +42,8 @@ interface ProviderState {
 
 interface UserWithoutMember {
   email?: string | null;
+  name?: string | null;
+  roleIds?: string[];
   roleNames: string[];
   userId: string;
 }
@@ -51,7 +54,7 @@ interface AudienceInput {
   hackers: AudienceHacker[];
   members: AudienceMember[];
   providerStates: ProviderState[];
-  teamRoleNames?: string[];
+  teamRoleIds?: string[];
   usersWithoutMember?: UserWithoutMember[];
 }
 
@@ -59,9 +62,10 @@ interface Match {
   email: string;
   hacker?: AudienceHacker;
   member?: AudienceMember;
+  roleUser?: UserWithoutMember;
   reason: string;
   sourceId: string;
-  sourceType: "hacker" | "member";
+  sourceType: "hacker" | "member" | "user";
 }
 
 interface CanonicalRecipient {
@@ -85,18 +89,30 @@ export function normalizeRecipientEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function isTeamOnlyAudienceDefinition(value: unknown) {
-  if (!Array.isArray(value) || value.length !== 1) return false;
-  const definition: unknown = value[0];
-  if (
-    typeof definition !== "object" ||
-    definition === null ||
-    Array.isArray(definition)
-  ) {
-    return false;
-  }
-  const record = definition as Record<string, unknown>;
-  return Object.keys(record).length === 1 && record.kind === "team_members";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isDevelopmentReviewAudienceDefinition(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) return false;
+  return value.every((definition: unknown) => {
+    if (
+      typeof definition !== "object" ||
+      definition === null ||
+      Array.isArray(definition)
+    ) {
+      return false;
+    }
+    const record = definition as Record<string, unknown>;
+    if (record.kind === "team_members") {
+      return Object.keys(record).length === 1;
+    }
+    return (
+      record.kind === "role" &&
+      Object.keys(record).length === 2 &&
+      typeof record.roleId === "string" &&
+      UUID_PATTERN.test(record.roleId)
+    );
+  });
 }
 
 export function applyManualRecipientExclusions<T extends { email: string }>(
@@ -130,7 +146,17 @@ function selected(
 
 function memberMatches(input: AudienceInput): Match[] {
   const result: Match[] = [];
-  const teamRoles = new Set(input.teamRoleNames ?? []);
+  const teamRoles = new Set(input.teamRoleIds ?? []);
+  const selectedRoleIds = new Set(
+    input.definitions
+      .filter(
+        (
+          definition,
+        ): definition is Extract<EmailAudienceDefinition, { kind: "role" }> =>
+          definition.kind === "role",
+      )
+      .map(({ roleId }) => roleId),
+  );
   for (const member of input.members) {
     if (
       selected(input.definitions, "current_members") &&
@@ -158,7 +184,7 @@ function memberMatches(input: AudienceInput): Match[] {
     }
     if (
       selected(input.definitions, "team_members") &&
-      member.roleNames.some((name) => teamRoles.has(name))
+      (member.roleIds ?? []).some((roleId) => teamRoles.has(roleId))
     ) {
       result.push({
         email: member.email,
@@ -168,8 +194,46 @@ function memberMatches(input: AudienceInput): Match[] {
         sourceType: "member",
       });
     }
+    for (const roleId of member.roleIds ?? []) {
+      if (!selectedRoleIds.has(roleId)) continue;
+      result.push({
+        email: member.email,
+        member,
+        reason: `role:${roleId}`,
+        sourceId: member.id,
+        sourceType: "member",
+      });
+    }
   }
   return result;
+}
+
+function roleUserMatches(input: AudienceInput): Match[] {
+  const selectedRoleIds = new Set(
+    input.definitions
+      .filter(
+        (
+          definition,
+        ): definition is Extract<EmailAudienceDefinition, { kind: "role" }> =>
+          definition.kind === "role",
+      )
+      .map(({ roleId }) => roleId),
+  );
+  return (input.usersWithoutMember ?? []).flatMap((roleUser) => {
+    const email = roleUser.email;
+    if (!email) return [];
+    return (roleUser.roleIds ?? [])
+      .filter((roleId) => selectedRoleIds.has(roleId))
+      .map(
+        (roleId): Match => ({
+          email,
+          reason: `role:${roleId}`,
+          roleUser,
+          sourceId: roleUser.userId,
+          sourceType: "user",
+        }),
+      );
+  });
 }
 
 function hackerMatches(input: AudienceInput): Match[] {
@@ -219,7 +283,8 @@ function toCanonicalRecipient(
   });
   const member = sorted.find((match) => match.member)?.member;
   const hacker = sorted.find((match) => match.hacker)?.hacker;
-  const name = member?.name ?? hacker?.name ?? email;
+  const roleUser = sorted.find((match) => match.roleUser)?.roleUser;
+  const name = member?.name ?? hacker?.name ?? roleUser?.name ?? email;
   const firstName =
     member?.firstName ?? hacker?.firstName ?? name.trim().split(/\s+/)[0] ?? "";
 
@@ -238,7 +303,7 @@ function toCanonicalRecipient(
           }
         : undefined,
       recipient: { email, firstName, name },
-      team: { roleNames: member?.roleNames ?? [] },
+      team: { roleNames: member?.roleNames ?? roleUser?.roleNames ?? [] },
     },
     email,
     matchReasons: [...new Set(matches.map(({ reason }) => reason))].sort(),
@@ -251,7 +316,11 @@ function checksum(value: unknown) {
 }
 
 export function buildEmailAudienceSnapshot(input: AudienceInput) {
-  const matches = [...memberMatches(input), ...hackerMatches(input)];
+  const matches = [
+    ...memberMatches(input),
+    ...hackerMatches(input),
+    ...roleUserMatches(input),
+  ];
   const grouped = new Map<string, Match[]>();
   let excludedInvalid = 0;
   for (const match of matches) {
@@ -314,7 +383,9 @@ export function buildEmailAudienceSnapshot(input: AudienceInput) {
   const warnings =
     selected(input.definitions, "team_members") &&
     (input.usersWithoutMember?.some((user) =>
-      user.roleNames.some((role) => (input.teamRoleNames ?? []).includes(role)),
+      (user.roleIds ?? []).some((roleId) =>
+        (input.teamRoleIds ?? []).includes(roleId),
+      ),
     ) ??
       false)
       ? [
@@ -322,8 +393,8 @@ export function buildEmailAudienceSnapshot(input: AudienceInput) {
             code: "TEAM_USER_WITHOUT_MEMBER" as const,
             count:
               input.usersWithoutMember?.filter((user) =>
-                user.roleNames.some((role) =>
-                  (input.teamRoleNames ?? []).includes(role),
+                (user.roleIds ?? []).some((roleId) =>
+                  (input.teamRoleIds ?? []).includes(roleId),
                 ),
               ).length ?? 0,
           },

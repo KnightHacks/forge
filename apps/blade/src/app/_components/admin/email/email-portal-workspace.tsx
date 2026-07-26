@@ -77,7 +77,7 @@ const VisualEmailEditor = dynamic(
 );
 
 export type EmailPortalTab = "compose" | "sends" | "templates";
-export type CampaignAudienceMode = "all" | "disabled" | "team_only";
+export type CampaignAudienceMode = "all" | "development_review" | "disabled";
 
 export interface EmailPortalTemplate {
   id: string;
@@ -193,6 +193,10 @@ export interface EmailAudienceOptions {
     kind: "alumni" | "current_members" | "team_members";
     label: string;
   }[];
+  roles: {
+    id: string;
+    name: string;
+  }[];
 }
 
 export interface TemplateEditorSeed {
@@ -307,6 +311,11 @@ function audienceDefinitions(selected: Set<string>): EmailAudienceDefinition[] {
       key === "team_members"
     ) {
       result.push({ kind: key });
+      continue;
+    }
+    if (key.startsWith("role:")) {
+      const roleId = key.slice("role:".length);
+      if (roleId) result.push({ kind: "role", roleId });
       continue;
     }
     const [, hackathonId, status] = key.split(":");
@@ -684,7 +693,8 @@ export function EmailPortalWorkspace({
 }) {
   const router = useRouter();
   const campaignDeliveryEnabled = campaignAudienceMode !== "disabled";
-  const teamOnlyCampaign = campaignAudienceMode === "team_only";
+  const developmentReviewCampaign =
+    campaignAudienceMode === "development_review";
   const [tab, setTab] = useState<EmailPortalTab>(initialTab);
   const [editor, setEditor] = useState<TemplateEditorSeed | null>(null);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
@@ -713,7 +723,9 @@ export function EmailPortalWorkspace({
   const [plainText, setPlainText] = useState("");
   const [templateRevisionId, setTemplateRevisionId] = useState("");
   const [selectedAudiences, setSelectedAudiences] = useState(
-    new Set<string>([teamOnlyCampaign ? "team_members" : "current_members"]),
+    new Set<string>([
+      developmentReviewCampaign ? "team_members" : "current_members",
+    ]),
   );
   const [scheduleMode, setScheduleMode] = useState<"now" | "schedule">("now");
   const [scheduledFor, setScheduledFor] = useState("");
@@ -727,6 +739,11 @@ export function EmailPortalWorkspace({
     try {
       const draft = loadEmailComposeDraft(window.localStorage);
       if (draft) {
+        const restoredAudiences = developmentReviewCampaign
+          ? draft.selectedAudiences.filter(
+              (key) => key === "team_members" || key.startsWith("role:"),
+            )
+          : draft.selectedAudiences;
         setContentMode(draft.contentMode);
         setExcludedRecipients(new Set(draft.excludedRecipients));
         setPlainText(draft.plainText);
@@ -734,7 +751,13 @@ export function EmailPortalWorkspace({
         setScheduledFor(draft.scheduledFor);
         setSelectedAudiences(
           new Set(
-            teamOnlyCampaign ? ["team_members"] : draft.selectedAudiences,
+            restoredAudiences.length > 0
+              ? restoredAudiences
+              : [
+                  developmentReviewCampaign
+                    ? "team_members"
+                    : "current_members",
+                ],
           ),
         );
         setSubject(draft.subject);
@@ -745,7 +768,7 @@ export function EmailPortalWorkspace({
     } finally {
       setComposeDraftReady(true);
     }
-  }, [teamOnlyCampaign]);
+  }, [developmentReviewCampaign]);
 
   useEffect(() => {
     if (!composeDraftReady) return;
@@ -780,7 +803,7 @@ export function EmailPortalWorkspace({
   ]);
 
   const options = Array.isArray(audienceOptions)
-    ? { hackathons: [], presets: [] }
+    ? { hackathons: [], presets: [], roles: [] }
     : audienceOptions;
   const publishedTemplates = useMemo(
     () =>
@@ -865,7 +888,6 @@ export function EmailPortalWorkspace({
   };
 
   const toggleAudience = (key: string) => {
-    if (teamOnlyCampaign) return;
     setSelectedAudiences((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key);
@@ -898,7 +920,7 @@ export function EmailPortalWorkspace({
     setScheduleMode("now");
     setScheduledFor("");
     setSelectedAudiences(
-      new Set([teamOnlyCampaign ? "team_members" : "current_members"]),
+      new Set([developmentReviewCampaign ? "team_members" : "current_members"]),
     );
     setSubject("");
     setTemplateRevisionId("");
@@ -1137,10 +1159,11 @@ export function EmailPortalWorkspace({
                   test to directors” to exercise Listmonk safely.
                 </div>
               )}
-              {teamOnlyCampaign && (
+              {developmentReviewCampaign && (
                 <div className="rounded-md border border-violet-500/30 bg-violet-500/10 p-3 text-sm text-violet-100">
                   Development review mode is live. Campaign delivery is enforced
-                  server-side to enabled Team members only.
+                  server-side to Team members and the explicit roles selected
+                  below.
                 </div>
               )}
               <div className="grid gap-2">
@@ -1243,16 +1266,15 @@ export function EmailPortalWorkspace({
                   {options.presets
                     .filter(
                       (preset) =>
-                        !teamOnlyCampaign || preset.kind === "team_members",
+                        !developmentReviewCampaign ||
+                        preset.kind === "team_members",
                     )
                     .map((preset) => (
                       <label
                         key={preset.kind}
                         className={cn(
                           "flex min-h-11 items-center gap-3 rounded-md border px-3 py-2 text-sm",
-                          teamOnlyCampaign
-                            ? "cursor-not-allowed"
-                            : "cursor-pointer",
+                          "cursor-pointer",
                           selectedAudiences.has(preset.kind)
                             ? "border-primary/35 bg-primary/10"
                             : "border-white/10 bg-background/50",
@@ -1261,14 +1283,44 @@ export function EmailPortalWorkspace({
                         <input
                           type="checkbox"
                           checked={selectedAudiences.has(preset.kind)}
-                          disabled={teamOnlyCampaign}
                           onChange={() => toggleAudience(preset.kind)}
                         />
                         {preset.label}
                       </label>
                     ))}
                 </div>
-                {!teamOnlyCampaign &&
+                <div className="rounded-md border border-white/10 bg-background/45 p-3">
+                  <p className="mb-3 text-sm font-medium">Roles</p>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {options.roles.map((role) => {
+                      const key = `role:${role.id}`;
+                      return (
+                        <label
+                          key={role.id}
+                          className={cn(
+                            "flex min-h-10 cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-sm",
+                            selectedAudiences.has(key)
+                              ? "border-primary/35 bg-primary/10"
+                              : "border-white/10",
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedAudiences.has(key)}
+                            onChange={() => toggleAudience(key)}
+                          />
+                          {role.name || "Unnamed role"}
+                        </label>
+                      );
+                    })}
+                    {options.roles.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No roles are configured.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {!developmentReviewCampaign &&
                   options.hackathons.map((hackathon) => (
                     <div
                       key={hackathon.id}

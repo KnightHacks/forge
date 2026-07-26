@@ -49,7 +49,7 @@ function isEmailComposeDraft(value: unknown): value is EmailComposeDraft {
     (draft.scheduleMode === "now" || draft.scheduleMode === "schedule") &&
     typeof draft.scheduledFor === "string" &&
     draft.scheduledFor.length <= 40 &&
-    isStringArray(draft.selectedAudiences, { itemMax: 160, max: 20 }) &&
+    isStringArray(draft.selectedAudiences, { itemMax: 160, max: 200 }) &&
     typeof draft.subject === "string" &&
     draft.subject.length <= 200 &&
     typeof draft.templateRevisionId === "string" &&

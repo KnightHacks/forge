@@ -2,6 +2,8 @@ export const DIRECTORS_TEST_RECIPIENT = "directors@knighthacks.org";
 
 const RAW_CONTENT_TEMPLATE_BODY = "{{ Safe .Tx.Data.body }}";
 const RAW_CONTENT_TEMPLATE_NAME = "Forge raw-content transactional wrapper";
+const PLAIN_CAMPAIGN_TEMPLATE_BODY = '{{ template "content" . }}';
+const PLAIN_CAMPAIGN_TEMPLATE_NAME = "Forge plain-text campaign wrapper";
 
 export type EmailDeliveryMode = "disabled" | "fake" | "production" | "test";
 
@@ -16,7 +18,7 @@ export type EmailHttpTransport = (
 ) => Promise<{ data: unknown }>;
 
 export interface CampaignContent {
-  audienceScope?: "team_members";
+  audienceScope?: "development_review";
   html: string;
   isRetry?: boolean;
   recipientData?: {
@@ -85,7 +87,7 @@ export interface EmailProviderGateway {
   setCampaignStatus(
     campaignId: number,
     status: "cancelled" | "draft" | "running" | "scheduled",
-    audienceScope?: "team_members",
+    audienceScope?: "development_review",
   ): Promise<void>;
   sendTest(input: TestEmailContent): Promise<{
     providerId: number;
@@ -159,7 +161,7 @@ function disabledError() {
 function testDeliveryOnlyError() {
   return new EmailProviderError(
     "TEST_DELIVERY_ONLY",
-    "This delivery mode permits only directors tests and verified development team campaigns.",
+    "This delivery mode permits only directors tests and server-verified development audiences.",
   );
 }
 
@@ -246,37 +248,39 @@ function disabledGateway(): EmailProviderGateway {
 function testGateway(
   transport: EmailHttpTransport | undefined,
   config: {
-    allowTeamCampaigns: boolean;
+    allowDevelopmentCampaigns: boolean;
     campaignTemplateId?: number;
     fromEmail?: string;
   },
 ): EmailProviderGateway {
   const campaignGateway = productionGateway(transport, config);
-  const permitsTeamCampaign = (audienceScope: "team_members" | undefined) =>
-    config.allowTeamCampaigns && audienceScope === "team_members";
+  const permitsDevelopmentCampaign = (
+    audienceScope: "development_review" | undefined,
+  ) =>
+    config.allowDevelopmentCampaigns && audienceScope === "development_review";
   return {
     createCampaign(input) {
-      return permitsTeamCampaign(input.audienceScope)
+      return permitsDevelopmentCampaign(input.audienceScope)
         ? campaignGateway.createCampaign(input)
         : Promise.reject(testDeliveryOnlyError());
     },
     reconcileCampaign(campaignId) {
-      return config.allowTeamCampaigns
+      return config.allowDevelopmentCampaigns
         ? campaignGateway.reconcileCampaign(campaignId)
         : Promise.reject(testDeliveryOnlyError());
     },
     lookupSubscriberStates(emails) {
-      return config.allowTeamCampaigns
+      return config.allowDevelopmentCampaigns
         ? campaignGateway.lookupSubscriberStates(emails)
         : Promise.resolve([]);
     },
     removeRecipientNamespace(sendId, emails) {
-      return config.allowTeamCampaigns
+      return config.allowDevelopmentCampaigns
         ? campaignGateway.removeRecipientNamespace(sendId, emails)
         : Promise.reject(testDeliveryOnlyError());
     },
     setCampaignStatus(campaignId, status, audienceScope) {
-      return permitsTeamCampaign(audienceScope)
+      return permitsDevelopmentCampaign(audienceScope)
         ? campaignGateway.setCampaignStatus(campaignId, status, audienceScope)
         : Promise.reject(testDeliveryOnlyError());
     },
@@ -386,6 +390,20 @@ function rawContentTemplateId(value: unknown): number | undefined {
   return undefined;
 }
 
+function plainCampaignTemplateId(value: unknown): number | undefined {
+  for (const result of responseRows(value)) {
+    const candidate = record(result);
+    if (
+      candidate?.name === PLAIN_CAMPAIGN_TEMPLATE_NAME &&
+      candidate.type === "campaign" &&
+      typeof candidate.id === "number"
+    ) {
+      return candidate.id;
+    }
+  }
+  return undefined;
+}
+
 function defaultCampaignTemplateId(value: unknown): number | undefined {
   for (const result of responseRows(value)) {
     const candidate = record(result);
@@ -439,6 +457,40 @@ async function ensureRawContentTemplate(client: EmailHttpTransport) {
     });
     const createdId =
       rawContentTemplateId(created.data) ??
+      (typeof record(created.data)?.id === "number"
+        ? (record(created.data)?.id as number)
+        : undefined);
+    if (createdId) return createdId;
+  } catch {
+    // A concurrent request may have created the shared wrapper.
+  }
+  const adoptedId = await findExisting();
+  if (!adoptedId) throw providerFailure("EMAIL_PROVIDER_UNAVAILABLE");
+  return adoptedId;
+}
+
+async function ensurePlainCampaignTemplate(client: EmailHttpTransport) {
+  const findExisting = async () => {
+    const response = await safeRequest(client, {
+      method: "GET",
+      path: "/api/templates?per_page=all",
+    });
+    return plainCampaignTemplateId(response.data);
+  };
+  const existingId = await findExisting();
+  if (existingId) return existingId;
+  try {
+    const created = await safeRequest(client, {
+      body: {
+        body: PLAIN_CAMPAIGN_TEMPLATE_BODY,
+        name: PLAIN_CAMPAIGN_TEMPLATE_NAME,
+        type: "campaign",
+      },
+      method: "POST",
+      path: "/api/templates",
+    });
+    const createdId =
+      plainCampaignTemplateId(created.data) ??
       (typeof record(created.data)?.id === "number"
         ? (record(created.data)?.id as number)
         : undefined);
@@ -640,10 +692,9 @@ function productionGateway(
       }
 
       const hasHtmlBody = input.html.trim().length > 0;
-      const templateId = await resolveCampaignTemplateId(
-        client,
-        config.campaignTemplateId,
-      );
+      const templateId = hasHtmlBody
+        ? await resolveCampaignTemplateId(client, config.campaignTemplateId)
+        : await ensurePlainCampaignTemplate(client);
       const body = {
         ...(hasHtmlBody ? { altbody: input.text } : {}),
         body: hasHtmlBody ? input.html : input.text,
@@ -764,13 +815,13 @@ function productionGateway(
 }
 
 export function createEmailProviderGateway({
-  allowTeamCampaigns = false,
+  allowDevelopmentCampaigns = false,
   campaignTemplateId,
   fromEmail,
   mode,
   transport,
 }: {
-  allowTeamCampaigns?: boolean;
+  allowDevelopmentCampaigns?: boolean;
   campaignTemplateId?: number;
   fromEmail?: string;
   mode: EmailDeliveryMode | undefined;
@@ -786,7 +837,7 @@ export function createEmailProviderGateway({
   if (mode === "fake") return fakeGateway();
   if (mode === "test") {
     return testGateway(transport, {
-      allowTeamCampaigns,
+      allowDevelopmentCampaigns,
       campaignTemplateId,
       fromEmail,
     });

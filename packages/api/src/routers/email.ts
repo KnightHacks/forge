@@ -9,6 +9,7 @@ import type {
 } from "@forge/validators";
 import {
   and,
+  asc,
   desc,
   eq,
   inArray,
@@ -57,7 +58,7 @@ import { requireEmailPortal } from "../utils/email/access";
 import {
   applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
-  isTeamOnlyAudienceDefinition,
+  isDevelopmentReviewAudienceDefinition,
   normalizeRecipientEmail,
 } from "../utils/email/audience";
 import {
@@ -83,55 +84,79 @@ const DEFAULT_TEMPLATE_SAMPLE = {
 };
 
 type EmailSendStatus = typeof EmailSend.$inferSelect.status;
-type CampaignAudienceScope = "team_members" | undefined;
+type CampaignAudienceScope = "development_review" | undefined;
 
-function developmentTeamCampaignReviewEnabled() {
+function developmentCampaignReviewEnabled() {
   return nodeEnv === "development" && !isBladeE2E;
 }
 
 function campaignAudienceScope(value: unknown): CampaignAudienceScope {
-  return developmentTeamCampaignReviewEnabled() &&
-    isTeamOnlyAudienceDefinition(value)
-    ? "team_members"
+  return developmentCampaignReviewEnabled() &&
+    isDevelopmentReviewAudienceDefinition(value)
+    ? "development_review"
     : undefined;
 }
 
-function teamReviewOnlyError() {
+function developmentReviewOnlyError() {
   return new EmailProviderError(
     "TEST_DELIVERY_ONLY",
-    "Development campaign delivery is limited to the enabled team roster.",
+    "Development campaign delivery is limited to Team members and explicit role audiences.",
   );
 }
 
-async function loadCurrentTeamMemberEmails() {
-  const rows = await db
-    .select({ email: Member.email })
-    .from(Member)
-    .innerJoin(Permissions, eq(Permissions.userId, Member.userId))
-    .innerJoin(
-      Roles,
-      and(
-        eq(Roles.id, Permissions.roleId),
-        eq(Roles.emailAudienceEnabled, true),
-      ),
-    );
-  return new Set(rows.map(({ email }) => normalizeRecipientEmail(email)));
+function developmentAudienceRoleIds(value: unknown) {
+  if (!isDevelopmentReviewAudienceDefinition(value)) return null;
+  return (value as EmailAudienceDefinition[])
+    .filter(
+      (
+        definition,
+      ): definition is Extract<EmailAudienceDefinition, { kind: "role" }> =>
+        definition.kind === "role",
+    )
+    .map(({ roleId }) => roleId);
 }
 
-async function assertCurrentTeamRecipients(
+async function loadCurrentDevelopmentAudienceEmails(
+  audienceDefinition: unknown,
+) {
+  const roleIds = developmentAudienceRoleIds(audienceDefinition);
+  if (!roleIds) throw developmentReviewOnlyError();
+  const includesTeam = (audienceDefinition as EmailAudienceDefinition[]).some(
+    ({ kind }) => kind === "team_members",
+  );
+  const roleCondition =
+    includesTeam && roleIds.length > 0
+      ? or(eq(Roles.emailAudienceEnabled, true), inArray(Roles.id, roleIds))
+      : includesTeam
+        ? eq(Roles.emailAudienceEnabled, true)
+        : inArray(Roles.id, roleIds);
+  const rows = await db
+    .select({ memberEmail: Member.email, userEmail: User.email })
+    .from(Permissions)
+    .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+    .innerJoin(User, eq(User.id, Permissions.userId))
+    .leftJoin(Member, eq(Member.userId, User.id))
+    .where(roleCondition);
+  return new Set(
+    rows
+      .map(({ memberEmail, userEmail }) => memberEmail ?? userEmail)
+      .filter((email): email is string => Boolean(email))
+      .map(normalizeRecipientEmail),
+  );
+}
+
+async function assertCurrentDevelopmentAudienceRecipients(
   audienceDefinition: unknown,
   emails: string[],
 ) {
-  if (!isTeamOnlyAudienceDefinition(audienceDefinition)) {
-    throw teamReviewOnlyError();
-  }
-  const currentTeamEmails = await loadCurrentTeamMemberEmails();
+  const currentAudienceEmails =
+    await loadCurrentDevelopmentAudienceEmails(audienceDefinition);
   if (
     emails.some(
-      (email) => !currentTeamEmails.has(normalizeRecipientEmail(email)),
+      (email) => !currentAudienceEmails.has(normalizeRecipientEmail(email)),
     )
   ) {
-    throw teamReviewOnlyError();
+    throw developmentReviewOnlyError();
   }
 }
 
@@ -375,13 +400,17 @@ async function loadAudienceCandidates(definitions: EmailAudienceDefinition[]) {
       .from(Member),
     db
       .select({
+        email: User.email,
+        name: User.name,
+        roleId: Roles.id,
         roleName: Roles.name,
         userId: Permissions.userId,
       })
       .from(Permissions)
-      .innerJoin(Roles, eq(Roles.id, Permissions.roleId)),
+      .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+      .innerJoin(User, eq(User.id, Permissions.userId)),
     db
-      .select({ name: Roles.name })
+      .select({ id: Roles.id })
       .from(Roles)
       .where(eq(Roles.emailAudienceEnabled, true)),
     db
@@ -400,24 +429,49 @@ async function loadAudienceCandidates(definitions: EmailAudienceDefinition[]) {
       .innerJoin(Hackathon, eq(Hackathon.id, HackerAttendee.hackathonId)),
   ]);
   const roleNamesByUser = new Map<string, string[]>();
+  const roleIdsByUser = new Map<string, string[]>();
   for (const assignment of roleAssignments) {
     const names = roleNamesByUser.get(assignment.userId) ?? [];
     names.push(assignment.roleName);
     roleNamesByUser.set(assignment.userId, names);
+    const ids = roleIdsByUser.get(assignment.userId) ?? [];
+    ids.push(assignment.roleId);
+    roleIdsByUser.set(assignment.userId, ids);
   }
   const memberUserIds = new Set(members.map(({ userId }) => userId));
-  const selectedTeamRoleNames = teamRoles.map(({ name }) => name);
+  const selectedTeamRoleIds = teamRoles.map(({ id }) => id);
   const usersWithoutMember = [...roleNamesByUser.entries()]
-    .filter(
-      ([userId, roleNames]) =>
-        !memberUserIds.has(userId) &&
-        roleNames.some((role) => selectedTeamRoleNames.includes(role)),
-    )
-    .map(([userId, roleNames]) => ({ roleNames, userId }));
+    .filter(([userId]) => !memberUserIds.has(userId))
+    .map(([userId, roleNames]) => {
+      const assignment = roleAssignments.find((row) => row.userId === userId);
+      return {
+        email: assignment?.email,
+        name: assignment?.name,
+        roleIds: roleIdsByUser.get(userId) ?? [],
+        roleNames,
+        userId,
+      };
+    });
+  const selectedRoleIds = new Set(
+    definitions
+      .filter(
+        (
+          definition,
+        ): definition is Extract<EmailAudienceDefinition, { kind: "role" }> =>
+          definition.kind === "role",
+      )
+      .map(({ roleId }) => roleId),
+  );
 
   const allCandidateEmails = [
     ...members.map(({ email }) => email),
     ...hackerRows.map(({ email }) => email),
+    ...usersWithoutMember
+      .filter(({ roleIds }) =>
+        roleIds.some((roleId) => selectedRoleIds.has(roleId)),
+      )
+      .map(({ email }) => email)
+      .filter((email): email is string => Boolean(email)),
   ];
   const providerStates =
     await getDefaultEmailProviderGateway().lookupSubscriberStates([
@@ -443,10 +497,11 @@ async function loadAudienceCandidates(definitions: EmailAudienceDefinition[]) {
       graduationDate: member.graduationDate,
       id: member.id,
       name: `${member.firstName} ${member.lastName}`.trim(),
+      roleIds: roleIdsByUser.get(member.userId) ?? [],
       roleNames: roleNamesByUser.get(member.userId) ?? [],
     })),
     providerStates,
-    teamRoleNames: selectedTeamRoleNames,
+    teamRoleIds: selectedTeamRoleIds,
     usersWithoutMember,
   });
 }
@@ -568,13 +623,13 @@ async function previewSend(
   actorId: string,
 ) {
   if (
-    developmentTeamCampaignReviewEnabled() &&
-    !isTeamOnlyAudienceDefinition(input.audiences)
+    developmentCampaignReviewEnabled() &&
+    !isDevelopmentReviewAudienceDefinition(input.audiences)
   ) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
-        "Development campaign delivery is limited to the Team members audience.",
+        "Development campaign delivery is limited to Team members and role audiences.",
     });
   }
   const sendId = input.sendId ?? randomUUID();
@@ -787,8 +842,8 @@ export async function processEmailSend(sendId: string) {
   const gateway = getDefaultEmailProviderGateway();
   try {
     const audienceScope = campaignAudienceScope(claimed.audienceDefinition);
-    if (developmentTeamCampaignReviewEnabled()) {
-      await assertCurrentTeamRecipients(
+    if (developmentCampaignReviewEnabled()) {
+      await assertCurrentDevelopmentAudienceRecipients(
         claimed.audienceDefinition,
         recipients.map(({ normalizedEmail }) => normalizedEmail),
       );
@@ -983,7 +1038,7 @@ export async function reconcileEmailSend(sendId: string) {
   });
   if (!send?.listmonkCampaignId) return null;
   const audienceScope = campaignAudienceScope(send.audienceDefinition);
-  if (developmentTeamCampaignReviewEnabled()) {
+  if (developmentCampaignReviewEnabled()) {
     const recipients = await db
       .select({ normalizedEmail: EmailSendRecipient.normalizedEmail })
       .from(EmailSendRecipient)
@@ -993,7 +1048,7 @@ export async function reconcileEmailSend(sendId: string) {
           isNull(EmailSendRecipient.exclusionReason),
         ),
       );
-    await assertCurrentTeamRecipients(
+    await assertCurrentDevelopmentAudienceRecipients(
       send.audienceDefinition,
       recipients.map(({ normalizedEmail }) => normalizedEmail),
     );
@@ -1203,13 +1258,13 @@ async function confirmSend(
       });
     }
     if (
-      developmentTeamCampaignReviewEnabled() &&
-      !isTeamOnlyAudienceDefinition(record.audienceDefinition)
+      developmentCampaignReviewEnabled() &&
+      !isDevelopmentReviewAudienceDefinition(record.audienceDefinition)
     ) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message:
-          "Development campaign delivery is limited to the Team members audience.",
+          "Development campaign delivery is limited to Team members and role audiences.",
       });
     }
     try {
@@ -1429,14 +1484,20 @@ export const emailRouter = {
 
   listAudienceOptions: permProcedure.query(async ({ ctx }) => {
     requireEmailPortal(ctx);
-    const hackathons = await db
-      .select({
-        displayName: Hackathon.displayName,
-        id: Hackathon.id,
-        name: Hackathon.name,
-      })
-      .from(Hackathon)
-      .orderBy(desc(Hackathon.startDate));
+    const [hackathons, roles] = await Promise.all([
+      db
+        .select({
+          displayName: Hackathon.displayName,
+          id: Hackathon.id,
+          name: Hackathon.name,
+        })
+        .from(Hackathon)
+        .orderBy(desc(Hackathon.startDate)),
+      db
+        .select({ id: Roles.id, name: Roles.name })
+        .from(Roles)
+        .orderBy(asc(Roles.name), asc(Roles.id)),
+    ]);
     return {
       presets: [
         { kind: "current_members" as const, label: "Current members" },
@@ -1456,6 +1517,7 @@ export const emailRouter = {
           "denied",
         ] as const,
       })),
+      roles,
     };
   }),
 

@@ -114,6 +114,7 @@ type AudienceDefinition = {
     | { kind: "current_members" }
     | { kind: "alumni" }
     | { kind: "team_members" }
+    | { kind: "role"; roleId: string }
     | { kind: "hackathon"; hackathonId: string; statuses?: HackerStatus[] }
   >;
 };
@@ -122,7 +123,8 @@ type AudienceDefinition = {
 - Current members: `Member.gradDate >= CURRENT_DATE`.
 - Alumni: `Member.gradDate < CURRENT_DATE`.
 - Team members: `Member` rows whose linked user has at least one `Roles.emailAudienceEnabled = true` assignment.
-- Role-assigned users without a `Member` profile are excluded with a visible warning; nullable Discord OAuth email is not used as an authoritative contact address.
+- Role audiences: assignments from `Permissions` to the selected stable `Roles.id`. A linked `Member.email` is authoritative; `User.email` is used only when that user has no Member profile.
+- Team-assigned users without a `Member` profile remain excluded with a visible warning.
 - Hackathon audiences join `HackerAttendee` to `Hacker` using stable `Hackathon.id`; `displayName` is presentation only.
 - An omitted hackathon status list means all attendees for that hackathon. Otherwise the list is validated against the canonical hacker-status enum.
 - Multiple sources are unioned.
@@ -178,10 +180,12 @@ Any Listmonk subscriber that is globally blocklisted or has an unsubscribed Knig
 There is no deployment-facing email delivery mode flag. Runtime behavior is derived from the standard `NODE_ENV`, preventing a stale email-specific flag from accidentally leaving production in a test-only state:
 
 - `production`: approved portal audiences and existing transactional behavior use Listmonk.
-- `development`: the directors-only test action remains available, and live portal campaigns are restricted to the enabled team roster.
+- `development`: the directors-only test action remains available, and live portal campaigns are restricted to Team members and explicit role audiences.
 - `test`: the default gateway is an in-memory fake with no network transport.
 
-The development exception is enforced independently at the UI, preview/confirmation API, delivery-time current-role recheck, and provider campaign/status boundary. The stored audience must be exactly `team_members`, every retained recipient must still have an enabled team role, and the provider request must carry the server-issued team scope. Automated tests fail if they reach an unmocked network gateway.
+The development exception is enforced independently at the UI, preview/confirmation API, delivery-time current-role recheck, and provider campaign/status boundary. Stored definitions may contain only `team_members` and stable role IDs; every retained recipient must still match one of those current assignments, and the provider request must carry the server-issued development-review scope. Automated tests fail if they reach an unmocked network gateway.
+
+Plain-text campaigns use Listmonk's `plain` content type and an auto-discovered/created campaign template whose complete body is `{{ template "content" . }}`. This avoids Listmonk's default HTML campaign template while retaining its required content insertion point.
 
 Because Next forces `next dev` processes to use the development environment, the existing `BLADE_E2E_AUTH` test-harness marker selects the same fake provider for the synthetic Playwright server. Production policy is resolved first, so this test-only marker cannot alter production delivery.
 
