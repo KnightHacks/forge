@@ -11,37 +11,57 @@ export interface DiscordArchiveCheckpointView {
 }
 
 export interface DiscordArchiveMessageSource {
-  discoverChannels(guildId: string): Promise<DiscordArchiveChannelInput[]>;
-  fetchMessages(input: {
-    before?: string;
-    channelId: string;
-    limit: number;
-  }): Promise<DiscordArchiveMessageInput[]>;
+  discoverChannels(
+    this: void,
+    guildId: string,
+  ): Promise<DiscordArchiveChannelInput[]>;
+  fetchMessages(
+    this: void,
+    input: {
+      before?: string;
+      channelId: string;
+      limit: number;
+    },
+  ): Promise<DiscordArchiveMessageInput[]>;
 }
 
 export interface DiscordArchiveWorkerStore {
-  commitBackfillPage(input: {
-    channelId: string;
-    complete: boolean;
-    messages: DiscordArchiveMessageInput[];
-    newestMessageId: string | null;
-    nextBeforeMessageId: string | null;
-    observedAt: Date;
-  }): Promise<void>;
-  commitReconciliation(input: {
-    channelId: string;
-    messages: DiscordArchiveMessageInput[];
-    newestMessageId: string;
-    observedAt: Date;
-  }): Promise<void>;
-  getBackfillWork(limit: number): Promise<DiscordArchiveCheckpointView[]>;
-  getReconciliationWork(limit: number): Promise<DiscordArchiveCheckpointView[]>;
+  commitBackfillPage(
+    this: void,
+    input: {
+      channelId: string;
+      complete: boolean;
+      messages: DiscordArchiveMessageInput[];
+      newestMessageId: string | null;
+      nextBeforeMessageId: string | null;
+      observedAt: Date;
+    },
+  ): Promise<void>;
+  commitReconciliation(
+    this: void,
+    input: {
+      channelId: string;
+      messages: DiscordArchiveMessageInput[];
+      newestMessageId: string;
+      observedAt: Date;
+    },
+  ): Promise<void>;
+  getBackfillWork(
+    this: void,
+    limit: number,
+  ): Promise<DiscordArchiveCheckpointView[]>;
+  getReconciliationWork(
+    this: void,
+    limit: number,
+  ): Promise<DiscordArchiveCheckpointView[]>;
   recordChannelFailure(
+    this: void,
     channelId: string,
     operation: "backfill" | "reconciliation",
     error: unknown,
   ): Promise<void>;
   upsertDiscoveredChannels(
+    this: void,
     channels: DiscordArchiveChannelInput[],
     observedAt: Date,
   ): Promise<void>;
@@ -63,19 +83,29 @@ function compareSnowflakes(left: string, right: string) {
 }
 
 function oldestMessageId(messages: DiscordArchiveMessageInput[]) {
-  return messages.reduce(
-    (oldest, message) =>
-      compareSnowflakes(message.id, oldest) < 0 ? message.id : oldest,
-    messages[0]!.id,
-  );
+  const first = messages[0];
+  if (!first)
+    throw new Error("Cannot select an ID from an empty message page.");
+  return messages
+    .slice(1)
+    .reduce(
+      (oldest, message) =>
+        compareSnowflakes(message.id, oldest) < 0 ? message.id : oldest,
+      first.id,
+    );
 }
 
 function newestMessageId(messages: DiscordArchiveMessageInput[]) {
-  return messages.reduce(
-    (newest, message) =>
-      compareSnowflakes(message.id, newest) > 0 ? message.id : newest,
-    messages[0]!.id,
-  );
+  const first = messages[0];
+  if (!first)
+    throw new Error("Cannot select an ID from an empty message page.");
+  return messages
+    .slice(1)
+    .reduce(
+      (newest, message) =>
+        compareSnowflakes(message.id, newest) > 0 ? message.id : newest,
+      first.id,
+    );
 }
 
 function sortAndDedupe(messages: DiscordArchiveMessageInput[]) {
@@ -102,6 +132,8 @@ export function createDiscordArchiveWorker({
 
   async function backfillBatch() {
     const checkpoints = await store.getBackfillWork(channelBatchSize);
+    let failed = 0;
+    let succeeded = 0;
 
     for (const checkpoint of checkpoints) {
       try {
@@ -127,7 +159,9 @@ export function createDiscordArchiveWorker({
             complete || ordered.length === 0 ? null : oldestMessageId(ordered),
           observedAt: now(),
         });
+        succeeded += 1;
       } catch (error) {
+        failed += 1;
         await store.recordChannelFailure(
           checkpoint.channelId,
           "backfill",
@@ -136,11 +170,13 @@ export function createDiscordArchiveWorker({
       }
     }
 
-    return checkpoints.length;
+    return { failed, selected: checkpoints.length, succeeded };
   }
 
   async function reconcileBatch() {
     const checkpoints = await store.getReconciliationWork(channelBatchSize);
+    let failed = 0;
+    let succeeded = 0;
 
     for (const checkpoint of checkpoints) {
       if (checkpoint.newestMessageId === null) continue;
@@ -173,15 +209,19 @@ export function createDiscordArchiveWorker({
         }
 
         const ordered = sortAndDedupe(recovered);
-        if (ordered.length === 0) continue;
 
         await store.commitReconciliation({
           channelId: checkpoint.channelId,
           messages: ordered,
-          newestMessageId: newestMessageId(ordered),
+          newestMessageId:
+            ordered.length > 0
+              ? newestMessageId(ordered)
+              : checkpoint.newestMessageId,
           observedAt: now(),
         });
+        succeeded += 1;
       } catch (error) {
+        failed += 1;
         await store.recordChannelFailure(
           checkpoint.channelId,
           "reconciliation",
@@ -190,7 +230,7 @@ export function createDiscordArchiveWorker({
       }
     }
 
-    return checkpoints.length;
+    return { failed, selected: checkpoints.length, succeeded };
   }
 
   return { backfillBatch, discover, reconcileBatch };

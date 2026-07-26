@@ -5,6 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@9.12.1",
   "scripts": {
+    "discord-archive:backfill": "pnpm with-env tsx src/scripts/discord-archive-backfill.ts",
     "dev": "pnpm with-env tsx watch src/index.ts",
     "start": "pnpm with-env tsx src/index.ts",
     "build": "echo 'noop: no build operation to perform'",

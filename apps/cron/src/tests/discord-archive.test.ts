@@ -99,7 +99,10 @@ describe("Discord archive durable scrape worker", () => {
 
     await worker.discover();
 
-    expect(archiveStore.upsertDiscoveredChannels).toHaveBeenCalledWith(
+    const upsertDiscoveredChannels = vi.mocked(
+      archiveStore.upsertDiscoveredChannels,
+    );
+    expect(upsertDiscoveredChannels).toHaveBeenCalledWith(
       channels,
       expect.any(Date),
     );
@@ -144,12 +147,17 @@ describe("Discord archive durable scrape worker", () => {
     await worker.backfillBatch();
     await worker.backfillBatch();
 
-    expect(fetchMessages.mock.calls.map((call) => call[0].before)).toEqual([
-      undefined,
-      snowflake(151),
-      snowflake(51),
-    ]);
-    expect(archiveStore.commitBackfillPage).toHaveBeenNthCalledWith(
+    expect(fetchMessages).toHaveBeenNthCalledWith(1, { channelId, limit: 100 });
+    expect(fetchMessages).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ before: snowflake(151) }),
+    );
+    expect(fetchMessages).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ before: snowflake(51) }),
+    );
+    const commitBackfillPage = vi.mocked(archiveStore.commitBackfillPage);
+    expect(commitBackfillPage).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         complete: false,
@@ -157,7 +165,7 @@ describe("Discord archive durable scrape worker", () => {
         newestMessageId: snowflake(250),
       }),
     );
-    expect(archiveStore.commitBackfillPage).toHaveBeenLastCalledWith(
+    expect(commitBackfillPage).toHaveBeenLastCalledWith(
       expect.objectContaining({
         complete: true,
         nextBeforeMessageId: null,
@@ -182,8 +190,10 @@ describe("Discord archive durable scrape worker", () => {
 
     await worker.backfillBatch();
 
-    expect(archiveStore.commitBackfillPage).not.toHaveBeenCalled();
-    expect(archiveStore.recordChannelFailure).toHaveBeenCalledWith(
+    const commitBackfillPage = vi.mocked(archiveStore.commitBackfillPage);
+    const recordChannelFailure = vi.mocked(archiveStore.recordChannelFailure);
+    expect(commitBackfillPage).not.toHaveBeenCalled();
+    expect(recordChannelFailure).toHaveBeenCalledWith(
       channelId,
       "backfill",
       failure,
@@ -217,17 +227,51 @@ describe("Discord archive durable scrape worker", () => {
     await worker.reconcileBatch();
 
     expect(fetchMessages).toHaveBeenCalledTimes(3);
-    expect(fetchMessages.mock.calls.map((call) => call[0].before)).toEqual([
-      undefined,
-      snowflake(202),
-      snowflake(102),
-    ]);
-    expect(archiveStore.commitReconciliation).toHaveBeenCalledOnce();
-    const committed = vi.mocked(archiveStore.commitReconciliation).mock
-      .calls[0]![0];
+    expect(fetchMessages).toHaveBeenNthCalledWith(1, { channelId, limit: 100 });
+    expect(fetchMessages).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ before: snowflake(202) }),
+    );
+    expect(fetchMessages).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ before: snowflake(102) }),
+    );
+    const commitReconciliation = vi.mocked(archiveStore.commitReconciliation);
+    expect(commitReconciliation).toHaveBeenCalledOnce();
+    const firstCommit = commitReconciliation.mock.calls[0];
+    if (!firstCommit) throw new Error("Expected a reconciliation commit.");
+    const [committed] = firstCommit;
     expect(committed.messages).toHaveLength(201);
     expect(committed.messages[0]?.id).toBe(snowflake(101));
     expect(committed.messages.at(-1)?.id).toBe(snowflake(301));
     expect(committed.newestMessageId).toBe(snowflake(301));
+  });
+
+  it("records a successful no-op reconciliation so quiet channels do not stay hot", async () => {
+    const newestStored = snowflake(100);
+    const archiveStore = store({
+      getReconciliationWork: vi
+        .fn()
+        .mockResolvedValue([checkpoint({ newestMessageId: newestStored })]),
+    });
+    const worker = createDiscordArchiveWorker({
+      guildId,
+      source: {
+        discoverChannels: vi.fn(),
+        fetchMessages: vi.fn().mockResolvedValue([message(100)]),
+      },
+      store: archiveStore,
+    });
+
+    await worker.reconcileBatch();
+
+    const commitReconciliation = vi.mocked(archiveStore.commitReconciliation);
+    expect(commitReconciliation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channelId,
+        messages: [],
+        newestMessageId: newestStored,
+      }),
+    );
   });
 });

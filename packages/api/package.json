@@ -13,6 +13,10 @@
       "default": "./src/env.ts"
     },
     "./minio/minio-client": "./src/minio/minio-client.ts",
+    "./discord-archive.server": {
+      "types": "./src/discord-archive.server.ts",
+      "default": "./src/discord-archive.server.ts"
+    },
     "./utils": {
       "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"

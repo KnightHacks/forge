@@ -74,6 +74,7 @@ describe("Discord archive additive storage", () => {
         "backfillBeforeMessageId",
         "backfillStatus",
         "backfillCompletedAt",
+        "lastBackfillAt",
         "lastDiscoveredAt",
         "lastReconciledAt",
         "processedMessageCount",

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    DISCORD_ARCHIVE_BOT_TOKEN: z.string().min(1).optional(),
     DISCORD_BOT_TOKEN: z.string(),
     DISCORD_WEBHOOK_ANIMAL: z.string(),
     DISCORD_WEBHOOK_LEETCODE: z.string(),
@@ -12,6 +13,7 @@ export const env = createEnv({
     BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
+    DISCORD_ARCHIVE_BOT_TOKEN: process.env.DISCORD_ARCHIVE_BOT_TOKEN,
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
     DISCORD_WEBHOOK_ANIMAL: process.env.DISCORD_WEBHOOK_ANIMAL,
     DISCORD_WEBHOOK_LEETCODE: process.env.DISCORD_WEBHOOK_LEETCODE,
@@ -20,6 +22,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS_HACK: process.env.DISCORD_WEBHOOK_REMINDERS_HACK,
     BLADE_URL: process.env.BLADE_URL,
   },
+  emptyStringAsUndefined: true,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

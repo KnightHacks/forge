@@ -1110,6 +1110,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "last_backfill_at": {
+          "name": "last_backfill_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "last_discovered_at": {
           "name": "last_discovered_at",
           "type": "timestamp with time zone",
@@ -1233,13 +1239,13 @@
           "name": "author_discord_user_id",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "author_label": {
           "name": "author_label",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "author_avatar_url": {
           "name": "author_avatar_url",

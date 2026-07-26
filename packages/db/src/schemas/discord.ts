@@ -21,6 +21,18 @@ export interface DiscordArchiveMentions {
   userIds: string[];
 }
 
+export type DiscordArchiveBackfillStatus =
+  | "complete"
+  | "failed"
+  | "pending"
+  | "running";
+export type DiscordArchiveHealthStatus =
+  | "degraded"
+  | "disabled"
+  | "failed"
+  | "healthy"
+  | "idle";
+
 export const DiscordArchiveChannel = createTable(
   "channel",
   (t) => ({
@@ -61,8 +73,8 @@ export const DiscordArchiveMessage = createTable(
       .varchar({ length: 20 })
       .notNull()
       .references(() => DiscordArchiveChannel.id),
-    authorDiscordUserId: t.varchar({ length: 20 }).notNull(),
-    authorLabel: t.varchar({ length: 255 }).notNull(),
+    authorDiscordUserId: t.varchar({ length: 20 }),
+    authorLabel: t.varchar({ length: 255 }),
     authorAvatarUrl: t.text(),
     authorIsBot: t.boolean().notNull().default(false),
     webhookId: t.varchar({ length: 20 }),
@@ -144,8 +156,13 @@ export const DiscordArchiveCheckpoint = createTable(
     oldestMessageId: t.varchar({ length: 20 }),
     newestMessageId: t.varchar({ length: 20 }),
     backfillBeforeMessageId: t.varchar({ length: 20 }),
-    backfillStatus: t.varchar({ length: 16 }).notNull().default("pending"),
+    backfillStatus: t
+      .varchar({ length: 16 })
+      .$type<DiscordArchiveBackfillStatus>()
+      .notNull()
+      .default("pending"),
     backfillCompletedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    lastBackfillAt: t.timestamp({ mode: "date", withTimezone: true }),
     lastDiscoveredAt: t.timestamp({ mode: "date", withTimezone: true }),
     lastReconciledAt: t.timestamp({ mode: "date", withTimezone: true }),
     processedMessageCount: t.integer().notNull().default(0),
@@ -172,7 +189,11 @@ export const DiscordArchiveState = createTable(
   "state",
   (t) => ({
     guildId: t.varchar({ length: 20 }).primaryKey(),
-    status: t.varchar({ length: 16 }).notNull().default("idle"),
+    status: t
+      .varchar({ length: 16 })
+      .$type<DiscordArchiveHealthStatus>()
+      .notNull()
+      .default("idle"),
     lastGatewayEventAt: t.timestamp({ mode: "date", withTimezone: true }),
     lastLiveWriteAt: t.timestamp({ mode: "date", withTimezone: true }),
     lastDiscoveryStartedAt: t.timestamp({

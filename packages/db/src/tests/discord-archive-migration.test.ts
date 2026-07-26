@@ -35,6 +35,7 @@ describe("Discord archive migration contract", () => {
     expect(sql).toContain(`discord_archive_message_channel_created_idx`);
     expect(sql).toContain(`discord_archive_message_guild_created_idx`);
     expect(sql).toContain(`discord_archive_message_author_created_idx`);
+    expect(sql).toContain(`"last_backfill_at" timestamp with time zone`);
     expect(sql).toContain(`discord_archive_checkpoint_status_check`);
     expect(sql).toContain(`discord_archive_state_status_check`);
     expect(sql).toContain(
