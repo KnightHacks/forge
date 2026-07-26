@@ -15,7 +15,7 @@ These cases prove the approved Email Portal product and system contracts:
 - preview/version/snapshot behavior;
 - immediate and scheduled Listmonk campaign lifecycle;
 - cancellation, retry, idempotency, reconciliation, and retention;
-- explicit non-production delivery modes and the Dylan-only live test boundary;
+- explicit non-production delivery modes and the directors-only portal test boundary;
 - additive migration/backfill behavior; and
 - responsive loading, success, failure, and confirmation UX.
 
@@ -274,6 +274,25 @@ Expected observations:
 - Its snapshot and counts replace the unconfirmed draft view transactionally.
 - The earlier version cannot be confirmed.
 
+### TC-017: Recipient inspection and manual deselection
+
+Setup:
+
+- Two or more selected audience groups resolve to overlapping eligible synthetic recipients.
+
+Action:
+
+- The administrator searches the recipient rail, deselects one person, and previews the send.
+
+Expected observations:
+
+- Every eligible recipient starts checked.
+- The compact recipient rail shows each person's name and normalized email.
+- The live selected count decreases when a recipient is unchecked.
+- The unchecked recipient is absent from personalization coverage and the frozen recipient snapshot.
+- The preview and confirmation dialog report the manual deselection and exact final count.
+- Changing groups preserves a deselection only while that normalized email remains in the resolved pool.
+
 ### TC-020: Plain-text composition
 
 Setup:
@@ -458,7 +477,7 @@ Action:
 Expected observations:
 
 - Every mutation fails before HTTP.
-- No operation is silently redirected to Dylan or another address.
+- No operation is silently redirected to the directors list or another address.
 - A safe disabled-delivery error is recorded or returned.
 
 ### TC-031: Fake mode never reaches the network
@@ -477,11 +496,11 @@ Expected observations:
 - No network client is constructed or called.
 - Synthetic fixture addresses may be counted and rendered but receive no email.
 
-### TC-032: Dylan-only live test send
+### TC-032: Directors-only portal test send
 
 Setup:
 
-- Delivery mode is `dylan-test`.
+- Delivery mode is `test`.
 - A valid template or plain-text test payload exists.
 
 Action:
@@ -491,7 +510,7 @@ Action:
 Expected observations:
 
 - The procedure exposes no recipient input.
-- Exactly one provider request targets normalized `dylan@knighthacks.org`.
+- Exactly one provider request targets `directors@knighthacks.org`.
 - Preview/sample data is rendered without resolving or mutating a bulk audience.
 - No bulk schedule or send is created.
 
@@ -730,11 +749,11 @@ Expected observations:
 - The UI disables duplicate actions while pending.
 - Server idempotency/state checks prevent duplicate revisions, campaigns, transitions, and events.
 
-### TC-NEG-008: Dylan-test mode rejects all bypasses
+### TC-NEG-008: Test mode rejects all portal-recipient bypasses
 
 Setup:
 
-- Delivery mode is `dylan-test`.
+- Delivery mode is `test`.
 
 Action:
 
@@ -743,8 +762,8 @@ Action:
 Expected observations:
 
 - Every bypass fails at the deepest provider boundary before HTTP.
-- No recipient is silently filtered or rewritten to Dylan.
-- The sole accepted live operation remains the dedicated one-recipient test send to `dylan@knighthacks.org`.
+- No recipient is silently filtered or rewritten to the directors list.
+- The sole accepted live portal operation remains the dedicated one-recipient test send to `directors@knighthacks.org`.
 
 ### TC-NEG-009: Unmocked automated provider access fails
 

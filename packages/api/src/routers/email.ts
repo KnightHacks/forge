@@ -20,7 +20,7 @@ import {
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions, Roles } from "@forge/db/schemas/auth";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
   EmailSend,
   EmailSendEvent,
@@ -40,6 +40,7 @@ import {
 import {
   emailConfirmSendSchema,
   emailPreviewSendSchema,
+  emailResolveAudienceSchema,
   emailSaveTemplateSchema,
   emailSendIdSchema,
   emailSendListSchema,
@@ -51,7 +52,10 @@ import {
 
 import { permProcedure } from "../trpc";
 import { requireEmailPortal } from "../utils/email/access";
-import { buildEmailAudienceSnapshot } from "../utils/email/audience";
+import {
+  applyManualRecipientExclusions,
+  buildEmailAudienceSnapshot,
+} from "../utils/email/audience";
 import {
   assertConfirmableEmailPreview,
   buildEmailPreviewVersion,
@@ -526,14 +530,19 @@ async function previewSend(
     ...recipient,
     attributes: withFallbackData(recipient.attributes, content.fallbackData),
   }));
+  const { excludedEmails: excludedManually, included: includedRecipients } =
+    applyManualRecipientExclusions(
+      hydratedRecipients,
+      input.excludedRecipients,
+    );
   const coverage = coverageFor(
     content.contract,
-    hydratedRecipients,
+    includedRecipients,
     content.fallbackData,
   );
   const blockingFields = coverage.filter(({ blocker }) => blocker);
   const blockedEmails = new Set(
-    hydratedRecipients
+    includedRecipients
       .filter((recipient) =>
         blockingFields.some(
           (field) =>
@@ -542,13 +551,14 @@ async function previewSend(
       )
       .map(({ email }) => email),
   );
-  const recipients = hydratedRecipients.filter(
+  const recipients = includedRecipients.filter(
     ({ email }) => !blockedEmails.has(email),
   );
   const counts = {
     duplicatesCollapsed: snapshot.counts.duplicatesCollapsed,
     excludedBlocklisted: snapshot.counts.excludedBlocklisted,
     excludedInvalid: snapshot.counts.excludedInvalid,
+    excludedManual: excludedManually.size,
     excludedMissingFields: blockedEmails.size,
     excludedUnsubscribed: snapshot.counts.excludedUnsubscribed,
     finalUnique: recipients.length,
@@ -562,6 +572,7 @@ async function previewSend(
   });
   const audienceHash = hashValue({
     definitions: input.audiences,
+    excludedRecipients: [...excludedManually].sort(),
     snapshot: snapshot.checksum,
   });
   const scheduleHash = hashValue(input.scheduledFor);
@@ -599,6 +610,7 @@ async function previewSend(
           contentHash,
           duplicateCount: counts.duplicatesCollapsed,
           excludedInvalidCount: counts.excludedInvalid,
+          excludedManualCount: counts.excludedManual,
           excludedMissingFieldCount: counts.excludedMissingFields,
           excludedSuppressedCount:
             counts.excludedBlocklisted + counts.excludedUnsubscribed,
@@ -624,6 +636,7 @@ async function previewSend(
         createdBy: actorId,
         duplicateCount: counts.duplicatesCollapsed,
         excludedInvalidCount: counts.excludedInvalid,
+        excludedManualCount: counts.excludedManual,
         excludedMissingFieldCount: counts.excludedMissingFields,
         excludedSuppressedCount:
           counts.excludedBlocklisted + counts.excludedUnsubscribed,
@@ -1245,7 +1258,7 @@ export const emailRouter = {
       if (!send) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Send not found." });
       }
-      const [events, recipients] = await Promise.all([
+      const [events, recipients, createdBy, cancelledBy] = await Promise.all([
         db
           .select()
           .from(EmailSendEvent)
@@ -1259,10 +1272,19 @@ export const emailRouter = {
             matchReasons: EmailSendRecipient.matchReasons,
           })
           .from(EmailSendRecipient)
-          .where(eq(EmailSendRecipient.sendId, send.id))
-          .limit(100),
+          .where(eq(EmailSendRecipient.sendId, send.id)),
+        db.query.User.findFirst({
+          columns: { email: true, id: true, name: true },
+          where: eq(User.id, send.createdBy),
+        }),
+        send.cancelledBy
+          ? db.query.User.findFirst({
+              columns: { email: true, id: true, name: true },
+              where: eq(User.id, send.cancelledBy),
+            })
+          : Promise.resolve(undefined),
       ]);
-      return { events, recipients, send };
+      return { cancelledBy, createdBy, events, recipients, send };
     }),
 
   getTemplate: permProcedure
@@ -1315,6 +1337,24 @@ export const emailRouter = {
       })),
     };
   }),
+
+  resolveAudience: permProcedure
+    .input(emailResolveAudienceSchema)
+    .query(async ({ ctx, input }) => {
+      requireEmailPortal(ctx);
+      const snapshot = await loadAudienceCandidates(input.audiences);
+      return {
+        conflicts: snapshot.conflicts,
+        counts: snapshot.counts,
+        recipients: snapshot.recipients.map((recipient) => ({
+          attributes: recipient.attributes,
+          email: recipient.email,
+          matchReasons: recipient.matchReasons,
+          name: recipient.attributes.recipient.name,
+        })),
+        warnings: snapshot.warnings,
+      };
+    }),
 
   listSends: permProcedure
     .input(emailSendListSchema)

@@ -1,10 +1,6 @@
-export const DYLAN_TEST_RECIPIENT = "dylan@knighthacks.org";
+export const DIRECTORS_TEST_RECIPIENT = "directors@knighthacks.org";
 
-export type EmailDeliveryMode =
-  | "disabled"
-  | "dylan-test"
-  | "fake"
-  | "production";
+export type EmailDeliveryMode = "disabled" | "fake" | "production" | "test";
 
 export interface EmailHttpRequest {
   body?: Record<string, unknown>;
@@ -47,11 +43,11 @@ export interface TransactionalEmailContent extends TestEmailContent {
 export class EmailProviderError extends Error {
   constructor(
     readonly code:
-      | "DYLAN_TEST_ONLY"
       | "EMAIL_DELIVERY_DISABLED"
       | "EMAIL_DELIVERY_MODE_REQUIRED"
       | "EMAIL_PROVIDER_INVALID_RESPONSE"
-      | "EMAIL_PROVIDER_UNAVAILABLE",
+      | "EMAIL_PROVIDER_UNAVAILABLE"
+      | "TEST_DELIVERY_ONLY",
     message: string,
   ) {
     super(message);
@@ -88,7 +84,7 @@ export interface EmailProviderGateway {
   ): Promise<void>;
   sendTest(input: TestEmailContent): Promise<{
     providerId: number;
-    recipient: typeof DYLAN_TEST_RECIPIENT;
+    recipient: typeof DIRECTORS_TEST_RECIPIENT;
   }>;
   sendTransactional(
     input: TransactionalEmailContent,
@@ -155,10 +151,10 @@ function disabledError() {
   );
 }
 
-function dylanOnlyError() {
+function testDeliveryOnlyError() {
   return new EmailProviderError(
-    "DYLAN_TEST_ONLY",
-    "This delivery mode permits only the dedicated Dylan test-send operation.",
+    "TEST_DELIVERY_ONLY",
+    "This delivery mode permits only the dedicated directors test-send operation.",
   );
 }
 
@@ -207,7 +203,7 @@ function fakeGateway(): EmailProviderGateway {
     sendTest() {
       return Promise.resolve({
         providerId: nextId++,
-        recipient: DYLAN_TEST_RECIPIENT,
+        recipient: DIRECTORS_TEST_RECIPIENT,
       });
     },
     sendTransactional() {
@@ -242,31 +238,31 @@ function disabledGateway(): EmailProviderGateway {
   };
 }
 
-function dylanTestGateway(
+function testGateway(
   transport: EmailHttpTransport | undefined,
 ): EmailProviderGateway {
   return {
     createCampaign() {
-      return Promise.reject(dylanOnlyError());
+      return Promise.reject(testDeliveryOnlyError());
     },
     reconcileCampaign() {
-      return Promise.reject(dylanOnlyError());
+      return Promise.reject(testDeliveryOnlyError());
     },
     lookupSubscriberStates() {
       return Promise.resolve([]);
     },
     removeRecipientNamespace() {
-      return Promise.reject(dylanOnlyError());
+      return Promise.reject(testDeliveryOnlyError());
     },
     setCampaignStatus() {
-      return Promise.reject(dylanOnlyError());
+      return Promise.reject(testDeliveryOnlyError());
     },
     async sendTest(input) {
       const response = await safeRequest(transportOrFail(transport), {
         body: {
           altbody: input.text,
           body: input.html,
-          subscriber_email: DYLAN_TEST_RECIPIENT,
+          subscriber_email: DIRECTORS_TEST_RECIPIENT,
           subject: input.subject,
         },
         method: "POST",
@@ -274,11 +270,11 @@ function dylanTestGateway(
       });
       return {
         providerId: numericId(response.data),
-        recipient: DYLAN_TEST_RECIPIENT,
+        recipient: DIRECTORS_TEST_RECIPIENT,
       };
     },
     sendTransactional() {
-      return Promise.reject(dylanOnlyError());
+      return Promise.reject(testDeliveryOnlyError());
     },
   };
 }
@@ -609,7 +605,7 @@ function productionGateway(
         body: {
           altbody: input.text,
           body: input.html,
-          subscriber_email: DYLAN_TEST_RECIPIENT,
+          subscriber_email: DIRECTORS_TEST_RECIPIENT,
           subject: input.subject,
         },
         method: "POST",
@@ -617,7 +613,7 @@ function productionGateway(
       });
       return {
         providerId: numericId(response.data),
-        recipient: DYLAN_TEST_RECIPIENT,
+        recipient: DIRECTORS_TEST_RECIPIENT,
       };
     },
     async sendTransactional(input) {
@@ -665,6 +661,6 @@ export function createEmailProviderGateway({
   }
   if (mode === "disabled") return disabledGateway();
   if (mode === "fake") return fakeGateway();
-  if (mode === "dylan-test") return dylanTestGateway(transport);
+  if (mode === "test") return testGateway(transport);
   return productionGateway(transport, { campaignTemplateId, fromEmail });
 }

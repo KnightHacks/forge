@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
@@ -67,11 +67,32 @@ export function EmailPortalAdmin({
       toast.success(`Test sent to ${result.recipient}.`);
     },
     onError(error) {
-      toast.error(error.message || "The Dylan-only test send failed.");
+      toast.error(error.message || "The directors-only test send failed.");
     },
   });
   const cancelSend = api.email.cancelSend.useMutation();
   const retrySend = api.email.retrySend.useMutation();
+  const resolveAudience = useCallback(
+    async (
+      audienceDefinitions: Parameters<
+        typeof utils.email.resolveAudience.fetch
+      >[0]["audiences"],
+    ) => {
+      try {
+        return await utils.email.resolveAudience.fetch({
+          audiences: audienceDefinitions,
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Recipients could not be loaded.",
+        );
+        throw error;
+      }
+    },
+    [utils],
+  );
 
   const refreshTemplates = async () => {
     await utils.email.listTemplates.invalidate();
@@ -135,6 +156,18 @@ export function EmailPortalAdmin({
                 {},
             };
       }}
+      onLoadSend={async (sendId) => {
+        try {
+          return await utils.email.getSend.fetch({ sendId });
+        } catch (error) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Send details could not be loaded.",
+          );
+          throw error;
+        }
+      }}
       onPreview={async (input) => {
         await previewSend.mutateAsync(input);
       }}
@@ -154,6 +187,7 @@ export function EmailPortalAdmin({
         await utils.email.listSends.invalidate();
         toast.success("Retry queued.");
       }}
+      onResolveAudience={resolveAudience}
       onSaveTemplate={async (input: TemplateEditorSeed) => {
         if (input.kind === "code") {
           await saveTemplate.mutateAsync({

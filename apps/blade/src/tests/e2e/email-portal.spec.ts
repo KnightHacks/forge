@@ -136,11 +136,17 @@ test.describe("Email Portal critical flow", () => {
     page,
   }) => {
     await page.goto(
-      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=/admin/email?tab=templates`,
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(
+        "/admin/email?tab=templates",
+      )}`,
     );
 
     await expect(
       page.getByRole("heading", { name: "Email Portal" }),
+    ).toBeVisible();
+    await page.goto("/admin/email");
+    await expect(
+      page.getByRole("tab", { name: "Templates", selected: true }),
     ).toBeVisible();
     await page.getByRole("button", { name: "New template" }).click();
     await page.getByLabel("Template name").fill("E2E Welcome");
@@ -152,9 +158,12 @@ test.describe("Email Portal critical flow", () => {
       export default <Html><Text>Hello <Merge field="recipient.firstName" fallback="friend" /></Text></Html>;
     `);
     await page.getByRole("button", { name: "Save draft" }).click();
-    await page.getByRole("button", { name: "Preview template" }).click();
+    const template = page.getByRole("article", {
+      name: "E2E Welcome template",
+    });
+    await template.getByRole("button", { name: "Preview template" }).click();
     await expect(page.getByText("Hello Dylan")).toBeVisible();
-    await page.getByRole("button", { name: "Publish" }).click();
+    await template.getByRole("button", { name: "Publish" }).click();
 
     await page.getByRole("tab", { name: "Compose" }).click();
     await page.getByLabel("Subject").fill("Scheduled E2E welcome");
@@ -162,6 +171,14 @@ test.describe("Email Portal critical flow", () => {
       .getByLabel("Email template")
       .selectOption({ label: "E2E Welcome" });
     await page.getByLabel("Current members").check();
+    await page
+      .getByLabel("Search selected audience")
+      .fill("Synthetic Recipient");
+    const syntheticRecipient = page.getByLabel(
+      /Synthetic Recipient.*email-portal-recipient@example\.test/,
+    );
+    await expect(syntheticRecipient).toBeChecked();
+    await syntheticRecipient.uncheck();
     await page.getByLabel("Schedule for").fill("2026-12-01T12:00");
     await page.getByRole("button", { name: "Preview audience" }).click();
 
@@ -171,6 +188,7 @@ test.describe("Email Portal critical flow", () => {
     await expect(
       confirmation.getByText(/^\d+ unique recipients?$/),
     ).toBeVisible();
+    await expect(confirmation.getByText("1 deselected")).toBeVisible();
     await page.waitForTimeout(300);
     await page.screenshot({
       path: ".playwright-results/email-portal-confirmation-desktop.png",
@@ -180,6 +198,18 @@ test.describe("Email Portal critical flow", () => {
     await page.getByRole("tab", { name: "Sends" }).click();
     const send = page.getByRole("row", { name: /Scheduled E2E welcome/ });
     await expect(send).toHaveAttribute("aria-label", /scheduled$/);
+    await send
+      .getByRole("button", { name: "View details for Scheduled E2E welcome" })
+      .click();
+    const details = page.getByRole("dialog", {
+      name: "Scheduled E2E welcome",
+    });
+    await expect(details.getByText(/Sent by Email Portal Admin/)).toBeVisible();
+    await expect(details.getByText("Message body")).toBeVisible();
+    await expect(
+      details.getByText("email-portal-recipient@example.test"),
+    ).toHaveCount(0);
+    await details.getByRole("button", { name: "Close" }).click();
     await send.getByRole("button", { name: "Cancel" }).click();
     await expect(send).toHaveAttribute("aria-label", /cancelled$/);
     await page.setViewportSize({ height: 844, width: 390 });

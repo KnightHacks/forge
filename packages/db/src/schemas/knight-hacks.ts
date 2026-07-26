@@ -1575,6 +1575,7 @@ export const EmailSend = pgTable(
     excludedInvalidCount: t.integer().notNull().default(0),
     excludedSuppressedCount: t.integer().notNull().default(0),
     excludedMissingFieldCount: t.integer().notNull().default(0),
+    excludedManualCount: t.integer().notNull().default(0),
     finalRecipientCount: t.integer().notNull().default(0),
     status: t
       .text({

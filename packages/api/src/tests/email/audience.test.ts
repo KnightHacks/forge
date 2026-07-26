@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
   normalizeRecipientEmail,
 } from "../../utils/email/audience";
@@ -9,6 +10,21 @@ import {
 const HACKATHON_ID = "00000000-0000-4000-8000-000000000012";
 
 describe("Email Portal audience resolution", () => {
+  it("TC-017 removes only selected emails from the resolved recipient pool", () => {
+    const result = applyManualRecipientExclusions(
+      [
+        { email: "ada@example.test", name: "Ada" },
+        { email: "grace@example.test", name: "Grace" },
+      ],
+      [" ADA@EXAMPLE.TEST ", "outside@example.test"],
+    );
+
+    expect(result.included).toEqual([
+      { email: "grace@example.test", name: "Grace" },
+    ]);
+    expect([...result.excludedEmails]).toEqual(["ada@example.test"]);
+  });
+
   it("TC-010 partitions current members and alumni at the date boundary", () => {
     const input = {
       currentDate: "2026-07-25",

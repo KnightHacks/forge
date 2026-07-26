@@ -57,6 +57,7 @@ describe("Email Portal additive storage", () => {
         "contentHash",
         "createdAt",
         "createdBy",
+        "excludedManualCount",
         "finalRecipientCount",
         "id",
         "listmonkCampaignId",

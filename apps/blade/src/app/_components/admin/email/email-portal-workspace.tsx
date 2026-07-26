@@ -1,13 +1,12 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   Archive,
   CalendarClock,
-  Check,
   ChevronRight,
   CircleAlert,
   Clock3,
@@ -17,9 +16,11 @@ import {
   FileText,
   FlaskConical,
   Loader2,
+  Mail,
   Plus,
   RefreshCw,
   Rocket,
+  Search,
   Send,
   Sparkles,
   UsersRound,
@@ -107,6 +108,7 @@ export interface EmailPortalPreview {
     duplicatesCollapsed: number;
     excludedBlocklisted: number;
     excludedInvalid: number;
+    excludedManual?: number;
     excludedMissingFields: number;
     excludedUnsubscribed: number;
     finalUnique: number;
@@ -115,6 +117,61 @@ export interface EmailPortalPreview {
   expiresAt: string;
   sendId?: string;
   version: string;
+}
+
+export interface EmailAudienceResolution {
+  counts: {
+    duplicatesCollapsed: number;
+    excludedBlocklisted: number;
+    excludedInvalid: number;
+    excludedUnsubscribed: number;
+    finalUnique: number;
+    rawMatches: number;
+  };
+  recipients: {
+    attributes: Record<string, unknown>;
+    email: string;
+    matchReasons: string[];
+    name: string;
+  }[];
+}
+
+export interface EmailPortalSendDetail {
+  cancelledBy?: {
+    email: string | null;
+    id: string;
+    name: string | null;
+  } | null;
+  createdBy?: {
+    email: string | null;
+    id: string;
+    name: string | null;
+  } | null;
+  events: {
+    createdAt: Date | string;
+    fromStatus: string | null;
+    id: string;
+    metadata: unknown;
+    toStatus: string | null;
+    type: string;
+  }[];
+  recipients: {
+    attributes: unknown;
+    email: string;
+    exclusionReason: string | null;
+    matchReasons: unknown;
+  }[];
+  send: EmailPortalSend & {
+    cancelledAt?: Date | string | null;
+    compiledHtml?: string | null;
+    compiledText?: string | null;
+    confirmedAt?: Date | string | null;
+    createdAt?: Date | string;
+    plainTextSource?: string | null;
+    providerBounceCount?: number;
+    providerSentCount?: number;
+    safeError?: string | null;
+  };
 }
 
 export interface EmailAudienceOptions {
@@ -360,19 +417,6 @@ function TemplateEditorDialog({
             )}
           </div>
           <aside className="space-y-4">
-            <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
-              <div className="flex items-start gap-3">
-                <Code2 className="mt-0.5 h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Expressive, bounded TSX</p>
-                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
-                    React Email layout components are supported with Merge,
-                    When, and Each. Imports, network calls, arbitrary functions,
-                    and raw HTML are rejected.
-                  </p>
-                </div>
-              </div>
-            </div>
             <div className="rounded-md border border-white/10 bg-background/60 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-medium">Preview & inferred fields</p>
@@ -469,13 +513,13 @@ function CountPreflight({
   const blocked = preview.blockers.length > 0;
   return (
     <section className="rounded-md border border-primary/25 bg-primary/5 p-4 sm:p-5">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="space-y-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             Delivery preflight
           </p>
           <div className="mt-2 flex items-end gap-3">
-            <span className="font-mono text-5xl font-semibold tracking-tight">
+            <span className="font-mono text-4xl font-semibold tracking-tight">
               {preview.counts.finalUnique}
             </span>
             <span className="pb-1 text-sm text-muted-foreground">
@@ -484,7 +528,7 @@ function CountPreflight({
             </span>
           </div>
         </div>
-        <dl className="grid grid-cols-3 gap-2 text-center">
+        <dl className="grid grid-cols-2 gap-2 text-center">
           <div className="rounded border border-white/10 bg-background/70 px-3 py-2">
             <dt className="text-xs text-muted-foreground">Duplicates</dt>
             <dd className="font-mono font-medium">
@@ -499,6 +543,12 @@ function CountPreflight({
             <dt className="text-xs text-muted-foreground">Missing</dt>
             <dd className="font-mono font-medium">
               {preview.counts.excludedMissingFields}
+            </dd>
+          </div>
+          <div className="rounded border border-white/10 bg-background/70 px-3 py-2">
+            <dt className="text-xs text-muted-foreground">Deselected</dt>
+            <dd className="font-mono font-medium">
+              {preview.counts.excludedManual ?? 0}
             </dd>
           </div>
         </dl>
@@ -556,9 +606,11 @@ export function EmailPortalWorkspace({
   onConfirm,
   onDuplicateTemplate,
   onLoadTemplate,
+  onLoadSend,
   onPreview,
   onPreviewTemplate,
   onPublishTemplate,
+  onResolveAudience,
   onRetrySend,
   onSaveTemplate,
   onSendTest,
@@ -576,13 +628,18 @@ export function EmailPortalWorkspace({
   onConfirm?: () => Promise<void> | void;
   onDuplicateTemplate?: (templateId: string) => Promise<void> | void;
   onLoadTemplate?: (templateId: string) => Promise<TemplateEditorSeed>;
+  onLoadSend?: (sendId: string) => Promise<EmailPortalSendDetail>;
   onPreview?: (input: {
     audiences: EmailAudienceDefinition[];
     content: EmailSendContent;
+    excludedRecipients: string[];
     scheduledFor: string | null;
   }) => Promise<void> | void;
   onPreviewTemplate?: (templateId: string) => Promise<TemplatePreviewResult>;
   onPublishTemplate?: (templateId: string) => Promise<void> | void;
+  onResolveAudience?: (
+    audiences: EmailAudienceDefinition[],
+  ) => Promise<EmailAudienceResolution>;
   onRetrySend?: (sendId: string) => Promise<void> | void;
   onSaveTemplate?: (input: TemplateEditorSeed) => Promise<void> | void;
   onSendTest?: (content: EmailSendContent) => Promise<void> | void;
@@ -598,6 +655,18 @@ export function EmailPortalWorkspace({
     "template",
   );
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [audienceResolution, setAudienceResolution] =
+    useState<EmailAudienceResolution | null>(null);
+  const [excludedRecipients, setExcludedRecipients] = useState(
+    new Set<string>(),
+  );
+  const [isResolvingAudience, setIsResolvingAudience] = useState(false);
+  const [recipientSearch, setRecipientSearch] = useState("");
+  const [sendDetail, setSendDetail] = useState<EmailPortalSendDetail | null>(
+    null,
+  );
+  const [loadingSendId, setLoadingSendId] = useState<string | null>(null);
+  const audienceRequest = useRef(0);
   const [templatePreview, setTemplatePreview] = useState<{
     result: TemplatePreviewResult;
     templateId: string;
@@ -630,6 +699,58 @@ export function EmailPortalWorkspace({
       }),
     [templates],
   );
+  const selectedAudienceDefinitions = useMemo(
+    () => audienceDefinitions(selectedAudiences),
+    [selectedAudiences],
+  );
+  const visibleRecipients = useMemo(() => {
+    const query = recipientSearch.trim().toLowerCase();
+    const recipients = audienceResolution?.recipients ?? [];
+    if (!query) return recipients;
+    return recipients.filter(
+      ({ email, name }) =>
+        email.toLowerCase().includes(query) ||
+        name.toLowerCase().includes(query),
+    );
+  }, [audienceResolution, recipientSearch]);
+  const selectedRecipientCount =
+    (audienceResolution?.recipients.length ?? 0) - excludedRecipients.size;
+
+  useEffect(() => {
+    if (!onResolveAudience || selectedAudienceDefinitions.length === 0) {
+      setAudienceResolution(null);
+      setExcludedRecipients(new Set());
+      setIsResolvingAudience(false);
+      return;
+    }
+    const request = ++audienceRequest.current;
+    setIsResolvingAudience(true);
+    const timeout = window.setTimeout(() => {
+      void onResolveAudience(selectedAudienceDefinitions)
+        .then((result) => {
+          if (audienceRequest.current !== request) return;
+          const pool = new Set(result.recipients.map(({ email }) => email));
+          setAudienceResolution(result);
+          setExcludedRecipients(
+            (current) =>
+              new Set([...current].filter((email) => pool.has(email))),
+          );
+        })
+        .catch(() => {
+          if (audienceRequest.current === request) {
+            setAudienceResolution(null);
+          }
+        })
+        .finally(() => {
+          if (audienceRequest.current === request) {
+            setIsResolvingAudience(false);
+          }
+        });
+    }, 180);
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [onResolveAudience, selectedAudienceDefinitions]);
 
   const content: EmailSendContent =
     contentMode === "plainText"
@@ -679,47 +800,22 @@ export function EmailPortalWorkspace({
   return (
     <main
       data-email-portal-layout="responsive"
-      className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8 lg:py-8"
+      className="container min-w-0 space-y-5 pb-16 pt-6 md:pt-10"
     >
+      <header className="min-w-0">
+        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+          <Mail className="h-4 w-4" aria-hidden="true" />
+          Administration
+        </div>
+        <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">
+          Email Portal
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+          Build reusable email templates, choose exactly who should receive
+          them, and review every delivery from one place.
+        </p>
+      </header>
       <div className="overflow-hidden rounded-lg border border-white/10 bg-card shadow-2xl shadow-black/20">
-        <header className="border-b border-border/70 px-4 py-5 sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_18px_hsl(var(--primary))]" />
-                Delivery console
-              </div>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                Email Portal
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                Build reusable React Email templates, resolve a frozen audience,
-                and hand one auditable campaign to Listmonk.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 divide-x divide-white/10 rounded-md border border-white/10 bg-background/60">
-              <div className="px-4 py-2 text-center">
-                <p className="font-mono text-lg font-semibold">
-                  {templates.length}
-                </p>
-                <p className="text-xs text-muted-foreground">Templates</p>
-              </div>
-              <div className="px-4 py-2 text-center">
-                <p className="font-mono text-lg font-semibold">
-                  {sends.filter(({ status }) => status === "scheduled").length}
-                </p>
-                <p className="text-xs text-muted-foreground">Scheduled</p>
-              </div>
-              <div className="px-4 py-2 text-center">
-                <p className="font-mono text-lg font-semibold">
-                  {sends.filter(({ status }) => status === "running").length}
-                </p>
-                <p className="text-xs text-muted-foreground">Running</p>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <div
           role="tablist"
           aria-label="Email portal sections"
@@ -789,6 +885,7 @@ export function EmailPortalWorkspace({
                 {templates.map((template) => (
                   <article
                     key={template.id}
+                    aria-label={`${template.name} template`}
                     className="group rounded-md border border-white/10 bg-background/55 p-4 transition-colors hover:border-primary/25"
                   >
                     <div className="flex items-start gap-3">
@@ -907,7 +1004,7 @@ export function EmailPortalWorkspace({
           <section
             id="email-compose-panel"
             role="tabpanel"
-            className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_24rem]"
+            className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_21rem]"
           >
             <div className="space-y-6 p-4 sm:p-6">
               <div>
@@ -1159,7 +1256,7 @@ export function EmailPortalWorkspace({
                   ) : (
                     <FlaskConical className="h-4 w-4" />
                   )}
-                  Send test to Dylan
+                  Send test to directors
                 </Button>
                 <Button
                   type="button"
@@ -1167,6 +1264,8 @@ export function EmailPortalWorkspace({
                     isPreviewing ||
                     !subject.trim() ||
                     selectedAudiences.size === 0 ||
+                    (audienceResolution !== null &&
+                      selectedRecipientCount === 0) ||
                     (contentMode === "template"
                       ? !templateRevisionId
                       : !plainText.trim()) ||
@@ -1176,6 +1275,7 @@ export function EmailPortalWorkspace({
                     onPreview?.({
                       audiences: audienceDefinitions(selectedAudiences),
                       content,
+                      excludedRecipients: [...excludedRecipients].sort(),
                       scheduledFor:
                         scheduleMode === "schedule"
                           ? dateTimeLocalToIso(scheduledFor)
@@ -1194,27 +1294,109 @@ export function EmailPortalWorkspace({
             </div>
             <aside className="border-t border-border/70 bg-background/35 p-4 xl:border-l xl:border-t-0 xl:p-5">
               <div className="sticky top-20 space-y-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Safety rail
-                  </p>
-                  <div className="mt-3 space-y-3">
-                    {[
-                      "No bulk delivery outside production mode",
-                      "Test sends are fixed to dylan@knighthacks.org",
-                      "Final unique count is locked at confirmation",
-                      "Late unsubscribes are removed before handoff",
-                    ].map((item) => (
-                      <p
-                        key={item}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                <section aria-labelledby="recipient-pool-heading">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3
+                        id="recipient-pool-heading"
+                        className="text-sm font-semibold"
                       >
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                        {item}
+                        Recipients
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {isResolvingAudience
+                          ? "Resolving selected groups…"
+                          : `${selectedRecipientCount} of ${
+                              audienceResolution?.recipients.length ?? 0
+                            } selected`}
                       </p>
-                    ))}
+                    </div>
+                    {isResolvingAudience && (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    )}
                   </div>
-                </div>
+                  <div className="relative mt-3">
+                    <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      aria-label="Search selected audience"
+                      className="h-10 pl-9"
+                      placeholder="Search people"
+                      value={recipientSearch}
+                      onChange={(event) =>
+                        setRecipientSearch(event.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={!audienceResolution?.recipients.length}
+                      onClick={() => setExcludedRecipients(new Set())}
+                    >
+                      Select all
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={!audienceResolution?.recipients.length}
+                      onClick={() =>
+                        setExcludedRecipients(
+                          new Set(
+                            audienceResolution?.recipients.map(
+                              ({ email }) => email,
+                            ) ?? [],
+                          ),
+                        )
+                      }
+                    >
+                      Deselect all
+                    </Button>
+                  </div>
+                  <div className="mt-2 max-h-[28rem] space-y-1 overflow-y-auto pr-1">
+                    {!isResolvingAudience && visibleRecipients.length === 0 ? (
+                      <p className="rounded-md border border-dashed border-white/15 px-3 py-8 text-center text-xs leading-5 text-muted-foreground">
+                        {audienceResolution
+                          ? "No recipients match this search."
+                          : "Choose an audience group to see its members."}
+                      </p>
+                    ) : (
+                      visibleRecipients.map((recipient) => (
+                        <label
+                          key={recipient.email}
+                          className="flex cursor-pointer items-start gap-2 rounded-md border border-transparent px-2 py-2 hover:border-white/10 hover:bg-background/60"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-1"
+                            checked={!excludedRecipients.has(recipient.email)}
+                            onChange={() =>
+                              setExcludedRecipients((current) => {
+                                const next = new Set(current);
+                                if (next.has(recipient.email)) {
+                                  next.delete(recipient.email);
+                                } else {
+                                  next.add(recipient.email);
+                                }
+                                return next;
+                              })
+                            }
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-medium">
+                              {recipient.name || recipient.email}
+                            </span>
+                            <span className="block truncate text-[11px] text-muted-foreground">
+                              {recipient.email}
+                            </span>
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </section>
                 {preview ? (
                   <CountPreflight
                     isConfirming={isConfirming}
@@ -1312,7 +1494,30 @@ export function EmailPortalWorkspace({
                             <RefreshCw className="h-4 w-4" /> Retry
                           </Button>
                         )}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`View details for ${send.subject}`}
+                          disabled={!onLoadSend || loadingSendId === send.id}
+                          onClick={async () => {
+                            if (!onLoadSend) return;
+                            setLoadingSendId(send.id);
+                            try {
+                              setSendDetail(await onLoadSend(send.id));
+                            } catch {
+                              // The caller surfaces the request failure.
+                            } finally {
+                              setLoadingSendId(null);
+                            }
+                          }}
+                        >
+                          {loadingSendId === send.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </article>
                   ))}
@@ -1330,6 +1535,179 @@ export function EmailPortalWorkspace({
           onPreview={onPreviewTemplate}
           onSave={onSaveTemplate}
         />
+      )}
+      {sendDetail && (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setSendDetail(null);
+          }}
+        >
+          <DialogContent className="max-h-[94svh] max-w-5xl overflow-y-auto border-white/10 bg-card p-0">
+            <DialogHeader className="border-b border-border/70 px-5 py-4 text-left">
+              <div className="flex flex-wrap items-center gap-2 pr-8">
+                <DialogTitle>{sendDetail.send.subject}</DialogTitle>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "capitalize",
+                    statusClass(sendDetail.send.status),
+                  )}
+                >
+                  {statusLabel(sendDetail.send.status)}
+                </Badge>
+              </div>
+              <DialogDescription>
+                Sent by{" "}
+                {sendDetail.createdBy?.name ??
+                  sendDetail.createdBy?.email ??
+                  "Unknown administrator"}
+                {sendDetail.send.createdAt
+                  ? ` on ${new Date(
+                      sendDetail.send.createdAt,
+                    ).toLocaleString()}`
+                  : ""}
+                .
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+              <div className="min-w-0 space-y-5">
+                <section>
+                  <h3 className="text-sm font-semibold">Message body</h3>
+                  <div className="mt-2 overflow-hidden rounded-md border border-white/10 bg-white">
+                    {sendDetail.send.compiledHtml ? (
+                      <iframe
+                        title={`Email body for ${sendDetail.send.subject}`}
+                        className="h-[34rem] w-full border-0 bg-white"
+                        sandbox=""
+                        srcDoc={sendDetail.send.compiledHtml}
+                      />
+                    ) : (
+                      <pre className="max-h-[34rem] overflow-auto whitespace-pre-wrap p-5 font-sans text-sm leading-6 text-slate-950">
+                        {sendDetail.send.compiledText ??
+                          sendDetail.send.plainTextSource ??
+                          "No retained message body."}
+                      </pre>
+                    )}
+                  </div>
+                </section>
+                <section>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold">Recipients</h3>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {sendDetail.recipients.length} retained
+                    </span>
+                  </div>
+                  <div className="mt-2 max-h-80 divide-y divide-white/10 overflow-y-auto rounded-md border border-white/10">
+                    {sendDetail.recipients.length === 0 ? (
+                      <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                        Recipient details are no longer retained.
+                      </p>
+                    ) : (
+                      sendDetail.recipients.map((recipient) => (
+                        <div
+                          key={recipient.email}
+                          className="flex items-start justify-between gap-3 px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm">
+                              {recipient.email}
+                            </p>
+                            {Array.isArray(recipient.matchReasons) && (
+                              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                {recipient.matchReasons
+                                  .filter(
+                                    (reason): reason is string =>
+                                      typeof reason === "string",
+                                  )
+                                  .map(statusLabel)
+                                  .join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                          {recipient.exclusionReason && (
+                            <Badge variant="outline">
+                              {statusLabel(recipient.exclusionReason)}
+                            </Badge>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </div>
+              <aside className="space-y-5">
+                <section className="rounded-md border border-white/10 bg-background/50 p-4">
+                  <h3 className="text-sm font-semibold">Delivery summary</h3>
+                  <dl className="mt-3 space-y-3 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Audience</dt>
+                      <dd className="font-mono">
+                        {sendDetail.send.finalRecipientCount ??
+                          sendDetail.send.recipientCount ??
+                          0}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Provider sent</dt>
+                      <dd className="font-mono">
+                        {sendDetail.send.providerSentCount ?? 0}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Bounces</dt>
+                      <dd className="font-mono">
+                        {sendDetail.send.providerBounceCount ?? 0}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted-foreground">Scheduled</dt>
+                      <dd className="text-right">
+                        {sendDetail.send.scheduledFor
+                          ? new Date(
+                              sendDetail.send.scheduledFor,
+                            ).toLocaleString()
+                          : "Immediately"}
+                      </dd>
+                    </div>
+                  </dl>
+                  {sendDetail.send.safeError && (
+                    <p className="mt-4 rounded border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                      {sendDetail.send.safeError}
+                    </p>
+                  )}
+                </section>
+                <section>
+                  <h3 className="text-sm font-semibold">Activity</h3>
+                  <div className="mt-2 max-h-96 space-y-2 overflow-y-auto">
+                    {sendDetail.events.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No delivery events recorded.
+                      </p>
+                    ) : (
+                      sendDetail.events.map((event) => (
+                        <div
+                          key={event.id}
+                          className="rounded-md border border-white/10 bg-background/45 p-3"
+                        >
+                          <p className="text-sm font-medium">
+                            {statusLabel(event.type)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {new Date(event.createdAt).toLocaleString()}
+                            {event.toStatus
+                              ? ` · ${statusLabel(event.toStatus)}`
+                              : ""}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </aside>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
       {preview && (
         <Dialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
@@ -1353,7 +1731,7 @@ export function EmailPortalWorkspace({
                 {preview.counts.finalUnique === 1 ? "" : "s"}
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+            <div className="grid grid-cols-2 gap-2 text-center text-sm">
               <div className="rounded border border-white/10 p-2">
                 {preview.counts.duplicatesCollapsed} duplicates
               </div>
@@ -1364,6 +1742,9 @@ export function EmailPortalWorkspace({
               </div>
               <div className="rounded border border-white/10 p-2">
                 {preview.counts.excludedMissingFields} missing
+              </div>
+              <div className="rounded border border-white/10 p-2">
+                {preview.counts.excludedManual ?? 0} deselected
               </div>
             </div>
             <DialogFooter>

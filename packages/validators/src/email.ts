@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
 
-export const EMAIL_TEST_RECIPIENT = "dylan@knighthacks.org";
+export const EMAIL_TEST_RECIPIENT = "directors@knighthacks.org";
 export const EMAIL_PREVIEW_TTL_MINUTES = 15;
 export const EMAIL_RECIPIENT_RETENTION_DAYS = 90;
 
@@ -54,6 +54,25 @@ export const emailAudienceDefinitionsSchema = z
     }
   });
 
+export const emailResolveAudienceSchema = z
+  .object({
+    audiences: emailAudienceDefinitionsSchema,
+  })
+  .strict();
+
+export const emailExcludedRecipientsSchema = z
+  .array(z.string().trim().toLowerCase().pipe(z.email()))
+  .max(50_000)
+  .superRefine((emails, ctx) => {
+    if (new Set(emails).size !== emails.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Excluded recipient emails must not contain duplicates.",
+      });
+    }
+  })
+  .default([]);
+
 const emailPlainTextContentSchema = z
   .object({
     mode: z.literal("plainText"),
@@ -80,6 +99,7 @@ export const emailPreviewSendSchema = z
   .object({
     audiences: emailAudienceDefinitionsSchema,
     content: emailSendContentSchema,
+    excludedRecipients: emailExcludedRecipientsSchema,
     scheduledFor: isoInstantSchema.nullable(),
     sendId: uuidSchema.optional(),
   })

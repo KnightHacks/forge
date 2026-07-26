@@ -47,6 +47,10 @@ describe("Email Portal workspace", () => {
     );
 
     expect(html).toContain("42");
+    expect(html).toContain("Administration");
+    expect(html).toContain("Send test to directors");
+    expect(html).not.toContain("Safety rail");
+    expect(html).not.toContain("Expressive, bounded TSX");
     expect(html).toMatch(/unique recipient/i);
     expect(html).toMatch(/5.*duplicate|duplicate.*5/i);
     expect(html).toMatch(/7.*suppressed|suppressed.*7/i);
@@ -85,6 +89,7 @@ describe("Email Portal workspace", () => {
     expect(html).toContain("Templates");
     expect(html).toContain("Compose");
     expect(html).toContain("Sends");
+    expect(html).toContain("View details for draft send");
     for (const status of statuses) {
       expect(html.toLowerCase()).toContain(status.replace("_", " "));
     }

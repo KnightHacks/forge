@@ -29,7 +29,7 @@ The portal is additive. Existing application-triggered transactional hackathon e
 - Client-side hiding is never an authorization boundary. Every email procedure starts with the explicit control-permission check.
 - Recipient addresses and personalization snapshots are PII. They are returned only to `EMAIL_PORTAL` callers, never included in Discord logs, and never logged as provider request payloads.
 - Template authors are trusted organizational administrators, but stored template source is still treated as operationally unsafe input. It cannot access arbitrary modules, Node globals, process environment, filesystem, database, network, dynamic code evaluation, or application APIs.
-- The live test-send procedure accepts no recipient field. The deepest `@forge/email` provider boundary resolves and enforces exactly `dylan@knighthacks.org`.
+- The portal test-send procedure accepts no recipient field. The deepest `@forge/email` provider boundary resolves and enforces exactly `directors@knighthacks.org`.
 
 ## Architecture / data flow
 
@@ -179,7 +179,7 @@ Any Listmonk subscriber that is globally blocklisted or has an unsubscribed Knig
 
 - `disabled`: default; all provider mutations throw before HTTP.
 - `fake`: tests and local UI development; mutations are recorded only by an injected in-memory fake.
-- `dylan-test`: only the dedicated test-send operation may call the real provider, and the provider boundary rewrites nothing and accepts only normalized `dylan@knighthacks.org`; audience sends, schedules, cron retries, and other recipients throw.
+- `test`: only the dedicated portal test-send operation may call the real provider, and the provider boundary targets exactly `directors@knighthacks.org`; audience sends, schedules, cron retries, and arbitrary transactional recipients throw.
 - `production`: authorized portal campaigns and existing transactional behavior may call Listmonk.
 
 The policy is checked again at provider execution time, including cron and retry paths. It does not rely solely on `NODE_ENV`. Automated tests fail if they reach an unmocked network gateway.
@@ -295,8 +295,8 @@ Multi-table preview replacement, confirmation, publish, cancellation, and state 
 - Existing transactional hackathon template fields and email behavior remain compatible.
 - Port/reconcile production main's direct Listmonk client before removing the deprecated SDK.
 - Deploy schema and code with `EMAIL_DELIVERY_MODE=disabled`.
-- Verify migrations, permission gating, fake-provider E2E, Listmonk API compatibility, pass-through template rendering, unsubscribe behavior, and Dylan-only test send.
-- Enable `dylan-test` only for an explicit manual smoke test to Dylan.
+- Verify migrations, permission gating, fake-provider E2E, Listmonk API compatibility, pass-through template rendering, unsubscribe behavior, and directors-only portal test send.
+- Enable `test` only for an explicit manual portal smoke test to the directors list.
 - Enable `production` only after the artifact bundle, migration, environment, Listmonk configuration, and smoke-test evidence are approved.
 
 Rollback:
@@ -337,14 +337,15 @@ Would this require a developer change next year?
 
 - `/admin/email/page.tsx` remains a thin server component responsible for auth, the `EMAIL_PORTAL` gate, stable initial reads, and `HydrateClient`.
 - Add Email Portal to the shared admin-access calculation, layout authorization, navigation model, active-route typing, desktop navigation, and mobile navigation. An `EMAIL_PORTAL`-only user must be able to enter the admin shell.
-- Templates, Compose, and Sends use URL-persisted tabs/workspace state.
+- Templates, Compose, and Sends use URL-persisted tabs/workspace state, with Templates as the default landing tab.
+- Compose resolves the selected groups into a compact searchable recipient list. Eligible recipients start checked; manually unchecked normalized emails are included in the preview hash, excluded before personalization coverage and snapshot persistence, and recorded only as an aggregate manual-exclusion count.
 - Blade-specific composed components live under `apps/blade/src/app/_components/admin/email`.
 - Focused hooks encapsulate template drafts, debounced preview compilation, audience preview, confirmation, and send-status polling.
 - The Monaco editor is client-only and dynamically loaded. The page itself never becomes a client component.
 - Visual and code template modes are distinct sources; arbitrary code templates are not promised to round-trip through the visual editor.
 - Use full-width admin workspace composition, raised `bg-card/95` top-level panels, darker `bg-background/60` inset rows, bounded tables, existing tokens, Lucide icons, visible labels, and no nested top-level cards.
 - The composer keeps continuously referenced content/preview information visible without defaulting to a fixed one-third settings rail. Bounded creation/settings use dialogs or mobile-safe drawers.
-- The final confirmation dialog gives the unique recipient count primary visual weight and lists duplicates, suppressions, invalid addresses, and missing-field blockers.
+- The final confirmation dialog gives the unique recipient count primary visual weight and lists duplicates, suppressions, manual deselections, invalid addresses, and missing-field blockers.
 - Loading, empty, draft, compiling, preview-ready, scheduled, running, completed, cancelled, retryable failure, and terminal failure states are explicit and accessible.
 - At 320px there is no document-level horizontal overflow. Code and data surfaces use labeled internal scroll regions, 44px touch targets, and viewport-safe dialogs.
 - Pending mutations disable duplicate actions; success closes bounded overlays/toasts and invalidates relevant data; failures preserve drafts and show safe actionable messages.
@@ -357,7 +358,7 @@ Would this require a developer change next year?
   - accepted declarative TSX and visual-document compilation;
   - rejection of arbitrary imports, globals, dynamic execution, dangerous props, unsupported nodes, oversized/deep ASTs, and unresolved markers;
   - merge/conditional/repeated-content serialization and HTML/plain-text snapshots;
-  - delivery-mode matrix and deepest-boundary Dylan-only enforcement;
+  - delivery-mode matrix and deepest-boundary directors-only portal enforcement;
   - direct Listmonk gateway request/response/error contracts with a fake transport.
 - `@forge/validators`
   - audience union, statuses, source-kind discrimination, schedules, previews, confirmation versions/counts, and transition inputs.
@@ -378,7 +379,7 @@ Would this require a developer change next year?
 - Component tests cover access-filtered navigation, URL tabs, template mode separation, preview states, audience counts/exclusions, confirmation dialog copy/count, disabled actions, cancellation, and failure recovery.
 - Playwright covers one high-value flow using synthetic `example.test` recipients and the fake provider: create/publish template → compose → preview → confirm immediate or scheduled send → observe status/cancel.
 - A separate negative E2E proves an `EMAIL_PORTAL`-only user can access the portal but an unauthorized user cannot.
-- Automated suites never call real Listmonk and never use copied real recipient addresses.
+- Automated suites never call real Listmonk and never use copied real recipient addresses. A future separately authorized live automated integration check, if introduced, may target only `donotreply@knighthacks.org`.
 
 ### Required commands
 

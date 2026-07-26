@@ -1,12 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it, vi } from "vitest";
 
-import { createEmailProviderGateway, DYLAN_TEST_RECIPIENT } from "../provider";
+import {
+  createEmailProviderGateway,
+  DIRECTORS_TEST_RECIPIENT,
+} from "../provider";
 
 const content = {
-  html: "<p>Hello Dylan</p>",
+  html: "<p>Hello directors</p>",
   subject: "Portal test",
-  text: "Hello Dylan",
+  text: "Hello directors",
 };
 
 describe("email delivery mode boundary", () => {
@@ -48,44 +51,44 @@ describe("email delivery mode boundary", () => {
       gateway.reconcileCampaign(campaign.campaignId),
     ).resolves.toEqual(expect.objectContaining({ totalCount: 2 }));
     await expect(gateway.sendTest(content)).resolves.toEqual(
-      expect.objectContaining({ recipient: DYLAN_TEST_RECIPIENT }),
+      expect.objectContaining({ recipient: DIRECTORS_TEST_RECIPIENT }),
     );
     expect(transport).not.toHaveBeenCalled();
   });
 
-  it("TC-032 permits exactly the dedicated Dylan test-send operation", async () => {
+  it("TC-032 permits exactly the dedicated directors test-send operation", async () => {
     const transport = vi.fn().mockResolvedValue({
       data: { id: 123, status: "success" },
     });
     const gateway = createEmailProviderGateway({
-      mode: "dylan-test",
+      mode: "test",
       transport,
     });
 
     await expect(gateway.sendTest(content)).resolves.toEqual(
-      expect.objectContaining({ recipient: "dylan@knighthacks.org" }),
+      expect.objectContaining({ recipient: "directors@knighthacks.org" }),
     );
     expect(transport).toHaveBeenCalledTimes(1);
     expect(transport).toHaveBeenCalledWith(
       expect.objectContaining({
         body: expect.objectContaining({
-          subscriber_email: "dylan@knighthacks.org",
+          subscriber_email: "directors@knighthacks.org",
         }),
       }),
     );
   });
 
   it.each([
-    ["bulk", ["dylan@knighthacks.org", "person@example.test"]],
-    ["non-Dylan", ["person@example.test"]],
-    ["case trick", ["DYLAN@KNIGHTHACKS.ORG"]],
-    ["whitespace trick", [" dylan@knighthacks.org "]],
+    ["bulk", ["directors@knighthacks.org", "person@example.test"]],
+    ["non-directors", ["person@example.test"]],
+    ["case trick", ["DIRECTORS@KNIGHTHACKS.ORG"]],
+    ["whitespace trick", [" directors@knighthacks.org "]],
   ])(
     "TC-NEG-008 rejects %s bypasses before HTTP",
     async (_name, recipients) => {
       const transport = vi.fn();
       const gateway = createEmailProviderGateway({
-        mode: "dylan-test",
+        mode: "test",
         transport,
       });
 
@@ -95,7 +98,7 @@ describe("email delivery mode boundary", () => {
           recipientSnapshot: recipients,
           sendId: "00000000-0000-4000-8000-000000000032",
         }),
-      ).rejects.toMatchObject({ code: "DYLAN_TEST_ONLY" });
+      ).rejects.toMatchObject({ code: "TEST_DELIVERY_ONLY" });
       expect(transport).not.toHaveBeenCalled();
     },
   );
@@ -103,16 +106,16 @@ describe("email delivery mode boundary", () => {
   it("TC-NEG-008 rejects a direct recipient-bearing test request", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
-      mode: "dylan-test",
+      mode: "test",
       transport,
     });
 
     await expect(
       gateway.sendTransactional({
         ...content,
-        recipients: ["dylan@knighthacks.org"],
+        recipients: ["directors@knighthacks.org"],
       }),
-    ).rejects.toMatchObject({ code: "DYLAN_TEST_ONLY" });
+    ).rejects.toMatchObject({ code: "TEST_DELIVERY_ONLY" });
     expect(transport).not.toHaveBeenCalled();
   });
 

@@ -85,6 +85,24 @@ export function normalizeRecipientEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function applyManualRecipientExclusions<T extends { email: string }>(
+  recipients: T[],
+  requestedEmails: string[],
+) {
+  const requested = new Set(requestedEmails.map(normalizeRecipientEmail));
+  const excludedEmails = new Set(
+    recipients
+      .filter(({ email }) => requested.has(normalizeRecipientEmail(email)))
+      .map(({ email }) => normalizeRecipientEmail(email)),
+  );
+  return {
+    excludedEmails,
+    included: recipients.filter(
+      ({ email }) => !excludedEmails.has(normalizeRecipientEmail(email)),
+    ),
+  };
+}
+
 function isCurrentMember(member: AudienceMember, currentDate: string) {
   return member.graduationDate >= currentDate;
 }

@@ -1,6 +1,6 @@
 # Email Portal Status
 
-Current phase: Implementation and feature QA complete / ready for review
+Current phase: Review revisions complete / live review server running
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -11,7 +11,7 @@ Current phase: Implementation and feature QA complete / ready for review
 - 2026-07-25: The approved personalization direction does not assume one database profile shape. Audience sources contribute to a common set of recipient and context fields, and the preflight reports field availability across the selected audience and requires explicit fallbacks where coverage is incomplete.
 - 2026-07-25: Arbitrary SQL audience selection is out of scope. V1 uses typed, server-compiled presets/rules.
 - 2026-07-25: Listmonk campaigns are the approved bulk-delivery primitive for immediate and scheduled portal sends. Forge owns the authoring, audience, confirmation, and history experience. Existing application-triggered transactional email remains separate.
-- 2026-07-25: Hard safety requirement: no test email may be delivered to any address except exactly `dylan@knighthacks.org`. Local development and CI use a fake provider by default. The only live test-send operation has no client-selectable recipient and resolves to that fixed address inside the email-provider boundary. Non-production audience sends, schedules, and retries fail closed rather than silently filtering a real audience down to Dylan; the mock database contains real email addresses.
+- 2026-07-26: The portal test button now targets exactly `directors@knighthacks.org`, with no client-selectable recipient. Local development and CI remain fake/network-free. If a separately authorized automated live integration check is ever introduced, its sole permitted address is `donotreply@knighthacks.org`. Test mode continues to reject bulk audience sends, schedules, retries, and arbitrary transactional recipients at the deepest provider boundary; the mock database contains real email addresses.
 - 2026-07-25: "All members" means current, non-alumni members. Alumni remain a separate audience.
 - 2026-07-25: "Team members" means the existing configured team roster.
 - 2026-07-25: A test email is optional. Before an immediate or scheduled send, the dashboard must show the final unique recipient count, especially in the confirmation dialog.
@@ -21,7 +21,8 @@ Current phase: Implementation and feature QA complete / ready for review
 - 2026-07-25: The user approved one broad `EMAIL_PORTAL` capability for V1, a Blade-configurable team-role classification, and 90-day retention for recipient-level snapshots with durable aggregate history.
 - 2026-07-25: `spec.md` is approved. A technical SRD has been drafted for explicit approval before schema, dependency, environment, email, cron, or deployment changes.
 - 2026-07-25: The SRD was explicitly approved, authorizing its documented schema/migration, dependency, environment, provider, cron, retention, and rollout changes.
-- 2026-07-25: Behavioral test cases were drafted at the owning package/app boundaries. Automated tests must use a fake provider and synthetic `example.test` addresses; live test delivery remains a separate Dylan-only manual gate.
+- 2026-07-25: Behavioral test cases were drafted at the owning package/app boundaries. Automated tests must use a fake provider and synthetic `example.test` addresses; live portal test delivery remains a separate directors-only manual gate.
+- 2026-07-26: Review feedback requires the portal to match Blade's standard Lucide-icon administration header and container width, default to Templates, remove the safety rail and bounded-TSX explainer, expand selected audience groups into a compact searchable checkbox list, and make Sends rows open full sender/content/recipient/activity details.
 - 2026-07-25: The behavioral test cases were explicitly approved. Test generation may begin; product implementation remains constrained by the approved spec, SRD, and cases.
 - 2026-07-25: The approved tests were generated at the email, validator, API, database, Blade component, and synthetic Playwright boundaries. Their initial runs fail for the intended missing compiler, provider, audience, lifecycle, schema, migration, and UI modules.
 - 2026-07-25: The user requested that newly merged Alumni Dashboard work from `reforge/main` be merged into this feature worktree before implementation continues.
@@ -54,12 +55,14 @@ Current phase: Implementation and feature QA complete / ready for review
 - [x] Implement Blade navigation, template workspace, composer, audience picker, exact-count confirmation, send history, and role audience configuration.
 - [x] Run changed-file analysis, affected-workspace lint/typecheck/test suites, and migration checks.
 - [x] Run Blade browser QA on an alternate port and inspect desktop/mobile screenshots.
+- [x] Apply review feedback for Blade layout consistency, recipient-level deselection, send details, and directors-only test delivery.
+- [x] Validate the Listmonk connection read-only and return the review server to port 3000 in test-only delivery mode.
 
 ## Validation / commands
 
 - `pnpm forge:feature email-portal "Email Portal"`: created the required feature artifact bundle.
 - Read-only repository review: confirmed the current Reforge branch has a thin transactional Listmonk client, an `EMAIL_PORTAL` permission, recipient data in `Member`/`Hacker`/`HackerAttendee`, and no current portal, campaign schema, queue, history, or email tests.
-- Port audit: Blade's default `3000` is occupied by the other worktree; use an alternate port for this worktree and account for the development auth base URL before OAuth testing.
+- Initial port testing used an alternate port. The other Blade worktree now runs on `3010`, and this feature worktree owns `3000` for live review with the development auth base URL intact.
 - `git diff --check`: passed for the drafted product artifacts.
 - `pnpm@9.12.1 exec prettier --check .forge/features/email-portal/spec.md .forge/features/email-portal/status.md`: passed.
 - `git diff --check`: passed after the SRD draft.
@@ -94,6 +97,14 @@ Current phase: Implementation and feature QA complete / ready for review
 - `pnpm lint`: affected workspaces pass; the root command retains unrelated Club type-resolution lint failures in `apps/club/src/app/teams/team-roster.ts`.
 - `NODE_ENV=production pnpm --filter blade build`: application compilation passed; the existing full-app prerender later failed on `/admin/forms/sections`.
 - `pnpm analyze:react`: completed with the repository's one existing analyzer failure in `apps/blade/src/trpc/react.tsx`; no Email Portal file existed yet at baseline.
+- Follow-up affected-workspace typechecks for validators, email, database, API, and Blade: passed.
+- Follow-up targeted ESLint for all changed TypeScript/TSX files: passed without warnings.
+- Follow-up focused Vitest: validators 13, email 35, database 6, API 25, and Blade 4 tests passed.
+- `drizzle-kit migrate`: applied additive migration `0023_email_manual_exclusions` successfully to the shared mock database.
+- The legacy-derived BloomKnights sample compiled through `compileCodeEmailTemplate` with a derived `recipient.firstName` contract and 2,216-byte HTML output.
+- Authenticated `GET /api/health` through the configured Listmonk transport: passed without sending or mutating email data.
+- Fake-provider Playwright follow-up: passed default Templates landing, one manual recipient deselection, exact adjusted confirmation count, send-detail sender/body/recipient audit, cancellation, and mobile layout. Desktop/mobile screenshots were visually inspected.
+- Port 3000 is running this worktree under `EMAIL_DELIVERY_MODE=test`; the portal test button can contact Listmonk only for `directors@knighthacks.org`, while bulk and arbitrary transactional operations fail closed.
 
 ## Links
 

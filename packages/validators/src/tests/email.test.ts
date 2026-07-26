@@ -49,7 +49,26 @@ describe("Email Portal validators", () => {
         content: sendContent,
         scheduledFor: null,
       }),
-    ).toMatchObject({ content: sendContent });
+    ).toMatchObject({ content: sendContent, excludedRecipients: [] });
+  });
+
+  it("TC-017 normalizes and validates manually excluded recipient emails", () => {
+    expect(
+      emailPreviewSendSchema.parse({
+        audiences: [{ kind: "current_members" }],
+        content: sendContent,
+        excludedRecipients: [" ADA@EXAMPLE.TEST "],
+        scheduledFor: null,
+      }).excludedRecipients,
+    ).toEqual(["ada@example.test"]);
+    expect(() =>
+      emailPreviewSendSchema.parse({
+        audiences: [{ kind: "current_members" }],
+        content: sendContent,
+        excludedRecipients: ["ada@example.test", "ADA@example.test"],
+        scheduledFor: null,
+      }),
+    ).toThrow(/duplicates/i);
   });
 
   it("TC-NEG-005 requires the displayed count and preview version at confirm", () => {

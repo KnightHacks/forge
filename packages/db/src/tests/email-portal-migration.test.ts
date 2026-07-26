@@ -63,4 +63,19 @@ describe("Email Portal migration contract", () => {
     expect(migration.sql).not.toMatch(/DROP TABLE "template"/i);
     expect(migration.sql).not.toMatch(/DROP COLUMN.*email_/i);
   });
+
+  it("TC-052 adds an aggregate manual-exclusion count without recipient PII", async () => {
+    const sql = await readFile(
+      new URL(
+        "../../drizzle/0023_email_manual_exclusions.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+
+    expect(sql).toMatch(
+      /ALTER TABLE "email_send" ADD COLUMN "excluded_manual_count" integer DEFAULT 0 NOT NULL/i,
+    );
+    expect(sql).not.toMatch(/email address|recipient email|@/i);
+  });
 });
