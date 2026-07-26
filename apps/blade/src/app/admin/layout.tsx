@@ -6,6 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import {
   canAccessAlumniAdmin,
   canAccessAnalytics,
+  canAccessEmailPortal,
   canAccessEventAdmin,
   canAccessEventCheckIn,
   canAccessFormAdmin,
@@ -31,6 +32,7 @@ export default async function AdminLayout({
     !canAccessAnalytics(effectivePermissions) &&
     !canAccessAlumniAdmin(effectivePermissions) &&
     !canAccessEventAdmin(effectivePermissions) &&
+    !canAccessEmailPortal(effectivePermissions) &&
     !canAccessEventCheckIn(effectivePermissions) &&
     !canAccessFormAdmin(effectivePermissions) &&
     !canAccessIssues(effectivePermissions) &&

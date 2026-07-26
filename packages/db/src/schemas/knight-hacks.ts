@@ -4,6 +4,7 @@ import {
   foreignKey,
   index,
   pgEnum,
+  pgTable,
   pgTableCreator,
   primaryKey,
   unique,
@@ -1471,3 +1472,227 @@ export const Template = createTable(
 );
 
 export const InsertTemplateSchema = createInsertSchema(Template);
+
+export const EmailTemplate = pgTable(
+  "email_template",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.varchar({ length: 120 }).notNull(),
+    normalizedName: t.varchar({ length: 120 }).notNull(),
+    kind: t.text({ enum: ["code", "visual"] }).notNull(),
+    archivedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdBy: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    updatedBy: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  }),
+  (table) => ({
+    normalizedNameUnique: unique("email_template_normalized_name_unique").on(
+      table.normalizedName,
+    ),
+    archivedIdx: index("email_template_archived_updated_idx").on(
+      table.archivedAt,
+      table.updatedAt,
+    ),
+  }),
+);
+
+export const EmailTemplateRevision = pgTable(
+  "email_template_revision",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    templateId: t
+      .uuid()
+      .notNull()
+      .references(() => EmailTemplate.id, { onDelete: "restrict" }),
+    version: t.integer().notNull(),
+    state: t
+      .text({ enum: ["draft", "published", "superseded"] })
+      .notNull()
+      .default("draft"),
+    source: t.text(),
+    visualDocument: t.jsonb(),
+    compiledHtml: t.text(),
+    compiledText: t.text(),
+    personalizationContract: t.jsonb().notNull().default([]),
+    checksum: t.varchar({ length: 64 }),
+    createdBy: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    publishedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }),
+  (table) => ({
+    templateVersionUnique: unique(
+      "email_template_revision_template_version_unique",
+    ).on(table.templateId, table.version),
+    templateStateIdx: index("email_template_revision_template_state_idx").on(
+      table.templateId,
+      table.state,
+      table.version,
+    ),
+  }),
+);
+
+export const EmailSend = pgTable(
+  "email_send",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    subject: t.varchar({ length: 200 }).notNull(),
+    templateRevisionId: t
+      .uuid()
+      .references(() => EmailTemplateRevision.id, { onDelete: "restrict" }),
+    plainTextSource: t.text(),
+    compiledHtml: t.text(),
+    compiledText: t.text().notNull(),
+    contentHash: t.varchar({ length: 64 }).notNull(),
+    audienceDefinition: t.jsonb().notNull(),
+    audienceVersion: t.integer().notNull().default(1),
+    audienceHash: t.varchar({ length: 64 }).notNull(),
+    previewVersion: t.varchar({ length: 80 }).notNull(),
+    previewExpiresAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull(),
+    rawMatchCount: t.integer().notNull().default(0),
+    duplicateCount: t.integer().notNull().default(0),
+    excludedInvalidCount: t.integer().notNull().default(0),
+    excludedSuppressedCount: t.integer().notNull().default(0),
+    excludedMissingFieldCount: t.integer().notNull().default(0),
+    finalRecipientCount: t.integer().notNull().default(0),
+    status: t
+      .text({
+        enum: [
+          "draft",
+          "queued",
+          "syncing",
+          "scheduled",
+          "running",
+          "completed",
+          "cancelled",
+          "failed",
+        ],
+      })
+      .notNull()
+      .default("draft"),
+    scheduledFor: t.timestamp({ mode: "date", withTimezone: true }),
+    listmonkListId: t.integer(),
+    listmonkCampaignId: t.integer(),
+    providerTag: t.varchar({ length: 80 }).notNull(),
+    providerMayHaveStarted: t.boolean().notNull().default(false),
+    providerSentCount: t.integer().notNull().default(0),
+    providerBounceCount: t.integer().notNull().default(0),
+    retryAttemptCount: t.integer().notNull().default(0),
+    retryLeaseExpiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    nextRetryAt: t.timestamp({ mode: "date", withTimezone: true }),
+    safeError: t.varchar({ length: 500 }),
+    createdBy: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    confirmedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    cancelledAt: t.timestamp({ mode: "date", withTimezone: true }),
+    cancelledBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    terminalAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  }),
+  (table) => ({
+    providerTagUnique: unique("email_send_provider_tag_unique").on(
+      table.providerTag,
+    ),
+    dueIdx: index("email_send_status_scheduled_for_idx").on(
+      table.status,
+      table.scheduledFor,
+    ),
+    retryIdx: index("email_send_retry_idx").on(
+      table.status,
+      table.nextRetryAt,
+      table.retryLeaseExpiresAt,
+    ),
+  }),
+);
+
+export const EmailSendRecipient = pgTable(
+  "email_send_recipient",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    sendId: t
+      .uuid()
+      .notNull()
+      .references(() => EmailSend.id, { onDelete: "cascade" }),
+    email: t.varchar({ length: 320 }).notNull(),
+    normalizedEmail: t.varchar({ length: 320 }).notNull(),
+    attributes: t.jsonb().notNull().default({}),
+    matchReasons: t
+      .text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    exclusionReason: t.varchar({ length: 64 }),
+    listmonkSubscriberId: t.integer(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }),
+  (table) => ({
+    sendEmailUnique: unique(
+      "email_send_recipient_send_id_normalized_email_unique",
+    ).on(table.sendId, table.normalizedEmail),
+    sendIdx: index("email_send_recipient_send_id_idx").on(
+      table.sendId,
+      table.exclusionReason,
+    ),
+  }),
+);
+
+export const EmailSendEvent = pgTable(
+  "email_send_event",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    sendId: t
+      .uuid()
+      .notNull()
+      .references(() => EmailSend.id, { onDelete: "restrict" }),
+    type: t.varchar({ length: 64 }).notNull(),
+    fromStatus: t.varchar({ length: 32 }),
+    toStatus: t.varchar({ length: 32 }),
+    actorId: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    metadata: t.jsonb().notNull().default({}),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }),
+  (table) => ({
+    sendCreatedIdx: index("email_send_event_send_created_idx").on(
+      table.sendId,
+      table.createdAt,
+      table.id,
+    ),
+  }),
+);

@@ -60,10 +60,15 @@ export function canAccessAlumniAdmin(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessEmailPortal(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.EMAIL_PORTAL === true;
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     alumni: canAccessAlumniAdmin(permissions),
     analytics: canAccessAnalytics(permissions),
+    email: canAccessEmailPortal(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),

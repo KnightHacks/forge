@@ -137,6 +137,31 @@ describe("safe email template compilation", () => {
     );
   });
 
+  it("emits executable namespaced Listmonk merge fields for visual templates", () => {
+    const result = compileVisualEmailTemplate({
+      document: {
+        root: {
+          children: [
+            {
+              fallback: "friend",
+              field: "recipient.firstName",
+              type: "merge",
+            },
+          ],
+          type: "root",
+        },
+        version: 1,
+      },
+      providerNamespace: "send-42",
+      sample: {},
+    });
+
+    expect(result.html).toContain(
+      '(index .Subscriber.Attribs "forge" "send-42" "recipient" "firstName")',
+    );
+    expect(result.html).not.toContain("&quot;");
+  });
+
   it.each([
     [
       "arbitrary import",

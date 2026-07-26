@@ -50,7 +50,9 @@ describe("Email Portal admin entry", () => {
       READ_ISSUES: false,
       READ_MEMBERS: false,
     } as const;
-    const access = getAdminNavigationAccess(permissions);
+    const access = getAdminNavigationAccess(
+      permissions as unknown as Parameters<typeof getAdminNavigationAccess>[0],
+    );
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         activeNavigation: "email",

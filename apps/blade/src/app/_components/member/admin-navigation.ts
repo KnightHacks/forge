@@ -6,6 +6,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   ListTodo,
+  Mail,
   QrCode,
   Settings,
   ShieldCheck,
@@ -17,6 +18,7 @@ import { GUILD_URL } from "~/lib/guild-urls";
 export interface AdminNavigationAccess {
   alumni?: boolean;
   analytics?: boolean;
+  email?: boolean;
   eventCheckIn?: boolean;
   events?: boolean;
   forms?: boolean;
@@ -62,6 +64,13 @@ export const adminNavigationItems = [
     icon: ClipboardList,
     id: "forms",
     label: "Forms",
+  },
+  {
+    access: "email",
+    href: "/admin/email",
+    icon: Mail,
+    id: "email",
+    label: "Email",
   },
   {
     access: "events",
@@ -122,6 +131,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "alumni") return pathname.startsWith("/admin/alumni");
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "events") return pathname.startsWith("/admin/events");
+  if (id === "email") return pathname.startsWith("/admin/email");
   if (id === "forms") return pathname.startsWith("/admin/forms");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");

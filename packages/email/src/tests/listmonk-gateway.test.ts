@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { describe, expect, it, vi } from "vitest";
 
 import { createEmailProviderGateway } from "../provider";
@@ -10,6 +11,8 @@ describe("production Listmonk campaign gateway", () => {
       .mockResolvedValueOnce({ data: { id: 92 } })
       .mockResolvedValueOnce({ data: { id: 93, status: "draft" } });
     const gateway = createEmailProviderGateway({
+      campaignTemplateId: 7,
+      fromEmail: "Knight Hacks <hello@knighthacks.org>",
       mode: "production",
       transport,
     });
@@ -42,15 +45,30 @@ describe("production Listmonk campaign gateway", () => {
       }),
     );
     expect(transport).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        body: expect.objectContaining({
+          email: "ada@example.test",
+          lists: [91],
+          preconfirm_subscriptions: true,
+          status: "enabled",
+        }),
+        method: "POST",
+        path: "/api/subscribers",
+      }),
+    );
+    expect(transport).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining({
         body: expect.objectContaining({
           altbody: "Hello Ada",
           body: expect.stringContaining("Subscriber.Attribs"),
+          from_email: "Knight Hacks <hello@knighthacks.org>",
           lists: [91],
           send_at: "2026-08-01T17:00:00.000Z",
           subject: "A campaign",
           tags: ["forge-send:00000000-0000-4000-8000-000000000033"],
+          template_id: 7,
           type: "regular",
         }),
         method: "POST",
@@ -95,6 +113,73 @@ describe("production Listmonk campaign gateway", () => {
           request.method === "POST" && request.path === "/api/lists",
       ),
     ).toHaveLength(1);
+  });
+
+  it("searches for tagged list and campaign objects before a retry", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: { results: [{ id: 201, name: "forge-send:retry" }] },
+      })
+      .mockResolvedValueOnce({ data: { id: 202 } })
+      .mockResolvedValueOnce({
+        data: { results: [{ id: 203, name: "forge-send:retry" }] },
+      });
+    const gateway = createEmailProviderGateway({
+      mode: "production",
+      transport,
+    });
+
+    await expect(
+      gateway.createCampaign({
+        html: "<p>Retry</p>",
+        isRetry: true,
+        recipientSnapshot: ["ada@example.test"],
+        sendId: "retry",
+        subject: "Retry",
+        text: "Retry",
+      }),
+    ).resolves.toMatchObject({ campaignId: 203, listId: 201 });
+    expect(
+      transport.mock.calls.some(
+        ([request]) =>
+          request.method === "POST" &&
+          (request.path === "/api/lists" || request.path === "/api/campaigns"),
+      ),
+    ).toBe(false);
+  });
+
+  it("creates plain-text campaigns with a plain Listmonk body", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { id: 301 } })
+      .mockResolvedValueOnce({ data: { id: 302 } })
+      .mockResolvedValueOnce({ data: { id: 303 } });
+    const gateway = createEmailProviderGateway({
+      mode: "production",
+      transport,
+    });
+
+    await gateway.createCampaign({
+      html: "",
+      recipientSnapshot: ["ada@example.test"],
+      sendId: "plain-campaign",
+      subject: "Plain",
+      text: "A complete plain-text message.",
+    });
+
+    expect(transport).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        body: expect.objectContaining({
+          body: "A complete plain-text message.",
+          content_type: "plain",
+        }),
+        method: "POST",
+        path: "/api/campaigns",
+      }),
+    );
+    expect(transport.mock.calls[2]?.[0].body).not.toHaveProperty("altbody");
   });
 
   it.each([

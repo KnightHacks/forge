@@ -40,6 +40,7 @@ export const Roles = createTable("roles", (t) => ({
   discordRoleId: t.varchar().unique().notNull(),
   permissions: t.varchar().notNull(),
   eventFeedbackExcluded: t.boolean().notNull().default(false),
+  emailAudienceEnabled: t.boolean().notNull().default(false),
   issueReminderChannel: t
     .varchar({ length: 32 })
     .notNull()

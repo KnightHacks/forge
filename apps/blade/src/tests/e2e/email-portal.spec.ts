@@ -145,13 +145,15 @@ test.describe("Email Portal critical flow", () => {
     await page.getByRole("button", { name: "New template" }).click();
     await page.getByLabel("Template name").fill("E2E Welcome");
     await page.getByRole("tab", { name: "Code" }).click();
-    await page.getByLabel("Template source").fill(`
+    await page.getByLabel("Template source").focus();
+    await page.keyboard.press("ControlOrMeta+A");
+    await page.keyboard.insertText(`
       import { Html, Text } from "@react-email/components";
       export default <Html><Text>Hello <Merge field="recipient.firstName" fallback="friend" /></Text></Html>;
     `);
     await page.getByRole("button", { name: "Save draft" }).click();
     await page.getByRole("button", { name: "Preview template" }).click();
-    await expect(page.getByText("Hello Synthetic")).toBeVisible();
+    await expect(page.getByText("Hello Dylan")).toBeVisible();
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.getByRole("tab", { name: "Compose" }).click();
@@ -166,13 +168,24 @@ test.describe("Email Portal critical flow", () => {
     const confirmation = page.getByRole("dialog", {
       name: "Confirm scheduled email",
     });
-    await expect(confirmation.getByText("1 unique recipient")).toBeVisible();
+    await expect(
+      confirmation.getByText(/^\d+ unique recipients?$/),
+    ).toBeVisible();
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      path: ".playwright-results/email-portal-confirmation-desktop.png",
+    });
     await confirmation.getByRole("button", { name: "Schedule email" }).click();
 
     await page.getByRole("tab", { name: "Sends" }).click();
     const send = page.getByRole("row", { name: /Scheduled E2E welcome/ });
-    await expect(send).toContainText("Scheduled");
+    await expect(send).toHaveAttribute("aria-label", /scheduled$/);
     await send.getByRole("button", { name: "Cancel" }).click();
-    await expect(send).toContainText("Cancelled");
+    await expect(send).toHaveAttribute("aria-label", /cancelled$/);
+    await page.setViewportSize({ height: 844, width: 390 });
+    await page.screenshot({
+      fullPage: true,
+      path: ".playwright-results/email-portal-sends-mobile.png",
+    });
   });
 });

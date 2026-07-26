@@ -311,6 +311,7 @@ export async function buildLinkedRoleViews(
         dependencies,
         dependencyCount: dependencies?.total ?? 0,
         discordRoleId: role.discordRoleId,
+        emailAudienceEnabled: role.emailAudienceEnabled,
         id: role.id,
         isCosmetic: isCosmeticPermissionString(role.permissions),
         isMissing: discordRoles.available && !live,

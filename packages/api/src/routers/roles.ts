@@ -8,6 +8,7 @@ import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { permissions } from "@forge/utils";
 import {
   discordRoleIdSchema,
+  emailRoleAudienceSchema,
   permissionExpressionSchema,
   roleBatchAssignmentSchema,
   roleCreateSchema,
@@ -316,6 +317,25 @@ export const rolesRouter = {
           channelId: Roles.issueReminderChannel,
           enabled: Roles.issueRemindersEnabled,
           roleId: Roles.id,
+        });
+      if (!updated) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });
+      }
+      return updated;
+    }),
+
+  updateEmailAudience: permProcedure
+    .input(emailRoleAudienceSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireConfigure(ctx);
+      const [updated] = await db
+        .update(Roles)
+        .set({ emailAudienceEnabled: input.emailAudienceEnabled })
+        .where(eq(Roles.id, input.roleId))
+        .returning({
+          emailAudienceEnabled: Roles.emailAudienceEnabled,
+          id: Roles.id,
+          name: Roles.name,
         });
       if (!updated) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Role not found." });

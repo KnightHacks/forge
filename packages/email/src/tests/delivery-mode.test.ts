@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it, vi } from "vitest";
 
 import { createEmailProviderGateway, DYLAN_TEST_RECIPIENT } from "../provider";
