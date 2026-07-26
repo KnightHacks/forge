@@ -24,23 +24,27 @@ export const backupFilteredDb = new CronBuilder({
       stdio: "pipe",
     });
 
-    // We're doing it this way so that we get line by line output. I'm
-    // not too worried about the exit status or anything. We just need
-    // it to run.
-    await Promise.all(
-      (
-        [
-          [proc.stdout, "log"],
-          [proc.stderr, "error"],
-        ] as const
-      ).map(async ([stream, key]) => {
-        for await (const line of createInterface({
-          input: stream,
-          crlfDelay: Infinity,
-        })) {
-          if (line) logger[key](line);
-        }
-      }),
-    );
+    const streams = (
+      [
+        [proc.stdout, "log"],
+        [proc.stderr, "error"],
+      ] as const
+    ).map(async ([stream, key]) => {
+      for await (const line of createInterface({
+        input: stream,
+        crlfDelay: Infinity,
+      })) {
+        if (line) logger[key](line);
+      }
+    });
+    const exitCode = new Promise<number | null>((resolve, reject) => {
+      proc.once("error", reject);
+      proc.once("close", resolve);
+    });
+
+    const [, code] = await Promise.all([Promise.all(streams), exitCode]);
+    if (code !== 0) {
+      throw new Error(`Filtered database backup exited with code ${code}.`);
+    }
   },
 );

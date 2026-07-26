@@ -5,9 +5,10 @@
 //   pnpm --filter @forge/db with-env tsx scripts/seed_devdb.ts
 
 // A script to be run on prod only, this will take the prod db and make a
-// backup sql script to insert all rows that don't have sensitive user data. It
-// will only keep data from our admin members and delete any judging data/other
-// sensitive data. It will also take all the server specific discord IDs in the
+// backup SQL script containing shared configuration and data belonging to
+// members of the team: officers, directors, and configured team roles. It
+// removes other people and sensitive operational data. It also takes all the
+// server-specific Discord IDs in the
 // DB and then sync them up with an event/role in the dev server and change the
 // ID in the db for the local version. This sql file is uploaded to our minio
 // client to be pulled by the get_prod_db.ts script. There's no realistic
@@ -24,12 +25,12 @@ import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
 import { Routes } from "discord-api-types/v10";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 import { stringify } from "superjson";
 
-import { DISCORD, MINIO } from "@forge/consts";
+import { DISCORD, ISSUE, MINIO } from "@forge/consts";
 
 // Scripts can use relative imports to avoid circular dependencies
 import { minioClient } from "../../api/src/minio/minio-client";
@@ -37,6 +38,11 @@ import * as discord from "../../utils/src/discord";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
+import {
+  sanitizedEventProviderState,
+  TABLES_TO_KEEP,
+  teamDataSanitizerSql,
+} from "./dev-db-backup-sanitizer";
 
 const execAsync = promisify(exec);
 console.log("Starting seeding script");
@@ -81,101 +87,52 @@ async function cleanUp() {
   });
 }
 
-const TABLES_TO_KEEP: string[] = [
-  "auth_account",
-  //"auth_judge_session",
-  "auth_permissions",
-  "auth_roles",
-  //"auth_session",
-  "auth_user",
-  //"auth_verification",
-  "knight_hacks_challenges",
-  "knight_hacks_companies",
-  "knight_hacks_dues_payment",
-  "knight_hacks_email_config",
-  "knight_hacks_email_daily_count",
-  "knight_hacks_email_queue",
-  "knight_hacks_event",
-  "knight_hacks_event_attendee",
-  "knight_hacks_event_feedback",
-  "knight_hacks_form_response",
-  "knight_hacks_form_response_roles",
-  "knight_hacks_form_schemas",
-  "knight_hacks_form_section_roles",
-  "knight_hacks_form_sections",
-  "knight_hacks_hackathon",
-  "knight_hacks_hackathon_sponsor",
-  "knight_hacks_hacker",
-  "knight_hacks_hacker_attendee",
-  "knight_hacks_hacker_event_attendee",
-  //"knight_hacks_judged_submission",
-  //"knight_hacks_judges",
-  "knight_hacks_member",
-  "knight_hacks_sponsor",
-  "knight_hacks_submissions",
-  "knight_hacks_teams",
-  "knight_hacks_trpc_form_connection",
-];
-
 const roleIdMappings: Record<string, string> = {};
 const eventIdMappings: Record<string, string> = {};
 
-async function cleanTable(name: string, userIdsToKeep: string[]) {
+async function truncateExcludedTable(name: string) {
   if (!backupDb) return;
 
-  if (!TABLES_TO_KEEP.includes(name)) {
+  if (!TABLES_TO_KEEP.includes(name as (typeof TABLES_TO_KEEP)[number])) {
     await backupDb.execute(
       sql.raw(`TRUNCATE TABLE "${name}" RESTART IDENTITY CASCADE`),
     );
-    return;
   }
+}
 
-  const relResult = await backupDb.execute(sql`
-    SELECT kcu.column_name
-    FROM information_schema.key_column_usage AS kcu
-    JOIN information_schema.constraint_column_usage AS ccu 
-      ON ccu.constraint_name = kcu.constraint_name
-    WHERE kcu.table_name = ${name}
-      AND ccu.table_name = 'auth_user'
-      AND ccu.column_name = 'id'
-      AND kcu.table_schema = 'public'
-    LIMIT 1;
-  `);
+async function sanitizeRoles() {
+  if (!backupDb) return;
 
-  const userFkColumn = relResult.rows[0]?.column_name as string | undefined;
-
-  if (userFkColumn) {
-    await backupDb.execute(sql`
-      DELETE FROM ${sql.identifier(name)}
-      WHERE ${sql.identifier(userFkColumn)} NOT IN (${sql.join(
-        userIdsToKeep.map((id) => sql`${id}`),
-        sql`, `,
-      )})
-    `);
-  } else if (name === "auth_roles") {
-    const all_rows = await backupDb.query.Roles.findMany();
-    for (const row of all_rows) {
-      const id = row.id;
-      await backupDb.execute(sql`
-				UPDATE "auth_roles" 
-  			SET discord_role_id = ${roleIdMappings[row.discordRoleId]} 
-  			WHERE id = ${id}
-			`);
+  const roles = await backupDb.query.Roles.findMany();
+  for (const role of roles) {
+    const mappedRoleId = roleIdMappings[role.discordRoleId];
+    if (!mappedRoleId) {
+      throw new Error(`No development Discord mapping for role ${role.id}.`);
     }
-  } else if (name === "knight_hacks_event") {
-    const all_rows = await backupDb.query.Event.findMany();
-    for (const row of all_rows) {
-      const sourceDiscordId = row.discordId;
-      if (!sourceDiscordId) continue;
-      const mappedDiscordId = eventIdMappings[sourceDiscordId];
-      if (!mappedDiscordId) continue;
-      const id = row.id;
-      await backupDb.execute(sql`
-        UPDATE "knight_hacks_event"
-        SET discord_id = ${mappedDiscordId}
-        WHERE id = ${id}
-      `);
-    }
+
+    await backupDb
+      .update(authSchema.Roles)
+      .set({
+        discordRoleId: mappedRoleId,
+        issueReminderChannel: ISSUE.DEV_ISSUE_REMINDER_CHANNEL_ID,
+      })
+      .where(eq(authSchema.Roles.id, role.id));
+  }
+}
+
+async function sanitizeEvents() {
+  if (!backupDb) return;
+
+  const events = await backupDb.query.Event.findMany();
+  for (const event of events) {
+    const mappedDiscordId = event.discordId
+      ? eventIdMappings[event.discordId]
+      : undefined;
+
+    await backupDb
+      .update(knightHacksSchema.Event)
+      .set(sanitizedEventProviderState(event.legacy, mappedDiscordId))
+      .where(eq(knightHacksSchema.Event.id, event.id));
   }
 }
 
@@ -200,6 +157,7 @@ async function copyDatabase() {
     );
   } catch (err) {
     console.error(err);
+    throw err;
   } finally {
     await unlink(backupFile);
   }
@@ -405,27 +363,17 @@ async function main() {
     let tables = tablesJSON.map((t) => t.table_name as string);
     tables = [...tables.filter((x) => x !== "auth_user"), "auth_user"];
 
-    const userIdsToKeep: string[] = (
-      await backupDb.query.Permissions.findMany({
-        columns: {
-          userId: true,
-        },
-      })
-    ).map((t) => t.userId);
-
-    console.log("Cleaning all tables");
+    console.log("Removing tables that are not approved for development");
     for (const tableName of tables) {
-      await cleanTable(tableName, userIdsToKeep);
+      await truncateExcludedTable(tableName);
     }
 
-    console.log("Cleaning cascading user data");
-    await backupDb.execute(sql`
-	    DELETE FROM auth_user 
-	    WHERE id NOT IN (${sql.join(
-        userIdsToKeep.map((id) => sql`${id}`),
-        sql`, `,
-      )})
-	  `);
+    console.log("Mapping development Discord roles and events");
+    await sanitizeRoles();
+    await sanitizeEvents();
+
+    console.log("Keeping team data and scrubbing credentials");
+    await backupDb.execute(sql.raw(teamDataSanitizerSql()));
 
     console.log("Uploading to minio");
     await minio();
