@@ -141,6 +141,13 @@
       "when": 1784929019177,
       "tag": "0019_panoramic_silk_fever",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785040303694,
+      "tag": "0020_superb_cannonball",
+      "breakpoints": true
     }
   ]
 }

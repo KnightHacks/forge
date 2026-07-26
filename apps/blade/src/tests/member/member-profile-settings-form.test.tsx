@@ -89,6 +89,7 @@ vi.mock("~/app/_components/member/member-resume-upload", () => ({
 
 const member: CurrentMember = {
   about: "I like building member tools.",
+  alumniConfirmedAt: null,
   age: 24,
   company: "Knight Hacks",
   currentCityKey: null,

@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
+
 import { cn } from "@forge/ui";
 import { Card, CardContent } from "@forge/ui/card";
 import { Skeleton } from "@forge/ui/skeleton";
-import { MEMBER_SIGNUP_FORM_SLUG } from "@forge/validators";
+import {
+  graduationTermYearFromDate,
+  MEMBER_SIGNUP_FORM_SLUG,
+} from "@forge/validators";
 
+import { AlumniDashboard } from "~/app/_components/member/alumni-dashboard";
+import { GraduationConfirmationDialog } from "~/app/_components/member/graduation-confirmation-dialog";
 import {
   dashboardGridClass,
   dashboardNestedSurfaceClass,
@@ -209,7 +216,9 @@ export function DashboardClient({
   const { isError, isLoading, isRedirecting, member } = useMember({
     redirectNoMemberTo: `/form/${MEMBER_SIGNUP_FORM_SLUG}`,
   });
-  const duesQuery = api.dues.getStatus.useQuery(undefined, {
+  const [graduationError, setGraduationError] = useState<string | null>(null);
+  const apiUtils = api.useUtils();
+  const alumniQuery = api.alumni.getDashboard.useQuery(undefined, {
     enabled: Boolean(member) && !isRedirecting,
     retry(failureCount, error) {
       if (error.data?.code === "NOT_FOUND") return false;
@@ -217,21 +226,47 @@ export function DashboardClient({
       return failureCount < 2;
     },
   });
+  const graduationMutation = api.alumni.resolveGraduation.useMutation({
+    async onSuccess() {
+      setGraduationError(null);
+      await Promise.all([
+        apiUtils.alumni.getDashboard.invalidate(),
+        apiUtils.member.getMember.invalidate(),
+      ]);
+    },
+    onError(error) {
+      setGraduationError(
+        error.message || "Your graduation choice could not be saved.",
+      );
+    },
+  });
+  const dashboardMode = alumniQuery.data?.mode;
+  const loadCurrentDashboard = dashboardMode === "current";
+  const duesQuery = api.dues.getStatus.useQuery(undefined, {
+    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
+    retry(failureCount, error) {
+      if (error.data?.code === "NOT_FOUND") return false;
+      if (error.data?.code === "UNAUTHORIZED") return false;
+      return failureCount < 2;
+    },
+  });
   const eventsQuery = api.event.listMemberEvents.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting,
+    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
   });
   const attendanceQuery = api.event.listMemberAttendance.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting,
+    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
   });
   const feedbackQuery = api.event.listMyFeedback.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting,
+    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
   });
 
   if (
     isLoading ||
     isRedirecting ||
     isDebugDelayPending ||
+    (member && alumniQuery.isPending) ||
     (member &&
+      loadCurrentDashboard &&
       (duesQuery.isPending ||
         eventsQuery.isPending ||
         attendanceQuery.isPending ||
@@ -240,9 +275,49 @@ export function DashboardClient({
     return <DashboardSkeleton />;
   }
 
-  if (isError) return <DashboardErrorState />;
+  if (isError || alumniQuery.isError) return <DashboardErrorState />;
 
   if (!member) return <DashboardSkeleton />;
+
+  if (!alumniQuery.data) return <DashboardErrorState />;
+
+  if (alumniQuery.data.mode === "needs_confirmation") {
+    const { gradTerm, gradYear } = graduationTermYearFromDate(
+      alumniQuery.data.gradDate,
+    );
+
+    return (
+      <>
+        <DashboardSkeleton />
+        <GraduationConfirmationDialog
+          currentGraduationLabel={`${gradTerm} ${gradYear}`}
+          error={graduationError}
+          isPending={graduationMutation.isPending}
+          onConfirmGraduated={() => {
+            setGraduationError(null);
+            graduationMutation.mutate({ resolution: "graduated" });
+          }}
+          onExtendGraduation={({ gradTerm: nextTerm, gradYear: nextYear }) => {
+            setGraduationError(null);
+            graduationMutation.mutate({
+              gradTerm: nextTerm,
+              gradYear: nextYear,
+              resolution: "extended",
+            });
+          }}
+        />
+      </>
+    );
+  }
+
+  if (alumniQuery.data.mode === "alumni") {
+    return (
+      <AlumniDashboard
+        dashboard={alumniQuery.data}
+        firstName={alumniQuery.data.firstName}
+      />
+    );
+  }
 
   if (duesQuery.isError || !duesQuery.data) {
     return <DashboardErrorState />;
