@@ -1,18 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@forge/ui/dropdown-menu";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@forge/ui/sheet";
 
 import type { AdminNavigationAccess } from "./admin-navigation";
 import {
@@ -33,47 +34,69 @@ export function MobileAdminNavigation({
   access: AdminNavigationAccess;
 }) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
   const renderItem = (item: NavigationItem) => {
     const Icon = item.icon;
     const active = isAdminNavigationActive(item.id, pathname);
     const contents = (
       <>
-        <Icon
-          className={cn("h-4 w-4", active && "text-primary")}
-          aria-hidden="true"
-        />
-        <span>{item.label}</span>
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-md border border-transparent bg-background/70",
+            active && "border-primary/25 bg-primary/15 text-primary",
+          )}
+        >
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {active && (
           <span
-            className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+            className="rounded-full bg-primary/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-primary"
             aria-hidden="true"
-          />
+          >
+            Current
+          </span>
         )}
       </>
     );
     const className = cn(
-      "h-11 cursor-pointer gap-3 rounded-md px-3 font-medium",
-      active && "bg-primary/15 text-foreground focus:bg-primary/15",
+      "flex min-h-12 w-full items-center gap-3 rounded-lg border border-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
+      "hover:border-white/10 hover:bg-background/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      active && "border-primary/25 bg-primary/10 text-foreground",
     );
 
+    if ("external" in item) {
+      return (
+        <a
+          key={item.id}
+          href={item.href}
+          target="_blank"
+          rel="noreferrer"
+          className={className}
+          onClick={() => setOpen(false)}
+        >
+          {contents}
+        </a>
+      );
+    }
+
     return (
-      <DropdownMenuItem key={item.id} asChild className={className}>
-        {"external" in item ? (
-          <a href={item.href} target="_blank" rel="noreferrer">
-            {contents}
-          </a>
-        ) : (
-          <Link href={item.href} aria-current={active ? "page" : undefined}>
-            {contents}
-          </Link>
-        )}
-      </DropdownMenuItem>
+      <Link
+        key={item.id}
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        className={className}
+        onClick={() => setOpen(false)}
+      >
+        {contents}
+      </Link>
     );
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         <button
           type="button"
           data-testid="mobile-admin-menu-trigger"
@@ -82,19 +105,35 @@ export function MobileAdminNavigation({
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-52 border-border/70 bg-card/95 p-1.5 shadow-xl shadow-black/25 md:hidden"
+      </SheetTrigger>
+      <SheetContent
+        data-testid="mobile-navigation-drawer"
+        side="top"
+        className="flex h-[100svh] w-full flex-col gap-0 border-b border-border/70 bg-card/95 p-0 shadow-2xl shadow-black/35 md:hidden"
       >
-        <DropdownMenuLabel className="px-2 py-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-          Navigate
-        </DropdownMenuLabel>
-        {memberNavigationItems.map(renderItem)}
-        {getVisibleAdminNavigation(access).map(renderItem)}
-        <DropdownMenuSeparator className="my-1.5" />
-        {renderItem(settingsNavigationItem)}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <SheetHeader className="border-b border-border/70 px-4 py-4 pr-14 text-left">
+          <SheetTitle className="flex items-center gap-2">
+            <Menu className="size-5 text-primary" aria-hidden="true" />
+            Navigation
+          </SheetTitle>
+          <SheetDescription>
+            Move between your member and administration workspaces.
+          </SheetDescription>
+        </SheetHeader>
+
+        <nav
+          aria-label="Mobile primary navigation"
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
+            {memberNavigationItems.map(renderItem)}
+            {getVisibleAdminNavigation(access).map(renderItem)}
+          </div>
+          <div className="border-t border-border/70 bg-card/95 p-3">
+            {renderItem(settingsNavigationItem)}
+          </div>
+        </nav>
+      </SheetContent>
+    </Sheet>
   );
 }

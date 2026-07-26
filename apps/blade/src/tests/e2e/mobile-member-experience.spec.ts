@@ -221,19 +221,30 @@ test.describe("mobile member experience", () => {
     await expect(page.getByText("PDF resume")).toHaveCount(0);
 
     await page.getByRole("button", { name: "Open navigation menu" }).click();
-    const navigation = page.getByRole("menu");
+    const drawer = page.getByTestId("mobile-navigation-drawer");
+    const navigation = page.getByRole("navigation", {
+      name: "Mobile primary navigation",
+    });
+    await expect(drawer).toHaveCSS("transform", "none");
+    const drawerBox = await drawer.boundingBox();
+    expect(drawerBox?.x).toBe(0);
+    expect(drawerBox?.width).toBe(390);
+    expect(drawerBox?.height).toBe(844);
     await expect(
-      navigation.getByRole("menuitem", { name: "Dashboard" }),
+      navigation.getByRole("link", { name: "Dashboard" }),
     ).toBeVisible();
     await expect(
-      navigation.getByRole("menuitem", { name: "Guild" }),
+      navigation.getByRole("link", { name: "Guild" }),
     ).toHaveAttribute("href", GUILD_URL);
     await expect(
-      navigation.getByRole("menuitem", { name: "Settings" }),
+      navigation.getByRole("link", { name: "Settings" }),
     ).toBeVisible();
+    await expect(navigation.getByRole("link", { name: "Members" })).toHaveCount(
+      0,
+    );
     await expect(
-      navigation.getByRole("menuitem", { name: "Members" }),
-    ).toHaveCount(0);
+      navigation.getByRole("link", { name: "Dashboard" }),
+    ).toHaveAttribute("aria-current", "page");
     await expect
       .poll(() =>
         navigation.evaluate((element) => getComputedStyle(element).opacity),
@@ -242,6 +253,15 @@ test.describe("mobile member experience", () => {
     await page.screenshot({
       path: ".playwright-results/member-dashboard-mobile-navigation.png",
     });
+    await navigation.getByRole("link", { name: "Settings" }).click();
+    await expect(page).toHaveURL(routeURL(MEMBER_SETTINGS_PATH));
+    await expect(drawer).toBeHidden();
+    await page.getByRole("button", { name: "Open navigation menu" }).click();
+    await expect(
+      page
+        .getByRole("navigation", { name: "Mobile primary navigation" })
+        .getByRole("link", { name: "Settings" }),
+    ).toHaveAttribute("aria-current", "page");
     await page.keyboard.press("Escape");
   });
 

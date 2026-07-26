@@ -427,6 +427,9 @@ test.describe("admin member dashboard", () => {
     await signInAs(page, READER_USER_ID);
     await expect(page).toHaveURL(new RegExp(`${ADMIN_PATH}$`));
     await expect(page.getByRole("heading", { name: "Members" })).toBeVisible();
+    await page
+      .getByRole("textbox", { name: "Search members" })
+      .fill("Alice Archive");
     await expect(page.getByText("Alice Archive").first()).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Invalidate all dues" }),
@@ -468,16 +471,27 @@ test.describe("admin member dashboard", () => {
     await mobilePage
       .getByRole("button", { name: "Open navigation menu" })
       .click();
+    const mobileDrawer = mobilePage.getByTestId("mobile-navigation-drawer");
+    const mobileNavigation = mobilePage.getByRole("navigation", {
+      name: "Mobile primary navigation",
+    });
+    await expect(mobileDrawer).toHaveCSS("transform", "none");
+    const mobileDrawerBox = await mobileDrawer.boundingBox();
+    expect(mobileDrawerBox?.x).toBe(0);
+    expect(mobileDrawerBox?.width).toBe(320);
+    expect(mobileDrawerBox?.height).toBe(740);
     await expect(
-      mobilePage.getByRole("menuitem", { name: "Dashboard" }),
+      mobileNavigation.getByRole("link", { name: "Dashboard" }),
     ).toBeVisible();
     await expect(
-      mobilePage.getByRole("menuitem", { name: "Members" }),
+      mobileNavigation.getByRole("link", { name: "Members" }),
     ).toBeVisible();
-    const mobileNavigationMenu = mobilePage.getByRole("menu");
+    await expect(
+      mobileNavigation.getByRole("link", { name: "Members" }),
+    ).toHaveAttribute("aria-current", "page");
     await expect
       .poll(() =>
-        mobileNavigationMenu.evaluate(
+        mobileNavigation.evaluate(
           (element) => getComputedStyle(element).opacity,
         ),
       )
