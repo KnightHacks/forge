@@ -60,6 +60,7 @@ import { toast } from "@forge/ui/toast";
 import { roleManagementPageSizes } from "@forge/validators";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -1180,7 +1181,7 @@ export function RoleManagementDashboard({
           </div>
         }
         description="Link Discord roles to Blade access and keep user assignments in sync."
-        eyebrow="Access control"
+        eyebrow={ADMIN_PAGE_EYEBROWS.roles}
         icon={ShieldCheck}
         title="Role management"
       />

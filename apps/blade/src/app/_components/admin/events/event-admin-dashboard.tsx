@@ -32,6 +32,7 @@ import type {
   EventTagItem,
 } from "./types";
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -774,7 +775,7 @@ export function EventAdminDashboard({
           ) : undefined
         }
         description="Manage club events, provider health, tags, and attendance records."
-        eyebrow="Club operations"
+        eyebrow={ADMIN_PAGE_EYEBROWS.events}
         icon={CalendarDays}
         title="Event management"
       />

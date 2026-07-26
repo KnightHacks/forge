@@ -77,6 +77,7 @@ import {
 } from "@forge/ui/tooltip";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -1963,7 +1964,7 @@ export function AnalyticsDashboard({
           </div>
         }
         description="Turnout, audience, dues, and feedback from retained non-hackathon Club records. Metrics show associations and coverage without inventing causes."
-        eyebrow="Club intelligence"
+        eyebrow={ADMIN_PAGE_EYEBROWS.analytics}
         icon={ChartNoAxesCombined}
         title="Analytics"
       />

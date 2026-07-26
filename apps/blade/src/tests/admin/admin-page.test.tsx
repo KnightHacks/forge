@@ -3,12 +3,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   AdminPageHeaderSkeleton,
 } from "~/app/_components/admin/admin-page";
 
 describe("admin page chrome", () => {
+  it("keeps every rendered admin page eyebrow unique", () => {
+    const eyebrows = Object.values(ADMIN_PAGE_EYEBROWS);
+
+    expect(new Set(eyebrows).size).toBe(eyebrows.length);
+  });
+
   it("keeps the Companies and Members shell contract centralized", () => {
     expect(adminPageClassName).toContain("container min-w-0 px-3");
     expect(adminPageClassName).toContain("sm:px-8");

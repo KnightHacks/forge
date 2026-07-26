@@ -9,6 +9,7 @@ import type {
 } from "./event-check-in-panel";
 import type { CheckInEventGroups } from "./types";
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -100,7 +101,7 @@ export function EventCheckInPage({
     >
       <AdminPageHeader
         description="Scan a member pass or search the directory to record attendance."
-        eyebrow="Event operations"
+        eyebrow={ADMIN_PAGE_EYEBROWS.checkIn}
         icon={QrCode}
         title="Event check-in"
       />

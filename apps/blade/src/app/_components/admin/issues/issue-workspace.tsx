@@ -47,6 +47,7 @@ import type { EventFormValue } from "../events/event-form-dialog";
 import type { IssueSearchInput } from "./params";
 import type { IssueWorkspaceData } from "./types";
 import {
+  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
@@ -67,6 +68,13 @@ import {
 import { TemplateCatalogDialog } from "./template-catalog-dialog";
 
 export type IssueWorkspaceView = "archive" | "calendar" | "kanban" | "list";
+
+const ISSUE_WORKSPACE_EYEBROW: Record<IssueWorkspaceView, string> = {
+  archive: ADMIN_PAGE_EYEBROWS.issueArchive,
+  calendar: ADMIN_PAGE_EYEBROWS.issueCalendar,
+  kanban: ADMIN_PAGE_EYEBROWS.issueKanban,
+  list: ADMIN_PAGE_EYEBROWS.issueList,
+};
 
 interface IssueDraft {
   assigneeIds: string[];
@@ -1173,7 +1181,7 @@ export function IssueWorkspace({
             </dl>
           }
           description="Shared work from planning through completion."
-          eyebrow="Club operations"
+          eyebrow={ISSUE_WORKSPACE_EYEBROW[view]}
           icon={ListTodo}
           title="Issues"
         />

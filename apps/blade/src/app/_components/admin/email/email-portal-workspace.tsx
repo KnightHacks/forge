@@ -45,7 +45,11 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
-import { AdminPageHeader, adminPageLayoutClassName } from "../admin-page";
+import {
+  ADMIN_PAGE_EYEBROWS,
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "../admin-page";
 import {
   discardEmailComposeDraft,
   loadEmailComposeDraft,
@@ -947,7 +951,7 @@ export function EmailPortalWorkspace({
     >
       <AdminPageHeader
         description="Build reusable email templates, choose exactly who should receive them, and review every delivery from one place."
-        eyebrow="Campaign communications"
+        eyebrow={ADMIN_PAGE_EYEBROWS.email}
         icon={Mail}
         title="Email Portal"
       />

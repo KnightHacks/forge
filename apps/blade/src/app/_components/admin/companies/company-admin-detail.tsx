@@ -43,7 +43,10 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
-import { adminPageClassName } from "~/app/_components/admin/admin-page";
+import {
+  ADMIN_PAGE_EYEBROWS,
+  adminPageClassName,
+} from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";
 
@@ -241,7 +244,7 @@ export function CompanyAdminDetail({
             <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-2 text-sm font-medium text-primary">
                 <BriefcaseBusiness className="size-4" aria-hidden="true" />
-                Company record
+                {ADMIN_PAGE_EYEBROWS.companyDetail}
               </span>
               <Badge
                 variant="outline"

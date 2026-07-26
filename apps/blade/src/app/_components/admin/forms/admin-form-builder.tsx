@@ -74,6 +74,7 @@ import {
 } from "@forge/validators";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -1211,7 +1212,11 @@ export function AdminFormBuilder({
           </>
         }
         description="Define the form, respondent experience, publishing state, and delivery behavior."
-        eyebrow="Form administration"
+        eyebrow={
+          initial
+            ? ADMIN_PAGE_EYEBROWS.formEdit
+            : ADMIN_PAGE_EYEBROWS.formCreate
+        }
         icon={FilePenLine}
         title={readOnly ? "View form" : initial ? "Edit form" : "Create form"}
       />

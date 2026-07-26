@@ -211,6 +211,9 @@ test.describe("Club operations issues visual workflow", () => {
     await signIn(page, "/admin/issues/calendar");
     await expect(page.getByRole("heading", { name: "Issues" })).toBeVisible();
     await expect(
+      page.getByText("Issue scheduling", { exact: true }),
+    ).toBeVisible();
+    await expect(
       page.locator('[data-issue-calendar="month-grid"]'),
     ).toBeVisible();
     await expect(
@@ -250,6 +253,9 @@ test.describe("Club operations issues visual workflow", () => {
 
     await page.getByRole("link", { name: "Kanban", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/issues\/kanban/);
+    await expect(
+      page.getByText("Issue workflow", { exact: true }),
+    ).toBeVisible();
     await expect
       .poll(() =>
         page
@@ -278,6 +284,9 @@ test.describe("Club operations issues visual workflow", () => {
 
     await page.getByRole("link", { name: "List", exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/issues\/list/);
+    await expect(
+      page.getByText("Issue directory", { exact: true }),
+    ).toBeVisible();
     await expect
       .poll(() =>
         page
@@ -304,6 +313,9 @@ test.describe("Club operations issues visual workflow", () => {
     await page.goto(`/admin/issues/${ISSUE_IDS[0]}`);
     await expect(
       page.getByRole("heading", { name: "Finalize fall kickoff run of show" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("main").getByText("Issue record", { exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Load older history" }),

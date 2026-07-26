@@ -55,6 +55,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -942,7 +943,7 @@ export function FormResponsesDashboard({
           </Button>
         }
         description="Review aggregate trends, individual submissions, and callback delivery."
-        eyebrow="Form intelligence"
+        eyebrow={ADMIN_PAGE_EYEBROWS.formResponses}
         icon={BarChart3}
         title={responses.data?.form.name ?? initialFormName ?? "Form responses"}
         titleClassName="break-words"

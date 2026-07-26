@@ -39,6 +39,7 @@ import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
@@ -497,22 +498,26 @@ export function IssueDetail({
           </Link>
         </Button>
         <AdminPageHeader
-          eyebrow="Issue record"
+          eyebrow={ADMIN_PAGE_EYEBROWS.issueDetail}
           icon={ListTodo}
           title={detail.name}
           titleClassName="break-words"
           description={
             <span className="flex flex-col items-start gap-2">
               <span className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="outline"
+                <span
+                  className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold"
                   style={{ borderColor: detail.team.color ?? "#7c3aed" }}
                 >
                   {detail.team.name}
-                </Badge>
-                <Badge variant="outline">{detail.priority}</Badge>
+                </span>
+                <span className="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold">
+                  {detail.priority}
+                </span>
                 {detail.archivedAt && (
-                  <Badge variant="destructive">Archived</Badge>
+                  <span className="inline-flex items-center rounded-md border border-transparent bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground">
+                    Archived
+                  </span>
                 )}
               </span>
               <span className="font-mono text-xs">

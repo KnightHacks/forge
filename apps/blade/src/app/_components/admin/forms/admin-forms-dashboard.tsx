@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -138,7 +139,7 @@ export function AdminFormsDashboard({
           </>
         }
         description="Build, publish, share, and review identified member forms."
-        eyebrow="Member workflows"
+        eyebrow={ADMIN_PAGE_EYEBROWS.forms}
         icon={FileText}
         title="Form administration"
       />

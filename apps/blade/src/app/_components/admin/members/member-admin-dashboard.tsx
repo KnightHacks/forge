@@ -45,6 +45,7 @@ import { toast } from "@forge/ui/toast";
 import { adminMemberPageSizes } from "@forge/validators";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
@@ -396,7 +397,7 @@ export function MemberAdminDashboard({
             </>
           }
           description="Find member records, manage current dues, and keep profile data accurate."
-          eyebrow="Club operations"
+          eyebrow={ADMIN_PAGE_EYEBROWS.members}
           icon={UsersRound}
           title="Members"
         />

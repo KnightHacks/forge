@@ -21,6 +21,7 @@ import { Label } from "@forge/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -147,7 +148,7 @@ export function FormSectionsManager({
           </Button>
         }
         description="Officers define separate viewer and editor role groups. Editors also receive view access."
-        eyebrow="Form administration"
+        eyebrow={ADMIN_PAGE_EYEBROWS.formSections}
         icon={Settings2}
         title="Form sections"
       />

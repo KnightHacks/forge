@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -100,7 +101,7 @@ export function EventFeedbackTemplateEditor({
           </Button>
         }
         description="Changes apply to future qualifying events. Comparable core questions remain locked."
-        eyebrow="Event configuration"
+        eyebrow={ADMIN_PAGE_EYEBROWS.eventFeedback}
         icon={MessageSquareText}
         title="Event feedback template"
       />

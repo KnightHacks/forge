@@ -52,6 +52,7 @@ import {
 } from "@forge/validators";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
@@ -446,7 +447,7 @@ export function AdminLogsDashboard({
     <main className={adminPageLayoutClassName}>
       <AdminPageHeader
         description="Search privileged actions by the administrator, action, affected member, or target. History is append-only and begins at deployment."
-        eyebrow="Officer access"
+        eyebrow={ADMIN_PAGE_EYEBROWS.logs}
         icon={ScrollText}
         title="Admin action logs"
       />

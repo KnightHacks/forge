@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
 import {
+  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
@@ -94,7 +95,7 @@ export function CompanyAdminDashboard({ companies }: { companies: Company[] }) {
             </dl>
           }
           description="Review company records and see where Knight Hacks members have worked."
-          eyebrow="Company intelligence"
+          eyebrow={ADMIN_PAGE_EYEBROWS.companies}
           icon={Building2}
           title="Companies"
         />
