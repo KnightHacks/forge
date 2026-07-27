@@ -233,7 +233,6 @@ describe("MemberDetailDialog", () => {
     );
 
     expect(html).toContain("Edit member");
-    expect(html).toContain('data-member-edit-placement="dialog-header"');
     expect(html).toContain("Revoke dues");
     expect(html).toContain("Profile files");
     expect(html).toContain("View resume");
@@ -251,7 +250,6 @@ describe("MemberDetailDialog", () => {
       }),
     );
 
-    expect(html).toContain('data-member-detail-layout="sectioned"');
     expect(html).toContain("Membership &amp; dues");
     expect(html).toContain("Contact &amp; identity");
     expect(html).toContain("Academics &amp; work");

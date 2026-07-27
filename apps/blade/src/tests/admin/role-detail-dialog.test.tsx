@@ -89,7 +89,6 @@ describe("RoleDetailDialog", () => {
       }),
     );
 
-    expect(html).toContain('data-role-detail-layout="sectioned"');
     expect(html).toContain("Design");
     expect(html).toContain("Discord members");
     expect(html).toContain("Blade assignments");

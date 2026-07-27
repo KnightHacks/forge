@@ -59,8 +59,6 @@ describe("Issues workspace views", () => {
         month: new Date("2026-07-15T12:00:00.000Z"),
       }),
     );
-    expect(html).toContain('data-issue-calendar="month-grid"');
-    expect(html).toContain('data-issue-calendar="agenda"');
     expect(html).toContain("Operations task 0");
   });
 

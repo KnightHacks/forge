@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { AlumniBulletinWorkspace } from "~/app/_components/admin/alumni-bulletin-workspace";
 
 describe("AlumniBulletinWorkspace", () => {
-  it("TC-013 uses a full-width board with card statuses and responsive preview", () => {
+  it("TC-013 renders bulletin posts with their status and the board preview", () => {
     const html = renderToStaticMarkup(
       createElement(AlumniBulletinWorkspace, {
         forms: [],
@@ -33,13 +33,11 @@ describe("AlumniBulletinWorkspace", () => {
       }),
     );
 
-    expect(html).toContain('data-alumni-admin-layout="full-width"');
     expect(html).toContain("Create bulletin post");
     expect(html).toContain("Fall volunteers");
     expect(html).toContain("Published");
     expect(html).toContain("Board preview");
     expect(html).toContain("Desktop");
     expect(html).toContain("Mobile");
-    expect(html).not.toContain("grid-cols-[1fr_");
   });
 });

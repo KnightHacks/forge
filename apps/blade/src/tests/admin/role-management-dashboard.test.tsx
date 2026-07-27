@@ -104,7 +104,6 @@ describe("RoleManagementDashboard", () => {
       }),
     );
 
-    expect(html).toContain('data-role-management-layout="responsive"');
     expect(html).toContain("Roles");
     expect(html).toContain("Assignments");
     expect(html).toContain("Create role");

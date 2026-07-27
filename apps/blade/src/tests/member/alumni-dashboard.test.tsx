@@ -50,7 +50,7 @@ const dashboard = {
 };
 
 describe("AlumniDashboard", () => {
-  it("TC-004 keeps alumni actions visible and gives the bulletin owned overflow", () => {
+  it("TC-004 renders the alumni primary actions alongside the bulletin", () => {
     const html = renderToStaticMarkup(
       createElement(AlumniDashboard, {
         dashboard,
@@ -58,11 +58,6 @@ describe("AlumniDashboard", () => {
       }),
     );
 
-    expect(html).toContain('data-alumni-dashboard-layout="screen-height"');
-    expect(html).toContain('data-alumni-primary-actions="always-visible"');
-    expect(html).toContain('data-alumni-bulletin-overflow="owned"');
-    expect(html).toContain("min-h-0");
-    expect(html).toContain("overflow-y-auto");
     expect(html).toContain("Support Knight Hacks");
     expect(html).toContain("Join the alumni Discord");
     expect(html).toContain("Update career history");

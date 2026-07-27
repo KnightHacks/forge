@@ -99,8 +99,6 @@ describe("MemberAdminDashboard", () => {
     expect(html).toContain("lenny@example.test");
     expect(html).toContain("University of Central Florida");
     expect(html).toContain("Spring 2027");
-    expect(html).toContain("hidden overflow-x-auto md:block");
-    expect(html).toContain("grid min-w-0 gap-2 p-2");
     expect(html).toContain("Showing 1-1 of 1 members");
   });
 

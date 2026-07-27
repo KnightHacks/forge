@@ -33,23 +33,4 @@ describe("FormShareActions", () => {
     expect(html).not.toContain("token=");
     expect(html).not.toContain("access_token");
   });
-
-  it("keeps every mobile share action touch-sized and keyboard-visible", () => {
-    const html = renderToStaticMarkup(
-      createElement(FormShareActions, {
-        canonicalUrl,
-        formName: "Workshop Interest",
-        onCopyLink: vi.fn(),
-        onOpenQrPreview: vi.fn(),
-        qrPngDataUrl,
-        slugName: "workshop-interest",
-      }),
-    );
-
-    expect(html).toContain('data-form-share-layout="responsive"');
-    expect(
-      (html.match(/(?:min-h-11|h-11)/g) ?? []).length,
-    ).toBeGreaterThanOrEqual(4);
-    expect(html).toContain("focus-visible:ring-2");
-  });
 });

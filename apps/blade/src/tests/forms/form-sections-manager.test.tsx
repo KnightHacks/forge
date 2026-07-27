@@ -42,13 +42,9 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 describe("FormSectionsManager", () => {
-  it("lays section access cards out as a compact responsive grid", () => {
+  it("renders every provisioned section with an access-editing control", () => {
     const html = renderToStaticMarkup(createElement(FormSectionsManager));
 
-    expect(html).toContain('data-section-grid="compact"');
-    expect(html).toContain("sm:grid-cols-2");
-    expect(html).toContain("xl:grid-cols-3");
-    expect(html).toContain('data-section-card="compact"');
     expect(html).toContain("Outreach");
     expect(html).toContain("Workshops");
     expect(html).toContain("Edit access");

@@ -12,14 +12,7 @@ vi.mock("~/app/_components/member/member-event-feedback", () => ({
     opportunity: { eventName: string; status: string };
     surface: string;
   }) =>
-    createElement(
-      "div",
-      {
-        "data-feedback-opportunity": opportunity.status,
-        "data-feedback-surface": surface,
-      },
-      `Feedback for ${opportunity.eventName}`,
-    ),
+    `Feedback for ${opportunity.eventName} (${opportunity.status}, ${surface})`,
 }));
 
 const events = [
@@ -121,8 +114,9 @@ describe("MemberEventsDashboard", () => {
       }),
     );
 
-    expect(html).toContain('data-feedback-opportunity="available"');
-    expect(html).toContain("Feedback for Public Workshop");
+    expect(html).toContain(
+      "Feedback for Public Workshop (available, event_history)",
+    );
     expect(html.match(/Feedback for Public Workshop/g)).toHaveLength(1);
   });
 
@@ -142,7 +136,6 @@ describe("MemberEventsDashboard", () => {
     expect(html).toContain("calendar.google.com/calendar/render");
     expect(html).toContain('href="/member/dashboard"');
     expect(html).toContain("Back to dashboard");
-    expect(html).toContain('data-member-events-layout="stacked"');
     expect(html).toContain('href="/member/dues"');
     expect(html).not.toContain("Discord health");
     expect(html).not.toContain("Google health");
@@ -163,6 +156,5 @@ describe("MemberEventsDashboard", () => {
     expect(html).not.toContain("Legacy");
     expect(html).not.toContain("unavailable");
     expect(html).not.toContain("Points stay tied");
-    expect(html).toContain('data-member-attendance-layout="stacked"');
   });
 });

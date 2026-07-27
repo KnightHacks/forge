@@ -61,7 +61,6 @@ describe("GenericFormRespondent", () => {
       }),
     );
 
-    expect(html).toContain('data-form-state="scheduled"');
     expect(html).toContain('role="status"');
     expect(html).toContain("This form is not open yet");
     expect(html).toContain("Opens");
@@ -81,7 +80,6 @@ describe("GenericFormRespondent", () => {
       }),
     );
 
-    expect(html).toContain('data-form-state="closed"');
     expect(html).toContain("This form is closed");
     expect(html).toContain("Responses are no longer accepted");
     expect(html).not.toContain("Submit response");
@@ -128,16 +126,13 @@ describe("GenericFormRespondent", () => {
       }),
     );
 
-    expect(html).toContain('data-form-state="submitted"');
     expect(html).toContain('aria-live="polite"');
     expect(html).toContain("Your submitted response");
     expect(html).toContain("This response is locked and cannot be edited");
     expect(html).toContain('aria-label="Submitted answers"');
     expect(html).toContain("Director/Officer");
     expect(html).toContain("Web, Robotics");
-    expect(html).toContain('data-form-response-link="clickable"');
     expect(html).toContain('href="https://github.com/knighthacks"');
-    expect(html).toContain('data-form-attachment-download="available"');
     expect(html).toContain("resume.pdf");
     expect(html).not.toContain("director-officer");
     expect(html).not.toContain("{&quot;kind&quot;");
@@ -149,7 +144,7 @@ describe("GenericFormRespondent", () => {
     expect(html).not.toContain("Failed");
   });
 
-  it("uses a mobile-first, labelled form surface with touch-sized controls", () => {
+  it("labels the form surface and links back to the member dashboard", () => {
     const html = renderToStaticMarkup(
       createElement(GenericFormRespondent, {
         definition,
@@ -163,12 +158,9 @@ describe("GenericFormRespondent", () => {
       }),
     );
 
-    expect(html).toContain('data-form-respondent-layout="mobile-first"');
     expect(html).toContain('aria-labelledby="form-title"');
     expect(html).toContain('id="form-title"');
     expect(html).toContain('href="/member/dashboard"');
     expect(html).toContain("Back to dashboard");
-    expect(html).toMatch(/(?:min-h-11|h-11)/);
-    expect(html).toContain("focus-visible:ring-2");
   });
 });

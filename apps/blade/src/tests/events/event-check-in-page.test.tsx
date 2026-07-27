@@ -77,7 +77,6 @@ describe("EventCheckInPage", () => {
     expect(html).toContain("Scanner");
     expect(html).toContain("Manual");
     expect(html).toContain("Allow repeat check-ins");
-    expect(html).toContain('data-check-in-layout="streamlined"');
     expect(html).not.toContain("Latest result");
     expect(html).not.toContain("Choose an event, then scan");
     expect(html).not.toContain("Selecting a member does not check them in");

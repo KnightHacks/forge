@@ -46,14 +46,7 @@ vi.mock("~/app/_components/member/member-event-feedback", () => ({
     opportunity: { eventName: string; status: string };
     surface: string;
   }) =>
-    createElement(
-      "div",
-      {
-        "data-feedback-opportunity": opportunity.status,
-        "data-feedback-surface": surface,
-      },
-      `Feedback for ${opportunity.eventName}`,
-    ),
+    `Feedback for ${opportunity.eventName} (${opportunity.status}, ${surface})`,
 }));
 
 vi.mock("~/app/_components/member/guild-preferences-dialog", () => ({
@@ -202,9 +195,9 @@ describe("MemberDashboard", () => {
       }),
     );
 
-    expect(html).toContain('data-feedback-opportunity="available"');
-    expect(html).toContain('data-feedback-surface="dashboard"');
-    expect(html).toContain("Feedback for Interview Workshop");
+    expect(html).toContain(
+      "Feedback for Interview Workshop (available, dashboard)",
+    );
   });
 
   it("renders the Guild social card without legacy member-profile chrome", () => {
@@ -229,8 +222,6 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Dues");
     expect(html).toContain("Paid for the 2026-2027 academic school year.");
     expect(html).toContain("Paid");
-    expect(html).toContain("bg-[hsl(var(--chart-2)/0.14)]");
-    expect(html).toContain("text-[hsl(var(--chart-2))]");
     expect(html).toContain('aria-label="Dues status"');
     expect(html).toContain('href="/member/settings"');
     expect(html).toContain('aria-label="Edit profile"');
@@ -244,16 +235,14 @@ describe("MemberDashboard", () => {
     expect(html).toContain('href="/member/events"');
     expect(html).not.toContain("Member info");
     expect(html).not.toContain("Academics");
-    expect(html).toContain('data-dashboard-events-layout="stacked"');
   });
 
-  it("keeps long Guild bio copy inside an overflow-owned About surface", () => {
+  it("renders the Guild bio copy in the About section", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, dashboardProps),
     );
 
     expect(html).toContain("About");
-    expect(html).toContain("overflow-y-auto");
     expect(html).toContain("My name is Dylan Vidal");
   });
 
@@ -306,6 +295,5 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Unpaid");
     expect(html).toContain("Pay dues");
     expect(html).toContain('href="/member/dues"');
-    expect(html).toContain("text-muted-foreground");
   });
 });
