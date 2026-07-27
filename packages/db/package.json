@@ -16,7 +16,11 @@
       "types": "./dist/schemas/*.d.ts",
       "default": "./src/schemas/*.ts"
     },
-    "./env": "./src/env.ts"
+    "./env": "./src/env.ts",
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./src/testing.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

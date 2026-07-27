@@ -25,14 +25,19 @@ type DatabaseSchema = AuditSchema &
   KnightHacksSchema &
   RelationsSchema;
 
-export const db: NodePgDatabase<DatabaseSchema> = drizzle({
-  client: pool,
-  schema: {
-    ...auditSchema,
-    ...authSchema,
-    ...discordSchema,
-    ...knightHacksSchema,
-    ...relations,
-  },
-  casing: "snake_case",
-});
+// `drizzle()` returns the database plus its underlying pool as `$client`. The
+// annotation is written out for stable declaration output, so it has to include
+// `$client` too — otherwise the pool is invisible to callers that need to shut
+// it down, such as the disposable-database test harness.
+export const db: NodePgDatabase<DatabaseSchema> & { $client: typeof pool } =
+  drizzle({
+    client: pool,
+    schema: {
+      ...auditSchema,
+      ...authSchema,
+      ...discordSchema,
+      ...knightHacksSchema,
+      ...relations,
+    },
+    casing: "snake_case",
+  });
