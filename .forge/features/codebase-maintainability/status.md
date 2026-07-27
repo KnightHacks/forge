@@ -68,23 +68,83 @@ changing what it asserts about behavior is not.
   feature PR with a test pinning the chosen behavior.
 - 2026-07-27: Owner asked to harden DX tooling (lint rules, dead-code detection,
   React analysis) and to add commit hooks, since CI will not cover this branch.
+- 2026-07-27: **Access policy is settled as two named tiers.** Tier one is
+  _capability_: a union across all of a user's roles, gating whether a route or
+  nav destination is reachable at all. Tier two is _scope_: an exact match against
+  the granting role, gating which rows within it are readable or editable. Only
+  `issues` and `forms` (including form sections) have a tier two today, and both
+  already implement it — `issueAccessForRoles` matches the owning role,
+  `evaluateFormSectionAccess` intersects role IDs against a section's editor and
+  viewer lists. The remaining 87 procedures are tier one with nothing to scope.
+  This is a naming and documentation change, not a behavior change. Where tier one
+  passes but tier two yields nothing, the page should redirect server-side rather
+  than render an empty screen.
+- 2026-07-27: `packages/api/src/utils/<domain>/access.ts` is adopted as the
+  standard home for both tiers. 7 of 15 domains already have one; the rest get one.
+  `apps/blade/src/app/_components/admin/access.ts` is the _nav_ gate, not a server
+  guard — it moves to `src/lib/` and gets a name that does not collide.
+- 2026-07-27: Option B chosen for `packages/api/src/utils`. The rule is: extract
+  when the logic can be tested without a tRPC context; keep it in the procedure
+  when it cannot; a `utils/<domain>/` file holds one cohesive concern. An earlier
+  draft of this rule forbade modules whose exports each have a single caller —
+  that was withdrawn. `updatePlatformForm` (~170 lines) and
+  `updatePlatformFormSettings` (~150) are substantial named workflows, and
+  extracting them is the point of Option B, not a violation of it. The real defect
+  in `utils/forms/platform.ts` is that one 1,132-line module covers forms,
+  responses, sections, exports, and member history; it splits by concern instead.
+- 2026-07-27: React findings corrected two earlier claims. The headline `useState`
+  counts were per _file_: `email-portal-workspace.tsx` holds three components
+  splitting 19/8/1, so the worst single component is 19, and the planned file split
+  reduces these counts on its own. Re-measure per component after the split.
+- 2026-07-27: `useReducer` is the wrong fix for most of Blade. 74 of 288 `useState`
+  initializers are prop-seeded independent form fields, where a reducer only
+  renames the setter. Exactly one reducer is warranted: the `questions` array in
+  `admin-form-builder.tsx`. The house pattern for record-shaped forms is one
+  `useState` holding the whole object plus a typed `update(key, value)`, copying
+  `event-form-dialog.tsx:240`. react-hook-form is blocked until
+  `packages/ui/src/form.tsx:26-35` stops pinning `ZodType<TIn, TIn>`.
+- 2026-07-27: The React 19 Actions family is ruled OUT, and the measured zeros for
+  `useActionState`, `useFormStatus`, and `useOptimistic` are correct rather than a
+  deficiency. They are not server-action-gated, but Blade's fields are controlled
+  Radix primitives, `<form action>` resets uncontrolled fields on success,
+  `useFormStatus` needs a parent `<form>` that 161 `isPending` sites do not have,
+  and Action errors escalate to `error.tsx` instead of the app's 136 toast sites.
+  Mutation state stays on tRPC `useMutation`.
+- 2026-07-27: Component splits proceed in three provability tiers, so work starts
+  before jsdom exists. Tier 1 is pure code with no React import, provable under the
+  vitest config that exists today (~400 lines can leave `analytics-dashboard.tsx`,
+  ~500 `email-portal-workspace.tsx`). Tier 2 moves hooks while JSX stays put,
+  provable by a byte-identical SSR HTML diff. Tier 3 moves JSX and is the only tier
+  requiring jsdom, Testing Library, and screenshots.
+- 2026-07-27: The chief appearance hazard is sibling-scoped Tailwind. Blade's
+  `adminPageLayoutClassName` ends in `space-y-4 sm:space-y-6`, which is `> * + *`,
+  so introducing one wrapper `div` silently removes a gap; `divide-y` and
+  `first:border-l-0` fail the same way. An extracted child returns a fragment or
+  the original single root, never a new wrapper. A submit button never leaves its
+  `<form>`.
+- 2026-07-27: `apps/blade/next.config.js:12` sets `typescript: { ignoreBuildErrors:
+true }`, so the build catches nothing during a refactor of this size. Turn it off
+  before the component work, not after.
+- 2026-07-27: `eslint-plugin-react-hooks` 7.0.1 already runs `set-state-in-effect`,
+  `set-state-in-render`, `purity`, and `immutability` at error, and all three
+  mega-components lint clean. Verified by repro that `set-state-in-effect` does not
+  fire for `useEffect(() => { setV(x) }, [x])`, the prop-mirroring form — so the
+  existing rules give a false all-clear on the pattern that matters. Static checks
+  must be verified against a repro before being trusted as coverage.
 
 ## Open questions
 
-- Which of the three permission semantics is intended? A permission key currently
-  means union-across-roles (87 procedures), per-granting-role (issues, 14), or
-  union-plus-section-membership (forms, 24). Officers grant all three from one
-  checkbox list, and the Blade nav gates assume the union model for all of them.
 - Is `READ_CLUB_DATA` the intended bar for the all-member resume ZIP, and should
   that gate move into `packages/api`? Today the only check is `canAccessAnalytics`
   imported from a Blade nav helper.
 - What is the house rule for mutation feedback? Currently 15 toast / 14 inline
   across 8 state-variable names, with the events feature split against itself.
-- Should `packages/api/src/utils` extraction be blessed (testability is a real
-  reason the principles never listed) or reversed toward fat routers? The docs
-  say one thing and 19,521 lines say the other.
 - Do the ten unaudited mutations — including `member.deleteMember`, which hard
   deletes User, Member, Permissions and FormResponse rows — stay unaudited?
+- Should the two tier-two mechanisms converge? `issues` matches the owning role
+  directly; `forms` intersects role IDs against per-section editor and viewer
+  lists. Both are correct for their domain, so this may stay as two shapes under
+  one documented vocabulary rather than one implementation.
 
 ## Task list
 
