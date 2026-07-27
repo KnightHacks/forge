@@ -11,7 +11,8 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description: "Build, schedule, and reconcile Knight Hacks email campaigns.",
+  description:
+    "Create Knight Hacks email campaigns and check their delivery status.",
   title: "Blade | Email Portal",
 };
 

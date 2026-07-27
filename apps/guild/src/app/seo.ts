@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 export const SITE_URL = "https://guild.knighthacks.org";
 export const SITE_NAME = "Guild Collective";
 
-export const SEO_TITLE = "Guild Collective | Knight Hacks Member Network";
+export const SEO_TITLE = "Guild Collective | Knight Hacks";
 export const SEO_DESCRIPTION =
-  "Explore the Guild Collective, Knight Hacks' public member and alumni network at UCF. Discover technologists, career paths, companies, and where the community is building.";
+  "The Guild Collective is Knight Hacks' directory for members and alumni at UCF. Browse profiles and see where people work or live.";
 
 export const SEO_KEYWORDS = [
   "Knight Hacks Guild Collective",
@@ -21,8 +21,7 @@ export const SEO_KEYWORDS = [
 export const OG_IMAGE_URL = `${SITE_URL}/guild-social-card.png`;
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
-export const OG_IMAGE_ALT =
-  "The Guild Collective, Knight Hacks' member and alumni network at UCF";
+export const OG_IMAGE_ALT = "The Guild Collective logo on a dark background";
 
 export function absoluteUrl(path = "/") {
   return new URL(path, SITE_URL).toString();

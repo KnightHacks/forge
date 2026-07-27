@@ -4,7 +4,7 @@ import type { IssueSearchParams } from "~/app/_components/admin/issues/params";
 import { renderIssueWorkspace } from "~/app/_components/admin/issues/server";
 
 export const metadata: Metadata = {
-  description: "Coordinate cross-team Club work on a shared due-date calendar.",
+  description: "See Club issue deadlines on a shared calendar.",
   title: "Blade | Issues Calendar",
 };
 

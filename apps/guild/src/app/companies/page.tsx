@@ -8,8 +8,7 @@ import { api } from "~/trpc/server";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Guild Companies",
-  description:
-    "Explore where Knight Hacks members and alumni have worked across the Guild.",
+  description: "See where Guild members and alumni have worked.",
   path: "/companies",
 });
 

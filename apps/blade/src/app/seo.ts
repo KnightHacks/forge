@@ -1,9 +1,9 @@
 export const SITE_URL = "https://blade.knighthacks.org";
 export const SITE_NAME = "Blade by Knight Hacks";
 
-export const SEO_TITLE = "Blade | Knight Hacks Member Platform";
+export const SEO_TITLE = "Blade | Knight Hacks";
 export const SEO_DESCRIPTION =
-  "Blade is the Knight Hacks member platform for managing membership, events, dues, profiles, forms, and club operations at the University of Central Florida.";
+  "Blade is where Knight Hacks members manage club activity at UCF, including their profiles, dues, and events.";
 
 export const SEO_KEYWORDS = [
   "Blade by Knight Hacks",
@@ -19,8 +19,7 @@ export const SEO_KEYWORDS = [
 export const OG_IMAGE_URL = `${SITE_URL}/blade-social-card.png`;
 export const OG_IMAGE_WIDTH = 1200;
 export const OG_IMAGE_HEIGHT = 630;
-export const OG_IMAGE_ALT =
-  "Blade, the Knight Hacks member platform at the University of Central Florida";
+export const OG_IMAGE_ALT = "Blade logo on a dark background";
 
 export const bladeJsonLd = {
   "@context": "https://schema.org",

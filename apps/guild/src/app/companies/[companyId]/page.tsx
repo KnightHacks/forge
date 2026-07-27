@@ -34,7 +34,7 @@ export async function generateMetadata({
   const data = await getCompany(companyId);
   return createPageMetadata({
     title: data.company.displayName,
-    description: `Knight Hacks members and alumni connected to ${data.company.displayName}.`,
+    description: `See the Knight Hacks members and alumni who have worked at ${data.company.displayName}.`,
     path: `/companies/${data.company.id}`,
   });
 }

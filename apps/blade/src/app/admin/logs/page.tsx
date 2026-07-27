@@ -8,7 +8,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description: "Review append-only privileged administration history.",
+  description: "Review the record of privileged admin actions.",
   title: "Blade | Admin Action Logs",
 };
 

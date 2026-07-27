@@ -15,8 +15,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description:
-    "Analyze Knight Hacks Club turnout, audience, dues, and feedback.",
+  description: "Review Knight Hacks turnout, dues, feedback, and member data.",
   title: "Blade | Club Analytics",
 };
 

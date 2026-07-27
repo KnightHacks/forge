@@ -12,7 +12,7 @@ import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Role Management",
-  description: "Configure Discord-backed Blade roles and assignments.",
+  description: "Manage Blade roles and their Discord connections.",
 };
 
 export default async function AdminRolesPage({

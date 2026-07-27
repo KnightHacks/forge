@@ -4,7 +4,7 @@ import { MemberFormHistory } from "~/app/_components/member/member-form-history"
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description: "Review your retained Knight Hacks form responses.",
+  description: "Review the Knight Hacks forms you have submitted.",
   title: "Blade | Previous Forms",
 };
 
