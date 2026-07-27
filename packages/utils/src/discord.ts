@@ -8,12 +8,10 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { and, desc, eq } from "drizzle-orm";
 
-import type { Session } from "@forge/auth/server";
-import { DISCORD } from "@forge/consts";
+import { DISCORD, TEAM } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
 
-import { TEAMS } from "../../consts/src/team";
 import { shouldSuppressDiscordAuditLogs } from "./discord-log-policy";
 import { env } from "./env";
 import { logger } from "./logger";
@@ -30,7 +28,7 @@ export async function sendRecruitingApplication(
     gradYear: string;
   },
 ) {
-  const team = TEAMS.find((x) => x.team === teamName);
+  const team = TEAM.TEAMS.find((x) => x.team === teamName);
   if (!team) {
     throw new Error("Team not found");
   }
@@ -169,32 +167,6 @@ export async function resolveDiscordUserId(
   )) as APIGuildMember[];
   return members[0]?.user.id ?? null;
 }
-
-// TODO: look into not using Session here so we can remove the auth import
-//       which will let us clean up our imports.
-
-export const isDiscordAdmin = async (user: Session["user"]) => {
-  try {
-    const guildMember = (await api.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    )) as APIGuildMember;
-    return guildMember.roles.includes(DISCORD.ADMIN_ROLE);
-  } catch (err) {
-    logger.error("Error: ", err);
-    return false;
-  }
-};
-
-export const isDiscordMember = async (user: Session["user"]) => {
-  try {
-    await api.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    );
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 export async function isDiscordVIP(discordUserId: string) {
   const guildMember = (await api.get(

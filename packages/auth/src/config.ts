@@ -6,8 +6,8 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@forge/db/client";
 import { Account, Session, User, Verifications } from "@forge/db/schemas/auth";
+import * as discord from "@forge/utils/discord";
 
-import * as discord from "../../utils/src/discord";
 import { env } from "./env";
 
 export const isSecureContext = env.NODE_ENV !== "development";

@@ -8,6 +8,26 @@ import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
 
 /**
+ * `import/no-relative-packages` needs a resolver this config does not install,
+ * so the package boundary is enforced by pattern. A `../` hop landing in another
+ * package's `src/` bypasses its exports map, hides the edge from Turbo's build
+ * graph (which keys off `dependencies`), and can create cycles the build never
+ * reports.
+ *
+ * Shared because ESLint rules replace rather than merge: `restrictEnvAccess`
+ * also sets `no-restricted-imports`, and packages spread it after the base
+ * config, so anything defined only in the base would be silently dropped in the
+ * 13 packages that opt in — including `@forge/api` and `apps/blade`.
+ */
+const crossPackageImportPatterns = [
+  {
+    group: ["../*/src/*", "../../*/src/*", "../../../*/src/*"],
+    message:
+      "Import across packages through the package export (e.g. `@forge/consts`), not a relative path into its src/.",
+  },
+];
+
+/**
  * All packages that leverage t3-env should use this rule
  */
 export const restrictEnvAccess = tseslint.config(
@@ -27,10 +47,15 @@ export const restrictEnvAccess = tseslint.config(
       "no-restricted-imports": [
         "error",
         {
-          name: "process",
-          importNames: ["env"],
-          message:
-            "Use `import { env } from '~/env'` instead to ensure validated types.",
+          paths: [
+            {
+              name: "process",
+              importNames: ["env"],
+              message:
+                "Use `import { env } from '~/env'` instead to ensure validated types.",
+            },
+          ],
+          patterns: crossPackageImportPatterns,
         },
       ],
     },
@@ -75,6 +100,10 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-non-null-assertion": "error",
       "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+      "no-restricted-imports": [
+        "error",
+        { patterns: crossPackageImportPatterns },
+      ],
       "no-console": "error",
     },
   },
