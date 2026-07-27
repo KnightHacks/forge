@@ -1,6 +1,6 @@
 # Codebase Maintainability Status
 
-Current phase: Phase 0 complete; all four gates green; Phase 1 harness not started
+Current phase: Phase 0 complete; Phase 1 harness complete; delete pass started
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -180,11 +180,35 @@ Deliberately not done in Phase 0:
 
 ### Phase 1 — harness
 
-- [ ] Add jsdom + Testing Library and prove one interaction test fails correctly.
-- [ ] Extract the disposable-Postgres harness into a reusable integration path.
-- [ ] Strip the Tailwind-class and exact-pixel assertions that will false-alarm.
-- [ ] Add `*.contract.test.ts` for `event`, `email`, `forms`, `member-admin`,
-      `roles` before any router move. Four routers already have this file.
+- [x] Add jsdom + Testing Library, opt-in per file, scoped by a written rule to
+      invariants that survive a redesign (`ba638d37`). Proven by mutation, not by
+      passing.
+- [x] Extract the disposable-Postgres harness into `@forge/db/testing`
+      (`21e8c2cd`). Proven against a real database.
+- [x] Strip the layout, pixel, and markup-anchor assertions (`734567af`). 132
+      removed, 6 tests deleted, 3 over-removals caught by audit and fixed.
+- [x] Pin the client-facing API surface instead of per-router contract tests
+      (`40e9082d`). Cross-router moves are what Phase 3 changes, and a per-router
+      file cannot see them.
+- [ ] Second strip pass over the five unassigned files: `member-event-feedback`
+      plus four e2e specs still hold the same patterns.
+
+### Phase 1b — delete pass, pulled forward
+
+Deletion is compiler-provable, so it does not depend on the weak suite, and every
+dead symbol is a placement decision Phase 2 would otherwise pay for and discard.
+Six scouts produced candidates with grep proof; six skeptics then attacked them
+and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
+
+- [x] Tier 2 — ten unreferenced app files (`00b8c530`).
+- [ ] Tier 1 — declare ~25 undeclared dependencies. Includes real latent
+      breakage: `apps/2025/next.config.js` top-level-awaits `jiti`, which it does
+      not declare, and only resolves because of `node-linker=hoisted`.
+- [ ] Tier 6, 9, 10 — zero-reference app-local exports, then dependency removal.
+- [ ] Tier 3, 4, 7, 8 — hold pending the decisions below.
+- [ ] Tier 5 — gated: deleting it removes ~388 lines of genuine unit tests for
+      logic the live path re-implements untested. Needs a human answer on whether
+      the extract-then-wire plan for `utils/forms/responses.ts` is abandoned.
 
 ### Phase 2 — the eleven converged moves
 
@@ -217,6 +241,29 @@ Deliberately not done in Phase 0:
 
 - [ ] Move organizational state out of `@forge/consts` into admin-managed tables.
 - [ ] The behavior-changing consolidations listed in the decision log.
+
+## Phase 1 findings
+
+- **`pnpm build` is a fourth red gate.** `apps/2025` and `apps/gemiknights` fail
+  prerendering `/_global-error` with a React `useContext` error. Confirmed
+  pre-existing by stashing all local changes and rebuilding at HEAD. CI would
+  have caught it; CI does not run here.
+- **knip has three blind spots**, so it is not the delete list on its own:
+  `ignoreExportsUsedInFile: true`, `packages/*/src/index.ts` treated as an entry,
+  and `packages/ui`'s `"./*"` exports map making every file an auto-entry. It
+  reported 0 of the 11 dead `packages/ui` files.
+- **Most "duplicate exports" knip reported are live aliases**, not dead code —
+  `ALUMNI_ROLE = PROD_ALUMNI_ROLE`, `eventTagArchiveSchema = eventTagIdSchema`.
+  Eight candidates were refuted outright by the adversarial pass.
+- **`EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES` is hand-copied** into
+  `routers/roles.ts:90-109` rather than imported — a duplication finding that
+  looked like a dead-export finding.
+- **The explicit type annotation on `db` was hiding `$client`**, leaving the
+  connection pool unreachable for shutdown. Writing a type out by hand can narrow
+  away part of the value.
+- **A test that only renders and does not throw is not coverage.** Six Blade
+  tests asserted nothing but markup; one compared two counts that are equal by
+  construction.
 
 ## Phase 0 findings
 
