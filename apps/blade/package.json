@@ -76,6 +76,9 @@
     "@forge/tailwind-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "^4.2.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^25.3.2",
     "@types/react": "^19.2.14",
@@ -83,6 +86,7 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "jiti": "^2.6.1",
+    "jsdom": "^30.0.0",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"
