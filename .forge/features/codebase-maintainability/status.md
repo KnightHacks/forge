@@ -134,6 +134,71 @@ changing what it asserts about behavior is not.
   existing rules give a false all-clear on the pattern that matters. Static checks
   must be verified against a repro before being trusted as coverage.
 
+## Standing decisions — 2026-07-27, authorized for autonomous work
+
+The owner stepped away and authorized completing the project without further
+questions. Where a new decision arises, resolve it by having 2-3 agents argue it
+out and record the outcome here.
+
+**Process**
+
+- All work lands on one branch, `reforge/refactor`. Do not push. Do not merge to
+  `reforge/main`; the owner merges everything on return.
+- Definition of done: maintainable, readable, beginner-friendly, and
+  agent-friendly. Loop until that holds, not until a task list empties.
+
+**Scope**
+
+- Full scope, through docs and skills, including moving organizational state
+  into admin-managed tables. This answer is the explicit schema-change approval
+  `AGENTS.md` requires.
+- Org state to migrate: **Discord IDs and role mappings** (39 snowflakes, 6 team
+  director role IDs). Those change with the server and the officer team.
+- Hackathon state is **deleted, not migrated**. Hackathon work is intentionally
+  deferred — the owner finished Club work and paused to refactor before the
+  high-risk hackathon phase. Reforge has little or no hackathon notion in new
+  Blade; where it does (the Knight Hacks VIII class/role map, the `HACKATHONS`
+  namespace), scrap it. Old hackathon behavior is preserved in `legacy/`.
+- Dues price, semester boundary dates, and event tag points/colors were not
+  selected for migration. Event tag data is already superseded by the
+  `knight_hacks_event_tag` table, so that constant is a delete, not a move.
+- `legacy/` will be deleted at cutover. Code whose only consumers are there is
+  dead. This unblocks delete tiers 3 and 4.
+
+**Behavior**
+
+- Divergent implementations may be consolidated. Choose the safest behavior per
+  family, argue it with agents, and land each as its own PR with a test pinning
+  the choice. `catalogValue` is data integrity, not style: one of the four
+  already differs and stored form responses may already mismatch their options —
+  investigate as a possible live bug.
+- Timezone: `America/New_York` everywhere via `EVENTS.CALENDAR_TIME_ZONE`, with
+  an explicit UTC formatter for true date-only columns.
+- Mutation feedback: toast plus `mutation.isPending` everywhere, through one
+  `useFeatureMutation` wrapper. Inline errors only for field-level validation.
+- Forms respondent state: wire the tested 7-state implementation in and retire
+  the 3-state inline one, as its own PR. Respondents should learn why a form is
+  unavailable rather than always seeing "closed".
+- `pnpm build` is red on `apps/2025` and `apps/gemiknights`; fix it. It gates
+  safe dependency removal.
+
+**Access and audit**
+
+- Move the resume-bundle gate into `packages/api` and keep `READ_CLUB_DATA`. The
+  platform function must not trust its caller.
+- Audit every `permProcedure` mutation, plus any `protectedProcedure` mutation
+  that deletes data or moves money. Enforce it in the coverage guardrail so the
+  next gap fails. Self-service deletion is audited too.
+- Register `member-admin` as `api.memberAdmin.*` and update call sites. The API
+  surface snapshot catches anything missed.
+
+**Skills**
+
+- Delete the seven vendored skills. Replace with a few Forge-authored,
+  codebase-specific ones: `forge-react`, `forge-api`, `forge-placement`, plus the
+  existing three artifact writers, `frontend-design`, `deslop`, and a new
+  scope-derived `forge-review` swarm skill. Nothing a generic tutorial would say.
+
 ## Open questions
 
 - Is `READ_CLUB_DATA` the intended bar for the all-member resume ZIP, and should
