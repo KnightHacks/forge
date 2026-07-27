@@ -1,0 +1,32 @@
+# Local quality gates.
+#
+# `reforge/main` is a staging branch and CI only runs on `main` and pull
+# requests, so on this branch these hooks are the only automated checks that ever
+# run. They mirror the CI jobs deliberately.
+#
+# The split matters: a pre-commit hook that runs the whole gate gets slow, people
+# learn `--no-verify`, and the hook becomes decoration. Commit-time work is
+# formatting only and touches staged files; the real gate runs once per push.
+#
+# Escape hatches: `git commit --no-verify`, or `LEFTHOOK=0 git push` to skip
+# everything. Use them when you mean to, not by habit.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format staged files
+      glob: "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,yml,yaml}"
+      run: npx prettier --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  jobs:
+    # The same commands as CI's format, lint, and typecheck jobs.
+    - name: verify
+      run: pnpm verify:push
+
+    # CI runs this as its own job. Included because nothing else will run it
+    # before this code reaches a branch other people build on.
+    - name: test
+      run: pnpm test
