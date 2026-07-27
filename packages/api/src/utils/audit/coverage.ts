@@ -86,6 +86,7 @@ export const HYBRID_ADMIN_PROCEDURES = [
 export const EXCLUDED_ADMIN_PROCEDURES = [
   "alumni.listBulletinAdmin",
   "alumni.listLinkableForms",
+  "analytics.getDiscordReport",
   "analytics.getReport",
   "audit.catalog",
   "audit.detail",
