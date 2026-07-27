@@ -49,6 +49,10 @@ describe("Discord archive contracts", () => {
     expect(discordSnowflakeSchema.parse("999999999999999999")).toBe(
       "999999999999999999",
     );
+    // The literal is deliberately past Number.MAX_SAFE_INTEGER: this asserts the
+    // schema rejects numeric snowflakes precisely because JavaScript cannot hold
+    // one. Formatting it as a safe number would delete the case being tested.
+    // eslint-disable-next-line no-loss-of-precision
     expect(() => discordSnowflakeSchema.parse(999999999999999999)).toThrow();
     expect(() => discordSnowflakeSchema.parse("not-a-snowflake")).toThrow();
   });

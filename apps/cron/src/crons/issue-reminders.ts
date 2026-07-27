@@ -1,4 +1,3 @@
-import type { APIMessageTopLevelComponent } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
 import { deliverIssueReminders } from "@forge/api/utils";
@@ -22,9 +21,7 @@ export const issueReminders = new CronBuilder({
       bladeUrl: env.BLADE_URL,
       send: async (message) => {
         const { allowedMentions, channelId, content, embeds } = message;
-        const components = (
-          "components" in message ? message.components : []
-        ) as APIMessageTopLevelComponent[];
+        const components = "components" in message ? message.components : [];
         const componentsBody = issueReminderComponentsBody({
           allowedMentions,
           components,
