@@ -18,12 +18,12 @@ export default async function HomePage() {
         <div className="space-y-7">
           <div className="flex items-center gap-3 text-white">
             <Image
-              src="/white-kh-title-logo.svg"
-              alt="Knight Hacks"
-              width={2040}
-              height={551}
+              src="/blade-logo.svg"
+              alt="Blade by Knight Hacks"
+              width={1880}
+              height={375}
               priority
-              style={{ height: "45.35px", width: "168px" }}
+              className="h-auto w-56 sm:w-64"
             />
           </div>
 

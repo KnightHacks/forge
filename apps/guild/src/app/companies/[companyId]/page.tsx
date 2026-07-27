@@ -9,6 +9,7 @@ import { Button } from "@forge/ui/button";
 import { CompanyMark } from "~/app/_components/company-mark";
 import { MemberCard } from "~/app/_components/member-card";
 import { SiteHeader } from "~/app/_components/site-header";
+import { createPageMetadata } from "~/app/seo";
 import { api } from "~/trpc/server";
 
 const employmentExperienceLabels: Readonly<Record<string, string>> =
@@ -31,10 +32,11 @@ export async function generateMetadata({
 }: CompanyPageProps): Promise<Metadata> {
   const { companyId } = await params;
   const data = await getCompany(companyId);
-  return {
+  return createPageMetadata({
     title: data.company.displayName,
     description: `Knight Hacks members and alumni connected to ${data.company.displayName}.`,
-  };
+    path: `/companies/${data.company.id}`,
+  });
 }
 
 function formatMonth(month: string | null) {

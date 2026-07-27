@@ -5,27 +5,81 @@ import { GeistSans } from "geist/font/sans";
 import { cn } from "@forge/ui";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import {
+  guildJsonLd,
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_URL,
+  OG_IMAGE_WIDTH,
+  SEO_DESCRIPTION,
+  SEO_KEYWORDS,
+  SEO_TITLE,
+  SITE_NAME,
+  SITE_URL,
+} from "./seo";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://guild.knighthacks.org"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Guild Collective | Knight Hacks",
-    template: "%s | Guild Collective",
+    default: SEO_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
+  description: SEO_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SEO_KEYWORDS,
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  icons: {
+    icon: [
+      {
+        url: "/knight-hacks-logo-black.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/knight-hacks-logo.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: [{ url: "/knight-hacks-logo.svg", type: "image/svg+xml" }],
+  },
   openGraph: {
-    title: "Guild Collective | Knight Hacks",
-    description:
-      "View the Guild Collective of Knight Hacks, a community of technologists at the University of Central Florida.",
-    url: "https://guild.knighthacks.org",
-    siteName: "Knight Hacks",
+    type: "website",
+    locale: "en_US",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
-        url: "https://blade.knighthacks.org/banner.png",
-        alt: "Knight Hacks Banner",
+        url: OG_IMAGE_URL,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
+        alt: OG_IMAGE_ALT,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    images: [
+      {
+        url: OG_IMAGE_URL,
+        alt: OG_IMAGE_ALT,
       },
     ],
   },
@@ -50,6 +104,12 @@ export default function RootLayout({
         )}
       >
         <TRPCReactProvider>{children}</TRPCReactProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(guildJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
       </body>
     </html>
   );
