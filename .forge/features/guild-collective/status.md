@@ -1,6 +1,6 @@
 # Guild Collective Status
 
-Current phase: Implementation complete; local review
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -308,6 +308,8 @@ Current phase: Implementation complete; local review
 - 2026-07-23: Drafted 32 observable cases in `test-cases.md` (26 primary and 6
   negative/regression cases), calibrated between the recent Analytics and
   Issues bundles. The artifact is ready for human review.
+- 2026-07-27: Development is finished and merged into `reforge/main`. The
+  feature is closed for development.
 
 ## Open questions
 

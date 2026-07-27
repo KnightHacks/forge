@@ -1,6 +1,6 @@
 # Club Operations Issues Status
 
-Current phase: Implementation complete; production rollout gated by legacy-data preflight
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -279,6 +279,9 @@ Current phase: Implementation complete; production rollout gated by legacy-data 
   a separate port to legacy `main` is intentionally deferred because the
   reminder presentation will be inherited with the full Blade migration. The
   temporary preview harness was removed before commit.
+- 2026-07-27: Development is finished and merged into `reforge/main`. The
+  feature is closed for development. The prerequisites below remain
+  production-enablement gates, not outstanding development work.
 
 ## Rollout prerequisites
 
