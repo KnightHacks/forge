@@ -571,7 +571,15 @@ Expected observations:
 
 - Assigned users are mentioned; otherwise only the owning role is mentioned.
 - Titles cannot create mentions and allowed_mentions permits only intended IDs.
-- Content contains only approved title/link, timing/priority, and mentions.
+- One Components V2 message presents a team/role-colored container with native
+  interval separators, linked title/due-date rows, exclamation-point priority,
+  and non-mention assignee names. A final plain-text display holds the concise
+  `cc:` line below the container and is the only part permitted to notify users
+  or roles.
+- Production permits only explicit selected IDs in `allowed_mentions`.
+  Development and test payloads contain no mention syntax and explicitly parse
+  no mentions.
+- Issue links use the configured Blade origin and canonical issue path.
 
 ### TC-REM-006: Deterministic grouping and splitting
 
@@ -585,9 +593,11 @@ Action:
 
 Expected observations:
 
-- Channel/window grouping and issue ordering are deterministic.
-- Every chunk stays within Discord's limit without losing or duplicating an
-  issue.
+- Destination/team grouping, interval order, and priority-first issue order are
+  deterministic.
+- Every chunk stays within Discord's component-text, component-count,
+  container-child, content, and mention limits without losing or duplicating
+  an issue.
 
 ### TC-REM-007: Replica, rerun, and channel-change deduplication
 

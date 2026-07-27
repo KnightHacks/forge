@@ -50,7 +50,7 @@ export async function generateMetadata({
       title: name,
       description:
         profile.tagline ??
-        `${name} is part of the Knight Hacks Guild Collective.`,
+        `View ${name}'s profile in the Knight Hacks Guild Collective.`,
       alternates: {
         canonical: `/members/${profile.id}`,
       },
@@ -58,7 +58,7 @@ export async function generateMetadata({
         title: `${name} | Guild Collective`,
         description:
           profile.tagline ??
-          `${name} is part of the Knight Hacks Guild Collective.`,
+          `View ${name}'s profile in the Knight Hacks Guild Collective.`,
         url: `/members/${profile.id}`,
         images: profile.profilePictureUrl
           ? [{ url: profile.profilePictureUrl, alt: name }]

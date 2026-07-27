@@ -95,12 +95,12 @@ export function AuthenticatedShell({
           <div className="flex h-16 items-center justify-between gap-4 border-b border-border/70 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <Image
-                src="/white-kh-title-logo.svg"
-                alt="Knight Hacks"
-                width={2040}
-                height={551}
+                src="/blade-logo.svg"
+                alt="Blade by Knight Hacks"
+                width={1880}
+                height={375}
                 priority
-                className="h-auto w-24 sm:w-[148px]"
+                className="h-auto w-32 sm:w-44"
               />
               <div className="hidden h-8 w-px bg-border sm:block" />
               <div className="hidden min-w-0 sm:block">

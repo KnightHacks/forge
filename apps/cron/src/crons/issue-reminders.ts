@@ -1,3 +1,4 @@
+import type { APIMessageTopLevelComponent } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
 import { deliverIssueReminders } from "@forge/api/utils";
@@ -6,6 +7,10 @@ import { api } from "@forge/utils/discord";
 
 import { env } from "../env";
 import { CronBuilder } from "../structs/CronBuilder";
+import {
+  issueReminderCcBody,
+  issueReminderComponentsBody,
+} from "./issue-reminder-delivery";
 
 export const issueReminders = new CronBuilder({
   color: 2,
@@ -15,10 +20,37 @@ export const issueReminders = new CronBuilder({
   async () => {
     const result = await deliverIssueReminders({
       bladeUrl: env.BLADE_URL,
-      send: async ({ allowedMentions, channelId, content }) => {
-        await api.post(Routes.channelMessages(channelId), {
-          body: { allowed_mentions: allowedMentions, content },
+      send: async (message) => {
+        const { allowedMentions, channelId, content, embeds } = message;
+        const components = (
+          "components" in message ? message.components : []
+        ) as APIMessageTopLevelComponent[];
+        const componentsBody = issueReminderComponentsBody({
+          allowedMentions,
+          components,
+          content,
+          nodeEnv: env.NODE_ENV,
         });
+        if (componentsBody) {
+          await api.post(Routes.channelMessages(channelId), {
+            body: componentsBody,
+          });
+          return;
+        }
+        if (embeds.length > 0) {
+          await api.post(Routes.channelMessages(channelId), {
+            body: { allowed_mentions: { parse: [] }, embeds },
+          });
+        }
+        if (content) {
+          await api.post(Routes.channelMessages(channelId), {
+            body: issueReminderCcBody({
+              allowedMentions,
+              content,
+              nodeEnv: env.NODE_ENV,
+            }),
+          });
+        }
       },
     });
     logger.info(

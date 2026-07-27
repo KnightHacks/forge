@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { CompanyDirectory } from "~/app/_components/company-directory";
 import { PageIntroMotion } from "~/app/_components/page-motion";
 import { SiteHeader } from "~/app/_components/site-header";
+import { createPageMetadata } from "~/app/seo";
 import { api } from "~/trpc/server";
 
-export const metadata: Metadata = {
-  title: "Companies",
-  description:
-    "Explore where Knight Hacks members and alumni have worked across the Guild.",
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Guild Companies",
+  description: "See where Guild members and alumni have worked.",
+  path: "/companies",
+});
 
 export default async function GuildCompaniesPage() {
   const companies = await api.guild.listPublicCompanies();

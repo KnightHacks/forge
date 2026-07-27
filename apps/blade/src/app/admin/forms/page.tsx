@@ -9,7 +9,7 @@ import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
-  description: "Create, publish, share, and review Knight Hacks forms.",
+  description: "Create and manage Knight Hacks forms and their responses.",
   title: "Blade | Form Administration",
 };
 

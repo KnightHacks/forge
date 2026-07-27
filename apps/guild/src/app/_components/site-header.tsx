@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -33,16 +34,14 @@ export function SiteHeader() {
           href="/"
           className="group flex min-w-0 items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {/* Reuse the same wordmark members see in Blade. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://blade.knighthacks.org/white-kh-title-logo.svg"
-            alt="Knight Hacks"
-            className="h-6 w-auto shrink-0 sm:h-7"
+          <Image
+            src="/guild-logo.svg"
+            alt="The Guild Collective by Knight Hacks"
+            width={1412}
+            height={467}
+            priority
+            className="h-8 w-auto shrink-0 sm:h-9"
           />
-          <span className="flex min-w-0 items-baseline gap-2">
-            <span className="text-sm font-medium text-primary">/ Guild</span>
-          </span>
         </Link>
         <nav
           aria-label="Guild sections"

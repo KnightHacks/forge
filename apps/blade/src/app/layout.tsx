@@ -5,14 +5,81 @@ import { GeistSans } from "geist/font/sans";
 import { cn } from "@forge/ui";
 
 import { Providers } from "~/app/_components/providers";
-import { env } from "~/env";
+import {
+  bladeJsonLd,
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_URL,
+  OG_IMAGE_WIDTH,
+  SEO_DESCRIPTION,
+  SEO_KEYWORDS,
+  SEO_TITLE,
+  SITE_NAME,
+  SITE_URL,
+} from "./seo";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(env.NEXT_PUBLIC_BLADE_URL),
-  title: "Blade",
-  description: "The Knight Hacks member platform.",
+  metadataBase: new URL(SITE_URL),
+  title: SEO_TITLE,
+  description: SEO_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SEO_KEYWORDS,
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  icons: {
+    icon: [
+      {
+        url: "/knight-hacks-logo-black.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/knight-hacks-logo.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: [{ url: "/knight-hacks-logo.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: OG_IMAGE_URL,
+        width: OG_IMAGE_WIDTH,
+        height: OG_IMAGE_HEIGHT,
+        alt: OG_IMAGE_ALT,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_TITLE,
+    description: SEO_DESCRIPTION,
+    images: [
+      {
+        url: OG_IMAGE_URL,
+        alt: OG_IMAGE_ALT,
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -30,6 +97,12 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <Providers>{props.children}</Providers>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(bladeJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
       </body>
     </html>
   );

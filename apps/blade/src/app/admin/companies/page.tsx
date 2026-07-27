@@ -10,7 +10,7 @@ import { api, HydrateClient } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Company Admin",
-  description: "Review Guild companies and member career histories.",
+  description: "Review Guild companies and member work histories.",
 };
 
 export default async function AdminCompaniesPage() {

@@ -233,6 +233,52 @@ Current phase: Implementation complete; production rollout gated by legacy-data 
   into `reforge/main`. Because the implementation worktree is already checked
   out on that target branch, integration is a direct feature commit rather
   than a branch merge commit.
+- 2026-07-26: Refine issue reminder presentation without creating a new
+  artifact bundle: structured embeds own issue details, while a concise
+  plain-text `cc:` line retains real Discord pings for assigned users or the
+  owning team. Keep explicit allowed mentions and all Discord payload limits.
+- 2026-07-26: Synced reminder work with `reforge/main` at `c6a8b048` after the
+  filtered dev-backup refresh merged. The sync introduced no reminder-file
+  conflicts.
+- 2026-07-26: First DB-backed Discord preview was visually reviewed and needs
+  refinement before approval: move `cc:` below the embed, remove the large
+  preview banner, use the owning role color, group compact rows by reminder
+  interval, encode priority with exclamation points, link task titles, and show
+  assignee names. A revised no-ping dev preview remains required; this work is
+  not yet approved.
+- 2026-07-26: Sent the revised DB-backed, no-ping preview to the dev guild bot
+  channel as embed message `1531070437625430167` followed by `cc:` message
+  `1531070439202226226`. Discord returned no parsed user, role, or everyone
+  mentions. Visual approval is still pending.
+- 2026-07-26: Strengthened the development safety boundary after visual
+  feedback: only `NODE_ENV=production` may emit mention-bearing `cc:` content.
+  Development and test replace it with a plain notification-disabled line,
+  even though explicit empty allowed mentions already suppressed notifications.
+- 2026-07-26: Reminder issue URLs derive from the cron service's required
+  `BLADE_URL`. The local development value is `http://localhost:3000`; the
+  repository's canonical production origin is `https://blade.knighthacks.org`,
+  while the deployed environment value remains external configuration.
+- 2026-07-26: Visual approval remains open. Research native Discord Components
+  V2 containers, Markdown text displays, and real separators as a potentially
+  clearer single-message hierarchy before sending another preview.
+- 2026-07-26: Adopted the proposed Components V2 preview direction for the next
+  visual review. A single atomic message now uses the owning role color on a
+  container, native dividers between overdue/1/3/7/14-day sections, compact
+  priority-sorted linked task rows, and a bottom text display for `cc:`.
+  Production retains explicitly allowlisted mentions there; development and
+  test replace the entire line before delivery so no mention syntax enters the
+  payload. Visual approval remains pending.
+- 2026-07-26: Sent the DB-backed Components V2 preview to the dev guild bot
+  channel as message `1531075906800713953`. Discord readback returned flag
+  `32768`, the KH IX role accent, all five interval sections and four native
+  separators, an empty ordinary content field, zero embeds, no raw mention
+  syntax, and zero parsed user, role, or everyone mentions. Visual approval
+  remains pending.
+- 2026-07-26: Human visually approved the Components V2 reminder preview and
+  described it as perfect. Authorized direct integration into `reforge/main`;
+  a separate port to legacy `main` is intentionally deferred because the
+  reminder presentation will be inherited with the full Blade migration. The
+  temporary preview harness was removed before commit.
 
 ## Rollout prerequisites
 
@@ -277,6 +323,10 @@ Assets`, owned by `Design Team`): either restore assignee Kaitlyn Awai
   `@forge/api`, `@forge/cron`, and `@forge/blade`: passed.
 - Package tests: validators 77 passed; database 18 passed/9 fixture-dependent
   skipped; API 244 passed; cron 7 passed; Blade 139 passed.
+- Components V2 reminder refinement: focused API tests 6 passed and focused
+  cron delivery tests 5 passed; full API tests 315 passed and full cron tests
+  12 passed. API/cron lint and typecheck, changed-file formatting, preview dry
+  run, Discord readback verification, and `git diff --check` passed.
 - `pnpm analyze:react --strict apps/blade/src/app/_components/admin/issues
 apps/blade/src/app/admin/issues`: 15 files, 6 components, zero failures.
 - Playwright Issues workflow with the rollout flag enabled: 2 passed. It

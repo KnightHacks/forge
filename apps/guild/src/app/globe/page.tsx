@@ -7,12 +7,14 @@ import {
   PageSurfaceMotion,
 } from "~/app/_components/page-motion";
 import { SiteHeader } from "~/app/_components/site-header";
+import { createPageMetadata } from "~/app/seo";
 import { api } from "~/trpc/server";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Guild Globe",
   description: "See where Knight Hacks members are across the United States.",
-};
+  path: "/globe",
+});
 
 export default async function GuildGlobePage() {
   const clusters = await api.guild.getPublicGlobeLocations();
