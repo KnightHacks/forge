@@ -749,9 +749,7 @@ export default function GlobeRenderer({
       <div
         className={cn(
           "pointer-events-none absolute inset-0 transition-opacity duration-300 motion-reduce:transition-none",
-          projectionMode === "map"
-            ? "opacity-0"
-            : "opacity-100",
+          projectionMode === "map" ? "opacity-0" : "opacity-100",
         )}
       >
         {markerGroups.map((group) => (
