@@ -21,6 +21,7 @@ import { publicProcedure } from "../trpc";
 import { getCompanyImageUrl } from "../utils/career/company-image";
 import { getGlobeCity } from "../utils/career/globe-cities";
 import { getUsCity } from "../utils/career/us-cities";
+import { getVisiblePublicClubRoster } from "../utils/guild/club-roster";
 import {
   normalizePublicGuildText,
   normalizePublicGuildUrl,
@@ -569,6 +570,10 @@ export const guildRouter = {
         (first, second) =>
           second.count - first.count || first.label.localeCompare(second.label),
       );
+  }),
+
+  getPublicClubTeamRoster: publicProcedure.query(async () => {
+    return await getVisiblePublicClubRoster();
   }),
 
   listProfiles: publicProcedure
