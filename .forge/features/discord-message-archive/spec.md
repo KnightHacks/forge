@@ -25,8 +25,8 @@ not provide a message browser or raw-message search.
 - The dedicated Archive bot captures live Discord activity.
 - Scheduled archive jobs discover channels and threads, reconcile recent
   history, and continue interrupted historical backfills.
-- Future Blade capabilities may consume approved derived data. Individual
-  member enrichment and knowledge retrieval are not included in this release.
+- Approved Blade capabilities may consume identity-linked derived counts for
+  authorized Member presentation. Knowledge retrieval remains excluded.
 
 ## User-visible interface
 
@@ -60,6 +60,10 @@ not provide a message browser or raw-message search.
   - visible channel and thread counts;
   - message volume over time; and
   - aggregate channel distribution.
+- The Discord tab also provides a selected-period message-count drill-down for
+  archived authors matched to retained Member profiles. A Member name opens
+  the shared admin Member dialog only when the caller separately has Member
+  administration access.
 - Analytics never return or render message bodies, embeds, attachments, user
   relationships, or a list of messages.
 
@@ -79,9 +83,12 @@ not provide a message browser or raw-message search.
   summaries and future retrieval work.
 - Attachment and embed metadata without copying attachment binaries into
   Knight Hacks object storage.
-- An officer-only health page and an aggregate Discord tab in Club Analytics.
-- Stable Discord author IDs that can later be linked to Blade users without
-  matching mutable usernames.
+- An officer-only health page and a Discord tab in Club Analytics with
+  aggregates plus matched-Member counts.
+- Stable Discord author IDs linked to Blade users at read time without matching
+  mutable usernames.
+- Read-only Member-profile enrichment with all-time message counts, active
+  days/surfaces, retained daily activity paged by month, and top channels.
 - Clearing stored content when Discord reports message deletion while
   retaining a content-free tombstone for aggregate correctness.
 - An operational author-content purge path for approved deletion requests.
@@ -100,8 +107,7 @@ not provide a message browser or raw-message search.
 - Sending messages, managing channels, moderating content, or changing Discord
   state.
 - Individual engagement scoring, lifecycle classification, relationship
-  inference, or member ranking.
-- Member-profile enrichment in this release.
+  inference, or predictive member ranking.
 - Embeddings, semantic search, retrieval-augmented generation, or model
   training.
 - A new Forge application, pod, queue, or deployment unit.

@@ -42,6 +42,8 @@ especially:
 | Read Overview, Events, Audience, Dues, and Reports data              | `READ_CLUB_DATA` or `IS_OFFICER`                                     |
 | See named Club events, including role-restricted/internal events     | `READ_CLUB_DATA` or `IS_OFFICER`                                     |
 | See approved named member analytics and unpaid-member rows           | `READ_CLUB_DATA` or `IS_OFFICER`                                     |
+| See Discord aggregates and matched-Member analytical rows            | `READ_CLUB_DATA` or `IS_OFFICER`                                     |
+| Open a matched Member in the shared full Member dialog               | Existing Member-admin read access                                    |
 | Download an internal or sponsor-safe analytics CSV                   | `READ_CLUB_DATA` or `IS_OFFICER`                                     |
 | Edit an event, attendance, member, dues record, or feedback response | Never granted by Analytics; existing feature permissions still apply |
 
@@ -55,8 +57,10 @@ Additional rules:
   read-only workspace even when the caller lacks `READ_CLUB_EVENT` or
   `READ_MEMBERS`.
 - Analytics DTOs may include only the named analytical fields documented here.
-  They never include email, phone, Discord identity, user ID, resume/profile
-  object keys, payment intent, dues amount, raw feedback, or edit controls.
+  They never include email, phone, raw Discord author ID, user ID,
+  resume/profile object keys, payment intent, dues amount, raw feedback, or
+  edit controls. The Discord report may include the stored Discord username
+  for an already matched retained Member.
 - Analytics does not make existing Member or Event procedures more permissive.
 - Sponsor export is a disclosure boundary, not a differently styled internal
   export. Its serializer receives a sponsor-safe DTO and cannot accept internal
@@ -419,17 +423,24 @@ race_or_ethnicity | shirt_size`.
 
 ## Discord integration
 
-None in this version. Analytics reads retained Club records and creates no
-Discord roles, messages, events, threads, sync attempts, or external side
-effects.
+Analytics reads the approved Discord archive without creating Discord roles,
+messages, events, threads, sync attempts, or external side effects.
 
-A Discord activity warehouse is explicitly deferred. A later feature may add
-governed identity mapping and measured activity signals such as recency,
-frequency, active weeks, and breadth of participation. That work needs its own
-retention, consent, content-minimization, authorization, and historical-backfill
-contract before Discord activity can be compared with event, membership, or
-dues transitions. The current feature must not reserve a schema or fabricate a
-Discord engagement score in anticipation of it.
+- `analytics.getDiscordReport` applies the Club Analytics read policy and
+  returns selected-period aggregate metrics plus rows for stable Discord
+  authors matched through `User.discordUserId` to retained Members.
+- Each matched row contains Member UUID/name, stored Discord username, message
+  count, active days, active surfaces, and last-message time. It contains no
+  message record/body/ID or raw Discord author ID.
+- Duplicate stable identity matches resolve deterministically to one retained
+  Member row.
+- Discord matched-Member names are clickable only when the server-provided
+  access map confirms separate Member-admin read access. The shared Member
+  query repeats that authorization at the API boundary.
+- The internal Discord CSV includes matched-Member rows. Sponsor output remains
+  aggregate-only.
+- No combined engagement score, relationship inference, or causal conclusion
+  is produced.
 
 ## Configurability review
 
@@ -477,7 +488,8 @@ Would this require a developer change next year?
   feedback-unavailable states do not replace measured turnout with zeros.
 - Report links to Event or Member administration render only when the caller
   separately has the needed admin permission; analytical drill-downs remain
-  read-only.
+  read-only. Named Audience, Dues, and Discord Member rows use the shared
+  Member detail dialog only with separate Member-admin read access.
 
 ## Testing / verification strategy
 

@@ -197,6 +197,17 @@ const discordReport = {
       start: new Date("2025-08-01T04:00:00.000Z"),
     },
   },
+  memberRows: [
+    {
+      activeChannels: 4,
+      activeDays: 8,
+      discordUser: "ada",
+      lastMessageAt: new Date("2026-07-16T11:00:00.000Z"),
+      memberId: "00000000-0000-4000-8000-000000000001",
+      messageCount: 32,
+      name: "Ada Lovelace",
+    },
+  ],
   mix: [
     { count: 75, kind: "human", label: "People", share: 0.75 },
     { count: 10, kind: "bot", label: "Bots", share: 0.1 },
@@ -232,10 +243,15 @@ const discordReport = {
 function renderSection(
   section: "audience" | "discord" | "dues" | "events" | "overview" | "reports",
   selectedReport = report,
+  access = {
+    canEditMembers: false,
+    canOpenEvents: false,
+    canOpenMembers: false,
+  },
 ) {
   return renderToStaticMarkup(
     createElement(AnalyticsDashboard, {
-      access: { canOpenEvents: false, canOpenMembers: false },
+      access,
       discordReport,
       input: analyticsReportInputSchema.parse({ section }),
       report: selectedReport,
@@ -271,6 +287,9 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("People posting");
     expect(html).toContain("Messages per person");
     expect(html).toContain("Most active surfaces");
+    expect(html).toContain("Member message drill-down");
+    expect(html).toContain("Ada Lovelace");
+    expect(html).toContain(">32<");
     expect(html).toContain("general");
     expect(html).toContain("Discord activity on Jul 15, 2026");
     expect(html).toContain("Define Current messages");
@@ -281,6 +300,62 @@ describe("AnalyticsDashboard", () => {
     expect(html).not.toContain("Ingestion context");
     expect(html).not.toContain("raw-message-sentinel");
     expect(html).not.toContain("authorDiscordUserId");
+  });
+
+  it("makes matched Discord members actionable when Member access is available", () => {
+    const html = renderSection("discord", report, {
+      canEditMembers: true,
+      canOpenEvents: false,
+      canOpenMembers: true,
+    });
+
+    expect(html).toMatch(/<button[^>]*>Ada Lovelace<\/button>/);
+  });
+
+  it("uses the shared Member action for every named analytics drill-down", () => {
+    const namedReport = {
+      ...report,
+      audience: {
+        ...report.audience,
+        memberRows: [
+          {
+            attendanceCount: 2,
+            category: "Undergraduate University",
+            lastEventAt: new Date("2026-07-10T12:00:00Z"),
+            lastEventName: "TypeScript Workshop",
+            memberId: "00000000-0000-4000-8000-000000000001",
+            name: "Ada Lovelace",
+            paid: false,
+          },
+        ],
+      },
+      dues: {
+        ...report.dues,
+        unpaidMembers: [
+          {
+            attendanceCount: 2,
+            graduationYear: "2027",
+            lastEventAt: new Date("2026-07-10T12:00:00Z"),
+            lastEventName: "TypeScript Workshop",
+            memberId: "00000000-0000-4000-8000-000000000001",
+            name: "Ada Lovelace",
+            points: 20,
+          },
+        ],
+      },
+    } as RouterOutputs["analytics"]["getReport"];
+    const memberAccess = {
+      canEditMembers: false,
+      canOpenEvents: false,
+      canOpenMembers: true,
+    };
+
+    expect(renderSection("audience", namedReport, memberAccess)).toMatch(
+      /<button[^>]*>Ada Lovelace<\/button>/,
+    );
+    expect(renderSection("dues", namedReport, memberAccess)).toMatch(
+      /<button[^>]*>Ada Lovelace<\/button>/,
+    );
   });
 
   it("[TC-023] preserves known profile and unpaid counts when events are empty", () => {
@@ -296,7 +371,7 @@ describe("AnalyticsDashboard", () => {
     expect(dues).toContain("no active dues credit recorded");
   });
 
-  it("adds author-free Discord context without changing Audience or dues identity boundaries", () => {
+  it("adds aggregate Discord context without changing Audience or dues identity boundaries", () => {
     const audience = renderSection("audience");
     const dues = renderSection("dues");
 

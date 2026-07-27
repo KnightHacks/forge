@@ -3,6 +3,14 @@ import { Activity, Bot, Hash, UsersRound, Webhook } from "lucide-react";
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@forge/ui/table";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -44,6 +52,14 @@ function formatTrendDate(value: string) {
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
+function formatDateTime(value: Date | null) {
+  if (!value) return "No matching activity";
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
+}
+
 const mixIcons = {
   bot: Bot,
   human: UsersRound,
@@ -52,8 +68,12 @@ const mixIcons = {
 } as const;
 
 export function DiscordAnalyticsSection({
+  canOpenMembers,
+  onMemberSelect,
   report,
 }: {
+  canOpenMembers: boolean;
+  onMemberSelect: (memberId: string) => void;
   report: DiscordAnalyticsReport;
 }) {
   const peakMessages = Math.max(
@@ -249,6 +269,79 @@ export function DiscordAnalyticsSection({
               ))
             )}
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="min-w-0 rounded-lg border border-border/70 bg-card/95 p-4 shadow-xl shadow-black/10 sm:p-5">
+          <div className="flex items-center gap-2">
+            <UsersRound className="size-4 text-primary" aria-hidden="true" />
+            <h2 className="font-semibold">Member message drill-down</h2>
+          </div>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Human messages matched to retained Member profiles through stable
+            Discord accounts. Unmatched Discord participants remain represented
+            only in the aggregate metrics above.
+          </p>
+          {report.memberRows.length === 0 ? (
+            <p className="mt-4 rounded-md border border-dashed border-border/80 p-6 text-center text-sm text-muted-foreground">
+              No Member profiles have matched Discord activity in this period.
+            </p>
+          ) : (
+            <div
+              aria-label="Discord messages by member"
+              className="mt-4 max-h-96 max-w-full overflow-auto rounded-md border border-border/60"
+              role="region"
+              tabIndex={0}
+            >
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-card">
+                  <TableRow>
+                    <TableHead>Member</TableHead>
+                    <TableHead>Discord</TableHead>
+                    <TableHead className="text-right">Messages</TableHead>
+                    <TableHead className="text-right">Active days</TableHead>
+                    <TableHead className="text-right">Surfaces</TableHead>
+                    <TableHead>Last message</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {report.memberRows.map((row) => (
+                    <TableRow key={row.memberId}>
+                      <TableCell className="min-w-40 font-medium">
+                        {canOpenMembers ? (
+                          <button
+                            type="button"
+                            className="min-h-9 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() => onMemberSelect(row.memberId)}
+                          >
+                            {row.name}
+                          </button>
+                        ) : (
+                          row.name
+                        )}
+                      </TableCell>
+                      <TableCell className="min-w-36">
+                        @{row.discordUser}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatNumber(row.messageCount)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatNumber(row.activeDays)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatNumber(row.activeChannels)}
+                      </TableCell>
+                      <TableCell className="min-w-44">
+                        {formatDateTime(row.lastMessageAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
       </section>
     </div>

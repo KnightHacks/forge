@@ -62,7 +62,10 @@ reusable inputs live in `@forge/validators`.
 - `member.getAdminMembers`: requires read-member access and returns rows,
   total count, page count, normalized page, and available facet values/counts.
 - `member.getAdminMember`: requires read-member access and returns one full
-  member record with derived current dues status.
+  member record with derived current dues status plus retained dues history,
+  event check-ins and operator attribution, event totals, normalized
+  employment/company/location history, Guild location, linked roles, and
+  archived Discord engagement.
 - `member.updateAdminMember`: requires edit-member access, validates a member
   ID plus member profile values, updates the selected member rather than the
   caller, and keeps the code-owned signup response consistent.
@@ -103,7 +106,8 @@ reusable inputs live in `@forge/validators`.
 ## Data / migration / compatibility
 
 - No schema migration is required. Existing `Roles`, `Permissions`, `Member`,
-  `FormResponse`, and `DuesPayment` rows remain authoritative.
+  `FormResponse`, `DuesPayment`, `Event`, `EventAttendee`, `Company`,
+  `Employment`, and Discord archive rows remain authoritative.
 - Manual dues records use cents, the same configured price, academic-year
   calculation, unique member/year rule, and active/stale semantics as Stripe
   records.
@@ -162,9 +166,15 @@ Would this require a developer change next year?
   surface and appear on member routes only when effective permissions allow
   admin access. Only implemented destinations appear.
 - Member detail is addressable through `?member=<uuid>` and uses a mobile-safe
-  full dialog. Contact, academics, Guild, files, membership/dues, and record
-  metadata are explicit sections rather than an undifferentiated card grid.
-  Desktop places membership and record summaries beside the main content;
+  full dialog. Contact, academics, employment, Guild, event engagement,
+  Discord engagement, files, membership/dues, linked roles, and record metadata
+  are explicit sections rather than an undifferentiated card grid. Event
+  attendance and dues history use bounded internal scrolling. Discord activity
+  contains all-time totals, top surfaces, and a contribution-style daily
+  tracker with accessible previous/next calendar-month pagination. All
+  presentation dates are localized and human-readable; Member and User IDs are
+  not rendered. Desktop
+  places membership, roles, and record summaries beside the main content;
   mobile uses one compact, ordered column. The edit action belongs to the
   identity header on desktop and expands beneath the identity block on mobile.
   URL parameters also own filters, sort, page, and page size.

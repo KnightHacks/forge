@@ -110,6 +110,11 @@ Current phase: Complete
   detail, complete segments, program affinity, Member drill-down, and unpaid
   follow-up now share compact client-side pagination over the complete report
   arrays, while CSV exports remain complete.
+- 2026-07-26: Discord Analytics now includes selected-period message counts for
+  stable Discord authors matched to retained Members. Discord, Audience, and
+  Dues named Member rows open the shared full Member dialog only when the
+  caller separately has Member-admin read access; Analytics-only access remains
+  read-only and profile-limited.
 - 2026-07-18: Renamed the generic `What changed` panel to `Member lifecycle
 findings` and made its scope explicit so the already-implemented activation,
   continuation, return, programming, audience, dues, and measurement findings
@@ -175,6 +180,9 @@ profiles` where that limitation matters.
   protection against sparse-cell and linkage disclosure.
 
 ## Task list
+
+- [x] Add matched-Member Discord counts and permission-aware shared Member
+      dialogs across every named Member analytics drill-down.
 
 - [x] Create the feature branch and artifact bundle.
 - [x] Read the repository workflow, engineering principles, design system, and
@@ -286,6 +294,16 @@ admin-club-analytics.spec.ts --headed --pass-with-no-tests`: 2 tests passed
   Validator, 231 API, and 132 Blade tests. Validator, API, and Blade typecheck
   and lint passed; the shared UI build and lint passed; feature-scoped
   formatting and `git diff --check` passed after this status update.
+- 2026-07-26 Member-insights follow-up validation: the Discord section now
+  includes selected-period matched-member message counts, and every named
+  Member drill-down in Audience, Dues, and Discord opens the shared Member
+  presentation. API and Blade typechecks/lint, 14 focused API tests, 15 focused
+  Blade tests, changed React analysis, and all seven focused Member/Analytics
+  Playwright scenarios pass.
+- The populated-database Playwright fixture now searches explicitly for its
+  seeded dues target instead of assuming it appears on the first result page.
+  Repository-wide formatting remains blocked only by unchanged Guild
+  `globe-renderer.tsx`; the changed files pass Prettier and whitespace checks.
 
 ## Links
 

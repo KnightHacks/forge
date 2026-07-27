@@ -34,9 +34,10 @@ separate user-account count.
 
 - Authorized users open `/admin/analytics` through an `Analytics` item in the
   existing admin navigation.
-- The workspace has five URL-addressable sections:
+- The workspace has six URL-addressable sections:
   - `Overview`;
   - `Events`;
+  - `Discord`;
   - `Audience`;
   - `Dues`;
   - `Reports`.
@@ -161,8 +162,24 @@ separate user-account count.
   including attendance count, last attended Club event, current dues status,
   and relevant demographic category. The analytics workspace does not expose
   email, phone number, payment identifiers, or editing controls.
+- Named Member rows in Audience and Dues open the shared Member presentation
+  dialog when the caller separately has Member-admin read access.
+  Analytics-only users retain the analytical rows without gaining full profile
+  access.
 - Profile-growth history reflects retained Member profiles. The interface
   explains that deleted historical profiles cannot be reconstructed.
+
+### Discord
+
+- The Discord section shows selected-period aggregate activity plus a bounded
+  table of archived human-message counts for stable Discord authors matched to
+  retained Member profiles.
+- Each matched row includes the Member name, stored Discord username, message
+  count, active days, active surfaces, and last-message time. Unmatched authors
+  remain represented only in aggregate measures.
+- Member names open the shared admin Member dialog only when the caller
+  separately has Member-admin read access. Analytics alone grants no contact,
+  file, full-profile, or mutation access.
 
 ### Dues
 
@@ -239,10 +256,12 @@ separate user-account count.
 
 ### In scope
 
-- A read-only `/admin/analytics` workspace with Overview, Events, Audience,
-  Dues, and Reports sections.
+- A read-only `/admin/analytics` workspace with Overview, Events, Discord,
+  Audience, Dues, and Reports sections.
 - Access through `READ_CLUB_DATA` or officer status.
 - Named read-only member and event drill-downs without edit or contact fields.
+- Selected-period Discord aggregates and matched-Member message-count
+  drill-down.
 - Current semester, academic-year, previous-year, all-time, and custom periods.
 - Equivalent-period comparisons and deterministic highlights.
 - Distinct-attendance, reach, frequency, first-time/returning, and mature return
@@ -335,6 +354,9 @@ separate user-account count.
   repeat attendees, dues status, and event types.
 - The named analytical member drill-down excludes contact, file, payment, and
   edit fields.
+- Discord matched-Member rows expose only the approved analytical identity and
+  activity counts; full Member presentation opens only under the existing
+  Member-admin read policy.
 - Dues reporting shows current paid/unpaid counts, payment timing, academic-year
   comparisons, collection pace, milestones, and active/stale history without
   showing dollars.

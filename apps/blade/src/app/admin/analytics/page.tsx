@@ -37,6 +37,9 @@ export default async function AdminAnalyticsPage({
     <HydrateClient>
       <AnalyticsDashboard
         access={{
+          canEditMembers:
+            permissions.IS_OFFICER === true ||
+            permissions.EDIT_MEMBERS === true,
           canOpenEvents: canAccessEventAdmin(permissions),
           canOpenMembers: canAccessMemberAdmin(permissions),
         }}

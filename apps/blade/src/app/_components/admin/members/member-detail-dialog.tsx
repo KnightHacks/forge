@@ -3,11 +3,19 @@
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import {
+  BriefcaseBusiness,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
   ExternalLink,
   FileText,
   GraduationCap,
+  Hash,
   IdCard,
   Loader2,
+  MapPin,
+  MessageSquareText,
   Pencil,
   ShieldCheck,
   Trash2,
@@ -21,6 +29,7 @@ import type {
   AdminMemberEditableProfileValues,
   MemberSettingsFieldDefinition,
 } from "@forge/validators";
+import { CAREER, GUILD } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Badge } from "@forge/ui/badge";
@@ -73,12 +82,65 @@ function display(value: boolean | number | string | null | undefined) {
   return String(value);
 }
 
-function formatTimestamp(value: Date | null) {
-  if (!value) return "Not paid";
+function formatDate(value: Date | string | null | undefined) {
+  if (!value) return "Not provided";
+  const date =
+    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T12:00:00.000Z`)
+      : value instanceof Date
+        ? value
+        : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeZone:
+      typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ? "UTC"
+        : undefined,
+  }).format(date);
+}
+
+function formatTimestamp(
+  value: Date | string | null | undefined,
+  empty = "Not recorded",
+) {
+  if (!value) return empty;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(value);
+  }).format(date);
+}
+
+function formatJoined(date: string, time: string) {
+  const joined = new Date(`${date}T${time}`);
+  if (Number.isNaN(joined.getTime())) return formatDate(date);
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(joined);
+}
+
+function formatMonth(value: string | null) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}-01T12:00:00.000Z`));
+}
+
+function shiftDate(value: string, days: number) {
+  const date = new Date(`${value}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+const numberFormatter = new Intl.NumberFormat("en-US");
+
+function formatNumber(value: number) {
+  return numberFormatter.format(value);
 }
 
 function DetailValue({
@@ -146,6 +208,503 @@ function ProfileLink({ href }: { href: string | null }) {
       <span className="min-w-0 break-all">{href}</span>
       <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
     </a>
+  );
+}
+
+function SummaryMetric({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-md border border-white/10 bg-background/60 px-3 py-2.5">
+      <p className="font-mono text-lg font-semibold tabular-nums">{value}</p>
+      <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function MemberOverviewMetrics({ detail }: { detail: AdminMemberDetail }) {
+  return (
+    <section
+      aria-label="Member profile summary"
+      className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+    >
+      <SummaryMetric label="Blade points" value={detail.member.points} />
+      <SummaryMetric
+        label="Events attended"
+        value={detail.engagement.distinctEventCount}
+      />
+      <SummaryMetric
+        label="Discord messages"
+        value={formatNumber(detail.discord.messageCount)}
+      />
+      <SummaryMetric
+        label="Dues status"
+        value={detail.duesStatus.paid ? "Paid" : "Unpaid"}
+      />
+      <SummaryMetric label="Linked roles" value={detail.roles.length} />
+      <SummaryMetric label="Career entries" value={detail.employment.length} />
+    </section>
+  );
+}
+
+function EventEngagement({ detail }: { detail: AdminMemberDetail }) {
+  return (
+    <DetailSection
+      title="Event engagement"
+      icon={CalendarDays}
+      description="Complete recorded event check-in history, including the operator and awarded points."
+    >
+      <div className="grid grid-cols-3 gap-2 border-b border-border/70 p-3 sm:p-4">
+        <SummaryMetric
+          label="Distinct events"
+          value={detail.engagement.distinctEventCount}
+        />
+        <SummaryMetric
+          label="Check-in records"
+          value={detail.engagement.eventCheckInCount}
+        />
+        <SummaryMetric
+          label="Event points"
+          value={formatNumber(detail.engagement.eventPointsAwarded)}
+        />
+      </div>
+      {detail.events.length === 0 ? (
+        <p className="p-6 text-center text-sm text-muted-foreground">
+          No event check-ins are recorded for this member.
+        </p>
+      ) : (
+        <div
+          aria-label="Member event attendance history"
+          className="max-h-80 divide-y divide-border/70 overflow-y-auto"
+          role="region"
+          tabIndex={0}
+        >
+          {detail.events.map((event) => (
+            <div
+              key={event.attendanceId}
+              className="grid min-w-0 gap-2 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-4"
+            >
+              <div className="min-w-0">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <p className="min-w-0 font-medium">{event.name}</p>
+                  <Badge variant="outline" className="shrink-0">
+                    {event.tag}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatTimestamp(event.startAt)} · {event.location}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {event.checkedInAt
+                    ? `Checked in ${formatTimestamp(event.checkedInAt)}`
+                    : "Check-in time not recorded"}{" "}
+                  · Recorded by {event.checkedInBy}
+                </p>
+              </div>
+              <div className="text-sm sm:text-right">
+                <p className="font-mono font-medium tabular-nums">
+                  {event.pointsAwarded == null
+                    ? "No points"
+                    : `${formatNumber(event.pointsAwarded)} pts`}
+                </p>
+                {event.pointsAwardedEstimated ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Estimated award
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </DetailSection>
+  );
+}
+
+interface DiscordActivityMonth {
+  days: { count: number; date: string }[];
+  leadingDays: number;
+  id: string;
+  label: string;
+}
+
+function monthStart(value: string) {
+  return `${value.slice(0, 7)}-01`;
+}
+
+function shiftMonth(value: string, months: number) {
+  const date = new Date(`${monthStart(value)}T12:00:00.000Z`);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return date.toISOString().slice(0, 10);
+}
+
+function discordActivityMonths(
+  activityEndDate: string,
+  activity: AdminMemberDetail["discord"]["activity"],
+): DiscordActivityMonth[] {
+  const countByDate = new Map(activity.map((row) => [row.date, row.count]));
+  const firstActivityDate = activity.reduce(
+    (earliest, row) => (row.date < earliest ? row.date : earliest),
+    activityEndDate,
+  );
+  const endMonth = monthStart(activityEndDate);
+  const months: DiscordActivityMonth[] = [];
+
+  for (
+    let cursor = monthStart(firstActivityDate);
+    cursor <= endMonth;
+    cursor = shiftMonth(cursor, 1)
+  ) {
+    const date = new Date(`${cursor}T12:00:00.000Z`);
+    const lastDay =
+      cursor === endMonth
+        ? Number(activityEndDate.slice(8, 10))
+        : new Date(
+            Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
+          ).getUTCDate();
+    months.push({
+      days: Array.from({ length: lastDay }, (_, index) => {
+        const day = shiftDate(cursor, index);
+        return { count: countByDate.get(day) ?? 0, date: day };
+      }),
+      id: cursor.slice(0, 7),
+      label: new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        timeZone: "UTC",
+        year: "numeric",
+      }).format(date),
+      leadingDays: date.getUTCDay(),
+    });
+  }
+
+  return months;
+}
+
+function activityColor(count: number, peak: number) {
+  if (count === 0) return "bg-muted/40";
+  const ratio = count / Math.max(1, peak);
+  if (ratio <= 0.25) return "bg-primary/25";
+  if (ratio <= 0.5) return "bg-primary/45";
+  if (ratio <= 0.75) return "bg-primary/70";
+  return "bg-primary";
+}
+
+function DiscordActivityTracker({
+  activity,
+  activityEndDate,
+}: {
+  activity: AdminMemberDetail["discord"]["activity"];
+  activityEndDate: string;
+}) {
+  const months = useMemo(
+    () => discordActivityMonths(activityEndDate, activity),
+    [activity, activityEndDate],
+  );
+  const [monthIndex, setMonthIndex] = useState(months.length - 1);
+  const safeMonthIndex = Math.min(monthIndex, months.length - 1);
+  const month = months[safeMonthIndex];
+  if (!month) return null;
+  const peak = Math.max(1, ...month.days.map((day) => day.count));
+  const total = month.days.reduce((sum, day) => sum + day.count, 0);
+
+  return (
+    <>
+      <div className="flex flex-col gap-3 border-b border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div>
+          <p className="text-sm font-medium">Daily activity</p>
+          <p className="text-sm text-muted-foreground">
+            Browse retained message activity by calendar month.
+          </p>
+        </div>
+        <div
+          aria-label="Discord activity month"
+          className="grid grid-cols-[2.75rem_minmax(8.5rem,1fr)_2.75rem] items-center gap-1"
+          role="group"
+        >
+          <Button
+            aria-label="Previous month"
+            className="size-11 p-0 sm:size-8"
+            disabled={safeMonthIndex === 0}
+            onClick={() => setMonthIndex((index) => Math.max(0, index - 1))}
+            type="button"
+            variant="outline"
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </Button>
+          <span className="text-center text-sm font-medium" aria-live="polite">
+            {month.label}
+          </span>
+          <Button
+            aria-label="Next month"
+            className="size-11 p-0 sm:size-8"
+            disabled={safeMonthIndex === months.length - 1}
+            onClick={() =>
+              setMonthIndex((index) => Math.min(months.length - 1, index + 1))
+            }
+            type="button"
+            variant="outline"
+          >
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+      <div className="px-3 py-4 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <p className="text-muted-foreground">
+            {formatDate(month.days[0]?.date)} –{" "}
+            {formatDate(month.days.at(-1)?.date)}
+          </p>
+          <p className="font-mono tabular-nums">
+            {formatNumber(total)} messages
+          </p>
+        </div>
+        <div
+          aria-label={`Discord message activity for ${month.label}`}
+          className="mt-3 grid w-full grid-cols-7 gap-1.5"
+          role="img"
+        >
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((weekday) => (
+            <span
+              key={weekday}
+              className="pb-1 text-center text-[10px] font-medium text-muted-foreground"
+              aria-hidden="true"
+            >
+              {weekday}
+            </span>
+          ))}
+          {Array.from({ length: month.leadingDays }, (_, index) => (
+            <span
+              key={`leading-${month.id}-${index}`}
+              className="h-8 w-full sm:h-9"
+              aria-hidden="true"
+            />
+          ))}
+          {month.days.map((day) => (
+            <span
+              key={day.date}
+              aria-hidden="true"
+              className={cn(
+                "flex h-8 w-full items-start rounded-[3px] border border-white/5 px-1.5 py-1 text-[10px] font-medium sm:h-9",
+                activityColor(day.count, peak),
+              )}
+              title={`${formatDate(day.date)}: ${formatNumber(day.count)} messages`}
+            >
+              {Number(day.date.slice(8, 10))}
+            </span>
+          ))}
+        </div>
+        <div className="sr-only">
+          {month.days.map((day) => (
+            <p key={day.date}>
+              {formatDate(day.date)}: {formatNumber(day.count)} messages
+            </p>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+          <span>Less</span>
+          {[0, 1, 2, 3, 4].map((level) => (
+            <span
+              key={level}
+              className={cn("size-3 rounded-[2px]", activityColor(level, 4))}
+              aria-hidden="true"
+            />
+          ))}
+          <span>More</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DiscordEngagement({ detail }: { detail: AdminMemberDetail }) {
+  const channelPeak = Math.max(
+    1,
+    ...detail.discord.topChannels.map((channel) => channel.count),
+  );
+
+  return (
+    <DetailSection
+      title="Discord engagement"
+      icon={MessageSquareText}
+      description="Human-authored, non-deleted messages matched through the member's stable Discord account."
+    >
+      <div className="grid grid-cols-2 gap-2 border-b border-border/70 p-3 sm:grid-cols-4 sm:p-4">
+        <SummaryMetric
+          label="Messages"
+          value={formatNumber(detail.discord.messageCount)}
+        />
+        <SummaryMetric
+          label="Active days"
+          value={formatNumber(detail.discord.activeDayCount)}
+        />
+        <SummaryMetric
+          label="Active surfaces"
+          value={formatNumber(detail.discord.activeChannelCount)}
+        />
+        <SummaryMetric
+          label="Last message"
+          value={
+            <span className="font-sans text-sm font-medium">
+              {formatTimestamp(detail.discord.lastMessageAt, "No messages")}
+            </span>
+          }
+        />
+      </div>
+      <DiscordActivityTracker
+        activity={detail.discord.activity}
+        activityEndDate={detail.discord.activityEndDate}
+      />
+      <div className="border-t border-border/70 px-3 py-4 sm:px-4">
+        <div className="flex items-center gap-2">
+          <Hash className="size-4 text-primary" aria-hidden="true" />
+          <h4 className="text-sm font-semibold">Most active channels</h4>
+        </div>
+        {detail.discord.topChannels.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            No archived Discord messages are matched to this member.
+          </p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {detail.discord.topChannels.map((channel) => (
+              <div key={`${channel.name}-${channel.isThread}`}>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0 truncate font-medium">
+                    #{channel.name}
+                    {channel.isThread ? (
+                      <span className="ml-1.5 font-normal text-muted-foreground">
+                        thread
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                    {formatNumber(channel.count)}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary/75"
+                    style={{
+                      width: `${(channel.count / channelPeak) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DetailSection>
+  );
+}
+
+function EmploymentHistory({ detail }: { detail: AdminMemberDetail }) {
+  return (
+    <DetailSection
+      title="Employment history"
+      icon={BriefcaseBusiness}
+      description="Current, former, and imported Guild career relationships."
+    >
+      {detail.employment.length === 0 ? (
+        <p className="p-6 text-center text-sm text-muted-foreground">
+          No employment history has been added.
+        </p>
+      ) : (
+        <div className="divide-y divide-border/70">
+          {detail.employment.map((employment) => {
+            const dates = [
+              formatMonth(employment.startMonth),
+              employment.state === "current"
+                ? "Present"
+                : formatMonth(employment.endMonth),
+            ]
+              .filter(Boolean)
+              .join(" – ");
+            return (
+              <div
+                key={employment.id}
+                className="grid min-w-0 gap-3 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <p className="font-medium">
+                      {employment.company.displayName}
+                    </p>
+                    <Badge variant="outline" className="capitalize">
+                      {employment.state === "unknown"
+                        ? "Unconfirmed"
+                        : employment.state}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {employment.title ?? "Title not provided"}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {employment.experienceType ? (
+                      <Badge variant="secondary">
+                        {
+                          CAREER.EMPLOYMENT_EXPERIENCE_LABELS[
+                            employment.experienceType
+                          ]
+                        }
+                      </Badge>
+                    ) : null}
+                    {employment.city ? (
+                      <Badge variant="outline" className="gap-1.5">
+                        <MapPin className="size-3.5" aria-hidden="true" />
+                        {employment.city.label}
+                      </Badge>
+                    ) : null}
+                    {!employment.guildVisible ? (
+                      <Badge variant="outline">Hidden on Guild</Badge>
+                    ) : null}
+                    {employment.company.reviewState !== "approved" ? (
+                      <Badge variant="outline" className="capitalize">
+                        Company {employment.company.reviewState}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground sm:text-right">
+                  {dates || "Dates not confirmed"}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </DetailSection>
+  );
+}
+
+function MemberRoles({ detail }: { detail: AdminMemberDetail }) {
+  return (
+    <DetailSection
+      title="Roles"
+      icon={ShieldCheck}
+      description="Discord-backed Blade roles linked to this account."
+    >
+      {detail.roles.length === 0 ? (
+        <p className="p-4 text-sm text-muted-foreground">
+          No linked roles are recorded.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-2 p-3 sm:p-4">
+          {detail.roles.map((role) => (
+            <Badge
+              key={role.name}
+              variant="outline"
+              className="gap-2 border-white/10"
+              style={role.color ? { borderColor: role.color } : undefined}
+            >
+              <span
+                className="size-2 rounded-full bg-primary"
+                style={role.color ? { backgroundColor: role.color } : undefined}
+                aria-hidden="true"
+              />
+              {role.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </DetailSection>
   );
 }
 
@@ -686,96 +1245,160 @@ export function MemberDetailDialog({
               data-member-detail-layout="sectioned"
               className="min-w-0 space-y-4 sm:space-y-5"
             >
-              <div className="grid min-w-0 gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start">
-                <div className="order-2 min-w-0 space-y-4 sm:space-y-5 lg:order-1">
-                  <DetailSection title="Contact & identity" icon={UserRound}>
-                    <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
-                      <DetailValue label="Email" value={member.email} />
-                      <DetailValue
-                        label="Phone"
-                        value={display(member.phoneNumber)}
-                      />
-                      <DetailValue label="Date of birth" value={member.dob} />
-                      <DetailValue label="Age" value={member.age} />
-                      <DetailValue
-                        label="Shirt size"
-                        value={member.shirtSize}
-                      />
-                      <DetailValue label="Gender" value={member.gender} />
-                      <DetailValue
-                        label="Race or ethnicity"
-                        value={member.raceOrEthnicity}
-                        wide
-                      />
-                    </dl>
-                  </DetailSection>
+              <MemberOverviewMetrics detail={detail} />
+              <div className="grid min-w-0 gap-4 sm:gap-5 lg:grid-cols-2 lg:items-start">
+                <div className="contents lg:order-2 lg:block lg:min-w-0 lg:space-y-5">
+                  <div className="order-1 min-w-0">
+                    <DiscordEngagement detail={detail} />
+                  </div>
 
-                  <DetailSection title="Academics & work" icon={GraduationCap}>
-                    <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
-                      <DetailValue label="School" value={member.school} wide />
-                      <DetailValue label="Major" value={member.major} />
-                      <DetailValue
-                        label="Level of study"
-                        value={member.levelOfStudy}
-                      />
-                      <DetailValue
-                        label="Graduation date"
-                        value={member.gradDate}
-                      />
-                      <DetailValue
-                        label="Company"
-                        value={display(member.company)}
-                      />
-                    </dl>
-                  </DetailSection>
+                  <div className="order-2 min-w-0 space-y-4 sm:space-y-5">
+                    <DetailSection title="Contact & identity" icon={UserRound}>
+                      <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
+                        <DetailValue label="Email" value={member.email} />
+                        <DetailValue
+                          label="Phone"
+                          value={display(member.phoneNumber)}
+                        />
+                        <DetailValue
+                          label="Date of birth"
+                          value={formatDate(member.dob)}
+                        />
+                        <DetailValue label="Age" value={member.age} />
+                        <DetailValue
+                          label="Shirt size"
+                          value={member.shirtSize}
+                        />
+                        <DetailValue label="Gender" value={member.gender} />
+                        <DetailValue
+                          label="Race or ethnicity"
+                          value={member.raceOrEthnicity}
+                          wide
+                        />
+                      </dl>
+                    </DetailSection>
 
-                  <DetailSection title="Guild profile" icon={ShieldCheck}>
-                    <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
-                      <DetailValue
-                        label="Visibility"
-                        value={
-                          member.guildProfileVisible ? "Public" : "Private"
-                        }
-                      />
-                      <DetailValue label="Points" value={member.points} />
-                      <DetailValue
-                        label="Tagline"
-                        value={display(member.tagline)}
-                        wide
-                      />
-                      <DetailValue
-                        label="About"
-                        value={display(member.about)}
-                        wide
-                      />
-                      <DetailValue
-                        label="GitHub"
-                        value={<ProfileLink href={member.githubProfileUrl} />}
-                        wide
-                      />
-                      <DetailValue
-                        label="LinkedIn"
-                        value={<ProfileLink href={member.linkedinProfileUrl} />}
-                        wide
-                      />
-                      <DetailValue
-                        label="Website"
-                        value={<ProfileLink href={member.websiteUrl} />}
-                        wide
-                      />
-                    </dl>
-                  </DetailSection>
+                    <DetailSection
+                      title="Academics & work"
+                      icon={GraduationCap}
+                    >
+                      <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
+                        <DetailValue
+                          label="School"
+                          value={member.school}
+                          wide
+                        />
+                        <DetailValue label="Major" value={member.major} />
+                        <DetailValue
+                          label="Level of study"
+                          value={member.levelOfStudy}
+                        />
+                        <DetailValue
+                          label="Graduation date"
+                          value={formatDate(member.gradDate)}
+                        />
+                        <DetailValue
+                          label="Legacy company"
+                          value={display(member.company)}
+                        />
+                      </dl>
+                    </DetailSection>
 
-                  <AdminMemberFiles
-                    canEdit={canEdit}
-                    detail={detail}
-                    onChanged={onChanged}
-                  />
+                    <DetailSection title="Guild profile" icon={ShieldCheck}>
+                      <dl className="grid min-w-0 gap-3 p-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4 sm:p-4">
+                        <DetailValue
+                          label="Profile visibility"
+                          value={
+                            member.guildProfileVisible ? "Public" : "Private"
+                          }
+                        />
+                        <DetailValue label="Points" value={member.points} />
+                        <DetailValue
+                          label="Resume visibility"
+                          value={
+                            member.guildResumeVisible ? "Public" : "Private"
+                          }
+                        />
+                        <DetailValue
+                          label="Location"
+                          value={detail.guildLocation?.label ?? "Not provided"}
+                        />
+                        <DetailValue
+                          label="Location visibility"
+                          value={
+                            member.guildLocationVisible ? "Public" : "Private"
+                          }
+                        />
+                        <DetailValue
+                          label="Alumni status"
+                          value={
+                            member.alumniConfirmedAt
+                              ? `Confirmed ${formatTimestamp(member.alumniConfirmedAt)}`
+                              : "Not confirmed"
+                          }
+                        />
+                        <DetailValue
+                          label="Tagline"
+                          value={display(member.tagline)}
+                          wide
+                        />
+                        <DetailValue
+                          label="About"
+                          value={display(member.about)}
+                          wide
+                        />
+                        <DetailValue
+                          label="Opportunity interests"
+                          value={
+                            member.guildOpportunityStatuses.length > 0 ? (
+                              <span className="flex flex-wrap gap-2">
+                                {member.guildOpportunityStatuses.map(
+                                  (status) => (
+                                    <Badge key={status} variant="secondary">
+                                      {
+                                        GUILD.GUILD_OPPORTUNITY_STATUS_LABELS[
+                                          status
+                                        ]
+                                      }
+                                    </Badge>
+                                  ),
+                                )}
+                              </span>
+                            ) : (
+                              "None selected"
+                            )
+                          }
+                          wide
+                        />
+                        <DetailValue
+                          label="GitHub"
+                          value={<ProfileLink href={member.githubProfileUrl} />}
+                          wide
+                        />
+                        <DetailValue
+                          label="LinkedIn"
+                          value={
+                            <ProfileLink href={member.linkedinProfileUrl} />
+                          }
+                          wide
+                        />
+                        <DetailValue
+                          label="Website"
+                          value={<ProfileLink href={member.websiteUrl} />}
+                          wide
+                        />
+                      </dl>
+                    </DetailSection>
+                  </div>
                 </div>
 
-                <aside className="contents lg:sticky lg:top-4 lg:order-2 lg:block lg:min-w-0 lg:space-y-5">
+                <aside className="contents lg:order-1 lg:block lg:min-w-0 lg:space-y-5">
                   <div className="order-1 min-w-0">
-                    <DetailSection title="Membership & dues" icon={ShieldCheck}>
+                    <EventEngagement detail={detail} />
+                  </div>
+
+                  <div className="order-1 min-w-0">
+                    <DetailSection title="Membership & dues" icon={CreditCard}>
                       <div className="min-w-0 p-3 sm:p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
@@ -814,7 +1437,10 @@ export function MemberDetailDialog({
                           <div className="flex min-w-0 items-start justify-between gap-3 py-2.5">
                             <dt className="text-muted-foreground">Paid date</dt>
                             <dd className="text-right font-medium">
-                              {formatTimestamp(detail.duesStatus.paidAt)}
+                              {formatTimestamp(
+                                detail.duesStatus.paidAt,
+                                "Not paid",
+                              )}
                             </dd>
                           </div>
                           <div className="flex min-w-0 items-start justify-between gap-3 py-2.5">
@@ -851,7 +1477,56 @@ export function MemberDetailDialog({
                           </Button>
                         )}
                       </div>
+                      {detail.duesHistory.length > 0 ? (
+                        <div className="border-t border-border/70 px-3 py-3 sm:px-4">
+                          <p className="text-sm font-semibold">
+                            Payment history
+                          </p>
+                          <div className="mt-2 max-h-52 divide-y divide-border/70 overflow-y-auto border-y border-border/70">
+                            {detail.duesHistory.map((payment) => (
+                              <div
+                                key={`${payment.year}-${payment.paidAt.toISOString()}`}
+                                className="py-2.5 text-sm"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="font-medium">
+                                    Stored year {payment.year}
+                                  </span>
+                                  <Badge
+                                    variant={
+                                      payment.active ? "default" : "outline"
+                                    }
+                                  >
+                                    {payment.active ? "Active" : "Inactive"}
+                                  </Badge>
+                                </div>
+                                <p className="mt-1 text-muted-foreground">
+                                  {formatTimestamp(payment.paidAt)} ·{" "}
+                                  {formatDuesAmount(payment.amount)} ·{" "}
+                                  {payment.source}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </DetailSection>
+                  </div>
+
+                  <div className="order-3 min-w-0">
+                    <EmploymentHistory detail={detail} />
+                  </div>
+
+                  <div className="order-3 min-w-0">
+                    <MemberRoles detail={detail} />
+                  </div>
+
+                  <div className="order-3 min-w-0">
+                    <AdminMemberFiles
+                      canEdit={canEdit}
+                      detail={detail}
+                      onChanged={onChanged}
+                    />
                   </div>
 
                   <div className="order-3 min-w-0">
@@ -859,23 +1534,27 @@ export function MemberDetailDialog({
                       <dl className="grid min-w-0 gap-3 p-3 sm:gap-y-4 sm:p-4">
                         <DetailValue
                           label="Joined"
-                          value={`${member.dateCreated} ${member.timeCreated}`}
+                          value={formatJoined(
+                            member.dateCreated,
+                            member.timeCreated,
+                          )}
                         />
                         <DetailValue
-                          label="Member ID"
+                          label="First event"
                           value={
-                            <span className="break-all font-mono text-xs">
-                              {member.id}
-                            </span>
+                            detail.events.length > 0
+                              ? formatTimestamp(
+                                  detail.events.at(-1)?.startAt ?? null,
+                                )
+                              : "No recorded attendance"
                           }
                         />
                         <DetailValue
-                          label="User ID"
-                          value={
-                            <span className="break-all font-mono text-xs">
-                              {member.userId}
-                            </span>
-                          }
+                          label="First Discord message"
+                          value={formatTimestamp(
+                            detail.discord.firstMessageAt,
+                            "No archived messages",
+                          )}
                         />
                       </dl>
                       {canEdit && (

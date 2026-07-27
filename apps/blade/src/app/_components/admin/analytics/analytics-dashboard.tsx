@@ -54,6 +54,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import {
   Select,
@@ -77,6 +84,7 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
+import { MemberDetailDialog } from "~/app/_components/admin/members/member-detail-dialog";
 import { api } from "~/trpc/react";
 import {
   AnalyticsMetricCard as MetricCard,
@@ -89,6 +97,7 @@ type AnalyticsReport = RouterOutputs["analytics"]["getReport"];
 type DiscordAnalyticsReport = RouterOutputs["analytics"]["getDiscordReport"];
 
 interface AnalyticsAccess {
+  canEditMembers: boolean;
   canOpenEvents: boolean;
   canOpenMembers: boolean;
 }
@@ -132,7 +141,7 @@ const highlightGroups = [
   },
   {
     description:
-      "Measure conversation breadth and depth without exposing identities.",
+      "Measure conversation breadth and depth with authorized Member drill-downs.",
     icon: MessagesSquare,
     id: "discord",
     label: "Sustain community conversation",
@@ -385,6 +394,90 @@ function formatDateTime(value: Date | string | null) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function MemberDrilldownName({
+  access,
+  memberId,
+  name,
+  onOpen,
+}: {
+  access: AnalyticsAccess;
+  memberId: string;
+  name: string;
+  onOpen: (memberId: string) => void;
+}) {
+  if (!access.canOpenMembers) return name;
+
+  return (
+    <button
+      type="button"
+      className="min-h-9 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={() => onOpen(memberId)}
+    >
+      {name}
+    </button>
+  );
+}
+
+function AnalyticsMemberDetail({
+  canEdit,
+  memberId,
+  onChanged,
+  onClose,
+  onDeleted,
+}: {
+  canEdit: boolean;
+  memberId: string;
+  onChanged: () => void;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const detail = api.member.getAdminMember.useQuery({ memberId });
+
+  if (detail.data) {
+    return (
+      <MemberDetailDialog
+        canEdit={canEdit}
+        detail={detail.data}
+        onChanged={() => {
+          void detail.refetch();
+          onChanged();
+        }}
+        onClose={onClose}
+        onDeleted={onDeleted}
+      />
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="border-white/10 bg-card/95">
+        <DialogHeader>
+          <DialogTitle>
+            {detail.error ? "Member could not be opened" : "Loading member"}
+          </DialogTitle>
+          <DialogDescription>
+            {detail.error
+              ? detail.error.message
+              : "Collecting the latest profile and engagement details."}
+          </DialogDescription>
+        </DialogHeader>
+        {!detail.error ? (
+          <div className="flex min-h-32 items-center justify-center">
+            <Loader2
+              className="size-6 animate-spin text-primary"
+              aria-label="Loading member profile"
+            />
+          </div>
+        ) : (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function DiscordParticipationMetrics({
@@ -1457,10 +1550,14 @@ function EventsSection({ report }: { report: AnalyticsReport }) {
 }
 
 function AudienceSection({
+  access,
   discordReport,
+  onMemberSelect,
   report,
 }: {
+  access: AnalyticsAccess;
   discordReport: DiscordAnalyticsReport;
+  onMemberSelect: (memberId: string) => void;
   report: AnalyticsReport;
 }) {
   const selected =
@@ -1692,7 +1789,12 @@ function AudienceSection({
                   {memberRows.map((row) => (
                     <TableRow key={row.memberId}>
                       <TableCell className="min-w-40 font-medium">
-                        {row.name}
+                        <MemberDrilldownName
+                          access={access}
+                          memberId={row.memberId}
+                          name={row.name}
+                          onOpen={onMemberSelect}
+                        />
                       </TableCell>
                       <TableCell>{row.category}</TableCell>
                       <TableCell className="text-right font-mono">
@@ -1727,10 +1829,12 @@ function AudienceSection({
 function DuesSection({
   access,
   discordReport,
+  onMemberSelect,
   report,
 }: {
   access: AnalyticsAccess;
   discordReport: DiscordAnalyticsReport;
+  onMemberSelect: (memberId: string) => void;
   report: AnalyticsReport;
 }) {
   const summary = report.dues.summary;
@@ -1960,7 +2064,12 @@ function DuesSection({
                 {unpaidRows.map((row) => (
                   <TableRow key={row.memberId}>
                     <TableCell className="min-w-40 font-medium">
-                      {row.name}
+                      <MemberDrilldownName
+                        access={access}
+                        memberId={row.memberId}
+                        name={row.name}
+                        onOpen={onMemberSelect}
+                      />
                     </TableCell>
                     <TableCell>{row.graduationYear}</TableCell>
                     <TableCell className="text-right font-mono">
@@ -2165,7 +2274,7 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
     },
     {
       description:
-        "Author-free message volume, participation depth, sender mix, daily activity, and top surfaces.",
+        "Message volume, participation depth, matched Member counts, daily activity, and top surfaces.",
       icon: MessagesSquare,
       kind: "discord",
       title: "Discord summary",
@@ -2281,13 +2390,29 @@ export function AnalyticsDashboard({
   input: AnalyticsReportInput;
   report: AnalyticsReport;
 }) {
+  const router = useRouter();
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const content: Record<AnalyticsSection, ReactNode> = {
-    audience: <AudienceSection discordReport={discordReport} report={report} />,
-    discord: <DiscordAnalyticsSection report={discordReport} />,
+    audience: (
+      <AudienceSection
+        access={access}
+        discordReport={discordReport}
+        onMemberSelect={setSelectedMemberId}
+        report={report}
+      />
+    ),
+    discord: (
+      <DiscordAnalyticsSection
+        canOpenMembers={access.canOpenMembers}
+        onMemberSelect={setSelectedMemberId}
+        report={discordReport}
+      />
+    ),
     dues: (
       <DuesSection
         access={access}
         discordReport={discordReport}
+        onMemberSelect={setSelectedMemberId}
         report={report}
       />
     ),
@@ -2351,7 +2476,7 @@ export function AnalyticsDashboard({
         }
         description={
           input.section === "discord"
-            ? "Aggregate Discord activity, sender mix, and channel distribution without exposing message bodies or identities."
+            ? "Discord activity, sender mix, channel distribution, and matched Member participation without exposing message bodies."
             : "Turnout, audience, dues, and feedback from retained non-hackathon Club records. Metrics show associations and coverage without inventing causes."
         }
         eyebrow={ADMIN_PAGE_EYEBROWS.analytics}
@@ -2361,6 +2486,18 @@ export function AnalyticsDashboard({
       <AnalyticsFilters input={input} report={report} />
       <SectionNavigation input={input} />
       {content[input.section]}
+      {selectedMemberId ? (
+        <AnalyticsMemberDetail
+          canEdit={access.canEditMembers}
+          memberId={selectedMemberId}
+          onChanged={() => router.refresh()}
+          onClose={() => setSelectedMemberId(null)}
+          onDeleted={() => {
+            setSelectedMemberId(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </main>
   );
 }

@@ -76,7 +76,11 @@ manage current dues status, and remove invalid member accounts.
   The server-rendered shell remains stable while member results load, and toast
   surfaces use the same raised-card theme as the surrounding interface.
 - The full member view groups information into named contact, academics, Guild,
-  files, membership, and record sections. Desktop uses a clear content/summary
+  employment, event engagement, Discord engagement, files, membership, roles,
+  and record sections. It summarizes points, event attendance, archived
+  Discord activity, linked roles, and career entries; provides bounded
+  histories for event check-ins and dues; and uses human-readable dates rather
+  than exposing Member or User IDs. Desktop uses a clear content/summary
   hierarchy; mobile presents those sections in one intentional reading order.
 
 ## Scope
@@ -88,6 +92,8 @@ manage current dues status, and remove invalid member accounts.
 - Server and page gates for member administration.
 - Search, compound filtering, sorting, pagination, and page-size choices.
 - Member detail, editing, deletion, and individual current-dues controls.
+- Read-only member enrichment from retained event attendance, Discord archive,
+  employment, Guild profile, role assignment, and dues-history data.
 - Filtered CSV export across all matching pages.
 - Officer-only mass dues invalidation with three confirmation stages.
 - Responsive Blade dashboard design for desktop and mobile.
@@ -96,10 +102,9 @@ manage current dues status, and remove invalid member accounts.
 ### Out of scope
 
 - Role configuration, role assignment, or Discord role mutation screens.
-- Dues payment history display.
 - Bulk member editing or bulk deletion.
 - Club analytics and exports other than the filtered member CSV.
-- Member event attendance and points management.
+- Member event attendance or points mutation.
 - Refunds or changes to Stripe payments.
 - New permissions or changes to the existing permission vocabulary.
 
@@ -135,6 +140,11 @@ manage current dues status, and remove invalid member accounts.
 - The default view shows 25 newest members.
 - A selected member dialog can be shared with another authorized admin through
   its URL query parameter.
+- The member dialog shows human-readable dates, complete retained event
+  check-ins with operator attribution, retained Discord daily activity paged by
+  calendar month, all-time Discord totals and top channels, employment history,
+  Guild fields, linked roles, and dues history without rendering Member or User
+  IDs.
 - Filtered CSV export contains all matching members, not only the visible page.
 - Officer-only mass dues invalidation requires all three confirmation stages
   and preserves dues records while also invalidating legacy manual grants.

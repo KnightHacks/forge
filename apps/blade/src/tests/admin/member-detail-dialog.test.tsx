@@ -57,6 +57,31 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 const detail = {
+  discord: {
+    activity: [
+      { count: 4, date: "2026-06-27" },
+      { count: 8, date: "2026-07-16" },
+    ],
+    activityEndDate: "2026-07-16",
+    activeChannelCount: 3,
+    activeDayCount: 12,
+    firstMessageAt: new Date("2025-09-01T12:00:00Z"),
+    lastMessageAt: new Date("2026-07-16T11:00:00Z"),
+    messageCount: 124,
+    topChannels: [
+      { count: 80, isThread: false, name: "general" },
+      { count: 44, isThread: true, name: "project-help" },
+    ],
+  },
+  duesHistory: [
+    {
+      active: true,
+      amount: 2500,
+      paidAt: new Date("2026-06-27T12:00:00Z"),
+      source: "Stripe",
+      year: 2025,
+    },
+  ],
   duesStatus: {
     amountDueLabel: "$25.00",
     amountPaid: 2500,
@@ -65,10 +90,62 @@ const detail = {
     payableAcademicYear: { shortLabel: "2025-2026" },
     paymentAcademicYear: { shortLabel: "2025-2026" },
   },
+  employment: [
+    {
+      city: {
+        key: "12-53000",
+        label: "Orlando, FL",
+        latitude: 28.5383,
+        longitude: -81.3792,
+        name: "Orlando",
+        state: "FL",
+      },
+      cityKey: "12-53000",
+      company: { displayName: "Knight Hacks", reviewState: "approved" },
+      endMonth: null,
+      experienceType: "full_time",
+      guildVisible: true,
+      id: "00000000-0000-4000-8000-000000000010",
+      startMonth: "2025-06",
+      state: "current",
+      title: "Platform Engineer",
+      updatedAt: new Date("2026-07-01T12:00:00Z"),
+    },
+  ],
+  engagement: {
+    distinctEventCount: 1,
+    eventCheckInCount: 1,
+    eventPointsAwarded: 20,
+  },
+  events: [
+    {
+      attendanceId: "00000000-0000-4000-8000-000000000011",
+      checkedInAt: new Date("2026-07-10T22:05:00Z"),
+      checkedInBy: "admin-user",
+      endAt: new Date("2026-07-11T00:00:00Z"),
+      eventId: "00000000-0000-4000-8000-000000000012",
+      location: "ENG2 Atrium",
+      name: "TypeScript Workshop",
+      pointsAwarded: 20,
+      pointsAwardedEstimated: false,
+      startAt: new Date("2026-07-10T22:00:00Z"),
+      tag: "Workshop",
+    },
+  ],
+  guildLocation: {
+    key: "12-53000",
+    label: "Orlando, FL",
+    latitude: 28.5383,
+    longitude: -81.3792,
+    name: "Orlando",
+    state: "FL",
+  },
   member: {
     about: "Build useful tools.",
     age: 25,
+    alumniConfirmedAt: null,
     company: "Knight Hacks",
+    currentCityKey: "12-53000",
     dateCreated: "2026-06-27",
     discordUser: "lenny-dragon",
     dob: "2001-02-03",
@@ -77,7 +154,10 @@ const detail = {
     gender: "Prefer not to answer",
     githubProfileUrl: "https://github.com/knighthacks",
     gradDate: "2027-05-02",
+    guildLocationVisible: true,
+    guildOpportunityStatuses: ["offering-mentorship"],
     guildProfileVisible: true,
+    guildResumeVisible: true,
     id: "00000000-0000-4000-8000-000000000001",
     lastName: "Dragonson",
     levelOfStudy: "Undergraduate University (3+ year)",
@@ -96,6 +176,10 @@ const detail = {
     websiteUrl: "https://knighthacks.org",
   },
   profilePictureUrl: "https://signed.example.test/profile.png",
+  roles: [
+    { color: "#6D28D9", name: "Development" },
+    { color: null, name: "Member" },
+  ],
 } as RouterOutputs["member"]["getAdminMember"];
 
 describe("MemberDetailDialog", () => {
@@ -117,6 +201,20 @@ describe("MemberDetailDialog", () => {
     expect(html).not.toContain("Delete member");
     expect(html).toContain("Profile files");
     expect(html).toContain("View resume");
+    expect(html).toContain("Event engagement");
+    expect(html).toContain("Discord engagement");
+    expect(html).toContain("Employment history");
+    expect(html).toContain("Roles");
+    expect(html).toContain("TypeScript Workshop");
+    expect(html).toContain("Platform Engineer");
+    expect(html).toContain("Development");
+    expect(html).toContain("Jun 27, 2026");
+    expect(html).toContain("July 2026");
+    expect(html).toContain('aria-label="Previous month"');
+    expect(html).toContain('aria-label="Next month"');
+    expect(html).not.toContain("Latest 30");
+    expect(html).not.toContain("Member ID");
+    expect(html).not.toContain("User ID");
     expect(html).not.toContain("signed.example.test/resume.pdf");
     expect(html).not.toContain(">Replace<");
     expect(html).not.toContain(">Upload<");

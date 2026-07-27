@@ -33,9 +33,11 @@ exposing a raw-message read surface.
 - Archive-health page routing and `discordArchive.getHealth` require effective
   `IS_OFFICER`. A director title or another admin permission does not grant
   access.
-- Discord aggregate analytics inherit the existing Club Analytics read policy.
-  They return aggregate measures and channel labels, not messages, author
-  identities, or relationship data.
+- Discord analytics inherit the existing Club Analytics read policy. They
+  return aggregate measures, channel labels, and selected-period counts for
+  stable Discord authors matched to retained Members, but never messages or
+  relationship data. Opening the full Member dialog still requires the
+  separate Member-admin read policy.
 - Client-side navigation hiding is not an access boundary. Page and procedure
   checks enforce the same policy server-side.
 - Archive writes are automated operational writes, not human admin actions.
@@ -340,11 +342,14 @@ These functions are not public web procedures.
   - visible channel/thread counts;
   - time-series buckets following existing Analytics grain rules where
     practical; and
-  - channel distribution with counts and shares.
+  - channel distribution with counts and shares; and
+  - matched Member rows containing Member UUID/name, stored Discord username,
+    message count, active-day count, active-surface count, and last-message
+    time.
 - Exclude tombstoned messages from content-derived counts but retain an
   explicit deleted-message count when useful for reconciliation transparency.
-- Return no message IDs, message content, author IDs/names, reply targets,
-  embeds, attachments, or per-author rankings.
+- Return no raw Discord author IDs, message IDs, message content, reply targets,
+  embeds, attachments, or unmatched-author identities.
 
 ## Validation
 
@@ -421,7 +426,9 @@ Would this require a developer change next year?
   `Discord operations` and `Discord archive health`.
 - Add navigation in the existing alphabetized configured-admin section.
 - The Analytics Discord tab reuses the existing responsive tab/filter shell,
-  charts, tables, and server-provided report state.
+  charts, tables, and server-provided report state. Its matched-Member table is
+  bounded and opens the shared Member detail only when the caller has separate
+  Member-admin access.
 - Client components receive bounded DTOs. They never receive raw message
   objects.
 - Health timestamps identify stale/degraded state with text and iconography,

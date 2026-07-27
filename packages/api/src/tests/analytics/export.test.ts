@@ -35,14 +35,14 @@ describe("club analytics CSV", () => {
     expect(csv).not.toMatch(/(?:^|,)=(?:HYPERLINK|IMPORT)/m);
   });
 
-  it("serializes an author-free Discord summary without message records or identities", () => {
+  it("serializes matched Discord members without raw message or author records", () => {
     const csv = serializeInternalAnalyticsCsv({
       generatedAt: new Date("2026-07-26T12:00:00.000Z"),
       kind: "discord",
       metadata: {
         comparisonLabel: "Not applicable",
-        filterLabel: "Aggregate Discord activity",
-        metricVersion: "discord-analytics-v1",
+        filterLabel: "Discord activity and matched Member counts",
+        metricVersion: "discord-analytics-v2",
         periodLabel: "2025-2026 academic school year",
       },
       rows: [
@@ -56,12 +56,20 @@ describe("club analytics CSV", () => {
           date: "2026-07-26",
           record_subtype: "daily_activity",
         },
+        {
+          member_id: "00000000-0000-4000-8000-000000000101",
+          member_name: "Ada Analytics",
+          message_count: 12,
+          record_subtype: "member",
+        },
       ],
     });
 
-    expect(csv).toContain("discord-analytics-v1");
+    expect(csv).toContain("discord-analytics-v2");
     expect(csv).toContain("Human participants");
     expect(csv).toContain("daily_activity");
+    expect(csv).toContain("Ada Analytics");
+    expect(csv).toContain("00000000-0000-4000-8000-000000000101");
     for (const forbidden of [
       "authorDiscordUserId",
       "authorLabel",

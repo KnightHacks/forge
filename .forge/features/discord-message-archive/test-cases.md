@@ -9,12 +9,11 @@ Status: Approved for test generation
 These cases prove the Discord guild/DM boundary, normalized current-state
 storage, idempotent message and tombstone writes, durable discovery/backfill
 checkpoints, frequent reconciliation, live Gateway recovery, archive-health
-access, and aggregate Discord analytics.
+access, aggregate Discord analytics, and authorized matched-Member drill-downs.
 
 They intentionally exclude reaction ingestion, attachment binary storage,
-message-content search or display, individual engagement scoring, member
-profile enrichment, knowledge retrieval, and production infrastructure
-encryption verification.
+message-content search or display, individual engagement scoring, knowledge
+retrieval, and production infrastructure encryption verification.
 
 ## Test placement plan
 
@@ -622,7 +621,7 @@ Expected observations:
 - Recent metadata contains only approved channel/author/event/timestamp facts.
 - Safe errors contain no Discord response bodies or tokens.
 
-### TC-034: Aggregate analytics never expose message or author identity
+### TC-034: Analytics never expose raw message or unmatched-author identity
 
 Setup:
 
@@ -635,10 +634,10 @@ Action:
 
 Expected observations:
 
-- Counts, labels, dates, and shares are present.
-- Message IDs, author IDs/names, reply targets, content, embeds, and attachment
-  metadata are absent.
-- No per-author ranking or relationship table exists.
+- Counts, labels, dates, shares, and approved matched-Member rows are present.
+- Message IDs, raw author IDs/labels, reply targets, content, embeds, and
+  attachment metadata are absent.
+- No unmatched-author identity, engagement score, or relationship table exists.
 
 ## Analytics correctness
 
@@ -786,6 +785,30 @@ Expected observations:
 - No list-message, get-message, search-content, content-export, or attachment
   read procedure exists.
 - Blade client bundles receive no raw archive payload type.
+
+### TC-045: Matched Member activity supports authorized drill-down
+
+Setup:
+
+- Archive human messages for a stable Discord user linked to a retained Member,
+  and include unmatched and bot authors in the same reporting period.
+- Render Analytics once with only Club Analytics access and once with separate
+  Member-admin read access.
+
+Action:
+
+- Open the Discord tab and inspect the per-Member activity table.
+
+Expected observations:
+
+- The matched Member row contains the selected-period message count, active
+  days, active surfaces, stored Discord username, and human-readable last
+  message time.
+- Aggregate totals continue to include unmatched human authors while their
+  identities are not returned.
+- The Member name is plain text for Analytics-only access and opens the shared
+  enriched Member dialog when Member-admin read access is also present.
+- No message body, message ID, or raw Discord author ID enters the client DTO.
 
 ## Migration and backup safety
 

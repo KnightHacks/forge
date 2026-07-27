@@ -128,7 +128,8 @@ function csvMetadata(report: ClubAnalyticsReport) {
 function discordCsvMetadata(report: DiscordAnalyticsReport) {
   return {
     comparisonLabel: "Not applicable",
-    filterLabel: "Aggregate Discord activity; event filters are not applied",
+    filterLabel:
+      "Discord activity and matched Member counts; event filters are not applied",
     metricVersion: report.metadata.metricVersion,
     periodLabel: report.metadata.period.label,
   };
@@ -185,6 +186,16 @@ function discordRows(
       share: row.share,
       surface: row.label,
       surface_type: row.type,
+    })),
+    ...report.memberRows.map((row) => ({
+      active_days: row.activeDays,
+      active_surfaces: row.activeChannels,
+      discord_username: row.discordUser,
+      last_message_at: row.lastMessageAt,
+      member_id: row.memberId,
+      member_name: row.name,
+      message_count: row.messageCount,
+      record_subtype: "member",
     })),
     {
       complete_surface_count: report.coverage.completeSurfaceCount,
@@ -528,7 +539,7 @@ function safeFileToken(value: string) {
 }
 
 export const analyticsRouter = createTRPCRouter({
-  /** Returns aggregate Discord activity analytics without message or author records. */
+  /** Returns Discord aggregates plus matched Member-level counts, never message records or bodies. */
   getDiscordReport: permProcedure
     .input(analyticsReportInputSchema)
     .query(async ({ ctx, input }) => {

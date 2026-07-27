@@ -62,6 +62,14 @@ Current phase: Complete
 - 2026-06-27: Human identified the standalone desktop Edit member action as
   visually disconnected. It now lives in the dialog identity header on
   desktop while remaining full-width beneath the identity on mobile.
+- 2026-07-26: The admin Member presentation now consolidates retained event
+  check-ins, archived Discord activity, normalized employment history, Guild
+  fields/files, linked roles, and dues history. Dates are human-readable and
+  Member/User IDs are no longer presented.
+- 2026-07-26: Discord daily activity uses full-width calendar-month pagination
+  over retained history. The desktop detail remains multi-column without a
+  sticky secondary column, and profile/resume files sit directly beside Guild
+  profile content.
 
 ## Open questions
 
@@ -83,6 +91,8 @@ Current phase: Complete
 - [x] Make row/card dues statuses direct editor controls.
 - [x] Restore legacy calendar-year dues compatibility and guarantee that
       individual and mass revoke leave affected members unpaid.
+- [x] Enrich the shared Member presentation from existing event, Discord,
+      career, Guild, role, and dues sources without a schema change.
 - [x] Keep the admin shell mounted around loading/error/result boundaries and
       align toast surfaces with the raised-card theme.
 - [x] Contain the mobile list and detail dialog at 320px and replace the flat
@@ -153,6 +163,18 @@ Current phase: Complete
 - Playwright uses the existing `BLADE_E2E_AUTH` flag to isolate its Next.js
   build in `.next-e2e`, allowing the shared development watcher to remain
   undisturbed.
+- 2026-07-26 Member-insights follow-up validation: API and Blade typechecks
+  and lint pass; 14 focused API tests and 15 focused Blade tests pass; the
+  seven-scenario Member/Analytics Playwright suite passes against the populated
+  development database. Visual review confirms independent equal-width desktop
+  columns, no sticky detail rail, full-width monthly Discord activity, and
+  Profile files in the left column immediately above Record details.
+- Changed React analysis against `origin/reforge/main` covers six files, three
+  components, and reports zero failures. The default repository analyzer still
+  compares against `origin/main` and reports the same two unchanged tRPC-wrapper
+  failures in current and legacy Blade. Repository formatting still reports the
+  unchanged `apps/guild/src/app/_components/globe-renderer.tsx`; all changed
+  files pass Prettier and `git diff --check`.
 
 ## Links
 

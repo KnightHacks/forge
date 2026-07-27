@@ -8,8 +8,8 @@ Status: Complete — approved for test generation
 
 These cases prove the shared filter contract, analytics access boundary,
 non-hackathon source scope, distinct-attendance and cohort rules, demographic
-and dues measures, event-feedback coverage, internal and sponsor CSV policy,
-and the essential Blade workspace states.
+and dues measures, event-feedback coverage, Discord matched-Member counts,
+internal and sponsor CSV policy, and the essential Blade workspace states.
 
 They intentionally do not test hackathon analytics, source-record editing,
 registration/capacity/marketing/cost fields, dollars, payment-provider splits,
@@ -474,6 +474,30 @@ Expected observations:
 - Every chart has a text/table alternative and no meaning relies on color
   alone.
 - Member/Event admin links appear only with their separate admin permission.
+- Named Audience, Dues, and Discord Member rows open the shared Member dialog
+  only with separate Member-admin read access.
+
+### TC-027: Discord message counts drill down by matched Member
+
+Setup:
+
+- Provide selected-period Discord activity for a stable author linked to a
+  retained Member plus activity from unmatched and bot authors.
+
+Action:
+
+- Render the Discord section with Analytics-only access, then with separate
+  Member-admin read access.
+
+Expected observations:
+
+- The matched row shows Member name, stored Discord username, message count,
+  active days, active surfaces, and a human-readable last-message time.
+- Unmatched authors contribute to aggregates without exposing identity.
+- The Member name is plain text for Analytics-only access and opens the shared
+  enriched Member dialog when Member-admin read access is present.
+- The internal Discord CSV includes the matched row without message bodies,
+  message IDs, or raw Discord author IDs.
 
 ### TC-023: Empty and feedback-unavailable states preserve known data
 

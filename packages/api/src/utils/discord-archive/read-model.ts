@@ -23,7 +23,7 @@ import {
 } from "./analytics-model";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DISCORD_ANALYTICS_METRIC_VERSION = "discord-analytics-v1";
+const DISCORD_ANALYTICS_METRIC_VERSION = "discord-analytics-v2";
 
 function ratio(numerator: number, denominator: number) {
   return denominator === 0 ? null : numerator / denominator;
@@ -248,6 +248,17 @@ export interface DiscordAnalyticsTrendRow extends Record<string, unknown> {
   messages: number;
 }
 
+export interface DiscordAnalyticsMemberRow extends Record<string, unknown> {
+  activeChannels: number;
+  activeDays: number;
+  discordUser: string;
+  firstName: string;
+  lastMessageAt: Date | string | null;
+  lastName: string;
+  memberId: string;
+  messageCount: number;
+}
+
 export async function getDiscordAnalyticsReport(
   input: AnalyticsReportInput,
   now = new Date(),
@@ -267,9 +278,15 @@ export async function getDiscordAnalyticsReport(
     and created_at < ${observationEnd}
   `;
 
-  const [summaryResult, mixResult, trendResult, channelResult, coverageRows] =
-    await Promise.all([
-      db.execute<DiscordAnalyticsSummaryRow>(sql`
+  const [
+    summaryResult,
+    mixResult,
+    trendResult,
+    channelResult,
+    memberResult,
+    coverageRows,
+  ] = await Promise.all([
+    db.execute<DiscordAnalyticsSummaryRow>(sql`
         with scoped_messages as (
           select
             application_id,
@@ -315,7 +332,7 @@ export async function getDiscordAnalyticsReport(
           (select count(*) from human_authors)::int as "uniqueHumanAuthors"
         from scoped_messages
       `),
-      db.execute<DiscordAnalyticsMixRow>(sql`
+    db.execute<DiscordAnalyticsMixRow>(sql`
         select
           case
             when webhook_id is not null then 'webhook'
@@ -329,7 +346,7 @@ export async function getDiscordAnalyticsReport(
         group by kind
         order by count desc
       `),
-      db.execute<DiscordAnalyticsTrendRow>(sql`
+    db.execute<DiscordAnalyticsTrendRow>(sql`
         select
           count(distinct channel_id)::int as "activeChannels",
           to_char(
@@ -342,7 +359,7 @@ export async function getDiscordAnalyticsReport(
         group by date
         order by date asc
       `),
-      db.execute<DiscordAnalyticsChannelRow>(sql`
+    db.execute<DiscordAnalyticsChannelRow>(sql`
         select
           count(*)::int as count,
           channel.is_thread as "isThread",
@@ -360,41 +377,95 @@ export async function getDiscordAnalyticsReport(
         order by count desc, channel.name asc
         limit 12
       `),
-      Promise.all([
-        db
-          .select({
-            channelCount: sql<number>`count(*) filter (where ${DiscordArchiveChannel.isThread} = false)::int`,
-            surfaceCount: sql<number>`count(*)::int`,
-            threadCount: sql<number>`count(*) filter (where ${DiscordArchiveChannel.isThread} = true)::int`,
-          })
-          .from(DiscordArchiveChannel)
-          .where(
-            and(
-              eq(DiscordArchiveChannel.guildId, guildId),
-              isNull(DiscordArchiveChannel.deletedAt),
-            ),
+    db.execute<DiscordAnalyticsMemberRow>(sql`
+        with discord_members as (
+          select distinct on (blade_user.discord_user_id)
+            blade_user.discord_user_id,
+            member.discord_user,
+            member.first_name,
+            member.id as member_id,
+            member.last_name
+          from auth_user as blade_user
+          inner join knight_hacks_member as member
+            on member.user_id = blade_user.id
+          where blade_user.discord_user_id <> ''
+          order by
+            blade_user.discord_user_id,
+            member.date_created desc,
+            member.time_created desc,
+            member.id
+        )
+        select
+          count(distinct message.channel_id)::int as "activeChannels",
+          count(
+            distinct (
+              message.created_at at time zone ${EVENTS.CALENDAR_TIME_ZONE}
+            )::date
+          )::int as "activeDays",
+          discord_members.discord_user as "discordUser",
+          discord_members.first_name as "firstName",
+          max(message.created_at) as "lastMessageAt",
+          discord_members.last_name as "lastName",
+          discord_members.member_id as "memberId",
+          count(*)::int as "messageCount"
+        from discord_archive_message as message
+        inner join discord_members
+          on discord_members.discord_user_id = message.author_discord_user_id
+        where
+          message.guild_id = ${guildId}
+          ${aliasedStartFilter}
+          and message.created_at < ${observationEnd}
+          and message.deleted_at is null
+          and message.author_is_bot = false
+          and message.webhook_id is null
+          and message.application_id is null
+          and message.message_type = 0
+        group by
+          discord_members.discord_user,
+          discord_members.first_name,
+          discord_members.last_name,
+          discord_members.member_id
+        order by
+          "messageCount" desc,
+          discord_members.first_name asc,
+          discord_members.last_name asc,
+          discord_members.member_id asc
+      `),
+    Promise.all([
+      db
+        .select({
+          channelCount: sql<number>`count(*) filter (where ${DiscordArchiveChannel.isThread} = false)::int`,
+          surfaceCount: sql<number>`count(*)::int`,
+          threadCount: sql<number>`count(*) filter (where ${DiscordArchiveChannel.isThread} = true)::int`,
+        })
+        .from(DiscordArchiveChannel)
+        .where(
+          and(
+            eq(DiscordArchiveChannel.guildId, guildId),
+            isNull(DiscordArchiveChannel.deletedAt),
           ),
-        db
-          .select({
-            completeCount: sql<number>`count(*) filter (where ${DiscordArchiveCheckpoint.backfillStatus} = 'complete')::int`,
-            lastBackfillAt: sql<Date | null>`max(${DiscordArchiveCheckpoint.lastBackfillAt})`,
-            lastReconciledAt: sql<Date | null>`max(${DiscordArchiveCheckpoint.lastReconciledAt})`,
-            totalCount: sql<number>`count(*)::int`,
-          })
-          .from(DiscordArchiveCheckpoint)
-          .where(eq(DiscordArchiveCheckpoint.guildId, guildId)),
-        db
-          .select({
-            lastBackfillProgressAt: DiscordArchiveState.lastBackfillProgressAt,
-            lastGatewayEventAt: DiscordArchiveState.lastGatewayEventAt,
-            lastLiveWriteAt: DiscordArchiveState.lastLiveWriteAt,
-            status: DiscordArchiveState.status,
-          })
-          .from(DiscordArchiveState)
-          .where(eq(DiscordArchiveState.guildId, guildId))
-          .limit(1),
-      ]),
-    ]);
+        ),
+      db
+        .select({
+          completeCount: sql<number>`count(*) filter (where ${DiscordArchiveCheckpoint.backfillStatus} = 'complete')::int`,
+          lastBackfillAt: sql<Date | null>`max(${DiscordArchiveCheckpoint.lastBackfillAt})`,
+          lastReconciledAt: sql<Date | null>`max(${DiscordArchiveCheckpoint.lastReconciledAt})`,
+          totalCount: sql<number>`count(*)::int`,
+        })
+        .from(DiscordArchiveCheckpoint)
+        .where(eq(DiscordArchiveCheckpoint.guildId, guildId)),
+      db
+        .select({
+          lastBackfillProgressAt: DiscordArchiveState.lastBackfillProgressAt,
+          lastGatewayEventAt: DiscordArchiveState.lastGatewayEventAt,
+          lastLiveWriteAt: DiscordArchiveState.lastLiveWriteAt,
+          status: DiscordArchiveState.status,
+        })
+        .from(DiscordArchiveState)
+        .where(eq(DiscordArchiveState.guildId, guildId))
+        .limit(1),
+    ]),
+  ]);
 
   const summary = summaryResult.rows[0] ?? {
     activeDays: 0,
@@ -457,6 +528,15 @@ export async function getDiscordAnalyticsReport(
         start: period.start,
       },
     },
+    memberRows: memberResult.rows.map((row) => ({
+      activeChannels: row.activeChannels,
+      activeDays: row.activeDays,
+      discordUser: row.discordUser,
+      lastMessageAt: dateOrNull(row.lastMessageAt),
+      memberId: row.memberId,
+      messageCount: row.messageCount,
+      name: `${row.firstName} ${row.lastName}`.trim(),
+    })),
     mix: buildDiscordAnalyticsMix(mixResult.rows, messageCount),
     summary: {
       activeDays: summary.activeDays,

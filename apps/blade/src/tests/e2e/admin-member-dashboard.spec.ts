@@ -439,7 +439,18 @@ test.describe("admin member dashboard", () => {
     await expect(page).toHaveURL(/q=alce/);
     await page.getByRole("button", { name: "View" }).first().click();
     await expect(page).toHaveURL(/member=[0-9a-f-]{36}/);
-    await expect(page.getByRole("dialog")).toBeVisible();
+    const readerDialog = page.getByRole("dialog");
+    await expect(readerDialog).toBeVisible();
+    await expect(readerDialog.getByText("Event engagement")).toBeVisible();
+    await expect(readerDialog.getByText("Discord engagement")).toBeVisible();
+    await expect(
+      readerDialog.getByRole("heading", { name: "Employment history" }),
+    ).toBeVisible();
+    await expect(
+      readerDialog.getByText("Roles", { exact: true }),
+    ).toBeVisible();
+    await expect(readerDialog.getByText("Member ID")).toHaveCount(0);
+    await expect(readerDialog.getByText("User ID")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Edit member" })).toHaveCount(
       0,
     );
@@ -670,6 +681,9 @@ test.describe("admin member dashboard", () => {
     page,
   }) => {
     await signInAs(page, EDITOR_USER_ID);
+    await page
+      .getByRole("textbox", { name: "Search members" })
+      .fill("Charlie Circuit");
     await page
       .getByRole("button", { name: "Revoke dues for Charlie Circuit" })
       .click();

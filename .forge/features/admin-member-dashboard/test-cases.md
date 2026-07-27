@@ -5,8 +5,8 @@ Status: Complete
 ## Scope
 
 These cases cover effective permission evaluation, admin member access,
-search/filter/pagination, detail display, editing, deletion, and current dues
-controls. Role configuration, payment history, bulk operations, club analytics,
+search/filter/pagination, enriched detail display, editing, deletion, and
+current dues controls. Role configuration, bulk operations, club analytics,
 and Discord role writes are excluded.
 
 ## Test placement plan
@@ -221,6 +221,29 @@ Expected observations:
   contact, academics, Guild, files, and record sections in a single column.
 - The desktop version presents the same content with main and summary regions
   instead of a flat grid of equal-weight cards.
+
+### TC-013: Member detail consolidates retained engagement and profile context
+
+Setup:
+
+- A Member has event check-ins by a known operator, archived human Discord
+  messages across channels and dates, employment rows, Guild profile data,
+  linked roles, and retained dues credits.
+
+Action:
+
+- Open the Member detail as an authorized reader.
+
+Expected observations:
+
+- Event totals and the complete bounded check-in history include event name,
+  human-readable date, points, and check-in operator.
+- Discord totals, active days/surfaces, top channels, and accessible
+  previous/next calendar-month activity pagination render without message
+  bodies.
+- Employment, Guild visibility/location/opportunity fields, roles, and dues
+  history render from the existing sources.
+- Dates are human-readable and neither Member ID nor User ID is presented.
 
 ### TC-010: Editor manages target-owned files
 

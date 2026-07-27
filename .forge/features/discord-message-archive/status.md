@@ -40,6 +40,11 @@ Current phase: Development implementation and automated/browser validation compl
 - 2026-07-26: Resume-bundle preparation keeps the memory-safe native streaming download and now uses a validated per-download readiness cookie. The Reports action remains responsive with a disabled spinner, realistic wait guidance, success/error feedback, and automatic reset when the ZIP response starts.
 - 2026-07-26: Resume-bundle graduation folders use the combined graduation term and year (for example, `Grad Term/Fall 2027`) so the same term across different cohorts is never collapsed into one folder.
 - 2026-07-26: Overview, Audience, and Dues now render Discord enrichment as direct metric-card rows without nested context panels. Every Analytics metric card requires a lower enrichment row: comparison-capable overview measures use green/red direction indicators, while the remaining cards show denominators, rates, medians, coverage, or other supporting facts.
+- 2026-07-26: The approved downstream Member enrichment is now implemented:
+  stable Discord author IDs are resolved to retained Members at read time for
+  all-time profile totals, top surfaces, full retained daily history paged by
+  month, and selected-period Analytics message counts. Raw messages and
+  unmatched-author identities remain excluded from Blade DTOs.
 
 ## Open questions
 
@@ -61,6 +66,8 @@ Current phase: Development implementation and automated/browser validation compl
 - [ ] Complete human create/edit/delete verification and post-reconciliation tombstone proof.
 - [x] Implement the approved Blade archive dashboard.
 - [x] Add the aggregate Discord tab to Club Analytics.
+- [x] Add matched-Member Discord analytics and authorized Member-profile
+      enrichment without exposing raw messages or author IDs.
 - [x] Compact and normalize the archive/Analytics layouts and frontend-only undergraduate grouping.
 - [x] Add and verify the audited Member resume bundle download.
 - [x] Add and browser-verify the resume-bundle preparation state.
@@ -105,6 +112,14 @@ Current phase: Development implementation and automated/browser validation compl
 - Resume preflight observed 329 blank legacy resume fields, 35 missing objects, one non-PDF object, and two ownership-invalid legacy references. These unavailable records are excluded with aggregate-only safe logs; no member names, object keys, or PDF contents were printed.
 - Blade is running from this checkout on port 3000 in Next webpack development mode because Turbopack rejects the checkout's shared `node_modules` symlink as outside its filesystem root.
 - Drizzle generation initially failed because migrations `0021` and `0022` had sibling snapshot parents after the logging/email merge. The existing SQL journal was already sequential. Snapshot metadata `0022` and `0023` now includes the three logging-owned schema changes and follows the journal chain; neither existing SQL migration changed.
+- 2026-07-26 Member-insights follow-up validation: retained Discord activity
+  resolves stable author IDs to Members without returning message content or
+  raw author identifiers. The Member presentation shows all-time totals, top
+  surfaces, and a full-width calendar-month pager across retained daily
+  activity; Discord Analytics exposes selected-period per-Member counts.
+  Fourteen focused API tests, fifteen focused Blade tests, both package
+  typechecks/lints, changed React analysis, and all seven focused
+  Member/Analytics Playwright scenarios pass.
 
 ## Links
 

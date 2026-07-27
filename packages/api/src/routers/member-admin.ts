@@ -6,10 +6,20 @@ import { z } from "zod";
 import type { SQL } from "@forge/db";
 import type { SelectMember } from "@forge/db/schemas/knight-hacks";
 import type { AdminMemberListInput } from "@forge/validators";
-import { and, desc, eq, gte, inArray, lte, sql } from "@forge/db";
+import { EVENTS } from "@forge/consts";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
+  DiscordArchiveChannel,
+  DiscordArchiveMessage,
+} from "@forge/db/schemas/discord";
+import {
+  Company,
   DuesPayment,
+  Employment,
+  Event,
+  EventAttendee,
   FormResponse,
   Member,
 } from "@forge/db/schemas/knight-hacks";
@@ -34,6 +44,7 @@ import {
   appendAdminAuditResults,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { getUsCity } from "../utils/career/us-cities";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
@@ -65,7 +76,9 @@ const editMemberPermissions = ["EDIT_MEMBERS"] as const;
 export interface AdminMemberRecord {
   about: string | null;
   age: number;
+  alumniConfirmedAt: Date | null;
   company: string | null;
+  currentCityKey: string | null;
   dateCreated: string;
   discordUser: string;
   dob: string;
@@ -75,6 +88,7 @@ export interface AdminMemberRecord {
   githubProfileUrl: string | null;
   gradDate: string;
   guildOpportunityStatuses: SelectMember["guildOpportunityStatuses"];
+  guildLocationVisible: boolean;
   guildProfileVisible: boolean;
   guildResumeVisible: boolean;
   id: string;
@@ -326,6 +340,172 @@ async function getDuesRows(memberIds: string[]) {
     .from(DuesPayment)
     .where(inArray(DuesPayment.memberId, memberIds))
     .orderBy(desc(DuesPayment.paymentDate));
+}
+
+function dateInCalendarTimeZone(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
+    year: "numeric",
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+async function getMemberEventHistory(memberId: string) {
+  return await db
+    .select({
+      attendanceId: EventAttendee.id,
+      checkedInAt: EventAttendee.checkedInAt,
+      checkedInByEmail: User.email,
+      checkedInByName: User.name,
+      endAt: Event.end_datetime,
+      eventId: Event.id,
+      location: Event.location,
+      name: Event.name,
+      pointsAwarded: EventAttendee.pointsAwarded,
+      pointsAwardedEstimated: EventAttendee.pointsAwardedEstimated,
+      startAt: Event.start_datetime,
+      tag: Event.tag,
+    })
+    .from(EventAttendee)
+    .innerJoin(Event, eq(Event.id, EventAttendee.eventId))
+    .leftJoin(User, eq(User.id, EventAttendee.checkedInBy))
+    .where(eq(EventAttendee.memberId, memberId))
+    .orderBy(desc(Event.start_datetime), desc(EventAttendee.checkedInAt));
+}
+
+async function getMemberEmploymentHistory(memberId: string) {
+  const rows = await db
+    .select({
+      cityKey: Employment.cityKey,
+      company: {
+        displayName: Company.displayName,
+        reviewState: Company.reviewState,
+      },
+      endMonth: Employment.endMonth,
+      experienceType: Employment.experienceType,
+      guildVisible: Employment.guildVisible,
+      id: Employment.id,
+      startMonth: Employment.startMonth,
+      state: Employment.state,
+      title: Employment.title,
+      updatedAt: Employment.updatedAt,
+    })
+    .from(Employment)
+    .innerJoin(Company, eq(Company.id, Employment.companyId))
+    .where(eq(Employment.memberId, memberId))
+    .orderBy(
+      asc(
+        sql<number>`CASE ${Employment.state} WHEN 'current' THEN 0 WHEN 'past' THEN 1 ELSE 2 END`,
+      ),
+      desc(Employment.startMonth),
+      asc(Company.displayName),
+    );
+
+  return rows.map((row) => ({
+    ...row,
+    city: row.cityKey ? getUsCity(row.cityKey) : null,
+  }));
+}
+
+async function getMemberRoles(userId: string) {
+  return await db
+    .selectDistinct({
+      color: Roles.teamHexcodeColor,
+      name: Roles.name,
+    })
+    .from(Permissions)
+    .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+    .where(eq(Permissions.userId, userId))
+    .orderBy(asc(Roles.name));
+}
+
+async function getMemberDiscordEngagement(userId: string, now = new Date()) {
+  const user = await db.query.User.findFirst({
+    columns: { discordUserId: true },
+    where: eq(User.id, userId),
+  });
+  if (!user) {
+    return {
+      activity: [],
+      activityEndDate: dateInCalendarTimeZone(now),
+      activeChannelCount: 0,
+      activeDayCount: 0,
+      firstMessageAt: null,
+      lastMessageAt: null,
+      messageCount: 0,
+      topChannels: [],
+    };
+  }
+
+  const activityEndDate = dateInCalendarTimeZone(now);
+  const humanMessageConditions = [
+    eq(DiscordArchiveMessage.authorDiscordUserId, user.discordUserId),
+    isNull(DiscordArchiveMessage.deletedAt),
+    eq(DiscordArchiveMessage.authorIsBot, false),
+    isNull(DiscordArchiveMessage.webhookId),
+    isNull(DiscordArchiveMessage.applicationId),
+    eq(DiscordArchiveMessage.messageType, 0),
+  ] as const;
+
+  const [summaryRows, activityRows, topChannels] = await Promise.all([
+    db
+      .select({
+        activeChannelCount: sql<number>`count(distinct ${DiscordArchiveMessage.channelId})::int`,
+        activeDayCount: sql<number>`count(distinct (${DiscordArchiveMessage.createdAt} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date)::int`,
+        firstMessageAt: sql<Date | null>`min(${DiscordArchiveMessage.createdAt})`,
+        lastMessageAt: sql<Date | null>`max(${DiscordArchiveMessage.createdAt})`,
+        messageCount: sql<number>`count(*)::int`,
+      })
+      .from(DiscordArchiveMessage)
+      .where(and(...humanMessageConditions)),
+    db
+      .select({
+        count: sql<number>`count(*)::int`,
+        date: sql<string>`to_char(${DiscordArchiveMessage.createdAt} at time zone ${EVENTS.CALENDAR_TIME_ZONE}, 'YYYY-MM-DD')`,
+      })
+      .from(DiscordArchiveMessage)
+      .where(and(...humanMessageConditions))
+      .groupBy(sql`2`)
+      .orderBy(sql`2`),
+    db
+      .select({
+        count: sql<number>`count(*)::int`,
+        isThread: DiscordArchiveChannel.isThread,
+        name: DiscordArchiveChannel.name,
+      })
+      .from(DiscordArchiveMessage)
+      .innerJoin(
+        DiscordArchiveChannel,
+        eq(DiscordArchiveChannel.id, DiscordArchiveMessage.channelId),
+      )
+      .where(and(...humanMessageConditions))
+      .groupBy(
+        DiscordArchiveChannel.id,
+        DiscordArchiveChannel.isThread,
+        DiscordArchiveChannel.name,
+      )
+      .orderBy(
+        desc(sql<number>`count(*)::int`),
+        asc(DiscordArchiveChannel.name),
+      )
+      .limit(5),
+  ]);
+  const summary = summaryRows[0];
+
+  return {
+    activity: activityRows,
+    activityEndDate,
+    activeChannelCount: summary?.activeChannelCount ?? 0,
+    activeDayCount: summary?.activeDayCount ?? 0,
+    firstMessageAt: summary?.firstMessageAt ?? null,
+    lastMessageAt: summary?.lastMessageAt ?? null,
+    messageCount: summary?.messageCount ?? 0,
+    topChannels,
+  };
 }
 
 function statusMapForCandidates(
@@ -595,15 +775,52 @@ export const adminMemberProcedures = {
     .query(async ({ ctx, input }) => {
       assertCanReadMembers(ctx);
       const member = await findMemberOrThrow(input.memberId);
-      const duesRows = await getDuesRows([member.id]);
-      const profilePicture = await getProfilePictureDownloadUrlForUser(
-        member.userId,
-      );
+      const [discord, duesRows, employment, events, profilePicture, roles] =
+        await Promise.all([
+          getMemberDiscordEngagement(member.userId),
+          getDuesRows([member.id]),
+          getMemberEmploymentHistory(member.id),
+          getMemberEventHistory(member.id),
+          getProfilePictureDownloadUrlForUser(member.userId),
+          getMemberRoles(member.userId),
+        ]);
+      const distinctEventCount = new Set(events.map((event) => event.eventId))
+        .size;
 
       return {
+        discord,
+        duesHistory: duesRows.map((row) => ({
+          active: row.active,
+          amount: row.amount,
+          paidAt: row.paymentDate,
+          source: row.stripePaymentIntentId
+            ? ("Stripe" as const)
+            : ("Manual" as const),
+          year: row.year,
+        })),
         member: toAdminMemberRecord(member),
         duesStatus: buildDuesStatus({ duesRows }),
+        employment,
+        engagement: {
+          distinctEventCount,
+          eventCheckInCount: events.length,
+          eventPointsAwarded: events.reduce(
+            (total, event) => total + (event.pointsAwarded ?? 0),
+            0,
+          ),
+        },
+        events: events.map(
+          ({ checkedInByEmail, checkedInByName, ...event }) => ({
+            ...event,
+            checkedInBy:
+              checkedInByName ?? checkedInByEmail ?? "Automatic or legacy",
+          }),
+        ),
+        guildLocation: member.currentCityKey
+          ? getUsCity(member.currentCityKey)
+          : null,
         profilePictureUrl: profilePicture.url,
+        roles,
       };
     }),
 

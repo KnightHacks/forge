@@ -2,10 +2,14 @@ import type { Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { PERMISSIONS } from "@forge/consts";
+import { DISCORD, PERMISSIONS } from "@forge/consts";
 import { inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import {
+  DiscordArchiveChannel,
+  DiscordArchiveMessage,
+} from "@forge/db/schemas/discord";
 import {
   DuesPayment,
   Event,
@@ -34,6 +38,14 @@ const EVENT_IDS = Array.from(
   (_, index) =>
     `00000000-0000-4000-8000-${String(930 + index).padStart(12, "0")}`,
 );
+const DISCORD_CHANNEL_ID = "9000000000000000930";
+const DISCORD_AUTHOR_ID = "9000000000000000910";
+const DISCORD_MESSAGE_IDS = [
+  "9000000000000000931",
+  "9000000000000000932",
+  "9000000000000000933",
+  "9000000000000000934",
+] as const;
 
 function required<T>(value: T | undefined, label: string): T {
   if (value === undefined) throw new Error(`Missing ${label}.`);
@@ -53,6 +65,12 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
 }
 
 async function cleanup() {
+  await db
+    .delete(DiscordArchiveMessage)
+    .where(inArray(DiscordArchiveMessage.id, [...DISCORD_MESSAGE_IDS]));
+  await db
+    .delete(DiscordArchiveChannel)
+    .where(inArray(DiscordArchiveChannel.id, [DISCORD_CHANNEL_ID]));
   await db.delete(Event).where(inArray(Event.id, EVENT_IDS));
   await db
     .delete(Member)
@@ -80,7 +98,7 @@ async function seed() {
     discordRoleId: "club-analytics-reader-e2e",
     id: ANALYTICS_ROLE_ID,
     name: "Club analytics reader E2E",
-    permissions: permissionBitstring("READ_CLUB_DATA"),
+    permissions: permissionBitstring("READ_CLUB_DATA", "READ_MEMBERS"),
   });
   await db.insert(User).values([
     {
@@ -100,7 +118,8 @@ async function seed() {
       name: "Analytics Unauthorized",
     },
     ...MEMBER_USER_IDS.map((id, index) => ({
-      discordUserId: `club-analytics-member-${index}`,
+      discordUserId:
+        index === 0 ? DISCORD_AUTHOR_ID : `club-analytics-member-${index}`,
       email: `club-analytics-member-${index}@example.test`,
       emailVerified: true,
       id,
@@ -194,6 +213,35 @@ async function seed() {
     })),
   );
   await db.insert(EventAttendee).values(attendanceValues);
+  await db.insert(DiscordArchiveChannel).values({
+    discordUpdatedAt: new Date("2026-07-15T12:00:00Z"),
+    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    id: DISCORD_CHANNEL_ID,
+    name: "analytics-member-e2e",
+    type: 0,
+  });
+  await db.insert(DiscordArchiveMessage).values(
+    DISCORD_MESSAGE_IDS.map((id, index) => ({
+      authorDiscordUserId: DISCORD_AUTHOR_ID,
+      authorIsBot: false,
+      channelId: DISCORD_CHANNEL_ID,
+      content: "E2E message content must not surface",
+      createdAt: new Date(
+        required(
+          [
+            "2026-06-20T12:00:00Z",
+            "2026-07-13T12:00:00Z",
+            "2026-07-14T12:00:00Z",
+            "2026-07-15T12:00:00Z",
+          ][index],
+          "Discord message date",
+        ),
+      ),
+      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      id,
+      messageType: 0,
+    })),
+  );
   const currentYear = getDuesAcademicYear(new Date()).startYear;
   await db.insert(DuesPayment).values(
     MEMBER_IDS.slice(0, 5).map((memberId, index) => ({
@@ -278,6 +326,44 @@ test.describe("admin Club analytics", () => {
     await expect(
       page.locator('[data-analytics-metric-detail="true"]'),
     ).toHaveCount(4);
+    const discordMemberTable = page.getByRole("region", {
+      name: "Discord messages by member",
+    });
+    await expect(discordMemberTable).toContainText("Avery Analytics");
+    await expect(discordMemberTable).toContainText("4");
+    await expect(
+      page.getByText("E2E message content must not surface"),
+    ).toHaveCount(0);
+    await expect(page.getByText(DISCORD_AUTHOR_ID)).toHaveCount(0);
+    await discordMemberTable
+      .getByRole("button", { name: "Avery Analytics" })
+      .click();
+    const memberDialog = page.getByRole("dialog");
+    await expect(memberDialog).toBeVisible();
+    await expect(memberDialog.getByText("Event engagement")).toBeVisible();
+    await expect(memberDialog.getByText("Discord engagement")).toBeVisible();
+    await expect(
+      memberDialog.getByRole("heading", { name: "Employment history" }),
+    ).toBeVisible();
+    await expect(memberDialog.getByText("Member ID")).toHaveCount(0);
+    await expect(memberDialog.getByText("User ID")).toHaveCount(0);
+    const discordHeading = memberDialog.getByRole("heading", {
+      name: "Discord engagement",
+    });
+    await discordHeading.scrollIntoViewIfNeeded();
+    await expect(
+      memberDialog.getByText("July 2026", { exact: true }),
+    ).toBeVisible();
+    await memberDialog.getByRole("button", { name: "Previous month" }).click();
+    await expect(
+      memberDialog.getByText("June 2026", { exact: true }),
+    ).toBeVisible();
+    await memberDialog.screenshot({
+      path: ".playwright-results/analytics-member-discord-month.png",
+    });
+    await memberDialog.getByRole("button", { name: "Next month" }).click();
+    await page.keyboard.press("Escape");
+    await expect(memberDialog).toHaveCount(0);
     await settleSectionNavigation(page);
     await page.screenshot({
       fullPage: true,
