@@ -310,6 +310,15 @@ Current phase: Complete
   Issues bundles. The artifact is ready for human review.
 - 2026-07-27: Development is finished and merged into `reforge/main`. The
   feature is closed for development.
+- 2026-07-27: **The Club roster deferral is reversed.** This bundle deliberately
+  restored the public Guild surface "without restoring the Club roster" and added
+  a contract test asserting `guild.getPublicClubTeamRoster` was absent. That
+  decision was reasoned entirely from the Guild side — no artifact here mentions
+  `apps/club`, which calls the procedure at `teams-client.tsx:237`, catches the
+  failure, and renders an empty roster. The Club team page has been showing
+  nobody since the merge. The procedure is restored in
+  `packages/api/src/utils/guild/club-roster.ts`, ported from `main` where it
+  still runs, and the contract test now asserts its presence.
 
 ## Open questions
 
