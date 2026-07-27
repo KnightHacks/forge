@@ -104,6 +104,18 @@ export default tseslint.config(
         "error",
         { patterns: crossPackageImportPatterns },
       ],
+      // Warnings, not errors, and ratcheted by `--max-warnings` in the lint
+      // script: the eleven client components over 800 lines are a known,
+      // scheduled refactor, so failing on them today would only teach people to
+      // skip the gate. The ceiling can only go down.
+      "max-lines": [
+        "warn",
+        { max: 500, skipBlankLines: true, skipComments: true },
+      ],
+      "max-lines-per-function": [
+        "warn",
+        { max: 200, skipBlankLines: true, skipComments: true },
+      ],
       "no-console": "error",
     },
   },
