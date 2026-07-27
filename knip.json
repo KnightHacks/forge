@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.ts", "turbo/generators/config.ts"],
+      "project": ["scripts/**/*.ts"]
+    },
+    "apps/*": {
+      "entry": [
+        "src/app/**/{page,layout,loading,error,not-found,route,template,default,sitemap,robots,opengraph-image,icon,apple-icon}.{ts,tsx}",
+        "src/**/*.{test,spec}.{ts,tsx}",
+        "*.config.{ts,js,cjs,mjs}"
+      ]
+    },
+    "packages/*": {
+      "entry": ["src/**/*.{test,spec}.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/db": {
+      "entry": ["scripts/*.ts", "src/**/*.{test,spec}.{ts,tsx}"]
+    },
+    "tooling/*": {
+      "entry": ["*.js", "index.ts"]
+    }
+  },
+  "ignore": ["**/dist/**", "**/.next/**", "**/drizzle/**"],
+  "ignoreExportsUsedInFile": true
+}
