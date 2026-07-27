@@ -10,7 +10,6 @@ The official Knight Hacks Discord Bot
 /capybara - sends a random image of a capybara!
 /cat - sends a random image of a cat!
 /check_points - check your Knight Hacks points
-/countdown - sends a countdown to the next Knight Hacks event!
 /dog - sends a random image of a dog!
 /duck - sends random duck image!
 /eightball - gives a response to an asked question!
