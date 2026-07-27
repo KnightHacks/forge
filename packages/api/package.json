@@ -17,6 +17,10 @@
       "types": "./src/discord-archive.server.ts",
       "default": "./src/discord-archive.server.ts"
     },
+    "./resume-bundle.server": {
+      "types": "./src/resume-bundle.server.ts",
+      "default": "./src/resume-bundle.server.ts"
+    },
     "./utils": {
       "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
@@ -44,6 +48,7 @@
     "@stripe/stripe-js": "^8.8.0",
     "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
+    "archiver": "^6.0.2",
     "discord-api-types": "^0.38.40",
     "json-schema-to-zod": "^2.7.0",
     "minimatch": "^10.2.4",
@@ -59,6 +64,7 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
+    "@types/archiver": "^6.0.3",
     "@types/pg": "^8.16.0",
     "@types/qrcode": "^1.5.6",
     "eslint": "catalog:",

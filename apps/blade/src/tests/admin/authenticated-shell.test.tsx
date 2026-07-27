@@ -38,6 +38,7 @@ describe("AuthenticatedShell", () => {
       getVisibleAdminNavigation({
         alumni: true,
         analytics: true,
+        discordArchive: true,
         email: true,
         eventCheckIn: true,
         events: true,
@@ -52,6 +53,7 @@ describe("AuthenticatedShell", () => {
       "Alumni",
       "Analytics",
       "Companies",
+      "Discord archive",
       "Email",
       "Event Check-in",
       "Events",

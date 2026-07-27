@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChartNoAxesCombined,
   ClipboardList,
+  DatabaseZap,
   GraduationCap,
   LayoutDashboard,
   ListTodo,
@@ -19,6 +20,7 @@ import { GUILD_URL } from "~/lib/guild-urls";
 export interface AdminNavigationAccess {
   alumni?: boolean;
   analytics?: boolean;
+  discordArchive?: boolean;
   email?: boolean;
   eventCheckIn?: boolean;
   events?: boolean;
@@ -73,6 +75,13 @@ export const adminNavigationItems = [
     icon: Building2,
     id: "companies",
     label: "Companies",
+  },
+  {
+    access: "discordArchive",
+    href: "/admin/discord-archive",
+    icon: DatabaseZap,
+    id: "discordArchive",
+    label: "Discord archive",
   },
   {
     access: "email",
@@ -139,6 +148,8 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "alumni") return pathname.startsWith("/admin/alumni");
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
+  if (id === "discordArchive")
+    return pathname.startsWith("/admin/discord-archive");
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "email") return pathname.startsWith("/admin/email");
   if (id === "forms") return pathname.startsWith("/admin/forms");

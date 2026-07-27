@@ -3,6 +3,7 @@ import type {
   APIMessage,
   APIRole,
   RESTGetAPIChannelThreadsArchivedPublicResult,
+  RESTGetAPICurrentUserResult,
   RESTGetAPIGuildChannelsResult,
   RESTGetAPIGuildRolesResult,
   RESTGetAPIGuildThreadsResult,
@@ -289,7 +290,7 @@ export function createDiscordArchiveRestSource({
       if (guildId !== configuredGuildId) {
         throw new Error("Discord archive source received an unexpected guild.");
       }
-      const [guildChannelResult, activeThreads, member, roles] =
+      const [guildChannelResult, activeThreads, currentUser, roles] =
         await Promise.all([
           rest.get(
             Routes.guildChannels(guildId),
@@ -297,13 +298,16 @@ export function createDiscordArchiveRestSource({
           rest.get(
             Routes.guildActiveThreads(guildId),
           ) as Promise<RESTGetAPIGuildThreadsResult>,
-          rest.get(
-            Routes.userGuildMember(guildId),
-          ) as Promise<RESTGetCurrentUserGuildMemberResult>,
+          rest.get(Routes.user()) as Promise<RESTGetAPICurrentUserResult>,
           rest.get(
             Routes.guildRoles(guildId),
           ) as Promise<RESTGetAPIGuildRolesResult>,
         ]);
+      // The OAuth current-user guild-member route rejects bot tokens. Resolve
+      // the bot identity first, then use the bot-safe guild member endpoint.
+      const member = (await rest.get(
+        Routes.guildMember(guildId, currentUser.id),
+      )) as RESTGetCurrentUserGuildMemberResult;
       const guildChannels = guildChannelResult as unknown as APIChannel[];
 
       const visibleParents = guildChannels.filter(
@@ -328,7 +332,9 @@ export function createDiscordArchiveRestSource({
 
       const archivedThreads: APIChannel[] = [];
       if (includeArchivedThreads) {
-        for (const parent of visibleParents) {
+        for (const parent of visibleParents.filter((channel) =>
+          THREAD_PARENT_TYPES.has(channel.type),
+        )) {
           archivedThreads.push(
             ...(await listArchivedThreads(rest, parent.id, "public")),
           );

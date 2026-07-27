@@ -15,6 +15,7 @@ const guildId = "111111111111111111";
 const visibleChannelId = "222222222222222222";
 const hiddenChannelId = "333333333333333333";
 const botId = "444444444444444444";
+const voiceChannelId = "888888888888888888";
 
 function channel(id: string, input: Partial<APIChannel> = {}): APIChannel {
   return {
@@ -99,6 +100,7 @@ describe("Discord archive REST source", () => {
         if (route === Routes.guildChannels(guildId)) {
           return [
             channel(visibleChannelId),
+            channel(voiceChannelId, { type: ChannelType.GuildVoice }),
             channel(hiddenChannelId, {
               permission_overwrites: [
                 {
@@ -114,7 +116,16 @@ describe("Discord archive REST source", () => {
         if (route === Routes.guildActiveThreads(guildId)) {
           return { members: [], threads: [] };
         }
-        if (route === Routes.userGuildMember(guildId)) {
+        if (route === Routes.user()) {
+          return {
+            avatar: null,
+            discriminator: "0",
+            global_name: "Archive",
+            id: botId,
+            username: "archive",
+          };
+        }
+        if (route === Routes.guildMember(guildId, botId)) {
           return {
             avatar: null,
             communication_disabled_until: null,
@@ -150,14 +161,32 @@ describe("Discord archive REST source", () => {
             },
           ];
         }
+        if (
+          route === Routes.channelThreads(visibleChannelId, "public") ||
+          route === Routes.channelJoinedArchivedThreads(visibleChannelId)
+        ) {
+          return { has_more: false, members: [], threads: [] };
+        }
         throw new Error(`Unexpected route: ${route}`);
       }),
     };
-    const source = createDiscordArchiveRestSource({ guildId, rest });
+    const source = createDiscordArchiveRestSource({
+      guildId,
+      includeArchivedThreads: true,
+      rest,
+    });
 
     const discovered = await source.discoverChannels(guildId);
 
-    expect(discovered.map((item) => item.id)).toEqual([visibleChannelId]);
+    expect(discovered.map((item) => item.id)).toEqual([
+      visibleChannelId,
+      voiceChannelId,
+    ]);
+    expect(rest.get).not.toHaveBeenCalledWith(Routes.userGuildMember(guildId));
+    expect(rest.get).not.toHaveBeenCalledWith(
+      Routes.channelThreads(voiceChannelId, "public"),
+      expect.anything(),
+    );
   });
 
   it("returns an empty history page without requiring message guild fields", async () => {

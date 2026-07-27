@@ -36,6 +36,10 @@ describe("development database backup sanitizer", () => {
       expect.arrayContaining([
         "audit_event",
         "audit_subject",
+        "discord_archive_channel",
+        "discord_archive_checkpoint",
+        "discord_archive_message",
+        "discord_archive_state",
         "email_send",
         "email_send_event",
         "email_send_recipient",

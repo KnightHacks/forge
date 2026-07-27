@@ -3,6 +3,7 @@ import { analyticsRouter } from "./routers/analytics";
 import { auditRouter } from "./routers/audit";
 import { authRouter } from "./routers/auth";
 import { careerRouter } from "./routers/career";
+import { discordArchiveRouter } from "./routers/discord-archive";
 import { duesRouter } from "./routers/dues";
 import { emailRouter } from "./routers/email";
 import { eventRouter } from "./routers/event";
@@ -28,6 +29,7 @@ export interface AppRouterShape {
   auth: typeof authRouter;
   career: typeof careerRouter;
   dues: typeof duesRouter;
+  discordArchive: typeof discordArchiveRouter;
   email: typeof emailRouter;
   event: typeof eventRouter;
   forms: typeof formsRouter;
@@ -52,6 +54,7 @@ const appRouterRecord: AppRouterRecord = {
   auth: authRouter,
   career: careerRouter,
   dues: duesRouter,
+  discordArchive: discordArchiveRouter,
   email: emailRouter,
   event: eventRouter,
   forms: formsRouter,

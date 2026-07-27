@@ -6,6 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import {
   canAccessAlumniAdmin,
   canAccessAnalytics,
+  canAccessDiscordArchive,
   canAccessEmailPortal,
   canAccessEventAdmin,
   canAccessEventCheckIn,
@@ -30,6 +31,7 @@ export default async function AdminLayout({
   const effectivePermissions = await api.roles.getPermissions();
   if (
     !canAccessAnalytics(effectivePermissions) &&
+    !canAccessDiscordArchive(effectivePermissions) &&
     !canAccessAlumniAdmin(effectivePermissions) &&
     !canAccessEventAdmin(effectivePermissions) &&
     !canAccessEmailPortal(effectivePermissions) &&

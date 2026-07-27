@@ -21,9 +21,11 @@ import {
   ChevronRight,
   CircleDollarSign,
   Download,
+  FileArchive,
   FileBarChart,
   Info,
   Loader2,
+  MessagesSquare,
   RefreshCcw,
   ShieldCheck,
   UsersRound,
@@ -69,12 +71,6 @@ import {
   TableRow,
 } from "@forge/ui/table";
 import { toast } from "@forge/ui/toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@forge/ui/tooltip";
 
 import {
   ADMIN_PAGE_EYEBROWS,
@@ -82,18 +78,40 @@ import {
   adminPageLayoutClassName,
 } from "~/app/_components/admin/admin-page";
 import { api } from "~/trpc/react";
+import {
+  AnalyticsMetricCard as MetricCard,
+  AnalyticsMetricGrid as MetricGrid,
+} from "./analytics-metric-card";
+import { DiscordAnalyticsSection } from "./discord-analytics-section";
 import { buildAnalyticsSearchParams } from "./params";
 
 type AnalyticsReport = RouterOutputs["analytics"]["getReport"];
+type DiscordAnalyticsReport = RouterOutputs["analytics"]["getDiscordReport"];
 
 interface AnalyticsAccess {
   canOpenEvents: boolean;
   canOpenMembers: boolean;
 }
 
+type LifecycleGroup =
+  | AnalyticsReport["highlights"][number]["group"]
+  | "discord";
+
+interface LifecycleHighlight {
+  destination: "audience" | "discord" | "dues" | "events";
+  filters: {
+    demographic?: AnalyticsReport["audience"]["selectedDemographic"];
+    eventTag?: string;
+  };
+  group: LifecycleGroup;
+  kind: string;
+  message: string;
+}
+
 const sections = [
   { id: "overview", label: "Overview" },
   { id: "events", label: "Events" },
+  { id: "discord", label: "Discord" },
   { id: "audience", label: "Audience" },
   { id: "dues", label: "Dues" },
   { id: "reports", label: "Reports" },
@@ -111,6 +129,13 @@ const highlightGroups = [
     icon: ChartNoAxesCombined,
     id: "engagement",
     label: "Deepen engagement",
+  },
+  {
+    description:
+      "Measure conversation breadth and depth without exposing identities.",
+    icon: MessagesSquare,
+    id: "discord",
+    label: "Sustain community conversation",
   },
   {
     description: "Separate program volume, turnout, timing, and gateway value.",
@@ -139,7 +164,7 @@ const highlightGroups = [
 ] satisfies {
   description: string;
   icon: typeof ChartNoAxesCombined;
-  id: AnalyticsReport["highlights"][number]["group"];
+  id: LifecycleGroup;
   label: string;
 }[];
 
@@ -153,6 +178,105 @@ const demographicLabels = {
   school: "School",
   shirt_size: "Shirt size",
 } as const;
+
+const COMBINED_UNDERGRADUATE_LABEL = "Undergraduate University";
+const UNDERGRADUATE_LEVELS = new Set([
+  "Undergraduate University (2 year)",
+  "Undergraduate University (2 year - community college or similar)",
+  "Undergraduate University (3+ year)",
+]);
+
+function isUndergraduateLevel(category: string) {
+  return UNDERGRADUATE_LEVELS.has(category);
+}
+
+function ratio(numerator: number, denominator: number) {
+  return denominator === 0 ? null : numerator / denominator;
+}
+
+function mergeUndergraduateDemographicRows(
+  rows: AnalyticsReport["audience"]["demographics"]["level_of_study"]["rows"],
+) {
+  const undergraduateRows = rows.filter((row) =>
+    isUndergraduateLevel(row.category),
+  );
+  if (undergraduateRows.length === 0) return rows;
+
+  const baseCount = undergraduateRows.reduce(
+    (total, row) => total + row.baseCount,
+    0,
+  );
+  const attendeeCount = undergraduateRows.reduce(
+    (total, row) => total + row.attendeeCount,
+    0,
+  );
+  const totalBaseCount = rows.reduce((total, row) => total + row.baseCount, 0);
+  const totalAttendeeCount = rows.reduce(
+    (total, row) => total + row.attendeeCount,
+    0,
+  );
+  const repeatAttendeeCount = undergraduateRows.reduce(
+    (total, row) => total + (row.repeatAttendeeRate ?? 0) * row.attendeeCount,
+    0,
+  );
+  const duesPaidCount = undergraduateRows.reduce(
+    (total, row) => total + (row.duesPaidRate ?? 0) * row.baseCount,
+    0,
+  );
+  const baseShare = ratio(baseCount, totalBaseCount);
+  const audienceShare = ratio(attendeeCount, totalAttendeeCount);
+  const merged = {
+    attendeeCount,
+    audienceShare,
+    baseCount,
+    baseShare,
+    category: COMBINED_UNDERGRADUATE_LABEL,
+    duesPaidRate: ratio(duesPaidCount, baseCount),
+    participationRate: ratio(attendeeCount, baseCount),
+    repeatAttendeeRate: ratio(repeatAttendeeCount, attendeeCount),
+    representationGap:
+      baseShare === null || audienceShare === null
+        ? null
+        : audienceShare - baseShare,
+  };
+
+  return [
+    ...rows.filter((row) => !isUndergraduateLevel(row.category)),
+    merged,
+  ].sort(
+    (left, right) =>
+      right.baseCount - left.baseCount ||
+      left.category.localeCompare(right.category),
+  );
+}
+
+function mergeUndergraduateAffinityRows(
+  rows: AnalyticsReport["audience"]["affinity"],
+) {
+  const mergedByLabel = new Map<
+    string,
+    AnalyticsReport["audience"]["affinity"][number]
+  >();
+  const unmerged = rows.filter((row) => {
+    if (!isUndergraduateLevel(row.category)) return true;
+    const current = mergedByLabel.get(row.label);
+    mergedByLabel.set(row.label, {
+      attendanceCount: (current?.attendanceCount ?? 0) + row.attendanceCount,
+      category: COMBINED_UNDERGRADUATE_LABEL,
+      eventCount: Math.max(current?.eventCount ?? 0, row.eventCount),
+      label: row.label,
+      memberCount: (current?.memberCount ?? 0) + row.memberCount,
+    });
+    return false;
+  });
+
+  return [...unmerged, ...mergedByLabel.values()].sort(
+    (left, right) =>
+      right.attendanceCount - left.attendanceCount ||
+      left.category.localeCompare(right.category) ||
+      left.label.localeCompare(right.label),
+  );
+}
 
 const chartConfig = {
   attendanceCount: {
@@ -255,6 +379,74 @@ function formatDate(value: Date | string | null) {
   }).format(new Date(value));
 }
 
+function formatDateTime(value: Date | string | null) {
+  if (value === null) return "Not recorded";
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function DiscordParticipationMetrics({
+  report,
+}: {
+  report: DiscordAnalyticsReport;
+}) {
+  const humanShare =
+    report.mix.find((row) => row.kind === "human")?.share ?? null;
+  return (
+    <MetricGrid>
+      <MetricCard
+        definition="Distinct human Discord accounts that authored a current message in the selected period. Bots, webhooks, and system messages are excluded."
+        detail={`${formatNumber(report.summary.activeDays)} active days · ${formatNumber(report.summary.activeSurfaceCount)} active surfaces`}
+        label="Discord participants"
+        value={formatNumber(report.summary.uniqueHumanAuthors)}
+      />
+      <MetricCard
+        definition="Current, non-deleted messages classified as human-authored in the selected period."
+        detail={`${formatPercent(humanShare)} of current Discord messages`}
+        label="Human messages"
+        value={formatNumber(report.summary.humanMessageCount)}
+      />
+      <MetricCard
+        definition="Human-authored messages divided by distinct human Discord authors in the selected period."
+        detail={`Median ${formatDecimal(report.summary.medianHumanMessagesPerAuthor)} per participant`}
+        label="Messages / participant"
+        value={formatDecimal(report.summary.averageHumanMessagesPerAuthor, 1)}
+      />
+      <MetricCard
+        definition="Observed calendar days with at least one current Discord message, divided by all observed days in the selected period."
+        detail={`${formatNumber(report.summary.activeDays)} of ${formatNumber(report.summary.calendarDays)} days · ${formatNumber(report.summary.activeSurfaceCount)} active surfaces`}
+        label="Active conversation"
+        value={formatPercent(report.summary.activeDayRate)}
+      />
+    </MetricGrid>
+  );
+}
+
+function buildDiscordLifecycleHighlights(
+  report: DiscordAnalyticsReport,
+): LifecycleHighlight[] {
+  const participation: LifecycleHighlight = {
+    destination: "discord",
+    filters: {},
+    group: "discord",
+    kind: "discord_participation_depth",
+    message:
+      report.summary.uniqueHumanAuthors === 0
+        ? "No human Discord participants are represented in the selected period."
+        : `${formatNumber(report.summary.uniqueHumanAuthors)} people authored ${formatNumber(report.summary.humanMessageCount)} Discord messages—${formatDecimal(report.summary.averageHumanMessagesPerAuthor)} on average and ${formatDecimal(report.summary.medianHumanMessagesPerAuthor)} at the median.`,
+  };
+  const activity: LifecycleHighlight = {
+    destination: "discord",
+    filters: {},
+    group: "discord",
+    kind: "discord_activity_breadth",
+    message: `Discord conversation was active on ${formatNumber(report.summary.activeDays)} of ${formatNumber(report.summary.calendarDays)} observed days (${formatPercent(report.summary.activeDayRate)}) across ${formatNumber(report.summary.activeSurfaceCount)} surfaces (${formatPercent(report.summary.activeSurfaceRate)} of visible surfaces).`,
+  };
+  return [participation, activity];
+}
+
 function Panel({
   children,
   description,
@@ -278,58 +470,6 @@ function Panel({
       </div>
       <div className="min-w-0 p-3 sm:p-5">{children}</div>
     </section>
-  );
-}
-
-function MetricCard({
-  definition,
-  detail,
-  label,
-  value,
-}: {
-  definition: string;
-  detail?: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0 rounded-lg border border-white/10 bg-card/95 p-4 shadow-lg shadow-black/15">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {label}
-        </p>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                aria-label={`Define ${label}`}
-                className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                type="button"
-              >
-                <Info className="size-3.5" aria-hidden="true" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-72 text-xs leading-5">
-              {definition}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <p className="mt-2 font-mono text-2xl font-semibold tabular-nums tracking-tight">
-        {value}
-      </p>
-      {detail ? (
-        <div className="mt-2 text-xs text-muted-foreground">{detail}</div>
-      ) : null}
-    </div>
-  );
-}
-
-function MetricGrid({ children }: { children: ReactNode }) {
-  return (
-    <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {children}
-    </div>
   );
 }
 
@@ -671,10 +811,19 @@ function AnalyticsFilters({
     input.period.kind === "custom"
       ? new Date(input.period.to.getTime() - 1).toISOString().slice(0, 10)
       : "";
+  const discordOnly = input.section === "discord";
 
   return (
     <div className="sticky top-16 z-20 rounded-lg border border-border/70 bg-card/95 p-3 shadow-xl shadow-black/15 backdrop-blur">
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr_1.2fr_auto]">
+      <div
+        className={
+          discordOnly
+            ? "grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] xl:max-w-xl"
+            : input.section === "audience"
+              ? "grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[1.05fr_0.9fr_0.9fr_1.1fr_1fr_auto]"
+              : "grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[1.15fr_1fr_1fr_1.2fr_auto]"
+        }
+      >
         <Select onValueChange={handlePeriod} value={periodValue}>
           <SelectTrigger aria-label="Reporting period" className="h-11 w-full">
             <SelectValue placeholder="Reporting period" />
@@ -693,46 +842,75 @@ function AnalyticsFilters({
             <SelectItem value="custom">Custom range</SelectItem>
           </SelectContent>
         </Select>
-        <Select onValueChange={handleComparison} value={input.comparison}>
-          <SelectTrigger aria-label="Comparison period" className="h-11 w-full">
-            <SelectValue placeholder="Comparison" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="previous_academic_year">
-              Previous academic year
-            </SelectItem>
-            <SelectItem value="previous_period">
-              Previous equivalent period
-            </SelectItem>
-            <SelectItem value="none">No comparison</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select onValueChange={handleTag} value={input.eventTags[0] ?? "all"}>
-          <SelectTrigger aria-label="Event type" className="h-11 w-full">
-            <SelectValue placeholder="Event type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All event types</SelectItem>
-            {report.filterOptions.tags.map((tag) => (
-              <SelectItem key={tag} value={tag}>
-                {tag}
+        {discordOnly ? null : (
+          <Select onValueChange={handleComparison} value={input.comparison}>
+            <SelectTrigger
+              aria-label="Comparison period"
+              className="h-11 w-full"
+            >
+              <SelectValue placeholder="Comparison" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="previous_academic_year">
+                Previous academic year
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select onValueChange={handleEvent} value={input.eventId ?? "all"}>
-          <SelectTrigger aria-label="Individual event" className="h-11 w-full">
-            <SelectValue placeholder="Individual event" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All matching events</SelectItem>
-            {report.filterOptions.events.map((event) => (
-              <SelectItem key={event.id} value={event.id}>
-                {event.name} · {formatDate(event.startAt)}
+              <SelectItem value="previous_period">
+                Previous equivalent period
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              <SelectItem value="none">No comparison</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+        {discordOnly ? null : (
+          <Select onValueChange={handleTag} value={input.eventTags[0] ?? "all"}>
+            <SelectTrigger aria-label="Event type" className="h-11 w-full">
+              <SelectValue placeholder="Event type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All event types</SelectItem>
+              {report.filterOptions.tags.map((tag) => (
+                <SelectItem key={tag} value={tag}>
+                  {tag}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {discordOnly ? null : (
+          <Select onValueChange={handleEvent} value={input.eventId ?? "all"}>
+            <SelectTrigger
+              aria-label="Individual event"
+              className="h-11 w-full"
+            >
+              <SelectValue placeholder="Individual event" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All matching events</SelectItem>
+              {report.filterOptions.events.map((event) => (
+                <SelectItem key={event.id} value={event.id}>
+                  {event.name} · {formatDate(event.startAt)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {input.section === "audience" ? (
+          <Select onValueChange={handleDemographic} value={input.demographic}>
+            <SelectTrigger
+              aria-label="Audience demographic"
+              className="h-11 w-full"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(demographicLabels).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Button
           className="h-11 w-full gap-2 xl:w-auto"
           disabled={isPending}
@@ -768,25 +946,6 @@ function AnalyticsFilters({
               value={customTo}
             />
           </label>
-        </div>
-      ) : null}
-      {input.section === "audience" ? (
-        <div className="mt-2 border-t border-border/60 pt-2 sm:max-w-xs">
-          <Select onValueChange={handleDemographic} value={input.demographic}>
-            <SelectTrigger
-              aria-label="Audience demographic"
-              className="h-11 w-full"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(demographicLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       ) : null}
     </div>
@@ -827,14 +986,20 @@ function SectionNavigation({ input }: { input: AnalyticsReportInput }) {
 }
 
 function OverviewSection({
+  discordReport,
   input,
   report,
 }: {
+  discordReport: DiscordAnalyticsReport;
   input: AnalyticsReportInput;
   report: AnalyticsReport;
 }) {
   const summary = report.overview.summary;
   const comparison = report.overview.comparison;
+  const lifecycleHighlights: LifecycleHighlight[] = [
+    ...report.highlights,
+    ...buildDiscordLifecycleHighlights(discordReport),
+  ];
   const return30 = report.events.returnCohorts.find(
     (cohort) => cohort.days === 30,
   );
@@ -846,7 +1011,7 @@ function OverviewSection({
     const percent = change?.percent ?? null;
     const positive = absolute >= 0;
     return (
-      <span className={positive ? "text-emerald-500" : "text-amber-500"}>
+      <span className={positive ? "text-emerald-500" : "text-red-500"}>
         {positive ? (
           <ArrowUpRight className="mr-1 inline size-3.5" />
         ) : (
@@ -862,11 +1027,13 @@ function OverviewSection({
       <MetricGrid>
         <MetricCard
           definition="Every retained Member profile, whether or not another account concept is relevant."
+          detail={`${formatNumber(report.audience.summary.newProfileCount)} created in the selected period`}
           label="Member profiles"
           value={formatNumber(report.overview.memberProfileCount)}
         />
         <MetricCard
           definition="Current retained Member profiles created in the selected period. Historical deletions are unavailable."
+          detail={`${formatPercent(ratio(report.audience.summary.newProfileCount, report.overview.memberProfileCount))} of current profiles`}
           label="New profiles"
           value={formatNumber(report.audience.summary.newProfileCount)}
         />
@@ -896,6 +1063,7 @@ function OverviewSection({
         />
         <MetricCard
           definition="Selected-period attendees who attended at least two events, divided by all selected attendees."
+          detail={`${formatNumber(report.audience.summary.repeatAttendeeCount)} of ${formatNumber(summary.distinctAttendeeCount)} attendees returned`}
           label="Repeat rate"
           value={formatPercent(summary.repeatAttendeeRate)}
         />
@@ -907,6 +1075,7 @@ function OverviewSection({
         />
         <MetricCard
           definition="The middle distinct attendance count across matching events."
+          detail={`Average ${formatDecimal(summary.averageAttendance, 1)} per event`}
           label="Median turnout"
           value={formatDecimal(summary.medianAttendance, 0)}
         />
@@ -928,18 +1097,20 @@ function OverviewSection({
         />
         <MetricCard
           definition="Current retained Member profiles with no effective active dues credit recorded."
+          detail={`${formatNumber(report.dues.summary.paidCount)} paid · ${formatPercent(report.dues.summary.paidRate)} coverage`}
           label="Unpaid profiles"
           value={formatNumber(report.dues.summary.unpaidCount)}
         />
       </MetricGrid>
-      {report.highlights.length > 0 ? (
+      <DiscordParticipationMetrics report={discordReport} />
+      {lifecycleHighlights.length > 0 ? (
         <Panel
-          description="What changed across profile activation, event return, programming, audience reach, and dues. These measured associations show where to investigate; they do not claim why a change happened."
+          description="A linked brief across profile activation, event return, Discord conversation, programming, audience reach, dues, and measurement. Each card opens the section behind the finding."
           title="Member lifecycle findings"
         >
-          <div className="divide-y divide-border/60">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
             {highlightGroups.map((group) => {
-              const groupHighlights = report.highlights.filter(
+              const groupHighlights = lifecycleHighlights.filter(
                 (highlight) => highlight.group === group.id,
               );
               if (groupHighlights.length === 0) return null;
@@ -947,7 +1118,7 @@ function OverviewSection({
               return (
                 <section
                   aria-labelledby={`highlight-group-${group.id}`}
-                  className="grid gap-3 py-5 first:pt-0 last:pb-0 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-6"
+                  className="min-w-0 rounded-lg border border-border/70 bg-card/60 p-4"
                   key={group.id}
                 >
                   <div className="min-w-0">
@@ -962,15 +1133,15 @@ function OverviewSection({
                       >
                         {group.label}
                       </h3>
-                      <span className="ml-auto font-mono text-sm tabular-nums text-muted-foreground md:ml-0">
+                      <span className="ml-auto font-mono text-sm tabular-nums text-muted-foreground">
                         {String(groupHighlights.length).padStart(2, "0")}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-sm leading-5 text-muted-foreground md:pl-6">
+                    <p className="mt-2 text-sm leading-5 text-muted-foreground">
                       {group.description}
                     </p>
                   </div>
-                  <div className="min-w-0 border-y border-border/60 bg-background/20">
+                  <div className="mt-4 grid min-w-0 gap-3">
                     {groupHighlights.map((highlight) => {
                       const params = buildAnalyticsSearchParams({
                         ...input,
@@ -983,22 +1154,27 @@ function OverviewSection({
                       });
                       return (
                         <Link
-                          className="group flex min-h-12 items-start gap-3 border-b border-border/50 px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                          className="group flex min-h-32 flex-col rounded-lg border border-border/70 bg-background/55 p-4 transition-colors hover:border-primary/35 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           href={`/admin/analytics?${params.toString()}`}
                           key={highlight.kind}
                           scroll={false}
                         >
-                          <span
-                            className="mt-2 size-1.5 shrink-0 rounded-full bg-primary/60 transition-colors group-hover:bg-primary"
-                            aria-hidden="true"
-                          />
-                          <p className="min-w-0 flex-1 text-sm leading-6">
+                          <p className="min-w-0 text-base font-medium leading-6">
                             {highlight.message}
                           </p>
-                          <ArrowUpRight
-                            className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                            aria-hidden="true"
-                          />
+                          <span className="mt-auto flex items-center gap-1 pt-4 text-xs font-medium uppercase tracking-[0.12em] text-primary">
+                            Open{" "}
+                            {
+                              sections.find(
+                                (section) =>
+                                  section.id === highlight.destination,
+                              )?.label
+                            }
+                            <ArrowUpRight
+                              className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                              aria-hidden="true"
+                            />
+                          </span>
                         </Link>
                       );
                     })}
@@ -1030,51 +1206,44 @@ function OverviewSection({
   );
 }
 
-function EventsSection({
-  canOpenEvents,
-  report,
-}: {
-  canOpenEvents: boolean;
-  report: AnalyticsReport;
-}) {
+function EventsSection({ report }: { report: AnalyticsReport }) {
   const summary = report.events.summary;
   return (
     <div className="space-y-4">
-      {canOpenEvents ? (
-        <div className="flex justify-end">
-          <Button asChild size="sm" variant="outline">
-            <Link href="/admin/events">Open Event admin</Link>
-          </Button>
-        </div>
-      ) : null}
       <MetricGrid>
         <MetricCard
           definition="Matching non-hackathon Club events."
+          detail={`${formatDecimal(summary.averageAttendance, 1)} average turnout`}
           label="Events"
           value={formatNumber(summary.eventCount)}
         />
         <MetricCard
           definition="One Member profile at one matching event."
+          detail={`${formatDecimal(summary.averageAttendance, 1)} per matching event`}
           label="Attendances"
           value={formatNumber(summary.distinctAttendanceCount)}
         />
         <MetricCard
           definition="Profiles reached by at least one matching event."
+          detail={`${formatNumber(report.audience.summary.repeatAttendeeCount)} attended at least twice`}
           label="Attendees"
           value={formatNumber(summary.distinctAttendeeCount)}
         />
         <MetricCard
           definition="Attendees divided by all current Member profiles."
+          detail={`${formatNumber(summary.distinctAttendeeCount)} of ${formatNumber(report.overview.memberProfileCount)} profiles`}
           label="Reach"
           value={formatPercent(summary.memberReach)}
         />
         <MetricCard
           definition="Attendees at two or more matching events divided by all matching attendees."
+          detail={`${formatNumber(report.audience.summary.repeatAttendeeCount)} of ${formatNumber(summary.distinctAttendeeCount)} attendees`}
           label="Repeat rate"
           value={formatPercent(summary.repeatAttendeeRate)}
         />
         <MetricCard
           definition="Mean distinct attendance across matching events."
+          detail={`Median ${formatDecimal(summary.medianAttendance, 0)} per event`}
           label="Average turnout"
           value={formatDecimal(summary.averageAttendance, 1)}
         />
@@ -1287,39 +1456,63 @@ function EventsSection({
   );
 }
 
-function AudienceSection({ report }: { report: AnalyticsReport }) {
+function AudienceSection({
+  discordReport,
+  report,
+}: {
+  discordReport: DiscordAnalyticsReport;
+  report: AnalyticsReport;
+}) {
   const selected =
     report.audience.demographics[report.audience.selectedDemographic];
-  const chartRows = selected.rows.slice(0, 12);
+  const shouldMergeUndergraduate =
+    report.audience.selectedDemographic === "level_of_study";
+  const selectedRows = shouldMergeUndergraduate
+    ? mergeUndergraduateDemographicRows(
+        report.audience.demographics.level_of_study.rows,
+      )
+    : selected.rows;
+  const affinityRows = shouldMergeUndergraduate
+    ? mergeUndergraduateAffinityRows(report.audience.affinity)
+    : report.audience.affinity;
+  const memberRows = shouldMergeUndergraduate
+    ? report.audience.memberRows.map((row) => ({
+        ...row,
+        category: isUndergraduateLevel(row.category)
+          ? COMBINED_UNDERGRADUATE_LABEL
+          : row.category,
+      }))
+    : report.audience.memberRows;
+  const chartRows = selectedRows.slice(0, 12);
   return (
     <div className="space-y-4">
       <MetricGrid>
         <MetricCard
           definition="Every current retained Member profile."
+          detail={`${formatNumber(report.audience.summary.newProfileCount)} created in the selected period`}
           label="Profiles"
           value={formatNumber(report.audience.summary.memberProfileCount)}
         />
         <MetricCard
           definition="Profiles created inside the selected period. Deleted profiles cannot be reconstructed."
+          detail={`${formatPercent(ratio(report.audience.summary.newProfileCount, report.audience.summary.memberProfileCount))} of current profiles`}
           label="New profiles"
           value={formatNumber(report.audience.summary.newProfileCount)}
         />
         <MetricCard
           definition="Profiles with at least one matching event attendance."
+          detail={`${formatPercent(ratio(report.audience.summary.attendeeCount, report.audience.summary.memberProfileCount))} of current profiles`}
           label="Reached"
           value={formatNumber(report.audience.summary.attendeeCount)}
         />
         <MetricCard
           definition="Reached profiles with at least two matching attendances."
+          detail={`${formatPercent(ratio(report.audience.summary.repeatAttendeeCount, report.audience.summary.attendeeCount))} of reached profiles`}
           label="Repeat attendees"
           value={formatNumber(report.audience.summary.repeatAttendeeCount)}
         />
-        <MetricCard
-          definition="Profiles with a usable value for the selected demographic. Missing and invalid remain in the table."
-          label="Data coverage"
-          value={formatPercent(report.audience.summary.dataCoverage)}
-        />
       </MetricGrid>
+      <DiscordParticipationMetrics report={discordReport} />
       <Panel
         description="Base profiles and matching attendees use the same complete demographic categories."
         title={`${demographicLabels[report.audience.selectedDemographic]} composition`}
@@ -1435,7 +1628,7 @@ function AudienceSection({ report }: { report: AnalyticsReport }) {
               </TableBody>
             </Table>
           )}
-          rows={selected.rows}
+          rows={selectedRows}
         />
       </Panel>
       <div className="grid min-w-0 gap-4">
@@ -1443,7 +1636,7 @@ function AudienceSection({ report }: { report: AnalyticsReport }) {
           description="Distinct selected attendance crossed with the selected demographic and event type."
           title="Program affinity"
         >
-          {report.audience.affinity.length === 0 ? (
+          {affinityRows.length === 0 ? (
             <EmptyInline message="No matching affinity data." />
           ) : (
             <PaginatedTableRegion
@@ -1474,7 +1667,7 @@ function AudienceSection({ report }: { report: AnalyticsReport }) {
                   </TableBody>
                 </Table>
               )}
-              rows={report.audience.affinity}
+              rows={affinityRows}
             />
           )}
         </Panel>
@@ -1523,7 +1716,7 @@ function AudienceSection({ report }: { report: AnalyticsReport }) {
                 </TableBody>
               </Table>
             )}
-            rows={report.audience.memberRows}
+            rows={memberRows}
           />
         </Panel>
       </div>
@@ -1533,9 +1726,11 @@ function AudienceSection({ report }: { report: AnalyticsReport }) {
 
 function DuesSection({
   access,
+  discordReport,
   report,
 }: {
   access: AnalyticsAccess;
+  discordReport: DiscordAnalyticsReport;
   report: AnalyticsReport;
 }) {
   const summary = report.dues.summary;
@@ -1567,25 +1762,30 @@ function DuesSection({
       <MetricGrid>
         <MetricCard
           definition="Every current retained Member profile is in the current dues denominator."
+          detail={`${formatNumber(summary.paidCount)} paid · ${formatNumber(summary.unpaidCount)} unpaid`}
           label="Expected profiles"
           value={formatNumber(summary.profileCount)}
         />
         <MetricCard
           definition="Profiles with an effective active dues credit under the existing dues-status rules."
+          detail={`${formatPercent(summary.paidRate)} of expected profiles`}
           label="Paid"
           value={formatNumber(summary.paidCount)}
         />
         <MetricCard
           definition="Profiles with no effective active dues credit recorded."
+          detail={`${formatPercent(ratio(summary.unpaidCount, summary.profileCount))} of expected profiles`}
           label="Unpaid"
           value={formatNumber(summary.unpaidCount)}
         />
         <MetricCard
           definition="Paid profiles divided by every current retained Member profile."
+          detail={`${formatNumber(summary.paidCount)} of ${formatNumber(summary.profileCount)} expected profiles`}
           label="Paid coverage"
           value={formatPercent(summary.paidRate)}
         />
       </MetricGrid>
+      <DiscordParticipationMetrics report={discordReport} />
       <div className="grid min-w-0 gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Panel
           description="Recorded Member/year credits by elapsed day from August 1. Active and stale details remain in the year table."
@@ -1834,6 +2034,119 @@ function ExportButton({
   );
 }
 
+const RESUME_DOWNLOAD_COOKIE = "resume-bundle-download";
+
+function readResumeDownloadSignal() {
+  const prefix = `${RESUME_DOWNLOAD_COOKIE}=`;
+  const cookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+}
+
+function clearResumeDownloadSignal() {
+  document.cookie = `${RESUME_DOWNLOAD_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
+function ResumeBundleButton() {
+  const [isPreparing, setIsPreparing] = useState(false);
+  const pollTimerRef = useRef<number | null>(null);
+  const timeoutTimerRef = useRef<number | null>(null);
+
+  const clearTimers = useCallback(() => {
+    if (pollTimerRef.current !== null) {
+      window.clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    if (timeoutTimerRef.current !== null) {
+      window.clearTimeout(timeoutTimerRef.current);
+      timeoutTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => clearTimers, [clearTimers]);
+
+  const handleDownload = useCallback(() => {
+    if (isPreparing) return;
+
+    clearTimers();
+    clearResumeDownloadSignal();
+    setIsPreparing(true);
+
+    const token = window.crypto.randomUUID().replaceAll("-", "");
+    const readySignal = `${token}.ready`;
+    const errorSignal = `${token}.error`;
+
+    pollTimerRef.current = window.setInterval(() => {
+      const signal = readResumeDownloadSignal();
+      if (signal !== readySignal && signal !== errorSignal) return;
+
+      clearTimers();
+      clearResumeDownloadSignal();
+      setIsPreparing(false);
+
+      if (signal === readySignal) {
+        toast.success("Resume bundle download started.");
+      } else {
+        toast.error(
+          "The resume bundle could not be prepared. Please try again.",
+        );
+      }
+    }, 250);
+
+    timeoutTimerRef.current = window.setTimeout(
+      () => {
+        clearTimers();
+        clearResumeDownloadSignal();
+        setIsPreparing(false);
+        toast.error(
+          "Resume preparation is taking longer than expected. Please try again.",
+        );
+      },
+      5 * 60 * 1000,
+    );
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = `/api/admin/resume-bundle?downloadToken=${encodeURIComponent(token)}`;
+    downloadLink.download = "";
+    downloadLink.hidden = true;
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+  }, [clearTimers, isPreparing]);
+
+  return (
+    <div className="grid w-full gap-2 sm:w-auto">
+      <Button
+        className="h-11 w-full sm:w-auto sm:justify-self-start"
+        disabled={isPreparing}
+        aria-busy={isPreparing}
+        onClick={handleDownload}
+        type="button"
+      >
+        {isPreparing ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <Download className="size-4" aria-hidden="true" />
+        )}
+        {isPreparing ? "Preparing ZIP…" : "Download ZIP"}
+      </Button>
+      <p
+        className={
+          isPreparing
+            ? "max-w-72 text-xs leading-relaxed text-muted-foreground"
+            : "sr-only"
+        }
+        aria-live="polite"
+      >
+        {isPreparing
+          ? "Checking available resumes and building folders. This usually takes about a minute; keep this page open."
+          : "Resume bundle preparation is idle."}
+      </p>
+    </div>
+  );
+}
+
 function ReportsSection({ input }: { input: AnalyticsReportInput }) {
   const exports = [
     {
@@ -1852,6 +2165,13 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
     },
     {
       description:
+        "Author-free message volume, participation depth, sender mix, daily activity, and top surfaces.",
+      icon: MessagesSquare,
+      kind: "discord",
+      title: "Discord summary",
+    },
+    {
+      description:
         "Full demographic segments and named analytical Member rows for internal planning.",
       icon: UsersRound,
       kind: "audience",
@@ -1867,7 +2187,7 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
   ] as const;
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {exports.map((item) => (
           <section
             className="flex min-w-0 flex-col gap-4 rounded-lg border border-white/10 bg-card/95 p-5 shadow-lg shadow-black/15"
@@ -1889,6 +2209,23 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
             </div>
           </section>
         ))}
+        <section className="flex min-w-0 flex-col gap-4 rounded-lg border border-white/10 bg-card/95 p-5 shadow-lg shadow-black/15">
+          <div className="flex gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/15 text-primary">
+              <FileArchive className="size-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-semibold">Member resume bundle</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Every available Member resume, organized by graduation term and
+                year, university, and major with a complete All folder.
+              </p>
+            </div>
+          </div>
+          <div className="mt-auto shrink-0">
+            <ResumeBundleButton />
+          </div>
+        </section>
       </div>
       <section className="rounded-lg border border-primary/25 bg-card/95 p-5 shadow-xl shadow-black/20">
         <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -1923,9 +2260,9 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
             aria-hidden="true"
           />
           <span>
-            Every file includes the reporting period, active filters, generation
-            time, and metric-definition version. Internal files remain sensitive
-            Club data even when exported.
+            Every analytics CSV includes the reporting period, active filters,
+            generation time, and metric-definition version. All internal
+            downloads remain sensitive Club data.
           </span>
         </p>
       </div>
@@ -1935,20 +2272,33 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
 
 export function AnalyticsDashboard({
   access,
+  discordReport,
   input,
   report,
 }: {
   access: AnalyticsAccess;
+  discordReport: DiscordAnalyticsReport;
   input: AnalyticsReportInput;
   report: AnalyticsReport;
 }) {
   const content: Record<AnalyticsSection, ReactNode> = {
-    audience: <AudienceSection report={report} />,
-    dues: <DuesSection access={access} report={report} />,
-    events: (
-      <EventsSection canOpenEvents={access.canOpenEvents} report={report} />
+    audience: <AudienceSection discordReport={discordReport} report={report} />,
+    discord: <DiscordAnalyticsSection report={discordReport} />,
+    dues: (
+      <DuesSection
+        access={access}
+        discordReport={discordReport}
+        report={report}
+      />
     ),
-    overview: <OverviewSection input={input} report={report} />,
+    events: <EventsSection report={report} />,
+    overview: (
+      <OverviewSection
+        discordReport={discordReport}
+        input={input}
+        report={report}
+      />
+    ),
     reports: <ReportsSection input={input} />,
   };
   return (
@@ -1956,14 +2306,54 @@ export function AnalyticsDashboard({
       <AdminPageHeader
         actions={
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline">{report.metadata.period.label}</Badge>
-            <Badge variant="outline">
-              {report.metadata.comparisonPeriod?.label ?? "No comparison"}
-            </Badge>
-            <Badge variant="outline">{report.metadata.metricVersion}</Badge>
+            {input.section === "discord" ? (
+              <Badge
+                className={
+                  discordReport.coverage.status === "healthy"
+                    ? "border-emerald-500/30 text-emerald-500"
+                    : "border-amber-500/30 text-amber-500"
+                }
+                variant="outline"
+              >
+                <span
+                  className={`mr-1.5 size-1.5 rounded-full ${
+                    discordReport.coverage.status === "healthy"
+                      ? "bg-emerald-500"
+                      : "bg-amber-500"
+                  }`}
+                  aria-hidden="true"
+                />
+                {discordReport.coverage.status === "healthy"
+                  ? "Healthy"
+                  : "Needs attention"}
+                <span className="text-muted-foreground">
+                  · Updated{" "}
+                  {formatDateTime(
+                    discordReport.coverage.lastGatewayEventAt ??
+                      discordReport.coverage.lastReconciledAt,
+                  )}
+                </span>
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="outline">{report.metadata.period.label}</Badge>
+                <Badge variant="outline">
+                  {report.metadata.comparisonPeriod?.label ?? "No comparison"}
+                </Badge>
+              </>
+            )}
+            {input.section === "events" && access.canOpenEvents ? (
+              <Button asChild className="h-7 px-2 text-xs" variant="outline">
+                <Link href="/admin/events">Open Event admin</Link>
+              </Button>
+            ) : null}
           </div>
         }
-        description="Turnout, audience, dues, and feedback from retained non-hackathon Club records. Metrics show associations and coverage without inventing causes."
+        description={
+          input.section === "discord"
+            ? "Aggregate Discord activity, sender mix, and channel distribution without exposing message bodies or identities."
+            : "Turnout, audience, dues, and feedback from retained non-hackathon Club records. Metrics show associations and coverage without inventing causes."
+        }
         eyebrow={ADMIN_PAGE_EYEBROWS.analytics}
         icon={ChartNoAxesCombined}
         title="Analytics"

@@ -83,7 +83,7 @@ export function projectDiscordLiveMessage(
     applicationId: message.applicationId,
     attachments: [...message.attachments.values()].map((attachment) => ({
       contentType: attachment.contentType,
-      filename: (attachment.name ?? attachment.id).slice(0, 255),
+      filename: attachment.name.slice(0, 255),
       height: attachment.height,
       id: attachment.id,
       size: attachment.size,

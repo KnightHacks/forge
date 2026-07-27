@@ -1,9 +1,12 @@
 import { Client } from "discord.js";
 
+import { DISCORD } from "@forge/consts";
 import { logger } from "@forge/utils";
 
+import { safelyHandleTkInteraction } from "./command-handler";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
+import { startDiscordArchiveGateway } from "./discord-archive/gateway";
 import { env } from "./env";
 
 /*
@@ -33,12 +36,41 @@ client.on("guildCreate", (guild) => {
 
 // Load interactions
 client.on("interactionCreate", (interaction) => {
-  if (!interaction.isCommand()) {
-    return;
-  }
-  const { commandName } = interaction;
-  void commands[commandName as keyof typeof commands].execute(interaction);
+  void safelyHandleTkInteraction({
+    commands,
+    interaction,
+    onError: () => {
+      logger.error(
+        "A T.K command failed. The bot and Discord archive listener remain available.",
+      );
+    },
+  });
 });
 
 // Login to Discord
 void client.login(env.DISCORD_BOT_TOKEN);
+
+async function startArchiveGateway() {
+  if (!env.DISCORD_ARCHIVE_BOT_TOKEN) {
+    logger.info(
+      "Discord archive Gateway is disabled because its token is not configured.",
+    );
+    return;
+  }
+
+  try {
+    const { discordArchiveDatabaseStore } =
+      await import("@forge/api/discord-archive.server");
+    startDiscordArchiveGateway({
+      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      store: discordArchiveDatabaseStore,
+      token: env.DISCORD_ARCHIVE_BOT_TOKEN,
+    });
+  } catch {
+    logger.error(
+      "Discord archive Gateway could not start. Existing T.K. behavior remains available.",
+    );
+  }
+}
+
+void startArchiveGateway();

@@ -28,6 +28,7 @@ describe("club analytics inputs", () => {
     for (const section of [
       "overview",
       "events",
+      "discord",
       "audience",
       "dues",
       "reports",
@@ -40,6 +41,7 @@ describe("club analytics inputs", () => {
     for (const kind of [
       "overview",
       "events",
+      "discord",
       "audience",
       "dues",
       "sponsor",

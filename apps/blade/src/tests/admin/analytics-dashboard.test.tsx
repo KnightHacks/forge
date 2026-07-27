@@ -166,13 +166,77 @@ const report = {
   },
 } as unknown as RouterOutputs["analytics"]["getReport"];
 
+const discordReport = {
+  channels: [
+    {
+      count: 60,
+      isThread: false,
+      label: "general",
+      share: 0.6,
+      type: 0,
+    },
+  ],
+  coverage: {
+    completeSurfaceCount: 52,
+    coverage: 1,
+    lastBackfillProgressAt: new Date("2026-07-16T11:58:00.000Z"),
+    lastGatewayEventAt: new Date("2026-07-16T11:59:00.000Z"),
+    lastLiveWriteAt: new Date("2026-07-16T11:59:00.000Z"),
+    lastReconciledAt: new Date("2026-07-16T11:57:00.000Z"),
+    status: "healthy",
+    totalSurfaceCount: 52,
+  },
+  metadata: {
+    generatedAt: new Date("2026-07-16T12:00:00.000Z"),
+    metricVersion: "discord-analytics-v1",
+    period: {
+      end: new Date("2026-08-01T04:00:00.000Z"),
+      kind: "current_academic_year",
+      label: "2025-2026 academic school year",
+      observationEnd: new Date("2026-07-16T12:00:00.000Z"),
+      start: new Date("2025-08-01T04:00:00.000Z"),
+    },
+  },
+  mix: [
+    { count: 75, kind: "human", label: "People", share: 0.75 },
+    { count: 10, kind: "bot", label: "Bots", share: 0.1 },
+    { count: 10, kind: "webhook", label: "Webhooks", share: 0.1 },
+    { count: 5, kind: "system", label: "System", share: 0.05 },
+  ],
+  summary: {
+    activeDays: 2,
+    activeDayRate: 0.2,
+    activeSurfaceCount: 4,
+    activeSurfaceRate: 4 / 52,
+    averageHumanMessagesPerAuthor: 75 / 18,
+    averageMessagesPerDay: 10,
+    calendarDays: 10,
+    humanMessageCount: 75,
+    messageCount: 100,
+    medianHumanMessagesPerAuthor: 3,
+    tombstonedMessageCount: 2,
+    uniqueAuthors: 18,
+    uniqueHumanAuthors: 18,
+    visibleChannels: 24,
+    visibleThreads: 28,
+  },
+  trend: {
+    grain: "day",
+    rows: [
+      { activeChannels: 3, date: "2026-07-15", messages: 40 },
+      { activeChannels: 4, date: "2026-07-16", messages: 60 },
+    ],
+  },
+} as RouterOutputs["analytics"]["getDiscordReport"];
+
 function renderSection(
-  section: "audience" | "dues" | "events" | "overview" | "reports",
+  section: "audience" | "discord" | "dues" | "events" | "overview" | "reports",
   selectedReport = report,
 ) {
   return renderToStaticMarkup(
     createElement(AnalyticsDashboard, {
       access: { canOpenEvents: false, canOpenMembers: false },
+      discordReport,
       input: analyticsReportInputSchema.parse({ section }),
       report: selectedReport,
     }),
@@ -187,6 +251,7 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("2025-2026 academic school year");
     expect(html).toContain("Overview");
     expect(html).toContain("Events");
+    expect(html).toContain("Discord");
     expect(html).toContain("Audience");
     expect(html).toContain("Dues");
     expect(html).toContain("Reports");
@@ -194,7 +259,28 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("New profiles");
     expect(html).toContain("Repeat rate");
     expect(html).toContain("30-day return");
+    expect(html).toContain("Discord participants");
+    expect(html).toContain("Messages / participant");
     expect(html).toContain("Define Member profiles");
+  });
+
+  it("renders aggregate Discord analytics without raw archive records", () => {
+    const html = renderSection("discord");
+
+    expect(html).toContain("Current messages");
+    expect(html).toContain("People posting");
+    expect(html).toContain("Messages per person");
+    expect(html).toContain("Most active surfaces");
+    expect(html).toContain("general");
+    expect(html).toContain("Discord activity on Jul 15, 2026");
+    expect(html).toContain("Define Current messages");
+    expect(html).toContain("Healthy");
+    expect(html).toContain("Updated");
+    expect(html).not.toContain("Aggregate activity only");
+    expect(html).not.toContain("discord-analytics-v1");
+    expect(html).not.toContain("Ingestion context");
+    expect(html).not.toContain("raw-message-sentinel");
+    expect(html).not.toContain("authorDiscordUserId");
   });
 
   it("[TC-023] preserves known profile and unpaid counts when events are empty", () => {
@@ -210,17 +296,112 @@ describe("AnalyticsDashboard", () => {
     expect(dues).toContain("no active dues credit recorded");
   });
 
+  it("adds author-free Discord context without changing Audience or dues identity boundaries", () => {
+    const audience = renderSection("audience");
+    const dues = renderSection("dues");
+
+    expect(audience).not.toContain("Discord audience context");
+    expect(audience).toContain("Discord participants");
+    expect(audience).not.toContain("Data coverage");
+    expect(audience).not.toContain("authorDiscordUserId");
+    expect(dues).not.toContain("Discord community context");
+    expect(dues).toContain("Human messages");
+    expect(dues).not.toContain("authorDiscordUserId");
+  });
+
+  it("renders enrichment detail on every analytics metric card", () => {
+    for (const section of [
+      "overview",
+      "events",
+      "discord",
+      "audience",
+      "dues",
+    ] as const) {
+      const html = renderSection(section);
+      const cardCount = html.match(
+        /data-analytics-metric-card="true"/g,
+      )?.length;
+      const detailCount = html.match(
+        /data-analytics-metric-detail="true"/g,
+      )?.length;
+
+      expect(cardCount, `${section} metric cards`).toBeGreaterThan(0);
+      expect(detailCount, `${section} metric details`).toBe(cardCount);
+    }
+  });
+
   it("[TC-020, TC-022] separates internal exports from the sponsor-safe report", () => {
     const html = renderSection("reports");
 
     expect(html).toContain("Overview data");
     expect(html).toContain("Audience data");
     expect(html).toContain("Dues data");
+    expect(html).toContain("Discord summary");
+    expect(html).toContain("Member resume bundle");
+    expect(html).toContain("Download ZIP");
+    expect(html).toContain("xl:grid-cols-3");
     expect(html).toContain("Sponsor-safe report");
     expect(html).toContain("Privacy reduced");
     expect(html).toContain(
       "Sparse and complementary demographic cells under five",
     );
+  });
+
+  it("combines the two undergraduate MLH levels only in audience rendering", () => {
+    const undergraduateRows = [
+      {
+        attendeeCount: 4,
+        audienceShare: 0.4,
+        baseCount: 8,
+        baseShare: 0.4,
+        category:
+          "Undergraduate University (2 year - community college or similar)",
+        duesPaidRate: 0.5,
+        participationRate: 0.5,
+        repeatAttendeeRate: 0.25,
+        representationGap: 0,
+      },
+      {
+        attendeeCount: 6,
+        audienceShare: 0.6,
+        baseCount: 12,
+        baseShare: 0.6,
+        category: "Undergraduate University (3+ year)",
+        duesPaidRate: 0.75,
+        participationRate: 0.5,
+        repeatAttendeeRate: 0.5,
+        representationGap: 0,
+      },
+    ];
+    const audienceReport = {
+      ...report,
+      audience: {
+        ...report.audience,
+        demographics: {
+          ...report.audience.demographics,
+          level_of_study: { coverageRate: 1, rows: undergraduateRows },
+        },
+        memberRows: [
+          {
+            attendanceCount: 1,
+            category: "Undergraduate University (3+ year)",
+            lastEventAt: null,
+            lastEventName: null,
+            memberId: "member-1",
+            name: "Ada Lovelace",
+            paid: true,
+          },
+        ],
+      },
+    } as unknown as RouterOutputs["analytics"]["getReport"];
+
+    const html = renderSection("audience", audienceReport);
+
+    expect(html).toContain("Undergraduate University");
+    expect(html).not.toContain("community college or similar");
+    expect(html).not.toContain("Undergraduate University (3+ year)");
+    expect(html).toContain(">20<");
+    expect(html).toContain(">10<");
   });
 
   it("[TC-024] contains labeled horizontal table regions", () => {
@@ -330,14 +511,16 @@ describe("AnalyticsDashboard", () => {
     const html = renderSection("overview", selectedReport);
 
     expect(html).toContain("Member lifecycle findings");
-    expect(html).toContain("What changed across profile activation");
+    expect(html).toContain("A linked brief across profile activation");
     expect(html).toContain("Grow membership");
     expect(html).toContain("Deepen engagement");
+    expect(html).toContain("Sustain community conversation");
     expect(html).toContain("Plan programming &amp; turnout");
     expect(html).toContain("Understand audience");
     expect(html).toContain("Collect &amp; renew dues");
     expect(html).toContain("Improve measurement");
     expect(html).toContain("tag=Social");
+    expect(html).toContain("section=discord");
     expect(html.indexOf("Grow membership")).toBeLessThan(
       html.indexOf("Deepen engagement"),
     );
