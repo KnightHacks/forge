@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,24 +8,24 @@ import {
   HYBRID_ADMIN_PROCEDURES,
 } from "../../utils/audit/coverage";
 
-const routerFiles = [
-  "alumni",
-  "analytics",
-  "audit",
-  "career",
-  "email",
-  "event",
-  "forms",
-  "issues",
-  "member-admin",
-  "roles",
-] as const;
+const routersDirectory = new URL("../../routers/", import.meta.url);
+
+// Discovered from disk rather than listed by hand. A hand-maintained list only
+// covered 10 of 18 routers, so `discordArchive.getHealth` shipped as a
+// permProcedure with no declared audit policy and nothing noticed.
+async function listRouterFiles() {
+  const entries = await readdir(routersDirectory);
+  return entries
+    .filter((entry) => entry.endsWith(".ts"))
+    .map((entry) => entry.replace(/\.ts$/, ""))
+    .sort();
+}
 
 async function discoverPermissionProcedures() {
   const discovered: string[] = [];
-  for (const router of routerFiles) {
+  for (const router of await listRouterFiles()) {
     const source = await readFile(
-      new URL(`../../routers/${router}.ts`, import.meta.url),
+      new URL(`${router}.ts`, routersDirectory),
       "utf8",
     );
     for (const match of source.matchAll(
@@ -42,6 +42,18 @@ describe("admin audit procedure coverage", () => {
     expect(await discoverPermissionProcedures()).toEqual(
       Object.keys(ADMIN_AUDIT_PROCEDURE_COVERAGE).sort(),
     );
+  });
+
+  it("scans every router on disk, including ones added later", async () => {
+    const scanned = await listRouterFiles();
+    expect(scanned).toContain("discord-archive");
+    expect(scanned.length).toBeGreaterThanOrEqual(18);
+
+    // Guards the regex itself: if it stops matching, the coverage assertion
+    // above would compare two empty lists and pass while enforcing nothing.
+    const discovered = await discoverPermissionProcedures();
+    expect(discovered).toContain("discord-archive.getHealth");
+    expect(discovered.length).toBeGreaterThan(100);
   });
 
   it("keeps audited, hybrid, and excluded declarations disjoint", () => {

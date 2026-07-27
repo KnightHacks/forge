@@ -94,6 +94,7 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "audit.searchMembers",
   "career.getAdminCompany",
   "career.listAdminCompanies",
+  "discord-archive.getHealth",
   "email.getSend",
   "email.getTemplate",
   "email.listAudienceOptions",
