@@ -1,6 +1,6 @@
 # Codebase Maintainability Status
 
-Current phase: Discovery complete; direction partly decided; implementation not started
+Current phase: Phase 0 complete; all four gates green; Phase 1 harness not started
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -122,9 +122,11 @@ changing what it asserts about behavior is not.
   `first:border-l-0` fail the same way. An extracted child returns a fragment or
   the original single root, never a new wrapper. A submit button never leaves its
   `<form>`.
-- 2026-07-27: `apps/blade/next.config.js:12` sets `typescript: { ignoreBuildErrors:
-true }`, so the build catches nothing during a refactor of this size. Turn it off
-  before the component work, not after.
+- 2026-07-27: `typescript: { ignoreBuildErrors: true }` stays. An earlier note
+  called it a hole to close; that was wrong. Six apps set it, `typecheck` is a
+  first-class Turbo task that passes 27/27, `verify:push` runs it, and CI's build
+  job already lists it under `needs`. Turning it on only makes every `next build`
+  re-run `tsc` for coverage that exists elsewhere.
 - 2026-07-27: `eslint-plugin-react-hooks` 7.0.1 already runs `set-state-in-effect`,
   `set-state-in-render`, `purity`, and `immutability` at error, and all three
   mega-components lint clean. Verified by repro that `set-state-in-effect` does not
@@ -150,16 +152,31 @@ true }`, so the build catches nothing during a refactor of this size. Turn it of
 
 ### Phase 0 — gates and enforcement, no product code
 
+Complete. Branch `reforge/phase-0-gates`, worktree `forge-reforge-phase-0`.
+
 - [x] Fix the red test baseline in `@forge/api` (`3921e365`).
 - [x] Fix repo-wide `pnpm format` (`4a7678e2`).
-- [ ] Fix the 7 pre-existing `pnpm lint` errors in club, cron, tk, validators.
-- [ ] Widen `packages/api/src/tests/audit/coverage.test.ts` to discover routers
-      from the filesystem instead of the hand-maintained 10-entry list, and
-      declare `discordArchive.getHealth`.
-- [ ] Enable `import/no-relative-packages` and `import/no-extraneous-dependencies`
-      in `tooling/eslint/base.js`; raise `consistent-type-imports` to error.
-- [ ] Add dead-code detection and wire it into the gate.
-- [ ] Add pre-commit and pre-push hooks so the gate runs without CI.
+- [x] Clear the standalone lint errors in cron and validators (`f276e685`).
+      The `@forge/tk` errors were stale-`node_modules` artifacts and did not
+      reproduce after a clean install; the `@forge/club` errors were the Club
+      roster regression below.
+- [x] Restore `guild.getPublicClubTeamRoster` (`04d9797e`, ledger `28caeb9c`).
+- [x] Discover audit-coverage routers from disk (`6d649151`).
+- [x] Enforce the package boundary in lint and break the auth/utils cycle
+      (`769c66df`).
+- [x] Let the whole suite run without a local `.env` (`e8ce6f36`).
+- [x] Add knip, report-only (`ce890725`).
+- [x] Warn on oversized files and functions (`d3d9d69a`).
+- [x] Add lefthook gates, opt-in via `pnpm hooks:install` (`e73c0dce`).
+
+Deliberately not done in Phase 0:
+
+- A per-component `useState` lint rule. The counts are per-file today and the
+  planned splits change them, so the rule would be written against numbers that
+  are about to move. Phase 3.
+- A `--max-warnings` ratchet on the 171-warning baseline, for the same reason.
+- Moving `packages/db/scripts/` to a root-level home. That is the real fix for
+  its relative imports, which are exempted with a comment for now.
 
 ### Phase 1 — harness
 
@@ -201,6 +218,26 @@ true }`, so the build catches nothing during a refactor of this size. Turn it of
 - [ ] Move organizational state out of `@forge/consts` into admin-managed tables.
 - [ ] The behavior-changing consolidations listed in the decision log.
 
+## Phase 0 findings
+
+- `guild.getPublicClubTeamRoster` was deferred by Guild Collective with a test
+  enforcing its absence, and nothing in that bundle mentions `apps/club`, which
+  calls it. The feature bundle captured the decision faithfully and still could
+  not catch the breakage, because no step asks who else calls a removed
+  procedure. The review skill needs a cross-app consumer check.
+- The package-boundary rule was silently dead in 13 packages, including
+  `@forge/api` and `apps/blade`, because `restrictEnvAccess` redefines
+  `no-restricted-imports` and ESLint rules replace rather than merge. A rule can
+  be present, correct, and enforcing nothing.
+- `packages/auth` and `packages/utils` were mutually dependent. The relative
+  import was not sloppiness; it was load-bearing, because declaring the edge
+  honestly makes Turbo reject the graph. The cycle existed only to type two dead
+  exports whose sole callers are in `legacy/`.
+- `pnpm lint` replayed a cached failure after the underlying error was fixed.
+  A red gate is worth re-running with `--force` before believing it.
+- Tests previously read whatever was in a developer's local `.env`, so the same
+  commit could produce different results for different people.
+
 ## Validation / commands
 
 - `pnpm test`: 23/23 Turbo tasks, 160 test files green as of `4a7678e2`.
@@ -208,16 +245,24 @@ true }`, so the build catches nothing during a refactor of this size. Turn it of
   without `CI=true`. Before the fix, local reported 7 failing files and silently
   skipped 25 tests that CI ran.
 - `pnpm format`: 19/19 green as of `4a7678e2`.
-- `pnpm lint`: RED. 7 errors — `apps/club/src/app/teams/team-roster.ts:8` (3
-  unsafe-return/call/member-access), `apps/tk/src/index.ts:62,66` (2 unsafe any),
-  `apps/cron/src/crons/issue-reminders.ts:25` (auto-fixable), and
-  `packages/validators/src/tests/discord-archive.test.ts:52`, which is a false
-  positive: the literal intentionally exceeds `MAX_SAFE_INTEGER` to prove the
-  schema rejects numeric snowflakes.
-- `pnpm --filter=@forge/api typecheck`: passed.
-- Audit coverage blind spot: `coverage.test.ts:11-22` scans 10 of 18 routers. 131
-  permProcedures sit inside the guardrail; 1 sits outside it and is undeclared
-  (`discordArchive.getHealth`).
+- End of Phase 0, on `reforge/phase-0-gates`, all four gates green together:
+  `pnpm format` 19/19, `pnpm lint` 25/25 (forced, uncached), `pnpm typecheck`
+  27/27, `pnpm test` 23/23 across 160 test files.
+- `pnpm test` with `.env` removed entirely: 23/23. The suite no longer needs a
+  local env file.
+- New audit guardrail proven to fail for the intended reason: removing the
+  `discord-archive.getHealth` declaration gives 1 failed / 323 passed; restoring
+  it gives 324 passed.
+- `npx lefthook run pre-commit`: 1.3s. `npx lefthook run pre-push`: 64.7s
+  (verify 56.8s, test 8.0s). Both verified, then uninstalled — hooks are opt-in.
+- `pnpm knip` baseline: 11 unused files, 28 unused exports, 3 unused exported
+  types, 6 duplicate exports, 82 unused and 38 unlisted dependencies. The
+  dependency counts are largely resolver noise and gate nothing yet.
+- `max-lines` / `max-lines-per-function` baseline: 171 warnings — 69 files over
+  500 lines, 102 functions over 200.
+- Turbo rejects the graph as cyclic if `@forge/auth` declares `@forge/utils`
+  while `@forge/utils` devDepends on `@forge/auth`; confirmed by making the
+  change and reading the error, then breaking the cycle.
 
 ## Links
 
