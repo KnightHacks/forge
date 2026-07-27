@@ -242,7 +242,7 @@ test.describe("admin Club analytics", () => {
     await expect(
       page.getByText("Attendances", { exact: true }).first(),
     ).toBeVisible();
-    await expect(page.getByText("club-analytics-v1")).toBeVisible();
+    await expect(page.getByText("club-analytics-v1")).toHaveCount(0);
     await expect(page.getByText(/@example\.test/)).toHaveCount(0);
 
     await page.screenshot({
@@ -252,7 +252,13 @@ test.describe("admin Club analytics", () => {
 
     await page.getByRole("link", { name: "Events", exact: true }).click();
     await expect(page.getByText("TypeScript Workshop")).toBeVisible();
-    await expect(page.getByText("Internal Planning")).toBeVisible();
+    await page.getByRole("combobox", { name: "Individual event" }).click();
+    await page.getByRole("option", { name: /^Internal Planning ·/ }).click();
+    await expect(
+      page.getByText("Internal Planning", { exact: true }),
+    ).toBeVisible();
+    await page.getByRole("combobox", { name: "Individual event" }).click();
+    await page.getByRole("option", { name: "All matching events" }).click();
     await settleSectionNavigation(page);
     await page.screenshot({
       fullPage: true,
@@ -264,10 +270,31 @@ test.describe("admin Club analytics", () => {
     await expect(page).toHaveURL(/tag=Workshop/);
     await expect(page.getByText("Fall Social")).toHaveCount(0);
 
+    await page.getByRole("link", { name: "Discord", exact: true }).click();
+    await expect(page.getByText("Message activity")).toBeVisible();
+    await expect(
+      page.locator('[data-analytics-metric-card="true"]'),
+    ).toHaveCount(4);
+    await expect(
+      page.locator('[data-analytics-metric-detail="true"]'),
+    ).toHaveCount(4);
+    await settleSectionNavigation(page);
+    await page.screenshot({
+      fullPage: true,
+      path: ".playwright-results/club-analytics-discord.png",
+    });
+
     await page.getByRole("link", { name: "Audience", exact: true }).click();
     await expect(page).toHaveURL(/section=audience/);
     await expect(page.getByText("Program affinity")).toBeVisible();
     await expect(page.getByText("Avery Analytics")).toBeVisible();
+    await expect(page.getByText("Discord audience context")).toHaveCount(0);
+    await expect(
+      page.locator('[data-analytics-metric-card="true"]'),
+    ).toHaveCount(8);
+    await expect(
+      page.locator('[data-analytics-metric-detail="true"]'),
+    ).toHaveCount(8);
     await settleSectionNavigation(page);
     await page.screenshot({
       fullPage: true,
@@ -276,6 +303,13 @@ test.describe("admin Club analytics", () => {
 
     await page.getByRole("link", { name: "Dues", exact: true }).click();
     await expect(page.getByText("Academic-year collection pace")).toBeVisible();
+    await expect(page.getByText("Discord community context")).toHaveCount(0);
+    await expect(
+      page.locator('[data-analytics-metric-card="true"]'),
+    ).toHaveCount(8);
+    await expect(
+      page.locator('[data-analytics-metric-detail="true"]'),
+    ).toHaveCount(8);
     await settleSectionNavigation(page);
     await page.screenshot({
       fullPage: true,
@@ -305,6 +339,17 @@ test.describe("admin Club analytics", () => {
     expect(download.suggestedFilename()).toMatch(
       /club-analytics-sponsor.*\.csv$/,
     );
+    const discordSummarySection = page
+      .getByRole("heading", { name: "Discord summary" })
+      .locator("xpath=ancestor::section");
+    const discordDownloadPromise = page.waitForEvent("download");
+    await discordSummarySection
+      .getByRole("button", { name: "Download CSV" })
+      .click();
+    const discordDownload = await discordDownloadPromise;
+    expect(discordDownload.suggestedFilename()).toMatch(
+      /discord-analytics-summary.*\.csv$/,
+    );
 
     await page.setViewportSize({ height: 900, width: 320 });
     await page.goto(ANALYTICS_PATH);
@@ -331,5 +376,71 @@ test.describe("admin Club analytics", () => {
     await expect(page.getByRole("heading", { name: "Analytics" })).toHaveCount(
       0,
     );
+  });
+
+  test("keeps the reports page responsive while a resume bundle is prepared", async ({
+    page,
+  }) => {
+    await signInAs(page, ANALYTICS_USER_ID);
+    await page.getByRole("link", { name: "Reports", exact: true }).click();
+
+    await page.evaluate(() => {
+      const testWindow = window as Window & {
+        resumeBundleTestHref?: string;
+      };
+      HTMLAnchorElement.prototype.click = function captureResumeBundleHref() {
+        testWindow.resumeBundleTestHref = this.href;
+      };
+    });
+
+    const resumeSection = page
+      .getByRole("heading", { name: "Member resume bundle" })
+      .locator("xpath=ancestor::section");
+    const resumeButton = resumeSection.getByRole("button", {
+      name: "Download ZIP",
+    });
+    await resumeButton.click();
+
+    await expect(
+      resumeSection.getByRole("button", { name: "Preparing ZIP…" }),
+    ).toBeDisabled();
+    await expect(
+      resumeSection.getByText(
+        "Checking available resumes and building folders. This usually takes about a minute; keep this page open.",
+      ),
+    ).toBeVisible();
+    await page.screenshot({
+      fullPage: true,
+      path: ".playwright-results/resume-bundle-preparing.png",
+    });
+
+    const downloadHref = await page.evaluate(
+      () =>
+        (
+          window as Window & {
+            resumeBundleTestHref?: string;
+          }
+        ).resumeBundleTestHref,
+    );
+    expect(downloadHref).toBeTruthy();
+    const capturedDownloadHref = required(
+      downloadHref,
+      "resume bundle download href",
+    );
+    const downloadToken = required(
+      new URL(capturedDownloadHref).searchParams.get("downloadToken") ??
+        undefined,
+      "resume bundle download token",
+    );
+    await page.context().addCookies([
+      {
+        name: "resume-bundle-download",
+        url: new URL(capturedDownloadHref).origin,
+        value: `${downloadToken}.ready`,
+      },
+    ]);
+
+    await expect(resumeButton).toBeEnabled();
+    await expect(resumeButton).toHaveText("Download ZIP");
   });
 });

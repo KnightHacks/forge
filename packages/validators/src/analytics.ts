@@ -5,6 +5,7 @@ const TEN_YEARS_MS = 10 * 366 * 24 * 60 * 60 * 1000;
 export const analyticsSectionSchema = z.enum([
   "overview",
   "events",
+  "discord",
   "audience",
   "dues",
   "reports",
@@ -95,6 +96,7 @@ export const analyticsReportInputSchema =
 export const analyticsExportKindSchema = z.enum([
   "overview",
   "events",
+  "discord",
   "audience",
   "dues",
   "sponsor",

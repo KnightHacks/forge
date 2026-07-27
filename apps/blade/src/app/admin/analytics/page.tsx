@@ -29,7 +29,10 @@ export default async function AdminAnalyticsPage({
   const permissions = await api.roles.getPermissions();
   if (!canAccessAnalytics(permissions)) redirect(MEMBER_DASHBOARD_PATH);
   const input = parseAnalyticsSearchParams(await searchParams);
-  const report = await api.analytics.getReport(input);
+  const [report, discordReport] = await Promise.all([
+    api.analytics.getReport(input),
+    api.analytics.getDiscordReport(input),
+  ]);
   return (
     <HydrateClient>
       <AnalyticsDashboard
@@ -37,6 +40,7 @@ export default async function AdminAnalyticsPage({
           canOpenEvents: canAccessEventAdmin(permissions),
           canOpenMembers: canAccessMemberAdmin(permissions),
         }}
+        discordReport={discordReport}
         input={input}
         report={report}
       />

@@ -22,8 +22,12 @@ import {
 } from "../utils/analytics/export";
 import { buildClubAnalyticsReport } from "../utils/analytics/report";
 import { createAdminAuditEvent } from "../utils/audit/service";
+import { getDiscordAnalyticsReport } from "../utils/discord-archive/read-model";
 
 const CSV_MIME_TYPE = "text/csv;charset=utf-8";
+type DiscordAnalyticsReport = Awaited<
+  ReturnType<typeof getDiscordAnalyticsReport>
+>;
 
 async function loadClubAnalyticsSources() {
   const [members, events, attendances, dues, feedback] = await Promise.all([
@@ -119,6 +123,81 @@ function csvMetadata(report: ClubAnalyticsReport) {
     metricVersion: report.metadata.metricVersion,
     periodLabel: report.metadata.period.label,
   };
+}
+
+function discordCsvMetadata(report: DiscordAnalyticsReport) {
+  return {
+    comparisonLabel: "Not applicable",
+    filterLabel: "Aggregate Discord activity; event filters are not applied",
+    metricVersion: report.metadata.metricVersion,
+    periodLabel: report.metadata.period.label,
+  };
+}
+
+function discordRows(
+  report: DiscordAnalyticsReport,
+): Record<string, unknown>[] {
+  const summaryMetrics = [
+    ["Current messages", report.summary.messageCount],
+    ["Human-authored messages", report.summary.humanMessageCount],
+    ["Human participants", report.summary.uniqueHumanAuthors],
+    [
+      "Average human messages per participant",
+      report.summary.averageHumanMessagesPerAuthor,
+    ],
+    [
+      "Median human messages per participant",
+      report.summary.medianHumanMessagesPerAuthor,
+    ],
+    ["Messages per observed day", report.summary.averageMessagesPerDay],
+    ["Active days", report.summary.activeDays],
+    ["Observed calendar days", report.summary.calendarDays],
+    ["Active-day rate", report.summary.activeDayRate],
+    ["Active surfaces", report.summary.activeSurfaceCount],
+    ["Visible channels", report.summary.visibleChannels],
+    ["Visible threads", report.summary.visibleThreads],
+    ["Active-surface rate", report.summary.activeSurfaceRate],
+    ["Deletion tombstones", report.summary.tombstonedMessageCount],
+  ] as const;
+
+  return [
+    ...summaryMetrics.map(([metric, value]) => ({
+      metric,
+      record_subtype: "summary",
+      value,
+    })),
+    ...report.mix.map((row) => ({
+      category: row.label,
+      count: row.count,
+      record_subtype: "sender_mix",
+      share: row.share,
+    })),
+    ...report.trend.rows.map((row) => ({
+      active_surfaces: row.activeChannels,
+      date: row.date,
+      messages: row.messages,
+      record_subtype: "daily_activity",
+    })),
+    ...report.channels.map((row) => ({
+      count: row.count,
+      is_thread: row.isThread,
+      record_subtype: "top_surface",
+      share: row.share,
+      surface: row.label,
+      surface_type: row.type,
+    })),
+    {
+      complete_surface_count: report.coverage.completeSurfaceCount,
+      coverage_rate: report.coverage.coverage,
+      last_backfill_progress_at: report.coverage.lastBackfillProgressAt,
+      last_gateway_event_at: report.coverage.lastGatewayEventAt,
+      last_live_write_at: report.coverage.lastLiveWriteAt,
+      last_reconciled_at: report.coverage.lastReconciledAt,
+      record_subtype: "archive_coverage",
+      status: report.coverage.status,
+      total_surface_count: report.coverage.totalSurfaceCount,
+    },
+  ];
 }
 
 function internalRows(
@@ -449,6 +528,14 @@ function safeFileToken(value: string) {
 }
 
 export const analyticsRouter = createTRPCRouter({
+  /** Returns aggregate Discord activity analytics without message or author records. */
+  getDiscordReport: permProcedure
+    .input(analyticsReportInputSchema)
+    .query(async ({ ctx, input }) => {
+      requireClubAnalyticsRead(ctx);
+      return getDiscordAnalyticsReport(input);
+    }),
+
   /** Returns complete read-only Club analytics; source rows are never exposed. */
   getReport: permProcedure
     .input(analyticsReportInputSchema)
@@ -463,32 +550,47 @@ export const analyticsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       requireClubAnalyticsRead(ctx);
       const { kind, ...reportInput } = input;
-      const report = await getClubAnalyticsReport(reportInput);
-      const metadata = csvMetadata(report);
-      const content =
-        kind === "sponsor"
-          ? serializeSponsorAnalyticsCsv({
-              audienceRows: Object.entries(
-                report.audience.demographics,
-              ).flatMap(([demographic, dimension]) =>
-                dimension.rows.map((row) => ({
-                  attendeeCount: row.attendeeCount,
-                  category: row.category,
-                  demographic,
-                  memberCount: row.baseCount,
-                })),
-              ),
-              generatedAt: report.metadata.generatedAt,
-              metadata,
-              metrics: sponsorMetrics(report),
-              suppressionThreshold: report.reports.sponsorSuppressionThreshold,
-            })
-          : serializeInternalAnalyticsCsv({
-              generatedAt: report.metadata.generatedAt,
-              kind,
-              metadata,
-              rows: internalRows(kind, report),
-            });
+      let content: string;
+      let fileName: string;
+      if (kind === "discord") {
+        const report = await getDiscordAnalyticsReport(reportInput);
+        content = serializeInternalAnalyticsCsv({
+          generatedAt: report.metadata.generatedAt,
+          kind,
+          metadata: discordCsvMetadata(report),
+          rows: discordRows(report),
+        });
+        fileName = `discord-analytics-summary-${safeFileToken(report.metadata.period.label)}.csv`;
+      } else {
+        const report = await getClubAnalyticsReport(reportInput);
+        const metadata = csvMetadata(report);
+        content =
+          kind === "sponsor"
+            ? serializeSponsorAnalyticsCsv({
+                audienceRows: Object.entries(
+                  report.audience.demographics,
+                ).flatMap(([demographic, dimension]) =>
+                  dimension.rows.map((row) => ({
+                    attendeeCount: row.attendeeCount,
+                    category: row.category,
+                    demographic,
+                    memberCount: row.baseCount,
+                  })),
+                ),
+                generatedAt: report.metadata.generatedAt,
+                metadata,
+                metrics: sponsorMetrics(report),
+                suppressionThreshold:
+                  report.reports.sponsorSuppressionThreshold,
+              })
+            : serializeInternalAnalyticsCsv({
+                generatedAt: report.metadata.generatedAt,
+                kind,
+                metadata,
+                rows: internalRows(kind, report),
+              });
+        fileName = `club-analytics-${kind}-${safeFileToken(report.metadata.period.label)}.csv`;
+      }
       await createAdminAuditEvent({
         actionKey: "analytics.report.exported",
         actor: ctx.session.user,
@@ -501,7 +603,12 @@ export const analyticsRouter = createTRPCRouter({
             reportInput.period.kind === "custom"
               ? reportInput.period.to.toISOString()
               : null,
-          eventIds: reportInput.eventId ? [reportInput.eventId] : [],
+          eventIds:
+            kind === "discord"
+              ? []
+              : reportInput.eventId
+                ? [reportInput.eventId]
+                : [],
           kind,
           rowCount: Math.max(0, content.split(/\r?\n/).length - 1),
         },
@@ -509,14 +616,17 @@ export const analyticsRouter = createTRPCRouter({
           {
             relation: "primary",
             targetId: kind,
-            targetLabel: `${kind} analytics report`,
+            targetLabel:
+              kind === "discord"
+                ? "Discord analytics summary"
+                : `${kind} analytics report`,
             targetType: "analytics_report",
           },
         ],
       });
       return {
         content,
-        fileName: `club-analytics-${kind}-${safeFileToken(report.metadata.period.label)}.csv`,
+        fileName,
         mimeType: CSV_MIME_TYPE,
       };
     }),

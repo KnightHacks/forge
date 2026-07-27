@@ -35,6 +35,45 @@ describe("club analytics CSV", () => {
     expect(csv).not.toMatch(/(?:^|,)=(?:HYPERLINK|IMPORT)/m);
   });
 
+  it("serializes an author-free Discord summary without message records or identities", () => {
+    const csv = serializeInternalAnalyticsCsv({
+      generatedAt: new Date("2026-07-26T12:00:00.000Z"),
+      kind: "discord",
+      metadata: {
+        comparisonLabel: "Not applicable",
+        filterLabel: "Aggregate Discord activity",
+        metricVersion: "discord-analytics-v1",
+        periodLabel: "2025-2026 academic school year",
+      },
+      rows: [
+        {
+          metric: "Human participants",
+          record_subtype: "summary",
+          value: 53,
+        },
+        {
+          count: 18,
+          date: "2026-07-26",
+          record_subtype: "daily_activity",
+        },
+      ],
+    });
+
+    expect(csv).toContain("discord-analytics-v1");
+    expect(csv).toContain("Human participants");
+    expect(csv).toContain("daily_activity");
+    for (const forbidden of [
+      "authorDiscordUserId",
+      "authorLabel",
+      "messageId",
+      "content",
+      "attachments",
+      "embeds",
+    ]) {
+      expect(csv).not.toContain(forbidden);
+    }
+  });
+
   it("[TC-020] withholds sparse sponsor demographics and excludes private domains", () => {
     const csv = serializeSponsorAnalyticsCsv({
       audienceRows: [

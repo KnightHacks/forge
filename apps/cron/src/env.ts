@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    DISCORD_ARCHIVE_BOT_TOKEN: z.string().min(1).optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
@@ -15,6 +16,7 @@ export const env = createEnv({
     BLADE_URL: z.string().url(),
   },
   runtimeEnvStrict: {
+    DISCORD_ARCHIVE_BOT_TOKEN: process.env.DISCORD_ARCHIVE_BOT_TOKEN,
     NODE_ENV: process.env.NODE_ENV,
     DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN,
     DISCORD_WEBHOOK_ANIMAL: process.env.DISCORD_WEBHOOK_ANIMAL,
@@ -24,6 +26,7 @@ export const env = createEnv({
     DISCORD_WEBHOOK_REMINDERS_HACK: process.env.DISCORD_WEBHOOK_REMINDERS_HACK,
     BLADE_URL: process.env.BLADE_URL,
   },
+  emptyStringAsUndefined: true,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

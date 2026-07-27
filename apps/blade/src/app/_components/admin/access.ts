@@ -6,6 +6,10 @@ export function canAccessAnalytics(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true || permissions.READ_CLUB_DATA === true;
 }
 
+export function canAccessDiscordArchive(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true;
+}
+
 export function canAccessMemberAdmin(permissions: EffectivePermissions) {
   return (
     permissions.IS_OFFICER === true ||
@@ -72,6 +76,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     alumni: canAccessAlumniAdmin(permissions),
     analytics: canAccessAnalytics(permissions),
+    discordArchive: canAccessDiscordArchive(permissions),
     email: canAccessEmailPortal(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),

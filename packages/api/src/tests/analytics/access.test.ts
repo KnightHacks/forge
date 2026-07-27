@@ -22,6 +22,10 @@ const testRouter = createTRPCRouter({
     requireClubAnalyticsRead(ctx);
     return "csv" as const;
   }),
+  getDiscordReport: permProcedure.query(({ ctx }) => {
+    requireClubAnalyticsRead(ctx);
+    return "discord-report" as const;
+  }),
   getReport: permProcedure.query(({ ctx }) => {
     requireClubAnalyticsRead(ctx);
     return "report" as const;
@@ -84,6 +88,9 @@ describe("club analytics API access", () => {
     await expect(createCaller().exportReport()).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
+    await expect(createCaller().getDiscordReport()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   it("[TC-004] authorizes READ_CLUB_DATA and officer callers", async () => {
@@ -91,6 +98,9 @@ describe("club analytics API access", () => {
       mocks.permissionRows = [{ permissions: permissionBitstring(permission) }];
       await expect(createCaller().getReport()).resolves.toBe("report");
       await expect(createCaller().exportReport()).resolves.toBe("csv");
+      await expect(createCaller().getDiscordReport()).resolves.toBe(
+        "discord-report",
+      );
     }
   });
 });

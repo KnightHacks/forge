@@ -10,6 +10,7 @@ export const ADMIN_PAGE_EYEBROWS = {
   checkIn: "Event attendance",
   companies: "Company intelligence",
   companyDetail: "Company record",
+  discordArchive: "Discord operations",
   email: "Campaign communications",
   eventFeedback: "Feedback configuration",
   events: "Event planning",

@@ -54,7 +54,7 @@ export function serializeInternalAnalyticsCsv({
   rows,
 }: {
   generatedAt: Date;
-  kind: "overview" | "events" | "audience" | "dues";
+  kind: "overview" | "events" | "discord" | "audience" | "dues";
   metadata: AnalyticsCsvMetadata;
   rows: readonly Record<string, unknown>[];
 }) {
