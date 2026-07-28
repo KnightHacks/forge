@@ -39,11 +39,14 @@
     "@forge/tsconfig": "workspace:*",
     "@types/node-cron": "^3.0.11",
     "discord-api-types": "^0.38.40",
+    "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
     "tsx": "^4.21.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

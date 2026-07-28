@@ -24,10 +24,12 @@
     "@forge/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1"
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
-    "minimatch": "^10.2.4"
+    "minimatch": "^10.2.4",
+    "zod": "catalog:"
   }
 }

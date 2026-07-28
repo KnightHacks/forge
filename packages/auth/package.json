@@ -39,7 +39,8 @@
     "@forge/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1"
   },
   "prettier": "@forge/prettier-config"
 }
