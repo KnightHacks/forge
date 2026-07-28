@@ -28,9 +28,10 @@ dependency removals.
 
 1. **Two user-visible changes**, both consequences of requested work rather than
    drift, in "User-visible changes" below.
-2. **61 deferred dependency removals** — `AGENTS.md` wants a human on dependency
-   changes, and the deferred set includes a question about whether `apps/tk` and
-   `apps/cron` are inert.
+2. **51 deferred dependency removals** — `AGENTS.md` wants a human on dependency
+   changes. What remains is workspace `@forge/*` deps, where the hoisted linker
+   lets an undeclared import resolve through a sibling, and build tooling that
+   is loaded by name rather than imported.
 3. **The server-clock seam** that blocks the remaining six component splits. One
    change unblocks all of them, and it is deliberately not in this branch.
 
@@ -359,10 +360,38 @@ changes want approval:
 - **Build tooling loaded by name rather than imported** — `postcss`,
   `@tailwindcss/postcss`, `tailwindcss`, `jiti`, `@svgr/webpack`,
   `eslint-plugin-jsx-a11y`, root `playwright`/`vitest`.
-- **Dormant apps.** `apps/tk` and `apps/cron` show `drizzle-orm`, `node-cron`,
-  `postgres`, `resend` and `jimp` as unused, which more likely means those apps
-  are inert than that the deps are wrong. That is a question about the apps, not
-  about the manifest.
+- ~~**Dormant apps.**~~ **Resolved, and the guess was wrong.** I recorded that
+  `apps/tk` and `apps/cron` showing `drizzle-orm`, `node-cron`, `postgres`,
+  `resend` and `jimp` as unused "more likely means those apps are inert."
+
+  Both are **live**. `apps/tk` is a 19-command Discord bot with every command
+  wired through `src/commands/index.ts`; `apps/cron` fires 14 `.schedule()`
+  calls from `src/index.ts`. `docs/ARCHITECTURE.md:397` says both run as
+  long-lived processes on the Coolify worker, and both were modified the same
+  day as HEAD.
+
+  The real cause is a single commit. `cca03627` ("feat(cron): migrate cron to
+  separate package", 2026-02-05) moved `apps/tk/src/hooks/*` and
+  `services/email-queue.ts` out of tk into cron **without trimming tk's
+  manifest**, and created cron's manifest as a **copy of tk's** — the two
+  dependency blocks are still byte-identical apart from `discord-api-types`.
+  That is how cron inherited `jimp`, which only tk uses, in the five animal
+  commands.
+
+  Ten removals applied after verifying each one has no importer in its own app
+  and that every real importer declares it itself — the hoisting risk that made
+  this class deferrable does not apply when the actual consumer has its own
+  declaration. `postgres` and `resend` turn out to be imported by **nothing in
+  the repo**; it uses `pg`/`pg-pool` through Drizzle.
+
+  `@forge/consts` in `apps/tk` is still held back. It is a workspace dep, and
+  workspace deps under `node-linker=hoisted` remain the class where a sibling's
+  undeclared import can be resolving through this declaration.
+
+  One genuinely dormant thing surfaced, inside a live app:
+  `apps/cron/src/index.ts:28` parks `hackReminders.schedule()` behind a comment
+  addressed to whoever is dev lead, until the next hackathon. Intent stated, not
+  rot.
 
 ## Task list
 
