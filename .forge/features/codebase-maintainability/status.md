@@ -1,28 +1,61 @@
 # Codebase Maintainability Status
 
-Current phase: Phases 0-4 complete on `reforge/refactor`; awaiting human review and
-merge. Tier 3 done on the two components the visual baselines cover; the other six
-are blocked on infrastructure, not on effort — see Phase 3.
+Current phase: Phases 0-4 complete and **pushed** to
+`origin/reforge/refactor`; awaiting human review and merge. Tier 3 done on the
+two components the visual baselines cover; the other six are blocked on
+infrastructure, not on effort — see Phase 3.
 
 ## Final state — 2026-07-28
 
 All five gates green, forced and uncached: `format` 19/19, plus
 `typecheck` + `lint` + `test` + `build` at **70/70 tasks, 0 errors**, with every
-one of the six Next apps building. Clean tree. **52 commits.**
+one of the six Next apps building. Clean tree. **61 commits.**
 
-563 files changed, +42,747 / -26,707 against `reforge/main`.
+569 files changed, +43,625 / -26,563 against `reforge/main`.
 
-Tests grew from a suite that could not verify a refactor to **208 files and 1,238
-tests**. Blade alone went from 56 files / 178 tests to 93 / 515 — most of that is
-coverage for logic that had never been reachable by any test, not new features.
-Nine of those are `toHaveScreenshot` baselines, the only ones in the repo.
+Tests grew from a suite that could not verify a refactor to **212 files and 1,286
+tests, none skipped**. Blade alone went from 56 files / 178 tests to 93 / 515 —
+most of that is coverage for logic that had never been reachable by any test, not
+new features. Nine are `toHaveScreenshot` baselines, the only ones in the repo.
+
+"None skipped" is load-bearing. `packages/db` and `packages/api` ran plain
+`vitest run`, which never loads `../../.env`, so `DATABASE_URL` was unset and
+every disposable-Postgres suite silently skipped — 25 in db, 8 in api. CI passes
+`DATABASE_URL` directly, so this was invisible there.
 
 Three of four gates were red on committed code when this started, and `build`
 was red too but nobody had run it. All five now pass, and the reasons they were
 red are fixed rather than suppressed.
 
-`pnpm install` also drops **446 packages** from the tree, from 32 direct
+`pnpm install` also drops **446 packages** from the tree, from 42 direct
 dependency removals.
+
+### The branch review, and what it found
+
+The most valuable single hour of this work was an adversarial review of the
+commits nobody had read — five risk dimensions, each finding handed to a
+separate agent instructed to **refute** it. **20 raised, 14 refuted, 6
+confirmed.** Two of the three real defects were mine.
+
+All six are fixed. In severity order:
+
+1. **A developer's live `.env`, committed as `.env.bak`** by a stray `git add -A`
+   in `005e613e` — Discord bot tokens, a Stripe secret key, a Google
+   service-account private key, MinIO and Listmonk credentials, the auth signing
+   secrets. `.gitignore` covered `.env`, `.env*.local` and `.env-e`, and matched
+   none of them. Nothing else could have caught it: there is no secret scanning
+   here, and no typecheck, lint, test, build or baseline can go red on a dotfile
+   nothing imports. Removed from history rather than deleted in a follow-up,
+   before the branch was ever pushed, so no rotation was forced. `.gitignore` is
+   now `.env*` plus `!.env.example` — a deny-list only protects the suffixes
+   someone thought of.
+2. **A closed restricted form became readable by anyone** (`3f53a258`).
+   Authorization had become a fallthrough of a display state. Fixed and, more
+   importantly, covered: deleting the gate previously broke nothing at all.
+3. **The version pins went inert** (`cafcd731`, mine). Reversed, and now guarded
+   by a test that asserts the lockfile, not the declaration site.
+4. **The club role backfill was a permanent no-op on fresh databases**. Fixed
+   with a re-runnable classifier.
 
 ### What a reviewer should look at first
 
@@ -34,6 +67,9 @@ dependency removals.
    is loaded by name rather than imported.
 3. **The server-clock seam** that blocks the remaining six component splits. One
    change unblocks all of them, and it is deliberately not in this branch.
+4. **Rotate the leaked credentials when convenient.** Owner's call was to defer;
+   the blob never reached GitHub, so this is prudence rather than incident
+   response.
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
