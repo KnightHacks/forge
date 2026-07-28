@@ -26,6 +26,16 @@ export interface IssueDraft {
   templateId: string;
 }
 
+/**
+ * The one-field-at-a-time setter the create form is built on. Named here rather
+ * than inferred, because the form is split across components and every one of
+ * them has to declare it in its props.
+ */
+export type IssueDraftUpdate = <K extends keyof IssueDraft>(
+  key: K,
+  value: IssueDraft[K],
+) => void;
+
 export function emptyDraft(team = ""): IssueDraft {
   return {
     assigneeIds: [],
