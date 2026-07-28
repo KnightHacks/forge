@@ -1,6 +1,6 @@
 ---
 name: forge-react
-description: Building or changing React in apps/blade — components, state, hooks, the server/client boundary, mutation UX, and splitting large components. Use before writing any component or touching client state. Not for pure styling; see frontend-design for that.
+description: How to build and change React in apps/blade: component structure, classifying state, custom hooks, the server/client boundary, mutation UX, and splitting oversized components without changing how pages look. Use this whenever writing or editing a component, adding useState/useEffect/useReducer, wiring a mutation, deciding whether data should load on the server or client, or breaking up a large file. Also use it whenever someone proposes a React feature like Suspense, useActionState, useOptimistic, or a state library — this codebase has decided against several of those and the reasons matter.
 ---
 
 # Forge React

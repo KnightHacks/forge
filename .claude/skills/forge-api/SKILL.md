@@ -1,6 +1,6 @@
 ---
 name: forge-api
-description: Adding or changing tRPC procedures in packages/api — procedure anatomy, the two access tiers, audit coverage, transactions, and where workflow logic lives. Use before touching any router or utils/<domain> module.
+description: How to add or change tRPC procedures in packages/api: procedure anatomy, the capability and scope access tiers, permission guards, audit coverage, transactions, and where workflow logic belongs. Use this whenever touching anything under packages/api — routers, procedures, permission checks, audit events, or utils/<domain> modules — and whenever someone mentions permProcedure, controlPerms, permissions, audit logging, or removing/renaming a procedure. Also use it before any change to who can call something, even if the request sounds like a small tweak.
 ---
 
 # Forge API

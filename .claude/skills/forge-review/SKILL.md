@@ -1,6 +1,6 @@
 ---
 name: forge-review
-description: Review a working diff or branch in Forge using scope-derived agents. Runs the static gate first and refuses to spend agents on a red diff. Use before committing meaningful work, before opening a PR into reforge/main, and at cutover. Not for one-line changes.
+description: Reviews a working diff or branch in Forge with scope-derived agents, running the static gate first and refusing to spend agents on a red diff. Use this whenever someone asks to review, check, sanity-check, or look over their changes, before committing meaningful work, before opening a PR, before merging toward reforge/main, and at cutover. Especially important when a procedure was removed or renamed, or when the work was written by an agent and nobody has read it. CI does not run on reforge/main, so this is the substitute.
 ---
 
 # Forge Review

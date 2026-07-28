@@ -1,6 +1,6 @@
 ---
 name: forge-placement
-description: Deciding where code goes — constants, helpers, components, and shared packages. Use whenever adding a helper, constant, type, or component, or when unsure which package owns something. Answers "where does this go?" without needing to read a doc.
+description: Decides where code belongs in the Forge monorepo — constants, helpers, components, types, and package boundaries. Use this whenever adding a new file, helper, constant, or component, whenever someone asks "where should this go", "which package owns this", "can I import this from there", or is about to duplicate something that already exists elsewhere. Also use it before promoting anything into @forge/utils, @forge/consts, @forge/ui, or @forge/validators, and whenever a cross-package import looks awkward — even if the user never says the word "placement".
 ---
 
 # Forge Placement
