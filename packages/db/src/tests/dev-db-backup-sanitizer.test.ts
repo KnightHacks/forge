@@ -31,7 +31,10 @@ function schemaTableNames() {
   return [
     ...new Set(
       modules
-        .flatMap((module) => Object.values(module))
+        // `unknown[]`, not the inferred `any[]`: these modules export types
+        // alongside tables, so the values are only narrowed by the `is` guard
+        // on the next line and must not be trusted before it.
+        .flatMap((module): unknown[] => Object.values(module))
         .filter((value): value is Table => is(value, Table))
         .map((table) => getTableName(table)),
     ),
