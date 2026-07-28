@@ -126,7 +126,11 @@ export async function gotoStable(page: Page, url: string) {
 /**
  * Signs in through the e2e auth route and lands on `callbackURL`.
  */
-export async function signInAs(page: Page, userId: string, callbackURL: string) {
+export async function signInAs(
+  page: Page,
+  userId: string,
+  callbackURL: string,
+) {
   await page.goto(
     `/api/e2e/signin?userId=${encodeURIComponent(userId)}&callbackURL=${encodeURIComponent(callbackURL)}`,
   );

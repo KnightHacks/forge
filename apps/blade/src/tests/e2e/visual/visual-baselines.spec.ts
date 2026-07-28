@@ -1,13 +1,6 @@
 import { expect, test } from "playwright/test";
 
 import {
-  DESKTOP_VIEWPORT,
-  expectVisualBaseline,
-  MOBILE_VIEWPORT,
-  preparePage,
-  signInAs,
-} from "./visual-harness";
-import {
   BUILDER_FORM_ID,
   cleanupVisualFixture,
   DIRECTORY_QUERY,
@@ -17,6 +10,13 @@ import {
   seedVisualFixture,
   VISUAL_USER_ID,
 } from "./visual-fixtures";
+import {
+  DESKTOP_VIEWPORT,
+  expectVisualBaseline,
+  MOBILE_VIEWPORT,
+  preparePage,
+  signInAs,
+} from "./visual-harness";
 
 /**
  * Visual-regression baselines for the surfaces Tier 3 of the component
