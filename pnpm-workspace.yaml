@@ -21,12 +21,9 @@ catalogs:
     "@types/react": ^19.2.14
     "@types/react-dom": ^19.2.3
 
-# Version pins applied across every workspace package. These lived in the root
-# package.json under `pnpm.overrides`, where pnpm no longer reads them — it warned
-# on every invocation and the pins, including React's, were silently inert.
-overrides:
-  "@types/node": "^25.3.2"
-  "react": "^19.2.4"
-  "react-dom": "^19.2.4"
-  "@types/react": "^19.2.14"
-  "@types/react-dom": "^19.2.3"
+# Version pins live in the root package.json under `pnpm.overrides`, NOT here.
+# `overrides:` in this file is a pnpm 10 feature and this repo pins pnpm 9.12.1
+# via `packageManager`, so pins written here are silently ignored — the lockfile
+# simply loses its `overrides:` block and nothing warns. Move them here only as
+# part of a deliberate pnpm 10 upgrade, and check that block is still present
+# afterwards.
