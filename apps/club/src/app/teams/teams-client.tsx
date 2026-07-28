@@ -21,6 +21,15 @@ import { countUniqueTeamMembers, createEmptyRoster } from "./teams-config";
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
 const TEAM_APPLICATIONS_ID = "team-applications";
 
+// Cosmetic bar widths for the loading filter strip. Blade owns the team list
+// now (f34428f8), so this file must not encode how many teams exist: these are
+// "enough bars to read as a filter row" and nothing more. Fetching the real
+// list at build time is not an alternative either -- CI's build job runs
+// `cp .env.example .env`, and .env.example points BLADE_URL at a localhost
+// Blade that is not running in that job, so a build-time fetch would either
+// fail the build or silently bake an empty list into the export.
+const TEAM_FILTER_SKELETON_WIDTHS = ["w-24", "w-20", "w-28", "w-16"];
+
 type RosterStatus = "loading" | "ready" | "error";
 
 const guildProfileImageLoader = ({ src }: ImageLoaderProps) => src;
@@ -147,6 +156,51 @@ function TeamCard({ member, index }: { member: TeamMember; index: number }) {
   return cardContent;
 }
 
+// Reserves the mobile picker's exact box. Below `md` the picker's wrapper is
+// `hidden` until Blade answers, and a `display: none` flex child forfeits both
+// its 44px height and the column's `gap-5`, so the header grows by exactly 64px
+// the moment the roster lands. The fill is muted so the box does not read as a
+// control worth tapping. `motion-safe:` rather than the `useReducedMotion()` in
+// scope, because this markup is what the static export prerenders: a JS-gated
+// class would animate for a frame before hydration corrected it.
+export function TeamPickerSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="h-11 w-full border-2 border-black bg-[#ffd0de]/35 shadow-[3px_4px_0_rgba(0,0,0,0.34)] motion-safe:animate-pulse"
+    />
+  );
+}
+
+// Deliberately narrower than the real strip. Between 768px and ~1146px the
+// header row only grows because the heading wraps, and it wraps only when the
+// strip's width pressure and the real (longer) heading combine -- a full-width
+// skeleton squeezes the short "Our Teams" heading onto two lines and makes the
+// loading header taller than the loaded one, so content would jump up on
+// arrival. Above ~1147px nothing shifts either way today, because the strip
+// wraps to two rows and `md:items-end` takes the taller heading block instead;
+// that is a fact about the current team count, not a structural one, and around
+// twelve teams the real strip takes a third row and drives the row height again.
+export function TeamFilterSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="hidden max-w-[44rem] flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex"
+    >
+      {TEAM_FILTER_SKELETON_WIDTHS.map((width, index) => (
+        <span key={index} className="block border-b-2 border-transparent pb-1">
+          <span
+            className={cn(
+              "block h-3 rounded-sm bg-white/20 motion-safe:animate-pulse lg:h-[13px]",
+              width,
+            )}
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
   const message =
     status === "loading"
@@ -168,6 +222,10 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
 }
 
 export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
+  // The roster sits just past one viewport, below a full-height hero, so the
+
+  // header scrolls into view. Leading by a viewport (as home-events.tsx does)
+  // means most visitors never see the loading state at all.
   const { ref: rosterSectionRef, shouldLoad: shouldLoadRoster } =
     useDeferredSectionLoad<HTMLElement>();
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
@@ -341,7 +399,12 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="max-w-xl text-left">
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#f7b5cc] md:text-xs">
+              {/* The loading placeholders are aria-hidden, so this label is the
+                  only channel a screen reader has for the section resolving. */}
+              <p
+                role="status"
+                className="text-[11px] font-black uppercase tracking-[0.2em] text-[#f7b5cc] md:text-xs"
+              >
                 {teamCountLabel}
               </p>
               <AnimatePresence mode="wait" initial={false}>
@@ -368,60 +431,68 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
             <div
               className={cn(
                 "relative md:hidden",
-                roster.teams.length === 0 && "hidden",
+                roster.teams.length === 0 && status !== "loading" && "hidden",
               )}
             >
-              <select
-                value={activeDefinition?.slug ?? ""}
-                onChange={(event) => selectTeam(event.target.value)}
-                aria-label="Choose team"
-                className="h-11 w-full appearance-none border-2 border-black bg-[#ffd0de] px-3 pr-10 text-[11px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_4px_0_rgba(0,0,0,0.34)] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)]"
-              >
-                {roster.teams.map((team) => (
-                  <option key={team.slug} value={team.slug}>
-                    {team.label} ({roster.members[team.slug]?.length ?? 0})
-                  </option>
-                ))}
-              </select>
+              {status === "loading" ? (
+                <TeamPickerSkeleton />
+              ) : (
+                <select
+                  value={activeDefinition?.slug ?? ""}
+                  onChange={(event) => selectTeam(event.target.value)}
+                  aria-label="Choose team"
+                  className="h-11 w-full appearance-none border-2 border-black bg-[#ffd0de] px-3 pr-10 text-[11px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_4px_0_rgba(0,0,0,0.34)] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)]"
+                >
+                  {roster.teams.map((team) => (
+                    <option key={team.slug} value={team.slug}>
+                      {team.label} ({roster.members[team.slug]?.length ?? 0})
+                    </option>
+                  ))}
+                </select>
+              )}
               <ChevronDown
                 aria-hidden="true"
                 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-black"
               />
             </div>
 
-            <div
-              className="hidden max-w-[44rem] flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex"
-              aria-label="Team filters"
-            >
-              {roster.teams.map((team) => {
-                const isActive = activeDefinition?.slug === team.slug;
+            {status === "loading" ? (
+              <TeamFilterSkeleton />
+            ) : (
+              <div
+                className="hidden max-w-[44rem] flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex"
+                aria-label="Team filters"
+              >
+                {roster.teams.map((team) => {
+                  const isActive = activeDefinition?.slug === team.slug;
 
-                return (
-                  <button
-                    key={team.slug}
-                    type="button"
-                    className={cn(
-                      "club-team-filter border-b-2 pb-1 text-xs font-black uppercase leading-none tracking-[0.08em] transition-colors hover:border-white/35 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)] lg:text-[13px]",
-                      isActive
-                        ? "border-[#ffef9b] text-[#ffef9b]"
-                        : "text-white/58 border-transparent",
-                    )}
-                    aria-pressed={isActive}
-                    onClick={() => selectTeam(team.slug)}
-                  >
-                    {team.label}
-                    <span
+                  return (
+                    <button
+                      key={team.slug}
+                      type="button"
                       className={cn(
-                        "ml-1 text-[var(--club-gold)]",
-                        isActive ? "opacity-100" : "opacity-85",
+                        "club-team-filter border-b-2 pb-1 text-xs font-black uppercase leading-none tracking-[0.08em] transition-colors hover:border-white/35 hover:text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)] lg:text-[13px]",
+                        isActive
+                          ? "border-[#ffef9b] text-[#ffef9b]"
+                          : "text-white/58 border-transparent",
                       )}
+                      aria-pressed={isActive}
+                      onClick={() => selectTeam(team.slug)}
                     >
-                      {roster.members[team.slug]?.length ?? 0}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      {team.label}
+                      <span
+                        className={cn(
+                          "ml-1 text-[var(--club-gold)]",
+                          isActive ? "opacity-100" : "opacity-85",
+                        )}
+                      >
+                        {roster.members[team.slug]?.length ?? 0}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
