@@ -66,68 +66,39 @@ import { Skeleton } from "@forge/ui/skeleton";
 import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
 import {
-  graduationTermYearFromDate,
   MEMBER_DASHBOARD_PATH,
-  memberSettingsFields,
   memberUpdateFormSchema,
 } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
+import type { CareerSettingsState } from "~/app/_components/member/member-career-settings";
+import type { MemberSettingsSection } from "~/app/_components/member/member-settings-sections";
 import type { CurrentMember } from "~/hooks/use-member";
 import { signOutFromBlade } from "~/app/_components/auth/sign-out-flow";
 import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
+import {
+  careerHistoryMutationInput,
+  careerHistoryValidationError,
+  careerSettingsStateFromCareerData,
+  hasCareerSettingsChanged,
+} from "~/app/_components/member/member-career-settings";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
-import { MemberRouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import {
+  memberSettingsFieldsBySection,
+  memberSettingsSectionOrder,
+} from "~/app/_components/member/member-settings-sections";
+import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
+import { memberProfileFormDefaults } from "~/lib/member-profile-form-values";
 import { api } from "~/trpc/react";
 
-type SettingsSection = MemberSettingsFieldDefinition["section"];
+export { memberProfileFormDefaults };
+
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
-interface CareerSettingsState {
-  currentCityKey: string | null;
-  currentCityLabel: string | null;
-  guildLocationVisible: boolean;
-  history: CareerHistoryDraft[];
-}
-type MemberProfileFormSource = Omit<
-  CurrentMember,
-  | "alumniConfirmedAt"
-  | "currentCityKey"
-  | "gender"
-  | "guildLocationVisible"
-  | "levelOfStudy"
-  | "major"
-  | "raceOrEthnicity"
-  | "school"
-  | "shirtSize"
-> & {
-  gender: string;
-  levelOfStudy: string;
-  major: string;
-  raceOrEthnicity: string;
-  school: string;
-  shirtSize: string;
-};
 
-function careerSettingsSnapshot(state: CareerSettingsState) {
-  return {
-    currentCityKey: state.currentCityKey,
-    guildLocationVisible: state.guildLocationVisible,
-    history: state.history.map(
-      ({
-        cityLabel: _cityLabel,
-        companyLabel: _companyLabel,
-        draftId: _draftId,
-        ...employment
-      }) => employment,
-    ),
-  };
-}
-
-const sectionOrder: SettingsSection[] = ["Personal", "Academics", "Guild"];
 const sectionMeta = {
   Personal: {
     icon: UserRound,
@@ -146,42 +117,9 @@ const sectionMeta = {
       "Public directory fields, recruiting links, profile photo, and resume.",
   },
 } satisfies Record<
-  SettingsSection,
+  MemberSettingsSection,
   { description: ReactNode; icon: typeof UserRound; title: string }
 >;
-
-export function memberProfileFormDefaults(
-  member: MemberProfileFormSource,
-): MemberUpdateFormValues {
-  const { gradTerm, gradYear } = graduationTermYearFromDate(member.gradDate);
-
-  return {
-    firstName: member.firstName,
-    lastName: member.lastName,
-    email: member.email,
-    phoneNumber: member.phoneNumber ?? "",
-    dob: member.dob,
-    school: member.school,
-    levelOfStudy: member.levelOfStudy,
-    major: member.major,
-    gender: member.gender,
-    raceOrEthnicity: member.raceOrEthnicity,
-    shirtSize: member.shirtSize,
-    gradTerm,
-    gradYear,
-    company: member.company ?? "",
-    githubProfileUrl: member.githubProfileUrl ?? "",
-    linkedinProfileUrl: member.linkedinProfileUrl ?? "",
-    websiteUrl: member.websiteUrl ?? "",
-    profilePictureUrl: member.profilePictureUrl ?? "",
-    resumeUrl: member.resumeUrl ?? "",
-    tagline: member.tagline ?? "",
-    about: member.about ?? "",
-    guildProfileVisible: member.guildProfileVisible,
-    guildResumeVisible: member.guildResumeVisible,
-    guildOpportunityStatuses: member.guildOpportunityStatuses,
-  };
-}
 
 export function MemberSettingsFieldControl({
   fieldConfig,
@@ -366,7 +304,7 @@ function MemberProfileSettingsSkeleton() {
           </div>
         </div>
 
-        {sectionOrder.map((section) => (
+        {memberSettingsSectionOrder.map((section) => (
           <Card
             key={section}
             className="gap-0 border-white/10 bg-card/95 py-0 shadow-xl shadow-black/20"
@@ -449,25 +387,7 @@ function MemberProfileSettingsEditor({
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const initialCareerState = useMemo<CareerSettingsState>(
-    () => ({
-      currentCityKey: careerData.currentLocation.currentCityKey,
-      currentCityLabel: careerData.currentLocation.city?.label ?? null,
-      guildLocationVisible: careerData.currentLocation.guildLocationVisible,
-      history: careerData.employment.map((employment) => ({
-        cityKey: employment.cityKey,
-        cityLabel: employment.city?.label ?? null,
-        companyId: employment.company.id,
-        companyLabel: employment.company.displayName,
-        draftId: employment.id,
-        endMonth: employment.endMonth,
-        experienceType: employment.experienceType,
-        guildVisible: employment.guildVisible,
-        proposedCompanyName: null,
-        startMonth: employment.startMonth,
-        state: employment.state,
-        title: employment.title,
-      })),
-    }),
+    () => careerSettingsStateFromCareerData(careerData),
     [careerData],
   );
   const [savedCareerState, setSavedCareerState] =
@@ -503,21 +423,13 @@ function MemberProfileSettingsEditor({
     }),
     [careerHistory, currentCityKey, currentCityLabel, guildLocationVisible],
   );
-  const isCareerDirty =
-    JSON.stringify(careerSettingsSnapshot(currentCareerState)) !==
-    JSON.stringify(careerSettingsSnapshot(savedCareerState));
+  const isCareerDirty = hasCareerSettingsChanged(
+    currentCareerState,
+    savedCareerState,
+  );
   const hasUnsavedChanges = isProfileDirty || isCareerDirty;
 
-  const fieldsBySection = useMemo(
-    () =>
-      sectionOrder.map((section) => ({
-        section,
-        fields: memberSettingsFields.filter(
-          (field) => field.section === section,
-        ),
-      })),
-    [],
-  );
+  const fieldsBySection = useMemo(() => memberSettingsFieldsBySection(), []);
 
   const updateMember = api.member.updateMember.useMutation();
   const deleteMember = api.member.deleteMember.useMutation();
@@ -529,39 +441,9 @@ function MemberProfileSettingsEditor({
   const isSaving =
     updateMember.isPending || isSavingCareer || isSavingBeforeNavigation;
 
-  const careerValidationError = () => {
-    const unconfirmed = careerHistory.find(
-      (employment) =>
-        employment.state === "unknown" || !employment.experienceType,
-    );
-    return unconfirmed
-      ? "Confirm whether each legacy entry is current or former before saving career history."
-      : null;
-  };
-
   const persistCareer = async () => {
     await Promise.all([
-      replaceEmployment.mutateAsync(
-        careerHistory.map(
-          ({
-            cityLabel: _cityLabel,
-            companyLabel: _companyLabel,
-            draftId: _draftId,
-            ...employment
-          }) => {
-            const experienceType = employment.experienceType;
-            if (!experienceType) {
-              throw new Error("Choose an experience type.");
-            }
-            return {
-              ...employment,
-              experienceType,
-              state: employment.state as "current" | "past",
-              title: employment.title ?? "",
-            };
-          },
-        ),
-      ),
+      replaceEmployment.mutateAsync(careerHistoryMutationInput(careerHistory)),
       updateCurrentCity.mutateAsync({
         currentCityKey,
         guildLocationVisible,
@@ -579,7 +461,9 @@ function MemberProfileSettingsEditor({
   const saveAllChanges = async (values: MemberUpdateFormValues) => {
     const saveProfile = isProfileDirty;
     const saveCareer = isCareerDirty;
-    const validationError = saveCareer ? careerValidationError() : null;
+    const validationError = saveCareer
+      ? careerHistoryValidationError(careerHistory)
+      : null;
     setSavedMessage(null);
     setSubmitError(null);
     setCareerError(validationError);
@@ -746,7 +630,7 @@ function MemberProfileSettingsEditor({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
             <Button asChild variant="ghost" className="-ml-3 gap-2">
-              <MemberRouteTransitionLink
+              <RouteTransitionLink
                 href={MEMBER_DASHBOARD_PATH}
                 beforeNavigate={handleDashboardNavigation}
               >
@@ -755,7 +639,7 @@ function MemberProfileSettingsEditor({
                   aria-hidden="true"
                 />
                 Dashboard
-              </MemberRouteTransitionLink>
+              </RouteTransitionLink>
             </Button>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">

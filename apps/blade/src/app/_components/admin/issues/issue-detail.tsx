@@ -39,11 +39,11 @@ import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import {
   clubWallClock,
   formatClubDateTime,

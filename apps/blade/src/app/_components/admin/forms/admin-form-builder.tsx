@@ -14,7 +14,6 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -73,12 +72,33 @@ import {
   formDefinitionSchema,
 } from "@forge/validators";
 
+import type { MediaInstruction } from "./form-definition-draft";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
+import {
+  formatRespondentAudience,
+  formatResponseMode,
+  formatSectionName,
+  formBuilderShareHref,
+  localDateTime,
+  toSlug,
+} from "./form-builder-formatting";
+import {
+  buildFormDefinition,
+  draftInstructionsBody,
+  draftMediaInstructions,
+  draftTextInstructionId,
+} from "./form-definition-draft";
+import {
+  changeQuestionType,
+  newManualOption,
+  newQuestion,
+} from "./form-question-model";
+import { reorderFormQuestions, swapQuestions } from "./form-question-ordering";
 import { FormShareActions } from "./form-share-actions";
 
 const questionTypes = [
@@ -112,71 +132,6 @@ const presetCatalogs = [
   "SHORT_LEVELS_OF_STUDY",
   "SHORT_RACES_AND_ETHNICITIES",
 ];
-
-function newQuestion(type: FormQuestion["type"]): FormQuestion {
-  const base = {
-    id: crypto.randomUUID(),
-    prompt: "Untitled question",
-    required: false,
-    retired: false,
-  };
-  if (type === "short_text") return { ...base, maxLength: 500, type };
-  if (type === "paragraph") return { ...base, maxLength: 5_000, type };
-  if (type === "file") {
-    return {
-      ...base,
-      allowedMimeTypes: ["application/pdf", "image/png", "image/jpeg"],
-      maxBytes: 100 * 1024 * 1024,
-      type,
-    };
-  }
-  if (type === "linear_scale") return { ...base, max: 5, min: 1, type };
-  if (type === "number") return { ...base, type };
-  if (
-    type === "multiple_choice" ||
-    type === "checkboxes" ||
-    type === "dropdown"
-  ) {
-    return {
-      ...base,
-      allowOther: false,
-      manualOptions: [
-        { id: crypto.randomUUID(), label: "Option 1", value: "option-1" },
-      ],
-      optionSource: "manual",
-      presetCatalogId: null,
-      type,
-    };
-  }
-  return { ...base, type } as FormQuestion;
-}
-
-function changeQuestionType(
-  question: FormQuestion,
-  type: FormQuestion["type"],
-): FormQuestion {
-  const replacement = newQuestion(type);
-  return {
-    ...replacement,
-    id: question.id,
-    prompt: question.prompt,
-    required: question.required,
-    retired: question.retired,
-  };
-}
-
-export function reorderFormQuestions(
-  questions: FormQuestion[],
-  activeId: string,
-  overId: string,
-) {
-  const oldIndex = questions.findIndex(({ id }) => id === activeId);
-  const newIndex = questions.findIndex(({ id }) => id === overId);
-  if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
-    return questions;
-  }
-  return arrayMove(questions, oldIndex, newIndex);
-}
 
 function SortableQuestionCard({
   children,
@@ -237,15 +192,6 @@ function focusOption(questionId: string, optionId: string) {
   requestAnimationFrame(() => {
     document.getElementById(`option-${questionId}-${optionId}`)?.focus();
   });
-}
-
-function newManualOption(label: string) {
-  const id = crypto.randomUUID();
-  return {
-    id,
-    label,
-    value: toSlug(label) || `option-${id.slice(0, 8)}`,
-  };
 }
 
 function ChoiceQuestionEditor({
@@ -738,16 +684,6 @@ function QuestionSpecificEditor({
   );
 }
 
-function toSlug(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-}
-
 interface BuilderInitial {
   closesAt: string | null;
   definition: FormDefinition;
@@ -772,50 +708,29 @@ interface CallbackCatalogItem {
   slug: string;
 }
 
-function localDateTime(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-export function formBuilderShareHref(
-  pathname: string,
-  currentSearch: string,
-  open: boolean,
-) {
-  const next = new URLSearchParams(currentSearch);
-  if (open) next.set("dialog", "share");
-  else next.delete("dialog");
-  const query = next.toString();
-  return query ? `${pathname}?${query}` : pathname;
-}
-
 export function AdminFormBuilder({
   callbacks,
   configuredCallbacks = [],
   initial,
-  initialShareAssets,
   readOnly = false,
   respondentRoles,
   sections,
+  shareAssets,
 }: {
   callbacks: CallbackCatalogItem[];
   configuredCallbacks?: { active: boolean; callbackSlug: string; id: string }[];
   initial?: BuilderInitial;
-  initialShareAssets?: RouterOutputs["forms"]["getShareAssets"];
   readOnly?: boolean;
   respondentRoles: { id: string; name: string }[];
   sections: { id: string; name: string }[];
+  shareAssets?: RouterOutputs["forms"]["getShareAssets"];
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTextInstruction = initial?.definition.instructions.find(
-    (instruction) => instruction.type === "text",
-  );
+  const savedInstructions = initial?.definition.instructions ?? [];
   const [textInstructionId] = useState(
-    initialTextInstruction?.id ?? crypto.randomUUID(),
+    draftTextInstructionId(savedInstructions),
   );
   const [name, setName] = useState(initial?.name ?? "");
   const [slug, setSlug] = useState(initial?.slugName ?? "");
@@ -823,29 +738,11 @@ export function AdminFormBuilder({
     initial?.definition.description ?? "",
   );
   const [instructions, setInstructions] = useState(
-    initial?.definition.instructions
-      .filter(
-        (item): item is Extract<typeof item, { type: "text" }> =>
-          item.type === "text",
-      )
-      .map((item) => item.body)
-      .join("\n\n") ?? "",
+    draftInstructionsBody(savedInstructions),
   );
   const [mediaInstructions, setMediaInstructions] = useState<
-    Extract<
-      FormDefinition["instructions"][number],
-      { type: "image" | "video" }
-    >[]
-  >(
-    initial?.definition.instructions.filter(
-      (
-        item,
-      ): item is Extract<
-        FormDefinition["instructions"][number],
-        { type: "image" | "video" }
-      > => item.type === "image" || item.type === "video",
-    ) ?? [],
-  );
+    MediaInstruction[]
+  >(draftMediaInstructions(savedInstructions));
   const [questions, setQuestions] = useState<FormQuestion[]>(
     initial?.definition.questions ?? [],
   );
@@ -892,10 +789,6 @@ export function AdminFormBuilder({
   const disableCallback = api.forms.disableCallback.useMutation();
   const createUpload = api.forms.createUpload.useMutation();
   const finalizeUpload = api.forms.finalizeUpload.useMutation();
-  const share = api.forms.getShareAssets.useQuery(
-    { formId: initial?.id ?? "00000000-0000-0000-0000-000000000000" },
-    { enabled: Boolean(initial?.id), initialData: initialShareAssets },
-  );
   const shareOpen = searchParams.get("dialog") === "share";
 
   useEffect(() => {
@@ -909,23 +802,14 @@ export function AdminFormBuilder({
     );
   }
 
-  const definition: FormDefinition = {
+  const definition = buildFormDefinition({
     description,
-    instructions: [
-      ...(instructions.trim()
-        ? [
-            {
-              body: instructions,
-              id: textInstructionId,
-              type: "text" as const,
-            },
-          ]
-        : []),
-      ...mediaInstructions,
-    ],
+    instructions,
+    media: mediaInstructions,
+    name,
     questions,
-    title: name || "Untitled form",
-  };
+    textId: textInstructionId,
+  });
 
   function updateQuestion(id: string, patch: Partial<FormQuestion>) {
     setQuestions((current) =>
@@ -938,17 +822,7 @@ export function AdminFormBuilder({
   }
 
   function moveQuestion(index: number, direction: -1 | 1) {
-    setQuestions((current) => {
-      const target = index + direction;
-      if (target < 0 || target >= current.length) return current;
-      const next = [...current];
-      const question = next[index];
-      const neighbor = next[target];
-      if (!question || !neighbor) return current;
-      next[index] = neighbor;
-      next[target] = question;
-      return next;
-    });
+    setQuestions((current) => swapQuestions(current, index, direction));
   }
 
   function handleQuestionDragEnd(event: DragEndEvent) {
@@ -1154,7 +1028,7 @@ export function AdminFormBuilder({
               <Button
                 variant="outline"
                 className="min-h-11 gap-2"
-                disabled={!share.data}
+                disabled={!shareAssets}
                 onClick={() => setShareOpen(true)}
               >
                 <Share2 className="h-4 w-4" aria-hidden="true" /> Share
@@ -1226,20 +1100,11 @@ export function AdminFormBuilder({
         aria-label="Form configuration summary"
       >
         <Badge variant="outline">
-          {sections.find((section) => section.id === sectionId)?.name ??
-            "No section"}
+          {formatSectionName(sections, sectionId)}
         </Badge>
+        <Badge variant="outline">{formatResponseMode(responseMode)}</Badge>
         <Badge variant="outline">
-          {responseMode === "single_locked"
-            ? "One locked response"
-            : responseMode === "single_editable"
-              ? "One editable response"
-              : "Multiple locked responses"}
-        </Badge>
-        <Badge variant="outline">
-          {respondentRoleIds.length === 0
-            ? "All eligible members"
-            : `${respondentRoleIds.length} respondent roles`}
+          {formatRespondentAudience(respondentRoleIds)}
         </Badge>
         <Badge variant="outline">
           {manuallyClosed ? "Manually closed" : "Schedule active"}
@@ -1784,7 +1649,7 @@ export function AdminFormBuilder({
         </Dialog>
       )}
 
-      {initial && share.data && (
+      {initial && shareAssets && (
         <Dialog open={shareOpen} onOpenChange={setShareOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -1795,24 +1660,24 @@ export function AdminFormBuilder({
             </DialogHeader>
             <div className="grid gap-4">
               <FormShareActions
-                canonicalUrl={share.data.canonicalUrl}
+                canonicalUrl={shareAssets.canonicalUrl}
                 formName={name}
                 onCopyLink={() =>
-                  void navigator.clipboard.writeText(share.data.canonicalUrl)
+                  void navigator.clipboard.writeText(shareAssets.canonicalUrl)
                 }
                 onOpenQrPreview={() =>
                   window.open(
-                    share.data.qrPngDataUrl,
+                    shareAssets.qrPngDataUrl,
                     "_blank",
                     "noopener,noreferrer",
                   )
                 }
-                qrPngDataUrl={share.data.qrPngDataUrl}
+                qrPngDataUrl={shareAssets.qrPngDataUrl}
                 slugName={slug}
               />
               {/* eslint-disable-next-line @next/next/no-img-element -- generated data URL QR preview */}
               <img
-                src={share.data.qrPngDataUrl}
+                src={shareAssets.qrPngDataUrl}
                 alt={`QR code for ${name}`}
                 className="mx-auto w-48 rounded-md border border-white/10 bg-white p-2"
               />

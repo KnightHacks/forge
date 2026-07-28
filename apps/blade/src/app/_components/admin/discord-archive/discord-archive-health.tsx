@@ -24,10 +24,10 @@ import {
 } from "@forge/ui/table";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime } from "~/lib/dates";
 
 type DiscordArchiveHealth = RouterOutputs["discordArchive"]["getHealth"];

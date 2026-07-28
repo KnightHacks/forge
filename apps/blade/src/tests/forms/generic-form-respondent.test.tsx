@@ -72,17 +72,67 @@ describe("GenericFormRespondent", () => {
     const html = renderToStaticMarkup(
       createElement(GenericFormRespondent, {
         definition,
-        respondentState: {
-          closedAt: "2026-09-01T03:59:59.000Z",
-          reason: "schedule" as const,
-          status: "closed" as const,
-        },
+        respondentState: { status: "closed" as const },
       }),
     );
 
     expect(html).toContain("This form is closed");
     expect(html).toContain("Responses are no longer accepted");
     expect(html).not.toContain("Submit response");
+  });
+
+  it("distinguishes a form closed early from one past its deadline", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormRespondent, {
+        definition,
+        respondentState: { status: "manually_closed" as const },
+      }),
+    );
+
+    expect(html).toContain('data-form-state="manually_closed"');
+    expect(html).toContain("This form was closed early");
+    expect(html).toContain("Responses are no longer accepted");
+    expect(html).not.toContain("Submit response");
+  });
+
+  it("names the archived state instead of calling it closed", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormRespondent, {
+        definition,
+        respondentState: { status: "archived" as const },
+      }),
+    );
+
+    expect(html).toContain('data-form-state="archived"');
+    expect(html).toContain("This form has been archived");
+    expect(html).toContain("Archived forms no longer accept responses");
+  });
+
+  it("tells an ineligible member why the form is unavailable", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormRespondent, {
+        definition,
+        respondentState: { status: "ineligible" as const },
+      }),
+    );
+
+    expect(html).toContain('role="status"');
+    expect(html).toContain('data-form-state="ineligible"');
+    expect(html).toContain("You are not eligible for this form");
+    expect(html).toContain("It is limited to specific members");
+    expect(html).not.toContain("This form is closed");
+  });
+
+  it("omits the opening date when a scheduled form has none", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormRespondent, {
+        definition,
+        respondentState: { opensAt: null, status: "scheduled" as const },
+      }),
+    );
+
+    expect(html).toContain("This form is not open yet");
+    expect(html).not.toContain("Opens");
   });
 
   it("TC-016 renders a locked response receipt without an inert review action", () => {

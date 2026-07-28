@@ -2,10 +2,8 @@ import { ShieldCheck } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import {
-  ADMIN_PAGE_EYEBROWS,
-  AdminPageHeader,
-} from "~/app/_components/shared/admin-page";
+import { AdminPageHeader } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 
 describe("admin page chrome", () => {
   it("keeps every rendered admin page eyebrow unique", () => {

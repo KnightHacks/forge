@@ -7,7 +7,8 @@ These conventions document the structure agents should preserve when editing For
 - Keep `app/**/page.tsx` thin: auth, permission checks, redirects, initial server tRPC reads, and rendering route components only.
 - Put Blade UI in `apps/blade/src/app/_components/**`, grouped by feature. Use `_components/shared` only for Blade-wide reusable pieces.
 - Do not put Blade-specific product components in `@forge/ui`; `@forge/ui` is for app-agnostic primitives.
-- Server components/pages use `~/trpc/server` (`api`, `HydrateClient`). Client components use `~/trpc/react`.
+- Server components/pages use `~/trpc/server` (`api`). Client components use `~/trpc/react`.
+- Server-read data reaches a client component as props. Do not re-fetch on the client what the page already read, and do not seed a client query with `initialData` to bridge the two. After a mutation, refresh RSC-prop data with `startTransition(() => router.refresh())`; use `utils.x.invalidate()` only for data the client itself fetched.
 - Do not add `"use client"` to pages just to use hooks. Keep auth/permissions server-side and move interactivity into a client component.
 - Blade-only constants belong in `apps/blade/src/consts`. Constants used across apps/packages belong in `@forge/consts`.
 - Blade-only helpers belong near the feature or in `apps/blade/src/lib`. Shared helpers belong in `@forge/utils`.

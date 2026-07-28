@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AdminFormBuilder } from "~/app/_components/admin/forms/admin-form-builder";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Create Form",
@@ -24,12 +24,10 @@ export default async function CreateFormPage() {
   }
 
   return (
-    <HydrateClient>
-      <AdminFormBuilder
-        callbacks={callbacks}
-        respondentRoles={respondentRoles}
-        sections={workspace.sections}
-      />
-    </HydrateClient>
+    <AdminFormBuilder
+      callbacks={callbacks}
+      respondentRoles={respondentRoles}
+      sections={workspace.sections}
+    />
   );
 }

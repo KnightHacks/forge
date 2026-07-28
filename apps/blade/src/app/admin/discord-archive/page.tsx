@@ -6,7 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import { DiscordArchiveHealthDashboard } from "~/app/_components/admin/discord-archive/discord-archive-health";
 import { canAccessDiscordArchive } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description:
@@ -21,9 +21,5 @@ export default async function DiscordArchiveHealthPage() {
   if (!canAccessDiscordArchive(permissions)) redirect(MEMBER_DASHBOARD_PATH);
   const health = await api.discordArchive.getHealth({ limit: 100 });
 
-  return (
-    <HydrateClient>
-      <DiscordArchiveHealthDashboard health={health} />
-    </HydrateClient>
-  );
+  return <DiscordArchiveHealthDashboard health={health} />;
 }

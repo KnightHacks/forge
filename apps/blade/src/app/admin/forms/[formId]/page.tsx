@@ -5,7 +5,7 @@ import { formDefinitionSchema } from "@forge/validators";
 
 import { AdminFormBuilder } from "~/app/_components/admin/forms/admin-form-builder";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Edit Form",
@@ -19,7 +19,7 @@ export default async function EditFormPage({
   const session = await auth();
   if (!session) redirect("/");
   const { formId } = await params;
-  const [result, workspace, callbacks, respondentRoles, initialShareAssets] =
+  const [result, workspace, callbacks, respondentRoles, shareAssets] =
     await Promise.all([
       api.forms.getAdminForm({ formId }),
       api.forms.listAdmin(),
@@ -30,30 +30,28 @@ export default async function EditFormPage({
   const definition = formDefinitionSchema.parse(result.form.formData);
 
   return (
-    <HydrateClient>
-      <AdminFormBuilder
-        callbacks={callbacks}
-        configuredCallbacks={result.callbacks}
-        initial={{
-          closesAt: result.form.closesAt?.toISOString() ?? null,
-          definition,
-          duesOnly: result.form.duesOnly,
-          id: result.form.id,
-          manuallyClosed: result.form.manuallyClosed,
-          name: result.form.name,
-          opensAt: result.form.opensAt?.toISOString() ?? null,
-          responseMode: result.form.responseMode,
-          revision: result.form.revision,
-          respondentRoleIds: result.respondentRoleIds,
-          sectionId: result.form.sectionId,
-          slugName: result.form.slugName,
-          state: result.form.state,
-        }}
-        initialShareAssets={initialShareAssets}
-        readOnly={!result.access.canEdit}
-        respondentRoles={respondentRoles}
-        sections={workspace.sections}
-      />
-    </HydrateClient>
+    <AdminFormBuilder
+      callbacks={callbacks}
+      configuredCallbacks={result.callbacks}
+      initial={{
+        closesAt: result.form.closesAt?.toISOString() ?? null,
+        definition,
+        duesOnly: result.form.duesOnly,
+        id: result.form.id,
+        manuallyClosed: result.form.manuallyClosed,
+        name: result.form.name,
+        opensAt: result.form.opensAt?.toISOString() ?? null,
+        responseMode: result.form.responseMode,
+        revision: result.form.revision,
+        respondentRoleIds: result.respondentRoleIds,
+        sectionId: result.form.sectionId,
+        slugName: result.form.slugName,
+        state: result.form.state,
+      }}
+      readOnly={!result.access.canEdit}
+      respondentRoles={respondentRoles}
+      sections={workspace.sections}
+      shareAssets={shareAssets}
+    />
   );
 }

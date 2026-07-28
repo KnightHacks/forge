@@ -12,11 +12,11 @@ import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { CompanyAdminMark } from "./company-admin-mark";
 
 type Company = RouterOutputs["career"]["listAdminCompanies"][number];

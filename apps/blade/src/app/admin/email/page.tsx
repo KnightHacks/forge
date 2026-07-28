@@ -8,7 +8,7 @@ import { EmailPortalAdmin } from "~/app/_components/admin/email/email-portal-adm
 import { env } from "~/env";
 import { canAccessEmailPortal } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description:
@@ -40,18 +40,16 @@ export default async function EmailPortalPage({
   const tab = parseTab((await searchParams).tab);
 
   return (
-    <HydrateClient>
-      <EmailPortalAdmin
-        campaignAudienceMode={
-          env.NODE_ENV === "development" && env.BLADE_E2E_AUTH !== "true"
-            ? "development_review"
-            : "all"
-        }
-        initialAudienceOptions={audienceOptions}
-        initialSends={sends}
-        initialTab={tab}
-        initialTemplates={templates}
-      />
-    </HydrateClient>
+    <EmailPortalAdmin
+      audienceOptions={audienceOptions}
+      campaignAudienceMode={
+        env.NODE_ENV === "development" && env.BLADE_E2E_AUTH !== "true"
+          ? "development_review"
+          : "all"
+      }
+      initialTab={tab}
+      sends={sends}
+      templates={templates}
+    />
   );
 }

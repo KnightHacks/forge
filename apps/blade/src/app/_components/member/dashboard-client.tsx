@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
 import { Card, CardContent } from "@forge/ui/card";
 import { Skeleton } from "@forge/ui/skeleton";
-import {
-  graduationTermYearFromDate,
-  MEMBER_SIGNUP_FORM_SLUG,
-} from "@forge/validators";
+import { graduationTermYearFromDate } from "@forge/validators";
 
+import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
+import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
+import type { CurrentMember } from "~/hooks/use-member";
 import { AlumniDashboard } from "~/app/_components/member/alumni-dashboard";
 import { GraduationConfirmationDialog } from "~/app/_components/member/graduation-confirmation-dialog";
 import {
@@ -19,7 +21,6 @@ import {
   MemberDashboard,
 } from "~/app/_components/member/member-dashboard";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
-import { useMember } from "~/hooks/use-member";
 import { api } from "~/trpc/react";
 
 function DashboardSkeleton() {
@@ -208,31 +209,29 @@ function DashboardErrorState() {
 }
 
 export function DashboardClient({
+  alumni,
+  attendance,
   debugLatencyMs = 0,
+  duesStatus,
+  events,
+  feedback = [],
+  member,
 }: {
+  alumni: RouterOutputs["alumni"]["getDashboard"] | null;
+  attendance: RouterOutputs["event"]["listMemberAttendance"] | null;
   debugLatencyMs?: number;
+  duesStatus: CurrentDuesStatus | null;
+  events: RouterOutputs["event"]["listMemberEvents"] | null;
+  feedback?: MemberFeedbackOpportunity[];
+  member: CurrentMember;
 }) {
+  const router = useRouter();
   const isDebugDelayPending = useDebugLatency(debugLatencyMs);
-  const { isError, isLoading, isRedirecting, member } = useMember({
-    redirectNoMemberTo: `/form/${MEMBER_SIGNUP_FORM_SLUG}`,
-  });
   const [graduationError, setGraduationError] = useState<string | null>(null);
-  const apiUtils = api.useUtils();
-  const alumniQuery = api.alumni.getDashboard.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting,
-    retry(failureCount, error) {
-      if (error.data?.code === "NOT_FOUND") return false;
-      if (error.data?.code === "UNAUTHORIZED") return false;
-      return failureCount < 2;
-    },
-  });
   const graduationMutation = api.alumni.resolveGraduation.useMutation({
-    async onSuccess() {
+    onSuccess() {
       setGraduationError(null);
-      await Promise.all([
-        apiUtils.alumni.getDashboard.invalidate(),
-        apiUtils.member.getMember.invalidate(),
-      ]);
+      startTransition(() => router.refresh());
     },
     onError(error) {
       setGraduationError(
@@ -240,51 +239,13 @@ export function DashboardClient({
       );
     },
   });
-  const dashboardMode = alumniQuery.data?.mode;
-  const loadCurrentDashboard = dashboardMode === "current";
-  const duesQuery = api.dues.getStatus.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
-    retry(failureCount, error) {
-      if (error.data?.code === "NOT_FOUND") return false;
-      if (error.data?.code === "UNAUTHORIZED") return false;
-      return failureCount < 2;
-    },
-  });
-  const eventsQuery = api.event.listMemberEvents.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
-  });
-  const attendanceQuery = api.event.listMemberAttendance.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
-  });
-  const feedbackQuery = api.event.listMyFeedback.useQuery(undefined, {
-    enabled: Boolean(member) && !isRedirecting && loadCurrentDashboard,
-  });
 
-  if (
-    isLoading ||
-    isRedirecting ||
-    isDebugDelayPending ||
-    (member && alumniQuery.isPending) ||
-    (member &&
-      loadCurrentDashboard &&
-      (duesQuery.isPending ||
-        eventsQuery.isPending ||
-        attendanceQuery.isPending ||
-        feedbackQuery.isPending))
-  ) {
-    return <DashboardSkeleton />;
-  }
+  if (isDebugDelayPending) return <DashboardSkeleton />;
 
-  if (isError || alumniQuery.isError) return <DashboardErrorState />;
+  if (!alumni) return <DashboardErrorState />;
 
-  if (!member) return <DashboardSkeleton />;
-
-  if (!alumniQuery.data) return <DashboardErrorState />;
-
-  if (alumniQuery.data.mode === "needs_confirmation") {
-    const { gradTerm, gradYear } = graduationTermYearFromDate(
-      alumniQuery.data.gradDate,
-    );
+  if (alumni.mode === "needs_confirmation") {
+    const { gradTerm, gradYear } = graduationTermYearFromDate(alumni.gradDate);
 
     return (
       <>
@@ -310,47 +271,19 @@ export function DashboardClient({
     );
   }
 
-  if (alumniQuery.data.mode === "alumni") {
-    return (
-      <AlumniDashboard
-        dashboard={alumniQuery.data}
-        firstName={alumniQuery.data.firstName}
-      />
-    );
+  if (alumni.mode === "alumni") {
+    return <AlumniDashboard dashboard={alumni} firstName={alumni.firstName} />;
   }
 
-  if (duesQuery.isError || !duesQuery.data) {
-    return <DashboardErrorState />;
-  }
-
-  const eventsUnavailable =
-    eventsQuery.isError ||
-    attendanceQuery.isError ||
-    !eventsQuery.data ||
-    !attendanceQuery.data;
+  if (!duesStatus) return <DashboardErrorState />;
 
   return (
     <MemberDashboard
-      attendance={attendanceQuery.data ?? []}
-      duesStatus={duesQuery.data}
-      events={eventsQuery.data ?? []}
-      eventsUnavailable={eventsUnavailable}
-      feedback={(feedbackQuery.data ?? [])
-        .filter(
-          (
-            feedback,
-          ): feedback is Exclude<
-            typeof feedback,
-            { status: "not_applicable" }
-          > => "dueAt" in feedback,
-        )
-        .map((feedback) => ({
-          ...feedback,
-          dueAt: feedback.dueAt.toISOString(),
-          ...(feedback.status === "completed"
-            ? { submittedAt: feedback.submittedAt.toISOString() }
-            : {}),
-        }))}
+      attendance={attendance ?? []}
+      duesStatus={duesStatus}
+      events={events ?? []}
+      eventsUnavailable={!events || !attendance}
+      feedback={feedback}
       member={member}
     />
   );

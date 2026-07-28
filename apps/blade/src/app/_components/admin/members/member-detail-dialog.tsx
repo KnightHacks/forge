@@ -74,7 +74,7 @@ import {
 } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
-type AdminMemberDetail = RouterOutputs["member"]["getAdminMember"];
+type AdminMemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
 type SettingsSection = MemberSettingsFieldDefinition["section"];
 
 const sectionOrder: SettingsSection[] = ["Personal", "Academics", "Guild"];
@@ -723,11 +723,11 @@ function AdminMemberFiles({
   onChanged: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const accessResume = api.member.accessAdminMemberResume.useMutation();
-  const uploadPicture = api.member.uploadAdminProfilePicture.useMutation();
-  const removePicture = api.member.removeAdminProfilePicture.useMutation();
-  const uploadResume = api.member.uploadAdminResume.useMutation();
-  const removeResume = api.member.removeAdminResume.useMutation();
+  const accessResume = api.memberAdmin.accessAdminMemberResume.useMutation();
+  const uploadPicture = api.memberAdmin.uploadAdminProfilePicture.useMutation();
+  const removePicture = api.memberAdmin.removeAdminProfilePicture.useMutation();
+  const uploadResume = api.memberAdmin.uploadAdminResume.useMutation();
+  const removeResume = api.memberAdmin.removeAdminResume.useMutation();
   const isPending =
     accessResume.isPending ||
     uploadPicture.isPending ||
@@ -970,7 +970,7 @@ function AdminMemberEditForm({
     schema: adminMemberEditableProfileSchema,
     defaultValues: defaults,
   });
-  const update = api.member.updateAdminMember.useMutation({
+  const update = api.memberAdmin.updateAdminMember.useMutation({
     onSuccess() {
       toast.success("Member profile saved.");
       onSaved();
@@ -1068,7 +1068,7 @@ function DeleteMemberDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
-  const remove = api.member.deleteAdminMember.useMutation({
+  const remove = api.memberAdmin.deleteAdminMember.useMutation({
     onSuccess() {
       toast.success("Member profile deleted.");
       setOpen(false);
@@ -1158,7 +1158,7 @@ export function MemberDetailDialog({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const dues = api.member.setAdminDuesStatus.useMutation({
+  const dues = api.memberAdmin.setAdminDuesStatus.useMutation({
     onSuccess() {
       toast.success("Dues status updated.");
       onChanged();

@@ -11,7 +11,7 @@ import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell
 import { env } from "~/env";
 import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Dues",
@@ -51,17 +51,15 @@ export default async function MemberDuesPage() {
   }
 
   return (
-    <HydrateClient>
-      <AuthenticatedShell
-        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
-        session={session}
-      >
-        <MemberDuesPayment
-          duesStatus={duesStatus}
-          initialPaymentIntent={paymentIntent}
-          initialPaymentError={paymentSetupError}
-        />
-      </AuthenticatedShell>
-    </HydrateClient>
+    <AuthenticatedShell
+      adminNavigation={getAdminNavigationAccess(effectivePermissions)}
+      session={session}
+    >
+      <MemberDuesPayment
+        duesStatus={duesStatus}
+        initialPaymentIntent={paymentIntent}
+        initialPaymentError={paymentSetupError}
+      />
+    </AuthenticatedShell>
   );
 }

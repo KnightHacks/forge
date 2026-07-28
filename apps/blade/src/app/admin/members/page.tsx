@@ -8,7 +8,7 @@ import { MemberAdminDashboard } from "~/app/_components/admin/members/member-adm
 import { parseAdminMemberSearchParams } from "~/app/_components/admin/members/params";
 import { canAccessMemberAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Admin",
@@ -32,27 +32,25 @@ export default async function AdminMembersPage({
     await searchParams,
   );
   const [data, detail] = await Promise.all([
-    api.member.getAdminMembers(input),
+    api.memberAdmin.getAdminMembers(input),
     selectedMemberId
-      ? api.member
+      ? api.memberAdmin
           .getAdminMember({ memberId: selectedMemberId })
           .catch(() => null)
       : Promise.resolve(null),
   ]);
 
   return (
-    <HydrateClient>
-      <MemberAdminDashboard
-        key={input.query}
-        canEdit={
-          effectivePermissions.IS_OFFICER === true ||
-          effectivePermissions.EDIT_MEMBERS === true
-        }
-        data={data}
-        detail={detail}
-        input={input}
-        isOfficer={effectivePermissions.IS_OFFICER === true}
-      />
-    </HydrateClient>
+    <MemberAdminDashboard
+      key={input.query}
+      canEdit={
+        effectivePermissions.IS_OFFICER === true ||
+        effectivePermissions.EDIT_MEMBERS === true
+      }
+      data={data}
+      detail={detail}
+      input={input}
+      isOfficer={effectivePermissions.IS_OFFICER === true}
+    />
   );
 }

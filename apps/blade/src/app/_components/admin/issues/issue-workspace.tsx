@@ -21,7 +21,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import type { RouterInputs } from "@forge/api";
 import { ISSUE } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
@@ -44,36 +43,45 @@ import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
 import type { EventFormValue } from "../events/event-form-dialog";
+import type { IssueDraft } from "./issue-draft";
+import type { TemplateBody } from "./issue-template-application";
 import type { IssueSearchInput } from "./params";
 import type { IssueWorkspaceData } from "./types";
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
-import { ISSUE_CREATE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import {
-  clubDateKey,
   clubWallClock,
   formatClubDate,
-  formatUtcDate,
-  formatUtcFullDate,
-  formatUtcMonth,
   localNewYorkDateTime,
 } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { EventFormDialog } from "../events/event-form-dialog";
 import {
+  formatIssueCalendarPeriod,
+  issueCalendarFocus,
+} from "./issue-calendar-period";
+import { emptyDraft, parseDraftLinks } from "./issue-draft";
+import {
+  discardIssueCreateDraft,
+  loadIssueCreateDraft,
+  saveIssueCreateDraft,
+} from "./issue-draft-storage";
+import {
+  applyTemplateToDraft,
+  relativeTemplateDueAt,
+  templateNeedsInput,
+} from "./issue-template-application";
+import { issueSearchHref, issueViewHref } from "./issue-view-href";
+import {
   IssueCalendarView,
   IssueKanbanView,
   IssueListView,
 } from "./issue-views";
-import {
-  buildIssueSearchParams,
-  parseIssueSearchParams,
-  shiftIssueCalendarDate,
-} from "./params";
+import { parseIssueSearchParams, shiftIssueCalendarDate } from "./params";
 import { TemplateCatalogDialog } from "./template-catalog-dialog";
 
 export type IssueWorkspaceView = "archive" | "calendar" | "kanban" | "list";
@@ -84,154 +92,6 @@ const ISSUE_WORKSPACE_EYEBROW: Record<IssueWorkspaceView, string> = {
   kanban: ADMIN_PAGE_EYEBROWS.issueKanban,
   list: ADMIN_PAGE_EYEBROWS.issueList,
 };
-
-interface IssueDraft {
-  assigneeIds: string[];
-  children: NonNullable<RouterInputs["issues"]["create"]["children"]>;
-  creationKey: string;
-  description: string;
-  dueDate: string;
-  dueTime: string;
-  eventId: string;
-  eventMode: "create" | "link" | "none";
-  links: string;
-  name: string;
-  parentId: string;
-  priority: (typeof ISSUE.PRIORITY)[number];
-  status: (typeof ISSUE.ISSUE_STATUS)[number];
-  team: string;
-  teamVisibilityIds: string[];
-  templateInput: string;
-  templateId: string;
-}
-
-function emptyDraft(team = ""): IssueDraft {
-  return {
-    assigneeIds: [],
-    children: [],
-    creationKey: crypto.randomUUID(),
-    description: "",
-    dueDate: "",
-    dueTime: ISSUE.TASK_DUE_TIME,
-    eventId: "",
-    eventMode: "none",
-    links: "",
-    name: "",
-    parentId: "",
-    priority: "Medium",
-    status: "Backlog",
-    team,
-    teamVisibilityIds: [],
-    templateId: "",
-    templateInput: "",
-  };
-}
-
-interface TemplateBody {
-  assigneeIds?: string[];
-  children?: TemplateBody[];
-  description: string;
-  name: string;
-  priority: IssueDraft["priority"];
-  relativeDueDays?: number;
-  status: IssueDraft["status"];
-  team: string;
-  teamVisibilityIds?: string[];
-}
-
-function relativeTemplateDueAt(days: number | undefined) {
-  if (days === undefined) return undefined;
-  const date = new Date(`${clubDateKey()}T12:00:00.000Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return defaultIssueDueAt(date.toISOString().slice(0, 10));
-}
-
-function easternDueParts(iso: string) {
-  const { date, time } = clubWallClock(iso);
-  return { date, time };
-}
-
-function replaceTemplateTokens(value: string, input: string, parent: string) {
-  return value.replaceAll("{INPUT}", input).replaceAll("{PARENT}", parent);
-}
-
-function materializeTemplateChildren(
-  nodes: TemplateBody[],
-  options: { input: string; parentName: string; team: string },
-): IssueDraft["children"] {
-  return nodes.map((node) => {
-    const name = replaceTemplateTokens(
-      node.name,
-      options.input,
-      options.parentName,
-    );
-    return {
-      assigneeIds: node.assigneeIds ?? [],
-      children: materializeTemplateChildren(node.children ?? [], {
-        ...options,
-        parentName: name,
-      }),
-      description: replaceTemplateTokens(
-        node.description,
-        options.input,
-        options.parentName,
-      ),
-      dueAt: relativeTemplateDueAt(node.relativeDueDays),
-      eventId: undefined,
-      links: [],
-      name,
-      priority: node.priority,
-      status: node.status,
-      team: options.team,
-      teamVisibilityIds: node.teamVisibilityIds ?? [],
-    };
-  });
-}
-
-function saveDraft(draft: IssueDraft) {
-  window.localStorage.setItem(
-    `${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${draft.creationKey}`,
-    JSON.stringify(draft),
-  );
-  window.localStorage.setItem(
-    ISSUE_CREATE_DRAFT_STORAGE_KEY,
-    draft.creationKey,
-  );
-}
-
-function loadDraft() {
-  const key = window.localStorage.getItem(ISSUE_CREATE_DRAFT_STORAGE_KEY);
-  if (!key) return null;
-  try {
-    const stored = JSON.parse(
-      window.localStorage.getItem(`${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${key}`) ??
-        "null",
-    ) as Partial<IssueDraft> | null;
-    if (!stored || typeof stored !== "object") return null;
-    return {
-      ...emptyDraft(),
-      ...stored,
-      links: typeof stored.links === "string" ? stored.links : "",
-    };
-  } catch {
-    return null;
-  }
-}
-
-function discardDraft(draft: IssueDraft) {
-  window.localStorage.removeItem(
-    `${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${draft.creationKey}`,
-  );
-  window.localStorage.removeItem(ISSUE_CREATE_DRAFT_STORAGE_KEY);
-}
-
-function viewHref(
-  view: Exclude<IssueWorkspaceView, "archive">,
-  input: IssueSearchInput,
-) {
-  const query = buildIssueSearchParams(input).toString();
-  return `/admin/issues/${view}${query ? `?${query}` : ""}`;
-}
 
 function IssueFilters({
   input,
@@ -434,7 +294,7 @@ function IssueCreateDialog({
     [data.teams],
   );
   const [initialDraft] = useState(() => {
-    const stored = loadDraft();
+    const stored = loadIssueCreateDraft(window.localStorage);
     return {
       draft: stored ?? emptyDraft(editableTeams[0]?.id),
       restore: stored,
@@ -475,7 +335,7 @@ function IssueCreateDialog({
 
   useEffect(() => {
     if (!open || restore) return;
-    saveDraft(draft);
+    saveIssueCreateDraft(window.localStorage, draft);
   }, [draft, open, restore]);
 
   function update<K extends keyof IssueDraft>(key: K, value: IssueDraft[K]) {
@@ -489,7 +349,7 @@ function IssueCreateDialog({
     if (!template) return;
     const body = template.body as TemplateBody;
     const input = draft.templateInput.trim();
-    if (!input && JSON.stringify(body).includes("{INPUT}")) {
+    if (!input && templateNeedsInput(body)) {
       toast.error("Enter the template value before applying it.");
       return;
     }
@@ -497,25 +357,9 @@ function IssueCreateDialog({
       ? body.team
       : draft.team;
     const rootDueAt = relativeTemplateDueAt(body.relativeDueDays);
-    const rootDue = rootDueAt ? easternDueParts(rootDueAt) : null;
-    const rootName = replaceTemplateTokens(body.name, input, "");
-    setDraft((current) => ({
-      ...current,
-      assigneeIds: body.assigneeIds ?? current.assigneeIds,
-      children: materializeTemplateChildren(body.children ?? [], {
-        input,
-        parentName: rootName,
-        team,
-      }),
-      description: replaceTemplateTokens(body.description, input, ""),
-      dueDate: rootDue?.date ?? current.dueDate,
-      dueTime: rootDue?.time ?? current.dueTime,
-      name: rootName,
-      priority: body.priority,
-      status: body.status,
-      team,
-      teamVisibilityIds: body.teamVisibilityIds ?? current.teamVisibilityIds,
-    }));
+    setDraft((current) =>
+      applyTemplateToDraft(current, { body, input, rootDueAt, team }),
+    );
     toast.success(`Applied ${template.name}.`);
   }
 
@@ -536,10 +380,7 @@ function IssueCreateDialog({
           draft.eventMode === "link" && draft.eventId
             ? draft.eventId
             : undefined,
-        links: draft.links
-          .split(/\r?\n/)
-          .map((value) => value.trim())
-          .filter(Boolean),
+        links: parseDraftLinks(draft.links),
         name: draft.name,
         priority: draft.priority,
         parentId: draft.parentId || undefined,
@@ -547,7 +388,7 @@ function IssueCreateDialog({
         team: draft.team,
         teamVisibilityIds: draft.teamVisibilityIds,
       });
-      discardDraft(draft);
+      discardIssueCreateDraft(window.localStorage, draft);
       toast.success("Issue created.");
       onClose();
       router.refresh();
@@ -635,7 +476,7 @@ function IssueCreateDialog({
                   <Button
                     variant="outline"
                     onClick={() => {
-                      discardDraft(restore);
+                      discardIssueCreateDraft(window.localStorage, restore);
                       setDraft(emptyDraft(editableTeams[0]?.id));
                       setRestore(null);
                     }}
@@ -1103,8 +944,7 @@ export function IssueWorkspace({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const query = buildIssueSearchParams(input).toString();
-  const calendarFocus = new Date(`${input.calendarDate}T12:00:00.000Z`);
+  const calendarFocus = issueCalendarFocus(input.calendarDate);
   const previousCalendarDate = shiftIssueCalendarDate(
     input.calendarDate,
     input.calendarMode,
@@ -1115,12 +955,10 @@ export function IssueWorkspace({
     input.calendarMode,
     1,
   );
-  const calendarPeriodLabel =
-    input.calendarMode === "month"
-      ? formatUtcMonth(calendarFocus)
-      : input.calendarMode === "week"
-        ? `Week of ${formatUtcDate(calendarFocus)}`
-        : formatUtcFullDate(calendarFocus);
+  const calendarPeriodLabel = formatIssueCalendarPeriod(
+    input.calendarMode,
+    calendarFocus,
+  );
 
   return (
     <main
@@ -1177,7 +1015,7 @@ export function IssueWorkspace({
                     asChild
                   >
                     <Link
-                      href={viewHref(item.id, input)}
+                      href={issueViewHref(item.id, input)}
                       aria-current={view === item.id ? "page" : undefined}
                     >
                       <Icon className="h-4 w-4" />
@@ -1210,7 +1048,7 @@ export function IssueWorkspace({
                 Templates
               </Button>
               <Button className="h-11" variant="outline" asChild>
-                <Link href={`/admin/issues/archive${query ? `?${query}` : ""}`}>
+                <Link href={issueViewHref("archive", input)}>
                   <Archive className="h-4 w-4" />
                   Archive
                 </Link>
@@ -1235,7 +1073,7 @@ export function IssueWorkspace({
                 <Button size="icon" variant="ghost" asChild>
                   <Link
                     aria-label={`Previous ${input.calendarMode}`}
-                    href={viewHref("calendar", {
+                    href={issueViewHref("calendar", {
                       ...input,
                       calendarDate: previousCalendarDate,
                     })}
@@ -1245,7 +1083,7 @@ export function IssueWorkspace({
                 </Button>
                 <Button variant="ghost" asChild>
                   <Link
-                    href={viewHref("calendar", {
+                    href={issueViewHref("calendar", {
                       ...input,
                       calendarDate: parseIssueSearchParams({}).calendarDate,
                     })}
@@ -1256,7 +1094,7 @@ export function IssueWorkspace({
                 <Button size="icon" variant="ghost" asChild>
                   <Link
                     aria-label={`Next ${input.calendarMode}`}
-                    href={viewHref("calendar", {
+                    href={issueViewHref("calendar", {
                       ...input,
                       calendarDate: nextCalendarDate,
                     })}
@@ -1282,7 +1120,7 @@ export function IssueWorkspace({
                       asChild
                     >
                       <Link
-                        href={viewHref("calendar", {
+                        href={issueViewHref("calendar", {
                           ...input,
                           calendarMode: mode,
                           page: 1,
@@ -1312,7 +1150,12 @@ export function IssueWorkspace({
                 className="h-11 rounded-md border border-input bg-background px-3 text-sm"
                 onChange={(event) =>
                   router.push(
-                    `?${buildIssueSearchParams({ ...input, page: 1, sortField: event.target.value as IssueSearchInput["sortField"] }).toString()}`,
+                    issueSearchHref({
+                      ...input,
+                      page: 1,
+                      sortField: event.target
+                        .value as IssueSearchInput["sortField"],
+                    }),
                   )
                 }
               >
@@ -1327,7 +1170,12 @@ export function IssueWorkspace({
                 variant="outline"
                 onClick={() =>
                   router.push(
-                    `?${buildIssueSearchParams({ ...input, page: 1, sortDirection: input.sortDirection === "asc" ? "desc" : "asc" }).toString()}`,
+                    issueSearchHref({
+                      ...input,
+                      page: 1,
+                      sortDirection:
+                        input.sortDirection === "asc" ? "desc" : "asc",
+                    }),
                   )
                 }
               >
@@ -1349,7 +1197,13 @@ export function IssueWorkspace({
                 className="h-11 rounded-md border border-input bg-background px-3 text-sm"
                 onChange={(event) =>
                   router.push(
-                    `?${buildIssueSearchParams({ ...input, page: 1, pageSize: Number(event.target.value) as IssueSearchInput["pageSize"] }).toString()}`,
+                    issueSearchHref({
+                      ...input,
+                      page: 1,
+                      pageSize: Number(
+                        event.target.value,
+                      ) as IssueSearchInput["pageSize"],
+                    }),
                   )
                 }
               >
@@ -1400,7 +1254,10 @@ export function IssueWorkspace({
                 {data.pagination.page > 1 ? (
                   <Button variant="outline" asChild>
                     <Link
-                      href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page - 1 }).toString()}`}
+                      href={issueSearchHref({
+                        ...input,
+                        page: data.pagination.page - 1,
+                      })}
                     >
                       Previous
                     </Link>
@@ -1413,7 +1270,10 @@ export function IssueWorkspace({
                 {data.pagination.page < data.pagination.pageCount ? (
                   <Button variant="outline" asChild>
                     <Link
-                      href={`?${buildIssueSearchParams({ ...input, page: data.pagination.page + 1 }).toString()}`}
+                      href={issueSearchHref({
+                        ...input,
+                        page: data.pagination.page + 1,
+                      })}
                     >
                       Next
                     </Link>

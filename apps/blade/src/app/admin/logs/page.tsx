@@ -6,7 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import { AdminLogsDashboard } from "~/app/_components/admin/logs/admin-logs-dashboard";
 import { canAccessAdminLogs } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Review the record of privileged admin actions.",
@@ -20,17 +20,10 @@ export default async function AdminLogsPage() {
   const permissions = await api.roles.getPermissions();
   if (!canAccessAdminLogs(permissions)) redirect(MEMBER_DASHBOARD_PATH);
 
-  const [initialEvents, initialMembers] = await Promise.all([
+  const [events, members] = await Promise.all([
     api.audit.list({ limit: 50 }),
     api.audit.searchMembers({ limit: 20, search: "" }),
   ]);
 
-  return (
-    <HydrateClient>
-      <AdminLogsDashboard
-        initialEvents={initialEvents}
-        initialMembers={initialMembers}
-      />
-    </HydrateClient>
-  );
+  return <AdminLogsDashboard events={events} members={members} />;
 }

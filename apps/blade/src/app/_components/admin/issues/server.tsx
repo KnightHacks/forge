@@ -7,7 +7,7 @@ import type { IssueWorkspaceData } from "./types";
 import type { SearchParams } from "~/lib/search-params";
 import { canAccessIssues } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 import { IssueWorkspace } from "./issue-workspace";
 import { issueCalendarWindow, parseIssueSearchParams } from "./params";
 
@@ -139,21 +139,19 @@ export async function renderIssueWorkspace(
     templates,
   };
   return (
-    <HydrateClient>
-      <IssueWorkspace
-        access={{
-          canCreateEvent:
-            permissions.IS_OFFICER === true ||
-            permissions.EDIT_CLUB_EVENT === true,
-          canEdit: teams.some((team) => team.canEdit),
-          canManageTemplates:
-            permissions.IS_OFFICER === true ||
-            permissions.EDIT_ISSUE_TEMPLATES === true,
-        }}
-        data={data}
-        input={input}
-        view={view}
-      />
-    </HydrateClient>
+    <IssueWorkspace
+      access={{
+        canCreateEvent:
+          permissions.IS_OFFICER === true ||
+          permissions.EDIT_CLUB_EVENT === true,
+        canEdit: teams.some((team) => team.canEdit),
+        canManageTemplates:
+          permissions.IS_OFFICER === true ||
+          permissions.EDIT_ISSUE_TEMPLATES === true,
+      }}
+      data={data}
+      input={input}
+      view={view}
+    />
   );
 }

@@ -30,7 +30,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
-import { MemberRouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
 import { env } from "~/env";
 import { api } from "~/trpc/react";
 
@@ -493,10 +493,10 @@ export function MemberDuesPayment({
     <main className="container py-7 md:py-10">
       <div className="mx-auto max-w-5xl space-y-5 md:space-y-7">
         <Button asChild variant="ghost" className="w-fit gap-2 px-2">
-          <MemberRouteTransitionLink href={MEMBER_DASHBOARD_PATH}>
+          <RouteTransitionLink href={MEMBER_DASHBOARD_PATH}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Dashboard
-          </MemberRouteTransitionLink>
+          </RouteTransitionLink>
         </Button>
 
         <div className="space-y-2">

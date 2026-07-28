@@ -45,11 +45,11 @@ import { toast } from "@forge/ui/toast";
 import { adminMemberPageSizes } from "@forge/validators";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatUtcDate } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { InvalidateDuesDialog } from "./invalidate-dues-dialog";
@@ -57,8 +57,8 @@ import { MemberDetailDialog } from "./member-detail-dialog";
 import { MemberFilters } from "./member-filters";
 import { buildAdminMemberSearchParams } from "./params";
 
-type DashboardData = RouterOutputs["member"]["getAdminMembers"];
-type MemberDetail = RouterOutputs["member"]["getAdminMember"];
+type DashboardData = RouterOutputs["memberAdmin"]["getAdminMembers"];
+type MemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
 type DashboardMember = DashboardData["members"][number];
 type FilterField =
   | "company"
@@ -295,10 +295,10 @@ export function MemberAdminDashboard({
   );
   const [search, setSearch] = useState(input.query);
   const activeFilters = useMemo(() => getActiveFilters(input), [input]);
-  const exportQuery = api.member.exportAdminMembers.useQuery(input, {
+  const exportQuery = api.memberAdmin.exportAdminMembers.useQuery(input, {
     enabled: false,
   });
-  const dues = api.member.setAdminDuesStatus.useMutation({
+  const dues = api.memberAdmin.setAdminDuesStatus.useMutation({
     onSuccess(_result, variables) {
       toast.success(variables.paid ? "Dues granted." : "Dues revoked.");
       startTransition(() => router.refresh());

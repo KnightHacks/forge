@@ -9,7 +9,7 @@ import type { Session } from "~/server/auth";
 import { SignOutButton } from "~/app/_components/auth/sign-out-button";
 import { DesktopAdminNavigation } from "~/app/_components/shared/desktop-admin-navigation";
 import { MobileAdminNavigation } from "~/app/_components/shared/mobile-admin-navigation";
-import { MemberRouteTransitionSurface } from "~/app/_components/shared/route-transition-link";
+import { RouteTransitionSurface } from "~/app/_components/shared/route-transition-link";
 
 type NavigationItem =
   | "alumni"
@@ -119,9 +119,7 @@ export function AuthenticatedShell({
         </header>
 
         <div className="relative z-10">
-          <MemberRouteTransitionSurface>
-            {children}
-          </MemberRouteTransitionSurface>
+          <RouteTransitionSurface>{children}</RouteTransitionSurface>
         </div>
       </div>
     </div>

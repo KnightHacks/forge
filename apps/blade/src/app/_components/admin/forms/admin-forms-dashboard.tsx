@@ -14,10 +14,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { AdminFormsSectionSelect } from "./admin-forms-section-select";
 
 interface AdminFormsAccess {

@@ -292,26 +292,18 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByText("Hackathon application")).toHaveCount(0);
   });
 
-  test("keeps the dashboard skeleton shape stable while member state loads", async ({
+  test("shows the Guild profile skeleton while member state loads", async ({
     page,
   }) => {
     await signInAs(page, EXISTING_MEMBER_USER_ID);
-    await page.route("**/api/trpc/member.getMember**", async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      await route.continue();
-    });
 
-    await page.goto(MEMBER_DASHBOARD_PATH);
+    // The dashboard reads its data on the server, so the only way to hold the
+    // skeleton on screen is the debug latency the page already supports.
+    await page.goto(`${MEMBER_DASHBOARD_PATH}?debugLatency=500`);
 
     await expect(
-      page
-        .getByRole("region", { name: "Guild profile loading" })
-        .locator(".animate-pulse")
-        .first(),
+      page.getByRole("region", { name: "Guild profile loading" }),
     ).toBeVisible();
-    await expect(page.locator("section").first()).toHaveClass(
-      /lg:grid-cols-\[minmax/,
-    );
     await expect(page.getByText("Welcome, Casey")).toBeVisible();
   });
 

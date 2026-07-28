@@ -19,7 +19,7 @@ const { mutate, toastInfo } = vi.hoisted(() => ({
 
 vi.mock("~/trpc/react", () => ({
   api: {
-    member: {
+    memberAdmin: {
       invalidateEffectiveDues: {
         useMutation: () => ({ isPending: false, mutate }),
       },

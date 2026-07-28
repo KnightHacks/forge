@@ -32,10 +32,10 @@ import type {
   EventTagItem,
 } from "./types";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import {
   clubDateTimeInput,
   clubUtcOffset,

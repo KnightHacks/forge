@@ -16,7 +16,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("~/trpc/react", () => ({
   api: {
-    member: {
+    memberAdmin: {
       exportAdminMembers: {
         useQuery: vi.fn(() => ({
           isFetching: false,
@@ -80,7 +80,7 @@ const data = {
     pageSize: 25,
     totalCount: 1,
   },
-} as RouterOutputs["member"]["getAdminMembers"];
+} as RouterOutputs["memberAdmin"]["getAdminMembers"];
 
 describe("MemberAdminDashboard", () => {
   it("renders desktop detail columns and the compact mobile member card", () => {

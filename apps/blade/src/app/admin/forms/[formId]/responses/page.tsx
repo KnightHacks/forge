@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { FormResponsesDashboard } from "~/app/_components/admin/forms/form-responses-dashboard";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Form Responses",
@@ -26,23 +26,29 @@ export default async function FormResponsesPage({
   }
 
   const { formId } = await params;
-  const [initialResponses, initialCallbacks, workspace] = await Promise.all([
-    api.forms.listResponses({ formId }).catch(() => undefined),
-    api.forms.listCallbackExecutions({ formId }).catch(() => undefined),
+  const [responses, callbacks, workspace] = await Promise.all([
+    api.forms
+      .listResponses({ formId })
+      .then((data) => ({ data, error: null }))
+      .catch((cause: unknown) => ({
+        data: null,
+        error:
+          cause instanceof Error
+            ? cause.message
+            : "Responses could not be loaded.",
+      })),
+    api.forms.listCallbackExecutions({ formId }).catch(() => null),
     api.forms.listAdmin().catch(() => null),
   ]);
-  const initialFormName = workspace?.forms.find(
-    (form) => form.id === formId,
-  )?.name;
+  const formName = workspace?.forms.find((form) => form.id === formId)?.name;
 
   return (
-    <HydrateClient>
-      <FormResponsesDashboard
-        formId={formId}
-        initialCallbacks={initialCallbacks}
-        initialFormName={initialFormName}
-        initialResponses={initialResponses}
-      />
-    </HydrateClient>
+    <FormResponsesDashboard
+      callbacks={callbacks}
+      formId={formId}
+      formName={formName}
+      responses={responses.data}
+      responsesError={responses.error}
+    />
   );
 }

@@ -9,10 +9,10 @@ import type {
 } from "./event-check-in-panel";
 import type { CheckInEventGroups } from "./types";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { EventCheckInPanel } from "./event-check-in-panel";
 

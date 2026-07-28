@@ -8,7 +8,7 @@ import { parseRoleManagementSearchParams } from "~/app/_components/admin/roles/p
 import { RoleManagementDashboard } from "~/app/_components/admin/roles/role-management-dashboard";
 import { canAccessRoleAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Role Management",
@@ -57,19 +57,17 @@ export default async function AdminRolesPage({
   ]);
 
   return (
-    <HydrateClient>
-      <RoleManagementDashboard
-        key={JSON.stringify(input)}
-        access={{
-          canAssign,
-          canConfigure,
-          isOfficer: effectivePermissions.IS_OFFICER === true,
-        }}
-        detail={detail}
-        input={input}
-        roles={roles}
-        users={users}
-      />
-    </HydrateClient>
+    <RoleManagementDashboard
+      key={JSON.stringify(input)}
+      access={{
+        canAssign,
+        canConfigure,
+        isOfficer: effectivePermissions.IS_OFFICER === true,
+      }}
+      detail={detail}
+      input={input}
+      roles={roles}
+      users={users}
+    />
   );
 }

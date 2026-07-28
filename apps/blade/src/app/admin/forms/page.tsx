@@ -6,7 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import { AdminFormsDashboard } from "~/app/_components/admin/forms/admin-forms-dashboard";
 import { canAccessFormAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Create and manage Knight Hacks forms and their responses.",
@@ -54,34 +54,32 @@ export default async function AdminFormsPage({
     }));
 
   return (
-    <HydrateClient>
-      <AdminFormsDashboard
-        access={{
-          canEdit: permissions.EDIT_FORMS === true,
-          canManageSections: permissions.IS_OFFICER === true,
-          canRead: permissions.READ_FORMS === true,
-          canReadResponses: permissions.READ_FORM_RESPONSES === true,
-          isOfficer: permissions.IS_OFFICER === true,
-        }}
-        data={{
-          forms,
-          pagination: {
-            page: 1,
-            pageCount: 1,
-            pageSize: Math.max(forms.length, 1),
-            totalCount: forms.length,
-          },
-          sections: result.sections,
-        }}
-        input={{
+    <AdminFormsDashboard
+      access={{
+        canEdit: permissions.EDIT_FORMS === true,
+        canManageSections: permissions.IS_OFFICER === true,
+        canRead: permissions.READ_FORMS === true,
+        canReadResponses: permissions.READ_FORM_RESPONSES === true,
+        isOfficer: permissions.IS_OFFICER === true,
+      }}
+      data={{
+        forms,
+        pagination: {
           page: 1,
+          pageCount: 1,
           pageSize: Math.max(forms.length, 1),
-          query,
-          sectionIds: selectedSectionId ? [selectedSectionId] : [],
-          states: [],
-          view,
-        }}
-      />
-    </HydrateClient>
+          totalCount: forms.length,
+        },
+        sections: result.sections,
+      }}
+      input={{
+        page: 1,
+        pageSize: Math.max(forms.length, 1),
+        query,
+        sectionIds: selectedSectionId ? [selectedSectionId] : [],
+        states: [],
+        view,
+      }}
+    />
   );
 }

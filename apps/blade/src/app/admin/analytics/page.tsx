@@ -12,7 +12,7 @@ import {
   canAccessMemberAdmin,
 } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Review Knight Hacks turnout, dues, feedback, and member data.",
@@ -34,19 +34,16 @@ export default async function AdminAnalyticsPage({
     api.analytics.getDiscordReport(input),
   ]);
   return (
-    <HydrateClient>
-      <AnalyticsDashboard
-        access={{
-          canEditMembers:
-            permissions.IS_OFFICER === true ||
-            permissions.EDIT_MEMBERS === true,
-          canOpenEvents: canAccessEventAdmin(permissions),
-          canOpenMembers: canAccessMemberAdmin(permissions),
-        }}
-        discordReport={discordReport}
-        input={input}
-        report={report}
-      />
-    </HydrateClient>
+    <AnalyticsDashboard
+      access={{
+        canEditMembers:
+          permissions.IS_OFFICER === true || permissions.EDIT_MEMBERS === true,
+        canOpenEvents: canAccessEventAdmin(permissions),
+        canOpenMembers: canAccessMemberAdmin(permissions),
+      }}
+      discordReport={discordReport}
+      input={input}
+      report={report}
+    />
   );
 }

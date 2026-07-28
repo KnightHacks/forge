@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
+  Archive,
   ArrowLeft,
   CalendarClock,
   CheckCircle2,
   LockKeyhole,
+  ShieldAlert,
 } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
@@ -24,9 +26,10 @@ interface GenericFormDefinition {
 }
 
 type GenericRespondentState =
-  | { opensAt: string; status: "scheduled" }
-  | { status: "open" }
-  | { closedAt: string; reason: "manual" | "schedule"; status: "closed" }
+  | { opensAt: string | null; status: "scheduled" }
+  | {
+      status: "archived" | "closed" | "ineligible" | "manually_closed" | "open";
+    }
   | {
       answers: { questionId: string; value: unknown }[];
       editable: boolean;
@@ -39,6 +42,107 @@ function formatDate(value: string) {
   return formatClubLongDate(value);
 }
 
+const NOTICE_ICON_CLASS = "mt-0.5 h-5 w-5 shrink-0";
+
+/**
+ * Copy for every state where the form exists but cannot be answered. Returns
+ * null for the states that render the form or a submitted response instead.
+ */
+function unavailableNotice(state: GenericRespondentState) {
+  switch (state.status) {
+    case "scheduled":
+      return {
+        body: state.opensAt ? `Opens ${formatDate(state.opensAt)}.` : undefined,
+        formState: "scheduled",
+        heading: "This form is not open yet",
+        icon: (
+          <CalendarClock
+            aria-hidden="true"
+            className={`${NOTICE_ICON_CLASS} text-primary`}
+          />
+        ),
+      };
+    case "closed":
+      return {
+        body: "Responses are no longer accepted.",
+        formState: "closed",
+        heading: "This form is closed",
+        icon: (
+          <LockKeyhole
+            aria-hidden="true"
+            className={`${NOTICE_ICON_CLASS} text-muted-foreground`}
+          />
+        ),
+      };
+    case "manually_closed":
+      return {
+        body: "Responses are no longer accepted.",
+        formState: "manually_closed",
+        heading: "This form was closed early",
+        icon: (
+          <LockKeyhole
+            aria-hidden="true"
+            className={`${NOTICE_ICON_CLASS} text-muted-foreground`}
+          />
+        ),
+      };
+    case "archived":
+      return {
+        body: "Archived forms no longer accept responses.",
+        formState: "archived",
+        heading: "This form has been archived",
+        icon: (
+          <Archive
+            aria-hidden="true"
+            className={`${NOTICE_ICON_CLASS} text-muted-foreground`}
+          />
+        ),
+      };
+    case "ineligible":
+      return {
+        body: "It is limited to specific members.",
+        formState: "ineligible",
+        heading: "You are not eligible for this form",
+        icon: (
+          <ShieldAlert
+            aria-hidden="true"
+            className={`${NOTICE_ICON_CLASS} text-muted-foreground`}
+          />
+        ),
+      };
+    default:
+      return null;
+  }
+}
+
+function UnavailableNotice({
+  body,
+  formState,
+  heading,
+  icon,
+}: {
+  body?: string;
+  formState: string;
+  heading: string;
+  icon: ReactNode;
+}) {
+  return (
+    <section
+      role="status"
+      data-form-state={formState}
+      className="rounded-md border border-white/10 bg-background/60 p-4"
+    >
+      <div className="flex items-start gap-3">
+        {icon}
+        <div>
+          <h2 className="font-semibold">{heading}</h2>
+          {body && <p className="mt-1 text-sm text-muted-foreground">{body}</p>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function GenericFormRespondent({
   definition,
   openForm,
@@ -48,6 +152,7 @@ export function GenericFormRespondent({
   openForm?: ReactNode;
   respondentState: GenericRespondentState;
 }) {
+  const notice = unavailableNotice(respondentState);
   return (
     <main
       aria-labelledby="form-title"
@@ -83,47 +188,7 @@ export function GenericFormRespondent({
         </CardHeader>
         <CardContent className="min-w-0 p-3 sm:p-6">
           {respondentState.status === "open" && openForm}
-          {respondentState.status === "scheduled" && (
-            <section
-              role="status"
-              data-form-state="scheduled"
-              className="rounded-md border border-white/10 bg-background/60 p-4"
-            >
-              <div className="flex items-start gap-3">
-                <CalendarClock
-                  className="mt-0.5 h-5 w-5 shrink-0 text-primary"
-                  aria-hidden="true"
-                />
-                <div>
-                  <h2 className="font-semibold">This form is not open yet</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Opens {formatDate(respondentState.opensAt)}.
-                  </p>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {respondentState.status === "closed" && (
-            <section
-              role="status"
-              data-form-state="closed"
-              className="rounded-md border border-white/10 bg-background/60 p-4"
-            >
-              <div className="flex items-start gap-3">
-                <LockKeyhole
-                  className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-                <div>
-                  <h2 className="font-semibold">This form is closed</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Responses are no longer accepted.
-                  </p>
-                </div>
-              </div>
-            </section>
-          )}
+          {notice && <UnavailableNotice {...notice} />}
 
           {respondentState.status === "submitted" && (
             <section

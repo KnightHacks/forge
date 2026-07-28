@@ -6,7 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import { CompanyAdminDetail } from "~/app/_components/admin/companies/company-admin-detail";
 import { canAccessMemberAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Company Detail",
@@ -32,15 +32,13 @@ export default async function AdminCompanyPage({
   if (!detail) notFound();
 
   return (
-    <HydrateClient>
-      <CompanyAdminDetail
-        allCompanies={allCompanies}
-        canEdit={
-          effectivePermissions.IS_OFFICER === true ||
-          effectivePermissions.EDIT_MEMBERS === true
-        }
-        detail={detail}
-      />
-    </HydrateClient>
+    <CompanyAdminDetail
+      allCompanies={allCompanies}
+      canEdit={
+        effectivePermissions.IS_OFFICER === true ||
+        effectivePermissions.EDIT_MEMBERS === true
+      }
+      detail={detail}
+    />
   );
 }

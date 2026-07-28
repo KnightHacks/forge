@@ -6,7 +6,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 import { AlumniBulletinAdmin } from "~/app/_components/admin/alumni/alumni-bulletin-admin";
 import { canAccessAlumniAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Manage the private Knight Hacks alumni bulletin.",
@@ -25,9 +25,5 @@ export default async function AlumniAdminPage() {
     api.alumni.listLinkableForms(),
   ]);
 
-  return (
-    <HydrateClient>
-      <AlumniBulletinAdmin initialForms={forms} initialPosts={posts} />
-    </HydrateClient>
-  );
+  return <AlumniBulletinAdmin forms={forms} posts={posts} />;
 }

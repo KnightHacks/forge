@@ -43,10 +43,8 @@ import {
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
 
-import {
-  ADMIN_PAGE_EYEBROWS,
-  adminPageClassName,
-} from "~/app/_components/shared/admin-page";
+import { adminPageClassName } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatUtcShortMonth } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";

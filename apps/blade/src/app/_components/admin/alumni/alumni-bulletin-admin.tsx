@@ -1,5 +1,8 @@
 "use client";
 
+import { startTransition } from "react";
+import { useRouter } from "next/navigation";
+
 import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
 
@@ -11,19 +14,13 @@ import { api } from "~/trpc/react";
 import { AlumniBulletinWorkspace } from "./alumni-bulletin-workspace";
 
 export function AlumniBulletinAdmin({
-  initialForms,
-  initialPosts,
+  forms,
+  posts,
 }: {
-  initialForms: RouterOutputs["alumni"]["listLinkableForms"];
-  initialPosts: RouterOutputs["alumni"]["listBulletinAdmin"];
+  forms: RouterOutputs["alumni"]["listLinkableForms"];
+  posts: RouterOutputs["alumni"]["listBulletinAdmin"];
 }) {
-  const utils = api.useUtils();
-  const postsQuery = api.alumni.listBulletinAdmin.useQuery(undefined, {
-    initialData: initialPosts,
-  });
-  const formsQuery = api.alumni.listLinkableForms.useQuery(undefined, {
-    initialData: initialForms,
-  });
+  const router = useRouter();
   const uploadImage = api.alumni.uploadBulletinImage.useMutation();
   const removeImage = api.alumni.removeBulletinImage.useMutation();
   const createPost = api.alumni.createBulletinPost.useMutation();
@@ -32,8 +29,8 @@ export function AlumniBulletinAdmin({
   const restorePost = api.alumni.restoreBulletinPost.useMutation();
   const reorderPosts = api.alumni.reorderBulletinPosts.useMutation();
 
-  const refresh = async () => {
-    await utils.alumni.listBulletinAdmin.invalidate();
+  const refresh = () => {
+    startTransition(() => router.refresh());
   };
 
   const withImage: BulletinSaveHandler = async (input, fileContent) => {
@@ -47,7 +44,7 @@ export function AlumniBulletinAdmin({
         ...input,
         imageObjectName: uploadedObjectName ?? input.imageObjectName,
       });
-      await refresh();
+      refresh();
       toast.success("Bulletin post created");
     } catch (error) {
       if (uploadedObjectName) {
@@ -59,8 +56,8 @@ export function AlumniBulletinAdmin({
 
   return (
     <AlumniBulletinWorkspace
-      forms={formsQuery.data}
-      posts={postsQuery.data as AlumniBulletinWorkspacePost[]}
+      forms={forms}
+      posts={posts as AlumniBulletinWorkspacePost[]}
       onCreate={withImage}
       onEdit={async (postId, input, fileContent) => {
         let uploadedObjectName: string | null = null;
@@ -74,7 +71,7 @@ export function AlumniBulletinAdmin({
             imageObjectName: uploadedObjectName ?? input.imageObjectName,
             postId,
           });
-          await refresh();
+          refresh();
           toast.success("Bulletin post updated");
         } catch (error) {
           if (uploadedObjectName) {
@@ -85,17 +82,17 @@ export function AlumniBulletinAdmin({
       }}
       onArchive={async (postId) => {
         await archivePost.mutateAsync({ postId });
-        await refresh();
+        refresh();
         toast.success("Bulletin post archived");
       }}
       onRestore={async (postId) => {
         await restorePost.mutateAsync({ postId });
-        await refresh();
+        refresh();
         toast.success("Bulletin post restored as a draft");
       }}
       onReorder={async (postIds) => {
         await reorderPosts.mutateAsync({ postIds });
-        await refresh();
+        refresh();
       }}
     />
   );

@@ -20,7 +20,7 @@ vi.mock("~/app/_components/auth/sign-out-button", () => ({
 }));
 
 vi.mock("~/app/_components/shared/route-transition-link", () => ({
-  MemberRouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
+  RouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
     createElement("div", null, children),
 }));
 

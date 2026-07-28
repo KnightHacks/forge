@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@forge/ui";
 
-const MEMBER_ROUTE_TRANSITION_EVENT = "blade:member-route-transition";
-const MEMBER_ROUTE_TRANSITION_DELAY_MS = 280;
+const ROUTE_TRANSITION_EVENT = "blade:route-transition";
+const ROUTE_TRANSITION_DELAY_MS = 280;
 
 function shouldUseNormalLink(event: MouseEvent<HTMLAnchorElement>) {
   return (
@@ -22,26 +22,16 @@ function shouldUseNormalLink(event: MouseEvent<HTMLAnchorElement>) {
   );
 }
 
-export function MemberRouteTransitionSurface({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function RouteTransitionSurface({ children }: { children: ReactNode }) {
   const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     const handleTransitionStart = () => setIsExiting(true);
 
-    window.addEventListener(
-      MEMBER_ROUTE_TRANSITION_EVENT,
-      handleTransitionStart,
-    );
+    window.addEventListener(ROUTE_TRANSITION_EVENT, handleTransitionStart);
 
     return () => {
-      window.removeEventListener(
-        MEMBER_ROUTE_TRANSITION_EVENT,
-        handleTransitionStart,
-      );
+      window.removeEventListener(ROUTE_TRANSITION_EVENT, handleTransitionStart);
     };
   }, []);
 
@@ -59,7 +49,7 @@ export function MemberRouteTransitionSurface({
   );
 }
 
-export const MemberRouteTransitionLink = forwardRef<
+export const RouteTransitionLink = forwardRef<
   HTMLAnchorElement,
   Omit<ComponentPropsWithoutRef<typeof Link>, "href"> & {
     beforeNavigate?: () => boolean;
@@ -99,15 +89,12 @@ export const MemberRouteTransitionLink = forwardRef<
           return;
         }
 
-        window.dispatchEvent(new Event(MEMBER_ROUTE_TRANSITION_EVENT));
+        window.dispatchEvent(new Event(ROUTE_TRANSITION_EVENT));
         setIsExiting(true);
-        window.setTimeout(
-          () => router.push(href),
-          MEMBER_ROUTE_TRANSITION_DELAY_MS,
-        );
+        window.setTimeout(() => router.push(href), ROUTE_TRANSITION_DELAY_MS);
       }}
       {...props}
     />
   );
 });
-MemberRouteTransitionLink.displayName = "MemberRouteTransitionLink";
+RouteTransitionLink.displayName = "RouteTransitionLink";

@@ -17,7 +17,7 @@ import {
 } from "~/app/_components/admin/events/server-adapters";
 import { canAccessEventAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Manage Knight Hacks club events and integrations.",
@@ -125,16 +125,14 @@ export default async function AdminEventsPage({
     : null;
 
   return (
-    <HydrateClient>
-      <EventAdminDashboard
-        key={JSON.stringify(input)}
-        access={access}
-        channels={channels}
-        data={data}
-        detail={detail}
-        input={input}
-        tags={tagItems}
-      />
-    </HydrateClient>
+    <EventAdminDashboard
+      key={JSON.stringify(input)}
+      access={access}
+      channels={channels}
+      data={data}
+      detail={detail}
+      input={input}
+      tags={tagItems}
+    />
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { startTransition, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Save, Search, Settings2 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -21,10 +22,10 @@ import { Label } from "@forge/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 
 interface SectionDraft {
@@ -85,32 +86,24 @@ function RolePicker({
 }
 
 export function FormSectionsManager({
-  initialProvisioning,
+  provisioning,
 }: {
-  initialProvisioning?: RouterOutputs["forms"]["sectionProvisioning"];
+  provisioning: RouterOutputs["forms"]["sectionProvisioning"];
 }) {
-  const utils = api.useUtils();
-  const provisioning = api.forms.sectionProvisioning.useQuery(undefined, {
-    initialData: initialProvisioning,
-  });
-  const create = api.forms.createSection.useMutation({
-    async onSuccess() {
-      await utils.forms.sectionProvisioning.invalidate();
-    },
-  });
-  const update = api.forms.updateSection.useMutation({
-    async onSuccess() {
-      await utils.forms.sectionProvisioning.invalidate();
-    },
-  });
+  const router = useRouter();
+  const refresh = () => {
+    startTransition(() => router.refresh());
+  };
+  const create = api.forms.createSection.useMutation({ onSuccess: refresh });
+  const update = api.forms.updateSection.useMutation({ onSuccess: refresh });
   const [draft, setDraft] = useState<SectionDraft | null>(null);
   const [roleSearch, setRoleSearch] = useState("");
   const roles = useMemo(() => {
     const query = roleSearch.trim().toLowerCase();
-    return (provisioning.data?.roles ?? []).filter(
+    return provisioning.roles.filter(
       (role) => !query || role.name.toLowerCase().includes(query),
     );
-  }, [provisioning.data?.roles, roleSearch]);
+  }, [provisioning.roles, roleSearch]);
 
   function closeDialog() {
     setDraft(null);
@@ -157,7 +150,7 @@ export function FormSectionsManager({
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
         data-section-grid="compact"
       >
-        {provisioning.data?.sections.map((section) => (
+        {provisioning.sections.map((section) => (
           <Card
             className="border-white/10 bg-card/95 shadow-xl shadow-black/15"
             data-section-card="compact"

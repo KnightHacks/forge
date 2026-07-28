@@ -4,31 +4,6 @@ import type { ReactNode } from "react";
 import { cn } from "@forge/ui";
 import { Skeleton } from "@forge/ui/skeleton";
 
-export const ADMIN_PAGE_EYEBROWS = {
-  alumni: "Alumni communications",
-  analytics: "Club intelligence",
-  checkIn: "Event attendance",
-  companies: "Company intelligence",
-  companyDetail: "Company record",
-  discordArchive: "Discord operations",
-  email: "Campaign communications",
-  eventFeedback: "Feedback configuration",
-  events: "Event planning",
-  formCreate: "Form creation",
-  formEdit: "Form configuration",
-  formResponses: "Response intelligence",
-  forms: "Member workflows",
-  formSections: "Form organization",
-  issueArchive: "Issue archive",
-  issueCalendar: "Club Operations",
-  issueDetail: "Issue record",
-  issueKanban: "Issue workflow",
-  issueList: "Issue directory",
-  logs: "Officer audit trail",
-  members: "Member directory",
-  roles: "Access control",
-} as const;
-
 export const adminPageClassName =
   "container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10";
 

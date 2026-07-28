@@ -38,11 +38,11 @@ import { alumniBulletinPostSchema } from "@forge/validators";
 import type { AlumniBulletinCardData } from "~/app/_components/member/alumni-dashboard";
 import { AlumniBulletinCard } from "~/app/_components/member/alumni-dashboard";
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 
 export interface AlumniBulletinWorkspacePost extends AlumniBulletinCardData {
   displayOrder: number;

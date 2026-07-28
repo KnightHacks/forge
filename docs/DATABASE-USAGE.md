@@ -115,6 +115,21 @@ Notes:
 - `IssuesToUsersAssignment` assignments are validated in code to ensure users belong to the issue team.
 - `Template.body` is generic `jsonb` in the DB, but the API validates it as an array of nested issue template nodes.
 
+## Discord configuration
+
+| Table export    | SQL table                     | Usage                                                                                                                                                                    |
+| --------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DiscordConfig` | `knight_hacks_discord_config` | Officer-managed Discord guild, channel, and role IDs. Replaces the snowflakes that used to be hard-coded in `@forge/consts`; read through `@forge/utils/discord-config`. |
+
+Notes:
+
+- One row is one _setting_, not one value. `production_id` and `development_id` are the two environment values of the same setting, replacing the `PROD_`/`DEV_` constant pairs that fed an `IS_PROD` ternary.
+- `development_id` is nullable and means "reuse `production_id`", which is how `alumni_role` and the six `*_director_role` rows behave.
+- `key` is a code contract enumerated by `DISCORD.CONFIG_KEYS`, not something an officer invents; renaming one needs a data migration. `kind`, `label`, and `description` exist so a future admin UI can present a row without the editor guessing.
+- Check constraints enforce that both ID columns are 17-20 digit snowflakes, so a pasted role mention or a trailing space fails at write time rather than as a Discord 404 inside a cron job.
+- The read path caches the whole table for 60 seconds per process. There is no admin UI yet, so writes happen in SQL; a writer inside the app must call `invalidateDiscordConfigCache()`, and other processes converge within the TTL.
+- `packages/db/scripts/seed_devdb.ts` reads the raw `guild` row rather than the resolved value, because it needs both environments at once.
+
 ## Undocumented columns
 
 If a task needs a table or column not explained here, inspect existing usage first. If the intended semantics are still not clear from code, ask a clarifying question before setting a new precedent.
