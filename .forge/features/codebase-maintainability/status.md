@@ -508,6 +508,16 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
       baseline would drift **daily**, not monthly. Worse than analytics, not
       cheaper.
 
+      **Playwright masking does not rescue it, so do not try.** `toHaveScreenshot`
+      accepts `mask: [locator]`, and the tracker has stable selectors
+      (`aria-label="Discord activity month"`, and the grid's own
+      `aria-label="Discord message activity for <month>"`). Masking paints over
+      pixels; it does not change layout. The grid is
+      `Array.from({ length: lastDay })` with a `leadingDays` offset in a
+      seven-column grid, so its **row count** swings between five and six as the
+      day-of-month advances, and the dialog's height swings with it. A full-page
+      baseline fails on image dimensions before it ever compares a pixel.
+
       **The real unlock, and it is one thing, not three.** Every blocked surface
       is blocked on a server-side `new Date()`. The seam already exists —
       `getMemberDiscordEngagement` takes `now` as a defaulted parameter — and
