@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import type { Dispatch, SetStateAction } from "react";
 import type { Mock } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { EmailAudienceDefinition } from "@forge/validators";
@@ -128,6 +128,42 @@ describe("useAudienceResolution", () => {
         "newest@knighthacks.org",
       ),
     );
+    expect(result.current.isResolving).toBe(false);
+  });
+
+  it("stays empty when the last audience is cleared mid-resolve", async () => {
+    // The campaign's recipient list. Clearing every audience group has to mean
+    // the list is empty and stays empty — a response dispatched before the
+    // clear must not put people back into a send the admin just emptied.
+    const inFlight = deferred<EmailAudienceResolution>();
+    const resolve = vi.fn().mockReturnValue(inFlight.promise);
+
+    const { rerender, result } = renderHook(
+      (props: { audiences: EmailAudienceDefinition[] }) =>
+        useAudienceResolution({
+          audiences: props.audiences,
+          resolve,
+          setExcludedRecipients,
+        }),
+      { initialProps: { audiences: CURRENT_MEMBERS } },
+    );
+
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(1));
+
+    rerender({ audiences: [] });
+    await waitFor(() => expect(result.current.resolution).toBeNull());
+    expect(result.current.isResolving).toBe(false);
+
+    // Settle inside `act` and await the chain itself, so the assertion runs
+    // after the `.then` and its React update have both flushed. Asserting on a
+    // bare microtask tick passes whether or not the guard works, which makes
+    // the test useless for the thing it exists to catch.
+    await act(async () => {
+      inFlight.settle(resolutionOf(["cleared@knighthacks.org"]));
+      await inFlight.promise;
+    });
+
+    expect(result.current.resolution).toBeNull();
     expect(result.current.isResolving).toBe(false);
   });
 

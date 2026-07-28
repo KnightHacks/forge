@@ -47,6 +47,13 @@ export function useAudienceResolution({
        rule did not fire on it while it was inlined in the 1,100-line
        workspace component only because that function defeated the analysis. */
     if (!resolve || audiences.length === 0) {
+      // Bump the sequence here too, not just on the resolving path. Clearing
+      // the last audience while a resolve is already dispatched used to leave
+      // `request.current` untouched, so the in-flight response still matched
+      // its own sequence, passed the staleness guard, and repopulated the
+      // recipient list the admin had just emptied. Cancelling the timeout does
+      // not help once the request has gone out.
+      request.current += 1;
       setResolution(null);
       setExcludedRecipients(new Set());
       setIsResolving(false);
