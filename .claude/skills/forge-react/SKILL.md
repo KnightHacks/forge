@@ -90,10 +90,24 @@ indirection layers.
 
 ## Mutations
 
-One shape, everywhere: toast plus `mutation.isPending`, through the shared
-`useFeatureMutation` wrapper. Inline errors are only for field-level validation
-inside a form. Before this rule there were 15 toast and 14 inline sites across 8
-different state-variable names, and the events feature was split against itself.
+One shape, everywhere: `api.x.y.useMutation({ onSuccess, onError })` with a
+toast from `@forge/ui/toast`, and `mutation.isPending` for the pending state.
+Inline errors are only for field-level validation inside a form. Before this rule
+there were 15 toast and 14 inline sites across 8 different state-variable names,
+and the events feature was split against itself.
+
+**There is no `useFeatureMutation` wrapper — do not import one.** An earlier
+version of this skill prescribed it as though it existed. It does not, and every
+screen hand-rolls the call above. Build the wrapper only as its own deliberate
+refactor of the existing sites, never as a side effect of a feature.
+
+Row-level actions need their own `useState<string | null>` holding the pending
+row id, because one `useMutation` object is shared across every row. There is no
+shared helper for this; each screen declares its own.
+
+Do not add optimistic updates. There are none in `apps/blade` — no `onMutate`,
+no `setQueryData`, no `useOptimistic` — and the house pattern is pending state
+plus a refresh.
 
 Match the invalidation mechanism to where the data came from:
 

@@ -5,7 +5,7 @@ description: How to add or change tRPC procedures in packages/api: procedure ana
 
 # Forge API
 
-`@forge/api` is the platform layer: 18 routers, 178 client-callable procedures.
+`@forge/api` is the platform layer: 18 routers, 179 client-callable procedures.
 Apps are clients of it, including the Discord bot and cron.
 
 ## Procedure anatomy
@@ -99,9 +99,14 @@ schemas, the client, and migrations; it must not own product queries.
 ## Contracts
 
 Adding, removing, or renaming a procedure changes a contract. The API surface
-snapshot in `packages/api/src/tests/root/api-surface.test.ts` pins all 178 paths
+snapshot in `packages/api/src/tests/root/api-surface.test.ts` pins all 179 paths
 and will fail — update it in the same commit, so the diff shows what clients
-gained or lost.
+gained or lost. Treat the `.snap` file as the authority on the current count,
+not this sentence; it drifted once already.
+
+Two naming schemes coexist deliberately, and mixing them produces a confusing
+failure. The snapshot uses **client namespaces** (`memberAdmin.*`), while
+`utils/audit/coverage.ts` uses **router file names** (`member-admin.*`).
 
 **Before removing or renaming anything, search every app.** `apps/club` and
 `apps/guild` deploy separately and reach Blade over HTTP, so a break there is
