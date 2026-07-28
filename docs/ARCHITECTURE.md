@@ -57,17 +57,20 @@ The `legacy/` tree is deliberately excluded from `pnpm-workspace.yaml`. Its
 `CURRENT.md` inventories are evidence for behavior that Reforge may need to
 preserve; legacy source is not an implementation target.
 
-### Intentional Guild Baseline Failure
+### The workspace gate is green — keep it that way
 
-The active Reforge API does not yet restore the `guild` router. The Guild app
-and Club team roster still reference `api.guild`, so full-workspace typecheck
-and build currently fail at those unchanged consumers. This is an intentional
-baseline condition until Guild is selected as a Reforge feature.
+There is no longer an accepted baseline failure. The `guild` router is restored
+and registered, and every root command passes: `format`, `lint`, `typecheck`,
+`test`, and `build`.
 
-Feature work outside Guild should run targeted checks for every touched app or
-package and record the inherited Guild failure separately when a root command
-reaches it. Do not weaken types or add a placeholder router merely to make the
-workspace gate green.
+This section previously said the workspace gate failed at Guild and that
+targeted filtered commands were the authoritative validation instead. That
+guidance outlived the condition it described, and it cost something: run only
+filtered checks and a repo-wide failure has nowhere to surface. Three of the
+four gates were red on committed code for some time, including a test that
+correctly detects a permission-aware procedure with no declared audit policy.
+
+Run the root commands. If one fails, the failure is real.
 
 ## How Apps Communicate
 
@@ -356,11 +359,15 @@ pnpm --filter=@forge/api test
 pnpm --filter=@forge/blade typecheck
 ```
 
-Because Guild is an intentional baseline failure, targeted filtered commands
-are the authoritative validation for non-Guild feature work until that
-capability is restored. Meaningful Blade UI changes should also run
+Filtered commands are useful for a fast inner loop, but the root commands are
+the authoritative validation — a repo-wide failure has nowhere to surface if you
+only ever run filtered ones. Meaningful Blade UI changes should also run
 `pnpm analyze:react:changed --base=reforge/main` and the relevant Playwright
-specs. The main CI workflow does not currently run Blade Playwright tests.
+specs. The main CI workflow does not run Blade Playwright tests.
+
+One caveat worth knowing: `pnpm lint` caches, and it will replay a stale failure
+after the underlying error is fixed. If lint is red and you believe it is fixed,
+re-run with `npx turbo run lint --force --continue` before concluding anything.
 
 ### Pipeline
 
