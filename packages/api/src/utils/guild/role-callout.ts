@@ -102,6 +102,3 @@ export function getGuildRoleCallout(
     label: highest.label,
   };
 }
-
-export type ClubTeamRoleConfig =
-  (typeof TEAM_CONSTS.CLUB_TEAM_ROLE_CONFIG)[keyof typeof TEAM_CONSTS.CLUB_TEAM_ROLE_CONFIG];

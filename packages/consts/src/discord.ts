@@ -1,8 +1,3 @@
-import {
-  GuildScheduledEventEntityType,
-  GuildScheduledEventPrivacyLevel,
-} from "discord-api-types/v10";
-
 import { IS_PROD } from "./util";
 
 // TODO: JSDOC all all of the non PROD_ or DEV_ exports
@@ -45,6 +40,3 @@ export const RECRUITING_CHANNEL = IS_PROD
   : DEV_LOG_CHANNEL;
 
 export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";
-
-export const EVENT_TYPE = GuildScheduledEventEntityType.External;
-export const EVENT_PRIVACY_LEVEL = GuildScheduledEventPrivacyLevel.GuildOnly;

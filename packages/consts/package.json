@@ -28,7 +28,6 @@
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
-    "discord-api-types": "^0.38.40",
     "minimatch": "^10.2.4"
   }
 }

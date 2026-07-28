@@ -6,10 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./discord": "./src/discord.ts",
-    "./forms": "./src/forms.ts",
-    "./forms.client": "./src/forms.client.ts",
     "./google": "./src/google.ts",
-    "./permissions.server": "./src/permissions.server.ts",
     "./stripe": "./src/stripe.ts"
   },
   "license": "MIT",

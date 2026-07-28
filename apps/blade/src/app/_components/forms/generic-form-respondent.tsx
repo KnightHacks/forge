@@ -11,10 +11,7 @@ import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 
-import {
-  formatFormResponseValue,
-  FormResponseValue,
-} from "./form-response-value";
+import { FormResponseValue } from "./form-response-value";
 
 interface GenericFormDefinition {
   description: string;
@@ -43,8 +40,6 @@ function formatDate(value: string) {
     timeZone: "UTC",
   }).format(new Date(value));
 }
-
-export { formatFormResponseValue as formatRespondentAnswer };
 
 export function GenericFormRespondent({
   definition,

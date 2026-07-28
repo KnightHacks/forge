@@ -8,10 +8,7 @@ import {
 
 import { DISCORD, EVENTS } from "@forge/consts";
 
-import type {
-  EventProjectionRequest,
-  EventWorkflowRecord,
-} from "./orchestration";
+import type { EventProjectionRequest } from "./orchestration";
 
 type GatewayResult =
   | { id: string; kind: "success"; request?: EventProjectionRequest }
@@ -429,8 +426,4 @@ export function eventGoogleCalendars() {
     internal: EVENTS.DEV_GOOGLE_CALENDAR_ID,
     public: EVENTS.GOOGLE_CALENDAR_ID,
   };
-}
-
-export function appliedChannelType(event: EventWorkflowRecord) {
-  return event.discordChannel?.type ?? null;
 }

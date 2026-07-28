@@ -5,7 +5,6 @@ export type IssueWorkspaceItem =
 export type IssueTeamChoice = RouterOutputs["issues"]["listTeams"][number];
 export type IssueTemplateChoice =
   RouterOutputs["issues"]["listTemplates"][number];
-export type IssueEventChoice = RouterOutputs["issues"]["listEvents"][number];
 
 export interface IssueWorkspaceData {
   counts: RouterOutputs["issues"]["list"]["counts"];

@@ -38,7 +38,7 @@ Use this placement hierarchy:
 
 `@forge/utils` owns reusable non-UI behavior: date/time helpers, permission calculations, form transforms, CSV/export logic, recursive tree helpers, status filtering/counting, and integration helpers.
 
-Constants do not belong in utils. Server-only utilities must stay behind explicit server-only files/subpath exports such as `@forge/utils/permissions.server`; do not leak DB, cookie, or service-client code through the root barrel.
+Constants do not belong in utils. Server-only utilities must stay behind explicit server-only files/subpath exports such as `@forge/utils/stripe`; do not leak DB, cookie, or service-client code through the root barrel.
 
 ## tRPC and API (`packages/api`)
 

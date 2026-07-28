@@ -140,10 +140,6 @@ export function buildIssueSearchParams(input: IssueSearchInput) {
   return params;
 }
 
-export function defaultIssueCalendarWindow(now = new Date()) {
-  return issueCalendarWindow({ date: easternDateKey(now), mode: "month" });
-}
-
 function dateAtNoon(date: string) {
   return new Date(`${date}T12:00:00.000Z`);
 }
