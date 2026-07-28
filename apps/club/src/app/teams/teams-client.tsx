@@ -20,6 +20,7 @@ import { countUniqueTeamMembers, createEmptyRoster } from "./teams-config";
 
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
 const TEAM_APPLICATIONS_ID = "team-applications";
+const TEAMS_ROSTER_LOAD_AHEAD_VIEWPORTS = 0.875;
 
 // Cosmetic bar widths for the loading filter strip. Blade owns the team list
 // now (f34428f8), so this file must not encode how many teams exist: these are
@@ -223,11 +224,13 @@ function EmptyTeam({ label, status }: { label: string; status: RosterStatus }) {
 
 export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
   // The roster sits just past one viewport, below a full-height hero, so the
-
+  // default lead of 0 starts the fetch at the exact moment the still-empty
   // header scrolls into view. Leading by a viewport (as home-events.tsx does)
   // means most visitors never see the loading state at all.
   const { ref: rosterSectionRef, shouldLoad: shouldLoadRoster } =
-    useDeferredSectionLoad<HTMLElement>();
+    useDeferredSectionLoad<HTMLElement>({
+      leadViewports: TEAMS_ROSTER_LOAD_AHEAD_VIEWPORTS,
+    });
   const pendingScrollPosition = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
