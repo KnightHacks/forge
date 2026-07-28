@@ -1,4 +1,4 @@
-import { DISCORD, EVENTS } from "@forge/consts";
+import { EVENTS } from "@forge/consts";
 
 interface ProviderProjection {
   appliedRevision: number | null;
@@ -170,7 +170,11 @@ export function listPublicClubEvents(
 
 export function listMemberEvents(
   events: readonly EventDiscoveryRecord[],
-  { member, now }: { member: MemberDiscoveryRecord; now: Date },
+  {
+    guildId,
+    member,
+    now,
+  }: { guildId: string; member: MemberDiscoveryRecord; now: Date },
 ) {
   return events
     .flatMap((event) => {
@@ -186,7 +190,7 @@ export function listMemberEvents(
           attendanceCount: event.attendanceCount,
           audience: event.audience,
           discordUrl: event.discord.id
-            ? `https://discord.com/events/${DISCORD.KNIGHTHACKS_GUILD}/${event.discord.id}`
+            ? `https://discord.com/events/${guildId}/${event.discord.id}`
             : null,
           internal: event.internal,
           locked,

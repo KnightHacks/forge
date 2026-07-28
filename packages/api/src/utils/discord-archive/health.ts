@@ -1,5 +1,4 @@
 import type { DiscordArchiveHealthInput } from "@forge/validators";
-import { DISCORD } from "@forge/consts";
 import { and, eq, ilike, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -8,6 +7,7 @@ import {
   DiscordArchiveMessage,
   DiscordArchiveState,
 } from "@forge/db/schemas/discord";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 function ratio(numerator: number, denominator: number) {
   return denominator === 0 ? null : numerator / denominator;
@@ -28,7 +28,7 @@ export async function getDiscordArchiveHealth(
   input: DiscordArchiveHealthInput,
   now = new Date(),
 ) {
-  const guildId = DISCORD.KNIGHTHACKS_GUILD;
+  const guildId = await getKnightHacksGuildId();
   const predicates = [
     eq(DiscordArchiveChannel.guildId, guildId),
     isNull(DiscordArchiveChannel.deletedAt),

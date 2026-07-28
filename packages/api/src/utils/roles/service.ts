@@ -1,7 +1,6 @@
 import type { APIGuildMember, APIRole } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
 
-import { DISCORD } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
@@ -13,6 +12,7 @@ import {
   IssuesToTeamsVisibility,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import type { RoleDiscordGateway } from "./discord-gateway";
 import {
@@ -33,14 +33,22 @@ export async function getDiscordRole(
   return guildRoles.roles.find((role) => role.id === roleId) ?? null;
 }
 
-export function assertEligibleDiscordRole(role: APIRole | null) {
+/**
+ * `guildId` is a parameter rather than a lookup so this stays synchronous and
+ * database-free, matching `filterDiscordRolesForLinking`. The guild's own ID
+ * doubles as the `@everyone` role ID, which is never linkable.
+ */
+export function assertEligibleDiscordRole(
+  role: APIRole | null,
+  guildId: string,
+) {
   if (!role) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "That Discord role could not be found.",
     });
   }
-  if (role.id === DISCORD.KNIGHTHACKS_GUILD || role.managed) {
+  if (role.id === guildId || role.managed) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "That Discord role cannot be linked in Blade.",
@@ -180,6 +188,7 @@ export async function syncLinkedRole(
 ) {
   const liveRole = assertEligibleDiscordRole(
     await getDiscordRole(gateway, role.discordRoleId),
+    await getKnightHacksGuildId(),
   );
   await assertUniqueDiscordRole(liveRole, role.id);
   await db

@@ -6,7 +6,8 @@ import {
   Routes,
 } from "discord-api-types/v10";
 
-import { DISCORD, EVENTS } from "@forge/consts";
+import { EVENTS } from "@forge/consts";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import type { EventProjectionRequest } from "./orchestration";
 
@@ -92,7 +93,7 @@ export function createDiscordEventGateway() {
       try {
         const discord = await import("@forge/utils/discord");
         const created = (await discord.api.post(
-          Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
+          Routes.guildScheduledEvents(await getKnightHacksGuildId()),
           { body: discordBody(request) },
         )) as { id: string };
         return { id: created.id, kind: "success" };
@@ -105,7 +106,7 @@ export function createDiscordEventGateway() {
       try {
         const discord = await import("@forge/utils/discord");
         await discord.api.delete(
-          Routes.guildScheduledEvent(DISCORD.KNIGHTHACKS_GUILD, id),
+          Routes.guildScheduledEvent(await getKnightHacksGuildId(), id),
         );
         return { id, kind: "success" };
       } catch (error) {
@@ -117,7 +118,7 @@ export function createDiscordEventGateway() {
       try {
         const discord = await import("@forge/utils/discord");
         const event = (await discord.api.get(
-          Routes.guildScheduledEvent(DISCORD.KNIGHTHACKS_GUILD, id),
+          Routes.guildScheduledEvent(await getKnightHacksGuildId(), id),
         )) as APIGuildScheduledEvent;
         return {
           id: event.id,
@@ -132,7 +133,7 @@ export function createDiscordEventGateway() {
     async list() {
       const discord = await import("@forge/utils/discord");
       const events = (await discord.api.get(
-        Routes.guildScheduledEvents(DISCORD.KNIGHTHACKS_GUILD),
+        Routes.guildScheduledEvents(await getKnightHacksGuildId()),
       )) as APIGuildScheduledEvent[];
       return events.map(discordLiveProjection);
     },
@@ -144,7 +145,7 @@ export function createDiscordEventGateway() {
       try {
         const discord = await import("@forge/utils/discord");
         const updated = (await discord.api.patch(
-          Routes.guildScheduledEvent(DISCORD.KNIGHTHACKS_GUILD, id),
+          Routes.guildScheduledEvent(await getKnightHacksGuildId(), id),
           { body: discordBody(request) },
         )) as { id: string };
         return { id: updated.id, kind: "success" };
@@ -163,7 +164,7 @@ export async function resolveDiscordEventChannelType(channelId: string) {
     )) as APIChannel;
     if (
       !("guild_id" in channel) ||
-      channel.guild_id !== DISCORD.KNIGHTHACKS_GUILD
+      channel.guild_id !== (await getKnightHacksGuildId())
     ) {
       return null;
     }
@@ -177,15 +178,13 @@ export async function resolveDiscordEventChannelType(channelId: string) {
 
 export async function listDiscordEventChannels() {
   const discord = await import("@forge/utils/discord");
+  const guildId = await getKnightHacksGuildId();
   const channels = (await discord.api.get(
-    Routes.guildChannels(DISCORD.KNIGHTHACKS_GUILD),
+    Routes.guildChannels(guildId),
   )) as APIChannel[];
   const choices: { id: string; name: string; type: "stage" | "voice" }[] = [];
   for (const channel of channels) {
-    if (
-      !("guild_id" in channel) ||
-      channel.guild_id !== DISCORD.KNIGHTHACKS_GUILD
-    ) {
+    if (!("guild_id" in channel) || channel.guild_id !== guildId) {
       continue;
     }
     if (channel.type === ChannelType.GuildVoice) {

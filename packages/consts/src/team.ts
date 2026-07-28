@@ -1,35 +1,8 @@
-export const TEAMS = [
-  {
-    team: "Outreach",
-    color: "#88fea1",
-    director_role: "779845137822908436",
-  },
-  {
-    team: "Design",
-    color: "#eaacff",
-    director_role: "874028482089349172",
-  },
-  {
-    team: "Development",
-    color: "#93ceff",
-    director_role: "1082124530077683772",
-  },
-  {
-    team: "Sponsorship",
-    color: "#f5f4af",
-    director_role: "626815399442513920",
-  },
-  {
-    team: "Workshops",
-    color: "#206694",
-    director_role: "757002949603098837",
-  },
-  {
-    team: "Projects/Mentorship",
-    color: "#3498db",
-    director_role: "1244790444626280550",
-  },
-];
+// The former `TEAMS` array lived here. Its six Discord director-role snowflakes
+// moved to the `knight_hacks_discord_config` table (keys `*_director_role`) and
+// are read through `@forge/utils/discord-config`. Its per-team hex colors were
+// dropped rather than migrated: `auth_roles.color` is the live source for team
+// display color, and nothing ever read the copy stored here.
 
 export const CLUB_TEAM_DEFINITIONS = [
   {

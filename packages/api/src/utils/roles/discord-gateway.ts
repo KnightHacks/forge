@@ -6,8 +6,8 @@ import type {
 import { ChannelType, Routes } from "discord-api-types/v10";
 
 import type { Session } from "@forge/auth/server";
-import { DISCORD } from "@forge/consts";
 import * as discord from "@forge/utils/discord";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { nodeEnv } from "../../env";
 
@@ -33,14 +33,15 @@ let roleCountCache:
 
 export const liveRoleDiscordGateway: RoleDiscordGateway = {
   async getGuildTextChannels() {
+    const guildId = await getKnightHacksGuildId();
     const channels = (await discord.api.get(
-      Routes.guildChannels(DISCORD.KNIGHTHACKS_GUILD),
+      Routes.guildChannels(guildId),
     )) as APIChannel[];
     return channels
       .filter(
         (channel) =>
           "guild_id" in channel &&
-          channel.guild_id === DISCORD.KNIGHTHACKS_GUILD &&
+          channel.guild_id === guildId &&
           "name" in channel &&
           (channel.type === ChannelType.GuildText ||
             channel.type === ChannelType.GuildAnnouncement),
@@ -50,7 +51,7 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
   },
   async getGuildMember(discordUserId) {
     return (await discord.api.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
+      Routes.guildMember(await getKnightHacksGuildId(), discordUserId),
     )) as APIGuildMember;
   },
 
@@ -59,7 +60,7 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
       return {
         available: true,
         roles: (await discord.api.get(
-          Routes.guildRoles(DISCORD.KNIGHTHACKS_GUILD),
+          Routes.guildRoles(await getKnightHacksGuildId()),
         )) as APIRole[],
       };
     } catch {
@@ -72,13 +73,14 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
       return roleCountCache.counts;
     }
     try {
+      const guildId = await getKnightHacksGuildId();
       const usersByRole = new Map<string, Set<string>>();
       let after: string | undefined;
       for (let page = 0; page < 100; page += 1) {
         const params = new URLSearchParams({ limit: "1000" });
         if (after) params.set("after", after);
         const members = (await discord.api.get(
-          `${Routes.guildMembers(DISCORD.KNIGHTHACKS_GUILD)}?${params.toString()}`,
+          `${Routes.guildMembers(guildId)}?${params.toString()}`,
         )) as APIGuildMember[];
         for (const member of members) {
           const userId = member.user.id;
@@ -111,7 +113,7 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
       )) as APIChannel;
       return (
         "guild_id" in channel &&
-        channel.guild_id === DISCORD.KNIGHTHACKS_GUILD &&
+        channel.guild_id === (await getKnightHacksGuildId()) &&
         (channel.type === ChannelType.GuildText ||
           channel.type === ChannelType.GuildAnnouncement)
       );

@@ -1,5 +1,5 @@
 import type { AnalyticsReportInput } from "@forge/validators";
-import { DISCORD, EVENTS } from "@forge/consts";
+import { EVENTS } from "@forge/consts";
 import { and, eq, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -7,6 +7,7 @@ import {
   DiscordArchiveCheckpoint,
   DiscordArchiveState,
 } from "@forge/db/schemas/discord";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import type {
   DiscordAnalyticsChannelRow,
@@ -63,7 +64,7 @@ export async function getDiscordAnalyticsReport(
   input: AnalyticsReportInput,
   now = new Date(),
 ) {
-  const guildId = DISCORD.KNIGHTHACKS_GUILD;
+  const guildId = await getKnightHacksGuildId();
   const period = resolveAnalyticsPeriod(input.period, now);
   const observationEnd = period.observationEnd;
   const startFilter = period.start

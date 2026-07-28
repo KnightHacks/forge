@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
-import { DISCORD } from "@forge/consts";
 import { and, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 import {
   discordRoleIdSchema,
   emailRoleAudienceSchema,
@@ -120,7 +120,7 @@ export const rolesRouter = {
       });
     }
     return filterDiscordRolesForLinking({
-      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      guildId: await getKnightHacksGuildId(),
       linkedRoleIds: new Set(linked.map((role) => role.discordRoleId)),
       memberCounts,
       roles: discordRoles.roles,
@@ -140,6 +140,7 @@ export const rolesRouter = {
       const gateway = await resolveRoleDiscordGateway(ctx.session);
       const role = assertEligibleDiscordRole(
         await getDiscordRole(gateway, input),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(role);
       const counts = await gateway.getRoleCounts();
@@ -203,6 +204,7 @@ export const rolesRouter = {
       const gateway = await resolveRoleDiscordGateway(ctx.session);
       const discordRole = assertEligibleDiscordRole(
         await getDiscordRole(gateway, input.discordRoleId),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(discordRole);
       const operationId = randomUUID();
@@ -313,6 +315,7 @@ export const rolesRouter = {
       }
       const live = assertEligibleDiscordRole(
         await getDiscordRole(gateway, role.discordRoleId),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(live, role.id);
       const nextPermissions = permissionKeysToBitstring(input.permissions);

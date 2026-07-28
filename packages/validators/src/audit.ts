@@ -73,6 +73,17 @@ export const AUDIT_ACTION_CATALOG = {
     "Invalidated effective dues",
     ["affectedMemberCount", "referenceAcademicYear", "referenceDate"],
   ),
+  "member.dues.payment_started": policy(
+    "members",
+    "Started member dues payment",
+    ["academicYear", "amount", "paymentIntentId"],
+  ),
+  "member.dues.paid": policy("members", "Paid member dues", [
+    "academicYear",
+    "amount",
+    "paymentIntentId",
+    "created",
+  ]),
   "member.profile.updated": policy(
     "members",
     "Updated member",
@@ -107,6 +118,11 @@ export const AUDIT_ACTION_CATALOG = {
     "Removed member profile picture",
     ["hadPrevious"],
   ),
+  "member.profile_picture.uploaded": policy(
+    "members",
+    "Uploaded member profile picture",
+    ["mimeType", "byteSize"],
+  ),
   "member.resume.replaced": policy("members", "Replaced member résumé", [
     "filename",
     "byteSize",
@@ -115,6 +131,14 @@ export const AUDIT_ACTION_CATALOG = {
   "member.resume.removed": policy("members", "Removed member résumé", [
     "hadPrevious",
   ]),
+  "member.resume.uploaded": policy("members", "Uploaded member résumé", [
+    "byteSize",
+  ]),
+  "member.employment.replaced": policy(
+    "members",
+    "Replaced member employment history",
+    ["entryCountBefore", "entryCountAfter"],
+  ),
   "member.resume.accessed": policy("members", "Accessed member résumé", [
     "filename",
     "accessMechanism",

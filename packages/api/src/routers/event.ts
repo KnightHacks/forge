@@ -15,6 +15,7 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 import {
   EVENT_CREATION_START_MESSAGE,
   eventAdminQuerySchema,
@@ -559,7 +560,7 @@ export const eventRouter = {
             memberRoleIds: member.roleIds,
             now,
           }),
-          { member, now },
+          { guildId: await getKnightHacksGuildId(), member, now },
         )
       : [];
   }),

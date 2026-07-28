@@ -1538,6 +1538,12 @@ importers:
       '@discordjs/rest':
         specifier: ^2.6.0
         version: 2.6.0
+      '@forge/consts':
+        specifier: workspace:*
+        version: link:../consts
+      '@forge/db':
+        specifier: workspace:*
+        version: link:../db
       '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
@@ -1557,12 +1563,6 @@ importers:
         specifier: ^20.4.0
         version: 20.4.0(@types/node@25.3.2)
     devDependencies:
-      '@forge/consts':
-        specifier: workspace:*
-        version: link:../consts
-      '@forge/db':
-        specifier: workspace:*
-        version: link:../db
       '@forge/eslint-config':
         specifier: workspace:*
         version: link:../../tooling/eslint

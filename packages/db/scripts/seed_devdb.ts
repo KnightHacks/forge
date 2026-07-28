@@ -30,13 +30,14 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
 import { stringify } from "superjson";
 
-import { DISCORD, ISSUE, MINIO } from "@forge/consts";
+import { ISSUE, MINIO } from "@forge/consts";
 
 // Scripts can use relative imports to avoid circular dependencies
 import { minioClient } from "../../api/src/minio/minio-client";
 import * as discord from "../../utils/src/discord";
 import { env } from "../src/env";
 import * as authSchema from "../src/schemas/auth";
+import * as discordConfigSchema from "../src/schemas/discord-config";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
 import {
   sanitizedEventProviderState,
@@ -48,8 +49,9 @@ const execAsync = promisify(exec);
 console.log("Starting seeding script");
 
 type AuthSchema = typeof authSchema;
+type DiscordConfigSchema = typeof discordConfigSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
-type DatabaseSchema = AuthSchema & KnightHacksSchema;
+type DatabaseSchema = AuthSchema & DiscordConfigSchema & KnightHacksSchema;
 
 const backupDbName = `backup`;
 
@@ -89,6 +91,28 @@ async function cleanUp() {
 
 const roleIdMappings: Record<string, string> = {};
 const eventIdMappings: Record<string, string> = {};
+
+/**
+ * This script is the one place that needs *both* environments' guild IDs at
+ * once — it reads the production server and writes to the development one — so
+ * it reads the raw row rather than going through the environment-resolving
+ * accessor in `@forge/utils/discord-config`. It cannot import that accessor
+ * anyway: `@forge/utils` depends on `@forge/db`, and the reverse edge would be
+ * a cycle.
+ */
+async function guildIds() {
+  if (!backupDb) throw new Error("Backup database is not connected.");
+
+  const row = await backupDb.query.DiscordConfig.findFirst({
+    where: eq(discordConfigSchema.DiscordConfig.key, "guild"),
+  });
+  if (!row?.developmentId) {
+    throw new Error(
+      'The "guild" row in knight_hacks_discord_config is missing or has no development_id. Seeding cannot map production Discord objects onto the development server without both.',
+    );
+  }
+  return { development: row.developmentId, production: row.productionId };
+}
 
 async function truncateExcludedTable(name: string) {
   if (!backupDb) return;
@@ -199,18 +223,19 @@ interface DiscordRole {
 async function syncRoles() {
   if (!backupDb) return;
 
+  const guild = await guildIds();
   const prodRolesWithPerms = new Set(
     (
       await backupDb.query.Roles.findMany({ columns: { discordRoleId: true } })
     ).map((row) => row.discordRoleId),
   );
   let prodRoles = (await discord.api.get(
-    Routes.guildRoles(DISCORD.PROD_KNIGHTHACKS_GUILD),
+    Routes.guildRoles(guild.production),
   )) as DiscordRole[];
   prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
 
   const devRolesArr = (await discord.api.get(
-    Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
+    Routes.guildRoles(guild.development),
   )) as DiscordRole[];
   const devRoles = Object.fromEntries(
     devRolesArr.map((role) => [role.name + " " + role.permissions, role]),
@@ -223,7 +248,7 @@ async function syncRoles() {
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const newRole = (await discord.api.post(
-        Routes.guildRoles(DISCORD.DEV_KNIGHTHACKS_GUILD),
+        Routes.guildRoles(guild.development),
         {
           body: {
             name: role.name,
@@ -264,12 +289,13 @@ interface DiscordGuildScheduledEvent {
 async function syncEvents() {
   if (!backupDb) return;
 
+  const guild = await guildIds();
   const prodEvents = (await discord.api.get(
-    Routes.guildScheduledEvents(DISCORD.PROD_KNIGHTHACKS_GUILD),
+    Routes.guildScheduledEvents(guild.production),
   )) as DiscordGuildScheduledEvent[];
 
   const devEventsArr = (await discord.api.get(
-    Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
+    Routes.guildScheduledEvents(guild.development),
   )) as DiscordGuildScheduledEvent[];
   const devEvents = Object.fromEntries(
     devEventsArr.map((ev) => [ev.name + " " + ev.scheduled_start_time, ev]),
@@ -282,7 +308,7 @@ async function syncEvents() {
     } else {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const newEvent = (await discord.api.post(
-        Routes.guildScheduledEvents(DISCORD.DEV_KNIGHTHACKS_GUILD),
+        Routes.guildScheduledEvents(guild.development),
         {
           body: {
             name: event.name,
@@ -345,7 +371,7 @@ async function main() {
 
     backupDb = drizzle({
       client: backupPool,
-      schema: { ...authSchema, ...knightHacksSchema },
+      schema: { ...authSchema, ...discordConfigSchema, ...knightHacksSchema },
       casing: "snake_case",
     });
 
