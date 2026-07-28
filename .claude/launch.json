@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blade",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter=@forge/blade", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "club",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter=@forge/club", "dev"],
+      "port": 3001
+    }
+  ]
+}
