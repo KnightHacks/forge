@@ -116,14 +116,6 @@ export async function settle(page: Page) {
 }
 
 /**
- * Navigates and settles in one step.
- */
-export async function gotoStable(page: Page, url: string) {
-  await page.goto(url);
-  await settle(page);
-}
-
-/**
  * Signs in through the e2e auth route and lands on `callbackURL`.
  */
 export async function signInAs(
