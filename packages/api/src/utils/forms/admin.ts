@@ -1,74 +1,37 @@
 import { TRPCError } from "@trpc/server";
 
-import type { Session } from "@forge/auth/server";
-import { and, desc, eq, inArray, sql } from "@forge/db";
+import { and, eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions } from "@forge/db/schemas/auth";
 import {
-  DuesPayment,
   FormAttachment,
   FormCallbackConfiguration,
-  FormCallbackExecution,
   FormResponse,
   FormResponseRoles,
-  FormSectionEditRole,
-  FormSections,
-  FormSectionViewRole,
   FormsSchemas,
-  Member,
 } from "@forge/db/schemas/knight-hacks";
 import {
   callbackConfigurationSchema,
   formDefinitionSchema,
 } from "@forge/validators";
 
-import type { PermissionMap } from "../permissions";
+import type { PlatformFormActor } from "./actor";
 import { createAdminAuditEvent } from "../audit/service";
-import { buildDuesStatus } from "../dues/status";
 import { evaluateFormSectionAccess, requireFormCapability } from "./access";
-import { summarizeFormResponses } from "./analytics";
+import { auditActor } from "./actor";
 import { removeFormAttachmentObjects } from "./attachments";
 import {
   applyFormDefinitionMutation,
   transitionFormState,
 } from "./definitions";
-import { serializeFormResponsesCsv } from "./export";
 import {
   normalizeStoredFormDefinition,
   normalizeStoredFormResponse,
 } from "./legacy";
-
-export interface PlatformFormActor {
-  discordUserId?: string | null;
-  name?: string | null;
-  permissions: PermissionMap;
-  roleIds: string[];
-  userId: string;
-}
-
-export async function loadPlatformFormActor(
-  session: Session & { permissions: PermissionMap },
-): Promise<PlatformFormActor> {
-  const rows = await db
-    .select({ roleId: Permissions.roleId })
-    .from(Permissions)
-    .where(eq(Permissions.userId, session.user.id));
-  return {
-    discordUserId: session.user.discordUserId,
-    name: session.user.name,
-    permissions: session.permissions,
-    roleIds: [...new Set(rows.map(({ roleId }) => roleId))],
-    userId: session.user.id,
-  };
-}
-
-function auditActor(actor: PlatformFormActor) {
-  return {
-    discordUserId: actor.discordUserId,
-    id: actor.userId,
-    name: actor.name,
-  };
-}
+import {
+  requirePlatformFormCapability,
+  requireSection,
+  sectionPolicies,
+} from "./sections";
 
 function safeDefinitionSummary(value: unknown) {
   const parsed = formDefinitionSchema.parse(value);
@@ -77,48 +40,6 @@ function safeDefinitionSummary(value: unknown) {
     questionIds: parsed.questions.map(({ id }) => id),
     questionTypes: parsed.questions.map(({ type }) => type),
   };
-}
-
-async function sectionPolicies() {
-  const [sections, viewers, editors] = await Promise.all([
-    db.select().from(FormSections),
-    db.select().from(FormSectionViewRole),
-    db.select().from(FormSectionEditRole),
-  ]);
-  return sections.map((section) => ({
-    editorRoleIds: editors
-      .filter(({ sectionId }) => sectionId === section.id)
-      .map(({ roleId }) => roleId),
-    id: section.id,
-    name: section.name,
-    viewerRoleIds: viewers
-      .filter(({ sectionId }) => sectionId === section.id)
-      .map(({ roleId }) => roleId),
-  }));
-}
-
-async function requireSection(actor: PlatformFormActor, sectionId: string) {
-  const section = (await sectionPolicies()).find(({ id }) => id === sectionId);
-  if (!section) throw new TRPCError({ code: "NOT_FOUND" });
-  return { section, access: evaluateFormSectionAccess(actor, section) };
-}
-
-export async function requirePlatformFormCapability(
-  actor: PlatformFormActor,
-  formId: string,
-  capability:
-    | "delete_response"
-    | "edit_definition"
-    | "read_definition"
-    | "read_responses",
-) {
-  const form = await db.query.FormsSchemas.findFirst({
-    where: eq(FormsSchemas.id, formId),
-  });
-  if (!form) throw new TRPCError({ code: "NOT_FOUND" });
-  const { access, section } = await requireSection(actor, form.sectionId);
-  requireFormCapability(access, capability);
-  return { access, form, section };
 }
 
 export async function listAdminForms(actor: PlatformFormActor) {
@@ -197,155 +118,6 @@ export async function getAdminPlatformForm(
     respondentRoleIds: respondentRoles.map(({ roleId }) => roleId),
     section,
   };
-}
-
-export async function listPlatformResponses(
-  actor: PlatformFormActor,
-  formId: string,
-) {
-  const { form } = await requirePlatformFormCapability(
-    actor,
-    formId,
-    "read_responses",
-  );
-  const rows = await db
-    .select({
-      answers: FormResponse.responseData,
-      email: Member.email,
-      firstName: Member.firstName,
-      lastName: Member.lastName,
-      memberId: Member.id,
-      responseId: FormResponse.id,
-      snapshot: FormResponse.responseSnapshot,
-      submittedAt: FormResponse.createdAt,
-    })
-    .from(FormResponse)
-    .innerJoin(Member, eq(FormResponse.userId, Member.userId))
-    .where(eq(FormResponse.form, form.id));
-  const definition = normalizeStoredFormDefinition(form.id, form.formData);
-  const responses = rows.map((row) => {
-    const normalized = normalizeStoredFormResponse({
-      currentDefinition: form.formData,
-      formId: form.id,
-      rawAnswers: row.answers,
-      rawSnapshot: row.snapshot,
-    });
-    return {
-      answers: normalized.answers,
-      member: {
-        email: row.email,
-        id: row.memberId,
-        name: `${row.firstName} ${row.lastName}`,
-      },
-      responseId: row.responseId,
-      snapshot: normalized.snapshot,
-      submittedAt: row.submittedAt,
-    };
-  });
-  return {
-    analytics: summarizeFormResponses({
-      definition,
-      responses: responses.map((response) => ({
-        answers: response.answers,
-        id: response.responseId,
-        snapshot: response.snapshot,
-      })),
-    }),
-    form: { id: form.id, name: form.name, state: form.state },
-    responses,
-  };
-}
-
-export async function deletePlatformResponse(input: {
-  actor: PlatformFormActor;
-  formId: string;
-  responseId: string;
-}) {
-  const { form } = await requirePlatformFormCapability(
-    input.actor,
-    input.formId,
-    "delete_response",
-  );
-  if (form.kind !== "general") throw new TRPCError({ code: "BAD_REQUEST" });
-  const result = await db.transaction(async (tx) => {
-    const response = await tx.query.FormResponse.findFirst({
-      columns: { createdAt: true, id: true, userId: true },
-      where: and(
-        eq(FormResponse.id, input.responseId),
-        eq(FormResponse.form, input.formId),
-      ),
-    });
-    if (!response) throw new TRPCError({ code: "NOT_FOUND" });
-    const member = await tx.query.Member.findFirst({
-      columns: { firstName: true, id: true, lastName: true },
-      where: eq(Member.userId, response.userId),
-    });
-    await tx
-      .update(FormCallbackExecution)
-      .set({ responseId: null, status: "cancelled" })
-      .where(
-        and(
-          eq(FormCallbackExecution.responseId, response.id),
-          inArray(FormCallbackExecution.status, ["pending", "running"]),
-        ),
-      );
-    await tx
-      .update(FormCallbackExecution)
-      .set({ input: {}, responseId: null })
-      .where(eq(FormCallbackExecution.responseId, response.id));
-    const attachments = await tx
-      .select({ objectName: FormAttachment.objectName })
-      .from(FormAttachment)
-      .where(eq(FormAttachment.responseId, response.id));
-    await tx
-      .delete(FormAttachment)
-      .where(eq(FormAttachment.responseId, response.id));
-    await tx.delete(FormResponse).where(eq(FormResponse.id, response.id));
-    await createAdminAuditEvent(
-      {
-        actionKey: "form.response.deleted",
-        actor: auditActor(input.actor),
-        metadata: {
-          attachmentCount: attachments.length,
-          callbackEffectsPreserved: true,
-          submittedAt: response.createdAt.toISOString(),
-        },
-        subjects: [
-          {
-            relation: "primary",
-            targetId: response.id,
-            targetLabel: `Response ${response.id}`,
-            targetType: "form_response",
-          },
-          {
-            relation: "secondary",
-            targetId: form.id,
-            targetLabel: form.name,
-            targetType: "form",
-          },
-          ...(member
-            ? [
-                {
-                  memberId: member.id,
-                  relation: "secondary" as const,
-                  targetId: member.id,
-                  targetLabel: `${member.firstName} ${member.lastName}`,
-                  targetType: "member" as const,
-                },
-              ]
-            : []),
-        ],
-      },
-      tx,
-    );
-    return {
-      id: response.id,
-      objectNames: attachments.map(({ objectName }) => objectName),
-      status: "deleted" as const,
-    };
-  });
-  await removeFormAttachmentObjects(result.objectNames);
-  return { id: result.id, status: result.status };
 }
 
 export async function deletePlatformForm(input: {
@@ -871,262 +643,5 @@ export async function changePlatformFormState(input: {
       tx,
     );
     return saved;
-  });
-}
-
-export async function memberFormHistory(userId: string) {
-  const rows = await db
-    .select({
-      formKind: FormsSchemas.kind,
-      formName: FormsSchemas.name,
-      slugName: FormsSchemas.slugName,
-      responseId: FormResponse.id,
-      responseMode: FormsSchemas.responseMode,
-      submittedAt: FormResponse.createdAt,
-    })
-    .from(FormResponse)
-    .innerJoin(FormsSchemas, eq(FormResponse.form, FormsSchemas.id))
-    .where(
-      and(eq(FormResponse.userId, userId), eq(FormsSchemas.kind, "general")),
-    )
-    .orderBy(desc(FormResponse.createdAt), desc(FormResponse.id));
-  return rows.map((row) => ({
-    formKind: row.formKind,
-    formName: row.formName,
-    locked: row.responseMode !== "single_editable",
-    responseId: row.responseId,
-    slugName: row.slugName,
-    submittedAt: row.submittedAt,
-  }));
-}
-
-export async function respondentForm(
-  slugName: string,
-  userId: string,
-  requestedResponseId?: string,
-) {
-  const form = await db.query.FormsSchemas.findFirst({
-    where: eq(FormsSchemas.slugName, slugName),
-  });
-  if (form?.kind !== "general") throw new TRPCError({ code: "NOT_FOUND" });
-  if (form.state === "draft") throw new TRPCError({ code: "NOT_FOUND" });
-  const [member, response, roleRows] = await Promise.all([
-    db.query.Member.findFirst({ where: eq(Member.userId, userId) }),
-    requestedResponseId || form.responseMode !== "multiple_locked"
-      ? db.query.FormResponse.findFirst({
-          where: and(
-            eq(FormResponse.form, form.id),
-            eq(FormResponse.userId, userId),
-            ...(requestedResponseId
-              ? [eq(FormResponse.id, requestedResponseId)]
-              : []),
-          ),
-        })
-      : null,
-    db
-      .select({ roleId: FormResponseRoles.roleId })
-      .from(FormResponseRoles)
-      .where(eq(FormResponseRoles.formId, form.id)),
-  ]);
-  if (!member) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Create a member profile before responding to this form.",
-    });
-  }
-  if (requestedResponseId && !response) {
-    throw new TRPCError({ code: "NOT_FOUND" });
-  }
-  const assignedRoles = await db
-    .select({ roleId: Permissions.roleId })
-    .from(Permissions)
-    .where(eq(Permissions.userId, userId));
-  const duesRows = await db
-    .select()
-    .from(DuesPayment)
-    .where(eq(DuesPayment.memberId, member.id));
-  const now = new Date();
-  let status: "closed" | "open" | "scheduled" = "open";
-  if (form.opensAt && now < form.opensAt) status = "scheduled";
-  else if (
-    form.state !== "published" ||
-    form.manuallyClosed ||
-    (form.closesAt && now >= form.closesAt)
-  )
-    status = "closed";
-  const eligible =
-    (!form.duesOnly || buildDuesStatus({ duesRows }).paid) &&
-    (roleRows.length === 0 ||
-      roleRows.some(({ roleId }) =>
-        assignedRoles.some((row) => row.roleId === roleId),
-      ));
-  if (!eligible && !response) throw new TRPCError({ code: "FORBIDDEN" });
-  const definition = normalizeStoredFormDefinition(form.id, form.formData);
-  const normalizedResponse = response
-    ? normalizeStoredFormResponse({
-        currentDefinition: form.formData,
-        formId: form.id,
-        rawAnswers: response.responseData,
-        rawSnapshot: response.responseSnapshot,
-      })
-    : null;
-  return {
-    definition,
-    form: {
-      closesAt: form.closesAt,
-      id: form.id,
-      name: form.name,
-      opensAt: form.opensAt,
-      responseMode: form.responseMode,
-      slugName: form.slugName,
-    },
-    respondentState: response
-      ? {
-          answers: normalizedResponse?.answers ?? {},
-          editable:
-            form.responseMode === "single_editable" && status === "open",
-          responseId: response.id,
-          status: "submitted" as const,
-          submittedAt: response.createdAt,
-        }
-      : status === "scheduled"
-        ? { opensAt: form.opensAt, status: "scheduled" as const }
-        : status === "closed"
-          ? {
-              closedAt: form.closesAt,
-              reason: form.manuallyClosed
-                ? ("manual" as const)
-                : ("schedule" as const),
-              status: "closed" as const,
-            }
-          : { status: "open" as const },
-  };
-}
-
-export async function exportPlatformResponses(
-  actor: PlatformFormActor,
-  formId: string,
-) {
-  const form = await db.query.FormsSchemas.findFirst({
-    where: eq(FormsSchemas.id, formId),
-  });
-  if (!form) throw new TRPCError({ code: "NOT_FOUND" });
-  const { access } = await requireSection(actor, form.sectionId);
-  requireFormCapability(access, "read_responses");
-  const rows = await db
-    .select({
-      answers: FormResponse.responseData,
-      email: Member.email,
-      firstName: Member.firstName,
-      id: FormResponse.id,
-      lastName: Member.lastName,
-      memberId: Member.id,
-      snapshot: FormResponse.responseSnapshot,
-      submittedAt: FormResponse.createdAt,
-    })
-    .from(FormResponse)
-    .innerJoin(Member, eq(FormResponse.userId, Member.userId))
-    .where(eq(FormResponse.form, form.id));
-  const definition = normalizeStoredFormDefinition(form.id, form.formData);
-  const csv = serializeFormResponsesCsv({
-    definition,
-    responses: rows.map((row) => {
-      const normalized = normalizeStoredFormResponse({
-        currentDefinition: form.formData,
-        formId: form.id,
-        rawAnswers: row.answers,
-        rawSnapshot: row.snapshot,
-      });
-      return {
-        answers: normalized.answers,
-        id: row.id,
-        member: {
-          email: row.email,
-          id: row.memberId,
-          name: `${row.firstName} ${row.lastName}`,
-        },
-        snapshot: normalized.snapshot,
-        status: "submitted",
-        submittedAt: row.submittedAt,
-      };
-    }),
-  });
-  await createAdminAuditEvent({
-    actionKey: "form.responses.exported",
-    actor: auditActor(actor),
-    metadata: {
-      formState: form.state,
-      questionCount: definition.questions.length,
-      responseCount: rows.length,
-    },
-    subjects: [
-      {
-        relation: "primary",
-        targetId: form.id,
-        targetLabel: form.name,
-        targetType: "form",
-      },
-    ],
-  });
-  return csv;
-}
-
-export async function provisionFormSection(input: {
-  actor: PlatformFormActor;
-  editorRoleIds: string[];
-  name: string;
-  viewerRoleIds: string[];
-}) {
-  if (!input.actor.permissions.IS_OFFICER)
-    throw new TRPCError({ code: "FORBIDDEN" });
-  return db.transaction(async (tx) => {
-    const [section] = await tx
-      .insert(FormSections)
-      .values({ name: input.name })
-      .returning();
-    if (!section) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    if (input.viewerRoleIds.length > 0)
-      await tx.insert(FormSectionViewRole).values(
-        input.viewerRoleIds.map((roleId) => ({
-          roleId,
-          sectionId: section.id,
-        })),
-      );
-    if (input.editorRoleIds.length > 0)
-      await tx.insert(FormSectionEditRole).values(
-        input.editorRoleIds.map((roleId) => ({
-          roleId,
-          sectionId: section.id,
-        })),
-      );
-    await createAdminAuditEvent(
-      {
-        actionKey: "form.section.created",
-        actor: auditActor(input.actor),
-        metadata: {
-          editorRoleIds: input.editorRoleIds,
-          name: section.name,
-          viewerRoleIds: input.viewerRoleIds,
-        },
-        subjects: [
-          {
-            relation: "primary",
-            targetId: section.id,
-            targetLabel: section.name,
-            targetType: "form_section",
-          },
-        ],
-      },
-      tx,
-    );
-    return section;
-  });
-}
-
-export async function visibleSections(actor: PlatformFormActor) {
-  const policies = await sectionPolicies();
-  return policies.filter((section) => {
-    const access = evaluateFormSectionAccess(actor, section);
-    return access.canRead || access.canEdit || access.canReadResponses;
   });
 }

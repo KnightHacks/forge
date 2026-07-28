@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildDiscordAnalyticsMix,
   buildDiscordChannelDistribution,
-} from "../../utils/discord-archive/analytics-model";
+} from "../../utils/analytics/discord-shares";
 
-describe("Discord archive analytics read model", () => {
+describe("Discord analytics share rows", () => {
   it("builds deterministic, mutually exclusive sender shares", () => {
     const mix = buildDiscordAnalyticsMix(
       [

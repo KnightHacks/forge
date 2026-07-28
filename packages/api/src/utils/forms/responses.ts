@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
+import type { FormDefinition } from "@forge/validators";
+
 export type FormResponseMode =
   | "multiple_locked"
   | "single_editable"
@@ -52,6 +54,73 @@ export function evaluateFormRespondentState(
     return "ineligible";
   }
   return "open";
+}
+
+/**
+ * What a respondent is told about a form they cannot answer. `draft` is absent
+ * on purpose: an unpublished form must stay undiscoverable, so the caller 404s
+ * before building a view.
+ */
+export type RespondentStateDto =
+  | {
+      answers: Record<string, unknown>;
+      editable: boolean;
+      responseId: string;
+      status: "submitted";
+      submittedAt: Date;
+    }
+  | { closedAt: Date | null; status: "closed" }
+  | { opensAt: Date | null; status: "scheduled" }
+  | { status: "archived" | "ineligible" | "manually_closed" | "open" };
+
+export function buildRespondentFormView(input: {
+  definition: FormDefinition;
+  form: {
+    closesAt: Date | null;
+    opensAt: Date | null;
+    responseMode: FormResponseMode;
+  };
+  response: {
+    answers: Record<string, unknown>;
+    id: string;
+    submittedAt: Date;
+  } | null;
+  state: Exclude<RespondentState, "draft">;
+}): { definition: FormDefinition; respondentState: RespondentStateDto } {
+  const { definition, form, response, state } = input;
+  if (response) {
+    return {
+      definition,
+      respondentState: {
+        answers: response.answers,
+        editable: form.responseMode === "single_editable" && state === "open",
+        responseId: response.id,
+        status: "submitted",
+        submittedAt: response.submittedAt,
+      },
+    };
+  }
+  if (state === "ineligible") {
+    // Telling a respondent they are ineligible must not hand them the form's
+    // contents; only the title and description survive.
+    return {
+      definition: { ...definition, instructions: [], questions: [] },
+      respondentState: { status: "ineligible" },
+    };
+  }
+  if (state === "scheduled") {
+    return {
+      definition,
+      respondentState: { opensAt: form.opensAt, status: "scheduled" },
+    };
+  }
+  if (state === "closed") {
+    return {
+      definition,
+      respondentState: { closedAt: form.closesAt, status: "closed" },
+    };
+  }
+  return { definition, respondentState: { status: state } };
 }
 
 interface FormResponseRepository {

@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { FormDefinition } from "@forge/validators";
+
 import {
   buildMemberFormHistory,
+  buildRespondentFormView,
   createFormResponseSubmissionService,
   evaluateFormRespondentState,
   planFormResponseDeletion,
@@ -211,6 +214,131 @@ describe("form respondent policy", () => {
       });
     }
     expect(updateSingleResponse).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("respondent form view", () => {
+  const QUESTION_ID = "50000000-0000-4000-8000-000000000401";
+  const INSTRUCTION_ID = "60000000-0000-4000-8000-000000000401";
+  const definition: FormDefinition = {
+    description: "Tell us which workshops you want to attend.",
+    instructions: [
+      { body: "Answer honestly.", id: INSTRUCTION_ID, type: "text" },
+    ],
+    questions: [
+      {
+        id: QUESTION_ID,
+        maxLength: 200,
+        prompt: "Which workshop?",
+        required: true,
+        retired: false,
+        type: "short_text",
+      },
+    ],
+    title: "Workshop Interest",
+  };
+  const OPENS_AT = new Date("2026-07-14T18:00:00.000Z");
+  const CLOSES_AT = new Date("2026-07-16T18:00:00.000Z");
+
+  function view(
+    state: Parameters<typeof buildRespondentFormView>[0]["state"],
+    overrides: {
+      responseMode?: "multiple_locked" | "single_editable" | "single_locked";
+      submitted?: boolean;
+    } = {},
+  ) {
+    return buildRespondentFormView({
+      definition,
+      form: {
+        closesAt: CLOSES_AT,
+        opensAt: OPENS_AT,
+        responseMode: overrides.responseMode ?? "single_locked",
+      },
+      response: overrides.submitted
+        ? {
+            answers: { [QUESTION_ID]: "Web" },
+            id: "response-1",
+            submittedAt: NOW,
+          }
+        : null,
+      state,
+    });
+  }
+
+  it("tells a respondent which unavailable state a form is in", () => {
+    expect(view("open").respondentState).toEqual({ status: "open" });
+    expect(view("scheduled").respondentState).toEqual({
+      opensAt: OPENS_AT,
+      status: "scheduled",
+    });
+    expect(view("closed").respondentState).toEqual({
+      closedAt: CLOSES_AT,
+      status: "closed",
+    });
+    expect(view("manually_closed").respondentState).toEqual({
+      status: "manually_closed",
+    });
+    expect(view("archived").respondentState).toEqual({ status: "archived" });
+    expect(view("ineligible").respondentState).toEqual({
+      status: "ineligible",
+    });
+  });
+
+  it("keeps the questions of every state a respondent may still read", () => {
+    for (const state of [
+      "open",
+      "scheduled",
+      "closed",
+      "manually_closed",
+      "archived",
+    ] as const) {
+      expect(view(state).definition).toEqual(definition);
+    }
+  });
+
+  it("withholds the questions from an ineligible respondent", () => {
+    const ineligible = view("ineligible");
+
+    expect(ineligible.definition).toEqual({
+      description: definition.description,
+      instructions: [],
+      questions: [],
+      title: definition.title,
+    });
+    const serialized = JSON.stringify(ineligible);
+    expect(serialized).not.toContain("Which workshop?");
+    expect(serialized).not.toContain("Answer honestly.");
+  });
+
+  it("still shows an existing response once the respondent loses eligibility", () => {
+    const submitted = view("ineligible", {
+      responseMode: "single_editable",
+      submitted: true,
+    });
+
+    expect(submitted.definition).toEqual(definition);
+    expect(submitted.respondentState).toEqual({
+      answers: { [QUESTION_ID]: "Web" },
+      editable: false,
+      responseId: "response-1",
+      status: "submitted",
+      submittedAt: NOW,
+    });
+  });
+
+  it("allows editing a submitted response only while an open form permits it", () => {
+    expect(
+      view("open", { responseMode: "single_editable", submitted: true })
+        .respondentState,
+    ).toMatchObject({ editable: true });
+    expect(
+      view("open", { responseMode: "single_locked", submitted: true })
+        .respondentState,
+    ).toMatchObject({ editable: false });
+    expect(
+      view("closed", { responseMode: "single_editable", submitted: true })
+        .respondentState,
+    ).toMatchObject({ editable: false });
   });
 });
 

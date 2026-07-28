@@ -41,10 +41,15 @@ import {
 import type { AuditChangeInput } from "../utils/audit/service";
 import { permProcedure } from "../trpc";
 import {
+  memberAuditLabel,
+  memberAuditSubject,
+} from "../utils/audit/member-subject";
+import {
   appendAdminAuditResults,
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { getUsCity } from "../utils/career/us-cities";
+import { dataUrlByteSize, dataUrlMimeType } from "../utils/data-url";
 import { isUniqueViolation } from "../utils/db";
 import {
   buildDuesStatus,
@@ -148,45 +153,6 @@ async function auditAdminMutation({
   } catch (error) {
     logger.warn(`Unable to deliver Blade audit log for ${title}:`, error);
   }
-}
-
-function memberAuditLabel(member: {
-  discordUser: string;
-  firstName: string;
-  lastName: string;
-}) {
-  return (
-    `${member.firstName} ${member.lastName}`.trim() ||
-    member.discordUser ||
-    "Unknown member"
-  );
-}
-
-function memberAuditSubject(member: {
-  discordUser: string;
-  firstName: string;
-  id: string;
-  lastName: string;
-}) {
-  return {
-    memberId: member.id,
-    relation: "primary" as const,
-    targetId: member.id,
-    targetLabel: memberAuditLabel(member),
-    targetType: "member" as const,
-  };
-}
-
-function dataUrlByteSize(fileContent: string) {
-  const payload = fileContent.slice(fileContent.indexOf(",") + 1);
-  return Buffer.from(payload, "base64").byteLength;
-}
-
-function dataUrlMimeType(fileContent: string) {
-  const separatorIndex = fileContent.indexOf(";");
-  return separatorIndex > 5
-    ? fileContent.slice("data:".length, separatorIndex)
-    : "application/octet-stream";
 }
 
 function activeMemberFilterFacets(input: AdminMemberListInput) {
@@ -734,7 +700,7 @@ async function findMemberOrThrow(memberId: string) {
   return member;
 }
 
-export const adminMemberProcedures = {
+export const memberAdminRouter = {
   getAdminMembers: permProcedure
     .input(adminMemberListSchema)
     .query(async ({ ctx, input }) => {

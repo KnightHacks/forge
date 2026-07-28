@@ -259,6 +259,22 @@ export async function appendAdminAuditResults(
   },
   executor: WriteDb = db,
 ) {
+  // Validated ahead of the Blade E2E short-circuit, the same way
+  // `createAdminAuditEvent` orders it. Skipping validation too left the append
+  // path with no end-to-end coverage at all: a malformed result subject passed
+  // silently under the harness and only failed once it reached a real database.
+  const subjects = validateSubjects(input.actionKey, [
+    {
+      relation: "primary",
+      targetId: input.eventId,
+      targetLabel: "validation-only",
+      targetType: "provider",
+    },
+    ...input.results.map((result) => ({
+      ...result,
+      relation: "result" as const,
+    })),
+  ]).slice(1);
   if (isBladeE2E) return;
 
   const [event] = await executor
@@ -280,19 +296,6 @@ export async function appendAdminAuditResults(
       "Admin audit result subjects require a parent operation ID",
     );
   }
-
-  const subjects = validateSubjects(input.actionKey, [
-    {
-      relation: "primary",
-      targetId: input.eventId,
-      targetLabel: "validation-only",
-      targetType: "provider",
-    },
-    ...input.results.map((result) => ({
-      ...result,
-      relation: "result" as const,
-    })),
-  ]).slice(1);
 
   const existing = await executor
     .select({

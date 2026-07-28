@@ -26,13 +26,12 @@ function clientFacingSurface() {
   return paths.sort();
 }
 
-// This pins the client-visible API surface, which is deliberately NOT the same
-// as the file layout. `member-admin.ts` exports a procedure record that is
-// spread into `memberRouter`, so its 12 permission-aware procedures reach
-// clients as `member.*` — while `utils/audit/coverage.ts` keys them under a
-// `member-admin.*` namespace that no client can call. Reconciling that is
-// planned work; until then this test makes the discrepancy visible instead of
-// letting it drift further.
+// This pins the client-visible API surface. `member-admin.ts` used to export a
+// procedure record spread into `memberRouter`, so its 12 permission-aware
+// procedures reached clients as `member.*` and shared one namespace with five
+// `protectedProcedure` self-service ones. It is now registered as its own
+// `memberAdmin` namespace, so the access tier is visible in the call path and
+// the file layout matches the surface.
 //
 // A failure here is not automatically a bug: adding or moving a procedure is a
 // real contract change. Update the list in the same commit that makes the
@@ -42,9 +41,25 @@ describe("client-facing API surface", () => {
     expect(clientFacingSurface()).toMatchSnapshot();
   });
 
-  it("keeps admin member procedures reachable under the member namespace", () => {
+  it("splits admin member procedures out of the member namespace", () => {
     const surface = clientFacingSurface();
-    expect(surface).toContain("member.getAdminMembers");
+    expect(surface).toContain("memberAdmin.getAdminMembers");
+    expect(surface).toContain("member.getMember");
+
+    // `member.*` must hold only the protected-tier self-service procedures.
+    // Nothing admin-shaped may leak back in through a spread.
+    expect(surface.filter((path) => path.startsWith("member.")).sort()).toEqual(
+      [
+        "member.createMember",
+        "member.deleteMember",
+        "member.getMember",
+        "member.updateGuildPreferences",
+        "member.updateMember",
+      ],
+    );
+    expect(
+      surface.filter((path) => path.startsWith("memberAdmin.")),
+    ).toHaveLength(12);
     expect(surface.some((path) => path.startsWith("member-admin."))).toBe(
       false,
     );
@@ -68,6 +83,7 @@ describe("client-facing API surface", () => {
       "guild",
       "issues",
       "member",
+      "memberAdmin",
       "profilePicture",
       "qr",
       "resume",
