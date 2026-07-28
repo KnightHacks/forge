@@ -1,6 +1,9 @@
 import { ISSUE } from "@forge/consts";
 import { defaultIssueDueAt } from "@forge/validators";
 
+import type { SearchParams } from "~/lib/search-params";
+import { clubDateKey } from "~/lib/dates";
+
 export interface IssueSearchInput {
   assigneeIds: string[];
   calendarDate: string;
@@ -19,33 +22,15 @@ export interface IssueSearchInput {
   teamIds: string[];
 }
 
-export type IssueSearchParams = Record<string, string | string[] | undefined>;
-
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
-function easternDateKey(now = new Date()) {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: "America/New_York",
-      year: "numeric",
-    })
-      .formatToParts(now)
-      .map((part) => [part.type, part.value]),
-  );
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
 
 function values(value: string | string[] | undefined) {
   return value === undefined ? [] : Array.isArray(value) ? value : [value];
 }
 
-export function parseIssueSearchParams(
-  params: IssueSearchParams,
-): IssueSearchInput {
+export function parseIssueSearchParams(params: SearchParams): IssueSearchInput {
   const page = Number(params.page);
   const pageSize = Number(params.pageSize);
   const calendarDate = Array.isArray(params.date)
@@ -72,7 +57,7 @@ export function parseIssueSearchParams(
     calendarDate:
       calendarDate && datePattern.test(calendarDate)
         ? calendarDate
-        : easternDateKey(),
+        : clubDateKey(),
     calendarMode:
       calendarMode === "week" || calendarMode === "day"
         ? calendarMode
@@ -122,7 +107,7 @@ export function buildIssueSearchParams(input: IssueSearchInput) {
   const params = new URLSearchParams();
   if (input.search) params.set("q", input.search);
   if (input.calendarMode !== "month") params.set("mode", input.calendarMode);
-  if (input.calendarDate !== easternDateKey())
+  if (input.calendarDate !== clubDateKey())
     params.set("date", input.calendarDate);
   if (input.dueFrom) params.set("dueFrom", input.dueFrom);
   if (input.dueTo) params.set("dueTo", input.dueTo);

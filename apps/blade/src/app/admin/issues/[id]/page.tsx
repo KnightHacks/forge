@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessIssues } from "~/app/_components/admin/access";
 import { IssueDetail } from "~/app/_components/admin/issues/issue-detail";
+import { canAccessIssues } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

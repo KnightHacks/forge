@@ -6,6 +6,7 @@ import type {
 } from "discord-api-types/v10";
 import { ComponentType, SeparatorSpacingSize } from "discord-api-types/v10";
 
+import { EVENTS } from "@forge/consts";
 import {
   and,
   eq,
@@ -22,7 +23,6 @@ import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import { Issue, IssueReminderDelivery } from "@forge/db/schemas/knight-hacks";
 
-const TIME_ZONE = "America/New_York";
 const MESSAGE_LIMIT = 2_000;
 const COMPONENT_TEXT_LIMIT = 2_000;
 const COMPONENT_MESSAGE_TEXT_LIMIT = 6_000;
@@ -74,7 +74,7 @@ function easternDateKey(date: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
-    timeZone: TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     year: "numeric",
   }).formatToParts(date);
   const values = Object.fromEntries(
@@ -134,7 +134,7 @@ function shortDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "numeric",
-    timeZone: TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
   }).format(date);
 }
 

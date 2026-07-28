@@ -4,12 +4,12 @@ import { PanelLeft } from "lucide-react";
 
 import { cn } from "@forge/ui";
 
-import type { AdminNavigationAccess } from "~/app/_components/member/admin-navigation";
+import type { AdminNavigationAccess } from "~/app/_components/shared/admin-navigation";
 import type { Session } from "~/server/auth";
 import { SignOutButton } from "~/app/_components/auth/sign-out-button";
-import { DesktopAdminNavigation } from "~/app/_components/member/desktop-admin-navigation";
-import { MemberRouteTransitionSurface } from "~/app/_components/member/member-route-transition-link";
-import { MobileAdminNavigation } from "~/app/_components/member/mobile-admin-navigation";
+import { DesktopAdminNavigation } from "~/app/_components/shared/desktop-admin-navigation";
+import { MobileAdminNavigation } from "~/app/_components/shared/mobile-admin-navigation";
+import { MemberRouteTransitionSurface } from "~/app/_components/shared/route-transition-link";
 
 type NavigationItem =
   | "alumni"

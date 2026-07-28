@@ -49,7 +49,8 @@ import {
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { formatUtcDate } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { InvalidateDuesDialog } from "./invalidate-dues-dialog";
 import { MemberDetailDialog } from "./member-detail-dialog";
@@ -79,10 +80,7 @@ interface ActiveFilter {
 }
 
 function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
+  return formatUtcDate(date);
 }
 
 function clearAllFilters(input: AdminMemberListInput): AdminMemberListInput {

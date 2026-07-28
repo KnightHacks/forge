@@ -30,7 +30,7 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
-import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
+import { MemberRouteTransitionLink } from "~/app/_components/shared/route-transition-link";
 import { env } from "~/env";
 import { api } from "~/trpc/react";
 

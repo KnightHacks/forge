@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 
+import { EVENTS } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { Button } from "@forge/ui/button";
@@ -479,8 +480,8 @@ export function EventFormDialog({
                 title="Schedule & location"
                 description={
                   mode === "edit"
-                    ? "Times are shown in America/New_York. The end must be after the start."
-                    : "Times are shown in America/New_York. The start must be at least 30 minutes ahead, and the end must be after it."
+                    ? `Times are shown in ${EVENTS.CALENDAR_TIME_ZONE}. The end must be after the start.`
+                    : `Times are shown in ${EVENTS.CALENDAR_TIME_ZONE}. The start must be at least 30 minutes ahead, and the end must be after it.`
                 }
               >
                 <div className="grid gap-4 sm:grid-cols-2">

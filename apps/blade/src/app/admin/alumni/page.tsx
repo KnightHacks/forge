@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessAlumniAdmin } from "~/app/_components/admin/access";
-import { AlumniBulletinAdmin } from "~/app/_components/admin/alumni-bulletin-admin";
+import { AlumniBulletinAdmin } from "~/app/_components/admin/alumni/alumni-bulletin-admin";
+import { canAccessAlumniAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

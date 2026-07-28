@@ -21,7 +21,7 @@ import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 import { api } from "~/trpc/react";
 
 const CORE_COUNT = 6;

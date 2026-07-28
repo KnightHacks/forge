@@ -5,7 +5,7 @@ import { Badge } from "@forge/ui/badge";
 
 import type { EventAudience, EventIntegrationHealth } from "./types";
 
-export { formatEventDateTime } from "~/lib/event-dates";
+export { formatEventDateTime } from "~/lib/dates";
 
 export function audienceLabel(audience: EventAudience) {
   if (audience === "dues") return "Dues paying";

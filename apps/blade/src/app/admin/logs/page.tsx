@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { AdminLogsDashboard } from "~/app/_components/admin/logs/admin-logs-dashboard";
+import { canAccessAdminLogs } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -17,7 +18,7 @@ export default async function AdminLogsPage() {
   if (!session) redirect("/");
 
   const permissions = await api.roles.getPermissions();
-  if (permissions.IS_OFFICER !== true) redirect(MEMBER_DASHBOARD_PATH);
+  if (!canAccessAdminLogs(permissions)) redirect(MEMBER_DASHBOARD_PATH);
 
   const [initialEvents, initialMembers] = await Promise.all([
     api.audit.list({ limit: 50 }),

@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { RoleManagementSearchParams } from "~/app/_components/admin/roles/params";
-import { canAccessRoleAdmin } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
 import { parseRoleManagementSearchParams } from "~/app/_components/admin/roles/params";
 import { RoleManagementDashboard } from "~/app/_components/admin/roles/role-management-dashboard";
+import { canAccessRoleAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function AdminRolesPage({
   searchParams,
 }: {
-  searchParams: Promise<RoleManagementSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");

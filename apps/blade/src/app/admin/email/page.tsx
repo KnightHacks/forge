@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { EmailPortalTab } from "~/app/_components/admin/email/email-portal-workspace";
-import { canAccessEmailPortal } from "~/app/_components/admin/access";
 import { EmailPortalAdmin } from "~/app/_components/admin/email/email-portal-admin";
 import { env } from "~/env";
+import { canAccessEmailPortal } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

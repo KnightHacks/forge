@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessFormAdmin } from "~/app/_components/admin/access";
 import { AdminFormsDashboard } from "~/app/_components/admin/forms/admin-forms-dashboard";
+import { canAccessFormAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
-import { canAccessIssues } from "~/app/_components/admin/access";
+import { canAccessIssues } from "~/lib/admin-access";
 
 type EffectivePermissions = RouterOutputs["roles"]["getPermissions"];
 

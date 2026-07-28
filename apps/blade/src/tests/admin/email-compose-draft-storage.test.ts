@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   discardEmailComposeDraft,
-  EMAIL_COMPOSE_DRAFT_STORAGE_KEY,
   loadEmailComposeDraft,
   saveEmailComposeDraft,
 } from "~/app/_components/admin/email/email-compose-draft-storage";
+import { EMAIL_COMPOSE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
 
 function memoryStorage() {
   const values = new Map<string, string>();

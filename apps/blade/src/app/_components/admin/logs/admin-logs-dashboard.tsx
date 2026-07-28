@@ -55,7 +55,8 @@ import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 type AuditEvent = RouterOutputs["audit"]["list"]["items"][number];
@@ -74,10 +75,7 @@ function memberLabel(member: AuditMember) {
 }
 
 function formatTimestamp(value: Date) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
+  return formatClubDateTime(value);
 }
 
 function formatAuditValue(value: unknown) {

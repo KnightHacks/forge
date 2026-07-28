@@ -1,14 +1,8 @@
 import type { AnalyticsReportInput } from "@forge/validators";
 import { analyticsReportInputSchema } from "@forge/validators";
 
-export type AnalyticsSearchParams = Record<
-  string,
-  string | string[] | undefined
->;
-
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import type { SearchParams } from "~/lib/search-params";
+import { first } from "~/lib/search-params";
 
 function list(value: string | string[] | undefined) {
   if (value === undefined) return [];
@@ -21,7 +15,7 @@ function date(value: string | undefined) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function period(params: AnalyticsSearchParams): AnalyticsReportInput["period"] {
+function period(params: SearchParams): AnalyticsReportInput["period"] {
   const selection = first(params.period);
   if (selection === "semester") return { kind: "current_semester" };
   if (selection === "all-time") return { kind: "all_time" };
@@ -38,7 +32,7 @@ function period(params: AnalyticsSearchParams): AnalyticsReportInput["period"] {
   return { kind: "current_academic_year" };
 }
 
-export function parseAnalyticsSearchParams(params: AnalyticsSearchParams) {
+export function parseAnalyticsSearchParams(params: SearchParams) {
   const parsed = analyticsReportInputSchema.safeParse({
     comparison: first(params.comparison),
     demographic: first(params.demographic),

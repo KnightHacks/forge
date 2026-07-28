@@ -37,8 +37,8 @@ import { MemberEventFeedback } from "~/app/_components/member/member-event-feedb
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
-import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
-import { formatEventDateTime } from "~/lib/event-dates";
+import { MemberRouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import { formatEventDateTime } from "~/lib/dates";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 
 export const dashboardGridClass =

@@ -28,6 +28,13 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { loadPermissionsForUser } from "../utils/permissions-db";
+import {
+  canConfigureRole,
+  requireAssign,
+  requireConfigure,
+  requireOfficerForOfficerEscalation,
+  requireRoleRead,
+} from "../utils/roles/access";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 import {
   filterDiscordRolesForLinking,
@@ -36,6 +43,7 @@ import {
   permissionBitstringToKeys,
   permissionKeysToBitstring,
   retainsAssignedRoleAdministratorAfterRevocations,
+  roleColorToHex,
   roleHasPermission,
   runRoleAssignmentBatch,
 } from "../utils/roles/management";
@@ -47,45 +55,8 @@ import {
   getDependencyCounts,
   getDiscordRole,
   retainsAdministratorAfter,
-  roleColorToHex,
   syncLinkedRole,
 } from "../utils/roles/service";
-
-function requireRoleRead(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(["CONFIGURE_ROLES", "ASSIGN_ROLES"], ctx);
-}
-
-function requireConfigure(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
-}
-
-function requireAssign(ctx: Parameters<typeof permissions.controlPerms.or>[1]) {
-  permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
-}
-
-function canConfigureRole(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  return (
-    ctx.session.permissions.IS_OFFICER === true ||
-    ctx.session.permissions.CONFIGURE_ROLES === true
-  );
-}
-
-function requireOfficerForOfficerEscalation(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  if (ctx.session.permissions.IS_OFFICER !== true) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only an existing officer may grant or remove officer access.",
-    });
-  }
-}
 
 const eventFeedbackExcludedRoleNames = new Set([
   "Dev Team",

@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@forge/ui/tooltip";
 
+import { formatClubDateTime, formatUtcDate } from "~/lib/dates";
 import {
   AnalyticsMetricCard,
   AnalyticsMetricGrid,
@@ -42,22 +43,11 @@ function formatPercent(value: number | null) {
 }
 
 function formatTrendDate(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined) {
-    return value;
-  }
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+  return formatUtcDate(value, value);
 }
 
 function formatDateTime(value: Date | null) {
-  if (!value) return "No matching activity";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
+  return formatClubDateTime(value, "No matching activity");
 }
 
 const mixIcons = {

@@ -17,7 +17,7 @@ import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
 import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
-import { formatEventDateTime } from "~/lib/event-dates";
+import { formatEventDateTime } from "~/lib/dates";
 
 export type MemberEventItem =
   RouterOutputs["event"]["listMemberEvents"][number];

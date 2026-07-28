@@ -4,13 +4,13 @@ import { NextResponse } from "next/server";
 import { createMemberResumeBundle } from "@forge/api/resume-bundle.server";
 import { logger } from "@forge/utils";
 
-import { canAccessAnalytics } from "~/app/_components/admin/access";
+import { RESUME_BUNDLE_DOWNLOAD_COOKIE } from "~/consts/browser-storage";
+import { canAccessAnalytics } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export const runtime = "nodejs";
 
-const DOWNLOAD_COOKIE = "resume-bundle-download";
 const DOWNLOAD_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 
 function getDownloadToken(request?: Request) {
@@ -30,7 +30,7 @@ function withDownloadSignal(
   const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
   response.headers.append(
     "Set-Cookie",
-    `${DOWNLOAD_COOKIE}=${token}.${status}; Path=/; Max-Age=300; SameSite=Lax${secure}`,
+    `${RESUME_BUNDLE_DOWNLOAD_COOKIE}=${token}.${status}; Path=/; Max-Age=300; SameSite=Lax${secure}`,
   );
   return response;
 }

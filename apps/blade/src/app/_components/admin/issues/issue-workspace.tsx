@@ -51,8 +51,17 @@ import {
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
-import { localNewYorkDateTime } from "~/lib/event-dates";
+} from "~/app/_components/shared/admin-page";
+import { ISSUE_CREATE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
+import {
+  clubDateKey,
+  clubWallClock,
+  formatClubDate,
+  formatUtcDate,
+  formatUtcFullDate,
+  formatUtcMonth,
+  localNewYorkDateTime,
+} from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { EventFormDialog } from "../events/event-form-dialog";
 import {
@@ -96,8 +105,6 @@ interface IssueDraft {
   templateId: string;
 }
 
-const DRAFT_POINTER = "forge:issues:create-draft";
-
 function emptyDraft(team = ""): IssueDraft {
   return {
     assigneeIds: [],
@@ -134,35 +141,14 @@ interface TemplateBody {
 
 function relativeTemplateDueAt(days: number | undefined) {
   if (days === undefined) return undefined;
-  const easternToday = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "America/New_York",
-    year: "numeric",
-  }).format(new Date());
-  const date = new Date(`${easternToday}T12:00:00.000Z`);
+  const date = new Date(`${clubDateKey()}T12:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return defaultIssueDueAt(date.toISOString().slice(0, 10));
 }
 
 function easternDueParts(iso: string) {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-      minute: "2-digit",
-      month: "2-digit",
-      timeZone: "America/New_York",
-      year: "numeric",
-    })
-      .formatToParts(new Date(iso))
-      .map((part) => [part.type, part.value]),
-  );
-  return {
-    date: `${parts.year}-${parts.month}-${parts.day}`,
-    time: `${parts.hour}:${parts.minute}`,
-  };
+  const { date, time } = clubWallClock(iso);
+  return { date, time };
 }
 
 function replaceTemplateTokens(value: string, input: string, parent: string) {
@@ -204,18 +190,22 @@ function materializeTemplateChildren(
 
 function saveDraft(draft: IssueDraft) {
   window.localStorage.setItem(
-    `${DRAFT_POINTER}:${draft.creationKey}`,
+    `${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${draft.creationKey}`,
     JSON.stringify(draft),
   );
-  window.localStorage.setItem(DRAFT_POINTER, draft.creationKey);
+  window.localStorage.setItem(
+    ISSUE_CREATE_DRAFT_STORAGE_KEY,
+    draft.creationKey,
+  );
 }
 
 function loadDraft() {
-  const key = window.localStorage.getItem(DRAFT_POINTER);
+  const key = window.localStorage.getItem(ISSUE_CREATE_DRAFT_STORAGE_KEY);
   if (!key) return null;
   try {
     const stored = JSON.parse(
-      window.localStorage.getItem(`${DRAFT_POINTER}:${key}`) ?? "null",
+      window.localStorage.getItem(`${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${key}`) ??
+        "null",
     ) as Partial<IssueDraft> | null;
     if (!stored || typeof stored !== "object") return null;
     return {
@@ -229,8 +219,10 @@ function loadDraft() {
 }
 
 function discardDraft(draft: IssueDraft) {
-  window.localStorage.removeItem(`${DRAFT_POINTER}:${draft.creationKey}`);
-  window.localStorage.removeItem(DRAFT_POINTER);
+  window.localStorage.removeItem(
+    `${ISSUE_CREATE_DRAFT_STORAGE_KEY}:${draft.creationKey}`,
+  );
+  window.localStorage.removeItem(ISSUE_CREATE_DRAFT_STORAGE_KEY);
 }
 
 function viewHref(
@@ -975,8 +967,7 @@ function IssueCreateDialog({
                         <option value="">Search or choose an event</option>
                         {(events.data ?? []).map((item) => (
                           <option key={item.id} value={item.id}>
-                            {item.name} ·{" "}
-                            {new Date(item.start).toLocaleDateString()}
+                            {item.name} · {formatClubDate(item.start)}
                           </option>
                         ))}
                       </select>
@@ -989,24 +980,9 @@ function IssueCreateDialog({
                             (item) => item.id === draft.eventId,
                           );
                           if (selected) {
-                            const parts = Object.fromEntries(
-                              new Intl.DateTimeFormat("en-CA", {
-                                day: "2-digit",
-                                hour: "2-digit",
-                                hourCycle: "h23",
-                                minute: "2-digit",
-                                month: "2-digit",
-                                timeZone: "America/New_York",
-                                year: "numeric",
-                              })
-                                .formatToParts(new Date(selected.start))
-                                .map((part) => [part.type, part.value]),
-                            );
-                            update(
-                              "dueDate",
-                              `${parts.year}-${parts.month}-${parts.day}`,
-                            );
-                            update("dueTime", `${parts.hour}:${parts.minute}`);
+                            const parts = clubWallClock(selected.start);
+                            update("dueDate", parts.date);
+                            update("dueTime", parts.time);
                           }
                         }}
                       >
@@ -1141,17 +1117,10 @@ export function IssueWorkspace({
   );
   const calendarPeriodLabel =
     input.calendarMode === "month"
-      ? new Intl.DateTimeFormat("en-US", {
-          month: "long",
-          timeZone: "UTC",
-          year: "numeric",
-        }).format(calendarFocus)
+      ? formatUtcMonth(calendarFocus)
       : input.calendarMode === "week"
-        ? `Week of ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(calendarFocus)}`
-        : new Intl.DateTimeFormat("en-US", {
-            dateStyle: "full",
-            timeZone: "UTC",
-          }).format(calendarFocus);
+        ? `Week of ${formatUtcDate(calendarFocus)}`
+        : formatUtcFullDate(calendarFocus);
 
   return (
     <main

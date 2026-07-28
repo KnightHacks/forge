@@ -35,7 +35,12 @@ import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import {
+  clubDateTimeInput,
+  clubUtcOffset,
+  localNewYorkDateTime,
+} from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { EventCalendar } from "./event-calendar";
 import { EventDetailDialog } from "./event-detail-dialog";
@@ -73,76 +78,9 @@ interface EventAdminActions {
   tags?: EventTagItem[];
 }
 
-function localNewYorkDateTime(
-  value: string,
-  selectedOffset?: "-04:00" | "-05:00",
-) {
-  if (/[-+]\d{2}:\d{2}$/.test(value)) return value;
-  const normalized = value.length === 16 ? `${value}:00` : value;
-  const wallTime = normalized.slice(0, 19);
-  const validOffsets = (["-04:00", "-05:00"] as const).filter((offset) => {
-    const candidate = `${wallTime}${offset}`;
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-      minute: "2-digit",
-      month: "2-digit",
-      second: "2-digit",
-      timeZone: "America/New_York",
-      year: "numeric",
-    }).formatToParts(new Date(candidate));
-    const values = Object.fromEntries(
-      parts
-        .filter((part) => part.type !== "literal")
-        .map((part) => [part.type, part.value]),
-    );
-    const rendered = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
-    return rendered === wallTime;
-  });
-  if (validOffsets.length === 0) {
-    throw new Error("Choose a valid America/New_York date and time.");
-  }
-  if (validOffsets.length > 1 && !selectedOffset) {
-    throw new Error(
-      "Choose the first or second occurrence of the repeated time.",
-    );
-  }
-  const offset = selectedOffset ?? validOffsets[0];
-  if (!offset || !validOffsets.includes(offset)) {
-    throw new Error("Choose a valid occurrence for the repeated time.");
-  }
-  return `${wallTime}${offset}`;
-}
-
 function offsetForInstant(value: string) {
-  const timeZoneName = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    timeZoneName: "longOffset",
-  })
-    .formatToParts(new Date(value))
-    .find((part) => part.type === "timeZoneName")?.value;
-  const offset = timeZoneName?.replace("GMT", "");
+  const offset = clubUtcOffset(value);
   return offset === "-04:00" || offset === "-05:00" ? offset : undefined;
-}
-
-function dateTimeInput(value: string) {
-  const date = new Date(value);
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-      minute: "2-digit",
-      month: "2-digit",
-      timeZone: "America/New_York",
-      year: "numeric",
-    })
-      .formatToParts(date)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
 function viewHref(input: AdminEventInput, view: EventAdminView) {
@@ -733,14 +671,14 @@ export function EventAdminDashboard({
               channelId: event.channelId,
               channelType: event.channelType,
               description: event.description ?? "",
-              end: dateTimeInput(event.endDateTime),
+              end: clubDateTimeInput(event.endDateTime),
               endOffset: offsetForInstant(event.endDateTime),
               internal: event.internal,
               location: event.location,
               name: event.name,
               pointOverride: event.points ?? null,
               roleIds: event.roleIds ?? [],
-              start: dateTimeInput(event.startDateTime),
+              start: clubDateTimeInput(event.startDateTime),
               startOffset: offsetForInstant(event.startDateTime),
               tagId: tags.find((tag) => tag.name === event.tag)?.id ?? "",
             },

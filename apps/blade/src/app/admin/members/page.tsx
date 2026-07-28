@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { AdminMemberSearchParams } from "~/app/_components/admin/members/params";
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
 import { MemberAdminDashboard } from "~/app/_components/admin/members/member-admin-dashboard";
 import { parseAdminMemberSearchParams } from "~/app/_components/admin/members/params";
+import { canAccessMemberAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function AdminMembersPage({
   searchParams,
 }: {
-  searchParams: Promise<AdminMemberSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");

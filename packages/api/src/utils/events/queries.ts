@@ -1,4 +1,5 @@
 import type { EventAdminQuery } from "@forge/validators";
+import { EVENTS } from "@forge/consts";
 import {
   and,
   asc,
@@ -293,10 +294,10 @@ export async function queryAdminEventRecords(
         ? sql`${Event.end_datetime} <= ${now}`
         : undefined,
     input.startDate
-      ? sql`(${Event.end_datetime} at time zone 'America/New_York')::date >= ${input.startDate}::date`
+      ? sql`(${Event.end_datetime} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date >= ${input.startDate}::date`
       : undefined,
     input.endDate
-      ? sql`(${Event.start_datetime} at time zone 'America/New_York')::date <= ${input.endDate}::date`
+      ? sql`(${Event.start_datetime} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date <= ${input.endDate}::date`
       : undefined,
     input.tags.length > 0 ? inArray(Event.tag, input.tags) : undefined,
     input.audiences.length > 0

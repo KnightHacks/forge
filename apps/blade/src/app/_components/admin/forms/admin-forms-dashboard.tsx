@@ -17,7 +17,7 @@ import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 import { AdminFormsSectionSelect } from "./admin-forms-section-select";
 
 interface AdminFormsAccess {

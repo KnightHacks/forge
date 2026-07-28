@@ -7,11 +7,11 @@ import {
   memberSignupFormDefinition,
 } from "@forge/validators";
 
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { GenericFormRespondent } from "~/app/_components/forms/generic-form-respondent";
 import { GenericFormResponseForm } from "~/app/_components/forms/generic-form-response-form";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberSignupForm } from "~/app/_components/member/member-signup-form";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

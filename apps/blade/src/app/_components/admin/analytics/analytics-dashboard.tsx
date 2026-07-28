@@ -79,12 +79,14 @@ import {
 } from "@forge/ui/table";
 import { toast } from "@forge/ui/toast";
 
+import { MemberDetailDialog } from "~/app/_components/admin/members/member-detail-dialog";
 import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
-import { MemberDetailDialog } from "~/app/_components/admin/members/member-detail-dialog";
+} from "~/app/_components/shared/admin-page";
+import { RESUME_BUNDLE_DOWNLOAD_COOKIE } from "~/consts/browser-storage";
+import { formatClubDate, formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import {
   AnalyticsMetricCard as MetricCard,
@@ -381,19 +383,11 @@ function formatPercent(value: number | null) {
 }
 
 function formatDate(value: Date | string | null) {
-  if (value === null) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "America/New_York",
-  }).format(new Date(value));
+  return formatClubDate(value);
 }
 
 function formatDateTime(value: Date | string | null) {
-  if (value === null) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return formatClubDateTime(value, "Not recorded");
 }
 
 function MemberDrilldownName({
@@ -2143,10 +2137,8 @@ function ExportButton({
   );
 }
 
-const RESUME_DOWNLOAD_COOKIE = "resume-bundle-download";
-
 function readResumeDownloadSignal() {
-  const prefix = `${RESUME_DOWNLOAD_COOKIE}=`;
+  const prefix = `${RESUME_BUNDLE_DOWNLOAD_COOKIE}=`;
   const cookie = document.cookie
     .split("; ")
     .find((entry) => entry.startsWith(prefix));
@@ -2154,7 +2146,7 @@ function readResumeDownloadSignal() {
 }
 
 function clearResumeDownloadSignal() {
-  document.cookie = `${RESUME_DOWNLOAD_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${RESUME_BUNDLE_DOWNLOAD_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
 function ResumeBundleButton() {

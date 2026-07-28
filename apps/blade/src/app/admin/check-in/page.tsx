@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessEventCheckIn } from "~/app/_components/admin/access";
 import { EventCheckInPage } from "~/app/_components/admin/events/event-check-in-page";
+import { canAccessEventCheckIn } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

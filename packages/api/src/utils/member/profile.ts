@@ -9,21 +9,9 @@ import { calculateMemberAge } from "@forge/validators";
 
 import type { WriteDb } from "../db";
 import { createEmploymentHistory } from "../career/employment";
+import { isUniqueViolation } from "../db";
 import { normalizeProfilePictureObjectNameForPersistence } from "../profile-picture/storage";
 import { normalizeResumeObjectNameForPersistence } from "../resume/storage";
-
-export function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-
-  if ("code" in error && error.code === "23505") return true;
-
-  return (
-    "cause" in error &&
-    typeof error.cause === "object" &&
-    error.cause !== null &&
-    isUniqueViolation(error.cause)
-  );
-}
 
 export async function createMemberProfile({
   database,

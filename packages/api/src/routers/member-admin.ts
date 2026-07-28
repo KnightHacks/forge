@@ -23,7 +23,7 @@ import {
   FormResponse,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { logger, permissions } from "@forge/utils";
+import { logger } from "@forge/utils";
 import {
   adminMemberDeleteSchema,
   adminMemberDuesStatusSchema,
@@ -45,15 +45,20 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { getUsCity } from "../utils/career/us-cities";
+import { isUniqueViolation } from "../utils/db";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
 } from "../utils/dues/status";
 import {
+  assertCanEditMembers,
+  assertCanInvalidateMemberDues,
+  assertCanReadMembers,
+} from "../utils/member/access";
+import {
   escapeCsvCell,
   rankAdminMemberCandidates,
 } from "../utils/member/admin";
-import { isUniqueViolation } from "../utils/member/profile";
 import { updateMemberProfile } from "../utils/member/update";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 import {
@@ -69,9 +74,6 @@ import {
   saveMemberResumeForUser,
   uploadResumeForUser,
 } from "../utils/resume/storage";
-
-const readMemberPermissions = ["READ_MEMBERS", "EDIT_MEMBERS"] as const;
-const editMemberPermissions = ["EDIT_MEMBERS"] as const;
 
 export interface AdminMemberRecord {
   about: string | null;
@@ -128,18 +130,6 @@ const adminResumeInputSchema = adminMemberIdSchema.extend({
   fileContent: z.string().max(MAX_RESUME_DATA_URL_LENGTH),
   fileName: z.string().trim().min(1).max(255),
 });
-
-function assertCanReadMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(readMemberPermissions, ctx);
-}
-
-function assertCanEditMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(editMemberPermissions, ctx);
-}
 
 async function auditAdminMutation({
   color,
@@ -1187,7 +1177,7 @@ export const adminMemberProcedures = {
   invalidateEffectiveDues: permProcedure
     .input(adminMemberMassDuesInvalidationSchema)
     .mutation(async ({ ctx }) => {
-      permissions.controlPerms.or(["IS_OFFICER"], ctx);
+      assertCanInvalidateMemberDues(ctx);
       try {
         const operationId = randomUUID();
         const affected = await db.transaction(async (tx) => {

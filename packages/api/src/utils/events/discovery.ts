@@ -1,4 +1,4 @@
-import { DISCORD } from "@forge/consts";
+import { DISCORD, EVENTS } from "@forge/consts";
 
 interface ProviderProjection {
   appliedRevision: number | null;
@@ -324,7 +324,7 @@ function compareEvents(
 const newYorkDateFormatter = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
   month: "2-digit",
-  timeZone: "America/New_York",
+  timeZone: EVENTS.CALENDAR_TIME_ZONE,
   year: "numeric",
 });
 

@@ -1,4 +1,4 @@
-export const EVENT_CREATE_DRAFT_STORAGE_KEY = "blade:event-create-draft";
+import { EVENT_CREATE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
 
 const DRAFT_VERSION = 1;
 const UUID_PATTERN =

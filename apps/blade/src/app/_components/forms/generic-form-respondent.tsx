@@ -11,6 +11,7 @@ import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 
+import { formatClubLongDate } from "~/lib/dates";
 import { FormResponseValue } from "./form-response-value";
 
 interface GenericFormDefinition {
@@ -35,10 +36,7 @@ type GenericRespondentState =
     };
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(value));
+  return formatClubLongDate(value);
 }
 
 export function GenericFormRespondent({

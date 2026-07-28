@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 
 describe("admin page chrome", () => {
   it("keeps every rendered admin page eyebrow unique", () => {

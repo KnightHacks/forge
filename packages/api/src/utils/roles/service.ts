@@ -21,12 +21,8 @@ import {
   permissionBitstringToKeys,
   retainsAssignedRoleAdministrator,
   retainsAssignedRoleAdministratorAfterRevocations,
+  roleColorToHex,
 } from "./management";
-
-export function roleColorToHex(color: number) {
-  if (color <= 0) return null;
-  return `#${color.toString(16).padStart(6, "0")}`;
-}
 
 export async function getDiscordRole(
   gateway: RoleDiscordGateway,

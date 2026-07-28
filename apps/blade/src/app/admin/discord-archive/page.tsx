@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessDiscordArchive } from "~/app/_components/admin/access";
 import { DiscordArchiveHealthDashboard } from "~/app/_components/admin/discord-archive/discord-archive-health";
+import { canAccessDiscordArchive } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

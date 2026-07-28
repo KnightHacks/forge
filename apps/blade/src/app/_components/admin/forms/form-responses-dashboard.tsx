@@ -54,12 +54,13 @@ import {
 } from "@forge/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
+import { FormResponseValue } from "~/app/_components/forms/form-response-value";
 import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
-import { FormResponseValue } from "~/app/_components/forms/form-response-value";
+} from "~/app/_components/shared/admin-page";
+import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 interface FormQuestionSnapshot {
@@ -649,7 +650,7 @@ function ResponseDetailDialog({
           <DialogDescription>
             {response?.member.email} ·{" "}
             {response
-              ? new Date(response.submittedAt).toLocaleString()
+              ? formatClubDateTime(response.submittedAt)
               : "Submitted response"}
           </DialogDescription>
         </DialogHeader>
@@ -779,7 +780,7 @@ export function IdentifiedResponses({
                 </p>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>{new Date(response.submittedAt).toLocaleString()}</span>
+                <span>{formatClubDateTime(response.submittedAt)}</span>
                 <span>{Object.keys(response.answers).length} answers</span>
               </div>
               <Button
@@ -814,7 +815,7 @@ export function IdentifiedResponses({
                     </p>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {new Date(response.submittedAt).toLocaleString()}
+                    {formatClubDateTime(response.submittedAt)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     {Object.keys(response.answers).length} answers

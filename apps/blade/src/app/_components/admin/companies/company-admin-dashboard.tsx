@@ -16,7 +16,7 @@ import {
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 import { CompanyAdminMark } from "./company-admin-mark";
 
 type Company = RouterOutputs["career"]["listAdminCompanies"][number];

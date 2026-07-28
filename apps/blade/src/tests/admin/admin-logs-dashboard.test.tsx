@@ -73,4 +73,12 @@ describe("AdminLogsDashboard", () => {
     expect(html).toContain("Target Member");
     expect(html).toContain("Updated member");
   });
+
+  it("stamps audit entries in club time rather than the viewer's zone", () => {
+    const html = renderToStaticMarkup(createElement(AdminLogsDashboard));
+
+    // 2026-07-25T20:00Z is 4:00 PM in club time. Rendering it in the browser's
+    // own zone was what made this column disagree with the member surfaces.
+    expect(html).toContain("Jul 25, 2026, 4:00 PM");
+  });
 });

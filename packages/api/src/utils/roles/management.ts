@@ -60,7 +60,7 @@ export function roleHasPermission(
   return bitstring.at(permissionData(key).idx) === "1";
 }
 
-function discordRoleColorToHex(color: number) {
+export function roleColorToHex(color: number) {
   if (color <= 0) return null;
   return `#${color.toString(16).padStart(6, "0")}`;
 }
@@ -87,7 +87,7 @@ export function filterDiscordRolesForLinking({
     )
     .map((role) => ({
       ...role,
-      hexColor: discordRoleColorToHex(role.color),
+      hexColor: roleColorToHex(role.color),
       memberCount: memberCounts?.[role.id] ?? null,
     }));
 }

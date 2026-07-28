@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { ISSUE } from "@forge/consts";
 import { defaultIssueDueAt, MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { IssueSearchParams } from "./params";
 import type { IssueWorkspaceData } from "./types";
-import { canAccessIssues } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
+import { canAccessIssues } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import { IssueWorkspace } from "./issue-workspace";
@@ -110,7 +110,7 @@ async function loadCalendar(input: ReturnType<typeof parseIssueSearchParams>) {
 
 export async function renderIssueWorkspace(
   view: WorkspaceView,
-  searchParams: Promise<IssueSearchParams>,
+  searchParams: Promise<SearchParams>,
 ) {
   const session = await auth();
   if (!session) redirect("/");

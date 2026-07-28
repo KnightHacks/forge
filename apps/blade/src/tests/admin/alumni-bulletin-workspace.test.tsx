@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { AlumniBulletinWorkspace } from "~/app/_components/admin/alumni-bulletin-workspace";
+import { AlumniBulletinWorkspace } from "~/app/_components/admin/alumni/alumni-bulletin-workspace";
 
 describe("AlumniBulletinWorkspace", () => {
   it("TC-013 renders bulletin posts with their status and the board preview", () => {

@@ -46,7 +46,8 @@ import { toast } from "@forge/ui/toast";
 import {
   ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { formatUtcShortMonth } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";
 
@@ -79,11 +80,7 @@ function fileToDataUrl(file: File) {
 
 function monthLabel(month: string | null) {
   if (!month) return null;
-  return new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  });
+  return formatUtcShortMonth(month);
 }
 
 function reviewClass(state: string) {

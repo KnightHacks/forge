@@ -79,7 +79,7 @@ import { EmploymentHistoryEditor } from "~/app/_components/member/employment-his
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
-import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
+import { MemberRouteTransitionLink } from "~/app/_components/shared/route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";

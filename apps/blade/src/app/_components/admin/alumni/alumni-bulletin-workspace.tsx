@@ -36,13 +36,13 @@ import { Textarea } from "@forge/ui/textarea";
 import { alumniBulletinPostSchema } from "@forge/validators";
 
 import type { AlumniBulletinCardData } from "~/app/_components/member/alumni-dashboard";
+import { AlumniBulletinCard } from "~/app/_components/member/alumni-dashboard";
 import {
   ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
-import { AlumniBulletinCard } from "~/app/_components/member/alumni-dashboard";
+} from "~/app/_components/shared/admin-page";
 
 export interface AlumniBulletinWorkspacePost extends AlumniBulletinCardData {
   displayOrder: number;

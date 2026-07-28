@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   discardEventCreateDraft,
-  EVENT_CREATE_DRAFT_STORAGE_KEY,
   loadEventCreateDraft,
   saveEventCreateDraft,
 } from "~/app/_components/admin/events/event-draft-storage";
+import { EVENT_CREATE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
 
 class MemoryStorage implements Pick<
   Storage,

@@ -64,6 +64,14 @@ import {
   memberProfileFormDefaults,
   MemberSettingsFieldControl,
 } from "~/app/_components/member/member-profile-settings-form";
+import {
+  formatClubDate,
+  formatClubDateTime,
+  formatUtcDate,
+  formatUtcDateTime,
+  formatUtcMonth,
+  formatUtcShortMonth,
+} from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 type AdminMemberDetail = RouterOutputs["member"]["getAdminMember"];
@@ -82,22 +90,18 @@ function display(value: boolean | number | string | null | undefined) {
   return String(value);
 }
 
+const DATE_ONLY_COLUMN = /^\d{4}-\d{2}-\d{2}$/;
+
 function formatDate(value: Date | string | null | undefined) {
   if (!value) return "Not provided";
-  const date =
-    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? new Date(`${value}T12:00:00.000Z`)
-      : value instanceof Date
-        ? value
-        : new Date(value);
+  // Date of birth, graduation date and day keys are date-only columns, so they
+  // stay in UTC. Anything else is a real instant and belongs in club time.
+  if (typeof value === "string" && DATE_ONLY_COLUMN.test(value)) {
+    return formatUtcDate(value, "Not provided");
+  }
+  const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone:
-      typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-        ? "UTC"
-        : undefined,
-  }).format(date);
+  return formatClubDate(date, "Not provided");
 }
 
 function formatTimestamp(
@@ -107,28 +111,21 @@ function formatTimestamp(
   if (!value) return empty;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return formatClubDateTime(date, empty);
 }
 
 function formatJoined(date: string, time: string) {
-  const joined = new Date(`${date}T${time}`);
+  // `dateCreated`/`timeCreated` are zoneless `date` + `time` columns, so the
+  // stored wall clock is what we show. Reading it back as UTC keeps the output
+  // identical for every viewer instead of following the browser.
+  const joined = new Date(`${date}T${time}Z`);
   if (Number.isNaN(joined.getTime())) return formatDate(date);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(joined);
+  return formatUtcDateTime(joined);
 }
 
 function formatMonth(value: string | null) {
   if (!value) return null;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(new Date(`${value}-01T12:00:00.000Z`));
+  return formatUtcShortMonth(value);
 }
 
 function shiftDate(value: string, days: number) {
@@ -366,11 +363,7 @@ function discordActivityMonths(
         return { count: countByDate.get(day) ?? 0, date: day };
       }),
       id: cursor.slice(0, 7),
-      label: new Intl.DateTimeFormat("en-US", {
-        month: "long",
-        timeZone: "UTC",
-        year: "numeric",
-      }).format(date),
+      label: formatUtcMonth(date),
       leadingDays: date.getUTCDay(),
     });
   }

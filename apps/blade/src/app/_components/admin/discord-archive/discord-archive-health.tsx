@@ -27,18 +27,15 @@ import {
   ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { formatClubDateTime } from "~/lib/dates";
 
 type DiscordArchiveHealth = RouterOutputs["discordArchive"]["getHealth"];
 
 const numberFormatter = new Intl.NumberFormat("en-US");
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
 
 function formatDate(value: Date | null) {
-  return value ? dateFormatter.format(value) : "Not recorded";
+  return formatClubDateTime(value, "Not recorded");
 }
 
 function formatLag(seconds: number | null) {

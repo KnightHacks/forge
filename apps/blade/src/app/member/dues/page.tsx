@@ -6,10 +6,10 @@ import {
   MEMBER_SIGNUP_FORM_SLUG,
 } from "@forge/validators";
 
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberDuesPayment } from "~/app/_components/member/member-dues-payment";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
 import { env } from "~/env";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 

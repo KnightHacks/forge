@@ -49,7 +49,8 @@ import {
   ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "../admin-page";
+} from "~/app/_components/shared/admin-page";
+import { formatClubDateTime, formatClubTime } from "~/lib/dates";
 import {
   discardEmailComposeDraft,
   loadEmailComposeDraft,
@@ -621,12 +622,7 @@ function CountPreflight({
       )}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Audience snapshot expires{" "}
-          {new Date(preview.expiresAt).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-          })}
-          .
+          Audience snapshot expires {formatClubTime(preview.expiresAt)}.
         </p>
         <Button
           type="button"
@@ -1645,7 +1641,7 @@ export function EmailPortalWorkspace({
                         <p className="truncate font-medium">{send.subject}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {send.scheduledFor
-                            ? new Date(send.scheduledFor).toLocaleString()
+                            ? formatClubDateTime(send.scheduledFor)
                             : "Immediate delivery"}
                         </p>
                       </div>
@@ -1756,9 +1752,7 @@ export function EmailPortalWorkspace({
                   sendDetail.createdBy?.email ??
                   "Unknown administrator"}
                 {sendDetail.send.createdAt
-                  ? ` on ${new Date(
-                      sendDetail.send.createdAt,
-                    ).toLocaleString()}`
+                  ? ` on ${formatClubDateTime(sendDetail.send.createdAt)}`
                   : ""}
                 .
               </DialogDescription>
@@ -1857,9 +1851,7 @@ export function EmailPortalWorkspace({
                       <dt className="text-muted-foreground">Scheduled</dt>
                       <dd className="text-right">
                         {sendDetail.send.scheduledFor
-                          ? new Date(
-                              sendDetail.send.scheduledFor,
-                            ).toLocaleString()
+                          ? formatClubDateTime(sendDetail.send.scheduledFor)
                           : "Immediately"}
                       </dd>
                     </div>
@@ -1870,9 +1862,7 @@ export function EmailPortalWorkspace({
                       {sendDetail.send.nextRetryAt && (
                         <p className="mt-1">
                           Automatic retry:{" "}
-                          {new Date(
-                            sendDetail.send.nextRetryAt,
-                          ).toLocaleString()}
+                          {formatClubDateTime(sendDetail.send.nextRetryAt)}
                         </p>
                       )}
                     </div>
@@ -1895,7 +1885,7 @@ export function EmailPortalWorkspace({
                             {statusLabel(event.type)}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(event.createdAt).toLocaleString()}
+                            {formatClubDateTime(event.createdAt)}
                             {event.toStatus
                               ? ` · ${statusLabel(event.toStatus)}`
                               : ""}

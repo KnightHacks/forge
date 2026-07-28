@@ -1,6 +1,7 @@
 import type { APIEmbed } from "discord-api-types/v10";
 
-const CLUB_TIME_ZONE = "America/New_York";
+import { EVENTS } from "@forge/consts";
+
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
@@ -22,7 +23,7 @@ function dateKey(value: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     year: "numeric",
   }).formatToParts(value);
   const values = Object.fromEntries(
@@ -47,7 +48,7 @@ function dateFromKey(key: string) {
 
 function weekday(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     weekday: "long",
   }).format(value);
 }
@@ -55,7 +56,7 @@ function weekday(value: Date) {
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "full",
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
   }).format(value);
 }
 
@@ -64,7 +65,7 @@ function formatTime(value: Date) {
     hour: "numeric",
     hour12: true,
     minute: "2-digit",
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
   }).format(value);
 }
 
@@ -150,11 +151,11 @@ export function createClubReminderExecutor({
       const range = `${new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "numeric",
-        timeZone: CLUB_TIME_ZONE,
+        timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(currentTime)} - ${new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "numeric",
-        timeZone: CLUB_TIME_ZONE,
+        timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(end)}`;
       await send({
         content: `# Events this Week (${range})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
