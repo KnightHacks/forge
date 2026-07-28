@@ -55,12 +55,45 @@ a `psql` session.
 
 - [x] Scaffold bundle.
 - [x] Owner settles scope and the `event_feedback_excluded` home.
-- [ ] Ground the spec in repo conventions — discovery pass over admin UI shape,
-      API/audit conventions, the three domains' read paths, and prior art.
-- [ ] Complete reverse-prompting for `spec.md`.
-- [ ] Complete reverse-prompting for `srd.md`.
-- [ ] Complete reverse-prompting for `test-cases.md`.
-- [ ] Human approves artifact bundle before implementation/test generation.
+- [x] Ground the spec in repo conventions — five-scout discovery over admin UI
+      shape, API/audit conventions, the three domains' read paths, and prior art.
+- [x] `spec.md` written and settled with the owner.
+- [x] `srd.md` and `test-cases.md` authored, attacked by two agents instructed to
+      disprove them, and revised. 3 blockers and 16 lower findings applied.
+- [ ] **Human approves artifact bundle before implementation.** ← blocking
+
+## Review record
+
+The authored bundle was attacked before it was believed. Both documents came
+back `needs-revision`. The blockers:
+
+1. An audit metadata key, `impactedPastEventCount`, that could never be
+   populated — the input schema is `.strict()` and does not declare it. Dropped
+   rather than added, because a client-supplied count is a number the log cannot
+   vouch for.
+2. **Acceptance criterion 11 was unbuildable as I first wrote it.**
+   `roles.listLinks` (`packages/api/src/routers/roles.ts:81-85`) takes no input
+   and returns every row in `Roles`, so no URL parameter can scope `/admin/roles`
+   and a full-page baseline is hostage to whatever the shared dev database holds.
+   This is the third surface to hit that wall, after the analytics dashboard and
+   the email portal. Replaced with element-scoped captures of the dialog, which
+   renders one role addressed by `?role=<id>`.
+3. A fixture spec that identified roles by name prefix while believing the e2e
+   gateway override replaced the name. The reviser established the override only
+   overlays seven hard-coded ids, and resolved it the other way.
+
+Two findings worth keeping visible because they are recurring failure shapes:
+
+- The impact count **over-counted**, including past events already unreadable
+  because they carry a different flagged role — the warning would have overstated
+  the harm.
+- Two cases were **vacuous-safe**: pure negative assertions that pass on an empty
+  result. That exact failure already shipped once on this branch, in the
+  audience-resolution test.
+
+Eight further defects were found during revision that neither attacker caught,
+including a claim about how non-snowflake ids render that was false under the
+override, and a documented command naming a script that does not exist.
 
 ## Validation / commands
 
