@@ -395,6 +395,13 @@ changes want approval:
 
 ## Task list
 
+**There are six phases: 0, 1, 1b, 2, 3, 4. There is no phase 5 and above.**
+
+Phases 3 and 4 each appear twice below, which reads like more phases than there
+are. The first pair is the plan as written at the start; the second pair is what
+actually happened, kept separately so the plan is not silently rewritten to match
+the outcome. Both pairs are labelled below.
+
 ### Phase 0 — gates and enforcement, no product code
 
 Complete. Branch `reforge/phase-0-gates`, worktree `forge-reforge-phase-0`.
@@ -467,14 +474,14 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
 - [ ] Extract the cross-process wire contracts (download cookie, storage keys).
 - [ ] Merge the byte-identical duplicates that carry no behavior risk.
 
-### Phase 3 — components and routers
+### Phase 3 — components and routers (as planned)
 
 - [ ] Split the eleven 800+ line client components. Needs Phase 1.
 - [ ] Delete `HydrateClient` from 25 pages; convert the six `initialData` bridges.
 - [ ] Register `member-admin` as its own namespace; fix the audit coverage keys.
 - [ ] Split `event.ts` and `email.ts`; reunify `analytics` and `discord-archive`.
 
-### Phase 4 — docs and skills
+### Phase 4 — docs and skills (as planned)
 
 - [ ] Rewrite or delete `docs/API-AND-PERMISSIONS.md` and the stale half of
       `docs/ARCHITECTURE.md`; document the `createAdminAuditEvent` convention.
@@ -482,7 +489,7 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
 - [ ] Delete the vendored skills; write Forge-authored replacements.
 - [ ] Add a scope-derived, tiered `forge-review` swarm skill.
 
-### Phase 3 — components and routers
+### Phase 3 — components and routers (what happened)
 
 - [x] `memberAdmin` registered as its own namespace; audit keys now name a real
       client path (`3f53a258`).
@@ -563,7 +570,7 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
       whose whole premise is that unverified changes are how this repo got
       here.
 
-### Phase 4 — docs and skills
+### Phase 4 — docs and skills (what happened)
 
 - [x] Seven vendored skills deleted (10,462 lines); three Forge-authored ones
       written, plus `forge-review` (`cbd5a6b7`, `187ef884`).
