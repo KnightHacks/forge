@@ -1,12 +1,74 @@
+import { getTableName, is, Table } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import {
   sanitizedEventProviderState,
+  TABLES_TO_DROP,
   TABLES_TO_KEEP,
   teamDataSanitizerSql,
 } from "../../scripts/dev-db-backup-sanitizer";
+import * as auditSchema from "../schemas/audit";
+import * as authSchema from "../schemas/auth";
+import * as clubTeamSchema from "../schemas/club-team";
+import * as discordSchema from "../schemas/discord";
+import * as discordConfigSchema from "../schemas/discord-config";
+import * as knightHacksSchema from "../schemas/knight-hacks";
+
+/**
+ * Every table Drizzle knows about, read out of the schema modules rather than
+ * listed by hand — a list written by hand is the thing that failed here.
+ */
+function schemaTableNames() {
+  const modules = [
+    auditSchema,
+    authSchema,
+    clubTeamSchema,
+    discordSchema,
+    discordConfigSchema,
+    knightHacksSchema,
+  ];
+
+  return [
+    ...new Set(
+      modules
+        .flatMap((module) => Object.values(module))
+        .filter((value): value is Table => is(value, Table))
+        .map((table) => getTableName(table)),
+    ),
+  ].sort();
+}
 
 describe("development database backup sanitizer", () => {
+  // The gate. The two `arrayContaining` assertions below sample the list; this
+  // one covers it, so a table added next year cannot default to being dropped
+  // just because nobody remembered this file existed.
+  it("classifies every table in the schema as kept or dropped", () => {
+    const classified = [...TABLES_TO_KEEP, ...TABLES_TO_DROP].sort();
+
+    expect(classified).toEqual(schemaTableNames());
+  });
+
+  it("never both keeps and drops the same table", () => {
+    const kept = new Set<string>(TABLES_TO_KEEP);
+
+    expect(TABLES_TO_DROP.filter((table) => kept.has(table))).toEqual([]);
+  });
+
+  // The bug the gate above was written for: configuration that an officer set
+  // in Blade, truncated out of every dev backup since `becc28d1`. Migrations
+  // cannot restore it — the backfill has already been recorded as applied — so
+  // a developer restoring a backup gets a Blade with no Discord configuration
+  // and no indication that it ever had one.
+  it("keeps officer-managed configuration, including the Discord config", () => {
+    expect(TABLES_TO_KEEP).toEqual(
+      expect.arrayContaining([
+        "knight_hacks_club_team",
+        "knight_hacks_club_team_role",
+        "knight_hacks_discord_config",
+      ]),
+    );
+  });
+
   it("keeps the approved Reforge configuration and team-owned tables", () => {
     expect(TABLES_TO_KEEP).toEqual(
       expect.arrayContaining([

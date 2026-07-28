@@ -229,6 +229,35 @@ out and record the outcome here.
   lists. Both are correct for their domain, so this may stay as two shapes under
   one documented vocabulary rather than one implementation.
 
+## Needs your sign-off — user-visible changes
+
+Everything else in this branch preserves appearance. These two do not, and both
+are consequences of work that was asked for rather than incidental drift.
+
+1. **The Club team tab strip is absent while the roster loads.** It previously
+   rendered all eight tabs at count 0, because the team list was compiled into
+   the static export from `TEAM.CLUB_TEAM_DEFINITIONS`. Making the team list
+   officer-managed data means `apps/club` cannot know it at build time —
+   `output: "export"` has no server runtime and no database access — so the list
+   now arrives with the roster. During the deferred fetch the heading reads "Our
+   Teams" and the tab strip is empty, then both populate.
+
+   This is not avoidable while the team list is configurable, only relocatable:
+   the alternatives are a build-time fetch from Blade (adds a deploy-time
+   network dependency on Blade being up) or a hard-coded skeleton list (puts the
+   thing we just deleted back, as a guess that goes stale silently). Both are
+   worse than the flash. Flagged rather than fixed because the tradeoff is
+   yours, not mine.
+
+2. **`roles.ts` no longer guesses `eventFeedbackExcluded` when a Discord role is
+   linked.** It set the flag by matching the new role's _name_ against the same
+   18 strings this work exists to delete. A role being linked has no
+   classification yet, so there is nothing to derive an honest answer from. The
+   durable source, `auth_roles.event_feedback_excluded`, is untouched and
+   already correct for all 19 live roles. Only the relink-a-staff-role path
+   changes, and the toggle belongs in the same deferred admin UI as the Discord
+   config's.
+
 ## Task list
 
 ### Phase 0 — gates and enforcement, no product code
