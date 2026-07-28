@@ -136,13 +136,28 @@ type UpdateResult = Error | unknown[];
 // onto it and joins through `.innerJoin(...)` when resolving the actor snapshot.
 // Returning a promise that also carries those methods supports every shape
 // without each caller having to know which one it got.
+interface SelectChain extends Promise<unknown[]> {
+  innerJoin: () => SelectChain;
+  leftJoin: () => SelectChain;
+  orderBy: () => Promise<unknown[]>;
+  where: () => Promise<unknown[]> & { limit: () => Promise<unknown[]> };
+}
+
 function createSelectMock(readIdentityRows: () => unknown[]) {
   const where = vi.fn(() =>
     Object.assign(Promise.resolve([]), {
       limit: vi.fn(() => Promise.resolve(readIdentityRows())),
     }),
   );
-  const chain = { innerJoin: vi.fn(() => chain), where };
+  // Loading the club team configuration for the actor's role badge ends the
+  // chain at `.orderBy(...)` and at `.leftJoin(...)` rather than at `.where`,
+  // so the chain itself has to be awaitable at any point.
+  const chain: SelectChain = Object.assign(Promise.resolve<unknown[]>([]), {
+    innerJoin: vi.fn((): SelectChain => chain),
+    leftJoin: vi.fn((): SelectChain => chain),
+    orderBy: vi.fn(() => Promise.resolve<unknown[]>([])),
+    where,
+  });
 
   return vi.fn(() => ({ from: vi.fn(() => chain) }));
 }

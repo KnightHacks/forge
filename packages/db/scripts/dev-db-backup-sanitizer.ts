@@ -1,7 +1,3 @@
-import { TEAM } from "@forge/consts";
-
-export const MEMBERS_OF_THE_TEAM_ROLE_NAMES = TEAM.CLUB_ROSTER_ROLE_NAMES;
-
 export const TABLES_TO_KEEP = [
   "auth_account",
   "auth_permissions",
@@ -11,6 +7,8 @@ export const TABLES_TO_KEEP = [
   "email_template_revision",
   "knight_hacks_alumni_bulletin_post",
   "knight_hacks_challenges",
+  "knight_hacks_club_team",
+  "knight_hacks_club_team_role",
   "knight_hacks_companies",
   "knight_hacks_company",
   "knight_hacks_dues_payment",
@@ -45,23 +43,22 @@ export const TABLES_TO_KEEP = [
 /**
  * Removes non-team people after non-retained tables have been truncated.
  *
- * "Members of the team" are users with an officer, director, or configured
- * team role from the canonical club roster. All of that user's remaining roles
+ * "Members of the team" are users holding a role the club roster classifies —
+ * an officer, a director, or a team role. All of that user's remaining roles
  * and product data are kept.
+ *
+ * That membership used to be a list of role names interpolated into this SQL
+ * from `@forge/consts`. It is a join on `knight_hacks_club_team_role` now, so a
+ * renamed Discord role cannot quietly shrink the set of people a development
+ * backup keeps.
  */
 export function teamDataSanitizerSql() {
-  const membersOfTheTeamRoleNames = MEMBERS_OF_THE_TEAM_ROLE_NAMES.map(
-    (name) => `'${name.replaceAll("'", "''")}'`,
-  ).join(",\n  ");
-
   return `
 CREATE TEMP TABLE "forge_team_user" AS
 SELECT DISTINCT permission.user_id
 FROM auth_permissions AS permission
-INNER JOIN auth_roles AS role ON role.id = permission.role_id
-WHERE role.name IN (
-  ${membersOfTheTeamRoleNames}
-);
+INNER JOIN knight_hacks_club_team_role AS club_role
+  ON club_role.role_id = permission.role_id;
 
 DO $$
 BEGIN

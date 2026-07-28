@@ -20,6 +20,7 @@ import {
 
 import type { WriteDb } from "../db";
 import { isBladeE2E } from "../../env";
+import { loadClubTeamConfig } from "../guild/club-team-config";
 import { getGuildRoleCallout } from "../guild/role-callout";
 
 const BLADE_E2E_AUDIT_EVENT_ID = "00000000-0000-4000-8000-000000000000";
@@ -161,12 +162,15 @@ async function resolveActorSnapshot(actor: AuditActor, executor: WriteDb) {
   const roles = await executor
     .select({
       color: Roles.teamHexcodeColor,
-      name: Roles.name,
+      roleId: Roles.id,
     })
     .from(Permissions)
     .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
     .where(eq(Permissions.userId, actor.id));
-  const roleCallout = getGuildRoleCallout(roles);
+  const roleCallout = getGuildRoleCallout(
+    await loadClubTeamConfig(executor),
+    roles,
+  );
 
   return {
     actorDiscordUserId: actor.discordUserId ?? null,

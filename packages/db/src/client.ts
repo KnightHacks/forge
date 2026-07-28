@@ -5,6 +5,7 @@ import Pool from "pg-pool";
 import { env } from "./env";
 import * as auditSchema from "./schemas/audit";
 import * as authSchema from "./schemas/auth";
+import * as clubTeamSchema from "./schemas/club-team";
 import * as discordSchema from "./schemas/discord";
 import * as discordConfigSchema from "./schemas/discord-config";
 import * as knightHacksSchema from "./schemas/knight-hacks";
@@ -16,6 +17,7 @@ const pool = new Pool({
 
 type AuthSchema = typeof authSchema;
 type AuditSchema = typeof auditSchema;
+type ClubTeamSchema = typeof clubTeamSchema;
 type DiscordSchema = typeof discordSchema;
 type DiscordConfigSchema = typeof discordConfigSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
@@ -23,6 +25,7 @@ type RelationsSchema = typeof relations;
 
 type DatabaseSchema = AuditSchema &
   AuthSchema &
+  ClubTeamSchema &
   DiscordSchema &
   DiscordConfigSchema &
   KnightHacksSchema &
@@ -38,6 +41,7 @@ export const db: NodePgDatabase<DatabaseSchema> & { $client: typeof pool } =
     schema: {
       ...auditSchema,
       ...authSchema,
+      ...clubTeamSchema,
       ...discordSchema,
       ...discordConfigSchema,
       ...knightHacksSchema,

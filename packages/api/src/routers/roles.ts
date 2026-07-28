@@ -58,27 +58,6 @@ import {
   syncLinkedRole,
 } from "../utils/roles/service";
 
-const eventFeedbackExcludedRoleNames = new Set([
-  "Dev Team",
-  "Workshop Team",
-  "Sponsorship Team",
-  "Outreach Team",
-  "Design Team",
-  "KH IX Team",
-  "President",
-  "Vice President",
-  "Treasurer",
-  "Secretary",
-  "Hack Lead",
-  "Dev Lead",
-  "Officers",
-  "Design Director",
-  "Sponsorship Director",
-  "Outreach Director",
-  "Workshop Director",
-  "Directors",
-]);
-
 export const rolesRouter = {
   getPermissions: protectedProcedure.query(async ({ ctx }) =>
     loadPermissionsForUser(ctx.session.user.id),
@@ -213,9 +192,14 @@ export const rolesRouter = {
           .insert(Roles)
           .values({
             discordRoleId: discordRole.id,
-            eventFeedbackExcluded: eventFeedbackExcludedRoleNames.has(
-              discordRole.name,
-            ),
+            // `eventFeedbackExcluded` is left at its column default here. It
+            // used to be set from a hard-coded list of eighteen role names,
+            // hand-copied out of `@forge/consts`, which guessed "is this a
+            // staff role?" from the Discord role's *name* — the same match that
+            // emptied club teams whenever a role was renamed. A role being
+            // linked has no club roster classification yet, so there is nothing
+            // to derive the answer from. The durable answer stays where it has
+            // always been, on the row, and an officer sets it.
             name: discordRole.name,
             permissions: permissionKeysToBitstring(input.permissions),
             teamHexcodeColor: roleColorToHex(discordRole.color),

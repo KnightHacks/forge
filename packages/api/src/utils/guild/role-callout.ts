@@ -1,8 +1,14 @@
-import { TEAM as TEAM_CONSTS } from "@forge/consts";
+import type { TEAM } from "@forge/consts";
+
+import type { ClubTeamConfig } from "./club-team-config";
+import {
+  getClubCalloutLabel,
+  getClubCalloutPriority,
+} from "./club-team-config";
 
 export interface GuildRoleAssignment {
   color: string | null;
-  name: string;
+  roleId: string;
 }
 
 export interface GuildRoleCallout {
@@ -16,78 +22,39 @@ interface RankedCallout extends GuildRoleCallout {
   tier: number;
 }
 
-const executiveRoleOrder = [
-  ...TEAM_CONSTS.CLUB_EXECUTIVE_ROLE_ORDER,
-  TEAM_CONSTS.CLUB_AGGREGATE_EXECUTIVE_ROLE,
-] as const;
-
-const directorRoleOrder = [
-  ...TEAM_CONSTS.CLUB_DIRECTOR_ROLE_ORDER.filter((role) => role !== "Director"),
-  TEAM_CONSTS.CLUB_AGGREGATE_DIRECTOR_ROLE,
-] as const;
-
-const teamRoleConfigs = Object.values(TEAM_CONSTS.CLUB_TEAM_ROLE_CONFIG);
-
-function rankRole(role: GuildRoleAssignment): RankedCallout | null {
-  const executiveIndex = (executiveRoleOrder as readonly string[]).indexOf(
-    role.name,
-  );
-  if (executiveIndex !== -1) {
-    return {
-      category: "officer",
-      color: role.color,
-      label:
-        role.name === TEAM_CONSTS.CLUB_AGGREGATE_EXECUTIVE_ROLE
-          ? "Officer"
-          : role.name,
-      priority: executiveIndex,
-      tier: 0,
-    };
-  }
-
-  const directorIndex = (directorRoleOrder as readonly string[]).indexOf(
-    role.name,
-  );
-  if (directorIndex !== -1) {
-    return {
-      category: "director",
-      color: role.color,
-      label:
-        role.name === TEAM_CONSTS.CLUB_AGGREGATE_DIRECTOR_ROLE
-          ? "Director"
-          : role.name,
-      priority: directorIndex,
-      tier: 1,
-    };
-  }
-
-  const teamIndex = teamRoleConfigs.findIndex(
-    (config) => config.teamRoleName === role.name,
-  );
-  const teamConfig = teamRoleConfigs[teamIndex] as
-    | (typeof teamRoleConfigs)[number]
-    | undefined;
-  if (teamIndex !== -1 && teamConfig) {
-    return {
-      category: "team",
-      color: role.color,
-      label:
-        teamConfig.label === "Hackathon"
-          ? "Organizer"
-          : `${teamConfig.label} Team`,
-      priority: teamIndex,
-      tier: 2,
-    };
-  }
-
-  return null;
-}
+// A role's classification decides both the badge category and how it outranks
+// the member's other roles. Officers beat directors beat team members; within a
+// tier, the configured rank decides. This used to be three hard-coded name
+// arrays that had to be kept in step with the roster's own copies.
+const CALLOUT_TIERS: Record<
+  TEAM.ClubTeamKind,
+  { category: GuildRoleCallout["category"]; tier: number }
+> = {
+  executive: { category: "officer", tier: 0 },
+  director: { category: "director", tier: 1 },
+  team: { category: "team", tier: 2 },
+};
 
 export function getGuildRoleCallout(
+  config: ClubTeamConfig,
   roles: readonly GuildRoleAssignment[],
 ): GuildRoleCallout | null {
   const [highest] = roles
-    .map(rankRole)
+    .map((role): RankedCallout | null => {
+      const classification = config.rolesById.get(role.roleId);
+
+      if (!classification) return null;
+
+      const { category, tier } = CALLOUT_TIERS[classification.kind];
+
+      return {
+        category,
+        color: role.color,
+        label: getClubCalloutLabel(config, classification),
+        priority: getClubCalloutPriority(config, classification),
+        tier,
+      };
+    })
     .filter((role): role is RankedCallout => role !== null)
     .sort(
       (first, second) =>

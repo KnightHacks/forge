@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TEAM } from "@forge/consts";
-
 import {
-  MEMBERS_OF_THE_TEAM_ROLE_NAMES,
   sanitizedEventProviderState,
   TABLES_TO_KEEP,
   teamDataSanitizerSql,
@@ -52,15 +49,27 @@ describe("development database backup sanitizer", () => {
     );
   });
 
-  it("defines members of the team through the canonical club roster roles", () => {
+  it("defines members of the team by club roster classification, not by role name", () => {
     const sanitizer = teamDataSanitizerSql();
 
-    expect(MEMBERS_OF_THE_TEAM_ROLE_NAMES).toEqual(TEAM.CLUB_ROSTER_ROLE_NAMES);
-    expect(sanitizer).toMatch(/WHERE role\.name IN/);
+    expect(sanitizer).toContain(
+      "INNER JOIN knight_hacks_club_team_role AS club_role",
+    );
+    expect(sanitizer).toContain("club_role.role_id = permission.role_id");
+    // A renamed Discord role used to shrink the set of people a development
+    // backup kept, silently, because the names were interpolated from a
+    // constant.
+    expect(sanitizer).not.toMatch(/role\.name IN/);
     expect(sanitizer).not.toContain("email_audience_enabled");
-    for (const roleName of TEAM.CLUB_ROSTER_ROLE_NAMES) {
-      expect(sanitizer).toContain(`'${roleName}'`);
-    }
+  });
+
+  it("keeps the club roster configuration tables in the development backup", () => {
+    expect(TABLES_TO_KEEP).toEqual(
+      expect.arrayContaining([
+        "knight_hacks_club_team",
+        "knight_hacks_club_team_role",
+      ]),
+    );
   });
 
   it("removes non-team users and production credentials", () => {

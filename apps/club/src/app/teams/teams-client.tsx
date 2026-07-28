@@ -16,11 +16,7 @@ import type { TeamMember, TeamRoster, TeamSlug } from "./teams-config";
 import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import { CLUB_ASSETS } from "../_lib/assets";
 import { loadClubTeamRoster } from "./team-roster";
-import {
-  countUniqueTeamMembers,
-  createEmptyRoster,
-  TEAM_DEFINITIONS,
-} from "./teams-config";
+import { countUniqueTeamMembers, createEmptyRoster } from "./teams-config";
 
 const CARD_ROTATIONS = ["-1.8deg", "1.7deg", "-1.4deg", "1.2deg", "-1deg"];
 const TEAM_APPLICATIONS_ID = "team-applications";
@@ -178,16 +174,17 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
   const prefersReducedMotion = useReducedMotion();
   const [roster, setRoster] = useState<TeamRoster>(() => createEmptyRoster());
   const [status, setStatus] = useState<RosterStatus>("loading");
-  const [activeTeam, setActiveTeam] = useState<TeamSlug>(
-    TEAM_DEFINITIONS[0].slug,
-  );
+  // Blade owns the team list, so there is nothing to select until it answers.
+  const [activeTeam, setActiveTeam] = useState<TeamSlug | null>(null);
   const activeDefinition = useMemo(
     () =>
-      TEAM_DEFINITIONS.find((team) => team.slug === activeTeam) ??
-      TEAM_DEFINITIONS[0],
-    [activeTeam],
+      roster.teams.find((team) => team.slug === activeTeam) ??
+      roster.teams[0] ??
+      null,
+    [activeTeam, roster.teams],
   );
-  const activeMembers = roster[activeTeam];
+  const activeSlug = activeDefinition?.slug ?? null;
+  const activeMembers = activeSlug ? (roster.members[activeSlug] ?? []) : [];
   const totalMembers = useMemo(() => countUniqueTeamMembers(roster), [roster]);
   const teamCountLabel =
     status === "loading"
@@ -223,7 +220,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
     });
 
     return () => window.cancelAnimationFrame(animationFrameId);
-  }, [activeTeam]);
+  }, [activeSlug]);
 
   useEffect(() => {
     if (!shouldLoadRoster) return;
@@ -250,7 +247,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
   }, [bladeUrl, shouldLoadRoster]);
 
   function selectTeam(team: TeamSlug) {
-    if (team === activeTeam) return;
+    if (team === activeDefinition?.slug) return;
 
     pendingScrollPosition.current = {
       x: window.scrollX,
@@ -349,7 +346,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
               </p>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.h2
-                  key={activeTeam}
+                  key={activeSlug}
                   id="team-members"
                   className="mt-1.5 text-[1.75rem] font-black leading-[1.04] text-[#ffef9b] min-[420px]:text-[1.9rem] md:mt-2 md:text-4xl md:leading-tight"
                   initial={
@@ -363,21 +360,26 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
                   }
                   transition={teamTransition}
                 >
-                  {activeDefinition.heading}
+                  {activeDefinition?.heading ?? "Our Teams"}
                 </motion.h2>
               </AnimatePresence>
             </div>
 
-            <div className="relative md:hidden">
+            <div
+              className={cn(
+                "relative md:hidden",
+                roster.teams.length === 0 && "hidden",
+              )}
+            >
               <select
-                value={activeTeam}
-                onChange={(event) => selectTeam(event.target.value as TeamSlug)}
+                value={activeDefinition?.slug ?? ""}
+                onChange={(event) => selectTeam(event.target.value)}
                 aria-label="Choose team"
                 className="h-11 w-full appearance-none border-2 border-black bg-[#ffd0de] px-3 pr-10 text-[11px] font-black uppercase tracking-[0.08em] text-black shadow-[3px_4px_0_rgba(0,0,0,0.34)] focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-[var(--club-gold)]"
               >
-                {TEAM_DEFINITIONS.map((team) => (
+                {roster.teams.map((team) => (
                   <option key={team.slug} value={team.slug}>
-                    {team.label} ({roster[team.slug].length})
+                    {team.label} ({roster.members[team.slug]?.length ?? 0})
                   </option>
                 ))}
               </select>
@@ -391,8 +393,8 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
               className="hidden max-w-[44rem] flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex"
               aria-label="Team filters"
             >
-              {TEAM_DEFINITIONS.map((team) => {
-                const isActive = activeTeam === team.slug;
+              {roster.teams.map((team) => {
+                const isActive = activeDefinition?.slug === team.slug;
 
                 return (
                   <button
@@ -414,7 +416,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
                         isActive ? "opacity-100" : "opacity-85",
                       )}
                     >
-                      {roster[team.slug].length}
+                      {roster.members[team.slug]?.length ?? 0}
                     </span>
                   </button>
                 );
@@ -424,7 +426,7 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
 
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
-              key={`${activeTeam}-${status}`}
+              key={`${activeSlug}-${status}`}
               initial={
                 prefersReducedMotion
                   ? { opacity: 1 }
@@ -476,7 +478,10 @@ export default function TeamsClient({ bladeUrl }: { bladeUrl: string }) {
                 </motion.div>
               ) : (
                 <div className="mt-10">
-                  <EmptyTeam label={activeDefinition.label} status={status} />
+                  <EmptyTeam
+                    label={activeDefinition?.label ?? "Our Teams"}
+                    status={status}
+                  />
                 </div>
               )}
             </motion.div>

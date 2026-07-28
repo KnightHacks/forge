@@ -183,6 +183,13 @@
       "when": 1785253348079,
       "tag": "0025_broad_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1785261224975,
+      "tag": "0026_cute_sersi",
+      "breakpoints": true
     }
   ]
 }
