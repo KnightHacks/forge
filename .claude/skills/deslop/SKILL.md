@@ -65,7 +65,7 @@ One point per section. Do not restate the same argument in ten different ways ac
 Run these before delivering any prose:
 
 - Heavy use of adverbs or -ly words? Cut them.
-- Any passive voice? Find the actor, make them the subject. 
+- Any passive voice? Find the actor, make them the subject.
 - Inanimate thing doing a human verb? Name the person.
 - Any "here's what/this/that" throat-clearing? Cut to the point.
 - Any "not X, it's Y" contrasts? State Y directly.
@@ -86,13 +86,13 @@ Run these before delivering any prose:
 
 When reviewing text, rate 1-10 on each dimension:
 
-| Dimension | Question |
-|-----------|----------|
-| Directness | Statements or announcements? |
-| Rhythm | Varied or metronomic? |
-| Trust | Respects reader intelligence? |
+| Dimension    | Question                               |
+| ------------ | -------------------------------------- |
+| Directness   | Statements or announcements?           |
+| Rhythm       | Varied or metronomic?                  |
+| Trust        | Respects reader intelligence?          |
 | Authenticity | Sounds like a specific human wrote it? |
-| Density | Anything cuttable? |
+| Density      | Anything cuttable?                     |
 
 Below 35/50: revise.
 
@@ -112,9 +112,11 @@ See [references/examples.md](references/examples.md) for before/after transforma
 **Quick inline example (scientific writing):**
 
 Before:
+
 > "It's worth noting that these findings have important implications for how we navigate the challenges of forecast ensembling moving forward. Despite these challenges, this work contributes meaningfully to the growing body of literature, highlighting the need for continued evaluation."
 
 After:
+
 > "If individual model rankings are unstable across geography and time, ensemble methods that weight models by past performance may not improve on equal-weight approaches."
 
 Changes: Replaced filler transition, vague declarative, "despite these challenges" formula, and superficial participle analysis with the specific implication.
@@ -122,9 +124,11 @@ Changes: Replaced filler transition, vague declarative, "despite these challenge
 **Quick inline example (blog post):**
 
 Before:
+
 > "Here's the thing: most bioinformatics pipelines break in production. Not because the code is bad. Because the data is bad. Let that sink in."
 
 After:
+
 > "Most bioinformatics pipelines break in production. The code runs fine. The data doesn't match the assumptions baked into it."
 
 Changes: Removed opener, binary contrast, and emphasis crutch. Named the specific problem.

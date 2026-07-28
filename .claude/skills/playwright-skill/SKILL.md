@@ -64,20 +64,20 @@ cd $SKILL_DIR && node -e "require('./lib/helpers').detectDevServers().then(s => 
 
 ```javascript
 // /tmp/playwright-test-page.js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 // Parameterized URL (detected or user-provided)
-const TARGET_URL = 'http://localhost:3001'; // <-- Auto-detected or from user
+const TARGET_URL = "http://localhost:3001"; // <-- Auto-detected or from user
 
 (async () => {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
   await page.goto(TARGET_URL);
-  console.log('Page loaded:', await page.title());
+  console.log("Page loaded:", await page.title());
 
-  await page.screenshot({ path: '/tmp/screenshot.png', fullPage: true });
-  console.log('📸 Screenshot saved to /tmp/screenshot.png');
+  await page.screenshot({ path: "/tmp/screenshot.png", fullPage: true });
+  console.log("📸 Screenshot saved to /tmp/screenshot.png");
 
   await browser.close();
 })();
@@ -95,9 +95,9 @@ cd $SKILL_DIR && node run.js /tmp/playwright-test-page.js
 
 ```javascript
 // /tmp/playwright-test-responsive.js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
-const TARGET_URL = 'http://localhost:3001'; // Auto-detected
+const TARGET_URL = "http://localhost:3001"; // Auto-detected
 
 (async () => {
   const browser = await chromium.launch({ headless: false, slowMo: 100 });
@@ -106,12 +106,12 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
   // Desktop test
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto(TARGET_URL);
-  console.log('Desktop - Title:', await page.title());
-  await page.screenshot({ path: '/tmp/desktop.png', fullPage: true });
+  console.log("Desktop - Title:", await page.title());
+  await page.screenshot({ path: "/tmp/desktop.png", fullPage: true });
 
   // Mobile test
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.screenshot({ path: '/tmp/mobile.png', fullPage: true });
+  await page.screenshot({ path: "/tmp/mobile.png", fullPage: true });
 
   await browser.close();
 })();
@@ -121,9 +121,9 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
 
 ```javascript
 // /tmp/playwright-test-login.js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
-const TARGET_URL = 'http://localhost:3001'; // Auto-detected
+const TARGET_URL = "http://localhost:3001"; // Auto-detected
 
 (async () => {
   const browser = await chromium.launch({ headless: false });
@@ -131,13 +131,13 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
 
   await page.goto(`${TARGET_URL}/login`);
 
-  await page.fill('input[name="email"]', 'test@example.com');
-  await page.fill('input[name="password"]', 'password123');
+  await page.fill('input[name="email"]', "test@example.com");
+  await page.fill('input[name="password"]', "password123");
   await page.click('button[type="submit"]');
 
   // Wait for redirect
-  await page.waitForURL('**/dashboard');
-  console.log('✅ Login successful, redirected to dashboard');
+  await page.waitForURL("**/dashboard");
+  console.log("✅ Login successful, redirected to dashboard");
 
   await browser.close();
 })();
@@ -147,9 +147,9 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
 
 ```javascript
 // /tmp/playwright-test-form.js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
-const TARGET_URL = 'http://localhost:3001'; // Auto-detected
+const TARGET_URL = "http://localhost:3001"; // Auto-detected
 
 (async () => {
   const browser = await chromium.launch({ headless: false, slowMo: 50 });
@@ -157,14 +157,14 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
 
   await page.goto(`${TARGET_URL}/contact`);
 
-  await page.fill('input[name="name"]', 'John Doe');
-  await page.fill('input[name="email"]', 'john@example.com');
-  await page.fill('textarea[name="message"]', 'Test message');
+  await page.fill('input[name="name"]', "John Doe");
+  await page.fill('input[name="email"]', "john@example.com");
+  await page.fill('textarea[name="message"]', "Test message");
   await page.click('button[type="submit"]');
 
   // Verify submission
-  await page.waitForSelector('.success-message');
-  console.log('✅ Form submitted successfully');
+  await page.waitForSelector(".success-message");
+  console.log("✅ Form submitted successfully");
 
   await browser.close();
 })();
@@ -173,19 +173,19 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
 ### Check for Broken Links
 
 ```javascript
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 (async () => {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
-  await page.goto('http://localhost:3000');
+  await page.goto("http://localhost:3000");
 
   const links = await page.locator('a[href^="http"]').all();
   const results = { working: 0, broken: [] };
 
   for (const link of links) {
-    const href = await link.getAttribute('href');
+    const href = await link.getAttribute("href");
     try {
       const response = await page.request.head(href);
       if (response.ok()) {
@@ -208,26 +208,26 @@ const { chromium } = require('playwright');
 ### Take Screenshot with Error Handling
 
 ```javascript
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 (async () => {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
   try {
-    await page.goto('http://localhost:3000', {
-      waitUntil: 'networkidle',
+    await page.goto("http://localhost:3000", {
+      waitUntil: "networkidle",
       timeout: 10000,
     });
 
     await page.screenshot({
-      path: '/tmp/screenshot.png',
+      path: "/tmp/screenshot.png",
       fullPage: true,
     });
 
-    console.log('📸 Screenshot saved to /tmp/screenshot.png');
+    console.log("📸 Screenshot saved to /tmp/screenshot.png");
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error("❌ Error:", error.message);
   } finally {
     await browser.close();
   }
@@ -238,18 +238,18 @@ const { chromium } = require('playwright');
 
 ```javascript
 // /tmp/playwright-test-responsive-full.js
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
-const TARGET_URL = 'http://localhost:3001'; // Auto-detected
+const TARGET_URL = "http://localhost:3001"; // Auto-detected
 
 (async () => {
   const browser = await chromium.launch({ headless: false });
   const page = await browser.newPage();
 
   const viewports = [
-    { name: 'Desktop', width: 1920, height: 1080 },
-    { name: 'Tablet', width: 768, height: 1024 },
-    { name: 'Mobile', width: 375, height: 667 },
+    { name: "Desktop", width: 1920, height: 1080 },
+    { name: "Tablet", width: 768, height: 1024 },
+    { name: "Mobile", width: 375, height: 667 },
   ];
 
   for (const viewport of viewports) {
@@ -271,7 +271,7 @@ const TARGET_URL = 'http://localhost:3001'; // Auto-detected
     });
   }
 
-  console.log('✅ All viewports tested');
+  console.log("✅ All viewports tested");
   await browser.close();
 })();
 ```
@@ -302,26 +302,26 @@ await browser.close();
 Optional utility functions in `lib/helpers.js`:
 
 ```javascript
-const helpers = require('./lib/helpers');
+const helpers = require("./lib/helpers");
 
 // Detect running dev servers (CRITICAL - use this first!)
 const servers = await helpers.detectDevServers();
-console.log('Found servers:', servers);
+console.log("Found servers:", servers);
 
 // Safe click with retry
-await helpers.safeClick(page, 'button.submit', { retries: 3 });
+await helpers.safeClick(page, "button.submit", { retries: 3 });
 
 // Safe type with clear
-await helpers.safeType(page, '#username', 'testuser');
+await helpers.safeType(page, "#username", "testuser");
 
 // Take timestamped screenshot
-await helpers.takeScreenshot(page, 'test-result');
+await helpers.takeScreenshot(page, "test-result");
 
 // Handle cookie banners
 await helpers.handleCookieBanner(page);
 
 // Extract table data
-const data = await helpers.extractTableData(page, 'table.results');
+const data = await helpers.extractTableData(page, "table.results");
 ```
 
 See `lib/helpers.js` for full list.

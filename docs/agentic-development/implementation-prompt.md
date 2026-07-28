@@ -22,25 +22,22 @@ Before editing, read:
 
 Forge ships repo-level agent skills under `.claude/skills/`. The full registry and agent-surface notes live in [`agent-skills.md`](./agent-skills.md).
 
-**When a skill matches the work, read its `SKILL.md` first and follow it.** Skills add domain expertise and repo-specific commands; they do not override `spec.md`, `srd.md`, `test-cases.md`, `AGENTS.md`, or `forge-engineering-principles.md`. Vendored skills may include `FORGE_NOTES.md`; read that too before applying third-party guidance.
+**When a skill matches the work, read its `SKILL.md` first and follow it.** Skills add repo-specific expertise and commands; they do not override `spec.md`, `srd.md`, `test-cases.md`, `AGENTS.md`, or `forge-engineering-principles.md`.
 
 ### Implementation-phase skills
 
 Use these during code implementation and validation. Do not substitute spec/SRD/test-case writer skills for implementation work.
 
-| Skill                 | Path                                   | Use when                                                                                                             |
-| --------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Frontend design       | `.claude/skills/frontend-design`       | Any meaningful UI creation, reshaping, dashboard, form, data-display, responsive, or interaction work.               |
-| Spec miner            | `.claude/skills/spec-miner`            | The SRD points at legacy or undocumented code and you need to map real behavior before editing.                      |
-| React analyzer        | `.claude/skills/react-analyzer`        | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`. |
-| React expert          | `.claude/skills/react-expert`          | Building or refactoring components, hooks, client/server boundaries, Suspense, forms, or interactive UI.             |
-| Next.js developer     | `.claude/skills/nextjs-developer`      | App Router pages, RSC, server actions, route handlers, `loading.tsx`/`error.tsx`, middleware, or streaming SSR.      |
-| TypeScript pro        | `.claude/skills/typescript-pro`        | tRPC procedures, Zod validators, advanced types, or end-to-end type-safety changes.                                  |
-| Test master           | `.claude/skills/test-master`           | Fixing or extending generated tests, mocking strategy, or test harness work tied to the SRD.                         |
-| Playwright expert     | `.claude/skills/playwright-expert`     | Writing, debugging, or extending Playwright E2E tests and fixtures.                                                  |
-| Playwright skill      | `.claude/skills/playwright-skill`      | Agent-driven browser verification of implemented UI flows, forms, responsive behavior, or runtime UX.                |
-| Architecture designer | `.claude/skills/architecture-designer` | The SRD requires an architectural decision, ADR, or cross-package boundary review before coding.                     |
-| Deslop                | `.claude/skills/deslop`                | Reviewing user-facing copy, comments, or `status.md` prose for AI-sounding filler.                                   |
+| Skill            | Path                              | Use when                                                                                                                       |
+| ---------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Forge placement  | `.claude/skills/forge-placement`  | Adding a helper, constant, type, or component, or unsure which file or package owns something. Read it before creating a file. |
+| Forge API        | `.claude/skills/forge-api`        | Adding or changing a tRPC procedure, access guard, audit event, or anything under `packages/api`.                              |
+| Forge React      | `.claude/skills/forge-react`      | Building or changing components, client state, hooks, mutation UX, or splitting a large component.                             |
+| Frontend design  | `.claude/skills/frontend-design`  | Any meaningful UI creation, reshaping, dashboard, form, data-display, responsive, or interaction work.                         |
+| React analyzer   | `.claude/skills/react-analyzer`   | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`.           |
+| Playwright skill | `.claude/skills/playwright-skill` | Agent-driven browser verification of implemented UI flows, forms, responsive behavior, or runtime UX.                          |
+| Forge review     | `.claude/skills/forge-review`     | Reviewing a diff or branch before committing meaningful work, before a PR, or at cutover.                                      |
+| Deslop           | `.claude/skills/deslop`           | Reviewing user-facing copy, comments, or `status.md` prose for AI-sounding filler.                                             |
 
 ### Out of scope for this prompt
 
@@ -54,7 +51,7 @@ Test generation from `test-cases.md` uses [`test-generation-prompt.md`](./test-g
 
 ### Skill usage rules
 
-1. Match skills to touched surfaces, not every file in the diff. One frontend feature may need `react-analyzer` + `react-expert` + `nextjs-developer`; a tRPC-only change may need only `typescript-pro`.
+1. Match skills to touched surfaces, not every file in the diff. One frontend feature may need `forge-react` + `frontend-design` + `react-analyzer`; a tRPC-only change may need only `forge-api`. `forge-placement` applies whenever a new file is created.
 2. Read the skill before improvising. Do not paraphrase a skill from memory.
 3. Run the skill's repo commands when it documents them (`pnpm analyze:react:changed`, app `e2e` scripts, Playwright flows, etc.).
 4. If multiple skills apply, read all relevant `SKILL.md` files up front, then implement once.
@@ -78,7 +75,7 @@ Test generation from `test-cases.md` uses [`test-generation-prompt.md`](./test-g
    - tests/checks to run
    - ambiguities or blockers
 
-3. Read matching skills from `.claude/skills/` (and any `FORGE_NOTES.md`) before editing.
+3. Read matching skills from `.claude/skills/` before editing.
 4. Inspect existing patterns before editing.
 5. Implement the smallest change.
 6. Use diffs while working:

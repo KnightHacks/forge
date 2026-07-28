@@ -45,30 +45,30 @@ npm run setup
 Create `playwright.config.ts`:
 
 ```typescript
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: "html",
   use: {
-    baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    baseURL: "http://localhost:3000",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
   webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000',
+    command: "npm run start",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
 });
@@ -79,25 +79,25 @@ export default defineConfig({
 ### Basic Browser Automation
 
 ```javascript
-const { chromium } = require('playwright');
+const { chromium } = require("playwright");
 
 (async () => {
   // Launch browser
   const browser = await chromium.launch({
-    headless: false,  // Set to true for headless mode
-    slowMo: 50       // Slow down operations by 50ms
+    headless: false, // Set to true for headless mode
+    slowMo: 50, // Slow down operations by 50ms
   });
 
   const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
   });
 
   const page = await context.newPage();
 
   // Navigate
-  await page.goto('https://example.com', {
-    waitUntil: 'networkidle'  // Wait for network to be idle
+  await page.goto("https://example.com", {
+    waitUntil: "networkidle", // Wait for network to be idle
   });
 
   // Your automation here
@@ -109,14 +109,14 @@ const { chromium } = require('playwright');
 ### Test Structure
 
 ```typescript
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test.describe('Feature Name', () => {
+test.describe("Feature Name", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto("/");
   });
 
-  test('should do something', async ({ page }) => {
+  test("should do something", async ({ page }) => {
     // Arrange
     const button = page.locator('button[data-testid="submit"]');
 
@@ -124,8 +124,8 @@ test.describe('Feature Name', () => {
     await button.click();
 
     // Assert
-    await expect(page).toHaveURL('/success');
-    await expect(page.locator('.message')).toHaveText('Success!');
+    await expect(page).toHaveURL("/success");
+    await expect(page.locator(".message")).toHaveText("Success!");
   });
 });
 ```
@@ -137,46 +137,46 @@ test.describe('Feature Name', () => {
 ```javascript
 // PREFERRED: Data attributes (most stable)
 await page.locator('[data-testid="submit-button"]').click();
-await page.locator('[data-cy="user-input"]').fill('text');
+await page.locator('[data-cy="user-input"]').fill("text");
 
 // GOOD: Role-based selectors (accessible)
-await page.getByRole('button', { name: 'Submit' }).click();
-await page.getByRole('textbox', { name: 'Email' }).fill('user@example.com');
-await page.getByRole('heading', { level: 1 }).click();
+await page.getByRole("button", { name: "Submit" }).click();
+await page.getByRole("textbox", { name: "Email" }).fill("user@example.com");
+await page.getByRole("heading", { level: 1 }).click();
 
 // GOOD: Text content (for unique text)
-await page.getByText('Sign in').click();
+await page.getByText("Sign in").click();
 await page.getByText(/welcome back/i).click();
 
 // OK: Semantic HTML
 await page.locator('button[type="submit"]').click();
-await page.locator('input[name="email"]').fill('test@test.com');
+await page.locator('input[name="email"]').fill("test@test.com");
 
 // AVOID: Classes and IDs (can change frequently)
-await page.locator('.btn-primary').click();  // Avoid
-await page.locator('#submit').click();       // Avoid
+await page.locator(".btn-primary").click(); // Avoid
+await page.locator("#submit").click(); // Avoid
 
 // LAST RESORT: Complex CSS/XPath
-await page.locator('div.container > form > button').click();  // Fragile
+await page.locator("div.container > form > button").click(); // Fragile
 ```
 
 ### Advanced Locator Patterns
 
 ```javascript
 // Filter and chain locators
-const row = page.locator('tr').filter({ hasText: 'John Doe' });
-await row.locator('button').click();
+const row = page.locator("tr").filter({ hasText: "John Doe" });
+await row.locator("button").click();
 
 // Nth element
-await page.locator('button').nth(2).click();
+await page.locator("button").nth(2).click();
 
 // Combining conditions
-await page.locator('button').and(page.locator('[disabled]')).count();
+await page.locator("button").and(page.locator("[disabled]")).count();
 
 // Parent/child navigation
-const cell = page.locator('td').filter({ hasText: 'Active' });
-const row = cell.locator('..');
-await row.locator('button.edit').click();
+const cell = page.locator("td").filter({ hasText: "Active" });
+const row = cell.locator("..");
+await row.locator("button.edit").click();
 ```
 
 ## Common Actions
@@ -185,55 +185,52 @@ await row.locator('button.edit').click();
 
 ```javascript
 // Text input
-await page.getByLabel('Email').fill('user@example.com');
-await page.getByPlaceholder('Enter your name').fill('John Doe');
+await page.getByLabel("Email").fill("user@example.com");
+await page.getByPlaceholder("Enter your name").fill("John Doe");
 
 // Clear and type
-await page.locator('#username').clear();
-await page.locator('#username').type('newuser', { delay: 100 });
+await page.locator("#username").clear();
+await page.locator("#username").type("newuser", { delay: 100 });
 
 // Checkbox
-await page.getByLabel('I agree').check();
-await page.getByLabel('Subscribe').uncheck();
+await page.getByLabel("I agree").check();
+await page.getByLabel("Subscribe").uncheck();
 
 // Radio button
-await page.getByLabel('Option 2').check();
+await page.getByLabel("Option 2").check();
 
 // Select dropdown
-await page.selectOption('select#country', 'usa');
-await page.selectOption('select#country', { label: 'United States' });
-await page.selectOption('select#country', { index: 2 });
+await page.selectOption("select#country", "usa");
+await page.selectOption("select#country", { label: "United States" });
+await page.selectOption("select#country", { index: 2 });
 
 // Multi-select
-await page.selectOption('select#colors', ['red', 'blue', 'green']);
+await page.selectOption("select#colors", ["red", "blue", "green"]);
 
 // File upload
-await page.setInputFiles('input[type="file"]', 'path/to/file.pdf');
-await page.setInputFiles('input[type="file"]', [
-  'file1.pdf',
-  'file2.pdf'
-]);
+await page.setInputFiles('input[type="file"]', "path/to/file.pdf");
+await page.setInputFiles('input[type="file"]', ["file1.pdf", "file2.pdf"]);
 ```
 
 ### Mouse Actions
 
 ```javascript
 // Click variations
-await page.click('button');                          // Left click
-await page.click('button', { button: 'right' });    // Right click
-await page.dblclick('button');                       // Double click
-await page.click('button', { position: { x: 10, y: 10 } });  // Click at position
+await page.click("button"); // Left click
+await page.click("button", { button: "right" }); // Right click
+await page.dblclick("button"); // Double click
+await page.click("button", { position: { x: 10, y: 10 } }); // Click at position
 
 // Hover
-await page.hover('.menu-item');
+await page.hover(".menu-item");
 
 // Drag and drop
-await page.dragAndDrop('#source', '#target');
+await page.dragAndDrop("#source", "#target");
 
 // Manual drag
-await page.locator('#source').hover();
+await page.locator("#source").hover();
 await page.mouse.down();
-await page.locator('#target').hover();
+await page.locator("#target").hover();
 await page.mouse.up();
 ```
 
@@ -241,18 +238,18 @@ await page.mouse.up();
 
 ```javascript
 // Type with delay
-await page.keyboard.type('Hello World', { delay: 100 });
+await page.keyboard.type("Hello World", { delay: 100 });
 
 // Key combinations
-await page.keyboard.press('Control+A');
-await page.keyboard.press('Control+C');
-await page.keyboard.press('Control+V');
+await page.keyboard.press("Control+A");
+await page.keyboard.press("Control+C");
+await page.keyboard.press("Control+V");
 
 // Special keys
-await page.keyboard.press('Enter');
-await page.keyboard.press('Tab');
-await page.keyboard.press('Escape');
-await page.keyboard.press('ArrowDown');
+await page.keyboard.press("Enter");
+await page.keyboard.press("Tab");
+await page.keyboard.press("Escape");
+await page.keyboard.press("ArrowDown");
 ```
 
 ## Waiting Strategies
@@ -261,40 +258,40 @@ await page.keyboard.press('ArrowDown');
 
 ```javascript
 // Wait for element states
-await page.locator('button').waitFor({ state: 'visible' });
-await page.locator('.spinner').waitFor({ state: 'hidden' });
-await page.locator('button').waitFor({ state: 'attached' });
-await page.locator('button').waitFor({ state: 'detached' });
+await page.locator("button").waitFor({ state: "visible" });
+await page.locator(".spinner").waitFor({ state: "hidden" });
+await page.locator("button").waitFor({ state: "attached" });
+await page.locator("button").waitFor({ state: "detached" });
 
 // Wait for specific conditions
-await page.waitForURL('**/success');
-await page.waitForURL(url => url.pathname === '/dashboard');
+await page.waitForURL("**/success");
+await page.waitForURL((url) => url.pathname === "/dashboard");
 
 // Wait for network
-await page.waitForLoadState('networkidle');
-await page.waitForLoadState('domcontentloaded');
+await page.waitForLoadState("networkidle");
+await page.waitForLoadState("domcontentloaded");
 
 // Wait for function
-await page.waitForFunction(() => document.querySelector('.loaded'));
+await page.waitForFunction(() => document.querySelector(".loaded"));
 await page.waitForFunction(
-  text => document.body.innerText.includes(text),
-  'Content loaded'
+  (text) => document.body.innerText.includes(text),
+  "Content loaded",
 );
 
 // Wait for response
-const responsePromise = page.waitForResponse('**/api/users');
-await page.click('button#load-users');
+const responsePromise = page.waitForResponse("**/api/users");
+await page.click("button#load-users");
 const response = await responsePromise;
 
 // Wait for request
-await page.waitForRequest(request =>
-  request.url().includes('/api/') && request.method() === 'POST'
+await page.waitForRequest(
+  (request) => request.url().includes("/api/") && request.method() === "POST",
 );
 
 // Custom timeout
-await page.locator('.slow-element').waitFor({
-  state: 'visible',
-  timeout: 10000  // 10 seconds
+await page.locator(".slow-element").waitFor({
+  state: "visible",
+  timeout: 10000, // 10 seconds
 });
 ```
 
@@ -303,37 +300,37 @@ await page.locator('.slow-element').waitFor({
 ### Common Assertions
 
 ```javascript
-import { expect } from '@playwright/test';
+import { expect } from "@playwright/test";
 
 // Page assertions
-await expect(page).toHaveTitle('My App');
-await expect(page).toHaveURL('https://example.com/dashboard');
+await expect(page).toHaveTitle("My App");
+await expect(page).toHaveURL("https://example.com/dashboard");
 await expect(page).toHaveURL(/.*dashboard/);
 
 // Element visibility
-await expect(page.locator('.message')).toBeVisible();
-await expect(page.locator('.spinner')).toBeHidden();
-await expect(page.locator('button')).toBeEnabled();
-await expect(page.locator('input')).toBeDisabled();
+await expect(page.locator(".message")).toBeVisible();
+await expect(page.locator(".spinner")).toBeHidden();
+await expect(page.locator("button")).toBeEnabled();
+await expect(page.locator("input")).toBeDisabled();
 
 // Text content
-await expect(page.locator('h1')).toHaveText('Welcome');
-await expect(page.locator('.message')).toContainText('success');
-await expect(page.locator('.items')).toHaveText(['Item 1', 'Item 2']);
+await expect(page.locator("h1")).toHaveText("Welcome");
+await expect(page.locator(".message")).toContainText("success");
+await expect(page.locator(".items")).toHaveText(["Item 1", "Item 2"]);
 
 // Input values
-await expect(page.locator('input')).toHaveValue('test@example.com');
-await expect(page.locator('input')).toBeEmpty();
+await expect(page.locator("input")).toHaveValue("test@example.com");
+await expect(page.locator("input")).toBeEmpty();
 
 // Attributes
-await expect(page.locator('button')).toHaveAttribute('type', 'submit');
-await expect(page.locator('img')).toHaveAttribute('src', /.*\.png/);
+await expect(page.locator("button")).toHaveAttribute("type", "submit");
+await expect(page.locator("img")).toHaveAttribute("src", /.*\.png/);
 
 // CSS properties
-await expect(page.locator('.error')).toHaveCSS('color', 'rgb(255, 0, 0)');
+await expect(page.locator(".error")).toHaveCSS("color", "rgb(255, 0, 0)");
 
 // Count
-await expect(page.locator('.item')).toHaveCount(5);
+await expect(page.locator(".item")).toHaveCount(5);
 
 // Checkbox/Radio state
 await expect(page.locator('input[type="checkbox"]')).toBeChecked();
@@ -351,11 +348,11 @@ class LoginPage {
     this.usernameInput = page.locator('input[name="username"]');
     this.passwordInput = page.locator('input[name="password"]');
     this.submitButton = page.locator('button[type="submit"]');
-    this.errorMessage = page.locator('.error-message');
+    this.errorMessage = page.locator(".error-message");
   }
 
   async navigate() {
-    await this.page.goto('/login');
+    await this.page.goto("/login");
   }
 
   async login(username, password) {
@@ -370,11 +367,11 @@ class LoginPage {
 }
 
 // Usage in test
-test('login with valid credentials', async ({ page }) => {
+test("login with valid credentials", async ({ page }) => {
   const loginPage = new LoginPage(page);
   await loginPage.navigate();
-  await loginPage.login('user@example.com', 'password123');
-  await expect(page).toHaveURL('/dashboard');
+  await loginPage.login("user@example.com", "password123");
+  await expect(page).toHaveURL("/dashboard");
 });
 ```
 
@@ -384,28 +381,28 @@ test('login with valid credentials', async ({ page }) => {
 
 ```javascript
 // Mock API responses
-await page.route('**/api/users', route => {
+await page.route("**/api/users", (route) => {
   route.fulfill({
     status: 200,
-    contentType: 'application/json',
+    contentType: "application/json",
     body: JSON.stringify([
-      { id: 1, name: 'John' },
-      { id: 2, name: 'Jane' }
-    ])
+      { id: 1, name: "John" },
+      { id: 2, name: "Jane" },
+    ]),
   });
 });
 
 // Modify requests
-await page.route('**/api/**', route => {
+await page.route("**/api/**", (route) => {
   const headers = {
     ...route.request().headers(),
-    'X-Custom-Header': 'value'
+    "X-Custom-Header": "value",
   };
   route.continue({ headers });
 });
 
 // Block resources
-await page.route('**/*.{png,jpg,jpeg,gif}', route => route.abort());
+await page.route("**/*.{png,jpg,jpeg,gif}", (route) => route.abort());
 ```
 
 ### Custom Headers via Environment Variables
@@ -421,10 +418,12 @@ PW_EXTRA_HEADERS='{"X-Automated-By":"playwright-skill","X-Request-ID":"123"}'
 ```
 
 These headers are automatically applied to all requests when using:
+
 - `helpers.createContext(browser)` - headers merged automatically
 - `getContextOptionsWithHeaders(options)` - utility injected by run.js wrapper
 
 **Precedence (highest to lowest):**
+
 1. Headers passed directly in `options.extraHTTPHeaders`
 2. Environment variable headers
 3. Playwright defaults
@@ -438,31 +437,31 @@ These headers are automatically applied to all requests when using:
 ```javascript
 // Full page screenshot
 await page.screenshot({
-  path: 'screenshot.png',
-  fullPage: true
+  path: "screenshot.png",
+  fullPage: true,
 });
 
 // Element screenshot
-await page.locator('.chart').screenshot({
-  path: 'chart.png'
+await page.locator(".chart").screenshot({
+  path: "chart.png",
 });
 
 // Visual comparison
-await expect(page).toHaveScreenshot('homepage.png');
+await expect(page).toHaveScreenshot("homepage.png");
 ```
 
 ## Mobile Testing
 
 ```javascript
 // Device emulation
-const { devices } = require('playwright');
-const iPhone = devices['iPhone 12'];
+const { devices } = require("playwright");
+const iPhone = devices["iPhone 12"];
 
 const context = await browser.newContext({
   ...iPhone,
-  locale: 'en-US',
-  permissions: ['geolocation'],
-  geolocation: { latitude: 37.7749, longitude: -122.4194 }
+  locale: "en-US",
+  permissions: ["geolocation"],
+  geolocation: { latitude: 37.7749, longitude: -122.4194 },
 });
 ```
 
@@ -488,8 +487,8 @@ npx playwright test --headed --slowmo=1000
 await page.pause();
 
 // Console logs
-page.on('console', msg => console.log('Browser log:', msg.text()));
-page.on('pageerror', error => console.log('Page error:', error));
+page.on("console", (msg) => console.log("Browser log:", msg.text()));
+page.on("pageerror", (error) => console.log("Page error:", error));
 ```
 
 ## Performance Testing
@@ -497,7 +496,7 @@ page.on('pageerror', error => console.log('Page error:', error));
 ```javascript
 // Measure page load time
 const startTime = Date.now();
-await page.goto('https://example.com');
+await page.goto("https://example.com");
 const loadTime = Date.now() - startTime;
 console.log(`Page loaded in ${loadTime}ms`);
 ```
@@ -506,12 +505,12 @@ console.log(`Page loaded in ${loadTime}ms`);
 
 ```javascript
 // Run tests in parallel
-test.describe.parallel('Parallel suite', () => {
-  test('test 1', async ({ page }) => {
+test.describe.parallel("Parallel suite", () => {
+  test("test 1", async ({ page }) => {
     // Runs in parallel with test 2
   });
 
-  test('test 2', async ({ page }) => {
+  test("test 2", async ({ page }) => {
     // Runs in parallel with test 1
   });
 });
@@ -522,17 +521,17 @@ test.describe.parallel('Parallel suite', () => {
 ```javascript
 // Parameterized tests
 const testData = [
-  { username: 'user1', password: 'pass1', expected: 'Welcome user1' },
-  { username: 'user2', password: 'pass2', expected: 'Welcome user2' },
+  { username: "user1", password: "pass1", expected: "Welcome user1" },
+  { username: "user2", password: "pass2", expected: "Welcome user2" },
 ];
 
 testData.forEach(({ username, password, expected }) => {
   test(`login with ${username}`, async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('#username', username);
-    await page.fill('#password', password);
+    await page.goto("/login");
+    await page.fill("#username", username);
+    await page.fill("#password", password);
     await page.click('button[type="submit"]');
-    await expect(page.locator('.message')).toHaveText(expected);
+    await expect(page.locator(".message")).toHaveText(expected);
   });
 });
 ```
@@ -540,10 +539,10 @@ testData.forEach(({ username, password, expected }) => {
 ## Accessibility Testing
 
 ```javascript
-import { injectAxe, checkA11y } from 'axe-playwright';
+import { checkA11y, injectAxe } from "axe-playwright";
 
-test('accessibility check', async ({ page }) => {
-  await page.goto('/');
+test("accessibility check", async ({ page }) => {
+  await page.goto("/");
   await injectAxe(page);
   await checkA11y(page);
 });
@@ -586,8 +585,8 @@ jobs:
 
 ```javascript
 const [popup] = await Promise.all([
-  page.waitForEvent('popup'),
-  page.click('button.open-popup')
+  page.waitForEvent("popup"),
+  page.click("button.open-popup"),
 ]);
 await popup.waitForLoadState();
 ```
@@ -596,8 +595,8 @@ await popup.waitForLoadState();
 
 ```javascript
 const [download] = await Promise.all([
-  page.waitForEvent('download'),
-  page.click('button.download')
+  page.waitForEvent("download"),
+  page.click("button.download"),
 ]);
 await download.saveAs(`./downloads/${download.suggestedFilename()}`);
 ```
@@ -605,8 +604,8 @@ await download.saveAs(`./downloads/${download.suggestedFilename()}`);
 ### iFrames
 
 ```javascript
-const frame = page.frameLocator('#my-iframe');
-await frame.locator('button').click();
+const frame = page.frameLocator("#my-iframe");
+await frame.locator("button").click();
 ```
 
 ### Infinite Scroll
