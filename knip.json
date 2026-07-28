@@ -23,6 +23,11 @@
       "entry": ["*.js", "index.ts"]
     }
   },
-  "ignore": ["**/dist/**", "**/.next/**", "**/drizzle/**"],
+  "ignore": [
+    "**/.next/**",
+    "**/dist/**",
+    "**/drizzle/**",
+    "apps/cron/src/crons/_example.ts"
+  ],
   "ignoreExportsUsedInFile": true
 }

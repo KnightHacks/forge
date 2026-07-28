@@ -27,7 +27,7 @@
     "hooks:install": "lefthook install",
     "hooks:uninstall": "lefthook uninstall",
     "knip": "knip --no-exit-code",
-    "knip:strict": "knip",
+    "knip:strict": "knip --include unlisted,unresolved,files,exports,types",
     "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
     "lint:fix": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "lint:ws": "pnpm dlx sherif@latest",
