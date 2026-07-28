@@ -29,7 +29,6 @@
   },
   "prettier": "@forge/prettier-config",
   "dependencies": {
-    "minimatch": "^10.2.4",
     "zod": "catalog:"
   }
 }

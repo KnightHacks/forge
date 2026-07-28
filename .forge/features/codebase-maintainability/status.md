@@ -246,9 +246,33 @@ are consequences of work that was asked for rather than incidental drift.
    list now arrives with the roster. During the deferred fetch the heading reads
    "Our Teams" and the tab strip is empty, then both populate.
 
-   The gap is unavoidable while the list is configurable; only its presentation
-   is in play. Being addressed now — see the loading-state entry in the task
-   list.
+   **Resolved** (`7ec6dd52`, `2b520722`). Four designs were written under
+   opposing priors and scored by three judges; all three picked a split
+   skeleton — an exact-metrics placeholder for the mobile picker and a
+   width-capped bar strip for the desktop filters, both `aria-hidden` with no
+   focusable node.
+
+   The build-time bake was the design that would have restored the old
+   appearance exactly, and it was rejected on evidence rather than taste:
+   `.github/workflows/ci.yml:228` runs `cp .env.example .env`, and
+   `.env.example:45` points `BLADE_URL` at `localhost:3000` with no Blade
+   service in that job. A build-time fetch would either fail the merge gate or
+   silently bake an empty list, and a developer's local build would produce a
+   different artifact than CI's. Request-time SSR is separately foreclosed by
+   `output: "export"`. That reasoning is now a code comment so nobody
+   re-proposes it as "good SSR".
+
+   Four bars, not eight: encoding today's team count would be a guess that goes
+   stale the moment an officer adds a team, and no digit appears in the skeleton
+   at all. "Design 0" would assert something false about officer-managed data;
+   a skeleton asserts nothing.
+
+   Two residuals, both recorded in the commit messages rather than smoothed
+   over. `role="status"` on the count paragraph does render in the loaded path —
+   it is the only screen-reader channel left once the placeholders are
+   `aria-hidden`. And below `md`, the error and zero-teams paths now shift 64px
+   upward, which moves the shift off the common path and onto a rare one rather
+   than eliminating it.
 
 2. **`roles.ts` no longer guesses `eventFeedbackExcluded` when a Discord role is
    linked.** It set the flag by matching the new role's _name_ against the same
@@ -258,6 +282,71 @@ are consequences of work that was asked for rather than incidental drift.
    already correct for all 19 live roles. Only the relink-a-staff-role path
    changes, and the toggle belongs in the same deferred admin UI as the Discord
    config's.
+
+## Knip — the final exit gate
+
+Owner's call: run knip once the tiers are done. Done. `knip` reports 83 unused
+dependencies and 16 unused devDependencies; a 16-agent audit checked **every**
+declared dependency in all 19 package.json files — not just knip's list, since
+knip both over- and under-reports here — and a second agent tried to refute
+each proposed removal. Result: 101 proposed, 8 refuted, 4 unsure, 408 kept.
+
+**Do not trust that number wholesale, and this branch does not.** Spot-checking
+turned up errors in both directions:
+
+- The refutation of `@forge/tailwind-config` in `apps/bloomknights`,
+  `apps/gemiknights` and `packages/ui` appears spurious — none of those
+  packages imports it, and the refuter seems to have matched the tooling
+  package's own `"name"` field in its own package.json.
+- Several surviving removals sit squarely in a known false-positive class:
+  root `playwright`/`vitest`, `tooling/tailwind`'s `postcss` and
+  `@tailwindcss/postcss` (loaded by name from a config, never imported),
+  `jiti`, and `@svgr/webpack`.
+
+So the removals are split by how they were verified, not by how confident the
+audit sounded.
+
+### Applied — 32 removals, each re-verified by hand
+
+Runtime libraries with zero references anywhere in their own package, no
+config-loading mechanism that could hide a usage, and a build to prove it:
+
+- `apps/blade` (15): both `@aws-sdk/*`, `@react-email/render`,
+  `@tanstack/react-table`, `canvas-confetti` + `@types/canvas-confetti`,
+  `csv-parse`, `csv-stringify`, `google-auth-library`, `googleapis`, `minio`,
+  `next-themes`, `react-icons`, `react-qr-code`, `react-qr-reader`
+- `packages/api` (6), `packages/auth` (3), `packages/ui` (3),
+  `packages/email` (2), `packages/consts`, `packages/db`,
+  `packages/validators`
+
+Two findings worth naming:
+
+- **`minimatch` is declared in seven packages and imported by nothing, in the
+  entire repo.** Not once. Pure copy-paste artifact.
+- **`packages/ui` depends on `tabs@^0.2.0`**, which does not exist in any
+  import. The only match for "tabs" is the _filename_ `src/tabs.tsx`, which
+  imports `@radix-ui/react-tabs`. Someone ran `pnpm add tabs` meaning the Radix
+  package and shipped an unrelated 0.2.0 package into the dependency tree. That
+  is a supply-chain finding, not a tidiness one.
+
+### Deferred — 61 removals, needing a human
+
+Held back deliberately, and `docs/AGENTS.md` is explicit that dependency
+changes want approval:
+
+- **Workspace `@forge/*` deps** across `apps/2025`, `bloomknights`,
+  `gemiknights`, `guild`, `khix`, `tk`. Under `node-linker=hoisted` an
+  undeclared import can resolve through a sibling's declaration, so removing
+  one is safe until the sibling changes. The challenge pass proved this is
+  real: `apps/2025` imports `@forge/eslint-config` without declaring it and
+  resolves only through the root's symlink.
+- **Build tooling loaded by name rather than imported** — `postcss`,
+  `@tailwindcss/postcss`, `tailwindcss`, `jiti`, `@svgr/webpack`,
+  `eslint-plugin-jsx-a11y`, root `playwright`/`vitest`.
+- **Dormant apps.** `apps/tk` and `apps/cron` show `drizzle-orm`, `node-cron`,
+  `postgres`, `resend` and `jimp` as unused, which more likely means those apps
+  are inert than that the deps are wrong. That is a question about the apps, not
+  about the manifest.
 
 ## Task list
 

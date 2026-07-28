@@ -33,9 +33,7 @@
   "dependencies": {
     "@forge/utils": "workspace:*",
     "@react-email/components": "^1.0.12",
-    "@react-email/render": "^2.1.0",
     "@t3-oss/env-core": "^0.13.10",
-    "minimatch": "^10.2.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "typescript": "catalog:"
