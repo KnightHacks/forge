@@ -293,11 +293,6 @@ test.describe("admin Club analytics", () => {
     await expect(page.getByText("club-analytics-v1")).toHaveCount(0);
     await expect(page.getByText(/@example\.test/)).toHaveCount(0);
 
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-desktop.png",
-    });
-
     await page.getByRole("link", { name: "Events", exact: true }).click();
     await expect(page.getByText("TypeScript Workshop")).toBeVisible();
     await page.getByRole("combobox", { name: "Individual event" }).click();
@@ -308,10 +303,6 @@ test.describe("admin Club analytics", () => {
     await page.getByRole("combobox", { name: "Individual event" }).click();
     await page.getByRole("option", { name: "All matching events" }).click();
     await settleSectionNavigation(page);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-events.png",
-    });
 
     await page.getByRole("combobox", { name: "Event type" }).click();
     await page.getByRole("option", { name: "Workshop" }).click();
@@ -358,17 +349,10 @@ test.describe("admin Club analytics", () => {
     await expect(
       memberDialog.getByText("June 2026", { exact: true }),
     ).toBeVisible();
-    await memberDialog.screenshot({
-      path: ".playwright-results/analytics-member-discord-month.png",
-    });
     await memberDialog.getByRole("button", { name: "Next month" }).click();
     await page.keyboard.press("Escape");
     await expect(memberDialog).toHaveCount(0);
     await settleSectionNavigation(page);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-discord.png",
-    });
 
     await page.getByRole("link", { name: "Audience", exact: true }).click();
     await expect(page).toHaveURL(/section=audience/);
@@ -382,10 +366,6 @@ test.describe("admin Club analytics", () => {
       page.locator('[data-analytics-metric-detail="true"]'),
     ).toHaveCount(8);
     await settleSectionNavigation(page);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-audience.png",
-    });
 
     await page.getByRole("link", { name: "Dues", exact: true }).click();
     await expect(page.getByText("Academic-year collection pace")).toBeVisible();
@@ -397,10 +377,6 @@ test.describe("admin Club analytics", () => {
       page.locator('[data-analytics-metric-detail="true"]'),
     ).toHaveCount(8);
     await settleSectionNavigation(page);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-dues.png",
-    });
 
     await page.getByRole("link", { name: "Reports", exact: true }).click();
     await expect(
@@ -412,10 +388,6 @@ test.describe("admin Club analytics", () => {
     });
     await expect(reportsLink).toHaveAttribute("aria-current", "page");
     await settleSectionNavigation(page);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-reports.png",
-    });
     const sponsorSection = page
       .getByRole("heading", { name: "Sponsor-safe report" })
       .locator("xpath=ancestor::section");
@@ -448,10 +420,6 @@ test.describe("admin Club analytics", () => {
         document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/club-analytics-320.png",
-    });
   });
 
   test("redirects an authenticated caller without Club-data access", async ({
@@ -495,10 +463,6 @@ test.describe("admin Club analytics", () => {
         "Checking available resumes and building folders. This usually takes about a minute; keep this page open.",
       ),
     ).toBeVisible();
-    await page.screenshot({
-      fullPage: true,
-      path: ".playwright-results/resume-bundle-preparing.png",
-    });
 
     const downloadHref = await page.evaluate(
       () =>

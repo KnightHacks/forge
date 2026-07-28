@@ -24,8 +24,9 @@ Blade is built on **shadcn/ui** primitives, styled with **Tailwind v4** design t
 6. [Iconography](#iconography)
 7. [Components](#components)
 8. [Patterns And Conventions](#patterns-and-conventions)
-9. [Refinements](#refinements)
-10. [Contributing](#contributing)
+9. [Visual Regression Baselines](#visual-regression-baselines)
+10. [Refinements](#refinements)
+11. [Contributing](#contributing)
 
 ## Principles
 
@@ -405,6 +406,130 @@ For profile/dashboard layouts:
 - Keep skeletons structurally close to loaded content.
 - Do not add entrance animation to content that replaces a skeleton; direct replacement is less jarring.
 - Keep upload/remove affordances attached to the object they modify.
+
+## Visual Regression Baselines
+
+Blade's layout is built on sibling-scoped Tailwind. `adminPageLayoutClassName`
+ends in `space-y-4 sm:space-y-6`, which compiles to `> * + *` and applies only
+to direct children. `divide-y`, `first:border-l-0`, `last:border-r-0` and flex
+or grid `gap` behave the same way.
+
+This means that extracting a component and introducing one wrapper `<div>`
+silently deletes a gap or a divider. There is no type error, no lint error, and
+no failing unit test — the only evidence is pixels. The baselines in
+`src/tests/e2e/visual/` exist to make that evidence automatic.
+
+### Running them
+
+```bash
+cd apps/blade
+pnpm e2e src/tests/e2e/visual
+```
+
+Playwright starts its own dev server on port 3100 and reuses one if it is
+already running. A full run of all nine takes about 12 seconds against a warm
+server and 20–30 seconds cold. The suite needs the Postgres container up
+(`docker compose up -d` from the repo root) because the fixture writes real
+rows — and removes them again in `afterAll`.
+
+### Updating a baseline on purpose
+
+When you have intentionally changed a surface, regenerate it and **read the
+diff before committing it**:
+
+```bash
+pnpm e2e src/tests/e2e/visual --update-snapshots -g "member settings"
+git diff --stat apps/blade/src/tests/e2e/visual/__screenshots__
+```
+
+Regenerate only the baselines your change should have moved. `--update-snapshots`
+with no `-g` rewrites all nine, which converts a real regression into a silent
+commit. If a PNG you did not expect to change shows up in `git status`, that is
+the suite working.
+
+### When one fails
+
+Playwright writes three images per failure into `.playwright-results/` —
+`-expected`, `-actual`, and `-diff`. Open the diff first.
+
+1. **The image sizes differ by 4–32px and everything below one point has
+   shifted.** This is the regression the suite is for: a wrapper `<div>` broke
+   a `space-y` chain. Find the element that moved and check whether a recent
+   extraction added a container around a run of siblings.
+2. **A horizontal rule or a left/right border vanished.** Same cause, via
+   `divide-y` or `first:border-l-0`.
+3. **The whole page is blank white.** The dev server returned a 500. Restart it
+   — a long-running Turbopack process accumulates stale chunks and starts
+   throwing module-evaluation errors that a restart clears.
+4. **The content is right but shifted 160px.** The admin rail is
+   `w-16 hover:w-56 focus-within:w-56`. Something left the pointer or focus
+   inside it. `settle()` in `visual-harness.ts` parks the pointer in the page
+   gutter; a new test that clicks before capturing needs to call it again.
+
+### What is covered, and what is deliberately not
+
+Nine baselines: the form builder and forms list, all three issue-workspace
+views (list, kanban, calendar), the admin members table, and member settings.
+Members and settings are captured at both 1440×1000 and 390×844 — the members
+table swaps between a `hidden md:block` table and a `md:hidden` card list, so
+those two baselines cover genuinely different markup rather than one narrower
+rendering of the other.
+
+**The analytics dashboard and the email portal are intentionally excluded.**
+Both were in the original brief. Neither can be scoped to a fixture:
+
+- `loadClubAnalyticsSources` reads every member, event, dues and Discord row in
+  the database with no filter, and the developer database holds real Club
+  records — over 1,100 members on the machine this was written on. The fixture
+  is a rounding error against that. Worse, `club-report.ts` passes
+  `referenceDate: new Date()` and `discord-report.ts` computes a rolling
+  365-day window, both on the server where a Playwright clock override cannot
+  reach. The rendered figures change every single day.
+- The email portal's audience section lists every role and every hackathon in
+  the database, so any role added by another spec — or by a person — moves it.
+
+A baseline that fails for reasons unrelated to the change under review teaches
+people to ignore failures, which is the exact habit this work exists to correct.
+Both surfaces become baselinable the moment Blade e2e runs against a dedicated,
+migrated, disposable database rather than the developer's own. That is the
+change worth making next; it would also let the fixture drop the query-string
+scoping that the members table and issue views currently rely on.
+
+Two smaller exclusions for the same reason: the issue **detail** page seeds its
+history with `Date.now()`-derived timestamps and renders 25 of them, and the
+issue **archive** view has no archived rows to show.
+
+### Limitations you should know before trusting these
+
+- **They are macOS-only.** Screenshot baselines are platform-specific — the OS
+  rasterizes text and form controls. The committed PNGs live under
+  `__screenshots__/darwin/` precisely so this is visible in the file tree. A
+  developer on Linux will see every baseline fail and must regenerate locally;
+  do not commit that regeneration.
+- **CI does not run them.** CI runs no Blade Playwright tests at all. This is a
+  local developer gate, not a merge gate. It only helps if you actually run it
+  before opening a PR touching these surfaces.
+- **Timezone is not pinned.** The dev server renders on the machine's clock and
+  timezone; pinning only the browser would split the two. Club-facing dates
+  already go through `EVENTS.CALENDAR_TIME_ZONE` server-side, so the exposure is
+  small, but it is one more reason these are per-machine artifacts.
+
+### Determinism rules for new baselines
+
+If you add one, it has to survive tomorrow:
+
+- Pin every filter in the URL — sort, page size, page, date, team, query.
+  Never rely on a default that reads the current date.
+- Seed absolute dates. Never `new Date()` or `Date.now()` in a fixture.
+- Scope the surface to fixture rows. If a page reads unfiltered tables and
+  offers no way to narrow it, do not baseline it.
+- Seed no dues rows. The Paid/Unpaid badge flips on 1 August.
+- Assert real content is on screen before capturing, so you never baseline a
+  `loading.tsx` skeleton.
+- Reuse `preparePage`/`signInAs`/`expectVisualBaseline` from `visual-harness.ts`
+  rather than calling `toHaveScreenshot` directly. They handle the fixed clock,
+  reduced motion, scrollbar suppression, the Next dev-overlay badge, font
+  readiness and pointer parking.
 
 ## Refinements
 
