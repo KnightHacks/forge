@@ -1,14 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -99,11 +92,19 @@ import {
   mergeUndergraduateAffinityRows,
   mergeUndergraduateDemographicRows,
 } from "./analytics-audience-segments";
+import { useChartDimensions } from "./analytics-chart-dimensions";
 import {
   buildDuesCurveConfig,
   buildDuesCurveRows,
   duesCurveYears,
 } from "./analytics-dues-curve";
+import {
+  buildPeriodPatch,
+  parseCustomRangeEnd,
+  parseCustomRangeStart,
+  resolvePeriodSelectValue,
+  toCustomRangeInputs,
+} from "./analytics-filter-period";
 import {
   formatDate,
   formatDateTime,
@@ -118,12 +119,10 @@ import {
   AnalyticsMetricGrid as MetricGrid,
 } from "./analytics-metric-card";
 import { ratio } from "./analytics-rates";
+import { resolveTablePage } from "./analytics-table-pagination";
 import { DiscordAnalyticsSection } from "./discord-analytics-section";
 import { buildAnalyticsSearchParams } from "./params";
-import {
-  clearResumeDownloadSignal,
-  readResumeDownloadSignal,
-} from "./resume-bundle-download-signal";
+import { useResumeBundleDownload } from "./resume-bundle-download";
 
 interface AnalyticsAccess {
   canEditMembers: boolean;
@@ -230,30 +229,7 @@ function ShadChart({
   className: string;
   config?: ChartConfig;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState<{
-    height: number;
-    width: number;
-  } | null>(null);
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const update = () => {
-      const bounds = container.getBoundingClientRect();
-      const height = Math.floor(bounds.height);
-      const width = Math.floor(bounds.width);
-      setDimensions((current) => {
-        if (height <= 0 || width <= 0) return null;
-        return current?.height === height && current.width === width
-          ? current
-          : { height, width };
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  const { containerRef, dimensions } = useChartDimensions();
   return (
     <div
       className={`${className} min-h-0 min-w-0`}
@@ -459,10 +435,11 @@ function PaginatedTableRegion<T>({
 }) {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(initialPageSize);
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const currentPage = Math.min(page, pageCount - 1);
-  const start = currentPage * pageSize;
-  const end = Math.min(start + pageSize, rows.length);
+  const { currentPage, end, pageCount, start } = resolveTablePage({
+    page,
+    pageSize,
+    rowCount: rows.length,
+  });
 
   return (
     <div className="min-w-0">
@@ -665,34 +642,8 @@ function AnalyticsFilters({
   );
   const handlePeriod = useCallback(
     (value: string) => {
-      if (value === "current_semester") {
-        update({
-          comparison: "previous_period",
-          period: { kind: "current_semester" },
-        });
-      } else if (value === "current_academic_year") {
-        update({
-          comparison: "previous_academic_year",
-          period: { kind: "current_academic_year" },
-        });
-      } else if (value === "all_time") {
-        update({ comparison: "none", period: { kind: "all_time" } });
-      } else if (value === "custom") {
-        const to = new Date();
-        const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
-        update({
-          comparison: "previous_period",
-          period: { from, kind: "custom", to },
-        });
-      } else if (value.startsWith("ay:")) {
-        update({
-          comparison: "previous_academic_year",
-          period: {
-            kind: "academic_year",
-            startYear: Number(value.slice(3)),
-          },
-        });
-      }
+      const patch = buildPeriodPatch(value);
+      if (patch) update(patch);
     },
     [update],
   );
@@ -721,7 +672,7 @@ function AnalyticsFilters({
       update({
         period: {
           ...input.period,
-          from: new Date(`${event.target.value}T00:00:00.000Z`),
+          from: parseCustomRangeStart(event.target.value),
         },
       });
     },
@@ -730,9 +681,12 @@ function AnalyticsFilters({
   const handleCustomTo = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (input.period.kind !== "custom" || !event.target.value) return;
-      const inclusive = new Date(`${event.target.value}T00:00:00.000Z`);
-      inclusive.setUTCDate(inclusive.getUTCDate() + 1);
-      update({ period: { ...input.period, to: inclusive } });
+      update({
+        period: {
+          ...input.period,
+          to: parseCustomRangeEnd(event.target.value),
+        },
+      });
     },
     [input.period, update],
   );
@@ -748,19 +702,9 @@ function AnalyticsFilters({
       }),
     [input.section, navigate],
   );
-  const periodValue =
-    input.period.kind === "academic_year"
-      ? `ay:${input.period.startYear}`
-      : input.period.kind;
+  const periodValue = resolvePeriodSelectValue(input.period);
   const academicYears = report.dues.academicYears.map((year) => year.startYear);
-  const customFrom =
-    input.period.kind === "custom"
-      ? input.period.from.toISOString().slice(0, 10)
-      : "";
-  const customTo =
-    input.period.kind === "custom"
-      ? new Date(input.period.to.getTime() - 1).toISOString().slice(0, 10)
-      : "";
+  const customRange = toCustomRangeInputs(input.period);
   const discordOnly = input.section === "discord";
 
   return (
@@ -884,7 +828,7 @@ function AnalyticsFilters({
               className="h-11"
               onChange={handleCustomFrom}
               type="date"
-              value={customFrom}
+              value={customRange.from}
             />
           </label>
           <label className="grid gap-1 text-xs text-muted-foreground">
@@ -893,7 +837,7 @@ function AnalyticsFilters({
               className="h-11"
               onChange={handleCustomTo}
               type="date"
-              value={customTo}
+              value={customRange.to}
             />
           </label>
         </div>
@@ -1985,71 +1929,7 @@ function ExportButton({
 }
 
 function ResumeBundleButton() {
-  const [isPreparing, setIsPreparing] = useState(false);
-  const pollTimerRef = useRef<number | null>(null);
-  const timeoutTimerRef = useRef<number | null>(null);
-
-  const clearTimers = useCallback(() => {
-    if (pollTimerRef.current !== null) {
-      window.clearInterval(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-    if (timeoutTimerRef.current !== null) {
-      window.clearTimeout(timeoutTimerRef.current);
-      timeoutTimerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => clearTimers, [clearTimers]);
-
-  const handleDownload = useCallback(() => {
-    if (isPreparing) return;
-
-    clearTimers();
-    clearResumeDownloadSignal();
-    setIsPreparing(true);
-
-    const token = window.crypto.randomUUID().replaceAll("-", "");
-    const readySignal = `${token}.ready`;
-    const errorSignal = `${token}.error`;
-
-    pollTimerRef.current = window.setInterval(() => {
-      const signal = readResumeDownloadSignal();
-      if (signal !== readySignal && signal !== errorSignal) return;
-
-      clearTimers();
-      clearResumeDownloadSignal();
-      setIsPreparing(false);
-
-      if (signal === readySignal) {
-        toast.success("Resume bundle download started.");
-      } else {
-        toast.error(
-          "The resume bundle could not be prepared. Please try again.",
-        );
-      }
-    }, 250);
-
-    timeoutTimerRef.current = window.setTimeout(
-      () => {
-        clearTimers();
-        clearResumeDownloadSignal();
-        setIsPreparing(false);
-        toast.error(
-          "Resume preparation is taking longer than expected. Please try again.",
-        );
-      },
-      5 * 60 * 1000,
-    );
-
-    const downloadLink = document.createElement("a");
-    downloadLink.href = `/api/admin/resume-bundle?downloadToken=${encodeURIComponent(token)}`;
-    downloadLink.download = "";
-    downloadLink.hidden = true;
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-  }, [clearTimers, isPreparing]);
+  const { isPreparing, startDownload } = useResumeBundleDownload();
 
   return (
     <div className="grid w-full gap-2 sm:w-auto">
@@ -2057,7 +1937,7 @@ function ResumeBundleButton() {
         className="h-11 w-full sm:w-auto sm:justify-self-start"
         disabled={isPreparing}
         aria-busy={isPreparing}
-        onClick={handleDownload}
+        onClick={startDownload}
         type="button"
       >
         {isPreparing ? (

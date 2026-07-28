@@ -23,7 +23,7 @@ import {
   FormResponse,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { logger } from "@forge/utils";
+import { logger, serializeCsvRows } from "@forge/utils";
 import {
   adminMemberDeleteSchema,
   adminMemberDuesStatusSchema,
@@ -60,10 +60,7 @@ import {
   assertCanInvalidateMemberDues,
   assertCanReadMembers,
 } from "../utils/member/access";
-import {
-  escapeCsvCell,
-  rankAdminMemberCandidates,
-} from "../utils/member/admin";
+import { rankAdminMemberCandidates } from "../utils/member/admin";
 import { updateMemberProfile } from "../utils/member/update";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 import {
@@ -808,17 +805,15 @@ export const memberAdminRouter = {
       const members = await getMembersInOrder(
         candidates.map((candidate) => candidate.id),
       );
-      const lines = [
-        csvColumns.map(escapeCsvCell).join(","),
+      const content = serializeCsvRows([
+        csvColumns,
         ...members.map((member) =>
           memberCsvRow(
             member,
             duesStatuses.get(member.id) ?? buildDuesStatus({ duesRows: [] }),
-          )
-            .map(escapeCsvCell)
-            .join(","),
+          ),
         ),
-      ];
+      ]);
       await createAdminAuditEvent({
         actionKey: "member.directory.exported",
         actor: ctx.session.user,
@@ -839,7 +834,7 @@ export const memberAdminRouter = {
       });
 
       return {
-        content: `${lines.join("\r\n")}\r\n`,
+        content,
         fileName: `members-${new Date().toISOString().slice(0, 10)}.csv`,
       };
     }),
@@ -1260,6 +1255,7 @@ export const memberAdminRouter = {
         previousObjectName = member.profilePictureUrl;
         const objectName = await uploadProfilePictureForUser({
           fileContent: input.fileContent,
+          fileName: input.fileName,
           userId: member.userId,
         });
         const operationId = randomUUID();
@@ -1395,6 +1391,7 @@ export const memberAdminRouter = {
         targetUserId = member.userId;
         const objectName = await uploadResumeForUser({
           fileContent: input.fileContent,
+          fileName: input.fileName,
           userId: member.userId,
         });
         const operationId = randomUUID();

@@ -1,6 +1,7 @@
 export * from "./hackathons";
 export * from "./forms";
 export * from "./forms-platform";
+export * from "./upload-policy";
 export * from "./member";
 export * from "./dues";
 export * from "./admin-member";

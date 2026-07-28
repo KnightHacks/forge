@@ -1,5 +1,7 @@
 import { EVENTS } from "@forge/consts";
 
+import { normalizeSearchValue, scoreSearchCandidate } from "../search-ranking";
+
 interface ProviderProjection {
   appliedRevision: number | null;
   id: string | null;
@@ -66,23 +68,6 @@ function normalize(value: string) {
     .toLocaleLowerCase("en-US")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function editDistance(left: string, right: string) {
-  const prior = Array.from({ length: right.length + 1 }, (_, index) => index);
-  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-    const next = [leftIndex];
-    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-      next[rightIndex] = Math.min(
-        (prior[rightIndex] ?? 0) + 1,
-        (next[rightIndex - 1] ?? 0) + 1,
-        (prior[rightIndex - 1] ?? 0) + cost,
-      );
-    }
-    prior.splice(0, prior.length, ...next);
-  }
-  return prior[right.length] ?? Number.POSITIVE_INFINITY;
 }
 
 function isActivePublished(event: EventDiscoveryRecord, now: Date) {
@@ -449,12 +434,9 @@ export function rankCheckInIdentityCandidates<
   candidates: readonly Candidate[],
   { limit, query }: { limit: number; query: string },
 ) {
-  const search = normalize(query)
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-  const tokens = search ? search.split(" ") : [];
+  const search = normalizeSearchValue(query);
   const ranked = candidates.flatMap((candidate) => {
-    const searchable = normalize(
+    const searchable = normalizeSearchValue(
       [
         candidate.firstName,
         candidate.lastName,
@@ -462,29 +444,12 @@ export function rankCheckInIdentityCandidates<
         candidate.discordUsername,
         candidate.email,
       ].join(" "),
-    )
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim();
-    const words = searchable.split(" ");
-    const scores = tokens.map((token) => {
-      if (searchable === token) return 1_000;
-      if (words.includes(token)) return 950;
-      if (words.some((word) => word.startsWith(token))) return 850;
-      if (searchable.includes(token)) return 800;
-      const distance = Math.min(
-        ...words.map((word) => editDistance(token, word)),
-      );
-      const allowed = token.length <= 4 ? 1 : 2;
-      return distance <= allowed ? 600 - distance * 50 : null;
-    });
-    if (scores.some((score) => score === null)) return [];
-    return [
-      {
-        candidate,
-        direct: searchable.includes(search),
-        score: scores.reduce<number>((total, score) => total + (score ?? 0), 0),
-      },
-    ];
+    );
+    const score = scoreSearchCandidate(searchable, search);
+    if (score === null) return [];
+    // Check-in scans a badge line, so a literal phrase hit must never share the
+    // list with typo-tolerant near-misses.
+    return [{ candidate, direct: searchable.includes(search), score }];
   });
   const relevant = ranked.some(({ direct }) => direct)
     ? ranked.filter(({ direct }) => direct)

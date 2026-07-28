@@ -22,6 +22,7 @@ import {
 import {
   callbackConfigurationSchema,
   formDefinitionSchema,
+  validateFormUpload,
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
@@ -42,7 +43,6 @@ import {
   finalizeFormAttachment,
   getFormAttachmentDownloadUrl,
   getLegacyFormFileDownloadUrl,
-  mimeTypeAllowed,
 } from "../utils/forms/attachments";
 import { listFormCallbackCatalog } from "../utils/forms/callbacks";
 import {
@@ -187,16 +187,21 @@ export const formsRouter = {
         const question = definition.questions.find(
           (candidate) => candidate.id === input.questionId,
         );
-        if (
-          question?.type !== "file" ||
-          question.retired ||
-          input.size > question.maxBytes ||
-          !mimeTypeAllowed(input.contentType, question.allowedMimeTypes)
-        ) {
+        if (question?.type !== "file" || question.retired) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "This file does not match the question's upload limits.",
+            message: "This question does not accept file uploads.",
           });
+        }
+        const check = validateFormUpload({
+          allowedMimeTypes: question.allowedMimeTypes,
+          contentType: input.contentType,
+          fileName: input.fileName,
+          maxBytes: question.maxBytes,
+          size: input.size,
+        });
+        if (!check.allowed) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: check.message });
         }
       }
       return createFormAttachmentUpload({

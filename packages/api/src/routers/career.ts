@@ -443,6 +443,7 @@ export const careerRouter = {
         .object({
           companyId: z.string().uuid(),
           fileContent: z.string().max(MAX_PROFILE_PICTURE_DATA_URL_LENGTH),
+          fileName: z.string().trim().min(1).max(255).optional(),
         })
         .strict(),
     )
@@ -462,6 +463,7 @@ export const careerRouter = {
       const objectName = await uploadCompanyImageObject({
         companyId: company.id,
         fileContent: input.fileContent,
+        fileName: input.fileName,
       });
       const operationId = company.logoObjectName ? randomUUID() : undefined;
       let auditEventId: string | undefined;

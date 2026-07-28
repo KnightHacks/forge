@@ -2,6 +2,13 @@ import { z } from "zod";
 
 import { FORMS } from "@forge/consts";
 
+import {
+  isAllowedFormAttachmentType,
+  isBlockedUploadExtension,
+  megabyteLabel,
+  mimeTypeAllowed,
+} from "./upload-policy";
+
 export const FORM_UPLOAD_MAX_BYTES = 100 * 1024 * 1024;
 export const FORM_LINEAR_SCALE_ENDPOINT_MIN = -1_000;
 export const FORM_LINEAR_SCALE_ENDPOINT_MAX = 1_000;
@@ -414,40 +421,42 @@ export const callbackConfigurationSchema = z.object({
   responseMode: z.enum(["single_locked", "multiple_locked"]),
 });
 
-const blockedExtensions = new Set([
-  "bat",
-  "cmd",
-  "com",
-  "exe",
-  "js",
-  "mjs",
-  "ps1",
-  "sh",
-  "vbs",
-]);
-const safeContentTypes = [
-  /^application\/(json|msword|pdf|rtf|vnd\.|x-7z-compressed|zip$)/,
-  /^image\//,
-  /^text\/(csv|plain|rtf)/,
-  /^video\//,
-] as const;
-
+/**
+ * The one gate every form attachment passes, at request time and again at
+ * finalize time. `allowedMimeTypes` and `maxBytes` narrow it to a single
+ * question's limits; omitting them checks only the platform-wide bound.
+ */
 export function validateFormUpload(input: {
+  allowedMimeTypes?: readonly string[];
   contentType: string;
   fileName: string;
+  maxBytes?: number;
   size: number;
 }):
   | { allowed: true }
-  | { allowed: false; reason: "too_large" | "unsafe_type" } {
-  if (input.size > FORM_UPLOAD_MAX_BYTES) {
-    return { allowed: false, reason: "too_large" };
+  | { allowed: false; message: string; reason: "too_large" | "unsafe_type" } {
+  const maxBytes = Math.min(
+    input.maxBytes ?? FORM_UPLOAD_MAX_BYTES,
+    FORM_UPLOAD_MAX_BYTES,
+  );
+  if (input.size > maxBytes) {
+    return {
+      allowed: false,
+      message: `Files may not exceed ${megabyteLabel(maxBytes)}.`,
+      reason: "too_large",
+    };
   }
-  const extension = input.fileName.toLowerCase().split(".").pop() ?? "";
   if (
-    blockedExtensions.has(extension) ||
-    !safeContentTypes.some((pattern) => pattern.test(input.contentType))
+    isBlockedUploadExtension(input.fileName) ||
+    !isAllowedFormAttachmentType(input.contentType) ||
+    (input.allowedMimeTypes &&
+      !mimeTypeAllowed(input.contentType, input.allowedMimeTypes))
   ) {
-    return { allowed: false, reason: "unsafe_type" };
+    return {
+      allowed: false,
+      message: "That file type is not allowed.",
+      reason: "unsafe_type",
+    };
   }
   return { allowed: true };
 }

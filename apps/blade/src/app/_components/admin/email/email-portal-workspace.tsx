@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -65,15 +65,8 @@ import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime, formatClubTime } from "~/lib/dates";
 import {
   audienceDefinitions,
-  defaultAudienceKey,
-  restoreDraftAudiences,
   toggleAudienceSelection,
 } from "./email-audience-selection";
-import {
-  discardEmailComposeDraft,
-  loadEmailComposeDraft,
-  saveEmailComposeDraft,
-} from "./email-compose-draft-storage";
 import { suppressedRecipientCount } from "./email-preview-counts";
 import { visibleRecipients as filterVisibleRecipients } from "./email-recipient-list";
 import { dateTimeLocalToIso } from "./email-schedule-formatting";
@@ -83,6 +76,8 @@ import {
   DEFAULT_VISUAL_DOCUMENT,
 } from "./email-template-defaults";
 import { publishedTemplateOptions } from "./email-template-revisions";
+import { useAudienceResolution } from "./use-audience-resolution";
+import { useEmailComposeDraft } from "./use-email-compose-draft";
 
 export type {
   CampaignAudienceMode,
@@ -466,90 +461,23 @@ export function EmailPortalWorkspace({
   const [tab, setTab] = useState<EmailPortalTab>(initialTab);
   const [editor, setEditor] = useState<TemplateEditorSeed | null>(null);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
-  const [contentMode, setContentMode] = useState<"plainText" | "template">(
-    "template",
-  );
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [audienceResolution, setAudienceResolution] =
-    useState<EmailAudienceResolution | null>(null);
-  const [excludedRecipients, setExcludedRecipients] = useState(
-    new Set<string>(),
-  );
-  const [isResolvingAudience, setIsResolvingAudience] = useState(false);
   const [recipientSearch, setRecipientSearch] = useState("");
   const [sendDetail, setSendDetail] = useState<EmailPortalSendDetail | null>(
     null,
   );
   const [loadingSendId, setLoadingSendId] = useState<string | null>(null);
-  const audienceRequest = useRef(0);
-  const skipNextDraftSave = useRef(false);
   const [templatePreview, setTemplatePreview] = useState<{
     result: TemplatePreviewResult;
     templateId: string;
   } | null>(null);
-  const [subject, setSubject] = useState("");
-  const [plainText, setPlainText] = useState("");
-  const [templateRevisionId, setTemplateRevisionId] = useState("");
-  const [selectedAudiences, setSelectedAudiences] = useState(
-    new Set<string>([defaultAudienceKey(developmentReviewCampaign)]),
-  );
-  const [scheduleMode, setScheduleMode] = useState<"now" | "schedule">("now");
-  const [scheduledFor, setScheduledFor] = useState("");
-  const [composeDraftReady, setComposeDraftReady] = useState(false);
-
-  useEffect(() => {
-    if (preview) setConfirmationOpen(true);
-  }, [preview]);
-
-  useEffect(() => {
-    try {
-      const draft = loadEmailComposeDraft(window.localStorage);
-      if (draft) {
-        setContentMode(draft.contentMode);
-        setExcludedRecipients(new Set(draft.excludedRecipients));
-        setPlainText(draft.plainText);
-        setScheduleMode(draft.scheduleMode);
-        setScheduledFor(draft.scheduledFor);
-        setSelectedAudiences(
-          new Set(
-            restoreDraftAudiences(
-              draft.selectedAudiences,
-              developmentReviewCampaign,
-            ),
-          ),
-        );
-        setSubject(draft.subject);
-        setTemplateRevisionId(draft.templateRevisionId);
-      }
-    } catch {
-      // Storage may be unavailable in hardened browser contexts.
-    } finally {
-      setComposeDraftReady(true);
-    }
-  }, [developmentReviewCampaign]);
-
-  useEffect(() => {
-    if (!composeDraftReady) return;
-    if (skipNextDraftSave.current) {
-      skipNextDraftSave.current = false;
-      return;
-    }
-    try {
-      saveEmailComposeDraft(window.localStorage, {
-        contentMode,
-        excludedRecipients: [...excludedRecipients].sort(),
-        plainText,
-        scheduleMode,
-        scheduledFor,
-        selectedAudiences: [...selectedAudiences].sort(),
-        subject,
-        templateRevisionId,
-      });
-    } catch {
-      // Browsers may deny storage or exhaust their local quota.
-    }
-  }, [
-    composeDraftReady,
+  const {
+    clear: clearComposeDraft,
+    compose,
+    setExcludedRecipients,
+    update: updateCompose,
+  } = useEmailComposeDraft(developmentReviewCampaign);
+  const {
     contentMode,
     excludedRecipients,
     plainText,
@@ -558,7 +486,11 @@ export function EmailPortalWorkspace({
     selectedAudiences,
     subject,
     templateRevisionId,
-  ]);
+  } = compose;
+
+  useEffect(() => {
+    if (preview) setConfirmationOpen(true);
+  }, [preview]);
 
   const options = Array.isArray(audienceOptions)
     ? { hackathons: [], presets: [], roles: [] }
@@ -571,6 +503,12 @@ export function EmailPortalWorkspace({
     () => audienceDefinitions(selectedAudiences),
     [selectedAudiences],
   );
+  const { isResolving: isResolvingAudience, resolution: audienceResolution } =
+    useAudienceResolution({
+      audiences: selectedAudienceDefinitions,
+      resolve: onResolveAudience,
+      setExcludedRecipients,
+    });
   const visibleRecipients = useMemo(
     () =>
       filterVisibleRecipients(
@@ -581,42 +519,6 @@ export function EmailPortalWorkspace({
   );
   const selectedRecipientCount =
     (audienceResolution?.recipients.length ?? 0) - excludedRecipients.size;
-
-  useEffect(() => {
-    if (!onResolveAudience || selectedAudienceDefinitions.length === 0) {
-      setAudienceResolution(null);
-      setExcludedRecipients(new Set());
-      setIsResolvingAudience(false);
-      return;
-    }
-    const request = ++audienceRequest.current;
-    setIsResolvingAudience(true);
-    const timeout = window.setTimeout(() => {
-      void onResolveAudience(selectedAudienceDefinitions)
-        .then((result) => {
-          if (audienceRequest.current !== request) return;
-          const pool = new Set(result.recipients.map(({ email }) => email));
-          setAudienceResolution(result);
-          setExcludedRecipients(
-            (current) =>
-              new Set([...current].filter((email) => pool.has(email))),
-          );
-        })
-        .catch(() => {
-          if (audienceRequest.current === request) {
-            setAudienceResolution(null);
-          }
-        })
-        .finally(() => {
-          if (audienceRequest.current === request) {
-            setIsResolvingAudience(false);
-          }
-        });
-    }, 180);
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [onResolveAudience, selectedAudienceDefinitions]);
 
   const content: EmailSendContent =
     contentMode === "plainText"
@@ -634,26 +536,9 @@ export function EmailPortalWorkspace({
   };
 
   const toggleAudience = (key: string) => {
-    setSelectedAudiences((current) => toggleAudienceSelection(current, key));
-  };
-
-  const clearComposeDraft = () => {
-    skipNextDraftSave.current = true;
-    try {
-      discardEmailComposeDraft(window.localStorage);
-    } catch {
-      // Storage may be unavailable even though the send succeeded.
-    }
-    setContentMode("template");
-    setExcludedRecipients(new Set());
-    setPlainText("");
-    setScheduleMode("now");
-    setScheduledFor("");
-    setSelectedAudiences(
-      new Set([defaultAudienceKey(developmentReviewCampaign)]),
+    updateCompose("selectedAudiences", (current) =>
+      toggleAudienceSelection(current, key),
     );
-    setSubject("");
-    setTemplateRevisionId("");
   };
 
   const tabs: {
@@ -896,7 +781,9 @@ export function EmailPortalWorkspace({
                   maxLength={200}
                   placeholder="A concise, useful subject"
                   value={subject}
-                  onChange={(event) => setSubject(event.target.value)}
+                  onChange={(event) =>
+                    updateCompose("subject", event.target.value)
+                  }
                 />
               </div>
               <div className="space-y-3">
@@ -927,7 +814,7 @@ export function EmailPortalWorkspace({
                             ? "border-primary/40 bg-primary/10"
                             : "border-white/10 bg-background/50",
                         )}
-                        onClick={() => setContentMode(option.id)}
+                        onClick={() => updateCompose("contentMode", option.id)}
                       >
                         <Icon className="mt-0.5 h-5 w-5 text-primary" />
                         <span>
@@ -950,7 +837,7 @@ export function EmailPortalWorkspace({
                       className="h-11 rounded-md border border-input bg-background px-3 text-sm"
                       value={templateRevisionId}
                       onChange={(event) =>
-                        setTemplateRevisionId(event.target.value)
+                        updateCompose("templateRevisionId", event.target.value)
                       }
                     >
                       <option value="">Choose a template</option>
@@ -972,7 +859,9 @@ export function EmailPortalWorkspace({
                       className="min-h-44"
                       placeholder="Write the complete text email…"
                       value={plainText}
-                      onChange={(event) => setPlainText(event.target.value)}
+                      onChange={(event) =>
+                        updateCompose("plainText", event.target.value)
+                      }
                     />
                   </div>
                 )}
@@ -1099,7 +988,7 @@ export function EmailPortalWorkspace({
                         ? "border-primary/35 bg-primary/10"
                         : "border-white/10 bg-background/50",
                     )}
-                    onClick={() => setScheduleMode("now")}
+                    onClick={() => updateCompose("scheduleMode", "now")}
                   >
                     <Send className="h-5 w-5 text-primary" />
                     <span>
@@ -1119,7 +1008,7 @@ export function EmailPortalWorkspace({
                         ? "border-primary/35 bg-primary/10"
                         : "border-white/10 bg-background/50",
                     )}
-                    onClick={() => setScheduleMode("schedule")}
+                    onClick={() => updateCompose("scheduleMode", "schedule")}
                   >
                     <CalendarClock className="h-5 w-5 text-primary" />
                     <span>
@@ -1141,8 +1030,11 @@ export function EmailPortalWorkspace({
                   type="datetime-local"
                   value={scheduledFor}
                   onChange={(event) => {
-                    setScheduledFor(event.target.value);
-                    setScheduleMode(event.target.value ? "schedule" : "now");
+                    updateCompose("scheduledFor", event.target.value);
+                    updateCompose(
+                      "scheduleMode",
+                      event.target.value ? "schedule" : "now",
+                    );
                   }}
                 />
                 {scheduleMode === "schedule" && (

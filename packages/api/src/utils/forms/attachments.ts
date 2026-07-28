@@ -9,7 +9,12 @@ import {
   FormResponse,
   FormsSchemas,
 } from "@forge/db/schemas/knight-hacks";
-import { formDefinitionSchema, validateFormUpload } from "@forge/validators";
+import {
+  formDefinitionSchema,
+  hasExecutableSignature,
+  matchesUploadSignature,
+  validateFormUpload,
+} from "@forge/validators";
 
 import type { AuditActor } from "../audit/service";
 import type { WriteDb } from "../db";
@@ -40,66 +45,16 @@ function safeFileName(value: string) {
     .slice(0, 180);
 }
 
-function beginsWith(buffer: Buffer, bytes: readonly number[]) {
-  return bytes.every((byte, index) => buffer[index] === byte);
-}
-
+/**
+ * Form attachments are the one path with an open type bound, so an unrecognised
+ * signature means "no opinion" rather than "reject" — a HEIC photo has no entry
+ * in the table and is still a legitimate upload. Executable images are refused
+ * whatever they claim to be.
+ */
 export function uploadSignatureMatches(contentType: string, prefix: Buffer) {
   if (prefix.length === 0) return false;
-  const dangerous =
-    beginsWith(prefix, [0x4d, 0x5a]) ||
-    beginsWith(prefix, [0x7f, 0x45, 0x4c, 0x46]) ||
-    beginsWith(prefix, [0xfe, 0xed, 0xfa, 0xce]) ||
-    beginsWith(prefix, [0xfe, 0xed, 0xfa, 0xcf]) ||
-    beginsWith(prefix, [0xcf, 0xfa, 0xed, 0xfe]) ||
-    beginsWith(prefix, [0xca, 0xfe, 0xba, 0xbe]) ||
-    beginsWith(prefix, [0x23, 0x21]);
-  if (dangerous) return false;
-
-  const normalized = contentType.toLowerCase().split(";", 1)[0]?.trim();
-  if (normalized === "application/pdf") {
-    return prefix.subarray(0, 5).toString("ascii") === "%PDF-";
-  }
-  if (normalized === "image/png") {
-    return beginsWith(prefix, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  }
-  if (normalized === "image/jpeg") {
-    return beginsWith(prefix, [0xff, 0xd8, 0xff]);
-  }
-  if (normalized === "image/gif") {
-    const signature = prefix.subarray(0, 6).toString("ascii");
-    return signature === "GIF87a" || signature === "GIF89a";
-  }
-  if (normalized === "image/webp") {
-    return (
-      prefix.subarray(0, 4).toString("ascii") === "RIFF" &&
-      prefix.subarray(8, 12).toString("ascii") === "WEBP"
-    );
-  }
-  if (
-    normalized === "application/zip" ||
-    normalized === "application/x-7z-compressed" ||
-    normalized?.startsWith("application/vnd.openxmlformats-officedocument")
-  ) {
-    return (
-      beginsWith(prefix, [0x50, 0x4b, 0x03, 0x04]) ||
-      beginsWith(prefix, [0x50, 0x4b, 0x05, 0x06]) ||
-      beginsWith(prefix, [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c])
-    );
-  }
-  if (
-    normalized === "application/msword" ||
-    normalized?.startsWith("application/vnd.ms-")
-  ) {
-    return beginsWith(prefix, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
-  }
-  if (normalized === "video/mp4") {
-    return prefix.subarray(4, 8).toString("ascii") === "ftyp";
-  }
-  if (normalized === "video/webm") {
-    return beginsWith(prefix, [0x1a, 0x45, 0xdf, 0xa3]);
-  }
-  return true;
+  if (hasExecutableSignature(prefix)) return false;
+  return matchesUploadSignature(contentType, prefix) !== false;
 }
 
 export function classifyFormAttachmentAccess(input: {
@@ -142,13 +97,7 @@ export async function createFormAttachmentUpload(input: {
 }) {
   const validation = validateFormUpload(input);
   if (!validation.allowed) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message:
-        validation.reason === "too_large"
-          ? "Files may not exceed 100 MB."
-          : "That file type is not allowed.",
-    });
+    throw new TRPCError({ code: "BAD_REQUEST", message: validation.message });
   }
   const id = randomUUID();
   const fileName = safeFileName(input.fileName);
@@ -352,8 +301,13 @@ export async function assertAndAttachResponseFiles(input: {
       question?.type !== "file" ||
       question.retired ||
       !attachment ||
-      attachment.size > question.maxBytes ||
-      !mimeTypeAllowed(attachment.contentType, question.allowedMimeTypes) ||
+      !validateFormUpload({
+        allowedMimeTypes: question.allowedMimeTypes,
+        contentType: attachment.contentType,
+        fileName: attachment.fileName,
+        maxBytes: question.maxBytes,
+        size: attachment.size,
+      }).allowed ||
       ("fileName" in value &&
         typeof value.fileName === "string" &&
         value.fileName !== attachment.fileName)
@@ -369,21 +323,6 @@ export async function assertAndAttachResponseFiles(input: {
     .set({ responseId: input.responseId })
     .where(inArray(FormAttachment.id, attachmentIds));
   return { removedObjectNames: [] };
-}
-
-export function mimeTypeAllowed(
-  contentType: string,
-  allowedMimeTypes: readonly string[],
-) {
-  const normalized = contentType.toLowerCase().split(";", 1)[0]?.trim();
-  return allowedMimeTypes.some((allowed) => {
-    const candidate = allowed.toLowerCase().trim();
-    return (
-      candidate === normalized ||
-      (candidate.endsWith("/*") &&
-        normalized?.startsWith(candidate.slice(0, -1)) === true)
-    );
-  });
 }
 
 export async function getFormAttachmentDownloadUrl(attachmentId: string) {

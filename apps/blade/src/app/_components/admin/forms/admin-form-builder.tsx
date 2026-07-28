@@ -2,7 +2,7 @@
 
 import type { DragEndEvent } from "@dnd-kit/core";
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -72,6 +72,11 @@ import {
   formDefinitionSchema,
 } from "@forge/validators";
 
+import type {
+  FormAvailability,
+  FormAvailabilitySource,
+} from "./form-availability-draft";
+import type { FormCallbackDraft } from "./form-callback-mappings";
 import type { MediaInstruction } from "./form-definition-draft";
 import {
   AdminPageHeader,
@@ -79,14 +84,15 @@ import {
 } from "~/app/_components/shared/admin-page";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
+import { draftAvailability } from "./form-availability-draft";
 import {
   formatRespondentAudience,
   formatResponseMode,
   formatSectionName,
   formBuilderShareHref,
-  localDateTime,
   toSlug,
 } from "./form-builder-formatting";
+import { callbackInputMappings } from "./form-callback-mappings";
 import {
   buildFormDefinition,
   draftInstructionsBody,
@@ -98,7 +104,7 @@ import {
   newManualOption,
   newQuestion,
 } from "./form-question-model";
-import { reorderFormQuestions, swapQuestions } from "./form-question-ordering";
+import { formQuestionsReducer } from "./form-questions-reducer";
 import { FormShareActions } from "./form-share-actions";
 
 const questionTypes = [
@@ -684,21 +690,23 @@ function QuestionSpecificEditor({
   );
 }
 
-interface BuilderInitial {
-  closesAt: string | null;
+interface BuilderInitial extends FormAvailabilitySource {
   definition: FormDefinition;
-  duesOnly: boolean;
   id: string;
-  manuallyClosed: boolean;
   name: string;
-  opensAt: string | null;
-  responseMode: "multiple_locked" | "single_editable" | "single_locked";
-  respondentRoleIds: string[];
   revision: number;
-  sectionId: string;
   slugName: string;
   state: "archived" | "draft" | "published";
 }
+
+/**
+ * Which of the builder's own dialogs is open. Settings, callbacks, and delete
+ * were three booleans, but each is opened from a header button the previous one
+ * covers, so two could never be true at once — they were one value all along.
+ * Sharing is not in here: it lives in the query string so the dialog survives a
+ * refresh and can be linked to.
+ */
+type BuilderDialog = "actions" | "callbacks" | "none" | "settings";
 
 interface CallbackCatalogItem {
   available: boolean;
@@ -743,36 +751,21 @@ export function AdminFormBuilder({
   const [mediaInstructions, setMediaInstructions] = useState<
     MediaInstruction[]
   >(draftMediaInstructions(savedInstructions));
-  const [questions, setQuestions] = useState<FormQuestion[]>(
+  const [questions, dispatchQuestions] = useReducer(
+    formQuestionsReducer,
     initial?.definition.questions ?? [],
   );
   const [revision, setRevision] = useState(initial?.revision ?? null);
-  const [sectionId, setSectionId] = useState(
-    initial?.sectionId ?? sections[0]?.id ?? "",
-  );
-  const [responseMode, setResponseMode] = useState<
-    BuilderInitial["responseMode"]
-  >(initial?.responseMode ?? "single_locked");
-  const [duesOnly, setDuesOnly] = useState(initial?.duesOnly ?? false);
-  const [respondentRoleIds, setRespondentRoleIds] = useState<string[]>(
-    initial?.respondentRoleIds ?? [],
-  );
-  const [manuallyClosed, setManuallyClosed] = useState(
-    initial?.manuallyClosed ?? false,
-  );
-  const [opensAt, setOpensAt] = useState(
-    localDateTime(initial?.opensAt ?? null),
-  );
-  const [closesAt, setClosesAt] = useState(
-    localDateTime(initial?.closesAt ?? null),
+  const [availability, setAvailability] = useState(() =>
+    draftAvailability(initial, sections),
   );
   const [message, setMessage] = useState<string | null>(null);
-  const [callbackSlug, setCallbackSlug] = useState("discord.assign-role");
-  const [callbackValue, setCallbackValue] = useState("");
-  const [callbackQuestionId, setCallbackQuestionId] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [callbacksOpen, setCallbacksOpen] = useState(false);
-  const [actionsOpen, setActionsOpen] = useState(false);
+  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>({
+    questionId: "",
+    slug: "discord.assign-role",
+    value: "",
+  });
+  const [openDialog, setOpenDialog] = useState<BuilderDialog>("none");
   const [respondentRoleSearch, setRespondentRoleSearch] = useState("");
   const questionSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -802,6 +795,36 @@ export function AdminFormBuilder({
     );
   }
 
+  function setDialogOpen(
+    dialog: Exclude<BuilderDialog, "none">,
+    open: boolean,
+  ) {
+    setOpenDialog(open ? dialog : "none");
+  }
+
+  function updateAvailability<Key extends keyof FormAvailability>(
+    key: Key,
+    value: FormAvailability[Key],
+  ) {
+    setAvailability((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleRespondentRole(roleId: string, selected: boolean) {
+    setAvailability((current) => ({
+      ...current,
+      respondentRoleIds: selected
+        ? [...current.respondentRoleIds, roleId]
+        : current.respondentRoleIds.filter((id) => id !== roleId),
+    }));
+  }
+
+  function updateCallbackDraft<Key extends keyof FormCallbackDraft>(
+    key: Key,
+    value: FormCallbackDraft[Key],
+  ) {
+    setCallbackDraft((current) => ({ ...current, [key]: value }));
+  }
+
   const definition = buildFormDefinition({
     description,
     instructions,
@@ -812,25 +835,21 @@ export function AdminFormBuilder({
   });
 
   function updateQuestion(id: string, patch: Partial<FormQuestion>) {
-    setQuestions((current) =>
-      current.map((question) =>
-        question.id === id
-          ? ({ ...question, ...patch } as FormQuestion)
-          : question,
-      ),
-    );
+    dispatchQuestions({ id, patch, type: "patched" });
   }
 
   function moveQuestion(index: number, direction: -1 | 1) {
-    setQuestions((current) => swapQuestions(current, index, direction));
+    dispatchQuestions({ direction, index, type: "moved" });
   }
 
   function handleQuestionDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
-    setQuestions((current) =>
-      reorderFormQuestions(current, String(active.id), String(over.id)),
-    );
+    dispatchQuestions({
+      activeId: String(active.id),
+      overId: String(over.id),
+      type: "reordered",
+    });
   }
 
   async function save() {
@@ -846,14 +865,16 @@ export function AdminFormBuilder({
     try {
       if (!initial) {
         const saved = await create.mutateAsync({
-          closesAt: closesAt ? new Date(closesAt) : null,
+          closesAt: availability.closesAt
+            ? new Date(availability.closesAt)
+            : null,
           definition: parsed,
-          duesOnly,
+          duesOnly: availability.duesOnly,
           name,
-          opensAt: opensAt ? new Date(opensAt) : null,
-          respondentRoleIds,
-          responseMode,
-          sectionId,
+          opensAt: availability.opensAt ? new Date(availability.opensAt) : null,
+          respondentRoleIds: availability.respondentRoleIds,
+          responseMode: availability.responseMode,
+          sectionId: availability.sectionId,
           slugName: slug || toSlug(name),
         });
         router.replace(`/admin/forms/${saved.id}`);
@@ -870,14 +891,16 @@ export function AdminFormBuilder({
       setRevision(saved.revision);
       try {
         await updateSettings.mutateAsync({
-          closesAt: closesAt ? new Date(closesAt) : null,
-          duesOnly,
+          closesAt: availability.closesAt
+            ? new Date(availability.closesAt)
+            : null,
+          duesOnly: availability.duesOnly,
           formId: initial.id,
-          manuallyClosed,
-          opensAt: opensAt ? new Date(opensAt) : null,
-          respondentRoleIds,
-          responseMode,
-          sectionId,
+          manuallyClosed: availability.manuallyClosed,
+          opensAt: availability.opensAt ? new Date(availability.opensAt) : null,
+          respondentRoleIds: availability.respondentRoleIds,
+          responseMode: availability.responseMode,
+          sectionId: availability.sectionId,
         });
       } catch (cause) {
         setMessage(
@@ -916,38 +939,11 @@ export function AdminFormBuilder({
 
   async function addCallback() {
     if (!initial) return;
-    const mappings =
-      callbackSlug === "discord.assign-role"
-        ? [
-            {
-              inputKey: "memberId",
-              source: { kind: "system", value: "member_id" },
-            },
-            {
-              inputKey: "roleId",
-              source: { kind: "fixed", value: callbackValue },
-            },
-          ]
-        : [
-            {
-              inputKey: "memberId",
-              source: { kind: "system", value: "member_id" },
-            },
-            callbackQuestionId
-              ? {
-                  inputKey: "note",
-                  source: { kind: "question", questionId: callbackQuestionId },
-                }
-              : {
-                  inputKey: "note",
-                  source: { kind: "fixed", value: callbackValue },
-                },
-          ];
     try {
       await configureCallback.mutateAsync({
-        callbackSlug,
+        callbackSlug: callbackDraft.slug,
         formId: initial.id,
-        mappings,
+        mappings: callbackInputMappings(callbackDraft),
       });
       setMessage("Callback configured for future responses.");
     } catch (cause) {
@@ -1010,7 +1006,7 @@ export function AdminFormBuilder({
               <Button
                 variant="outline"
                 className="min-h-11 gap-2"
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => setOpenDialog("settings")}
               >
                 <Settings2 className="h-4 w-4" aria-hidden="true" /> Settings
               </Button>
@@ -1019,7 +1015,7 @@ export function AdminFormBuilder({
               <Button
                 variant="outline"
                 className="min-h-11 gap-2"
-                onClick={() => setCallbacksOpen(true)}
+                onClick={() => setOpenDialog("callbacks")}
               >
                 <Workflow className="h-4 w-4" aria-hidden="true" /> Callbacks
               </Button>
@@ -1039,7 +1035,7 @@ export function AdminFormBuilder({
                 variant="outline"
                 className="min-h-11 gap-2"
                 aria-label="More form actions"
-                onClick={() => setActionsOpen(true)}
+                onClick={() => setOpenDialog("actions")}
               >
                 <MoreHorizontal className="h-4 w-4" aria-hidden="true" /> More
               </Button>
@@ -1100,14 +1096,16 @@ export function AdminFormBuilder({
         aria-label="Form configuration summary"
       >
         <Badge variant="outline">
-          {formatSectionName(sections, sectionId)}
-        </Badge>
-        <Badge variant="outline">{formatResponseMode(responseMode)}</Badge>
-        <Badge variant="outline">
-          {formatRespondentAudience(respondentRoleIds)}
+          {formatSectionName(sections, availability.sectionId)}
         </Badge>
         <Badge variant="outline">
-          {manuallyClosed ? "Manually closed" : "Schedule active"}
+          {formatResponseMode(availability.responseMode)}
+        </Badge>
+        <Badge variant="outline">
+          {formatRespondentAudience(availability.respondentRoleIds)}
+        </Badge>
+        <Badge variant="outline">
+          {availability.manuallyClosed ? "Manually closed" : "Schedule active"}
         </Badge>
       </div>
 
@@ -1240,10 +1238,10 @@ export function AdminFormBuilder({
                   variant="outline"
                   className="min-h-11 gap-2"
                   onClick={() =>
-                    setQuestions((current) => [
-                      ...current,
-                      newQuestion("short_text"),
-                    ])
+                    dispatchQuestions({
+                      question: newQuestion("short_text"),
+                      type: "added",
+                    })
                   }
                 >
                   <Plus className="h-4 w-4" /> Add question
@@ -1300,11 +1298,10 @@ export function AdminFormBuilder({
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                setQuestions((current) =>
-                                  current.filter(
-                                    ({ id }) => id !== question.id,
-                                  ),
-                                )
+                                dispatchQuestions({
+                                  id: question.id,
+                                  type: "removed",
+                                })
                               }
                             >
                               Remove
@@ -1336,16 +1333,13 @@ export function AdminFormBuilder({
                             disabled={readOnly}
                             value={question.type}
                             onValueChange={(value) =>
-                              setQuestions((current) =>
-                                current.map((currentQuestion) =>
-                                  currentQuestion.id === question.id
-                                    ? changeQuestionType(
-                                        currentQuestion,
-                                        value as FormQuestion["type"],
-                                      )
-                                    : currentQuestion,
+                              dispatchQuestions({
+                                question: changeQuestionType(
+                                  question,
+                                  value as FormQuestion["type"],
                                 ),
-                              )
+                                type: "replaced",
+                              })
                             }
                           >
                             <SelectTrigger
@@ -1368,13 +1362,10 @@ export function AdminFormBuilder({
                       <QuestionSpecificEditor
                         disabled={readOnly}
                         onUpdate={(nextQuestion) =>
-                          setQuestions((current) =>
-                            current.map((currentQuestion) =>
-                              currentQuestion.id === question.id
-                                ? nextQuestion
-                                : currentQuestion,
-                            ),
-                          )
+                          dispatchQuestions({
+                            question: nextQuestion,
+                            type: "replaced",
+                          })
                         }
                         question={question}
                       />
@@ -1400,7 +1391,10 @@ export function AdminFormBuilder({
         </section>
       </div>
 
-      <Dialog open={!readOnly && settingsOpen} onOpenChange={setSettingsOpen}>
+      <Dialog
+        open={!readOnly && openDialog === "settings"}
+        onOpenChange={(open) => setDialogOpen("settings", open)}
+      >
         <DialogContent className="flex max-h-[90svh] max-w-2xl flex-col overflow-hidden p-0">
           <DialogHeader className="border-b border-border/70 px-5 py-4 text-left">
             <DialogTitle>Availability & access</DialogTitle>
@@ -1413,8 +1407,10 @@ export function AdminFormBuilder({
               <Label>Section</Label>
               <select
                 className="h-11 rounded-md border border-input bg-background px-3"
-                value={sectionId}
-                onChange={(event) => setSectionId(event.target.value)}
+                value={availability.sectionId}
+                onChange={(event) =>
+                  updateAvailability("sectionId", event.target.value)
+                }
               >
                 {sections.map((section) => (
                   <option key={section.id} value={section.id}>
@@ -1427,10 +1423,11 @@ export function AdminFormBuilder({
               <Label>Response mode</Label>
               <select
                 className="h-11 rounded-md border border-input bg-background px-3"
-                value={responseMode}
+                value={availability.responseMode}
                 onChange={(event) =>
-                  setResponseMode(
-                    event.target.value as BuilderInitial["responseMode"],
+                  updateAvailability(
+                    "responseMode",
+                    event.target.value as FormAvailability["responseMode"],
                   )
                 }
               >
@@ -1445,8 +1442,10 @@ export function AdminFormBuilder({
                 id="opens-at"
                 type="datetime-local"
                 className="h-11"
-                value={opensAt}
-                onChange={(event) => setOpensAt(event.target.value)}
+                value={availability.opensAt}
+                onChange={(event) =>
+                  updateAvailability("opensAt", event.target.value)
+                }
               />
             </div>
             <div className="grid gap-2">
@@ -1455,15 +1454,19 @@ export function AdminFormBuilder({
                 id="closes-at"
                 type="datetime-local"
                 className="h-11"
-                value={closesAt}
-                onChange={(event) => setClosesAt(event.target.value)}
+                value={availability.closesAt}
+                onChange={(event) =>
+                  updateAvailability("closesAt", event.target.value)
+                }
               />
             </div>
             <label className="flex min-h-11 items-center gap-3 text-sm">
               <input
                 type="checkbox"
-                checked={duesOnly}
-                onChange={(event) => setDuesOnly(event.target.checked)}
+                checked={availability.duesOnly}
+                onChange={(event) =>
+                  updateAvailability("duesOnly", event.target.checked)
+                }
               />
               Dues-paid members only
             </label>
@@ -1498,14 +1501,12 @@ export function AdminFormBuilder({
                     >
                       <span className="min-w-0 truncate">{role.name}</span>
                       <input
-                        checked={respondentRoleIds.includes(role.id)}
+                        checked={availability.respondentRoleIds.includes(
+                          role.id,
+                        )}
                         type="checkbox"
                         onChange={(event) =>
-                          setRespondentRoleIds((current) =>
-                            event.target.checked
-                              ? [...current, role.id]
-                              : current.filter((id) => id !== role.id),
-                          )
+                          toggleRespondentRole(role.id, event.target.checked)
                         }
                       />
                     </label>
@@ -1515,14 +1516,16 @@ export function AdminFormBuilder({
             <label className="flex min-h-11 items-center gap-3 text-sm">
               <input
                 type="checkbox"
-                checked={manuallyClosed}
-                onChange={(event) => setManuallyClosed(event.target.checked)}
+                checked={availability.manuallyClosed}
+                onChange={(event) =>
+                  updateAvailability("manuallyClosed", event.target.checked)
+                }
               />
               Manually closed
             </label>
           </div>
           <DialogFooter className="border-t border-border/70 px-5 py-4">
-            <Button className="min-h-11" onClick={() => setSettingsOpen(false)}>
+            <Button className="min-h-11" onClick={() => setOpenDialog("none")}>
               Done
             </Button>
           </DialogFooter>
@@ -1530,7 +1533,10 @@ export function AdminFormBuilder({
       </Dialog>
 
       {initial && !readOnly && (
-        <Dialog open={callbacksOpen} onOpenChange={setCallbacksOpen}>
+        <Dialog
+          open={openDialog === "callbacks"}
+          onOpenChange={(open) => setDialogOpen("callbacks", open)}
+        >
           <DialogContent className="max-h-[90svh] max-w-xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Callbacks</DialogTitle>
@@ -1572,8 +1578,10 @@ export function AdminFormBuilder({
               <select
                 aria-label="Callback"
                 className="h-11 rounded-md border border-input bg-background px-3"
-                value={callbackSlug}
-                onChange={(event) => setCallbackSlug(event.target.value)}
+                value={callbackDraft.slug}
+                onChange={(event) =>
+                  updateCallbackDraft("slug", event.target.value)
+                }
               >
                 {callbacks.map((callback) => (
                   <option
@@ -1588,13 +1596,13 @@ export function AdminFormBuilder({
                   </option>
                 ))}
               </select>
-              {callbackSlug === "recruiting.notify" && (
+              {callbackDraft.slug === "recruiting.notify" && (
                 <select
                   aria-label="Map note from question"
                   className="h-11 rounded-md border border-input bg-background px-3"
-                  value={callbackQuestionId}
+                  value={callbackDraft.questionId}
                   onChange={(event) =>
-                    setCallbackQuestionId(event.target.value)
+                    updateCallbackDraft("questionId", event.target.value)
                   }
                 >
                   <option value="">Use fixed note</option>
@@ -1611,24 +1619,26 @@ export function AdminFormBuilder({
                     ))}
                 </select>
               )}
-              {(!callbackQuestionId ||
-                callbackSlug === "discord.assign-role") && (
+              {(!callbackDraft.questionId ||
+                callbackDraft.slug === "discord.assign-role") && (
                 <Input
                   className="h-11"
                   placeholder={
-                    callbackSlug === "discord.assign-role"
+                    callbackDraft.slug === "discord.assign-role"
                       ? "Assignable Blade role UUID"
                       : "Fixed recruiting note"
                   }
-                  value={callbackValue}
-                  onChange={(event) => setCallbackValue(event.target.value)}
+                  value={callbackDraft.value}
+                  onChange={(event) =>
+                    updateCallbackDraft("value", event.target.value)
+                  }
                 />
               )}
               <Button
                 variant="outline"
                 className="min-h-11"
                 disabled={
-                  responseMode === "single_editable" ||
+                  availability.responseMode === "single_editable" ||
                   configureCallback.isPending
                 }
                 onClick={() => void addCallback()}
@@ -1641,7 +1651,7 @@ export function AdminFormBuilder({
               </p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCallbacksOpen(false)}>
+              <Button variant="outline" onClick={() => setOpenDialog("none")}>
                 Close
               </Button>
             </DialogFooter>
@@ -1687,7 +1697,10 @@ export function AdminFormBuilder({
       )}
 
       {initial && !readOnly && (
-        <Dialog open={actionsOpen} onOpenChange={setActionsOpen}>
+        <Dialog
+          open={openDialog === "actions"}
+          onOpenChange={(open) => setDialogOpen("actions", open)}
+        >
           <DialogContent className="max-w-lg border-destructive/30">
             <DialogHeader>
               <DialogTitle>Delete form?</DialogTitle>
@@ -1703,7 +1716,7 @@ export function AdminFormBuilder({
               </p>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setActionsOpen(false)}>
+              <Button variant="outline" onClick={() => setOpenDialog("none")}>
                 Cancel
               </Button>
               <Button

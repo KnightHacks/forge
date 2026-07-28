@@ -33,7 +33,12 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
-import { alumniBulletinPostSchema } from "@forge/validators";
+import {
+  alumniBulletinPostSchema,
+  BULLETIN_IMAGE_UPLOAD_POLICY,
+  checkUploadMetadata,
+  uploadAccept,
+} from "@forge/validators";
 
 import type { AlumniBulletinCardData } from "~/app/_components/member/alumni-dashboard";
 import { AlumniBulletinCard } from "~/app/_components/member/alumni-dashboard";
@@ -110,6 +115,13 @@ function statusClass(status: ReturnType<typeof derivedStatus>) {
 }
 
 async function fileToBulletinImage(file: File) {
+  const selected = checkUploadMetadata(BULLETIN_IMAGE_UPLOAD_POLICY, {
+    contentType: file.type,
+    fileName: file.name,
+    size: file.size,
+  });
+  if (!selected.ok) throw new Error(selected.message);
+
   const source = await createImageBitmap(file);
   const targetWidth = Math.min(1_600, source.width);
   const targetHeight = Math.round(targetWidth * (9 / 16));
@@ -143,9 +155,11 @@ async function fileToBulletinImage(file: File) {
     canvas.toBlob(resolve, "image/webp", 0.82),
   );
   if (!blob) throw new Error("Image preview could not be prepared.");
-  if (blob.size > 2 * 1024 * 1024) {
-    throw new Error("Bulletin image must be 2MB or smaller.");
-  }
+  const encoded = checkUploadMetadata(BULLETIN_IMAGE_UPLOAD_POLICY, {
+    contentType: blob.type,
+    size: blob.size,
+  });
+  if (!encoded.ok) throw new Error(encoded.message);
   return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Image could not be read."));
@@ -323,7 +337,7 @@ function BulletinEditorDialog({
                 <Input
                   type="file"
                   aria-label="Bulletin image file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept={uploadAccept(BULLETIN_IMAGE_UPLOAD_POLICY)}
                   className="h-11 bg-card file:text-foreground"
                   onChange={async (event) => {
                     const file = event.target.files?.[0];

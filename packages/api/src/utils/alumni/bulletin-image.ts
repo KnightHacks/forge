@@ -1,20 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { TRPCError } from "@trpc/server";
 
 import { MINIO } from "@forge/consts";
 import { logger } from "@forge/utils";
+import {
+  BULLETIN_IMAGE_UPLOAD_POLICY,
+  uploadExtension,
+} from "@forge/validators";
 
-import { decodeAndValidateImageDataUrl } from "../profile-picture/security";
 import {
   ensureProfilePictureBucketExists,
   profilePictureStorageClient,
 } from "../profile-picture/storage";
-
-const extensionByContentType = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-} as const;
+import { decodeUploadDataUrl } from "../upload/data-url";
 
 function bulletinImagePrefix(userId: string) {
   return `alumni-bulletin/${userId}/`;
@@ -37,25 +34,18 @@ function isBulletinImageObjectName(objectName: string) {
 
 export async function uploadAlumniBulletinImage({
   fileContent,
+  fileName,
   userId,
 }: {
   fileContent: string;
+  fileName?: string;
   userId: string;
 }) {
-  const { contentType, fileBuffer } = decodeAndValidateImageDataUrl(
-    fileContent,
-    "Bulletin image",
+  const { contentType, fileBuffer, type } = decodeUploadDataUrl(
+    BULLETIN_IMAGE_UPLOAD_POLICY,
+    { dataUrl: fileContent, fileName },
   );
-  if (!(contentType in extensionByContentType)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Bulletin images must be JPEG, PNG, or WebP.",
-    });
-  }
-
-  const extension =
-    extensionByContentType[contentType as keyof typeof extensionByContentType];
-  const objectName = `${bulletinImagePrefix(userId)}bulletin-${randomUUID()}.${extension}`;
+  const objectName = `${bulletinImagePrefix(userId)}bulletin-${randomUUID()}.${uploadExtension(type)}`;
 
   await ensureProfilePictureBucketExists();
   await profilePictureStorageClient.putObject(

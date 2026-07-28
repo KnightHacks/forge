@@ -667,11 +667,11 @@ describe("club event feedback", () => {
       eventId: EVENT_IDS.ended,
     });
     expect(csv).toContain(MEMBER_IDS.member);
-    expect(csv.split("\n")[0]).toBe(
-      '"Response UUID","Member UUID","Submitted At","Overall","Fun","Learning","Discovery","Discovery Other","Worked","Improve","How useful was the live demo?","What should the next demo cover?"',
+    expect(csv.split("\r\n")[0]).toBe(
+      "Response UUID,Member UUID,Submitted At,Overall,Fun,Learning,Discovery,Discovery Other,Worked,Improve,How useful was the live demo?,What should the next demo cover?",
     );
-    expect(csv).toContain('"5","\'=SUM(1,2)"');
-    expect(csv).toContain('"3","Deployment"');
+    expect(csv).toContain('5,"\'=SUM(1,2)"');
+    expect(csv).toContain("3,Deployment");
   });
 
   it("[TC-051] applies exclusions only to the current rich inspection, never list metrics, CSV, or stored responses", async () => {

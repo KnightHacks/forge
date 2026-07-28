@@ -1,6 +1,8 @@
 import type { RoleManagementInput } from "@forge/validators";
 import { PERMISSIONS } from "@forge/consts";
 
+import { scoreSearchCandidate } from "../search-ranking";
+
 export interface DiscordRoleSummary {
   color: number;
   id: string;
@@ -92,54 +94,16 @@ export function filterDiscordRolesForLinking({
     }));
 }
 
-function normalizeSearchValue(value: string) {
-  return value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLocaleLowerCase("en-US")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
-
-function editDistance(left: string, right: string) {
-  const prior = Array.from({ length: right.length + 1 }, (_, index) => index);
-  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-    const next = [leftIndex];
-    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-      const cost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
-      next[rightIndex] = Math.min(
-        (prior[rightIndex] ?? 0) + 1,
-        (next[rightIndex - 1] ?? 0) + 1,
-        (prior[rightIndex - 1] ?? 0) + cost,
-      );
-    }
-    prior.splice(0, prior.length, ...next);
-  }
-  return prior[right.length] ?? Number.POSITIVE_INFINITY;
-}
-
 function roleUserSearchScore(user: RoleUserCandidate, query: string) {
-  const normalized = normalizeSearchValue(query);
-  if (!normalized) return 0;
-  const searchable = normalizeSearchValue(
+  return scoreSearchCandidate(
     [
       user.memberName ?? "",
       user.name ?? "",
       user.email ?? "",
       user.discordUserId,
     ].join(" "),
+    query,
   );
-  const words = searchable.split(" ");
-  if (searchable === normalized) return 1_000;
-  if (words.includes(normalized)) return 950;
-  if (words.some((word) => word.startsWith(normalized))) return 850;
-  if (searchable.includes(normalized)) return 800;
-  const distance = Math.min(
-    ...words.map((word) => editDistance(normalized, word)),
-  );
-  const allowedDistance = normalized.length <= 4 ? 1 : 2;
-  return distance <= allowedDistance ? 600 - distance * 50 : null;
 }
 
 export function filterRoleUsers(

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
-import { logger } from "@forge/utils";
+import { logger, serializeCsvRows } from "@forge/utils";
 
 import { assertClubEvent } from "./access";
 
@@ -255,12 +255,6 @@ export function createAttendanceService({
   };
 }
 
-function csvCell(value: Date | number | string | null) {
-  let text = value instanceof Date ? value.toISOString() : String(value ?? "");
-  if (/^[\t\r\n ]*[=+\-@]/.test(text)) text = `'${text}`;
-  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
 export function serializeAttendanceCsv(
   rows: readonly {
     checkedInAt: Date | null;
@@ -273,31 +267,26 @@ export function serializeAttendanceCsv(
     pointsAwardedEstimated: boolean;
   }[],
 ) {
-  const header = [
-    "Member UUID",
-    "Name",
-    "Discord Username",
-    "Checked In At",
-    "Operator UUID",
-    "Operator",
-    "Points Awarded",
-    "Estimated",
-  ].join(",");
-  return [
-    header,
-    ...rows.map((row) =>
-      [
-        row.memberId,
-        row.name,
-        row.discordUsername,
-        row.checkedInAt,
-        row.operatorId,
-        row.operatorName,
-        row.pointsAwarded,
-        row.pointsAwardedEstimated ? "Yes" : "No",
-      ]
-        .map(csvCell)
-        .join(","),
-    ),
-  ].join("\n");
+  return serializeCsvRows([
+    [
+      "Member UUID",
+      "Name",
+      "Discord Username",
+      "Checked In At",
+      "Operator UUID",
+      "Operator",
+      "Points Awarded",
+      "Estimated",
+    ],
+    ...rows.map((row) => [
+      row.memberId,
+      row.name,
+      row.discordUsername,
+      row.checkedInAt,
+      row.operatorId,
+      row.operatorName,
+      row.pointsAwarded,
+      row.pointsAwardedEstimated ? "Yes" : "No",
+    ]),
+  ]);
 }

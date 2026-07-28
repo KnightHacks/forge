@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getDuesPaymentIdsToInvalidate } from "../../utils/dues/status";
-import {
-  escapeCsvCell,
-  rankAdminMemberCandidates,
-} from "../../utils/member/admin";
+import { rankAdminMemberCandidates } from "../../utils/member/admin";
 
 const candidates = [
   {
@@ -64,15 +61,6 @@ describe("admin member data utilities", () => {
     const result = rankAdminMemberCandidates(candidates, query);
 
     expect(result[0]?.candidate.id).toBe(expectedId);
-  });
-
-  it("escapes CSV syntax and neutralizes spreadsheet formulas", () => {
-    expect(escapeCsvCell('Builder, "speaker"')).toBe('"Builder, ""speaker"""');
-    expect(escapeCsvCell('=HYPERLINK("https://bad.test")')).toBe(
-      '"\'=HYPERLINK(""https://bad.test"")"',
-    );
-    expect(escapeCsvCell("line one\nline two")).toBe('"line one\nline two"');
-    expect(escapeCsvCell("\n+SUM(A1:A2)")).toBe('"\'\n+SUM(A1:A2)"');
   });
 
   it("invalidates every row that would keep dues effective while preserving unrelated history", () => {

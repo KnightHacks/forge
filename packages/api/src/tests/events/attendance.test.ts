@@ -361,7 +361,7 @@ describe("event check-in and attendance", () => {
       },
     ]);
 
-    expect(csv.split("\n")[0]).toBe(
+    expect(csv.split("\r\n")[0]).toBe(
       "Member UUID,Name,Discord Username,Checked In At,Operator UUID,Operator,Points Awarded,Estimated",
     );
     expect(csv).toContain("'=HYPERLINK");

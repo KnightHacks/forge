@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -64,12 +64,7 @@ import {
   formatIssueCalendarPeriod,
   issueCalendarFocus,
 } from "./issue-calendar-period";
-import { emptyDraft, parseDraftLinks } from "./issue-draft";
-import {
-  discardIssueCreateDraft,
-  loadIssueCreateDraft,
-  saveIssueCreateDraft,
-} from "./issue-draft-storage";
+import { parseDraftLinks } from "./issue-draft";
 import {
   applyTemplateToDraft,
   relativeTemplateDueAt,
@@ -83,8 +78,15 @@ import {
 } from "./issue-views";
 import { parseIssueSearchParams, shiftIssueCalendarDate } from "./params";
 import { TemplateCatalogDialog } from "./template-catalog-dialog";
+import { useIssueCreateDraft } from "./use-issue-create-draft";
 
 export type IssueWorkspaceView = "archive" | "calendar" | "kanban" | "list";
+
+/**
+ * The workspace has three overlays and every one of them is modal, so at most
+ * one can be open. One value says that; three booleans only implied it.
+ */
+type IssueWorkspaceOverlay = "create" | "filters" | "none" | "templates";
 
 const ISSUE_WORKSPACE_EYEBROW: Record<IssueWorkspaceView, string> = {
   archive: ADMIN_PAGE_EYEBROWS.issueArchive,
@@ -293,17 +295,15 @@ function IssueCreateDialog({
     () => data.teams.filter((team) => team.canEdit),
     [data.teams],
   );
-  const [initialDraft] = useState(() => {
-    const stored = loadIssueCreateDraft(window.localStorage);
-    return {
-      draft: stored ?? emptyDraft(editableTeams[0]?.id),
-      restore: stored,
-    };
-  });
-  const [draft, setDraft] = useState<IssueDraft>(initialDraft.draft);
-  const [restore, setRestore] = useState<IssueDraft | null>(
-    initialDraft.restore,
-  );
+  const {
+    clearStoredDraft,
+    discardDraft,
+    draft,
+    restore,
+    restoreDraft,
+    setDraft,
+    update,
+  } = useIssueCreateDraft({ defaultTeamId: editableTeams[0]?.id, open });
   const [preview, setPreview] = useState(false);
   const [eventStep, setEventStep] = useState(false);
   const createIssue = api.issues.create.useMutation();
@@ -332,15 +332,6 @@ function IssueCreateDialog({
   const eventChannels = api.event.listDiscordChannels.useQuery(undefined, {
     enabled: open && access.canCreateEvent,
   });
-
-  useEffect(() => {
-    if (!open || restore) return;
-    saveIssueCreateDraft(window.localStorage, draft);
-  }, [draft, open, restore]);
-
-  function update<K extends keyof IssueDraft>(key: K, value: IssueDraft[K]) {
-    setDraft((current) => ({ ...current, [key]: value }));
-  }
 
   function applyTemplate() {
     const template = data.templates.find(
@@ -388,7 +379,7 @@ function IssueCreateDialog({
         team: draft.team,
         teamVisibilityIds: draft.teamVisibilityIds,
       });
-      discardIssueCreateDraft(window.localStorage, draft);
+      clearStoredDraft();
       toast.success("Issue created.");
       onClose();
       router.refresh();
@@ -465,22 +456,8 @@ function IssueCreateDialog({
                   This browser has a draft saved with its original creation key.
                 </p>
                 <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                  <Button
-                    onClick={() => {
-                      setDraft(restore);
-                      setRestore(null);
-                    }}
-                  >
-                    Restore draft
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      discardIssueCreateDraft(window.localStorage, restore);
-                      setDraft(emptyDraft(editableTeams[0]?.id));
-                      setRestore(null);
-                    }}
-                  >
+                  <Button onClick={restoreDraft}>Restore draft</Button>
+                  <Button variant="outline" onClick={discardDraft}>
                     Discard draft
                   </Button>
                 </div>
@@ -941,9 +918,7 @@ export function IssueWorkspace({
   view: IssueWorkspaceView;
 }) {
   const router = useRouter();
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [overlay, setOverlay] = useState<IssueWorkspaceOverlay>("none");
   const calendarFocus = issueCalendarFocus(input.calendarDate);
   const previousCalendarDate = shiftIssueCalendarDate(
     input.calendarDate,
@@ -1028,8 +1003,8 @@ export function IssueWorkspace({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Button
                 className="h-11 flex-1 sm:flex-none"
-                variant={filtersOpen ? "secondary" : "outline"}
-                onClick={() => setFiltersOpen(true)}
+                variant={overlay === "filters" ? "secondary" : "outline"}
+                onClick={() => setOverlay("filters")}
               >
                 <Filter className="h-4 w-4" />
                 Filters
@@ -1042,7 +1017,7 @@ export function IssueWorkspace({
               <Button
                 className="h-11"
                 variant="outline"
-                onClick={() => setTemplatesOpen(true)}
+                onClick={() => setOverlay("templates")}
               >
                 <LayoutTemplate className="h-4 w-4" />
                 Templates
@@ -1056,7 +1031,7 @@ export function IssueWorkspace({
               <Button
                 className="h-11"
                 disabled={!access.canEdit}
-                onClick={() => setCreateOpen(true)}
+                onClick={() => setOverlay("create")}
               >
                 <Plus className="h-4 w-4" />
                 Create
@@ -1298,7 +1273,10 @@ export function IssueWorkspace({
         )}
       </div>
 
-      <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+      <Dialog
+        open={overlay === "filters"}
+        onOpenChange={(next) => setOverlay(next ? "filters" : "none")}
+      >
         <DialogContent className="max-h-[92svh] max-w-3xl gap-0 overflow-hidden border-white/10 bg-card p-0 [&_a:has(>svg)]:gap-2 [&_button:has(>svg)]:gap-2">
           <DialogHeader className="border-b border-white/10 px-5 py-4 pr-14 text-left">
             <DialogTitle>Filter issues</DialogTitle>
@@ -1310,18 +1288,18 @@ export function IssueWorkspace({
         </DialogContent>
       </Dialog>
 
-      {createOpen && (
+      {overlay === "create" && (
         <IssueCreateDialog
           access={access}
           data={data}
-          onClose={() => setCreateOpen(false)}
+          onClose={() => setOverlay("none")}
           open
         />
       )}
       <TemplateCatalogDialog
         canManage={access.canManageTemplates}
-        onClose={() => setTemplatesOpen(false)}
-        open={templatesOpen}
+        onClose={() => setOverlay("none")}
+        open={overlay === "templates"}
         teams={data.teams}
         templates={data.templates}
       />

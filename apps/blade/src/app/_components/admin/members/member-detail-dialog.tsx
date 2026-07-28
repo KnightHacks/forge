@@ -56,8 +56,12 @@ import { toast } from "@forge/ui/toast";
 import {
   ADMIN_MEMBER_DELETE_CONFIRMATION,
   adminMemberEditableProfileSchema,
+  checkUploadMetadata,
   formatDuesAmount,
   memberSettingsFields,
+  PROFILE_PICTURE_UPLOAD_POLICY,
+  RESUME_UPLOAD_POLICY,
+  uploadAccept,
 } from "@forge/validators";
 
 import {
@@ -815,12 +819,24 @@ function AdminMemberFiles({
                   {detail.member.profilePictureUrl ? "Replace" : "Upload"}
                   <Input
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
                     className="sr-only"
                     disabled={isPending}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (!file) return;
+                      const check = checkUploadMetadata(
+                        PROFILE_PICTURE_UPLOAD_POLICY,
+                        {
+                          contentType: file.type,
+                          fileName: file.name,
+                          size: file.size,
+                        },
+                      );
+                      if (!check.ok) {
+                        setError(check.message);
+                        return;
+                      }
                       void run(async () => {
                         const fileContent = await fileToDataUrl(
                           file,
@@ -893,12 +909,21 @@ function AdminMemberFiles({
                   {detail.member.resumeUrl ? "Replace" : "Upload"}
                   <Input
                     type="file"
-                    accept="application/pdf,.pdf"
+                    accept={uploadAccept(RESUME_UPLOAD_POLICY)}
                     className="sr-only"
                     disabled={isPending}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (!file) return;
+                      const check = checkUploadMetadata(RESUME_UPLOAD_POLICY, {
+                        contentType: file.type,
+                        fileName: file.name,
+                        size: file.size,
+                      });
+                      if (!check.ok) {
+                        setError(check.message);
+                        return;
+                      }
                       void run(async () => {
                         const fileContent = await fileToDataUrl(
                           file,
