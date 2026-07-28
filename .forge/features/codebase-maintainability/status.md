@@ -1,22 +1,38 @@
 # Codebase Maintainability Status
 
 Current phase: Phases 0-4 complete on `reforge/refactor`; awaiting human review and
-merge. Component splits stopped after Tier 2 by design — see Deferred.
+merge. Tier 3 done on the two components the visual baselines cover; the other six
+are blocked on infrastructure, not on effort — see Phase 3.
 
-## Final state — 2026-07-27
+## Final state — 2026-07-28
 
-All five gates green, forced and uncached: `format` 19/19, `lint` 25/25,
-`typecheck` 27/27, `test` 23/23, `build` 16/16. Clean tree. 36 commits.
+All five gates green, forced and uncached: `format` 19/19, plus
+`typecheck` + `lint` + `test` + `build` at **70/70 tasks, 0 errors**, with every
+one of the six Next apps building. Clean tree. **52 commits.**
 
-517 files changed, +28,781 / -22,013 against `reforge/main`.
+563 files changed, +42,747 / -26,707 against `reforge/main`.
 
-Tests grew from a suite that could not verify a refactor to **205 files and 1,211
-tests**. Blade alone went from 56 files / 178 tests to 93 / 514 — most of that is
+Tests grew from a suite that could not verify a refactor to **208 files and 1,238
+tests**. Blade alone went from 56 files / 178 tests to 93 / 515 — most of that is
 coverage for logic that had never been reachable by any test, not new features.
+Nine of those are `toHaveScreenshot` baselines, the only ones in the repo.
 
 Three of four gates were red on committed code when this started, and `build`
 was red too but nobody had run it. All five now pass, and the reasons they were
 red are fixed rather than suppressed.
+
+`pnpm install` also drops **446 packages** from the tree, from 32 direct
+dependency removals.
+
+### What a reviewer should look at first
+
+1. **Two user-visible changes**, both consequences of requested work rather than
+   drift, in "User-visible changes" below.
+2. **61 deferred dependency removals** — `AGENTS.md` wants a human on dependency
+   changes, and the deferred set includes a question about whether `apps/tk` and
+   `apps/cron` are inert.
+3. **The server-clock seam** that blocks the remaining six component splits. One
+   change unblocks all of them, and it is deliberately not in this branch.
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
