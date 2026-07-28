@@ -298,7 +298,7 @@ Multi-table preview replacement, confirmation, publish, cancellation, and state 
 ### Migration and rollout
 
 - Generate and commit a Drizzle migration; do not use schema push as the production artifact.
-- Backfill `Roles.emailAudienceEnabled = true` for role names currently in `TEAM.CLUB_ROSTER_ROLE_NAMES`, then make the database flag authoritative for Email Portal.
+- Backfill `Roles.emailAudienceEnabled = true` for every role classified in `knight_hacks_club_team_role`, then make the database flag authoritative for Email Portal. This plan originally read from `TEAM.CLUB_ROSTER_ROLE_NAMES`, which no longer exists — club roster classification moved out of `@forge/consts` and is keyed by `auth_roles.id` rather than by role name, so the backfill is a join and not a name match.
 - Do not alter or delete the existing issue `Template` table; email tables use distinct names.
 - Existing transactional hackathon template fields and email behavior remain compatible.
 - Port/reconcile production main's direct Listmonk client before removing the deprecated SDK.
