@@ -229,25 +229,26 @@ out and record the outcome here.
   lists. Both are correct for their domain, so this may stay as two shapes under
   one documented vocabulary rather than one implementation.
 
-## Needs your sign-off — user-visible changes
+## User-visible changes
 
 Everything else in this branch preserves appearance. These two do not, and both
 are consequences of work that was asked for rather than incidental drift.
 
-1. **The Club team tab strip is absent while the roster loads.** It previously
-   rendered all eight tabs at count 0, because the team list was compiled into
-   the static export from `TEAM.CLUB_TEAM_DEFINITIONS`. Making the team list
-   officer-managed data means `apps/club` cannot know it at build time —
-   `output: "export"` has no server runtime and no database access — so the list
-   now arrives with the roster. During the deferred fetch the heading reads "Our
-   Teams" and the tab strip is empty, then both populate.
+1. **The Club team tab strip is absent while the roster loads.** _Owner accepted
+   2026-07-28, with a follow-up: "we will just need to make a proper skeleton
+   loader or good SSR for the club team member fetch since it isnt at build time
+   anymore."_
 
-   This is not avoidable while the team list is configurable, only relocatable:
-   the alternatives are a build-time fetch from Blade (adds a deploy-time
-   network dependency on Blade being up) or a hard-coded skeleton list (puts the
-   thing we just deleted back, as a guess that goes stale silently). Both are
-   worse than the flash. Flagged rather than fixed because the tradeoff is
-   yours, not mine.
+   It previously rendered all eight tabs at count 0, because the team list was
+   compiled into the static export from `TEAM.CLUB_TEAM_DEFINITIONS`. Making the
+   team list officer-managed data means `apps/club` cannot know it at build time
+   — `output: "export"` has no server runtime and no database access — so the
+   list now arrives with the roster. During the deferred fetch the heading reads
+   "Our Teams" and the tab strip is empty, then both populate.
+
+   The gap is unavoidable while the list is configurable; only its presentation
+   is in play. Being addressed now — see the loading-state entry in the task
+   list.
 
 2. **`roles.ts` no longer guesses `eventFeedbackExcluded` when a Discord role is
    linked.** It set the flag by matching the new role's _name_ against the same
@@ -357,14 +358,66 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
       six `initialData` bridges converted to server props (`b303b639`).
 - [x] Tier 1 pure-code extraction from the five largest components.
 - [x] Tier 2 hook extraction from the same five (`7dbf5cc2`).
-- [ ] **Tier 3 — JSX movement. Deliberately not done.** This is the only tier
-      that can change pixels, and the doctrine requires jsdom plus screenshot
-      baselines before it. jsdom exists; screenshot baselines do not, and the
-      repo has zero `toHaveScreenshot` assertions. Building them needs a running
-      Blade server against a seeded database. Doing Tier 3 without them would be
-      exactly the unverified change this whole effort exists to prevent.
-- [ ] Six of the eleven 800+ line components were never touched. The five
-      largest got Tiers 1 and 2.
+- [x] Visual baselines built and proven (`5098166e`). Nine `toHaveScreenshot`
+      assertions across two viewports — the only ones in the repo. Proven by
+      mutation: collapsing two siblings of a `space-y-3` container leaves
+      typecheck, lint and 515 unit tests green while failing two baselines with
+      a 12px height delta, exactly the deleted gap. Confirmed not to fire on
+      harmless nesting.
+- [x] **Tier 3 — JSX movement, on the two components the baselines cover.**
+      `admin-form-builder.tsx` 1,747 → 450 across eleven siblings (`d988b73d`);
+      `issue-workspace.tsx` 1,308 → 249 across four (`655621d7`). 3,055 lines of
+      JSX moved. Baselines re-run by hand afterwards: 9/9 pass, zero pixels
+      moved. Both were verified a second way before that — the form builder by
+      diffing `document.body.innerHTML` against a checked-out copy of the
+      pre-refactor file across eleven scenarios, the issue workspace by
+      comparing `className` and JSX-tag multisets and proving every original
+      line was carried over exactly once.
+- [ ] **Six components remain oversized, and they stay that way on purpose.**
+      `analytics-dashboard.tsx` (2,210), `member-detail-dialog.tsx` (1,596),
+      `email-portal-workspace.tsx` (1,593), `role-management-dashboard.tsx`
+      (1,285), `event-admin-dashboard.tsx` (1,222) and one more have **no
+      visual baseline**. Splitting their JSX without one is precisely the
+      unverified change this effort exists to prevent, and the rule does not
+      get to bend because the remaining files are the annoying ones.
+
+      Two of them cannot be baselined without new infrastructure: the analytics
+      dashboard and the email portal both read the database unfiltered (1,124
+      real members against a 13-member fixture) and compute rolling 365-day
+      windows server-side, where `page.clock` cannot reach. A generated
+      baseline literally read "322 of 365 active days". The unblocking work is
+      a migrated disposable database for visual runs, not more careful
+      screenshotting.
+
+      I initially recorded `member-detail-dialog.tsx` as the cheap next one,
+      because the dialog is URL-driven (`?member=<id>`) and the admin members
+      table already has a baseline. That was wrong, and the correction is the
+      useful part.
+
+      `getMemberDiscordEngagement(userId, now = new Date())` computes
+      `activityEndDate` from the **server** clock, which `page.clock` cannot
+      reach. With zero Discord messages the activity tracker does not disappear:
+      `firstActivityDate` falls back to `activityEndDate`, so the loop emits one
+      month, labelled from the server clock, whose day grid is
+      `activityEndDate.slice(8, 10)` cells long — today's day-of-month. That
+      baseline would drift **daily**, not monthly. Worse than analytics, not
+      cheaper.
+
+      **The real unlock, and it is one thing, not three.** Every blocked surface
+      is blocked on a server-side `new Date()`. The seam already exists —
+      `getMemberDiscordEngagement` takes `now` as a defaulted parameter — and
+      the repo already has a server-side E2E switch, `isBladeE2E`, used by
+      `utils/audit/service.ts` to pin an event id. Pinning "now" behind that
+      same flag makes the member dialog baselineable outright and removes half
+      of what blocks analytics; the other half is the unfiltered read, which
+      needs the migrated disposable database.
+
+      Deliberately not built here. It is a product-code change in
+      `packages/api` whose failure mode is a wrong clock in production, so it
+      wants its own bundle, its own review, and a test proving the override is
+      inert when the flag is off. It should not ride along inside a refactor
+      whose whole premise is that unverified changes are how this repo got
+      here.
 
 ### Phase 4 — docs and skills
 
