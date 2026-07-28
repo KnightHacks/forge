@@ -25,6 +25,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
+    "classify:club-roles": "pnpm with-env tsx scripts/classify-club-roles.ts",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -36,8 +37,8 @@
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests"
+    "test": "pnpm with-env vitest run --passWithNoTests",
+    "test:watch": "pnpm with-env vitest --passWithNoTests"
   },
   "dependencies": {
     "@forge/consts": "workspace:*",

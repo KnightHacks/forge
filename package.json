@@ -14,6 +14,7 @@
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
     "db:bootstrap": "pnpm --filter=@forge/db with-env tsx scripts/bootstrap-superadmin.ts",
+    "db:club-roles": "pnpm --filter=@forge/db classify:club-roles",
     "db:generate": "pnpm --filter=@forge/db generate",
     "db:migrate": "pnpm --filter=@forge/db migrate",
     "db:pull": "pnpm --filter=@forge/db with-env tsx scripts/get_prod_db.ts",
