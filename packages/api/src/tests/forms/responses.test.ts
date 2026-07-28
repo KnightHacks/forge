@@ -7,6 +7,7 @@ import {
   buildRespondentFormView,
   createFormResponseSubmissionService,
   evaluateFormRespondentState,
+  isFormRespondentEligible,
   planFormResponseDeletion,
   toMemberFormResponseDto,
 } from "../../utils/forms/responses";
@@ -57,6 +58,54 @@ function context(
     },
   };
 }
+
+describe("form respondent eligibility", () => {
+  // Eligibility must not be a fallthrough of the display state. `state`
+  // collapses to the first matching condition, so a restricted form that has
+  // closed reports "closed" and never reaches the ineligible branch. Callers
+  // that gated on `state === "ineligible"` therefore let anyone read a
+  // role-restricted form — and download its instruction attachments — the
+  // moment it stopped accepting responses.
+  const RESTRICTED = { respondentRoleIds: [ROLE_ID], roleIds: [] };
+  const CLOSED_STATES = [
+    { closesAt: new Date("2026-07-14T18:00:00.000Z"), label: "closed" },
+    { label: "manually closed", manuallyClosed: true },
+    { label: "scheduled", opensAt: new Date("2026-07-16T18:00:00.000Z") },
+    { label: "archived", state: "archived" as const },
+  ];
+
+  it.each(CLOSED_STATES)(
+    "stays ineligible for a member outside the respondent roles when the form is $label",
+    (timing) => {
+      const ctx = context({ ...RESTRICTED, ...timing });
+
+      // The display state reports the timing, not the ineligibility...
+      expect(evaluateFormRespondentState(ctx, NOW)).not.toBe("ineligible");
+      // ...so authorization has to be asked separately, and must still say no.
+      expect(isFormRespondentEligible(ctx)).toBe(false);
+    },
+  );
+
+  it("stays ineligible on a closed dues-only form for a member who has not paid", () => {
+    const ctx = context({
+      closesAt: new Date("2026-07-14T18:00:00.000Z"),
+      duesPaid: false,
+      respondentDuesRequired: true,
+    });
+
+    expect(evaluateFormRespondentState(ctx, NOW)).toBe("closed");
+    expect(isFormRespondentEligible(ctx)).toBe(false);
+  });
+
+  it("admits a member holding one of the respondent roles, and an unrestricted form", () => {
+    expect(
+      isFormRespondentEligible(
+        context({ respondentRoleIds: [ROLE_ID], roleIds: [ROLE_ID] }),
+      ),
+    ).toBe(true);
+    expect(isFormRespondentEligible(context())).toBe(true);
+  });
+});
 
 describe("form respondent policy", () => {
   it("[TC-019, TC-020] enforces publication, schedule, manual close, dues, and roles from a direct link", () => {

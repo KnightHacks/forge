@@ -36,6 +36,28 @@ export interface FormRespondentContext {
   };
 }
 
+/**
+ * Whether this member is permitted to see this form at all.
+ *
+ * Separate from `evaluateFormRespondentState` on purpose. That function answers
+ * "what should the page say", and it answers with a single value, so timing
+ * wins: a closed form returns `"closed"` and never reaches the eligibility
+ * branch. Authorization cannot be a fallthrough of a display state — a
+ * restricted form that closes must not become readable to everyone. This is the
+ * gate the pre-refactor `respondentForm` applied unconditionally, restored as a
+ * predicate that callers must ask for by name.
+ */
+export function isFormRespondentEligible(context: FormRespondentContext) {
+  const { actor, form } = context;
+
+  if (form.respondentDuesRequired && !actor.duesPaid) return false;
+
+  return (
+    form.respondentRoleIds.length === 0 ||
+    form.respondentRoleIds.some((roleId) => actor.roleIds.includes(roleId))
+  );
+}
+
 export function evaluateFormRespondentState(
   context: FormRespondentContext,
   now: Date,

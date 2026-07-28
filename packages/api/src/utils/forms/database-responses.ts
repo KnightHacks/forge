@@ -28,6 +28,7 @@ import {
 import {
   buildRespondentFormView,
   evaluateFormRespondentState,
+  isFormRespondentEligible,
 } from "./responses";
 import { requirePlatformFormCapability, requireSection } from "./sections";
 
@@ -251,31 +252,38 @@ export async function respondentForm(
     .select()
     .from(DuesPayment)
     .where(eq(DuesPayment.memberId, member.id));
-  const state = evaluateFormRespondentState(
-    {
-      actor: {
-        duesPaid: buildDuesStatus({ duesRows }).paid,
-        memberId: member.id,
-        roleIds: assignedRoles.map(({ roleId }) => roleId),
-        userId,
-      },
-      form: {
-        closesAt: form.closesAt,
-        id: form.id,
-        kind: form.kind,
-        manuallyClosed: form.manuallyClosed,
-        opensAt: form.opensAt,
-        respondentDuesRequired: form.duesOnly,
-        respondentRoleIds: roleRows.map(({ roleId }) => roleId),
-        responseMode: form.responseMode,
-        state: form.state,
-      },
+  const respondentContext = {
+    actor: {
+      duesPaid: buildDuesStatus({ duesRows }).paid,
+      memberId: member.id,
+      roleIds: assignedRoles.map(({ roleId }) => roleId),
+      userId,
     },
-    new Date(),
-  );
+    form: {
+      closesAt: form.closesAt,
+      id: form.id,
+      kind: form.kind,
+      manuallyClosed: form.manuallyClosed,
+      opensAt: form.opensAt,
+      respondentDuesRequired: form.duesOnly,
+      respondentRoleIds: roleRows.map(({ roleId }) => roleId),
+      responseMode: form.responseMode,
+      state: form.state,
+    },
+  };
+  const state = evaluateFormRespondentState(respondentContext, new Date());
   // Draft forms already 404 above; repeating it here keeps the view builder's
   // state union free of a case the respondent must never see.
   if (state === "draft") throw new TRPCError({ code: "NOT_FOUND" });
+  // Authorization, asked separately from the display state. `state` collapses
+  // to the first condition that matches, so a restricted form that has closed
+  // reports `"closed"` and never evaluates eligibility — which let anyone read
+  // a Dev-Team-only form, and download its instruction attachments, the moment
+  // it stopped accepting responses. Someone who already responded keeps access
+  // to their own submission, which is what the pre-refactor gate did.
+  if (!isFormRespondentEligible(respondentContext) && !response) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
   const normalizedResponse = response
     ? normalizeStoredFormResponse({
         currentDefinition: form.formData,
