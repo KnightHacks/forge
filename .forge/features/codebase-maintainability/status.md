@@ -1,6 +1,22 @@
 # Codebase Maintainability Status
 
-Current phase: Phase 0 complete; Phase 1 harness complete; delete pass started
+Current phase: Phases 0-4 complete on `reforge/refactor`; awaiting human review and
+merge. Component splits stopped after Tier 2 by design — see Deferred.
+
+## Final state — 2026-07-27
+
+All five gates green, forced and uncached: `format` 19/19, `lint` 25/25,
+`typecheck` 27/27, `test` 23/23, `build` 16/16. Clean tree. 36 commits.
+
+517 files changed, +28,781 / -22,013 against `reforge/main`.
+
+Tests grew from a suite that could not verify a refactor to **205 files and 1,211
+tests**. Blade alone went from 56 files / 178 tests to 93 / 514 — most of that is
+coverage for logic that had never been reachable by any test, not new features.
+
+Three of four gates were red on committed code when this started, and `build`
+was red too but nobody had run it. All five now pass, and the reasons they were
+red are fixed rather than suppressed.
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -302,10 +318,62 @@ and refuted 8. Verified total: ~2,850 LOC across 22 files and ~80 exports.
 - [ ] Delete the vendored skills; write Forge-authored replacements.
 - [ ] Add a scope-derived, tiered `forge-review` swarm skill.
 
+### Phase 3 — components and routers
+
+- [x] `memberAdmin` registered as its own namespace; audit keys now name a real
+      client path (`3f53a258`).
+- [x] `event.ts` and `email.ts` split; `analytics` and `discord-archive`
+      reunified; `utils/forms/platform.ts` split by concern.
+- [x] `HydrateClient` deleted from all 25 boundaries and from `trpc/server.ts`;
+      six `initialData` bridges converted to server props (`b303b639`).
+- [x] Tier 1 pure-code extraction from the five largest components.
+- [x] Tier 2 hook extraction from the same five (`7dbf5cc2`).
+- [ ] **Tier 3 — JSX movement. Deliberately not done.** This is the only tier
+      that can change pixels, and the doctrine requires jsdom plus screenshot
+      baselines before it. jsdom exists; screenshot baselines do not, and the
+      repo has zero `toHaveScreenshot` assertions. Building them needs a running
+      Blade server against a seeded database. Doing Tier 3 without them would be
+      exactly the unverified change this whole effort exists to prevent.
+- [ ] Six of the eleven 800+ line components were never touched. The five
+      largest got Tiers 1 and 2.
+
+### Phase 4 — docs and skills
+
+- [x] Seven vendored skills deleted (10,462 lines); three Forge-authored ones
+      written, plus `forge-review` (`cbd5a6b7`, `187ef884`).
+- [x] Skill descriptions made pushier after running skill-creator's optimizer;
+      the measurement was inconclusive and the reasons are recorded (`366c2afc`).
+- [x] `docs/API-AND-PERMISSIONS.md` rewritten against the code (`e4b8b87c`).
+- [x] `docs/ARCHITECTURE.md` corrected (`3d3daf0e`).
+- [x] `docs/REPO-CONVENTIONS.md` updated for the removed HydrateClient pattern
+      and the server-read-to-props rule.
+
 ### Deferred — own feature track, not this change
 
 - [ ] Move organizational state out of `@forge/consts` into admin-managed tables.
 - [ ] The behavior-changing consolidations listed in the decision log.
+
+## What this turned out to be about
+
+The recurring shape was not missing tooling. Forge builds good guardrails and
+then routes around them. CI is well designed — lint, format, test, typecheck,
+build, three migration jobs including a prod-like upgrade smoke test — and it has
+never run on a single line of Reforge code, because `push` triggers only on
+`main` and all 88 commits arrived by local merge. The audit coverage test is
+genuinely clever and scanned 10 of 18 routers. Sherif was wired into postinstall
+and caught a dependency mistake within seconds of being given one.
+
+The most expensive problems were invisible rather than hard. `pnpm build` failed
+for every Next app because of one line in a local `.env`, which Next warned about
+on the first line of every build. `pnpm.overrides` was ignored with a warning on
+every pnpm invocation, leaving the React version pins inert. Both had been
+shouting for months.
+
+And the sharpest lesson for the process itself: the feature-bundle framework
+recorded the Club roster deferral perfectly — three times, plus a test enforcing
+it — and still could not catch that `apps/club` was left calling a procedure that
+no longer existed. The artifacts were not wrong. Nothing in the process asked
+_who else calls this_. That check is now a permanent rule in `forge-review`.
 
 ## Phase 1 findings
 
