@@ -1,7 +1,14 @@
-import { TEAM } from "@forge/consts";
-
-export const MEMBERS_OF_THE_TEAM_ROLE_NAMES = TEAM.CLUB_ROSTER_ROLE_NAMES;
-
+/**
+ * Tables whose rows survive into a development backup.
+ *
+ * Every table in the Drizzle schema must appear either here or in
+ * `TABLES_TO_DROP`, and `dev-db-backup-sanitizer.test.ts` fails if one appears
+ * in neither. That gate exists because this list was previously checked only
+ * against a hand-written sample of table names, so a table added later was
+ * silently truncated: `knight_hacks_discord_config` shipped empty in every dev
+ * backup from `becc28d1` onward, and re-running migrations could not repair it
+ * because its backfill migration had already been recorded as applied.
+ */
 export const TABLES_TO_KEEP = [
   "auth_account",
   "auth_permissions",
@@ -11,8 +18,11 @@ export const TABLES_TO_KEEP = [
   "email_template_revision",
   "knight_hacks_alumni_bulletin_post",
   "knight_hacks_challenges",
+  "knight_hacks_club_team",
+  "knight_hacks_club_team_role",
   "knight_hacks_companies",
   "knight_hacks_company",
+  "knight_hacks_discord_config",
   "knight_hacks_dues_payment",
   "knight_hacks_employment",
   "knight_hacks_event",
@@ -43,25 +53,65 @@ export const TABLES_TO_KEEP = [
 ] as const;
 
 /**
+ * Tables deliberately emptied, grouped by the reason they are emptied.
+ *
+ * This list is not consumed by the sanitizer — truncation is "everything not
+ * kept". It exists so that adding a table forces a decision instead of
+ * defaulting to silent truncation, and so the reason is written down next to
+ * the name rather than inferred later from the absence of one.
+ */
+export const TABLES_TO_DROP = [
+  // Records of who did what, tied to real people. Not developer data.
+  "audit_event",
+  "audit_subject",
+  // Live credentials. A backup that carries these hands out logins.
+  "auth_judge_session",
+  "auth_session",
+  "auth_verification",
+  // Members' private Discord conversations.
+  "discord_archive_channel",
+  "discord_archive_checkpoint",
+  "discord_archive_message",
+  "discord_archive_state",
+  // Delivery logs holding recipient snapshots — every address a send touched.
+  "email_send",
+  "email_send_event",
+  "email_send_recipient",
+  // Applicant-uploaded files and the execution log of what ran against them.
+  "knight_hacks_form_attachment",
+  "knight_hacks_form_callback_execution",
+  // Work queues. Real assignments and reminders aimed at real officers.
+  "knight_hacks_issue",
+  "knight_hacks_issue_history",
+  "knight_hacks_issue_reminder_delivery",
+  "knight_hacks_issues_to_teams_visibility",
+  "knight_hacks_issues_to_users_assignment",
+  // Judging data: scores attached to named people.
+  "knight_hacks_judged_submission",
+  "knight_hacks_judges",
+  // Per-hackathon message templates, superseded by `email_template`.
+  "knight_hacks_template",
+] as const;
+
+/**
  * Removes non-team people after non-retained tables have been truncated.
  *
- * "Members of the team" are users with an officer, director, or configured
- * team role from the canonical club roster. All of that user's remaining roles
+ * "Members of the team" are users holding a role the club roster classifies —
+ * an officer, a director, or a team role. All of that user's remaining roles
  * and product data are kept.
+ *
+ * That membership used to be a list of role names interpolated into this SQL
+ * from `@forge/consts`. It is a join on `knight_hacks_club_team_role` now, so a
+ * renamed Discord role cannot quietly shrink the set of people a development
+ * backup keeps.
  */
 export function teamDataSanitizerSql() {
-  const membersOfTheTeamRoleNames = MEMBERS_OF_THE_TEAM_ROLE_NAMES.map(
-    (name) => `'${name.replaceAll("'", "''")}'`,
-  ).join(",\n  ");
-
   return `
 CREATE TEMP TABLE "forge_team_user" AS
 SELECT DISTINCT permission.user_id
 FROM auth_permissions AS permission
-INNER JOIN auth_roles AS role ON role.id = permission.role_id
-WHERE role.name IN (
-  ${membersOfTheTeamRoleNames}
-);
+INNER JOIN knight_hacks_club_team_role AS club_role
+  ON club_role.role_id = permission.role_id;
 
 DO $$
 BEGIN

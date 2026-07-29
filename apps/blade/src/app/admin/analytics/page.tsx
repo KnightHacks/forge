@@ -3,16 +3,16 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { AnalyticsSearchParams } from "~/app/_components/admin/analytics/params";
+import type { SearchParams } from "~/lib/search-params";
+import { AnalyticsDashboard } from "~/app/_components/admin/analytics/analytics-dashboard";
+import { parseAnalyticsSearchParams } from "~/app/_components/admin/analytics/params";
 import {
   canAccessAnalytics,
   canAccessEventAdmin,
   canAccessMemberAdmin,
-} from "~/app/_components/admin/access";
-import { AnalyticsDashboard } from "~/app/_components/admin/analytics/analytics-dashboard";
-import { parseAnalyticsSearchParams } from "~/app/_components/admin/analytics/params";
+} from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Review Knight Hacks turnout, dues, feedback, and member data.",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<AnalyticsSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");
@@ -34,19 +34,16 @@ export default async function AdminAnalyticsPage({
     api.analytics.getDiscordReport(input),
   ]);
   return (
-    <HydrateClient>
-      <AnalyticsDashboard
-        access={{
-          canEditMembers:
-            permissions.IS_OFFICER === true ||
-            permissions.EDIT_MEMBERS === true,
-          canOpenEvents: canAccessEventAdmin(permissions),
-          canOpenMembers: canAccessMemberAdmin(permissions),
-        }}
-        discordReport={discordReport}
-        input={input}
-        report={report}
-      />
-    </HydrateClient>
+    <AnalyticsDashboard
+      access={{
+        canEditMembers:
+          permissions.IS_OFFICER === true || permissions.EDIT_MEMBERS === true,
+        canOpenEvents: canAccessEventAdmin(permissions),
+        canOpenMembers: canAccessMemberAdmin(permissions),
+      }}
+      discordReport={discordReport}
+      input={input}
+      report={report}
+    />
   );
 }

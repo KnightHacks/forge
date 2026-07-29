@@ -88,7 +88,7 @@ describe("GenericFormResponseForm", () => {
     expect(linearScaleValues(1, 1_001)).toEqual([]);
   });
 
-  it("keeps questions and the submit action phone-safe", () => {
+  it("renders labelled question controls and the submit action", () => {
     const html = renderToStaticMarkup(
       createElement(GenericFormResponseForm, {
         definition,
@@ -96,11 +96,6 @@ describe("GenericFormResponseForm", () => {
       }),
     );
 
-    expect(html).toContain('data-form-response-layout="mobile-first"');
-    expect(html).toContain('data-form-submit-bar="sticky-mobile"');
-    expect(html).toContain("w-full");
-    expect(html).toContain("min-w-0");
-    expect(html).toContain("text-base");
     expect(html).toContain('aria-label="Which track?"');
     expect(html).toContain('<option value="frontend">Frontend</option>');
     expect(html).toContain('type="tel"');

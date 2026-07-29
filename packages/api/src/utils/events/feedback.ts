@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
 import { FORMS } from "@forge/consts";
+import { serializeCsvRows } from "@forge/utils";
 
 const DAY = 24 * 60 * 60 * 1000;
 const FEEDBACK_POINTS = 5;
@@ -337,23 +338,6 @@ function aggregateFeedback({
   };
 }
 
-function escapeCsv(value: unknown) {
-  const text =
-    value === null || value === undefined
-      ? ""
-      : typeof value === "string"
-        ? value
-        : typeof value === "number" ||
-            typeof value === "bigint" ||
-            typeof value === "boolean"
-          ? String(value)
-          : typeof value === "object"
-            ? JSON.stringify(value)
-            : "";
-  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
 function customCsvColumns(
   questions: unknown,
 ): { id: string; prompt: string }[] {
@@ -584,28 +568,24 @@ export function createEventFeedbackService({
         "Improve",
         ...customColumns.map(({ prompt }) => prompt),
       ];
-      return [
-        header.map(escapeCsv).join(","),
-        ...responses.map((response) =>
-          [
-            response.id,
-            response.memberId,
-            response.submittedAt.toISOString(),
-            response.answers.overall,
-            response.answers.fun,
-            response.answers.learning,
-            response.answers.discovery,
-            response.answers.discoveryOther,
-            response.answers.worked,
-            response.answers.improve,
-            ...customColumns.map(
-              ({ id }) => response.answers.customAnswers?.[id],
-            ),
-          ]
-            .map(escapeCsv)
-            .join(","),
-        ),
-      ].join("\n");
+      return serializeCsvRows([
+        header,
+        ...responses.map((response) => [
+          response.id,
+          response.memberId,
+          response.submittedAt.toISOString(),
+          response.answers.overall,
+          response.answers.fun,
+          response.answers.learning,
+          response.answers.discovery,
+          response.answers.discoveryOther,
+          response.answers.worked,
+          response.answers.improve,
+          ...customColumns.map(
+            ({ id }) => response.answers.customAnswers?.[id],
+          ),
+        ]),
+      ]);
     },
 
     getAnalytics,

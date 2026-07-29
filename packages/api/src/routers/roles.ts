@@ -2,18 +2,19 @@ import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
-import { DISCORD } from "@forge/consts";
 import { and, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { permissions } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 import {
   discordRoleIdSchema,
   emailRoleAudienceSchema,
   permissionExpressionSchema,
   roleBatchAssignmentSchema,
   roleCreateSchema,
+  roleEventFeedbackExclusionSchema,
   roleIdSchema,
   roleIssueReminderUpdateSchema,
   roleManagementQuerySchema,
@@ -28,6 +29,13 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { loadPermissionsForUser } from "../utils/permissions-db";
+import {
+  canConfigureRole,
+  requireAssign,
+  requireConfigure,
+  requireOfficerForOfficerEscalation,
+  requireRoleRead,
+} from "../utils/roles/access";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 import {
   filterDiscordRolesForLinking,
@@ -36,6 +44,7 @@ import {
   permissionBitstringToKeys,
   permissionKeysToBitstring,
   retainsAssignedRoleAdministratorAfterRevocations,
+  roleColorToHex,
   roleHasPermission,
   runRoleAssignmentBatch,
 } from "../utils/roles/management";
@@ -43,70 +52,13 @@ import {
   assertEligibleDiscordRole,
   assertUniqueDiscordRole,
   buildLinkedRoleViews,
+  countFeedbackExclusionImpact,
   getAssignmentRows,
   getDependencyCounts,
   getDiscordRole,
   retainsAdministratorAfter,
-  roleColorToHex,
   syncLinkedRole,
 } from "../utils/roles/service";
-
-function requireRoleRead(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(["CONFIGURE_ROLES", "ASSIGN_ROLES"], ctx);
-}
-
-function requireConfigure(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(["CONFIGURE_ROLES"], ctx);
-}
-
-function requireAssign(ctx: Parameters<typeof permissions.controlPerms.or>[1]) {
-  permissions.controlPerms.or(["ASSIGN_ROLES"], ctx);
-}
-
-function canConfigureRole(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  return (
-    ctx.session.permissions.IS_OFFICER === true ||
-    ctx.session.permissions.CONFIGURE_ROLES === true
-  );
-}
-
-function requireOfficerForOfficerEscalation(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  if (ctx.session.permissions.IS_OFFICER !== true) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only an existing officer may grant or remove officer access.",
-    });
-  }
-}
-
-const eventFeedbackExcludedRoleNames = new Set([
-  "Dev Team",
-  "Workshop Team",
-  "Sponsorship Team",
-  "Outreach Team",
-  "Design Team",
-  "KH IX Team",
-  "President",
-  "Vice President",
-  "Treasurer",
-  "Secretary",
-  "Hack Lead",
-  "Dev Lead",
-  "Officers",
-  "Design Director",
-  "Sponsorship Director",
-  "Outreach Director",
-  "Workshop Director",
-  "Directors",
-]);
 
 export const rolesRouter = {
   getPermissions: protectedProcedure.query(async ({ ctx }) =>
@@ -149,7 +101,7 @@ export const rolesRouter = {
       });
     }
     return filterDiscordRolesForLinking({
-      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      guildId: await getKnightHacksGuildId(),
       linkedRoleIds: new Set(linked.map((role) => role.discordRoleId)),
       memberCounts,
       roles: discordRoles.roles,
@@ -169,6 +121,7 @@ export const rolesRouter = {
       const gateway = await resolveRoleDiscordGateway(ctx.session);
       const role = assertEligibleDiscordRole(
         await getDiscordRole(gateway, input),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(role);
       const counts = await gateway.getRoleCounts();
@@ -195,7 +148,14 @@ export const rolesRouter = {
       !isAdministrativePermissionString(
         permissionKeysToBitstring(role.permissions),
       ) || (await retainsAdministratorAfter(role.id, null));
-    return { ...role, canRemoveAdmin };
+    // One extra query for the one role this procedure resolves, beside the
+    // `canRemoveAdmin` lookup. `listLinks` deliberately does not carry it.
+    const pastEventCount = await countFeedbackExclusionImpact(role.id);
+    return {
+      ...role,
+      canRemoveAdmin,
+      feedbackExclusionImpact: { pastEventCount },
+    };
   }),
 
   listUsers: permProcedure
@@ -232,6 +192,7 @@ export const rolesRouter = {
       const gateway = await resolveRoleDiscordGateway(ctx.session);
       const discordRole = assertEligibleDiscordRole(
         await getDiscordRole(gateway, input.discordRoleId),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(discordRole);
       const operationId = randomUUID();
@@ -240,9 +201,14 @@ export const rolesRouter = {
           .insert(Roles)
           .values({
             discordRoleId: discordRole.id,
-            eventFeedbackExcluded: eventFeedbackExcludedRoleNames.has(
-              discordRole.name,
-            ),
+            // `eventFeedbackExcluded` is left at its column default here. It
+            // used to be set from a hard-coded list of eighteen role names,
+            // hand-copied out of `@forge/consts`, which guessed "is this a
+            // staff role?" from the Discord role's *name* — the same match that
+            // emptied club teams whenever a role was renamed. A role being
+            // linked has no club roster classification yet, so there is nothing
+            // to derive the answer from. The durable answer stays where it has
+            // always been, on the row, and an officer sets it.
             name: discordRole.name,
             permissions: permissionKeysToBitstring(input.permissions),
             teamHexcodeColor: roleColorToHex(discordRole.color),
@@ -342,6 +308,7 @@ export const rolesRouter = {
       }
       const live = assertEligibleDiscordRole(
         await getDiscordRole(gateway, role.discordRoleId),
+        await getKnightHacksGuildId(),
       );
       await assertUniqueDiscordRole(live, role.id);
       const nextPermissions = permissionKeysToBitstring(input.permissions);
@@ -516,6 +483,70 @@ export const rolesRouter = {
                 after: updated.emailAudienceEnabled,
                 before: role.emailAudienceEnabled,
                 field: "enabled",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: role.name,
+                targetType: "role",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
+    }),
+
+  /** Excludes a role's events from feedback collection, analytics, and export. */
+  updateEventFeedbackExclusion: permProcedure
+    .input(roleEventFeedbackExclusionSchema)
+    .mutation(async ({ ctx, input }) => {
+      // `requireConfigure`, not the officer guard the platform console uses. It
+      // sits in the same dialog as `updateEmailAudience`, and a CONFIGURE_ROLES
+      // holder who can already rewrite a role's permissions is not meaningfully
+      // restrained by being denied one boolean.
+      requireConfigure(ctx);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [role] = await tx
+          .select()
+          .from(Roles)
+          .where(eq(Roles.id, input.roleId))
+          .limit(1)
+          .for("update");
+        if (!role) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        const [updated] = await tx
+          .update(Roles)
+          .set({ eventFeedbackExcluded: input.excluded })
+          .where(eq(Roles.id, input.roleId))
+          .returning({
+            eventFeedbackExcluded: Roles.eventFeedbackExcluded,
+            id: Roles.id,
+            name: Roles.name,
+          });
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.event_feedback_exclusion.updated",
+            actor: auditActor,
+            changes: [
+              {
+                after: updated.eventFeedbackExcluded,
+                before: role.eventFeedbackExcluded,
+                field: "excluded",
               },
             ],
             subjects: [

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ISSUE } from "@forge/consts";
+import { EVENTS, ISSUE } from "@forge/consts";
 
 const uuid = z.string().uuid();
 const issueDateTime = z.iso.datetime({ offset: true });
@@ -320,7 +320,8 @@ export function defaultIssueDueAt(date: string, time = ISSUE.TASK_DUE_TIME) {
   let candidate = new Date(localAsUtc);
   for (let iteration = 0; iteration < 2; iteration += 1) {
     candidate = new Date(
-      localAsUtc - timeZoneOffsetMilliseconds(candidate, "America/New_York"),
+      localAsUtc -
+        timeZoneOffsetMilliseconds(candidate, EVENTS.CALENDAR_TIME_ZONE),
     );
   }
   return candidate.toISOString();

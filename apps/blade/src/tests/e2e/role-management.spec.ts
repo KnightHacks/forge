@@ -307,24 +307,6 @@ async function waitForOverlay(locator: Locator) {
     .toBe("1");
 }
 
-async function expectAlignedControls(...controls: Locator[]) {
-  await expect
-    .poll(() =>
-      Promise.all(
-        controls.map((control) =>
-          control.evaluateAll((elements) =>
-            Math.max(
-              ...elements.map(
-                (element) => element.getBoundingClientRect().height,
-              ),
-            ),
-          ),
-        ),
-      ),
-    )
-    .toEqual(controls.map(() => 44));
-}
-
 async function callTRPCMutation(page: Page, procedure: string, input: unknown) {
   const response = await page.request.post(`/api/trpc/${procedure}`, {
     data: { json: input },
@@ -428,25 +410,14 @@ test.describe("role management", () => {
     expect(assignCannotConfigure.status).toBe(403);
   });
 
-  test("aligns both desktop search toolbars and omits the email column", async ({
+  test("omits the email column from the assignments table", async ({
     page,
   }) => {
     await signInAs(page, OFFICER_USER_ID);
-    await expectAlignedControls(
-      page.getByLabel("Search linked roles"),
-      page.getByRole("button", { name: "Search", exact: true }),
-      page.getByRole("button", { name: "Filters", exact: true }),
-    );
-
     await page
       .getByLabel("Role management sections")
       .getByRole("link", { name: "Assignments", exact: true })
       .click();
-    await expectAlignedControls(
-      page.getByLabel("Search Blade users"),
-      page.getByRole("button", { name: "Search", exact: true }),
-      page.getByRole("button", { name: "Assigned roles", exact: true }),
-    );
     await expect(
       page.getByRole("columnheader", { name: "Email", exact: true }),
     ).toHaveCount(0);

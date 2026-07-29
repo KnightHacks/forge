@@ -42,24 +42,20 @@ import {
   SelectValue,
 } from "@forge/ui/select";
 import { toast } from "@forge/ui/toast";
-
 import {
-  ADMIN_PAGE_EYEBROWS,
-  adminPageClassName,
-} from "~/app/_components/admin/admin-page";
+  checkUploadMetadata,
+  COMPANY_IMAGE_UPLOAD_POLICY,
+  uploadAccept,
+} from "@forge/validators";
+
+import { adminPageClassName } from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
+import { formatUtcShortMonth } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";
 
 type CompanyDetail = RouterOutputs["career"]["getAdminCompany"];
 type CompanySummary = RouterOutputs["career"]["listAdminCompanies"][number];
-
-const MAX_COMPANY_IMAGE_SIZE = 2 * 1024 * 1024;
-const COMPANY_IMAGE_TYPES = [
-  "image/gif",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -79,11 +75,7 @@ function fileToDataUrl(file: File) {
 
 function monthLabel(month: string | null) {
   if (!month) return null;
-  return new Date(`${month}-01T00:00:00Z`).toLocaleDateString("en-US", {
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  });
+  return formatUtcShortMonth(month);
 }
 
 function reviewClass(state: string) {
@@ -204,12 +196,13 @@ export function CompanyAdminDetail({
 
   const handleImage = async (file: File | undefined) => {
     if (!file) return;
-    if (!COMPANY_IMAGE_TYPES.includes(file.type)) {
-      toast.error("Use a JPEG, PNG, GIF, or WebP image.");
-      return;
-    }
-    if (file.size > MAX_COMPANY_IMAGE_SIZE) {
-      toast.error("Company images must be 2MB or smaller.");
+    const check = checkUploadMetadata(COMPANY_IMAGE_UPLOAD_POLICY, {
+      contentType: file.type,
+      fileName: file.name,
+      size: file.size,
+    });
+    if (!check.ok) {
+      toast.error(check.message);
       return;
     }
 
@@ -218,6 +211,7 @@ export function CompanyAdminDetail({
       await uploadImage.mutateAsync({
         companyId: detail.company.id,
         fileContent,
+        fileName: file.name,
       });
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -410,7 +404,7 @@ export function CompanyAdminDetail({
                     {logoUrl ? "Replace" : "Upload image"}
                     <Input
                       type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      accept={uploadAccept(COMPANY_IMAGE_UPLOAD_POLICY)}
                       className="sr-only"
                       disabled={imagePending}
                       onChange={(event) => {

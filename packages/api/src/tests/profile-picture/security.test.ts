@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createProfilePictureObjectName,
+  decodeAndValidateImageDataUrl,
   decodeAndValidateProfilePictureDataUrl,
   resolveProfilePictureObjectName,
 } from "../../utils/profile-picture/security";
@@ -30,6 +32,46 @@ describe("profile-picture security", () => {
         imageDataUrl("image/svg+xml", [0x3c, 0x73, 0x76, 0x67]),
       ),
     ).toThrow("Profile picture must be a JPEG, PNG, GIF, or WebP image.");
+  });
+
+  it("names the object after the resolved type, not the declared one", () => {
+    const result = decodeAndValidateProfilePictureDataUrl(
+      `data:application/octet-stream;base64,${Buffer.from([0xff, 0xd8, 0xff, 0x00]).toString("base64")}`,
+      "selfie.JPG",
+    );
+
+    expect(result.contentType).toBe("image/jpeg");
+    expect(
+      createProfilePictureObjectName(userId, result.type).startsWith(
+        `${userId}/profile-picture-`,
+      ),
+    ).toBe(true);
+    expect(createProfilePictureObjectName(userId, result.type)).toMatch(
+      /\.jpg$/,
+    );
+  });
+
+  it("rejects bytes that contradict an allowed content type", () => {
+    expect(() =>
+      decodeAndValidateProfilePictureDataUrl(
+        imageDataUrl("image/png", [0xff, 0xd8, 0xff, 0x00]),
+      ),
+    ).toThrow("Profile picture must be a valid image.");
+  });
+
+  it("reuses one allowlist for every image subject", () => {
+    expect(() =>
+      decodeAndValidateImageDataUrl(
+        imageDataUrl("image/gif", [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
+        "Bulletin image",
+      ),
+    ).not.toThrow();
+    expect(() =>
+      decodeAndValidateImageDataUrl(
+        imageDataUrl("application/pdf", [0x25, 0x50, 0x44, 0x46, 0x2d]),
+        "Company image",
+      ),
+    ).toThrow("Company image must be a JPEG, PNG, GIF, or WebP image.");
   });
 
   it("resolves legacy MinIO URLs to current-user-owned object names", () => {

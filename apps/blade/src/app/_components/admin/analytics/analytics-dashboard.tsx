@@ -1,14 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -40,7 +33,6 @@ import {
   YAxis,
 } from "recharts";
 
-import type { RouterOutputs } from "@forge/api";
 import type { ChartConfig } from "@forge/ui/chart";
 import type {
   AnalyticsExportKind,
@@ -79,42 +71,63 @@ import {
 } from "@forge/ui/table";
 import { toast } from "@forge/ui/toast";
 
+import type {
+  LifecycleGroup,
+  LifecycleHighlight,
+} from "./analytics-lifecycle-highlights";
+import type {
+  AnalyticsReport,
+  DiscordAnalyticsReport,
+} from "./analytics-report-types";
+import { MemberDetailDialog } from "~/app/_components/admin/members/member-detail-dialog";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
-import { MemberDetailDialog } from "~/app/_components/admin/members/member-detail-dialog";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
+import {
+  COMBINED_UNDERGRADUATE_LABEL,
+  isUndergraduateLevel,
+  mergeUndergraduateAffinityRows,
+  mergeUndergraduateDemographicRows,
+} from "./analytics-audience-segments";
+import { useChartDimensions } from "./analytics-chart-dimensions";
+import {
+  buildDuesCurveConfig,
+  buildDuesCurveRows,
+  duesCurveYears,
+} from "./analytics-dues-curve";
+import {
+  buildPeriodPatch,
+  parseCustomRangeEnd,
+  parseCustomRangeStart,
+  resolvePeriodSelectValue,
+  toCustomRangeInputs,
+} from "./analytics-filter-period";
+import {
+  formatDate,
+  formatDateTime,
+  formatDecimal,
+  formatNumber,
+  formatPercent,
+  truncateChartLabel,
+} from "./analytics-formatting";
+import { buildDiscordLifecycleHighlights } from "./analytics-lifecycle-highlights";
 import {
   AnalyticsMetricCard as MetricCard,
   AnalyticsMetricGrid as MetricGrid,
 } from "./analytics-metric-card";
+import { ratio } from "./analytics-rates";
+import { resolveTablePage } from "./analytics-table-pagination";
 import { DiscordAnalyticsSection } from "./discord-analytics-section";
 import { buildAnalyticsSearchParams } from "./params";
-
-type AnalyticsReport = RouterOutputs["analytics"]["getReport"];
-type DiscordAnalyticsReport = RouterOutputs["analytics"]["getDiscordReport"];
+import { useResumeBundleDownload } from "./resume-bundle-download";
 
 interface AnalyticsAccess {
   canEditMembers: boolean;
   canOpenEvents: boolean;
   canOpenMembers: boolean;
-}
-
-type LifecycleGroup =
-  | AnalyticsReport["highlights"][number]["group"]
-  | "discord";
-
-interface LifecycleHighlight {
-  destination: "audience" | "discord" | "dues" | "events";
-  filters: {
-    demographic?: AnalyticsReport["audience"]["selectedDemographic"];
-    eventTag?: string;
-  };
-  group: LifecycleGroup;
-  kind: string;
-  message: string;
 }
 
 const sections = [
@@ -188,105 +201,6 @@ const demographicLabels = {
   shirt_size: "Shirt size",
 } as const;
 
-const COMBINED_UNDERGRADUATE_LABEL = "Undergraduate University";
-const UNDERGRADUATE_LEVELS = new Set([
-  "Undergraduate University (2 year)",
-  "Undergraduate University (2 year - community college or similar)",
-  "Undergraduate University (3+ year)",
-]);
-
-function isUndergraduateLevel(category: string) {
-  return UNDERGRADUATE_LEVELS.has(category);
-}
-
-function ratio(numerator: number, denominator: number) {
-  return denominator === 0 ? null : numerator / denominator;
-}
-
-function mergeUndergraduateDemographicRows(
-  rows: AnalyticsReport["audience"]["demographics"]["level_of_study"]["rows"],
-) {
-  const undergraduateRows = rows.filter((row) =>
-    isUndergraduateLevel(row.category),
-  );
-  if (undergraduateRows.length === 0) return rows;
-
-  const baseCount = undergraduateRows.reduce(
-    (total, row) => total + row.baseCount,
-    0,
-  );
-  const attendeeCount = undergraduateRows.reduce(
-    (total, row) => total + row.attendeeCount,
-    0,
-  );
-  const totalBaseCount = rows.reduce((total, row) => total + row.baseCount, 0);
-  const totalAttendeeCount = rows.reduce(
-    (total, row) => total + row.attendeeCount,
-    0,
-  );
-  const repeatAttendeeCount = undergraduateRows.reduce(
-    (total, row) => total + (row.repeatAttendeeRate ?? 0) * row.attendeeCount,
-    0,
-  );
-  const duesPaidCount = undergraduateRows.reduce(
-    (total, row) => total + (row.duesPaidRate ?? 0) * row.baseCount,
-    0,
-  );
-  const baseShare = ratio(baseCount, totalBaseCount);
-  const audienceShare = ratio(attendeeCount, totalAttendeeCount);
-  const merged = {
-    attendeeCount,
-    audienceShare,
-    baseCount,
-    baseShare,
-    category: COMBINED_UNDERGRADUATE_LABEL,
-    duesPaidRate: ratio(duesPaidCount, baseCount),
-    participationRate: ratio(attendeeCount, baseCount),
-    repeatAttendeeRate: ratio(repeatAttendeeCount, attendeeCount),
-    representationGap:
-      baseShare === null || audienceShare === null
-        ? null
-        : audienceShare - baseShare,
-  };
-
-  return [
-    ...rows.filter((row) => !isUndergraduateLevel(row.category)),
-    merged,
-  ].sort(
-    (left, right) =>
-      right.baseCount - left.baseCount ||
-      left.category.localeCompare(right.category),
-  );
-}
-
-function mergeUndergraduateAffinityRows(
-  rows: AnalyticsReport["audience"]["affinity"],
-) {
-  const mergedByLabel = new Map<
-    string,
-    AnalyticsReport["audience"]["affinity"][number]
-  >();
-  const unmerged = rows.filter((row) => {
-    if (!isUndergraduateLevel(row.category)) return true;
-    const current = mergedByLabel.get(row.label);
-    mergedByLabel.set(row.label, {
-      attendanceCount: (current?.attendanceCount ?? 0) + row.attendanceCount,
-      category: COMBINED_UNDERGRADUATE_LABEL,
-      eventCount: Math.max(current?.eventCount ?? 0, row.eventCount),
-      label: row.label,
-      memberCount: (current?.memberCount ?? 0) + row.memberCount,
-    });
-    return false;
-  });
-
-  return [...unmerged, ...mergedByLabel.values()].sort(
-    (left, right) =>
-      right.attendanceCount - left.attendanceCount ||
-      left.category.localeCompare(right.category) ||
-      left.label.localeCompare(right.label),
-  );
-}
-
 const chartConfig = {
   attendanceCount: {
     color: "hsl(var(--chart-1))",
@@ -315,30 +229,7 @@ function ShadChart({
   className: string;
   config?: ChartConfig;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState<{
-    height: number;
-    width: number;
-  } | null>(null);
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const update = () => {
-      const bounds = container.getBoundingClientRect();
-      const height = Math.floor(bounds.height);
-      const width = Math.floor(bounds.width);
-      setDimensions((current) => {
-        if (height <= 0 || width <= 0) return null;
-        return current?.height === height && current.width === width
-          ? current
-          : { height, width };
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  const { containerRef, dimensions } = useChartDimensions();
   return (
     <div
       className={`${className} min-h-0 min-w-0`}
@@ -361,39 +252,6 @@ function ShadChart({
       )}
     </div>
   );
-}
-
-function formatNumber(value: number | null) {
-  return value === null ? "—" : new Intl.NumberFormat("en-US").format(value);
-}
-
-function formatDecimal(value: number | null, digits = 1) {
-  return value === null ? "—" : value.toFixed(digits);
-}
-
-function formatPercent(value: number | null) {
-  return value === null
-    ? "—"
-    : new Intl.NumberFormat("en-US", {
-        maximumFractionDigits: 1,
-        style: "percent",
-      }).format(value);
-}
-
-function formatDate(value: Date | string | null) {
-  if (value === null) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone: "America/New_York",
-  }).format(new Date(value));
-}
-
-function formatDateTime(value: Date | string | null) {
-  if (value === null) return "Not recorded";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 }
 
 function MemberDrilldownName({
@@ -433,7 +291,7 @@ function AnalyticsMemberDetail({
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const detail = api.member.getAdminMember.useQuery({ memberId });
+  const detail = api.memberAdmin.getAdminMember.useQuery({ memberId });
 
   if (detail.data) {
     return (
@@ -517,29 +375,6 @@ function DiscordParticipationMetrics({
   );
 }
 
-function buildDiscordLifecycleHighlights(
-  report: DiscordAnalyticsReport,
-): LifecycleHighlight[] {
-  const participation: LifecycleHighlight = {
-    destination: "discord",
-    filters: {},
-    group: "discord",
-    kind: "discord_participation_depth",
-    message:
-      report.summary.uniqueHumanAuthors === 0
-        ? "No human Discord participants are represented in the selected period."
-        : `${formatNumber(report.summary.uniqueHumanAuthors)} people authored ${formatNumber(report.summary.humanMessageCount)} Discord messages—${formatDecimal(report.summary.averageHumanMessagesPerAuthor)} on average and ${formatDecimal(report.summary.medianHumanMessagesPerAuthor)} at the median.`,
-  };
-  const activity: LifecycleHighlight = {
-    destination: "discord",
-    filters: {},
-    group: "discord",
-    kind: "discord_activity_breadth",
-    message: `Discord conversation was active on ${formatNumber(report.summary.activeDays)} of ${formatNumber(report.summary.calendarDays)} observed days (${formatPercent(report.summary.activeDayRate)}) across ${formatNumber(report.summary.activeSurfaceCount)} surfaces (${formatPercent(report.summary.activeSurfaceRate)} of visible surfaces).`,
-  };
-  return [participation, activity];
-}
-
 function Panel({
   children,
   description,
@@ -600,10 +435,11 @@ function PaginatedTableRegion<T>({
 }) {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(initialPageSize);
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const currentPage = Math.min(page, pageCount - 1);
-  const start = currentPage * pageSize;
-  const end = Math.min(start + pageSize, rows.length);
+  const { currentPage, end, pageCount, start } = resolveTablePage({
+    page,
+    pageSize,
+    rowCount: rows.length,
+  });
 
   return (
     <div className="min-w-0">
@@ -698,9 +534,7 @@ function HorizontalBars({
           <YAxis
             axisLine={false}
             dataKey="label"
-            tickFormatter={(value: string) =>
-              value.length > 20 ? `${value.slice(0, 19)}…` : value
-            }
+            tickFormatter={(value: string) => truncateChartLabel(value, 20)}
             tickLine={false}
             type="category"
             width={112}
@@ -808,34 +642,8 @@ function AnalyticsFilters({
   );
   const handlePeriod = useCallback(
     (value: string) => {
-      if (value === "current_semester") {
-        update({
-          comparison: "previous_period",
-          period: { kind: "current_semester" },
-        });
-      } else if (value === "current_academic_year") {
-        update({
-          comparison: "previous_academic_year",
-          period: { kind: "current_academic_year" },
-        });
-      } else if (value === "all_time") {
-        update({ comparison: "none", period: { kind: "all_time" } });
-      } else if (value === "custom") {
-        const to = new Date();
-        const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
-        update({
-          comparison: "previous_period",
-          period: { from, kind: "custom", to },
-        });
-      } else if (value.startsWith("ay:")) {
-        update({
-          comparison: "previous_academic_year",
-          period: {
-            kind: "academic_year",
-            startYear: Number(value.slice(3)),
-          },
-        });
-      }
+      const patch = buildPeriodPatch(value);
+      if (patch) update(patch);
     },
     [update],
   );
@@ -864,7 +672,7 @@ function AnalyticsFilters({
       update({
         period: {
           ...input.period,
-          from: new Date(`${event.target.value}T00:00:00.000Z`),
+          from: parseCustomRangeStart(event.target.value),
         },
       });
     },
@@ -873,9 +681,12 @@ function AnalyticsFilters({
   const handleCustomTo = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (input.period.kind !== "custom" || !event.target.value) return;
-      const inclusive = new Date(`${event.target.value}T00:00:00.000Z`);
-      inclusive.setUTCDate(inclusive.getUTCDate() + 1);
-      update({ period: { ...input.period, to: inclusive } });
+      update({
+        period: {
+          ...input.period,
+          to: parseCustomRangeEnd(event.target.value),
+        },
+      });
     },
     [input.period, update],
   );
@@ -891,19 +702,9 @@ function AnalyticsFilters({
       }),
     [input.section, navigate],
   );
-  const periodValue =
-    input.period.kind === "academic_year"
-      ? `ay:${input.period.startYear}`
-      : input.period.kind;
+  const periodValue = resolvePeriodSelectValue(input.period);
   const academicYears = report.dues.academicYears.map((year) => year.startYear);
-  const customFrom =
-    input.period.kind === "custom"
-      ? input.period.from.toISOString().slice(0, 10)
-      : "";
-  const customTo =
-    input.period.kind === "custom"
-      ? new Date(input.period.to.getTime() - 1).toISOString().slice(0, 10)
-      : "";
+  const customRange = toCustomRangeInputs(input.period);
   const discordOnly = input.section === "discord";
 
   return (
@@ -1027,7 +828,7 @@ function AnalyticsFilters({
               className="h-11"
               onChange={handleCustomFrom}
               type="date"
-              value={customFrom}
+              value={customRange.from}
             />
           </label>
           <label className="grid gap-1 text-xs text-muted-foreground">
@@ -1036,7 +837,7 @@ function AnalyticsFilters({
               className="h-11"
               onChange={handleCustomTo}
               type="date"
-              value={customTo}
+              value={customRange.to}
             />
           </label>
         </div>
@@ -1633,7 +1434,7 @@ function AudienceSection({
                   dataKey="category"
                   minTickGap={16}
                   tickFormatter={(value: string) =>
-                    value.length > 14 ? `${value.slice(0, 13)}…` : value
+                    truncateChartLabel(value, 14)
                   }
                   tickLine={false}
                 />
@@ -1838,29 +1639,11 @@ function DuesSection({
   report: AnalyticsReport;
 }) {
   const summary = report.dues.summary;
-  const curveData = useMemo(() => {
-    const byDay = new Map<number, Record<string, number>>();
-    report.dues.academicYears.slice(0, 4).forEach((year) => {
-      year.curve.forEach((point) => {
-        const row = byDay.get(point.elapsedDays) ?? {
-          elapsedDays: point.elapsedDays,
-        };
-        row[year.label] = point.recordedCount;
-        byDay.set(point.elapsedDays, row);
-      });
-    });
-    return [...byDay.values()].sort(
-      (a, b) => (a.elapsedDays ?? 0) - (b.elapsedDays ?? 0),
-    );
-  }, [report.dues.academicYears]);
-  const curveConfig = Object.fromEntries(
-    report.dues.academicYears
-      .slice(0, 4)
-      .map((year, index) => [
-        year.label,
-        { color: `hsl(var(--chart-${(index % 5) + 1}))`, label: year.label },
-      ]),
-  ) satisfies ChartConfig;
+  const curveData = useMemo(
+    () => buildDuesCurveRows(report.dues.academicYears),
+    [report.dues.academicYears],
+  );
+  const curveConfig = buildDuesCurveConfig(report.dues.academicYears);
   return (
     <div className="space-y-4">
       <MetricGrid>
@@ -1918,24 +1701,26 @@ function DuesSection({
                   />
                   <YAxis allowDecimals={false} width={32} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  {report.dues.academicYears.slice(0, 4).map((year, index) => (
-                    <Line
-                      dataKey={year.label}
-                      dot={false}
-                      isAnimationActive={false}
-                      key={year.startYear}
-                      stroke={`var(--color-${year.label})`}
-                      strokeDasharray={
-                        index === 0 ? undefined : `${4 + index * 2} 3`
-                      }
-                      strokeWidth={index === 0 ? 3 : 2}
-                      type="stepAfter"
-                    />
-                  ))}
+                  {duesCurveYears(report.dues.academicYears).map(
+                    (year, index) => (
+                      <Line
+                        dataKey={year.label}
+                        dot={false}
+                        isAnimationActive={false}
+                        key={year.startYear}
+                        stroke={`var(--color-${year.label})`}
+                        strokeDasharray={
+                          index === 0 ? undefined : `${4 + index * 2} 3`
+                        }
+                        strokeWidth={index === 0 ? 3 : 2}
+                        type="stepAfter"
+                      />
+                    ),
+                  )}
                 </LineChart>
               </ShadChart>
               <div className="sr-only">
-                {report.dues.academicYears.slice(0, 4).map((year) => (
+                {duesCurveYears(report.dues.academicYears).map((year) => (
                   <p key={year.startYear}>
                     {year.label}: {year.recordedCount} recorded credits among{" "}
                     {year.denominator} retained profiles by year end.
@@ -2143,86 +1928,8 @@ function ExportButton({
   );
 }
 
-const RESUME_DOWNLOAD_COOKIE = "resume-bundle-download";
-
-function readResumeDownloadSignal() {
-  const prefix = `${RESUME_DOWNLOAD_COOKIE}=`;
-  const cookie = document.cookie
-    .split("; ")
-    .find((entry) => entry.startsWith(prefix));
-  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
-}
-
-function clearResumeDownloadSignal() {
-  document.cookie = `${RESUME_DOWNLOAD_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
-}
-
 function ResumeBundleButton() {
-  const [isPreparing, setIsPreparing] = useState(false);
-  const pollTimerRef = useRef<number | null>(null);
-  const timeoutTimerRef = useRef<number | null>(null);
-
-  const clearTimers = useCallback(() => {
-    if (pollTimerRef.current !== null) {
-      window.clearInterval(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-    if (timeoutTimerRef.current !== null) {
-      window.clearTimeout(timeoutTimerRef.current);
-      timeoutTimerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => clearTimers, [clearTimers]);
-
-  const handleDownload = useCallback(() => {
-    if (isPreparing) return;
-
-    clearTimers();
-    clearResumeDownloadSignal();
-    setIsPreparing(true);
-
-    const token = window.crypto.randomUUID().replaceAll("-", "");
-    const readySignal = `${token}.ready`;
-    const errorSignal = `${token}.error`;
-
-    pollTimerRef.current = window.setInterval(() => {
-      const signal = readResumeDownloadSignal();
-      if (signal !== readySignal && signal !== errorSignal) return;
-
-      clearTimers();
-      clearResumeDownloadSignal();
-      setIsPreparing(false);
-
-      if (signal === readySignal) {
-        toast.success("Resume bundle download started.");
-      } else {
-        toast.error(
-          "The resume bundle could not be prepared. Please try again.",
-        );
-      }
-    }, 250);
-
-    timeoutTimerRef.current = window.setTimeout(
-      () => {
-        clearTimers();
-        clearResumeDownloadSignal();
-        setIsPreparing(false);
-        toast.error(
-          "Resume preparation is taking longer than expected. Please try again.",
-        );
-      },
-      5 * 60 * 1000,
-    );
-
-    const downloadLink = document.createElement("a");
-    downloadLink.href = `/api/admin/resume-bundle?downloadToken=${encodeURIComponent(token)}`;
-    downloadLink.download = "";
-    downloadLink.hidden = true;
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-  }, [clearTimers, isPreparing]);
+  const { isPreparing, startDownload } = useResumeBundleDownload();
 
   return (
     <div className="grid w-full gap-2 sm:w-auto">
@@ -2230,7 +1937,7 @@ function ResumeBundleButton() {
         className="h-11 w-full sm:w-auto sm:justify-self-start"
         disabled={isPreparing}
         aria-busy={isPreparing}
-        onClick={handleDownload}
+        onClick={startDownload}
         type="button"
       >
         {isPreparing ? (

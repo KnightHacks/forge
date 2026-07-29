@@ -450,5 +450,3 @@ export const FAQ_ITEMS = [
       "Reach out through the sponsor form and our sponsorship team will follow up with options for the current season.",
   },
 ] as const;
-
-export type FeaturedSupporterSlide = (typeof FEATURED_SUPPORTER_SLIDES)[number];

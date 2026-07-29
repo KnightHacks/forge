@@ -81,6 +81,14 @@ You must apply the committed migrations to your local database before running th
 pnpm db:migrate
 ```
 
+Migrations apply to an empty database, so the public Club team roster starts out with no roles classified into it. After you link Discord roles in Blade (or restore data in step 6), classify them:
+
+```bash
+pnpm db:club-roles
+```
+
+Run it whenever the Club roster looks empty. It only adds classifications that are missing, never edits or removes existing ones, and prints the roles it could not resolve.
+
 When you change files in `packages/db/src/schemas`, generate a new migration and commit it:
 
 ```bash

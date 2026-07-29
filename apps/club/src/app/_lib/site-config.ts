@@ -2,7 +2,6 @@ export const SITE_URL = "https://club.knighthacks.org";
 export const SITE_NAME = "Knight Hacks";
 export const ORGANIZATION_NAME = "Knight Hacks";
 export const ORGANIZER_EMAIL = "team@knighthacks.org";
-export const PRESIDENT_EMAIL = "president@knighthacks.org";
 export const SITE_LAST_MODIFIED = "2026-06-15";
 export const CLUB_ASSET_BASE_URL = "https://assets.knighthacks.org";
 

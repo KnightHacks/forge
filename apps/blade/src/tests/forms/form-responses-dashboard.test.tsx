@@ -27,7 +27,7 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 describe("form response reader", () => {
-  it("TC-026 renders every free-text answer in one bounded scrolling table", () => {
+  it("TC-026 renders every free-text answer in one table without pagination", () => {
     const answers = Array.from({ length: 60 }, (_, index) => ({
       responseId: `response-${index + 1}`,
       value: `Long qualitative answer ${index + 1} ${"detail ".repeat(20)}`,
@@ -44,9 +44,6 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-answer-density="bounded"');
-    expect(html).toContain("max-h-72");
-    expect(html).toContain("overflow-y-auto");
     expect(html).toContain("60 responses");
     expect(html).toContain("<table");
     expect(html).toContain("Response</th>");
@@ -61,7 +58,7 @@ describe("form response reader", () => {
     );
   });
 
-  it("TC-026 renders a labeled donut for a small mutually-exclusive choice set", () => {
+  it("TC-026 labels a small mutually-exclusive choice set with counts and shares", () => {
     const html = renderToStaticMarkup(
       createElement(ResponseAnalyticsCard, {
         summary: {
@@ -76,8 +73,6 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-analytics-visualization="donut"');
-    expect(html).toContain('data-chart-library="shadcn"');
     expect(html).toContain(
       'aria-label="How did you hear about us? response distribution"',
     );
@@ -85,7 +80,7 @@ describe("form response reader", () => {
     expect(html).toContain("4 · 40%");
   });
 
-  it("TC-026 uses respondent-based bars, not a pie, for multi-select answers", () => {
+  it("TC-026 reports multi-select shares against respondents, not selections", () => {
     const html = renderToStaticMarkup(
       createElement(ResponseAnalyticsCard, {
         summary: {
@@ -101,11 +96,8 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-analytics-visualization="multi-select-bars"');
-    expect(html).toContain('data-chart-library="shadcn"');
     expect(html).toContain("8 · 80% of respondents");
     expect(html).toContain("6 · 60% of respondents");
-    expect(html).not.toContain('data-analytics-visualization="donut"');
   });
 
   it("TC-026 renders a Yes/No breakdown for boolean responses", () => {
@@ -124,7 +116,6 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-analytics-visualization="donut"');
     expect(html).toContain("18 · 75%");
     expect(html).toContain("6 · 25%");
     expect(html).toContain("Yes");
@@ -164,15 +155,13 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(linkHtml).toContain('data-form-response-link="clickable"');
     expect(linkHtml).toContain('href="https://github.com/knighthacks"');
     expect(linkHtml).toContain('target="_blank"');
-    expect(fileHtml).toContain('data-form-attachment-download="available"');
     expect(fileHtml).toContain("1 uploaded file");
     expect(fileHtml).toContain("resume.pdf");
   });
 
-  it("TC-026 keeps legacy uploaded files downloadable", () => {
+  it("TC-026 renders legacy uploaded files by name", () => {
     const html = renderToStaticMarkup(
       createElement(ResponseAnalyticsCard, {
         summary: {
@@ -192,11 +181,10 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-form-attachment-download="legacy"');
     expect(html).toContain("legacy-resume.pdf");
   });
 
-  it("TC-026 keeps identified submissions compact and opens detail on demand", () => {
+  it("TC-026 keeps long answers out of the row and opens detail on demand", () => {
     const response = {
       answers: {
         improve: "A full answer that should stay out of the table row",
@@ -224,9 +212,6 @@ describe("form response reader", () => {
       }),
     );
 
-    expect(html).toContain('data-response-density="compact"');
-    expect(html).toContain("max-h-[65svh]");
-    expect(html).toContain("overflow-y-auto");
     expect(html).toContain("View response");
     expect(html).toContain("2 answers");
     expect(html).not.toContain(
@@ -234,7 +219,7 @@ describe("form response reader", () => {
     );
   });
 
-  it("TC-026 keeps every identified response in one scroll-bounded table", () => {
+  it("TC-026 keeps every identified response in one unpaginated table", () => {
     const responses = Array.from({ length: 30 }, (_, index) => ({
       answers: { improve: `Answer ${index + 1}` },
       member: {

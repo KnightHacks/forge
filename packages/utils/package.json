@@ -6,10 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./discord": "./src/discord.ts",
-    "./forms": "./src/forms.ts",
-    "./forms.client": "./src/forms.client.ts",
+    "./discord-config": "./src/discord-config.ts",
     "./google": "./src/google.ts",
-    "./permissions.server": "./src/permissions.server.ts",
     "./stripe": "./src/stripe.ts"
   },
   "license": "MIT",
@@ -24,9 +22,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
-    "@forge/auth": "workspace:*",
-    "@forge/consts": "workspace:*",
-    "@forge/db": "workspace:*",
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
@@ -34,6 +29,8 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9",
     "zod": "catalog:"
   },
   "peerDependencies": {
@@ -42,9 +39,13 @@
   "prettier": "@forge/prettier-config",
   "dependencies": {
     "@discordjs/rest": "^2.6.0",
+    "@forge/consts": "workspace:*",
+    "@forge/db": "workspace:*",
     "@t3-oss/env-core": "^0.13.10",
     "discord-api-types": "^0.38.40",
+    "drizzle-orm": "^0.45.1",
     "googleapis": "^171.4.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "stripe": "^20.4.0"
   }
 }

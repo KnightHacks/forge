@@ -1,57 +1,23 @@
 import { randomUUID } from "node:crypto";
-import { TRPCError } from "@trpc/server";
 
+import type { UploadFileType } from "@forge/validators";
 import { MINIO } from "@forge/consts";
+import {
+  IMAGE_UPLOAD_POLICY,
+  maxDataUrlLength,
+  PROFILE_PICTURE_UPLOAD_POLICY,
+  uploadExtension,
+  uploadPolicyFor,
+} from "@forge/validators";
+
+import { decodeUploadDataUrl } from "../upload/data-url";
 
 export const PROFILE_PICTURE_BUCKET_NAME = MINIO.PROFILE_PICTURES_BUCKET_NAME;
 export const MAX_PROFILE_PICTURE_DATA_URL_LENGTH =
-  Math.ceil((MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE * 4) / 3) + 128;
+  maxDataUrlLength(IMAGE_UPLOAD_POLICY);
 
-const BASE64_CONTENT = /^[A-Za-z0-9+/]*={0,2}$/;
-const PROFILE_PICTURE_DATA_URL_PREFIX =
-  /^data:(image\/(?:jpeg|png|gif|webp));base64,/i;
 const SERVER_GENERATED_PROFILE_PICTURE_FILE_NAME =
   /^profile-picture-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:jpg|jpeg|png|gif|webp)$/i;
-
-const extensionByContentType = {
-  "image/gif": "gif",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-} as const;
-
-function assertImageMagic(
-  fileBuffer: Buffer,
-  contentType: string,
-  subject: string,
-) {
-  const hasJpegMagic =
-    fileBuffer.length >= 3 &&
-    fileBuffer[0] === 0xff &&
-    fileBuffer[1] === 0xd8 &&
-    fileBuffer[2] === 0xff;
-  const hasPngMagic =
-    fileBuffer.subarray(0, 8).toString("hex") === "89504e470d0a1a0a";
-  const gifHeader = fileBuffer.subarray(0, 6).toString("ascii");
-  const hasGifMagic = gifHeader === "GIF87a" || gifHeader === "GIF89a";
-  const hasWebpMagic =
-    fileBuffer.subarray(0, 4).toString("ascii") === "RIFF" &&
-    fileBuffer.subarray(8, 12).toString("ascii") === "WEBP";
-
-  if (
-    (contentType === "image/jpeg" && hasJpegMagic) ||
-    (contentType === "image/png" && hasPngMagic) ||
-    (contentType === "image/gif" && hasGifMagic) ||
-    (contentType === "image/webp" && hasWebpMagic)
-  ) {
-    return;
-  }
-
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: `${subject} must be a valid image.`,
-  });
-}
 
 export function getProfilePictureUserPrefix(userId: string) {
   return `${userId}/`;
@@ -59,11 +25,9 @@ export function getProfilePictureUserPrefix(userId: string) {
 
 export function createProfilePictureObjectName(
   userId: string,
-  contentType: keyof typeof extensionByContentType,
+  type: UploadFileType,
 ) {
-  return `${getProfilePictureUserPrefix(userId)}profile-picture-${randomUUID()}.${
-    extensionByContentType[contentType]
-  }`;
+  return `${getProfilePictureUserPrefix(userId)}profile-picture-${randomUUID()}.${uploadExtension(type)}`;
 }
 
 export function isProfilePictureObjectOwnedByUser(
@@ -137,54 +101,20 @@ export function isServerGeneratedProfilePictureObjectName(
 export function decodeAndValidateImageDataUrl(
   fileContent: string,
   subject: string,
+  fileName?: string,
 ) {
-  if (fileContent.length > MAX_PROFILE_PICTURE_DATA_URL_LENGTH) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `${subject} must be 2MB or smaller.`,
-    });
-  }
-
-  const match = PROFILE_PICTURE_DATA_URL_PREFIX.exec(fileContent);
-  const contentType = match?.[1]?.toLowerCase() as
-    | keyof typeof extensionByContentType
-    | undefined;
-
-  if (!contentType || !(contentType in extensionByContentType)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `${subject} must be a JPEG, PNG, GIF, or WebP image.`,
-    });
-  }
-
-  const base64Data = fileContent.replace(PROFILE_PICTURE_DATA_URL_PREFIX, "");
-  if (
-    !base64Data ||
-    base64Data.length % 4 === 1 ||
-    !BASE64_CONTENT.test(base64Data)
-  ) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `${subject} data is missing or invalid.`,
-    });
-  }
-
-  const fileBuffer = Buffer.from(base64Data, "base64");
-  if (
-    fileBuffer.length === 0 ||
-    fileBuffer.length > MINIO.KNIGHTHACKS_MAX_PROFILE_PICTURE_SIZE
-  ) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `${subject} must be 2MB or smaller.`,
-    });
-  }
-
-  assertImageMagic(fileBuffer, contentType, subject);
-
-  return { contentType, fileBuffer };
+  return decodeUploadDataUrl(uploadPolicyFor(IMAGE_UPLOAD_POLICY, subject), {
+    dataUrl: fileContent,
+    fileName,
+  });
 }
 
-export function decodeAndValidateProfilePictureDataUrl(fileContent: string) {
-  return decodeAndValidateImageDataUrl(fileContent, "Profile picture");
+export function decodeAndValidateProfilePictureDataUrl(
+  fileContent: string,
+  fileName?: string,
+) {
+  return decodeUploadDataUrl(PROFILE_PICTURE_UPLOAD_POLICY, {
+    dataUrl: fileContent,
+    fileName,
+  });
 }

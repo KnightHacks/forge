@@ -2,10 +2,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
 import type { SQL, SQLWrapper } from "@forge/db";
-import { TEAM } from "@forge/consts";
 import { and, asc, desc, eq, inArray, isNotNull, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
+import { ClubTeamRole } from "@forge/db/schemas/club-team";
 import { Company, Employment, Member } from "@forge/db/schemas/knight-hacks";
 import {
   companyIdInputSchema,
@@ -21,6 +21,8 @@ import { publicProcedure } from "../trpc";
 import { getCompanyImageUrl } from "../utils/career/company-image";
 import { getGlobeCity } from "../utils/career/globe-cities";
 import { getUsCity } from "../utils/career/us-cities";
+import { getVisiblePublicClubRoster } from "../utils/guild/club-roster";
+import { loadClubTeamConfig } from "../utils/guild/club-team-config";
 import {
   normalizePublicGuildText,
   normalizePublicGuildUrl,
@@ -264,17 +266,15 @@ function getFilters(
     );
   }
   if (input.teamMembersOnly) {
-    const roleNames = sql.join(
-      TEAM.CLUB_ROSTER_ROLE_NAMES.map((roleName) => sql`${roleName}`),
-      sql`, `,
-    );
+    // "On the team" is now whatever the club roster configuration classifies,
+    // matched on role ID. It used to be a literal list of role names, which
+    // dropped anyone whose Discord role had since been renamed.
     filters.push(sql`
       EXISTS (
         SELECT 1
         FROM ${Permissions}
-        INNER JOIN ${Roles} ON ${Roles.id} = ${Permissions.roleId}
+        INNER JOIN ${ClubTeamRole} ON ${ClubTeamRole.roleId} = ${Permissions.roleId}
         WHERE ${Permissions.userId} = ${Member.userId}
-          AND ${Roles.name} IN (${roleNames})
       )
     `);
   }
@@ -289,30 +289,33 @@ async function getRoleCalloutsByUserId(
     return new Map<string, GuildRoleCallout | null>();
   }
 
-  const rows = await db
-    .select({
-      userId: Permissions.userId,
-      name: Roles.name,
-      color: Roles.teamHexcodeColor,
-    })
-    .from(Permissions)
-    .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
-    .where(inArray(Permissions.userId, [...userIds]));
+  const [config, rows] = await Promise.all([
+    loadClubTeamConfig(),
+    db
+      .select({
+        userId: Permissions.userId,
+        roleId: Roles.id,
+        color: Roles.teamHexcodeColor,
+      })
+      .from(Permissions)
+      .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+      .where(inArray(Permissions.userId, [...userIds])),
+  ]);
 
   const rolesByUserId = new Map<
     string,
-    { name: string; color: string | null }[]
+    { roleId: string; color: string | null }[]
   >();
   for (const row of rows) {
     const roles = rolesByUserId.get(row.userId) ?? [];
-    roles.push({ name: row.name, color: row.color });
+    roles.push({ roleId: row.roleId, color: row.color });
     rolesByUserId.set(row.userId, roles);
   }
 
   return new Map<string, GuildRoleCallout | null>(
     [...rolesByUserId].map(([userId, roles]) => [
       userId,
-      getGuildRoleCallout(roles),
+      getGuildRoleCallout(config, roles),
     ]),
   );
 }
@@ -569,6 +572,10 @@ export const guildRouter = {
         (first, second) =>
           second.count - first.count || first.label.localeCompare(second.label),
       );
+  }),
+
+  getPublicClubTeamRoster: publicProcedure.query(async () => {
+    return await getVisiblePublicClubRoster();
   }),
 
   listProfiles: publicProcedure

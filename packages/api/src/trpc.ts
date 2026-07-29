@@ -60,4 +60,3 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     },
   });
 });
-export const judgeProcedure = protectedProcedure;

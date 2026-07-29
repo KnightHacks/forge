@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { RoleManagementSearchParams } from "~/app/_components/admin/roles/params";
-import { canAccessRoleAdmin } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
 import { parseRoleManagementSearchParams } from "~/app/_components/admin/roles/params";
 import { RoleManagementDashboard } from "~/app/_components/admin/roles/role-management-dashboard";
+import { canAccessRoleAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Role Management",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function AdminRolesPage({
   searchParams,
 }: {
-  searchParams: Promise<RoleManagementSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");
@@ -57,19 +57,17 @@ export default async function AdminRolesPage({
   ]);
 
   return (
-    <HydrateClient>
-      <RoleManagementDashboard
-        key={JSON.stringify(input)}
-        access={{
-          canAssign,
-          canConfigure,
-          isOfficer: effectivePermissions.IS_OFFICER === true,
-        }}
-        detail={detail}
-        input={input}
-        roles={roles}
-        users={users}
-      />
-    </HydrateClient>
+    <RoleManagementDashboard
+      key={JSON.stringify(input)}
+      access={{
+        canAssign,
+        canConfigure,
+        isOfficer: effectivePermissions.IS_OFFICER === true,
+      }}
+      detail={detail}
+      input={input}
+      roles={roles}
+      users={users}
+    />
   );
 }

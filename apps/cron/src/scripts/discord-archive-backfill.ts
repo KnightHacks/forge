@@ -3,8 +3,8 @@ import { hostname } from "node:os";
 import { REST } from "discord.js";
 
 import { discordArchiveDatabaseStore } from "@forge/api/discord-archive.server";
-import { DISCORD } from "@forge/consts";
 import { logger } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { runDiscordArchiveInitialBackfill } from "../discord-archive/cycle";
 import { createDiscordArchiveRestSource } from "../discord-archive/rest-source";
@@ -16,22 +16,23 @@ async function main() {
     throw new Error("DISCORD_ARCHIVE_BOT_TOKEN is required for backfill.");
   }
 
+  const guildId = await getKnightHacksGuildId();
   const rest = new REST({ version: "10" }).setToken(
     env.DISCORD_ARCHIVE_BOT_TOKEN,
   );
   const source = createDiscordArchiveRestSource({
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     includeArchivedThreads: true,
     rest,
   });
   const worker = createDiscordArchiveWorker({
     channelBatchSize: 25,
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     source,
     store: discordArchiveDatabaseStore,
   });
   const result = await runDiscordArchiveInitialBackfill({
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     onRound: ({ failed, round, selected, succeeded }) => {
       if (round === 1 || round % 10 === 0 || selected === 0 || failed > 0) {
         logger.info(

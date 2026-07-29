@@ -1,12 +1,12 @@
 import type { APIGuildMember } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
-import { DISCORD } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { logger } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
@@ -23,6 +23,8 @@ export const roleSync = new CronBuilder({
 }).addCron(
   "0 8 * * *", // 8am every day
   async () => {
+    const guildId = await getKnightHacksGuildId();
+
     // Get all roles that are linked in Blade
     const linkedRoles = await db.select().from(Roles);
     logger.log(`Found ${linkedRoles.length} linked roles`);
@@ -42,7 +44,7 @@ export const roleSync = new CronBuilder({
       try {
         // Fetch the user's roles from Discord
         const guildMember = (await discord.api.get(
-          Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
+          Routes.guildMember(guildId, user.discordUserId),
         )) as APIGuildMember;
 
         const discordRoleIds = guildMember.roles;

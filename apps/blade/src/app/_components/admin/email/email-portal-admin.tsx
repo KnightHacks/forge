@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { startTransition, useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
@@ -15,32 +16,25 @@ import { api } from "~/trpc/react";
 import { EmailPortalWorkspace } from "./email-portal-workspace";
 
 export function EmailPortalAdmin({
+  audienceOptions,
   campaignAudienceMode,
-  initialAudienceOptions,
-  initialSends,
   initialTab,
-  initialTemplates,
+  sends,
+  templates,
 }: {
+  audienceOptions: RouterOutputs["email"]["listAudienceOptions"];
   campaignAudienceMode: CampaignAudienceMode;
-  initialAudienceOptions: RouterOutputs["email"]["listAudienceOptions"];
-  initialSends: RouterOutputs["email"]["listSends"];
   initialTab: EmailPortalTab;
-  initialTemplates: RouterOutputs["email"]["listTemplates"];
+  sends: RouterOutputs["email"]["listSends"];
+  templates: RouterOutputs["email"]["listTemplates"];
 }) {
   const campaignDeliveryEnabled = campaignAudienceMode !== "disabled";
+  const router = useRouter();
   const utils = api.useUtils();
   const [preview, setPreview] = useState<EmailPortalPreview | null>(null);
-  const templates = api.email.listTemplates.useQuery(
-    { includeArchived: false, limit: 50 },
-    { initialData: initialTemplates },
-  );
-  const sends = api.email.listSends.useQuery(
-    { limit: 50 },
-    { initialData: initialSends },
-  );
-  const audiences = api.email.listAudienceOptions.useQuery(undefined, {
-    initialData: initialAudienceOptions,
-  });
+  const refresh = () => {
+    startTransition(() => router.refresh());
+  };
   const saveTemplate = api.email.saveTemplateDraft.useMutation();
   const publishTemplate = api.email.publishTemplate.useMutation();
   const archiveTemplate = api.email.archiveTemplate.useMutation();
@@ -57,9 +51,9 @@ export function EmailPortalAdmin({
     },
   });
   const confirmSend = api.email.confirmSend.useMutation({
-    async onSuccess() {
+    onSuccess() {
       setPreview(null);
-      await utils.email.listSends.invalidate();
+      refresh();
       toast.success("Campaign confirmed.");
     },
     onError(error) {
@@ -98,29 +92,25 @@ export function EmailPortalAdmin({
     [utils],
   );
 
-  const refreshTemplates = async () => {
-    await utils.email.listTemplates.invalidate();
-  };
-
   return (
     <EmailPortalWorkspace
-      audienceOptions={audiences.data}
+      audienceOptions={audienceOptions}
       campaignAudienceMode={campaignAudienceMode}
       initialTab={initialTab}
       isConfirming={confirmSend.isPending}
       isPreviewing={previewSend.isPending}
       isTesting={sendTest.isPending}
       preview={preview}
-      sends={sends.data}
-      templates={templates.data}
+      sends={sends}
+      templates={templates}
       onArchiveTemplate={async (templateId) => {
         await archiveTemplate.mutateAsync({ templateId });
-        await refreshTemplates();
+        refresh();
         toast.success("Template archived.");
       }}
       onCancelSend={async (sendId) => {
         await cancelSend.mutateAsync({ sendId });
-        await utils.email.listSends.invalidate();
+        refresh();
         toast.success("Send cancelled.");
       }}
       onConfirm={
@@ -138,7 +128,7 @@ export function EmailPortalAdmin({
       }
       onDuplicateTemplate={async (templateId) => {
         await duplicateTemplate.mutateAsync({ templateId });
-        await refreshTemplates();
+        refresh();
         toast.success("Template duplicated as a draft.");
       }}
       onLoadTemplate={async (templateId) => {
@@ -184,12 +174,12 @@ export function EmailPortalAdmin({
       }}
       onPublishTemplate={async (templateId) => {
         await publishTemplate.mutateAsync({ templateId });
-        await refreshTemplates();
+        refresh();
         toast.success("Template published.");
       }}
       onRetrySend={async (sendId) => {
         await retrySend.mutateAsync({ sendId });
-        await utils.email.listSends.invalidate();
+        refresh();
         toast.success("Retry queued.");
       }}
       onResolveAudience={resolveAudience}
@@ -209,7 +199,7 @@ export function EmailPortalAdmin({
             visualDocument: input.visualDocument ?? {},
           });
         }
-        await refreshTemplates();
+        refresh();
         toast.success("Template draft saved.");
       }}
       onSendTest={async (content) => {

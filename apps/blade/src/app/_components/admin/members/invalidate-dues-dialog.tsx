@@ -29,7 +29,7 @@ export function InvalidateDuesDialog({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [confirmation, setConfirmation] = useState("");
-  const invalidate = api.member.invalidateEffectiveDues.useMutation({
+  const invalidate = api.memberAdmin.invalidateEffectiveDues.useMutation({
     onSuccess(result) {
       toast.success(
         `Invalidated effective dues for ${result.affected} member${result.affected === 1 ? "" : "s"}.`,

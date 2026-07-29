@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
+import type { FormDefinition } from "@forge/validators";
+
 export type FormResponseMode =
   | "multiple_locked"
   | "single_editable"
@@ -34,6 +36,28 @@ export interface FormRespondentContext {
   };
 }
 
+/**
+ * Whether this member is permitted to see this form at all.
+ *
+ * Separate from `evaluateFormRespondentState` on purpose. That function answers
+ * "what should the page say", and it answers with a single value, so timing
+ * wins: a closed form returns `"closed"` and never reaches the eligibility
+ * branch. Authorization cannot be a fallthrough of a display state — a
+ * restricted form that closes must not become readable to everyone. This is the
+ * gate the pre-refactor `respondentForm` applied unconditionally, restored as a
+ * predicate that callers must ask for by name.
+ */
+export function isFormRespondentEligible(context: FormRespondentContext) {
+  const { actor, form } = context;
+
+  if (form.respondentDuesRequired && !actor.duesPaid) return false;
+
+  return (
+    form.respondentRoleIds.length === 0 ||
+    form.respondentRoleIds.some((roleId) => actor.roleIds.includes(roleId))
+  );
+}
+
 export function evaluateFormRespondentState(
   context: FormRespondentContext,
   now: Date,
@@ -52,6 +76,73 @@ export function evaluateFormRespondentState(
     return "ineligible";
   }
   return "open";
+}
+
+/**
+ * What a respondent is told about a form they cannot answer. `draft` is absent
+ * on purpose: an unpublished form must stay undiscoverable, so the caller 404s
+ * before building a view.
+ */
+export type RespondentStateDto =
+  | {
+      answers: Record<string, unknown>;
+      editable: boolean;
+      responseId: string;
+      status: "submitted";
+      submittedAt: Date;
+    }
+  | { closedAt: Date | null; status: "closed" }
+  | { opensAt: Date | null; status: "scheduled" }
+  | { status: "archived" | "ineligible" | "manually_closed" | "open" };
+
+export function buildRespondentFormView(input: {
+  definition: FormDefinition;
+  form: {
+    closesAt: Date | null;
+    opensAt: Date | null;
+    responseMode: FormResponseMode;
+  };
+  response: {
+    answers: Record<string, unknown>;
+    id: string;
+    submittedAt: Date;
+  } | null;
+  state: Exclude<RespondentState, "draft">;
+}): { definition: FormDefinition; respondentState: RespondentStateDto } {
+  const { definition, form, response, state } = input;
+  if (response) {
+    return {
+      definition,
+      respondentState: {
+        answers: response.answers,
+        editable: form.responseMode === "single_editable" && state === "open",
+        responseId: response.id,
+        status: "submitted",
+        submittedAt: response.submittedAt,
+      },
+    };
+  }
+  if (state === "ineligible") {
+    // Telling a respondent they are ineligible must not hand them the form's
+    // contents; only the title and description survive.
+    return {
+      definition: { ...definition, instructions: [], questions: [] },
+      respondentState: { status: "ineligible" },
+    };
+  }
+  if (state === "scheduled") {
+    return {
+      definition,
+      respondentState: { opensAt: form.opensAt, status: "scheduled" },
+    };
+  }
+  if (state === "closed") {
+    return {
+      definition,
+      respondentState: { closedAt: form.closesAt, status: "closed" },
+    };
+  }
+  return { definition, respondentState: { status: state } };
 }
 
 interface FormResponseRepository {

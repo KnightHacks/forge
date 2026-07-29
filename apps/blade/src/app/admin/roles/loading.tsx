@@ -3,7 +3,7 @@ import { Skeleton } from "@forge/ui/skeleton";
 import {
   AdminPageHeaderSkeleton,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 
 export default function AdminRolesLoading() {
   return (

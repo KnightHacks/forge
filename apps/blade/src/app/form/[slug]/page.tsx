@@ -7,13 +7,13 @@ import {
   memberSignupFormDefinition,
 } from "@forge/validators";
 
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
 import { GenericFormRespondent } from "~/app/_components/forms/generic-form-respondent";
 import { GenericFormResponseForm } from "~/app/_components/forms/generic-form-response-form";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { MemberSignupForm } from "~/app/_components/member/member-signup-form";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Form",
@@ -43,17 +43,12 @@ export default async function FormPage({
     const respondentState =
       result.respondentState.status === "scheduled"
         ? {
-            opensAt:
-              result.respondentState.opensAt?.toISOString() ??
-              new Date().toISOString(),
+            opensAt: result.respondentState.opensAt?.toISOString() ?? null,
             status: "scheduled" as const,
           }
         : result.respondentState.status === "closed"
           ? {
-              closedAt:
-                result.respondentState.closedAt?.toISOString() ??
-                new Date().toISOString(),
-              reason: result.respondentState.reason,
+              closedAt: result.respondentState.closedAt?.toISOString() ?? null,
               status: "closed" as const,
             }
           : result.respondentState.status === "submitted"
@@ -66,45 +61,43 @@ export default async function FormPage({
                 status: "submitted" as const,
                 submittedAt: result.respondentState.submittedAt.toISOString(),
               }
-            : { status: "open" as const };
+            : { status: result.respondentState.status };
 
     return (
-      <HydrateClient>
-        <AuthenticatedShell
-          adminNavigation={getAdminNavigationAccess(effectivePermissions)}
-          sectionLabel="Member form"
-          session={session}
-        >
-          <GenericFormRespondent
-            definition={{
-              description: definition.description,
-              id: result.form.id,
-              name: result.form.name,
-              questions: definition.questions,
-              responseMode: result.form.responseMode,
-              slugName: result.form.slugName,
-            }}
-            openForm={
-              <GenericFormResponseForm
-                definition={definition}
-                formId={result.form.id}
-                initialAnswers={
-                  result.respondentState.status === "submitted"
-                    ? result.respondentState.answers
-                    : undefined
-                }
-                mode={
-                  result.respondentState.status === "submitted" &&
-                  result.respondentState.editable
-                    ? "edit"
-                    : "create"
-                }
-              />
-            }
-            respondentState={respondentState}
-          />
-        </AuthenticatedShell>
-      </HydrateClient>
+      <AuthenticatedShell
+        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
+        sectionLabel="Member form"
+        session={session}
+      >
+        <GenericFormRespondent
+          definition={{
+            description: definition.description,
+            id: result.form.id,
+            name: result.form.name,
+            questions: definition.questions,
+            responseMode: result.form.responseMode,
+            slugName: result.form.slugName,
+          }}
+          openForm={
+            <GenericFormResponseForm
+              definition={definition}
+              formId={result.form.id}
+              initialAnswers={
+                result.respondentState.status === "submitted"
+                  ? result.respondentState.answers
+                  : undefined
+              }
+              mode={
+                result.respondentState.status === "submitted" &&
+                result.respondentState.editable
+                  ? "edit"
+                  : "create"
+              }
+            />
+          }
+          respondentState={respondentState}
+        />
+      </AuthenticatedShell>
     );
   }
 
@@ -119,20 +112,18 @@ export default async function FormPage({
   if (member) redirect(completionRedirectUrl);
 
   return (
-    <HydrateClient>
-      <AuthenticatedShell
-        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
-        session={session}
-      >
-        <MemberSignupForm
-          definition={{
-            ...memberSignupFormDefinition,
-            completionRedirectUrl,
-            id: form.id,
-            slugName: form.slugName,
-          }}
-        />
-      </AuthenticatedShell>
-    </HydrateClient>
+    <AuthenticatedShell
+      adminNavigation={getAdminNavigationAccess(effectivePermissions)}
+      session={session}
+    >
+      <MemberSignupForm
+        definition={{
+          ...memberSignupFormDefinition,
+          completionRedirectUrl,
+          id: form.id,
+          slugName: form.slugName,
+        }}
+      />
+    </AuthenticatedShell>
   );
 }

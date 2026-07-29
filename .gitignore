@@ -45,9 +45,14 @@ yarn-error.log*
 /packages/db/backup.sql
 
 # local env files
-.env
-.env*.local
-.env-e
+#
+# Ignore every .env variant and re-admit the tracked template, rather than
+# listing known suffixes. The old list covered `.env`, `.env*.local` and
+# `.env-e`, so a `.env.bak` sitting next to them was committable -- and was
+# committed, byte-identical to a developer's live credentials, by a stray
+# `git add -A`. A deny-list only protects the suffixes someone thought of.
+.env*
+!.env.example
 
 # typescript
 dist/

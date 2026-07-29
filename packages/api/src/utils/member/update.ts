@@ -16,9 +16,9 @@ import {
 
 import type { TransactionDb } from "../db";
 import { replaceEmploymentHistory } from "../career/employment";
+import { isUniqueViolation } from "../db";
 import { codeOwnedFormConfigs } from "../forms/config";
 import { updateResponse } from "../forms/manager";
-import { isUniqueViolation } from "./profile";
 
 function getCodeOfConductAccepted(responseData: unknown) {
   if (

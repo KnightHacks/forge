@@ -23,12 +23,8 @@
     "@forge/validators": "workspace:*",
     "@t3-oss/env-core": "^0.13.10",
     "discord.js": "^14.25.1",
-    "drizzle-orm": "^0.45.1",
     "jimp": "^1.6.0",
     "natural": "^8.1.0",
-    "node-cron": "^4.2.1",
-    "postgres": "^3.4.8",
-    "resend": "^6.0.0",
     "sharp": "^0.34.5",
     "zod": "catalog:"
   },
@@ -36,12 +32,13 @@
     "@forge/eslint-config": "workspace:*",
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
-    "@types/node-cron": "^3.0.11",
+    "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "tailwindcss": "catalog:",
     "tsx": "^4.21.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

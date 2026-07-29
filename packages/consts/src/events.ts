@@ -78,11 +78,6 @@ export const EVENT_DISCORD_ENTITY_TYPES = [
   "stage",
 ] as const;
 
-export type EventSyncState = (typeof EVENT_SYNC_STATES)[number];
-export type EventGoogleDestination = (typeof EVENT_GOOGLE_DESTINATIONS)[number];
-export type EventDiscordEntityType =
-  (typeof EVENT_DISCORD_ENTITY_TYPES)[number];
-
 export type EventTagsColor =
   | "GBM"
   | "Social"
@@ -102,13 +97,6 @@ export type EventTagsColor =
   | "Ceremony"
   | "CAREER-FAIR"
   | "RSO-FAIR";
-
-export const EVENT_FEEDBACK_SLIDER_MINIMUM = 1;
-export const EVENT_FEEDBACK_SLIDER_MAXIMUM = 10;
-export const EVENT_FEEDBACK_SLIDER_STEP = 1;
-export const EVENT_FEEDBACK_SLIDER_VALUE = 5;
-export const EVENT_FEEDBACK_TEXT_ROWS = 4;
-export const EVENT_FEEDBACK_POINTS_INCREMENT = 10;
 
 export const CALENDAR_TIME_ZONE = "America/New_York";
 

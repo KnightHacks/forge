@@ -1,50 +1,122 @@
-import {
-  GuildScheduledEventEntityType,
-  GuildScheduledEventPrivacyLevel,
-} from "discord-api-types/v10";
-
 import { IS_PROD } from "./util";
 
-// TODO: JSDOC all all of the non PROD_ or DEV_ exports
+//
+// Discord organizational state — guild, channel, and role IDs — is no longer
+// hard-coded here. It lives in the `knight_hacks_discord_config` table and is
+// read through `@forge/utils/discord-config`.
+//
+// A Discord server gets reorganized and an officer team turns over roughly
+// every year, so every one of those IDs failed the "would this require a
+// developer change next year?" test. What stays in this file is the part that
+// genuinely is a code contract: the set of settings the platform knows how to
+// look up, and the kinds of Discord object they point at.
+//
 
-export const PROD_OFFICER_ROLE = "486629374758748180";
-export const DEV_OFFICER_ROLE = "1246637685011906560";
-export const OFFICER_ROLE = IS_PROD ? PROD_OFFICER_ROLE : DEV_OFFICER_ROLE;
+/**
+ * The kind of Discord object a config row points at. Purely descriptive: it
+ * tells an officer editing a row whether to paste a server ID, a channel ID, or
+ * a role ID. Nothing branches on it.
+ */
+export const CONFIG_KINDS = ["channel", "guild", "role"] as const;
 
-export const PROD_ADMIN_ROLE = "1319413082258411652";
-export const DEV_ADMIN_ROLE = "1321955700540309645";
-export const ADMIN_ROLE = IS_PROD ? PROD_ADMIN_ROLE : DEV_ADMIN_ROLE;
+export type ConfigKind = (typeof CONFIG_KINDS)[number];
 
-export const PROD_VOLUNTEER_ROLE = "1415505872360312974";
-export const DEV_VOLUNTEER_ROLE = "1426947077514203279";
-export const VOLUNTEER_ROLE = IS_PROD
-  ? PROD_VOLUNTEER_ROLE
-  : DEV_VOLUNTEER_ROLE;
+/**
+ * Every setting the platform reads out of `knight_hacks_discord_config`.
+ *
+ * This is a contract, not organizational state: adding a key means adding code
+ * that reads it, so it belongs in the codebase. The *values* behind the keys are
+ * organizational state and belong to the table.
+ *
+ * Keys are stable identifiers — renaming one is a breaking change that needs a
+ * data migration, exactly like renaming a column.
+ */
+export const CONFIG_KEYS = [
+  "guild",
+  "log_channel",
+  "recruiting_channel",
+  "officer_role",
+  "admin_role",
+  "volunteer_role",
+  "alumni_role",
+  "vip_role",
+  "outreach_director_role",
+  "design_director_role",
+  "development_director_role",
+  "sponsorship_director_role",
+  "workshops_director_role",
+  "projects_mentorship_director_role",
+] as const;
 
-// TODO: add DEV_ALUMNI_ROLE
-export const PROD_ALUMNI_ROLE = "486629512101232661";
-export const ALUMNI_ROLE = PROD_ALUMNI_ROLE;
+export type ConfigKey = (typeof CONFIG_KEYS)[number];
 
-export const PROD_VIP_ROLE = "1423358570203844689";
-export const DEV_VIP_ROLE = "1423366084874080327";
-export const VIP_ROLE = IS_PROD ? PROD_VIP_ROLE : DEV_VIP_ROLE;
+/**
+ * What reads each setting, in officer-facing terms. An empty array means the
+ * platform reads this key nowhere: the row exists because the constant it
+ * replaced existed, not because anything resolves it.
+ *
+ * `satisfies Record<ConfigKey, ...>` is the point. Adding a key to
+ * {@link CONFIG_KEYS} without answering "what reads it?" is a type error, which
+ * is the only moment anyone is in a position to answer honestly.
+ *
+ * The labels are copy and are not verified against anything. The live/inert
+ * split is, by `packages/utils/src/tests/discord-config-consumers.test.ts`,
+ * which scans for the call sites this describes.
+ */
+export const CONFIG_KEY_CONSUMERS = {
+  guild: [
+    "Discord message archive",
+    "Role sync and role linking",
+    "Discord event projection",
+    "T.K. Discord bot",
+    "Role-sync and alumni cron jobs",
+  ],
+  log_channel: ["Blade admin action log embeds"],
+  recruiting_channel: ["Recruiting notifications posted by form callbacks"],
+  alumni_role: ["Nightly alumni grant/revoke cron"],
+  officer_role: [],
+  admin_role: [],
+  volunteer_role: [],
+  vip_role: [],
+  outreach_director_role: [],
+  design_director_role: [],
+  development_director_role: [],
+  sponsorship_director_role: [],
+  workshops_director_role: [],
+  projects_mentorship_director_role: [],
+} as const satisfies Record<ConfigKey, readonly string[]>;
 
+/** Keys some code resolves. Ordered by {@link CONFIG_KEYS}, not alphabetically. */
+export const LIVE_CONFIG_KEYS = CONFIG_KEYS.filter(
+  (key) => CONFIG_KEY_CONSUMERS[key].length > 0,
+);
+
+/** Keys nothing resolves. Editing one changes no platform behavior. */
+export const INERT_CONFIG_KEYS = CONFIG_KEYS.filter(
+  (key) => CONFIG_KEY_CONSUMERS[key].length === 0,
+);
+
+/**
+ * @deprecated Read `"guild"` from `@forge/utils/discord-config` instead.
+ *
+ * These three survive only because `apps/blade`'s Playwright specs and
+ * `@forge/api`'s role-management test fixture still compare against the literal
+ * snowflake, and `apps/blade` is out of scope for this change. Delete them once
+ * those fixtures resolve the guild from the config table.
+ */
 export const PROD_KNIGHTHACKS_GUILD = "486628710443778071";
+/** @deprecated See {@link PROD_KNIGHTHACKS_GUILD}. */
 export const DEV_KNIGHTHACKS_GUILD = "1151877367434850364";
+/** @deprecated See {@link PROD_KNIGHTHACKS_GUILD}. */
 export const KNIGHTHACKS_GUILD = IS_PROD
   ? PROD_KNIGHTHACKS_GUILD
   : DEV_KNIGHTHACKS_GUILD;
 
-export const PROD_LOG_CHANNEL = "1324885515412963531";
-export const DEV_LOG_CHANNEL = "1284582557689843785";
-export const LOG_CHANNEL = IS_PROD ? PROD_LOG_CHANNEL : DEV_LOG_CHANNEL;
-
-export const PROD_RECRUITING_CHANNEL = "1461758896950608104";
-export const RECRUITING_CHANNEL = IS_PROD
-  ? PROD_RECRUITING_CHANNEL
-  : DEV_LOG_CHANNEL;
-
+/**
+ * The club's vanity invite link. Deliberately *not* moved into the config
+ * table: it is a URL rather than a Discord snowflake, it has no
+ * production/development pair, and every remaining reference to it lives in
+ * `legacy/`. Storing it would mean loosening the snowflake check constraint
+ * that guards every other row for the sake of one archival value.
+ */
 export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";
-
-export const EVENT_TYPE = GuildScheduledEventEntityType.External;
-export const EVENT_PRIVACY_LEVEL = GuildScheduledEventPrivacyLevel.GuildOnly;

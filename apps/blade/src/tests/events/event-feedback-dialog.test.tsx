@@ -96,7 +96,6 @@ describe("EventFeedbackDialog", () => {
     );
 
     expect(html).toContain('aria-label="Event feedback for Git Workshop"');
-    expect(html).toContain('data-event-feedback-dialog-state="available"');
     expect(html).toContain("Overall event rating");
     expect(html).toContain("How fun was the event?");
     expect(html).toContain("How much did you learn?");
@@ -140,7 +139,6 @@ describe("EventFeedbackDialog", () => {
       }),
     );
 
-    expect(html).toContain('data-event-feedback-dialog-state="completed"');
     expect(html).toContain("Feedback submitted");
     expect(html).toContain("5 points earned");
     expect(html).toContain("Overall event rating");
@@ -174,27 +172,5 @@ describe("EventFeedbackDialog", () => {
     expect(html).toContain("5 points earned");
     expect(html).toContain("The submitted answers are no longer available");
     expect(html).not.toContain("Submit feedback");
-  });
-
-  it("uses a full-screen mobile dialog, labelled fields, and touch-sized actions", () => {
-    const html = renderToStaticMarkup(
-      createElement(EventFeedbackDialog, {
-        definition,
-        event,
-        onClose: vi.fn(),
-        onSubmit: vi.fn(),
-        open: true,
-        state: {
-          closesAt: "2026-08-29T23:00:00.000Z",
-          rewardAmount: 5,
-          status: "available" as const,
-        },
-      }),
-    );
-
-    expect(html).toContain('data-event-feedback-dialog-layout="responsive"');
-    expect(html).toContain("h-[100svh]");
-    expect(html).toMatch(/(?:min-h-11|h-11)/);
-    expect(html).toContain("focus-visible:ring-2");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -45,16 +45,52 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Textarea } from "@forge/ui/textarea";
 
+import type {
+  CampaignAudienceMode,
+  EmailAudienceOptions,
+  EmailAudienceResolution,
+  EmailPortalPreview,
+  EmailPortalSend,
+  EmailPortalSendDetail,
+  EmailPortalTab,
+  EmailPortalTemplate,
+  TemplateEditorSeed,
+  TemplatePreviewResult,
+} from "./email-portal-types";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "../admin-page";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
+import { formatClubDateTime, formatClubTime } from "~/lib/dates";
 import {
-  discardEmailComposeDraft,
-  loadEmailComposeDraft,
-  saveEmailComposeDraft,
-} from "./email-compose-draft-storage";
+  audienceDefinitions,
+  toggleAudienceSelection,
+} from "./email-audience-selection";
+import { suppressedRecipientCount } from "./email-preview-counts";
+import { visibleRecipients as filterVisibleRecipients } from "./email-recipient-list";
+import { dateTimeLocalToIso } from "./email-schedule-formatting";
+import { statusClass, statusLabel } from "./email-send-status";
+import {
+  DEFAULT_CODE_TEMPLATE,
+  DEFAULT_VISUAL_DOCUMENT,
+} from "./email-template-defaults";
+import { publishedTemplateOptions } from "./email-template-revisions";
+import { useAudienceResolution } from "./use-audience-resolution";
+import { useEmailComposeDraft } from "./use-email-compose-draft";
+
+export type {
+  CampaignAudienceMode,
+  EmailAudienceOptions,
+  EmailAudienceResolution,
+  EmailPortalPreview,
+  EmailPortalSend,
+  EmailPortalSendDetail,
+  EmailPortalTab,
+  EmailPortalTemplate,
+  TemplateEditorSeed,
+  TemplatePreviewResult,
+};
 
 const CodeEmailEditor = dynamic(
   () => import("./code-email-editor").then((module) => module.CodeEmailEditor),
@@ -80,281 +116,6 @@ const VisualEmailEditor = dynamic(
     ssr: false,
   },
 );
-
-export type EmailPortalTab = "compose" | "sends" | "templates";
-export type CampaignAudienceMode = "all" | "development_review" | "disabled";
-
-export interface EmailPortalTemplate {
-  id: string;
-  kind: "code" | "visual";
-  latestRevision?: {
-    id?: string;
-    publishedAt?: Date | string | null;
-    state: "draft" | "published" | "superseded";
-    version?: number;
-  } | null;
-  name: string;
-  publishedRevision?: {
-    id: string;
-    version: number;
-  } | null;
-  updatedAt?: Date | string;
-}
-
-export interface EmailPortalSend {
-  finalRecipientCount?: number;
-  id: string;
-  nextRetryAt?: Date | string | null;
-  recipientCount?: number;
-  safeError?: string | null;
-  scheduledFor?: Date | string | null;
-  status: string;
-  subject: string;
-}
-
-export interface EmailPortalPreview {
-  blockers: {
-    code: string;
-    count: number;
-    field: string;
-  }[];
-  counts: {
-    duplicatesCollapsed: number;
-    excludedBlocklisted: number;
-    excludedInvalid: number;
-    excludedManual?: number;
-    excludedMissingFields: number;
-    excludedUnsubscribed: number;
-    finalUnique: number;
-    rawMatches: number;
-  };
-  expiresAt: string;
-  sendId?: string;
-  version: string;
-}
-
-export interface EmailAudienceResolution {
-  counts: {
-    duplicatesCollapsed: number;
-    excludedBlocklisted: number;
-    excludedInvalid: number;
-    excludedUnsubscribed: number;
-    finalUnique: number;
-    rawMatches: number;
-  };
-  recipients: {
-    attributes: Record<string, unknown>;
-    email: string;
-    matchReasons: string[];
-    name: string;
-  }[];
-}
-
-export interface EmailPortalSendDetail {
-  cancelledBy?: {
-    email: string | null;
-    id: string;
-    name: string | null;
-  } | null;
-  createdBy?: {
-    email: string | null;
-    id: string;
-    name: string | null;
-  } | null;
-  events: {
-    createdAt: Date | string;
-    fromStatus: string | null;
-    id: string;
-    metadata: unknown;
-    toStatus: string | null;
-    type: string;
-  }[];
-  recipients: {
-    attributes: unknown;
-    email: string;
-    exclusionReason: string | null;
-    matchReasons: unknown;
-  }[];
-  send: EmailPortalSend & {
-    cancelledAt?: Date | string | null;
-    compiledHtml?: string | null;
-    compiledText?: string | null;
-    confirmedAt?: Date | string | null;
-    createdAt?: Date | string;
-    nextRetryAt?: Date | string | null;
-    plainTextSource?: string | null;
-    providerBounceCount?: number;
-    providerSentCount?: number;
-    safeError?: string | null;
-  };
-}
-
-export interface EmailAudienceOptions {
-  hackathons: {
-    allLabel: string;
-    displayName: string;
-    id: string;
-    name: string;
-    statuses: readonly string[];
-  }[];
-  presets: {
-    kind: "alumni" | "current_members" | "team_members";
-    label: string;
-  }[];
-  roles: {
-    id: string;
-    name: string;
-  }[];
-}
-
-export interface TemplateEditorSeed {
-  id?: string;
-  kind: "code" | "visual";
-  name: string;
-  source?: string;
-  visualDocument?: Record<string, unknown>;
-}
-
-export interface TemplatePreviewResult {
-  contract: {
-    fallback?: string;
-    field: string;
-    required: boolean;
-    type: string;
-  }[];
-  html: string;
-  text: string;
-}
-
-const DEFAULT_CODE_TEMPLATE = `import { Container, Heading, Html, Merge, Text } from "@react-email/components";
-
-export default (
-  <Html>
-    <Container style={{ maxWidth: 560, margin: "0 auto", padding: 32 }}>
-      <Heading>Knight Hacks update</Heading>
-      <Text>
-        Hello <Merge field="recipient.firstName" fallback="friend" />,
-      </Text>
-      <Text>We have something exciting to share with you.</Text>
-    </Container>
-  </Html>
-);`;
-
-const DEFAULT_VISUAL_DOCUMENT = {
-  root: {
-    children: [
-      {
-        children: [
-          { text: "Hello " },
-          {
-            fallback: "friend",
-            field: "recipient.firstName",
-            type: "merge",
-          },
-        ],
-        type: "text",
-      },
-    ],
-    type: "root",
-  },
-  version: 1,
-};
-
-const recipientNameCollator = new Intl.Collator(undefined, {
-  numeric: true,
-  sensitivity: "base",
-});
-
-function recipientFirstName(name: string, email: string) {
-  return name.trim().split(/\s+/)[0] || email;
-}
-
-function compareRecipientsByFirstName(
-  left: EmailAudienceResolution["recipients"][number],
-  right: EmailAudienceResolution["recipients"][number],
-) {
-  return (
-    recipientNameCollator.compare(
-      recipientFirstName(left.name, left.email),
-      recipientFirstName(right.name, right.email),
-    ) ||
-    recipientNameCollator.compare(
-      left.name || left.email,
-      right.name || right.email,
-    ) ||
-    recipientNameCollator.compare(left.email, right.email)
-  );
-}
-
-function statusLabel(status: string) {
-  return status.replaceAll("_", " ");
-}
-
-function statusClass(status: string) {
-  if (status === "completed") {
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
-  }
-  if (status === "running" || status === "compiling") {
-    return "border-blue-500/30 bg-blue-500/10 text-blue-300";
-  }
-  if (status === "scheduled") {
-    return "border-violet-500/30 bg-violet-500/10 text-violet-300";
-  }
-  if (status.includes("failure")) {
-    return "border-destructive/30 bg-destructive/10 text-destructive";
-  }
-  return "border-white/10 bg-background/60 text-muted-foreground";
-}
-
-function dateTimeLocalToIso(value: string) {
-  return value ? new Date(value).toISOString() : null;
-}
-
-function audienceDefinitions(selected: Set<string>): EmailAudienceDefinition[] {
-  const result: EmailAudienceDefinition[] = [];
-  for (const key of selected) {
-    if (
-      key === "current_members" ||
-      key === "alumni" ||
-      key === "team_members"
-    ) {
-      result.push({ kind: key });
-      continue;
-    }
-    if (key.startsWith("role:")) {
-      const roleId = key.slice("role:".length);
-      if (roleId) result.push({ kind: "role", roleId });
-      continue;
-    }
-    const [, hackathonId, status] = key.split(":");
-    if (!hackathonId) continue;
-    const existing = result.find(
-      (item): item is Extract<EmailAudienceDefinition, { kind: "hackathon" }> =>
-        item.kind === "hackathon" && item.hackathonId === hackathonId,
-    );
-    if (status === "all") {
-      if (existing) existing.statuses = undefined;
-      else result.push({ hackathonId, kind: "hackathon" });
-      continue;
-    }
-    if (existing?.statuses) {
-      existing.statuses.push(
-        status as NonNullable<typeof existing.statuses>[number],
-      );
-    } else if (!existing) {
-      result.push({
-        hackathonId,
-        kind: "hackathon",
-        statuses: [
-          status as NonNullable<
-            Extract<EmailAudienceDefinition, { kind: "hackathon" }>["statuses"]
-          >[number],
-        ],
-      });
-    }
-  }
-  return result;
-}
 
 function TemplateEditorDialog({
   initial,
@@ -558,8 +319,7 @@ function CountPreflight({
   onConfirm?: () => Promise<void> | void;
   preview: EmailPortalPreview;
 }) {
-  const suppressed =
-    preview.counts.excludedBlocklisted + preview.counts.excludedUnsubscribed;
+  const suppressed = suppressedRecipientCount(preview.counts);
   const blocked = preview.blockers.length > 0;
   return (
     <section className="rounded-md border border-primary/25 bg-primary/5 p-4 sm:p-5">
@@ -621,12 +381,7 @@ function CountPreflight({
       )}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Audience snapshot expires{" "}
-          {new Date(preview.expiresAt).toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit",
-          })}
-          .
+          Audience snapshot expires {formatClubTime(preview.expiresAt)}.
         </p>
         <Button
           type="button"
@@ -706,100 +461,23 @@ export function EmailPortalWorkspace({
   const [tab, setTab] = useState<EmailPortalTab>(initialTab);
   const [editor, setEditor] = useState<TemplateEditorSeed | null>(null);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
-  const [contentMode, setContentMode] = useState<"plainText" | "template">(
-    "template",
-  );
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [audienceResolution, setAudienceResolution] =
-    useState<EmailAudienceResolution | null>(null);
-  const [excludedRecipients, setExcludedRecipients] = useState(
-    new Set<string>(),
-  );
-  const [isResolvingAudience, setIsResolvingAudience] = useState(false);
   const [recipientSearch, setRecipientSearch] = useState("");
   const [sendDetail, setSendDetail] = useState<EmailPortalSendDetail | null>(
     null,
   );
   const [loadingSendId, setLoadingSendId] = useState<string | null>(null);
-  const audienceRequest = useRef(0);
-  const skipNextDraftSave = useRef(false);
   const [templatePreview, setTemplatePreview] = useState<{
     result: TemplatePreviewResult;
     templateId: string;
   } | null>(null);
-  const [subject, setSubject] = useState("");
-  const [plainText, setPlainText] = useState("");
-  const [templateRevisionId, setTemplateRevisionId] = useState("");
-  const [selectedAudiences, setSelectedAudiences] = useState(
-    new Set<string>([
-      developmentReviewCampaign ? "team_members" : "current_members",
-    ]),
-  );
-  const [scheduleMode, setScheduleMode] = useState<"now" | "schedule">("now");
-  const [scheduledFor, setScheduledFor] = useState("");
-  const [composeDraftReady, setComposeDraftReady] = useState(false);
-
-  useEffect(() => {
-    if (preview) setConfirmationOpen(true);
-  }, [preview]);
-
-  useEffect(() => {
-    try {
-      const draft = loadEmailComposeDraft(window.localStorage);
-      if (draft) {
-        const restoredAudiences = developmentReviewCampaign
-          ? draft.selectedAudiences.filter(
-              (key) => key === "team_members" || key.startsWith("role:"),
-            )
-          : draft.selectedAudiences;
-        setContentMode(draft.contentMode);
-        setExcludedRecipients(new Set(draft.excludedRecipients));
-        setPlainText(draft.plainText);
-        setScheduleMode(draft.scheduleMode);
-        setScheduledFor(draft.scheduledFor);
-        setSelectedAudiences(
-          new Set(
-            restoredAudiences.length > 0
-              ? restoredAudiences
-              : [
-                  developmentReviewCampaign
-                    ? "team_members"
-                    : "current_members",
-                ],
-          ),
-        );
-        setSubject(draft.subject);
-        setTemplateRevisionId(draft.templateRevisionId);
-      }
-    } catch {
-      // Storage may be unavailable in hardened browser contexts.
-    } finally {
-      setComposeDraftReady(true);
-    }
-  }, [developmentReviewCampaign]);
-
-  useEffect(() => {
-    if (!composeDraftReady) return;
-    if (skipNextDraftSave.current) {
-      skipNextDraftSave.current = false;
-      return;
-    }
-    try {
-      saveEmailComposeDraft(window.localStorage, {
-        contentMode,
-        excludedRecipients: [...excludedRecipients].sort(),
-        plainText,
-        scheduleMode,
-        scheduledFor,
-        selectedAudiences: [...selectedAudiences].sort(),
-        subject,
-        templateRevisionId,
-      });
-    } catch {
-      // Browsers may deny storage or exhaust their local quota.
-    }
-  }, [
-    composeDraftReady,
+  const {
+    clear: clearComposeDraft,
+    compose,
+    setExcludedRecipients,
+    update: updateCompose,
+  } = useEmailComposeDraft(developmentReviewCampaign);
+  const {
     contentMode,
     excludedRecipients,
     plainText,
@@ -808,77 +486,39 @@ export function EmailPortalWorkspace({
     selectedAudiences,
     subject,
     templateRevisionId,
-  ]);
+  } = compose;
+
+  useEffect(() => {
+    if (preview) setConfirmationOpen(true);
+  }, [preview]);
 
   const options = Array.isArray(audienceOptions)
     ? { hackathons: [], presets: [], roles: [] }
     : audienceOptions;
   const publishedTemplates = useMemo(
-    () =>
-      templates.flatMap((template) => {
-        const revisionId =
-          template.publishedRevision?.id ??
-          (template.latestRevision?.state === "published"
-            ? template.latestRevision.id
-            : undefined);
-        return revisionId ? [{ ...template, revisionId }] : [];
-      }),
+    () => publishedTemplateOptions(templates),
     [templates],
   );
   const selectedAudienceDefinitions = useMemo(
     () => audienceDefinitions(selectedAudiences),
     [selectedAudiences],
   );
-  const visibleRecipients = useMemo(() => {
-    const query = recipientSearch.trim().toLowerCase();
-    const recipients = audienceResolution?.recipients ?? [];
-    return recipients
-      .filter(
-        ({ email, name }) =>
-          !query ||
-          email.toLowerCase().includes(query) ||
-          name.toLowerCase().includes(query),
-      )
-      .sort(compareRecipientsByFirstName);
-  }, [audienceResolution, recipientSearch]);
+  const { isResolving: isResolvingAudience, resolution: audienceResolution } =
+    useAudienceResolution({
+      audiences: selectedAudienceDefinitions,
+      resolve: onResolveAudience,
+      setExcludedRecipients,
+    });
+  const visibleRecipients = useMemo(
+    () =>
+      filterVisibleRecipients(
+        audienceResolution?.recipients ?? [],
+        recipientSearch,
+      ),
+    [audienceResolution, recipientSearch],
+  );
   const selectedRecipientCount =
     (audienceResolution?.recipients.length ?? 0) - excludedRecipients.size;
-
-  useEffect(() => {
-    if (!onResolveAudience || selectedAudienceDefinitions.length === 0) {
-      setAudienceResolution(null);
-      setExcludedRecipients(new Set());
-      setIsResolvingAudience(false);
-      return;
-    }
-    const request = ++audienceRequest.current;
-    setIsResolvingAudience(true);
-    const timeout = window.setTimeout(() => {
-      void onResolveAudience(selectedAudienceDefinitions)
-        .then((result) => {
-          if (audienceRequest.current !== request) return;
-          const pool = new Set(result.recipients.map(({ email }) => email));
-          setAudienceResolution(result);
-          setExcludedRecipients(
-            (current) =>
-              new Set([...current].filter((email) => pool.has(email))),
-          );
-        })
-        .catch(() => {
-          if (audienceRequest.current === request) {
-            setAudienceResolution(null);
-          }
-        })
-        .finally(() => {
-          if (audienceRequest.current === request) {
-            setIsResolvingAudience(false);
-          }
-        });
-    }, 180);
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [onResolveAudience, selectedAudienceDefinitions]);
 
   const content: EmailSendContent =
     contentMode === "plainText"
@@ -896,42 +536,9 @@ export function EmailPortalWorkspace({
   };
 
   const toggleAudience = (key: string) => {
-    setSelectedAudiences((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else {
-        if (key.endsWith(":all")) {
-          const prefix = key.slice(0, -3);
-          for (const value of next) {
-            if (value.startsWith(prefix)) next.delete(value);
-          }
-        } else if (key.startsWith("hack:")) {
-          const [, hackathonId] = key.split(":");
-          next.delete(`hack:${hackathonId}:all`);
-        }
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
-  const clearComposeDraft = () => {
-    skipNextDraftSave.current = true;
-    try {
-      discardEmailComposeDraft(window.localStorage);
-    } catch {
-      // Storage may be unavailable even though the send succeeded.
-    }
-    setContentMode("template");
-    setExcludedRecipients(new Set());
-    setPlainText("");
-    setScheduleMode("now");
-    setScheduledFor("");
-    setSelectedAudiences(
-      new Set([developmentReviewCampaign ? "team_members" : "current_members"]),
+    updateCompose("selectedAudiences", (current) =>
+      toggleAudienceSelection(current, key),
     );
-    setSubject("");
-    setTemplateRevisionId("");
   };
 
   const tabs: {
@@ -1174,7 +781,9 @@ export function EmailPortalWorkspace({
                   maxLength={200}
                   placeholder="A concise, useful subject"
                   value={subject}
-                  onChange={(event) => setSubject(event.target.value)}
+                  onChange={(event) =>
+                    updateCompose("subject", event.target.value)
+                  }
                 />
               </div>
               <div className="space-y-3">
@@ -1205,7 +814,7 @@ export function EmailPortalWorkspace({
                             ? "border-primary/40 bg-primary/10"
                             : "border-white/10 bg-background/50",
                         )}
-                        onClick={() => setContentMode(option.id)}
+                        onClick={() => updateCompose("contentMode", option.id)}
                       >
                         <Icon className="mt-0.5 h-5 w-5 text-primary" />
                         <span>
@@ -1228,7 +837,7 @@ export function EmailPortalWorkspace({
                       className="h-11 rounded-md border border-input bg-background px-3 text-sm"
                       value={templateRevisionId}
                       onChange={(event) =>
-                        setTemplateRevisionId(event.target.value)
+                        updateCompose("templateRevisionId", event.target.value)
                       }
                     >
                       <option value="">Choose a template</option>
@@ -1250,7 +859,9 @@ export function EmailPortalWorkspace({
                       className="min-h-44"
                       placeholder="Write the complete text email…"
                       value={plainText}
-                      onChange={(event) => setPlainText(event.target.value)}
+                      onChange={(event) =>
+                        updateCompose("plainText", event.target.value)
+                      }
                     />
                   </div>
                 )}
@@ -1377,7 +988,7 @@ export function EmailPortalWorkspace({
                         ? "border-primary/35 bg-primary/10"
                         : "border-white/10 bg-background/50",
                     )}
-                    onClick={() => setScheduleMode("now")}
+                    onClick={() => updateCompose("scheduleMode", "now")}
                   >
                     <Send className="h-5 w-5 text-primary" />
                     <span>
@@ -1397,7 +1008,7 @@ export function EmailPortalWorkspace({
                         ? "border-primary/35 bg-primary/10"
                         : "border-white/10 bg-background/50",
                     )}
-                    onClick={() => setScheduleMode("schedule")}
+                    onClick={() => updateCompose("scheduleMode", "schedule")}
                   >
                     <CalendarClock className="h-5 w-5 text-primary" />
                     <span>
@@ -1419,8 +1030,11 @@ export function EmailPortalWorkspace({
                   type="datetime-local"
                   value={scheduledFor}
                   onChange={(event) => {
-                    setScheduledFor(event.target.value);
-                    setScheduleMode(event.target.value ? "schedule" : "now");
+                    updateCompose("scheduledFor", event.target.value);
+                    updateCompose(
+                      "scheduleMode",
+                      event.target.value ? "schedule" : "now",
+                    );
                   }}
                 />
                 {scheduleMode === "schedule" && (
@@ -1645,7 +1259,7 @@ export function EmailPortalWorkspace({
                         <p className="truncate font-medium">{send.subject}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {send.scheduledFor
-                            ? new Date(send.scheduledFor).toLocaleString()
+                            ? formatClubDateTime(send.scheduledFor)
                             : "Immediate delivery"}
                         </p>
                       </div>
@@ -1756,9 +1370,7 @@ export function EmailPortalWorkspace({
                   sendDetail.createdBy?.email ??
                   "Unknown administrator"}
                 {sendDetail.send.createdAt
-                  ? ` on ${new Date(
-                      sendDetail.send.createdAt,
-                    ).toLocaleString()}`
+                  ? ` on ${formatClubDateTime(sendDetail.send.createdAt)}`
                   : ""}
                 .
               </DialogDescription>
@@ -1857,9 +1469,7 @@ export function EmailPortalWorkspace({
                       <dt className="text-muted-foreground">Scheduled</dt>
                       <dd className="text-right">
                         {sendDetail.send.scheduledFor
-                          ? new Date(
-                              sendDetail.send.scheduledFor,
-                            ).toLocaleString()
+                          ? formatClubDateTime(sendDetail.send.scheduledFor)
                           : "Immediately"}
                       </dd>
                     </div>
@@ -1870,9 +1480,7 @@ export function EmailPortalWorkspace({
                       {sendDetail.send.nextRetryAt && (
                         <p className="mt-1">
                           Automatic retry:{" "}
-                          {new Date(
-                            sendDetail.send.nextRetryAt,
-                          ).toLocaleString()}
+                          {formatClubDateTime(sendDetail.send.nextRetryAt)}
                         </p>
                       )}
                     </div>
@@ -1895,7 +1503,7 @@ export function EmailPortalWorkspace({
                             {statusLabel(event.type)}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(event.createdAt).toLocaleString()}
+                            {formatClubDateTime(event.createdAt)}
                             {event.toStatus
                               ? ` · ${statusLabel(event.toStatus)}`
                               : ""}
@@ -1937,9 +1545,7 @@ export function EmailPortalWorkspace({
                 {preview.counts.duplicatesCollapsed} duplicates
               </div>
               <div className="rounded border border-white/10 p-2">
-                {preview.counts.excludedBlocklisted +
-                  preview.counts.excludedUnsubscribed}{" "}
-                suppressed
+                {suppressedRecipientCount(preview.counts)} suppressed
               </div>
               <div className="rounded border border-white/10 p-2">
                 {preview.counts.excludedMissingFields} missing

@@ -21,6 +21,7 @@ export const profilePictureRouter = {
     .mutation(async ({ ctx, input }) => {
       return await uploadProfilePictureForSession({
         fileContent: input.fileContent,
+        fileName: input.fileName,
         session: ctx.session,
       });
     }),

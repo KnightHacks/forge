@@ -53,28 +53,28 @@ Phrases that assume the reader needs a teacher. Cut them.
 
 Replace with plain language.
 
-| Avoid | Use instead |
-|-------|-------------|
-| Navigate (challenges) | Handle, address |
-| Unpack (analysis) | Explain, examine |
-| Lean into | Accept, embrace |
-| Landscape (context) | Situation, field |
-| Game-changer | Significant, important |
-| Double down | Commit, increase |
-| Deep dive | Analysis, examination |
-| Take a step back | Reconsider |
-| Moving forward | Next, from now |
-| Circle back | Return to, revisit |
-| On the same page | Aligned, agreed |
-| Leverage (verb) | Use |
-| Utilize | Use |
-| Robust | Strong, solid |
-| Streamline | Simplify |
-| Harness | Use, apply |
-| Paradigm | Model, approach |
-| Synergy | Cooperation, combined effect |
-| Ecosystem | System, field, community |
-| Framework | Structure, approach |
+| Avoid                 | Use instead                  |
+| --------------------- | ---------------------------- |
+| Navigate (challenges) | Handle, address              |
+| Unpack (analysis)     | Explain, examine             |
+| Lean into             | Accept, embrace              |
+| Landscape (context)   | Situation, field             |
+| Game-changer          | Significant, important       |
+| Double down           | Commit, increase             |
+| Deep dive             | Analysis, examination        |
+| Take a step back      | Reconsider                   |
+| Moving forward        | Next, from now               |
+| Circle back           | Return to, revisit           |
+| On the same page      | Aligned, agreed              |
+| Leverage (verb)       | Use                          |
+| Utilize               | Use                          |
+| Robust                | Strong, solid                |
+| Streamline            | Simplify                     |
+| Harness               | Use, apply                   |
+| Paradigm              | Model, approach              |
+| Synergy               | Cooperation, combined effect |
+| Ecosystem             | System, field, community     |
+| Framework             | Structure, approach          |
 
 ## AI Vocabulary Tells
 
@@ -90,12 +90,12 @@ Words that became dramatically overrepresented in AI-generated text. Avoid or re
 
 AI replaces simple "is" or "are" with pompous alternatives. Use the simple verb.
 
-| Avoid | Use instead |
-|-------|-------------|
-| serves as | is |
-| stands as | is |
-| marks (when meaning "is") | is |
-| represents (when meaning "is") | is |
+| Avoid                          | Use instead |
+| ------------------------------ | ----------- |
+| serves as                      | is          |
+| stands as                      | is          |
+| marks (when meaning "is")      | is          |
+| represents (when meaning "is") | is          |
 
 ## Adverbs
 

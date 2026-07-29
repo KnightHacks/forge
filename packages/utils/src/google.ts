@@ -22,11 +22,6 @@ const auth = new google.auth.JWT({
   subject: EVENTS.GOOGLE_PERSONIFY_EMAIL as string,
 });
 
-export const gmail = google.gmail({
-  version: "v1",
-  auth: auth,
-});
-
 export const calendar = google.calendar({
   version: "v3",
   auth: auth,

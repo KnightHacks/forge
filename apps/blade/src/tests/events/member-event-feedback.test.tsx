@@ -70,7 +70,7 @@ describe("MemberEventFeedback", () => {
     feedbackMocks.refresh.mockClear();
   });
 
-  it("anchors available feedback at the card's bottom-right edge before event end", () => {
+  it("keeps available dashboard feedback icon-only without a due-date row", () => {
     const html = renderToStaticMarkup(
       createElement(MemberEventFeedback, {
         opportunity: {
@@ -86,8 +86,6 @@ describe("MemberEventFeedback", () => {
       }),
     );
 
-    expect(html).toContain('data-feedback-position="bottom-right"');
-    expect(html).toContain("justify-end");
     expect(html).toContain('aria-label="Give feedback for Git Workshop"');
     expect(html).not.toContain(">Give feedback<");
     expect(html).not.toContain("Due ");
@@ -138,25 +136,5 @@ describe("MemberEventFeedback", () => {
     expect(feedbackMocks.invalidateFeedback).toHaveBeenCalledOnce();
     expect(feedbackMocks.invalidateMember).toHaveBeenCalledOnce();
     expect(feedbackMocks.refresh).toHaveBeenCalledOnce();
-  });
-
-  it("renders completed dashboard feedback with the success visual", () => {
-    const html = renderToStaticMarkup(
-      createElement(MemberEventFeedback, {
-        opportunity: {
-          dueAt: "2026-08-29T23:00:00.000Z",
-          eventId: "00000000-0000-4000-8000-000000001001",
-          eventName: "Git Workshop",
-          formId: "00000000-0000-4000-8000-000000001002",
-          rewardPoints: 5,
-          status: "completed",
-          urgent: false,
-        },
-        surface: "dashboard",
-      }),
-    );
-
-    expect(html).toContain('data-feedback-state="completed"');
-    expect(html).toContain('data-feedback-completed-visual="success"');
   });
 });

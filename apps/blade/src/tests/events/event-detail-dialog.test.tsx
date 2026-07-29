@@ -93,7 +93,6 @@ describe("EventDetailDialog", () => {
       }),
     );
 
-    expect(html).toContain('data-event-detail-layout="sectioned"');
     expect(html).toContain("Current Workshop");
     expect(html).toContain("Overview");
     expect(html).toContain("Schedule &amp; location");

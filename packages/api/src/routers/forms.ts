@@ -22,17 +22,27 @@ import {
 import {
   callbackConfigurationSchema,
   formDefinitionSchema,
+  validateFormUpload,
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
 import { createAdminAuditEvent } from "../utils/audit/service";
+import { loadPlatformFormActor } from "../utils/forms/actor";
+import {
+  changePlatformFormState,
+  createPlatformForm,
+  deletePlatformForm,
+  getAdminPlatformForm,
+  listAdminForms,
+  updatePlatformForm,
+  updatePlatformFormSettings,
+} from "../utils/forms/admin";
 import {
   classifyFormAttachmentAccess,
   createFormAttachmentUpload,
   finalizeFormAttachment,
   getFormAttachmentDownloadUrl,
   getLegacyFormFileDownloadUrl,
-  mimeTypeAllowed,
 } from "../utils/forms/attachments";
 import { listFormCallbackCatalog } from "../utils/forms/callbacks";
 import {
@@ -44,31 +54,25 @@ import {
   saveFormCallbackConfiguration,
 } from "../utils/forms/database-callbacks";
 import {
+  deletePlatformResponse,
+  exportPlatformResponses,
+  listPlatformResponses,
+  memberFormHistory,
+  respondentForm,
+} from "../utils/forms/database-responses";
+import {
   createResponse,
   createResponseInputSchema,
   getFormBySlug,
   updateResponse,
   updateResponseInputSchema,
 } from "../utils/forms/manager";
+import { formCallbackRegistry } from "../utils/forms/registry";
 import {
-  changePlatformFormState,
-  createPlatformForm,
-  deletePlatformForm,
-  deletePlatformResponse,
-  exportPlatformResponses,
-  getAdminPlatformForm,
-  listAdminForms,
-  listPlatformResponses,
-  loadPlatformFormActor,
-  memberFormHistory,
   provisionFormSection,
   requirePlatformFormCapability,
-  respondentForm,
-  updatePlatformForm,
-  updatePlatformFormSettings,
   visibleSections,
-} from "../utils/forms/platform";
-import { formCallbackRegistry } from "../utils/forms/registry";
+} from "../utils/forms/sections";
 import { isSelectableProductRole } from "../utils/roles/selectable";
 
 const responseModes = [
@@ -183,16 +187,21 @@ export const formsRouter = {
         const question = definition.questions.find(
           (candidate) => candidate.id === input.questionId,
         );
-        if (
-          question?.type !== "file" ||
-          question.retired ||
-          input.size > question.maxBytes ||
-          !mimeTypeAllowed(input.contentType, question.allowedMimeTypes)
-        ) {
+        if (question?.type !== "file" || question.retired) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "This file does not match the question's upload limits.",
+            message: "This question does not accept file uploads.",
           });
+        }
+        const check = validateFormUpload({
+          allowedMimeTypes: question.allowedMimeTypes,
+          contentType: input.contentType,
+          fileName: input.fileName,
+          maxBytes: question.maxBytes,
+          size: input.size,
+        });
+        if (!check.allowed) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: check.message });
         }
       }
       return createFormAttachmentUpload({
@@ -257,7 +266,12 @@ export const formsRouter = {
           requesterUserId: ctx.session.user.id,
         });
         if (accessKind === "published_instruction") {
-          await respondentForm(form.slugName, ctx.session.user.id);
+          const view = await respondentForm(form.slugName, ctx.session.user.id);
+          // Ineligibility is a rendered state for the form page, but it still
+          // withholds the instruction files that page would have shown.
+          if (view.respondentState.status === "ineligible") {
+            throw new TRPCError({ code: "FORBIDDEN" });
+          }
         } else if (accessKind === "admin_instruction") {
           await requirePlatformFormCapability(
             await loadPlatformFormActor(ctx.session),

@@ -8,7 +8,9 @@ import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 
+import { requireClubAnalyticsRead } from "./utils/analytics/access";
 import { createAdminAuditEvent } from "./utils/audit/service";
+import { loadPermissionsForUser } from "./utils/permissions-db";
 import { createResumeBundlePlan } from "./utils/resume/bundle";
 import {
   isResumeObjectOwnedByUser,
@@ -101,6 +103,10 @@ export async function createMemberResumeBundle({
 }: {
   actor: Session["user"];
 }) {
+  requireClubAnalyticsRead({
+    session: { permissions: await loadPermissionsForUser(actor.id) },
+  });
+
   const resumeRows = await db
     .select({
       firstName: Member.firstName,

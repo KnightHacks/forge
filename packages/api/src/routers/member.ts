@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
@@ -13,14 +14,20 @@ import {
 } from "@forge/validators";
 
 import { protectedProcedure } from "../trpc";
+import {
+  loadMemberAuditIdentity,
+  memberAuditSubject,
+} from "../utils/audit/member-subject";
+import {
+  appendAdminAuditResults,
+  createAdminAuditEvent,
+} from "../utils/audit/service";
 import { createMemberProfile } from "../utils/member/profile";
 import { updateMemberProfile } from "../utils/member/update";
 import { removeProfilePictureObjectsForUser } from "../utils/profile-picture/storage";
 import { removeUnreferencedResumeObjectsForUser } from "../utils/resume/storage";
-import { adminMemberProcedures } from "./member-admin";
 
 export const memberRouter = {
-  ...adminMemberProcedures,
   getMember: protectedProcedure.query(async ({ ctx }) => {
     const member = await db.query.Member.findFirst({
       where: eq(Member.userId, ctx.session.user.id),
@@ -78,31 +85,45 @@ export const memberRouter = {
 
   deleteMember: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
+    const operationId = randomUUID();
+    let auditEventId: string;
 
     try {
-      await db.transaction(async (tx) => {
-        const existingMember = await tx.query.Member.findFirst({
-          where: eq(Member.userId, userId),
-          columns: {
-            id: true,
-          },
-        });
+      auditEventId = await db.transaction(async (tx) => {
+        const existingMember = await loadMemberAuditIdentity(userId, tx);
 
-        if (!existingMember) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Member profile does not exist.",
-          });
-        }
-
-        await tx
+        const deletedResponses = await tx
           .delete(FormResponse)
           .where(
             and(
               eq(FormResponse.userId, userId),
               eq(FormResponse.form, MEMBER_SIGNUP_FORM_ID),
             ),
-          );
+          )
+          .returning({ id: FormResponse.id });
+
+        // Written before the deletes so the actor snapshot still resolves: the
+        // actor here is the member deleting their own account, and the rows the
+        // snapshot reads are about to be gone.
+        const auditEvent = await createAdminAuditEvent(
+          {
+            actionKey: "member.profile.deleted",
+            actor: ctx.session.user,
+            metadata: {
+              deletedObjectCount: deletedResponses.length + 3,
+              deletedObjectTypes: [
+                "member",
+                "user",
+                "permissions",
+                ...(deletedResponses.length > 0 ? ["signup_response"] : []),
+              ],
+            },
+            operationId,
+            subjects: [memberAuditSubject(existingMember)],
+          },
+          tx,
+        );
+
         await tx.delete(Member).where(eq(Member.userId, userId));
         await tx.delete(Permissions).where(eq(Permissions.userId, userId));
 
@@ -117,6 +138,8 @@ export const memberRouter = {
             message: "Member account could not be deleted.",
           });
         }
+
+        return auditEvent.id;
       });
     } catch (error) {
       if (error instanceof TRPCError) throw error;
@@ -127,10 +150,28 @@ export const memberRouter = {
       });
     }
 
-    await Promise.all([
+    const [pictureCleanup, resumeCleanup] = await Promise.all([
       removeProfilePictureObjectsForUser(userId),
       removeUnreferencedResumeObjectsForUser(userId),
     ]);
+    await appendAdminAuditResults({
+      actionKey: "member.profile.deleted",
+      eventId: auditEventId,
+      results: [
+        {
+          resultOutcome: pictureCleanup,
+          targetId: `profile-picture-cleanup:${userId}`,
+          targetLabel: "Profile picture storage cleanup",
+          targetType: "provider",
+        },
+        {
+          resultOutcome: resumeCleanup,
+          targetId: `resume-cleanup:${userId}`,
+          targetLabel: "Résumé storage cleanup",
+          targetType: "provider",
+        },
+      ],
+    });
 
     return { deleted: true };
   }),

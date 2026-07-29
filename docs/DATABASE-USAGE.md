@@ -115,6 +115,41 @@ Notes:
 - `IssuesToUsersAssignment` assignments are validated in code to ensure users belong to the issue team.
 - `Template.body` is generic `jsonb` in the DB, but the API validates it as an array of nested issue template nodes.
 
+## Discord configuration
+
+| Table export    | SQL table                     | Usage                                                                                                                                                                    |
+| --------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DiscordConfig` | `knight_hacks_discord_config` | Officer-managed Discord guild, channel, and role IDs. Replaces the snowflakes that used to be hard-coded in `@forge/consts`; read through `@forge/utils/discord-config`. |
+
+Notes:
+
+- One row is one _setting_, not one value. `production_id` and `development_id` are the two environment values of the same setting, replacing the `PROD_`/`DEV_` constant pairs that fed an `IS_PROD` ternary.
+- `development_id` is nullable and means "reuse `production_id`", which is how `alumni_role` and the six `*_director_role` rows behave.
+- `key` is a code contract enumerated by `DISCORD.CONFIG_KEYS`, not something an officer invents; renaming one needs a data migration. `kind`, `label`, and `description` exist so a future admin UI can present a row without the editor guessing.
+- Check constraints enforce that both ID columns are 17-20 digit snowflakes, so a pasted role mention or a trailing space fails at write time rather than as a Discord 404 inside a cron job.
+- The read path caches the whole table for 60 seconds per process. There is no admin UI yet, so writes happen in SQL; a writer inside the app must call `invalidateDiscordConfigCache()`, and other processes converge within the TTL.
+- `packages/db/scripts/seed_devdb.ts` reads the raw `guild` row rather than the resolved value, because it needs both environments at once.
+
+## Club team roster
+
+| Table export   | SQL table                     | Usage                                                                                                                                                       |
+| -------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ClubTeam`     | `knight_hacks_club_team`      | The buckets the public Club team page renders, with their slug, tab label, section heading, and left-to-right order. Replaces `TEAM.CLUB_TEAM_DEFINITIONS`. |
+| `ClubTeamRole` | `knight_hacks_club_team_role` | Classifies one `auth_roles` row as executive, director, or team, with its rank and optional team. Replaces the role-name constants in `@forge/consts/team`. |
+
+Notes:
+
+- Classification is keyed by `auth_roles.id`, not by role name. That is the point of the tables: `inArray(Roles.name, CLUB_ROSTER_ROLE_NAMES)` meant renaming a Discord role emptied that team on the public site with no error and no failing test.
+- `ClubTeam.kind` is how the roster finds the executive and director buckets without hard-coding the slugs `executive` and `directors`. A partial unique index allows at most one team of each non-`team` kind.
+- `ClubTeamRole.kind` decides the role's primary bucket. An `executive` or `director` role that also sets `teamId` **leads** that team and appears in both buckets — this is "Hack Lead", listed under Executive Officers and at the top of Hackathon. There is no `is_lead` column because it would be derivable from those two and could disagree with them.
+- `ClubTeamRole.rank` orders roles inside their primary bucket. Plain team members share a rank; their lead is placed ahead of them by the bucketing rule rather than by this column.
+- `rosterLabel` and `calloutLabel` are `NULL` for almost every row. `NULL` means "use the role name", except for a plain team member, where the roster falls back to the team's label and the Guild badge to `"<team label> Team"`. The three exceptions are data: "Directors" displays as the singular "Director", "Officers" badges as "Officer", and the hackathon team role badges as "Organizer".
+- `roleId` cascades on delete, so unlinking a role removes its classification. `teamId` restricts, so a team with roles cannot be deleted out from under them.
+- Read these through `@forge/api`'s `utils/guild/club-team-config`, which applies the label fallbacks. There is no cache: the tables are ~27 narrow rows and the reads are two small queries.
+- Classification rows come from two places: migration `0026`'s one-time backfill, and `pnpm db:club-roles`. A fresh database migrates before any Discord role is linked, so the backfill classifies nothing and the migration is then recorded as applied — an empty Club roster means the roles were linked afterwards and nothing has classified them yet. Run `pnpm db:club-roles` (`packages/db/scripts/classify-club-roles.ts`); it is insert-only, safe to re-run, and reports the configured roles it could not resolve. Role names are a bootstrap input there, never the source of truth: a classified role that is later renamed keeps its row.
+- There is no admin UI yet, so writes happen in SQL — the same state the Discord config table is in.
+- `auth_roles.event_feedback_excluded` is unrelated to these tables and remains the durable source for feedback eligibility. The role-name lists that used to seed it are gone; migration `0013` already wrote the column.
+
 ## Undocumented columns
 
 If a task needs a table or column not explained here, inspect existing usage first. If the intended semantics are still not clear from code, ask a clarifying question before setting a new precedent.

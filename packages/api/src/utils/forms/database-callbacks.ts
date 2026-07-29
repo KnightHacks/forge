@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
-import { DISCORD } from "@forge/consts";
 import { and, eq, inArray, lte, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
@@ -13,6 +12,7 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import * as discord from "@forge/utils/discord";
+import { getDiscordConfigId } from "@forge/utils/discord-config";
 import { callbackConfigurationSchema } from "@forge/validators";
 
 import type { WriteDb } from "../db";
@@ -222,7 +222,8 @@ async function runRecruitingNotification(
     where: eq(Member.id, input.memberId),
   });
   if (!member) throw new Error("Callback member was not found.");
-  await discord.api.post(Routes.channelMessages(DISCORD.RECRUITING_CHANNEL), {
+  const recruitingChannelId = await getDiscordConfigId("recruiting_channel");
+  await discord.api.post(Routes.channelMessages(recruitingChannelId), {
     body: {
       content: `**Form recruiting notification**\n${member.firstName} ${member.lastName} (${member.email})\n${input.note}`,
       allowed_mentions: { parse: [] },

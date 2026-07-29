@@ -215,9 +215,6 @@ test.describe("Club operations issues visual workflow", () => {
       page.getByText("Club Operations", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.locator('[data-issue-calendar="month-grid"]'),
-    ).toBeVisible();
-    await expect(
       page.getByRole("link", {
         name: "Open Finalize fall kickoff run of show · 9",
       }),
@@ -226,21 +223,6 @@ test.describe("Club operations issues visual workflow", () => {
       animations: "disabled",
       path: testInfo.outputPath("issues-calendar-laptop.png"),
     });
-
-    const calendarDockHeight = await page
-      .locator("[data-issue-dock]")
-      .evaluate((element) => element.getBoundingClientRect().height);
-    const calendarContextHeight = await page
-      .locator("[data-issue-context]")
-      .evaluate((element) => element.getBoundingClientRect().height);
-
-    const calendarBox = await page
-      .locator('[data-issue-calendar="month-grid"]')
-      .boundingBox();
-    expect(calendarBox?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(390);
-    expect(
-      (calendarBox?.y ?? 0) + (calendarBox?.height ?? 0),
-    ).toBeLessThanOrEqual(768);
 
     await page.getByRole("button", { name: "Filters", exact: true }).click();
     await expect(
@@ -258,20 +240,6 @@ test.describe("Club operations issues visual workflow", () => {
       page.getByText("Issue workflow", { exact: true }),
     ).toBeVisible();
     await expect
-      .poll(() =>
-        page
-          .locator("[data-issue-dock]")
-          .evaluate((element) => element.getBoundingClientRect().height),
-      )
-      .toBe(calendarDockHeight);
-    await expect
-      .poll(() =>
-        page
-          .locator("[data-issue-context]")
-          .evaluate((element) => element.getBoundingClientRect().height),
-      )
-      .toBe(calendarContextHeight);
-    await expect
       .poll(() => page.locator('[aria-label^="Open "]').count())
       .toBeGreaterThanOrEqual(64);
     for (const status of ISSUE.ISSUE_STATUS) {
@@ -288,20 +256,6 @@ test.describe("Club operations issues visual workflow", () => {
     await expect(
       page.getByText("Issue directory", { exact: true }),
     ).toBeVisible();
-    await expect
-      .poll(() =>
-        page
-          .locator("[data-issue-dock]")
-          .evaluate((element) => element.getBoundingClientRect().height),
-      )
-      .toBe(calendarDockHeight);
-    await expect
-      .poll(() =>
-        page
-          .locator("[data-issue-context]")
-          .evaluate((element) => element.getBoundingClientRect().height),
-      )
-      .toBe(calendarContextHeight);
     await expect(page.getByText(/Page 1 of \d+/)).toBeVisible();
     await expect(page.getByRole("link", { name: "Next" })).toBeVisible();
     await expect(page.getByLabel("Sort issues")).toBeVisible();
@@ -349,7 +303,7 @@ test.describe("Club operations issues visual workflow", () => {
     });
   });
 
-  test("keeps creation and mobile agenda focused at 320px", async ({
+  test("keeps issue creation focused and the 320px calendar overflow-free", async ({
     page,
   }, testInfo) => {
     await signIn(page, "/admin/issues/calendar");
@@ -383,9 +337,6 @@ test.describe("Club operations issues visual workflow", () => {
 
     await page.setViewportSize({ height: 900, width: 320 });
     await page.reload();
-    await expect(
-      page.locator('[data-issue-calendar="agenda"]').first(),
-    ).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(

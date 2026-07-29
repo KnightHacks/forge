@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { FormQuestion } from "@forge/validators";
 
-import {
-  formBuilderShareHref,
-  reorderFormQuestions,
-} from "~/app/_components/admin/forms/admin-form-builder";
+import { formBuilderShareHref } from "~/app/_components/admin/forms/form-builder-formatting";
+import { reorderFormQuestions } from "~/app/_components/admin/forms/form-question-ordering";
 
 function question(id: string): FormQuestion {
   return {

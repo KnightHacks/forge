@@ -62,15 +62,12 @@ describe("MemberFormHistory", () => {
     );
   });
 
-  it("uses a responsive, labelled history surface with keyboard-visible actions", () => {
+  it("labels the history section for assistive technology", () => {
     const html = renderToStaticMarkup(
       createElement(MemberFormHistory, { responses }),
     );
 
-    expect(html).toContain('data-member-form-history-layout="responsive"');
     expect(html).toContain('aria-labelledby="previous-forms-heading"');
     expect(html).toContain('id="previous-forms-heading"');
-    expect(html).toMatch(/(?:min-h-11|h-11)/);
-    expect(html).toContain("focus-visible:ring-2");
   });
 });

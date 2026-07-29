@@ -4,7 +4,7 @@ import {
   adminPageClassName,
   AdminPageHeaderSkeleton,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
 
 type IssueLoadingView = "archive" | "calendar" | "kanban" | "list";
 

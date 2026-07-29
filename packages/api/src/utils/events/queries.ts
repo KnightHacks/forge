@@ -1,4 +1,7 @@
+import { TRPCError } from "@trpc/server";
+
 import type { EventAdminQuery } from "@forge/validators";
+import { EVENTS } from "@forge/consts";
 import {
   and,
   asc,
@@ -293,10 +296,10 @@ export async function queryAdminEventRecords(
         ? sql`${Event.end_datetime} <= ${now}`
         : undefined,
     input.startDate
-      ? sql`(${Event.end_datetime} at time zone 'America/New_York')::date >= ${input.startDate}::date`
+      ? sql`(${Event.end_datetime} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date >= ${input.startDate}::date`
       : undefined,
     input.endDate
-      ? sql`(${Event.start_datetime} at time zone 'America/New_York')::date <= ${input.endDate}::date`
+      ? sql`(${Event.start_datetime} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date <= ${input.endDate}::date`
       : undefined,
     input.tags.length > 0 ? inArray(Event.tag, input.tags) : undefined,
     input.audiences.length > 0
@@ -597,4 +600,60 @@ export async function queryCheckInEventChoices({
     older: serialize(older),
     recent: serialize(recent),
   };
+}
+
+/** Rejects hackathon events and unknown ids before any Club-scoped work. */
+export async function assertClubEventId(eventId: string) {
+  const event = await db.query.Event.findFirst({
+    columns: { id: true },
+    where: and(eq(Event.id, eventId), isNull(Event.hackathonId)),
+  });
+  if (!event) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+  }
+}
+
+export type EventAuditSnapshot = Pick<
+  typeof Event.$inferSelect,
+  | "deletionIntentAt"
+  | "discordAppliedRevision"
+  | "discordId"
+  | "discordSyncState"
+  | "end_datetime"
+  | "googleAppliedRevision"
+  | "googleId"
+  | "googleSyncState"
+  | "id"
+  | "legacy"
+  | "location"
+  | "name"
+  | "points"
+  | "roles"
+  | "start_datetime"
+>;
+
+/** Loads the exact Event columns audit events record, or null. */
+export async function loadEventAuditSnapshot(eventId: string) {
+  return (
+    (await db.query.Event.findFirst({
+      columns: {
+        deletionIntentAt: true,
+        discordAppliedRevision: true,
+        discordId: true,
+        discordSyncState: true,
+        end_datetime: true,
+        googleAppliedRevision: true,
+        googleId: true,
+        googleSyncState: true,
+        id: true,
+        legacy: true,
+        location: true,
+        name: true,
+        points: true,
+        roles: true,
+        start_datetime: true,
+      },
+      where: and(eq(Event.id, eventId), isNull(Event.hackathonId)),
+    })) ?? null
+  );
 }

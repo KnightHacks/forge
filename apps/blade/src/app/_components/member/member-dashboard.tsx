@@ -37,8 +37,8 @@ import { MemberEventFeedback } from "~/app/_components/member/member-event-feedb
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberQRCodeDialog } from "~/app/_components/member/member-qr-code-dialog";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
-import { MemberRouteTransitionLink } from "~/app/_components/member/member-route-transition-link";
-import { formatEventDateTime } from "~/lib/event-dates";
+import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import { formatEventDateTime } from "~/lib/dates";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 
 export const dashboardGridClass =
@@ -129,9 +129,9 @@ function DuesStatusTile({
 
       {!duesStatus.paid && (
         <Button asChild size={compact ? "sm" : "md"} className="w-full gap-2">
-          <MemberRouteTransitionLink href={MEMBER_DUES_PATH}>
+          <RouteTransitionLink href={MEMBER_DUES_PATH}>
             Pay dues
-          </MemberRouteTransitionLink>
+          </RouteTransitionLink>
         </Button>
       )}
     </DashboardContent>
@@ -170,13 +170,13 @@ function EventsOverview({
           <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
           Events
         </div>
-        <MemberRouteTransitionLink
+        <RouteTransitionLink
           href="/member/events"
           className="flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-medium text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           View all
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </MemberRouteTransitionLink>
+        </RouteTransitionLink>
       </div>
 
       {unavailable ? (
@@ -359,7 +359,7 @@ function GuildProfileCard({
             size="icon"
             className="absolute right-0 top-0 shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <MemberRouteTransitionLink
+            <RouteTransitionLink
               href={MEMBER_SETTINGS_PATH}
               aria-label="Edit profile"
             >
@@ -367,7 +367,7 @@ function GuildProfileCard({
                 className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[exiting=true]:-rotate-90 motion-reduce:transition-none"
                 aria-hidden="true"
               />
-            </MemberRouteTransitionLink>
+            </RouteTransitionLink>
           </Button>
           <MemberProfilePictureUpload
             avatarClassName="h-[36vw] w-[36vw] min-h-32 min-w-32 max-h-44 max-w-44 lg:h-32 lg:w-32 lg:min-h-0 lg:min-w-0 lg:max-h-none lg:max-w-none"
@@ -435,9 +435,9 @@ function GuildProfileCard({
               Previous forms
             </span>
             <Button asChild size="sm" variant="outline" className="min-h-11">
-              <MemberRouteTransitionLink href="/member/forms">
+              <RouteTransitionLink href="/member/forms">
                 Review
-              </MemberRouteTransitionLink>
+              </RouteTransitionLink>
             </Button>
           </div>
         </DashboardContent>
@@ -617,9 +617,9 @@ export function MemberDashboard({
                   Previous forms
                 </span>
                 <Button asChild size="sm" variant="outline">
-                  <MemberRouteTransitionLink href="/member/forms">
+                  <RouteTransitionLink href="/member/forms">
                     Review history
-                  </MemberRouteTransitionLink>
+                  </RouteTransitionLink>
                 </Button>
               </div>
             </DashboardContent>

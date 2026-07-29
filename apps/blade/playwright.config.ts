@@ -15,6 +15,12 @@ export default defineConfig({
     ["list"],
     ["html", { open: "never", outputFolder: "playwright-report" }],
   ],
+  // Baselines are platform-specific: the OS renders text and controls, so a
+  // PNG generated on macOS will not match one generated on Linux. `{platform}`
+  // keeps that fact visible in the directory tree rather than buried in a
+  // failure message. See apps/blade/DESIGN_SYSTEM.md.
+  snapshotPathTemplate:
+    "{testDir}/{testFileDir}/__screenshots__/{platform}/{arg}{ext}",
   testDir: "./src/tests/e2e",
   timeout: 60_000,
   use: {

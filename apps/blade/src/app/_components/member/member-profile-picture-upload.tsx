@@ -6,17 +6,14 @@ import { Camera, Loader2, X } from "lucide-react";
 import { cn } from "@forge/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Input } from "@forge/ui/input";
+import {
+  checkUploadMetadata,
+  PROFILE_PICTURE_UPLOAD_POLICY,
+  uploadAccept,
+} from "@forge/validators";
 
 import { useObjectPreviewUrl } from "~/hooks/use-object-preview-url";
 import { api } from "~/trpc/react";
-
-const MAX_PROFILE_PICTURE_SIZE = 2 * 1024 * 1024;
-const PROFILE_PICTURE_TYPES = [
-  "image/gif",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-];
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -95,15 +92,13 @@ export function MemberProfilePictureUpload({
 
     if (!file) return;
 
-    if (!PROFILE_PICTURE_TYPES.includes(file.type)) {
-      setUploadError(
-        "Profile picture must be a JPEG, PNG, GIF, or WebP image.",
-      );
-      return;
-    }
-
-    if (file.size > MAX_PROFILE_PICTURE_SIZE) {
-      setUploadError("Profile picture must be 2MB or smaller.");
+    const check = checkUploadMetadata(PROFILE_PICTURE_UPLOAD_POLICY, {
+      contentType: file.type,
+      fileName: file.name,
+      size: file.size,
+    });
+    if (!check.ok) {
+      setUploadError(check.message);
       return;
     }
 
@@ -166,7 +161,7 @@ export function MemberProfilePictureUpload({
           <span className="sr-only">Upload profile picture</span>
           <Input
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
+            accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
             className="sr-only"
             disabled={isPending}
             onChange={(event) => {

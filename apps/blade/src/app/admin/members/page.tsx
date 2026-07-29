@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { AdminMemberSearchParams } from "~/app/_components/admin/members/params";
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
 import { MemberAdminDashboard } from "~/app/_components/admin/members/member-admin-dashboard";
 import { parseAdminMemberSearchParams } from "~/app/_components/admin/members/params";
+import { canAccessMemberAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Admin",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default async function AdminMembersPage({
   searchParams,
 }: {
-  searchParams: Promise<AdminMemberSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");
@@ -32,27 +32,25 @@ export default async function AdminMembersPage({
     await searchParams,
   );
   const [data, detail] = await Promise.all([
-    api.member.getAdminMembers(input),
+    api.memberAdmin.getAdminMembers(input),
     selectedMemberId
-      ? api.member
+      ? api.memberAdmin
           .getAdminMember({ memberId: selectedMemberId })
           .catch(() => null)
       : Promise.resolve(null),
   ]);
 
   return (
-    <HydrateClient>
-      <MemberAdminDashboard
-        key={input.query}
-        canEdit={
-          effectivePermissions.IS_OFFICER === true ||
-          effectivePermissions.EDIT_MEMBERS === true
-        }
-        data={data}
-        detail={detail}
-        input={input}
-        isOfficer={effectivePermissions.IS_OFFICER === true}
-      />
-    </HydrateClient>
+    <MemberAdminDashboard
+      key={input.query}
+      canEdit={
+        effectivePermissions.IS_OFFICER === true ||
+        effectivePermissions.EDIT_MEMBERS === true
+      }
+      data={data}
+      detail={detail}
+      input={input}
+      isOfficer={effectivePermissions.IS_OFFICER === true}
+    />
   );
 }

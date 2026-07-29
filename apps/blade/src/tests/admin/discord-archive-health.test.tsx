@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
-import { canAccessDiscordArchive } from "~/app/_components/admin/access";
 import { DiscordArchiveHealthDashboard } from "~/app/_components/admin/discord-archive/discord-archive-health";
+import { canAccessDiscordArchive } from "~/lib/admin-access";
 
 const health = {
   checkpoints: {

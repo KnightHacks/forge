@@ -20,6 +20,7 @@ import {
 
 import type { WriteDb } from "../db";
 import { isBladeE2E } from "../../env";
+import { loadClubTeamConfig } from "../guild/club-team-config";
 import { getGuildRoleCallout } from "../guild/role-callout";
 
 const BLADE_E2E_AUDIT_EVENT_ID = "00000000-0000-4000-8000-000000000000";
@@ -161,12 +162,15 @@ async function resolveActorSnapshot(actor: AuditActor, executor: WriteDb) {
   const roles = await executor
     .select({
       color: Roles.teamHexcodeColor,
-      name: Roles.name,
+      roleId: Roles.id,
     })
     .from(Permissions)
     .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
     .where(eq(Permissions.userId, actor.id));
-  const roleCallout = getGuildRoleCallout(roles);
+  const roleCallout = getGuildRoleCallout(
+    await loadClubTeamConfig(executor),
+    roles,
+  );
 
   return {
     actorDiscordUserId: actor.discordUserId ?? null,
@@ -259,6 +263,22 @@ export async function appendAdminAuditResults(
   },
   executor: WriteDb = db,
 ) {
+  // Validated ahead of the Blade E2E short-circuit, the same way
+  // `createAdminAuditEvent` orders it. Skipping validation too left the append
+  // path with no end-to-end coverage at all: a malformed result subject passed
+  // silently under the harness and only failed once it reached a real database.
+  const subjects = validateSubjects(input.actionKey, [
+    {
+      relation: "primary",
+      targetId: input.eventId,
+      targetLabel: "validation-only",
+      targetType: "provider",
+    },
+    ...input.results.map((result) => ({
+      ...result,
+      relation: "result" as const,
+    })),
+  ]).slice(1);
   if (isBladeE2E) return;
 
   const [event] = await executor
@@ -280,19 +300,6 @@ export async function appendAdminAuditResults(
       "Admin audit result subjects require a parent operation ID",
     );
   }
-
-  const subjects = validateSubjects(input.actionKey, [
-    {
-      relation: "primary",
-      targetId: input.eventId,
-      targetLabel: "validation-only",
-      targetType: "provider",
-    },
-    ...input.results.map((result) => ({
-      ...result,
-      relation: "result" as const,
-    })),
-  ]).slice(1);
 
   const existing = await executor
     .select({

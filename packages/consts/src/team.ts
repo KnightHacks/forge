@@ -1,173 +1,28 @@
-export const TEAMS = [
-  {
-    team: "Outreach",
-    color: "#88fea1",
-    director_role: "779845137822908436",
-  },
-  {
-    team: "Design",
-    color: "#eaacff",
-    director_role: "874028482089349172",
-  },
-  {
-    team: "Development",
-    color: "#93ceff",
-    director_role: "1082124530077683772",
-  },
-  {
-    team: "Sponsorship",
-    color: "#f5f4af",
-    director_role: "626815399442513920",
-  },
-  {
-    team: "Workshops",
-    color: "#206694",
-    director_role: "757002949603098837",
-  },
-  {
-    team: "Projects/Mentorship",
-    color: "#3498db",
-    director_role: "1244790444626280550",
-  },
-];
+// The former `TEAMS` array lived here. Its six Discord director-role snowflakes
+// moved to the `knight_hacks_discord_config` table (keys `*_director_role`) and
+// are read through `@forge/utils/discord-config`. Its per-team hex colors were
+// dropped rather than migrated: `auth_roles.color` is the live source for team
+// display color, and nothing ever read the copy stored here.
+//
+// The club team roster followed. `CLUB_TEAM_DEFINITIONS`,
+// `CLUB_EXECUTIVE_ROLE_ORDER`, `CLUB_DIRECTOR_ROLE_ORDER`,
+// `CLUB_TEAM_ROLE_CONFIG`, `CLUB_ROSTER_ROLE_NAMES` and
+// `EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES` are now rows in `knight_hacks_club_team`
+// and `knight_hacks_club_team_role`, keyed by `auth_roles.id` rather than by
+// role name. They failed Forge's own test — a new hackathon year meant editing
+// `teamRoleName: "KH IX Team"` and redeploying — and they classified members by
+// a string a Discord admin can rename, which emptied a team on the public site
+// with no error. Read them through `@forge/api`'s guild club-team config.
 
-export const CLUB_TEAM_DEFINITIONS = [
-  {
-    slug: "executive",
-    label: "Executive",
-    heading: "Executive Officers",
-  },
-  {
-    slug: "directors",
-    label: "Directors",
-    heading: "Directors",
-  },
-  {
-    slug: "hackathon",
-    label: "Hackathon",
-    heading: "Hackathon Team",
-  },
-  {
-    slug: "sponsorship",
-    label: "Sponsorship",
-    heading: "Sponsorship Team",
-  },
-  {
-    slug: "workshop",
-    label: "Workshop",
-    heading: "Workshop Team",
-  },
-  {
-    slug: "design",
-    label: "Design",
-    heading: "Design Team",
-  },
-  {
-    slug: "outreach",
-    label: "Outreach",
-    heading: "Outreach Team",
-  },
-  {
-    slug: "development",
-    label: "Development",
-    heading: "Development Team",
-  },
-] as const;
+/**
+ * What a club team bucket, and a role's place in it, can be.
+ *
+ * This is a code contract rather than organizational state: the roster's
+ * bucketing rules are written against these three values, so adding a fourth is
+ * a code change. It lives here for the same reason `DISCORD.CONFIG_KINDS` does
+ * — `@forge/db` types the column with it and the check constraint enumerates
+ * it, so the database and the application cannot disagree about the set.
+ */
+export const CLUB_TEAM_KINDS = ["executive", "director", "team"] as const;
 
-export type ClubTeamDefinition = (typeof CLUB_TEAM_DEFINITIONS)[number];
-export type ClubTeamSlug = ClubTeamDefinition["slug"];
-
-export const CLUB_EXECUTIVE_ROLE_ORDER = [
-  "President",
-  "Vice President",
-  "Treasurer",
-  "Secretary",
-  "Hack Lead",
-  "Dev Lead",
-] as const;
-
-export const CLUB_AGGREGATE_EXECUTIVE_ROLE = "Officers" as const;
-
-export const CLUB_DIRECTOR_ROLE_ORDER = [
-  "Design Director",
-  "Sponsorship Director",
-  "Mentorship Director",
-  "Outreach Director",
-  "Workshop Director",
-  "Director",
-] as const;
-
-export const CLUB_AGGREGATE_DIRECTOR_ROLE = "Directors" as const;
-
-export const CLUB_TEAM_ROLE_CONFIG = {
-  hackathon: {
-    label: "Hackathon",
-    teamRoleName: "KH IX Team",
-    leadRoleName: "Hack Lead",
-  },
-  sponsorship: {
-    label: "Sponsorship",
-    teamRoleName: "Sponsorship Team",
-    leadRoleName: "Sponsorship Director",
-  },
-  workshop: {
-    label: "Workshop",
-    teamRoleName: "Workshop Team",
-    leadRoleName: "Workshop Director",
-  },
-  design: {
-    label: "Design",
-    teamRoleName: "Design Team",
-    leadRoleName: "Design Director",
-  },
-  outreach: {
-    label: "Outreach",
-    teamRoleName: "Outreach Team",
-    leadRoleName: "Outreach Director",
-  },
-  development: {
-    label: "Development",
-    teamRoleName: "Dev Team",
-    leadRoleName: "Dev Lead",
-  },
-} as const;
-
-export type ClubTeamRoleSlug = keyof typeof CLUB_TEAM_ROLE_CONFIG;
-
-const CLUB_TEAM_ROLE_SLUGS = Object.keys(
-  CLUB_TEAM_ROLE_CONFIG,
-) as ClubTeamRoleSlug[];
-
-export const CLUB_ROSTER_ROLE_NAMES = [
-  ...CLUB_EXECUTIVE_ROLE_ORDER,
-  CLUB_AGGREGATE_EXECUTIVE_ROLE,
-  ...CLUB_DIRECTOR_ROLE_ORDER.filter((role) => role !== "Director"),
-  CLUB_AGGREGATE_DIRECTOR_ROLE,
-  ...CLUB_TEAM_ROLE_SLUGS.map(
-    (slug) => CLUB_TEAM_ROLE_CONFIG[slug].teamRoleName,
-  ),
-] as const;
-
-// This list is used only when bootstrapping the durable exclusion flag on a
-// role. Event eligibility reads the persisted role identity flag afterward so
-// renaming a role cannot silently expose organizational events to feedback.
-export const EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES = [
-  "Dev Team",
-  "Workshop Team",
-  "Sponsorship Team",
-  "Outreach Team",
-  "Design Team",
-  "KH IX Team",
-  "President",
-  "Vice President",
-  "Treasurer",
-  "Secretary",
-  "Hack Lead",
-  "Dev Lead",
-  "Officers",
-  "Design Director",
-  "Sponsorship Director",
-  "Outreach Director",
-  "Workshop Director",
-  "Directors",
-] as const;
+export type ClubTeamKind = (typeof CLUB_TEAM_KINDS)[number];

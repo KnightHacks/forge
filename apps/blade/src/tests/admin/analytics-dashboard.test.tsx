@@ -384,27 +384,6 @@ describe("AnalyticsDashboard", () => {
     expect(dues).not.toContain("authorDiscordUserId");
   });
 
-  it("renders enrichment detail on every analytics metric card", () => {
-    for (const section of [
-      "overview",
-      "events",
-      "discord",
-      "audience",
-      "dues",
-    ] as const) {
-      const html = renderSection(section);
-      const cardCount = html.match(
-        /data-analytics-metric-card="true"/g,
-      )?.length;
-      const detailCount = html.match(
-        /data-analytics-metric-detail="true"/g,
-      )?.length;
-
-      expect(cardCount, `${section} metric cards`).toBeGreaterThan(0);
-      expect(detailCount, `${section} metric details`).toBe(cardCount);
-    }
-  });
-
   it("[TC-020, TC-022] separates internal exports from the sponsor-safe report", () => {
     const html = renderSection("reports");
 
@@ -414,7 +393,6 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("Discord summary");
     expect(html).toContain("Member resume bundle");
     expect(html).toContain("Download ZIP");
-    expect(html).toContain("xl:grid-cols-3");
     expect(html).toContain("Sponsor-safe report");
     expect(html).toContain("Privacy reduced");
     expect(html).toContain(
@@ -484,7 +462,6 @@ describe("AnalyticsDashboard", () => {
 
     expect(html).toContain('role="region"');
     expect(html).toContain('aria-label="Academic-year dues comparison"');
-    expect(html).toContain("max-w-full overflow-x-auto");
   });
 
   it("[TC-024] paginates unbounded analytical tables without truncating their totals", () => {

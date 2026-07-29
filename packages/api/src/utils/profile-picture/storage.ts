@@ -44,27 +44,32 @@ export async function ensureProfilePictureBucketExists() {
 
 export async function uploadProfilePictureForSession({
   fileContent,
+  fileName,
   session,
 }: {
   fileContent: string;
+  fileName?: string;
   session: Session;
 }) {
   return await uploadProfilePictureForUser({
     fileContent,
+    fileName,
     userId: session.user.id,
   });
 }
 
 export async function uploadProfilePictureForUser({
   fileContent,
+  fileName,
   userId,
 }: {
   fileContent: string;
+  fileName?: string;
   userId: string;
 }) {
-  const { contentType, fileBuffer } =
-    decodeAndValidateProfilePictureDataUrl(fileContent);
-  const filePath = createProfilePictureObjectName(userId, contentType);
+  const { contentType, fileBuffer, type } =
+    decodeAndValidateProfilePictureDataUrl(fileContent, fileName);
+  const filePath = createProfilePictureObjectName(userId, type);
 
   await ensureProfilePictureBucketExists();
   await profilePictureStorageClient.putObject(

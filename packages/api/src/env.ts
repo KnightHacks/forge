@@ -9,8 +9,13 @@ export const env = createEnv({
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
+  // Tests mock every storage client, so they never reach MinIO. Without the
+  // test skip, local `pnpm test` fails on six files that CI passes, because CI
+  // already skips validation — a divergence that hides real failures.
   skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+    !!process.env.CI ||
+    process.env.NODE_ENV === "test" ||
+    process.env.npm_lifecycle_event === "lint",
 });
 
 export const nodeEnv = z

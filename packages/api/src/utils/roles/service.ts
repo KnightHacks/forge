@@ -1,18 +1,19 @@
 import type { APIGuildMember, APIRole } from "discord-api-types/v10";
 import { TRPCError } from "@trpc/server";
 
-import { DISCORD } from "@forge/consts";
 import { eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
   Event,
+  EventFeedbackConfig,
   FormResponseRoles,
   FormSectionRoles,
   Issue,
   IssuesToTeamsVisibility,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import type { RoleDiscordGateway } from "./discord-gateway";
 import {
@@ -21,12 +22,8 @@ import {
   permissionBitstringToKeys,
   retainsAssignedRoleAdministrator,
   retainsAssignedRoleAdministratorAfterRevocations,
+  roleColorToHex,
 } from "./management";
-
-export function roleColorToHex(color: number) {
-  if (color <= 0) return null;
-  return `#${color.toString(16).padStart(6, "0")}`;
-}
 
 export async function getDiscordRole(
   gateway: RoleDiscordGateway,
@@ -37,14 +34,22 @@ export async function getDiscordRole(
   return guildRoles.roles.find((role) => role.id === roleId) ?? null;
 }
 
-export function assertEligibleDiscordRole(role: APIRole | null) {
+/**
+ * `guildId` is a parameter rather than a lookup so this stays synchronous and
+ * database-free, matching `filterDiscordRolesForLinking`. The guild's own ID
+ * doubles as the `@everyone` role ID, which is never linkable.
+ */
+export function assertEligibleDiscordRole(
+  role: APIRole | null,
+  guildId: string,
+) {
   if (!role) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "That Discord role could not be found.",
     });
   }
-  if (role.id === DISCORD.KNIGHTHACKS_GUILD || role.managed) {
+  if (role.id === guildId || role.managed) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "That Discord role cannot be linked in Blade.",
@@ -103,6 +108,51 @@ export async function getDependencyCounts(
       issues.length +
       issueVisibility.length,
   };
+}
+
+/**
+ * Past events that stop being readable for feedback analytics and CSV export if
+ * this role is excluded.
+ *
+ * Every clause is load bearing, and the number is deliberately smaller than
+ * "events touching this role":
+ *
+ * - `hackathonId IS NULL` and the role membership are what `isQualifyingEvent`
+ *   tests, so they are what excluding the role actually changes.
+ * - `end_datetime <= now()` because the officer is warned about *past* events.
+ * - the feedback-config join, because that row is what collection hangs off:
+ *   no config, no form, no responses. Such an event has nothing to lose, and
+ *   naming it inflates the number and makes the warning easier to dismiss.
+ * - the no-other-excluded-role clause, because `isQualifyingEvent` fails on any
+ *   protected role. An event already carrying a flagged role is already
+ *   unreadable, so counting it would bill this toggle for a loss that has
+ *   already happened.
+ *
+ * Lives here rather than in `buildLinkedRoleViews`, which runs a per-role
+ * `await` inside a `map` and backs the roles *list* page — one query per linked
+ * role, on every list render, for a number one dialog reads.
+ */
+export async function countFeedbackExclusionImpact(
+  roleId: string,
+  executor: DbExecutor = db,
+) {
+  const rows = await executor
+    .select({ id: Event.id })
+    .from(Event)
+    .innerJoin(EventFeedbackConfig, eq(EventFeedbackConfig.eventId, Event.id))
+    .where(
+      sql`${Event.hackathonId} IS NULL
+        AND ${roleId} = ANY(${Event.roles})
+        AND ${Event.end_datetime} <= now()
+        AND NOT EXISTS (
+          SELECT 1 FROM ${Roles}
+          WHERE ${Roles.eventFeedbackExcluded} = true
+            AND ${Roles.id} <> ${roleId}
+            AND ${Roles.id}::text = ANY(${Event.roles})
+        )`,
+    );
+
+  return rows.length;
 }
 
 export async function getAssignmentRows() {
@@ -184,6 +234,7 @@ export async function syncLinkedRole(
 ) {
   const liveRole = assertEligibleDiscordRole(
     await getDiscordRole(gateway, role.discordRoleId),
+    await getKnightHacksGuildId(),
   );
   await assertUniqueDiscordRole(liveRole, role.id);
   await db
@@ -388,6 +439,9 @@ export async function buildLinkedRoleViews(
         dependencyCount: dependencies?.total ?? 0,
         discordRoleId: role.discordRoleId,
         emailAudienceEnabled: role.emailAudienceEnabled,
+        // Free: the select above already reads the whole row. The *count* of
+        // affected past events is not here — see `countFeedbackExclusionImpact`.
+        eventFeedbackExcluded: role.eventFeedbackExcluded,
         id: role.id,
         isCosmetic: isCosmeticPermissionString(role.permissions),
         isMissing: discordRoles.available && !live,

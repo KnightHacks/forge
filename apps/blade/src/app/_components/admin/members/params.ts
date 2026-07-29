@@ -1,14 +1,8 @@
 import type { AdminMemberListInput } from "@forge/validators";
 import { adminMemberIdSchema, adminMemberListSchema } from "@forge/validators";
 
-export type AdminMemberSearchParams = Record<
-  string,
-  string | string[] | undefined
->;
-
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import type { SearchParams } from "~/lib/search-params";
+import { first } from "~/lib/search-params";
 
 function list(value: string | string[] | undefined) {
   if (!value) return [];
@@ -21,7 +15,7 @@ function numberList(value: string | string[] | undefined) {
     .filter((item) => Number.isInteger(item));
 }
 
-export function parseAdminMemberSearchParams(params: AdminMemberSearchParams) {
+export function parseAdminMemberSearchParams(params: SearchParams) {
   const raw = {
     companies: list(params.company),
     duesStatuses: list(params.dues),

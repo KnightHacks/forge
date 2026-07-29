@@ -15,7 +15,6 @@ import {
   FormsSchemas,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { permissions } from "@forge/utils";
 import {
   alumniBulletinIdSchema,
   alumniBulletinImageRemoveSchema,
@@ -28,6 +27,7 @@ import {
 } from "@forge/validators";
 
 import { permProcedure, protectedProcedure } from "../trpc";
+import { assertCanManageAlumni } from "../utils/alumni/access";
 import {
   getAlumniBulletinImageUrl,
   removeAlumniBulletinImage,
@@ -68,12 +68,6 @@ function officerDisplayName(row: {
   if (memberName.length > 0) return memberName;
   const userName = row.userName?.trim();
   return userName && userName.length > 0 ? userName : "Knight Hacks officer";
-}
-
-function assertCanManageAlumni(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(["MANAGE_ALUMNI_DASHBOARD"], ctx);
 }
 
 async function getMemberForUser(userId: string) {

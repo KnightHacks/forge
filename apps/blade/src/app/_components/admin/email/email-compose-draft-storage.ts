@@ -1,5 +1,4 @@
-export const EMAIL_COMPOSE_DRAFT_STORAGE_KEY =
-  "blade:email-portal-compose-draft";
+import { EMAIL_COMPOSE_DRAFT_STORAGE_KEY } from "~/consts/browser-storage";
 
 const DRAFT_VERSION = 1;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1_000;

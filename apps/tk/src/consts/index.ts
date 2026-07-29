@@ -1,34 +1,3 @@
-export const DAILY_MESSAGES = [
-  "Try not to TLE this time!",
-  "Let's hope it's not a graph network flow DP problem...",
-  "Don't use ChatGPT this time!",
-  "👅",
-  "May the bugs ever be in your favor!",
-  "Don't use C for this one...",
-  "Let's see who comes out victorious!",
-  "Let's crack it together!",
-  "Time to debug the day away!",
-  "Today's challenge awaits!",
-  "Let's code circles around Neetcode!",
-  "Let's get to hacking!",
-  "May your algorithms be swift and your bugs be minimal!",
-  "Take a shower after this...",
-  "Let's flex your brain muscles! 💪👅😈",
-  "𝓛𝓮𝓽'𝓼 𝓬𝓸𝓭𝓮 𝓿𝓻𝓸 ❤️‍🔥⛓️👅",
-  "I'm 𝓯𝓻𝓮𝓪𝓴𝔂 T.K! 🛡️👅",
-];
-
-export const DISCORD_LEETCODE_ROLE_ID = "1264645162060091483";
-
-export const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
-
-export const DISCORD_HACKATHON_ROLE_ID = "1408025502119231498";
-
-export const DISCORD_PROD_GUILD_ID = "486628710443778071";
-
-export const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
-export const HACK_BANNER_IMAGE = "https://i.imgur.com/lpTVNl7.png";
-
 export const BUBBLE_WRAP_TEXT = "||pop||||pop||||pop||||pop||||pop||||pop||\n";
 
 export const TK_CAPYBARA_URL = "https://api.capy.lol/v1/capybara?json=true";
@@ -78,12 +47,6 @@ export const TK_JOKE_URL =
   "https://v2.jokeapi.dev/joke/Programming?blacklistFlags=nsfw,religious,political,racist,sexist,explicit";
 
 export const TK_KNIGHTHACKS_LINKTREE_URL = "https://linktr.ee/knighthacks";
-
-export const TK_LEETCODE_API_URL =
-  "https://alfa-leetcode-api.onrender.com/daily";
-
-export const TK_LEETCODE_ICON_URL =
-  "https://assets.leetcode.com/static_assets/public/images/LeetCode_logo_rvs.png";
 
 export const LINKS = [
   "• [**Sign up for KnightHacks VII!**](https://2024.knighthacks.org/)",

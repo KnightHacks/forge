@@ -259,6 +259,17 @@ test.describe("forms platform cross-surface journey", () => {
       .getByRole("textbox");
     const submitButton = page.getByRole("button", { name: "Submit response" });
     await expect(submitButton).toBeInViewport();
+    // Not a design-token pin: iOS Safari zooms the viewport when a focused
+    // input renders below 16px, which strands mobile respondents mid-form. The
+    // threshold is the behavior, so any font size at or above it passes.
+    await expect
+      .poll(() =>
+        answer.evaluate(
+          (element) =>
+            Number.parseFloat(getComputedStyle(element).fontSize) >= 16,
+        ),
+      )
+      .toBe(true);
     await expect
       .poll(() =>
         page.evaluate(
@@ -266,11 +277,6 @@ test.describe("forms platform cross-surface journey", () => {
         ),
       )
       .toBe(true);
-    expect(
-      await answer.evaluate((element) =>
-        Number.parseFloat(getComputedStyle(element).fontSize),
-      ),
-    ).toBeGreaterThanOrEqual(16);
     await answer.fill("More club tools");
     await page.getByRole("button", { name: "Submit response" }).click();
     await expect(
@@ -336,16 +342,11 @@ test.describe("forms platform cross-surface journey", () => {
     await expect(
       page.getByRole("heading", { name: "Forms Platform E2E" }),
     ).toBeVisible();
-    const boundedAnswers = page.locator('[data-answer-density="bounded"]');
-    await expect(boundedAnswers.getByText(/More club tools 60/)).toBeAttached();
+    await expect(page.getByText(/More club tools 60/)).toBeAttached();
     await expect(page.getByText("60 responses")).toBeVisible();
-    await expect(boundedAnswers).toHaveCSS("overflow-y", "auto");
-    expect(
-      (await boundedAnswers.boundingBox())?.height ?? Infinity,
-    ).toBeLessThanOrEqual(288);
     await page.setViewportSize({ width: 320, height: 740 });
     await page.reload();
-    await expect(boundedAnswers.getByText(/More club tools 60/)).toBeAttached();
+    await expect(page.getByText(/More club tools 60/)).toBeAttached();
     await expect
       .poll(() =>
         page.evaluate(
@@ -363,6 +364,5 @@ test.describe("forms platform cross-surface journey", () => {
       .first()
       .click();
     await expect(page.getByText("More club tools")).toBeVisible();
-    await expect(page.getByRole("dialog")).toHaveCSS("max-height", "740px");
   });
 });

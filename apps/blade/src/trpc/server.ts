@@ -21,7 +21,11 @@ const createContext = cache(async () => {
 const getQueryClient = cache(createQueryClient);
 const caller = createCaller(createContext);
 
-export const { trpc: api, HydrateClient } = createHydrationHelpers<AppRouter>(
+// `HydrateClient` is deliberately not re-exported. It only does anything when a
+// page seeds the query cache with `.prefetch()`, which Blade never did — all 25
+// wrappers dehydrated an empty cache. Pages read on the server and pass props
+// down, so there is nothing to hydrate.
+export const { trpc: api } = createHydrationHelpers<AppRouter>(
   caller,
   getQueryClient,
 );

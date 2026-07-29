@@ -1,7 +1,7 @@
-import type { APIMessageTopLevelComponent } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
 import { deliverIssueReminders } from "@forge/api/utils";
+import { EVENTS } from "@forge/consts";
 import { logger } from "@forge/utils";
 import { api } from "@forge/utils/discord";
 
@@ -22,9 +22,7 @@ export const issueReminders = new CronBuilder({
       bladeUrl: env.BLADE_URL,
       send: async (message) => {
         const { allowedMentions, channelId, content, embeds } = message;
-        const components = (
-          "components" in message ? message.components : []
-        ) as APIMessageTopLevelComponent[];
+        const components = "components" in message ? message.components : [];
         const componentsBody = issueReminderComponentsBody({
           allowedMentions,
           components,
@@ -57,5 +55,5 @@ export const issueReminders = new CronBuilder({
       `Planned ${result.plannedTargets} issue reminder target(s); acquired ${result.deliveredTargets} delivery target(s).`,
     );
   },
-  { timezone: "America/New_York" },
+  { timezone: EVENTS.CALENDAR_TIME_ZONE },
 );

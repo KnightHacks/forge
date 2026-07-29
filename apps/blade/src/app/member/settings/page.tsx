@@ -3,12 +3,12 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_SIGNUP_FORM_SLUG } from "@forge/validators";
 
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
 import { getMemberDebugLatencyMs } from "~/app/_components/member/debug-latency";
 import { MemberProfileSettingsForm } from "~/app/_components/member/member-profile-settings-form";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Member Settings",
@@ -35,18 +35,16 @@ export default async function MemberSettingsPage({
   const careerData = await api.career.listMyEmployment();
 
   return (
-    <HydrateClient>
-      <AuthenticatedShell
-        activeNavigation="settings"
-        adminNavigation={getAdminNavigationAccess(effectivePermissions)}
-        session={session}
-      >
-        <MemberProfileSettingsForm
-          member={member}
-          careerData={careerData}
-          debugLatencyMs={debugLatencyMs}
-        />
-      </AuthenticatedShell>
-    </HydrateClient>
+    <AuthenticatedShell
+      activeNavigation="settings"
+      adminNavigation={getAdminNavigationAccess(effectivePermissions)}
+      session={session}
+    >
+      <MemberProfileSettingsForm
+        member={member}
+        careerData={careerData}
+        debugLatencyMs={debugLatencyMs}
+      />
+    </AuthenticatedShell>
   );
 }

@@ -1,6 +1,6 @@
 # Email Portal Status
 
-Current phase: Development team-campaign review / live review server running
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -43,10 +43,13 @@ Current phase: Development team-campaign review / live review server running
 - 2026-07-26: The deployment-facing email mode flag was removed. `NODE_ENV=production` always resolves to normal Listmonk delivery, normal development resolves to directors tests plus team-only campaigns, and unit/test processes resolve to the fake provider. The existing Blade E2E harness marker selects fake delivery under `next dev` and is ignored by the production-first policy.
 - 2026-07-26: Every `Roles` row is now an audience option in production and development. Role audiences prefer the linked Member profile email and fall back to the auth-user email only when no Member profile exists. Development permits only Team members and explicit role definitions, with current-assignment revalidation before Listmonk.
 - 2026-07-26: The first live team review campaign completed through Listmonk for 10 recipients. Although the campaign content type was `plain`, Listmonk template `1` wrapped it in the default HTML layout and recipients reported spam placement. Forge now creates/reuses a content-only plaintext campaign wrapper; deliverability authentication still requires checking the received message's Gmail “Show original” results.
+- 2026-07-27: Development is finished and merged into `reforge/main`. The
+  feature is closed for development.
 
 ## Open questions
 
-- The implementation must return to SRD review if the deployed Listmonk or current React/Next versions cannot support the documented integration safely.
+- None. The Listmonk/React/Next integration held through live team-campaign
+  review, so the earlier "return to SRD review" contingency did not trigger.
 
 ## Task list
 

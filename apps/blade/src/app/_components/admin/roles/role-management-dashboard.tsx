@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   UserRoundCheck,
   UsersRound,
@@ -60,10 +61,10 @@ import { toast } from "@forge/ui/toast";
 import { roleManagementPageSizes } from "@forge/validators";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { CreateRoleDialog } from "./create-role-dialog";
 import { buildRoleManagementSearchParams } from "./params";
@@ -1175,10 +1176,23 @@ export function RoleManagementDashboard({
     >
       <AdminPageHeader
         actions={
-          <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-[hsl(var(--chart-2))]" />
-            {roleRows.length} linked roles
-          </div>
+          // A fragment, not a wrapper: AdminPageHeader spaces its actions with
+          // `gap-2` on direct children, so grouping these two in a <div> would
+          // drop the gap between them silently.
+          <>
+            <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+              <span className="h-2 w-2 rounded-full bg-[hsl(var(--chart-2))]" />
+              {roleRows.length} linked roles
+            </div>
+            {access.isOfficer === true && (
+              <Button asChild variant="outline" className="min-h-11 gap-2">
+                <Link href="/admin/roles/config">
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  Platform configuration
+                </Link>
+              </Button>
+            )}
+          </>
         }
         description="Link Discord roles to Blade access and keep user assignments in sync."
         eyebrow={ADMIN_PAGE_EYEBROWS.roles}

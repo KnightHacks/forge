@@ -84,7 +84,6 @@ describe("Email Portal workspace", () => {
       }),
     );
 
-    expect(html).toContain('data-email-portal-layout="responsive"');
     expect(html).toContain('role="tablist"');
     expect(html).toContain("Templates");
     expect(html).toContain("Compose");

@@ -9,9 +9,15 @@ import { MEMBER_SIGNUP_FORM_ID } from "@forge/validators";
 import { memberRouter } from "../../routers/member";
 import { createCallerFactory, createTRPCRouter } from "../../trpc";
 import { memberSignupFormConfig } from "../../utils/member/onboarding";
+import { AUDIT_EVENT_ID, createAuditRecorder } from "../support/audit-recorder";
 
 const mocks = vi.hoisted(() => ({
   db: {
+    // `appendAdminAuditResults` runs after the transaction commits, against the
+    // top-level client rather than `tx`, so the storage-cleanup results it
+    // records need select and insert here too.
+    insert: vi.fn(),
+    select: vi.fn(),
     transaction: vi.fn(),
     update: vi.fn(),
   },
@@ -65,7 +71,9 @@ const existingMember = {
   githubProfileUrl: "https://github.com/knighthacks",
   gradDate: "2027-05-02",
   guildProfileVisible: true,
-  id: "member-id",
+  // A real UUID: audit subjects are validated as UUIDs, so a placeholder
+  // string fails subject validation before the delete ever runs.
+  id: "11111111-1111-4111-8111-111111111111",
   lastName: "Member",
   levelOfStudy: "Undergraduate University (3+ year)",
   linkedinProfileUrl: "https://www.linkedin.com/company/knight-hacks",
@@ -124,20 +132,42 @@ const updateInput = {
 
 type UpdateResult = Error | unknown[];
 
-function createSelectMock() {
-  return vi.fn(() => ({
-    from: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue([]),
-    })),
-  }));
+// Most callers await `where(...)` directly, but the audit path chains `.limit(1)`
+// onto it and joins through `.innerJoin(...)` when resolving the actor snapshot.
+// Returning a promise that also carries those methods supports every shape
+// without each caller having to know which one it got.
+interface SelectChain extends Promise<unknown[]> {
+  innerJoin: () => SelectChain;
+  leftJoin: () => SelectChain;
+  orderBy: () => Promise<unknown[]>;
+  where: () => Promise<unknown[]> & { limit: () => Promise<unknown[]> };
 }
 
-function createInsertMock() {
+function createSelectMock(readIdentityRows: () => unknown[]) {
+  const where = vi.fn(() =>
+    Object.assign(Promise.resolve([]), {
+      limit: vi.fn(() => Promise.resolve(readIdentityRows())),
+    }),
+  );
+  // Loading the club team configuration for the actor's role badge ends the
+  // chain at `.orderBy(...)` and at `.leftJoin(...)` rather than at `.where`,
+  // so the chain itself has to be awaitable at any point.
+  const chain: SelectChain = Object.assign(Promise.resolve<unknown[]>([]), {
+    innerJoin: vi.fn((): SelectChain => chain),
+    leftJoin: vi.fn((): SelectChain => chain),
+    orderBy: vi.fn(() => Promise.resolve<unknown[]>([])),
+    where,
+  });
+
+  return vi.fn(() => ({ from: vi.fn(() => chain) }));
+}
+
+function createInsertMock(audit: ReturnType<typeof createAuditRecorder>) {
   const values = vi.fn(() => ({
     onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
     returning: vi.fn().mockResolvedValue([{ id: "backfilled-response-id" }]),
   }));
-  const insert = vi.fn(() => ({ values }));
+  const insert = vi.fn((table: unknown) => audit.insert(table) ?? { values });
 
   return { insert, values };
 }
@@ -170,16 +200,21 @@ function createUpdateMock(results: UpdateResult[]) {
 }
 
 function createDeleteMock(results: unknown[][] = [[{ id: userId }]]) {
+  const deletedTables: unknown[] = [];
   const returningResults = [...results];
-  const remove = vi.fn((_table: unknown) => ({
-    where: vi.fn(() => ({
-      returning: vi.fn(() =>
-        Promise.resolve(returningResults.shift() ?? [{ id: userId }]),
-      ),
-    })),
-  }));
+  const remove = vi.fn((table: unknown) => {
+    deletedTables.push(table);
 
-  return { delete: remove };
+    return {
+      where: vi.fn(() => ({
+        returning: vi.fn(() =>
+          Promise.resolve(returningResults.shift() ?? [{ id: userId }]),
+        ),
+      })),
+    };
+  });
+
+  return { delete: remove, deletedTables };
 }
 
 function createTransactionMock({
@@ -193,9 +228,20 @@ function createTransactionMock({
   deleteResults?: unknown[][];
   updateResults?: UpdateResult[];
 } = {}) {
+  const audit = createAuditRecorder();
   const deleteMock = createDeleteMock(deleteResults);
-  const insertMock = createInsertMock();
+  const insertMock = createInsertMock(audit);
   const updateMock = createUpdateMock(updateResults);
+  const memberIdentityRows = memberRow
+    ? [
+        {
+          discordUser: memberRow.discordUser,
+          firstName: memberRow.firstName,
+          id: memberRow.id,
+          lastName: memberRow.lastName,
+        },
+      ]
+    : [];
   const formResponseFindFirst = vi
     .fn()
     .mockResolvedValueOnce(existingSignupResponse)
@@ -227,9 +273,19 @@ function createTransactionMock({
         findFirst: vi.fn().mockResolvedValue(memberRow),
       },
     },
-    select: createSelectMock(),
+    // The member row is gone once it has been deleted, so the identity lookup
+    // and the actor snapshot only resolve while the audit event is written
+    // ahead of the deletes.
+    select: createSelectMock(() =>
+      deleteMock.deletedTables.includes(Member) ? [] : memberIdentityRows,
+    ),
     update: updateMock.update,
   };
+
+  // `appendAdminAuditResults` runs after the transaction commits, against the
+  // top-level client rather than `tx`.
+  mocks.db.select.mockImplementation(audit.select);
+  mocks.db.insert.mockImplementation(audit.insert);
 
   mocks.db.transaction.mockImplementation(
     (callback: (txHandle: typeof tx) => unknown) =>
@@ -238,6 +294,8 @@ function createTransactionMock({
 
   return {
     formResponseFindFirst,
+    auditEvents: audit.events,
+    auditSubjects: audit.subjects,
     delete: deleteMock.delete,
     insertValues: insertMock.values,
     setValues: updateMock.setValues,
@@ -412,6 +470,10 @@ describe("member.updateMember", () => {
 describe("member.deleteMember", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Both cleanups return an audit result outcome, which is what the appended
+    // result subjects record. Distinct values keep them apart in assertions.
+    mocks.removeProfilePictureObjectsForUser.mockResolvedValue("succeeded");
+    mocks.removeUnreferencedResumeObjectsForUser.mockResolvedValue("skipped");
   });
 
   it("deletes member profile data and auth identity in one transaction", async () => {
@@ -432,6 +494,75 @@ describe("member.deleteMember", () => {
     expect(mocks.removeUnreferencedResumeObjectsForUser).toHaveBeenCalledWith(
       userId,
     );
+  });
+
+  it("records the self-service deletion as a member.profile.deleted event", async () => {
+    const transaction = createTransactionMock({
+      deleteResults: [[{ id: "signup-response-id" }]],
+    });
+
+    await createCaller().member.deleteMember();
+
+    expect(transaction.auditEvents).toHaveLength(1);
+    expect(transaction.auditEvents[0]).toMatchObject({
+      actionKey: "member.profile.deleted",
+      // Only resolvable because the event is written before the deletes.
+      actorMemberId: existingMember.id,
+      actorUserId: userId,
+      domain: "members",
+      metadata: {
+        deletedObjectCount: 4,
+        deletedObjectTypes: [
+          "member",
+          "user",
+          "permissions",
+          "signup_response",
+        ],
+      },
+      outcome: "committed",
+    });
+    expect(transaction.auditSubjects[0]).toEqual({
+      eventId: AUDIT_EVENT_ID,
+      memberId: existingMember.id,
+      metadata: {},
+      position: 0,
+      relation: "primary",
+      resultOutcome: null,
+      targetId: existingMember.id,
+      targetLabel: "Old Member",
+      targetType: "member",
+    });
+  });
+
+  it("appends both storage cleanup outcomes to the audit event", async () => {
+    const transaction = createTransactionMock();
+
+    await createCaller().member.deleteMember();
+
+    expect(transaction.auditSubjects.slice(1)).toEqual([
+      {
+        eventId: AUDIT_EVENT_ID,
+        memberId: null,
+        metadata: {},
+        position: 1,
+        relation: "result",
+        resultOutcome: "succeeded",
+        targetId: `profile-picture-cleanup:${userId}`,
+        targetLabel: "Profile picture storage cleanup",
+        targetType: "provider",
+      },
+      {
+        eventId: AUDIT_EVENT_ID,
+        memberId: null,
+        metadata: {},
+        position: 2,
+        relation: "result",
+        resultOutcome: "skipped",
+        targetId: `resume-cleanup:${userId}`,
+        targetLabel: "Résumé storage cleanup",
+        targetType: "provider",
+      },
+    ]);
   });
 
   it("does not delete auth identity when the member profile is missing", async () => {

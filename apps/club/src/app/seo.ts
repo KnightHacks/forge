@@ -11,24 +11,14 @@ import {
 
 export {
   CANONICAL_ROUTES,
-  ORGANIZATION_NAME,
-  ORGANIZER_EMAIL,
-  PRESIDENT_EMAIL,
-  PUBLIC_LINKS,
   SITE_LAST_MODIFIED,
   SITE_NAME,
   SITE_URL,
-  SOCIAL_PROFILE_URLS,
 } from "./_lib/site-config";
 
 export const BLADE_URL = PUBLIC_LINKS.blade;
-export const CODE_OF_CONDUCT_URL = PUBLIC_LINKS.codeOfConduct;
 export const DISCORD_URL = PUBLIC_LINKS.discord;
 export const INSTAGRAM_URL = PUBLIC_LINKS.instagram;
-export const LINKEDIN_URL = PUBLIC_LINKS.linkedin;
-export const GITHUB_URL = PUBLIC_LINKS.github;
-export const LINKTREE_URL = PUBLIC_LINKS.linktree;
-export const X_URL = PUBLIC_LINKS.x;
 
 export const SEO_TITLE =
   "Knight Hacks | UCF Software Engineering Club and Hackathon";

@@ -14,12 +14,15 @@ import {
   DialogTrigger,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
+import {
+  checkUploadMetadata,
+  RESUME_UPLOAD_POLICY,
+  uploadAccept,
+} from "@forge/validators";
 
 import { ResumePreview } from "~/app/_components/member/resume-preview";
 import { useObjectPreviewUrl } from "~/hooks/use-object-preview-url";
 import { api } from "~/trpc/react";
-
-const MAX_RESUME_SIZE = 5 * 1000000;
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -82,14 +85,13 @@ export function MemberResumeUpload({
 
     if (!file) return;
 
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (file.type !== "application/pdf" && extension !== "pdf") {
-      setUploadError("Resume must be a PDF.");
-      return;
-    }
-
-    if (file.size > MAX_RESUME_SIZE) {
-      setUploadError("Resume must be 5MB or smaller.");
+    const check = checkUploadMetadata(RESUME_UPLOAD_POLICY, {
+      contentType: file.type,
+      fileName: file.name,
+      size: file.size,
+    });
+    if (!check.ok) {
+      setUploadError(check.message);
       return;
     }
 
@@ -178,7 +180,7 @@ export function MemberResumeUpload({
         {resumeUrl ? "Replace" : "Upload"}
         <Input
           type="file"
-          accept="application/pdf,.pdf"
+          accept={uploadAccept(RESUME_UPLOAD_POLICY)}
           className="sr-only"
           disabled={isPending}
           onChange={(event) => {

@@ -3,7 +3,9 @@ import { analyticsRouter } from "./routers/analytics";
 import { auditRouter } from "./routers/audit";
 import { authRouter } from "./routers/auth";
 import { careerRouter } from "./routers/career";
+import { clubTeamsRouter } from "./routers/club-teams";
 import { discordArchiveRouter } from "./routers/discord-archive";
+import { discordConfigRouter } from "./routers/discord-config";
 import { duesRouter } from "./routers/dues";
 import { emailRouter } from "./routers/email";
 import { eventRouter } from "./routers/event";
@@ -11,6 +13,7 @@ import { formsRouter } from "./routers/forms";
 import { guildRouter } from "./routers/guild";
 import { issuesRouter } from "./routers/issues";
 import { memberRouter } from "./routers/member";
+import { memberAdminRouter } from "./routers/member-admin";
 import { profilePictureRouter } from "./routers/profile-picture";
 import { qrRouter } from "./routers/qr";
 import { resumeRouter } from "./routers/resume";
@@ -28,8 +31,10 @@ export interface AppRouterShape {
   audit: typeof auditRouter;
   auth: typeof authRouter;
   career: typeof careerRouter;
+  clubTeams: typeof clubTeamsRouter;
   dues: typeof duesRouter;
   discordArchive: typeof discordArchiveRouter;
+  discordConfig: typeof discordConfigRouter;
   email: typeof emailRouter;
   event: typeof eventRouter;
   forms: typeof formsRouter;
@@ -37,6 +42,7 @@ export interface AppRouterShape {
   health: typeof healthProcedure;
   issues: typeof issuesRouter;
   member: typeof memberRouter;
+  memberAdmin: typeof memberAdminRouter;
   profilePicture: typeof profilePictureRouter;
   qr: typeof qrRouter;
   resume: typeof resumeRouter;
@@ -53,8 +59,10 @@ const appRouterRecord: AppRouterRecord = {
   audit: auditRouter,
   auth: authRouter,
   career: careerRouter,
+  clubTeams: clubTeamsRouter,
   dues: duesRouter,
   discordArchive: discordArchiveRouter,
+  discordConfig: discordConfigRouter,
   email: emailRouter,
   event: eventRouter,
   forms: formsRouter,
@@ -62,6 +70,7 @@ const appRouterRecord: AppRouterRecord = {
   health: healthProcedure,
   issues: issuesRouter,
   member: memberRouter,
+  memberAdmin: memberAdminRouter,
   profilePicture: profilePictureRouter,
   qr: qrRouter,
   resume: resumeRouter,

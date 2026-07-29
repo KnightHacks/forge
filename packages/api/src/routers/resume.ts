@@ -21,6 +21,7 @@ export const resumeRouter = {
     .mutation(async ({ input, ctx }) => {
       return await uploadResumeForSession({
         fileContent: input.fileContent,
+        fileName: input.fileName,
         session: ctx.session,
       });
     }),

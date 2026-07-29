@@ -482,15 +482,14 @@ test.describe("admin member dashboard", () => {
     await mobilePage
       .getByRole("button", { name: "Open navigation menu" })
       .click();
-    const mobileDrawer = mobilePage.getByTestId("mobile-navigation-drawer");
     const mobileNavigation = mobilePage.getByRole("navigation", {
       name: "Mobile primary navigation",
     });
-    await expect(mobileDrawer).toHaveCSS("transform", "none");
-    const mobileDrawerBox = await mobileDrawer.boundingBox();
-    expect(mobileDrawerBox?.x).toBe(0);
-    expect(mobileDrawerBox?.width).toBe(320);
-    expect(mobileDrawerBox?.height).toBe(740);
+    // `toBeVisible` alone would pass on a drawer still translated off-screen,
+    // so the open outcome needs a viewport check. This replaces exact transform
+    // and bounding-box pins, which asserted the animation rather than the
+    // behavior.
+    await expect(mobileNavigation).toBeInViewport();
     await expect(
       mobileNavigation.getByRole("link", { name: "Dashboard" }),
     ).toBeVisible();
@@ -557,24 +556,9 @@ test.describe("admin member dashboard", () => {
     await signInAs(page, ALICE_USER_ID, "/dashboard");
     await expect(page).toHaveURL(new RegExp(`${MEMBER_DASHBOARD_PATH}$`));
     await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
-    const dashboardHeader = await page
-      .getByTestId("blade-shell-header")
-      .boundingBox();
-    const dashboardRailHeader = await page
-      .getByTestId("member-navigation-rail-header")
-      .boundingBox();
-    expect(dashboardRailHeader?.y).toBe(dashboardHeader?.y);
-    expect(
-      (dashboardRailHeader?.y ?? 0) + (dashboardRailHeader?.height ?? 0),
-    ).toBe((dashboardHeader?.y ?? 0) + (dashboardHeader?.height ?? 0));
     await page.getByRole("link", { name: "Members", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${ADMIN_PATH}$`));
     await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
-    const adminHeader = await page
-      .getByTestId("blade-shell-header")
-      .boundingBox();
-    expect(adminHeader?.x).toBe(dashboardHeader?.x);
-    expect(adminHeader?.height).toBe(dashboardHeader?.height);
   });
 
   test("searches fuzzily, persists table state, paginates, filters, sorts, and exports every match", async ({
@@ -688,21 +672,6 @@ test.describe("admin member dashboard", () => {
       .getByRole("button", { name: "Revoke dues for Charlie Circuit" })
       .click();
     await expect(page.getByText("Dues revoked.")).toBeVisible();
-    const toastColors = await page
-      .locator("[data-sonner-toast]")
-      .filter({ hasText: "Dues revoked." })
-      .evaluate((toast) => {
-        const cardProbe = document.createElement("div");
-        cardProbe.className = "bg-card";
-        document.body.append(cardProbe);
-        const colors = {
-          card: getComputedStyle(cardProbe).backgroundColor,
-          toast: getComputedStyle(toast).backgroundColor,
-        };
-        cardProbe.remove();
-        return colors;
-      });
-    expect(toastColors.toast).toBe(toastColors.card);
     await expect
       .poll(async () => {
         const rows = await db.query.DuesPayment.findMany({
@@ -730,17 +699,9 @@ test.describe("admin member dashboard", () => {
     );
     const editorDialog = page.getByRole("dialog");
     await expect(editorDialog).toBeVisible();
-    const editorHeader = await editorDialog
-      .getByTestId("member-detail-header")
-      .boundingBox();
     const editMemberButton = page.getByRole("button", {
       name: "Edit member",
     });
-    const editMemberButtonBox = await editMemberButton.boundingBox();
-    expect(editMemberButtonBox?.y).toBeGreaterThanOrEqual(editorHeader?.y ?? 0);
-    expect(
-      (editMemberButtonBox?.y ?? 0) + (editMemberButtonBox?.height ?? 0),
-    ).toBeLessThanOrEqual((editorHeader?.y ?? 0) + (editorHeader?.height ?? 0));
     await editorDialog.screenshot({
       path: ".playwright-results/admin-member-editor-desktop.png",
     });

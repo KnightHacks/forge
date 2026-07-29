@@ -1,4 +1,4 @@
-const DANGEROUS_SPREADSHEET_PREFIX = /^\s*[=+\-@\t\r]/;
+import { serializeCsvRows } from "@forge/utils";
 
 export interface AnalyticsCsvMetadata {
   comparisonLabel: string;
@@ -7,30 +7,8 @@ export interface AnalyticsCsvMetadata {
   periodLabel: string;
 }
 
-function safeCell(value: unknown) {
-  if (value === null || value === undefined) return "";
-  const text =
-    value instanceof Date
-      ? value.toISOString()
-      : typeof value === "string" ||
-          typeof value === "number" ||
-          typeof value === "boolean" ||
-          typeof value === "bigint"
-        ? String(value)
-        : JSON.stringify(value);
-  return DANGEROUS_SPREADSHEET_PREFIX.test(text) ? `'${text}` : text;
-}
-
-function quoteCell(value: unknown) {
-  const safe = safeCell(value);
-  return /[",\r\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
-}
-
 function serializeRows(headers: readonly string[], rows: readonly unknown[][]) {
-  return [
-    headers.map(quoteCell).join(","),
-    ...rows.map((row) => row.map(quoteCell).join(",")),
-  ].join("\r\n");
+  return serializeCsvRows([headers, ...rows]);
 }
 
 function metadataRows(

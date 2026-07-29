@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
 import {
   canAccessAlumniAdmin,
   canAccessAnalytics,
@@ -15,8 +16,7 @@ import {
   canAccessMemberAdmin,
   canAccessRoleAdmin,
   getAdminNavigationAccess,
-} from "~/app/_components/admin/access";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
+} from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 

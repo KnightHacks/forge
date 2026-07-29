@@ -1,6 +1,5 @@
 export const SITE_URL = "https://2026.knighthacks.org";
 export const EVENT_NAME = "Knight Hacks IX";
-export const EVENT_DATE_LABEL = "October 9-11, 2026";
 export const EVENT_START_DATE = "2026-10-09";
 export const EVENT_END_DATE = "2026-10-11";
 export const ORGANIZER_NAME = "Knight Hacks";

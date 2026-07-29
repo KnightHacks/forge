@@ -1,3 +1,5 @@
+import type { SearchParams } from "~/lib/search-params";
+
 export type EventAdminView = "calendar" | "list" | "tags";
 export type EventAdminTiming = "past" | "upcoming";
 export type EventAdminSort = "attendance" | "name" | "start" | "tag";
@@ -24,11 +26,6 @@ export interface AdminEventInput {
   timing: EventAdminTiming;
   view: EventAdminView;
 }
-
-export type AdminEventSearchParams = Record<
-  string,
-  string | string[] | undefined
->;
 
 const PAGE_SIZES = [25, 50, 100, 250, 500] as const;
 const UUID_PATTERN =
@@ -103,7 +100,7 @@ function validInstant(value: string | string[] | undefined) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
-export function parseAdminEventSearchParams(params: AdminEventSearchParams) {
+export function parseAdminEventSearchParams(params: SearchParams) {
   const requestedPageSize = positiveInteger(params.pageSize, 25);
   const pageSize = PAGE_SIZES.includes(
     requestedPageSize as (typeof PAGE_SIZES)[number],

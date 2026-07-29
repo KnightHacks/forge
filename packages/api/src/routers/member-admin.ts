@@ -23,7 +23,7 @@ import {
   FormResponse,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import { logger, permissions } from "@forge/utils";
+import { logger, serializeCsvRows } from "@forge/utils";
 import {
   adminMemberDeleteSchema,
   adminMemberDuesStatusSchema,
@@ -41,19 +41,26 @@ import {
 import type { AuditChangeInput } from "../utils/audit/service";
 import { permProcedure } from "../trpc";
 import {
+  memberAuditLabel,
+  memberAuditSubject,
+} from "../utils/audit/member-subject";
+import {
   appendAdminAuditResults,
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { getUsCity } from "../utils/career/us-cities";
+import { dataUrlByteSize, dataUrlMimeType } from "../utils/data-url";
+import { isUniqueViolation } from "../utils/db";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
 } from "../utils/dues/status";
 import {
-  escapeCsvCell,
-  rankAdminMemberCandidates,
-} from "../utils/member/admin";
-import { isUniqueViolation } from "../utils/member/profile";
+  assertCanEditMembers,
+  assertCanInvalidateMemberDues,
+  assertCanReadMembers,
+} from "../utils/member/access";
+import { rankAdminMemberCandidates } from "../utils/member/admin";
 import { updateMemberProfile } from "../utils/member/update";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 import {
@@ -69,9 +76,6 @@ import {
   saveMemberResumeForUser,
   uploadResumeForUser,
 } from "../utils/resume/storage";
-
-const readMemberPermissions = ["READ_MEMBERS", "EDIT_MEMBERS"] as const;
-const editMemberPermissions = ["EDIT_MEMBERS"] as const;
 
 export interface AdminMemberRecord {
   about: string | null;
@@ -129,18 +133,6 @@ const adminResumeInputSchema = adminMemberIdSchema.extend({
   fileName: z.string().trim().min(1).max(255),
 });
 
-function assertCanReadMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(readMemberPermissions, ctx);
-}
-
-function assertCanEditMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(editMemberPermissions, ctx);
-}
-
 async function auditAdminMutation({
   color,
   message,
@@ -158,45 +150,6 @@ async function auditAdminMutation({
   } catch (error) {
     logger.warn(`Unable to deliver Blade audit log for ${title}:`, error);
   }
-}
-
-function memberAuditLabel(member: {
-  discordUser: string;
-  firstName: string;
-  lastName: string;
-}) {
-  return (
-    `${member.firstName} ${member.lastName}`.trim() ||
-    member.discordUser ||
-    "Unknown member"
-  );
-}
-
-function memberAuditSubject(member: {
-  discordUser: string;
-  firstName: string;
-  id: string;
-  lastName: string;
-}) {
-  return {
-    memberId: member.id,
-    relation: "primary" as const,
-    targetId: member.id,
-    targetLabel: memberAuditLabel(member),
-    targetType: "member" as const,
-  };
-}
-
-function dataUrlByteSize(fileContent: string) {
-  const payload = fileContent.slice(fileContent.indexOf(",") + 1);
-  return Buffer.from(payload, "base64").byteLength;
-}
-
-function dataUrlMimeType(fileContent: string) {
-  const separatorIndex = fileContent.indexOf(";");
-  return separatorIndex > 5
-    ? fileContent.slice("data:".length, separatorIndex)
-    : "application/octet-stream";
 }
 
 function activeMemberFilterFacets(input: AdminMemberListInput) {
@@ -744,7 +697,7 @@ async function findMemberOrThrow(memberId: string) {
   return member;
 }
 
-export const adminMemberProcedures = {
+export const memberAdminRouter = {
   getAdminMembers: permProcedure
     .input(adminMemberListSchema)
     .query(async ({ ctx, input }) => {
@@ -852,17 +805,15 @@ export const adminMemberProcedures = {
       const members = await getMembersInOrder(
         candidates.map((candidate) => candidate.id),
       );
-      const lines = [
-        csvColumns.map(escapeCsvCell).join(","),
+      const content = serializeCsvRows([
+        csvColumns,
         ...members.map((member) =>
           memberCsvRow(
             member,
             duesStatuses.get(member.id) ?? buildDuesStatus({ duesRows: [] }),
-          )
-            .map(escapeCsvCell)
-            .join(","),
+          ),
         ),
-      ];
+      ]);
       await createAdminAuditEvent({
         actionKey: "member.directory.exported",
         actor: ctx.session.user,
@@ -883,7 +834,7 @@ export const adminMemberProcedures = {
       });
 
       return {
-        content: `${lines.join("\r\n")}\r\n`,
+        content,
         fileName: `members-${new Date().toISOString().slice(0, 10)}.csv`,
       };
     }),
@@ -1187,7 +1138,7 @@ export const adminMemberProcedures = {
   invalidateEffectiveDues: permProcedure
     .input(adminMemberMassDuesInvalidationSchema)
     .mutation(async ({ ctx }) => {
-      permissions.controlPerms.or(["IS_OFFICER"], ctx);
+      assertCanInvalidateMemberDues(ctx);
       try {
         const operationId = randomUUID();
         const affected = await db.transaction(async (tx) => {
@@ -1304,6 +1255,7 @@ export const adminMemberProcedures = {
         previousObjectName = member.profilePictureUrl;
         const objectName = await uploadProfilePictureForUser({
           fileContent: input.fileContent,
+          fileName: input.fileName,
           userId: member.userId,
         });
         const operationId = randomUUID();
@@ -1439,6 +1391,7 @@ export const adminMemberProcedures = {
         targetUserId = member.userId;
         const objectName = await uploadResumeForUser({
           fileContent: input.fileContent,
+          fileName: input.fileName,
           userId: member.userId,
         });
         const operationId = randomUUID();

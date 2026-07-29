@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import type { IssueSearchParams } from "~/app/_components/admin/issues/params";
+import type { SearchParams } from "~/lib/search-params";
 import { renderIssueWorkspace } from "~/app/_components/admin/issues/server";
 
 export const metadata: Metadata = { title: "Blade | Issues Archive" };
@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Blade | Issues Archive" };
 export default function IssuesArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<IssueSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   return renderIssueWorkspace("archive", searchParams);
 }

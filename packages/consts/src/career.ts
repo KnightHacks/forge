@@ -5,11 +5,7 @@ export const COMPANY_REVIEW_STATES = [
   "merged",
 ] as const;
 
-export type CompanyReviewState = (typeof COMPANY_REVIEW_STATES)[number];
-
 export const EMPLOYMENT_STATES = ["current", "past", "unknown"] as const;
-
-export type EmploymentState = (typeof EMPLOYMENT_STATES)[number];
 
 export const MEMBER_EMPLOYMENT_STATES = ["current", "past"] as const;
 

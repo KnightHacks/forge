@@ -3,8 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Session } from "~/server/auth";
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 
 vi.mock("next/image", () => ({
   default: ({ priority: _priority, ...props }: Record<string, unknown>) =>
@@ -19,8 +19,8 @@ vi.mock("~/app/_components/auth/sign-out-button", () => ({
   SignOutButton: () => createElement("button", null, "Sign out"),
 }));
 
-vi.mock("~/app/_components/member/member-route-transition-link", () => ({
-  MemberRouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
+vi.mock("~/app/_components/shared/route-transition-link", () => ({
+  RouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
     createElement("div", null, children),
 }));
 

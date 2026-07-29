@@ -6,14 +6,8 @@ import {
   roleUuidSchema,
 } from "@forge/validators";
 
-export type RoleManagementSearchParams = Record<
-  string,
-  string | string[] | undefined
->;
-
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
+import type { SearchParams } from "~/lib/search-params";
+import { first } from "~/lib/search-params";
 
 function list(value: string | string[] | undefined) {
   if (!value) return [];
@@ -30,9 +24,7 @@ function validList<T>(
   });
 }
 
-export function parseRoleManagementSearchParams(
-  params: RoleManagementSearchParams,
-) {
+export function parseRoleManagementSearchParams(params: SearchParams) {
   const defaults = roleManagementQuerySchema.parse({});
   const role = roleUuidSchema.safeParse(first(params.role));
   const raw = {

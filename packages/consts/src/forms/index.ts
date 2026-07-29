@@ -173,68 +173,11 @@ export const EVENT_FEEDBACK_HEARD = [
   "Other",
 ] as const;
 
-export const FORM_OPTION_CATALOGS = {
-  LEVELS_OF_STUDY: { label: "Levels of Study", loadStrategy: "inline" },
-  ALLERGIES: { label: "Allergies", loadStrategy: "inline" },
-  MAJORS: { label: "Majors", loadStrategy: "search" },
-  GENDERS: { label: "Genders", loadStrategy: "inline" },
-  RACES_OR_ETHNICITIES: {
-    label: "Races or Ethnicities",
-    loadStrategy: "inline",
-  },
-  COUNTRIES: { label: "Countries", loadStrategy: "search" },
-  SCHOOLS: { label: "Schools", loadStrategy: "remote" },
-  COMPANIES: { label: "Companies", loadStrategy: "remote" },
-  SHIRT_SIZES: { label: "Shirt Sizes", loadStrategy: "inline" },
-  EVENT_FEEDBACK_HEARD: {
-    label: "Event Feedback - How You Heard",
-    loadStrategy: "inline",
-  },
-  SHORT_LEVELS_OF_STUDY: {
-    label: "Short Levels of Study",
-    loadStrategy: "inline",
-  },
-  SHORT_RACES_AND_ETHNICITIES: {
-    label: "Short Races and Ethnicities",
-    loadStrategy: "inline",
-  },
-} as const satisfies Record<
-  DropdownConstantKey,
-  { label: string; loadStrategy: "inline" | "remote" | "search" }
->;
-
-export interface FormCatalogOption {
-  active: boolean;
-  label: string;
-  value: string;
-}
-
-function stableCatalogValue(label: string) {
-  return label
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-export function getFormCatalogOptions(
-  catalogId: DropdownConstantKey,
-): readonly FormCatalogOption[] {
-  return getDropdownOptionsFromConst(catalogId).map((label) => ({
-    active: true,
-    label,
-    value: stableCatalogValue(label),
-  }));
-}
-
 export const TERM_TO_DATE = {
   Spring: { month: 4, day: 2 }, // May 2
   Summer: { month: 7, day: 6 }, // Aug 6
   Fall: { month: 11, day: 10 }, // Dec 10
 } as const;
-
-export type GradTerm = keyof typeof TERM_TO_DATE;
 
 export function getDropdownOptionsFromConst(
   constName: string,
@@ -389,9 +332,6 @@ interface FormQuestionTypeMetadata {
   validationErrors: FormQuestionTypeValidationErrors;
 }
 
-export const FORM_QUESTION_TYPE_VALUES: readonly FormQuestionType[] =
-  FORM_QUESTION_TYPES.map((questionType) => questionType.value);
-
 export const FORM_QUESTION_TYPE_BY_VALUE: Record<
   FormQuestionType,
   FormQuestionTypeMetadata
@@ -411,36 +351,6 @@ export const HACKATHON_APPLICATION_STATES = [
 
 export const SPONSOR_TIERS = ["gold", "silver", "bronze", "other"] as const;
 
-export const ADMIN_PIE_CHART_COLORS: readonly string[] = [
-  "#f72585",
-  "#b5179e",
-  "#7209b7",
-  "#3a0ca3",
-  "#4361ee",
-  "#4895ef",
-  "#4cc9f0",
-  "#560bad",
-  "#480ca8",
-] as const;
-
-export const WEEKDAY_ORDER: string[] = [
-  "Mon",
-  "Tues",
-  "Wed",
-  "Thurs",
-  "Fri",
-  "Sat/Sun",
-] as const;
-
-export const RANKING_STYLES: string[] = [
-  "md:text-lg lg:text-lg font-bold text-yellow-500",
-  "md:text-lg lg:text-lg font-semibold text-gray-400",
-  "md:text-lg lg:text-lg font-medium text-orange-500",
-];
-
-export const DEFAULT_COLOR = "#ffffff";
-export const DEFAULT_EMAIL_QUEUE_CRON_SCHEDULE = "0 * * * *";
-
 export const SEMESTER_START_DATES = {
   spring: {
     month: 0,
@@ -456,22 +366,7 @@ export const SEMESTER_START_DATES = {
   },
 } as const;
 
-export const ALL_DATES_RANGE_UNIX = {
-  start: -8640000000000000,
-  end: 8640000000000000,
-} as const;
-
-export interface Semester {
-  name: string;
-  startDate: Date;
-  endDate: Date;
-}
-
 export const ALLOWED_ASSIGNABLE_DISCORD_ROLES = [PROJECT_LAUNCH_26.MEMBER_ROLE];
-
-// TODO: decide where these go
-
-export const DEVPOST_TEAM_MEMBER_EMAIL_OFFSET = 3;
 
 export const QuestionValidator = z.object({
   question: z.string(),
@@ -509,9 +404,6 @@ export const FormSchemaValidator = z.object({
 });
 
 export type FormType = z.infer<typeof FormSchemaValidator>;
-export type InstructionValidatorType = z.infer<typeof InstructionValidator>;
 
 export type QuestionValidatorType = z.infer<typeof QuestionValidator>;
 export type ValidatorOptions = Omit<QuestionValidatorType, "question">;
-
-export type QuestionsType = FormQuestionType;

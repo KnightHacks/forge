@@ -2,8 +2,8 @@ import { hostname } from "node:os";
 import { REST } from "discord.js";
 
 import { discordArchiveDatabaseStore } from "@forge/api/discord-archive.server";
-import { DISCORD } from "@forge/consts";
 import { logger } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { runDiscordArchiveCycle } from "../discord-archive/cycle";
 import { createDiscordArchiveRestSource } from "../discord-archive/rest-source";
@@ -22,20 +22,21 @@ export const discordArchive = new CronBuilder({
     return;
   }
 
+  const guildId = await getKnightHacksGuildId();
   const rest = new REST({ version: "10" }).setToken(
     env.DISCORD_ARCHIVE_BOT_TOKEN,
   );
   const source = createDiscordArchiveRestSource({
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     rest,
   });
   const worker = createDiscordArchiveWorker({
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     source,
     store: discordArchiveDatabaseStore,
   });
   const result = await runDiscordArchiveCycle({
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    guildId,
     owner,
     store: discordArchiveDatabaseStore,
     worker,

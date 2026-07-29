@@ -374,14 +374,22 @@ describe("forms platform state, availability, callbacks, and uploads", () => {
         fileName: "payload.exe",
         size: 512,
       }),
-    ).toEqual({ allowed: false, reason: "unsafe_type" });
+    ).toEqual({
+      allowed: false,
+      message: "That file type is not allowed.",
+      reason: "unsafe_type",
+    });
     expect(
       validateFormUpload({
         contentType: "application/pdf",
         fileName: "huge.pdf",
         size: FORM_UPLOAD_MAX_BYTES + 1,
       }),
-    ).toEqual({ allowed: false, reason: "too_large" });
+    ).toEqual({
+      allowed: false,
+      message: "Files may not exceed 100 MB.",
+      reason: "too_large",
+    });
   });
 
   it("[TC-016] validates new answers against the live preset catalog", () => {

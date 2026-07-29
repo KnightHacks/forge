@@ -34,28 +34,23 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests"
+    "test": "pnpm with-env vitest run --passWithNoTests",
+    "test:watch": "pnpm with-env vitest --passWithNoTests",
+    "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@discordjs/rest": "^2.6.0",
     "@forge/auth": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
     "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
-    "@stripe/stripe-js": "^8.8.0",
     "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "archiver": "^6.0.2",
     "discord-api-types": "^0.38.40",
-    "json-schema-to-zod": "^2.7.0",
-    "minimatch": "^10.2.4",
     "minio": "^8.0.6",
-    "passkit-generator": "^3.5.7",
     "qrcode": "^1.5.4",
-    "resend": "^6.0.0",
     "stripe": "^20.4.0",
     "superjson": "2.2.6",
     "zod": "catalog:"
@@ -65,11 +60,15 @@
     "@forge/prettier-config": "workspace:*",
     "@forge/tsconfig": "workspace:*",
     "@types/archiver": "^6.0.3",
+    "@types/json-schema": "^7.0.15",
     "@types/pg": "^8.16.0",
     "@types/qrcode": "^1.5.6",
+    "dotenv-cli": "^11.0.0",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

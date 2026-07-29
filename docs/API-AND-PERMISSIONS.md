@@ -1,470 +1,167 @@
-# API / Permissions Development Guide
+# API and Permissions Guide
 
-This guide covers how to work with the tRPC API in Forge, including our permission system, procedure types, and common patterns.
+How to write tRPC procedures in `@forge/api`, and how access control actually
+works. Everything here was checked against the code.
 
-## tRPC Procedures
+For the working conventions an agent should follow, see
+`.claude/skills/forge-api/SKILL.md`. This document is the human-facing
+explanation of the same system.
 
-We have four types of procedures. Choose the right one based on authentication and permission requirements.
+## Procedure types
 
-### `publicProcedure`
+Four exist in `packages/api/src/trpc.ts`. Three are meaningful:
 
-Use when the endpoint doesn't require authentication.
+| Type                 | Use for                                             |
+| -------------------- | --------------------------------------------------- |
+| `publicProcedure`    | genuinely public reads — Guild directory, club site |
+| `protectedProcedure` | any logged-in user acting on their own data         |
+| `permProcedure`      | permission-aware admin operations                   |
 
-```typescript
-export const myRouter = {
-  getPublicData: publicProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      // Anyone can call this
-      return await db.query.SomeTable.findFirst({
-        where: eq(SomeTable.id, input.id),
-      });
-    }),
-};
-```
+`permProcedure` **loads** the caller's permissions into context. It does not
+decide anything. Every one must call its domain guard near the top, before any
+work happens.
 
-**When to use:** Public data that anyone can access without logging in.
+`judgeProcedure` is currently `export const judgeProcedure = protectedProcedure`
+with zero uses in any router. It is a placeholder left from the judging system,
+not a fourth tier. Do not reach for it.
 
-### `protectedProcedure`
+## How permissions are stored
 
-Use when the user must be signed in, but no specific permissions are required.
+A user holds Roles; each Role carries a permission bitstring.
+`loadPermissionsForUser` ORs the bitstrings of every role the user holds into one
+flat object, which is what `permProcedure` puts in context.
 
-```typescript
-export const myRouter = {
-  getUserProfile: protectedProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      // ctx.session.user is guaranteed to exist
-      return await db.query.User.findFirst({
-        where: eq(User.id, input.userId),
-      });
-    }),
-};
-```
+Permission keys live in `packages/consts/src/permissions.ts` — `IS_OFFICER`,
+`READ_MEMBERS`, `EDIT_MEMBERS`, `READ_CLUB_DATA`, `READ_CLUB_EVENT`,
+`EDIT_CLUB_EVENT`, `CHECKIN_CLUB_EVENT`, and others. Read that file for the
+current list rather than guessing a name.
 
-**When to use:** Any feature that requires authentication but is available to all logged-in users.
+`IS_OFFICER` short-circuits every `controlPerms` check. An officer passes
+regardless of the specific permission asked for.
 
-### `permProcedure`
+## The two access tiers
 
-Use when specific permissions are required. This procedure automatically loads the user's permissions into `ctx.session.permissions`.
+This distinction decides how a permission behaves, and until recently nothing
+named it. Both tiers already existed in the code.
 
-```typescript
-import { controlPerms } from "../utils";
+### Capability — a union across all your roles
 
-export const myRouter = {
-  deleteEvent: permProcedure
-    .input(z.object({ eventId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      // Check if user has the required permission
-      controlPerms.or(["MANAGE_EVENTS"], ctx);
-
-      return await db.delete(Events).where(eq(Events.id, input.eventId));
-    }),
-};
-```
-
-**When to use:** Admin features or actions that require specific permissions.
-
-### `judgeProcedure`
-
-**Status:** Deprecated and will be removed in the future. Use `permProcedure` with appropriate permissions instead.
-
-## Permission System
-
-Forge uses a custom role-based permission system that syncs with Discord roles.
-
-### How Permissions Work
-
-Permissions are stored as a bit string (e.g., `"111010"`). Each position represents a specific permission:
-
-- `1` = user has the permission
-- `0` = user doesn't have the permission
-
-The mapping is defined in `@forge/consts/knight-hacks` in the `PERMISSIONS` object. Each permission has a unique index number that is used to store the permission in the database. For example, the `IS_OFFICER` permission has an index of `0`. This means that a user with a permission string of `"10000000000000000000"` has the `IS_OFFICER` permission.
-
-### Permission Checking
-
-Use the `controlPerms` middleware from `@forge/api/src/utils`:
-
-#### `controlPerms.or()`
-
-Returns true if the user has **any** of the required permissions.
+Gates whether a route or nav destination is reachable at all. Hold a permission
+through _any_ role and you have it. This is what `controlPerms` does, and it
+covers most procedures.
 
 ```typescript
-// User needs at least ONE of these permissions
-controlPerms.or(["MANAGE_EVENTS", "MANAGE_MEMBERS"], ctx);
-```
-
-**Special behavior:** If the user has the `IS_OFFICER` permission, they automatically pass all permission checks.
-
-#### `controlPerms.and()`
-
-Returns true only if the user has **all** of the required permissions.
-
-```typescript
-// User needs ALL of these permissions
-controlPerms.and(["MANAGE_EVENTS", "DELETE_EVENTS"], ctx);
-```
-
-**Special behavior:** If the user has the `IS_OFFICER` permission, they automatically pass all permission checks.
-
-### Permission Gating for Pages
-
-For admin pages, use the permissions router to check if a user can access a page:
-
-```typescript
-// Example: Gate a page with OR logic
-// If someone has edit rights, they need to see the page
-// Same is true for read-only access
-export const pageRouter = {
-  canAccessEventsPage: permProcedure.query(async ({ ctx }) => {
-    // Will throw UNAUTHORIZED if they don't have either permission
-    controlPerms.or(["VIEW_EVENTS", "MANAGE_EVENTS"], ctx);
-    return { canAccess: true };
-  }),
-};
-```
-
-**Pattern:** We typically use OR logic for page gating. If someone can edit, they need to see the page. If someone can only read, they also need to see the page.
-
-### Discord Role Syncing
-
-Permissions are based on Discord roles:
-
-1. **Manual Assignment (Recommended):** Use the role assignment page in Blade. This immediately adds/removes Discord roles on the server.
-
-2. **Automatic Sync:** Runs daily at 8:00 AM to sync Discord roles with the database for users who had roles changed directly in Discord.
-
-**Best Practice:** Always assign roles through the Blade UI when possible for instant synchronization.
-
-## Form Integration Pattern
-
-When creating tRPC procedures that will be called from dynamic forms, you must include metadata for the form responder client.
-
-### Required Pattern
-
-```typescript
-export const myRouter = {
-  submitApplication: protectedProcedure
-    .meta({
-      id: "submitApplication",
-      inputSchema: z.object({
-        name: z.string().min(1),
-        email: z.string().email(),
-        major: z.string().min(1),
-      }),
-    })
-    .input(
-      z.object({
-        name: z.string().min(1),
-        email: z.string().email(),
-        major: z.string().min(1),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      // Handle form submission
-    }),
-};
-```
-
-### Requirements
-
-1. **`.meta()` must include:**
-   - `id`: String identifier for the procedure (usually matches the procedure name)
-   - `inputSchema`: The Zod schema object (must match the `.input()` schema)
-
-2. **Both `.meta()` and `.input()` are required** with the same schema
-
-3. **The form responder client** consumes this metadata to validate input and submit form data sent through this procedure via the form connector.
-
-### Why Both?
-
-- `.input()` - Used by tRPC for runtime validation
-- `.meta()` with `inputSchema` - Used by the form builder/responder to validate form input for the procedure on the client side
-
-## Logging Requirement
-
-**Every tRPC procedure that performs state changes (mutations) MUST log both success and failure.**
-
-We use Discord webhooks for logging to maintain an audit trail of all actions in the system.
-
-### The Log Function
-
-Import from utils:
-
-```typescript
-import { log } from "../utils";
-```
-
-Usage:
-
-```typescript
-await log({
-  title: "Action Title",
-  message: "Detailed description of what happened",
-  color: "success_green", // or "uhoh_red", "blade_purple", "tk_blue"
-  userId: ctx.session.user.discordUserId,
+listAdminEvents: permProcedure.query(async ({ ctx }) => {
+  requireEventRead(ctx); // wraps controlPerms.or([...], ctx)
+  // ...
 });
 ```
 
-### Color Guide
+`controlPerms.or([...])` passes if the caller holds **any** listed permission.
+`controlPerms.and([...])` requires **all** of them. Both throw `FORBIDDEN`
+otherwise.
 
-- `success_green` - Successful operations
-- `uhoh_red` - Errors and failures
-- `blade_purple` - General informational logs
-- `tk_blue` - Bot-related actions
+### Scope — an exact match against the granting role
 
-### Required Pattern for Mutations
+Gates _which rows_ you may read or edit, rather than whether the feature is
+reachable at all. Only two domains have a scope tier:
 
-Every mutation must wrap its logic in a try-catch block with appropriate logging:
+- **issues** — `issueAccessForRoles` matches an issue's owning team against the
+  role that granted the permission. Holding `EDIT_ISSUES` through Dev Team does
+  not let you edit Design Team's issues.
+- **forms** — `evaluateFormSectionAccess` intersects your role IDs against a
+  section's editor and viewer lists.
 
-```typescript
-export const myRouter = {
-  updateMember: permProcedure
-    .input(
-      z.object({
-        memberId: z.string(),
-        name: z.string(),
-      }),
-    )
-    .mutation(async ({ input, ctx }) => {
-      try {
-        // Check permissions
-        controlPerms.or(["MANAGE_MEMBERS"], ctx);
+Everything else is capability-only, because it has nothing to scope.
 
-        // Perform the action
-        const result = await db
-          .update(Members)
-          .set({ name: input.name })
-          .where(eq(Members.id, input.memberId))
-          .returning();
+**The trap:** if a nav gate uses capability while the server scopes per role, a
+user can pass the gate and land on a page whose every query returns nothing. That
+is the bug report that reads as unfixable — "it loads but it's blank." Where
+capability passes but scope yields nothing, redirect server-side instead.
 
-        // Log success
-        await log({
-          title: "Member Updated",
-          message: `Updated member ${input.memberId}: name changed to "${input.name}"`,
-          color: "success_green",
-          userId: ctx.session.user.discordUserId,
-        });
+### Where guards live
 
-        return result;
-      } catch (error) {
-        // Log failure
-        await log({
-          title: "Member Update Failed",
-          message: `Failed to update member ${input.memberId}: ${error instanceof Error ? error.message : "Unknown error"}`,
-          color: "uhoh_red",
-          userId: ctx.session.user.discordUserId,
-        });
+One file per domain: `packages/api/src/utils/<domain>/access.ts`, each exporting
+named `require*` functions. `email/access.ts` is the model, at fifteen lines.
 
-        // Re-throw to let tRPC handle the error response
-        throw error;
-      }
-    }),
-};
-```
+This gives the access decision a name instead of an inline array of permission
+keys, puts every rule for a domain in one place, and makes the guards unit
+testable without a database.
 
-### Logging Best Practices
+## Gating a page
 
-1. **Be specific in titles** - "Member Updated" not "Success"
-2. **Include relevant IDs** - Always include what was changed
-3. **Log before and after values** for updates when relevant
-4. **Don't log sensitive data** - No passwords, tokens, or PII details
-5. **Keep messages concise** - The Discord embed has character limits
-
-### Read Operations (Queries)
-
-Queries typically don't require logging unless they're sensitive or expensive operations:
+Blade pages gate server-side, in the page itself, using the predicates in
+`apps/blade/src/lib/admin-access.ts`:
 
 ```typescript
-// Normal query - no logging needed
-export const myRouter = {
-  getMember: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      return await db.query.Members.findFirst({
-        where: eq(Members.id, input.id),
-      });
-    }),
+export default async function Page() {
+  const session = await auth();
+  if (!session) redirect("/");
 
-  // Sensitive query - should be logged
-  exportAllMemberData: permProcedure.query(async ({ ctx }) => {
-    try {
-      controlPerms.or(["EXPORT_DATA"], ctx);
-
-      const data = await db.query.Members.findMany();
-
-      await log({
-        title: "Member Data Exported",
-        message: `Exported ${data.length} member records`,
-        color: "blade_purple",
-        userId: ctx.session.user.discordUserId,
-      });
-
-      return data;
-    } catch (error) {
-      await log({
-        title: "Member Export Failed",
-        message: `Failed to export member data: ${error instanceof Error ? error.message : "Unknown error"}`,
-        color: "uhoh_red",
-        userId: ctx.session.user.discordUserId,
-      });
-
-      throw error;
-    }
-  }),
-};
-```
-
-## Best Practices
-
-### 1. Always Log State Changes
-
-Every mutation must log both success and failure. No exceptions.
-
-```typescript
-// ❌ Bad - no logging
-.mutation(async ({ input, ctx }) => {
-  return await db.update(Something).set(input);
-});
-
-// ✅ Good - proper logging
-.mutation(async ({ input, ctx }) => {
-  try {
-    const result = await db.update(Something).set(input);
-
-    await log({
-      title: "Something Updated",
-      message: `Updated something with ID ${input.id}`,
-      color: "success_green",
-      userId: ctx.session.user.discordUserId,
-    });
-
-    return result;
-  } catch (error) {
-    await log({
-      title: "Update Failed",
-      message: `Failed to update: ${error instanceof Error ? error.message : "Unknown error"}`,
-      color: "uhoh_red",
-      userId: ctx.session.user.discordUserId,
-    });
-
-    throw error;
-  }
-});
-```
-
-### 2. Always Use the Right Procedure Type
-
-Don't use `protectedProcedure` when you need permissions. Use `permProcedure` instead.
-
-### 3. Use OR Logic for Page Access
-
-When gating pages, use `controlPerms.or()` so users with any relevant permission can access:
-
-```typescript
-// Good: Users with read OR write can see the page
-controlPerms.or(["VIEW_EVENTS", "MANAGE_EVENTS"], ctx);
-
-// Less common: Requiring multiple permissions
-controlPerms.and(["VIEW_EVENTS", "MANAGE_EVENTS"], ctx);
-```
-
-### 4. Validate Input Thoroughly
-
-Always use Zod schemas for input validation:
-
-```typescript
-.input(
-  z.object({
-    email: z.string().email(),
-    age: z.number().min(0).max(150),
-    name: z.string().min(1).max(100),
-  }),
-)
-```
-
-### 5. Handle Errors Gracefully
-
-Throw appropriate tRPC errors and always log them:
-
-```typescript
-import { TRPCError } from "@trpc/server";
-
-try {
-  const found = await db.query.Something.findFirst();
-
-  if (!found) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Resource not found",
-    });
-  }
-
-  // ... rest of logic
-} catch (error) {
-  await log({
-    title: "Operation Failed",
-    message: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
-    color: "uhoh_red",
-    userId: ctx.session.user.discordUserId,
-  });
-
-  throw error;
+  const permissions = await api.roles.getPermissions();
+  if (!canAccessAnalytics(permissions)) redirect(MEMBER_DASHBOARD_PATH);
+  // ...
 }
 ```
 
-### 6. Keep Routers Organized
+Client-side hiding is UX only. The server boundary is the boundary, and every
+procedure the page calls enforces its own access independently — a page gate is
+not a substitute for a procedure guard.
 
-Group related procedures into routers by domain:
+## Audit logging
 
-```text
-routers/
-├── members.ts      # Member management
-├── events.ts       # Event management
-├── roles.ts        # Role/permission management
-├── misc.ts         # Form integrations and misc
-└── index.ts        # Main router that combines all
-```
+Every `permProcedure` mutation, plus any `protectedProcedure` mutation that
+deletes data or moves money, writes an audit event. Self-service deletion is
+included: the actor is the member, which is exactly what forensics needs.
 
-### 7. Document Complex Procedures
-
-Add comments for non-obvious logic:
+The function is `createAdminAuditEvent` from
+`packages/api/src/utils/audit/service.ts`, with roughly 100 call sites. Write the
+event inside the same transaction as the change, and before any deletes — the
+actor snapshot reads rows a delete is about to remove.
 
 ```typescript
-export const complexRouter = {
-  doComplexThing: permProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      // Check permissions first
-      controlPerms.or(["COMPLEX_PERMISSION"], ctx);
-
-      // Step 1: Fetch related data
-      const data = await db.query.Something.findFirst();
-
-      // Step 2: Process based on business logic
-      // Note: We do X because of Y business requirement
-
-      // Step 3: Update database
-      // ...
-    }),
-};
+await createAdminAuditEvent(
+  {
+    actionKey: "member.profile.deleted",
+    actor: ctx.session.user,
+    metadata: { deletedObjectCount },
+    operationId,
+    subjects: [memberAuditSubject(member)],
+  },
+  tx,
+);
 ```
 
-## Testing Your Procedures
+Every permission-aware procedure must be declared in
+`packages/api/src/utils/audit/coverage.ts` as `audited`, `excluded`, or
+`hybrid`. The coverage test discovers routers from the filesystem, so a new
+procedure with no declaration fails the suite. That guardrail once read a
+hand-maintained list covering 10 of 18 routers, which is how a `permProcedure`
+shipped with no declared policy and nobody noticed.
 
-When developing locally:
+Reads are normally `excluded`. Exporting data is not a read — it is `audited`.
 
-1. **Use the tRPC devtools** (if enabled) to inspect requests
-2. **Check the console** - tRPC logs execution time for each procedure
-3. **Test permission logic** - Create test roles with specific permissions
-4. **Use Drizzle Studio** to verify database changes
+## Discord role syncing
 
-## Next Steps
+Permissions follow Discord roles.
 
-- Review existing routers in `packages/api/src/routers/` for examples
-- Check `@forge/consts/knight-hacks` for available permissions
-- Read the [Architecture Guide](./ARCHITECTURE.md) to understand data flow
-- See [CONTRIBUTING.md](../CONTRIBUTING.md) for general contribution guidelines
-- Read our [GitHub Etiquette](./GITHUB-ETIQUETTE.md) guide for how to contribute to the project
-- Check out the [Getting Started](./GETTING-STARTED.md) guide for setup instructions if you haven't already
+Assigning through the Blade role page is the preferred path: it updates Discord
+immediately. A cron job at `apps/cron/src/crons/role-sync.ts` also runs daily at
+08:00 to reconcile users whose roles were changed directly in Discord.
+
+## What this document used to say
+
+Four patterns documented here previously do not exist in the codebase, and
+following them produced code that does not compile:
+
+- a `log()` function for mutation logging — no such export; the real mechanism is
+  `createAdminAuditEvent`
+- `.meta({ id, inputSchema })` on procedures for the form responder — zero uses,
+  and it would not typecheck
+- the permissions `VIEW_EVENTS` and `MANAGE_EVENTS` — the real keys are
+  `READ_CLUB_EVENT` and `EDIT_CLUB_EVENT`
+- a `pageRouter` exposing `canAccessEventsPage` procedures — pages gate directly,
+  as shown above
+
+They are named here rather than quietly deleted, because anyone who followed them
+deserves to know why their code did not work.

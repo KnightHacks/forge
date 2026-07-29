@@ -24,6 +24,7 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import type { IssueWorkspaceItem } from "./types";
+import { clubDateKey, formatClubDayTime, formatUtcFullDate } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 const STATUS_TONE: Record<(typeof ISSUE.ISSUE_STATUS)[number], string> = {
@@ -41,28 +42,8 @@ const PRIORITY_TONE: Record<(typeof ISSUE.PRIORITY)[number], string> = {
   Lowest: "border-white/10 bg-background/70 text-muted-foreground",
 };
 
-function easternDateKey(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "America/New_York",
-    year: "numeric",
-  }).formatToParts(date);
-  const values = Object.fromEntries(
-    parts.map((part) => [part.type, part.value]),
-  );
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
 function dueLabel(date: Date | null) {
-  if (!date) return "No due date";
-  return new Intl.DateTimeFormat("en-US", {
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    month: "short",
-    timeZone: "America/New_York",
-  }).format(date);
+  return formatClubDayTime(date, "No due date");
 }
 
 function IssueSignal({
@@ -285,7 +266,7 @@ export function IssueCalendarView({
   const byDay = new Map<string, IssueWorkspaceItem[]>();
   for (const issue of statusState.issues) {
     if (!issue.dueAt) continue;
-    const key = easternDateKey(issue.dueAt);
+    const key = clubDateKey(issue.dueAt);
     byDay.set(key, [...(byDay.get(key) ?? []), issue]);
   }
   const days = calendarDays(month);
@@ -294,7 +275,7 @@ export function IssueCalendarView({
   );
 
   if (mode !== "month") {
-    const today = easternDateKey(month);
+    const today = clubDateKey(month);
     const current = new Date(`${today}T12:00:00Z`);
     const weekStart = new Date(current);
     weekStart.setUTCDate(current.getUTCDate() - current.getUTCDay());
@@ -318,12 +299,7 @@ export function IssueCalendarView({
           >
             <header className="flex items-center gap-3 border-b border-white/10 bg-background/55 px-4 py-3">
               <CalendarClock className="h-4 w-4 text-primary" />
-              <h2 className="font-semibold">
-                {new Intl.DateTimeFormat("en-US", {
-                  dateStyle: "full",
-                  timeZone: "UTC",
-                }).format(new Date(`${key}T12:00:00Z`))}
-              </h2>
+              <h2 className="font-semibold">{formatUtcFullDate(key)}</h2>
               <span className="ml-auto font-mono text-xs text-muted-foreground">
                 {rows.length}
               </span>
@@ -427,10 +403,7 @@ export function IssueCalendarView({
                 aria-hidden="true"
               />
               <h3 className="text-sm font-semibold">
-                {new Intl.DateTimeFormat("en-US", {
-                  dateStyle: "full",
-                  timeZone: "UTC",
-                }).format(new Date(`${key}T12:00:00Z`))}
+                {formatUtcFullDate(key)}
               </h3>
               <span className="ml-auto font-mono text-xs text-muted-foreground">
                 {rows.length}

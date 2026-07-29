@@ -42,25 +42,30 @@ export async function ensureResumeBucketExists() {
 
 export async function uploadResumeForSession({
   fileContent,
+  fileName,
   session,
 }: {
   fileContent: string;
+  fileName?: string;
   session: Session;
 }) {
   return await uploadResumeForUser({
     fileContent,
+    fileName,
     userId: session.user.id,
   });
 }
 
 export async function uploadResumeForUser({
   fileContent,
+  fileName,
   userId,
 }: {
   fileContent: string;
+  fileName?: string;
   userId: string;
 }) {
-  const fileBuffer = decodeAndValidateResumeDataUrl(fileContent);
+  const fileBuffer = decodeAndValidateResumeDataUrl(fileContent, fileName);
   const filePath = createResumeObjectName(userId);
 
   await ensureResumeBucketExists();

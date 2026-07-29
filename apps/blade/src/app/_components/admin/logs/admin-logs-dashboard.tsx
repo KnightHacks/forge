@@ -52,10 +52,11 @@ import {
 } from "@forge/validators";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
+import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 type AuditEvent = RouterOutputs["audit"]["list"]["items"][number];
@@ -74,10 +75,7 @@ function memberLabel(member: AuditMember) {
 }
 
 function formatTimestamp(value: Date) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(value);
+  return formatClubDateTime(value);
 }
 
 function formatAuditValue(value: unknown) {
@@ -354,11 +352,11 @@ function EventRow({
 }
 
 export function AdminLogsDashboard({
-  initialEvents,
-  initialMembers,
+  events,
+  members,
 }: {
-  initialEvents?: RouterOutputs["audit"]["list"];
-  initialMembers?: RouterOutputs["audit"]["searchMembers"];
+  events: RouterOutputs["audit"]["list"];
+  members: RouterOutputs["audit"]["searchMembers"];
 }) {
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search.trim());
@@ -413,17 +411,27 @@ export function AdminLogsDashboard({
     !outcome &&
     !targetType &&
     !to;
-  const events = api.audit.list.useQuery(queryInput, {
-    initialData: isDefaultEventQuery ? initialEvents : undefined,
-    placeholderData: (previous) => previous,
+  // The server read covers the unfiltered first page. Anything else is driven
+  // by client state, so only those inputs reach the network.
+  const filteredEvents = api.audit.list.useQuery(queryInput, {
+    enabled: !isDefaultEventQuery,
+    placeholderData: (previous) => previous ?? events,
   });
-  const members = api.audit.searchMembers.useQuery(
+  const matchingMembers = api.audit.searchMembers.useQuery(
     {
       limit: 20,
       search: deferredMemberSearch,
     },
-    { initialData: deferredMemberSearch ? undefined : initialMembers },
+    { enabled: Boolean(deferredMemberSearch) },
   );
+  const eventPage = isDefaultEventQuery ? events : filteredEvents.data;
+  const eventsError = isDefaultEventQuery ? null : filteredEvents.error;
+  const eventsFetching = !isDefaultEventQuery && filteredEvents.isFetching;
+  const memberOptions = deferredMemberSearch
+    ? (matchingMembers.data ?? [])
+    : members;
+  const memberOptionsPending =
+    Boolean(deferredMemberSearch) && matchingMembers.isPending;
 
   const resetPagination = () => {
     setCursorStack([undefined]);
@@ -482,7 +490,7 @@ export function AdminLogsDashboard({
               <Label htmlFor="audit-member">Member involved</Label>
               <ResponsiveComboBox
                 ariaLabel="Filter by involved member"
-                items={members.data ?? []}
+                items={memberOptions}
                 value={memberId}
                 onSearchValueChange={setMemberSearch}
                 onValueChange={(value) => {
@@ -501,7 +509,7 @@ export function AdminLogsDashboard({
                 emptyMessage="No members found."
                 filterItems={false}
                 inputPlaceholder="Find a member…"
-                isLoading={members.isPending}
+                isLoading={memberOptionsPending}
                 triggerClassName="mt-2"
                 triggerId="audit-member"
               />
@@ -511,11 +519,10 @@ export function AdminLogsDashboard({
               <Label htmlFor="audit-actor">Actor only</Label>
               <ResponsiveComboBox
                 ariaLabel="Filter by actor"
-                items={members.data ?? []}
+                items={memberOptions}
                 value={
-                  (members.data ?? []).find(
-                    (member) => member.userId === actorUserId,
-                  )?.id ?? null
+                  memberOptions.find((member) => member.userId === actorUserId)
+                    ?.id ?? null
                 }
                 onSearchValueChange={setMemberSearch}
                 onItemSelect={(member) => {
@@ -531,7 +538,7 @@ export function AdminLogsDashboard({
                 emptyMessage="No members found."
                 filterItems={false}
                 inputPlaceholder="Find an administrator…"
-                isLoading={members.isPending}
+                isLoading={memberOptionsPending}
                 triggerClassName="mt-2"
                 triggerId="audit-actor"
               />
@@ -654,16 +661,16 @@ export function AdminLogsDashboard({
 
       <Card className="gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
         <CardContent className="p-0">
-          {events.error ? (
+          {eventsError ? (
             <div className="flex gap-3 p-6 text-sm text-destructive-foreground">
               <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {events.error.message}
+              {eventsError.message}
             </div>
-          ) : events.isPending ? (
+          ) : !eventPage ? (
             <div className="p-10 text-center text-sm text-muted-foreground">
               Loading admin logs…
             </div>
-          ) : events.data.items.length === 0 ? (
+          ) : eventPage.items.length === 0 ? (
             <div className="p-10 text-center">
               <p className="font-medium">No matching admin actions</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -682,7 +689,7 @@ export function AdminLogsDashboard({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {events.data.items.map((event) => (
+                {eventPage.items.map((event) => (
                   <EventRow
                     key={event.id}
                     event={event}
@@ -701,7 +708,7 @@ export function AdminLogsDashboard({
           <Button
             type="button"
             variant="outline"
-            disabled={page === 0 || events.isFetching}
+            disabled={page === 0 || eventsFetching}
             onClick={() => setPage((current) => Math.max(0, current - 1))}
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -710,9 +717,9 @@ export function AdminLogsDashboard({
           <Button
             type="button"
             variant="outline"
-            disabled={!events.data?.nextCursor || events.isFetching}
+            disabled={!eventPage?.nextCursor || eventsFetching}
             onClick={() => {
-              const nextCursor = events.data?.nextCursor;
+              const nextCursor = eventPage?.nextCursor;
               if (!nextCursor) return;
               setCursorStack((current) => [
                 ...current.slice(0, page + 1),

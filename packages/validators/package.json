@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@forge/consts": "workspace:*",
-    "minimatch": "^10.2.4",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -31,7 +30,9 @@
     "@forge/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

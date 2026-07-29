@@ -2,19 +2,16 @@ import { randomUUID } from "node:crypto";
 
 import { MINIO } from "@forge/consts";
 import { logger } from "@forge/utils";
+import {
+  COMPANY_IMAGE_UPLOAD_POLICY,
+  uploadExtension,
+} from "@forge/validators";
 
-import { decodeAndValidateImageDataUrl } from "../profile-picture/security";
 import {
   ensureProfilePictureBucketExists,
   profilePictureStorageClient,
 } from "../profile-picture/storage";
-
-const extensionByContentType = {
-  "image/gif": "gif",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-} as const;
+import { decodeUploadDataUrl } from "../upload/data-url";
 
 function companyImagePrefix(companyId: string) {
   return `companies/${companyId}/`;
@@ -36,17 +33,17 @@ function isCompanyImageObjectName(companyId: string, objectName: string) {
 export async function uploadCompanyImage({
   companyId,
   fileContent,
+  fileName,
 }: {
   companyId: string;
   fileContent: string;
+  fileName?: string;
 }) {
-  const { contentType, fileBuffer } = decodeAndValidateImageDataUrl(
-    fileContent,
-    "Company image",
+  const { contentType, fileBuffer, type } = decodeUploadDataUrl(
+    COMPANY_IMAGE_UPLOAD_POLICY,
+    { dataUrl: fileContent, fileName },
   );
-  const objectName = `${companyImagePrefix(companyId)}company-image-${randomUUID()}.${
-    extensionByContentType[contentType]
-  }`;
+  const objectName = `${companyImagePrefix(companyId)}company-image-${randomUUID()}.${uploadExtension(type)}`;
 
   await ensureProfilePictureBucketExists();
   await profilePictureStorageClient.putObject(

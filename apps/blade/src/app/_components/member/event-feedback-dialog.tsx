@@ -17,6 +17,8 @@ import { Label } from "@forge/ui/label";
 import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
 import { Textarea } from "@forge/ui/textarea";
 
+import { formatClubDateTime } from "~/lib/dates";
+
 type FeedbackQuestion =
   | {
       id: string;
@@ -64,10 +66,7 @@ type EventFeedbackDialogState =
     };
 
 function formatDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+  return formatClubDateTime(value);
 }
 
 function FeedbackQuestionControl({ question }: { question: FeedbackQuestion }) {

@@ -1,10 +1,10 @@
 import { and, gt, isNotNull, isNull, lte, or } from "drizzle-orm";
 
-import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
+import { getDiscordConfigId } from "@forge/utils/discord-config";
 
 import { CronBuilder } from "../structs/CronBuilder";
 
@@ -15,6 +15,7 @@ export const alumniAssign = new CronBuilder({
   "0 8 * * *", // every day 8am
   async () => {
     const today = new Date().toISOString().slice(0, 10);
+    const alumniRoleId = await getDiscordConfigId("alumni_role");
 
     // Add role to members whose grad date has passed
     const graduatedMembers = await db
@@ -25,8 +26,7 @@ export const alumniAssign = new CronBuilder({
     for (const { discordUser } of graduatedMembers) {
       try {
         const discordId = await discord.resolveDiscordUserId(discordUser);
-        if (discordId)
-          await discord.addRoleToMember(discordId, DISCORD.ALUMNI_ROLE);
+        if (discordId) await discord.addRoleToMember(discordId, alumniRoleId);
       } catch (err) {
         logger.error(`Failed to add alumni role for ${discordUser}:`, err);
       }
@@ -49,7 +49,7 @@ export const alumniAssign = new CronBuilder({
       try {
         const discordId = await discord.resolveDiscordUserId(discordUser);
         if (discordId)
-          await discord.removeRoleFromMember(discordId, DISCORD.ALUMNI_ROLE);
+          await discord.removeRoleFromMember(discordId, alumniRoleId);
       } catch (err) {
         logger.error(`Failed to remove alumni role for ${discordUser}:`, err);
       }

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { EVENTS } from "@forge/consts";
+
 const HISTORY_FIELDS = [
   "archiveBatchId",
   "archivedAt",
@@ -94,7 +96,7 @@ export function legacyEasternWallClock(dueAt: string | Date) {
     minute: "2-digit",
     month: "2-digit",
     second: "2-digit",
-    timeZone: "America/New_York",
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     year: "numeric",
   }).formatToParts(instant);
   const values = Object.fromEntries(

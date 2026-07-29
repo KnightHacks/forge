@@ -50,6 +50,22 @@ export const roleIssueReminderUpdateSchema = roleIdSchema
   })
   .strict();
 
+/**
+ * No acknowledgement field, unlike {@link roleUnlinkSchema}. The blast radius is
+ * one boolean on one row, the dialog shows its current value, and it can be
+ * flipped back in one click — so the confirmation is client-side, exactly as it
+ * is for `emailRoleAudienceSchema`, the toggle this one sits beside.
+ */
+export const roleEventFeedbackExclusionSchema = roleIdSchema
+  .extend({
+    excluded: z
+      .boolean()
+      .describe(
+        "True hides this role's past and future events from feedback analytics, export, and collection.",
+      ),
+  })
+  .strict();
+
 export const roleUnlinkSchema = roleIdSchema.extend({
   confirmation: z.literal(ROLE_UNLINK_CONFIRMATION),
 });

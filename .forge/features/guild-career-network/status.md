@@ -1,6 +1,6 @@
 # Guild Career Network Status
 
-Current phase: Complete — live review
+Current phase: Complete
 
 ## Decision log
 
@@ -45,6 +45,8 @@ Current phase: Complete — live review
 - 2026-07-24: Employment editor cards use immutable client-only draft IDs so
   editing company, title, date, or location fields never remounts the card or
   drops keyboard focus.
+- 2026-07-27: Live review is finished and the work is merged into
+  `reforge/main`. The feature is closed for development.
 
 ## Open questions
 

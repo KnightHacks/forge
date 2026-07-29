@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { canAccessMemberAdmin } from "~/app/_components/admin/access";
 import { CompanyAdminDashboard } from "~/app/_components/admin/companies/company-admin-dashboard";
+import { canAccessMemberAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   title: "Blade | Company Admin",
@@ -23,9 +23,5 @@ export default async function AdminCompaniesPage() {
   }
 
   const companies = await api.career.listAdminCompanies();
-  return (
-    <HydrateClient>
-      <CompanyAdminDashboard companies={companies} />
-    </HydrateClient>
-  );
+  return <CompanyAdminDashboard companies={companies} />;
 }

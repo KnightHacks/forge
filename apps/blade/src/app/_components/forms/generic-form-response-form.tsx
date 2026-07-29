@@ -14,6 +14,7 @@ import {
   FORM_LINEAR_SCALE_ENDPOINT_MIN,
   FORM_LINEAR_SCALE_MAX_SPAN,
   validateFormAnswers,
+  validateFormUpload,
 } from "@forge/validators";
 
 import { api } from "~/trpc/react";
@@ -424,6 +425,7 @@ function QuestionControl({
         allowedMimeTypes={question.allowedMimeTypes}
         formId={formId}
         label={question.prompt}
+        maxBytes={question.maxBytes}
         onChange={onChange}
         onPendingChange={onUploadPendingChange}
         questionId={question.id}
@@ -468,6 +470,7 @@ function FormFileUpload({
   allowedMimeTypes,
   formId,
   label,
+  maxBytes,
   onChange,
   onPendingChange,
   questionId,
@@ -475,6 +478,7 @@ function FormFileUpload({
   allowedMimeTypes: string[];
   formId: string;
   label: string;
+  maxBytes: number;
   onChange: (value: unknown) => void;
   onPendingChange?: (pending: boolean) => void;
   questionId: string;
@@ -493,12 +497,25 @@ function FormFileUpload({
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (!file) return;
+          const contentType = file.type || "application/octet-stream";
+          const check = validateFormUpload({
+            allowedMimeTypes,
+            contentType,
+            fileName: file.name,
+            maxBytes,
+            size: file.size,
+          });
+          if (!check.allowed) {
+            onChange(undefined);
+            setStatus(check.message);
+            return;
+          }
           void (async () => {
             onPendingChange?.(true);
             try {
               setStatus("Uploading…");
               const upload = await createUpload.mutateAsync({
-                contentType: file.type || "application/octet-stream",
+                contentType,
                 fileName: file.name,
                 formId,
                 purpose: "response",

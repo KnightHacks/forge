@@ -16,7 +16,6 @@ export interface PublicClubEvent {
 
 export type EventsStatus = "loading" | "ready" | "error";
 
-export const CLUB_TIME_ZONE = "America/New_York";
 const DEFAULT_EVENT_LIMIT = 24;
 const EVENT_FETCH_TIMEOUT_MS = 8_000;
 
@@ -157,7 +156,7 @@ export async function loadClubEvents({
 
 function getDatePart(date: Date, options: Intl.DateTimeFormatOptions): string {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     ...options,
   }).format(date);
 }
@@ -167,7 +166,7 @@ function getDateParts(
   options: Intl.DateTimeFormatOptions,
 ): Record<string, string> {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: CLUB_TIME_ZONE,
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
     ...options,
   }).formatToParts(date);
 

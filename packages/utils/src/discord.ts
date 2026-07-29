@@ -8,88 +8,23 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v10";
 import { and, desc, eq } from "drizzle-orm";
 
-import type { Session } from "@forge/auth/server";
-import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Account } from "@forge/db/schemas/auth";
 
-import { TEAMS } from "../../consts/src/team";
+import { getDiscordConfigId, getKnightHacksGuildId } from "./discord-config";
 import { shouldSuppressDiscordAuditLogs } from "./discord-log-policy";
 import { env } from "./env";
 import { logger } from "./logger";
 
 export const api = new REST({ version: "10" }).setToken(env.DISCORD_BOT_TOKEN);
 
-export async function sendRecruitingApplication(
-  teamName: string,
-  applicant: {
-    name: string;
-    email: string;
-    major: string;
-    gradTerm: string;
-    gradYear: string;
-  },
-) {
-  const team = TEAMS.find((x) => x.team === teamName);
-  if (!team) {
-    throw new Error("Team not found");
-  }
-
-  const colorInt = parseInt(team.color.replace("#", ""), 16);
-
-  await api.post(Routes.channelMessages(DISCORD.RECRUITING_CHANNEL), {
-    body: {
-      content: `<@&${team.director_role}> **New Applicant for ${team.team}!**`,
-      embeds: [
-        {
-          title: `${applicant.name}'s Application`,
-          description: `A new applicant is interested in joining the **${team.team}** team.\n\nPlease see details below:`,
-          color: colorInt,
-          fields: [
-            {
-              name: "Name",
-              value: applicant.name,
-              inline: true,
-            },
-            {
-              name: "Email",
-              value: applicant.email,
-              inline: true,
-            },
-            {
-              name: "Major",
-              value: applicant.major,
-              inline: true,
-            },
-            {
-              name: "Grad Term",
-              value: applicant.gradTerm,
-              inline: true,
-            },
-            {
-              name: "Grad Year",
-              value: applicant.gradYear,
-              inline: true,
-            },
-            {
-              name: "Team",
-              value: team.team,
-              inline: true,
-            },
-          ],
-          footer: {
-            text: `Submitted at: ${new Date().toLocaleString()}`,
-          },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    },
-  });
-}
-
 export async function addRoleToMember(discordUserId: string, roleId: string) {
   await api.put(
-    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
+    Routes.guildMemberRole(
+      await getKnightHacksGuildId(),
+      discordUserId,
+      roleId,
+    ),
   );
 }
 
@@ -98,17 +33,21 @@ export async function removeRoleFromMember(
   roleId: string,
 ) {
   await api.delete(
-    Routes.guildMemberRole(DISCORD.KNIGHTHACKS_GUILD, discordUserId, roleId),
+    Routes.guildMemberRole(
+      await getKnightHacksGuildId(),
+      discordUserId,
+      roleId,
+    ),
   );
 }
 
-export async function addMemberToServer(
+async function addMemberToServer(
   discordUserId: string,
   accessToken: string,
 ): Promise<void> {
   try {
     await api.put(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
+      Routes.guildMember(await getKnightHacksGuildId(), discordUserId),
       {
         body: {
           access_token: accessToken,
@@ -165,42 +104,9 @@ export async function resolveDiscordUserId(
 ): Promise<string | null> {
   const q = username.trim().toLowerCase();
   const members = (await api.get(
-    `${Routes.guildMembersSearch(DISCORD.KNIGHTHACKS_GUILD)}?query=${encodeURIComponent(q)}&limit=1`,
+    `${Routes.guildMembersSearch(await getKnightHacksGuildId())}?query=${encodeURIComponent(q)}&limit=1`,
   )) as APIGuildMember[];
   return members[0]?.user.id ?? null;
-}
-
-// TODO: look into not using Session here so we can remove the auth import
-//       which will let us clean up our imports.
-
-export const isDiscordAdmin = async (user: Session["user"]) => {
-  try {
-    const guildMember = (await api.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    )) as APIGuildMember;
-    return guildMember.roles.includes(DISCORD.ADMIN_ROLE);
-  } catch (err) {
-    logger.error("Error: ", err);
-    return false;
-  }
-};
-
-export const isDiscordMember = async (user: Session["user"]) => {
-  try {
-    await api.get(
-      Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, user.discordUserId),
-    );
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export async function isDiscordVIP(discordUserId: string) {
-  const guildMember = (await api.get(
-    Routes.guildMember(DISCORD.KNIGHTHACKS_GUILD, discordUserId),
-  )) as APIGuildMember;
-  return guildMember.roles.includes(DISCORD.VIP_ROLE);
 }
 
 export async function log({
@@ -216,23 +122,26 @@ export async function log({
 }) {
   if (shouldSuppressDiscordAuditLogs()) return;
 
-  await api.post(Routes.channelMessages(DISCORD.LOG_CHANNEL), {
-    body: {
-      embeds: [
-        {
-          title: title,
-          description: message + `\n\nUser: <@${userId}>`.toString(),
-          color: {
-            tk_blue: 0x1a73e8,
-            blade_purple: 0xcca4f4,
-            uhoh_red: 0xff0000,
-            success_green: 0x00ff00,
-          }[color],
-          footer: {
-            text: new Date().toLocaleString(),
+  await api.post(
+    Routes.channelMessages(await getDiscordConfigId("log_channel")),
+    {
+      body: {
+        embeds: [
+          {
+            title: title,
+            description: message + `\n\nUser: <@${userId}>`.toString(),
+            color: {
+              tk_blue: 0x1a73e8,
+              blade_purple: 0xcca4f4,
+              uhoh_red: 0xff0000,
+              success_green: 0x00ff00,
+            }[color],
+            footer: {
+              text: new Date().toLocaleString(),
+            },
           },
-        },
-      ],
+        ],
+      },
     },
-  });
+  );
 }

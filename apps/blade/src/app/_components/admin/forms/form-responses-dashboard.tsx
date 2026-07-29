@@ -1,6 +1,11 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import {
+  startTransition,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -54,12 +59,13 @@ import {
 } from "@forge/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
+import { FormResponseValue } from "~/app/_components/forms/form-response-value";
 import {
-  ADMIN_PAGE_EYEBROWS,
   AdminPageHeader,
   adminPageLayoutClassName,
-} from "~/app/_components/admin/admin-page";
-import { FormResponseValue } from "~/app/_components/forms/form-response-value";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
+import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 interface FormQuestionSnapshot {
@@ -649,7 +655,7 @@ function ResponseDetailDialog({
           <DialogDescription>
             {response?.member.email} ·{" "}
             {response
-              ? new Date(response.submittedAt).toLocaleString()
+              ? formatClubDateTime(response.submittedAt)
               : "Submitted response"}
           </DialogDescription>
         </DialogHeader>
@@ -779,7 +785,7 @@ export function IdentifiedResponses({
                 </p>
               </div>
               <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>{new Date(response.submittedAt).toLocaleString()}</span>
+                <span>{formatClubDateTime(response.submittedAt)}</span>
                 <span>{Object.keys(response.answers).length} answers</span>
               </div>
               <Button
@@ -814,7 +820,7 @@ export function IdentifiedResponses({
                     </p>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {new Date(response.submittedAt).toLocaleString()}
+                    {formatClubDateTime(response.submittedAt)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     {Object.keys(response.answers).length} answers
@@ -866,17 +872,18 @@ function workspaceHref(
 }
 
 export function FormResponsesDashboard({
+  callbacks,
   formId,
-  initialCallbacks,
-  initialFormName,
-  initialResponses,
+  formName,
+  responses,
+  responsesError,
 }: {
+  callbacks: RouterOutputs["forms"]["listCallbackExecutions"] | null;
   formId: string;
-  initialCallbacks?: RouterOutputs["forms"]["listCallbackExecutions"];
-  initialFormName?: string;
-  initialResponses?: RouterOutputs["forms"]["listResponses"];
+  formName?: string;
+  responses: RouterOutputs["forms"]["listResponses"] | null;
+  responsesError: string | null;
 }) {
-  const utils = api.useUtils();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -885,31 +892,17 @@ export function FormResponsesDashboard({
     requestedView === "responses" || requestedView === "delivery"
       ? requestedView
       : "analytics";
-  const responses = api.forms.listResponses.useQuery(
-    { formId },
-    { initialData: initialResponses },
-  );
-  const callbacks = api.forms.listCallbackExecutions.useQuery(
-    { formId },
-    { initialData: initialCallbacks },
-  );
   const exportQuery = api.forms.exportResponses.useQuery(
     { formId },
     { enabled: false },
   );
+  const refresh = () => {
+    startTransition(() => router.refresh());
+  };
   const deleteResponse = api.forms.deleteResponse.useMutation({
-    async onSuccess() {
-      await Promise.all([
-        utils.forms.listResponses.invalidate({ formId }),
-        utils.forms.listCallbackExecutions.invalidate({ formId }),
-      ]);
-    },
+    onSuccess: refresh,
   });
-  const retry = api.forms.retryCallback.useMutation({
-    async onSuccess() {
-      await utils.forms.listCallbackExecutions.invalidate({ formId });
-    },
-  });
+  const retry = api.forms.retryCallback.useMutation({ onSuccess: refresh });
 
   async function exportCsv() {
     const result = await exportQuery.refetch();
@@ -945,23 +938,16 @@ export function FormResponsesDashboard({
         description="Review aggregate trends, individual submissions, and callback delivery."
         eyebrow={ADMIN_PAGE_EYEBROWS.formResponses}
         icon={BarChart3}
-        title={responses.data?.form.name ?? initialFormName ?? "Form responses"}
+        title={responses?.form.name ?? formName ?? "Form responses"}
         titleClassName="break-words"
       />
 
-      {responses.isLoading ? (
-        <p
-          className="rounded-lg border border-white/10 bg-card/95 p-6"
-          role="status"
-        >
-          Loading responses…
-        </p>
-      ) : responses.error ? (
+      {responsesError ? (
         <p
           className="rounded-lg border border-destructive/40 bg-card/95 p-6 text-destructive"
           role="alert"
         >
-          {responses.error.message}
+          {responsesError}
         </p>
       ) : (
         <Tabs
@@ -992,7 +978,7 @@ export function FormResponsesDashboard({
               <div className="border-b border-border/70 p-4 sm:border-b-0">
                 <p className="text-sm text-muted-foreground">Responses</p>
                 <p className="mt-1 font-mono text-3xl font-semibold">
-                  {responses.data?.analytics.responseCount ?? 0}
+                  {responses?.analytics.responseCount ?? 0}
                 </p>
               </div>
               <div className="p-4">
@@ -1000,10 +986,7 @@ export function FormResponsesDashboard({
                   Questions summarized
                 </p>
                 <p className="mt-1 font-mono text-3xl font-semibold">
-                  {
-                    Object.keys(responses.data?.analytics.byQuestion ?? {})
-                      .length
-                  }
+                  {Object.keys(responses?.analytics.byQuestion ?? {}).length}
                 </p>
               </div>
             </section>
@@ -1025,7 +1008,7 @@ export function FormResponsesDashboard({
                 </p>
               </header>
               <div className="divide-y divide-border/70">
-                {Object.entries(responses.data?.analytics.byQuestion ?? {}).map(
+                {Object.entries(responses?.analytics.byQuestion ?? {}).map(
                   ([questionId, summary]) => (
                     <ResponseAnalyticsCard key={questionId} summary={summary} />
                   ),
@@ -1040,7 +1023,7 @@ export function FormResponsesDashboard({
               onDelete={(responseId) => {
                 deleteResponse.mutate({ formId, responseId });
               }}
-              responses={responses.data?.responses ?? []}
+              responses={responses?.responses ?? []}
             />
           </TabsContent>
 
@@ -1051,7 +1034,7 @@ export function FormResponsesDashboard({
                 <h2 className="text-lg font-semibold">Callback delivery</h2>
               </div>
               <div className="mt-4 grid max-h-[65svh] gap-2 overflow-y-auto overscroll-contain pr-1">
-                {callbacks.data?.map((execution) => (
+                {callbacks?.map((execution) => (
                   <article
                     className="grid gap-2 rounded-md border border-white/10 bg-background/60 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
                     key={execution.id}
@@ -1099,12 +1082,7 @@ export function FormResponsesDashboard({
                     )}
                   </article>
                 ))}
-                {callbacks.isLoading && (
-                  <p className="text-sm text-muted-foreground" role="status">
-                    Loading callback delivery…
-                  </p>
-                )}
-                {callbacks.data?.length === 0 && (
+                {callbacks?.length === 0 && (
                   <p className="text-sm text-muted-foreground">
                     No callback executions.
                   </p>

@@ -1,3 +1,5 @@
+import { serializeCsvRows } from "@forge/utils";
+
 interface ExportQuestion {
   id: string;
   prompt: string;
@@ -35,17 +37,6 @@ function displayAnswer(value: unknown): string {
     if (typeof value.fileName === "string") return value.fileName;
   }
   return JSON.stringify(value);
-}
-
-function neutralizeFormula(value: string) {
-  return /^[=+\-@]/.test(value.trimStart()) ? `'${value}` : value;
-}
-
-function csvCell(value: unknown) {
-  const rendered = neutralizeFormula(displayAnswer(value));
-  return /[",\r\n]/.test(rendered)
-    ? `"${rendered.replaceAll('"', '""')}"`
-    : rendered;
 }
 
 function exportPrompt(
@@ -86,10 +77,10 @@ export function serializeFormResponsesCsv({
     response.member.email,
     response.submittedAt.toISOString(),
     response.status,
-    ...definition.questions.map((question) => response.answers[question.id]),
+    ...definition.questions.map((question) =>
+      displayAnswer(response.answers[question.id]),
+    ),
   ]);
 
-  return [headers, ...rows]
-    .map((row) => row.map(csvCell).join(","))
-    .join("\r\n");
+  return serializeCsvRows([headers, ...rows]);
 }

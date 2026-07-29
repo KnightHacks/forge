@@ -68,7 +68,7 @@ interface Match {
   sourceType: "hacker" | "member" | "user";
 }
 
-interface CanonicalRecipient {
+export interface CanonicalRecipient {
   attributes: {
     hacker?: { status: HackerStatus };
     hackathon?: { displayName?: string; name?: string };

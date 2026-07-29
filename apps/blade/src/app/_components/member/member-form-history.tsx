@@ -5,6 +5,8 @@ import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
+import { formatClubLongDate } from "~/lib/dates";
+
 interface MemberFormResponseItem {
   formKind: "event_feedback" | "general" | "system";
   formName: string;
@@ -15,10 +17,7 @@ interface MemberFormResponseItem {
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(value));
+  return formatClubLongDate(value);
 }
 
 export function MemberFormHistory({

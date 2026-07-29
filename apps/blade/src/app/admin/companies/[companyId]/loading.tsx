@@ -1,6 +1,6 @@
 import { Skeleton } from "@forge/ui/skeleton";
 
-import { adminPageLayoutClassName } from "~/app/_components/admin/admin-page";
+import { adminPageLayoutClassName } from "~/app/_components/shared/admin-page";
 
 export default function AdminCompanyDetailLoading() {
   return (

@@ -54,6 +54,7 @@ describe("form response CSV", () => {
       [
         "Response ID,Member ID,Member name,Member email,Submitted at,Status,Historical first question,Topics",
         'response-1,member-1,\'+Lenny Formula,lenny@example.test,2026-07-15T18:00:00.000Z,submitted,"\'=HYPERLINK(""https://evil.test"",""click"")\nsecond line","Web, mobile | C++ ""systems"""',
+        "",
       ].join("\r\n"),
     );
     expect(csv).not.toMatch(/(?:^|,)=(?:HYPERLINK|IMPORT)/m);

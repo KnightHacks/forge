@@ -1,14 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
-import { PERMISSIONS } from "@forge/consts";
-
-export const hasPermission = (
-  userPermissions: string,
-  permission: PERMISSIONS.PermissionIndex,
-): boolean => {
-  const permissionBit = userPermissions[permission];
-  return permissionBit === "1";
-};
+import type { PERMISSIONS } from "@forge/consts";
 
 // Mock tRPC context for type-safety
 interface Context {
@@ -41,9 +33,3 @@ export const controlPerms = {
     return true;
   },
 };
-
-export function getPermsAsList(perms: string): string[] {
-  return Object.values(PERMISSIONS.PERMISSION_DATA)
-    .filter(({ idx }) => perms.at(idx) === "1")
-    .map(({ name }) => name);
-}

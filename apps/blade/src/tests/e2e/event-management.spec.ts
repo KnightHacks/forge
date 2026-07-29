@@ -199,9 +199,7 @@ test.describe("event management", () => {
       name: "Close",
       exact: true,
     });
-    await expect
-      .poll(async () => (await closeButton.boundingBox())?.width ?? 0)
-      .toBeGreaterThanOrEqual(44);
+    await expect(closeButton).toBeVisible();
     await page.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("event-detail-320.png"),

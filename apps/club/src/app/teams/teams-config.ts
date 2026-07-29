@@ -1,8 +1,16 @@
-import { TEAM } from "@forge/consts";
+// The team list used to be `TEAM.CLUB_TEAM_DEFINITIONS`, compiled into this
+// static export. It is officer-managed data now, so it arrives alongside the
+// roster from Blade instead: this app builds with `output: "export"` and cannot
+// reach the database, and a team added, renamed, or reordered in Blade must not
+// need a Club redeploy to show up here.
 
-export const TEAM_DEFINITIONS = TEAM.CLUB_TEAM_DEFINITIONS;
+export interface TeamDefinition {
+  slug: string;
+  label: string;
+  heading: string;
+}
 
-export type TeamSlug = TEAM.ClubTeamSlug;
+export type TeamSlug = string;
 
 export interface TeamMember {
   id: string;
@@ -13,13 +21,13 @@ export interface TeamMember {
   color: string | null;
 }
 
-export type TeamRoster = Record<TeamSlug, TeamMember[]>;
+export interface TeamRoster {
+  teams: TeamDefinition[];
+  members: Record<TeamSlug, TeamMember[]>;
+}
 
 export function createEmptyRoster(): TeamRoster {
-  return TEAM_DEFINITIONS.reduce((roster, team) => {
-    roster[team.slug] = [];
-    return roster;
-  }, {} as TeamRoster);
+  return { teams: [], members: {} };
 }
 
 function getMemberProfileId(member: TeamMember) {
@@ -29,8 +37,8 @@ function getMemberProfileId(member: TeamMember) {
 export function countUniqueTeamMembers(roster: TeamRoster) {
   const uniqueMemberIds = new Set<string>();
 
-  for (const team of TEAM_DEFINITIONS) {
-    for (const member of roster[team.slug]) {
+  for (const team of roster.teams) {
+    for (const member of roster.members[team.slug] ?? []) {
       uniqueMemberIds.add(getMemberProfileId(member));
     }
   }

@@ -20,6 +20,11 @@ export const AUDIT_DOMAINS = [
   "forms",
   "issues",
   "members",
+  // Platform wiring: which Discord server, channels, and roles the platform
+  // resolves. Filed by effect rather than by table, the same rule that puts
+  // `role.email_audience.updated` under "email" — "changed the recruiting
+  // notification channel" is neither a roles nor an events action.
+  "platform",
   "roles",
 ] as const;
 
@@ -73,6 +78,17 @@ export const AUDIT_ACTION_CATALOG = {
     "Invalidated effective dues",
     ["affectedMemberCount", "referenceAcademicYear", "referenceDate"],
   ),
+  "member.dues.payment_started": policy(
+    "members",
+    "Started member dues payment",
+    ["academicYear", "amount", "paymentIntentId"],
+  ),
+  "member.dues.paid": policy("members", "Paid member dues", [
+    "academicYear",
+    "amount",
+    "paymentIntentId",
+    "created",
+  ]),
   "member.profile.updated": policy(
     "members",
     "Updated member",
@@ -107,6 +123,11 @@ export const AUDIT_ACTION_CATALOG = {
     "Removed member profile picture",
     ["hadPrevious"],
   ),
+  "member.profile_picture.uploaded": policy(
+    "members",
+    "Uploaded member profile picture",
+    ["mimeType", "byteSize"],
+  ),
   "member.resume.replaced": policy("members", "Replaced member résumé", [
     "filename",
     "byteSize",
@@ -115,6 +136,14 @@ export const AUDIT_ACTION_CATALOG = {
   "member.resume.removed": policy("members", "Removed member résumé", [
     "hadPrevious",
   ]),
+  "member.resume.uploaded": policy("members", "Uploaded member résumé", [
+    "byteSize",
+  ]),
+  "member.employment.replaced": policy(
+    "members",
+    "Replaced member employment history",
+    ["entryCountBefore", "entryCountAfter"],
+  ),
   "member.resume.accessed": policy("members", "Accessed member résumé", [
     "filename",
     "accessMechanism",
@@ -236,6 +265,37 @@ export const AUDIT_ACTION_CATALOG = {
     "Updated role issue reminders",
     [],
     ["enabled", "channelId"],
+  ),
+  "role.club_classification.updated": policy(
+    "roles",
+    "Updated club roster classification",
+    // `created` distinguishes a first classification, whose changes carry an
+    // `after` with no `before`, from an edit of an existing row.
+    ["created"],
+    // `teamSlug`, not `teamId`: a UUID in an audit row is unreadable, and the
+    // slug is both stable and human-legible.
+    ["kind", "rank", "teamSlug", "rosterLabel", "calloutLabel"],
+  ),
+  "role.event_feedback_exclusion.updated": policy(
+    "events",
+    "Updated role event feedback exclusion",
+    // No metadata, matching `role.email_audience.updated`, the sibling toggle.
+    // The blast radius is a count recomputed at read time for the confirmation;
+    // a count supplied by the client is a number the log cannot vouch for.
+    [],
+    ["excluded"],
+  ),
+  "discord_config.updated": policy(
+    "platform",
+    "Updated Discord configuration",
+    // `isInert` records whether the key was read by anything at write time, so
+    // a later reader can tell an inert-row cleanup from a live-wiring change
+    // without re-deriving the classification from a code version they no
+    // longer have.
+    ["configKey", "configKind", "isInert", "guildRepointAcknowledged"],
+    // Snowflakes go in the clear. They are public Discord IDs, and "what was it
+    // before" is the entire point of the log.
+    ["label", "description", "productionId", "developmentId"],
   ),
   "role.synced": policy("roles", "Synced linked role", [
     "checkedCount",
@@ -535,6 +595,7 @@ export const AUDIT_TARGET_TYPES = [
   "bulletin_post",
   "callback_execution",
   "company",
+  "discord_config",
   "discord_role",
   "dues_population",
   "employment",

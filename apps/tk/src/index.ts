@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 
-import { DISCORD } from "@forge/consts";
 import { logger } from "@forge/utils";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { safelyHandleTkInteraction } from "./command-handler";
 import { commands } from "./commands";
@@ -62,7 +62,7 @@ async function startArchiveGateway() {
     const { discordArchiveDatabaseStore } =
       await import("@forge/api/discord-archive.server");
     startDiscordArchiveGateway({
-      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      guildId: await getKnightHacksGuildId(),
       store: discordArchiveDatabaseStore,
       token: env.DISCORD_ARCHIVE_BOT_TOKEN,
     });

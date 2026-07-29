@@ -178,13 +178,12 @@ describe("EventFeedbackPanel", () => {
     expect(excludedHtml).toContain(
       "Exclusions reset when you leave or refresh this view",
     );
-    expect(excludedHtml).toContain('data-exclusion-scope="session"');
     expect(excludedHtml).toMatch(
       /00000000-0000-4000-8000-000000003103[\s\S]*checked(?:="")?/,
     );
   });
 
-  it("keeps charts text-labelled and the feedback surface responsive", () => {
+  it("keeps chart distributions text-labelled", () => {
     const html = renderToStaticMarkup(
       createElement(EventFeedbackPanel, {
         access: aggregateAccess,
@@ -196,7 +195,6 @@ describe("EventFeedbackPanel", () => {
       }),
     );
 
-    expect(html).toContain('data-feedback-metrics-layout="responsive"');
     expect(html).toContain('aria-label="Overall rating distribution"');
     expect(html).toContain('aria-label="Fun rating distribution"');
     expect(html).toContain('aria-label="Learning rating distribution"');

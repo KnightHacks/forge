@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { ISSUE } from "@forge/consts";
+import { EVENTS, ISSUE } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -39,11 +39,16 @@ import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
 
 import {
-  ADMIN_PAGE_EYEBROWS,
   adminPageClassName,
   AdminPageHeader,
   adminPageStackClassName,
-} from "~/app/_components/admin/admin-page";
+} from "~/app/_components/shared/admin-page";
+import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
+import {
+  clubWallClock,
+  formatClubDateTime,
+  formatClubFullDateTime,
+} from "~/lib/dates";
 import { api } from "~/trpc/react";
 
 type Detail = RouterOutputs["issues"]["get"];
@@ -53,32 +58,12 @@ type EventChoice = RouterOutputs["issues"]["listEvents"][number];
 
 function easternParts(value: Date | null) {
   if (!value) return { date: "", time: ISSUE.TASK_DUE_TIME };
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-      minute: "2-digit",
-      month: "2-digit",
-      timeZone: "America/New_York",
-      year: "numeric",
-    })
-      .formatToParts(value)
-      .map((part) => [part.type, part.value]),
-  );
-  return {
-    date: `${parts.year}-${parts.month}-${parts.day}`,
-    time: `${parts.hour}:${parts.minute}`,
-  };
+  const { date, time } = clubWallClock(value);
+  return { date, time };
 }
 
 function fullDate(value: Date | null) {
-  if (!value) return "No due date";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "full",
-    timeStyle: "short",
-    timeZone: "America/New_York",
-  }).format(value);
+  return formatClubFullDateTime(value, "No due date");
 }
 
 function EditIssueDialog({
@@ -638,10 +623,7 @@ export function IssueDetail({
                           : "History tracking boundary"}
                       </p>
                       <time className="mt-1 block text-xs text-muted-foreground">
-                        {new Intl.DateTimeFormat("en-US", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(entry.createdAt)}
+                        {formatClubDateTime(entry.createdAt)}
                       </time>
                     </div>
                   </li>
@@ -675,7 +657,7 @@ export function IssueDetail({
                     {fullDate(detail.dueAt)}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    America/New_York
+                    {EVENTS.CALENDAR_TIME_ZONE}
                   </p>
                 </div>
               </div>

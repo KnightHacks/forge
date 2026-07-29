@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { getAdminNavigationAccess } from "~/app/_components/admin/access";
-import { AuthenticatedShell } from "~/app/_components/member/authenticated-shell";
+import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
+import { getAdminNavigationAccess } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 

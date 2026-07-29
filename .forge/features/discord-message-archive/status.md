@@ -1,6 +1,6 @@
 # Discord Message Archive Status
 
-Current phase: Development implementation and automated/browser validation complete; human live edit/delete verification pending
+Current phase: Complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -45,10 +45,23 @@ Current phase: Development implementation and automated/browser validation compl
   all-time profile totals, top surfaces, full retained daily history paged by
   month, and selected-period Analytics message counts. Raw messages and
   unmatched-author identities remain excluded from Blade DTOs.
+- 2026-07-27: Development is finished and merged into `reforge/main`. The
+  feature is closed for development; the two unfinished verification items are
+  production-enablement gates and moved to operational follow-ups.
 
 ## Open questions
 
-- Production database and backup encryption at rest must be confirmed before production ingestion is enabled. This does not block development-guild implementation or testing.
+- None blocking development. Two operational items below carry over to production enablement.
+
+## Operational follow-ups
+
+These are deployment gates, not outstanding development work. They were never
+completed and are recorded here rather than checked off.
+
+- Human create/edit/delete verification and post-reconciliation tombstone proof
+  against a live guild. Automated and browser validation covered the rest.
+- Production database and backup encryption at rest must be confirmed before
+  production ingestion is enabled.
 
 ## Task list
 
@@ -63,7 +76,6 @@ Current phase: Development implementation and automated/browser validation compl
 - [x] Implement and test the durable channel/thread discovery and historical scrape path.
 - [x] Implement frequent cursor reconciliation with single-run coordination.
 - [x] Implement live create/update/delete ingestion.
-- [ ] Complete human create/edit/delete verification and post-reconciliation tombstone proof.
 - [x] Implement the approved Blade archive dashboard.
 - [x] Add the aggregate Discord tab to Club Analytics.
 - [x] Add matched-Member Discord analytics and authorized Member-profile
@@ -71,7 +83,9 @@ Current phase: Development implementation and automated/browser validation compl
 - [x] Compact and normalize the archive/Analytics layouts and frontend-only undergraduate grouping.
 - [x] Add and verify the audited Member resume bundle download.
 - [x] Add and browser-verify the resume-bundle preparation state.
-- [ ] Confirm production storage and backup encryption at rest.
+
+Remaining live-verification and production-encryption items moved to
+[Operational follow-ups](#operational-follow-ups).
 
 ## Validation / commands
 

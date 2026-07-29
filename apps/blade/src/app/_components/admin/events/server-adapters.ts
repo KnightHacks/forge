@@ -7,6 +7,7 @@ import type {
   EventListItem,
   EventTagItem,
 } from "./types";
+import { clubDateTimeSeconds, clubUtcOffset } from "~/lib/dates";
 
 type EventAdminInput = EventAdminDashboardProps["input"];
 
@@ -230,26 +231,8 @@ export function eventQueryInput(input: EventAdminInput) {
   };
 }
 
-/** Converts an instant to the explicit New York offset required by event APIs. */
+/** Converts an instant to the explicit club-time offset required by event APIs. */
 export function explicitNewYorkInstant(value: Date | string) {
   const instant = value instanceof Date ? value : new Date(value);
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
-    minute: "2-digit",
-    month: "2-digit",
-    second: "2-digit",
-    timeZone: "America/New_York",
-    timeZoneName: "longOffset",
-    year: "numeric",
-  });
-  const parts = Object.fromEntries(
-    formatter
-      .formatToParts(instant)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  const offset = (parts.timeZoneName ?? "GMT-05:00").replace("GMT", "");
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${offset}`;
+  return `${clubDateTimeSeconds(instant)}${clubUtcOffset(instant) ?? "-05:00"}`;
 }

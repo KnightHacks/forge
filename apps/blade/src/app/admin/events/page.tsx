@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import type { AdminEventSearchParams } from "~/app/_components/admin/events/params";
-import { canAccessEventAdmin } from "~/app/_components/admin/access";
+import type { SearchParams } from "~/lib/search-params";
 import { EventAdminDashboard } from "~/app/_components/admin/events/event-admin-dashboard";
 import {
   buildAdminEventSearchParams,
@@ -16,8 +15,9 @@ import {
   eventRowsToAdminData,
   eventRowToDetail,
 } from "~/app/_components/admin/events/server-adapters";
+import { canAccessEventAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
+import { api } from "~/trpc/server";
 
 export const metadata: Metadata = {
   description: "Manage Knight Hacks club events and integrations.",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default async function AdminEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<AdminEventSearchParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const session = await auth();
   if (!session) redirect("/");
@@ -125,16 +125,14 @@ export default async function AdminEventsPage({
     : null;
 
   return (
-    <HydrateClient>
-      <EventAdminDashboard
-        key={JSON.stringify(input)}
-        access={access}
-        channels={channels}
-        data={data}
-        detail={detail}
-        input={input}
-        tags={tagItems}
-      />
-    </HydrateClient>
+    <EventAdminDashboard
+      key={JSON.stringify(input)}
+      access={access}
+      channels={channels}
+      data={data}
+      detail={detail}
+      input={input}
+      tags={tagItems}
+    />
   );
 }

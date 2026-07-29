@@ -8,7 +8,6 @@ import { CAREER } from "@forge/consts";
 import { and, asc, desc, eq, ilike, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Company, Employment, Member } from "@forge/db/schemas/knight-hacks";
-import { permissions } from "@forge/utils";
 import {
   companyAdminUpdateSchema,
   companyCreateInputSchema,
@@ -37,33 +36,12 @@ import {
   hasUsCity,
   searchUsCities,
 } from "../utils/career/us-cities";
+import { isUniqueViolation } from "../utils/db";
+import {
+  assertCanEditMembers,
+  assertCanReadMembers,
+} from "../utils/member/access";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
-
-const readMemberPermissions = ["READ_MEMBERS", "EDIT_MEMBERS"] as const;
-const editMemberPermissions = ["EDIT_MEMBERS"] as const;
-
-function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false;
-  if ("code" in error && error.code === "23505") return true;
-  return (
-    "cause" in error &&
-    typeof error.cause === "object" &&
-    error.cause !== null &&
-    isUniqueViolation(error.cause)
-  );
-}
-
-function assertCanReadMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(readMemberPermissions, ctx);
-}
-
-function assertCanEditMembers(
-  ctx: Parameters<typeof permissions.controlPerms.or>[1],
-) {
-  permissions.controlPerms.or(editMemberPermissions, ctx);
-}
 
 async function getMemberForUser(userId: string) {
   const member = await db.query.Member.findFirst({
@@ -465,6 +443,7 @@ export const careerRouter = {
         .object({
           companyId: z.string().uuid(),
           fileContent: z.string().max(MAX_PROFILE_PICTURE_DATA_URL_LENGTH),
+          fileName: z.string().trim().min(1).max(255).optional(),
         })
         .strict(),
     )
@@ -484,6 +463,7 @@ export const careerRouter = {
       const objectName = await uploadCompanyImageObject({
         companyId: company.id,
         fileContent: input.fileContent,
+        fileName: input.fileName,
       });
       const operationId = company.logoObjectName ? randomUUID() : undefined;
       let auditEventId: string | undefined;

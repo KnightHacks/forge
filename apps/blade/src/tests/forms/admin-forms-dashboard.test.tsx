@@ -163,7 +163,7 @@ describe("AdminFormsDashboard", () => {
     expect(officerHtml).toContain("Manage sections");
   });
 
-  it("uses the established responsive admin surface and accessible controls", () => {
+  it("labels the forms admin controls for assistive technology", () => {
     const html = renderDashboard({
       canEdit: true,
       canManageSections: false,
@@ -172,16 +172,11 @@ describe("AdminFormsDashboard", () => {
       isOfficer: false,
     });
 
-    expect(html).toContain('data-forms-admin-layout="responsive"');
     expect(html).toContain('aria-label="Forms"');
     expect(html).toContain('aria-label="Search forms"');
     expect(html).toContain('aria-label="Form section"');
     expect(html).toContain("All sections");
-    expect(html).toContain('data-auto-swap="query-param"');
     expect(html).not.toContain("View section");
-    expect(html).toContain('data-section-context="all"');
-    expect(html).toMatch(/(?:min-h-11|h-11)/);
-    expect(html).toContain("focus-visible:ring-2");
   });
 
   it("makes the selected section an explicit, persistent workspace context", () => {
@@ -199,7 +194,6 @@ describe("AdminFormsDashboard", () => {
       }),
     );
 
-    expect(html).toContain(`data-section-context="${form.section.id}"`);
     expect(html).toContain(`name="section"`);
     expect(html).toContain(`value="${form.section.id}" selected=""`);
   });

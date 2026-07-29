@@ -56,17 +56,29 @@ import { toast } from "@forge/ui/toast";
 import {
   ADMIN_MEMBER_DELETE_CONFIRMATION,
   adminMemberEditableProfileSchema,
+  checkUploadMetadata,
   formatDuesAmount,
   memberSettingsFields,
+  PROFILE_PICTURE_UPLOAD_POLICY,
+  RESUME_UPLOAD_POLICY,
+  uploadAccept,
 } from "@forge/validators";
 
 import {
   memberProfileFormDefaults,
   MemberSettingsFieldControl,
 } from "~/app/_components/member/member-profile-settings-form";
+import {
+  formatClubDate,
+  formatClubDateTime,
+  formatUtcDate,
+  formatUtcDateTime,
+  formatUtcMonth,
+  formatUtcShortMonth,
+} from "~/lib/dates";
 import { api } from "~/trpc/react";
 
-type AdminMemberDetail = RouterOutputs["member"]["getAdminMember"];
+type AdminMemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
 type SettingsSection = MemberSettingsFieldDefinition["section"];
 
 const sectionOrder: SettingsSection[] = ["Personal", "Academics", "Guild"];
@@ -82,22 +94,18 @@ function display(value: boolean | number | string | null | undefined) {
   return String(value);
 }
 
+const DATE_ONLY_COLUMN = /^\d{4}-\d{2}-\d{2}$/;
+
 function formatDate(value: Date | string | null | undefined) {
   if (!value) return "Not provided";
-  const date =
-    typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? new Date(`${value}T12:00:00.000Z`)
-      : value instanceof Date
-        ? value
-        : new Date(value);
+  // Date of birth, graduation date and day keys are date-only columns, so they
+  // stay in UTC. Anything else is a real instant and belongs in club time.
+  if (typeof value === "string" && DATE_ONLY_COLUMN.test(value)) {
+    return formatUtcDate(value, "Not provided");
+  }
+  const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeZone:
-      typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-        ? "UTC"
-        : undefined,
-  }).format(date);
+  return formatClubDate(date, "Not provided");
 }
 
 function formatTimestamp(
@@ -107,28 +115,21 @@ function formatTimestamp(
   if (!value) return empty;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+  return formatClubDateTime(date, empty);
 }
 
 function formatJoined(date: string, time: string) {
-  const joined = new Date(`${date}T${time}`);
+  // `dateCreated`/`timeCreated` are zoneless `date` + `time` columns, so the
+  // stored wall clock is what we show. Reading it back as UTC keeps the output
+  // identical for every viewer instead of following the browser.
+  const joined = new Date(`${date}T${time}Z`);
   if (Number.isNaN(joined.getTime())) return formatDate(date);
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(joined);
+  return formatUtcDateTime(joined);
 }
 
 function formatMonth(value: string | null) {
   if (!value) return null;
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(new Date(`${value}-01T12:00:00.000Z`));
+  return formatUtcShortMonth(value);
 }
 
 function shiftDate(value: string, days: number) {
@@ -366,11 +367,7 @@ function discordActivityMonths(
         return { count: countByDate.get(day) ?? 0, date: day };
       }),
       id: cursor.slice(0, 7),
-      label: new Intl.DateTimeFormat("en-US", {
-        month: "long",
-        timeZone: "UTC",
-        year: "numeric",
-      }).format(date),
+      label: formatUtcMonth(date),
       leadingDays: date.getUTCDay(),
     });
   }
@@ -730,11 +727,11 @@ function AdminMemberFiles({
   onChanged: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const accessResume = api.member.accessAdminMemberResume.useMutation();
-  const uploadPicture = api.member.uploadAdminProfilePicture.useMutation();
-  const removePicture = api.member.removeAdminProfilePicture.useMutation();
-  const uploadResume = api.member.uploadAdminResume.useMutation();
-  const removeResume = api.member.removeAdminResume.useMutation();
+  const accessResume = api.memberAdmin.accessAdminMemberResume.useMutation();
+  const uploadPicture = api.memberAdmin.uploadAdminProfilePicture.useMutation();
+  const removePicture = api.memberAdmin.removeAdminProfilePicture.useMutation();
+  const uploadResume = api.memberAdmin.uploadAdminResume.useMutation();
+  const removeResume = api.memberAdmin.removeAdminResume.useMutation();
   const isPending =
     accessResume.isPending ||
     uploadPicture.isPending ||
@@ -822,12 +819,24 @@ function AdminMemberFiles({
                   {detail.member.profilePictureUrl ? "Replace" : "Upload"}
                   <Input
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
                     className="sr-only"
                     disabled={isPending}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (!file) return;
+                      const check = checkUploadMetadata(
+                        PROFILE_PICTURE_UPLOAD_POLICY,
+                        {
+                          contentType: file.type,
+                          fileName: file.name,
+                          size: file.size,
+                        },
+                      );
+                      if (!check.ok) {
+                        setError(check.message);
+                        return;
+                      }
                       void run(async () => {
                         const fileContent = await fileToDataUrl(
                           file,
@@ -900,12 +909,21 @@ function AdminMemberFiles({
                   {detail.member.resumeUrl ? "Replace" : "Upload"}
                   <Input
                     type="file"
-                    accept="application/pdf,.pdf"
+                    accept={uploadAccept(RESUME_UPLOAD_POLICY)}
                     className="sr-only"
                     disabled={isPending}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (!file) return;
+                      const check = checkUploadMetadata(RESUME_UPLOAD_POLICY, {
+                        contentType: file.type,
+                        fileName: file.name,
+                        size: file.size,
+                      });
+                      if (!check.ok) {
+                        setError(check.message);
+                        return;
+                      }
                       void run(async () => {
                         const fileContent = await fileToDataUrl(
                           file,
@@ -977,7 +995,7 @@ function AdminMemberEditForm({
     schema: adminMemberEditableProfileSchema,
     defaultValues: defaults,
   });
-  const update = api.member.updateAdminMember.useMutation({
+  const update = api.memberAdmin.updateAdminMember.useMutation({
     onSuccess() {
       toast.success("Member profile saved.");
       onSaved();
@@ -1075,7 +1093,7 @@ function DeleteMemberDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
-  const remove = api.member.deleteAdminMember.useMutation({
+  const remove = api.memberAdmin.deleteAdminMember.useMutation({
     onSuccess() {
       toast.success("Member profile deleted.");
       setOpen(false);
@@ -1165,7 +1183,7 @@ export function MemberDetailDialog({
   onDeleted: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const dues = api.member.setAdminDuesStatus.useMutation({
+  const dues = api.memberAdmin.setAdminDuesStatus.useMutation({
     onSuccess() {
       toast.success("Dues status updated.");
       onChanged();

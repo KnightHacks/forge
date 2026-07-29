@@ -13,6 +13,7 @@ import {
   requiredText,
 } from "./forms";
 import { guildOpportunityStatusesSchema } from "./guild";
+import { IMAGE_UPLOAD_POLICY } from "./upload-policy";
 
 export const MEMBER_SIGNUP_FORM_ID = "f0000000-0000-4000-8000-000000000001";
 export const MEMBER_SIGNUP_CONNECTION_ID =
@@ -407,7 +408,7 @@ export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
     label: "Profile picture",
     kind: "image",
     section: "Guild",
-    description: "Upload a JPEG, PNG, GIF, or WebP image, up to 2MB.",
+    description: `Upload a ${IMAGE_UPLOAD_POLICY.typeLabel}, up to ${IMAGE_UPLOAD_POLICY.sizeLabel}.`,
   },
   {
     name: "tagline",

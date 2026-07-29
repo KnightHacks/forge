@@ -46,13 +46,13 @@ You can also reference the skill directly:
 
 The skill includes a 1-10 scoring rubric across five dimensions:
 
-| Dimension | Question |
-|-----------|----------|
-| Directness | Statements or announcements? |
-| Rhythm | Varied or metronomic? |
-| Trust | Respects reader intelligence? |
+| Dimension    | Question                               |
+| ------------ | -------------------------------------- |
+| Directness   | Statements or announcements?           |
+| Rhythm       | Varied or metronomic?                  |
+| Trust        | Respects reader intelligence?          |
 | Authenticity | Sounds like a specific human wrote it? |
-| Density | Anything cuttable? |
+| Density      | Anything cuttable?                     |
 
 Below 35/50: revise.
 

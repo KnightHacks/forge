@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@9.12.1",
   "scripts": {
-    "build": "pnpm with-env next build",
+    "build": "NODE_ENV=production pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev --port 3001",
     "format": "prettier --check . --ignore-path ../../.gitignore",
@@ -23,6 +23,7 @@
     "@forge/api": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/ui": "workspace:*",
+    "@t3-oss/env-nextjs": "^0.13.10",
     "@trpc/client": "catalog:",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
@@ -46,7 +47,9 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
   },
   "prettier": "@forge/prettier-config"
 }

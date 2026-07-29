@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { DISCORD } from "@forge/consts";
-
 import {
   listAdminEvents,
   listCheckInEvents,
@@ -20,6 +18,10 @@ import {
   ROLE_IDS,
   safeEventFixtureSet,
 } from "../support/events/fixtures";
+
+// A fixture snowflake, not the real guild. `listMemberEvents` takes the guild
+// ID as a parameter precisely so this stays a pure test with no config lookup.
+const GUILD_ID = "990000000000000042";
 
 describe("event discovery policy", () => {
   it("[TC-001] returns only bounded, safe, eligible public Club events", () => {
@@ -100,6 +102,7 @@ describe("event discovery policy", () => {
     ).toEqual([futureLegacy.id]);
     expect(
       listMemberEvents([futureLegacy, combinedLegacy], {
+        guildId: GUILD_ID,
         member: memberRecord({ duesActive: false }),
         now: NOW,
       }),
@@ -143,7 +146,11 @@ describe("event discovery policy", () => {
       }),
     ];
 
-    const result = listMemberEvents(events, { member, now: NOW });
+    const result = listMemberEvents(events, {
+      guildId: GUILD_ID,
+      member,
+      now: NOW,
+    });
 
     expect(new Set(result.map((event) => event.id))).toEqual(
       new Set([
@@ -162,7 +169,7 @@ describe("event discovery policy", () => {
     expect(result.find((event) => event.id === EVENT_IDS.public)).toMatchObject(
       {
         attendanceCount: 0,
-        discordUrl: `https://discord.com/events/${DISCORD.KNIGHTHACKS_GUILD}/discord-event-1`,
+        discordUrl: `https://discord.com/events/${GUILD_ID}/discord-event-1`,
       },
     );
     for (const event of result) {
@@ -185,12 +192,14 @@ describe("event discovery policy", () => {
 
     expect(
       listMemberEvents([duesEvent], {
+        guildId: GUILD_ID,
         member: memberRecord({ duesActive: true }),
         now: NOW,
       })[0],
     ).toMatchObject({ locked: false });
     expect(
       listMemberEvents([duesEvent], {
+        guildId: GUILD_ID,
         member: memberRecord({ duesActive: false }),
         now: NOW,
       })[0],
@@ -439,12 +448,14 @@ describe("event discovery policy", () => {
 
     expect(
       listMemberEvents([narrowing], {
+        guildId: GUILD_ID,
         member: memberRecord({ duesActive: false }),
         now: NOW,
       })[0],
     ).toMatchObject({ locked: true, lockReason: "dues_required" });
     expect(
       listMemberEvents([broadening], {
+        guildId: GUILD_ID,
         member: memberRecord({ duesActive: false }),
         now: NOW,
       })[0],
