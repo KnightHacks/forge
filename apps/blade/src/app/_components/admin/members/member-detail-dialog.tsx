@@ -77,6 +77,7 @@ import {
   formatUtcShortMonth,
 } from "~/lib/dates";
 import { api } from "~/trpc/react";
+import { AlumniBadge, graduatedDateClassName } from "./alumni-status";
 
 type AdminMemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
 type SettingsSection = MemberSettingsFieldDefinition["section"];
@@ -1231,6 +1232,7 @@ export function MemberDetailDialog({
                   >
                     {detail.duesStatus.paid ? "Paid" : "Unpaid"}
                   </Badge>
+                  {member.alumniConfirmedAt && <AlumniBadge />}
                 </div>
               </div>
             </div>
@@ -1313,7 +1315,15 @@ export function MemberDetailDialog({
                         />
                         <DetailValue
                           label="Graduation date"
-                          value={formatDate(member.gradDate)}
+                          value={
+                            detail.graduated ? (
+                              <span className={graduatedDateClassName}>
+                                {formatDate(member.gradDate)}
+                              </span>
+                            ) : (
+                              formatDate(member.gradDate)
+                            )
+                          }
                         />
                         <DetailValue
                           label="Legacy company"

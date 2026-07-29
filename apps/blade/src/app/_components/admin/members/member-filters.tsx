@@ -40,9 +40,11 @@ interface FilterOptions {
 function cloneFilters(input: AdminMemberListInput): AdminMemberListInput {
   return {
     ...input,
+    alumniConfirmations: [...input.alumniConfirmations],
     companies: [...input.companies],
     duesStatuses: [...input.duesStatuses],
     genders: [...input.genders],
+    graduationStatuses: [...input.graduationStatuses],
     graduationYears: [...input.graduationYears],
     guildVisibilities: [...input.guildVisibilities],
     levelsOfStudy: [...input.levelsOfStudy],
@@ -55,9 +57,11 @@ function cloneFilters(input: AdminMemberListInput): AdminMemberListInput {
 function clearFilters(input: AdminMemberListInput): AdminMemberListInput {
   return {
     ...input,
+    alumniConfirmations: [],
     companies: [],
     duesStatuses: [],
     genders: [],
+    graduationStatuses: [],
     graduationYears: [],
     guildVisibilities: [],
     joinedFrom: undefined,
@@ -258,6 +262,34 @@ export function MemberFilters({
                 setDraft((current) => ({
                   ...current,
                   guildVisibilities: values as ("public" | "private")[],
+                }))
+              }
+            />
+            <MultiSelectFilter
+              label="Graduation status"
+              options={["graduated", "current student"]}
+              selected={draft.graduationStatuses}
+              onChange={(values) =>
+                setDraft((current) => ({
+                  ...current,
+                  graduationStatuses: values as (
+                    | "current student"
+                    | "graduated"
+                  )[],
+                }))
+              }
+            />
+            <MultiSelectFilter
+              label="Alumni confirmation"
+              options={["confirmed", "unconfirmed"]}
+              selected={draft.alumniConfirmations}
+              onChange={(values) =>
+                setDraft((current) => ({
+                  ...current,
+                  alumniConfirmations: values as (
+                    | "confirmed"
+                    | "unconfirmed"
+                  )[],
                 }))
               }
             />

@@ -7,7 +7,18 @@ import type { SQL } from "@forge/db";
 import type { SelectMember } from "@forge/db/schemas/knight-hacks";
 import type { AdminMemberListInput } from "@forge/validators";
 import { EVENTS } from "@forge/consts";
-import { and, asc, desc, eq, gte, inArray, isNull, lte, sql } from "@forge/db";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  sql,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
@@ -61,6 +72,7 @@ import {
   assertCanReadMembers,
 } from "../utils/member/access";
 import { rankAdminMemberCandidates } from "../utils/member/admin";
+import { graduatedCondition, hasGraduated } from "../utils/member/graduation";
 import { updateMemberProfile } from "../utils/member/update";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 import {
@@ -162,6 +174,8 @@ function activeMemberFilterFacets(input: AdminMemberListInput) {
     input.graduationYears.length > 0 ? "graduationYears" : null,
     input.companies.length > 0 ? "companies" : null,
     input.guildVisibilities.length > 0 ? "guildVisibilities" : null,
+    input.graduationStatuses.length > 0 ? "graduationStatuses" : null,
+    input.alumniConfirmations.length > 0 ? "alumniConfirmations" : null,
     input.genders.length > 0 ? "genders" : null,
     input.racesOrEthnicities.length > 0 ? "racesOrEthnicities" : null,
     input.joinedFrom ? "joinedFrom" : null,
@@ -246,6 +260,18 @@ function structuredMemberConditions(input: AdminMemberListInput) {
   if (input.guildVisibilities.length === 1) {
     conditions.push(
       eq(Member.guildProfileVisible, input.guildVisibilities[0] === "public"),
+    );
+  }
+  if (input.graduationStatuses.length === 1) {
+    conditions.push(
+      graduatedCondition(input.graduationStatuses[0] === "graduated"),
+    );
+  }
+  if (input.alumniConfirmations.length === 1) {
+    conditions.push(
+      input.alumniConfirmations[0] === "confirmed"
+        ? isNotNull(Member.alumniConfirmedAt)
+        : isNull(Member.alumniConfirmedAt),
     );
   }
   if (input.joinedFrom) {
@@ -578,24 +604,28 @@ function toListItem(
   member: Awaited<ReturnType<typeof getMembersInOrder>>[number],
   duesStatus: ReturnType<typeof buildDuesStatus>,
 ): {
+  alumniConfirmed: boolean;
   company: string | null;
   dateCreated: string;
   discordUser: string;
   duesStatus: { paid: boolean; state: "paid" | "unpaid" };
   email: string;
   firstName: string;
+  graduated: boolean;
   graduation: ReturnType<typeof graduationTermYearFromDate>;
   id: string;
   lastName: string;
   school: string;
 } {
   return {
+    alumniConfirmed: member.alumniConfirmedAt !== null,
     company: member.company,
     dateCreated: member.dateCreated,
     discordUser: member.discordUser,
     duesStatus: { paid: duesStatus.paid, state: duesStatus.state },
     email: member.email,
     firstName: member.firstName,
+    graduated: hasGraduated(member.gradDate),
     graduation: graduationTermYearFromDate(member.gradDate),
     id: member.id,
     lastName: member.lastName,
@@ -769,6 +799,7 @@ export const memberAdminRouter = {
               checkedInByName ?? checkedInByEmail ?? "Automatic or legacy",
           }),
         ),
+        graduated: hasGraduated(member.gradDate),
         guildLocation: member.currentCityKey
           ? getUsCity(member.currentCityKey)
           : null,

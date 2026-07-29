@@ -42,6 +42,34 @@ describe("admin member contracts", () => {
     });
   });
 
+  it("keeps graduation and alumni confirmation as independent three-state filters", () => {
+    const defaults = adminMemberListSchema.parse({});
+    expect(defaults.graduationStatuses).toEqual([]);
+    expect(defaults.alumniConfirmations).toEqual([]);
+
+    // Graduated-but-unconfirmed is the common case, so the two must be
+    // expressible together rather than as one tri-state control.
+    expect(
+      adminMemberListSchema.parse({
+        alumniConfirmations: ["unconfirmed"],
+        graduationStatuses: ["graduated"],
+      }),
+    ).toMatchObject({
+      alumniConfirmations: ["unconfirmed"],
+      graduationStatuses: ["graduated"],
+    });
+    expect(
+      adminMemberListSchema.parse({ graduationStatuses: ["current student"] })
+        .graduationStatuses,
+    ).toEqual(["current student"]);
+    expect(() =>
+      adminMemberListSchema.parse({ graduationStatuses: ["alumni"] }),
+    ).toThrow();
+    expect(() =>
+      adminMemberListSchema.parse({ alumniConfirmations: ["maybe"] }),
+    ).toThrow();
+  });
+
   it("rejects malformed filter values and date ranges", () => {
     expect(() =>
       adminMemberListSchema.parse({ schools: ["Unknown University"] }),
