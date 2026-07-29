@@ -17,9 +17,11 @@ function numberList(value: string | string[] | undefined) {
 
 export function parseAdminMemberSearchParams(params: SearchParams) {
   const raw = {
+    alumniConfirmations: list(params.alumni),
     companies: list(params.company),
     duesStatuses: list(params.dues),
     genders: list(params.gender),
+    graduationStatuses: list(params.gradStatus),
     graduationYears: numberList(params.gradYear),
     guildVisibilities: list(params.visibility),
     joinedFrom: first(params.joinedFrom),
@@ -70,6 +72,8 @@ export function buildAdminMemberSearchParams(
   append("gradYear", input.graduationYears);
   append("company", input.companies);
   append("visibility", input.guildVisibilities);
+  append("gradStatus", input.graduationStatuses);
+  append("alumni", input.alumniConfirmations);
   append("gender", input.genders);
   append("race", input.racesOrEthnicities);
   if (input.joinedFrom) params.set("joinedFrom", input.joinedFrom);

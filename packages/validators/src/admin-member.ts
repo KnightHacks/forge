@@ -55,6 +55,12 @@ export const adminMemberListSchema = z
     graduationYears: z.array(z.number().int().min(1900).max(2100)).default([]),
     companies: z.array(z.string().trim().min(1).max(255)).default([]),
     guildVisibilities: z.array(z.enum(["public", "private"])).default([]),
+    graduationStatuses: z
+      .array(z.enum(["graduated", "current student"]))
+      .default([]),
+    alumniConfirmations: z
+      .array(z.enum(["confirmed", "unconfirmed"]))
+      .default([]),
     genders: z.array(z.enum(FORMS.GENDERS)).default([]),
     racesOrEthnicities: z.array(z.enum(FORMS.RACES_OR_ETHNICITIES)).default([]),
     joinedFrom: strictDateString.optional(),

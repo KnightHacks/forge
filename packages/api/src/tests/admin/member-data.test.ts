@@ -1,7 +1,25 @@
 import { describe, expect, it } from "vitest";
 
+import type { SQL } from "@forge/db";
+import { StringChunk } from "@forge/db";
+
 import { getDuesPaymentIdsToInvalidate } from "../../utils/dues/status";
 import { rankAdminMemberCandidates } from "../../utils/member/admin";
+import {
+  graduatedCondition,
+  hasGraduated,
+} from "../../utils/member/graduation";
+
+function renderCondition(condition: SQL) {
+  return condition.queryChunks
+    .map((chunk) =>
+      chunk instanceof StringChunk
+        ? chunk.value.join("")
+        : (chunk as { name: string }).name,
+    )
+    .join("")
+    .trim();
+}
 
 const candidates = [
   {
@@ -61,6 +79,32 @@ describe("admin member data utilities", () => {
     const result = rankAdminMemberCandidates(candidates, query);
 
     expect(result[0]?.candidate.id).toBe(expectedId);
+  });
+
+  it("filters graduation off the graduation date, not off alumni confirmation", () => {
+    expect(renderCondition(graduatedCondition(true))).toBe(
+      "gradDate < CURRENT_DATE",
+    );
+    expect(renderCondition(graduatedCondition(false))).toBe(
+      "gradDate >= CURRENT_DATE",
+    );
+  });
+
+  it("counts someone graduating today as a current student all day", () => {
+    const gradDay = "2026-05-02";
+
+    expect(hasGraduated(gradDay, new Date("2026-05-02T00:00:00.000Z"))).toBe(
+      false,
+    );
+    expect(hasGraduated(gradDay, new Date("2026-05-02T23:59:58.000Z"))).toBe(
+      false,
+    );
+    expect(hasGraduated(gradDay, new Date("2026-05-03T00:00:00.000Z"))).toBe(
+      true,
+    );
+    expect(
+      hasGraduated(new Date("2027-05-02T00:00:00.000Z"), new Date(gradDay)),
+    ).toBe(false);
   });
 
   it("invalidates every row that would keep dues effective while preserving unrelated history", () => {

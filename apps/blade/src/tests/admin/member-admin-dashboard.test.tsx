@@ -60,12 +60,14 @@ const data = {
   },
   members: [
     {
+      alumniConfirmed: false,
       company: "Knight Hacks",
       dateCreated: "2026-06-27",
       discordUser: "lenny-dragon",
       duesStatus: {
         paid: true,
       },
+      graduated: false,
       email: "lenny@example.test",
       firstName: "Lenny",
       graduation: { gradTerm: "Spring", gradYear: 2027 },
@@ -82,7 +84,67 @@ const data = {
   },
 } as RouterOutputs["memberAdmin"]["getAdminMembers"];
 
+type DashboardMember = (typeof data)["members"][number];
+
+function renderWith(overrides: Partial<DashboardMember>) {
+  return renderToStaticMarkup(
+    createElement(MemberAdminDashboard, {
+      canEdit: false,
+      data: {
+        ...data,
+        members: data.members.map((member) => ({ ...member, ...overrides })),
+      },
+      detail: null,
+      input,
+      isOfficer: false,
+    }),
+  );
+}
+
 describe("MemberAdminDashboard", () => {
+  it("drills into a member from the name rather than a separate View control", () => {
+    const html = renderWith({});
+
+    expect(html).not.toContain(">View<");
+    expect(html).not.toContain(">Actions<");
+    expect(html).toContain('aria-label="View Lenny Dragonson"');
+    // Real button, keyboard focusable, 44px hit target.
+    expect(html).toContain("min-h-11");
+  });
+
+  // The two facts must stay separable in the markup: a graduated member tints
+  // their own data gold, a confirmed one earns the badge, and the common case is
+  // graduated *without* confirmation. A single assertion covering both would
+  // pass if one silently stood in for the other.
+  it("tints graduated members gold and badges only confirmed alumni", () => {
+    const graduatedOnly = renderWith({
+      alumniConfirmed: false,
+      graduated: true,
+    });
+    const confirmed = renderWith({ alumniConfirmed: true, graduated: true });
+    const currentStudent = renderWith({
+      alumniConfirmed: false,
+      graduated: false,
+    });
+
+    // Positive control: without this, the two `not.toContain`s below would pass
+    // on markup that failed to render a member row at all.
+    expect(graduatedOnly).toContain("Dragonson");
+
+    // The affordance must be present at rest, not only on hover — the name is
+    // the sole route into the detail dialog now the View button is gone.
+    expect(graduatedOnly).toContain("underline");
+    expect(graduatedOnly).toContain("text-[hsl(var(--guild-gold))]");
+    expect(graduatedOnly).not.toContain(">Alumni<");
+
+    expect(confirmed).toContain(">Alumni<");
+
+    expect(currentStudent).toContain("Dragonson");
+    expect(currentStudent).toContain("underline");
+    expect(currentStudent).not.toContain("text-[hsl(var(--guild-gold))]");
+    expect(currentStudent).not.toContain(">Alumni<");
+  });
+
   it("renders desktop detail columns and the compact mobile member card", () => {
     const html = renderToStaticMarkup(
       createElement(MemberAdminDashboard, {

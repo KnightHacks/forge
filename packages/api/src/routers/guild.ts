@@ -28,6 +28,7 @@ import {
   normalizePublicGuildUrl,
 } from "../utils/guild/public-profile";
 import { getGuildRoleCallout } from "../utils/guild/role-callout";
+import { graduatedCondition, hasGraduated } from "../utils/member/graduation";
 import {
   PROFILE_PICTURE_BUCKET_NAME,
   resolveProfilePictureObjectName,
@@ -217,9 +218,9 @@ function getFilters(
   const wantsCurrent = input.memberStatuses.includes("current");
   const wantsAlumni = input.memberStatuses.includes("alumni");
   if (wantsCurrent && !wantsAlumni) {
-    filters.push(sql`${Member.gradDate} >= CURRENT_DATE`);
+    filters.push(graduatedCondition(false));
   } else if (wantsAlumni && !wantsCurrent) {
-    filters.push(sql`${Member.gradDate} < CURRENT_DATE`);
+    filters.push(graduatedCondition(true));
   }
 
   if (input.graduationYears.length > 0) {
@@ -366,10 +367,7 @@ async function toPublicProfile(
       typeof row.resumeReference === "string" &&
       row.resumeReference.trim().length > 0,
     opportunityStatuses: row.opportunityStatuses,
-    memberStatus:
-      new Date(`${row.gradDate}T23:59:59Z`) >= new Date()
-        ? "current"
-        : "alumni",
+    memberStatus: hasGraduated(row.gradDate) ? "alumni" : "current",
     roleCallout,
   });
 }

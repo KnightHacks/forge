@@ -1,3 +1,5 @@
+import { hasGraduated } from "../member/graduation";
+
 export type AlumniDashboardMode = "alumni" | "current" | "needs_confirmation";
 
 interface AlumniStatusInput {
@@ -15,9 +17,7 @@ export function getAlumniDashboardMode(
   member: AlumniStatusInput,
   now = new Date(),
 ): AlumniDashboardMode {
-  if (dateOnly(member.gradDate) >= now.toISOString().slice(0, 10)) {
-    return "current";
-  }
+  if (!hasGraduated(member.gradDate, now)) return "current";
 
   return member.alumniConfirmedAt ? "alumni" : "needs_confirmation";
 }

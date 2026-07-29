@@ -13,7 +13,6 @@ import {
   ArrowDownUp,
   ArrowUpAZ,
   Download,
-  Eye,
   Loader2,
   Search,
   UsersRound,
@@ -22,6 +21,7 @@ import {
 
 import type { RouterOutputs } from "@forge/api";
 import type { AdminMemberListInput } from "@forge/validators";
+import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
@@ -52,6 +52,12 @@ import {
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatUtcDate } from "~/lib/dates";
 import { api } from "~/trpc/react";
+import {
+  AlumniBadge,
+  graduatedDateClassName,
+  graduatedNameClassName,
+  nameClassName,
+} from "./alumni-status";
 import { InvalidateDuesDialog } from "./invalidate-dues-dialog";
 import { MemberDetailDialog } from "./member-detail-dialog";
 import { MemberFilters } from "./member-filters";
@@ -61,9 +67,11 @@ type DashboardData = RouterOutputs["memberAdmin"]["getAdminMembers"];
 type MemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
 type DashboardMember = DashboardData["members"][number];
 type FilterField =
+  | "alumni"
   | "company"
   | "dues"
   | "gender"
+  | "gradStatus"
   | "gradYear"
   | "joinedFrom"
   | "joinedTo"
@@ -86,9 +94,11 @@ function formatDate(date: string) {
 function clearAllFilters(input: AdminMemberListInput): AdminMemberListInput {
   return {
     ...input,
+    alumniConfirmations: [],
     companies: [],
     duesStatuses: [],
     genders: [],
+    graduationStatuses: [],
     graduationYears: [],
     guildVisibilities: [],
     joinedFrom: undefined,
@@ -136,6 +146,16 @@ function getActiveFilters(input: AdminMemberListInput): ActiveFilter[] {
     ...input.guildVisibilities.map((value) => ({
       field: "visibility" as const,
       label: `Guild: ${value}`,
+      value,
+    })),
+    ...input.graduationStatuses.map((value) => ({
+      field: "gradStatus" as const,
+      label: `Graduation: ${value}`,
+      value,
+    })),
+    ...input.alumniConfirmations.map((value) => ({
+      field: "alumni" as const,
+      label: `Alumni: ${value}`,
       value,
     })),
     ...input.genders.map((value) => ({
@@ -192,6 +212,16 @@ function removeFilter(
       return { ...next, companies: without(input.companies) };
     case "visibility":
       return { ...next, guildVisibilities: without(input.guildVisibilities) };
+    case "gradStatus":
+      return {
+        ...next,
+        graduationStatuses: without(input.graduationStatuses),
+      };
+    case "alumni":
+      return {
+        ...next,
+        alumniConfirmations: without(input.alumniConfirmations),
+      };
     case "gender":
       return { ...next, genders: without(input.genders) };
     case "race":
@@ -546,21 +576,39 @@ export function MemberAdminDashboard({
                             onClick={() => changeSort("joined")}
                           />
                         </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {data.members.map((member) => (
                         <TableRow key={member.id}>
                           <TableCell className="font-medium">
-                            {member.firstName} {member.lastName}
+                            <div className="flex min-w-0 items-center gap-2">
+                              <button
+                                type="button"
+                                aria-label={`View ${member.firstName} ${member.lastName}`}
+                                className={cn(
+                                  "inline-flex min-h-11 items-center rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-9",
+                                  member.graduated
+                                    ? graduatedNameClassName
+                                    : nameClassName,
+                                )}
+                                onClick={() => navigate(input, member.id)}
+                              >
+                                {member.firstName} {member.lastName}
+                              </button>
+                              {member.alumniConfirmed && <AlumniBadge />}
+                            </div>
                           </TableCell>
                           <TableCell>@{member.discordUser}</TableCell>
                           <TableCell>{member.email}</TableCell>
                           <TableCell className="max-w-52 truncate">
                             {member.school}
                           </TableCell>
-                          <TableCell>
+                          <TableCell
+                            className={cn(
+                              member.graduated && graduatedDateClassName,
+                            )}
+                          >
                             {member.graduation.gradTerm}{" "}
                             {member.graduation.gradYear}
                           </TableCell>
@@ -574,17 +622,6 @@ export function MemberAdminDashboard({
                           </TableCell>
                           <TableCell>
                             {formatDate(member.dateCreated)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => navigate(input, member.id)}
-                            >
-                              <Eye className="h-4 w-4" />
-                              View
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -600,7 +637,13 @@ export function MemberAdminDashboard({
                     >
                       <button
                         type="button"
-                        className="flex min-h-20 min-w-0 flex-1 items-center p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-24 sm:p-4"
+                        aria-label={`View ${member.firstName} ${member.lastName}`}
+                        className={cn(
+                          "flex min-h-20 min-w-0 flex-1 items-center p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-24 sm:p-4",
+                          member.graduated
+                            ? graduatedNameClassName
+                            : nameClassName,
+                        )}
                         onClick={() => navigate(input, member.id)}
                       >
                         <span className="min-w-0">
@@ -612,6 +655,7 @@ export function MemberAdminDashboard({
                           </span>
                         </span>
                       </button>
+                      {member.alumniConfirmed && <AlumniBadge />}
                       <DuesStatusControl
                         canEdit={canEdit}
                         isPending={pendingDuesMemberId === member.id}
