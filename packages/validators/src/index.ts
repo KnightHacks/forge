@@ -15,3 +15,4 @@ export * from "./audit";
 export * from "./email";
 export * from "./alumni";
 export * from "./discord-archive";
+export * from "./platform-config";

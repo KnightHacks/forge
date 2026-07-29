@@ -6,6 +6,7 @@ import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
   Event,
+  EventFeedbackConfig,
   FormResponseRoles,
   FormSectionRoles,
   Issue,
@@ -107,6 +108,51 @@ export async function getDependencyCounts(
       issues.length +
       issueVisibility.length,
   };
+}
+
+/**
+ * Past events that stop being readable for feedback analytics and CSV export if
+ * this role is excluded.
+ *
+ * Every clause is load bearing, and the number is deliberately smaller than
+ * "events touching this role":
+ *
+ * - `hackathonId IS NULL` and the role membership are what `isQualifyingEvent`
+ *   tests, so they are what excluding the role actually changes.
+ * - `end_datetime <= now()` because the officer is warned about *past* events.
+ * - the feedback-config join, because that row is what collection hangs off:
+ *   no config, no form, no responses. Such an event has nothing to lose, and
+ *   naming it inflates the number and makes the warning easier to dismiss.
+ * - the no-other-excluded-role clause, because `isQualifyingEvent` fails on any
+ *   protected role. An event already carrying a flagged role is already
+ *   unreadable, so counting it would bill this toggle for a loss that has
+ *   already happened.
+ *
+ * Lives here rather than in `buildLinkedRoleViews`, which runs a per-role
+ * `await` inside a `map` and backs the roles *list* page — one query per linked
+ * role, on every list render, for a number one dialog reads.
+ */
+export async function countFeedbackExclusionImpact(
+  roleId: string,
+  executor: DbExecutor = db,
+) {
+  const rows = await executor
+    .select({ id: Event.id })
+    .from(Event)
+    .innerJoin(EventFeedbackConfig, eq(EventFeedbackConfig.eventId, Event.id))
+    .where(
+      sql`${Event.hackathonId} IS NULL
+        AND ${roleId} = ANY(${Event.roles})
+        AND ${Event.end_datetime} <= now()
+        AND NOT EXISTS (
+          SELECT 1 FROM ${Roles}
+          WHERE ${Roles.eventFeedbackExcluded} = true
+            AND ${Roles.id} <> ${roleId}
+            AND ${Roles.id}::text = ANY(${Event.roles})
+        )`,
+    );
+
+  return rows.length;
 }
 
 export async function getAssignmentRows() {
@@ -393,6 +439,9 @@ export async function buildLinkedRoleViews(
         dependencyCount: dependencies?.total ?? 0,
         discordRoleId: role.discordRoleId,
         emailAudienceEnabled: role.emailAudienceEnabled,
+        // Free: the select above already reads the whole row. The *count* of
+        // affected past events is not here — see `countFeedbackExclusionImpact`.
+        eventFeedbackExcluded: role.eventFeedbackExcluded,
         id: role.id,
         isCosmetic: isCosmeticPermissionString(role.permissions),
         isMissing: discordRoles.available && !live,

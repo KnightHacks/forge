@@ -13,6 +13,10 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "career.removeCompanyImage",
   "career.updateCompany",
   "career.uploadCompanyImage",
+  // Router *file* names, not client namespaces. The api-surface snapshot keys
+  // the same procedures as `clubTeams.*` and `discordConfig.*`.
+  "club-teams.updateClassification",
+  "discord-config.update",
   "email.archiveTemplate",
   "email.cancelSend",
   "email.confirmSend",
@@ -72,6 +76,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "roles.syncRole",
   "roles.unlinkRole",
   "roles.updateEmailAudience",
+  "roles.updateEventFeedbackExclusion",
   "roles.updateIssueReminders",
   "roles.updatePermissions",
 ] as const;
@@ -94,7 +99,9 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "audit.searchMembers",
   "career.getAdminCompany",
   "career.listAdminCompanies",
+  "club-teams.listConfiguration",
   "discord-archive.getHealth",
+  "discord-config.list",
   "email.getSend",
   "email.getTemplate",
   "email.listAudienceOptions",

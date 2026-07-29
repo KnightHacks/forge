@@ -14,6 +14,7 @@ import {
   permissionExpressionSchema,
   roleBatchAssignmentSchema,
   roleCreateSchema,
+  roleEventFeedbackExclusionSchema,
   roleIdSchema,
   roleIssueReminderUpdateSchema,
   roleManagementQuerySchema,
@@ -51,6 +52,7 @@ import {
   assertEligibleDiscordRole,
   assertUniqueDiscordRole,
   buildLinkedRoleViews,
+  countFeedbackExclusionImpact,
   getAssignmentRows,
   getDependencyCounts,
   getDiscordRole,
@@ -146,7 +148,14 @@ export const rolesRouter = {
       !isAdministrativePermissionString(
         permissionKeysToBitstring(role.permissions),
       ) || (await retainsAdministratorAfter(role.id, null));
-    return { ...role, canRemoveAdmin };
+    // One extra query for the one role this procedure resolves, beside the
+    // `canRemoveAdmin` lookup. `listLinks` deliberately does not carry it.
+    const pastEventCount = await countFeedbackExclusionImpact(role.id);
+    return {
+      ...role,
+      canRemoveAdmin,
+      feedbackExclusionImpact: { pastEventCount },
+    };
   }),
 
   listUsers: permProcedure
@@ -474,6 +483,70 @@ export const rolesRouter = {
                 after: updated.emailAudienceEnabled,
                 before: role.emailAudienceEnabled,
                 field: "enabled",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: role.id,
+                targetLabel: role.name,
+                targetType: "role",
+              },
+            ],
+          },
+          tx,
+        );
+        return updated;
+      });
+    }),
+
+  /** Excludes a role's events from feedback collection, analytics, and export. */
+  updateEventFeedbackExclusion: permProcedure
+    .input(roleEventFeedbackExclusionSchema)
+    .mutation(async ({ ctx, input }) => {
+      // `requireConfigure`, not the officer guard the platform console uses. It
+      // sits in the same dialog as `updateEmailAudience`, and a CONFIGURE_ROLES
+      // holder who can already rewrite a role's permissions is not meaningfully
+      // restrained by being denied one boolean.
+      requireConfigure(ctx);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [role] = await tx
+          .select()
+          .from(Roles)
+          .where(eq(Roles.id, input.roleId))
+          .limit(1)
+          .for("update");
+        if (!role) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        const [updated] = await tx
+          .update(Roles)
+          .set({ eventFeedbackExcluded: input.excluded })
+          .where(eq(Roles.id, input.roleId))
+          .returning({
+            eventFeedbackExcluded: Roles.eventFeedbackExcluded,
+            id: Roles.id,
+            name: Roles.name,
+          });
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Role not found.",
+          });
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "role.event_feedback_exclusion.updated",
+            actor: auditActor,
+            changes: [
+              {
+                after: updated.eventFeedbackExcluded,
+                before: role.eventFeedbackExcluded,
+                field: "excluded",
               },
             ],
             subjects: [

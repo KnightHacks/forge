@@ -51,6 +51,52 @@ export const CONFIG_KEYS = [
 export type ConfigKey = (typeof CONFIG_KEYS)[number];
 
 /**
+ * What reads each setting, in officer-facing terms. An empty array means the
+ * platform reads this key nowhere: the row exists because the constant it
+ * replaced existed, not because anything resolves it.
+ *
+ * `satisfies Record<ConfigKey, ...>` is the point. Adding a key to
+ * {@link CONFIG_KEYS} without answering "what reads it?" is a type error, which
+ * is the only moment anyone is in a position to answer honestly.
+ *
+ * The labels are copy and are not verified against anything. The live/inert
+ * split is, by `packages/utils/src/tests/discord-config-consumers.test.ts`,
+ * which scans for the call sites this describes.
+ */
+export const CONFIG_KEY_CONSUMERS = {
+  guild: [
+    "Discord message archive",
+    "Role sync and role linking",
+    "Discord event projection",
+    "T.K. Discord bot",
+    "Role-sync and alumni cron jobs",
+  ],
+  log_channel: ["Blade admin action log embeds"],
+  recruiting_channel: ["Recruiting notifications posted by form callbacks"],
+  alumni_role: ["Nightly alumni grant/revoke cron"],
+  officer_role: [],
+  admin_role: [],
+  volunteer_role: [],
+  vip_role: [],
+  outreach_director_role: [],
+  design_director_role: [],
+  development_director_role: [],
+  sponsorship_director_role: [],
+  workshops_director_role: [],
+  projects_mentorship_director_role: [],
+} as const satisfies Record<ConfigKey, readonly string[]>;
+
+/** Keys some code resolves. Ordered by {@link CONFIG_KEYS}, not alphabetically. */
+export const LIVE_CONFIG_KEYS = CONFIG_KEYS.filter(
+  (key) => CONFIG_KEY_CONSUMERS[key].length > 0,
+);
+
+/** Keys nothing resolves. Editing one changes no platform behavior. */
+export const INERT_CONFIG_KEYS = CONFIG_KEYS.filter(
+  (key) => CONFIG_KEY_CONSUMERS[key].length === 0,
+);
+
+/**
  * @deprecated Read `"guild"` from `@forge/utils/discord-config` instead.
  *
  * These three survive only because `apps/blade`'s Playwright specs and

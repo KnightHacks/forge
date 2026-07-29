@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   AUDIT_ACTION_CATALOG,
   AUDIT_ACTION_KEYS,
+  AUDIT_DOMAINS,
+  AUDIT_TARGET_TYPES,
   auditListInputSchema,
   auditSubjectInputSchema,
 } from "../audit";
@@ -40,6 +42,44 @@ describe("admin audit contracts", () => {
     expect(AUDIT_ACTION_CATALOG["role.email_audience.updated"].domain).toBe(
       "email",
     );
+  });
+
+  it("TC-024 files the console actions by effect and keeps the target type unique", () => {
+    expect(AUDIT_ACTION_CATALOG["discord_config.updated"]).toMatchObject({
+      // A new domain, because none of the existing ten fits a Discord guild
+      // repoint. Filed by effect, the rule that already puts
+      // `role.email_audience.updated` under "email".
+      domain: "platform",
+      metadataKeys: [
+        "configKey",
+        "configKind",
+        "isInert",
+        "guildRepointAcknowledged",
+      ],
+    });
+    expect(AUDIT_DOMAINS).toContain("platform");
+    expect(
+      AUDIT_ACTION_CATALOG["role.club_classification.updated"],
+    ).toMatchObject({
+      domain: "roles",
+      // The slug, never the UUID: a UUID in an audit row is unreadable.
+      changeFields: ["kind", "rank", "teamSlug", "rosterLabel", "calloutLabel"],
+      metadataKeys: ["created"],
+    });
+    expect(
+      AUDIT_ACTION_CATALOG["role.event_feedback_exclusion.updated"],
+    ).toMatchObject({
+      // "events", not "roles": the visible consequence is feedback analytics
+      // and export, where `event.feedback.exported` already lives.
+      domain: "events",
+      changeFields: ["excluded"],
+      // Matches `role.email_audience.updated`, the sibling toggle. An earlier
+      // draft declared an impact count the strict input schema could never
+      // have carried.
+      metadataKeys: [],
+    });
+    expect(AUDIT_TARGET_TYPES).toContain("discord_config");
+    expect(new Set(AUDIT_TARGET_TYPES).size).toBe(AUDIT_TARGET_TYPES.length);
   });
 
   it("rejects inverted dates, oversized search, and malformed result subjects", () => {

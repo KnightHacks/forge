@@ -5,6 +5,7 @@ import {
   ROLE_UNLINK_CONFIRMATION,
   roleBatchAssignmentSchema,
   roleCreateSchema,
+  roleEventFeedbackExclusionSchema,
   roleIssueReminderUpdateSchema,
   roleManagementQuerySchema,
   rolePermissionUpdateSchema,
@@ -167,6 +168,36 @@ describe("role management validators", () => {
         channelId: "not-a-channel",
         enabled: true,
         roleId: ROLE_ID,
+      }),
+    ).toThrow();
+  });
+
+  it("TC-021 carries only the role and the flag, with no acknowledgement field", () => {
+    expect(
+      roleEventFeedbackExclusionSchema.parse({
+        excluded: true,
+        roleId: ROLE_ID,
+      }),
+    ).toEqual({ excluded: true, roleId: ROLE_ID });
+
+    // The confirmation for this toggle is a client dialog. An acknowledgement
+    // field here would be a count the log cannot vouch for, and would make two
+    // adjacent switches in one dialog behave differently for no inferable
+    // reason — `emailRoleAudienceSchema` has none either.
+    expect(() =>
+      roleEventFeedbackExclusionSchema.parse({
+        acknowledged: true,
+        excluded: true,
+        roleId: ROLE_ID,
+      }),
+    ).toThrow();
+    expect(() =>
+      roleEventFeedbackExclusionSchema.parse({ roleId: ROLE_ID }),
+    ).toThrow();
+    expect(() =>
+      roleEventFeedbackExclusionSchema.parse({
+        excluded: true,
+        roleId: "not-a-uuid",
       }),
     ).toThrow();
   });

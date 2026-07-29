@@ -1,4 +1,4 @@
-import type { Page } from "playwright/test";
+import type { Locator, Page } from "playwright/test";
 import { expect } from "playwright/test";
 
 /**
@@ -149,6 +149,37 @@ export async function expectVisualBaseline(
     // Playwright re-shoots until two consecutive frames match. On a cold
     // `next dev` route the tall full-page captures need more than the 10s
     // `expect.timeout` in playwright.config.ts to get there.
+    timeout: 30_000,
+  });
+}
+
+/**
+ * The same assertion, scoped to one element's own box.
+ *
+ * A sibling rather than a `{ element }` option on `expectVisualBaseline`,
+ * because `fullPage` is meaningless for an element and the two option sets do
+ * not overlap. Everything that makes a capture deterministic lives in
+ * `preparePage` and `settle`, which are page-level and apply unchanged — this
+ * function deliberately adds nothing of its own beyond the shared budget and
+ * timeout, so the two helpers cannot drift.
+ *
+ * Use it where a full-page capture is impossible rather than merely
+ * inconvenient. The role detail dialog is the case that forced it: the page
+ * behind it comes from `roles.listLinks`, which takes no input and returns
+ * every row in `Roles`, so the page can never be pinned to a fixture — but the
+ * dialog itself is rendered from `?role=<uuid>` and holds exactly one role.
+ *
+ * The honest limit: `toHaveScreenshot` on a locator is relative to that
+ * element's own box, so a region that was merely translated down the page
+ * still passes. Pair every element capture with an assertion on document
+ * order — see `visual-baselines.spec.ts`.
+ */
+export async function expectElementVisualBaseline(
+  locator: Locator,
+  name: string,
+) {
+  await expect(locator).toHaveScreenshot(name, {
+    maxDiffPixels: 120,
     timeout: 30_000,
   });
 }

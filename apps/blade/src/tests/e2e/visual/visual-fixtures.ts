@@ -42,17 +42,43 @@ const id = (suffix: number) =>
   `d1500000-0000-4000-8000-${String(suffix).padStart(12, "0")}`;
 
 export const VISUAL_USER_ID = id(1);
+/**
+ * The sole holder of `ROLE_DETAIL_ROLE_ID`.
+ *
+ * A user of its own rather than one of the directory members, so that
+ * `Blade assignments` and the e2e gateway's `getRoleCounts` — which counts
+ * `Permissions` rows — are both exactly 1. It gets no `Member` row on purpose:
+ * `getAdminMembers` selects from `Member`, so a holder without one cannot
+ * reach the members baselines.
+ */
+const ROLE_DETAIL_HOLDER_USER_ID = id(2);
 const OFFICER_ROLE_ID = id(11);
 const PROGRAMS_ROLE_ID = id(12);
 const MARKETING_ROLE_ID = id(13);
 const PARTNERSHIPS_ROLE_ID = id(14);
+export const ROLE_DETAIL_ROLE_ID = id(15);
 export const SETTINGS_MEMBER_ID = id(21);
+
+/**
+ * The role the role-detail-dialog baselines open.
+ *
+ * The name is what renders in the captured dialog header, so it is pinned
+ * here rather than being spelled again in the spec. Under the e2e Discord
+ * override `getGuildRoles` builds its list from the database and echoes each
+ * linked row's stored name back before overlaying seven hard-coded roles
+ * (`packages/api/src/tests/support/role-management-discord.ts`), and
+ * `buildLinkedRoleViews` renders `live?.name ?? role.name`. So the stored name
+ * below is what the dialog shows — but only because `discordRoleId` is none of
+ * those seven ids. Reusing one would silently rename the role in the capture.
+ */
+export const ROLE_DETAIL_ROLE_NAME = "Baseline Role Detail";
 
 const ROLE_IDS = [
   OFFICER_ROLE_ID,
   PROGRAMS_ROLE_ID,
   MARKETING_ROLE_ID,
   PARTNERSHIPS_ROLE_ID,
+  ROLE_DETAIL_ROLE_ID,
 ];
 
 /**
@@ -90,7 +116,11 @@ const PUBLISHED_FORM_ID = id(412);
 const ARCHIVED_FORM_ID = id(413);
 const FORM_IDS = [BUILDER_FORM_ID, PUBLISHED_FORM_ID, ARCHIVED_FORM_ID];
 
-const ALL_USER_IDS = [VISUAL_USER_ID, ...DIRECTORY_USER_IDS];
+const ALL_USER_IDS = [
+  VISUAL_USER_ID,
+  ROLE_DETAIL_HOLDER_USER_ID,
+  ...DIRECTORY_USER_IDS,
+];
 
 /**
  * The token the admin members table is filtered by.
@@ -225,6 +255,66 @@ function simpleFormData(title: string, description: string) {
   };
 }
 
+/**
+ * The four roles the existing baselines depend on, plus the one the role
+ * detail dialog opens.
+ *
+ * Extracted the way `builderFormData` is, so `seedVisualFixture` stays under
+ * the file's 200-line function limit. Do not rename the first four: the issue
+ * baselines render their names as team filter chips.
+ */
+function roleRows() {
+  return [
+    {
+      discordRoleId: "visual-baseline-officer-role",
+      id: OFFICER_ROLE_ID,
+      name: "Officers",
+      permissions: permissionBitstring("IS_OFFICER"),
+      teamHexcodeColor: "#8b5cf6",
+    },
+    {
+      discordRoleId: "visual-baseline-programs-role",
+      id: PROGRAMS_ROLE_ID,
+      name: "Programs",
+      permissions: permissionBitstring("EDIT_ISSUES"),
+      teamHexcodeColor: "#22c55e",
+    },
+    {
+      discordRoleId: "visual-baseline-marketing-role",
+      emailAudienceEnabled: true,
+      id: MARKETING_ROLE_ID,
+      name: "Marketing",
+      permissions: permissionBitstring("EDIT_ISSUES"),
+      teamHexcodeColor: "#f59e0b",
+    },
+    {
+      discordRoleId: "visual-baseline-partnerships-role",
+      id: PARTNERSHIPS_ROLE_ID,
+      name: "Partnerships",
+      permissions: permissionBitstring("READ_ISSUES"),
+      teamHexcodeColor: "#38bdf8",
+    },
+    // The role the role-detail-dialog baselines open. Every field the captured
+    // regions read is pinned: a non-empty permission set so the header badge
+    // reads "Access" rather than "Cosmetic"
+    // (`isCosmeticPermissionString` is "no permissions at all"), a colour so
+    // the header swatch is not the `#64748b` fallback, and the email audience
+    // off so the captured switch is in its default position.
+    // `issueRemindersEnabled` is spelled out because the column defaults to
+    // `true`, not `false`.
+    {
+      discordRoleId: "visual-baseline-role-detail-role",
+      emailAudienceEnabled: false,
+      eventFeedbackExcluded: false,
+      id: ROLE_DETAIL_ROLE_ID,
+      issueRemindersEnabled: false,
+      name: ROLE_DETAIL_ROLE_NAME,
+      permissions: permissionBitstring("READ_ISSUES"),
+      teamHexcodeColor: "#ef4444",
+    },
+  ];
+}
+
 export async function cleanupVisualFixture() {
   await db
     .delete(IssueReminderDelivery)
@@ -266,6 +356,14 @@ export async function seedVisualFixture() {
       image: null,
       name: "Riley Baseline",
     },
+    {
+      discordUserId: "visual-baseline-role-detail-holder",
+      email: "visual-baseline-role-detail-holder@example.test",
+      emailVerified: true,
+      id: ROLE_DETAIL_HOLDER_USER_ID,
+      image: null,
+      name: "Quinn Baseline",
+    },
     ...DIRECTORY_USER_IDS.map((userId, index) => ({
       discordUserId: `visual-baseline-member-${index}`,
       email: `visual-baseline-member-${index}@example.test`,
@@ -276,41 +374,12 @@ export async function seedVisualFixture() {
     })),
   ]);
 
-  await db.insert(Roles).values([
-    {
-      discordRoleId: "visual-baseline-officer-role",
-      id: OFFICER_ROLE_ID,
-      name: "Officers",
-      permissions: permissionBitstring("IS_OFFICER"),
-      teamHexcodeColor: "#8b5cf6",
-    },
-    {
-      discordRoleId: "visual-baseline-programs-role",
-      id: PROGRAMS_ROLE_ID,
-      name: "Programs",
-      permissions: permissionBitstring("EDIT_ISSUES"),
-      teamHexcodeColor: "#22c55e",
-    },
-    {
-      discordRoleId: "visual-baseline-marketing-role",
-      emailAudienceEnabled: true,
-      id: MARKETING_ROLE_ID,
-      name: "Marketing",
-      permissions: permissionBitstring("EDIT_ISSUES"),
-      teamHexcodeColor: "#f59e0b",
-    },
-    {
-      discordRoleId: "visual-baseline-partnerships-role",
-      id: PARTNERSHIPS_ROLE_ID,
-      name: "Partnerships",
-      permissions: permissionBitstring("READ_ISSUES"),
-      teamHexcodeColor: "#38bdf8",
-    },
-  ]);
+  await db.insert(Roles).values(roleRows());
 
-  await db
-    .insert(Permissions)
-    .values({ roleId: OFFICER_ROLE_ID, userId: VISUAL_USER_ID });
+  await db.insert(Permissions).values([
+    { roleId: OFFICER_ROLE_ID, userId: VISUAL_USER_ID },
+    { roleId: ROLE_DETAIL_ROLE_ID, userId: ROLE_DETAIL_HOLDER_USER_ID },
+  ]);
 
   // The member behind /member/settings. `profilePictureUrl` and `resumeUrl`
   // stay null on purpose: both render presigned S3 URLs, one into an <img> and

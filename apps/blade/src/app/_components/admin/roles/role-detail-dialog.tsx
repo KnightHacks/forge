@@ -8,6 +8,7 @@ import {
   Hash,
   Loader2,
   Mail,
+  MessageSquareText,
   RefreshCw,
   ShieldCheck,
   Trash2,
@@ -63,6 +64,10 @@ export function RoleDetailDialog({
   const [emailAudienceEnabled, setEmailAudienceEnabled] = useState(
     detail.emailAudienceEnabled,
   );
+  const [feedbackExcluded, setFeedbackExcluded] = useState(
+    detail.eventFeedbackExcluded,
+  );
+  const [feedbackConfirmOpen, setFeedbackConfirmOpen] = useState(false);
   const reminderChannels = api.roles.listReminderChannels.useQuery();
   const update = api.roles.updatePermissions.useMutation({
     onSuccess() {
@@ -106,6 +111,19 @@ export function RoleDetailDialog({
       );
     },
   });
+  const updateFeedbackExclusion =
+    api.roles.updateEventFeedbackExclusion.useMutation({
+      onSuccess() {
+        toast.success("Event feedback setting saved.");
+        setFeedbackConfirmOpen(false);
+        onChanged();
+      },
+      onError(error) {
+        toast.error(
+          error.message || "Event feedback setting could not be saved.",
+        );
+      },
+    });
   const unlink = api.roles.unlinkRole.useMutation({
     onSuccess() {
       toast.success("Blade role unlinked. Discord was left unchanged.");
@@ -380,6 +398,115 @@ export function RoleDetailDialog({
                 Save audience setting
               </Button>
             </div>
+          </section>
+
+          <section
+            className="space-y-4 rounded-md border border-white/10 bg-background/60 p-3 sm:p-4"
+            aria-labelledby="event-feedback-settings"
+          >
+            <div className="flex min-h-11 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+                <MessageSquareText className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 id="event-feedback-settings" className="font-semibold">
+                  Event feedback
+                </h3>
+                <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
+                  Exclude events attached to this role from feedback collection,
+                  analytics, and CSV export.
+                </p>
+              </div>
+              <Switch
+                aria-label="Exclude this role's events from feedback"
+                checked={feedbackExcluded}
+                onCheckedChange={setFeedbackExcluded}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                className="min-h-11"
+                disabled={
+                  feedbackExcluded === detail.eventFeedbackExcluded ||
+                  updateFeedbackExclusion.isPending
+                }
+                onClick={() => {
+                  // Only turning the flag on needs the confirmation. Turning it
+                  // off restores readability, which needs no warning.
+                  if (feedbackExcluded) {
+                    setFeedbackConfirmOpen(true);
+                    return;
+                  }
+                  updateFeedbackExclusion.mutate({
+                    excluded: false,
+                    roleId: detail.id,
+                  });
+                }}
+              >
+                {updateFeedbackExclusion.isPending && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Save feedback setting
+              </Button>
+            </div>
+            {feedbackConfirmOpen && (
+              <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/10 p-3">
+                <div>
+                  {/*
+                   * An h4, not an h3. The visual baseline reads this dialog's
+                   * `h3` list in document order to prove where this section
+                   * landed; a confirmation heading would insert itself into
+                   * that list whenever it happens to be open.
+                   */}
+                  <h4 className="font-semibold">
+                    Exclude {detail.name} from event feedback?
+                  </h4>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {detail.feedbackExclusionImpact.pastEventCount} past{" "}
+                    {detail.feedbackExclusionImpact.pastEventCount === 1
+                      ? "event"
+                      : "events"}{" "}
+                    stop being readable for feedback analytics and CSV export.
+                    Eligibility is re-checked against the live role set rather
+                    than the set that applied when the feedback was collected,
+                    so responses already collected are hidden rather than
+                    deleted. Future events attached to this role stop
+                    provisioning feedback at all.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11"
+                    onClick={() => {
+                      setFeedbackConfirmOpen(false);
+                      setFeedbackExcluded(detail.eventFeedbackExcluded);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="min-h-11"
+                    disabled={updateFeedbackExclusion.isPending}
+                    onClick={() =>
+                      updateFeedbackExclusion.mutate({
+                        excluded: true,
+                        roleId: detail.id,
+                      })
+                    }
+                  >
+                    {updateFeedbackExclusion.isPending && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Exclude from feedback
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="space-y-2">

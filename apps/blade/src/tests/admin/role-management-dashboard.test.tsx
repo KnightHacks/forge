@@ -146,4 +146,32 @@ describe("RoleManagementDashboard", () => {
     expect(html).not.toContain('href="/admin/roles?view=assignments"');
     expect(html).not.toContain("Select Alice Archive");
   });
+
+  it("links officers to the platform configuration console", () => {
+    const officerHtml = renderToStaticMarkup(
+      createElement(RoleManagementDashboard, {
+        access: { canAssign: true, canConfigure: true, isOfficer: true },
+        detail: null,
+        input: roleManagementQuerySchema.parse({}),
+        roles,
+        users: null,
+      }),
+    );
+
+    expect(officerHtml).toContain('href="/admin/roles/config"');
+    expect(officerHtml).toContain("Platform configuration");
+
+    const configureOnlyHtml = renderToStaticMarkup(
+      createElement(RoleManagementDashboard, {
+        access: { canAssign: true, canConfigure: true, isOfficer: false },
+        detail: null,
+        input: roleManagementQuerySchema.parse({}),
+        roles,
+        users: null,
+      }),
+    );
+
+    // Hiding the link is UX only; /admin/roles/config gates itself.
+    expect(configureOnlyHtml).not.toContain('href="/admin/roles/config"');
+  });
 });

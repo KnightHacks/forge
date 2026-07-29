@@ -33,4 +33,5 @@ export const ADMIN_PAGE_EYEBROWS = {
   logs: "Officer audit trail",
   members: "Member directory",
   roles: "Access control",
+  rolesConfig: "Platform wiring",
 } as const;

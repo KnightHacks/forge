@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
-import { PERMISSIONS } from "@forge/consts";
 import { permissions } from "@forge/utils";
 
 import {
@@ -9,6 +8,7 @@ import {
   createTRPCRouter,
   permProcedure,
 } from "../../trpc";
+import { permissionBitstring } from "../support/permissions";
 
 const mocks = vi.hoisted(() => ({
   db: { select: vi.fn() },
@@ -46,18 +46,6 @@ const session = {
     name: "permission-procedure-test",
   },
 } as Session;
-
-function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
-  const maxIndex = Math.max(
-    ...Object.values(PERMISSIONS.PERMISSION_DATA).map(({ idx }) => idx),
-  );
-  const bits = Array.from({ length: maxIndex + 1 }, () => "0");
-  for (const key of keys) {
-    const permission = PERMISSIONS.PERMISSION_DATA[key];
-    bits[permission.idx] = "1";
-  }
-  return bits.join("");
-}
 
 function createCaller(currentSession: Session | null = session) {
   return callerFactory({
