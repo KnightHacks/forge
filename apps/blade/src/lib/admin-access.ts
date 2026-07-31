@@ -68,6 +68,15 @@ export function canAccessAlumniAdmin(permissions: EffectivePermissions) {
   );
 }
 
+/**
+ * Officer-only, deliberately. `READ_HACK_DATA` and `READ_HACKERS` exist and are
+ * *not* accepted: this screen writes the mail every applicant receives, which
+ * is not a read-tier action.
+ */
+export function canAccessHackathonAdmin(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true;
+}
+
 export function canAccessEmailPortal(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true || permissions.EMAIL_PORTAL === true;
 }
@@ -81,6 +90,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     eventCheckIn: canAccessEventCheckIn(permissions),
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),
+    hackathon: canAccessHackathonAdmin(permissions),
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),

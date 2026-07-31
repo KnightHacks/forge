@@ -27,9 +27,13 @@ interface AudienceMember {
 interface AudienceHacker {
   email: string;
   firstName?: string;
+  hackathonApplicationUrl?: string;
+  hackathonConfirmationDeadline?: string;
   hackathonDisplayName?: string;
+  hackathonEndDate?: string;
   hackathonId: string;
   hackathonName?: string;
+  hackathonStartDate?: string;
   id: string;
   name: string;
   status: HackerStatus;
@@ -71,7 +75,14 @@ interface Match {
 export interface CanonicalRecipient {
   attributes: {
     hacker?: { status: HackerStatus };
-    hackathon?: { displayName?: string; name?: string };
+    hackathon?: {
+      applicationUrl?: string;
+      confirmationDeadline?: string;
+      displayName?: string;
+      endDate?: string;
+      name?: string;
+      startDate?: string;
+    };
     member?: { graduationYear: number };
     recipient: {
       email: string;
@@ -293,8 +304,17 @@ function toCanonicalRecipient(
       hacker: hacker ? { status: hacker.status } : undefined,
       hackathon: hacker
         ? {
+            // Every field the catalog offers under `hackathon.*` is filled
+            // here. A field in the catalog and in the preview sample but not in
+            // this object renders in the preview and blank in the delivered
+            // mail — which is precisely the drift the shared sample exists to
+            // prevent, inverted.
+            applicationUrl: hacker.hackathonApplicationUrl,
+            confirmationDeadline: hacker.hackathonConfirmationDeadline,
             displayName: hacker.hackathonDisplayName,
+            endDate: hacker.hackathonEndDate,
             name: hacker.hackathonName,
+            startDate: hacker.hackathonStartDate,
           }
         : undefined,
       member: member

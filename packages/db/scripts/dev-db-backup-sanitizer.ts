@@ -41,7 +41,13 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_form_sections",
   "knight_hacks_form_single_response_claim",
   "knight_hacks_hackathon",
+  // Configuration, not personal data: which Discord role and colour each class
+  // maps to, and which template and subject each status sends. Losing these
+  // from a dev backup means an officer's whole hackathon setup silently comes
+  // back empty — the same failure `knight_hacks_discord_config` had.
+  "knight_hacks_hackathon_class",
   "knight_hacks_hackathon_sponsor",
+  "knight_hacks_hackathon_status_email",
   "knight_hacks_hacker",
   "knight_hacks_hacker_attendee",
   "knight_hacks_hacker_event_attendee",

@@ -12,6 +12,7 @@ import {
   canAccessEventAdmin,
   canAccessEventCheckIn,
   canAccessFormAdmin,
+  canAccessHackathonAdmin,
   canAccessIssues,
   canAccessMemberAdmin,
   canAccessRoleAdmin,
@@ -37,6 +38,7 @@ export default async function AdminLayout({
     !canAccessEmailPortal(effectivePermissions) &&
     !canAccessEventCheckIn(effectivePermissions) &&
     !canAccessFormAdmin(effectivePermissions) &&
+    !canAccessHackathonAdmin(effectivePermissions) &&
     !canAccessIssues(effectivePermissions) &&
     !canAccessMemberAdmin(effectivePermissions) &&
     !canAccessRoleAdmin(effectivePermissions)

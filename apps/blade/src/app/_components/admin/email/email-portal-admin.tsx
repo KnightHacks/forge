@@ -137,12 +137,14 @@ export function EmailPortalAdmin({
         if (!revision) throw new Error("Template has no revision to edit.");
         return detail.template.kind === "code"
           ? {
+              domain: detail.template.domain,
               id: detail.template.id,
               kind: "code",
               name: detail.template.name,
               source: revision.source ?? "",
             }
           : {
+              domain: detail.template.domain,
               id: detail.template.id,
               kind: "visual",
               name: detail.template.name,
@@ -184,8 +186,13 @@ export function EmailPortalAdmin({
       }}
       onResolveAudience={resolveAudience}
       onSaveTemplate={async (input: TemplateEditorSeed) => {
+        // `domain` has to be passed explicitly. It is required on the mutation
+        // schema — deliberately, because it used to default to "club" and this
+        // callback dropped it, so every save silently reset the template's
+        // domain while reporting success.
         if (input.kind === "code") {
           await saveTemplate.mutateAsync({
+            domain: input.domain,
             id: input.id,
             kind: "code",
             name: input.name,
@@ -193,6 +200,7 @@ export function EmailPortalAdmin({
           });
         } else {
           await saveTemplate.mutateAsync({
+            domain: input.domain,
             id: input.id,
             kind: "visual",
             name: input.name,

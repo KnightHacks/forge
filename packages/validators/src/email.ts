@@ -126,8 +126,18 @@ export const emailSendTestSchema = z
   })
   .strict();
 
+// Which product the template writes for.
+//
+// Deliberately required rather than defaulted. A default made omission silent:
+// the portal's save callback rebuilt the payload field by field, dropped
+// `domain`, and every save quietly reset the template back to club while
+// reporting success. Required turns that into a compile error at each call
+// site instead.
+const emailTemplateDomainSchema = z.enum(["club", "hackathon"]);
+
 const emailCodeTemplateDraftSchema = z
   .object({
+    domain: emailTemplateDomainSchema,
     id: uuidSchema.optional(),
     kind: z.literal("code"),
     name: emailTemplateNameSchema,
@@ -137,6 +147,7 @@ const emailCodeTemplateDraftSchema = z
 
 const emailVisualTemplateDraftSchema = z
   .object({
+    domain: emailTemplateDomainSchema,
     id: uuidSchema.optional(),
     kind: z.literal("visual"),
     name: emailTemplateNameSchema,
@@ -171,6 +182,8 @@ export const emailRoleAudienceSchema = z
 
 export const emailTemplateListSchema = z
   .object({
+    // Omitted means "every domain", which is what the portal's own list wants.
+    domain: z.enum(["club", "hackathon"]).optional(),
     includeArchived: z.boolean().default(false),
     limit: z.number().int().min(1).max(100).default(50),
   })

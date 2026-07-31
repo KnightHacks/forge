@@ -6,6 +6,7 @@ import { publishedTemplateOptions } from "~/app/_components/admin/email/email-te
 const template = (
   overrides: Partial<EmailPortalTemplate> & { id: string },
 ): EmailPortalTemplate => ({
+  domain: "club",
   kind: "code",
   name: `Template ${overrides.id}`,
   ...overrides,

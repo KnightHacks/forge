@@ -20,6 +20,7 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import { getDefaultEmailProviderGateway } from "@forge/email";
+import { formatHackathonDate } from "@forge/email/fields";
 import {
   emailConfirmSendSchema,
   emailPreviewSendSchema,
@@ -84,9 +85,13 @@ export async function loadAudienceCandidates(
       .select({
         email: Hacker.email,
         firstName: Hacker.firstName,
+        hackathonApplicationUrl: Hackathon.applicationUrl,
+        hackathonConfirmationDeadline: Hackathon.confirmationDeadline,
         hackathonDisplayName: Hackathon.displayName,
+        hackathonEndDate: Hackathon.endDate,
         hackathonId: HackerAttendee.hackathonId,
         hackathonName: Hackathon.name,
+        hackathonStartDate: Hackathon.startDate,
         hackerId: Hacker.id,
         lastName: Hacker.lastName,
         status: HackerAttendee.status,
@@ -151,9 +156,19 @@ export async function loadAudienceCandidates(
     hackers: hackerRows.map((hacker) => ({
       email: hacker.email,
       firstName: hacker.firstName,
+      // Dates are formatted here, not in the template. The catalog declares
+      // these as pre-formatted strings and the preview sample builds them with
+      // the same helper, so an officer approving "Oct 3, 2026" is approving what
+      // actually goes out.
+      hackathonApplicationUrl: hacker.hackathonApplicationUrl ?? undefined,
+      hackathonConfirmationDeadline: formatHackathonDate(
+        hacker.hackathonConfirmationDeadline,
+      ),
       hackathonDisplayName: hacker.hackathonDisplayName,
+      hackathonEndDate: formatHackathonDate(hacker.hackathonEndDate),
       hackathonId: hacker.hackathonId,
       hackathonName: hacker.hackathonName,
+      hackathonStartDate: formatHackathonDate(hacker.hackathonStartDate),
       id: hacker.hackerId,
       name: `${hacker.firstName} ${hacker.lastName}`.trim(),
       status: hacker.status,
@@ -269,10 +284,14 @@ async function materializeContent(content: EmailSendContent, sendId: string) {
       message: "Choose an active published email template.",
     });
   }
+  // The real send path. Scoped to the template's domain so a template whose
+  // domain no longer matches its fields fails loudly here rather than
+  // delivering blanks to a recipient's inbox.
   const compiled = compileDraft(
     revisionSource(template, revision),
     { ...DEFAULT_TEMPLATE_SAMPLE, ...content.fallbackData },
     sendId,
+    template.domain,
   );
   return {
     compiledHtml: compiled.html,

@@ -8,6 +8,7 @@ import {
   pgTableCreator,
   primaryKey,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
@@ -90,6 +91,18 @@ export const Hackathon = createTable(
     name: t.varchar({ length: 255 }).notNull(),
     displayName: t.varchar({ length: 255 }).notNull().default(""),
     theme: t.varchar({ length: 255 }).notNull(),
+    /**
+     * Where the hackathon's own site hosts its application. Typed in rather
+     * than built from `name`, because that site owns its paths and changes
+     * them. Optional; nothing is blocked by its absence.
+     */
+    applicationUrl: t.text(),
+    /**
+     * Retired by hackathon-configuration. Production Blade on `main` still
+     * reads all four against this shared database, so they are dropped at
+     * cutover rather than here. No Reforge code path may read or write them —
+     * that is the precondition making the drop safe.
+     */
     applicationBackgroundEnabled: t.boolean().notNull().default(false),
     applicationBackgroundKey: t.varchar({ length: 255 }),
     emailTemplateEnabled: t.boolean().notNull().default(false),
@@ -107,6 +120,71 @@ export const Hackathon = createTable(
 
 export type InsertHackathon = typeof Hackathon.$inferInsert;
 export type SelectHackathon = typeof Hackathon.$inferSelect;
+
+/**
+ * A hackathon's own hacker groupings, replacing the six theme-specific names
+ * that used to be a constant in this file.
+ *
+ * The purpose is logistical: a thousand people cannot eat at once, so they are
+ * split into buckets and the split is themed to make it enjoyable. Each
+ * hackathon invents its own names and decides how many it wants.
+ *
+ * `kind` separates two things that share a shape but not a meaning. A `class`
+ * is a bucket a hacker belongs to. `vip` is a bypass — when class A is called,
+ * a VIP assigned to class B may still go — and a hacker holds it *in addition
+ * to* a class, which is why it is not one of them. Legacy put VIP in the same
+ * union as the class names and so could not express both at once.
+ *
+ * `discordRoleId` is a raw snowflake, deliberately not a reference to `Roles`.
+ * A class role grants Discord channel access; it is not a Blade permission
+ * role and must never appear in role administration. `Roles.discordRoleId` is
+ * also unique, which would forbid two classes sharing a role — something these
+ * are explicitly allowed to do.
+ *
+ * `color` is stored rather than read from the Discord role, because it drives
+ * hacker-facing surfaces and must be changeable without touching Discord.
+ */
+export const HackathonClass = createTable(
+  "hackathon_class",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    kind: t.text({ enum: ["class", "vip"] }).notNull(),
+    name: t.varchar({ length: 64 }).notNull(),
+    discordRoleId: t.varchar({ length: 20 }).notNull(),
+    color: t.varchar({ length: 7 }).notNull(),
+  }),
+  (table) => ({
+    hackathonIdx: index("knight_hacks_hackathon_class_hackathon_idx").on(
+      table.hackathonId,
+    ),
+    // At most one VIP entry per hackathon. A partial unique index rather than
+    // a procedure check, so it holds against a direct write too.
+    oneVipPerHackathon: uniqueIndex(
+      "knight_hacks_hackathon_class_one_vip_per_hackathon",
+    )
+      .on(table.hackathonId)
+      .where(sql`${table.kind} = 'vip'`),
+    // Discord snowflakes are 17-20 digits. The realistic way an officer breaks
+    // this is pasting a role *mention* (`<@&123>`) or a trailing space, which
+    // would otherwise surface as a 404 from Discord at check-in. Same rule as
+    // `knight_hacks_discord_config`.
+    validDiscordRoleId: check(
+      "knight_hacks_hackathon_class_discord_role_id_check",
+      sql`${table.discordRoleId} ~ '^[0-9]{17,20}$'`,
+    ),
+    validColor: check(
+      "knight_hacks_hackathon_class_color_check",
+      sql`${table.color} ~ '^#[0-9a-fA-F]{6}$'`,
+    ),
+  }),
+);
+
+export type InsertHackathonClass = typeof HackathonClass.$inferInsert;
+export type SelectHackathonClass = typeof HackathonClass.$inferSelect;
 
 export const Company = createTable(
   "company",
@@ -593,52 +671,81 @@ export const EventAttendee = createTable(
 export type InsertEventAttendee = typeof EventAttendee.$inferInsert;
 export type SelectEventAttendee = typeof EventAttendee.$inferSelect;
 
-export const HACKER_TEAMS = ["Humanity", "Monstrosity"] as const;
-export const HACKER_CLASSES = [
-  "Operator",
-  "Mechanist",
-  "Sentinel",
-  "Harbinger",
-  "Monstologist",
-  "Alchemist",
-] as const;
-export const SPECIAL_HACKER_CLASSES = ["VIP"] as const;
-export const HACKER_CLASSES_ALL = [
-  ...HACKER_CLASSES,
-  ...SPECIAL_HACKER_CLASSES,
-] as const;
-export type HackerClass = (typeof HACKER_CLASSES_ALL)[number];
 export type RepeatPolicy = "none" | "all" | "class";
-export const AssignedClassCheckinSchema = z.union([
-  z.literal("All"),
-  z.enum(HACKER_CLASSES),
-]);
 
-export const HackerAttendee = createTable("hacker_attendee", (t) => ({
-  id: t.uuid().notNull().primaryKey().defaultRandom(),
-  hackerId: t
-    .uuid()
-    .notNull()
-    .references(() => Hacker.id, {
-      onDelete: "cascade",
+export const HackerAttendee = createTable(
+  "hacker_attendee",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackerId: t
+      .uuid()
+      .notNull()
+      .references(() => Hacker.id, {
+        onDelete: "cascade",
+      }),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, {
+        onDelete: "cascade",
+      }),
+    status: t
+      .text("status", {
+        enum: FORMS.HACKATHON_APPLICATION_STATES,
+      })
+      .notNull()
+      .default("pending"),
+    timeApplied: t.timestamp().notNull().defaultNow(),
+    timeConfirmed: t.timestamp(),
+    points: t.integer().notNull().default(0),
+    /** Assigned at check-in to whichever class currently has the fewest people. */
+    classId: t.uuid().references(() => HackathonClass.id, {
+      onDelete: "restrict",
     }),
-  hackathonId: t
-    .uuid()
-    .notNull()
-    .references(() => Hackathon.id, {
-      onDelete: "cascade",
-    }),
-  status: t
-    .text("status", {
-      enum: FORMS.HACKATHON_APPLICATION_STATES,
-    })
-    .notNull()
-    .default("pending"),
-  timeApplied: t.timestamp().notNull().defaultNow(),
-  timeConfirmed: t.timestamp(),
-  points: t.integer().notNull().default(0),
-  class: t.varchar({ length: 20 }).$type<HackerClass | null>().default(null),
-}));
+    /** Bypasses class gating. Held alongside `classId`, not instead of it. */
+    isVip: t.boolean().notNull().default(false),
+    /**
+     * Retired by hackathon-configuration, in favour of `classId`/`isVip`.
+     *
+     * Held a class *name* from a retired theme, and — because Legacy kept `VIP`
+     * in the same union as the class names — sometimes held `'VIP'` to mean "VIP,
+     * no class". Those values are deliberately abandoned rather than backfilled,
+     * so nothing here may be reinterpreted as a class reference.
+     *
+     * Production Blade on `main` still writes this at check-in against the same
+     * database, so it is dropped at cutover rather than here.
+     */
+    class: t.varchar({ length: 20 }).$type<string | null>().default(null),
+  }),
+  (table) => ({
+    /**
+     * This table carried no index beyond its primary key. Hackathon
+     * configuration adds reads against it that are free today, because
+     * `classId` is entirely NULL, and monotonically worse with every attendee
+     * ever recorded.
+     *
+     * Two indexes rather than one, because the queries have two different
+     * leading columns and a composite only serves its prefix:
+     *
+     * - `(hackathonId, classId)` serves the per-class headcount and the
+     *   pre-delete count in `remove`, both of which filter on `hackathonId`.
+     * - `(classId)` serves the pre-delete count in `removeClass`, which filters
+     *   on `classId` alone, plus the RESTRICT integrity probe Postgres fires on
+     *   every class delete. Neither can use the composite, since `classId` is
+     *   not its leading column — and Postgres does not auto-index a
+     *   referencing column the way it does a primary key.
+     */
+    classOnly: index("knight_hacks_hacker_attendee_class_idx").on(
+      table.classId,
+    ),
+    hackathonClass: index(
+      "knight_hacks_hacker_attendee_hackathon_class_idx",
+    ).on(table.hackathonId, table.classId),
+  }),
+);
+
+export type InsertHackerAttendee = typeof HackerAttendee.$inferInsert;
+export type SelectHackerAttendee = typeof HackerAttendee.$inferSelect;
 
 export const HackerEventAttendee = createTable(
   "hacker_event_attendee",
@@ -1488,6 +1595,27 @@ export const EmailTemplate = pgTable(
     name: t.varchar({ length: 120 }).notNull(),
     normalizedName: t.varchar({ length: 120 }).notNull(),
     kind: t.text({ enum: ["code", "visual"] }).notNull(),
+    /**
+     * Which product this template writes for. Orthogonal to `kind`, which is
+     * the authoring format.
+     *
+     * Declared by the author rather than derived from "is any hackathon
+     * pointing at it", because a derived mark is empty while the template is
+     * being written — exactly when the offered field list and the list badge
+     * matter.
+     *
+     * Scopes the personalization catalog: a `hackathon` template is never
+     * offered `member.*` or `team.*`, which come from a club member record. A
+     * hacker need not be a club member, so those would render blank for the
+     * people most likely to receive hackathon mail.
+     *
+     * Named `domain` rather than `audience` because the email portal already
+     * uses "audience" for recipient targeting.
+     */
+    domain: t
+      .text({ enum: ["club", "hackathon"] })
+      .notNull()
+      .default("club"),
     archivedAt: t.timestamp({ mode: "date", withTimezone: true }),
     createdBy: t
       .uuid()
@@ -1517,6 +1645,58 @@ export const EmailTemplate = pgTable(
     ),
   }),
 );
+
+/**
+ * Which template and subject a hackathon sends when an applicant reaches a
+ * status. Replaces a table of Listmonk template ids that lived in
+ * `@forge/email` source, where adding a hackathon meant a deploy.
+ *
+ * One row per `(hackathon, status)`. Six statuses send; `checkedin` does not,
+ * which the CHECK enforces rather than leaving to the caller.
+ *
+ * `templateId` points at the template, not at a revision, so editing a template
+ * changes what future applicants receive and leaves sent mail alone — what an
+ * officer expects from "fix a typo in the acceptance email". `restrict` means a
+ * template in use cannot be deleted out from under a hackathon; note that
+ * `EmailTemplate.archivedAt` is a soft delete no foreign key can catch, so
+ * archival has to be refused in the procedure.
+ *
+ * `subject` lives here rather than on the template because subjects change far
+ * more often than bodies, and keeping it beside the template pointer is what
+ * stops a subject drifting away from the mail it heads.
+ */
+export const HackathonStatusEmail = createTable(
+  "hackathon_status_email",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    status: t.text({ enum: FORMS.HACKATHON_APPLICATION_STATES }).notNull(),
+    templateId: t
+      .uuid()
+      .notNull()
+      .references(() => EmailTemplate.id, { onDelete: "restrict" }),
+    subject: t.varchar({ length: 200 }).notNull(),
+  }),
+  (table) => ({
+    oneTemplatePerStatus: unique(
+      "knight_hacks_hackathon_status_email_hackathon_status_unique",
+    ).on(table.hackathonId, table.status),
+    // Checking in sends no mail, so a row for it is meaningless rather than
+    // merely unused.
+    sendingStatusOnly: check(
+      "knight_hacks_hackathon_status_email_status_check",
+      sql`${table.status} <> 'checkedin'`,
+    ),
+  }),
+);
+
+export type InsertHackathonStatusEmail =
+  typeof HackathonStatusEmail.$inferInsert;
+export type SelectHackathonStatusEmail =
+  typeof HackathonStatusEmail.$inferSelect;
 
 export const EmailTemplateRevision = pgTable(
   "email_template_revision",

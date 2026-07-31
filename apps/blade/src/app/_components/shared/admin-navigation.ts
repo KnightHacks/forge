@@ -12,6 +12,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Swords,
   UsersRound,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export interface AdminNavigationAccess {
   eventCheckIn?: boolean;
   events?: boolean;
   forms?: boolean;
+  hackathon?: boolean;
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
@@ -112,6 +114,13 @@ export const adminNavigationItems = [
     label: "Forms",
   },
   {
+    access: "hackathon",
+    href: "/admin/hackathon",
+    icon: Swords,
+    id: "hackathon",
+    label: "Hackathons",
+  },
+  {
     access: "issues",
     href: "/admin/issues/calendar",
     icon: ListTodo,
@@ -153,6 +162,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "email") return pathname.startsWith("/admin/email");
   if (id === "forms") return pathname.startsWith("/admin/forms");
+  if (id === "hackathon") return pathname.startsWith("/admin/hackathon");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "companies") return pathname.startsWith("/admin/companies");
