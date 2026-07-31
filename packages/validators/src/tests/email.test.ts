@@ -131,17 +131,46 @@ describe("Email Portal validators", () => {
   it("TC-002 validates code-template drafts as source, not executable functions", () => {
     expect(
       emailSaveTemplateSchema.parse({
+        domain: "club",
         kind: "code",
         name: "Welcome",
         source: `export default <Text>Hello</Text>;`,
       }),
-    ).toMatchObject({ kind: "code", name: "Welcome" });
+    ).toMatchObject({ domain: "club", kind: "code", name: "Welcome" });
     expect(() =>
       emailSaveTemplateSchema.parse({
+        domain: "club",
         kind: "code",
         name: "Welcome",
         render: () => "arbitrary code",
       }),
     ).toThrow();
+  });
+
+  it("requires a domain rather than defaulting it", () => {
+    // A default made omission silent: the portal's save callback rebuilt the
+    // payload field by field, dropped `domain`, and every save quietly reset
+    // the template to club while reporting success. Required makes any caller
+    // that forgets fail loudly — at compile time in TypeScript, and here.
+    // Asserts the path, not just "throws": tightening some unrelated field
+    // would otherwise keep this green while every save silently reset domain.
+    const result = emailSaveTemplateSchema.safeParse({
+      kind: "code",
+      name: "Welcome",
+      source: `export default <Text>Hello</Text>;`,
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["domain"]);
+  });
+
+  it("keeps the hackathon domain it was given", () => {
+    expect(
+      emailSaveTemplateSchema.parse({
+        domain: "hackathon",
+        kind: "code",
+        name: "Acceptance",
+        source: `export default <Text>Hello</Text>;`,
+      }),
+    ).toMatchObject({ domain: "hackathon" });
   });
 });

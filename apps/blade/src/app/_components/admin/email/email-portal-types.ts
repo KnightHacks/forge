@@ -2,6 +2,7 @@ export type EmailPortalTab = "compose" | "sends" | "templates";
 export type CampaignAudienceMode = "all" | "development_review" | "disabled";
 
 export interface EmailPortalTemplate {
+  domain: "club" | "hackathon";
   id: string;
   kind: "code" | "visual";
   latestRevision?: {
@@ -125,6 +126,11 @@ export interface EmailAudienceOptions {
 }
 
 export interface TemplateEditorSeed {
+  /**
+   * Which product this template writes for. Decides the personalization fields
+   * it may reference, and whether it can back a hackathon's status mail.
+   */
+  domain: "club" | "hackathon";
   id?: string;
   kind: "code" | "visual";
   name: string;

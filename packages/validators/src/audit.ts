@@ -18,6 +18,10 @@ export const AUDIT_DOMAINS = [
   "email",
   "events",
   "forms",
+  // The hackathon product surface: which hackathons exist, the mail each sends
+  // on a status change, and the classes hackers are split into. Separate from
+  // "platform", which is Discord wiring, and from "events", which is Club.
+  "hackathons",
   "issues",
   "members",
   // Platform wiring: which Discord server, channels, and roles the platform
@@ -297,6 +301,53 @@ export const AUDIT_ACTION_CATALOG = {
     // before" is the entire point of the log.
     ["label", "description", "productionId", "developmentId"],
   ),
+  "hackathon.created": policy("hackathons", "Created hackathon"),
+  // Change fields declared so an update reads as a diff. `validateActionPayload`
+  // rejects any field not listed here, so an undeclared field means the event
+  // can never carry a before/after — which is the entire point of the log.
+  "hackathon.updated": policy(
+    "hackathons",
+    "Updated hackathon",
+    [],
+    [
+      "displayName",
+      "theme",
+      "applicationUrl",
+      "applicationOpen",
+      "applicationDeadline",
+      "confirmationDeadline",
+      "startDate",
+      "endDate",
+    ],
+  ),
+  "hackathon.deleted": policy("hackathons", "Deleted hackathon"),
+  // `status` names which applicant status the mail belongs to, and
+  // `templateName` records what it pointed at *then* — the template can be
+  // renamed later, and the log should not silently follow it.
+  "hackathon.status_email_set": policy(
+    "hackathons",
+    "Set hackathon status email",
+    ["status", "templateName"],
+  ),
+  "hackathon.status_email_cleared": policy(
+    "hackathons",
+    "Cleared hackathon status email",
+    ["status"],
+  ),
+  // `kind` distinguishes an ordinary class from the hackathon's single VIP
+  // entry, which behaves differently and cannot be inferred from the name.
+  "hackathon.class_created": policy("hackathons", "Created hackathon class", [
+    "kind",
+  ]),
+  // `discordRoleId` especially: repointing it re-grants Discord channel access,
+  // so "what was it before" has to be answerable.
+  "hackathon.class_updated": policy(
+    "hackathons",
+    "Updated hackathon class",
+    [],
+    ["name", "discordRoleId", "color"],
+  ),
+  "hackathon.class_deleted": policy("hackathons", "Deleted hackathon class"),
   "role.synced": policy("roles", "Synced linked role", [
     "checkedCount",
     "addedCount",
@@ -608,6 +659,8 @@ export const AUDIT_TARGET_TYPES = [
   "form",
   "form_response",
   "form_section",
+  "hackathon",
+  "hackathon_class",
   "issue",
   "issue_template",
   "issue_tree",

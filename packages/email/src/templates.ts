@@ -1,5 +1,15 @@
 import ts from "typescript";
 
+import type { EmailTemplateDomain, PersonalizationField } from "./fields";
+import {
+  assertFieldsAllowedForDomain,
+  EmailTemplateValidationError,
+  PERSONALIZATION_FIELDS,
+  scalarText,
+} from "./fields";
+
+export * from "./fields";
+
 export interface ResolvedEmailTemplateLimits {
   maxAstNodes: number;
   maxEachItems: number;
@@ -19,13 +29,6 @@ export const EMAIL_TEMPLATE_LIMITS: ResolvedEmailTemplateLimits = {
 };
 
 export type EmailTemplateLimits = Partial<ResolvedEmailTemplateLimits>;
-
-export interface PersonalizationField {
-  fallback?: string;
-  field: string;
-  required: boolean;
-  type: "number" | "string" | "string[]";
-}
 
 export interface VisualEmailDocument {
   root: {
@@ -59,26 +62,6 @@ export type VisualEmailNode =
       label: string;
       type: "button";
     };
-
-export class EmailTemplateValidationError extends Error {
-  readonly code = "EMAIL_TEMPLATE_INVALID";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "EmailTemplateValidationError";
-  }
-}
-
-const PERSONALIZATION_FIELDS = {
-  "hacker.status": "string",
-  "hackathon.displayName": "string",
-  "hackathon.name": "string",
-  "member.graduationYear": "number",
-  "recipient.email": "string",
-  "recipient.firstName": "string",
-  "recipient.name": "string",
-  "team.roleNames": "string[]",
-} as const satisfies Record<string, PersonalizationField["type"]>;
 
 const ALLOWED_COMPONENTS = new Set([
   "Body",
@@ -149,14 +132,6 @@ function byteLength(value: string) {
 
 function resolveLimits(limits: EmailTemplateLimits | undefined) {
   return { ...EMAIL_TEMPLATE_LIMITS, ...limits };
-}
-
-function scalarText(value: unknown): string {
-  return typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean"
-    ? String(value)
-    : "";
 }
 
 function escapeHtml(value: unknown): string {
@@ -455,7 +430,20 @@ function renderElement(
       };
     }
     const value = resolvePath(field, context.sample, context.locals);
-    if (value !== expected) return { html: "", text: "" };
+    if (value !== expected) {
+      // Rendered and discarded rather than skipped.
+      //
+      // `registerField` only runs while rendering, so returning early here left
+      // every field inside a non-matching branch out of the contract — on the
+      // *sample* path only. The provider path above always renders children into
+      // a Go `{{ if }}`, so its contract is complete. That asymmetry means a
+      // template can pass `saveTemplateDraft` and then fail at send with a field
+      // error the officer never saw, and it also means the stored
+      // `personalization_contract` under-reports what the template references.
+      // The children are the same nodes either way; only the output is dropped.
+      renderChildren(children, context, depth + 1);
+      return { html: "", text: "" };
+    }
     return renderChildren(children, context, depth + 1);
   }
 
@@ -485,13 +473,39 @@ function renderElement(
       };
     }
     const value = resolvePath(field, context.sample, context.locals);
-    if (value === undefined || value === null) return { html: "", text: "" };
+
+    // The alias has to be bound even when there is nothing to iterate.
+    // `resolvePath` and `fieldType` both test `field in locals`, so binding it
+    // to `undefined` is what makes `<Merge field="role" />` inside the loop
+    // resolve to an empty string instead of being reported as an unknown
+    // personalization field. Omitting this turned a template that previously
+    // compiled to nothing into a hard failure.
+    const emptyContext = {
+      ...context,
+      locals: { ...context.locals, [alias]: undefined },
+    };
+
+    if (value === undefined || value === null) {
+      // Same reason as the `When` miss above: a collection absent from the
+      // sample must still contribute its children's fields to the contract, or
+      // the sample and provider paths disagree about what this template
+      // references. Output is discarded; only the contract survives.
+      renderChildren(children, emptyContext, depth + 1);
+      return { html: "", text: "" };
+    }
     if (!Array.isArray(value))
       fail("Each field must resolve to an array", node);
     if (value.length > context.limits.maxEachItems) {
       fail("Repeated-content limit exceeded", node);
     }
     const items = value as unknown[];
+    if (items.length === 0) {
+      // An empty array is the realistic case, not the absent one: `roleNames`
+      // defaults to `[]`. Without this the two compile paths still disagree for
+      // every template whose sample happens to have no rows.
+      renderChildren(children, emptyContext, depth + 1);
+      return { html: "", text: "" };
+    }
     const rendered = items.map((item) =>
       renderChildren(
         children,
@@ -638,7 +652,11 @@ function finalize(
   rendered: RenderedNode,
   contract: Map<string, PersonalizationField>,
   limits: ResolvedEmailTemplateLimits,
+  domain?: EmailTemplateDomain,
 ) {
+  // Both compile paths pass through here with a complete contract, so this is
+  // the one place the domain rule has to hold.
+  if (domain) assertFieldsAllowedForDomain(contract, domain);
   const html = `<!doctype html>${rendered.html}`.trim();
   const text = rendered.text
     .replace(/[ \t]+\n/g, "\n")
@@ -670,11 +688,13 @@ function finalize(
 }
 
 export function compileCodeEmailTemplate({
+  domain,
   limits: limitOverrides,
   providerNamespace,
   sample,
   source,
 }: {
+  domain?: EmailTemplateDomain;
   limits?: EmailTemplateLimits;
   providerNamespace?: string;
   sample: Record<string, unknown>;
@@ -718,7 +738,7 @@ export function compileCodeEmailTemplate({
     sample,
   };
   const rendered = renderChild(root, context, 0);
-  return finalize("code", rendered, context.contract, limits);
+  return finalize("code", rendered, context.contract, limits, domain);
 }
 
 function renderVisualNodes(
@@ -799,11 +819,13 @@ function renderVisualNodes(
 
 export function compileVisualEmailTemplate({
   document,
+  domain,
   limits: limitOverrides,
   providerNamespace,
   sample,
 }: {
   document: VisualEmailDocument;
+  domain?: EmailTemplateDomain;
   limits?: EmailTemplateLimits;
   providerNamespace?: string;
   sample: Record<string, unknown>;
@@ -829,7 +851,7 @@ export function compileVisualEmailTemplate({
     providerNamespace,
   );
   return {
-    ...finalize("visual", rendered, contract, limits),
+    ...finalize("visual", rendered, contract, limits, domain),
     document,
   };
 }

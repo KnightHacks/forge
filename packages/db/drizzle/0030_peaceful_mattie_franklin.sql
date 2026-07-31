@@ -1,0 +1,1 @@
+CREATE INDEX "knight_hacks_hacker_attendee_class_idx" ON "knight_hacks_hacker_attendee" USING btree ("class_id");

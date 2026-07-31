@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it } from "vitest";
 
+import { personalizationFieldsForDomain } from "@forge/email/fields";
+
 import {
   applyManualRecipientExclusions,
   buildEmailAudienceSnapshot,
@@ -393,5 +395,66 @@ describe("Email Portal audience resolution", () => {
       excludedUnsubscribed: 1,
       finalUnique: 1,
     });
+  });
+});
+
+describe("hackathon personalization reaches the send path", () => {
+  /**
+   * The catalog, the preview sample, and the delivered attributes have to name
+   * the same `hackathon.*` fields.
+   *
+   * A field present in the first two but missing from the third renders in the
+   * preview an officer approves and blank in the mail an applicant receives —
+   * silently, because nothing compares them. Four fields were added to the
+   * catalog and the sample without being added here, which is what this pins.
+   */
+  it("fills every hackathon.* field the catalog offers", () => {
+    const snapshot = buildEmailAudienceSnapshot({
+      currentDate: "2026-07-31",
+      definitions: [
+        {
+          hackathonId: HACKATHON_ID,
+          kind: "hackathon",
+          statuses: ["accepted"],
+        },
+      ],
+      hackers: [
+        {
+          email: "hacker@example.test",
+          firstName: "Dylan",
+          hackathonApplicationUrl: "https://bloomknights.org/apply",
+          hackathonConfirmationDeadline: "Oct 3, 2026",
+          hackathonDisplayName: "BloomKnights",
+          hackathonEndDate: "Oct 11, 2026",
+          hackathonId: HACKATHON_ID,
+          hackathonName: "bloomknights",
+          hackathonStartDate: "Oct 9, 2026",
+          id: "00000000-0000-4000-8000-0000000000a1",
+          name: "Dylan Vidal",
+          status: "accepted",
+        },
+      ],
+      members: [],
+      providerStates: [],
+    });
+
+    const [recipient] = snapshot.recipients;
+    const hackathon = recipient?.attributes.hackathon ?? {};
+
+    // Derived from the catalog, not written out. A hand-written `toEqual` would
+    // still pass after someone adds `hackathon.venue` to `PERSONALIZATION_FIELDS`
+    // and to the preview sample without populating it here — which is exactly
+    // the preview/delivery drift this test exists to catch.
+    const catalogKeys = personalizationFieldsForDomain("hackathon")
+      .filter((field) => field.startsWith("hackathon."))
+      .map((field) => field.slice("hackathon.".length))
+      .sort();
+
+    expect(Object.keys(hackathon).sort()).toEqual(catalogKeys);
+    // Populated, not merely present: `undefined` for every key would satisfy
+    // the key check above while still delivering blank mail.
+    for (const key of catalogKeys) {
+      expect(hackathon[key as keyof typeof hackathon]).toBeTruthy();
+    }
   });
 });

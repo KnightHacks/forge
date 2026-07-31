@@ -33,7 +33,10 @@ export default async function EmailPortalPage({
   if (!canAccessEmailPortal(permissions)) redirect(MEMBER_DASHBOARD_PATH);
 
   const [templates, sends, audienceOptions] = await Promise.all([
-    api.email.listTemplates({ includeArchived: false, limit: 50 }),
+    // 100 is the schema maximum. The domain filter counts templates from this
+    // list, so a cap below the real total makes a filter button read "0" while
+    // matching templates exist just past it.
+    api.email.listTemplates({ includeArchived: false, limit: 100 }),
     api.email.listSends({ limit: 50 }),
     api.email.listAudienceOptions(),
   ]);

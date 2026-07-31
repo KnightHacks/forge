@@ -8,15 +8,11 @@
       "types": "./dist/index.d.ts",
       "default": "./src/index.ts"
     },
-    "./client": {
-      "types": "./dist/client.d.ts",
-      "default": "./src/client.ts"
-    },
-    "./hackathons": {
-      "types": "./dist/hackathons/index.d.ts",
-      "default": "./src/hackathons/index.ts"
-    },
-    "./env": "./src/env.ts"
+    "./env": "./src/env.ts",
+    "./fields": {
+      "types": "./dist/fields.d.ts",
+      "default": "./src/fields.ts"
+    }
   },
   "license": "MIT",
   "scripts": {

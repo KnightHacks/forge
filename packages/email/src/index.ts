@@ -1,13 +1,11 @@
 import { logger } from "@forge/utils";
 
-import type { BuildHackathonEmailInput } from "./hackathons";
 import type {
   EmailDeliveryMode,
   EmailHttpRequest,
   EmailHttpTransport,
 } from "./provider";
 import { env } from "./env";
-import { buildHackathonEmail } from "./hackathons";
 import { createEmailProviderGateway } from "./provider";
 
 function basicAuthorization(username: string, password: string) {
@@ -107,30 +105,37 @@ export function getDefaultEmailProviderGateway() {
   return defaultGateway;
 }
 
+/**
+ * Sends one already-rendered message.
+ *
+ * No `templateId`: the provider falls back to its raw-content wrapper and
+ * delivers the HTML we hand it. That is what lets hackathon status mail be
+ * authored in Blade's own email portal instead of Listmonk, which is what
+ * removed the per-hackathon template-id table that used to live in this
+ * package.
+ */
 export const sendEmail = async ({
-  to,
-  subject,
-  template_id,
   from,
-  data,
+  html,
+  subject,
+  text,
+  to,
 }: {
-  to: string | string[];
-  subject: string;
-  template_id: number;
-  data: Record<string, string>;
   from?: string;
+  html: string;
+  subject: string;
+  text: string;
+  to: string | string[];
 }): Promise<{ success: true }> => {
   try {
     const fromEmail =
       from ?? env.LISTMONK_FROM_EMAIL ?? "disabled@knighthacks.org";
     await getDefaultEmailProviderGateway().sendTransactional({
-      data,
       from: fromEmail,
-      html: "",
+      html,
       recipients: typeof to === "string" ? [to] : to,
       subject,
-      templateId: template_id,
-      text: "",
+      text,
     });
     return { success: true };
   } catch (error) {
@@ -144,28 +149,5 @@ export const sendEmail = async ({
   }
 };
 
-export const sendHackathonEmail = async (
-  input: BuildHackathonEmailInput,
-): Promise<{ success: true }> => {
-  return sendEmail(buildHackathonEmail(input));
-};
-
 export * from "./provider";
 export * from "./templates";
-export {
-  buildHackathonEmail,
-  getHackathonEmailTemplateId,
-  type BuildHackathonEmailInput,
-  type BuiltHackathonEmail,
-  type HackathonEmailHackathonContext,
-} from "./hackathons";
-export {
-  DEFAULT_HACKATHON_EMAIL_TEMPLATE_PRESET_KEY,
-  HACKATHON_EMAIL_KINDS,
-  HACKATHON_EMAIL_TEMPLATE_IDS,
-  HACKATHON_EMAIL_TEMPLATE_PRESET_KEYS,
-  HACKATHON_EMAIL_TEMPLATE_PRESET_OPTIONS,
-  HACKATHON_TEMPLATE_IDS,
-  type HackathonEmailKind,
-  type HackathonEmailTemplatePresetKey,
-} from "./hackathons/templates";

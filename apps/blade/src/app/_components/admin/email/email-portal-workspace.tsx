@@ -130,6 +130,7 @@ function TemplateEditorDialog({
 }) {
   const [name, setName] = useState(initial.name);
   const [kind, setKind] = useState(initial.kind);
+  const [domain, setDomain] = useState(initial.domain);
   const [source, setSource] = useState(initial.source ?? DEFAULT_CODE_TEMPLATE);
   const [visualDocument, setVisualDocument] = useState(
     initial.visualDocument ?? DEFAULT_VISUAL_DOCUMENT,
@@ -149,8 +150,9 @@ function TemplateEditorDialog({
     try {
       await onSave?.(
         kind === "code"
-          ? { id: initial.id, kind, name, source }
+          ? { domain, id: initial.id, kind, name, source }
           : {
+              domain,
               id: initial.id,
               kind,
               name,
@@ -181,7 +183,7 @@ function TemplateEditorDialog({
         </DialogHeader>
         <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.6fr)]">
           <div className="min-w-0 space-y-4">
-            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
               <div className="grid gap-2">
                 <Label htmlFor="email-template-name">Template name</Label>
                 <Input
@@ -189,6 +191,36 @@ function TemplateEditorDialog({
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
+              </div>
+              <div className="grid gap-2">
+                <span
+                  id="email-template-domain-label"
+                  className="text-sm font-medium"
+                >
+                  Used for
+                </span>
+                <div
+                  aria-labelledby="email-template-domain-label"
+                  className="flex rounded-md border border-white/10 bg-background/60 p-1"
+                  role="group"
+                >
+                  {(["club", "hackathon"] as const).map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      aria-pressed={domain === option}
+                      className={cn(
+                        "h-9 rounded px-3 text-sm font-medium capitalize",
+                        domain === option
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                      onClick={() => setDomain(option)}
+                    >
+                      {option === "club" ? "Club" : "Hackathon"}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label>Editor</Label>
@@ -460,6 +492,13 @@ export function EmailPortalWorkspace({
     campaignAudienceMode === "development_review";
   const [tab, setTab] = useState<EmailPortalTab>(initialTab);
   const [editor, setEditor] = useState<TemplateEditorSeed | null>(null);
+  const [templateDomain, setTemplateDomain] = useState<
+    "all" | "club" | "hackathon"
+  >("all");
+  const visibleTemplates =
+    templateDomain === "all"
+      ? templates
+      : templates.filter((template) => template.domain === templateDomain);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [recipientSearch, setRecipientSearch] = useState("");
@@ -610,6 +649,11 @@ export function EmailPortalWorkspace({
                 type="button"
                 onClick={() =>
                   setEditor({
+                    // Inherits the active filter. Hardcoding "club" meant a
+                    // template created from the Hackathon tab disappeared the
+                    // moment it saved, and was then rejected by the hackathon
+                    // picker with no indication why.
+                    domain: templateDomain === "all" ? "club" : templateDomain,
                     kind: "code",
                     name: "",
                     source: DEFAULT_CODE_TEMPLATE,
@@ -619,17 +663,73 @@ export function EmailPortalWorkspace({
                 <Plus className="h-4 w-4" /> New template
               </Button>
             </div>
-            {templates.length === 0 ? (
+            {/* A toggle group, not a tab list: there is no second panel to
+                switch to, and declaring `role="tablist"` inside the real
+                tabpanel promised arrow-key navigation that does not exist. */}
+            <div
+              aria-label="Filter templates by domain"
+              className="mt-4 flex w-fit rounded-md border border-white/10 bg-background/60 p-1"
+              role="group"
+            >
+              {(
+                [
+                  ["all", "All"],
+                  ["club", "Club"],
+                  ["hackathon", "Hackathon"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  aria-pressed={templateDomain === value}
+                  className={cn(
+                    "h-9 rounded px-3 text-sm font-medium",
+                    templateDomain === value
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  key={value}
+                  onClick={() => setTemplateDomain(value)}
+                  type="button"
+                >
+                  {label}
+                  <span className="ml-1.5 text-xs opacity-70">
+                    {value === "all"
+                      ? templates.length
+                      : templates.filter((item) => item.domain === value)
+                          .length}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {visibleTemplates.length === 0 ? (
               <div className="mt-6 rounded-md border border-dashed border-white/15 bg-background/40 px-5 py-12 text-center">
                 <Sparkles className="mx-auto h-8 w-8 text-primary" />
-                <p className="mt-3 font-medium">No templates yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Start with safe TSX for full React Email layout control.
-                </p>
+                {templates.length === 0 ? (
+                  <>
+                    <p className="mt-3 font-medium">No templates yet</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Start with safe TSX for full React Email layout control.
+                    </p>
+                  </>
+                ) : (
+                  // Distinct copy on purpose: an officer sent here by the
+                  // hackathon config screen filters to Hackathon, sees zero,
+                  // and "No templates yet" would tell them the portal is empty
+                  // when they are looking at 12 club templates.
+                  <>
+                    <p className="mt-3 font-medium">
+                      No {templateDomain} templates
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {templates.length} template
+                      {templates.length === 1 ? "" : "s"} loaded here are in
+                      another domain. Create one, or switch the filter to All.
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="mt-5 grid gap-3 xl:grid-cols-2">
-                {templates.map((template) => (
+                {visibleTemplates.map((template) => (
                   <article
                     key={template.id}
                     aria-label={`${template.name} template`}
@@ -655,6 +755,22 @@ export function EmailPortalWorkspace({
                             )}
                           >
                             {template.latestRevision?.state ?? "draft"}
+                          </Badge>
+                          {/* Both domains are badged, not just hackathon: a
+                              portal containing no hackathon templates would
+                              otherwise show no distinction at all, which reads
+                              as "this feature is missing". */}
+                          <Badge
+                            variant="outline"
+                            className={
+                              template.domain === "hackathon"
+                                ? "border-primary/40 text-primary"
+                                : "border-white/15 text-muted-foreground"
+                            }
+                          >
+                            {template.domain === "hackathon"
+                              ? "Hackathon"
+                              : "Club"}
                           </Badge>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">

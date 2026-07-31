@@ -200,3 +200,55 @@ describe("Email Portal workspace", () => {
     expect(html).not.toMatch(/disabled="" checked=""/);
   });
 });
+
+describe("template domains in the portal list", () => {
+  // Only the invariant that survives a redesign: a hackathon template is
+  // distinguishable from a club one. The earlier version also asserted the
+  // filter counts via regex over rendered markup — that fired on a Tailwind
+  // class change and stayed silent when the filter predicate was inverted,
+  // because `renderToStaticMarkup` cannot click a tab. Filtering behaviour
+  // belongs in the e2e spec.
+  it("TC-018 distinguishes hackathon templates from club ones", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmailPortalWorkspace, {
+        audienceOptions: [],
+        initialTab: "templates",
+        preview: {
+          blockers: [],
+          counts: {
+            duplicatesCollapsed: 0,
+            excludedBlocklisted: 0,
+            excludedInvalid: 0,
+            excludedMissingFields: 0,
+            excludedUnsubscribed: 0,
+            finalUnique: 0,
+            rawMatches: 0,
+          },
+          expiresAt: "2026-07-25T18:15:00.000Z",
+          version: "pv_01J00000000000000000000000",
+        },
+        sends: [],
+        templates: [
+          {
+            domain: "club" as const,
+            id: "tpl-club",
+            kind: "code" as const,
+            latestRevision: { state: "published" as const, version: 1 },
+            name: "Club newsletter",
+          },
+          {
+            domain: "hackathon" as const,
+            id: "tpl-hack",
+            kind: "code" as const,
+            latestRevision: { state: "published" as const, version: 1 },
+            name: "KH acceptance",
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("Club newsletter");
+    expect(html).toContain("KH acceptance");
+    expect(html).toContain("Hackathon");
+  });
+});

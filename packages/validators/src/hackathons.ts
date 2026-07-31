@@ -1,15 +1,8 @@
 import { z } from "zod";
 
-export const hackathonRouteNameSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(2, "Route name must be at least 2 characters.")
-  .max(64, "Route name must be 64 characters or fewer.")
-  .regex(
-    /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
-    "Use lowercase letters, numbers, and hyphens. Start and end with a letter or number.",
-  );
+import { FORMS } from "@forge/consts";
+
+import { discordSnowflakeSchema } from "./discord-archive";
 
 export const hackathonDisplayNameSchema = z
   .string()
@@ -23,17 +16,65 @@ export const hackathonThemeSchema = z
   .min(1, "Theme is required.")
   .max(255, "Theme must be 255 characters or fewer.");
 
-export function createHackathonApplicationBackgroundKeySchema<
-  T extends readonly [string, ...string[]],
->(backgroundKeys: T) {
-  return z.enum(backgroundKeys).nullable().optional();
-}
+/** Same rule and reason as `platform-config`: a cleared field means "not set". */
+const emptyToNull = (value: string | null) => (value === "" ? null : value);
 
-export function createHackathonEmailTemplateKeySchema<
-  T extends readonly [string, ...string[]],
->(emailTemplateKeys: T) {
-  return z.enum(emailTemplateKeys).nullable().optional();
-}
+/**
+ * Where the hackathon's own site hosts its application. Optional, so an officer
+ * clearing the field is expressing "no link yet" rather than making a mistake.
+ * The empty string is coerced before the URL check runs, because `""` would
+ * otherwise fail it.
+ */
+export const hackathonApplicationUrlSchema = z
+  .string()
+  .trim()
+  .nullable()
+  .optional()
+  .transform((value) => emptyToNull(value ?? null))
+  .pipe(
+    z
+      .string()
+      .url("Enter a full URL, including https://")
+      // Load-bearing despite `.url()` running first: zod accepts
+      // `javascript:alert(1)` as a URL, and this is the only thing rejecting it.
+      // Compared case-insensitively because a scheme is case-insensitive per
+      // RFC 3986 — an officer pasting `HTTPS://bloomknights.org` from a slide
+      // deck is not making a mistake, and rejecting it would be a lie.
+      .refine(
+        (value) => /^https?:\/\//i.test(value),
+        "Only http and https links are allowed.",
+      )
+      .max(2048, "Link must be 2048 characters or fewer.")
+      .nullable(),
+  );
+
+export const hackathonClassNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Class name is required.")
+  .max(64, "Class name must be 64 characters or fewer.");
+
+/**
+ * Six-digit hex, matching how colours are already stored on `Roles` and
+ * `Event` (`varchar(7)`). Three-digit shorthand is rejected rather than
+ * expanded, so what an officer types is what is stored.
+ */
+export const hackathonClassColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex colour, such as #4F46E5.");
+
+/**
+ * The Discord role a class maps to. Trimmed before the pattern runs, because
+ * the realistic officer error is a pasted role *mention* (`<@&123>`) or a
+ * trailing space — either of which would otherwise surface as a 404 from
+ * Discord at check-in rather than here. Same composition as
+ * `configSnowflakeSchema`.
+ */
+export const hackathonClassDiscordRoleSchema = z
+  .string()
+  .trim()
+  .pipe(discordSnowflakeSchema);
 
 export type HackathonDateWindowField =
   | "applicationOpen"
@@ -52,47 +93,11 @@ export interface HackathonDateWindow {
 
 export interface HackathonValidationIssue {
   message: string;
-  path: [
-    HackathonDateWindowField | "applicationBackgroundKey" | "emailTemplateKey",
-  ];
+  path: [HackathonDateWindowField];
 }
 
 function isValidDate(date: Date) {
   return Number.isFinite(date.getTime());
-}
-
-export function getHackathonBackgroundIssues({
-  applicationBackgroundEnabled,
-  applicationBackgroundKey,
-}: {
-  applicationBackgroundEnabled: boolean;
-  applicationBackgroundKey?: string | null;
-}): HackathonValidationIssue[] {
-  if (!applicationBackgroundEnabled || applicationBackgroundKey) return [];
-
-  return [
-    {
-      message: "Choose a background preset or disable the background override.",
-      path: ["applicationBackgroundKey"],
-    },
-  ];
-}
-
-export function getHackathonEmailTemplateIssues({
-  emailTemplateEnabled,
-  emailTemplateKey,
-}: {
-  emailTemplateEnabled: boolean;
-  emailTemplateKey?: string | null;
-}): HackathonValidationIssue[] {
-  if (!emailTemplateEnabled || emailTemplateKey) return [];
-
-  return [
-    {
-      message: "Choose an email template preset or disable the email override.",
-      path: ["emailTemplateKey"],
-    },
-  ];
 }
 
 export function getHackathonDateWindowIssues(
@@ -153,3 +158,99 @@ export function getHackathonDateWindowIssues(
 
   return issues;
 }
+
+/**
+ * The statuses that send mail. `checkedin` is the one that does not, and this
+ * is derived rather than written out so the two lists cannot drift.
+ */
+export const HACKATHON_SENDING_STATUSES =
+  FORMS.HACKATHON_APPLICATION_STATES.filter(
+    (status): status is HackathonSendingStatus => status !== "checkedin",
+  );
+
+export type HackathonSendingStatus = Exclude<
+  (typeof FORMS.HACKATHON_APPLICATION_STATES)[number],
+  "checkedin"
+>;
+
+export const hackathonSendingStatusSchema = z.enum(
+  HACKATHON_SENDING_STATUSES as [
+    HackathonSendingStatus,
+    ...HackathonSendingStatus[],
+  ],
+);
+
+/**
+ * Route name is no longer an officer-facing field.
+ *
+ * It was Legacy's application URL segment; applications now live on each
+ * hackathon's own site, which owns its paths, so nothing links to it and no
+ * Reforge code reads it. The column survives only because production Blade
+ * still routes on it, and it is `NOT NULL UNIQUE` — so it is derived from the
+ * display name rather than typed, and drops at cutover with the other retired
+ * columns.
+ */
+export function deriveHackathonRouteName(displayName: string) {
+  return displayName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64)
+    .replace(/-+$/g, "");
+}
+
+const hackathonWritableFields = {
+  applicationDeadline: z.coerce.date(),
+  applicationOpen: z.coerce.date(),
+  applicationUrl: hackathonApplicationUrlSchema,
+  confirmationDeadline: z.coerce.date(),
+  displayName: hackathonDisplayNameSchema,
+  endDate: z.coerce.date(),
+  startDate: z.coerce.date(),
+  theme: hackathonThemeSchema,
+};
+
+export const hackathonCreateSchema = z.object(hackathonWritableFields);
+
+export const hackathonUpdateSchema = z.object({
+  ...hackathonWritableFields,
+  id: z.string().uuid(),
+});
+
+export const hackathonIdSchema = z.object({ id: z.string().uuid() });
+
+export const hackathonStatusEmailSetSchema = z.object({
+  hackathonId: z.string().uuid(),
+  status: hackathonSendingStatusSchema,
+  subject: z
+    .string()
+    .trim()
+    .min(1, "Subject is required.")
+    .max(200, "Subject must be 200 characters or fewer."),
+  templateId: z.string().uuid(),
+});
+
+export const hackathonStatusEmailClearSchema = z.object({
+  hackathonId: z.string().uuid(),
+  status: hackathonSendingStatusSchema,
+});
+
+export const hackathonClassKindSchema = z.enum(["class", "vip"]);
+
+export const hackathonClassCreateSchema = z.object({
+  color: hackathonClassColorSchema,
+  discordRoleId: hackathonClassDiscordRoleSchema,
+  hackathonId: z.string().uuid(),
+  kind: hackathonClassKindSchema,
+  name: hackathonClassNameSchema,
+});
+
+export const hackathonClassUpdateSchema = z.object({
+  color: hackathonClassColorSchema,
+  discordRoleId: hackathonClassDiscordRoleSchema,
+  id: z.string().uuid(),
+  name: hackathonClassNameSchema,
+});
+
+export const hackathonClassIdSchema = z.object({ id: z.string().uuid() });

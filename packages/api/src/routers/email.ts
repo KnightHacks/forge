@@ -49,6 +49,7 @@ import {
   listTemplateRecords,
   revisionSource,
   saveTemplateDraft,
+  templateBindings,
 } from "../utils/email/templates";
 
 export const emailRouter = {
@@ -57,6 +58,32 @@ export const emailRouter = {
     .mutation(async ({ ctx, input }) => {
       requireEmailPortal(ctx);
       return db.transaction(async (tx) => {
+        // Lock the template before reading its bindings, matching
+        // `saveTemplateDraft`. Without this the binding check is an unlocked
+        // read: `hackathon.setStatusEmail` takes `FOR UPDATE` on this row, so a
+        // bind committing between this read and the archive below would be
+        // invisible here and the archive would still win — leaving a hackathon
+        // reporting itself configured against mail the portal calls retired,
+        // which is precisely what this guard exists to prevent.
+        await tx
+          .select({ id: EmailTemplate.id })
+          .from(EmailTemplate)
+          .where(eq(EmailTemplate.id, input.templateId))
+          .limit(1)
+          .for("update");
+
+        // The `restrict` FK cannot see a soft delete, so the refusal has to
+        // live here.
+        const bindings = await templateBindings(input.templateId, tx);
+        if (bindings.length > 0) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `This template is used by ${bindings
+              .map((binding) => `${binding.displayName} (${binding.status})`)
+              .join(", ")}. Replace it there before archiving.`,
+          });
+        }
+
         const [template] = await tx
           .update(EmailTemplate)
           .set({
@@ -180,11 +207,16 @@ export const emailRouter = {
       return saveTemplateDraft(
         template.kind === "code"
           ? {
+              // A copy stays in its source's domain: duplicating a hackathon
+              // template to get a club one would silently widen what fields it
+              // may reference.
+              domain: template.domain,
               kind: "code",
               name: `${template.name} copy ${suffix}`,
               source: revision.source ?? "",
             }
           : {
+              domain: template.domain,
               kind: "visual",
               name: `${template.name} copy ${suffix}`,
               visualDocument: revision.visualDocument as Record<
@@ -380,10 +412,15 @@ export const emailRouter = {
           message: "Email template not found.",
         });
       }
-      return compileDraft(revisionSource(template, revision), {
-        ...DEFAULT_TEMPLATE_SAMPLE,
-        ...input.sample,
-      });
+      // Scoped to the template's domain so preview and save agree. Compiling
+      // unscoped meant an author saw a green preview of a club field in a
+      // hackathon template and then an unexplained rejection on save.
+      return compileDraft(
+        revisionSource(template, revision),
+        { ...DEFAULT_TEMPLATE_SAMPLE, ...input.sample },
+        undefined,
+        template.domain,
+      );
     }),
 
   publishTemplate: permProcedure
@@ -556,10 +593,12 @@ export const emailRouter = {
             message: "Email template not found.",
           });
         }
-        const compiled = compileDraft(revisionSource(template, revision), {
-          ...DEFAULT_TEMPLATE_SAMPLE,
-          ...input.sample,
-        });
+        const compiled = compileDraft(
+          revisionSource(template, revision),
+          { ...DEFAULT_TEMPLATE_SAMPLE, ...input.sample },
+          undefined,
+          template.domain,
+        );
         result = await gateway.sendTest({
           html: compiled.html,
           subject: input.content.subject,
