@@ -24,3 +24,18 @@ export const nodeEnv = z
   .parse(process.env.NODE_ENV);
 
 export const isBladeE2E = process.env.BLADE_E2E_AUTH === "true";
+
+/**
+ * Opt-in: let a development environment send hackathon status mail for real.
+ *
+ * Off by default, and deliberately its own switch rather than a relaxation of
+ * the development gate. That gate exists because `processEmailSend` refuses a
+ * hackathon audience outside production, so a status change made in dev would
+ * otherwise mark every recipient delivery-failed a couple of minutes later.
+ *
+ * Turning this on points a dev box at the real applicant table and mails real
+ * students. It is opt-in per environment for that reason — there is no
+ * "practice" mode here, and a bulk accept cannot be recalled.
+ */
+export const allowDevelopmentHackathonSends =
+  process.env.BLADE_ALLOW_DEV_HACKATHON_SENDS === "true";

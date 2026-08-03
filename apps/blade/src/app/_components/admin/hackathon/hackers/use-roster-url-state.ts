@@ -105,7 +105,18 @@ export function clearedFacets(): RosterFilterPatch {
   return Object.fromEntries(FACET_KEYS.map((key) => [key, undefined]));
 }
 
-function applyPatch(params: URLSearchParams, patch: RosterFilterPatch) {
+/**
+ * Applies a patch to a *copy* of `base`, and never to a live params object.
+ *
+ * `useSearchParams` returns a `ReadonlyURLSearchParams` whose `set`, `delete`,
+ * `append` and `sort` all throw at runtime — and are only marked `@deprecated`
+ * on the type, so passing one here type-checks cleanly and blows up in the
+ * browser on the first filter click. Taking a string rather than a params object
+ * means no caller can make that mistake, instead of three callers each having to
+ * remember to copy.
+ */
+function applyPatch(base: string, patch: RosterFilterPatch) {
+  const params = new URLSearchParams(base);
   for (const key of SCALAR_KEYS) {
     if (!(key in patch)) continue;
     const value = patch[key];
@@ -126,6 +137,7 @@ function applyPatch(params: URLSearchParams, patch: RosterFilterPatch) {
       params.append(key, value);
     }
   }
+  return params;
 }
 
 function parseFilter(params: {
@@ -236,14 +248,13 @@ export function useRosterUrlState(
   );
 
   const write = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
+    (build: (base: string) => URLSearchParams) => {
       const committed = searchParams.toString();
       // Once the URL catches up with what we wrote, the pending copy is spent.
       if (pendingRef.current === committed) pendingRef.current = null;
       const settled = pendingRef.current === null;
       const base = pendingRef.current ?? committed;
-      const params = new URLSearchParams(base);
-      mutate(params);
+      const params = build(base);
       // Sorted, so a query is defined by its content rather than by the order
       // keys happened to be touched. Without this, re-appending list keys built
       // a different string for an identical filter, and every no-op click cost
@@ -274,24 +285,20 @@ export function useRosterUrlState(
     hackathonId: searchParams.get("hackathon"),
     navigating,
     projectFilter: useCallback(
-      (patch) => {
-        const params = new URLSearchParams(
-          pendingRef.current ?? searchParams.toString(),
-        );
-        applyPatch(params, patch);
-        return parseFilter(params);
-      },
+      (patch) =>
+        parseFilter(
+          applyPatch(pendingRef.current ?? searchParams.toString(), patch),
+        ),
       [searchParams],
     ),
     setFilter: useCallback(
-      (patch) => write((params) => applyPatch(params, patch)),
+      (patch) => write((base) => applyPatch(base, patch)),
       [write],
     ),
     wouldMove: useCallback(
       (patch) => {
         const base = pendingRef.current ?? searchParams.toString();
-        const params = new URLSearchParams(base);
-        applyPatch(params, patch);
+        const params = applyPatch(base, patch);
         params.sort();
         // Compared against the sorted base, so an externally-built URL whose
         // keys happen to be out of order is not mistaken for a pending change.
@@ -303,16 +310,20 @@ export function useRosterUrlState(
     ),
     setHackathonId: useCallback(
       (next) =>
-        write((params) => {
+        write((base) => {
+          const params = new URLSearchParams(base);
           params.set("hackathon", next);
+          return params;
         }),
       [write],
     ),
     setShowAll: useCallback(
       (next) =>
-        write((params) => {
+        write((base) => {
+          const params = new URLSearchParams(base);
           if (next) params.set("showAll", "true");
           else params.delete("showAll");
+          return params;
         }),
       [write],
     ),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CalendarOff,
@@ -19,7 +19,6 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 import { HACKER_STATUS_LABELS } from "@forge/validators";
 
-import type { RosterFilterPatch } from "./use-roster-url-state";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
@@ -31,6 +30,7 @@ import { FilterChangeDialog } from "./filter-change-dialog";
 import { HackerDetailDialog } from "./hacker-detail-dialog";
 import { FilterChips, HackerFilters, StatusTabs } from "./hacker-filters";
 import { HackerTable } from "./hacker-table";
+import { useFilterFlow } from "./use-filter-flow";
 import { useHackerSelection } from "./use-hacker-selection";
 import { useRosterUrlState } from "./use-roster-url-state";
 
@@ -96,49 +96,6 @@ export function HackerRoster({
 
   const [bulkStatus, setBulkStatus] = useState<SendingStatus | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  /**
-   * Applying a filter is one process with three states, not two booleans.
-   *
-   * As two, `checking` and `prompting` were simultaneously reachable: a request
-   * issued before the dialog opened would resolve behind it and either rewrite
-   * the open dialog's numbers under the officer's cursor, or commit a different
-   * filter outright while the dialog was still asking about this one. That state
-   * has no meaning, so it is now unrepresentable.
-   */
-  const [filterFlow, setFilterFlow] = useState<
-    | { kind: "checking" }
-    | { kind: "idle" }
-    | { droppedIds: string[]; kind: "prompting"; patch: RosterFilterPatch }
-  >({ kind: "idle" });
-  const [search, setSearch] = useState(url.filter.search ?? "");
-  /**
-   * Two facts, because one is not enough to know whether to touch the box.
-   *
-   * `lastUrlSearch` is what the URL held when we last reconciled, and it is the
-   * *only* trigger for the adjustment below — the box may be rewritten when the
-   * URL moves, and at no other time. `sentSearches` is every term we asked the
-   * URL to hold in the current chain, which says whether a move was ours.
-   *
-   * Collapsing these into one "committed" value is what broke first: the
-   * microtask recording a commit always beats the server round trip, so for the
-   * length of a navigation that value disagreed with a URL which had simply not
-   * caught up, and the adjustment blanked the box mid-typing.
-   *
-   * A *single* sent term was then wrong for the same reason `useRosterUrlState`
-   * keeps a list rather than one pending query: two commits inside one window
-   * land one after the other, and the first landing is not the latest term. It
-   * read as foreign and rewound `"john smith"` to `"john"`.
-   *
-   * Stored trimmed, because the schema trims: keeping the raw box text meant
-   * `"john "` never matched the `"john"` that came back, so the box read its own
-   * write as someone else's and `"john "` + `"smith"` produced `"johnsmith"`.
-   */
-  const [lastUrlSearch, setLastUrlSearch] = useState(url.filter.search ?? "");
-  const [sentSearches, setSentSearches] = useState<string[]>([
-    url.filter.search ?? "",
-  ]);
-  const latestSent = sentSearches[sentSearches.length - 1] ?? "";
-
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
 
@@ -203,124 +160,37 @@ export function HackerRoster({
     await utils.hacker.invalidate();
   };
 
-  /**
-   * Discards a survival response that a later request has already superseded.
-   *
-   * Without it, typing "jo" then "john" could commit "jo" last if the first
-   * request happened to be slower: the box read "john", the roster was filtered
-   * by "jo", and because neither the box nor the URL changed again, nothing
-   * re-armed. The screen stayed lying about what it was showing, and the next
-   * bulk action mailed the wrong group.
-   */
-  const requestSeqRef = useRef(0);
+  /*
+    The whole filter-application process, including the search box.
 
-  /** Resolves true only if the patch actually reached the URL. */
-  const requestFilter = useCallback(
-    async (patch: RosterFilterPatch) => {
-      /*
-        Refused unless the flow is settled.
-
-        `prompting` alone was not enough. Every *control* is disabled during a
-        check, but the search box cannot be — an officer is typing into it — so
-        the debounce was the one remaining path that could bump the sequence and
-        discard the check the officer was already waiting on. Their status click
-        then vanished with no error and no toast.
-
-        Nothing is lost by refusing: `filterFlow.kind` is a dependency of the
-        debounce, so the term is retried the moment the flow settles.
-      */
-      if (filterFlow.kind !== "idle") return false;
-
-      // A patch that changes nothing needs neither a navigation nor a question
-      // about a selection that cannot be affected by it.
-      if (!url.wouldMove(patch)) return false;
-      if (selection.selected.size === 0) return url.setFilter(patch);
-
-      const seq = ++requestSeqRef.current;
-      setFilterFlow({ kind: "checking" });
-      try {
-        // Asked server-side: the browser only knows the rows it has loaded, and
-        // the case that matters is a selected row on a page nobody is looking
-        // at. Projected through the hook so the question is about the filter
-        // that will actually land, not the one currently in the URL.
-        const survival = await utils.hacker.selectionSurvival.fetch({
-          attendeeIds: [...selection.selected],
-          filter: url.projectFilter(patch),
-          hackathonId,
-        });
-        if (seq !== requestSeqRef.current) return false;
-        if (survival.droppedIds.length === 0) {
-          setFilterFlow({ kind: "idle" });
-          return url.setFilter(patch);
-        }
-        setFilterFlow({
-          droppedIds: survival.droppedIds,
-          kind: "prompting",
-          patch,
-        });
-        return false;
-      } catch {
-        if (seq === requestSeqRef.current) {
-          setFilterFlow({ kind: "idle" });
-          toast.error("Could not check the selection against that filter.");
-        }
-        return false;
-      }
-    },
-    [filterFlow.kind, hackathonId, selection.selected, url, utils],
-  );
-
-  /**
-   * The debounce reads these rather than naming them as dependencies.
-   *
-   * `useRosterUrlState` rebuilds its return value every render, so listing
-   * `requestFilter` re-armed the 350 ms timer on every render — and when a
-   * pending search opened the prompt instead of committing, it fired again, and
-   * again. Assigned in an effect, never during render: a ref touched in the
-   * render path is what breaks under concurrent rendering, and this component
-   * renders inside a transition.
-   *
-   * There is no filter ref any more. The debounce sends `{ search }` alone, so
-   * it has nothing stale to carry.
-   */
-  const requestFilterRef = useRef(requestFilter);
-  useEffect(() => {
-    requestFilterRef.current = requestFilter;
+    Injected dependencies rather than inline logic: every regression here for
+    four consecutive rounds has been about interleaving — a survival response
+    landing after a later one, a commit recorded before the URL caught up — and
+    that is only reachable in a test that controls when each promise settles.
+    Nothing rendered this component, so none of it was ever covered.
+  */
+  const flow = useFilterFlow({
+    checkSurvival: (patch) =>
+      // Asked server-side: the browser only knows the rows it has loaded, and
+      // the case that matters is a selected row on a page nobody is looking at.
+      // Projected through the URL hook so the question is about the filter that
+      // will actually land, not the one currently in the address bar.
+      utils.hacker.selectionSurvival.fetch({
+        attendeeIds: [...selection.selected],
+        filter: url.projectFilter(patch),
+        hackathonId,
+      }),
+    onCheckFailed: () =>
+      toast.error("Could not check the selection against that filter."),
+    selectedCount: () => selection.selected.size,
+    setFilter: url.setFilter,
+    urlSearch: url.filter.search ?? "",
+    wouldMove: url.wouldMove,
   });
-
-  // Resyncs only when the URL's search changed to something we did not write —
-  // removing the chip, "Clear filters", or arriving on a shared link.
-  const searchFromUrl = url.filter.search ?? "";
-  if (searchFromUrl !== lastUrlSearch) {
-    setLastUrlSearch(searchFromUrl);
-    if (sentSearches.includes(searchFromUrl)) {
-      // Ours. Once the last one we sent lands, the chain is spent.
-      if (searchFromUrl === latestSent) setSentSearches([searchFromUrl]);
-    } else {
-      setSentSearches([searchFromUrl]);
-      setSearch(searchFromUrl);
-    }
-  }
-
-  useEffect(() => {
-    // Compared trimmed, because that is what comes back. The schema trims, so
-    // storing the raw box text meant `"john "` never matched the `"john"` in
-    // the URL — the resync above read its own commit as someone else's, rewound
-    // the box, and typing `"john "` then `"smith"` produced `"johnsmith"`.
-    const term = search.trim();
-    if (term === latestSent) return;
-    const timer = setTimeout(() => {
-      void requestFilterRef
-        .current({ search: term || undefined })
-        .then((committed) => {
-          // Only once it landed. Recording it up front stranded the term when the
-          // survival dialog intercepted the write: the box held text the roster
-          // was not filtered by, and nothing would retry it.
-          if (committed) setSentSearches((sent) => [...sent, term]);
-        });
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [filterFlow.kind, latestSent, search]);
+  const requestFilter = flow.requestFilter;
+  const search = flow.search;
+  const setSearch = flow.setSearch;
+  const filterBusy = flow.busy;
 
   if (!selected) {
     return (
@@ -348,16 +218,6 @@ export function HackerRoster({
   // exactly full. A hackathon with precisely 1000 matches otherwise rendered
   // "1000 of 1000 shown · capped at 1000; narrow the filter to reach the rest"
   // — telling an officer to go hunting for rows that were all on screen.
-  /*
-    Every control that writes a filter is locked while a check is running, so a
-    second request cannot discard the one the officer is waiting on. Previously
-    only the status tabs greyed, and clicking a still-live pane tab or chip
-    silently cancelled the greyed-out request.
-
-    The search box is the exception — an officer may be mid-word — so the
-    debounce refuses instead, and retries when this settles.
-  */
-  const filterBusy = filterFlow.kind !== "idle";
   const atCap = url.showAll && roster.data?.nextCursor != null;
   /**
    * The total for the rows actually on screen.
@@ -631,27 +491,11 @@ export function HackerRoster({
 
       <FilterChangeDialog
         droppedCount={
-          filterFlow.kind === "prompting" ? filterFlow.droppedIds.length : 0
+          flow.flow.kind === "prompting" ? flow.flow.droppedIds.length : 0
         }
-        onCancel={() => {
-          // Only when the prompt was about the search. Rewinding
-          // unconditionally meant cancelling a *status* prompt silently threw
-          // away text the officer had typed but not yet committed.
-          if (filterFlow.kind === "prompting" && "search" in filterFlow.patch) {
-            setSearch(latestSent);
-          }
-          setFilterFlow({ kind: "idle" });
-        }}
-        onProceed={() => {
-          if (filterFlow.kind !== "prompting") return;
-          const { droppedIds, patch } = filterFlow;
-          selection.deselect(droppedIds);
-          setFilterFlow({ kind: "idle" });
-          if (url.setFilter(patch) && "search" in patch) {
-            setSentSearches((sent) => [...sent, patch.search ?? ""]);
-          }
-        }}
-        open={filterFlow.kind === "prompting"}
+        onCancel={flow.cancelPrompt}
+        onProceed={() => flow.proceedWithPrompt(selection.deselect)}
+        open={flow.flow.kind === "prompting"}
         selectedCount={selectedCount}
       />
     </main>

@@ -60,7 +60,7 @@ export function FilterChangeDialog({
           </DialogTitle>
           <DialogDescription>
             {selectedCount === 0
-              ? "Something cleared it while this filter was being checked, so there is nothing left to lose. Applying the filter now."
+              ? "Something cleared it while this filter was being checked, so there is nothing left to lose — but the filter has not been applied yet."
               : `Changing the filter now deselects those ${droppedCount}; the rest stay selected. Keep this filter instead and your selection is untouched, so you can finish what you started.`}
           </DialogDescription>
         </DialogHeader>

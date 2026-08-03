@@ -42,12 +42,13 @@ export function HackerTable({
   selected,
 }: {
   /**
-   * True while a filter change is being checked against the selection.
+   * True while a filter change is being checked against the selection, and
+   * while the officer is answering the prompt that check produced.
    *
-   * Selecting during that window changed the set the answer was computed over,
-   * so a check that reported "nobody is dropped" could commit while rows added
-   * afterwards sat selected and off-screen under the new filter — and the next
-   * bulk action mailed them.
+   * Selecting during either window changes the set the answer was computed
+   * over, so a check that reported "nobody is dropped" could commit while rows
+   * added afterwards sat selected and off-screen under the new filter — and the
+   * next bulk action mailed them.
    */
   busy: boolean;
   hackers: Roster;

@@ -13,7 +13,7 @@ import {
   getDefaultEmailProviderGateway,
 } from "@forge/email";
 
-import { isBladeE2E, nodeEnv } from "../../env";
+import { allowDevelopmentHackathonSends, isBladeE2E, nodeEnv } from "../../env";
 import {
   isDevelopmentReviewAudienceDefinition,
   normalizeRecipientEmail,
@@ -24,6 +24,17 @@ type CampaignAudienceScope = "development_review" | undefined;
 
 export function developmentCampaignReviewEnabled() {
   return nodeEnv === "development" && !isBladeE2E;
+}
+
+/**
+ * Whether hackathon status mail may actually leave this environment.
+ *
+ * Production always may. A development environment may only when explicitly
+ * opted in, because the audience restriction below would otherwise fail every
+ * recipient — and because the opt-in mails real applicants.
+ */
+export function hackathonStatusSendsAllowed() {
+  return !developmentCampaignReviewEnabled() || allowDevelopmentHackathonSends;
 }
 
 export function campaignAudienceScope(value: unknown): CampaignAudienceScope {

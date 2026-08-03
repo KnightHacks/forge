@@ -24,7 +24,10 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** `checkedin` is filterable but not settable, so it has no label entry. */
 function statusLabel(status: string) {
-  return status in HACKER_STATUS_LABELS
+  // `hasOwn`, not `in`, which walks the prototype and would return a function
+  // for a wire value like `"toString"` — React throws on that, so an officer
+  // would get an error boundary instead of this fallback.
+  return Object.hasOwn(HACKER_STATUS_LABELS, status)
     ? HACKER_STATUS_LABELS[status as SendingStatus]
     : "Checked in";
 }

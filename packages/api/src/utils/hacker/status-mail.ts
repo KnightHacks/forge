@@ -13,7 +13,7 @@ import { formatHackathonDate } from "@forge/email/fields";
 
 import type { WriteDb } from "../db";
 import { materializeContent } from "../email/campaign";
-import { developmentCampaignReviewEnabled } from "../email/delivery";
+import { hackathonStatusSendsAllowed } from "../email/delivery";
 
 /** Everything read and compiled before the transaction opens. */
 export interface PreparedStatusMail {
@@ -72,13 +72,17 @@ export interface StatusMailHackathon {
  * success, and two minutes later the roster shows all two hundred as
  * delivery-failed. Exported so the *preview* can run the same check — a preview
  * that promises to send and is then refused has failed at its only job.
+ *
+ * `BLADE_ALLOW_DEV_HACKATHON_SENDS=true` lifts it, together with the audience
+ * restriction, so a development environment can exercise the real path. That
+ * mails real students; it is not a dry run.
  */
 export function assertStatusMailDeliverable() {
-  if (developmentCampaignReviewEnabled()) {
+  if (!hackathonStatusSendsAllowed()) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
-        "Status email delivery is disabled in this environment, so status changes are blocked here.",
+        "Status email delivery is off in this environment, so status changes are blocked. Set BLADE_ALLOW_DEV_HACKATHON_SENDS=true to enable it — real applicants will be emailed.",
     });
   }
 }

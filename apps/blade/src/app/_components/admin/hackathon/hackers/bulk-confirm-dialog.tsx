@@ -105,11 +105,12 @@ export function BulkConfirmDialog({
   /**
    * The selection's contents, as a value the dependency array can compare.
    *
-   * The array identity is memoised by the caller, so the effect can depend on
-   * `attendeeIds` honestly — this key is what makes a *content* change re-fire
-   * even if that ever stops being true. Order-sensitive on purpose: a reorder
-   * means a different partition, and the confirm button must never be armed
-   * against a preview built from different ids.
+   * The caller must hand this component a memoised array — `hacker-roster.tsx`
+   * does, via `selectedIds`. Inlined as `[...selection.selected]` it is a fresh
+   * identity every parent render, and the effect below would re-fire a
+   * `previewBulk` each time, blanking the list an officer is reading in a dialog
+   * that cannot be recalled. `idsKey` does not save that case; it exists so a
+   * *content* change re-fires even when identity happens not to move.
    */
   const idsKey = attendeeIds.join(",");
   useEffect(() => {
