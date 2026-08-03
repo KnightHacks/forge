@@ -98,18 +98,65 @@ attempted later. The achievable invariant is:
 
 That is weaker than AC-009 and needs an explicit decision. See the open question.
 
+## Bulk operates on a filter, not a list of ids
+
+Bulk is the primary flow, and "select every applicant matching these filters" is
+the shape officers actually want. That rules out the obvious design.
+
+**Why not an id list.** Filtering to UCF undergraduates on a real hackathon
+selects hundreds of people. Sending that many uuids to `previewBulk` and again
+to `confirmBulk` is wasteful, but the real problem is correctness: between the
+officer clicking select-all and clicking confirm, rows change. Someone gets
+blacklisted; someone withdraws on the hack site. An id list captured at
+select-all time silently acts on stale membership.
+
+**So the filter is the selection.** `previewBulk` takes the same filter the
+roster is showing, resolves it server-side, and returns the resolved set plus a
+`previewVersion`. `confirmBulk` takes that version and acts on the snapshot the
+officer was actually shown. Anything that changed in between is reported in the
+result rather than silently included or dropped — which is AC-029.
+
+This is deliberately the same shape as `email.previewSend` / `email.confirmSend`,
+which already solves this problem for campaigns with `previewVersion`,
+`audienceHash`, and `previewExpiresAt`. Officers already know the interaction,
+and the snapshot semantics are proven.
+
+**Show-all is a read concern, not a bulk concern.** AC-028's unpaginated view
+raises the page limit for display; it does not change how selection works.
+Selection is always the filter. A roster of 2537 is renderable if the row is
+cheap, but the ceiling needs measuring rather than assuming — and the count
+query stays server-side regardless.
+
+## Filters and what the data actually supports
+
+Filterable: `status` and the blacklist flag from `HackerAttendee`; `school`,
+`levelOfStudy`, and `gradDate` from `Hacker`.
+
+**`levelOfStudy` is degree type, not academic year** — "Undergraduate University
+(3+ year)", "(2 year — community college or similar)", "Graduate", "Secondary /
+High School", plus opt-outs. There is no freshman/sophomore/junior/senior field,
+and `spec.md` explains why deriving one from `gradDate` is a guess that would
+put officers on the wrong cohort. Filter is on **graduation year**, labelled as
+such.
+
+Distribution in the dev database, which is what these filters will be exercised
+against: 1969 of 2538 hackers are UCF, 1905 are undergraduate 3+ year. A filter
+that returns most of the table is the normal case here, not the edge case — so
+the filtered path has to be as fast as the unfiltered one, and `school` and
+`levelOfStudy` are the indexes to consider.
+
 ## tRPC/API behavior
 
 New `hacker` router, registered in `root.ts` as `api.hacker.*`.
 
-| Procedure          | Shape                                                    | Notes                                                                         |
-| ------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `listForHackathon` | query(`{hackathonId, search?, status?, cursor?}`) → page | Paginated. 2537 rows exist today; the largest hackathon must not be one read. |
-| `statusCounts`     | query(`{hackathonId}`) → count per status                | One grouped query, not seven.                                                 |
-| `setStatus`        | mutation(`{attendeeId, status}`)                         | Enqueues the configured mail. Refuses on blacklist and on unconfigured.       |
-| `previewBulk`      | mutation(`{attendeeIds, status}`) → who sends, who skips | Mirrors `email.previewSend`; nothing is written.                              |
-| `confirmBulk`      | mutation(`{previewVersion, ...}`) → per-hacker result    | Best-effort. Mirrors `email.confirmSend`.                                     |
-| `setBlacklist`     | mutation(`{attendeeId, blacklisted, reason?}`)           | Never changes status. Sends nothing.                                          |
+| Procedure          | Shape                                                            | Notes                                                                         |
+| ------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `listForHackathon` | query(`{hackathonId, search?, status?, cursor?}`) → page         | Paginated. 2537 rows exist today; the largest hackathon must not be one read. |
+| `statusCounts`     | query(`{hackathonId}`) → count per status                        | One grouped query, not seven.                                                 |
+| `setStatus`        | mutation(`{attendeeId, status}`)                                 | Enqueues the configured mail. Refuses on blacklist and on unconfigured.       |
+| `previewBulk`      | mutation(`{hackathonId, filter, status}`) → who sends, who skips | Takes a **filter**, not an id list. Nothing is written.                       |
+| `confirmBulk`      | mutation(`{previewVersion}`) → per-hacker result                 | Acts on the snapshot the preview took. Best-effort.                           |
+| `setBlacklist`     | mutation(`{attendeeId, blacklisted, reason?}`)                   | Never changes status. Sends nothing.                                          |
 
 Errors: `NOT_FOUND` for unknown ids, `PRECONDITION_FAILED` for a blacklisted
 accept and for an unconfigured hackathon, `BAD_REQUEST` for validation.

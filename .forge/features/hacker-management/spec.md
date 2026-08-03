@@ -33,10 +33,15 @@ slice).
 the configuration screen.
 
 - A table of applicants: name, email, school, status, points, and a blacklist
-  marker. Searchable by name and email, filterable by status.
-- Per-row status actions. Changing a status sends that hackathon's configured
-  mail for the new status.
-- Multi-select with bulk accept and bulk deny.
+  marker. Searchable by name and email, filterable by status, school, level of
+  study, and graduation year.
+- **Bulk is the primary flow.** Filter the roster down to the group you mean —
+  UCF undergraduates, say — then select the whole matching set from one control
+  and act on it. Accepting people one at a time is possible but is not what this
+  screen is optimised for.
+- A "show all" mode that drops pagination, so a filtered group can be eyeballed
+  in full before it is selected.
+- Per-row status actions, for the exceptions.
 - A blacklist toggle per row, and a visible marker on blacklisted rows.
 - A result summary after a bulk action naming exactly who moved and who did not.
 
@@ -84,6 +89,9 @@ invisible to the applicant.
   hacker management.
 - **Configured / ready** — a hackathon with all six sending statuses mapped to a
   template and subject. Computed by the configuration slice; enforced here.
+- **Graduation year, not academic year.** Applicants record a graduation date,
+  not "freshman" or "senior" — see the note below. Filters say what the data
+  says.
 
 ## Acceptance criteria
 
@@ -91,7 +99,15 @@ invisible to the applicant.
 
 - AC-001 An officer opening the roster sees every applicant to that hackathon
   with their status, and no applicants from any other hackathon.
-- AC-002 The roster can be searched by name and email and filtered by status.
+- AC-002 The roster can be searched by name and email, and filtered by status,
+  school, level of study, and graduation year. Filters compose.
+- AC-027 An officer can select every applicant matching the current filters in
+  one action, without paging through them.
+- AC-028 A "show all" mode renders the whole filtered set without pagination, so
+  a group can be reviewed before being acted on.
+- AC-029 Acting on a filtered selection acts on exactly the set the officer was
+  shown — an applicant whose data changes between selecting and confirming is
+  reported, not silently included or silently dropped.
 - AC-003 Points are visible per applicant and cannot be edited here.
 
 **Transitions and mail**
@@ -145,6 +161,29 @@ invisible to the applicant.
 
 - AC-020 The screen states that a status change sends mail immediately and
   cannot be recalled, before the officer commits to it.
+
+## A note on "freshman"
+
+The bulk example given was "school = University of Central Florida and year =
+freshman". The first half is available; the second is not, and this is worth
+stating plainly rather than approximating.
+
+`Hacker` stores `levelOfStudy` — degree type, not year: "Undergraduate
+University (3+ year)", "(2 year — community college or similar)", "Graduate",
+"Secondary / High School", and a few opt-outs. It also stores `gradDate`, a
+plain date.
+
+Nothing records that someone is a freshman. It could be inferred from `gradDate`
+— graduating in 2030 while it is 2026 suggests a first-year — but that inference
+is wrong for transfers, part-time students, anyone who accelerated, and anyone
+who typed a placeholder date. Getting it wrong means an officer accepts a cohort
+they did not mean to.
+
+**Proposal: filter on graduation year directly**, and label it that way. An
+officer wanting first-years filters to the graduating class four years out,
+which is the same query without the lie. If a real academic-year field is
+wanted, that is a change to what applicants are asked, on the hack sites — a
+different slice.
 
 ## Resolved questions
 

@@ -173,10 +173,55 @@ delivery cycle does after retention.
 
 Action: read the roster.
 
-Expected: the failure is still attributed to the applicant. This is the case the
-whole `last_status_send_id` design exists for — if the link went through the
-recipient snapshot, this is where it would break, and it would break silently
-and late.
+Expected: the roster's query plan touches `HackerAttendee`, `EmailSend`, and
+`Hacker` — and **never `EmailSendRecipient`**.
+
+Asserting the dependency rather than simulating a purge, per the resolved
+question below. A purge simulation would prove the symptom is absent today and
+break whenever the cleanup logic changes; this pins the design decision that
+makes the symptom impossible. If someone later "simplifies" the roster by
+joining through the recipient snapshot, this fails immediately rather than
+months later when retention first bites.
+
+### TC-015: Select-all acts on the filter, not a page (AC-027)
+
+Setup: a hackathon whose applicants span more than one page; a filter matching
+rows on several pages.
+
+Action: apply the filter, select all matching, and preview.
+
+Expected: the preview covers every matching applicant, including ones the
+officer never paged to. Selecting all from page one must not mean "page one".
+
+### TC-016: The selection is the filter the officer was shown (AC-029)
+
+Setup: a filtered selection previewed.
+
+Action: change one applicant so they no longer match — blacklist them — then
+confirm.
+
+Expected: the result reports that applicant as skipped, with the reason. They
+are neither silently included nor silently dropped. This is the case that proves
+the snapshot is real rather than the filter being re-run at confirm time.
+
+### TC-017: Filters compose and match the data (AC-002)
+
+Setup: applicants across schools, levels of study, and graduation years.
+
+Action: filter by school; add level of study; add graduation year.
+
+Expected: each narrows the set correctly and the composition is an AND. The dev
+data is heavily skewed — 1969 of 2538 are UCF — so a filter returning most of the
+table must behave, not just a filter returning a handful.
+
+### TC-018: Show-all renders the whole filtered set (AC-028)
+
+Setup: a filter matching more applicants than one page.
+
+Action: switch to show-all.
+
+Expected: every matching applicant is rendered, and the per-status counts still
+agree with what is displayed.
 
 ### TC-014: Points are read-only (AC-003)
 
@@ -286,14 +331,17 @@ is the case the SDK slice will need to keep passing.
 
 ## Open questions
 
-1. **What is the roster's page size, and is it officer-adjustable?** TC-003
-   asserts pagination is correct but not what the page is. 2537 rows across seven
-   statuses; 50 feels right for scanning, 25 for phones. Not blocking, but it
-   changes the UI work.
+1. **Resolved in part: there is a show-all mode** (AC-028, TC-018), because bulk
+   is the primary flow and a filtered group should be reviewable in full. The
+   paged default still needs a page size — 50 scans well, 25 suits a phone — and
+   show-all needs a measured ceiling rather than an assumed one, since 2537 rows
+   is renderable only if the row stays cheap. Both are UI decisions that do not
+   block the platform tier.
 
-2. **Should TC-013 be a DB-backed test or is it enough to assert the join
-   shape?** Simulating retention purge means deleting `EmailSendRecipient` rows
-   mid-test, which is realistic but couples the test to the delivery cycle's
-   cleanup. The cheaper version asserts the roster query never reads that table
-   at all — arguably a better test, since it pins the design decision rather than
-   the symptom.
+2. **Resolved: TC-013 asserts the roster query never reads
+   `EmailSendRecipient`.** Rather than simulating a retention purge, which would
+   couple the test to the delivery cycle's cleanup and break whenever that
+   changes. Asserting the roster never touches that table pins the design
+   decision itself — the failure attribution goes through
+   `last_status_send_id` — which is the thing that must stay true. Restated as
+   TC-013 above.
