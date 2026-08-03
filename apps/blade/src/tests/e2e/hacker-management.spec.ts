@@ -34,7 +34,9 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
 async function cleanupFixtures() {
   await db
     .delete(HackerAttendee)
-    .where(inArray(HackerAttendee.id, [ATTENDEE_ONE, ATTENDEE_TWO]));
+    .where(
+      inArray(HackerAttendee.id, [ATTENDEE_ONE, ATTENDEE_TWO, ENDED_ATTENDEE]),
+    );
   await db.delete(Hacker).where(inArray(Hacker.id, [HACKER_ONE, HACKER_TWO]));
   await db
     .delete(Hackathon)
@@ -198,8 +200,13 @@ test.describe("Hacker management critical flow", () => {
     // Read-only: selecting still works, but nothing can be sent.
     await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
     await expect(page.getByText("1 selected")).toBeVisible();
-    // `exact`, because the status tab beside it is also called "Waitlisted" —
-    // the tab stays live (filtering an ended hackathon is fine), the action does
+    // `exact`, because the status tab beside it is also called "Waitlisted".
+    // The names differ only because the tab renders its count in a span *inside*
+    // the button, making its accessible name "Waitlisted 0" — move that count
+    // out or hide it and both collapse, which surfaces as a Playwright
+    // strict-mode violation rather than a silent pass.
+    //
+    // The tab stays live (filtering an ended hackathon is fine); the action does
     // not, and that is the distinction this test exists to hold.
     await expect(
       page.getByRole("button", { exact: true, name: "Waitlisted" }),

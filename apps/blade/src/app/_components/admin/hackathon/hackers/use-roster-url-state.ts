@@ -34,6 +34,14 @@ export interface RosterUrlState {
    * Proceed would then apply the real one.
    */
   projectFilter: (patch: RosterFilterPatch) => HackerRosterFilter;
+  /**
+   * Whether a patch would actually move the URL.
+   *
+   * Asked before the survival check, so re-clicking the tab that is already
+   * active does not freeze the whole filter strip for the length of a server
+   * round trip in response to a click that was a no-op by construction.
+   */
+  wouldMove: (patch: RosterFilterPatch) => boolean;
   /** Applies only the keys present on `patch`. Returns whether the URL moved. */
   setFilter: (patch: RosterFilterPatch) => boolean;
   setHackathonId: (next: string) => boolean;
@@ -75,7 +83,7 @@ export const FACET_KEYS = [
   "graduationYears",
   "levelsOfStudy",
   "schools",
-] as const;
+] as const satisfies readonly (keyof HackerRosterFilter)[];
 
 /** A patch that clears every facet, leaving search, status and the pane alone. */
 export function clearedFacets(): RosterFilterPatch {
@@ -95,8 +103,12 @@ function applyPatch(params: URLSearchParams, patch: RosterFilterPatch) {
   for (const key of LIST_KEYS) {
     if (!(key in patch)) continue;
     params.delete(key);
-    for (const value of patch[key] ?? []) {
-      params.append(key, String(value));
+    // Sorted, because these are sets and the order carries no meaning. Appending
+    // in click order meant unticking UCF and re-ticking it produced a different
+    // query for an identical filter — a navigation, a refetch, and with a
+    // selection live a survival request, for a change that was not one.
+    for (const value of [...(patch[key] ?? [])].map(String).sort()) {
+      params.append(key, value);
     }
   }
 }
@@ -259,6 +271,20 @@ export function useRosterUrlState(
     setFilter: useCallback(
       (patch) => write((params) => applyPatch(params, patch)),
       [write],
+    ),
+    wouldMove: useCallback(
+      (patch) => {
+        const base = pendingRef.current ?? searchParams.toString();
+        const params = new URLSearchParams(base);
+        applyPatch(params, patch);
+        params.sort();
+        // Compared against the sorted base, so an externally-built URL whose
+        // keys happen to be out of order is not mistaken for a pending change.
+        const sortedBase = new URLSearchParams(base);
+        sortedBase.sort();
+        return params.toString() !== sortedBase.toString();
+      },
+      [searchParams],
     ),
     setHackathonId: useCallback(
       (next) =>

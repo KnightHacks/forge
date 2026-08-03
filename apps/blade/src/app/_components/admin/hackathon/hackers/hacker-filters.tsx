@@ -163,6 +163,7 @@ function MultiSelectFilter({
  * chips once applied.
  */
 export function HackerFilters({
+  busy,
   filter,
   hackathonId,
   hackathons,
@@ -173,16 +174,33 @@ export function HackerFilters({
   filter: RosterFilter;
   hackathonId: string;
   hackathons: Options;
+  busy: boolean;
   onFilterChange: (patch: RosterFilterPatch) => void;
   onHackathonChange: (next: string) => void;
   options: FilterOptions;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<RosterFilter>(filter);
+  /**
+   * The draft as it was seeded, so Apply can send only what the officer touched.
+   *
+   * `filter` comes from the URL, which does not update until the server
+   * responds — so a panel opened during a navigation is seeded from a stale
+   * copy. Sending all five facets unconditionally then made this a
+   * `{...snapshot, oneChange}` write wearing a patch's clothes: remove the UCF
+   * chip, open the panel inside that window, tick a level of study, Apply, and
+   * the chip an officer just removed came back. Diffing against the seed means
+   * a facet they never touched is simply absent from the patch, and whatever
+   * happened to it meanwhile survives.
+   */
+  const [seed, setSeed] = useState<RosterFilter>(filter);
 
   const openWith = (next: boolean) => {
     // Reseeded on open, so a cancelled edit does not persist into the next one.
-    if (next) setDraft(filter);
+    if (next) {
+      setDraft(filter);
+      setSeed(filter);
+    }
     setOpen(next);
   };
 
@@ -211,7 +229,11 @@ export function HackerFilters({
 
       <Popover onOpenChange={openWith} open={open}>
         <PopoverTrigger asChild>
-          <Button className="h-11 gap-2 bg-background/70" variant="outline">
+          <Button
+            className="h-11 gap-2 bg-background/70"
+            disabled={busy}
+            variant="outline"
+          >
             <Filter className="size-4" aria-hidden="true" />
             Filters
             {appliedCount > 0 ? (
@@ -292,6 +314,7 @@ export function HackerFilters({
             <div className="flex justify-end gap-2 border-t pt-3">
               <Button
                 className="min-h-11"
+                disabled={busy}
                 onClick={() => {
                   // Only the facets this panel owns. Search, status and the
                   // pane are untouched because they are not named — and
@@ -306,14 +329,9 @@ export function HackerFilters({
               </Button>
               <Button
                 className="min-h-11"
+                disabled={busy}
                 onClick={() => {
-                  onFilterChange({
-                    blacklisted: draft.blacklisted,
-                    graduationTerms: draft.graduationTerms,
-                    graduationYears: draft.graduationYears,
-                    levelsOfStudy: draft.levelsOfStudy,
-                    schools: draft.schools,
-                  });
+                  onFilterChange(changedFacets(seed, draft));
                   setOpen(false);
                 }}
               >
@@ -325,6 +343,42 @@ export function HackerFilters({
       </Popover>
     </div>
   );
+}
+
+/**
+ * Only the facets whose value actually differs from what the panel was seeded
+ * with, compared as sets — the multi-selects append, so re-ticking a school an
+ * officer had just unticked yields the same set in a different order, which
+ * would otherwise read as a change and cost a navigation and a survival check.
+ */
+function changedFacets(
+  seed: RosterFilter,
+  draft: RosterFilter,
+): RosterFilterPatch {
+  const patch: RosterFilterPatch = {};
+  if (seed.blacklisted !== draft.blacklisted) {
+    patch.blacklisted = draft.blacklisted;
+  }
+  if (differs(seed.schools, draft.schools)) patch.schools = draft.schools;
+  if (differs(seed.levelsOfStudy, draft.levelsOfStudy)) {
+    patch.levelsOfStudy = draft.levelsOfStudy;
+  }
+  if (differs(seed.graduationTerms, draft.graduationTerms)) {
+    patch.graduationTerms = draft.graduationTerms;
+  }
+  if (differs(seed.graduationYears, draft.graduationYears)) {
+    patch.graduationYears = draft.graduationYears;
+  }
+  return patch;
+}
+
+function differs(
+  left: (number | string)[] | undefined,
+  right: (number | string)[] | undefined,
+) {
+  const a = [...(left ?? [])].map(String).sort();
+  const b = [...(right ?? [])].map(String).sort();
+  return a.length !== b.length || a.some((value, index) => value !== b[index]);
 }
 
 /** The status tabs, with their counts. Always visible — this is the main axis. */
@@ -405,10 +459,12 @@ function StatusTab({
 
 /** Removable chips for whatever is applied, matching the member directory. */
 export function FilterChips({
+  busy,
   filter,
   onFilterChange,
 }: {
   filter: RosterFilter;
+  busy: boolean;
   onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
   const chips = activeFilters(filter);
@@ -418,7 +474,8 @@ export function FilterChips({
     <div className="flex flex-wrap items-center gap-2">
       {chips.map((chip) => (
         <button
-          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15 disabled:opacity-50"
+          disabled={busy}
           key={chip.field}
           onClick={() =>
             onFilterChange(
@@ -437,6 +494,7 @@ export function FilterChips({
       ))}
       <Button
         className="min-h-11"
+        disabled={busy}
         onClick={() =>
           // Search too, since it has a chip here. The pane and the status tab
           // are not chips, so "Clear filters" leaves them where they are.

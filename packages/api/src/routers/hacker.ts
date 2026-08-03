@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { SQL } from "@forge/db";
-import type { HackerRosterFilter } from "@forge/validators";
+import type { HackerRosterFilter, SkipReason } from "@forge/validators";
 import {
   and,
   count,
@@ -239,12 +239,6 @@ function assertHackathonNotEnded(hackathon: {
 }
 
 /** Why a selected applicant was left out of a bulk action. */
-export type SkipReason =
-  | "already"
-  | "blacklisted"
-  | "duplicate_email"
-  | "missing"
-  | "no_email";
 
 /** Audit metadata takes scalars, so each reason worth tracing gets its own. */
 function countReason(skips: BulkSkip[], reason: SkipReason) {
@@ -722,12 +716,12 @@ export const hackerRouter = createTRPCRouter({
               sendId,
               skippedCount: skipped.length,
               /*
-                Broken down, because `duplicate_email` is the only reason with
-                no other trace. `blacklisted` leaves `blacklistedAt`, `already`
-                leaves the status, `no_email` leaves an empty address and
-                `missing` leaves no row at all — but a collapsed duplicate exists
-                only in a toast the officer closes. Two weeks later, "why was I
-                never told?" has to be answerable from here.
+                An aggregate, for spotting how often this happens. It names
+                nobody — the event's subject is the hackathon, not a person. What
+                actually answers "why was I never told?" weeks later is that a
+                duplicate-skipped applicant keeps her previous status and a null
+                `lastStatusSendId`, so she is still sitting at Applied on the
+                roster beside someone accepted at the same address.
               */
               skippedDuplicateEmail: countReason(skipped, "duplicate_email"),
               status: input.status,
@@ -886,13 +880,18 @@ async function resolveBulkTargets(
   const claimedEmails = new Set<string>();
 
   /*
-    Ordered by when they applied, not by the order the officer clicked.
+    Ordered by when they applied, then by id.
 
-    Which of a same-address pair is mailed has to be explainable. Iterating the
+    Which of a same-address pair is mailed has to be *stable*. Iterating the
     client's array meant shift-selecting rows 1-50 accepted Alice, while
-    clicking Bob first and *then* shift-selecting the same 50 accepted Bob — an
+    clicking Bob first and then shift-selecting the same 50 accepted Bob — an
     identical visible selection choosing a different person, with nothing on
-    screen to account for it. Earliest applicant wins.
+    screen to account for it.
+
+    Note that `timeApplied` is `defaultNow()`, so everyone created by one import
+    shares a timestamp and the id tiebreak decides. That is arbitrary, and it is
+    meant to be: the guarantee is only that repeating the same bulk picks the
+    same person, not that the choice is fair.
 
     Deduplicated as well: a client can send the same id twice, and each
     duplicate would otherwise become a second recipient row and abort the whole

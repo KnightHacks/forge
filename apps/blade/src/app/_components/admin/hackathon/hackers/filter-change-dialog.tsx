@@ -41,14 +41,23 @@ export function FilterChangeDialog({
       open={open}
     >
       <DialogContent className="sm:max-w-lg">
+        {/*
+          The selection can empty while the check that produced this is still in
+          flight — a sidebar click to this same route is a soft navigation, and
+          it clears the selection without cancelling the request. Rather than
+          asking about rows that no longer exist ("hides 12 of your 0 selected"),
+          the question becomes the one that is still true.
+        */}
         <DialogHeader>
           <DialogTitle>
-            This filter hides {droppedCount} of your {selectedCount} selected
+            {selectedCount === 0
+              ? "Your selection was cleared"
+              : `This filter hides ${droppedCount} of your ${selectedCount} selected`}
           </DialogTitle>
           <DialogDescription>
-            Changing the filter now deselects those {droppedCount}; the rest
-            stay selected. Keep this filter instead and your selection is
-            untouched, so you can finish what you started.
+            {selectedCount === 0
+              ? "Something cleared it while this filter was being checked, so there is nothing left to lose. Applying the filter now."
+              : `Changing the filter now deselects those ${droppedCount}; the rest stay selected. Keep this filter instead and your selection is untouched, so you can finish what you started.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -60,10 +69,14 @@ export function FilterChangeDialog({
         */}
         <DialogFooter className="flex-col gap-2 sm:flex-row">
           <Button className="min-h-11" onClick={onCancel} variant="outline">
-            Keep this filter and my selection
+            {selectedCount === 0
+              ? "Cancel"
+              : "Keep this filter and my selection"}
           </Button>
           <Button className="min-h-11" onClick={onProceed} variant="secondary">
-            Change filter, drop {droppedCount}
+            {selectedCount === 0
+              ? "Apply filter"
+              : `Change filter, drop ${droppedCount}`}
           </Button>
         </DialogFooter>
       </DialogContent>

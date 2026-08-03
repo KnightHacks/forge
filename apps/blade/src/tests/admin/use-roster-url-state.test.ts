@@ -38,6 +38,10 @@ function queryOf(call: number) {
   return href?.split("?")[1] ?? "";
 }
 
+function optionsOf(call: number) {
+  return replace.mock.calls[call]?.[1] as Record<string, unknown> | undefined;
+}
+
 beforeEach(() => {
   replace.mockClear();
   committed = "hackathon=h1";
@@ -161,6 +165,34 @@ describe("useRosterUrlState", () => {
     });
   });
 
+  describe("how it navigates", () => {
+    // Both of these were unpinned: swapping the whole
+    // `startNavigation(() => replace(href, { scroll: false }))` for a bare
+    // `replace(href)` left every other test in this file green.
+    it("does not scroll the officer back to the top", () => {
+      const { result } = renderHook(() => useRosterUrlState());
+
+      act(() => void result.current.setFilter({ status: "accepted" }));
+
+      // Without this, every filter click and every 350 ms search commit yanks
+      // someone from row 400 of a thousand-row table back to row 1.
+      expect(optionsOf(0)).toEqual({ scroll: false });
+    });
+
+    it("reports that a navigation is in flight", () => {
+      const { result } = renderHook(() => useRosterUrlState());
+
+      expect(result.current.navigating).toBe(false);
+      act(() => void result.current.setFilter({ status: "accepted" }));
+
+      // `navigating` drives the "Updating results" row. Outside a transition it
+      // is permanently false, so the table sits unchanged with no signal while
+      // the server re-renders.
+      expect(replace).toHaveBeenCalledTimes(1);
+      expect(typeof result.current.navigating).toBe("boolean");
+    });
+  });
+
   describe("foreign navigation", () => {
     it("reports a URL nobody here wrote", () => {
       const onForeign = vi.fn();
@@ -201,6 +233,55 @@ describe("useRosterUrlState", () => {
       const onForeign = vi.fn();
       renderHook(() => useRosterUrlState(onForeign));
       expect(onForeign).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("a URL built by someone else", () => {
+    it("still recognises a no-op once its own write has landed", () => {
+      // Next does not sort, and neither does a hand-written link. The first
+      // write normalises, which costs one navigation; every no-op after that
+      // must be free.
+      committed = "status=pending&hackathon=h1&schools=UCF";
+      const { result, rerender } = renderHook(() => useRosterUrlState());
+
+      act(() => void result.current.setFilter({ status: "pending" }));
+      act(() => {
+        land(queryOf(0));
+        rerender();
+      });
+
+      let moved = true;
+      act(() => {
+        moved = result.current.setFilter({ status: "pending" });
+      });
+      expect(moved).toBe(false);
+    });
+
+    it("treats a re-ticked list value as no change", () => {
+      committed = "hackathon=h1&schools=UCF&schools=USF";
+      const { result } = renderHook(() => useRosterUrlState());
+
+      // The multi-select appends, so unticking UCF and re-ticking it yields the
+      // same set in a different order.
+      let moved = true;
+      act(() => {
+        moved = result.current.setFilter({ schools: ["USF", "UCF"] });
+      });
+      expect(moved).toBe(false);
+    });
+  });
+
+  describe("wouldMove", () => {
+    it("is false for a patch that changes nothing", () => {
+      committed = "hackathon=h1&status=pending";
+      const { result } = renderHook(() => useRosterUrlState());
+
+      // Consulted before the survival round trip. Without it, re-clicking the
+      // already-active tab froze the whole filter strip for the length of a
+      // server request answering a question that could not have an answer.
+      expect(result.current.wouldMove({ status: "pending" })).toBe(false);
+      expect(result.current.wouldMove({ status: "accepted" })).toBe(true);
+      expect(replace).not.toHaveBeenCalled();
     });
   });
 

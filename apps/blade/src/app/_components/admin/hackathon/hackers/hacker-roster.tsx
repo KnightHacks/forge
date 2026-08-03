@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarOff,
@@ -53,16 +53,19 @@ const SHOW_ALL_SIZE = 1000;
 
 function PaneTab({
   active,
+  busy,
   label,
   onClick,
 }: {
   active: boolean;
+  busy: boolean;
   label: string;
   onClick: () => void;
 }) {
   return (
     <button
       aria-pressed={active}
+      disabled={busy}
       className={
         active
           ? "min-h-11 rounded px-3 text-sm font-medium text-foreground shadow-sm ring-1 ring-border"
@@ -109,20 +112,25 @@ export function HackerRoster({
   >({ kind: "idle" });
   const [search, setSearch] = useState(url.filter.search ?? "");
   /**
-   * The search term as the URL currently holds it.
+   * Two facts, because one is not enough to know whether to touch the box.
    *
-   * Kept so the box can tell "the officer removed the search chip" from "my own
-   * debounced commit just landed" — without it, a commit arriving mid-word
-   * rewound the box and ate everything typed since, which on a dynamic route is
-   * the common case rather than the edge one.
+   * `lastUrlSearch` is what the URL held when we last reconciled, and it is the
+   * *only* trigger for the adjustment below — the box may be rewritten when the
+   * URL moves, and at no other time. `sentSearch` is the term we last asked the
+   * URL to hold, which says whether a move was ours.
+   *
+   * Collapsing these into one "committed" value is what broke: the microtask
+   * recording a commit always beats the server round trip, so for the length of
+   * a navigation that single value disagreed with a URL which had simply not
+   * caught up. The adjustment fired, blanked the box, and ate everything typed
+   * during the navigation — the exact failure it exists to prevent.
    *
    * Stored trimmed, because the schema trims: keeping the raw box text meant
    * `"john "` never matched the `"john"` that came back, so the box read its own
    * write as someone else's and `"john "` + `"smith"` produced `"johnsmith"`.
    */
-  const [committedSearch, setCommittedSearch] = useState(
-    url.filter.search ?? "",
-  );
+  const [lastUrlSearch, setLastUrlSearch] = useState(url.filter.search ?? "");
+  const [sentSearch, setSentSearch] = useState(url.filter.search ?? "");
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -152,6 +160,19 @@ export function HackerRoster({
   const filterOptions = api.hacker.filterOptions.useQuery(
     { hackathonId },
     { enabled },
+  );
+
+  /**
+   * A stable array for the bulk dialog.
+   *
+   * Built inline as `[...selection.selected]` it was a fresh identity every
+   * render, so the preview effect re-fired on each one — a `previewBulk` per
+   * parent render while a dialog for an irreversible mass email was open, each
+   * one blanking the list the officer was reading.
+   */
+  const selectedIds = useMemo(
+    () => [...selection.selected],
+    [selection.selected],
   );
 
   const hackers = roster.data?.hackers ?? [];
@@ -194,6 +215,9 @@ export function HackerRoster({
       // would apply a filter they never agreed to.
       if (filterFlow.kind === "prompting") return false;
 
+      // A patch that changes nothing needs neither a navigation nor a question
+      // about a selection that cannot be affected by it.
+      if (!url.wouldMove(patch)) return false;
       if (selection.selected.size === 0) return url.setFilter(patch);
 
       const seq = ++requestSeqRef.current;
@@ -251,9 +275,12 @@ export function HackerRoster({
   // Resyncs only when the URL's search changed to something we did not write —
   // removing the chip, "Clear filters", or arriving on a shared link.
   const searchFromUrl = url.filter.search ?? "";
-  if (searchFromUrl !== committedSearch) {
-    setCommittedSearch(searchFromUrl);
-    setSearch(searchFromUrl);
+  if (searchFromUrl !== lastUrlSearch) {
+    setLastUrlSearch(searchFromUrl);
+    if (searchFromUrl !== sentSearch) {
+      setSentSearch(searchFromUrl);
+      setSearch(searchFromUrl);
+    }
   }
 
   useEffect(() => {
@@ -262,7 +289,7 @@ export function HackerRoster({
     // the URL — the resync above read its own commit as someone else's, rewound
     // the box, and typing `"john "` then `"smith"` produced `"johnsmith"`.
     const term = search.trim();
-    if (term === committedSearch) return;
+    if (term === sentSearch) return;
     const timer = setTimeout(() => {
       void requestFilterRef
         .current({ search: term || undefined })
@@ -270,11 +297,11 @@ export function HackerRoster({
           // Only once it landed. Recording it up front stranded the term when the
           // survival dialog intercepted the write: the box held text the roster
           // was not filtered by, and nothing would retry it.
-          if (committed) setCommittedSearch(term);
+          if (committed) setSentSearch(term);
         });
     }, 350);
     return () => clearTimeout(timer);
-  }, [committedSearch, search]);
+  }, [filterFlow.kind, search, sentSearch]);
 
   if (!selected) {
     return (
@@ -302,6 +329,11 @@ export function HackerRoster({
   // exactly full. A hackathon with precisely 1000 matches otherwise rendered
   // "1000 of 1000 shown · capped at 1000; narrow the filter to reach the rest"
   // — telling an officer to go hunting for rows that were all on screen.
+  // Every control that writes a filter is locked while a check is running, so a
+  // second request cannot cancel the one the officer is waiting on. Previously
+  // only the status tabs greyed out, and clicking a still-live pane tab or chip
+  // silently discarded the greyed-out request.
+  const filterBusy = filterFlow.kind !== "idle";
   const atCap = url.showAll && roster.data?.nextCursor != null;
   /**
    * The total for the rows actually on screen.
@@ -363,6 +395,7 @@ export function HackerRoster({
               />
             </div>
             <HackerFilters
+              busy={filterBusy}
               options={
                 filterOptions.data ?? {
                   graduationYears: [],
@@ -392,6 +425,7 @@ export function HackerRoster({
             <div className="flex shrink-0 items-center gap-1 rounded-md bg-background/70 p-1">
               <PaneTab
                 active={!url.filter.deliveryFailed}
+                busy={filterBusy}
                 label="Roster"
                 onClick={() =>
                   void requestFilter({ deliveryFailed: undefined })
@@ -399,6 +433,7 @@ export function HackerRoster({
               />
               <PaneTab
                 active={url.filter.deliveryFailed === true}
+                busy={filterBusy}
                 label="Delivery"
                 onClick={() =>
                   void requestFilter({
@@ -413,7 +448,7 @@ export function HackerRoster({
           <div className="flex flex-wrap items-center justify-between gap-2">
             {url.filter.deliveryFailed ? null : (
               <StatusTabs
-                busy={filterFlow.kind === "checking"}
+                busy={filterBusy}
                 counts={counts.data ?? { byStatus: {}, total: 0 }}
                 filter={url.filter}
                 onFilterChange={(patch) => void requestFilter(patch)}
@@ -431,6 +466,7 @@ export function HackerRoster({
           </div>
 
           <FilterChips
+            busy={filterBusy}
             filter={url.filter}
             onFilterChange={(patch) => void requestFilter(patch)}
           />
@@ -478,6 +514,7 @@ export function HackerRoster({
             )}
             <Button
               className="ml-auto min-h-11 text-sm"
+              disabled={filterBusy}
               onClick={selection.clear}
               size="sm"
               variant="ghost"
@@ -541,7 +578,7 @@ export function HackerRoster({
       </Card>
 
       <BulkConfirmDialog
-        attendeeIds={[...selection.selected]}
+        attendeeIds={selectedIds}
         hackathonId={selected.id}
         onDone={() => {
           setBulkStatus(null);
@@ -576,7 +613,7 @@ export function HackerRoster({
           // unconditionally meant cancelling a *status* prompt silently threw
           // away text the officer had typed but not yet committed.
           if (filterFlow.kind === "prompting" && "search" in filterFlow.patch) {
-            setSearch(committedSearch);
+            setSearch(sentSearch);
           }
           setFilterFlow({ kind: "idle" });
         }}
@@ -586,7 +623,7 @@ export function HackerRoster({
           selection.deselect(droppedIds);
           setFilterFlow({ kind: "idle" });
           if (url.setFilter(patch) && "search" in patch) {
-            setCommittedSearch(patch.search ?? "");
+            setSentSearch(patch.search ?? "");
           }
         }}
         open={filterFlow.kind === "prompting"}

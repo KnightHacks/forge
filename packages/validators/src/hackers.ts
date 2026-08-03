@@ -157,3 +157,22 @@ export const hackerSelectionSurvivalSchema = z.object({
   filter: hackerRosterFilterSchema.default({}),
   hackathonId: z.string().uuid(),
 });
+
+/**
+ * Why a selected applicant was left out of a bulk status change.
+ *
+ * Lives here rather than on `@forge/api`'s barrel so Blade can label these
+ * without importing from a module that value-exports `appRouter`. One missing
+ * `import type` in a `"use client"` file would otherwise pull the router — and
+ * through it the database client — toward a browser bundle, and
+ * `consistent-type-imports` is only a warning.
+ */
+export const BULK_SKIP_REASONS = [
+  "already",
+  "blacklisted",
+  "duplicate_email",
+  "missing",
+  "no_email",
+] as const;
+
+export type SkipReason = (typeof BULK_SKIP_REASONS)[number];

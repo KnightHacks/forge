@@ -33,6 +33,10 @@ const BLOCKED_HACKER = "70000000-0000-4000-8000-0000000000e2";
 const UNREADY_HACKER = "70000000-0000-4000-8000-0000000000e3";
 const SECOND_HACKER = "70000000-0000-4000-8000-0000000000e4";
 /** Suffix per hacker id, so `afterEach` can rebuild the fixture addresses. */
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Fixture dates relative to the run, so no test expires on a calendar date. */
+const since = (days: number) => new Date(Date.now() + days * DAY_MS);
+
 const HACKER_SUFFIXES: [string, string][] = [
   [PLAIN_HACKER, "plain"],
   [BLOCKED_HACKER, "blocked"],
@@ -110,12 +114,19 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .insert(auth.Permissions)
       .values({ roleId: OFFICER_ROLE, userId: OFFICER_USER });
 
+    /*
+      Relative to now, not a fixed year. `assertHackathonNotEnded` gates
+      `setStatus`, `previewBulk` and `confirmBulk`, so a hard-coded `endDate`
+      turns most of this file red on a date — and the failure looks like a
+      readiness or blacklist regression, because those tests assert only
+      `PRECONDITION_FAILED`, which an ended hackathon also throws.
+    */
     const window = {
-      applicationDeadline: new Date("2026-09-01T00:00:00Z"),
-      applicationOpen: new Date("2026-08-01T00:00:00Z"),
-      confirmationDeadline: new Date("2026-09-15T00:00:00Z"),
-      endDate: new Date("2026-10-03T00:00:00Z"),
-      startDate: new Date("2026-10-01T00:00:00Z"),
+      applicationDeadline: since(29),
+      applicationOpen: since(-2),
+      confirmationDeadline: since(43),
+      endDate: since(61),
+      startDate: since(59),
       theme: "Guards",
     };
     await client.insert(knightHacks.Hackathon).values([
@@ -253,6 +264,24 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .set({ email: `hacker-${suffix}@example.test` })
         .where(eq(knightHacks.Hacker.id, id));
     }
+    // Template health, for the same reason as the emails: these two restores
+    // used to sit after the assertion in their own tests, so a failure there
+    // cascaded into the positive control and the send test. Both happen to be
+    // declared later in the file today, which is the only thing that kept it
+    // from mattering.
+    await client
+      .update(knightHacks.EmailTemplate)
+      .set({ archivedAt: null })
+      .where(eq(knightHacks.EmailTemplate.id, TEMPLATE_ID));
+    await client
+      .update(knightHacks.EmailTemplateRevision)
+      .set({ state: "published" })
+      .where(eq(knightHacks.EmailTemplateRevision.id, REVISION_ID));
+    // The ended-gate test moves this hackathon into the past.
+    await client
+      .update(knightHacks.Hackathon)
+      .set({ endDate: since(61) })
+      .where(eq(knightHacks.Hackathon.id, READY_HACKATHON));
     await client
       .update(knightHacks.HackerAttendee)
       .set({ lastStatusSendId: null, status: "pending" })
@@ -673,6 +702,53 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
     });
   });
 
+  describe("the ended-hackathon gate, server side", () => {
+    /**
+     * The e2e test asserts the buttons render disabled, which is a claim about
+     * `selected.hasEnded` in the browser. Deleting every
+     * `assertHackathonNotEnded` call left the whole api suite green — so a
+     * refactor could drop the guard, the disabled button would still render,
+     * and any caller that reaches the procedure directly (a stale tab, a
+     * keyboard activation, a script) would mail last year's applicants.
+     */
+    it("refuses every sending path once the hackathon is over", async () => {
+      await client
+        .update(knightHacks.Hackathon)
+        .set({ endDate: new Date("2020-01-02T00:00:00Z") })
+        .where(eq(knightHacks.Hackathon.id, READY_HACKATHON));
+
+      await expect(
+        caller.hacker.setStatus({
+          attendeeId: PLAIN_ATTENDEE,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+      await expect(
+        caller.hacker.previewBulk({
+          attendeeIds: [PLAIN_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+      await expect(
+        caller.hacker.confirmBulk({
+          attendeeIds: [PLAIN_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      // Readable, though — an ended hackathon is still a roster an officer
+      // looks things up in.
+      const roster = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+        limit: 50,
+      });
+      expect(roster.hackers.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("the has-more signal the cap notice reads", () => {
     /**
      * `nextCursor` must mean "there are more", not "the page came back full".
@@ -841,11 +917,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           status: "accepted",
         }),
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-
-      await client
-        .update(knightHacks.EmailTemplate)
-        .set({ archivedAt: null })
-        .where(eq(knightHacks.EmailTemplate.id, TEMPLATE_ID));
     });
 
     it("refuses when the template has no published revision", async () => {
@@ -861,11 +932,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           status: "accepted",
         }),
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-
-      await client
-        .update(knightHacks.EmailTemplateRevision)
-        .set({ state: "published" })
-        .where(eq(knightHacks.EmailTemplateRevision.id, REVISION_ID));
     });
 
     it("positive control: a healthy template previews", async () => {

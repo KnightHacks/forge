@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
 
-import type { SkipReason } from "@forge/api";
+import type { SkipReason } from "@forge/validators";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -26,6 +26,22 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
   officer. The previous round shipped exactly that: `already` was missing, and
   the `?? row.reason` fallback printed "already" in the skipped list.
 */
+/**
+ * Read through a widening helper, the same way `hacker-table.tsx` reads status
+ * labels.
+ *
+ * The map stays exhaustive over the union so a new reason fails the build. But
+ * `row.reason` arrives over the wire, so a tab left open across a release that
+ * adds one holds a value the union does not have — and indexing directly gave
+ * `undefined`, which React renders as nothing. A blank explanation on the one
+ * list whose job is saying who was *not* mailed is worse than an ugly one.
+ */
+function skipLabel(reason: string) {
+  return reason in SKIP_REASONS
+    ? SKIP_REASONS[reason as SkipReason]
+    : "Skipped — reload for details";
+}
+
 const SKIP_REASONS: Record<SkipReason, string> = {
   already: "Already has this status",
   blacklisted: "Blacklisted",
@@ -173,7 +189,7 @@ export function BulkConfirmDialog({
                 <ul className="mt-1 max-h-40 overflow-y-auto text-sm text-destructive/90">
                   {result.skipped.map((row) => (
                     <li key={row.attendeeId}>
-                      {row.name} — {SKIP_REASONS[row.reason]}
+                      {row.name} — {skipLabel(row.reason)}
                       {row.email ? ` (${row.email})` : ""}
                     </li>
                   ))}
