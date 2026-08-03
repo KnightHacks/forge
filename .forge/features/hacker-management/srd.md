@@ -134,14 +134,17 @@ Two columns on `knight_hacks_hacker_attendee`:
 
 - `blacklisted_at timestamptz null`
 - `blacklisted_by uuid null references auth_user(id)`
+- `blacklist_reason text null`
+
+A `CHECK` keeps the three consistent: either all null, or `blacklisted_at` and
+`blacklist_reason` both set. A flag with no reason is the thing a year-later
+officer cannot interpret, so the database refuses it rather than trusting the
+form.
 
 Nullable and additive, so existing rows stay valid and production `main` — which
 reads this table in `campaign.ts` and writes it at check-in — is unaffected.
 Presence of `blacklisted_at` is the flag; storing who and when rather than a
 boolean is what makes AC-015 answerable.
-
-**Open for the spec, not for me:** whether a reason is required. The spec's
-AC-015 asks only for attributability. A required reason is a product call.
 
 **Shared-database caveat, unchanged from last slice:** production `main` and
 Reforge share one `__drizzle_migrations` table, and Drizzle's migrator is a
@@ -193,23 +196,64 @@ Guards get DB-backed integration tests with positive controls, following
 `hackathon-destructive-guards.test.ts` — a guard test that passes against an
 unconditionally-refusing guard proves nothing.
 
+## Resolved: what "enqueued" actually guarantees
+
+The async invariant was accepted on the condition that it still means the mail
+_gets there_. Here is exactly what carries that, read out of
+`packages/api/src/utils/email/delivery.ts`:
+
+1. **The transition and the enqueue commit together.** One transaction writes
+   the new status and an `EmailSend` row at `queued`. There is no window where a
+   hacker is accepted with nothing queued, or something queued for a status
+   change that rolled back.
+2. **The cron claims work under a five-minute lease**
+   (`retryLeaseExpiresAt`), so two cron ticks cannot process the same send twice
+   and a crashed tick releases its claim instead of stranding the row.
+3. **One Listmonk campaign per send, carrying every recipient.**
+   `createCampaign` takes a `recipientData` array — so a bulk accept of two
+   hundred is one campaign with two hundred recipients, which is the behaviour
+   observed in the Listmonk portal and the behaviour we want.
+4. **Failure is retried, bounded, and recorded.** A failed attempt increments
+   `retryAttemptCount` and sets `nextRetryAt`; at the fifth attempt the send goes
+   terminal with `status: "failed"` and a human-readable `safeError`.
+5. **Every state change is logged.** `EmailSendEvent` records `fromStatus`,
+   `toStatus`, `type`, actor and metadata per send, so "what happened to that
+   acceptance email" is answerable after the fact.
+
+So the guarantee is not fire-and-forget: it is a durable row, bounded retry, a
+terminal state, and an event log.
+
+### The gap that leaves, and what this slice should do about it
+
+**A permanently failed status email is invisible from the roster.** After five
+attempts the send sits at `failed` in the email portal's send list. Nothing
+connects it back to the hacker whose acceptance it was — the officer who clicked
+accept sees a success toast, and the applicant never hears anything. Two minutes
+later, or five retries later, nobody is watching.
+
+That is the honest weak point of reusing an async pipeline, and it is fixable
+here rather than later:
+
+- **AC-024 (proposed).** The roster shows, per hacker, when their most recent
+  status email failed terminally — so "accepted but never told" is visible on
+  the screen where it can be acted on, not only in the email portal.
+
+This is the same class of problem as the previous slice's `isConfigured`: a
+signal that exists but is read by nothing. Worth not repeating.
+
+## Resolved decisions
+
+1. **Async is accepted.** Up to two minutes to delivery is fine given the
+   guarantees above. AC-009 is replaced by the enqueue-atomicity invariant, plus
+   proposed AC-024 so terminal failure is visible where it matters.
+2. **One campaign per bulk action** — which is what the pipeline already does,
+   and confirmed against the Listmonk portal. A single transition is a batch of
+   one. My earlier phrasing suggested a campaign per recipient; that was wrong.
+3. **Blacklisting requires a written reason.** Stored on `HackerAttendee`,
+   shown only in hacker management. It is officer-only, like the flag itself —
+   `blacklist_reason` must never appear in any member-facing or SDK payload.
+
 ## Open questions
 
-1. **AC-009 cannot hold as written.** The pipeline is async, so "a failed send
-   does not leave the applicant in the new status with no mail sent" is not
-   achievable — the transition commits and delivery happens up to two minutes
-   later, in a cron. I propose replacing it with: the status change and the
-   enqueue are atomic, and delivery failure is visible in the send log and
-   retried, never silent. **Does that satisfy what AC-009 was protecting, or do
-   you want the transition to block until delivery is confirmed?** The latter is
-   possible via `sendTransactional`, but costs suppression and delivery records.
-
-2. **Is one Listmonk campaign per single acceptance acceptable?** Accepting
-   fifty people individually creates fifty campaigns in Listmonk. Functionally
-   fine, operationally noisy. The alternative is single transitions going
-   through `sendTransactional` and bulk going through the pipeline — two paths,
-   which is what the pipeline choice was meant to avoid.
-
-3. **Is a reason required when blacklisting?** AC-015 asks only for
-   attributability. A required free-text reason is more useful a year later and
-   more friction now.
+None blocking. `test-cases.md` is next, then implementation once the bundle is
+approved.

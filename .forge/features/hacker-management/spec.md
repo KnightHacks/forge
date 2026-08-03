@@ -80,7 +80,8 @@ invisible to the applicant.
   this person by accident". It is **not a status**, it is never shown to the
   applicant, and setting it changes nothing about where they sit in the funnel.
   A blacklisted applicant stays `pending` until an officer capacity-rejects them
-  like anyone else.
+  like anyone else. Setting it **requires a written reason**, visible only in
+  hacker management.
 - **Configured / ready** — a hackathon with all six sending statuses mapped to a
   template and subject. Computed by the configuration slice; enforced here.
 
@@ -104,8 +105,14 @@ invisible to the applicant.
 - AC-007 `checkedin` is not reachable from this screen.
 - AC-008 The mail an applicant receives is the one an officer previewed in the
   configuration screen — same template, same subject, same rendered fields.
-- AC-009 A failed send does not leave the applicant in the new status with no
-  mail sent, nor mail sent with the status unchanged.
+- AC-009 **Revised.** The status change and the queuing of its mail succeed or
+  fail together. Delivery itself is asynchronous — up to two minutes — and a
+  delivery failure is retried, recorded, and surfaced rather than silent. The
+  original wording required the send itself to be atomic with the status change,
+  which the pipeline cannot do; see `srd.md`.
+- AC-024 If an applicant's status email fails permanently, the roster shows it
+  against that applicant. "Accepted but never told" must be visible on the
+  screen where an officer can fix it, not only in the email portal's send log.
 
 **Blacklist**
 
@@ -115,8 +122,11 @@ invisible to the applicant.
 - AC-013 On a blacklisted row every action is disabled except capacity reject
   and un-blacklist.
 - AC-014 A blacklisted applicant cannot be accepted, including via bulk accept.
-- AC-015 Blacklisting and un-blacklisting are attributable — who did it, and
-  when.
+- AC-015 Blacklisting and un-blacklisting are attributable — who did it, when,
+  and why.
+- AC-025 Blacklisting requires a written reason, and that reason is visible only
+  in hacker management. It must never reach the applicant, a member-facing
+  surface, or the SDK.
 
 **Bulk**
 
