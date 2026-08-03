@@ -183,17 +183,19 @@ makes the symptom impossible. If someone later "simplifies" the roster by
 joining through the recipient snapshot, this fails immediately rather than
 months later when retention first bites.
 
-### TC-015: Every selection path works (AC-027)
+### TC-015: The selection is amendable (AC-027)
 
-Setup: a filtered roster.
+Setup: a filtered roster spanning more than one page.
 
-Action: click a row; shift-click to extend a range; drag across a group; use the
-header control.
+Action: click a row; shift-click a later row to take the range; deselect two rows
+inside that range; page forward and back.
 
-Expected: each produces the selection it implies, and each works without the
-others — drag is an accelerator, so a trackpad or keyboard user who never drags
-can still select any set. Asserted through the selection the component reports,
-not through pointer-event plumbing.
+Expected: the range added to the existing selection rather than replacing it;
+the two deselected rows are out and every other row is still in; paging away and
+back loses nothing; the visible count matches at each step.
+
+This is the case that rules out deriving the selection from whatever is
+currently rendered — the implementation that looks right until someone pages.
 
 ### TC-016: A bulk action acts on exactly what was selected (AC-029)
 

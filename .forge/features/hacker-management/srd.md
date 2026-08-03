@@ -124,13 +124,42 @@ and confirm — an applicant gets blacklisted, or withdraws on the hack site —
 anything that moved rather than silently including or dropping it. That is
 AC-029, and it holds regardless of how the selection was made.
 
-**Drag-select is the one genuinely new interaction here**, and it is not
-something the design system already provides. It needs a decision on pointer
-handling — pointer events over mouse events, so it works on a trackpad and does
-not break text selection — and it must not fight the row's own click targets.
-Worth prototyping before committing to it, and worth keeping the click and
-shift-click paths working on their own so drag is an accelerator rather than the
-only way in.
+**No custom pointer machinery.** An earlier draft made click-and-drag a
+requirement and flagged it as the risky part. It is not required: a shift-click
+range gives the same reach with standard, accessible interactions the design
+system already supports. Drag can be added later as an accelerator if it earns
+its place; nothing here depends on it.
+
+**What "amendable" demands.** The requirement is a selection an officer can
+build up and then correct, which is a stricter constraint than it sounds:
+
+- A shift-click range **adds** to the selection rather than replacing it.
+- Toggling one row off leaves every other selected row alone.
+- The selection survives scrolling and paging; nothing is dropped because a row
+  scrolled out of view.
+- The count of what is selected is visible at all times, because it is the only
+  way to know the correction landed.
+
+That rules out the naive implementation where the selection is derived from
+whatever is rendered. It has to be state that outlives the rows on screen —
+which matters most in the case below.
+
+**The dangerous edge: selection versus filter change.** If an officer selects
+forty applicants and then changes a filter, the selected rows may no longer be
+displayed. Three options, and this needs a decision rather than a default:
+
+1. **Selection persists, hidden members shown as a count** — "40 selected, 12 not
+   matching the current filter". Safest for amendability, but an officer can
+   confirm a bulk action against people they cannot currently see.
+2. **Selection clears on filter change**, with a warning. Safest against
+   accidents, most annoying if you are refining a filter to narrow a group you
+   have already started picking.
+3. **Selection intersects with the filter** — hidden rows silently drop out.
+   Feels tidy, is the worst of the three: it loses work with no signal.
+
+I would take (1), because the preview step already shows exactly who is about to
+be mailed before anything happens, so "confirm against people you cannot see" is
+mitigated where it actually matters. Raised in `spec.md` as an open question.
 
 ## Filters and what the data actually supports
 

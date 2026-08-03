@@ -39,8 +39,9 @@ the configuration screen.
   UCF undergraduates, say — then sweep across the rows and act on them together.
   Accepting people one at a time is possible but is not what this screen is
   optimised for.
-- Selection is by row: click to toggle, shift-click for a range, **click and
-  drag to sweep a group**, and a header control for everything shown.
+- Selection is by row and **amendable**: click to toggle, shift-click to select
+  everything between two rows, a header control for everything shown — and then
+  go back and deselect individual rows without losing the rest.
 - A "show all" mode that drops pagination, so a filtered group can be selected
   in one sweep rather than page by page.
 - Per-row status actions, for the exceptions.
@@ -103,9 +104,10 @@ invisible to the applicant.
   with their status, and no applicants from any other hackathon.
 - AC-002 The roster can be searched by name and email, and filtered by status,
   school, level of study, and graduation year. Filters compose.
-- AC-027 Rows can be selected by clicking, by shift-clicking a range, and by
-  dragging across them. Every selection path is available on its own — drag is an
-  accelerator, not the only way in.
+- AC-027 Rows can be selected by clicking and by shift-clicking a range, and the
+  resulting selection is amendable: a range adds to what is already selected,
+  deselecting one row leaves the others, and the selection survives scrolling
+  and paging. How many are selected is visible at all times.
 - AC-028 A "show all" mode renders the whole filtered set without pagination, so
   a group can be selected in one sweep rather than page by page.
 - AC-029 A bulk action acts on exactly the rows the officer selected. An
@@ -164,6 +166,21 @@ invisible to the applicant.
 
 - AC-020 The screen states that a status change sends mail immediately and
   cannot be recalled, before the officer commits to it.
+
+## Open question — selection and filters
+
+An officer selects forty applicants, then changes a filter. Some of the selected
+rows are no longer displayed. What should happen?
+
+1. **Selection persists**, with hidden members surfaced as a count — "40
+   selected, 12 not matching the current filter".
+2. **Selection clears**, with a warning.
+3. **Selection intersects with the filter** — hidden rows drop out silently.
+
+I would take (1). It is the only one that does not lose work, and the preview
+step already lists exactly who is about to be mailed before anything is sent, so
+the "acting on people you cannot see" risk is caught where it counts. (3) is the
+one to avoid: it looks tidy and quietly discards selections.
 
 ## A note on "freshman"
 
