@@ -1,7 +1,7 @@
 # Hacker Management Status
 
-Phase: **artifacts** — spec and SRD approved 2026-08-03; `test-cases.md` drafted
-and awaiting approval. No implementation started.
+Phase: **implemented** — whole bundle approved 2026-08-03 and built. Awaiting
+`forge-review` and the owner's UI pass.
 
 ## Context
 
@@ -92,15 +92,54 @@ not specified.
 - [x] Reverse-prompt and fill `spec.md` — 26 acceptance criteria.
 - [x] Reverse-prompt and fill `srd.md` — send path worked out against the code.
 - [x] Owner approved `spec.md` and `srd.md`.
-- [ ] Owner approves `test-cases.md`.
-- [ ] Implement the platform tier: schema, migration, validators, `hacker`
-      router, audit registration.
-- [ ] Implement the roster UI.
-- [ ] Write the tests, including the Blade and e2e files this bundle commits to.
+- [x] Owner approved `test-cases.md` and the whole bundle.
+- [x] Platform tier: migration 0031, validators, `hacker` router, audit
+      registration.
+- [x] Roster UI with amendable multi-select, filters, bulk preview/confirm,
+      blacklist, and the failed-delivery surface.
+- [x] Tests, **including both files the previous bundle promised and skipped**.
+- [ ] `forge-review` until clean.
+- [ ] Owner UI pass.
+
+## Deviations from the approved SRD
+
+Two, both deliberate and commented at the point of deviation:
+
+1. **`confirmBulk` takes the selection, not a stored preview handle.** The SRD
+   proposed a `previewVersion`. Persisting a preview would add a row with its
+   own lifecycle and expiry for no gain, because the ids _are_ the selection —
+   and it would act on eligibility frozen at preview time. Re-resolving at
+   confirm catches anyone blacklisted in between and names them, which is what
+   AC-029 actually asks for.
+2. **`school` and `levelOfStudy` compare with `sql` rather than `eq`.** Both
+   columns are typed as unions of several thousand literals, so `eq` demands a
+   member of that union while the filter carries whatever the officer typed.
+   Identical SQL, different type-level narrowing.
 
 ## Validation / commands
 
-Nothing run yet beyond the environment check below. No code written.
+- `pnpm format` — 19/19. `pnpm lint` — 25/25, zero errors. `pnpm typecheck` —
+  27/27. `pnpm test` — 23/23.
+- Test totals: db 102, validators 197, email 79, api 494, blade 565.
+- `pnpm --filter=@forge/db migrate` — 0031 applied to the local dev database.
+  The CHECK was verified against the database directly: it rejects
+  `blacklisted_at` without a reason and accepts the pair.
+
+**Guards proven by breaking them.** Every guard test was verified by
+reintroducing the bug it exists for, then reverting:
+
+- Removing the officer check from `listForHackathon` fails the access test.
+- Neutering the blacklist guard fails three integration cases.
+- Neutering the readiness gate fails one.
+- Making a shift-range replace the selection rather than add to it fails the
+  amendability case.
+
+A guard that refuses unconditionally passes every negative case, so each guard
+also asserts it _allows_ the legal one.
+
+**Not verified in a browser by me.** The route compiles and returns 307 for an
+unauthenticated request, which proves the officer gate fires, but signing in
+needs Discord OAuth. The dev server is left running for the owner's pass.
 
 ## Environment
 
