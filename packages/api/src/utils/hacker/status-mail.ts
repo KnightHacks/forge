@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 
 import type { HackathonSendingStatus } from "@forge/validators";
 import { and, eq } from "@forge/db";
+import { db } from "@forge/db/client";
 import {
   EmailSend,
   EmailSendRecipient,
@@ -12,6 +13,16 @@ import { formatHackathonDate } from "@forge/email/fields";
 
 import type { WriteDb } from "../db";
 import { materializeContent } from "../email/campaign";
+import { developmentCampaignReviewEnabled } from "../email/delivery";
+
+/** Everything read and compiled before the transaction opens. */
+export interface PreparedStatusMail {
+  content: Awaited<ReturnType<typeof materializeContent>>;
+  hackathon: StatusMailHackathon;
+  hackathonAttributes: Record<string, string | undefined>;
+  sendId: string;
+  status: HackathonSendingStatus;
+}
 
 /** Everything the mail needs about one applicant, read once by the caller. */
 export interface StatusMailRecipient {
@@ -53,28 +64,27 @@ export interface StatusMailHackathon {
  * commit together — the invariant that replaced the original AC-009 when the
  * pipeline turned out to be asynchronous.
  */
-export async function enqueueStatusMail(
-  tx: WriteDb,
-  {
-    actorId,
-    hackathon,
-    recipients,
-    status,
-  }: {
-    actorId: string;
-    hackathon: StatusMailHackathon;
-    recipients: StatusMailRecipient[];
-    status: HackathonSendingStatus;
-  },
-): Promise<string> {
-  if (recipients.length === 0) {
+export async function prepareStatusMail({
+  hackathon,
+  status,
+}: {
+  hackathon: StatusMailHackathon;
+  status: HackathonSendingStatus;
+}): Promise<PreparedStatusMail> {
+  // Refused up front in a development environment, exactly as the campaign
+  // path does. `processEmailSend` rejects a hackathon audience there and marks
+  // the send `failed`, so without this an officer accepts two hundred people,
+  // sees success, and two minutes later the roster shows all two hundred as
+  // delivery-failed.
+  if (developmentCampaignReviewEnabled()) {
     throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "No applicants to notify.",
+      code: "FORBIDDEN",
+      message:
+        "Status email delivery is disabled in this environment, so status changes are blocked here.",
     });
   }
 
-  const [configured] = await tx
+  const [configured] = await db
     .select({
       subject: HackathonStatusEmail.subject,
       templateId: HackathonStatusEmail.templateId,
@@ -116,7 +126,6 @@ export async function enqueueStatusMail(
   }
 
   const publishedRevisionId = await resolvePublishedRevision(
-    tx,
     configured.templateId,
     status,
   );
@@ -145,6 +154,43 @@ export async function enqueueStatusMail(
     startDate: formatHackathonDate(hackathon.startDate),
   };
 
+  return { content, hackathon, hackathonAttributes, sendId, status };
+}
+
+/**
+ * Writes the prepared send inside the caller's transaction.
+ *
+ * Only inserts — every read happened in `prepareStatusMail`, before the
+ * transaction opened. That split is not cosmetic: a pooled read issued while a
+ * transaction holds a connection can exhaust the pool and deadlock the whole
+ * process, since `pg-pool` here has `max: 10` and no connection timeout. Ten
+ * concurrent status changes would each hold one connection and wait forever for
+ * another. `previewSend` orders itself the same way for the same reason.
+ */
+export async function writeStatusMail(
+  tx: WriteDb,
+  prepared: PreparedStatusMail,
+  actorId: string,
+  recipients: StatusMailRecipient[],
+): Promise<string> {
+  if (recipients.length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "No applicants to notify.",
+    });
+  }
+  const { content, hackathon, hackathonAttributes, sendId, status } = prepared;
+
+  // Deduplicated by normalized address. `EmailSendRecipient` is unique on
+  // `(sendId, normalizedEmail)`, and `Hacker.email` is not unique — one person
+  // who applied twice is two attendees sharing an address, which would
+  // otherwise abort the whole bulk with a raw constraint violation.
+  const byEmail = new Map<string, StatusMailRecipient>();
+  for (const recipient of recipients) {
+    const key = recipient.email.trim().toLowerCase();
+    if (!byEmail.has(key)) byEmail.set(key, recipient);
+  }
+
   await tx.insert(EmailSend).values({
     audienceDefinition: [
       { hackathonId: hackathon.id, kind: "hackathon", statuses: [status] },
@@ -159,7 +205,7 @@ export async function enqueueStatusMail(
     excludedManualCount: 0,
     excludedMissingFieldCount: 0,
     excludedSuppressedCount: 0,
-    finalRecipientCount: recipients.length,
+    finalRecipientCount: byEmail.size,
     id: sendId,
     plainTextSource: content.plainTextSource,
     // Required by the column, and meaningless here: the preview window exists
@@ -177,7 +223,7 @@ export async function enqueueStatusMail(
   });
 
   await tx.insert(EmailSendRecipient).values(
-    recipients.map((recipient) => ({
+    [...byEmail.values()].map((recipient) => ({
       attributes: {
         hacker: { status },
         hackathon: hackathonAttributes,
@@ -187,7 +233,9 @@ export async function enqueueStatusMail(
           name: recipient.name,
         },
       },
-      email: recipient.email,
+      // Normalized on both fields, matching what the campaign path writes, so
+      // `{{recipient.email}}` renders identically from either path.
+      email: recipient.email.trim().toLowerCase(),
       matchReasons: [`hackathon:${hackathon.id}:${status}`],
       normalizedEmail: recipient.email.trim().toLowerCase(),
       sendId,
@@ -205,11 +253,10 @@ export async function enqueueStatusMail(
  * one, so anything else breaks the equivalence that screen promises.
  */
 async function resolvePublishedRevision(
-  tx: WriteDb,
   templateId: string,
   status: HackathonSendingStatus,
 ): Promise<string> {
-  const revision = await tx.query.EmailTemplateRevision.findFirst({
+  const revision = await db.query.EmailTemplateRevision.findFirst({
     columns: { id: true },
     orderBy: (row, { desc }) => [desc(row.version)],
     where: (row, { and: andWhere, eq: eqWhere }) =>

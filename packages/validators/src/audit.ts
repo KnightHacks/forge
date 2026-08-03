@@ -348,11 +348,12 @@ export const AUDIT_ACTION_CATALOG = {
     ["name", "discordRoleId", "color"],
   ),
   "hackathon.class_deleted": policy("hackathons", "Deleted hackathon class"),
-  // Hacker management. `status` and `previousStatus` are metadata rather than a
-  // change diff because the officer-facing name differs from the stored value:
-  // `denied` is presented as "capacity", and a log that reads "denied" for an
-  // action an officer performed as "capacity reject" is a log that has to be
-  // translated before it can be trusted.
+  // Hacker management. The status is carried **both** ways on purpose: as a
+  // change diff, so the log renders "pending → denied" like every other edit,
+  // and as metadata, so `previousStatus` and the `sendId` that carried the mail
+  // are queryable. Note the stored value is what appears — an officer performs
+  // a "capacity reject" and the log reads `denied`, because that is the value
+  // in the column and a log that renamed it would not match the database.
   "hacker.status_changed": policy(
     "hackathons",
     "Changed hacker status",
@@ -361,8 +362,13 @@ export const AUDIT_ACTION_CATALOG = {
   ),
   // One event per bulk action, not per hacker: the officer performed one act.
   // Counts rather than a name list, because a bulk of two hundred would
-  // otherwise write a payload nobody reads. Individual moves are recoverable
-  // from the per-hacker events the bulk still writes.
+  // otherwise write a payload nobody reads.
+  //
+  // The trade-off is real and worth stating: an individual applicant's bulk
+  // move is **not** separately recoverable from the log. Answering "who denied
+  // me?" for someone caught in a bulk means finding the event by hackathon and
+  // time, not by searching for that person. Per-hacker events for a
+  // two-hundred-person bulk were judged worse.
   "hacker.bulk_status_changed": policy(
     "hackathons",
     "Bulk changed hacker status",

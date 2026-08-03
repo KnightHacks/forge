@@ -794,6 +794,22 @@ export const HackerAttendee = createTable(
     hackathonStatus: index(
       "knight_hacks_hacker_attendee_hackathon_status_idx",
     ).on(table.hackathonId, table.status),
+    /**
+     * Both new FK columns get their own index, for the same reason `classId`
+     * has one: Postgres does not auto-index a referencing column, and every
+     * `ON DELETE SET NULL` fires a referential-integrity probe against this
+     * table per deleted parent row.
+     *
+     * `lastStatusSendId` is the sharper of the two — the delivery cycle deletes
+     * up to 500 expired draft sends per tick, which without this is 500
+     * sequential scans of every attendee ever recorded, every two minutes.
+     */
+    blacklistedByOnly: index(
+      "knight_hacks_hacker_attendee_blacklisted_by_idx",
+    ).on(table.blacklistedBy),
+    lastStatusSend: index(
+      "knight_hacks_hacker_attendee_last_status_send_idx",
+    ).on(table.lastStatusSendId),
   }),
 );
 

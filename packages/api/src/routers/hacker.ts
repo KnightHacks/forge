@@ -5,8 +5,8 @@ import type { HackerRosterFilter } from "@forge/validators";
 import {
   and,
   count,
-  desc,
   eq,
+  gt,
   inArray,
   isNotNull,
   isNull,
@@ -38,7 +38,10 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
-import { enqueueStatusMail } from "../utils/hacker/status-mail";
+import {
+  prepareStatusMail,
+  writeStatusMail,
+} from "../utils/hacker/status-mail";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
 
 /**
@@ -113,6 +116,17 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
 }
 
 /**
+ * Keyset pagination on `id`.
+ *
+ * Ordered by id rather than `timeApplied` because the cursor has to be unique
+ * and stable: two applicants sharing a timestamp would make an offsetless page
+ * boundary either repeat or skip them.
+ */
+function cursorAfter(cursor: string | undefined) {
+  return cursor ? gt(HackerAttendee.id, cursor) : undefined;
+}
+
+/**
  * Attendees plus the hacker record, and the send their last status mail rode.
  *
  * `leftJoin` on the send: most attendees have never been mailed, and an inner
@@ -124,6 +138,19 @@ function rosterQuery(executor: WriteDb = db) {
     .from(HackerAttendee)
     .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
     .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId));
+}
+
+/** Unlocked pre-read, only to decide which hackathon's mail to compile. */
+async function requireAttendee(attendeeId: string) {
+  const [attendee] = await db
+    .select({ hackathonId: HackerAttendee.hackathonId })
+    .from(HackerAttendee)
+    .where(eq(HackerAttendee.id, attendeeId))
+    .limit(1);
+  if (!attendee) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Applicant not found." });
+  }
+  return attendee;
 }
 
 async function requireHackathon(id: string) {
@@ -169,7 +196,7 @@ async function assertHackathonReady(executor: WriteDb, hackathonId: string) {
 }
 
 /** Why a selected applicant was left out of a bulk action. */
-type SkipReason = "blacklisted" | "missing" | "no_email";
+type SkipReason = "already" | "blacklisted" | "missing" | "no_email";
 
 interface BulkSkip {
   attendeeId: string;
@@ -185,18 +212,29 @@ export const hackerRouter = createTRPCRouter({
       assertCanManagePlatformConfig(ctx.session.permissions);
       await requireHackathon(input.hackathonId);
 
+      // One extra row, to know whether another page exists without a second
+      // count query.
       const rows = await rosterQuery()
-        .where(rosterWhere(input.hackathonId, input.filter))
-        .orderBy(desc(HackerAttendee.timeApplied), HackerAttendee.id)
-        .limit(input.limit);
+        .where(
+          and(
+            rosterWhere(input.hackathonId, input.filter),
+            cursorAfter(input.cursor),
+          ),
+        )
+        .orderBy(HackerAttendee.id)
+        .limit(input.limit + 1);
 
+      const page = rows.slice(0, input.limit);
       return {
-        hackers: rows.map((row) => ({
+        hackers: page.map((row) => ({
           ...row,
           blacklisted: row.blacklistedAt !== null,
           deliveryFailed: row.sendStatus === "failed",
           name: `${row.firstName} ${row.lastName}`.trim(),
         })),
+        // Null when this is the last page, so a caller can stop without
+        // requesting an empty one.
+        nextCursor: rows.length > input.limit ? page.at(-1)?.attendeeId : null,
       };
     }),
 
@@ -207,6 +245,11 @@ export const hackerRouter = createTRPCRouter({
       assertCanManagePlatformConfig(ctx.session.permissions);
       await requireHackathon(input.hackathonId);
 
+      // `status` is stripped: this query groups *by* status, so applying it as
+      // a filter collapses the result to the one bucket already selected and
+      // every other count renders zero — leaving an officer who filtered to
+      // "Applied" with no way to see, or click back to, anything else.
+      const { status: _selected, ...countable } = input.filter;
       const rows = await db
         .select({
           status: HackerAttendee.status,
@@ -215,7 +258,7 @@ export const hackerRouter = createTRPCRouter({
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
-        .where(rosterWhere(input.hackathonId, input.filter))
+        .where(rosterWhere(input.hackathonId, countable))
         .groupBy(HackerAttendee.status);
 
       return {
@@ -260,7 +303,24 @@ export const hackerRouter = createTRPCRouter({
       assertCanManagePlatformConfig(ctx.session.permissions);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
+      // Everything read here, before the transaction opens. A pooled read
+      // issued while a transaction holds a connection can exhaust the pool and
+      // hang every query in the process — `pg-pool` is `max: 10` with no
+      // connection timeout, so ten concurrent status changes would each hold
+      // one connection and wait forever for another.
+      const existing = await requireAttendee(input.attendeeId);
+      await assertHackathonReady(db, existing.hackathonId);
+      const hackathon = await requireHackathon(existing.hackathonId);
+      const prepared = await prepareStatusMail({
+        hackathon,
+        status: input.status,
+      });
+
       return db.transaction(async (tx) => {
+        // Re-read under a lock. The pre-read above only decided *which*
+        // hackathon's mail to compile; this is the authoritative state, so a
+        // concurrent blacklist or transition lands here rather than being
+        // missed.
         const [attendee] = await tx
           .select({
             blacklistedAt: HackerAttendee.blacklistedAt,
@@ -293,13 +353,21 @@ export const hackerRouter = createTRPCRouter({
           });
         }
 
-        await assertHackathonReady(tx, attendee.hackathonId);
-        const hackathon = await requireHackathon(attendee.hackathonId);
+        // Already there. Re-sending an acceptance to someone who was accepted
+        // an hour ago is the kind of mistake a double-click makes, and it is
+        // not recallable.
+        if (attendee.status === input.status) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `That applicant is already ${input.status}.`,
+          });
+        }
 
-        const sendId = await enqueueStatusMail(tx, {
-          actorId: ctx.session.user.id,
-          hackathon,
-          recipients: [
+        const sendId = await writeStatusMail(
+          tx,
+          prepared,
+          ctx.session.user.id,
+          [
             {
               attendeeId: input.attendeeId,
               email: attendee.email,
@@ -308,8 +376,7 @@ export const hackerRouter = createTRPCRouter({
               status: input.status,
             },
           ],
-          status: input.status,
-        });
+        );
 
         await tx
           .update(HackerAttendee)
@@ -399,20 +466,26 @@ export const hackerRouter = createTRPCRouter({
       const hackathon = await requireHackathon(input.hackathonId);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
+      // Read and compiled before the transaction, for the pool reason above.
+      await assertHackathonReady(db, input.hackathonId);
+      const prepared = await prepareStatusMail({
+        hackathon,
+        status: input.status,
+      });
+
       return db.transaction(async (tx) => {
-        await assertHackathonReady(tx, input.hackathonId);
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
 
         if (sending.length === 0) {
           return { movedCount: 0, sendId: null, skipped };
         }
 
-        const sendId = await enqueueStatusMail(tx, {
-          actorId: ctx.session.user.id,
-          hackathon,
-          recipients: sending,
-          status: input.status,
-        });
+        const sendId = await writeStatusMail(
+          tx,
+          prepared,
+          ctx.session.user.id,
+          sending,
+        );
 
         await tx
           .update(HackerAttendee)
@@ -554,6 +627,7 @@ async function resolveBulkTargets(
       email: Hacker.email,
       firstName: Hacker.firstName,
       lastName: Hacker.lastName,
+      status: HackerAttendee.status,
     })
     .from(HackerAttendee)
     .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
@@ -570,7 +644,10 @@ async function resolveBulkTargets(
   const sending: StatusMailRecipient[] = [];
   const skipped: BulkSkip[] = [];
 
-  for (const attendeeId of input.attendeeIds) {
+  // Deduplicated: a client can send the same id twice, and each duplicate
+  // would otherwise become a second recipient row and abort the whole bulk on
+  // the `(sendId, normalizedEmail)` unique constraint.
+  for (const attendeeId of [...new Set(input.attendeeIds)]) {
     const row = found.get(attendeeId);
     // Selected but no longer in this hackathon's roster — withdrawn on the hack
     // site, or deleted between selecting and confirming.
@@ -589,6 +666,13 @@ async function resolveBulkTargets(
     }
     if (!row.email.trim()) {
       skipped.push({ attendeeId, name, reason: "no_email" });
+      continue;
+    }
+    // Already there. An officer who filters to Accepted, selects all, and
+    // clicks Accept would otherwise send every one of them a second
+    // acceptance — and mail already queued cannot be recalled.
+    if (row.status === input.status) {
+      skipped.push({ attendeeId, name, reason: "already" });
       continue;
     }
     sending.push({

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
@@ -26,6 +26,7 @@ const REVISION_ID = "81000000-0000-4000-8000-0000000000e1";
 const PLAIN_ATTENDEE = "60000000-0000-4000-8000-0000000000e1";
 const BLACKLISTED_ATTENDEE = "60000000-0000-4000-8000-0000000000e2";
 const UNREADY_ATTENDEE = "60000000-0000-4000-8000-0000000000e3";
+const SECOND_ATTENDEE = "60000000-0000-4000-8000-0000000000e4";
 
 /**
  * The guards that stand between an officer and an applicant's inbox, exercised
@@ -66,6 +67,13 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
     disposable = await provisionDisposableDatabase("forge_api");
     // eslint-disable-next-line no-restricted-properties
     process.env.DATABASE_URL = disposable.url;
+    // The same escape hatch the Playwright suite uses. `NODE_ENV` is
+    // "development" under `pnpm test`, and status mail is refused there on
+    // purpose — the delivery cycle rejects a hackathon audience in development
+    // and would mark every send failed. Set before the dynamic imports below,
+    // because `isBladeE2E` is read at module load.
+    // eslint-disable-next-line no-restricted-properties
+    process.env.BLADE_E2E_AUTH = "true";
 
     ({ db: client } = await import("@forge/db/client"));
     auth = await import("@forge/db/schemas/auth");
@@ -175,6 +183,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       userId: OFFICER_USER,
     });
 
+    const SECOND_HACKER = "70000000-0000-4000-8000-0000000000e4";
     const PLAIN_HACKER = "70000000-0000-4000-8000-0000000000e1";
     const BLOCKED_HACKER = "70000000-0000-4000-8000-0000000000e2";
     const UNREADY_HACKER = "70000000-0000-4000-8000-0000000000e3";
@@ -184,6 +193,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         hackerFixture(PLAIN_HACKER, "plain"),
         hackerFixture(BLOCKED_HACKER, "blocked"),
         hackerFixture(UNREADY_HACKER, "unready"),
+        hackerFixture(SECOND_HACKER, "second"),
       ]);
 
     await client.insert(knightHacks.HackerAttendee).values([
@@ -208,10 +218,52 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         id: UNREADY_ATTENDEE,
         status: "pending",
       },
+      {
+        hackathonId: READY_HACKATHON,
+        hackerId: SECOND_HACKER,
+        id: SECOND_ATTENDEE,
+        status: "pending",
+      },
     ]);
 
     caller = await officerCaller();
   }, 120_000);
+
+  // Reset after every test, not on the success path of each one. A reset that
+  // only runs when the assertions pass means the first failure mutates shared
+  // rows and poisons everything after it — and a readiness test can then pass
+  // for the wrong reason, because the blacklist guard throws the identical
+  // PRECONDITION_FAILED code.
+  afterEach(async () => {
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({ lastStatusSendId: null, status: "pending" })
+      .where(eq(knightHacks.HackerAttendee.hackathonId, READY_HACKATHON));
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({
+        blacklistReason: null,
+        blacklistedAt: null,
+        blacklistedBy: null,
+        lastStatusSendId: null,
+        status: "pending",
+      })
+      .where(eq(knightHacks.HackerAttendee.id, UNREADY_ATTENDEE));
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({
+        blacklistReason: "Repeated code of conduct violations.",
+        blacklistedAt: new Date(),
+        blacklistedBy: OFFICER_USER,
+      })
+      .where(eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE));
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({ blacklistReason: null, blacklistedAt: null, blacklistedBy: null })
+      .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
+    await client.delete(knightHacks.EmailSendRecipient);
+    await client.delete(knightHacks.EmailSend);
+  });
 
   afterAll(async () => {
     // Pool first, then drop. Dropping a database with live connections makes
@@ -247,11 +299,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           reason: "Testing that triage still works.",
         }),
       ).resolves.toMatchObject({ blacklisted: true });
-
-      await caller.hacker.setBlacklist({
-        attendeeId: UNREADY_ATTENDEE,
-        blacklisted: false,
-      });
     });
 
     it("positive control: a configured hackathon allows the same transition", async () => {
@@ -263,11 +310,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           status: "waitlisted",
         }),
       ).resolves.toMatchObject({ status: "waitlisted" });
-
-      await caller.hacker.setStatus({
-        attendeeId: PLAIN_ATTENDEE,
-        status: "pending",
-      });
     });
   });
 
@@ -296,11 +338,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           status: "denied",
         }),
       ).resolves.toMatchObject({ status: "denied" });
-
-      await client
-        .update(knightHacks.HackerAttendee)
-        .set({ status: "pending" })
-        .where(eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE));
     });
 
     it("AC-014: skips a blacklisted applicant in bulk and names them", async () => {
@@ -318,11 +355,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           reason: "blacklisted",
         }),
       ]);
-
-      await client
-        .update(knightHacks.HackerAttendee)
-        .set({ lastStatusSendId: null, status: "pending" })
-        .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
     });
   });
 
@@ -349,11 +381,142 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       expect(row?.blacklistedAt).not.toBeNull();
       expect(row?.blacklistedBy).toBe(OFFICER_USER);
       expect(row?.blacklistReason).toBe("Under review.");
+    });
+  });
 
+  describe("gaps the first review found", () => {
+    it("confirmBulk refuses on an unconfigured hackathon", async () => {
+      // The readiness gate on the bulk path had a positive control and no
+      // negative case, so deleting it entirely left the suite green while an
+      // officer could mail two hundred people from a half-configured
+      // hackathon.
+      await expect(
+        caller.hacker.confirmBulk({
+          attendeeIds: [UNREADY_ATTENDEE],
+          hackathonId: UNREADY_HACKATHON,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      const sends = await client.select().from(knightHacks.EmailSend);
+      expect(sends).toHaveLength(0);
+    });
+
+    it("TC-007: a bulk of many produces exactly one send", async () => {
+      const result = await caller.hacker.confirmBulk({
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      // One campaign carrying everyone, not one per person. Cited by the
+      // original test and never actually asserted.
+      const sends = await client.select().from(knightHacks.EmailSend);
+      expect(sends).toHaveLength(1);
+      expect(sends[0]?.finalRecipientCount).toBe(2);
+      expect(result.movedCount).toBe(2);
+
+      const recipients = await client
+        .select()
+        .from(knightHacks.EmailSendRecipient);
+      expect(recipients).toHaveLength(2);
+    });
+
+    it("a bulk that skips someone does not move them in the database", async () => {
+      // The result object reporting "skipped" is not the same as the row being
+      // left alone. Changing the update predicate to the full input list would
+      // flip a blacklisted applicant while the result still read honestly.
+      await caller.hacker.confirmBulk({
+        attendeeIds: [PLAIN_ATTENDEE, BLACKLISTED_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      const [blocked] = await client
+        .select({ status: knightHacks.HackerAttendee.status })
+        .from(knightHacks.HackerAttendee)
+        .where(eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE));
+      expect(blocked?.status).toBe("pending");
+    });
+
+    it("blacklisting sends no mail", async () => {
+      // An applicant emailed about their own blacklisting would be a
+      // disclosure of officer-tier data.
       await caller.hacker.setBlacklist({
         attendeeId: PLAIN_ATTENDEE,
-        blacklisted: false,
+        blacklisted: true,
+        reason: "Under review.",
       });
+
+      const sends = await client.select().from(knightHacks.EmailSend);
+      expect(sends).toHaveLength(0);
+    });
+
+    it("refuses a transition to the status the applicant already holds", async () => {
+      await caller.hacker.setStatus({
+        attendeeId: PLAIN_ATTENDEE,
+        status: "accepted",
+      });
+
+      await expect(
+        caller.hacker.setStatus({
+          attendeeId: PLAIN_ATTENDEE,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      // One send, not two. A double-click must not mail twice.
+      const sends = await client.select().from(knightHacks.EmailSend);
+      expect(sends).toHaveLength(1);
+    });
+
+    it("skips an applicant already at the target status in bulk", async () => {
+      await caller.hacker.setStatus({
+        attendeeId: PLAIN_ATTENDEE,
+        status: "accepted",
+      });
+
+      const result = await caller.hacker.confirmBulk({
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      expect(result.movedCount).toBe(1);
+      expect(result.skipped).toEqual([
+        expect.objectContaining({
+          attendeeId: PLAIN_ATTENDEE,
+          reason: "already",
+        }),
+      ]);
+    });
+
+    it("collapses a duplicated id rather than aborting the bulk", async () => {
+      // `EmailSendRecipient` is unique on (sendId, normalizedEmail), so a
+      // repeated id would otherwise surface as a raw constraint violation.
+      const result = await caller.hacker.confirmBulk({
+        attendeeIds: [PLAIN_ATTENDEE, PLAIN_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      expect(result.movedCount).toBe(1);
+      const recipients = await client
+        .select()
+        .from(knightHacks.EmailSendRecipient);
+      expect(recipients).toHaveLength(1);
+    });
+
+    it("names the shortfall rather than only refusing", async () => {
+      // Both the readiness gate and the blacklist guard throw
+      // PRECONDITION_FAILED, so asserting the code alone cannot tell them
+      // apart — and the count is the only thing telling an officer what to fix.
+      await expect(
+        caller.hacker.setStatus({
+          attendeeId: UNREADY_ATTENDEE,
+          status: "accepted",
+        }),
+      ).rejects.toThrow(/5 of 6 status emails/);
     });
   });
 
@@ -393,11 +556,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .from(knightHacks.HackerAttendee)
         .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
       expect(attendee?.lastStatusSendId).toBe(result.sendId);
-
-      await client
-        .update(knightHacks.HackerAttendee)
-        .set({ lastStatusSendId: null, status: "pending" })
-        .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
     });
   });
 });
