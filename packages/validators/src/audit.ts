@@ -348,6 +348,30 @@ export const AUDIT_ACTION_CATALOG = {
     ["name", "discordRoleId", "color"],
   ),
   "hackathon.class_deleted": policy("hackathons", "Deleted hackathon class"),
+  // Hacker management. `status` and `previousStatus` are metadata rather than a
+  // change diff because the officer-facing name differs from the stored value:
+  // `denied` is presented as "capacity", and a log that reads "denied" for an
+  // action an officer performed as "capacity reject" is a log that has to be
+  // translated before it can be trusted.
+  "hacker.status_changed": policy(
+    "hackathons",
+    "Changed hacker status",
+    ["previousStatus", "status", "sendId"],
+    ["status"],
+  ),
+  // One event per bulk action, not per hacker: the officer performed one act.
+  // Counts rather than a name list, because a bulk of two hundred would
+  // otherwise write a payload nobody reads. Individual moves are recoverable
+  // from the per-hacker events the bulk still writes.
+  "hacker.bulk_status_changed": policy(
+    "hackathons",
+    "Bulk changed hacker status",
+    ["status", "movedCount", "skippedCount", "sendId"],
+  ),
+  // The reason is recorded here as well as on the row, because the row's
+  // reason is overwritten by the next blacklist and the log is what survives.
+  "hacker.blacklisted": policy("hackathons", "Blacklisted hacker", ["reason"]),
+  "hacker.unblacklisted": policy("hackathons", "Removed hacker blacklist"),
   "role.synced": policy("roles", "Synced linked role", [
     "checkedCount",
     "addedCount",
@@ -661,6 +685,7 @@ export const AUDIT_TARGET_TYPES = [
   "form_section",
   "hackathon",
   "hackathon_class",
+  "hacker_attendee",
   "issue",
   "issue_template",
   "issue_tree",

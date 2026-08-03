@@ -253,7 +253,18 @@ function coverageFor(
   });
 }
 
-async function materializeContent(content: EmailSendContent, sendId: string) {
+/**
+ * Exported for hacker status mail, which builds its own send rather than going
+ * through `previewSend`: that path selects recipients by audience definition
+ * ("every pending hacker in this hackathon"), and a status transition mails a
+ * specific set of people an officer selected. Sharing the compile step is what
+ * keeps the mail an applicant receives identical to the one an officer
+ * previewed on the configuration screen.
+ */
+export async function materializeContent(
+  content: EmailSendContent,
+  sendId: string,
+) {
   if (content.mode === "plainText") {
     return {
       compiledHtml: null,
