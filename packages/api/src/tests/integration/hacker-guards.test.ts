@@ -27,6 +27,7 @@ const PLAIN_ATTENDEE = "60000000-0000-4000-8000-0000000000e1";
 const BLACKLISTED_ATTENDEE = "60000000-0000-4000-8000-0000000000e2";
 const UNREADY_ATTENDEE = "60000000-0000-4000-8000-0000000000e3";
 const SECOND_ATTENDEE = "60000000-0000-4000-8000-0000000000e4";
+const SECOND_HACKER_ID = "70000000-0000-4000-8000-0000000000e4";
 
 /**
  * The guards that stand between an officer and an applicant's inbox, exercised
@@ -183,7 +184,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       userId: OFFICER_USER,
     });
 
-    const SECOND_HACKER = "70000000-0000-4000-8000-0000000000e4";
+    const SECOND_HACKER = SECOND_HACKER_ID;
     const PLAIN_HACKER = "70000000-0000-4000-8000-0000000000e1";
     const BLOCKED_HACKER = "70000000-0000-4000-8000-0000000000e2";
     const UNREADY_HACKER = "70000000-0000-4000-8000-0000000000e3";
@@ -611,6 +612,52 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       });
       expect(options.schools).toEqual(["University of Central Florida"]);
       expect(options.graduationYears).toEqual([2030]);
+    });
+  });
+
+  describe("two applicants sharing an email", () => {
+    // `Hacker.email` is not unique, and `EmailSendRecipient` is unique on
+    // (sendId, normalizedEmail) — so only one of them could ever be mailed.
+    // Collapsing silently meant the second person moved to accepted, was never
+    // told, and never appeared in the Delivery pane either, because the send
+    // they pointed at had succeeded.
+    it("reports the duplicate rather than moving them unmailed", async () => {
+      await client
+        .update(knightHacks.Hacker)
+        .set({ email: "hacker-plain@example.test" })
+        .where(eq(knightHacks.Hacker.id, SECOND_HACKER_ID));
+
+      const result = await caller.hacker.confirmBulk({
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      expect(result.movedCount).toBe(1);
+      expect(result.skipped).toEqual([
+        expect.objectContaining({
+          attendeeId: SECOND_ATTENDEE,
+          reason: "duplicate_email",
+        }),
+      ]);
+
+      // The one that was skipped must not have moved.
+      const [second] = await client
+        .select({ status: knightHacks.HackerAttendee.status })
+        .from(knightHacks.HackerAttendee)
+        .where(eq(knightHacks.HackerAttendee.id, SECOND_ATTENDEE));
+      expect(second?.status).toBe("pending");
+
+      // And the recipient count matches what was actually sent.
+      const recipients = await client
+        .select()
+        .from(knightHacks.EmailSendRecipient);
+      expect(recipients).toHaveLength(1);
+
+      await client
+        .update(knightHacks.Hacker)
+        .set({ email: "hacker-second@example.test" })
+        .where(eq(knightHacks.Hacker.id, SECOND_HACKER_ID));
     });
   });
 

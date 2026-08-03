@@ -20,7 +20,9 @@ import { api } from "~/trpc/react";
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 const SKIP_REASONS: Record<string, string> = {
+  already: "Already has this status",
   blacklisted: "Blacklisted",
+  duplicate_email: "Shares an email with another selected applicant",
   missing: "No longer in this hackathon",
   no_email: "No email address",
 };
@@ -75,6 +77,14 @@ export function BulkConfirmDialog({
       resetPreview();
       return;
     }
+    // `previewBulk` requires at least one id. If the selection empties while
+    // this is open the request fails validation, the dialog shows a Zod string
+    // in place of the preview, and retrying fails the same way — so it says
+    // what happened instead.
+    if (attendeeIds.length === 0) {
+      resetPreview();
+      return;
+    }
     runPreview({ attendeeIds, hackathonId, status });
     // `attendeeIds` is a fresh array each render; keying on its contents keeps
     // this from re-firing on every parent render.
@@ -110,6 +120,13 @@ export function BulkConfirmDialog({
               Try again
             </Button>
           </div>
+        ) : null}
+
+        {attendeeIds.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nothing is selected any more. Close this and pick the applicants
+            again.
+          </p>
         ) : null}
 
         {preview.isPending ? (

@@ -188,11 +188,28 @@ export function HackerRoster({
     await utils.hacker.invalidate();
   };
 
+  /**
+   * Applies a filter and flags the resulting URL change as ours.
+   *
+   * Every path that writes a filter goes through here. Missing the flag on even
+   * one of them means the effect above sees our own commit as a foreign
+   * navigation and empties the selection — which is precisely what a survival
+   * check that just said "everyone survives" promised would not happen.
+   */
+  const commitFilter = useCallback(
+    (next: RosterFilter) => {
+      ownChangeRef.current = true;
+      url.setFilter(next);
+    },
+    [url],
+  );
+
+  /** Resolves true only if the filter actually reached the URL. */
   const requestFilter = useCallback(
     async (next: RosterFilter) => {
       if (selectedCount === 0) {
-        url.setFilter(next);
-        return;
+        commitFilter(next);
+        return true;
       }
       setCheckingFilter(true);
       try {
@@ -204,8 +221,8 @@ export function HackerRoster({
           hackathonId,
         });
         if (survival.droppedIds.length === 0) {
-          url.setFilter(next);
-          return;
+          commitFilter(next);
+          return true;
         }
         setPendingFilter({ droppedIds: survival.droppedIds, filter: next });
       } catch {
@@ -213,8 +230,9 @@ export function HackerRoster({
       } finally {
         setCheckingFilter(false);
       }
+      return false;
     },
-    [hackathonId, selection.selected, url, utils],
+    [commitFilter, hackathonId, selection.selected, selectedCount, utils],
   );
 
   /**
@@ -242,13 +260,24 @@ export function HackerRoster({
   }, [url.filter.search]);
 
   useEffect(() => {
-    if (search === committedSearchRef.current) return;
+    // Compared trimmed, because that is what comes back. The schema trims, so
+    // storing the raw box text meant `"john "` never matched the `"john"` in
+    // the URL — the resync above read its own commit as someone else's, rewound
+    // the box, and typing `"john "` then `"smith"` produced `"johnsmith"`.
+    const term = search.trim();
+    if (term === committedSearchRef.current) return;
     const timer = setTimeout(() => {
-      committedSearchRef.current = search;
-      void requestFilterRef.current({
-        ...filterRef.current,
-        search: search || undefined,
-      });
+      void requestFilterRef
+        .current({
+          ...filterRef.current,
+          search: term || undefined,
+        })
+        .then((committed) => {
+          // Only once it landed. Recording it up front stranded the term when the
+          // survival dialog intercepted the write: the box held text the roster
+          // was not filtered by, and nothing would retry it.
+          if (committed) committedSearchRef.current = term;
+        });
     }, 350);
     return () => clearTimeout(timer);
   }, [search]);
@@ -275,10 +304,21 @@ export function HackerRoster({
     );
   }
 
-  // The cap has to be stated. "1000 shown" beside a status tab reading 1448,
-  // with a header select-all that then mails 1000 of them, is the worst
-  // possible silence on this screen.
-  const atCap = url.showAll && hackers.length === SHOW_ALL_SIZE;
+  // From the server's own "there is more after this", not from the page being
+  // exactly full. A hackathon with precisely 1000 matches otherwise rendered
+  // "1000 of 1000 shown · capped at 1000; narrow the filter to reach the rest"
+  // — telling an officer to go hunting for rows that were all on screen.
+  const atCap = url.showAll && roster.data?.nextCursor != null;
+  /**
+   * The total for the rows actually on screen.
+   *
+   * `counts` is deliberately computed with `status` stripped so the tabs can
+   * show every bucket at once, which makes `counts.total` the whole hackathon.
+   * Using it here put "3 of 903 shown" beside a tab reading "Applied 3".
+   */
+  const shownTotal = url.filter.status
+    ? counts.data?.byStatus[url.filter.status]
+    : counts.data?.total;
   const failedToLoad = roster.isError || counts.isError;
   const blocked = selected.hasEnded || failedToLoad;
   const blockedReason = selected.hasEnded
@@ -487,7 +527,13 @@ export function HackerRoster({
             a header select-all that then mails 1000 of them, is the worst
             possible silence on this screen.
           */}
-          {hackers.length} of {counts.data?.total ?? hackers.length} shown
+          {/*
+            No `?? hackers.length` fallback: during the first load that asserted
+            "50 of 50 shown", which is a claim about the whole hackathon made
+            from one page of it.
+          */}
+          {hackers.length}
+          {shownTotal === undefined ? "" : ` of ${shownTotal}`} shown
           {atCap
             ? ` · capped at ${SHOW_ALL_SIZE}; narrow the filter to reach the rest`
             : url.showAll
@@ -526,12 +572,17 @@ export function HackerRoster({
 
       <FilterChangeDialog
         droppedCount={pendingFilter?.droppedIds.length ?? 0}
-        onCancel={() => setPendingFilter(null)}
+        onCancel={() => {
+          setPendingFilter(null);
+          // Backing out means the filter was not applied, so the search box has
+          // to stop claiming it was.
+          setSearch(url.filter.search ?? "");
+        }}
         onProceed={() => {
           if (!pendingFilter) return;
           selection.deselect(pendingFilter.droppedIds);
-          ownChangeRef.current = true;
-          url.setFilter(pendingFilter.filter);
+          committedSearchRef.current = pendingFilter.filter.search ?? "";
+          commitFilter(pendingFilter.filter);
           setPendingFilter(null);
         }}
         open={pendingFilter !== null}

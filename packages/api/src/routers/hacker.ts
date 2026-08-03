@@ -239,7 +239,12 @@ function assertHackathonNotEnded(hackathon: {
 }
 
 /** Why a selected applicant was left out of a bulk action. */
-type SkipReason = "already" | "blacklisted" | "missing" | "no_email";
+type SkipReason =
+  | "already"
+  | "blacklisted"
+  | "duplicate_email"
+  | "missing"
+  | "no_email";
 
 interface BulkSkip {
   attendeeId: string;
@@ -841,6 +846,20 @@ async function resolveBulkTargets(
   const found = new Map(rows.map((row) => [row.attendeeId, row]));
   const sending: StatusMailRecipient[] = [];
   const skipped: BulkSkip[] = [];
+  /**
+   * Addresses already claimed by an earlier applicant in this selection.
+   *
+   * `Hacker.email` is not unique, so two attendee rows in one hackathon can
+   * share an address. `EmailSendRecipient` is unique on
+   * `(sendId, normalizedEmail)`, so only one of them could ever be mailed —
+   * and collapsing silently meant the second person moved to `accepted`, was
+   * never told, and never appeared in the Delivery pane either, because the
+   * send they pointed at had succeeded.
+   *
+   * Reported instead. Two applicants sharing an address inside one hackathon is
+   * itself worth an officer's attention.
+   */
+  const claimedEmails = new Set<string>();
 
   // Deduplicated: a client can send the same id twice, and each duplicate
   // would otherwise become a second recipient row and abort the whole bulk on
@@ -873,6 +892,12 @@ async function resolveBulkTargets(
       skipped.push({ attendeeId, name, reason: "already" });
       continue;
     }
+    const normalizedEmail = row.email.trim().toLowerCase();
+    if (claimedEmails.has(normalizedEmail)) {
+      skipped.push({ attendeeId, name, reason: "duplicate_email" });
+      continue;
+    }
+    claimedEmails.add(normalizedEmail);
     sending.push({
       attendeeId,
       email: row.email,

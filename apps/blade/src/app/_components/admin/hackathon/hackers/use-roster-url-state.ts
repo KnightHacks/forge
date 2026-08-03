@@ -56,6 +56,17 @@ export function useRosterUrlState(): RosterUrlState {
    */
   const pendingRef = useRef<string | null>(null);
   /**
+   * Every query we wrote in the current chain, newest last.
+   *
+   * Distinguishing "an earlier write of ours landed" from "someone navigated
+   * away" needs more than the latest one. Click "Show all", then a status tab
+   * before it lands: pending holds the second query while the URL settles on
+   * the first. Comparing only against pending called that a foreign navigation
+   * and dropped it, so the next write rebuilt from the URL — and "Show all"
+   * turned itself back off with nothing to explain why.
+   */
+  const writtenRef = useRef<string[]>([]);
+  /**
    * Discarded whenever the URL moves anywhere we did not send it — browser
    * Back, most importantly.
    *
@@ -65,9 +76,19 @@ export function useRosterUrlState(): RosterUrlState {
    * the officer had just backed out of.
    */
   useEffect(() => {
+    if (pendingRef.current === null) return;
     const committed = searchParams.toString();
-    if (pendingRef.current !== null && pendingRef.current !== committed) {
+    if (committed === pendingRef.current) {
+      // The chain caught up. Nothing left to compose against.
       pendingRef.current = null;
+      writtenRef.current = [];
+      return;
+    }
+    // An intermediate write of ours landing is the chain working, not a
+    // foreign navigation — keep composing. Anything else is Back or a link.
+    if (!writtenRef.current.includes(committed)) {
+      pendingRef.current = null;
+      writtenRef.current = [];
     }
   }, [searchParams]);
 
@@ -114,10 +135,14 @@ export function useRosterUrlState(): RosterUrlState {
       const committed = searchParams.toString();
       // Once the URL catches up with what we wrote, the pending copy is spent.
       if (pendingRef.current === committed) pendingRef.current = null;
+      const settled = pendingRef.current === null;
       const params = new URLSearchParams(pendingRef.current ?? committed);
       mutate(params);
       const query = params.toString();
       pendingRef.current = query;
+      // A chain starting from a settled URL begins its own history, so a Back
+      // to something we wrote minutes ago is still recognised as foreign.
+      writtenRef.current = settled ? [query] : [...writtenRef.current, query];
       // In a transition so the officer gets a pending signal rather than a
       // screen that sits unchanged while the server re-renders.
       startNavigation(() => {
