@@ -239,15 +239,29 @@ function assertHackathonNotEnded(hackathon: {
 }
 
 /** Why a selected applicant was left out of a bulk action. */
-type SkipReason =
+export type SkipReason =
   | "already"
   | "blacklisted"
   | "duplicate_email"
   | "missing"
   | "no_email";
 
+/** Audit metadata takes scalars, so each reason worth tracing gets its own. */
+function countReason(skips: BulkSkip[], reason: SkipReason) {
+  return skips.filter((skip) => skip.reason === reason).length;
+}
+
 interface BulkSkip {
   attendeeId: string;
+  /**
+   * Only set for `duplicate_email`, where the address *is* the explanation.
+   *
+   * Without it an officer cannot tell one person who applied twice from two
+   * people sharing a family address, and those need opposite handling. The
+   * caller already receives every sending recipient's email at the same tier,
+   * so this reveals nothing new.
+   */
+  email?: string;
   name: string;
   reason: SkipReason;
 }
@@ -707,6 +721,15 @@ export const hackerRouter = createTRPCRouter({
               movedCount: sending.length,
               sendId,
               skippedCount: skipped.length,
+              /*
+                Broken down, because `duplicate_email` is the only reason with
+                no other trace. `blacklisted` leaves `blacklistedAt`, `already`
+                leaves the status, `no_email` leaves an empty address and
+                `missing` leaves no row at all — but a collapsed duplicate exists
+                only in a toast the officer closes. Two weeks later, "why was I
+                never told?" has to be answerable from here.
+              */
+              skippedDuplicateEmail: countReason(skipped, "duplicate_email"),
               status: input.status,
             },
             subjects: [
@@ -825,6 +848,7 @@ async function resolveBulkTargets(
       blacklistedAt: HackerAttendee.blacklistedAt,
       email: Hacker.email,
       firstName: Hacker.firstName,
+      timeApplied: HackerAttendee.timeApplied,
       lastName: Hacker.lastName,
       status: HackerAttendee.status,
     })
@@ -861,10 +885,32 @@ async function resolveBulkTargets(
    */
   const claimedEmails = new Set<string>();
 
-  // Deduplicated: a client can send the same id twice, and each duplicate
-  // would otherwise become a second recipient row and abort the whole bulk on
-  // the `(sendId, normalizedEmail)` unique constraint.
-  for (const attendeeId of [...new Set(input.attendeeIds)]) {
+  /*
+    Ordered by when they applied, not by the order the officer clicked.
+
+    Which of a same-address pair is mailed has to be explainable. Iterating the
+    client's array meant shift-selecting rows 1-50 accepted Alice, while
+    clicking Bob first and *then* shift-selecting the same 50 accepted Bob — an
+    identical visible selection choosing a different person, with nothing on
+    screen to account for it. Earliest applicant wins.
+
+    Deduplicated as well: a client can send the same id twice, and each
+    duplicate would otherwise become a second recipient row and abort the whole
+    bulk on the `(sendId, normalizedEmail)` unique constraint.
+  */
+  const ordered = [...new Set(input.attendeeIds)].sort((left, right) => {
+    const leftRow = found.get(left);
+    const rightRow = found.get(right);
+    if (!leftRow || !rightRow) return leftRow ? -1 : rightRow ? 1 : 0;
+    const byTime =
+      leftRow.timeApplied.getTime() - rightRow.timeApplied.getTime();
+    // Ties broken by id. Two applications can share a timestamp — the fixtures
+    // do, and so does any pair created by the same import — and without this the
+    // sort is stable on the input array, which puts the officer's click order
+    // back in charge of who gets mailed.
+    return byTime === 0 ? left.localeCompare(right) : byTime;
+  });
+  for (const attendeeId of ordered) {
     const row = found.get(attendeeId);
     // Selected but no longer in this hackathon's roster — withdrawn on the hack
     // site, or deleted between selecting and confirming.
@@ -894,7 +940,12 @@ async function resolveBulkTargets(
     }
     const normalizedEmail = row.email.trim().toLowerCase();
     if (claimedEmails.has(normalizedEmail)) {
-      skipped.push({ attendeeId, name, reason: "duplicate_email" });
+      skipped.push({
+        attendeeId,
+        email: row.email,
+        name,
+        reason: "duplicate_email",
+      });
       continue;
     }
     claimedEmails.add(normalizedEmail);

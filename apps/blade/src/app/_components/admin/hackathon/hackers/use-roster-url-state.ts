@@ -11,18 +11,49 @@ import { hackerRosterFilterSchema } from "@forge/validators";
  * rest of the admin surface.
  *
  * Not a preference — a shareable address. An officer working a capacity round
- * sends "here, this filter" to another officer, refreshes without losing their
- * place, and gets back where they were from history.
+ * sends "here, this filter" to another officer, and refreshes without losing
+ * their place.
+ *
+ * Every write is a `replace`, so there is deliberately no per-filter history
+ * entry: a 350 ms-debounced search box would otherwise bury the page an officer
+ * arrived from under a dozen of them. The cost is that Back does not step
+ * backwards through filters, and nothing here should claim it does.
  */
 export interface RosterUrlState {
   filter: HackerRosterFilter;
   hackathonId: string | null;
   navigating: boolean;
-  setFilter: (next: HackerRosterFilter) => void;
-  setHackathonId: (next: string) => void;
-  setShowAll: (next: boolean) => void;
+  /**
+   * The filter a patch would produce, resolved against any write still in
+   * flight rather than against the URL.
+   *
+   * The survival check needs the filter that will actually be in effect. Asking
+   * with `{...url.filter, ...patch}` reintroduces the stale-snapshot bug in the
+   * one place it is most expensive: the officer would be told "12 of your 20
+   * selected disappear" about a filter that is not the one being applied, and
+   * Proceed would then apply the real one.
+   */
+  projectFilter: (patch: RosterFilterPatch) => HackerRosterFilter;
+  /** Applies only the keys present on `patch`. Returns whether the URL moved. */
+  setFilter: (patch: RosterFilterPatch) => boolean;
+  setHackathonId: (next: string) => boolean;
+  setShowAll: (next: boolean) => boolean;
   showAll: boolean;
 }
+
+/**
+ * A partial filter, where "absent" and "present but undefined" mean different
+ * things: absent leaves the key alone, present-and-undefined clears it.
+ *
+ * This distinction is the whole design. Callers used to pass a complete filter
+ * built as `{...url.filter, oneChange}`, and `url.filter` comes from
+ * `useSearchParams`, which does not update until the server responds. A second
+ * write issued during that window therefore carried a stale copy of every
+ * *other* key and silently reverted it — remove a school chip, click a status
+ * tab 200 ms later, and the chip came back. Composing the query string could
+ * not help, because the mutator then overwrote exactly the keys it composed.
+ */
+export type RosterFilterPatch = Partial<HackerRosterFilter>;
 
 const LIST_KEYS = [
   "schools",
@@ -37,98 +68,145 @@ const SCALAR_KEYS = [
   "blacklisted",
 ] as const;
 
-export function useRosterUrlState(): RosterUrlState {
+/** Everything the Filters panel owns, so its Clear buttons can name them. */
+export const FACET_KEYS = [
+  "blacklisted",
+  "graduationTerms",
+  "graduationYears",
+  "levelsOfStudy",
+  "schools",
+] as const;
+
+/** A patch that clears every facet, leaving search, status and the pane alone. */
+export function clearedFacets(): RosterFilterPatch {
+  return Object.fromEntries(FACET_KEYS.map((key) => [key, undefined]));
+}
+
+function applyPatch(params: URLSearchParams, patch: RosterFilterPatch) {
+  for (const key of SCALAR_KEYS) {
+    if (!(key in patch)) continue;
+    const value = patch[key];
+    if (value === undefined || value === "" || value === false) {
+      params.delete(key);
+    } else {
+      params.set(key, String(value));
+    }
+  }
+  for (const key of LIST_KEYS) {
+    if (!(key in patch)) continue;
+    params.delete(key);
+    for (const value of patch[key] ?? []) {
+      params.append(key, String(value));
+    }
+  }
+}
+
+function parseFilter(params: {
+  get: (key: string) => string | null;
+  getAll: (key: string) => string[];
+}): HackerRosterFilter {
+  const list = (key: string) => {
+    const values = params.getAll(key);
+    return values.length > 0 ? values : undefined;
+  };
+  const raw = {
+    blacklisted: params.get("blacklisted") === "true" ? true : undefined,
+    deliveryFailed: params.get("deliveryFailed") === "true" ? true : undefined,
+    graduationTerms: list("graduationTerms"),
+    graduationYears: list("graduationYears")
+      ?.map(Number)
+      .filter((year) => Number.isInteger(year) && year >= 1900),
+    levelsOfStudy: list("levelsOfStudy"),
+    schools: list("schools"),
+    search: params.get("search") ?? undefined,
+    status: params.get("status") ?? undefined,
+  };
+
+  // Parsed, not cast. A shared or hand-edited link carrying `?status=Accepted`
+  // or a truncated `?graduationYears=` would otherwise reach the server, fail
+  // Zod, and put the whole screen into its error state — an officer following a
+  // colleague's link would see "the roster could not be loaded" and have no idea
+  // a stray character caused it. Unparseable values are dropped and the rest of
+  // the filter still applies.
+  const parsed = hackerRosterFilterSchema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+
+  const salvaged = { ...raw } as Record<string, unknown>;
+  for (const issue of parsed.error.issues) {
+    const key = issue.path[0];
+    if (typeof key === "string") delete salvaged[key];
+  }
+  const retry = hackerRosterFilterSchema.safeParse(salvaged);
+  return retry.success ? retry.data : {};
+}
+
+/**
+ * @param onForeignNavigation Called when the URL changes to something this hook
+ *   did not write — a pasted link, or Back leaving the page. The roster drops
+ *   its selection on these and only these, and the decision lives here because
+ *   this is the only place that knows which queries are ours. Mirroring that
+ *   knowledge in the component as a flag was wrong three separate times; as a
+ *   boolean it was consumed by the first of two navigations in a chain, so the
+ *   second wiped a selection a survival check had just cleared as safe.
+ */
+export function useRosterUrlState(
+  onForeignNavigation?: () => void,
+): RosterUrlState {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [navigating, startNavigation] = useTransition();
 
   /**
-   * The last params we wrote, so two writes inside one navigation window
-   * compose instead of the second rebuilding from the first's stale snapshot.
-   *
-   * `useSearchParams` only updates once the server responds, and this page is
-   * dynamic. Clicking "Show all" and then a status tab before that lands would
-   * otherwise silently drop the first.
-   *
-   * Read and reconciled inside `write`, never during render — a ref touched in
-   * the render path is exactly what breaks under concurrent rendering.
+   * The last query we wrote, so two writes inside one navigation window compose
+   * instead of the second rebuilding from the first's stale snapshot.
    */
   const pendingRef = useRef<string | null>(null);
   /**
    * Every query we wrote in the current chain, newest last.
    *
-   * Distinguishing "an earlier write of ours landed" from "someone navigated
-   * away" needs more than the latest one. Click "Show all", then a status tab
-   * before it lands: pending holds the second query while the URL settles on
-   * the first. Comparing only against pending called that a foreign navigation
-   * and dropped it, so the next write rebuilt from the URL — and "Show all"
-   * turned itself back off with nothing to explain why.
+   * Telling "an earlier write of ours landed" from "someone navigated away"
+   * needs more than the latest one: pending holds the second query while the
+   * URL settles on the first, and comparing only against pending called that a
+   * foreign navigation.
    */
   const writtenRef = useRef<string[]>([]);
-  /**
-   * Discarded whenever the URL moves anywhere we did not send it — browser
-   * Back, most importantly.
-   *
-   * Without this the ref outlived the navigation it belonged to: apply a school
-   * filter, let it land, press Back to undo it, then click "Show all" — and the
-   * write rebuilt from the dead pending query, silently restoring the filter
-   * the officer had just backed out of.
-   */
+  const lastCommittedRef = useRef<string | null>(null);
+  const foreignRef = useRef(onForeignNavigation);
   useEffect(() => {
-    if (pendingRef.current === null) return;
+    foreignRef.current = onForeignNavigation;
+  });
+
+  useEffect(() => {
     const committed = searchParams.toString();
+    // The first run establishes a baseline; the URL we mounted on is neither
+    // ours nor a navigation away from anything.
+    if (lastCommittedRef.current === null) {
+      lastCommittedRef.current = committed;
+      return;
+    }
+    if (lastCommittedRef.current === committed) return;
+    lastCommittedRef.current = committed;
+
     if (committed === pendingRef.current) {
       // The chain caught up. Nothing left to compose against.
       pendingRef.current = null;
       writtenRef.current = [];
       return;
     }
-    // An intermediate write of ours landing is the chain working, not a
-    // foreign navigation — keep composing. Anything else is Back or a link.
-    if (!writtenRef.current.includes(committed)) {
-      pendingRef.current = null;
-      writtenRef.current = [];
-    }
+    // An intermediate write of ours landing is the chain working — keep
+    // composing. Anything else is a link, a pasted URL, or Back.
+    if (writtenRef.current.includes(committed)) return;
+
+    pendingRef.current = null;
+    writtenRef.current = [];
+    foreignRef.current?.();
   }, [searchParams]);
 
-  const filter = useMemo<HackerRosterFilter>(() => {
-    const list = (key: string) => {
-      const values = searchParams.getAll(key);
-      return values.length > 0 ? values : undefined;
-    };
-    const raw = {
-      blacklisted:
-        searchParams.get("blacklisted") === "true" ? true : undefined,
-      deliveryFailed:
-        searchParams.get("deliveryFailed") === "true" ? true : undefined,
-      graduationTerms: list("graduationTerms"),
-      graduationYears: list("graduationYears")
-        ?.map(Number)
-        .filter((year) => Number.isInteger(year) && year >= 1900),
-      levelsOfStudy: list("levelsOfStudy"),
-      schools: list("schools"),
-      search: searchParams.get("search") ?? undefined,
-      status: searchParams.get("status") ?? undefined,
-    };
-
-    // Parsed, not cast. A shared or hand-edited link carrying `?status=Accepted`
-    // or a truncated `?graduationYears=` would otherwise reach the server, fail
-    // Zod, and put the whole screen into its error state — an officer following
-    // a colleague's link would see "the roster could not be loaded" and have no
-    // idea a stray character caused it. Unparseable values are dropped and the
-    // rest of the filter still applies.
-    const parsed = hackerRosterFilterSchema.safeParse(raw);
-    if (parsed.success) return parsed.data;
-
-    const salvaged = { ...raw } as Record<string, unknown>;
-    for (const issue of parsed.error.issues) {
-      const key = issue.path[0];
-      if (typeof key === "string") delete salvaged[key];
-    }
-    const retry = hackerRosterFilterSchema.safeParse(salvaged);
-    return retry.success ? retry.data : {};
-  }, [searchParams]);
+  const filter = useMemo<HackerRosterFilter>(
+    () => parseFilter(searchParams),
+    [searchParams],
+  );
 
   const write = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
@@ -136,9 +214,18 @@ export function useRosterUrlState(): RosterUrlState {
       // Once the URL catches up with what we wrote, the pending copy is spent.
       if (pendingRef.current === committed) pendingRef.current = null;
       const settled = pendingRef.current === null;
-      const params = new URLSearchParams(pendingRef.current ?? committed);
+      const base = pendingRef.current ?? committed;
+      const params = new URLSearchParams(base);
       mutate(params);
+      // Sorted, so a query is defined by its content rather than by the order
+      // keys happened to be touched. Without this, re-appending list keys built
+      // a different string for an identical filter, and every no-op click cost
+      // a navigation, a spinner, and — with a selection live — a survival
+      // request against the server.
+      params.sort();
       const query = params.toString();
+      if (query === base) return false;
+
       pendingRef.current = query;
       // A chain starting from a settled URL begins its own history, so a Back
       // to something we wrote minutes ago is still recognised as foreign.
@@ -150,6 +237,7 @@ export function useRosterUrlState(): RosterUrlState {
           scroll: false,
         });
       });
+      return true;
     },
     [pathname, router, searchParams],
   );
@@ -158,24 +246,18 @@ export function useRosterUrlState(): RosterUrlState {
     filter,
     hackathonId: searchParams.get("hackathon"),
     navigating,
+    projectFilter: useCallback(
+      (patch) => {
+        const params = new URLSearchParams(
+          pendingRef.current ?? searchParams.toString(),
+        );
+        applyPatch(params, patch);
+        return parseFilter(params);
+      },
+      [searchParams],
+    ),
     setFilter: useCallback(
-      (next) =>
-        write((params) => {
-          for (const key of SCALAR_KEYS) {
-            const value = next[key];
-            if (value === undefined || value === "" || value === false) {
-              params.delete(key);
-            } else {
-              params.set(key, String(value));
-            }
-          }
-          for (const key of LIST_KEYS) {
-            params.delete(key);
-            for (const value of next[key] ?? []) {
-              params.append(key, String(value));
-            }
-          }
-        }),
+      (patch) => write((params) => applyPatch(params, patch)),
       [write],
     ),
     setHackathonId: useCallback(

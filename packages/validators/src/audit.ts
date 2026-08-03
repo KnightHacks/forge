@@ -372,7 +372,12 @@ export const AUDIT_ACTION_CATALOG = {
   "hacker.bulk_status_changed": policy(
     "hackathons",
     "Bulk changed hacker status",
-    ["status", "movedCount", "skippedCount", "sendId"],
+    // `skippedDuplicateEmail` is broken out because it is the only skip reason
+    // that leaves no other trace: a blacklist leaves `blacklistedAt`, an
+    // already-at-status leaves the status, a missing applicant leaves no row.
+    // A collapsed duplicate exists nowhere else once the officer closes the
+    // toast, and "why was I never told?" has to be answerable weeks later.
+    ["status", "movedCount", "skippedCount", "skippedDuplicateEmail", "sendId"],
   ),
   // The reason is recorded here as well as on the row, because the row's
   // reason is overwritten by the next blacklist and the log is what survives.

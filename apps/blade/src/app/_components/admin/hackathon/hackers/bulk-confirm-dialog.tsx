@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
 
+import type { SkipReason } from "@forge/api";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -19,7 +20,13 @@ import { api } from "~/trpc/react";
 
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
-const SKIP_REASONS: Record<string, string> = {
+/*
+  Typed against the router's union rather than `string`, so adding a reason
+  server-side fails the build here instead of rendering its raw slug to an
+  officer. The previous round shipped exactly that: `already` was missing, and
+  the `?? row.reason` fallback printed "already" in the skipped list.
+*/
+const SKIP_REASONS: Record<SkipReason, string> = {
   already: "Already has this status",
   blacklisted: "Blacklisted",
   duplicate_email: "Shares an email with another selected applicant",
@@ -72,6 +79,15 @@ export function BulkConfirmDialog({
   // `isPending` guard could not see either, because it reads a render-time
   // snapshot.
   const { mutate: runPreview, reset: resetPreview } = preview;
+  /**
+   * The selection's contents, as a value the dependency array can compare.
+   *
+   * `attendeeIds` is a fresh array on every parent render, so depending on it
+   * directly re-fires the preview constantly. Order-sensitive on purpose: a
+   * reorder means a different partition, and the confirm button must never be
+   * armed against a preview built from different ids.
+   */
+  const idsKey = attendeeIds.join(",");
   useEffect(() => {
     if (status === null) {
       resetPreview();
@@ -86,9 +102,7 @@ export function BulkConfirmDialog({
       return;
     }
     runPreview({ attendeeIds, hackathonId, status });
-    // `attendeeIds` is a fresh array each render; keying on its contents keeps
-    // this from re-firing on every parent render.
-  }, [attendeeIds.join(","), hackathonId, resetPreview, runPreview, status]);
+  }, [attendeeIds, hackathonId, idsKey, resetPreview, runPreview, status]);
 
   const result = preview.data;
 
@@ -159,7 +173,8 @@ export function BulkConfirmDialog({
                 <ul className="mt-1 max-h-40 overflow-y-auto text-sm text-destructive/90">
                   {result.skipped.map((row) => (
                     <li key={row.attendeeId}>
-                      {row.name} — {SKIP_REASONS[row.reason] ?? row.reason}
+                      {row.name} — {SKIP_REASONS[row.reason]}
+                      {row.email ? ` (${row.email})` : ""}
                     </li>
                   ))}
                 </ul>

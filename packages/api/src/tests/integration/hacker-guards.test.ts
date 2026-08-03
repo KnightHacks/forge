@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
-import { eq } from "@forge/db";
+import { eq, inArray } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -27,7 +27,18 @@ const PLAIN_ATTENDEE = "60000000-0000-4000-8000-0000000000e1";
 const BLACKLISTED_ATTENDEE = "60000000-0000-4000-8000-0000000000e2";
 const UNREADY_ATTENDEE = "60000000-0000-4000-8000-0000000000e3";
 const SECOND_ATTENDEE = "60000000-0000-4000-8000-0000000000e4";
-const SECOND_HACKER_ID = "70000000-0000-4000-8000-0000000000e4";
+
+const PLAIN_HACKER = "70000000-0000-4000-8000-0000000000e1";
+const BLOCKED_HACKER = "70000000-0000-4000-8000-0000000000e2";
+const UNREADY_HACKER = "70000000-0000-4000-8000-0000000000e3";
+const SECOND_HACKER = "70000000-0000-4000-8000-0000000000e4";
+/** Suffix per hacker id, so `afterEach` can rebuild the fixture addresses. */
+const HACKER_SUFFIXES: [string, string][] = [
+  [PLAIN_HACKER, "plain"],
+  [BLOCKED_HACKER, "blocked"],
+  [UNREADY_HACKER, "unready"],
+  [SECOND_HACKER, "second"],
+];
 
 /**
  * The guards that stand between an officer and an applicant's inbox, exercised
@@ -184,10 +195,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       userId: OFFICER_USER,
     });
 
-    const SECOND_HACKER = SECOND_HACKER_ID;
-    const PLAIN_HACKER = "70000000-0000-4000-8000-0000000000e1";
-    const BLOCKED_HACKER = "70000000-0000-4000-8000-0000000000e2";
-    const UNREADY_HACKER = "70000000-0000-4000-8000-0000000000e3";
     await client
       .insert(knightHacks.Hacker)
       .values([
@@ -236,6 +243,16 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   // for the wrong reason, because the blacklist guard throws the identical
   // PRECONDITION_FAILED code.
   afterEach(async () => {
+    // Emails too. The duplicate-email test rewrites one, and restoring it in the
+    // test body means a failure before that line leaks the collision into every
+    // later test — which today is masked only by declaration order, since the
+    // one test that would break happens to be declared earlier in the file.
+    for (const [id, suffix] of HACKER_SUFFIXES) {
+      await client
+        .update(knightHacks.Hacker)
+        .set({ email: `hacker-${suffix}@example.test` })
+        .where(eq(knightHacks.Hacker.id, id));
+    }
     await client
       .update(knightHacks.HackerAttendee)
       .set({ lastStatusSendId: null, status: "pending" })
@@ -625,7 +642,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       await client
         .update(knightHacks.Hacker)
         .set({ email: "hacker-plain@example.test" })
-        .where(eq(knightHacks.Hacker.id, SECOND_HACKER_ID));
+        .where(eq(knightHacks.Hacker.id, SECOND_HACKER));
 
       const result = await caller.hacker.confirmBulk({
         attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
@@ -653,11 +670,156 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .select()
         .from(knightHacks.EmailSendRecipient);
       expect(recipients).toHaveLength(1);
+    });
+  });
 
+  describe("the has-more signal the cap notice reads", () => {
+    /**
+     * `nextCursor` must mean "there are more", not "the page came back full".
+     *
+     * The roster's "capped at 1000; narrow the filter to reach the rest" line is
+     * derived from this. Under a fullness check, a hackathon with exactly 1000
+     * matches told an officer to go hunting for rows that were all on screen —
+     * and, worse, the inverse mistake hides the notice while hundreds of
+     * applicants are unreachable behind a header select-all.
+     */
+    it("is null when the last page is exactly full", async () => {
+      const all = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+        limit: 50,
+      });
+      const exactly = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+        limit: all.hackers.length,
+      });
+
+      expect(exactly.hackers).toHaveLength(all.hackers.length);
+      expect(exactly.nextCursor).toBeNull();
+    });
+
+    it("is set when rows remain beyond the page", async () => {
+      const all = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+        limit: 50,
+      });
+      // Guards the test itself: with fewer than two applicants the assertion
+      // below would pass for the wrong reason.
+      expect(all.hackers.length).toBeGreaterThan(1);
+
+      const partial = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+        limit: all.hackers.length - 1,
+      });
+
+      expect(partial.nextCursor).not.toBeNull();
+    });
+  });
+
+  describe("two applicants sharing an email, continued", () => {
+    async function shareAnAddress() {
       await client
         .update(knightHacks.Hacker)
-        .set({ email: "hacker-second@example.test" })
-        .where(eq(knightHacks.Hacker.id, SECOND_HACKER_ID));
+        .set({ email: "hacker-plain@example.test" })
+        .where(eq(knightHacks.Hacker.id, SECOND_HACKER));
+    }
+
+    // The officer is shown the preview and acts on it. If confirm partitions
+    // differently, they approved one thing and sent another.
+    it("preview reports the same duplicate confirm does", async () => {
+      await shareAnAddress();
+      const input = {
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted" as const,
+      };
+
+      const preview = await caller.hacker.previewBulk(input);
+      const confirmed = await caller.hacker.confirmBulk(input);
+
+      expect(preview.sending.map((row) => row.attendeeId)).toEqual([
+        PLAIN_ATTENDEE,
+      ]);
+      expect(preview.skipped).toEqual(confirmed.skipped);
+      expect(preview.sending).toHaveLength(confirmed.movedCount);
+    });
+
+    /**
+     * The skip is only defensible because the officer can finish the job.
+     *
+     * Re-selecting both and accepting again has to mail the one that was
+     * skipped: the first is now `already`, and that branch has to `continue`
+     * *before* claiming the address. Order them the other way and the pair
+     * never converges — the second person is skipped forever, on every attempt,
+     * with no way out from the UI.
+     */
+    it("mails the skipped applicant when the bulk is repeated", async () => {
+      await shareAnAddress();
+      const input = {
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted" as const,
+      };
+
+      await caller.hacker.confirmBulk(input);
+      const second = await caller.hacker.confirmBulk(input);
+
+      expect(second.movedCount).toBe(1);
+      expect(second.skipped).toEqual([
+        expect.objectContaining({
+          attendeeId: PLAIN_ATTENDEE,
+          reason: "already",
+        }),
+      ]);
+      const rows = await client
+        .select({
+          id: knightHacks.HackerAttendee.id,
+          status: knightHacks.HackerAttendee.status,
+        })
+        .from(knightHacks.HackerAttendee)
+        .where(
+          inArray(knightHacks.HackerAttendee.id, [
+            PLAIN_ATTENDEE,
+            SECOND_ATTENDEE,
+          ]),
+        );
+      expect(rows.every((row) => row.status === "accepted")).toBe(true);
+    });
+
+    // Which of the pair is mailed must not depend on the order the officer
+    // happened to click the rows.
+    it("picks the earliest applicant whichever order the ids arrive", async () => {
+      await shareAnAddress();
+      const forwards = await caller.hacker.previewBulk({
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+      const backwards = await caller.hacker.previewBulk({
+        attendeeIds: [SECOND_ATTENDEE, PLAIN_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      expect(backwards.sending.map((row) => row.attendeeId)).toEqual(
+        forwards.sending.map((row) => row.attendeeId),
+      );
+    });
+
+    // The address is the whole explanation — one person who applied twice needs
+    // a different remedy from two people on a family address.
+    it("names the address on the skip", async () => {
+      await shareAnAddress();
+      const preview = await caller.hacker.previewBulk({
+        attendeeIds: [PLAIN_ATTENDEE, SECOND_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "accepted",
+      });
+
+      expect(preview.skipped[0]?.email).toBe("hacker-plain@example.test");
     });
   });
 

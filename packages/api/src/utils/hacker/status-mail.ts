@@ -189,16 +189,18 @@ export async function writeStatusMail(
   }
   const { content, hackathon, hackathonAttributes, sendId, status } = prepared;
 
-  // Deduplicated by normalized address. `EmailSendRecipient` is unique on
-  // `(sendId, normalizedEmail)`, and `Hacker.email` is not unique — one person
-  // who applied twice is two attendees sharing an address, which would
-  // otherwise abort the whole bulk with a raw constraint violation.
-  const byEmail = new Map<string, StatusMailRecipient>();
-  for (const recipient of recipients) {
-    const key = recipient.email.trim().toLowerCase();
-    if (!byEmail.has(key)) byEmail.set(key, recipient);
-  }
+  /*
+    Addresses are unique by the time they arrive here — the caller reports a
+    second attendee sharing one as `duplicate_email` and does not move them.
 
+    There used to be a dedupe at this point, kept afterwards as defence in
+    depth. It was the opposite: the caller updates `status` and
+    `lastStatusSendId` for everyone it hands over, so a silent collapse here
+    marked someone accepted, never mailed them, and left them invisible in the
+    Delivery pane because the send they pointed at had succeeded. A silent
+    collapser sitting behind the only thing that prevents collapse is how this
+    shipped broken the first time.
+  */
   await tx.insert(EmailSend).values({
     audienceDefinition: [
       { hackathonId: hackathon.id, kind: "hackathon", statuses: [status] },
@@ -213,7 +215,7 @@ export async function writeStatusMail(
     excludedManualCount: 0,
     excludedMissingFieldCount: 0,
     excludedSuppressedCount: 0,
-    finalRecipientCount: byEmail.size,
+    finalRecipientCount: recipients.length,
     id: sendId,
     plainTextSource: content.plainTextSource,
     // Required by the column, and meaningless here: the preview window exists
@@ -231,7 +233,7 @@ export async function writeStatusMail(
   });
 
   await tx.insert(EmailSendRecipient).values(
-    [...byEmail.values()].map((recipient) => ({
+    recipients.map((recipient) => ({
       attributes: {
         hacker: { status },
         hackathon: hackathonAttributes,

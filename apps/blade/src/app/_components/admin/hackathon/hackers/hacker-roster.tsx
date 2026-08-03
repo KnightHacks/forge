@@ -19,6 +19,7 @@ import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
 import { HACKER_STATUS_LABELS } from "@forge/validators";
 
+import type { RosterFilterPatch } from "./use-roster-url-state";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
@@ -82,29 +83,46 @@ export function HackerRoster({
   hackathons: Options;
   selected: Options[number] | null;
 }) {
-  const url = useRosterUrlState();
   const selection = useHackerSelection();
+  const url = useRosterUrlState(() => {
+    if (selection.selected.size === 0) return;
+    selection.clear();
+    toast.info("Selection cleared — the view changed.");
+  });
   const utils = api.useUtils();
 
   const [bulkStatus, setBulkStatus] = useState<SendingStatus | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [pendingFilter, setPendingFilter] = useState<{
-    droppedIds: string[];
-    filter: RosterFilter;
-  } | null>(null);
-  const [checkingFilter, setCheckingFilter] = useState(false);
-  /** Set when this component initiates a URL change, so the selection survives it. */
-  const ownChangeRef = useRef(false);
+  /**
+   * Applying a filter is one process with three states, not two booleans.
+   *
+   * As two, `checking` and `prompting` were simultaneously reachable: a request
+   * issued before the dialog opened would resolve behind it and either rewrite
+   * the open dialog's numbers under the officer's cursor, or commit a different
+   * filter outright while the dialog was still asking about this one. That state
+   * has no meaning, so it is now unrepresentable.
+   */
+  const [filterFlow, setFilterFlow] = useState<
+    | { kind: "checking" }
+    | { kind: "idle" }
+    | { droppedIds: string[]; kind: "prompting"; patch: RosterFilterPatch }
+  >({ kind: "idle" });
   const [search, setSearch] = useState(url.filter.search ?? "");
   /**
-   * What we last pushed into the URL ourselves.
+   * The search term as the URL currently holds it.
    *
-   * Without it the resync below cannot tell "the officer removed the search
-   * chip" from "my own debounced commit just landed", so a commit arriving
-   * mid-word rewound the box and ate whatever had been typed since — which is
-   * the common case on a dynamic route, not the edge one.
+   * Kept so the box can tell "the officer removed the search chip" from "my own
+   * debounced commit just landed" — without it, a commit arriving mid-word
+   * rewound the box and ate everything typed since, which on a dynamic route is
+   * the common case rather than the edge one.
+   *
+   * Stored trimmed, because the schema trims: keeping the raw box text meant
+   * `"john "` never matched the `"john"` that came back, so the box read its own
+   * write as someone else's and `"john "` + `"smith"` produced `"johnsmith"`.
    */
-  const committedSearchRef = useRef(url.filter.search ?? "");
+  const [committedSearch, setCommittedSearch] = useState(
+    url.filter.search ?? "",
+  );
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -147,37 +165,6 @@ export function HackerRoster({
   useEffect(() => resetAnchor(), [resetAnchor, shownKey]);
 
   /**
-   * Clears the selection when the view changes underneath it.
-   *
-   * Back/forward changes the URL without going through `requestFilter`, so the
-   * survival prompt never runs — and the selection would then span rows the
-   * officer cannot see, or belong to a different hackathon entirely. The key
-   * includes the hackathon for exactly that reason: backing from hackathon B to
-   * A kept "12 selected" holding B's ids, which a bulk action then resolved as
-   * every applicant missing.
-   *
-   * `ownChangeRef` is what keeps this from firing on our own commits — a
-   * debounced search landing while a bulk dialog is open would otherwise empty
-   * the selection under it and re-fire the preview with nothing in it.
-   */
-  const viewKey = `${hackathonId}:${JSON.stringify(url.filter)}`;
-  const lastViewKeyRef = useRef(viewKey);
-  useEffect(() => {
-    if (viewKey === lastViewKeyRef.current) return;
-    const ours = ownChangeRef.current;
-    lastViewKeyRef.current = viewKey;
-    ownChangeRef.current = false;
-    if (!ours && selection.selected.size > 0) {
-      selection.clear();
-      toast.info("Selection cleared — the view changed.");
-    }
-  }, [selection, viewKey]);
-
-  // Search commits on a pause. Per keystroke it round-trips through the URL
-  // and, with a selection active, a server survival check — which blanked the
-  // field mid-word and fired a dialog per character.
-
-  /**
    * Invalidates the query cache rather than refreshing the route.
    *
    * `router.refresh()` re-runs the server component, but the table renders from
@@ -189,75 +176,85 @@ export function HackerRoster({
   };
 
   /**
-   * Applies a filter and flags the resulting URL change as ours.
+   * Discards a survival response that a later request has already superseded.
    *
-   * Every path that writes a filter goes through here. Missing the flag on even
-   * one of them means the effect above sees our own commit as a foreign
-   * navigation and empties the selection — which is precisely what a survival
-   * check that just said "everyone survives" promised would not happen.
+   * Without it, typing "jo" then "john" could commit "jo" last if the first
+   * request happened to be slower: the box read "john", the roster was filtered
+   * by "jo", and because neither the box nor the URL changed again, nothing
+   * re-armed. The screen stayed lying about what it was showing, and the next
+   * bulk action mailed the wrong group.
    */
-  const commitFilter = useCallback(
-    (next: RosterFilter) => {
-      ownChangeRef.current = true;
-      url.setFilter(next);
-    },
-    [url],
-  );
+  const requestSeqRef = useRef(0);
 
-  /** Resolves true only if the filter actually reached the URL. */
+  /** Resolves true only if the patch actually reached the URL. */
   const requestFilter = useCallback(
-    async (next: RosterFilter) => {
-      if (selectedCount === 0) {
-        commitFilter(next);
-        return true;
-      }
-      setCheckingFilter(true);
+    async (patch: RosterFilterPatch) => {
+      // A prompt is a question this officer has not answered yet. Committing
+      // anything behind it — including a debounce armed before it opened —
+      // would apply a filter they never agreed to.
+      if (filterFlow.kind === "prompting") return false;
+
+      if (selection.selected.size === 0) return url.setFilter(patch);
+
+      const seq = ++requestSeqRef.current;
+      setFilterFlow({ kind: "checking" });
       try {
         // Asked server-side: the browser only knows the rows it has loaded, and
-        // the case that matters is a selected row on a page nobody is looking at.
+        // the case that matters is a selected row on a page nobody is looking
+        // at. Projected through the hook so the question is about the filter
+        // that will actually land, not the one currently in the URL.
         const survival = await utils.hacker.selectionSurvival.fetch({
           attendeeIds: [...selection.selected],
-          filter: next,
+          filter: url.projectFilter(patch),
           hackathonId,
         });
+        if (seq !== requestSeqRef.current) return false;
         if (survival.droppedIds.length === 0) {
-          commitFilter(next);
-          return true;
+          setFilterFlow({ kind: "idle" });
+          return url.setFilter(patch);
         }
-        setPendingFilter({ droppedIds: survival.droppedIds, filter: next });
+        setFilterFlow({
+          droppedIds: survival.droppedIds,
+          kind: "prompting",
+          patch,
+        });
+        return false;
       } catch {
-        toast.error("Could not check the selection against that filter.");
-      } finally {
-        setCheckingFilter(false);
+        if (seq === requestSeqRef.current) {
+          setFilterFlow({ kind: "idle" });
+          toast.error("Could not check the selection against that filter.");
+        }
+        return false;
       }
-      return false;
     },
-    [commitFilter, hackathonId, selection.selected, selectedCount, utils],
+    [filterFlow.kind, hackathonId, selection.selected, url, utils],
   );
 
   /**
-   * The live filter and the request function, held in refs.
+   * The debounce reads these rather than naming them as dependencies.
    *
-   * `useRosterUrlState` rebuilds its return value every render, so naming
-   * `url` or `requestFilter` as effect dependencies re-armed the 350 ms timer
-   * on every render — and when the pending search opened the survival dialog
-   * instead of committing, `url.filter.search` never caught up, so it fired
-   * again, and again. Refs read the current values without making the effect
-   * re-run.
+   * `useRosterUrlState` rebuilds its return value every render, so listing
+   * `requestFilter` re-armed the 350 ms timer on every render — and when a
+   * pending search opened the prompt instead of committing, it fired again, and
+   * again. Assigned in an effect, never during render: a ref touched in the
+   * render path is what breaks under concurrent rendering, and this component
+   * renders inside a transition.
+   *
+   * There is no filter ref any more. The debounce sends `{ search }` alone, so
+   * it has nothing stale to carry.
    */
-  const filterRef = useRef(url.filter);
-  filterRef.current = url.filter;
   const requestFilterRef = useRef(requestFilter);
-  requestFilterRef.current = requestFilter;
+  useEffect(() => {
+    requestFilterRef.current = requestFilter;
+  });
 
   // Resyncs only when the URL's search changed to something we did not write —
-  // removing the chip, "Clear filters", or browser Back.
-  useEffect(() => {
-    const fromUrl = url.filter.search ?? "";
-    if (fromUrl === committedSearchRef.current) return;
-    committedSearchRef.current = fromUrl;
-    setSearch(fromUrl);
-  }, [url.filter.search]);
+  // removing the chip, "Clear filters", or arriving on a shared link.
+  const searchFromUrl = url.filter.search ?? "";
+  if (searchFromUrl !== committedSearch) {
+    setCommittedSearch(searchFromUrl);
+    setSearch(searchFromUrl);
+  }
 
   useEffect(() => {
     // Compared trimmed, because that is what comes back. The schema trims, so
@@ -265,22 +262,19 @@ export function HackerRoster({
     // the URL — the resync above read its own commit as someone else's, rewound
     // the box, and typing `"john "` then `"smith"` produced `"johnsmith"`.
     const term = search.trim();
-    if (term === committedSearchRef.current) return;
+    if (term === committedSearch) return;
     const timer = setTimeout(() => {
       void requestFilterRef
-        .current({
-          ...filterRef.current,
-          search: term || undefined,
-        })
+        .current({ search: term || undefined })
         .then((committed) => {
           // Only once it landed. Recording it up front stranded the term when the
           // survival dialog intercepted the write: the box held text the roster
           // was not filtered by, and nothing would retry it.
-          if (committed) committedSearchRef.current = term;
+          if (committed) setCommittedSearch(term);
         });
     }, 350);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [committedSearch, search]);
 
   if (!selected) {
     return (
@@ -379,7 +373,7 @@ export function HackerRoster({
               filter={url.filter}
               hackathonId={selected.id}
               hackathons={hackathons}
-              onFilterChange={(next) => void requestFilter(next)}
+              onFilterChange={(patch) => void requestFilter(patch)}
               onHackathonChange={(next) => {
                 // Those ids belong to the roster being left.
                 selection.clear();
@@ -400,10 +394,7 @@ export function HackerRoster({
                 active={!url.filter.deliveryFailed}
                 label="Roster"
                 onClick={() =>
-                  void requestFilter({
-                    ...url.filter,
-                    deliveryFailed: undefined,
-                  })
+                  void requestFilter({ deliveryFailed: undefined })
                 }
               />
               <PaneTab
@@ -411,7 +402,6 @@ export function HackerRoster({
                 label="Delivery"
                 onClick={() =>
                   void requestFilter({
-                    ...url.filter,
                     deliveryFailed: true,
                     status: undefined,
                   })
@@ -423,10 +413,10 @@ export function HackerRoster({
           <div className="flex flex-wrap items-center justify-between gap-2">
             {url.filter.deliveryFailed ? null : (
               <StatusTabs
-                busy={checkingFilter}
+                busy={filterFlow.kind === "checking"}
                 counts={counts.data ?? { byStatus: {}, total: 0 }}
                 filter={url.filter}
-                onFilterChange={(next) => void requestFilter(next)}
+                onFilterChange={(patch) => void requestFilter(patch)}
               />
             )}
             <Button
@@ -442,7 +432,7 @@ export function HackerRoster({
 
           <FilterChips
             filter={url.filter}
-            onFilterChange={(next) => void requestFilter(next)}
+            onFilterChange={(patch) => void requestFilter(patch)}
           />
 
           {url.filter.deliveryFailed ? (
@@ -465,6 +455,13 @@ export function HackerRoster({
             <Badge className="text-sm" variant="secondary">
               {selectedCount} selected
             </Badge>
+            {/*
+              Named, because this row sits directly under the status tabs and
+              carries the same six words. Without a label it reads as a second
+              filter strip — and the difference is that these buttons send mail
+              and cannot be recalled.
+            */}
+            <span className="text-sm font-medium">Move to</span>
             {(Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]).map(
               (status) => (
                 <Button
@@ -571,21 +568,28 @@ export function HackerRoster({
       />
 
       <FilterChangeDialog
-        droppedCount={pendingFilter?.droppedIds.length ?? 0}
+        droppedCount={
+          filterFlow.kind === "prompting" ? filterFlow.droppedIds.length : 0
+        }
         onCancel={() => {
-          setPendingFilter(null);
-          // Backing out means the filter was not applied, so the search box has
-          // to stop claiming it was.
-          setSearch(url.filter.search ?? "");
+          // Only when the prompt was about the search. Rewinding
+          // unconditionally meant cancelling a *status* prompt silently threw
+          // away text the officer had typed but not yet committed.
+          if (filterFlow.kind === "prompting" && "search" in filterFlow.patch) {
+            setSearch(committedSearch);
+          }
+          setFilterFlow({ kind: "idle" });
         }}
         onProceed={() => {
-          if (!pendingFilter) return;
-          selection.deselect(pendingFilter.droppedIds);
-          committedSearchRef.current = pendingFilter.filter.search ?? "";
-          commitFilter(pendingFilter.filter);
-          setPendingFilter(null);
+          if (filterFlow.kind !== "prompting") return;
+          const { droppedIds, patch } = filterFlow;
+          selection.deselect(droppedIds);
+          setFilterFlow({ kind: "idle" });
+          if (url.setFilter(patch) && "search" in patch) {
+            setCommittedSearch(patch.search ?? "");
+          }
         }}
-        open={pendingFilter !== null}
+        open={filterFlow.kind === "prompting"}
         selectedCount={selectedCount}
       />
     </main>

@@ -19,6 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { GRADUATION_TERMS, HACKER_STATUS_LABELS } from "@forge/validators";
 
 import type { RosterFilter } from "./hacker-roster";
+import type { RosterFilterPatch } from "./use-roster-url-state";
+import { clearedFacets } from "./use-roster-url-state";
 
 type Options = RouterOutputs["hacker"]["listHackathonOptions"]["hackathons"];
 type FilterOptions = RouterOutputs["hacker"]["filterOptions"];
@@ -171,7 +173,7 @@ export function HackerFilters({
   filter: RosterFilter;
   hackathonId: string;
   hackathons: Options;
-  onFilterChange: (next: RosterFilter) => void;
+  onFilterChange: (patch: RosterFilterPatch) => void;
   onHackathonChange: (next: string) => void;
   options: FilterOptions;
 }) {
@@ -291,14 +293,11 @@ export function HackerFilters({
               <Button
                 className="min-h-11"
                 onClick={() => {
-                  // `deliveryFailed` survives: it is the pane the officer is
-                  // in, not a filter they set. Clearing it here threw them out
-                  // of the worklist they were working to empty.
-                  onFilterChange({
-                    deliveryFailed: filter.deliveryFailed,
-                    search: filter.search,
-                    status: filter.status,
-                  });
+                  // Only the facets this panel owns. Search, status and the
+                  // pane are untouched because they are not named — and
+                  // `deliveryFailed` in particular is the worklist the officer
+                  // is working to empty, not a filter they set.
+                  onFilterChange(clearedFacets());
                   setOpen(false);
                 }}
                 variant="ghost"
@@ -309,9 +308,11 @@ export function HackerFilters({
                 className="min-h-11"
                 onClick={() => {
                   onFilterChange({
-                    ...draft,
-                    deliveryFailed: filter.deliveryFailed,
-                    search: filter.search,
+                    blacklisted: draft.blacklisted,
+                    graduationTerms: draft.graduationTerms,
+                    graduationYears: draft.graduationYears,
+                    levelsOfStudy: draft.levelsOfStudy,
+                    schools: draft.schools,
                   });
                   setOpen(false);
                 }}
@@ -336,7 +337,7 @@ export function StatusTabs({
   busy: boolean;
   counts: RouterOutputs["hacker"]["statusCounts"];
   filter: RosterFilter;
-  onFilterChange: (next: RosterFilter) => void;
+  onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
   const order = [
     "pending",
@@ -354,7 +355,7 @@ export function StatusTabs({
         busy={busy}
         count={counts.total}
         label="All"
-        onClick={() => onFilterChange({ ...filter, status: undefined })}
+        onClick={() => onFilterChange({ status: undefined })}
       />
       {order.map((status) => (
         <StatusTab
@@ -363,7 +364,7 @@ export function StatusTabs({
           count={counts.byStatus[status] ?? 0}
           key={status}
           label={HACKER_STATUS_LABELS[status]}
-          onClick={() => onFilterChange({ ...filter, status })}
+          onClick={() => onFilterChange({ status })}
         />
       ))}
     </div>
@@ -408,7 +409,7 @@ export function FilterChips({
   onFilterChange,
 }: {
   filter: RosterFilter;
-  onFilterChange: (next: RosterFilter) => void;
+  onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
   const chips = activeFilters(filter);
   if (chips.length === 0) return null;
@@ -420,13 +421,12 @@ export function FilterChips({
           className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
           key={chip.field}
           onClick={() =>
-            onFilterChange({
-              ...filter,
+            onFilterChange(
               // The grad chip owns both halves, so removing it clears both.
-              ...(chip.field === "graduationYears"
+              chip.field === "graduationYears"
                 ? { graduationTerms: undefined, graduationYears: undefined }
-                : { [chip.field]: undefined }),
-            })
+                : { [chip.field]: undefined },
+            )
           }
           type="button"
         >
@@ -438,10 +438,9 @@ export function FilterChips({
       <Button
         className="min-h-11"
         onClick={() =>
-          onFilterChange({
-            deliveryFailed: filter.deliveryFailed,
-            status: filter.status,
-          })
+          // Search too, since it has a chip here. The pane and the status tab
+          // are not chips, so "Clear filters" leaves them where they are.
+          onFilterChange({ ...clearedFacets(), search: undefined })
         }
         size="sm"
         variant="ghost"
