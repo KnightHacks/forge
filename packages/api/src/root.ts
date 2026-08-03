@@ -12,6 +12,7 @@ import { eventRouter } from "./routers/event";
 import { formsRouter } from "./routers/forms";
 import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
+import { hackerRouter } from "./routers/hacker";
 import { issuesRouter } from "./routers/issues";
 import { memberRouter } from "./routers/member";
 import { memberAdminRouter } from "./routers/member-admin";
@@ -41,6 +42,7 @@ export interface AppRouterShape {
   forms: typeof formsRouter;
   guild: typeof guildRouter;
   hackathon: typeof hackathonRouter;
+  hacker: typeof hackerRouter;
   health: typeof healthProcedure;
   issues: typeof issuesRouter;
   member: typeof memberRouter;
@@ -70,6 +72,7 @@ const appRouterRecord: AppRouterRecord = {
   forms: formsRouter,
   guild: guildRouter,
   hackathon: hackathonRouter,
+  hacker: hackerRouter,
   health: healthProcedure,
   issues: issuesRouter,
   member: memberRouter,

@@ -81,6 +81,11 @@ export const hackerSetStatusSchema = z.object({
 /**
  * A bulk action carries the ids the officer actually selected.
  *
+ * Preview and confirm take the same shape on purpose. There is no stored
+ * preview handle: the ids are the selection, so a persisted snapshot would add
+ * a lifecycle to manage and would act on eligibility frozen at preview time.
+ * Re-resolving at confirm catches anyone blacklisted in between and names them.
+ *
  * Not a filter: filtering the table and selecting across it already *is*
  * selecting by filter, and resolving a filter server-side at confirm time
  * loses the property that matters most on a destructive action — that the
@@ -93,10 +98,6 @@ export const hackerBulkPreviewSchema = z.object({
   attendeeIds: z.array(z.string().uuid()).min(1).max(5000),
   hackathonId: z.string().uuid(),
   status: hackerTransitionStatusSchema,
-});
-
-export const hackerBulkConfirmSchema = z.object({
-  previewId: z.string().uuid(),
 });
 
 /**
