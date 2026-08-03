@@ -1,6 +1,6 @@
 # Hacker Management Spec
 
-Status: Draft — proposed 2026-07-31, **not approved**. Open questions at the end.
+Status: Draft — proposed 2026-07-31. Four open questions **resolved** 2026-08-03; see the end. Awaiting owner approval of the whole document.
 
 > This file owns the non-technical user/product intent. Do not fill it from guesses. Use reverse-prompting to clarify it with the human.
 
@@ -132,27 +132,31 @@ invisible to the applicant.
 - AC-020 The screen states that a status change sends mail immediately and
   cannot be recalled, before the officer commits to it.
 
-## Open questions
+## Resolved questions
 
-1. **Does a bulk action need a confirmation step?** Accepting two hundred people
-   sends two hundred emails that cannot be recalled. AC-020 requires the screen
-   be honest about that, but does not propose a gate. My inclination is a
-   preview listing exactly who is about to be mailed, since that also surfaces
-   the blacklisted rows that will be skipped — but a typed count or nothing
-   beyond the copy are both defensible.
+1. **Bulk actions get a preview-and-confirm step**, modelled on the email
+   portal's existing send flow — the officer sees who is about to be mailed and
+   commits deliberately, rather than a button that fires two hundred emails on
+   one click. Reusing that flow rather than inventing a second one also means
+   the blocker list, the suppressed-recipient count, and the confirm gate all
+   behave the way officers already know.
 
-2. **Is `withdrawn` officer-settable?** It is a sending status, which implies an
-   officer can set it — but the applicant is the one who withdraws. If it is
-   inbound-only from the hack site, its configured mail is unreachable from this
-   screen, and the configuration slice is requiring officers to configure a
-   template that nothing here can fire.
+2. **`withdrawn` is officer-settable, but not a quick action.** An officer
+   withdrawing someone is rare, so it does not earn a primary button — it lives
+   behind the row's overflow. This also answers the worry that its configured
+   template would be unreachable: it is reachable, just deliberately not
+   prominent.
 
-3. **Should any transition be forbidden?** Legacy allowed any status to any
-   status. Some are nonsense — `denied → confirmed`, or moving someone who
-   already confirmed back to `pending`. I propose keeping every transition legal,
-   because officers fix mistakes and a restrictive graph is its own trap, but
-   that should be a decision rather than an inheritance.
+3. **No transition graph.** Any status to any status stays legal. Officers fix
+   mistakes, and a restrictive state machine is its own trap.
 
-4. **Should the roster show per-status counts?** The configuration screen shows
-   6/6 readiness; the roster's equivalent is "48 pending, 12 accepted". Legacy
-   had `statusCountByHackathonId`. Cheap to add, easy to leave out.
+4. **Per-status counts are in**, and they are a deliberate design target rather
+   than a port: legacy's version is the thing to beat, not the thing to match.
+
+## Acceptance criteria added by those answers
+
+- AC-021 A bulk action shows, before anything is sent, exactly which applicants
+  will be mailed and which will be skipped, and requires an explicit confirm.
+- AC-022 Withdrawing an applicant is available but is not a primary row action.
+- AC-023 The roster shows a live count per status, and it agrees with the table
+  under every filter.
