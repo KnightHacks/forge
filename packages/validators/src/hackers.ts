@@ -167,12 +167,9 @@ export const hackerSelectionSurvivalSchema = z.object({
  * through it the database client — toward a browser bundle, and
  * `consistent-type-imports` is only a warning.
  */
-export const BULK_SKIP_REASONS = [
-  "already",
-  "blacklisted",
-  "duplicate_email",
-  "missing",
-  "no_email",
-] as const;
-
-export type SkipReason = (typeof BULK_SKIP_REASONS)[number];
+export type SkipReason =
+  | "already"
+  | "blacklisted"
+  | "duplicate_email"
+  | "missing"
+  | "no_email";

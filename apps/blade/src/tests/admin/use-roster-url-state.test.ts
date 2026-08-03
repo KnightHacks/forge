@@ -22,10 +22,30 @@ import {
 const replace = vi.fn();
 let committed = "";
 
+/**
+ * Next hands back a `ReadonlyURLSearchParams`, whose mutators throw.
+ *
+ * A plain `URLSearchParams` here would let the hook mutate the object it was
+ * given and still pass, while throwing on the first filter click in a browser —
+ * and `set`/`append`/`delete`/`sort` are only `@deprecated` on that type, not
+ * removed, so `tsc` would not catch it either.
+ */
+function readonlyParams(query: string) {
+  const params = new URLSearchParams(query);
+  for (const method of ["append", "delete", "set", "sort"] as const) {
+    Object.defineProperty(params, method, {
+      value: () => {
+        throw new Error(`ReadonlyURLSearchParams.${method} is not callable`);
+      },
+    });
+  }
+  return params;
+}
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/hackers",
   useRouter: () => ({ replace }),
-  useSearchParams: () => new URLSearchParams(committed),
+  useSearchParams: () => readonlyParams(committed),
 }));
 
 /** Simulates the server responding: the URL becomes whatever we last wrote. */
@@ -180,16 +200,23 @@ describe("useRosterUrlState", () => {
     });
 
     it("reports that a navigation is in flight", () => {
-      const { result } = renderHook(() => useRosterUrlState());
+      // Sampled per render, because the pending window opens and closes inside
+      // the `act`. Asserting on `result.current` afterwards only ever sees the
+      // settled value — which is why the previous version of this test passed
+      // with the transition removed entirely.
+      const seen: boolean[] = [];
+      const { result } = renderHook(() => {
+        const state = useRosterUrlState();
+        seen.push(state.navigating);
+        return state;
+      });
 
-      expect(result.current.navigating).toBe(false);
       act(() => void result.current.setFilter({ status: "accepted" }));
 
       // `navigating` drives the "Updating results" row. Outside a transition it
       // is permanently false, so the table sits unchanged with no signal while
-      // the server re-renders.
-      expect(replace).toHaveBeenCalledTimes(1);
-      expect(typeof result.current.navigating).toBe("boolean");
+      // the server re-renders and the officer clicks again.
+      expect(seen).toContain(true);
     });
   });
 
@@ -282,6 +309,17 @@ describe("useRosterUrlState", () => {
       expect(result.current.wouldMove({ status: "pending" })).toBe(false);
       expect(result.current.wouldMove({ status: "accepted" })).toBe(true);
       expect(replace).not.toHaveBeenCalled();
+    });
+
+    it("is false on a URL whose keys are not in order", () => {
+      // Next does not sort, and neither does a pasted link. Comparing the
+      // sorted result against an unsorted base reported a change for every
+      // patch, so re-clicking the active tab froze the whole filter strip for
+      // the length of a survival request that could not have an answer.
+      committed = "status=pending&hackathon=h1&schools=UCF";
+      const { result } = renderHook(() => useRosterUrlState());
+
+      expect(result.current.wouldMove({ status: "pending" })).toBe(false);
     });
   });
 

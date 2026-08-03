@@ -76,6 +76,21 @@ const SCALAR_KEYS = [
   "blacklisted",
 ] as const;
 
+/**
+ * Fails the build if a filter key is added without a branch in `applyPatch`.
+ *
+ * `satisfies` on the key lists checks membership, not coverage — an unhandled
+ * key would be silently skipped, so `wouldMove` would report false for it
+ * forever and its control would be a permanent no-op that nothing catches.
+ */
+type UncoveredFilterKey = Exclude<
+  keyof HackerRosterFilter,
+  (typeof LIST_KEYS)[number] | (typeof SCALAR_KEYS)[number]
+>;
+const _everyFilterKeyIsApplied: UncoveredFilterKey extends never
+  ? true
+  : never = true;
+
 /** Everything the Filters panel owns, so its Clear buttons can name them. */
 export const FACET_KEYS = [
   "blacklisted",

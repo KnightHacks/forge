@@ -238,8 +238,6 @@ function assertHackathonNotEnded(hackathon: {
   }
 }
 
-/** Why a selected applicant was left out of a bulk action. */
-
 /** Audit metadata takes scalars, so each reason worth tracing gets its own. */
 function countReason(skips: BulkSkip[], reason: SkipReason) {
   return skips.filter((skip) => skip.reason === reason).length;
@@ -719,9 +717,11 @@ export const hackerRouter = createTRPCRouter({
                 An aggregate, for spotting how often this happens. It names
                 nobody — the event's subject is the hackathon, not a person. What
                 actually answers "why was I never told?" weeks later is that a
-                duplicate-skipped applicant keeps her previous status and a null
-                `lastStatusSendId`, so she is still sitting at Applied on the
-                roster beside someone accepted at the same address.
+                skipped applicant is simply absent from the update below, so she
+                keeps her previous status — still sitting at Applied on the
+                roster beside someone accepted at the same address. Not a null
+                `lastStatusSendId`: she keeps whatever she already had, which is
+                set if any earlier transition mailed her.
               */
               skippedDuplicateEmail: countReason(skipped, "duplicate_email"),
               status: input.status,

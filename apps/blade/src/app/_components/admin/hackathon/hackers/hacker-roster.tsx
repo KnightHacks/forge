@@ -116,21 +116,28 @@ export function HackerRoster({
    *
    * `lastUrlSearch` is what the URL held when we last reconciled, and it is the
    * *only* trigger for the adjustment below — the box may be rewritten when the
-   * URL moves, and at no other time. `sentSearch` is the term we last asked the
-   * URL to hold, which says whether a move was ours.
+   * URL moves, and at no other time. `sentSearches` is every term we asked the
+   * URL to hold in the current chain, which says whether a move was ours.
    *
-   * Collapsing these into one "committed" value is what broke: the microtask
-   * recording a commit always beats the server round trip, so for the length of
-   * a navigation that single value disagreed with a URL which had simply not
-   * caught up. The adjustment fired, blanked the box, and ate everything typed
-   * during the navigation — the exact failure it exists to prevent.
+   * Collapsing these into one "committed" value is what broke first: the
+   * microtask recording a commit always beats the server round trip, so for the
+   * length of a navigation that value disagreed with a URL which had simply not
+   * caught up, and the adjustment blanked the box mid-typing.
+   *
+   * A *single* sent term was then wrong for the same reason `useRosterUrlState`
+   * keeps a list rather than one pending query: two commits inside one window
+   * land one after the other, and the first landing is not the latest term. It
+   * read as foreign and rewound `"john smith"` to `"john"`.
    *
    * Stored trimmed, because the schema trims: keeping the raw box text meant
    * `"john "` never matched the `"john"` that came back, so the box read its own
    * write as someone else's and `"john "` + `"smith"` produced `"johnsmith"`.
    */
   const [lastUrlSearch, setLastUrlSearch] = useState(url.filter.search ?? "");
-  const [sentSearch, setSentSearch] = useState(url.filter.search ?? "");
+  const [sentSearches, setSentSearches] = useState<string[]>([
+    url.filter.search ?? "",
+  ]);
+  const latestSent = sentSearches[sentSearches.length - 1] ?? "";
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -210,10 +217,19 @@ export function HackerRoster({
   /** Resolves true only if the patch actually reached the URL. */
   const requestFilter = useCallback(
     async (patch: RosterFilterPatch) => {
-      // A prompt is a question this officer has not answered yet. Committing
-      // anything behind it — including a debounce armed before it opened —
-      // would apply a filter they never agreed to.
-      if (filterFlow.kind === "prompting") return false;
+      /*
+        Refused unless the flow is settled.
+
+        `prompting` alone was not enough. Every *control* is disabled during a
+        check, but the search box cannot be — an officer is typing into it — so
+        the debounce was the one remaining path that could bump the sequence and
+        discard the check the officer was already waiting on. Their status click
+        then vanished with no error and no toast.
+
+        Nothing is lost by refusing: `filterFlow.kind` is a dependency of the
+        debounce, so the term is retried the moment the flow settles.
+      */
+      if (filterFlow.kind !== "idle") return false;
 
       // A patch that changes nothing needs neither a navigation nor a question
       // about a selection that cannot be affected by it.
@@ -277,8 +293,11 @@ export function HackerRoster({
   const searchFromUrl = url.filter.search ?? "";
   if (searchFromUrl !== lastUrlSearch) {
     setLastUrlSearch(searchFromUrl);
-    if (searchFromUrl !== sentSearch) {
-      setSentSearch(searchFromUrl);
+    if (sentSearches.includes(searchFromUrl)) {
+      // Ours. Once the last one we sent lands, the chain is spent.
+      if (searchFromUrl === latestSent) setSentSearches([searchFromUrl]);
+    } else {
+      setSentSearches([searchFromUrl]);
       setSearch(searchFromUrl);
     }
   }
@@ -289,7 +308,7 @@ export function HackerRoster({
     // the URL — the resync above read its own commit as someone else's, rewound
     // the box, and typing `"john "` then `"smith"` produced `"johnsmith"`.
     const term = search.trim();
-    if (term === sentSearch) return;
+    if (term === latestSent) return;
     const timer = setTimeout(() => {
       void requestFilterRef
         .current({ search: term || undefined })
@@ -297,11 +316,11 @@ export function HackerRoster({
           // Only once it landed. Recording it up front stranded the term when the
           // survival dialog intercepted the write: the box held text the roster
           // was not filtered by, and nothing would retry it.
-          if (committed) setSentSearch(term);
+          if (committed) setSentSearches((sent) => [...sent, term]);
         });
     }, 350);
     return () => clearTimeout(timer);
-  }, [filterFlow.kind, search, sentSearch]);
+  }, [filterFlow.kind, latestSent, search]);
 
   if (!selected) {
     return (
@@ -329,10 +348,15 @@ export function HackerRoster({
   // exactly full. A hackathon with precisely 1000 matches otherwise rendered
   // "1000 of 1000 shown · capped at 1000; narrow the filter to reach the rest"
   // — telling an officer to go hunting for rows that were all on screen.
-  // Every control that writes a filter is locked while a check is running, so a
-  // second request cannot cancel the one the officer is waiting on. Previously
-  // only the status tabs greyed out, and clicking a still-live pane tab or chip
-  // silently discarded the greyed-out request.
+  /*
+    Every control that writes a filter is locked while a check is running, so a
+    second request cannot discard the one the officer is waiting on. Previously
+    only the status tabs greyed, and clicking a still-live pane tab or chip
+    silently cancelled the greyed-out request.
+
+    The search box is the exception — an officer may be mid-word — so the
+    debounce refuses instead, and retries when this settles.
+  */
   const filterBusy = filterFlow.kind !== "idle";
   const atCap = url.showAll && roster.data?.nextCursor != null;
   /**
@@ -457,6 +481,7 @@ export function HackerRoster({
             <Button
               aria-pressed={url.showAll}
               className="min-h-11 text-sm"
+              disabled={filterBusy}
               onClick={() => url.setShowAll(!url.showAll)}
               size="sm"
               variant={url.showAll ? "secondary" : "ghost"}
@@ -514,7 +539,6 @@ export function HackerRoster({
             )}
             <Button
               className="ml-auto min-h-11 text-sm"
-              disabled={filterBusy}
               onClick={selection.clear}
               size="sm"
               variant="ghost"
@@ -525,7 +549,7 @@ export function HackerRoster({
         ) : null}
 
         <CardContent className="px-0 py-0">
-          {roster.isFetching || url.navigating ? (
+          {roster.isFetching || url.navigating || filterBusy ? (
             <div className="flex items-center gap-2 border-b border-border/70 px-4 py-2 text-sm text-muted-foreground md:px-6">
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
               Updating results
@@ -542,6 +566,7 @@ export function HackerRoster({
           ) : (
             <div className="overflow-x-auto">
               <HackerTable
+                busy={filterBusy}
                 hackers={hackers}
                 onOpen={(hacker) => setDetailId(hacker.attendeeId)}
                 onSelectAllShown={(next) =>
@@ -613,7 +638,7 @@ export function HackerRoster({
           // unconditionally meant cancelling a *status* prompt silently threw
           // away text the officer had typed but not yet committed.
           if (filterFlow.kind === "prompting" && "search" in filterFlow.patch) {
-            setSearch(sentSearch);
+            setSearch(latestSent);
           }
           setFilterFlow({ kind: "idle" });
         }}
@@ -623,7 +648,7 @@ export function HackerRoster({
           selection.deselect(droppedIds);
           setFilterFlow({ kind: "idle" });
           if (url.setFilter(patch) && "search" in patch) {
-            setSentSearch(patch.search ?? "");
+            setSentSearches((sent) => [...sent, patch.search ?? ""]);
           }
         }}
         open={filterFlow.kind === "prompting"}

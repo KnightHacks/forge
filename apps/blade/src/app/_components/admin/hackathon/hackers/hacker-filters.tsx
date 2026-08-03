@@ -214,6 +214,7 @@ export function HackerFilters({
         Hackathon
       </label>
       <select
+        disabled={busy}
         className="h-11 min-w-0 max-w-64 rounded-md border border-input bg-background/70 px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         id="hacker-hackathon"
         onChange={(event) => onHackathonChange(event.target.value)}
@@ -351,7 +352,7 @@ export function HackerFilters({
  * officer had just unticked yields the same set in a different order, which
  * would otherwise read as a change and cost a navigation and a survival check.
  */
-function changedFacets(
+export function changedFacets(
   seed: RosterFilter,
   draft: RosterFilter,
 ): RosterFilterPatch {

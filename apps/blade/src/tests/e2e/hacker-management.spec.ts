@@ -18,6 +18,16 @@ const HACKER_TWO = "00000000-0000-4000-8000-000000000905";
 const ATTENDEE_ONE = "00000000-0000-4000-8000-000000000906";
 const ATTENDEE_TWO = "00000000-0000-4000-8000-000000000907";
 const ENDED_HACKATHON = "00000000-0000-4000-8000-000000000908";
+/**
+ * Fixture dates relative to the run.
+ *
+ * A hard-coded `endDate` expires silently here: past it, the "live" hackathon
+ * becomes an ended one, so AC-006 compares ended against ended and the other
+ * two tests exercise a read-only roster believing it is live. A regression that
+ * unblocked sending on a live hackathon would be invisible.
+ */
+const since = (days: number) =>
+  new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 const ENDED_ATTENDEE = "00000000-0000-4000-8000-000000000909";
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
@@ -76,14 +86,14 @@ test.describe("Hacker management critical flow", () => {
       .values({ roleId: ADMIN_ROLE_ID, userId: ADMIN_ID });
 
     await db.insert(Hackathon).values({
-      applicationDeadline: new Date("2026-09-01T00:00:00Z"),
-      applicationOpen: new Date("2026-08-01T00:00:00Z"),
-      confirmationDeadline: new Date("2026-09-15T00:00:00Z"),
+      applicationDeadline: since(29),
+      applicationOpen: since(-2),
+      confirmationDeadline: since(43),
       displayName: "E2E Hackathon",
-      endDate: new Date("2026-10-03T00:00:00Z"),
+      endDate: since(61),
       id: HACKATHON_ID,
       name: "e2e-hackathon",
-      startDate: new Date("2026-10-01T00:00:00Z"),
+      startDate: since(59),
       theme: "End to end",
     });
     // A hackathon that is over. Its roster stays readable and its status

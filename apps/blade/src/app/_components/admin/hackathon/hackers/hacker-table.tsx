@@ -25,12 +25,15 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
  * and rendered a blank badge for every checked-in applicant.
  */
 function statusLabel(status: string) {
-  return status in HACKER_STATUS_LABELS
+  // `hasOwn`, not `in`, which walks the prototype and would return a function
+  // for `"toString"`.
+  return Object.hasOwn(HACKER_STATUS_LABELS, status)
     ? HACKER_STATUS_LABELS[status as SendingStatus]
     : "Checked in";
 }
 
 export function HackerTable({
+  busy,
   hackers,
   onOpen,
   onSelectAllShown,
@@ -38,6 +41,15 @@ export function HackerTable({
   onToggleRange,
   selected,
 }: {
+  /**
+   * True while a filter change is being checked against the selection.
+   *
+   * Selecting during that window changed the set the answer was computed over,
+   * so a check that reported "nobody is dropped" could commit while rows added
+   * afterwards sat selected and off-screen under the new filter — and the next
+   * bulk action mailed them.
+   */
+  busy: boolean;
   hackers: Roster;
   onOpen: (hacker: Hacker) => void;
   onSelectAllShown: (next: boolean) => void;
@@ -66,6 +78,7 @@ export function HackerTable({
             <Checkbox
               aria-label="Select every applicant shown"
               checked={headerChecked}
+              disabled={busy}
               onCheckedChange={(next) => onSelectAllShown(next === true)}
             />
           </TableHead>
@@ -97,13 +110,14 @@ export function HackerTable({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  if (event.shiftKey) onToggleRange(hacker.attendeeId);
-                  else onOpen(hacker);
+                  if (event.shiftKey) {
+                    if (!busy) onToggleRange(hacker.attendeeId);
+                  } else onOpen(hacker);
                   return;
                 }
                 if (event.key === " ") {
                   event.preventDefault();
-                  onToggle(hacker.attendeeId);
+                  if (!busy) onToggle(hacker.attendeeId);
                 }
               }}
               tabIndex={0}
@@ -113,7 +127,7 @@ export function HackerTable({
               // checkbox for every pick is what made multi-select feel broken.
               onClick={(event) => {
                 if (event.shiftKey) {
-                  onToggleRange(hacker.attendeeId);
+                  if (!busy) onToggleRange(hacker.attendeeId);
                   return;
                 }
                 onOpen(hacker);
@@ -134,6 +148,7 @@ export function HackerTable({
                 className="pl-4"
                 onClick={(event) => {
                   event.stopPropagation();
+                  if (busy) return;
                   // Shift on the checkbox means the same thing it means on the
                   // row. Previously it silently degraded to a single toggle,
                   // with no signal that the gesture had done something else.
@@ -144,6 +159,7 @@ export function HackerTable({
                 <Checkbox
                   aria-label={`Select ${hacker.name}`}
                   checked={isSelected}
+                  disabled={busy}
                   // The cell owns the click; this is the visual affordance, so
                   // it must not toggle a second time.
                   onClick={(event) => event.preventDefault()}
@@ -154,7 +170,7 @@ export function HackerTable({
                     if (event.key !== " " && event.key !== "Enter") return;
                     event.preventDefault();
                     event.stopPropagation();
-                    onToggle(hacker.attendeeId);
+                    if (!busy) onToggle(hacker.attendeeId);
                   }}
                   tabIndex={-1}
                 />

@@ -20,12 +20,6 @@ import { api } from "~/trpc/react";
 
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
-/*
-  Typed against the router's union rather than `string`, so adding a reason
-  server-side fails the build here instead of rendering its raw slug to an
-  officer. The previous round shipped exactly that: `already` was missing, and
-  the `?? row.reason` fallback printed "already" in the skipped list.
-*/
 /**
  * Read through a widening helper, the same way `hacker-table.tsx` reads status
  * labels.
@@ -37,11 +31,24 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
  * list whose job is saying who was *not* mailed is worse than an ugly one.
  */
 function skipLabel(reason: string) {
-  return reason in SKIP_REASONS
+  // `hasOwn`, not `in`: `in` walks the prototype, so `"toString"` would pass the
+  // guard and return a function, which React refuses to render — an error
+  // boundary in place of the fallback this helper exists to provide.
+  return Object.hasOwn(SKIP_REASONS, reason)
     ? SKIP_REASONS[reason as SkipReason]
     : "Skipped — reload for details";
 }
 
+/*
+  Keyed by the shared union rather than `string`, so adding a reason in
+  `@forge/validators` fails the build here instead of rendering its raw slug to
+  an officer. A previous round shipped exactly that: `already` was missing, and
+  the fallback printed "already" in the skipped list.
+
+  Note the guarantee needs the whole build — `@forge/validators` resolves through
+  its compiled `dist`, so a filtered typecheck of this app alone will not see a
+  newly added member.
+*/
 const SKIP_REASONS: Record<SkipReason, string> = {
   already: "Already has this status",
   blacklisted: "Blacklisted",
@@ -98,10 +105,11 @@ export function BulkConfirmDialog({
   /**
    * The selection's contents, as a value the dependency array can compare.
    *
-   * `attendeeIds` is a fresh array on every parent render, so depending on it
-   * directly re-fires the preview constantly. Order-sensitive on purpose: a
-   * reorder means a different partition, and the confirm button must never be
-   * armed against a preview built from different ids.
+   * The array identity is memoised by the caller, so the effect can depend on
+   * `attendeeIds` honestly — this key is what makes a *content* change re-fire
+   * even if that ever stops being true. Order-sensitive on purpose: a reorder
+   * means a different partition, and the confirm button must never be armed
+   * against a preview built from different ids.
    */
   const idsKey = attendeeIds.join(",");
   useEffect(() => {

@@ -17,8 +17,12 @@ import {
  * that leave the view and keep the rest, or abandon the filter change and go
  * finish the action that is already part-way done.
  *
- * Never rendered when nothing would be lost. A dialog that fires with nothing
- * at stake is how the real one gets clicked through without reading.
+ * Never rendered when nothing would be lost — with one exception it names out
+ * loud. The selection can empty while the check that produced this is still in
+ * flight, and by then the question about rows is moot; what is still pending is
+ * the filter itself, so the dialog says so and asks about that instead. A dialog
+ * that fires with nothing at stake is how the real one gets clicked through
+ * without reading.
  */
 export function FilterChangeDialog({
   droppedCount,
