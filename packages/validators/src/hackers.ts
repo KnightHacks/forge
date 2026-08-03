@@ -40,13 +40,30 @@ export const HACKER_STATUS_LABELS: Record<
  * meant to. So the year filter is the **graduation** year, named for what it
  * is.
  */
+export const GRADUATION_TERMS = ["Spring", "Summer", "Fall"] as const;
+export type GraduationTerm = (typeof GRADUATION_TERMS)[number];
+
+/**
+ * Term is derived from the graduation month, not stored.
+ *
+ * Applicants give a date. Officers think in terms — "the Spring 2027 cohort" —
+ * so the filter offers that vocabulary and the query does the arithmetic.
+ * Boundaries follow the usual academic calendar: Jan–May Spring, Jun–Jul
+ * Summer, Aug–Dec Fall.
+ */
 export const hackerRosterFilterSchema = z.object({
   /** Free text over name and email. */
   search: z.string().trim().max(200).optional(),
   status: hackathonSendingStatusSchema.or(z.literal("checkedin")).optional(),
-  school: z.string().trim().max(255).optional(),
-  levelOfStudy: z.string().trim().max(255).optional(),
-  graduationYear: z.number().int().min(1900).max(2200).optional(),
+  // Arrays, because "UCF or Valencia" is one cohort to an officer and two
+  // filters to a single-value field.
+  schools: z.array(z.string().trim().max(255)).max(50).optional(),
+  levelsOfStudy: z.array(z.string().trim().max(255)).max(50).optional(),
+  graduationTerms: z.array(z.enum(GRADUATION_TERMS)).max(3).optional(),
+  graduationYears: z
+    .array(z.number().int().min(1900).max(2200))
+    .max(30)
+    .optional(),
   /** Applicants whose most recent status mail failed permanently. */
   deliveryFailed: z.boolean().optional(),
   blacklisted: z.boolean().optional(),
@@ -130,6 +147,10 @@ export const hackerSetBlacklistSchema = z.discriminatedUnion("blacklisted", [
  * and the interesting case is precisely the one where a selected row is on a
  * page nobody is looking at.
  */
+export const hackerFilterOptionsSchema = z.object({
+  hackathonId: z.string().uuid(),
+});
+
 export const hackerSelectionSurvivalSchema = z.object({
   attendeeIds: z.array(z.string().uuid()).min(1).max(5000),
   filter: hackerRosterFilterSchema.default({}),

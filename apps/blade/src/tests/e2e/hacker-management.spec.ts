@@ -126,20 +126,23 @@ test.describe("Hacker management critical flow", () => {
   }) => {
     await page.goto(
       `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(
-        `/admin/hackathon/${HACKATHON_ID}/hackers`,
+        `/admin/hackers?hackathon=${HACKATHON_ID}`,
       )}`,
     );
 
     await expect(page.getByRole("heading", { name: "Hackers" })).toBeVisible();
 
-    // TC-001: both applicants, and only this hackathon's.
+    // TC-001: both applicants, and only this hackathon's — the second
+    // hackathon's applicant must not appear.
     await expect(page.getByText("Edge alpha")).toBeVisible();
     await expect(page.getByText("Edge beta")).toBeVisible();
+    await expect(page.getByText("Other gamma")).toHaveCount(0);
 
-    // AC-006: the gate is visible, not a server-side surprise at click time.
+    // AC-006: the gate is visible AND the actions are actually disabled —
+    // a banner alone would still leave the click-then-error surprise.
     await expect(
-      page.getByRole("heading", { name: "Status changes are blocked" }),
-    ).toBeVisible();
+      page.getByRole("button", { name: "Accepted Edge alpha" }),
+    ).toBeDisabled();
 
     // TC-015: select one, then amend.
     await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
@@ -157,7 +160,7 @@ test.describe("Hacker management critical flow", () => {
   test("TC-002 filters the roster by status", async ({ page }) => {
     await page.goto(
       `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(
-        `/admin/hackathon/${HACKATHON_ID}/hackers`,
+        `/admin/hackers?hackathon=${HACKATHON_ID}`,
       )}`,
     );
 

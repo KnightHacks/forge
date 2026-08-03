@@ -87,9 +87,22 @@ export function useHackerSelection() {
     setSelected(new Set());
   }, []);
 
+  /**
+   * Drops the shift-click anchor without touching the selection.
+   *
+   * Called when the displayed rows change. A stale anchor still present in the
+   * new list makes the next shift-click span from a row the officer clicked
+   * under a different filter — selecting an entire page they never meant to
+   * touch, on the screen whose primary action mails people.
+   */
+  const resetAnchor = useCallback(() => {
+    anchorRef.current = null;
+  }, []);
+
   return {
     clear,
     deselect,
+    resetAnchor,
     selectRange,
     selected,
     setAllShown,

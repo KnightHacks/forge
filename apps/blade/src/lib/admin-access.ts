@@ -91,6 +91,8 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),
     hackathon: canAccessHackathonAdmin(permissions),
+    // Same tier: both screens are officer-only and one links to the other.
+    hackers: canAccessHackathonAdmin(permissions),
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),

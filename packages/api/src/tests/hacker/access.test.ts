@@ -67,6 +67,12 @@ const ATTENDEE_ID = "00000000-0000-4000-8000-0000000000dd";
 
 /** Every procedure the router exposes, with input its schema accepts. */
 const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
+  ["listHackathonOptions", (caller) => caller.listHackathonOptions()],
+  ["get", (caller) => caller.get({ attendeeId: ATTENDEE_ID })],
+  [
+    "filterOptions",
+    (caller) => caller.filterOptions({ hackathonId: HACKATHON_ID }),
+  ],
   [
     "listForHackathon",
     (caller) => caller.listForHackathon({ hackathonId: HACKATHON_ID }),
@@ -179,12 +185,26 @@ describe("hacker management access policy", () => {
           { permissions: permissionBitstring("IS_OFFICER") },
         ];
 
-        // The officer gets past the guard and then hits the throwing mocks, so
-        // the failure is anything *except* FORBIDDEN. Without this control a
-        // guard that refuses everyone would pass every case above.
-        await expect(call(createCaller())).rejects.not.toMatchObject({
-          code: "FORBIDDEN",
-        });
+        // Admitted means "not refused for permission" — which is either a
+        // resolution, or a failure from the throwing mocks further in. Written
+        // as an explicit catch rather than `rejects.not.toMatchObject`, because
+        // that form fails outright on a procedure whose mocked reads happen to
+        // succeed, and it would then be reporting a harness detail as an access
+        // failure.
+        //
+        // Without this control a guard that refused everyone would pass every
+        // negative case above.
+        let refused = false;
+        try {
+          await call(createCaller());
+        } catch (error) {
+          refused =
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            (error as { code?: unknown }).code === "FORBIDDEN";
+        }
+        expect(refused).toBe(false);
       },
     );
   });

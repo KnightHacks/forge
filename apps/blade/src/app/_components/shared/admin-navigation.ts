@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Swords,
+  UserSearch,
   UsersRound,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ export interface AdminNavigationAccess {
   events?: boolean;
   forms?: boolean;
   hackathon?: boolean;
+  hackers?: boolean;
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
@@ -114,6 +116,13 @@ export const adminNavigationItems = [
     label: "Forms",
   },
   {
+    access: "hackers",
+    href: "/admin/hackers",
+    icon: UserSearch,
+    id: "hackers",
+    label: "Hackers",
+  },
+  {
     access: "hackathon",
     href: "/admin/hackathon",
     icon: Swords,
@@ -162,6 +171,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "email") return pathname.startsWith("/admin/email");
   if (id === "forms") return pathname.startsWith("/admin/forms");
+  if (id === "hackers") return pathname.startsWith("/admin/hackers");
   if (id === "hackathon") return pathname.startsWith("/admin/hackathon");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");

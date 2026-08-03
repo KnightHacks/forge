@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Loader2, Send } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -47,8 +47,6 @@ export function BulkConfirmDialog({
   onOpenChange: (open: boolean) => void;
   status: SendingStatus | null;
 }) {
-  const [previewedFor, setPreviewedFor] = useState<string | null>(null);
-
   const preview = api.hacker.previewBulk.useMutation({
     onError: (error) => toast.error(error.message),
   });
@@ -65,12 +63,22 @@ export function BulkConfirmDialog({
   });
 
   const open = status !== null;
-  // Preview once per opening, keyed by status so switching action re-previews.
-  if (status !== null && previewedFor !== status && !preview.isPending) {
-    setPreviewedFor(status);
-    preview.mutate({ attendeeIds, hackathonId, status });
-  }
-  if (!open && previewedFor !== null) setPreviewedFor(null);
+
+  // An effect, not a render-phase call. `previewBulk` is a network request, and
+  // firing it during render means StrictMode's double-invoke sends it twice —
+  // and a render discarded by a parent transition sends it anyway. The
+  // `isPending` guard could not see either, because it reads a render-time
+  // snapshot.
+  const { mutate: runPreview, reset: resetPreview } = preview;
+  useEffect(() => {
+    if (status === null) {
+      resetPreview();
+      return;
+    }
+    runPreview({ attendeeIds, hackathonId, status });
+    // `attendeeIds` is a fresh array each render; keying on its contents keeps
+    // this from re-firing on every parent render.
+  }, [attendeeIds.join(","), hackathonId, resetPreview, runPreview, status]);
 
   const result = preview.data;
 
@@ -80,13 +88,29 @@ export function BulkConfirmDialog({
         <DialogHeader>
           <DialogTitle>
             {status ? HACKER_STATUS_LABELS[status] : ""}{" "}
-            {result ? `${result.sending.length} applicants` : "applicants"}
+            {result ? `${result.sending.length} applicants` : "applicants…"}
           </DialogTitle>
           <DialogDescription>
             This sends each of them the configured email immediately. It cannot
             be recalled.
           </DialogDescription>
         </DialogHeader>
+
+        {preview.isError ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <p className="text-sm text-destructive">{preview.error.message}</p>
+            <Button
+              className="mt-2 min-h-11"
+              onClick={() => {
+                if (status) runPreview({ attendeeIds, hackathonId, status });
+              }}
+              size="sm"
+              variant="secondary"
+            >
+              Try again
+            </Button>
+          </div>
+        ) : null}
 
         {preview.isPending ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -128,7 +152,11 @@ export function BulkConfirmDialog({
         ) : null}
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button
+            className="min-h-11"
+            onClick={() => onOpenChange(false)}
+            variant="outline"
+          >
             Cancel
           </Button>
           <Button
@@ -148,7 +176,7 @@ export function BulkConfirmDialog({
             ) : (
               <Send className="size-4" aria-hidden="true" />
             )}
-            Send {result ? result.sending.length : ""} emails
+            {result ? `Send ${result.sending.length} emails` : "Send emails"}
           </Button>
         </DialogFooter>
       </DialogContent>

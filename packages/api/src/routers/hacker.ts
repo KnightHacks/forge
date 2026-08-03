@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import type { SQL } from "@forge/db";
 import type { HackerRosterFilter } from "@forge/validators";
@@ -24,6 +25,7 @@ import {
 import {
   HACKATHON_SENDING_STATUSES,
   hackerBulkPreviewSchema,
+  hackerFilterOptionsSchema,
   hackerRosterCountsSchema,
   hackerRosterListSchema,
   hackerSelectionSurvivalSchema,
@@ -84,13 +86,29 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   // thousand literal values, so `eq` demands a member of that union while the
   // filter carries whatever the officer picked. The comparison is identical;
   // only the type-level narrowing differs.
-  if (filter.school) clauses.push(sql`${Hacker.school} = ${filter.school}`);
-  if (filter.levelOfStudy) {
-    clauses.push(sql`${Hacker.levelOfStudy} = ${filter.levelOfStudy}`);
+  // `sql` rather than `inArray`: both columns are typed as unions of several
+  // thousand literal values, so the typed helper demands members of that union
+  // while the filter carries whatever an officer picked from the data.
+  if (filter.schools?.length) {
+    clauses.push(sql`${Hacker.school} = any(${filter.schools})`);
   }
-  if (filter.graduationYear !== undefined) {
+  if (filter.levelsOfStudy?.length) {
+    clauses.push(sql`${Hacker.levelOfStudy} = any(${filter.levelsOfStudy})`);
+  }
+  if (filter.graduationYears?.length) {
     clauses.push(
-      sql`extract(year from ${Hacker.gradDate}) = ${filter.graduationYear}`,
+      sql`extract(year from ${Hacker.gradDate}) = any(${filter.graduationYears})`,
+    );
+  }
+  if (filter.graduationTerms?.length) {
+    // Derived from the month, matching `GRADUATION_TERMS`: Jan–May Spring,
+    // Jun–Jul Summer, Aug–Dec Fall.
+    clauses.push(
+      sql`(case
+            when extract(month from ${Hacker.gradDate}) <= 5 then 'Spring'
+            when extract(month from ${Hacker.gradDate}) <= 7 then 'Summer'
+            else 'Fall'
+          end) = any(${filter.graduationTerms})`,
     );
   }
   if (filter.blacklisted !== undefined) {
@@ -195,6 +213,25 @@ async function assertHackathonReady(executor: WriteDb, hackathonId: string) {
   }
 }
 
+/**
+ * Refuses a status change for a hackathon that is over.
+ *
+ * Old rosters stay visible and searchable — reading last year's decisions is
+ * normal — but mailing someone about a hackathon that finished months ago is
+ * almost certainly a misclick on the wrong entry in the picker.
+ */
+function assertHackathonNotEnded(hackathon: {
+  displayName: string;
+  endDate: Date;
+}) {
+  if (hackathon.endDate.getTime() < Date.now()) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: `${hackathon.displayName} ended on ${hackathon.endDate.toISOString().slice(0, 10)}. Its roster is read-only.`,
+    });
+  }
+}
+
 /** Why a selected applicant was left out of a bulk action. */
 type SkipReason = "already" | "blacklisted" | "missing" | "no_email";
 
@@ -205,6 +242,143 @@ interface BulkSkip {
 }
 
 export const hackerRouter = createTRPCRouter({
+  /**
+   * Officer-only. The hackathons the roster's picker offers.
+   *
+   * Ordered by how close the start date is to now, so the default selection is
+   * the hackathon an officer is most likely working on — the one about to
+   * happen, or the one that just did. Past hackathons stay in the list because
+   * looking at last year's roster is normal; `endedAt` lets the screen show
+   * them read-only rather than hiding them.
+   */
+  listHackathonOptions: permProcedure.query(async ({ ctx }) => {
+    assertCanManagePlatformConfig(ctx.session.permissions);
+
+    const rows = await db
+      .select({
+        displayName: Hackathon.displayName,
+        endDate: Hackathon.endDate,
+        id: Hackathon.id,
+        startDate: Hackathon.startDate,
+      })
+      .from(Hackathon)
+      .orderBy(sql`abs(extract(epoch from (${Hackathon.startDate} - now())))`);
+
+    const now = Date.now();
+    return {
+      hackathons: rows.map((row) => ({
+        ...row,
+        // Past its end date: still readable, but nothing should be mailed for
+        // a hackathon that is over.
+        hasEnded: row.endDate.getTime() < now,
+      })),
+    };
+  }),
+
+  /**
+   * Officer-only. The distinct values the filters offer, for this hackathon.
+   *
+   * Read from the applicants who actually exist rather than from the full
+   * school enum — offering five thousand universities when eleven appear in
+   * the data makes the filter useless.
+   */
+  filterOptions: permProcedure
+    .input(hackerFilterOptionsSchema)
+    .query(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+
+      const rows = await db
+        .select({
+          gradDate: Hacker.gradDate,
+          levelOfStudy: Hacker.levelOfStudy,
+          school: Hacker.school,
+        })
+        .from(HackerAttendee)
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .where(eq(HackerAttendee.hackathonId, input.hackathonId));
+
+      const distinct = (values: string[]) =>
+        [...new Set(values)].sort((left, right) => left.localeCompare(right));
+
+      return {
+        graduationYears: [
+          ...new Set(
+            rows.flatMap((row) =>
+              row.gradDate ? [new Date(row.gradDate).getUTCFullYear()] : [],
+            ),
+          ),
+        ].sort((left, right) => left - right),
+        levelsOfStudy: distinct(rows.map((row) => row.levelOfStudy)),
+        schools: distinct(rows.map((row) => row.school)),
+      };
+    }),
+
+  /**
+   * Officer-only. One applicant in full.
+   *
+   * A hacker record is a superset of a member's — everything a member has,
+   * plus what MLH requires and what the hackathon needs — so the detail panel
+   * reads the whole row rather than the handful of columns the table shows.
+   * Kept separate from `listForHackathon` so the roster does not carry every
+   * applicant's dietary restrictions and resume link over the wire.
+   */
+  get: permProcedure
+    .input(z.object({ attendeeId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+
+      const [row] = await db
+        .select({
+          age: Hacker.age,
+          attendeeId: HackerAttendee.id,
+          blacklistReason: HackerAttendee.blacklistReason,
+          blacklistedAt: HackerAttendee.blacklistedAt,
+          country: Hacker.country,
+          discordUser: Hacker.discordUser,
+          email: Hacker.email,
+          firstName: Hacker.firstName,
+          foodAllergies: Hacker.foodAllergies,
+          githubProfileUrl: Hacker.githubProfileUrl,
+          gradDate: Hacker.gradDate,
+          isFirstTime: Hacker.isFirstTime,
+          lastName: Hacker.lastName,
+          levelOfStudy: Hacker.levelOfStudy,
+          linkedinProfileUrl: Hacker.linkedinProfileUrl,
+          major: Hacker.major,
+          phoneNumber: Hacker.phoneNumber,
+          points: HackerAttendee.points,
+          raceOrEthnicity: Hacker.raceOrEthnicity,
+          resumeUrl: Hacker.resumeUrl,
+          school: Hacker.school,
+          sendError: EmailSend.safeError,
+          sendStatus: EmailSend.status,
+          shirtSize: Hacker.shirtSize,
+          status: HackerAttendee.status,
+          timeApplied: HackerAttendee.timeApplied,
+          timeConfirmed: HackerAttendee.timeConfirmed,
+          websiteUrl: Hacker.websiteUrl,
+        })
+        .from(HackerAttendee)
+        .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
+        .where(eq(HackerAttendee.id, input.attendeeId))
+        .limit(1);
+
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Applicant not found.",
+        });
+      }
+
+      return {
+        ...row,
+        blacklisted: row.blacklistedAt !== null,
+        deliveryFailed: row.sendStatus === "failed",
+        name: `${row.firstName} ${row.lastName}`.trim(),
+      };
+    }),
+
   /** Officer-only. One page of the roster, or the whole filtered set. */
   listForHackathon: permProcedure
     .input(hackerRosterListSchema)
@@ -311,6 +485,7 @@ export const hackerRouter = createTRPCRouter({
       const existing = await requireAttendee(input.attendeeId);
       await assertHackathonReady(db, existing.hackathonId);
       const hackathon = await requireHackathon(existing.hackathonId);
+      assertHackathonNotEnded(hackathon);
       const prepared = await prepareStatusMail({
         hackathon,
         status: input.status,
@@ -467,6 +642,7 @@ export const hackerRouter = createTRPCRouter({
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       // Read and compiled before the transaction, for the pool reason above.
+      assertHackathonNotEnded(hackathon);
       await assertHackathonReady(db, input.hackathonId);
       const prepared = await prepareStatusMail({
         hackathon,
