@@ -1,0 +1,173 @@
+import { expect, test } from "playwright/test";
+
+import { PERMISSIONS } from "@forge/consts";
+import { eq, inArray } from "@forge/db";
+import { db } from "@forge/db/client";
+import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import {
+  Hackathon,
+  Hacker,
+  HackerAttendee,
+} from "@forge/db/schemas/knight-hacks";
+
+const ADMIN_ID = "00000000-0000-4000-8000-000000000901";
+const ADMIN_ROLE_ID = "00000000-0000-4000-8000-000000000902";
+const HACKATHON_ID = "00000000-0000-4000-8000-000000000903";
+const HACKER_ONE = "00000000-0000-4000-8000-000000000904";
+const HACKER_TWO = "00000000-0000-4000-8000-000000000905";
+const ATTENDEE_ONE = "00000000-0000-4000-8000-000000000906";
+const ATTENDEE_TWO = "00000000-0000-4000-8000-000000000907";
+
+function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
+  const maxIndex = Math.max(
+    ...Object.values(PERMISSIONS.PERMISSION_DATA).map(({ idx }) => idx),
+  );
+  const bits = Array.from({ length: maxIndex + 1 }, () => "0");
+  for (const key of keys) {
+    bits[PERMISSIONS.PERMISSION_DATA[key].idx] = "1";
+  }
+  return bits.join("");
+}
+
+async function cleanupFixtures() {
+  await db
+    .delete(HackerAttendee)
+    .where(inArray(HackerAttendee.id, [ATTENDEE_ONE, ATTENDEE_TWO]));
+  await db.delete(Hacker).where(inArray(Hacker.id, [HACKER_ONE, HACKER_TWO]));
+  await db.delete(Hackathon).where(eq(Hackathon.id, HACKATHON_ID));
+  await db.delete(Permissions).where(eq(Permissions.userId, ADMIN_ID));
+  await db.delete(Roles).where(eq(Roles.id, ADMIN_ROLE_ID));
+  await db.delete(User).where(eq(User.id, ADMIN_ID));
+}
+
+/**
+ * The roster's critical path: an officer reaches it, sees applicants, and can
+ * build a selection.
+ *
+ * Deliberately does **not** send anything. This hackathon has no status emails
+ * configured, so the readiness gate is active — which makes the spec safe to
+ * run repeatedly and also proves the gate is visible rather than a server-side
+ * secret. Sending is covered by the DB-backed guard tests, where a disposable
+ * database means no real address is ever involved.
+ */
+test.describe("Hacker management critical flow", () => {
+  test.beforeAll(async () => {
+    await cleanupFixtures();
+    await db.insert(User).values({
+      discordUserId: "hacker-admin-e2e",
+      email: "hacker-admin@example.test",
+      id: ADMIN_ID,
+      name: "Hacker Admin",
+    });
+    await db.insert(Roles).values({
+      discordRoleId: "990000000000000921",
+      id: ADMIN_ROLE_ID,
+      name: "Hacker Admins",
+      permissions: permissionBitstring("IS_OFFICER"),
+    });
+    await db
+      .insert(Permissions)
+      .values({ roleId: ADMIN_ROLE_ID, userId: ADMIN_ID });
+
+    await db.insert(Hackathon).values({
+      applicationDeadline: new Date("2026-09-01T00:00:00Z"),
+      applicationOpen: new Date("2026-08-01T00:00:00Z"),
+      confirmationDeadline: new Date("2026-09-15T00:00:00Z"),
+      displayName: "E2E Hackathon",
+      endDate: new Date("2026-10-03T00:00:00Z"),
+      id: HACKATHON_ID,
+      name: "e2e-hackathon",
+      startDate: new Date("2026-10-01T00:00:00Z"),
+      theme: "End to end",
+    });
+
+    const hacker = (id: string, suffix: string) => ({
+      age: 20,
+      discordUser: `e2e-${suffix}`,
+      dob: "2006-01-01",
+      email: `e2e-${suffix}@example.test`,
+      firstName: "Edge",
+      gradDate: "2030-05-01",
+      id,
+      lastName: suffix,
+      levelOfStudy: "Undergraduate University (3+ year)" as const,
+      phoneNumber: "0000000000",
+      school: "University of Central Florida" as const,
+      shirtSize: "M" as const,
+      survey1: "",
+      survey2: "",
+      userId: ADMIN_ID,
+    });
+    await db
+      .insert(Hacker)
+      .values([hacker(HACKER_ONE, "alpha"), hacker(HACKER_TWO, "beta")]);
+    await db.insert(HackerAttendee).values([
+      {
+        hackathonId: HACKATHON_ID,
+        hackerId: HACKER_ONE,
+        id: ATTENDEE_ONE,
+        status: "pending",
+      },
+      {
+        hackathonId: HACKATHON_ID,
+        hackerId: HACKER_TWO,
+        id: ATTENDEE_TWO,
+        status: "pending",
+      },
+    ]);
+  });
+
+  test.afterAll(async () => {
+    await cleanupFixtures();
+  });
+
+  test("TC-001/TC-015 lists applicants and builds an amendable selection", async ({
+    page,
+  }) => {
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(
+        `/admin/hackathon/${HACKATHON_ID}/hackers`,
+      )}`,
+    );
+
+    await expect(page.getByRole("heading", { name: "Hackers" })).toBeVisible();
+
+    // TC-001: both applicants, and only this hackathon's.
+    await expect(page.getByText("Edge alpha")).toBeVisible();
+    await expect(page.getByText("Edge beta")).toBeVisible();
+
+    // AC-006: the gate is visible, not a server-side surprise at click time.
+    await expect(
+      page.getByRole("heading", { name: "Status changes are blocked" }),
+    ).toBeVisible();
+
+    // TC-015: select one, then amend.
+    await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
+    await expect(page.getByText("1 selected")).toBeVisible();
+
+    await page.getByRole("checkbox", { name: "Select Edge beta" }).click();
+    await expect(page.getByText("2 selected")).toBeVisible();
+
+    // Deselecting one leaves the other — the amendability that makes a
+    // correction possible without starting over.
+    await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
+    await expect(page.getByText("1 selected")).toBeVisible();
+  });
+
+  test("TC-002 filters the roster by status", async ({ page }) => {
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(
+        `/admin/hackathon/${HACKATHON_ID}/hackers`,
+      )}`,
+    );
+
+    await expect(page.getByText("Edge alpha")).toBeVisible();
+
+    // Filtering to a status nobody holds empties the table rather than
+    // silently ignoring the filter.
+    await page.getByRole("button", { name: /^Accepted/ }).first().click();
+    await expect(
+      page.getByText("No applicants match these filters."),
+    ).toBeVisible();
+  });
+});
