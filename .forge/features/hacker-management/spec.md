@@ -111,8 +111,12 @@ invisible to the applicant.
   original wording required the send itself to be atomic with the status change,
   which the pipeline cannot do; see `srd.md`.
 - AC-024 If an applicant's status email fails permanently, the roster shows it
-  against that applicant. "Accepted but never told" must be visible on the
-  screen where an officer can fix it, not only in the email portal's send log.
+  against that applicant, with the reason. "Accepted but never told" must be
+  visible where an officer can act on it, not only in the email portal's send
+  log.
+- AC-026 Failed rows can be filtered to, and show the applicant's email, phone,
+  and Discord username — because the point of surfacing a failure is reaching
+  that person another way.
 
 **Blacklist**
 

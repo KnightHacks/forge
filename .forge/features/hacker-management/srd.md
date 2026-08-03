@@ -223,23 +223,57 @@ _gets there_. Here is exactly what carries that, read out of
 So the guarantee is not fire-and-forget: it is a durable row, bounded retry, a
 terminal state, and an event log.
 
-### The gap that leaves, and what this slice should do about it
+### The gap that leaves, and how it gets closed
 
-**A permanently failed status email is invisible from the roster.** After five
-attempts the send sits at `failed` in the email portal's send list. Nothing
-connects it back to the hacker whose acceptance it was — the officer who clicked
-accept sees a success toast, and the applicant never hears anything. Two minutes
-later, or five retries later, nobody is watching.
+**Confirmed in scope:** officers need to see which emails failed and who they
+were for, so they can reach those people another way — phone or Discord —
+rather than leaving an accepted hacker who never heard anything.
 
-That is the honest weak point of reusing an async pipeline, and it is fixable
-here rather than later:
+That is a stronger requirement than a badge, and it constrains the design in a
+way worth writing down before any code:
 
-- **AC-024 (proposed).** The roster shows, per hacker, when their most recent
-  status email failed terminally — so "accepted but never told" is visible on
-  the screen where it can be acted on, not only in the email portal.
+**The link cannot lean on `EmailSendRecipient`.** That table holds the
+per-recipient snapshot (`email`, `attributes`, `exclusionReason`), and
+`runEmailDeliveryCycle` **deletes it** once a send passes its retention window,
+along with the provider-side recipient namespace. Recipient rows for expired
+drafts are deleted outright. So "which hackers were in that failed send" is not
+answerable from the email tables after retention — exactly when an officer is
+most likely to go looking.
 
-This is the same class of problem as the previous slice's `isConfigured`: a
-signal that exists but is read by nothing. Worth not repeating.
+**So this slice owns the link.** When a transition enqueues mail, it records the
+`EmailSend` id against each attendee it covered:
+
+- `knight_hacks_hacker_attendee.last_status_send_id uuid null references email_send(id) on delete set null`
+
+Many attendees to one send, which is correct for bulk: two hundred acceptances
+share one send id. `on delete set null` because expired drafts are hard-deleted
+and a dangling FK would break the roster. `EmailSend` rows for completed and
+failed sends are **not** deleted — only their recipient snapshots are — so the
+status stays readable indefinitely.
+
+The roster then joins attendee → `EmailSend` and reads `status` and `safeError`
+directly. No dependence on purged data, and it works for both single and bulk.
+
+**What the officer sees, given the purpose is manual outreach:**
+
+- A per-row indicator when the last status email is `failed`, showing
+  `safeError` so they know whether it was a bad address or a provider problem.
+- A filter for "delivery failed", so the list can be worked through rather than
+  hunted for.
+- The contact fields already on `Hacker` — `email`, `phoneNumber`, `discordUser`
+  — surfaced on those rows, since reaching out is the entire point.
+
+**Note on `discordUser`:** it is the only one of the three that may be absent or
+stale, and it is a username rather than a link. Displaying it is fine; making it
+actionable is not something this slice should promise.
+
+### Superseded note
+
+Without the above, a permanently failed status email sits at `failed` in the
+email portal's send list with nothing tying it to the hacker it was for — the
+officer who clicked accept saw a success toast, and the applicant never heard
+anything. Same class of problem as the previous slice's `isConfigured`: a signal
+that exists and is read by nothing. Not repeating it.
 
 ## Resolved decisions
 
