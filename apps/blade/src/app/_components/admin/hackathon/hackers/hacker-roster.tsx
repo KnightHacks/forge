@@ -7,11 +7,11 @@ import { ArrowLeft, Ban, Loader2, TriangleAlert, Users } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import type { HackerRosterFilter } from "@forge/validators";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { toast } from "@forge/ui/toast";
+import { HACKER_STATUS_LABELS } from "@forge/validators";
 
 import {
   AdminPageHeader,
@@ -58,9 +58,9 @@ export function HackerRoster({
   const [bulkStatus, setBulkStatus] = useState<
     keyof typeof HACKER_STATUS_LABELS | null
   >(null);
-  const [blacklistTarget, setBlacklistTarget] = useState<
-    Roster[number] | null
-  >(null);
+  const [blacklistTarget, setBlacklistTarget] = useState<Roster[number] | null>(
+    null,
+  );
   /**
    * A filter the officer asked for that would cost selections, held unapplied
    * until they decide. Carries the ids it would drop so the dialog can say how
@@ -142,7 +142,8 @@ export function HackerRoster({
     <main className={adminPageLayoutClassName}>
       <Button asChild variant="ghost" className="-ml-3 min-h-11 w-fit gap-2">
         <Link href={`/admin/hackathon/${hackathon.id}`}>
-          <ArrowLeft className="size-4" aria-hidden="true" /> {hackathon.displayName}
+          <ArrowLeft className="size-4" aria-hidden="true" />{" "}
+          {hackathon.displayName}
         </Link>
       </Button>
 
@@ -198,7 +199,9 @@ export function HackerRoster({
               rare — the applicant normally does it themselves.
             */}
             {(
-              Object.keys(HACKER_STATUS_LABELS) as (keyof typeof HACKER_STATUS_LABELS)[]
+              Object.keys(
+                HACKER_STATUS_LABELS,
+              ) as (keyof typeof HACKER_STATUS_LABELS)[]
             ).map((status) => (
               <Button
                 className="min-h-11"
@@ -289,7 +292,9 @@ export function HackerRoster({
         selectedCount={selectedCount}
       />
 
-      {blacklistTarget === null && bulkStatus === null && selectedCount === 0 ? (
+      {blacklistTarget === null &&
+      bulkStatus === null &&
+      selectedCount === 0 ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Ban className="size-4" aria-hidden="true" />
           Blacklisting an applicant never changes their status and is never

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
 
-import { HACKER_STATUS_LABELS } from "@forge/validators";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from "@forge/ui/dialog";
 import { toast } from "@forge/ui/toast";
+import { HACKER_STATUS_LABELS } from "@forge/validators";
 
 import { api } from "~/trpc/react";
 
@@ -56,9 +56,7 @@ export function BulkConfirmDialog({
     onError: (error) => toast.error(error.message),
     onSuccess: (result) => {
       const skippedNote =
-        result.skipped.length > 0
-          ? `, ${result.skipped.length} skipped`
-          : "";
+        result.skipped.length > 0 ? `, ${result.skipped.length} skipped` : "";
       toast.success(
         `${result.movedCount} moved${skippedNote}. The email is queued.`,
       );

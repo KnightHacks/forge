@@ -3,11 +3,11 @@
 import { Loader2, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { HACKER_STATUS_LABELS } from "@forge/validators";
 
 import type { RosterFilter } from "./hacker-roster";
 
@@ -160,7 +160,9 @@ export function HackerFilters({
               <Button
                 className="min-h-11"
                 onClick={() =>
-                  patch({ deliveryFailed: filter.deliveryFailed ? undefined : true })
+                  patch({
+                    deliveryFailed: filter.deliveryFailed ? undefined : true,
+                  })
                 }
                 size="sm"
                 variant={filter.deliveryFailed ? "secondary" : "ghost"}
@@ -168,9 +170,7 @@ export function HackerFilters({
                 Email failed
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {shownCount} shown
-            </p>
+            <p className="text-sm text-muted-foreground">{shownCount} shown</p>
           </div>
         </div>
       </CardContent>

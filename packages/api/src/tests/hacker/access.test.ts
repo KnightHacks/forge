@@ -157,7 +157,9 @@ describe("hacker management access policy", () => {
         // The SRD says it does not — the roster carries applicant PII and every
         // write here is officer-only — so this pins a decision, not an accident.
         mocks.permissionRows = [
-          { permissions: permissionBitstring("READ_HACKERS", "READ_HACK_DATA") },
+          {
+            permissions: permissionBitstring("READ_HACKERS", "READ_HACK_DATA"),
+          },
         ];
 
         await expect(call(createCaller())).rejects.toMatchObject({

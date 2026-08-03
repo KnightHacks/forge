@@ -1,7 +1,18 @@
-import type { SQL } from "@forge/db";
 import { TRPCError } from "@trpc/server";
 
-import { and, count, desc, eq, inArray, isNotNull, isNull, or, sql } from "@forge/db";
+import type { SQL } from "@forge/db";
+import type { HackerRosterFilter } from "@forge/validators";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   EmailSend,
@@ -20,7 +31,6 @@ import {
   hackerSetStatusSchema,
 } from "@forge/validators";
 
-import type { HackerRosterFilter } from "@forge/validators";
 import type { WriteDb } from "../utils/db";
 import type { StatusMailRecipient } from "../utils/hacker/status-mail";
 import { createTRPCRouter, permProcedure } from "../trpc";
@@ -229,13 +239,12 @@ export const hackerRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
 
-      const rows = await rosterQuery()
-        .where(
-          and(
-            rosterWhere(input.hackathonId, input.filter),
-            inArray(HackerAttendee.id, input.attendeeIds),
-          ),
-        );
+      const rows = await rosterQuery().where(
+        and(
+          rosterWhere(input.hackathonId, input.filter),
+          inArray(HackerAttendee.id, input.attendeeIds),
+        ),
+      );
 
       const surviving = new Set(rows.map((row) => row.attendeeId));
       return {
@@ -528,7 +537,13 @@ async function resolveBulkTargets(
   input: {
     attendeeIds: string[];
     hackathonId: string;
-    status: "accepted" | "confirmed" | "denied" | "pending" | "waitlisted" | "withdrawn";
+    status:
+      | "accepted"
+      | "confirmed"
+      | "denied"
+      | "pending"
+      | "waitlisted"
+      | "withdrawn";
   },
   lock = false,
 ): Promise<{ sending: StatusMailRecipient[]; skipped: BulkSkip[] }> {
@@ -560,7 +575,11 @@ async function resolveBulkTargets(
     // Selected but no longer in this hackathon's roster — withdrawn on the hack
     // site, or deleted between selecting and confirming.
     if (!row) {
-      skipped.push({ attendeeId, name: "Unknown applicant", reason: "missing" });
+      skipped.push({
+        attendeeId,
+        name: "Unknown applicant",
+        reason: "missing",
+      });
       continue;
     }
     const name = `${row.firstName} ${row.lastName}`.trim();

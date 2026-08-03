@@ -165,7 +165,10 @@ test.describe("Hacker management critical flow", () => {
 
     // Filtering to a status nobody holds empties the table rather than
     // silently ignoring the filter.
-    await page.getByRole("button", { name: /^Accepted/ }).first().click();
+    await page
+      .getByRole("button", { name: /^Accepted/ })
+      .first()
+      .click();
     await expect(
       page.getByText("No applicants match these filters."),
     ).toBeVisible();

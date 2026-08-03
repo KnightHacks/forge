@@ -21,17 +21,21 @@ describe("TC-NEG-004: checked-in is unreachable from the roster", () => {
     ).toBe(false);
   });
 
-  it.each(["accepted", "confirmed", "denied", "pending", "waitlisted", "withdrawn"])(
-    "accepts %s",
-    (status) => {
-      expect(
-        hackerSetStatusSchema.safeParse({
-          attendeeId: "00000000-0000-4000-8000-000000000001",
-          status,
-        }).success,
-      ).toBe(true);
-    },
-  );
+  it.each([
+    "accepted",
+    "confirmed",
+    "denied",
+    "pending",
+    "waitlisted",
+    "withdrawn",
+  ])("accepts %s", (status) => {
+    expect(
+      hackerSetStatusSchema.safeParse({
+        attendeeId: "00000000-0000-4000-8000-000000000001",
+        status,
+      }).success,
+    ).toBe(true);
+  });
 
   it("still allows filtering by checkedin", () => {
     // Reading is not transitioning. An officer needs to see who checked in even

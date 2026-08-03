@@ -55,11 +55,7 @@ export function FilterChangeDialog({
         </DialogHeader>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button
-            className="min-h-11"
-            onClick={onCancel}
-            variant="outline"
-          >
+          <Button className="min-h-11" onClick={onCancel} variant="outline">
             Keep the current filter
           </Button>
           <Button className="min-h-11" onClick={onProceed} variant="secondary">

@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
+import type { HackathonSendingStatus } from "@forge/validators";
 import { and, eq } from "@forge/db";
 import {
   EmailSend,
@@ -8,8 +9,6 @@ import {
   HackathonStatusEmail,
 } from "@forge/db/schemas/knight-hacks";
 import { formatHackathonDate } from "@forge/email/fields";
-
-import type { HackathonSendingStatus } from "@forge/validators";
 
 import type { WriteDb } from "../db";
 import { materializeContent } from "../email/campaign";

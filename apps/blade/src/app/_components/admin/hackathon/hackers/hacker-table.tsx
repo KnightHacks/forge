@@ -3,7 +3,6 @@
 import { Ban, MailWarning } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -15,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@forge/ui/table";
+import { HACKER_STATUS_LABELS } from "@forge/validators";
 
 type Roster = RouterOutputs["hacker"]["listForHackathon"]["hackers"];
 type Hacker = Roster[number];
@@ -163,7 +163,9 @@ export function HackerTable({
                         key={status}
                         onClick={() => onSetStatus(hacker.attendeeId, status)}
                         size="sm"
-                        variant={status === "accepted" ? "primary" : "secondary"}
+                        variant={
+                          status === "accepted" ? "primary" : "secondary"
+                        }
                       >
                         {HACKER_STATUS_LABELS[status]}
                       </Button>
