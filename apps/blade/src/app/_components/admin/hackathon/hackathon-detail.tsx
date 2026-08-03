@@ -12,6 +12,7 @@ import {
   Swords,
   Trash2,
   TriangleAlert,
+  Users,
 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -112,6 +113,11 @@ export function HackathonDetail({
       <AdminPageHeader
         actions={
           <>
+            <Button asChild className="min-h-11 gap-2" variant="secondary">
+              <Link href={`/admin/hackathon/${hackathon.id}/hackers`}>
+                <Users className="size-4" aria-hidden="true" /> Hackers
+              </Link>
+            </Button>
             <Button
               className="min-h-11 gap-2"
               onClick={() => setEditing(true)}

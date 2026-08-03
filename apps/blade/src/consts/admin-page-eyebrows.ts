@@ -25,6 +25,7 @@ export const ADMIN_PAGE_EYEBROWS = {
   formResponses: "Response intelligence",
   forms: "Member workflows",
   formSections: "Form organization",
+  hackers: "Hacker management",
   hackathonDetail: "Hackathon record",
   hackathons: "Hackathon operations",
   issueArchive: "Issue archive",
