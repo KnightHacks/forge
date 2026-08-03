@@ -98,34 +98,39 @@ attempted later. The achievable invariant is:
 
 That is weaker than AC-009 and needs an explicit decision. See the open question.
 
-## Bulk operates on a filter, not a list of ids
+## Bulk selection is the rows the officer selected
 
-Bulk is the primary flow, and "select every applicant matching these filters" is
-the shape officers actually want. That rules out the obvious design.
+Selection is a list of attendee ids — the rows the officer actually picked.
 
-**Why not an id list.** Filtering to UCF undergraduates on a real hackathon
-selects hundreds of people. Sending that many uuids to `previewBulk` and again
-to `confirmBulk` is wasteful, but the real problem is correctness: between the
-officer clicking select-all and clicking confirm, rows change. Someone gets
-blacklisted; someone withdraws on the hack site. An id list captured at
-select-all time silently acts on stale membership.
+**An earlier draft of this SRD had `previewBulk` take a filter and resolve it
+server-side.** That was over-engineering: filtering the table and then selecting
+across it already _is_ selecting by filter, and a second "apply to everything
+matching" mechanism duplicates the first with different semantics. It also loses
+the property that matters most on a destructive bulk action — that the officer
+acts on exactly what they can see. Dropped.
 
-**So the filter is the selection.** `previewBulk` takes the same filter the
-roster is showing, resolves it server-side, and returns the resolved set plus a
-`previewVersion`. `confirmBulk` takes that version and acts on the snapshot the
-officer was actually shown. Anything that changed in between is reported in the
-result rather than silently included or dropped — which is AC-029.
+So the flow is: filter the table down, select rows, act. Selection is fast
+because of how it is selected, not because of a separate feature:
 
-This is deliberately the same shape as `email.previewSend` / `email.confirmSend`,
-which already solves this problem for campaigns with `previewVersion`,
-`audienceHash`, and `previewExpiresAt`. Officers already know the interaction,
-and the snapshot semantics are proven.
+- click a row to toggle it,
+- shift-click for a contiguous range,
+- **click and drag across rows** to sweep a group,
+- a header control to select everything currently shown.
 
-**Show-all is a read concern, not a bulk concern.** AC-028's unpaginated view
-raises the page limit for display; it does not change how selection works.
-Selection is always the filter. A roster of 2537 is renderable if the row is
-cheap, but the ceiling needs measuring rather than assuming — and the count
-query stays server-side regardless.
+Several hundred uuids in a `previewBulk` payload is unremarkable, and the
+snapshot semantics still earn their keep: something can change between preview
+and confirm — an applicant gets blacklisted, or withdraws on the hack site — so
+`previewBulk` still returns a `previewVersion` and `confirmBulk` still reports
+anything that moved rather than silently including or dropping it. That is
+AC-029, and it holds regardless of how the selection was made.
+
+**Drag-select is the one genuinely new interaction here**, and it is not
+something the design system already provides. It needs a decision on pointer
+handling — pointer events over mouse events, so it works on a trackpad and does
+not break text selection — and it must not fight the row's own click targets.
+Worth prototyping before committing to it, and worth keeping the click and
+shift-click paths working on their own so drag is an accelerator rather than the
+only way in.
 
 ## Filters and what the data actually supports
 

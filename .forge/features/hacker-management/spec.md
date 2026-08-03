@@ -36,11 +36,13 @@ the configuration screen.
   marker. Searchable by name and email, filterable by status, school, level of
   study, and graduation year.
 - **Bulk is the primary flow.** Filter the roster down to the group you mean —
-  UCF undergraduates, say — then select the whole matching set from one control
-  and act on it. Accepting people one at a time is possible but is not what this
-  screen is optimised for.
-- A "show all" mode that drops pagination, so a filtered group can be eyeballed
-  in full before it is selected.
+  UCF undergraduates, say — then sweep across the rows and act on them together.
+  Accepting people one at a time is possible but is not what this screen is
+  optimised for.
+- Selection is by row: click to toggle, shift-click for a range, **click and
+  drag to sweep a group**, and a header control for everything shown.
+- A "show all" mode that drops pagination, so a filtered group can be selected
+  in one sweep rather than page by page.
 - Per-row status actions, for the exceptions.
 - A blacklist toggle per row, and a visible marker on blacklisted rows.
 - A result summary after a bulk action naming exactly who moved and who did not.
@@ -101,12 +103,13 @@ invisible to the applicant.
   with their status, and no applicants from any other hackathon.
 - AC-002 The roster can be searched by name and email, and filtered by status,
   school, level of study, and graduation year. Filters compose.
-- AC-027 An officer can select every applicant matching the current filters in
-  one action, without paging through them.
+- AC-027 Rows can be selected by clicking, by shift-clicking a range, and by
+  dragging across them. Every selection path is available on its own — drag is an
+  accelerator, not the only way in.
 - AC-028 A "show all" mode renders the whole filtered set without pagination, so
-  a group can be reviewed before being acted on.
-- AC-029 Acting on a filtered selection acts on exactly the set the officer was
-  shown — an applicant whose data changes between selecting and confirming is
+  a group can be selected in one sweep rather than page by page.
+- AC-029 A bulk action acts on exactly the rows the officer selected. An
+  applicant whose eligibility changes between selecting and confirming is
   reported, not silently included or silently dropped.
 - AC-003 Points are visible per applicant and cannot be edited here.
 

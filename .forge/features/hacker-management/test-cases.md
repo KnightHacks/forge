@@ -183,26 +183,27 @@ makes the symptom impossible. If someone later "simplifies" the roster by
 joining through the recipient snapshot, this fails immediately rather than
 months later when retention first bites.
 
-### TC-015: Select-all acts on the filter, not a page (AC-027)
+### TC-015: Every selection path works (AC-027)
 
-Setup: a hackathon whose applicants span more than one page; a filter matching
-rows on several pages.
+Setup: a filtered roster.
 
-Action: apply the filter, select all matching, and preview.
+Action: click a row; shift-click to extend a range; drag across a group; use the
+header control.
 
-Expected: the preview covers every matching applicant, including ones the
-officer never paged to. Selecting all from page one must not mean "page one".
+Expected: each produces the selection it implies, and each works without the
+others — drag is an accelerator, so a trackpad or keyboard user who never drags
+can still select any set. Asserted through the selection the component reports,
+not through pointer-event plumbing.
 
-### TC-016: The selection is the filter the officer was shown (AC-029)
+### TC-016: A bulk action acts on exactly what was selected (AC-029)
 
-Setup: a filtered selection previewed.
+Setup: a selection previewed.
 
-Action: change one applicant so they no longer match — blacklist them — then
-confirm.
+Action: blacklist one of the selected applicants, then confirm.
 
 Expected: the result reports that applicant as skipped, with the reason. They
-are neither silently included nor silently dropped. This is the case that proves
-the snapshot is real rather than the filter being re-run at confirm time.
+are neither silently included nor silently dropped. This proves the preview
+snapshot is real rather than the selection being re-evaluated at confirm.
 
 ### TC-017: Filters compose and match the data (AC-002)
 
