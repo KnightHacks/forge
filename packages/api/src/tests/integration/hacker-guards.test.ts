@@ -959,7 +959,9 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           subject: knightHacks.EmailSend.subject,
         })
         .from(knightHacks.EmailSend)
-        .where(eq(knightHacks.EmailSend.id, result.sendId));
+        // Non-null under test, where delivery is unrestricted. In development
+        // the send is narrowed to the team and can legitimately be absent.
+        .where(eq(knightHacks.EmailSend.id, result.sendId ?? ""));
 
       expect(send?.status).toBe("queued");
       expect(send?.finalRecipientCount).toBe(1);
@@ -969,7 +971,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       const recipients = await client
         .select({ email: knightHacks.EmailSendRecipient.email })
         .from(knightHacks.EmailSendRecipient)
-        .where(eq(knightHacks.EmailSendRecipient.sendId, result.sendId));
+        .where(eq(knightHacks.EmailSendRecipient.sendId, result.sendId ?? ""));
       expect(recipients).toHaveLength(1);
 
       // AC-024: the attendee points at the send, so a failure stays

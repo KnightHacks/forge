@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import type { HackathonSendingStatus } from "@forge/validators";
 import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
+import { Permissions, User } from "@forge/db/schemas/auth";
 import {
   EmailSend,
   EmailSendRecipient,
@@ -13,11 +14,19 @@ import { formatHackathonDate } from "@forge/email/fields";
 
 import type { WriteDb } from "../db";
 import { materializeContent } from "../email/campaign";
-import { hackathonStatusSendsAllowed } from "../email/delivery";
+import { developmentCampaignReviewEnabled } from "../email/delivery";
 
 /** Everything read and compiled before the transaction opens. */
 export interface PreparedStatusMail {
   content: Awaited<ReturnType<typeof materializeContent>>;
+  /**
+   * Addresses allowed to receive this send, or `null` for no restriction.
+   *
+   * Resolved before the transaction opens, like every other read here — a
+   * pooled read issued while a transaction holds a connection can exhaust the
+   * pool and deadlock the process.
+   */
+  deliverableEmails: Set<string> | null;
   hackathon: StatusMailHackathon;
   hackathonAttributes: Record<string, string | undefined>;
   sendId: string;
@@ -65,26 +74,29 @@ export interface StatusMailHackathon {
  * pipeline turned out to be asynchronous.
  */
 /**
- * Refuses status mail in a development environment.
+ * Who may actually receive status mail here.
  *
- * `processEmailSend` rejects a hackathon audience there and marks the send
- * `failed`, so without this an officer accepts two hundred people, sees
- * success, and two minutes later the roster shows all two hundred as
- * delivery-failed. Exported so the *preview* can run the same check — a preview
- * that promises to send and is then refused has failed at its only job.
+ * `null` in production: everyone the officer selected. In development it is the
+ * set of addresses belonging to someone who holds a role — the team — and every
+ * other recipient is dropped before the send is written.
  *
- * `BLADE_ALLOW_DEV_HACKATHON_SENDS=true` lifts it, together with the audience
- * restriction, so a development environment can exercise the real path. That
- * mails real students; it is not a dry run.
+ * The status change itself still happens for everyone, so the roster behaves
+ * exactly as it will in production and the flow is testable end to end. What
+ * does not happen is mail to a few hundred real students from a laptop. This is
+ * the same rule the campaign path already applies, which restricts development
+ * delivery to team members and explicit role audiences.
  */
-export function assertStatusMailDeliverable() {
-  if (!hackathonStatusSendsAllowed()) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message:
-        "Status email delivery is off in this environment, so status changes are blocked. Set BLADE_ALLOW_DEV_HACKATHON_SENDS=true to enable it — real applicants will be emailed.",
-    });
-  }
+async function resolveDeliverableEmails(): Promise<Set<string> | null> {
+  if (!developmentCampaignReviewEnabled()) return null;
+  const rows = await db
+    .selectDistinct({ email: User.email })
+    .from(Permissions)
+    .innerJoin(User, eq(User.id, Permissions.userId));
+  return new Set(
+    rows
+      .map((row) => row.email?.trim().toLowerCase())
+      .filter((email): email is string => Boolean(email)),
+  );
 }
 
 export async function prepareStatusMail({
@@ -94,8 +106,6 @@ export async function prepareStatusMail({
   hackathon: StatusMailHackathon;
   status: HackathonSendingStatus;
 }): Promise<PreparedStatusMail> {
-  assertStatusMailDeliverable();
-
   const [configured] = await db
     .select({
       subject: HackathonStatusEmail.subject,
@@ -166,7 +176,14 @@ export async function prepareStatusMail({
     startDate: formatHackathonDate(hackathon.startDate),
   };
 
-  return { content, hackathon, hackathonAttributes, sendId, status };
+  return {
+    content,
+    deliverableEmails: await resolveDeliverableEmails(),
+    hackathon,
+    hackathonAttributes,
+    sendId,
+    status,
+  };
 }
 
 /**
@@ -184,7 +201,7 @@ export async function writeStatusMail(
   prepared: PreparedStatusMail,
   actorId: string,
   recipients: StatusMailRecipient[],
-): Promise<string> {
+): Promise<string | null> {
   if (recipients.length === 0) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -192,6 +209,25 @@ export async function writeStatusMail(
     });
   }
   const { content, hackathon, hackathonAttributes, sendId, status } = prepared;
+
+  /*
+    Narrowed to the team in development, and to nobody in production.
+
+    Statuses still move for everyone — the roster behaves as it will in
+    production — but only addresses belonging to a role-holder are written as
+    recipients here, so a laptop cannot mail three hundred real students. The
+    audience definition is recorded as `team_members` to match, which is also
+    what lets `processEmailSend` accept it: it refuses a hackathon audience
+    outside production.
+  */
+  const deliverable = prepared.deliverableEmails
+    ? recipients.filter((recipient) =>
+        prepared.deliverableEmails?.has(recipient.email.trim().toLowerCase()),
+      )
+    : recipients;
+  // Nothing to send is not a failure here; the officer's status change stands
+  // and the attendee simply has no send to point at.
+  if (deliverable.length === 0) return null;
 
   /*
     Addresses are unique by the time they arrive here — the caller reports a
@@ -206,9 +242,9 @@ export async function writeStatusMail(
     shipped broken the first time.
   */
   await tx.insert(EmailSend).values({
-    audienceDefinition: [
-      { hackathonId: hackathon.id, kind: "hackathon", statuses: [status] },
-    ],
+    audienceDefinition: prepared.deliverableEmails
+      ? [{ kind: "team_members" }]
+      : [{ hackathonId: hackathon.id, kind: "hackathon", statuses: [status] }],
     audienceHash: sendId,
     compiledHtml: content.compiledHtml,
     compiledText: content.compiledText,
@@ -219,7 +255,7 @@ export async function writeStatusMail(
     excludedManualCount: 0,
     excludedMissingFieldCount: 0,
     excludedSuppressedCount: 0,
-    finalRecipientCount: recipients.length,
+    finalRecipientCount: deliverable.length,
     id: sendId,
     plainTextSource: content.plainTextSource,
     // Required by the column, and meaningless here: the preview window exists
@@ -237,7 +273,7 @@ export async function writeStatusMail(
   });
 
   await tx.insert(EmailSendRecipient).values(
-    recipients.map((recipient) => ({
+    deliverable.map((recipient) => ({
       attributes: {
         hacker: { status },
         hackathon: hackathonAttributes,

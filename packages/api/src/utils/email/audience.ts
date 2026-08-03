@@ -2,8 +2,6 @@ import { createHash } from "node:crypto";
 
 import type { EmailAudienceDefinition } from "@forge/validators";
 
-import { allowDevelopmentHackathonSends } from "../../env";
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type HackerStatus =
@@ -116,12 +114,6 @@ export function isDevelopmentReviewAudienceDefinition(value: unknown) {
       return false;
     }
     const record = definition as Record<string, unknown>;
-    // A hackathon audience is allowed through only where the environment has
-    // opted into real hackathon sends; otherwise the provider refuses it and
-    // the whole send is marked failed.
-    if (record.kind === "hackathon" && allowDevelopmentHackathonSends) {
-      return true;
-    }
     if (record.kind === "team_members") {
       return Object.keys(record).length === 1;
     }
