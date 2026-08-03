@@ -113,6 +113,15 @@ invisible to the applicant.
 - AC-029 A bulk action acts on exactly the rows the officer selected. An
   applicant whose eligibility changes between selecting and confirming is
   reported, not silently included or silently dropped.
+- AC-030 A filter or search change that would hide selected rows prompts first,
+  naming how many selections would be lost, and offers both changing the filter
+  anyway and completing the action first.
+- AC-031 Changing the filter anyway deselects only the rows that leave the view.
+  Selected rows that still match stay selected.
+- AC-032 Completing the action first abandons the filter change and takes the
+  officer to the confirmation panel with the selection intact.
+- AC-033 No prompt appears when the change hides none of the selected rows, or
+  when nothing is selected.
 - AC-003 Points are visible per applicant and cannot be edited here.
 
 **Transitions and mail**
@@ -167,20 +176,26 @@ invisible to the applicant.
 - AC-020 The screen states that a status change sends mail immediately and
   cannot be recalled, before the officer commits to it.
 
-## Open question — selection and filters
+## Selection versus filter change
 
-An officer selects forty applicants, then changes a filter. Some of the selected
-rows are no longer displayed. What should happen?
+When a filter or search change would hide rows that are currently selected, the
+officer is asked before it happens. The dialog says how many selections are
+about to be lost, and offers two ways forward:
 
-1. **Selection persists**, with hidden members surfaced as a count — "40
-   selected, 12 not matching the current filter".
-2. **Selection clears**, with a warning.
-3. **Selection intersects with the filter** — hidden rows drop out silently.
+- **Change the filter anyway** — the rows that disappear are deselected, and
+  every still-visible selected row stays selected. Only what leaves the view
+  leaves the selection.
+- **Finish this action first** — the filter change is abandoned and the officer
+  goes straight to the confirmation panel with their selection intact, so they
+  can complete the bulk action they were part-way through.
 
-I would take (1). It is the only one that does not lose work, and the preview
-step already lists exactly who is about to be mailed before anything is sent, so
-the "acting on people you cannot see" risk is caught where it counts. (3) is the
-one to avoid: it looks tidy and quietly discards selections.
+No dialog when nothing is at stake: if the change hides none of the selected
+rows, or nothing is selected, the filter just applies.
+
+This is deliberately not the silent version. Dropping hidden rows without asking
+looks tidy and quietly discards work — on a bulk accept that means people an
+officer meant to accept simply do not get accepted, with nothing on screen
+saying so. The dialog is what makes the drop consented rather than invisible.
 
 ## A note on "freshman"
 

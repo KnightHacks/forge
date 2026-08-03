@@ -197,6 +197,41 @@ back loses nothing; the visible count matches at each step.
 This is the case that rules out deriving the selection from whatever is
 currently rendered — the implementation that looks right until someone pages.
 
+### TC-019: Changing a filter that hides selections prompts first (AC-030)
+
+Setup: a selection spanning rows that a new filter would hide and rows it would
+keep.
+
+Action: change the filter.
+
+Expected: a prompt, naming how many selections would be lost. The filter has not
+been applied yet.
+
+### TC-020: Changing anyway drops only what leaves the view (AC-031)
+
+Action: from that prompt, choose to change the filter.
+
+Expected: the new filter applies; the selected rows that still match remain
+selected; only the hidden ones are dropped. The visible count reflects it.
+
+### TC-021: Finishing first keeps the selection whole (AC-032)
+
+Action: from that prompt, choose to finish the action first.
+
+Expected: the filter change is abandoned, the roster is unchanged, and the
+officer is on the confirmation panel with the full original selection — nothing
+dropped.
+
+### TC-NEG-009: No prompt when nothing is at stake (AC-033)
+
+Setup: (a) a selection that the new filter fully preserves; (b) no selection.
+
+Action: change the filter in each case.
+
+Expected: no prompt in either case; the filter applies directly. A prompt that
+fires when nothing would be lost trains officers to dismiss it, which is how the
+real one gets clicked through.
+
 ### TC-016: A bulk action acts on exactly what was selected (AC-029)
 
 Setup: a selection previewed.

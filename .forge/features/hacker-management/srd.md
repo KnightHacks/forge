@@ -144,22 +144,26 @@ That rules out the naive implementation where the selection is derived from
 whatever is rendered. It has to be state that outlives the rows on screen —
 which matters most in the case below.
 
-**The dangerous edge: selection versus filter change.** If an officer selects
-forty applicants and then changes a filter, the selected rows may no longer be
-displayed. Three options, and this needs a decision rather than a default:
+**Selection versus filter change — resolved.** A filter or search change that
+would hide selected rows prompts first, offering either to change the filter
+(deselecting only the rows that leave view) or to jump to the confirmation panel
+and finish the action first. See `spec.md`.
 
-1. **Selection persists, hidden members shown as a count** — "40 selected, 12 not
-   matching the current filter". Safest for amendability, but an officer can
-   confirm a bulk action against people they cannot currently see.
-2. **Selection clears on filter change**, with a warning. Safest against
-   accidents, most annoying if you are refining a filter to narrow a group you
-   have already started picking.
-3. **Selection intersects with the filter** — hidden rows silently drop out.
-   Feels tidy, is the worst of the three: it loses work with no signal.
+Two implementation consequences:
 
-I would take (1), because the preview step already shows exactly who is about to
-be mailed before anything happens, so "confirm against people you cannot see" is
-mitigated where it actually matters. Raised in `spec.md` as an open question.
+- **The prompt needs to know which selected rows would survive the new filter,
+  before the filter is applied.** That is a count against the prospective filter,
+  not the current one. Cheapest correct approach is to resolve it server-side —
+  the same query the roster runs, restricted to the selected ids, returning which
+  still match — rather than reasoning client-side from rows that may not be
+  loaded. A client-side answer is only right when every selected row happens to
+  be on the current page, which is exactly the case that is not interesting.
+- **The filter change has to be deferrable.** "Finish this action first" means
+  the pending change is discarded and the officer lands on the confirmation
+  panel. So the filter control cannot commit its change and then ask — it has to
+  hold the intent, ask, and only then apply or discard. Worth stating because the
+  natural implementation updates state on change and asks afterwards, which makes
+  "abandon" impossible without undoing something already applied.
 
 ## Filters and what the data actually supports
 
