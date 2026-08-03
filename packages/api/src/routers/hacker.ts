@@ -41,7 +41,6 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import {
-  assertStatusMailDeliverable,
   prepareStatusMail,
   writeStatusMail,
 } from "../utils/hacker/status-mail";
@@ -609,11 +608,20 @@ export const hackerRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
       const hackathon = await requireHackathon(input.hackathonId);
-      // The same gates the confirm runs. A preview that promises "sending to
-      // 300" and then dies on confirm has failed at the one job it has.
       assertHackathonNotEnded(hackathon);
-      assertStatusMailDeliverable();
       await assertHackathonReady(db, input.hackathonId);
+
+      // Runs the *whole* preparation and throws the result away.
+      //
+      // Checking the gates individually was not enough: `assertHackathonReady`
+      // only counts configured rows, while `prepareStatusMail` also resolves
+      // the template and its published revision. A hackathon with all six
+      // statuses set but an archived template, or one whose template has no
+      // published version, previewed "Send 300 emails" and then died on
+      // confirm — the exact failure the preview exists to prevent. Compiling
+      // twice costs one template render; being wrong costs an officer's
+      // confidence in the preview.
+      await prepareStatusMail({ hackathon, status: input.status });
 
       const { sending, skipped } = await resolveBulkTargets(db, input);
 

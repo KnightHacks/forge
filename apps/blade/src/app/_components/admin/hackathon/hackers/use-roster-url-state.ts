@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { HackerRosterFilter } from "@forge/validators";
@@ -55,6 +55,21 @@ export function useRosterUrlState(): RosterUrlState {
    * the render path is exactly what breaks under concurrent rendering.
    */
   const pendingRef = useRef<string | null>(null);
+  /**
+   * Discarded whenever the URL moves anywhere we did not send it — browser
+   * Back, most importantly.
+   *
+   * Without this the ref outlived the navigation it belonged to: apply a school
+   * filter, let it land, press Back to undo it, then click "Show all" — and the
+   * write rebuilt from the dead pending query, silently restoring the filter
+   * the officer had just backed out of.
+   */
+  useEffect(() => {
+    const committed = searchParams.toString();
+    if (pendingRef.current !== null && pendingRef.current !== committed) {
+      pendingRef.current = null;
+    }
+  }, [searchParams]);
 
   const filter = useMemo<HackerRosterFilter>(() => {
     const list = (key: string) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarOff,
@@ -93,16 +93,18 @@ export function HackerRoster({
     filter: RosterFilter;
   } | null>(null);
   const [checkingFilter, setCheckingFilter] = useState(false);
+  /** Set when this component initiates a URL change, so the selection survives it. */
+  const ownChangeRef = useRef(false);
   const [search, setSearch] = useState(url.filter.search ?? "");
-  const [lastUrlSearch, setLastUrlSearch] = useState(url.filter.search ?? "");
-
-  // Resyncs when the URL's search changes from elsewhere — removing the chip,
-  // "Clear filters", or browser Back. Without this the box kept the old text
-  // while the results widened, so the screen lied about what was filtered.
-  if ((url.filter.search ?? "") !== lastUrlSearch) {
-    setLastUrlSearch(url.filter.search ?? "");
-    setSearch(url.filter.search ?? "");
-  }
+  /**
+   * What we last pushed into the URL ourselves.
+   *
+   * Without it the resync below cannot tell "the officer removed the search
+   * chip" from "my own debounced commit just landed", so a commit arriving
+   * mid-word rewound the box and ate whatever had been typed since — which is
+   * the common case on a dynamic route, not the edge one.
+   */
+  const committedSearchRef = useRef(url.filter.search ?? "");
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -144,19 +146,32 @@ export function HackerRoster({
   const { resetAnchor } = selection;
   useEffect(() => resetAnchor(), [resetAnchor, shownKey]);
 
-  // Back/forward changes the URL filter without going through `requestFilter`,
-  // so the survival prompt never runs. Clearing the selection is the safe
-  // resolution: the alternative is a bulk action mailing people the officer
-  // cannot see on screen.
-  const filterKey = JSON.stringify(url.filter);
-  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
-  if (filterKey !== lastFilterKey) {
-    setLastFilterKey(filterKey);
-    if (pendingFilter === null && selection.selected.size > 0) {
+  /**
+   * Clears the selection when the view changes underneath it.
+   *
+   * Back/forward changes the URL without going through `requestFilter`, so the
+   * survival prompt never runs — and the selection would then span rows the
+   * officer cannot see, or belong to a different hackathon entirely. The key
+   * includes the hackathon for exactly that reason: backing from hackathon B to
+   * A kept "12 selected" holding B's ids, which a bulk action then resolved as
+   * every applicant missing.
+   *
+   * `ownChangeRef` is what keeps this from firing on our own commits — a
+   * debounced search landing while a bulk dialog is open would otherwise empty
+   * the selection under it and re-fire the preview with nothing in it.
+   */
+  const viewKey = `${hackathonId}:${JSON.stringify(url.filter)}`;
+  const lastViewKeyRef = useRef(viewKey);
+  useEffect(() => {
+    if (viewKey === lastViewKeyRef.current) return;
+    const ours = ownChangeRef.current;
+    lastViewKeyRef.current = viewKey;
+    ownChangeRef.current = false;
+    if (!ours && selection.selected.size > 0) {
       selection.clear();
-      toast.info("Selection cleared — the filter changed.");
+      toast.info("Selection cleared — the view changed.");
     }
-  }
+  }, [selection, viewKey]);
 
   // Search commits on a pause. Per keystroke it round-trips through the URL
   // and, with a selection active, a server survival check — which blanked the
@@ -202,17 +217,41 @@ export function HackerRoster({
     [hackathonId, selection.selected, url, utils],
   );
 
-  // Full deps, including the live filter. Keyed on `search` alone the pending
-  // timer closed over whatever the filter was when the officer last typed — so
-  // applying a school filter inside the 350ms window silently dropped it.
+  /**
+   * The live filter and the request function, held in refs.
+   *
+   * `useRosterUrlState` rebuilds its return value every render, so naming
+   * `url` or `requestFilter` as effect dependencies re-armed the 350 ms timer
+   * on every render — and when the pending search opened the survival dialog
+   * instead of committing, `url.filter.search` never caught up, so it fired
+   * again, and again. Refs read the current values without making the effect
+   * re-run.
+   */
+  const filterRef = useRef(url.filter);
+  filterRef.current = url.filter;
+  const requestFilterRef = useRef(requestFilter);
+  requestFilterRef.current = requestFilter;
+
+  // Resyncs only when the URL's search changed to something we did not write —
+  // removing the chip, "Clear filters", or browser Back.
   useEffect(() => {
-    if (search === (url.filter.search ?? "")) return;
-    const timer = setTimeout(
-      () => void requestFilter({ ...url.filter, search: search || undefined }),
-      350,
-    );
+    const fromUrl = url.filter.search ?? "";
+    if (fromUrl === committedSearchRef.current) return;
+    committedSearchRef.current = fromUrl;
+    setSearch(fromUrl);
+  }, [url.filter.search]);
+
+  useEffect(() => {
+    if (search === committedSearchRef.current) return;
+    const timer = setTimeout(() => {
+      committedSearchRef.current = search;
+      void requestFilterRef.current({
+        ...filterRef.current,
+        search: search || undefined,
+      });
+    }, 350);
     return () => clearTimeout(timer);
-  }, [requestFilter, search, url.filter]);
+  }, [search]);
 
   if (!selected) {
     return (
@@ -236,6 +275,10 @@ export function HackerRoster({
     );
   }
 
+  // The cap has to be stated. "1000 shown" beside a status tab reading 1448,
+  // with a header select-all that then mails 1000 of them, is the worst
+  // possible silence on this screen.
+  const atCap = url.showAll && hackers.length === SHOW_ALL_SIZE;
   const failedToLoad = roster.isError || counts.isError;
   const blocked = selected.hasEnded || failedToLoad;
   const blockedReason = selected.hasEnded
@@ -303,16 +346,16 @@ export function HackerRoster({
                 url.setHackathonId(next);
               }}
             />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
             {/*
-              Delivery is its own pane, not a filter chip among the statuses.
-              "Who never got told" is a different job from triage — it is
-              worked through until empty, using phone and Discord rather than
-              status changes — and mixing it into the status axis buried it.
+              Delivery is its own pane, not a filter chip among the statuses:
+              "who never got told" is a different job from triage — worked until
+              empty, using phone and Discord rather than status changes.
+
+              Sits in the toolbar beside Filters rather than on its own row. Two
+              small tabs alone on a full-width row left most of it empty, which
+              read as a gap in the layout rather than a deliberate control.
             */}
-            <div className="flex items-center gap-1 rounded-md bg-background/70 p-1">
+            <div className="flex shrink-0 items-center gap-1 rounded-md bg-background/70 p-1">
               <PaneTab
                 active={!url.filter.deliveryFailed}
                 label="Roster"
@@ -338,9 +381,7 @@ export function HackerRoster({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            {url.filter.deliveryFailed ? (
-              <span />
-            ) : (
+            {url.filter.deliveryFailed ? null : (
               <StatusTabs
                 busy={checkingFilter}
                 counts={counts.data ?? { byStatus: {}, total: 0 }}
@@ -417,7 +458,7 @@ export function HackerRoster({
             </div>
           ) : null}
 
-          {hackers.length === 0 && !roster.isPending ? (
+          {hackers.length === 0 && !roster.isPending && !failedToLoad ? (
             <div className="px-6 py-12 text-center">
               <p className="font-medium">No applicants match these filters.</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -441,9 +482,18 @@ export function HackerRoster({
         </CardContent>
 
         <div className="border-t border-border/70 px-3 py-3 text-sm text-muted-foreground sm:px-4 md:px-6">
-          {hackers.length} shown
-          {url.showAll ? "" : ` · first ${PAGE_SIZE}`} · click a row to select,
-          shift-click to extend, double-click to open
+          {/*
+            States the cap. "1000 shown" beside a status tab reading 1448, with
+            a header select-all that then mails 1000 of them, is the worst
+            possible silence on this screen.
+          */}
+          {hackers.length} of {counts.data?.total ?? hackers.length} shown
+          {atCap
+            ? ` · capped at ${SHOW_ALL_SIZE}; narrow the filter to reach the rest`
+            : url.showAll
+              ? ""
+              : ` · first ${PAGE_SIZE}, use Show all to select across the list`}
+          {" · "}click a row to open it, shift-click to select a range
         </div>
       </Card>
 
@@ -480,6 +530,7 @@ export function HackerRoster({
         onProceed={() => {
           if (!pendingFilter) return;
           selection.deselect(pendingFilter.droppedIds);
+          ownChangeRef.current = true;
           url.setFilter(pendingFilter.filter);
           setPendingFilter(null);
         }}

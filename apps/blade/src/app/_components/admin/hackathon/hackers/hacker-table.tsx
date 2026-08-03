@@ -86,15 +86,25 @@ export function HackerTable({
               className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               data-selected={isSelected ? "true" : undefined}
               key={hacker.attendeeId}
-              // Reachable and operable from a keyboard: Enter or Space opens
-              // the applicant, Shift+Enter extends the selection. Without this
-              // a keyboard officer could select and bulk-mail people but never
-              // open a record to read the blacklist reason first.
+              /*
+                Operable from a keyboard, with a gesture for each thing the
+                mouse can do: Enter opens the record, Space toggles this row,
+                Shift+Enter extends from the last one. Space matters most —
+                `selectRange` only ever adds, so without a plain toggle a
+                keyboard officer who selected one person too many could only
+                clear the entire selection and start over.
+              */
               onKeyDown={(event) => {
-                if (event.key !== "Enter" && event.key !== " ") return;
-                event.preventDefault();
-                if (event.shiftKey) onToggleRange(hacker.attendeeId);
-                else onOpen(hacker);
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  if (event.shiftKey) onToggleRange(hacker.attendeeId);
+                  else onOpen(hacker);
+                  return;
+                }
+                if (event.key === " ") {
+                  event.preventDefault();
+                  onToggle(hacker.attendeeId);
+                }
               }}
               tabIndex={0}
               // Click opens the applicant; shift-click extends the selection
@@ -134,9 +144,18 @@ export function HackerTable({
                 <Checkbox
                   aria-label={`Select ${hacker.name}`}
                   checked={isSelected}
-                  // The cell owns the click; this is the visual and keyboard
-                  // affordance, so it must not toggle a second time.
+                  // The cell owns the click; this is the visual affordance, so
+                  // it must not toggle a second time.
                   onClick={(event) => event.preventDefault()}
+                  // Radix keeps focus on this button after a mouse click, and
+                  // the row's handler would then read Space as "open". Handling
+                  // it here keeps Space meaning "toggle" wherever focus landed.
+                  onKeyDown={(event) => {
+                    if (event.key !== " " && event.key !== "Enter") return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onToggle(hacker.attendeeId);
+                  }}
                   tabIndex={-1}
                 />
               </TableCell>

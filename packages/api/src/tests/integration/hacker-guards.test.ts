@@ -614,6 +614,62 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
     });
   });
 
+  describe("preview refuses everything confirm refuses", () => {
+    // A preview that promises "Send 300 emails" and then dies on confirm has
+    // failed at its only job. Checking the gates individually was not enough —
+    // configuration is counted, but the template still has to exist, be a
+    // hackathon template, and have a published revision.
+    it("refuses when the configured template is archived", async () => {
+      await client
+        .update(knightHacks.EmailTemplate)
+        .set({ archivedAt: new Date() })
+        .where(eq(knightHacks.EmailTemplate.id, TEMPLATE_ID));
+
+      await expect(
+        caller.hacker.previewBulk({
+          attendeeIds: [PLAIN_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      await client
+        .update(knightHacks.EmailTemplate)
+        .set({ archivedAt: null })
+        .where(eq(knightHacks.EmailTemplate.id, TEMPLATE_ID));
+    });
+
+    it("refuses when the template has no published revision", async () => {
+      await client
+        .update(knightHacks.EmailTemplateRevision)
+        .set({ state: "draft" })
+        .where(eq(knightHacks.EmailTemplateRevision.id, REVISION_ID));
+
+      await expect(
+        caller.hacker.previewBulk({
+          attendeeIds: [PLAIN_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+
+      await client
+        .update(knightHacks.EmailTemplateRevision)
+        .set({ state: "published" })
+        .where(eq(knightHacks.EmailTemplateRevision.id, REVISION_ID));
+    });
+
+    it("positive control: a healthy template previews", async () => {
+      await expect(
+        caller.hacker.previewBulk({
+          attendeeIds: [PLAIN_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+          status: "accepted",
+        }),
+      ).resolves.toMatchObject({ sending: [expect.anything()] });
+    });
+  });
+
   describe("TC-005/TC-007: transitions enqueue exactly one send", () => {
     it("a single transition queues one send carrying that applicant", async () => {
       const result = await caller.hacker.setStatus({
