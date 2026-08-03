@@ -1,33 +1,29 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { HackerRosterFilter } from "@forge/validators";
+import { hackerRosterFilterSchema } from "@forge/validators";
 
 /**
- * Filter state and the selected hackathon live in the URL, like the rest of
- * the admin surface.
+ * Filter state, the selected hackathon, and show-all live in the URL, like the
+ * rest of the admin surface.
  *
- * Not a preference — a shareable address. An officer working through a
- * capacity round sends "here, this filter" to another officer, refreshes
- * without losing their place, and gets back where they were from history.
- * Component state does none of that.
- *
- * `router.replace` rather than `push`: refining a filter is not a navigation
- * step, and stacking twenty history entries for twenty keystrokes makes the
- * back button useless.
+ * Not a preference — a shareable address. An officer working a capacity round
+ * sends "here, this filter" to another officer, refreshes without losing their
+ * place, and gets back where they were from history.
  */
 export interface RosterUrlState {
   filter: HackerRosterFilter;
   hackathonId: string | null;
+  navigating: boolean;
   setFilter: (next: HackerRosterFilter) => void;
   setHackathonId: (next: string) => void;
-  showAll: boolean;
   setShowAll: (next: boolean) => void;
+  showAll: boolean;
 }
 
-/** Repeatable params, so `?school=A&school=B` round-trips as an array. */
 const LIST_KEYS = [
   "schools",
   "levelsOfStudy",
@@ -45,43 +41,74 @@ export function useRosterUrlState(): RosterUrlState {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [navigating, startNavigation] = useTransition();
+
+  /**
+   * The last params we wrote, so two writes inside one navigation window
+   * compose instead of the second rebuilding from the first's stale snapshot.
+   *
+   * `useSearchParams` only updates once the server responds, and this page is
+   * dynamic. Clicking "Show all" and then a status tab before that lands would
+   * otherwise silently drop the first.
+   *
+   * Read and reconciled inside `write`, never during render — a ref touched in
+   * the render path is exactly what breaks under concurrent rendering.
+   */
+  const pendingRef = useRef<string | null>(null);
 
   const filter = useMemo<HackerRosterFilter>(() => {
     const list = (key: string) => {
       const values = searchParams.getAll(key);
       return values.length > 0 ? values : undefined;
     };
-    return {
+    const raw = {
       blacklisted:
         searchParams.get("blacklisted") === "true" ? true : undefined,
       deliveryFailed:
         searchParams.get("deliveryFailed") === "true" ? true : undefined,
-      graduationTerms: list(
-        "graduationTerms",
-      ) as HackerRosterFilter["graduationTerms"],
-      // Junk years in a hand-edited URL are dropped rather than sent as NaN,
-      // which the schema would reject with no visible cause.
+      graduationTerms: list("graduationTerms"),
       graduationYears: list("graduationYears")
         ?.map(Number)
-        .filter((year) => Number.isInteger(year)),
+        .filter((year) => Number.isInteger(year) && year >= 1900),
       levelsOfStudy: list("levelsOfStudy"),
       schools: list("schools"),
       search: searchParams.get("search") ?? undefined,
-      status:
-        (searchParams.get("status") as HackerRosterFilter["status"]) ??
-        undefined,
+      status: searchParams.get("status") ?? undefined,
     };
+
+    // Parsed, not cast. A shared or hand-edited link carrying `?status=Accepted`
+    // or a truncated `?graduationYears=` would otherwise reach the server, fail
+    // Zod, and put the whole screen into its error state — an officer following
+    // a colleague's link would see "the roster could not be loaded" and have no
+    // idea a stray character caused it. Unparseable values are dropped and the
+    // rest of the filter still applies.
+    const parsed = hackerRosterFilterSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+
+    const salvaged = { ...raw } as Record<string, unknown>;
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (typeof key === "string") delete salvaged[key];
+    }
+    const retry = hackerRosterFilterSchema.safeParse(salvaged);
+    return retry.success ? retry.data : {};
   }, [searchParams]);
 
   const write = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const committed = searchParams.toString();
+      // Once the URL catches up with what we wrote, the pending copy is spent.
+      if (pendingRef.current === committed) pendingRef.current = null;
+      const params = new URLSearchParams(pendingRef.current ?? committed);
       mutate(params);
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
-        // The roster is a client query; re-running the server component on
-        // every keystroke would fetch a page nothing renders.
-        scroll: false,
+      pendingRef.current = query;
+      // In a transition so the officer gets a pending signal rather than a
+      // screen that sits unchanged while the server re-renders.
+      startNavigation(() => {
+        router.replace(query ? `${pathname}?${query}` : pathname, {
+          scroll: false,
+        });
       });
     },
     [pathname, router, searchParams],
@@ -90,6 +117,7 @@ export function useRosterUrlState(): RosterUrlState {
   return {
     filter,
     hackathonId: searchParams.get("hackathon"),
+    navigating,
     setFilter: useCallback(
       (next) =>
         write((params) => {

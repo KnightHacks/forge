@@ -520,6 +520,100 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
     });
   });
 
+  describe("TC-002/TC-017: the filters execute", () => {
+    // These exist because every array filter shipped generating invalid SQL —
+    // `= any(($1, $2))` rather than a Postgres array — and 500'd on the first
+    // school an officer ticked. Nothing caught it: the access test calls
+    // `listForHackathon` with no filter, and no other test named these fields.
+    // Executing each one against real SQL is the only thing that would have.
+    it("filters by school", async () => {
+      const result = await caller.hacker.listForHackathon({
+        filter: { schools: ["University of Central Florida"] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(result.hackers.length).toBeGreaterThan(0);
+
+      const none = await caller.hacker.listForHackathon({
+        filter: { schools: ["A School Nobody Attends"] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(none.hackers).toHaveLength(0);
+    });
+
+    it("filters by a single school and by several", async () => {
+      // One value and many take different SQL shapes; the broken version failed
+      // differently for each, so both are pinned.
+      for (const schools of [
+        ["University of Central Florida"],
+        ["University of Central Florida", "University of Florida"],
+      ]) {
+        const result = await caller.hacker.listForHackathon({
+          filter: { schools },
+          hackathonId: READY_HACKATHON,
+        });
+        expect(result.hackers.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("filters by level of study, graduation year, and term", async () => {
+      const level = await caller.hacker.listForHackathon({
+        filter: { levelsOfStudy: ["Undergraduate University (3+ year)"] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(level.hackers.length).toBeGreaterThan(0);
+
+      // Fixtures graduate 2030-05-01 — May, so Spring.
+      const year = await caller.hacker.listForHackathon({
+        filter: { graduationYears: [2030] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(year.hackers.length).toBeGreaterThan(0);
+
+      const spring = await caller.hacker.listForHackathon({
+        filter: { graduationTerms: ["Spring"] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(spring.hackers.length).toBeGreaterThan(0);
+
+      const fall = await caller.hacker.listForHackathon({
+        filter: { graduationTerms: ["Fall"] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(fall.hackers).toHaveLength(0);
+    });
+
+    it("filters compose as AND", async () => {
+      const both = await caller.hacker.listForHackathon({
+        filter: {
+          graduationTerms: ["Fall"],
+          schools: ["University of Central Florida"],
+        },
+        hackathonId: READY_HACKATHON,
+      });
+      // The school matches and the term does not, so an AND returns nothing.
+      // An OR would return every UCF applicant.
+      expect(both.hackers).toHaveLength(0);
+    });
+
+    it("statusCounts keeps every bucket when a status is selected", async () => {
+      // It groups *by* status, so applying the status filter collapsed the
+      // result to one bucket and rendered every other tab as zero.
+      const counts = await caller.hacker.statusCounts({
+        filter: { status: "accepted" },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(counts.byStatus.pending).toBeGreaterThan(0);
+    });
+
+    it("filterOptions offers only values present in this hackathon", async () => {
+      const options = await caller.hacker.filterOptions({
+        hackathonId: READY_HACKATHON,
+      });
+      expect(options.schools).toEqual(["University of Central Florida"]);
+      expect(options.graduationYears).toEqual([2030]);
+    });
+  });
+
   describe("TC-005/TC-007: transitions enqueue exactly one send", () => {
     it("a single transition queues one send carrying that applicant", async () => {
       const result = await caller.hacker.setStatus({

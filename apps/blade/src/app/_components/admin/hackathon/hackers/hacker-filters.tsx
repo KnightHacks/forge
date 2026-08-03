@@ -291,7 +291,11 @@ export function HackerFilters({
               <Button
                 className="min-h-11"
                 onClick={() => {
+                  // `deliveryFailed` survives: it is the pane the officer is
+                  // in, not a filter they set. Clearing it here threw them out
+                  // of the worklist they were working to empty.
                   onFilterChange({
+                    deliveryFailed: filter.deliveryFailed,
                     search: filter.search,
                     status: filter.status,
                   });
@@ -304,7 +308,11 @@ export function HackerFilters({
               <Button
                 className="min-h-11"
                 onClick={() => {
-                  onFilterChange({ ...draft, search: filter.search });
+                  onFilterChange({
+                    ...draft,
+                    deliveryFailed: filter.deliveryFailed,
+                    search: filter.search,
+                  });
                   setOpen(false);
                 }}
               >
@@ -409,7 +417,7 @@ export function FilterChips({
     <div className="flex flex-wrap items-center gap-2">
       {chips.map((chip) => (
         <button
-          className="inline-flex min-h-9 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-primary hover:bg-primary/15"
           key={chip.field}
           onClick={() =>
             onFilterChange({
@@ -428,8 +436,13 @@ export function FilterChips({
         </button>
       ))}
       <Button
-        className="min-h-9"
-        onClick={() => onFilterChange({ status: filter.status })}
+        className="min-h-11"
+        onClick={() =>
+          onFilterChange({
+            deliveryFailed: filter.deliveryFailed,
+            status: filter.status,
+          })
+        }
         size="sm"
         variant="ghost"
       >

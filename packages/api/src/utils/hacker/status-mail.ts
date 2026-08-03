@@ -64,18 +64,16 @@ export interface StatusMailHackathon {
  * commit together — the invariant that replaced the original AC-009 when the
  * pipeline turned out to be asynchronous.
  */
-export async function prepareStatusMail({
-  hackathon,
-  status,
-}: {
-  hackathon: StatusMailHackathon;
-  status: HackathonSendingStatus;
-}): Promise<PreparedStatusMail> {
-  // Refused up front in a development environment, exactly as the campaign
-  // path does. `processEmailSend` rejects a hackathon audience there and marks
-  // the send `failed`, so without this an officer accepts two hundred people,
-  // sees success, and two minutes later the roster shows all two hundred as
-  // delivery-failed.
+/**
+ * Refuses status mail in a development environment.
+ *
+ * `processEmailSend` rejects a hackathon audience there and marks the send
+ * `failed`, so without this an officer accepts two hundred people, sees
+ * success, and two minutes later the roster shows all two hundred as
+ * delivery-failed. Exported so the *preview* can run the same check — a preview
+ * that promises to send and is then refused has failed at its only job.
+ */
+export function assertStatusMailDeliverable() {
   if (developmentCampaignReviewEnabled()) {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -83,6 +81,16 @@ export async function prepareStatusMail({
         "Status email delivery is disabled in this environment, so status changes are blocked here.",
     });
   }
+}
+
+export async function prepareStatusMail({
+  hackathon,
+  status,
+}: {
+  hackathon: StatusMailHackathon;
+  status: HackathonSendingStatus;
+}): Promise<PreparedStatusMail> {
+  assertStatusMailDeliverable();
 
   const [configured] = await db
     .select({

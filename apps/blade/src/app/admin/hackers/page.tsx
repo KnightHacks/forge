@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
@@ -38,10 +38,17 @@ export default async function AdminHackersPage({
   const requested =
     typeof params.hackathon === "string" ? params.hackathon : undefined;
 
-  // Ordered by proximity to now, so the first entry is the hackathon about to
-  // happen or the one that just did — what an officer wants by default.
-  const selected =
-    hackathons.find((hackathon) => hackathon.id === requested) ?? hackathons[0];
+  // Ordered by proximity to now, so the default is the hackathon about to
+  // happen or the one that just did — what an officer wants most of the time.
+  const matched = hackathons.find((hackathon) => hackathon.id === requested);
+
+  // A named-but-unknown hackathon is a 404, not a silent fallback. Falling back
+  // meant someone opening a shared link to a deleted hackathon read the
+  // *current* one's roster while the URL still named the other, and every
+  // filter they set afterwards preserved the bogus id.
+  if (requested !== undefined && !matched) notFound();
+
+  const selected = matched ?? hackathons[0];
 
   return <HackerRoster hackathons={hackathons} selected={selected ?? null} />;
 }

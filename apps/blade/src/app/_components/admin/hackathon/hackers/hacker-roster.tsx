@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CalendarOff,
@@ -38,7 +38,17 @@ export type RosterFilter = HackerRosterFilter;
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 const PAGE_SIZE = 50;
-const SHOW_ALL_SIZE = 5000;
+/**
+ * The show-all ceiling.
+ *
+ * Deliberately not the schema's 5000. These rows are unvirtualized and each
+ * carries a Radix Checkbox, so mounting a few thousand freezes the main thread
+ * for seconds with only a progress bar as warning. 1000 covers every hackathon
+ * held so far — the largest is 1448 attendees across all statuses, and a single
+ * status bucket is far smaller — and the count below the table says plainly
+ * when the cap bites.
+ */
+const SHOW_ALL_SIZE = 1000;
 
 function PaneTab({
   active,
@@ -54,8 +64,8 @@ function PaneTab({
       aria-pressed={active}
       className={
         active
-          ? "min-h-9 rounded px-3 text-sm font-medium text-foreground shadow-sm ring-1 ring-border"
-          : "min-h-9 rounded px-3 text-sm text-muted-foreground hover:text-foreground"
+          ? "min-h-11 rounded px-3 text-sm font-medium text-foreground shadow-sm ring-1 ring-border"
+          : "min-h-11 rounded px-3 text-sm text-muted-foreground hover:text-foreground"
       }
       onClick={onClick}
       type="button"
@@ -84,6 +94,15 @@ export function HackerRoster({
   } | null>(null);
   const [checkingFilter, setCheckingFilter] = useState(false);
   const [search, setSearch] = useState(url.filter.search ?? "");
+  const [lastUrlSearch, setLastUrlSearch] = useState(url.filter.search ?? "");
+
+  // Resyncs when the URL's search changes from elsewhere — removing the chip,
+  // "Clear filters", or browser Back. Without this the box kept the old text
+  // while the results widened, so the screen lied about what was filtered.
+  if ((url.filter.search ?? "") !== lastUrlSearch) {
+    setLastUrlSearch(url.filter.search ?? "");
+    setSearch(url.filter.search ?? "");
+  }
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -101,8 +120,13 @@ export function HackerRoster({
     },
     { enabled },
   );
+  // `status` is excluded from the key as well as from the query: the server
+  // strips it, so including it made every tab click a cache miss that returned
+  // identical numbers — and while it was in flight every tab rendered 0, which
+  // is indistinguishable from an empty hackathon.
+  const { status: _ignored, ...countFilter } = url.filter;
   const counts = api.hacker.statusCounts.useQuery(
-    { filter: url.filter, hackathonId },
+    { filter: countFilter, hackathonId },
     { enabled },
   );
   const filterOptions = api.hacker.filterOptions.useQuery(
@@ -120,18 +144,23 @@ export function HackerRoster({
   const { resetAnchor } = selection;
   useEffect(() => resetAnchor(), [resetAnchor, shownKey]);
 
+  // Back/forward changes the URL filter without going through `requestFilter`,
+  // so the survival prompt never runs. Clearing the selection is the safe
+  // resolution: the alternative is a bulk action mailing people the officer
+  // cannot see on screen.
+  const filterKey = JSON.stringify(url.filter);
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    if (pendingFilter === null && selection.selected.size > 0) {
+      selection.clear();
+      toast.info("Selection cleared — the filter changed.");
+    }
+  }
+
   // Search commits on a pause. Per keystroke it round-trips through the URL
   // and, with a selection active, a server survival check — which blanked the
   // field mid-word and fired a dialog per character.
-  useEffect(() => {
-    if (search === (url.filter.search ?? "")) return;
-    const timer = setTimeout(
-      () => void requestFilter({ ...url.filter, search: search || undefined }),
-      350,
-    );
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
 
   /**
    * Invalidates the query cache rather than refreshing the route.
@@ -144,31 +173,46 @@ export function HackerRoster({
     await utils.hacker.invalidate();
   };
 
-  const requestFilter = async (next: RosterFilter) => {
-    if (selectedCount === 0) {
-      url.setFilter(next);
-      return;
-    }
-    setCheckingFilter(true);
-    try {
-      // Asked server-side: the browser only knows the rows it has loaded, and
-      // the case that matters is a selected row on a page nobody is looking at.
-      const survival = await utils.hacker.selectionSurvival.fetch({
-        attendeeIds: [...selection.selected],
-        filter: next,
-        hackathonId,
-      });
-      if (survival.droppedIds.length === 0) {
+  const requestFilter = useCallback(
+    async (next: RosterFilter) => {
+      if (selectedCount === 0) {
         url.setFilter(next);
         return;
       }
-      setPendingFilter({ droppedIds: survival.droppedIds, filter: next });
-    } catch {
-      toast.error("Could not check the selection against that filter.");
-    } finally {
-      setCheckingFilter(false);
-    }
-  };
+      setCheckingFilter(true);
+      try {
+        // Asked server-side: the browser only knows the rows it has loaded, and
+        // the case that matters is a selected row on a page nobody is looking at.
+        const survival = await utils.hacker.selectionSurvival.fetch({
+          attendeeIds: [...selection.selected],
+          filter: next,
+          hackathonId,
+        });
+        if (survival.droppedIds.length === 0) {
+          url.setFilter(next);
+          return;
+        }
+        setPendingFilter({ droppedIds: survival.droppedIds, filter: next });
+      } catch {
+        toast.error("Could not check the selection against that filter.");
+      } finally {
+        setCheckingFilter(false);
+      }
+    },
+    [hackathonId, selection.selected, url, utils],
+  );
+
+  // Full deps, including the live filter. Keyed on `search` alone the pending
+  // timer closed over whatever the filter was when the officer last typed — so
+  // applying a school filter inside the 350ms window silently dropped it.
+  useEffect(() => {
+    if (search === (url.filter.search ?? "")) return;
+    const timer = setTimeout(
+      () => void requestFilter({ ...url.filter, search: search || undefined }),
+      350,
+    );
+    return () => clearTimeout(timer);
+  }, [requestFilter, search, url.filter]);
 
   if (!selected) {
     return (
@@ -366,7 +410,7 @@ export function HackerRoster({
         ) : null}
 
         <CardContent className="px-0 py-0">
-          {roster.isFetching ? (
+          {roster.isFetching || url.navigating ? (
             <div className="flex items-center gap-2 border-b border-border/70 px-4 py-2 text-sm text-muted-foreground md:px-6">
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
               Updating results
@@ -433,15 +477,6 @@ export function HackerRoster({
       <FilterChangeDialog
         droppedCount={pendingFilter?.droppedIds.length ?? 0}
         onCancel={() => setPendingFilter(null)}
-        onFinishFirst={() => {
-          setPendingFilter(null);
-          // Deliberately does not pick an action. Guessing which one an officer
-          // was part-way through is how someone denying twenty people lands in
-          // an Accept confirmation with all twenty loaded.
-          toast.info(
-            "Selection kept. Choose the action you want from the bar above.",
-          );
-        }}
         onProceed={() => {
           if (!pendingFilter) return;
           selection.deselect(pendingFilter.droppedIds);

@@ -90,11 +90,37 @@ export function HackerDetailDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={attendeeId !== null}>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
+        {/*
+          Always rendered, even while loading or on failure. A DialogContent
+          without a DialogTitle is an unnamed dialog to a screen reader, and
+          Radix logs it.
+        */}
+        {hacker ? null : (
+          <DialogHeader>
+            <DialogTitle>
+              {detail.isError ? "Could not load applicant" : "Applicant"}
+            </DialogTitle>
+            <DialogDescription>
+              {detail.isError ? detail.error.message : "Loading their record…"}
+            </DialogDescription>
+          </DialogHeader>
+        )}
+
         {detail.isPending ? (
           <p className="flex items-center gap-2 py-8 text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             Loading applicant…
           </p>
+        ) : null}
+
+        {detail.isError ? (
+          <Button
+            className="min-h-11 justify-self-start"
+            onClick={() => void detail.refetch()}
+            variant="secondary"
+          >
+            Try again
+          </Button>
         ) : null}
 
         {hacker ? (
@@ -236,7 +262,10 @@ export function HackerDetailDialog({
             {hacker.blacklisted ? (
               <Button
                 className="min-h-11 gap-2 justify-self-start"
-                disabled={busy}
+                // Respects the same gate the status buttons do. An officer
+                // reading "this roster is read-only" should not be able to
+                // scroll down and blacklist someone anyway.
+                disabled={busy || blocked}
                 onClick={() =>
                   setBlacklist.mutate({
                     attendeeId: hacker.attendeeId,
@@ -266,7 +295,7 @@ export function HackerDetailDialog({
                 </p>
                 <Button
                   className="min-h-11 gap-2 justify-self-start"
-                  disabled={busy || reason.trim() === ""}
+                  disabled={busy || blocked || reason.trim() === ""}
                   onClick={() =>
                     setBlacklist.mutate({
                       attendeeId: hacker.attendeeId,

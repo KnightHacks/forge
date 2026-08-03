@@ -23,14 +23,12 @@ import {
 export function FilterChangeDialog({
   droppedCount,
   onCancel,
-  onFinishFirst,
   onProceed,
   open,
   selectedCount,
 }: {
   droppedCount: number;
   onCancel: () => void;
-  onFinishFirst: () => void;
   onProceed: () => void;
   open: boolean;
   selectedCount: number;
@@ -48,21 +46,24 @@ export function FilterChangeDialog({
             This filter hides {droppedCount} of your {selectedCount} selected
           </DialogTitle>
           <DialogDescription>
-            Changing the filter now deselects those {droppedCount}. The rest
-            stay selected. Or finish what you started first — the whole
-            selection carries over to the confirmation step.
+            Changing the filter now deselects those {droppedCount}; the rest
+            stay selected. Keep this filter instead and your selection is
+            untouched, so you can finish what you started.
           </DialogDescription>
         </DialogHeader>
 
+        {/*
+          Two buttons, not three. The previous "finish this action first" did
+          exactly what "keep the current filter" does — it only added a toast —
+          and a dialog where two of three choices are the same thing is how the
+          real choice gets clicked through unread.
+        */}
         <DialogFooter className="flex-col gap-2 sm:flex-row">
           <Button className="min-h-11" onClick={onCancel} variant="outline">
-            Keep the current filter
+            Keep this filter and my selection
           </Button>
           <Button className="min-h-11" onClick={onProceed} variant="secondary">
-            Change anyway, drop {droppedCount}
-          </Button>
-          <Button className="min-h-11" onClick={onFinishFirst}>
-            Finish this action first
+            Change filter, drop {droppedCount}
           </Button>
         </DialogFooter>
       </DialogContent>

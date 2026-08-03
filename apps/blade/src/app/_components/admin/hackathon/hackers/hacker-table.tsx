@@ -83,32 +83,61 @@ export function HackerTable({
           return (
             <TableRow
               aria-selected={isSelected}
-              className="cursor-pointer"
+              className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               data-selected={isSelected ? "true" : undefined}
               key={hacker.attendeeId}
+              // Reachable and operable from a keyboard: Enter or Space opens
+              // the applicant, Shift+Enter extends the selection. Without this
+              // a keyboard officer could select and bulk-mail people but never
+              // open a record to read the blacklist reason first.
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                if (event.shiftKey) onToggleRange(hacker.attendeeId);
+                else onOpen(hacker);
+              }}
+              tabIndex={0}
               // Click opens the applicant; shift-click extends the selection
               // from the last row clicked. Selection also lives on the checkbox
               // column, so both gestures are available — requiring a 20px
               // checkbox for every pick is what made multi-select feel broken.
               onClick={(event) => {
                 if (event.shiftKey) {
-                  // Stops the browser painting a text selection across the rows
-                  // being swept.
-                  event.preventDefault();
                   onToggleRange(hacker.attendeeId);
                   return;
                 }
                 onOpen(hacker);
               }}
+              // `preventDefault` on click is too late to stop the browser
+              // painting a text selection across a shift-sweep — that is
+              // decided on mousedown.
+              onMouseDown={(event) => {
+                if (event.shiftKey) event.preventDefault();
+              }}
             >
-              <TableCell className="pl-4">
+              {/*
+                The whole cell is the hit area, not the 20px box — this is the
+                densest part of the screen and a mis-tap would open the detail
+                dialog instead of selecting.
+              */}
+              <TableCell
+                className="pl-4"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  // Shift on the checkbox means the same thing it means on the
+                  // row. Previously it silently degraded to a single toggle,
+                  // with no signal that the gesture had done something else.
+                  if (event.shiftKey) onToggleRange(hacker.attendeeId);
+                  else onToggle(hacker.attendeeId);
+                }}
+              >
                 <Checkbox
                   aria-label={`Select ${hacker.name}`}
                   checked={isSelected}
-                  // The row handler owns selection; this is a visual affordance
-                  // and a keyboard target, so it must not toggle twice.
-                  onCheckedChange={() => onToggle(hacker.attendeeId)}
-                  onClick={(event) => event.stopPropagation()}
+                  // The cell owns the click; this is the visual and keyboard
+                  // affordance, so it must not toggle a second time.
+                  onClick={(event) => event.preventDefault()}
+                  tabIndex={-1}
                 />
               </TableCell>
               <TableCell className="min-w-0">

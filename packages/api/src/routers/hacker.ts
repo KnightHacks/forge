@@ -41,6 +41,7 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import {
+  assertStatusMailDeliverable,
   prepareStatusMail,
   writeStatusMail,
 } from "../utils/hacker/status-mail";
@@ -84,20 +85,26 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   if (filter.status) clauses.push(eq(HackerAttendee.status, filter.status));
   // `sql` rather than `eq`: both columns are typed as unions of several
   // thousand literal values, so `eq` demands a member of that union while the
-  // filter carries whatever the officer picked. The comparison is identical;
-  // only the type-level narrowing differs.
-  // `sql` rather than `inArray`: both columns are typed as unions of several
-  // thousand literal values, so the typed helper demands members of that union
-  // while the filter carries whatever an officer picked from the data.
+  // `in`, not `= any(...)`.
+  //
+  // Interpolating a JS array into drizzle's `sql` tag expands it to a
+  // parenthesised *parameter list* — `($1, $2)` — which is exactly what `in`
+  // wants and is not a Postgres array. Written as `= any(...)` it produced
+  // `= any(($1, $2))`, and every filter 500'd with "malformed array literal"
+  // on the first school an officer ticked.
+  //
+  // These stay in `sql` rather than `inArray` because both columns are typed as
+  // unions of several thousand literals, while the filter carries whatever an
+  // officer picked out of the data.
   if (filter.schools?.length) {
-    clauses.push(sql`${Hacker.school} = any(${filter.schools})`);
+    clauses.push(sql`${Hacker.school} in ${filter.schools}`);
   }
   if (filter.levelsOfStudy?.length) {
-    clauses.push(sql`${Hacker.levelOfStudy} = any(${filter.levelsOfStudy})`);
+    clauses.push(sql`${Hacker.levelOfStudy} in ${filter.levelsOfStudy}`);
   }
   if (filter.graduationYears?.length) {
     clauses.push(
-      sql`extract(year from ${Hacker.gradDate}) = any(${filter.graduationYears})`,
+      sql`extract(year from ${Hacker.gradDate}) in ${filter.graduationYears}`,
     );
   }
   if (filter.graduationTerms?.length) {
@@ -108,7 +115,7 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
             when extract(month from ${Hacker.gradDate}) <= 5 then 'Spring'
             when extract(month from ${Hacker.gradDate}) <= 7 then 'Summer'
             else 'Fall'
-          end) = any(${filter.graduationTerms})`,
+          end) in ${filter.graduationTerms}`,
     );
   }
   if (filter.blacklisted !== undefined) {
@@ -287,9 +294,12 @@ export const hackerRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
 
+      // DISTINCT at the database. Without it this moved every attendee row —
+      // 1448 on the largest hackathon today — to build a list of about a dozen
+      // schools, and it re-runs on every roster mount and hackathon switch.
       const rows = await db
-        .select({
-          gradDate: Hacker.gradDate,
+        .selectDistinct({
+          gradYear: sql<number>`extract(year from ${Hacker.gradDate})::int`,
           levelOfStudy: Hacker.levelOfStudy,
           school: Hacker.school,
         })
@@ -301,13 +311,9 @@ export const hackerRouter = createTRPCRouter({
         [...new Set(values)].sort((left, right) => left.localeCompare(right));
 
       return {
-        graduationYears: [
-          ...new Set(
-            rows.flatMap((row) =>
-              row.gradDate ? [new Date(row.gradDate).getUTCFullYear()] : [],
-            ),
-          ),
-        ].sort((left, right) => left - right),
+        graduationYears: [...new Set(rows.map((row) => row.gradYear))].sort(
+          (left, right) => left - right,
+        ),
         levelsOfStudy: distinct(rows.map((row) => row.levelOfStudy)),
         schools: distinct(rows.map((row) => row.school)),
       };
@@ -508,7 +514,7 @@ export const hackerRouter = createTRPCRouter({
           .from(HackerAttendee)
           .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
           .where(eq(HackerAttendee.id, input.attendeeId))
-          .for("update")
+          .for("update", { of: HackerAttendee })
           .limit(1);
 
         if (!attendee) {
@@ -602,7 +608,11 @@ export const hackerRouter = createTRPCRouter({
     .input(hackerBulkPreviewSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
-      await requireHackathon(input.hackathonId);
+      const hackathon = await requireHackathon(input.hackathonId);
+      // The same gates the confirm runs. A preview that promises "sending to
+      // 300" and then dies on confirm has failed at the one job it has.
+      assertHackathonNotEnded(hackathon);
+      assertStatusMailDeliverable();
       await assertHackathonReady(db, input.hackathonId);
 
       const { sending, skipped } = await resolveBulkTargets(db, input);
@@ -718,7 +728,7 @@ export const hackerRouter = createTRPCRouter({
           .from(HackerAttendee)
           .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
           .where(eq(HackerAttendee.id, input.attendeeId))
-          .for("update")
+          .for("update", { of: HackerAttendee })
           .limit(1);
 
         if (!attendee) {
@@ -814,7 +824,11 @@ async function resolveBulkTargets(
       ),
     );
 
-  const rows = await (lock ? base.for("update") : base);
+  // `of` matters: without it Postgres takes the lock on every table in the
+  // join, so a bulk of two thousand would hold row locks on two thousand
+  // `Hacker` rows for the life of the transaction — blocking those people from
+  // editing their own profiles in the club app until the officer commits.
+  const rows = await (lock ? base.for("update", { of: HackerAttendee }) : base);
 
   const found = new Map(rows.map((row) => [row.attendeeId, row]));
   const sending: StatusMailRecipient[] = [];

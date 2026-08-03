@@ -140,6 +140,11 @@ export const hackerSetBlacklistSchema = z.discriminatedUnion("blacklisted", [
   }),
 ]);
 
+/** The distinct values the roster's filters offer, for one hackathon. */
+export const hackerFilterOptionsSchema = z.object({
+  hackathonId: z.string().uuid(),
+});
+
 /**
  * Which of a set of selected applicants would survive a prospective filter.
  *
@@ -147,10 +152,6 @@ export const hackerSetBlacklistSchema = z.discriminatedUnion("blacklisted", [
  * and the interesting case is precisely the one where a selected row is on a
  * page nobody is looking at.
  */
-export const hackerFilterOptionsSchema = z.object({
-  hackathonId: z.string().uuid(),
-});
-
 export const hackerSelectionSurvivalSchema = z.object({
   attendeeIds: z.array(z.string().uuid()).min(1).max(5000),
   filter: hackerRosterFilterSchema.default({}),
