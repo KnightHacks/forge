@@ -413,8 +413,8 @@ export const AUDIT_ACTION_CATALOG = {
     "Edited hacker profile",
     [],
     [
-      "age",
       "country",
+      "dob",
       "discordUser",
       "email",
       "firstName",

@@ -21,6 +21,14 @@ import { hackerRosterFilterSchema } from "@forge/validators";
  */
 export interface RosterUrlState {
   filter: HackerRosterFilter;
+  /**
+   * The applicant whose panel is open, so a link opens on the same person.
+   *
+   * The member directory does this with `?member=`; an officer asking a
+   * colleague "what do you make of this one" should be able to paste a URL
+   * rather than describe how to find the row.
+   */
+  hackerId: string | null;
   hackathonId: string | null;
   navigating: boolean;
   /**
@@ -44,6 +52,7 @@ export interface RosterUrlState {
   wouldMove: (patch: RosterFilterPatch) => boolean;
   /** Applies only the keys present on `patch`. Returns whether the URL moved. */
   setFilter: (patch: RosterFilterPatch) => boolean;
+  setHackerId: (next: string | null) => boolean;
   setHackathonId: (next: string) => boolean;
   setShowAll: (next: boolean) => boolean;
   showAll: boolean;
@@ -81,6 +90,7 @@ const SCALAR_KEYS = [
   "ageMin",
   "ageMax",
   "hasDietaryNeeds",
+  "isFirstTime",
 ] as const;
 
 /**
@@ -136,8 +146,10 @@ function applyPatch(base: string, patch: RosterFilterPatch) {
     const value = patch[key];
     // `hasDietaryNeeds: false` is a filter, not an absence — the others use
     // `false` to mean "not applied", so only this one keeps it.
+    // `false` is a filter for the tri-state keys, not an absence — the others
+    // use `false` to mean "not applied".
     const clears =
-      key === "hasDietaryNeeds"
+      key === "hasDietaryNeeds" || key === "isFirstTime"
         ? value === undefined
         : value === undefined || value === "" || value === false;
     if (clears) params.delete(key);
@@ -155,6 +167,10 @@ function applyPatch(base: string, patch: RosterFilterPatch) {
     }
   }
   return params;
+}
+
+function triState(value: string | null) {
+  return value === "true" ? true : value === "false" ? false : undefined;
 }
 
 function numeric(value: string | null) {
@@ -186,14 +202,10 @@ function parseFilter(params: {
     ageMin: numeric(params.get("ageMin")),
     blacklisted: params.get("blacklisted") === "true" ? true : undefined,
     deliveryFailed: params.get("deliveryFailed") === "true" ? true : undefined,
-    // Tri-state: absent means "either", and `false` is a real choice, so it
+    // Tri-state: absent means "either", and `false` is a real choice, so these
     // cannot collapse to `undefined` the way the other booleans do.
-    hasDietaryNeeds:
-      params.get("hasDietaryNeeds") === "true"
-        ? true
-        : params.get("hasDietaryNeeds") === "false"
-          ? false
-          : undefined,
+    hasDietaryNeeds: triState(params.get("hasDietaryNeeds")),
+    isFirstTime: triState(params.get("isFirstTime")),
     // Years are the one list that is not strings.
     graduationYears: list("graduationYears")
       ?.map(Number)
@@ -322,6 +334,7 @@ export function useRosterUrlState(
   );
 
   return {
+    hackerId: searchParams.get("hacker"),
     filter,
     hackathonId: searchParams.get("hackathon"),
     navigating,
@@ -348,6 +361,16 @@ export function useRosterUrlState(
         return params.toString() !== sortedBase.toString();
       },
       [searchParams],
+    ),
+    setHackerId: useCallback(
+      (next) =>
+        write((base) => {
+          const params = new URLSearchParams(base);
+          if (next) params.set("hacker", next);
+          else params.delete("hacker");
+          return params;
+        }),
+      [write],
     ),
     setHackathonId: useCallback(
       (next) =>

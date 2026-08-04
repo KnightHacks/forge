@@ -108,7 +108,7 @@ export function HackerRoster({
   const utils = api.useUtils();
 
   const [bulkStatus, setBulkStatus] = useState<SendingStatus | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
+
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
 
@@ -435,7 +435,7 @@ export function HackerRoster({
               <HackerTable
                 busy={filterBusy}
                 hackers={hackers}
-                onOpen={(hacker) => setDetailId(hacker.attendeeId)}
+                onOpen={(hacker) => url.setHackerId(hacker.attendeeId)}
                 onSelectAllShown={(next) =>
                   selection.setAllShown(shownIds, next)
                 }
@@ -484,16 +484,13 @@ export function HackerRoster({
       />
 
       <HackerDetailDialog
-        attendeeId={detailId}
+        attendeeId={url.hackerId}
         blocked={blocked}
         blockedReason={blockedReason}
         onOpenChange={(open) => {
-          if (!open) setDetailId(null);
+          if (!open) url.setHackerId(null);
         }}
-        onSaved={() => {
-          setDetailId(null);
-          void refresh();
-        }}
+        onSaved={() => void refresh()}
       />
 
       <FilterChangeDialog

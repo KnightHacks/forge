@@ -70,6 +70,13 @@ export const hackerRosterFilterSchema = z.object({
   ageMax: z.number().int().min(0).max(120).optional(),
   /** Applicants who wrote something in the dietary field. */
   hasDietaryNeeds: z.boolean().optional(),
+  /**
+   * Whether this is their first hackathon.
+   *
+   * Read from `Hacker.isFirstTime`, which is declared once on the profile rather
+   * than per hackathon — see the note on the filter clause.
+   */
+  isFirstTime: z.boolean().optional(),
   graduationTerms: z.array(z.enum(GRADUATION_TERMS)).max(3).optional(),
   graduationYears: z
     .array(z.number().int().min(1900).max(2200))
@@ -218,10 +225,20 @@ export const hackerAwardPointsSchema = z.object({
  * is a write error rather than a validation failure.
  */
 export const hackerUpdateProfileSchema = z.object({
-  age: z.number().int().min(0).max(120).optional(),
   attendeeId: z.string().uuid(),
   country: z.enum(FORMS.COUNTRIES).optional(),
   discordUser: z.string().trim().min(1).max(255).optional(),
+  /**
+   * The source of truth for age.
+   *
+   * Age is derived from this now, so correcting it is what actually fixes a
+   * wrong age — typing an age directly would be overwritten by the next read.
+   */
+  dob: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   email: z.string().trim().email().max(255).optional(),
   firstName: z.string().trim().min(1).max(255).optional(),
   foodAllergies: z.string().trim().max(500).nullish(),

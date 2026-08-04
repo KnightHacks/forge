@@ -254,6 +254,15 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   // for the wrong reason, because the blacklist guard throws the identical
   // PRECONDITION_FAILED code.
   afterEach(async () => {
+    await client
+      .update(knightHacks.Hacker)
+      .set({ isFirstTime: false })
+      .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
+    // Date of birth, which the age tests move.
+    await client
+      .update(knightHacks.Hacker)
+      .set({ age: 20, dob: "2006-01-01" })
+      .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
     // Emails too. The duplicate-email test rewrites one, and restoring it in the
     // test body means a failure before that line leaks the collision into every
     // later test — which today is masked only by declaration order, since the
@@ -645,6 +654,35 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       );
     });
 
+    it("filters by first hackathon in both directions", async () => {
+      await client
+        .update(knightHacks.Hacker)
+        .set({ isFirstTime: true })
+        .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
+
+      const first = await caller.hacker.listForHackathon({
+        filter: { isFirstTime: true },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(first.hackers.map((row) => row.attendeeId)).toContain(
+        PLAIN_ATTENDEE,
+      );
+
+      // A null has never been answered, which is not the same as "no" — but for
+      // the purpose of "who is returning" it has to fall on one side, and the
+      // roster treats an unanswered question as not a declared first-timer.
+      const returning = await caller.hacker.listForHackathon({
+        filter: { isFirstTime: false },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(returning.hackers.map((row) => row.attendeeId)).not.toContain(
+        PLAIN_ATTENDEE,
+      );
+      expect(
+        first.hackers.length + returning.hackers.length,
+      ).toBeGreaterThanOrEqual(1);
+    });
+
     it("combines facets with AND", async () => {
       // Within a facet the values are OR; across facets they are AND. Getting
       // that backwards would widen a capacity filter instead of narrowing it.
@@ -783,6 +821,58 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .select()
         .from(knightHacks.EmailSendRecipient);
       expect(recipients).toHaveLength(1);
+    });
+  });
+
+  describe("age", () => {
+    /**
+     * Stored age is what someone declared when they applied and is never aged
+     * up — the application lives in the legacy site, which has no reason to come
+     * back on anyone's birthday. Two thirds of the real roster is stale because
+     * of it, always understated.
+     */
+    it("is derived from the date of birth, not read from the stored column", async () => {
+      // Born twenty years ago yesterday: their birthday has passed, so a stored
+      // age of 19 is exactly the drift this replaces.
+      const born = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+      born.setFullYear(born.getFullYear() - 20);
+      await client
+        .update(knightHacks.Hacker)
+        .set({ age: 19, dob: born.toISOString().slice(0, 10) })
+        .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
+
+      const detail = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+      expect(detail.age).toBe(20);
+      // The declaration is still on the record; it is simply not what "age"
+      // means on this screen.
+      expect(detail.ageAtApplication).toBe(19);
+    });
+
+    it("filters on the derived age, which a lazy repair could not fix", async () => {
+      const born = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000);
+      born.setFullYear(born.getFullYear() - 20);
+      await client
+        .update(knightHacks.Hacker)
+        .set({ age: 19, dob: born.toISOString().slice(0, 10) })
+        .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
+
+      // The filter runs in SQL over rows nobody has read, so repairing on read
+      // would leave this applicant out of their own age bracket.
+      const twenties = await caller.hacker.listForHackathon({
+        filter: { ageMin: 20 },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(twenties.hackers.map((row) => row.attendeeId)).toContain(
+        PLAIN_ATTENDEE,
+      );
+
+      const teens = await caller.hacker.listForHackathon({
+        filter: { ageMax: 19 },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(teens.hackers.map((row) => row.attendeeId)).not.toContain(
+        PLAIN_ATTENDEE,
+      );
     });
   });
 

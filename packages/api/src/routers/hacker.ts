@@ -8,11 +8,9 @@ import {
   count,
   eq,
   gt,
-  gte,
   inArray,
   isNotNull,
   isNull,
-  lte,
   or,
   sql,
 } from "@forge/db";
@@ -82,6 +80,26 @@ const ROSTER_COLUMNS = {
   status: HackerAttendee.status,
 } as const;
 
+/**
+ * Age as of today, derived from the date of birth.
+ *
+ * `Hacker.age` is captured once when someone applies and never revisited — the
+ * application lives in the legacy site, which has no reason to come back and
+ * age everyone up on their birthday. Two thirds of the roster is stale as a
+ * result, always understated, by up to two years for anyone who applied to an
+ * earlier hackathon.
+ *
+ * Derived rather than repaired on read. A lazy write-back cannot fix the
+ * *filter*, which runs in SQL across rows nobody has read yet, so "18 and over"
+ * would still miss whoever has not been looked at since their birthday — and it
+ * would put a write on a read path, which on a pool of ten connections with no
+ * timeout is how this process deadlocks.
+ *
+ * The stored column stays as it is: it is an honest record of what someone
+ * declared when they applied.
+ */
+const currentAge = sql<number>`date_part('year', age(${Hacker.dob}))::int`;
+
 /** Every filter the roster supports, composed as AND. */
 function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   const clauses: (SQL | undefined)[] = [
@@ -123,10 +141,30 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
     clauses.push(sql`${Hacker.shirtSize}::text in ${filter.shirtSizes}`);
   }
   if (filter.ageMin !== undefined) {
-    clauses.push(gte(Hacker.age, filter.ageMin));
+    clauses.push(sql`${currentAge} >= ${filter.ageMin}`);
   }
   if (filter.ageMax !== undefined) {
-    clauses.push(lte(Hacker.age, filter.ageMax));
+    clauses.push(sql`${currentAge} <= ${filter.ageMax}`);
+  }
+  if (filter.isFirstTime !== undefined) {
+    /*
+      Self-declared, and declared on the *profile* rather than per hackathon.
+
+      So it does not reset between events: someone who ticked it for their first
+      Knight Hacks still reads as a first-timer at the next one unless they go
+      back and change it. Treated as "they said so" rather than "this is their
+      first", which is the honest reading of the column and the only one the data
+      supports today. Deriving it from a prior attendance record would be a
+      different filter and is deliberately not what this is.
+
+      `isFirstTime` is nullable, and a null has never been answered — which is
+      not the same as "no", so it only ever matches the false case explicitly.
+    */
+    clauses.push(
+      filter.isFirstTime
+        ? eq(Hacker.isFirstTime, true)
+        : sql`coalesce(${Hacker.isFirstTime}, false) = false`,
+    );
   }
   if (filter.hasDietaryNeeds !== undefined) {
     // Blank and null both mean "nothing to accommodate" — the form writes an
@@ -441,7 +479,9 @@ export const hackerRouter = createTRPCRouter({
 
       const [row] = await db
         .select({
-          age: Hacker.age,
+          age: currentAge,
+          ageAtApplication: Hacker.age,
+          dob: Hacker.dob,
           attendeeId: HackerAttendee.id,
           blacklistReason: HackerAttendee.blacklistReason,
           blacklistedAt: HackerAttendee.blacklistedAt,

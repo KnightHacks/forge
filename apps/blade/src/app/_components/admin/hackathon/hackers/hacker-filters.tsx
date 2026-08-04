@@ -91,6 +91,12 @@ export function activeFilters(filter: RosterFilter): ActiveFilter[] {
     const high = filter.ageMax ?? "any";
     chips.push({ field: "ageMin", label: `Age ${low}–${high}` });
   }
+  if (filter.isFirstTime !== undefined) {
+    chips.push({
+      field: "isFirstTime",
+      label: filter.isFirstTime ? "First hackathon" : "Returning hacker",
+    });
+  }
   if (filter.hasDietaryNeeds !== undefined) {
     chips.push({
       field: "hasDietaryNeeds",
@@ -417,6 +423,34 @@ export function HackerFilters({
                   type="number"
                   value={draft.ageMax ?? ""}
                 />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>First hackathon</Label>
+              {/* Self-declared on the profile, so it does not reset between
+                  events — "they said so", not "this is provably their first". */}
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["Either", undefined],
+                    ["First-timers", true],
+                    ["Returning", false],
+                  ] as const
+                ).map(([label, value]) => (
+                  <Button
+                    aria-pressed={draft.isFirstTime === value}
+                    className="min-h-11 text-sm"
+                    key={label}
+                    onClick={() => setDraft({ ...draft, isFirstTime: value })}
+                    size="sm"
+                    variant={
+                      draft.isFirstTime === value ? "secondary" : "outline"
+                    }
+                  >
+                    {label}
+                  </Button>
+                ))}
               </div>
             </div>
 

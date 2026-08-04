@@ -11,8 +11,10 @@ import {
   MessageSquareText,
   Pencil,
   Send,
+  ShieldAlert,
   Sparkles,
   UserRound,
+  Utensils,
 } from "lucide-react";
 
 import { FORMS } from "@forge/consts";
@@ -43,8 +45,8 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** Only what the edit form reads, so it does not depend on the whole DTO. */
 interface HackerEditable {
-  age: number;
   country: string;
+  dob: string;
   discordUser: string;
   email: string;
   firstName: string;
@@ -260,6 +262,9 @@ export function HackerDetailDialog({
                 className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"
               >
                 <SummaryMetric label="Points" value={hacker.points} />
+                {/* Derived from the date of birth on every read, because the
+                    stored age is captured once at application time and never
+                    ages up. */}
                 <SummaryMetric label="Age" value={hacker.age} />
                 <SummaryMetric
                   label="Discord messages"
@@ -276,6 +281,33 @@ export function HackerDetailDialog({
               </section>
             </DialogHeader>
 
+            {hacker.age < 18 ? (
+              <div className="mx-4 mb-4 rounded-lg border-2 border-amber-500 bg-amber-500/20 p-5 sm:mx-6">
+                <p className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <ShieldAlert className="size-5 shrink-0" aria-hidden="true" />
+                  Under 18 — {hacker.age} years old
+                </p>
+                <p className="mt-2 text-sm text-foreground/80">
+                  MLH requires a signed parental consent form before this
+                  applicant can attend, and they cannot be left unsupervised.
+                  Check this before accepting.
+                </p>
+              </div>
+            ) : null}
+
+            {hacker.foodAllergies?.trim() ? (
+              <div className="mx-4 mb-4 rounded-lg border border-primary/40 bg-primary/10 p-4 sm:mx-6">
+                <p className="flex items-center gap-2 font-semibold text-foreground">
+                  <Utensils className="size-4 shrink-0" aria-hidden="true" />
+                  Dietary needs
+                </p>
+                {/* Verbatim: an allergy paraphrased is an allergy missed. */}
+                <p className="mt-1.5 text-base leading-relaxed text-foreground">
+                  {hacker.foodAllergies}
+                </p>
+              </div>
+            ) : null}
+
             {hacker.deliveryFailed ? (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                 <p className="flex items-center gap-2 font-medium text-destructive">
@@ -290,12 +322,18 @@ export function HackerDetailDialog({
             ) : null}
 
             {hacker.blacklisted ? (
-              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
-                <p className="font-medium text-destructive">Blacklisted</p>
-                <p className="mt-1 text-sm text-destructive/90">
-                  {hacker.blacklistReason}
+              <div className="mx-4 mb-4 rounded-lg border-2 border-destructive/70 bg-destructive/20 p-5 sm:mx-6">
+                <p className="flex items-center gap-2 text-base font-semibold text-destructive-foreground">
+                  <Ban className="size-5 shrink-0" aria-hidden="true" />
+                  Blacklisted
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                {/* The reason is the whole point of the banner — a year from now
+                    it is the only thing that explains the flag — so it reads as
+                    the message rather than a footnote under it. */}
+                <blockquote className="mt-3 border-l-4 border-destructive/70 bg-background/30 py-2 pl-4 text-base font-medium leading-relaxed text-destructive-foreground">
+                  {hacker.blacklistReason}
+                </blockquote>
+                <p className="mt-3 text-sm text-destructive-foreground/80">
                   They cannot be accepted. Capacity reject still works — that is
                   how they leave the funnel. They are never told about this.
                 </p>
@@ -446,13 +484,31 @@ export function HackerDetailDialog({
                 </DetailSection>
 
                 <DetailSection
-                  description="What they gave us, and how to reach them."
+                  description="Who they are, and how to reach them."
                   icon={UserRound}
-                  title="Contact"
+                  title="Personal info"
                 >
                   <DetailRow label="Email" value={hacker.email} />
                   <DetailRow label="Phone" value={hacker.phoneNumber} />
                   <DetailRow label="Country" value={hacker.country} />
+                  {/* Derived from the date of birth on every read. The declared
+                      figure sits beside it, since that is what they attested
+                      to and it is what MLH paperwork quotes. */}
+                  <DetailRow
+                    label="Age"
+                    value={`${hacker.age} (declared ${hacker.ageAtApplication})`}
+                  />
+                  <DetailRow
+                    label="Date of birth"
+                    value={new Date(hacker.dob).toLocaleDateString(undefined, {
+                      timeZone: "UTC",
+                    })}
+                  />
+                  <DetailRow label="Gender" value={hacker.gender} />
+                  <DetailRow
+                    label="Race / ethnicity"
+                    value={hacker.raceOrEthnicity}
+                  />
                   <DetailRow
                     label="Dietary"
                     value={hacker.foodAllergies ?? "Not given"}
@@ -473,10 +529,6 @@ export function HackerDetailDialog({
                       undefined,
                       { month: "long", timeZone: "UTC", year: "numeric" },
                     )}
-                  />
-                  <DetailRow
-                    label="Race / ethnicity"
-                    value={hacker.raceOrEthnicity}
                   />
                   <DetailRow label="Shirt" value={hacker.shirtSize} />
                   <DetailRow
@@ -775,10 +827,12 @@ function HackerEditForm({
     {
       fields: [
         {
-          label: "Age",
-          name: "age",
-          type: "number",
-          value: String(hacker.age),
+          // The date of birth, not the age: age is derived on every read now,
+          // so a hand-typed age would be discarded on the next render.
+          label: "Date of birth",
+          name: "dob",
+          type: "date",
+          value: hacker.dob.slice(0, 10),
         },
         {
           label: "Gender",
@@ -847,7 +901,6 @@ function HackerEditForm({
             const entry = data.get(name);
             const raw = typeof entry === "string" ? entry.trim() : "";
             if (raw === original.trim()) continue;
-            if (name === "age") patch[name] = Number(raw);
             // Cleared on purpose is a real answer for these — "nothing to
             // accommodate", "no resume" — so it survives as null, not "".
             else if (nullable.has(name)) patch[name] = raw === "" ? null : raw;
