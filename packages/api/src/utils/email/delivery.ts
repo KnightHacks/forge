@@ -6,6 +6,7 @@ import {
   EmailSend,
   EmailSendEvent,
   EmailSendRecipient,
+  Hacker,
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import {
@@ -66,16 +67,36 @@ async function loadCurrentDevelopmentAudienceEmails(
       : includesTeam
         ? eq(Roles.emailAudienceEnabled, true)
         : inArray(Roles.id, roleIds);
-  const rows = await db
-    .select({ memberEmail: Member.email, userEmail: User.email })
-    .from(Permissions)
-    .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
-    .innerJoin(User, eq(User.id, Permissions.userId))
-    .leftJoin(Member, eq(Member.userId, User.id))
-    .where(roleCondition);
+  const [rows, hackerRows] = await Promise.all([
+    db
+      .select({ memberEmail: Member.email, userEmail: User.email })
+      .from(Permissions)
+      .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+      .innerJoin(User, eq(User.id, Permissions.userId))
+      .leftJoin(Member, eq(Member.userId, User.id))
+      .where(roleCondition),
+    /*
+      Their hackathon application address counts too.
+
+      Status mail resolves recipients from `Hacker.email`, which people fill in
+      with a personal address and officers correct after a bounce — so it is
+      routinely not the address on their member record. Checking only member and
+      account emails refused a send to a sitting officer because his application
+      listed a different mailbox, which is a real address belonging to a real
+      team account and exactly who development mail is meant to reach.
+    */
+    db
+      .select({ hackerEmail: Hacker.email })
+      .from(Hacker)
+      .innerJoin(Permissions, eq(Permissions.userId, Hacker.userId))
+      .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+      .where(roleCondition),
+  ]);
   return new Set(
-    rows
-      .map(({ memberEmail, userEmail }) => memberEmail ?? userEmail)
+    [
+      ...rows.map(({ memberEmail, userEmail }) => memberEmail ?? userEmail),
+      ...hackerRows.map(({ hackerEmail }) => hackerEmail),
+    ]
       .filter((email): email is string => Boolean(email))
       .map(normalizeRecipientEmail),
   );

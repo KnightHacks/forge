@@ -171,7 +171,17 @@ function parseFilter(params: {
     const values = params.getAll(key);
     return values.length > 0 ? values : undefined;
   };
+  /*
+    List keys are read back from `LIST_KEYS`, not named again here.
+
+    Written out by hand, this object silently omitted `majors`,
+    `racesOrEthnicities`, `genders` and `shirtSizes`: the patch reached the URL,
+    the chip appeared, and the filter did nothing, because the value was dropped
+    on the way back in. Deriving it means a key that can be written can also be
+    read.
+  */
   const raw = {
+    ...Object.fromEntries(LIST_KEYS.map((key) => [key, list(key)])),
     ageMax: numeric(params.get("ageMax")),
     ageMin: numeric(params.get("ageMin")),
     blacklisted: params.get("blacklisted") === "true" ? true : undefined,
@@ -184,12 +194,10 @@ function parseFilter(params: {
         : params.get("hasDietaryNeeds") === "false"
           ? false
           : undefined,
-    graduationTerms: list("graduationTerms"),
+    // Years are the one list that is not strings.
     graduationYears: list("graduationYears")
       ?.map(Number)
       .filter((year) => Number.isInteger(year) && year >= 1900),
-    levelsOfStudy: list("levelsOfStudy"),
-    schools: list("schools"),
     search: params.get("search") ?? undefined,
     status: params.get("status") ?? undefined,
   };

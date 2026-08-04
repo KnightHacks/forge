@@ -62,6 +62,10 @@ import {
   uploadAccept,
 } from "@forge/validators";
 
+import {
+  DetailSection,
+  SummaryMetric,
+} from "~/app/_components/admin/shared/detail-panel";
 import { DiscordActivityTracker } from "~/app/_components/admin/shared/discord-activity-tracker";
 import {
   memberProfileFormDefaults,
@@ -158,37 +162,6 @@ function DetailValue({
   );
 }
 
-function DetailSection({
-  children,
-  description,
-  icon: Icon,
-  title,
-}: {
-  children: ReactNode;
-  description?: string;
-  icon: typeof UserRound;
-  title: string;
-}) {
-  return (
-    <section className="min-w-0 overflow-hidden rounded-lg border border-white/10 bg-background/45">
-      <div className="flex items-start gap-2.5 border-b border-border/70 px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
-        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-          <Icon className="h-4 w-4" aria-hidden="true" />
-        </div>
-        <div className="min-w-0">
-          <h3 className="font-semibold">{title}</h3>
-          {description && (
-            <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </div>
-      </div>
-      {children}
-    </section>
-  );
-}
-
 function ProfileLink({ href }: { href: string | null }) {
   if (!href) return "Not provided";
 
@@ -202,15 +175,6 @@ function ProfileLink({ href }: { href: string | null }) {
       <span className="min-w-0 break-all">{href}</span>
       <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
     </a>
-  );
-}
-
-function SummaryMetric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="min-w-0 rounded-md border border-white/10 bg-background/60 px-3 py-2.5">
-      <p className="font-mono text-lg font-semibold tabular-nums">{value}</p>
-      <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
-    </div>
   );
 }
 

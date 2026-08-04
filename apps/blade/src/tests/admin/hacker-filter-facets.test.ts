@@ -80,6 +80,28 @@ describe("changedFacets", () => {
     ).toEqual({ graduationYears: [2028] });
   });
 
+  // Every facet the panel offers, not just the ones that happened to exist when
+  // this helper was first written — those were silently omitted and the filters
+  // did nothing at all.
+  it.each([
+    ["majors", ["Computer Science"]],
+    ["racesOrEthnicities", ["Prefer not to answer"]],
+    ["genders", ["Prefer not to answer"]],
+    ["shirtSizes", ["M"]],
+    ["schools", ["University of Central Florida"]],
+    ["levelsOfStudy", ["Undergraduate University (3+ year)"]],
+  ] as const)("sends %s when it changes", (field, value) => {
+    const patch = changedFacets({}, { [field]: value });
+    expect(patch).toEqual({ [field]: value });
+  });
+
+  it("sends the age range and the dietary toggle", () => {
+    expect(changedFacets({}, { ageMin: 18 })).toEqual({ ageMin: 18 });
+    expect(changedFacets({}, { hasDietaryNeeds: false })).toEqual({
+      hasDietaryNeeds: false,
+    });
+  });
+
   it("sends nothing at all when nothing moved", () => {
     const seed = {
       graduationTerms: ["Fall" as const],

@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import type { HackathonSendingStatus } from "@forge/validators";
 import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions } from "@forge/db/schemas/auth";
+import { Permissions, Roles } from "@forge/db/schemas/auth";
 import {
   EmailSend,
   EmailSendRecipient,
@@ -109,9 +109,14 @@ export function withheldByDevelopmentGate(
  */
 async function resolveTeamUserIds(): Promise<Set<string> | null> {
   if (!developmentCampaignReviewEnabled()) return null;
+  // The same roles the delivery gate accepts, not merely "holds any role".
+  // Allowing a broader set here wrote recipient rows that delivery then refused,
+  // failing the whole send rather than narrowing it.
   const rows = await db
     .selectDistinct({ userId: Permissions.userId })
-    .from(Permissions);
+    .from(Permissions)
+    .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
+    .where(eq(Roles.emailAudienceEnabled, true));
   return new Set(rows.map((row) => row.userId));
 }
 

@@ -323,6 +323,57 @@ describe("useRosterUrlState", () => {
     });
   });
 
+  describe("every facet survives the round trip", () => {
+    /**
+     * Write it, read it back, and see it in `filter`.
+     *
+     * Four facets shipped where the write worked and the read did not: the chip
+     * appeared, the URL carried the value, and the roster ignored it. A filter
+     * that looks applied and is not is worse than one that visibly fails.
+     */
+    it.each([
+      ["majors", ["Computer Science"]],
+      ["racesOrEthnicities", ["Prefer not to answer"]],
+      ["genders", ["Prefer not to answer"]],
+      ["shirtSizes", ["M"]],
+      ["schools", ["University of Central Florida"]],
+      ["levelsOfStudy", ["Undergraduate University (3+ year)"]],
+    ] as const)("%s", (field, value) => {
+      const { result, rerender } = renderHook(() => useRosterUrlState());
+
+      act(() => void result.current.setFilter({ [field]: value }));
+      act(() => {
+        land(queryOf(0));
+        rerender();
+      });
+
+      expect(result.current.filter[field]).toEqual(value);
+    });
+
+    it("age range and dietary toggle", () => {
+      const { result, rerender } = renderHook(() => useRosterUrlState());
+
+      act(
+        () =>
+          void result.current.setFilter({
+            ageMax: 22,
+            ageMin: 18,
+            hasDietaryNeeds: false,
+          }),
+      );
+      act(() => {
+        land(queryOf(0));
+        rerender();
+      });
+
+      expect(result.current.filter.ageMin).toBe(18);
+      expect(result.current.filter.ageMax).toBe(22);
+      // `false` is a real choice here, unlike the other booleans where it means
+      // "not applied".
+      expect(result.current.filter.hasDietaryNeeds).toBe(false);
+    });
+  });
+
   describe("projectFilter", () => {
     it("resolves against a write still in flight, not the URL", () => {
       committed = "hackathon=h1";
