@@ -42,6 +42,7 @@ import {
 } from "../utils/audit/service";
 import {
   prepareStatusMail,
+  withheldByDevelopmentGate,
   writeStatusMail,
 } from "../utils/hacker/status-mail";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
@@ -237,6 +238,43 @@ function assertHackathonNotEnded(hackathon: {
     });
   }
 }
+
+/**
+ * The audit subjects for a bulk: the hackathon, then everyone who moved.
+ *
+ * "Bulk changed hacker status · movedCount 187" cannot answer the only question
+ * anyone brings to this log weeks later — was *she* in it? Counts describe the
+ * action; subjects describe who it happened to, and only subjects are queryable
+ * by person.
+ */
+export function bulkAuditSubjects(
+  hackathon: { displayName: string; id: string },
+  moved: { attendeeId: string; name: string }[],
+) {
+  return [
+    {
+      relation: "primary" as const,
+      targetId: hackathon.id,
+      targetLabel: hackathon.displayName,
+      targetType: "hackathon" as const,
+    },
+    ...moved.slice(0, BULK_AUDIT_SUBJECT_LIMIT).map((recipient) => ({
+      relation: "secondary" as const,
+      targetId: recipient.attendeeId,
+      targetLabel: recipient.name,
+      targetType: "hacker_attendee" as const,
+    })),
+  ];
+}
+
+/**
+ * How many applicants a bulk event names individually.
+ *
+ * High enough to cover any real capacity round in full — the largest hackathon
+ * so far is 1448 across every status, and one status bucket is far smaller — and
+ * bounded so a runaway selection cannot write an unbounded row.
+ */
+const BULK_AUDIT_SUBJECT_LIMIT = 500;
 
 /** Audit metadata takes scalars, so each reason worth tracing gets its own. */
 function countReason(skips: BulkSkip[], reason: SkipReason) {
@@ -517,6 +555,7 @@ export const hackerRouter = createTRPCRouter({
             blacklistedAt: HackerAttendee.blacklistedAt,
             email: Hacker.email,
             firstName: Hacker.firstName,
+            hackerUserId: Hacker.userId,
             hackathonId: HackerAttendee.hackathonId,
             lastName: Hacker.lastName,
             status: HackerAttendee.status,
@@ -565,6 +604,7 @@ export const hackerRouter = createTRPCRouter({
               firstName: attendee.firstName,
               name: `${attendee.firstName} ${attendee.lastName}`.trim(),
               status: input.status,
+              userId: attendee.hackerUserId,
             },
           ],
         );
@@ -603,7 +643,20 @@ export const hackerRouter = createTRPCRouter({
           tx,
         );
 
-        return { sendId, status: input.status };
+        return {
+          sendId,
+          status: input.status,
+          withheldCount: withheldByDevelopmentGate(prepared.teamUserIds, [
+            {
+              attendeeId: input.attendeeId,
+              email: attendee.email,
+              firstName: attendee.firstName,
+              name: `${attendee.firstName} ${attendee.lastName}`.trim(),
+              status: input.status,
+              userId: attendee.hackerUserId,
+            },
+          ]),
+        };
       });
     }),
 
@@ -682,7 +735,7 @@ export const hackerRouter = createTRPCRouter({
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
 
         if (sending.length === 0) {
-          return { movedCount: 0, sendId: null, skipped };
+          return { movedCount: 0, sendId: null, skipped, withheldCount: 0 };
         }
 
         const sendId = await writeStatusMail(
@@ -725,20 +778,34 @@ export const hackerRouter = createTRPCRouter({
               */
               skippedDuplicateEmail: countReason(skipped, "duplicate_email"),
               status: input.status,
+              // Stated when the subject list below is partial, so nobody reads
+              // a truncated list as the whole bulk.
+              subjectsTruncated: sending.length > BULK_AUDIT_SUBJECT_LIMIT,
+              withheldCount: withheldByDevelopmentGate(
+                prepared.teamUserIds,
+                sending,
+              ),
             },
-            subjects: [
-              {
-                relation: "primary",
-                targetId: input.hackathonId,
-                targetLabel: hackathon.displayName,
-                targetType: "hackathon",
-              },
-            ],
+            subjects: bulkAuditSubjects(
+              { displayName: hackathon.displayName, id: input.hackathonId },
+              sending,
+            ),
           },
           tx,
         );
 
-        return { movedCount: sending.length, sendId, skipped };
+        return {
+          movedCount: sending.length,
+          sendId,
+          skipped,
+          // Surfaced so the officer is told when a development run mails fewer
+          // people than it moved, instead of reporting a clean success and
+          // sending nothing.
+          withheldCount: withheldByDevelopmentGate(
+            prepared.teamUserIds,
+            sending,
+          ),
+        };
       });
     }),
 
@@ -843,6 +910,7 @@ async function resolveBulkTargets(
       email: Hacker.email,
       firstName: Hacker.firstName,
       timeApplied: HackerAttendee.timeApplied,
+      userId: Hacker.userId,
       lastName: Hacker.lastName,
       status: HackerAttendee.status,
     })
@@ -954,6 +1022,7 @@ async function resolveBulkTargets(
       firstName: row.firstName,
       name,
       status: input.status,
+      userId: row.userId,
     });
   }
 

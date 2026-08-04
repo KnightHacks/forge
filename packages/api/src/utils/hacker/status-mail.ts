@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import type { HackathonSendingStatus } from "@forge/validators";
 import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions, User } from "@forge/db/schemas/auth";
+import { Permissions } from "@forge/db/schemas/auth";
 import {
   EmailSend,
   EmailSendRecipient,
@@ -20,13 +20,13 @@ import { developmentCampaignReviewEnabled } from "../email/delivery";
 export interface PreparedStatusMail {
   content: Awaited<ReturnType<typeof materializeContent>>;
   /**
-   * Addresses allowed to receive this send, or `null` for no restriction.
+   * Accounts allowed to receive this send, or `null` for no restriction.
    *
    * Resolved before the transaction opens, like every other read here — a
    * pooled read issued while a transaction holds a connection can exhaust the
    * pool and deadlock the process.
    */
-  deliverableEmails: Set<string> | null;
+  teamUserIds: Set<string> | null;
   hackathon: StatusMailHackathon;
   hackathonAttributes: Record<string, string | undefined>;
   sendId: string;
@@ -40,6 +40,8 @@ export interface StatusMailRecipient {
   firstName: string;
   name: string;
   status: HackathonSendingStatus;
+  /** The Blade account behind the application, used for the dev-only gate. */
+  userId: string | null;
 }
 
 export interface StatusMailHackathon {
@@ -73,12 +75,31 @@ export interface StatusMailHackathon {
  * commit together — the invariant that replaced the original AC-009 when the
  * pipeline turned out to be asynchronous.
  */
+/** How many of a set would be withheld by the development gate. */
+export function withheldByDevelopmentGate(
+  teamUserIds: Set<string> | null,
+  recipients: StatusMailRecipient[],
+) {
+  if (!teamUserIds) return 0;
+  return recipients.filter(
+    (recipient) =>
+      recipient.userId === null || !teamUserIds.has(recipient.userId),
+  ).length;
+}
+
 /**
  * Who may actually receive status mail here.
  *
  * `null` in production: everyone the officer selected. In development it is the
- * set of addresses belonging to someone who holds a role — the team — and every
- * other recipient is dropped before the send is written.
+ * set of Blade accounts holding a role — the team — and every recipient whose
+ * application is not linked to one of them is dropped before the send is
+ * written.
+ *
+ * Matched on **account, not address**. `User.email` is a synthetic
+ * `<discordId>@blade.org` placeholder, because Blade authenticates through
+ * Discord and never learns a real address — so comparing it against
+ * `Hacker.email` matched nobody, and the first live test sent nothing at all
+ * while reporting a successful bulk.
  *
  * The status change itself still happens for everyone, so the roster behaves
  * exactly as it will in production and the flow is testable end to end. What
@@ -86,17 +107,12 @@ export interface StatusMailHackathon {
  * the same rule the campaign path already applies, which restricts development
  * delivery to team members and explicit role audiences.
  */
-async function resolveDeliverableEmails(): Promise<Set<string> | null> {
+async function resolveTeamUserIds(): Promise<Set<string> | null> {
   if (!developmentCampaignReviewEnabled()) return null;
   const rows = await db
-    .selectDistinct({ email: User.email })
-    .from(Permissions)
-    .innerJoin(User, eq(User.id, Permissions.userId));
-  return new Set(
-    rows
-      .map((row) => row.email?.trim().toLowerCase())
-      .filter((email): email is string => Boolean(email)),
-  );
+    .selectDistinct({ userId: Permissions.userId })
+    .from(Permissions);
+  return new Set(rows.map((row) => row.userId));
 }
 
 export async function prepareStatusMail({
@@ -178,7 +194,7 @@ export async function prepareStatusMail({
 
   return {
     content,
-    deliverableEmails: await resolveDeliverableEmails(),
+    teamUserIds: await resolveTeamUserIds(),
     hackathon,
     hackathonAttributes,
     sendId,
@@ -220,13 +236,17 @@ export async function writeStatusMail(
     what lets `processEmailSend` accept it: it refuses a hackathon audience
     outside production.
   */
-  const deliverable = prepared.deliverableEmails
-    ? recipients.filter((recipient) =>
-        prepared.deliverableEmails?.has(recipient.email.trim().toLowerCase()),
+  const deliverable = prepared.teamUserIds
+    ? recipients.filter(
+        (recipient) =>
+          recipient.userId !== null &&
+          prepared.teamUserIds?.has(recipient.userId),
       )
     : recipients;
   // Nothing to send is not a failure here; the officer's status change stands
-  // and the attendee simply has no send to point at.
+  // and the attendee simply has no send to point at. The caller reports the
+  // gap — a bulk that silently mails nobody while announcing success is exactly
+  // how the first live test was lost.
   if (deliverable.length === 0) return null;
 
   /*
@@ -242,7 +262,7 @@ export async function writeStatusMail(
     shipped broken the first time.
   */
   await tx.insert(EmailSend).values({
-    audienceDefinition: prepared.deliverableEmails
+    audienceDefinition: prepared.teamUserIds
       ? [{ kind: "team_members" }]
       : [{ hackathonId: hackathon.id, kind: "hackathon", statuses: [status] }],
     audienceHash: sendId,

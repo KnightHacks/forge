@@ -73,8 +73,12 @@ export function HackerDetailDialog({
 
   const setStatus = api.hacker.setStatus.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: () => {
-      toast.success("Status updated. The email is queued.");
+    onSuccess: (result) => {
+      toast.success(
+        result.withheldCount
+          ? "Status updated. No email sent — this environment only sends to the team."
+          : "Status updated. The email is queued.",
+      );
       onSaved();
     },
   });

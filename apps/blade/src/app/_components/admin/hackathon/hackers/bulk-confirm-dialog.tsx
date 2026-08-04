@@ -87,9 +87,13 @@ export function BulkConfirmDialog({
     onSuccess: (result) => {
       const skippedNote =
         result.skipped.length > 0 ? `, ${result.skipped.length} skipped` : "";
-      toast.success(
-        `${result.movedCount} moved${skippedNote}. The email is queued.`,
-      );
+      // The withheld note only ever appears outside production, where sends are
+      // narrowed to the team. Saying "queued" with nothing queued is how a live
+      // test looked successful and mailed nobody.
+      const withheldNote = result.withheldCount
+        ? ` Email withheld for ${result.withheldCount} — this environment only sends to the team.`
+        : " The email is queued.";
+      toast.success(`${result.movedCount} moved${skippedNote}.${withheldNote}`);
       onDone();
     },
   });

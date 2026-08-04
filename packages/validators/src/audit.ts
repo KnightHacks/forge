@@ -377,7 +377,18 @@ export const AUDIT_ACTION_CATALOG = {
     // already-at-status leaves the status, a missing applicant leaves no row.
     // A collapsed duplicate exists nowhere else once the officer closes the
     // toast, and "why was I never told?" has to be answerable weeks later.
-    ["status", "movedCount", "skippedCount", "skippedDuplicateEmail", "sendId"],
+    [
+      "status",
+      "movedCount",
+      "skippedCount",
+      "skippedDuplicateEmail",
+      "sendId",
+      // True when the bulk moved more applicants than the event names
+      // individually, so a partial subject list is never read as the whole set.
+      "subjectsTruncated",
+      // Non-zero only outside production, where sends are narrowed to the team.
+      "withheldCount",
+    ],
   ),
   // The reason is recorded here as well as on the row, because the row's
   // reason is overwritten by the next blacklist and the log is what survives.
