@@ -392,6 +392,37 @@ export const AUDIT_ACTION_CATALOG = {
   ),
   // The reason is recorded here as well as on the row, because the row's
   // reason is overwritten by the next blacklist and the log is what survives.
+  /*
+    Manual point awards live in the audit log rather than a ledger table.
+
+    `HackerAttendee.points` is a single integer with no history of its own, and
+    the audit event already records actor, time, subject and metadata — which is
+    exactly the ledger a manual award needs. Adding a table would duplicate that
+    and require a migration; this does not.
+  */
+  "hacker.points_awarded": policy("hackathons", "Adjusted hacker points", [
+    "delta",
+    "reason",
+    "resultingPoints",
+  ]),
+  // The correctable fields, named so the log shows which one an officer
+  // touched. Deliberately not school, major or the MLH consent answers — those
+  // are the applicant's own answers, not an officer's to rewrite.
+  "hacker.profile_updated": policy(
+    "hackathons",
+    "Edited hacker profile",
+    [],
+    [
+      "age",
+      "discordUser",
+      "email",
+      "firstName",
+      "foodAllergies",
+      "lastName",
+      "phoneNumber",
+      "shirtSize",
+    ],
+  ),
   "hacker.blacklisted": policy("hackathons", "Blacklisted hacker", ["reason"]),
   "hacker.unblacklisted": policy("hackathons", "Removed hacker blacklist"),
   "role.synced": policy("roles", "Synced linked role", [

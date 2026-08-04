@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { FORMS } from "@forge/consts";
+
 import { hackathonSendingStatusSchema } from "./hackathons";
 
 /**
@@ -62,8 +64,12 @@ export const hackerRosterFilterSchema = z.object({
   majors: z.array(z.string().trim().max(255)).max(100).optional(),
   racesOrEthnicities: z.array(z.string().trim().max(255)).max(50).optional(),
   genders: z.array(z.string().trim().max(255)).max(20).optional(),
-  countries: z.array(z.string().trim().max(255)).max(100).optional(),
   shirtSizes: z.array(z.string().trim().max(16)).max(20).optional(),
+  /** Inclusive age range. Either end may stand alone. */
+  ageMin: z.number().int().min(0).max(120).optional(),
+  ageMax: z.number().int().min(0).max(120).optional(),
+  /** Applicants who wrote something in the dietary field. */
+  hasDietaryNeeds: z.boolean().optional(),
   graduationTerms: z.array(z.enum(GRADUATION_TERMS)).max(3).optional(),
   graduationYears: z
     .array(z.number().int().min(1900).max(2200))
@@ -178,3 +184,39 @@ export type SkipReason =
   | "duplicate_email"
   | "missing"
   | "no_email";
+
+/**
+ * A manual point adjustment made by an officer.
+ *
+ * Deliberately a delta rather than a new total: two officers awarding at once
+ * would otherwise overwrite each other, and "set to 40" loses the fact that it
+ * was 30 and someone added 10. The reason is required because a bare number in
+ * a ledger a year later explains nothing.
+ */
+export const hackerAwardPointsSchema = z.object({
+  attendeeId: z.string().uuid(),
+  delta: z
+    .number()
+    .int()
+    .min(-1000)
+    .max(1000)
+    .refine((value) => value !== 0, {
+      message: "Award or deduct at least one point.",
+    }),
+  reason: z.string().trim().min(1).max(300),
+});
+
+/** Fields an officer may correct on an application. */
+export const hackerUpdateProfileSchema = z.object({
+  age: z.number().int().min(0).max(120).optional(),
+  attendeeId: z.string().uuid(),
+  discordUser: z.string().trim().min(1).max(255).optional(),
+  email: z.string().trim().email().max(255).optional(),
+  firstName: z.string().trim().min(1).max(255).optional(),
+  foodAllergies: z.string().trim().max(500).nullish(),
+  lastName: z.string().trim().min(1).max(255).optional(),
+  phoneNumber: z.string().trim().min(1).max(255).optional(),
+  // The enum itself, not a free string: `shirtSize` is a Postgres enum, so an
+  // arbitrary value is a write error rather than a validation failure.
+  shirtSize: z.enum(FORMS.SHIRT_SIZES).optional(),
+});

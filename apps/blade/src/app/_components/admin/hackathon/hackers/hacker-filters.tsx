@@ -22,13 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
+import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { GRADUATION_TERMS, HACKER_STATUS_LABELS } from "@forge/validators";
 
 import type { RosterFilter } from "./hacker-roster";
 import type { RosterFilterPatch } from "./use-roster-url-state";
-import { clearedFacets } from "./use-roster-url-state";
+import { clearedFacets, FACET_KEYS } from "./use-roster-url-state";
 
 type Options = RouterOutputs["hacker"]["listHackathonOptions"]["hackathons"];
 type FilterOptions = RouterOutputs["hacker"]["filterOptions"];
@@ -67,7 +68,6 @@ export function activeFilters(filter: RosterFilter): ActiveFilter[] {
     ["majors", "majors"],
     ["racesOrEthnicities", "races"],
     ["genders", "genders"],
-    ["countries", "countries"],
     ["shirtSizes", "shirt sizes"],
   ] as const) {
     const values = filter[field];
@@ -84,6 +84,17 @@ export function activeFilters(filter: RosterFilter): ActiveFilter[] {
     chips.push({
       field: "graduationYears",
       label: `Graduating ${[terms, years].filter(Boolean).join(" ")}`,
+    });
+  }
+  if (filter.ageMin !== undefined || filter.ageMax !== undefined) {
+    const low = filter.ageMin ?? "any";
+    const high = filter.ageMax ?? "any";
+    chips.push({ field: "ageMin", label: `Age ${low}–${high}` });
+  }
+  if (filter.hasDietaryNeeds !== undefined) {
+    chips.push({
+      field: "hasDietaryNeeds",
+      label: filter.hasDietaryNeeds ? "Has dietary needs" : "No dietary needs",
     });
   }
   if (filter.deliveryFailed) {
@@ -327,12 +338,6 @@ export function HackerFilters({
               selected={draft.genders ?? []}
             />
             <MultiSelectFilter
-              label="Country"
-              onChange={(countries) => setDraft({ ...draft, countries })}
-              options={options.countries}
-              selected={draft.countries ?? []}
-            />
-            <MultiSelectFilter
               label="Shirt size"
               onChange={(shirtSizes) => setDraft({ ...draft, shirtSizes })}
               options={options.shirtSizes}
@@ -368,6 +373,81 @@ export function HackerFilters({
                 options={options.graduationYears.map(String)}
                 selected={(draft.graduationYears ?? []).map(String)}
               />
+            </div>
+
+            {/* An inclusive range, because "18 to 20" is one thought and two
+                multi-selects of discrete ages is not. */}
+            <div className="grid gap-2">
+              <Label htmlFor="hacker-age-min">Age</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  className="h-11 bg-background/70"
+                  id="hacker-age-min"
+                  inputMode="numeric"
+                  max={120}
+                  min={0}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      ageMin: event.target.value
+                        ? Number(event.target.value)
+                        : undefined,
+                    })
+                  }
+                  placeholder="Min"
+                  type="number"
+                  value={draft.ageMin ?? ""}
+                />
+                <span className="text-sm text-muted-foreground">to</span>
+                <Input
+                  aria-label="Maximum age"
+                  className="h-11 bg-background/70"
+                  inputMode="numeric"
+                  max={120}
+                  min={0}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      ageMax: event.target.value
+                        ? Number(event.target.value)
+                        : undefined,
+                    })
+                  }
+                  placeholder="Max"
+                  type="number"
+                  value={draft.ageMax ?? ""}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Dietary needs</Label>
+              {/* Three states, not a checkbox: "either" is the default and has
+                  to stay reachable after picking one. */}
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["Either", undefined],
+                    ["Has needs", true],
+                    ["None stated", false],
+                  ] as const
+                ).map(([label, value]) => (
+                  <Button
+                    aria-pressed={draft.hasDietaryNeeds === value}
+                    className="min-h-11 text-sm"
+                    key={label}
+                    onClick={() =>
+                      setDraft({ ...draft, hasDietaryNeeds: value })
+                    }
+                    size="sm"
+                    variant={
+                      draft.hasDietaryNeeds === value ? "secondary" : "outline"
+                    }
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             <div className="grid gap-2">
@@ -426,27 +506,35 @@ export function HackerFilters({
 
 /**
  * Only the facets whose value actually differs from what the panel was seeded
- * with, compared as sets — the multi-selects append, so re-ticking a school an
+ * with, compared as sets — the multi-selects append, so re-ticking a value an
  * officer had just unticked yields the same set in a different order, which
  * would otherwise read as a change and cost a navigation and a survival check.
+ *
+ * Driven by `FACET_KEYS` rather than a hand-written list. Written out by hand it
+ * silently omitted every facet added after it, so Apply sent nothing for major,
+ * race, gender or shirt size and those filters simply did not work — with a
+ * green build and a green suite.
  */
 export function changedFacets(
   seed: RosterFilter,
   draft: RosterFilter,
 ): RosterFilterPatch {
   const patch: RosterFilterPatch = {};
-  if (seed.blacklisted !== draft.blacklisted) {
-    patch.blacklisted = draft.blacklisted;
-  }
-  if (differs(seed.schools, draft.schools)) patch.schools = draft.schools;
-  if (differs(seed.levelsOfStudy, draft.levelsOfStudy)) {
-    patch.levelsOfStudy = draft.levelsOfStudy;
-  }
-  if (differs(seed.graduationTerms, draft.graduationTerms)) {
-    patch.graduationTerms = draft.graduationTerms;
-  }
-  if (differs(seed.graduationYears, draft.graduationYears)) {
-    patch.graduationYears = draft.graduationYears;
+  for (const key of FACET_KEYS) {
+    const before = seed[key];
+    const after = draft[key];
+    if (Array.isArray(before) || Array.isArray(after)) {
+      if (
+        differs(
+          before as (number | string)[] | undefined,
+          after as (number | string)[] | undefined,
+        )
+      ) {
+        Object.assign(patch, { [key]: after });
+      }
+      continue;
+    }
+    if (before !== after) Object.assign(patch, { [key]: after });
   }
   return patch;
 }
@@ -561,7 +649,9 @@ export function FilterChips({
               // The grad chip owns both halves, so removing it clears both.
               chip.field === "graduationYears"
                 ? { graduationTerms: undefined, graduationYears: undefined }
-                : { [chip.field]: undefined },
+                : chip.field === "ageMin"
+                  ? { ageMax: undefined, ageMin: undefined }
+                  : { [chip.field]: undefined },
             )
           }
           type="button"

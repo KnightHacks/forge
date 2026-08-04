@@ -614,6 +614,37 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       expect(none.hackers).toHaveLength(0);
     });
 
+    it("filters by an age range and by dietary needs", async () => {
+      const inRange = await caller.hacker.listForHackathon({
+        filter: { ageMax: 30, ageMin: 18 },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(inRange.hackers.length).toBeGreaterThan(0);
+
+      const impossible = await caller.hacker.listForHackathon({
+        filter: { ageMin: 99 },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(impossible.hackers).toHaveLength(0);
+
+      // The fixtures state no dietary needs, so the two halves must partition.
+      const withNeeds = await caller.hacker.listForHackathon({
+        filter: { hasDietaryNeeds: true },
+        hackathonId: READY_HACKATHON,
+      });
+      const without = await caller.hacker.listForHackathon({
+        filter: { hasDietaryNeeds: false },
+        hackathonId: READY_HACKATHON,
+      });
+      const all = await caller.hacker.listForHackathon({
+        filter: {},
+        hackathonId: READY_HACKATHON,
+      });
+      expect(withNeeds.hackers.length + without.hackers.length).toBe(
+        all.hackers.length,
+      );
+    });
+
     it("combines facets with AND", async () => {
       // Within a facet the values are OR; across facets they are AND. Getting
       // that backwards would widen a capacity filter instead of narrowing it.
@@ -637,7 +668,6 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       expect(options.majors).toEqual(["Computer Science"]);
       expect(options.genders.length).toBeGreaterThan(0);
       expect(options.shirtSizes).toEqual(["M"]);
-      expect(options.countries.length).toBeGreaterThan(0);
       expect(options.racesOrEthnicities.length).toBeGreaterThan(0);
     });
 
@@ -753,6 +783,86 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .select()
         .from(knightHacks.EmailSendRecipient);
       expect(recipients).toHaveLength(1);
+    });
+  });
+
+  describe("manual point awards", () => {
+    // Deltas rather than a new total, because two officers awarding at the same
+    // time must add up instead of overwriting each other.
+    it("adds and deducts, and never goes negative", async () => {
+      const first = await caller.hacker.awardPoints({
+        attendeeId: PLAIN_ATTENDEE,
+        delta: 25,
+        reason: "Won the hardware challenge.",
+      });
+      expect(first.points).toBe(25);
+
+      const second = await caller.hacker.awardPoints({
+        attendeeId: PLAIN_ATTENDEE,
+        delta: -10,
+        reason: "Correcting a double award.",
+      });
+      expect(second.points).toBe(15);
+
+      // A deduction bigger than the balance is a typo, and a negative total is
+      // not something an officer can reason about.
+      const floored = await caller.hacker.awardPoints({
+        attendeeId: PLAIN_ATTENDEE,
+        delta: -999,
+        reason: "Reset.",
+      });
+      expect(floored.points).toBe(0);
+    });
+
+    it("refuses a zero adjustment and an empty reason", async () => {
+      await expect(
+        caller.hacker.awardPoints({
+          attendeeId: PLAIN_ATTENDEE,
+          delta: 0,
+          reason: "Nothing.",
+        }),
+      ).rejects.toThrow();
+      await expect(
+        caller.hacker.awardPoints({
+          attendeeId: PLAIN_ATTENDEE,
+          delta: 5,
+          reason: "   ",
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("correcting an application", () => {
+    it("writes only the fields that were sent", async () => {
+      const before = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+
+      await caller.hacker.updateProfile({
+        attendeeId: PLAIN_ATTENDEE,
+        phoneNumber: "4075550100",
+      });
+
+      const after = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+      expect(after.phoneNumber).toBe("4075550100");
+      // Everything else has to survive untouched — an officer fixing a phone
+      // number must not blank the rest of the application.
+      expect(after.email).toBe(before.email);
+      expect(after.firstName).toBe(before.firstName);
+      expect(after.school).toBe(before.school);
+    });
+
+    it("clears dietary needs when asked, and reports a no-op", async () => {
+      await caller.hacker.updateProfile({
+        attendeeId: PLAIN_ATTENDEE,
+        foodAllergies: null,
+      });
+      const cleared = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+      expect(cleared.foodAllergies).toBeNull();
+
+      // Nothing sent is not an error; it is simply nothing to do.
+      const nothing = await caller.hacker.updateProfile({
+        attendeeId: PLAIN_ATTENDEE,
+      });
+      expect(nothing.updated).toBe(false);
     });
   });
 

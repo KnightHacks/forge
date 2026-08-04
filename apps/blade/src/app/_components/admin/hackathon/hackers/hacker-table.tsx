@@ -86,9 +86,6 @@ export function HackerTable({
           <TableHead>Applicant</TableHead>
           <TableHead className="hidden md:table-cell">School</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="hidden text-right sm:table-cell">
-            Points
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -207,9 +204,6 @@ export function HackerTable({
                 <Badge className="text-sm" variant="secondary">
                   {statusLabel(hacker.status)}
                 </Badge>
-              </TableCell>
-              <TableCell className="hidden text-right text-sm sm:table-cell">
-                {hacker.points}
               </TableCell>
             </TableRow>
           );

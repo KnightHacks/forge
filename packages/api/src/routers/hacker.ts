@@ -8,9 +8,11 @@ import {
   count,
   eq,
   gt,
+  gte,
   inArray,
   isNotNull,
   isNull,
+  lte,
   or,
   sql,
 } from "@forge/db";
@@ -25,6 +27,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import {
   HACKATHON_SENDING_STATUSES,
+  hackerAwardPointsSchema,
   hackerBulkPreviewSchema,
   hackerFilterOptionsSchema,
   hackerRosterCountsSchema,
@@ -32,6 +35,7 @@ import {
   hackerSelectionSurvivalSchema,
   hackerSetBlacklistSchema,
   hackerSetStatusSchema,
+  hackerUpdateProfileSchema,
 } from "@forge/validators";
 
 import type { WriteDb } from "../utils/db";
@@ -41,6 +45,7 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { getDiscordEngagement } from "../utils/discord/engagement";
 import {
   prepareStatusMail,
   withheldByDevelopmentGate,
@@ -114,11 +119,20 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   if (filter.genders?.length) {
     clauses.push(sql`${Hacker.gender}::text in ${filter.genders}`);
   }
-  if (filter.countries?.length) {
-    clauses.push(sql`${Hacker.country} in ${filter.countries}`);
-  }
   if (filter.shirtSizes?.length) {
     clauses.push(sql`${Hacker.shirtSize}::text in ${filter.shirtSizes}`);
+  }
+  if (filter.ageMin !== undefined) {
+    clauses.push(gte(Hacker.age, filter.ageMin));
+  }
+  if (filter.ageMax !== undefined) {
+    clauses.push(lte(Hacker.age, filter.ageMax));
+  }
+  if (filter.hasDietaryNeeds !== undefined) {
+    // Blank and null both mean "nothing to accommodate" — the form writes an
+    // empty string when someone tabs through the field.
+    const stated = sql`coalesce(nullif(btrim(${Hacker.foodAllergies}), ''), null) is not null`;
+    clauses.push(filter.hasDietaryNeeds ? stated : sql`not (${stated})`);
   }
   if (filter.graduationYears?.length) {
     clauses.push(
@@ -380,7 +394,6 @@ export const hackerRouter = createTRPCRouter({
       // schools, and it re-runs on every roster mount and hackathon switch.
       const rows = await db
         .selectDistinct({
-          country: Hacker.country,
           gender: Hacker.gender,
           gradYear: sql<number>`extract(year from ${Hacker.gradDate})::int`,
           levelOfStudy: Hacker.levelOfStudy,
@@ -400,7 +413,6 @@ export const hackerRouter = createTRPCRouter({
       // full enum would list a hundred majors nobody applied with, and an
       // officer picking one gets an empty roster and no explanation.
       return {
-        countries: distinct(rows.map((row) => row.country)),
         genders: distinct(rows.map((row) => row.gender)),
         graduationYears: [...new Set(rows.map((row) => row.gradYear))].sort(
           (left, right) => left - right,
@@ -440,6 +452,7 @@ export const hackerRouter = createTRPCRouter({
           // stable snowflake; `Hacker.discordUser` is the handle they typed and
           // can be stale or wrong.
           discordUserId: User.discordUserId,
+          hackerUserId: Hacker.userId,
           email: Hacker.email,
           firstName: Hacker.firstName,
           foodAllergies: Hacker.foodAllergies,
@@ -478,8 +491,13 @@ export const hackerRouter = createTRPCRouter({
         });
       }
 
+      const discord = row.hackerUserId
+        ? await getDiscordEngagement(row.hackerUserId)
+        : null;
+
       return {
         ...row,
+        discord,
         blacklisted: row.blacklistedAt !== null,
         deliveryFailed: row.sendStatus === "failed",
         name: `${row.firstName} ${row.lastName}`.trim(),
@@ -863,6 +881,155 @@ export const hackerRouter = createTRPCRouter({
     }),
 
   /** Officer-only. Sets or clears the blacklist. Never touches status. */
+  /**
+   * A manual point adjustment, with the officer who made it on the record.
+   *
+   * Lives here rather than on the check-in screen because volunteers can reach
+   * check-in and should not be able to hand out points. A delta rather than a
+   * new total, so two officers awarding at the same time add up instead of
+   * overwriting one another.
+   */
+  awardPoints: permProcedure
+    .input(hackerAwardPointsSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        // Locked, because the update reads the current value to report the
+        // result and two concurrent awards would otherwise both report the
+        // total they each saw.
+        const [attendee] = await tx
+          .select({
+            firstName: Hacker.firstName,
+            hackathonId: HackerAttendee.hackathonId,
+            lastName: Hacker.lastName,
+            points: HackerAttendee.points,
+          })
+          .from(HackerAttendee)
+          .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.id, input.attendeeId))
+          .for("update", { of: HackerAttendee })
+          .limit(1);
+        if (!attendee) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "That applicant is no longer in this hackathon.",
+          });
+        }
+
+        // Clamped at zero: a negative total is not a thing an officer can
+        // reason about, and a deduction larger than the balance is a typo.
+        const resultingPoints = Math.max(0, attendee.points + input.delta);
+        await tx
+          .update(HackerAttendee)
+          .set({ points: resultingPoints })
+          .where(eq(HackerAttendee.id, input.attendeeId));
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hacker.points_awarded",
+            actor: auditActor,
+            metadata: {
+              delta: input.delta,
+              reason: input.reason,
+              resultingPoints,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.attendeeId,
+                targetLabel:
+                  `${attendee.firstName} ${attendee.lastName}`.trim(),
+                targetType: "hacker_attendee",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return { points: resultingPoints };
+      });
+    }),
+
+  /**
+   * Corrects an application in place.
+   *
+   * Officers retype phone numbers off a badge and fix a typo'd email that
+   * bounced; without this the only remedy was asking the applicant to reapply.
+   * Scoped to the fields that actually get corrected — school, major and the
+   * MLH consent answers are the applicant's own answers, not an officer's to
+   * rewrite.
+   */
+  updateProfile: permProcedure
+    .input(hackerUpdateProfileSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      const { attendeeId, ...patch } = input;
+
+      return db.transaction(async (tx) => {
+        const [attendee] = await tx
+          .select({
+            hackerId: HackerAttendee.hackerId,
+            firstName: Hacker.firstName,
+            lastName: Hacker.lastName,
+          })
+          .from(HackerAttendee)
+          .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.id, attendeeId))
+          .limit(1);
+        if (!attendee) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "That applicant is no longer in this hackathon.",
+          });
+        }
+
+        /*
+          Only what was sent, which the input shape already guarantees: under
+          `exactOptionalPropertyTypes` an omitted key is absent from the object
+          rather than present-and-undefined, so `patch` holds exactly the fields
+          the officer touched.
+
+          `foodAllergies: null` is deliberately kept — clearing it is a real
+          answer ("nothing to accommodate"), not an omission.
+        */
+        const changes = patch;
+        if (Object.keys(changes).length === 0) return { updated: false };
+
+        await tx
+          .update(Hacker)
+          .set(changes)
+          .where(eq(Hacker.id, attendee.hackerId));
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hacker.profile_updated",
+            actor: auditActor,
+            // The audit event carries the field names, so a later reader knows
+            // what an officer touched without diffing two snapshots.
+            changes: Object.entries(changes).map(([field, value]) => ({
+              after: value === null ? null : String(value),
+              field,
+            })),
+            subjects: [
+              {
+                relation: "primary",
+                targetId: attendeeId,
+                targetLabel:
+                  `${attendee.firstName} ${attendee.lastName}`.trim(),
+                targetType: "hacker_attendee",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return { updated: true };
+      });
+    }),
+
   setBlacklist: permProcedure
     .input(hackerSetBlacklistSchema)
     .mutation(async ({ ctx, input }) => {

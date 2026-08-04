@@ -6,7 +6,6 @@ import { z } from "zod";
 import type { SQL } from "@forge/db";
 import type { SelectMember } from "@forge/db/schemas/knight-hacks";
 import type { AdminMemberListInput } from "@forge/validators";
-import { EVENTS } from "@forge/consts";
 import {
   and,
   asc,
@@ -21,10 +20,9 @@ import {
 } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
-import {
-  DiscordArchiveChannel,
-  DiscordArchiveMessage,
-} from "@forge/db/schemas/discord";
+
+import "@forge/db/schemas/discord";
+
 import {
   Company,
   DuesPayment,
@@ -62,6 +60,7 @@ import {
 import { getUsCity } from "../utils/career/us-cities";
 import { dataUrlByteSize, dataUrlMimeType } from "../utils/data-url";
 import { isUniqueViolation } from "../utils/db";
+import { getDiscordEngagement } from "../utils/discord/engagement";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
@@ -321,18 +320,6 @@ async function getDuesRows(memberIds: string[]) {
     .orderBy(desc(DuesPayment.paymentDate));
 }
 
-function dateInCalendarTimeZone(value: Date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: EVENTS.CALENDAR_TIME_ZONE,
-    year: "numeric",
-  }).formatToParts(value);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((candidate) => candidate.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}`;
-}
-
 async function getMemberEventHistory(memberId: string) {
   return await db
     .select({
@@ -400,91 +387,6 @@ async function getMemberRoles(userId: string) {
     .innerJoin(Roles, eq(Roles.id, Permissions.roleId))
     .where(eq(Permissions.userId, userId))
     .orderBy(asc(Roles.name));
-}
-
-async function getMemberDiscordEngagement(userId: string, now = new Date()) {
-  const user = await db.query.User.findFirst({
-    columns: { discordUserId: true },
-    where: eq(User.id, userId),
-  });
-  if (!user) {
-    return {
-      activity: [],
-      activityEndDate: dateInCalendarTimeZone(now),
-      activeChannelCount: 0,
-      activeDayCount: 0,
-      firstMessageAt: null,
-      lastMessageAt: null,
-      messageCount: 0,
-      topChannels: [],
-    };
-  }
-
-  const activityEndDate = dateInCalendarTimeZone(now);
-  const humanMessageConditions = [
-    eq(DiscordArchiveMessage.authorDiscordUserId, user.discordUserId),
-    isNull(DiscordArchiveMessage.deletedAt),
-    eq(DiscordArchiveMessage.authorIsBot, false),
-    isNull(DiscordArchiveMessage.webhookId),
-    isNull(DiscordArchiveMessage.applicationId),
-    eq(DiscordArchiveMessage.messageType, 0),
-  ] as const;
-
-  const [summaryRows, activityRows, topChannels] = await Promise.all([
-    db
-      .select({
-        activeChannelCount: sql<number>`count(distinct ${DiscordArchiveMessage.channelId})::int`,
-        activeDayCount: sql<number>`count(distinct (${DiscordArchiveMessage.createdAt} at time zone ${EVENTS.CALENDAR_TIME_ZONE})::date)::int`,
-        firstMessageAt: sql<Date | null>`min(${DiscordArchiveMessage.createdAt})`,
-        lastMessageAt: sql<Date | null>`max(${DiscordArchiveMessage.createdAt})`,
-        messageCount: sql<number>`count(*)::int`,
-      })
-      .from(DiscordArchiveMessage)
-      .where(and(...humanMessageConditions)),
-    db
-      .select({
-        count: sql<number>`count(*)::int`,
-        date: sql<string>`to_char(${DiscordArchiveMessage.createdAt} at time zone ${EVENTS.CALENDAR_TIME_ZONE}, 'YYYY-MM-DD')`,
-      })
-      .from(DiscordArchiveMessage)
-      .where(and(...humanMessageConditions))
-      .groupBy(sql`2`)
-      .orderBy(sql`2`),
-    db
-      .select({
-        count: sql<number>`count(*)::int`,
-        isThread: DiscordArchiveChannel.isThread,
-        name: DiscordArchiveChannel.name,
-      })
-      .from(DiscordArchiveMessage)
-      .innerJoin(
-        DiscordArchiveChannel,
-        eq(DiscordArchiveChannel.id, DiscordArchiveMessage.channelId),
-      )
-      .where(and(...humanMessageConditions))
-      .groupBy(
-        DiscordArchiveChannel.id,
-        DiscordArchiveChannel.isThread,
-        DiscordArchiveChannel.name,
-      )
-      .orderBy(
-        desc(sql<number>`count(*)::int`),
-        asc(DiscordArchiveChannel.name),
-      )
-      .limit(5),
-  ]);
-  const summary = summaryRows[0];
-
-  return {
-    activity: activityRows,
-    activityEndDate,
-    activeChannelCount: summary?.activeChannelCount ?? 0,
-    activeDayCount: summary?.activeDayCount ?? 0,
-    firstMessageAt: summary?.firstMessageAt ?? null,
-    lastMessageAt: summary?.lastMessageAt ?? null,
-    messageCount: summary?.messageCount ?? 0,
-    topChannels,
-  };
 }
 
 function statusMapForCandidates(
@@ -760,7 +662,7 @@ export const memberAdminRouter = {
       const member = await findMemberOrThrow(input.memberId);
       const [discord, duesRows, employment, events, profilePicture, roles] =
         await Promise.all([
-          getMemberDiscordEngagement(member.userId),
+          getDiscordEngagement(member.userId),
           getDuesRows([member.id]),
           getMemberEmploymentHistory(member.id),
           getMemberEventHistory(member.id),

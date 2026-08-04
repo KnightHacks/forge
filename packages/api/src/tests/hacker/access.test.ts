@@ -121,6 +121,23 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
         reason: "Repeated code of conduct violations.",
       }),
   ],
+  [
+    "awardPoints",
+    (caller) =>
+      caller.awardPoints({
+        attendeeId: ATTENDEE_ID,
+        delta: 10,
+        reason: "Won the hardware challenge.",
+      }),
+  ],
+  [
+    "updateProfile",
+    (caller) =>
+      caller.updateProfile({
+        attendeeId: ATTENDEE_ID,
+        phoneNumber: "4075550100",
+      }),
+  ],
 ];
 
 describe("hacker management access policy", () => {

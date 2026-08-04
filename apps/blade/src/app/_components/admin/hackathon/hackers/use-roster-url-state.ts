@@ -69,7 +69,6 @@ const LIST_KEYS = [
   "majors",
   "racesOrEthnicities",
   "genders",
-  "countries",
   "shirtSizes",
   "graduationTerms",
   "graduationYears",
@@ -79,6 +78,9 @@ const SCALAR_KEYS = [
   "status",
   "deliveryFailed",
   "blacklisted",
+  "ageMin",
+  "ageMax",
+  "hasDietaryNeeds",
 ] as const;
 
 /**
@@ -98,9 +100,11 @@ const _everyFilterKeyIsApplied: UncoveredFilterKey extends never
 
 /** Everything the Filters panel owns, so its Clear buttons can name them. */
 export const FACET_KEYS = [
+  "ageMax",
+  "ageMin",
   "blacklisted",
-  "countries",
   "genders",
+  "hasDietaryNeeds",
   "graduationTerms",
   "graduationYears",
   "levelsOfStudy",
@@ -130,11 +134,14 @@ function applyPatch(base: string, patch: RosterFilterPatch) {
   for (const key of SCALAR_KEYS) {
     if (!(key in patch)) continue;
     const value = patch[key];
-    if (value === undefined || value === "" || value === false) {
-      params.delete(key);
-    } else {
-      params.set(key, String(value));
-    }
+    // `hasDietaryNeeds: false` is a filter, not an absence — the others use
+    // `false` to mean "not applied", so only this one keeps it.
+    const clears =
+      key === "hasDietaryNeeds"
+        ? value === undefined
+        : value === undefined || value === "" || value === false;
+    if (clears) params.delete(key);
+    else params.set(key, String(value));
   }
   for (const key of LIST_KEYS) {
     if (!(key in patch)) continue;
@@ -150,6 +157,12 @@ function applyPatch(base: string, patch: RosterFilterPatch) {
   return params;
 }
 
+function numeric(value: string | null) {
+  if (value === null || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? parsed : undefined;
+}
+
 function parseFilter(params: {
   get: (key: string) => string | null;
   getAll: (key: string) => string[];
@@ -159,8 +172,18 @@ function parseFilter(params: {
     return values.length > 0 ? values : undefined;
   };
   const raw = {
+    ageMax: numeric(params.get("ageMax")),
+    ageMin: numeric(params.get("ageMin")),
     blacklisted: params.get("blacklisted") === "true" ? true : undefined,
     deliveryFailed: params.get("deliveryFailed") === "true" ? true : undefined,
+    // Tri-state: absent means "either", and `false` is a real choice, so it
+    // cannot collapse to `undefined` the way the other booleans do.
+    hasDietaryNeeds:
+      params.get("hasDietaryNeeds") === "true"
+        ? true
+        : params.get("hasDietaryNeeds") === "false"
+          ? false
+          : undefined,
     graduationTerms: list("graduationTerms"),
     graduationYears: list("graduationYears")
       ?.map(Number)
