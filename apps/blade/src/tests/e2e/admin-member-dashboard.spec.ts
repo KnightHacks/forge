@@ -514,8 +514,13 @@ test.describe("admin member dashboard", () => {
       .getByRole("textbox", { name: "Search members" })
       .fill("alce");
     await expect(mobilePage).toHaveURL(/q=alce/);
+    // The card opens the detail dialog, so it has to stay a named control; its
+    // label is the action, not the rendered name and Discord handle. The
+    // desktop table carries the same label but is display:none here, so the
+    // role query still resolves to the card.
     const mobileMember = mobilePage.getByRole("button", {
-      name: /^Alice Archive/,
+      exact: true,
+      name: "View Alice Archive",
     });
     await expect(mobileMember).toBeVisible();
     await expect(mobilePage.locator("table")).not.toBeVisible();
@@ -731,7 +736,7 @@ test.describe("admin member dashboard", () => {
     });
 
     await page
-      .locator('input[accept="image/jpeg,image/png,image/gif,image/webp"]')
+      .getByLabel("Upload profile picture", { exact: true })
       .setInputFiles(pngPayload);
     await expect(page.getByText("Profile picture saved.")).toBeVisible();
     await expect
