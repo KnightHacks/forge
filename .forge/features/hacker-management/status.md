@@ -215,3 +215,27 @@ reasonable one.
 - PRs:
 - Issues:
 - Discord/thread context:
+
+## Dev database: Discord guild config was polluted by a test
+
+Found while fixing the club-analytics e2e spec. `knight_hacks_discord_config`
+held `guild.development_id = 990000000000000401` — a constant from
+`packages/api/src/tests/integration/platform-config.test.ts` (TC-009), not a real
+guild. All 52 rows in `discord_archive_channel` sit under `1151877367434850364`,
+so everything reading `getKnightHacksGuildId()` in development was querying an
+empty guild and rendering zeros: Discord analytics, the member dialog's activity
+heatmap, and the archive views.
+
+Repaired in place on 2026-08-04: `guild.development_id` set to
+`1151877367434850364`, the value the archive actually uses and the value of the
+`DISCORD.KNIGHTHACKS_GUILD` constant. Previous value recorded above if a revert
+is ever wanted.
+
+**Not repaired, because the correct value is not knowable from here:**
+`log_channel.production_id` is `990000000000000502`, which is the `winner`
+constant from TC-NEG-002 in the same file. A _production_ id carrying a test
+value is worth an officer's eyes before anyone deploys.
+
+That suite provisions a disposable database today, so it cannot be the ongoing
+cause — the pollution predates that safety. Worth confirming no other environment
+took the same damage.
