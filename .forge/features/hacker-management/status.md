@@ -158,6 +158,9 @@ needs Discord OAuth. The dev server is left running for the owner's pass.
 **Decision (owner):** keep both fields for now, take the schema change as a
 manual migration, and drop `Hacker.isFirstTime` only after cutover — the legacy
 application form writes it, so dropping it before then breaks applications.
+Cutover is confirmed to land before Knight Hacks IX, so the two-column period is
+short and the profile column can be dropped in the same window rather than
+lingering behind a feature flag.
 
 **Why.** `isFirstTime` is a claim about a person _at one hackathon_, stored on
 the profile where the next application overwrites it. 181 hackers have applied to
@@ -178,20 +181,23 @@ conflating "they said no" with "nobody asked", and the first statistic pulled of
 it is understated with nothing to reveal that. `null` means unrecorded, which is
 true.
 
-**Write point: check-in**, in the event slice, not here. At check-in:
+**Write point: application, once cutover lands.** Owner confirms cutover happens
+before Knight Hacks IX, which removes the constraint this was originally planned
+around. When the application form is ours, the attendee row is created from an
+answer given _for that hackathon_ — so the write is a copy at application time,
+and no derivation rule is needed at all.
 
-```
-isFirstTime = declared_on_profile AND no prior checked-in attendance
-```
+An earlier draft put the write at check-in with
+`declared AND no prior checked-in attendance`. That was a workaround for the form
+living in legacy, where nothing in this workspace could hook the application. It
+is not needed post-cutover, and check-in is the wrong anchor anyway: attendance
+is already recorded by `status = checkedin`, so the attendee row only needs to
+carry what they claimed.
 
-computed once and frozen. Waiting costs nothing — the profile value is correct
-for the current hackathon at the moment someone applies or checks in, so
-capturing it at check-in loses only what is already lost. Adding the column now
-would ship something nothing writes and nothing reads, plus a backfill to redo.
-
-**The one thing that changes this:** if check-in will not ship before Knight
-Hacks IX, add the column early and snapshot before the event, or KH IX's
-first-timer number is lost the same way KH VIII's was.
+Waiting costs nothing. The profile value is correct for the current hackathon at
+the moment someone applies, so capturing it then loses only what is already lost.
+Adding the column now would ship something nothing writes and nothing reads, plus
+a backfill to redo.
 
 **Backfill, when it happens.** `true` on the earliest checked-in attendance for
 hackers currently declaring true; `false` on their later checked-in ones; `null`
