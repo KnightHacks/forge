@@ -81,7 +81,12 @@ test.describe("event management", () => {
     await expect(page).toHaveURL(/\/$/);
 
     await events.signIn(fixture.users.unauthorizedId);
-    await expect(page).toHaveURL(/\/member\/dashboard$/);
+    // Two hops: the admin layout bounces a caller without admin capabilities to
+    // the member dashboard, which is a server component that redirects again
+    // when the account has no Member row. This fixture seeds a bare `User`, so
+    // it lands on the signup form. The gate moved server-side, so the
+    // intermediate URL no longer settles long enough to assert on.
+    await expect(page).toHaveURL(/\/form\/member-signup$/);
 
     await events.signIn(fixture.users.readerId);
     await expect(
@@ -104,7 +109,9 @@ test.describe("event management", () => {
     ).toHaveCount(0);
 
     await events.signIn(fixture.users.checkInId, ADMIN_PATH);
-    await expect(page).toHaveURL(/\/member\/dashboard$/);
+    // Same two hops as the unauthorized user above: check-in is not an admin
+    // capability, and this fixture seeds no Member row.
+    await expect(page).toHaveURL(/\/form\/member-signup$/);
 
     await events.signIn(fixture.users.checkInId, CHECK_IN_PATH);
     await expect(page).toHaveURL(/\/admin\/check-in$/);
@@ -326,9 +333,19 @@ test.describe("event management", () => {
     await page.getByLabel("Allow repeat check-ins").uncheck();
     const eventChoice = page.getByRole("combobox", { name: "Event" });
     await eventChoice.click();
-    await expect(page.getByRole("option").first()).toContainText(
-      "Dues Member Workshop",
-    );
+    // The combobox also lists events this spec does not own, so TC-032 ordering
+    // (upcoming choices latest-starting first) is proven across the fixture
+    // events only. Unpublished fixtures must stay out of the list entirely.
+    const fixtureChoices = page.getByRole("option").filter({
+      hasText:
+        /^(Ambiguous Discord|Check-in|Current|Deletable|Dues Member|Partial Sync|Past) Workshop/,
+    });
+    await expect(fixtureChoices).toHaveText([
+      /^Dues Member Workshop/,
+      /^Deletable Workshop/,
+      /^Current Workshop/,
+      /^Check-in Workshop/,
+    ]);
     await page.getByRole("option", { name: /^Check-in Workshop / }).click();
 
     await page.getByRole("tab", { name: "Manual" }).click();
@@ -455,8 +472,18 @@ test.describe("event management", () => {
       .getByRole("region", { name: "Events overview" })
       .first();
     await expect(overview).toBeVisible();
-    await expect(overview.getByText("Current Workshop")).toBeVisible();
-    await expect(overview.getByText("Recently attended")).toBeVisible();
+    // The overview stacks two labelled sections and the fixture event is both
+    // upcoming and already attended, so each surface is asserted on its own.
+    await expect(
+      overview
+        .getByRole("region", { name: "Up next" })
+        .getByRole("heading", { name: "Current Workshop" }),
+    ).toBeVisible();
+    await expect(
+      overview
+        .getByRole("region", { name: "Recently attended" })
+        .getByRole("heading", { name: "Current Workshop" }),
+    ).toBeVisible();
     await expect(page.getByText("Member info")).toHaveCount(0);
     await expect(page.getByText("Academics")).toHaveCount(0);
     await page.screenshot({
