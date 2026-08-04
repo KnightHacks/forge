@@ -275,6 +275,7 @@ function FieldControl({
           )}
         </div>
         <Switch
+          aria-label={fieldConfig.label}
           className="shrink-0"
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked === true)}
