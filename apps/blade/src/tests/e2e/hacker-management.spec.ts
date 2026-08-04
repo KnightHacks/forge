@@ -29,6 +29,15 @@ const ENDED_HACKATHON = "00000000-0000-4000-8000-000000000908";
 const since = (days: number) =>
   new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 const ENDED_ATTENDEE = "00000000-0000-4000-8000-000000000909";
+/**
+ * An applicant who exists only in the ended hackathon.
+ *
+ * Without one, no name is unique to the second hackathon, and the isolation
+ * assertion below has nothing real to look for — it named "Other gamma", a
+ * fixture that was never created, so it could not fail and had never once
+ * tested what it claimed.
+ */
+const ENDED_HACKER = "00000000-0000-4000-8000-00000000090a";
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const maxIndex = Math.max(
@@ -47,7 +56,9 @@ async function cleanupFixtures() {
     .where(
       inArray(HackerAttendee.id, [ATTENDEE_ONE, ATTENDEE_TWO, ENDED_ATTENDEE]),
     );
-  await db.delete(Hacker).where(inArray(Hacker.id, [HACKER_ONE, HACKER_TWO]));
+  await db
+    .delete(Hacker)
+    .where(inArray(Hacker.id, [HACKER_ONE, HACKER_TWO, ENDED_HACKER]));
   await db
     .delete(Hackathon)
     .where(inArray(Hackathon.id, [HACKATHON_ID, ENDED_HACKATHON]));
@@ -130,7 +141,11 @@ test.describe("Hacker management critical flow", () => {
     });
     await db
       .insert(Hacker)
-      .values([hacker(HACKER_ONE, "alpha"), hacker(HACKER_TWO, "beta")]);
+      .values([
+        hacker(HACKER_ONE, "alpha"),
+        hacker(HACKER_TWO, "beta"),
+        hacker(ENDED_HACKER, "gamma"),
+      ]);
     await db.insert(HackerAttendee).values([
       {
         hackathonId: HACKATHON_ID,
@@ -146,7 +161,7 @@ test.describe("Hacker management critical flow", () => {
       },
       {
         hackathonId: ENDED_HACKATHON,
-        hackerId: HACKER_ONE,
+        hackerId: ENDED_HACKER,
         id: ENDED_ATTENDEE,
         status: "accepted",
       },
@@ -172,7 +187,9 @@ test.describe("Hacker management critical flow", () => {
     // hackathon's applicant must not appear.
     await expect(page.getByText("Edge alpha")).toBeVisible();
     await expect(page.getByText("Edge beta")).toBeVisible();
-    await expect(page.getByText("Other gamma")).toHaveCount(0);
+    // Genuinely unique to the other hackathon, so this fails if
+    // `listForHackathon` ever drops its `hackathonId` predicate.
+    await expect(page.getByText("Edge gamma")).toHaveCount(0);
 
     // TC-015: select one, then amend.
     await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
@@ -204,11 +221,11 @@ test.describe("Hacker management critical flow", () => {
     );
 
     // Readable: the applicant is still listed.
-    await expect(page.getByText("Edge alpha")).toBeVisible();
+    await expect(page.getByText("Edge gamma")).toBeVisible();
     await expect(page.getByText("Ended — read-only.")).toBeVisible();
 
     // Read-only: selecting still works, but nothing can be sent.
-    await page.getByRole("checkbox", { name: "Select Edge alpha" }).click();
+    await page.getByRole("checkbox", { name: "Select Edge gamma" }).click();
     await expect(page.getByText("1 selected")).toBeVisible();
     // `exact`, because the status tab beside it is also called "Waitlisted".
     // The names differ only because the tab renders its count in a span *inside*
@@ -224,7 +241,7 @@ test.describe("Hacker management critical flow", () => {
 
     // And the same gate holds inside the detail dialog, which is where the
     // per-applicant actions live now.
-    await page.getByText("Edge alpha").click();
+    await page.getByText("Edge gamma").click();
     await expect(
       page
         .getByRole("button", { name: "Remove blacklist" })
