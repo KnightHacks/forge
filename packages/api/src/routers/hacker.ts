@@ -452,6 +452,7 @@ export const hackerRouter = createTRPCRouter({
           // stable snowflake; `Hacker.discordUser` is the handle they typed and
           // can be stale or wrong.
           discordUserId: User.discordUserId,
+          gender: Hacker.gender,
           hackerUserId: Hacker.userId,
           email: Hacker.email,
           firstName: Hacker.firstName,

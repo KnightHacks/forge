@@ -206,17 +206,39 @@ export const hackerAwardPointsSchema = z.object({
   reason: z.string().trim().min(1).max(300),
 });
 
-/** Fields an officer may correct on an application. */
+/**
+ * Fields an officer may correct on an application.
+ *
+ * Everything the roster shows, so a correction never has to become "ask them to
+ * reapply". The MLH consent answers are the one deliberate omission: those are
+ * attestations the applicant made, not data an officer can restate for them.
+ *
+ * The enum-typed columns take their enums rather than free strings — `gender`,
+ * `raceOrEthnicity` and `shirtSize` are Postgres enums, where an unknown value
+ * is a write error rather than a validation failure.
+ */
 export const hackerUpdateProfileSchema = z.object({
   age: z.number().int().min(0).max(120).optional(),
   attendeeId: z.string().uuid(),
+  country: z.enum(FORMS.COUNTRIES).optional(),
   discordUser: z.string().trim().min(1).max(255).optional(),
   email: z.string().trim().email().max(255).optional(),
   firstName: z.string().trim().min(1).max(255).optional(),
   foodAllergies: z.string().trim().max(500).nullish(),
+  gender: z.enum(FORMS.GENDERS).optional(),
+  githubProfileUrl: z.string().trim().url().max(255).nullish(),
+  gradDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   lastName: z.string().trim().min(1).max(255).optional(),
+  levelOfStudy: z.enum(FORMS.LEVELS_OF_STUDY).optional(),
+  linkedinProfileUrl: z.string().trim().url().max(255).nullish(),
+  major: z.enum(FORMS.MAJORS).optional(),
   phoneNumber: z.string().trim().min(1).max(255).optional(),
-  // The enum itself, not a free string: `shirtSize` is a Postgres enum, so an
-  // arbitrary value is a write error rather than a validation failure.
+  raceOrEthnicity: z.enum(FORMS.RACES_OR_ETHNICITIES).optional(),
+  school: z.enum(FORMS.SCHOOLS).optional(),
   shirtSize: z.enum(FORMS.SHIRT_SIZES).optional(),
+  websiteUrl: z.string().trim().url().max(255).nullish(),
 });

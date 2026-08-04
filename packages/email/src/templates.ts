@@ -172,6 +172,28 @@ function providerFieldAccessor(namespace: string, field: string) {
   return `(index .Subscriber.Attribs "forge" "${namespace.replaceAll('"', '\\"')}" ${path})`;
 }
 
+/**
+ * Rewrites `{{namespace.field}}` in a subject line into the provider's accessor.
+ *
+ * Subjects are plain strings, not template nodes, so the compiler that handles
+ * the body never touched them — they reached Listmonk with the merge tags
+ * intact, and Go rejected the campaign with `function "hacker" not defined`.
+ * The campaign was created but could never start, so the send sat at "running"
+ * and nobody was ever mailed. The hackathon configuration screen advertises
+ * exactly this syntax, so every status email whose subject used one was
+ * silently undeliverable.
+ */
+export function compileSubjectForProvider(
+  subject: string,
+  providerNamespace: string,
+) {
+  return subject.replace(
+    /\{\{\s*([A-Za-z0-9_.]+)\s*\}\}/g,
+    (_match, field: string) =>
+      `{{ ${providerFieldAccessor(providerNamespace, field)} }}`,
+  );
+}
+
 function providerLocal(value: unknown): string | undefined {
   if (
     typeof value === "object" &&

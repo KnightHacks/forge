@@ -10,6 +10,7 @@ import {
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import {
+  compileSubjectForProvider,
   EmailProviderError,
   getDefaultEmailProviderGateway,
 } from "@forge/email";
@@ -258,7 +259,9 @@ export async function processEmailSend(sendId: string) {
         ({ normalizedEmail }) => normalizedEmail,
       ),
       sendId,
-      subject: claimed.subject,
+      // Compiled here rather than stored compiled, so the Email Portal keeps
+      // showing an officer the subject they wrote.
+      subject: compileSubjectForProvider(claimed.subject, sendId),
       text: claimed.compiledText,
     });
     await db

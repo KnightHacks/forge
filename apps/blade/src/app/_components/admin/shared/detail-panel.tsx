@@ -3,6 +3,8 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { cn } from "@forge/ui";
+
 /**
  * The card and metric shells the admin detail panels are built from.
  *
@@ -13,17 +15,25 @@ import type { ReactNode } from "react";
  */
 export function DetailSection({
   children,
+  className,
   description,
   icon: Icon,
   title,
 }: {
   children: ReactNode;
+  /** For a card that spans the grid, like a full-width actions panel. */
+  className?: string;
   description?: string;
   icon: LucideIcon;
   title: string;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-lg border border-white/10 bg-background/45">
+    <section
+      className={cn(
+        "min-w-0 overflow-hidden rounded-lg border border-white/10 bg-background/45",
+        className,
+      )}
+    >
       <div className="flex items-start gap-2.5 border-b border-border/70 px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
           <Icon className="h-4 w-4" aria-hidden="true" />
