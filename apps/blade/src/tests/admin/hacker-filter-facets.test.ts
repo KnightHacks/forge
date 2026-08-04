@@ -95,6 +95,17 @@ describe("changedFacets", () => {
     expect(patch).toEqual({ [field]: value });
   });
 
+  it("sends every tri-state facet, including false", () => {
+    // `false` is a real choice for these, unlike the other booleans where it
+    // means "not applied".
+    expect(changedFacets({}, { isFirstTime: true })).toEqual({
+      isFirstTime: true,
+    });
+    expect(
+      changedFacets({ isFirstTime: true }, { isFirstTime: false }),
+    ).toEqual({ isFirstTime: false });
+  });
+
   it("sends the age range and the dietary toggle", () => {
     expect(changedFacets({}, { ageMin: 18 })).toEqual({ ageMin: 18 });
     expect(changedFacets({}, { hasDietaryNeeds: false })).toEqual({

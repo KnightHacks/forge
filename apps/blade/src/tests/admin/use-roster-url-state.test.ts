@@ -350,6 +350,20 @@ describe("useRosterUrlState", () => {
       expect(result.current.filter[field]).toEqual(value);
     });
 
+    it("first hackathon, in both directions", () => {
+      // Shipped broken: the key was in `SCALAR_KEYS` but not `FACET_KEYS`, so
+      // `changedFacets` never sent it and Apply did nothing at all.
+      for (const value of [true, false]) {
+        const { result, rerender } = renderHook(() => useRosterUrlState());
+        act(() => void result.current.setFilter({ isFirstTime: value }));
+        act(() => {
+          land(queryOf(replace.mock.calls.length - 1));
+          rerender();
+        });
+        expect(result.current.filter.isFirstTime).toBe(value);
+      }
+    });
+
     it("age range and dietary toggle", () => {
       const { result, rerender } = renderHook(() => useRosterUrlState());
 

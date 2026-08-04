@@ -114,15 +114,36 @@ export const FACET_KEYS = [
   "ageMin",
   "blacklisted",
   "genders",
-  "hasDietaryNeeds",
   "graduationTerms",
   "graduationYears",
+  "hasDietaryNeeds",
+  "isFirstTime",
   "levelsOfStudy",
   "majors",
   "racesOrEthnicities",
   "schools",
   "shirtSizes",
 ] as const satisfies readonly (keyof HackerRosterFilter)[];
+
+/**
+ * Fails the build if a filter key is not owned by the panel or named as an
+ * exception.
+ *
+ * `satisfies` above only checks that every listed key is a real filter key. It
+ * says nothing about *coverage*, so a new facet could be added to the schema and
+ * the panel and simply be missing here — and `changedFacets` iterates this list,
+ * so Apply would silently send nothing for it. That shipped three times running:
+ * major, race, gender and shirt size, then again for first-hackathon.
+ *
+ * `search` lives in the search box, `status` on the tabs, and `deliveryFailed`
+ * is the pane an officer is in rather than a filter they set.
+ */
+type UnownedFilterKey = Exclude<
+  keyof HackerRosterFilter,
+  (typeof FACET_KEYS)[number] | "deliveryFailed" | "search" | "status"
+>;
+const _everyFilterKeyIsOwned: UnownedFilterKey extends never ? true : never =
+  true;
 
 /** A patch that clears every facet, leaving search, status and the pane alone. */
 export function clearedFacets(): RosterFilterPatch {

@@ -286,6 +286,7 @@ export function HackerRoster({
               <Input
                 aria-label="Search applicants"
                 className="h-11 bg-background/70 pl-9"
+                maxLength={200}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search name or email"
                 value={search}
@@ -394,7 +395,7 @@ export function HackerRoster({
               (status) => (
                 <Button
                   className="min-h-11 text-sm"
-                  disabled={blocked}
+                  disabled={blocked || filterBusy}
                   key={status}
                   onClick={() => setBulkStatus(status)}
                   size="sm"
