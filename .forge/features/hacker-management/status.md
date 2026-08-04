@@ -153,6 +153,57 @@ needs Discord OAuth. The dev server is left running for the owner's pass.
   465 confirmed, 462 pending, 387 denied, 60 withdrawn, 54 waitlisted, 51
   accepted. Enough to exercise pagination and counts against something real.
 
+## Deferred: move `isFirstTime` onto the attendance record
+
+**Decision (owner):** keep both fields for now, take the schema change as a
+manual migration, and drop `Hacker.isFirstTime` only after cutover — the legacy
+application form writes it, so dropping it before then breaks applications.
+
+**Why.** `isFirstTime` is a claim about a person _at one hackathon_, stored on
+the profile where the next application overwrites it. 181 hackers have applied to
+more than one hackathon and 97 of those still read as first-timers, so the field
+is already wrong for over half the people it can be wrong about. The per-event
+answer for past hackathons is unrecoverable: one boolean cannot be un-overwritten.
+This is the same shape as the `age` bug — a point-in-time fact kept somewhere
+mutable.
+
+Self-declared is kept deliberately. Deriving it from our own attendance would
+answer a narrower question ("first Knight Hacks") under the same label, and count
+someone who has done three hackathons elsewhere as a first-timer. Sponsors and
+MLH ask the applicant; the applicant's answer is the data.
+
+**Shape.** `HackerAttendee.isFirstTime`, **nullable, no default.** Not
+default-`false`: that makes every pre-existing row assert "not a first-timer",
+conflating "they said no" with "nobody asked", and the first statistic pulled off
+it is understated with nothing to reveal that. `null` means unrecorded, which is
+true.
+
+**Write point: check-in**, in the event slice, not here. At check-in:
+
+```
+isFirstTime = declared_on_profile AND no prior checked-in attendance
+```
+
+computed once and frozen. Waiting costs nothing — the profile value is correct
+for the current hackathon at the moment someone applies or checks in, so
+capturing it at check-in loses only what is already lost. Adding the column now
+would ship something nothing writes and nothing reads, plus a backfill to redo.
+
+**The one thing that changes this:** if check-in will not ship before Knight
+Hacks IX, add the column early and snapshot before the event, or KH IX's
+first-timer number is lost the same way KH VIII's was.
+
+**Backfill, when it happens.** `true` on the earliest checked-in attendance for
+hackers currently declaring true; `false` on their later checked-in ones; `null`
+everywhere else, including the majority who have never checked in. No value is
+manufactured for rows we cannot speak to.
+
+**Not extended to the other profile fields.** `school`, `levelOfStudy`,
+`shirtSize` and `foodAllergies` drift too, so "what year were our KH VIII
+attendees" is already unanswerable — but those are slowly-changing attributes,
+where `isFirstTime` is definitionally a point-in-time claim. Owner's call, and a
+reasonable one.
+
 ## Links
 
 - PRs:
