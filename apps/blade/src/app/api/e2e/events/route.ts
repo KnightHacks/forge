@@ -151,7 +151,9 @@ export async function POST(request: Request) {
     email: "ada@e2e.local",
     firstName: "Ada",
     gender: "Prefer not to answer",
-    gradDate: "2027-05-01",
+    // Relative, because a graduation date in the past flips this member to
+    // `needs_confirmation` and renders the graduation dialog over the dashboard.
+    gradDate: `${new Date().getUTCFullYear() + 1}-05-01`,
     id: ids.member,
     lastName: "Lovelace",
     levelOfStudy: "Graduate University (Masters, Professional, Doctoral, etc)",
