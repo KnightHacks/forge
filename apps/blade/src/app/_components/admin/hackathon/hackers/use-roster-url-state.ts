@@ -66,6 +66,11 @@ export type RosterFilterPatch = Partial<HackerRosterFilter>;
 const LIST_KEYS = [
   "schools",
   "levelsOfStudy",
+  "majors",
+  "racesOrEthnicities",
+  "genders",
+  "countries",
+  "shirtSizes",
   "graduationTerms",
   "graduationYears",
 ] as const;
@@ -94,10 +99,15 @@ const _everyFilterKeyIsApplied: UncoveredFilterKey extends never
 /** Everything the Filters panel owns, so its Clear buttons can name them. */
 export const FACET_KEYS = [
   "blacklisted",
+  "countries",
+  "genders",
   "graduationTerms",
   "graduationYears",
   "levelsOfStudy",
+  "majors",
+  "racesOrEthnicities",
   "schools",
+  "shirtSizes",
 ] as const satisfies readonly (keyof HackerRosterFilter)[];
 
 /** A patch that clears every facet, leaving search, status and the pane alone. */

@@ -15,6 +15,7 @@ import {
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
+import { User } from "@forge/db/schemas/auth";
 import {
   EmailSend,
   Hackathon,
@@ -101,6 +102,23 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   }
   if (filter.levelsOfStudy?.length) {
     clauses.push(sql`${Hacker.levelOfStudy} in ${filter.levelsOfStudy}`);
+  }
+  if (filter.majors?.length) {
+    clauses.push(sql`${Hacker.major} in ${filter.majors}`);
+  }
+  if (filter.racesOrEthnicities?.length) {
+    clauses.push(
+      sql`${Hacker.raceOrEthnicity}::text in ${filter.racesOrEthnicities}`,
+    );
+  }
+  if (filter.genders?.length) {
+    clauses.push(sql`${Hacker.gender}::text in ${filter.genders}`);
+  }
+  if (filter.countries?.length) {
+    clauses.push(sql`${Hacker.country} in ${filter.countries}`);
+  }
+  if (filter.shirtSizes?.length) {
+    clauses.push(sql`${Hacker.shirtSize}::text in ${filter.shirtSizes}`);
   }
   if (filter.graduationYears?.length) {
     clauses.push(
@@ -317,7 +335,22 @@ export const hackerRouter = createTRPCRouter({
         startDate: Hackathon.startDate,
       })
       .from(Hackathon)
-      .orderBy(sql`abs(extract(epoch from (${Hackathon.startDate} - now())))`);
+      /*
+        Upcoming first, soonest at the top; then past ones, most recent first.
+
+        Plain proximity was wrong in the one case that matters: a hackathon that
+        ended three weeks ago is "closer" than one starting in two months, so the
+        screen opened on a finished event with every action greyed out. Triage
+        work is always about the one coming up.
+
+        Both groups sort by distance ascending, which reads correctly in each —
+        soonest among the upcoming, most recent among the past — so the furthest
+        thing in either direction ends up at the bottom.
+      */
+      .orderBy(
+        sql`case when ${Hackathon.startDate} >= now() then 0 else 1 end`,
+        sql`abs(extract(epoch from (${Hackathon.startDate} - now())))`,
+      );
 
     const now = Date.now();
     return {
@@ -347,9 +380,14 @@ export const hackerRouter = createTRPCRouter({
       // schools, and it re-runs on every roster mount and hackathon switch.
       const rows = await db
         .selectDistinct({
+          country: Hacker.country,
+          gender: Hacker.gender,
           gradYear: sql<number>`extract(year from ${Hacker.gradDate})::int`,
           levelOfStudy: Hacker.levelOfStudy,
+          major: Hacker.major,
+          raceOrEthnicity: Hacker.raceOrEthnicity,
           school: Hacker.school,
+          shirtSize: Hacker.shirtSize,
         })
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
@@ -358,12 +396,20 @@ export const hackerRouter = createTRPCRouter({
       const distinct = (values: string[]) =>
         [...new Set(values)].sort((left, right) => left.localeCompare(right));
 
+      // Only values this hackathon's applicants actually have. Offering the
+      // full enum would list a hundred majors nobody applied with, and an
+      // officer picking one gets an empty roster and no explanation.
       return {
+        countries: distinct(rows.map((row) => row.country)),
+        genders: distinct(rows.map((row) => row.gender)),
         graduationYears: [...new Set(rows.map((row) => row.gradYear))].sort(
           (left, right) => left - right,
         ),
         levelsOfStudy: distinct(rows.map((row) => row.levelOfStudy)),
+        majors: distinct(rows.map((row) => row.major)),
+        racesOrEthnicities: distinct(rows.map((row) => row.raceOrEthnicity)),
         schools: distinct(rows.map((row) => row.school)),
+        shirtSizes: distinct(rows.map((row) => row.shirtSize)),
       };
     }),
 
@@ -389,6 +435,11 @@ export const hackerRouter = createTRPCRouter({
           blacklistedAt: HackerAttendee.blacklistedAt,
           country: Hacker.country,
           discordUser: Hacker.discordUser,
+          // The Discord account behind the application, so an organiser can
+          // reach someone whose email bounced. `User.discordUserId` is the
+          // stable snowflake; `Hacker.discordUser` is the handle they typed and
+          // can be stale or wrong.
+          discordUserId: User.discordUserId,
           email: Hacker.email,
           firstName: Hacker.firstName,
           foodAllergies: Hacker.foodAllergies,
@@ -414,6 +465,8 @@ export const hackerRouter = createTRPCRouter({
         })
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+        // Left, not inner: an application can outlive the account that made it.
+        .leftJoin(User, eq(User.id, Hacker.userId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
         .where(eq(HackerAttendee.id, input.attendeeId))
         .limit(1);

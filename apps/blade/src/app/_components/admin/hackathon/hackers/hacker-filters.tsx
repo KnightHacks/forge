@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, Filter, X } from "lucide-react";
+import { Check, ChevronsUpDown, SlidersHorizontal, X } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
@@ -14,6 +14,14 @@ import {
   CommandItem,
   CommandList,
 } from "@forge/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@forge/ui/dialog";
 import { Label } from "@forge/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import { GRADUATION_TERMS, HACKER_STATUS_LABELS } from "@forge/validators";
@@ -51,6 +59,23 @@ export function activeFilters(filter: RosterFilter): ActiveFilter[] {
         filter.levelsOfStudy.length === 1
           ? (filter.levelsOfStudy[0] ?? "")
           : `${filter.levelsOfStudy.length} levels`,
+    });
+  }
+  // One chip per facet, named by its own plural, so removing one is
+  // unambiguous — a generic "5 filters" chip cannot say which it drops.
+  for (const [field, plural] of [
+    ["majors", "majors"],
+    ["racesOrEthnicities", "races"],
+    ["genders", "genders"],
+    ["countries", "countries"],
+    ["shirtSizes", "shirt sizes"],
+  ] as const) {
+    const values = filter[field];
+    if (!values?.length) continue;
+    chips.push({
+      field,
+      label:
+        values.length === 1 ? (values[0] ?? "") : `${values.length} ${plural}`,
     });
   }
   if (filter.graduationTerms?.length || filter.graduationYears?.length) {
@@ -220,6 +245,12 @@ export function HackerFilters({
         onChange={(event) => onHackathonChange(event.target.value)}
         value={hackathonId}
       >
+        {/*
+          Rendered in the order the server returned them — nearest start date
+          first — rather than re-sorted here. An officer opening this screen
+          wants the hackathon about to happen, and alphabetical put "Knight
+          Hacks IX" above whatever is running next week.
+        */}
         {hackathons.map((hackathon) => (
           <option key={hackathon.id} value={hackathon.id}>
             {hackathon.displayName}
@@ -228,24 +259,39 @@ export function HackerFilters({
         ))}
       </select>
 
-      <Popover onOpenChange={openWith} open={open}>
-        <PopoverTrigger asChild>
-          <Button
-            className="h-11 gap-2 bg-background/70"
-            disabled={busy}
-            variant="outline"
-          >
-            <Filter className="size-4" aria-hidden="true" />
-            Filters
-            {appliedCount > 0 ? (
-              <span className="rounded-full bg-primary/15 px-2 text-sm text-primary">
-                {appliedCount}
-              </span>
-            ) : null}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[min(24rem,calc(100vw-2rem))] p-4">
-          <div className="grid gap-4">
+      <Button
+        className="h-11 gap-2 bg-background/70"
+        disabled={busy}
+        onClick={() => openWith(true)}
+        type="button"
+        variant="outline"
+      >
+        <SlidersHorizontal className="size-4" aria-hidden="true" />
+        Filters
+        {appliedCount > 0 ? (
+          <span className="rounded-full bg-primary/15 px-2 text-sm text-primary">
+            {appliedCount}
+          </span>
+        ) : null}
+      </Button>
+
+      {/*
+        A dialog rather than a popover, matching the member directory. Ten
+        facets do not fit a 24rem popover without becoming a scroll-within-a-
+        scroll, and an officer building a capacity filter is doing deliberate
+        work, not glancing.
+      */}
+      <Dialog onOpenChange={openWith} open={open}>
+        <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] max-w-4xl overflow-y-auto border-white/10 bg-card/95 p-0 shadow-2xl">
+          <DialogHeader className="border-b border-border/70 px-5 py-5 pr-12 md:px-6">
+            <DialogTitle>Filter applicants</DialogTitle>
+            <DialogDescription>
+              Values within one filter are combined with OR. Different filters
+              are combined with AND. Status lives on the tabs behind this.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-5 px-5 py-5 md:grid-cols-2 md:px-6">
             <MultiSelectFilter
               label="School"
               onChange={(schools) => setDraft({ ...draft, schools })}
@@ -259,6 +305,38 @@ export function HackerFilters({
               }
               options={options.levelsOfStudy}
               selected={draft.levelsOfStudy ?? []}
+            />
+            <MultiSelectFilter
+              label="Major"
+              onChange={(majors) => setDraft({ ...draft, majors })}
+              options={options.majors}
+              selected={draft.majors ?? []}
+            />
+            <MultiSelectFilter
+              label="Race or ethnicity"
+              onChange={(racesOrEthnicities) =>
+                setDraft({ ...draft, racesOrEthnicities })
+              }
+              options={options.racesOrEthnicities}
+              selected={draft.racesOrEthnicities ?? []}
+            />
+            <MultiSelectFilter
+              label="Gender"
+              onChange={(genders) => setDraft({ ...draft, genders })}
+              options={options.genders}
+              selected={draft.genders ?? []}
+            />
+            <MultiSelectFilter
+              label="Country"
+              onChange={(countries) => setDraft({ ...draft, countries })}
+              options={options.countries}
+              selected={draft.countries ?? []}
+            />
+            <MultiSelectFilter
+              label="Shirt size"
+              onChange={(shirtSizes) => setDraft({ ...draft, shirtSizes })}
+              options={options.shirtSizes}
+              selected={draft.shirtSizes ?? []}
             />
 
             {/*
@@ -311,37 +389,37 @@ export function HackerFilters({
                 </Button>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2 border-t pt-3">
-              <Button
-                className="min-h-11"
-                disabled={busy}
-                onClick={() => {
-                  // Only the facets this panel owns. Search, status and the
-                  // pane are untouched because they are not named — and
-                  // `deliveryFailed` in particular is the worklist the officer
-                  // is working to empty, not a filter they set.
-                  onFilterChange(clearedFacets());
-                  setOpen(false);
-                }}
-                variant="ghost"
-              >
-                Clear
-              </Button>
-              <Button
-                className="min-h-11"
-                disabled={busy}
-                onClick={() => {
-                  onFilterChange(changedFacets(seed, draft));
-                  setOpen(false);
-                }}
-              >
-                Apply
-              </Button>
-            </div>
           </div>
-        </PopoverContent>
-      </Popover>
+
+          <DialogFooter className="border-t border-border/70 px-5 py-4 md:px-6">
+            <Button
+              className="min-h-11"
+              disabled={busy}
+              onClick={() => {
+                // Only the facets this panel owns. Search, status and the pane
+                // are untouched because they are not named — and
+                // `deliveryFailed` in particular is the worklist the officer is
+                // working to empty, not a filter they set.
+                onFilterChange(clearedFacets());
+                setOpen(false);
+              }}
+              variant="ghost"
+            >
+              Clear
+            </Button>
+            <Button
+              className="min-h-11"
+              disabled={busy}
+              onClick={() => {
+                onFilterChange(changedFacets(seed, draft));
+                setOpen(false);
+              }}
+            >
+              Apply
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

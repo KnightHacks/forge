@@ -97,7 +97,7 @@ export function HackerTable({
           return (
             <TableRow
               aria-selected={isSelected}
-              className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              className="group/row cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               data-selected={isSelected ? "true" : undefined}
               key={hacker.attendeeId}
               /*
@@ -178,7 +178,11 @@ export function HackerTable({
               </TableCell>
               <TableCell className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="break-words font-medium">{hacker.name}</span>
+                  {/* Underlined, because the whole row opens the applicant and
+                      nothing else on it says so. */}
+                  <span className="break-words font-medium underline decoration-muted-foreground/40 underline-offset-4 group-hover/row:decoration-foreground">
+                    {hacker.name}
+                  </span>
                   {hacker.blacklisted ? (
                     <Badge className="gap-1 text-sm" variant="destructive">
                       <Ban className="size-3" aria-hidden="true" />

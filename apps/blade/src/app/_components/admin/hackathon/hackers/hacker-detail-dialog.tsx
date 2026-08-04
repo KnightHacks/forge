@@ -181,7 +181,6 @@ export function HackerDetailDialog({
             <Section title="Contact">
               <Field label="Email" value={hacker.email} />
               <Field label="Phone" value={hacker.phoneNumber} />
-              <Field label="Discord" value={`@${hacker.discordUser}`} />
               <Field label="Country" value={hacker.country} />
             </Section>
 
@@ -209,6 +208,54 @@ export function HackerDetailDialog({
               />
               <Field label="Dietary" value={hacker.foodAllergies} />
               <Field label="Race / ethnicity" value={hacker.raceOrEthnicity} />
+            </Section>
+
+            <Section title="Discord">
+              {/*
+                Two facts, because they answer different questions. The handle is
+                what the applicant typed and is the thing to search for; the
+                snowflake is the account Blade actually linked, and is what stays
+                correct after a rename. An organiser chasing someone whose email
+                bounced needs the second.
+              */}
+              <Field label="Handle" value={`@${hacker.discordUser}`} />
+              <Field
+                label="Account"
+                value={hacker.discordUserId ?? "Not linked to a Blade account"}
+              />
+              {hacker.discordUserId ? (
+                <div className="min-w-0">
+                  <dt className="text-sm text-muted-foreground">Open</dt>
+                  <dd>
+                    <a
+                      className="inline-flex items-center gap-1 break-all text-primary underline-offset-4 hover:underline"
+                      href={`discord://-/users/${hacker.discordUserId}`}
+                    >
+                      Message on Discord
+                      <ExternalLink
+                        className="size-3.5 shrink-0"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+            </Section>
+
+            <Section title="Hackathon events">
+              {/*
+                TODO: hackathon events do not exist yet. When they do, this
+                becomes attendance for *this hackathon's* events — workshops,
+                ceremonies, meals — and nothing else. It is deliberately not the
+                club event feed: an organiser looking at an applicant during a
+                hackathon cares who showed up to the opening ceremony, not who
+                came to a GBM in March.
+              */}
+              <p className="text-sm text-muted-foreground sm:col-span-2">
+                Hackathon events are not built yet, so there is no attendance to
+                show. This is where check-ins for this hackathon&rsquo;s events
+                will appear.
+              </p>
             </Section>
 
             {(hacker.resumeUrl ??

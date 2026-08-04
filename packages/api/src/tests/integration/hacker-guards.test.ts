@@ -587,6 +587,60 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       expect(none.hackers).toHaveLength(0);
     });
 
+    /**
+     * Every new facet, executed against real SQL.
+     *
+     * The array filters shipped once generating `= any(($1, $2))` instead of a
+     * Postgres array and 500'd on the first value an officer ticked. Adding five
+     * more facets adds five more chances to do it again, and a filter that
+     * throws — or worse, silently matches nothing — looks to an officer like a
+     * hackathon where nobody fits.
+     */
+    it.each([
+      ["majors", "Computer Science", "Underwater Basket Weaving"],
+      ["genders", "Prefer not to answer", "Not A Gender"],
+      ["shirtSizes", "M", "XXXXL"],
+    ] as const)("filters by %s", async (field, present, absent) => {
+      const matching = await caller.hacker.listForHackathon({
+        filter: { [field]: [present] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(matching.hackers.length).toBeGreaterThan(0);
+
+      const none = await caller.hacker.listForHackathon({
+        filter: { [field]: [absent] },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(none.hackers).toHaveLength(0);
+    });
+
+    it("combines facets with AND", async () => {
+      // Within a facet the values are OR; across facets they are AND. Getting
+      // that backwards would widen a capacity filter instead of narrowing it.
+      const both = await caller.hacker.listForHackathon({
+        filter: {
+          majors: ["Computer Science"],
+          schools: ["A School Nobody Attends"],
+        },
+        hackathonId: READY_HACKATHON,
+      });
+      expect(both.hackers).toHaveLength(0);
+    });
+
+    it("offers only values this hackathon's applicants actually have", async () => {
+      const options = await caller.hacker.filterOptions({
+        hackathonId: READY_HACKATHON,
+      });
+
+      // Offering the whole enum would list a hundred majors nobody applied
+      // with, and picking one returns an empty roster with no explanation.
+      expect(options.majors).toEqual(["Computer Science"]);
+      expect(options.genders.length).toBeGreaterThan(0);
+      expect(options.shirtSizes).toEqual(["M"]);
+      expect(options.countries.length).toBeGreaterThan(0);
+      expect(options.racesOrEthnicities.length).toBeGreaterThan(0);
+    });
+
     it("filters by a single school and by several", async () => {
       // One value and many take different SQL shapes; the broken version failed
       // differently for each, so both are pinned.

@@ -59,6 +59,11 @@ export const hackerRosterFilterSchema = z.object({
   // filters to a single-value field.
   schools: z.array(z.string().trim().max(255)).max(50).optional(),
   levelsOfStudy: z.array(z.string().trim().max(255)).max(50).optional(),
+  majors: z.array(z.string().trim().max(255)).max(100).optional(),
+  racesOrEthnicities: z.array(z.string().trim().max(255)).max(50).optional(),
+  genders: z.array(z.string().trim().max(255)).max(20).optional(),
+  countries: z.array(z.string().trim().max(255)).max(100).optional(),
+  shirtSizes: z.array(z.string().trim().max(16)).max(20).optional(),
   graduationTerms: z.array(z.enum(GRADUATION_TERMS)).max(3).optional(),
   graduationYears: z
     .array(z.number().int().min(1900).max(2200))

@@ -38,6 +38,19 @@ type Options = RouterOutputs["hacker"]["listHackathonOptions"]["hackathons"];
 export type RosterFilter = HackerRosterFilter;
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
+/** Shown until `filterOptions` lands, so every combobox renders empty rather
+ * than absent. */
+const EMPTY_FILTER_OPTIONS = {
+  countries: [],
+  genders: [],
+  graduationYears: [],
+  levelsOfStudy: [],
+  majors: [],
+  racesOrEthnicities: [],
+  schools: [],
+  shirtSizes: [],
+};
+
 const PAGE_SIZE = 50;
 /**
  * The show-all ceiling.
@@ -280,13 +293,7 @@ export function HackerRoster({
             </div>
             <HackerFilters
               busy={filterBusy}
-              options={
-                filterOptions.data ?? {
-                  graduationYears: [],
-                  levelsOfStudy: [],
-                  schools: [],
-                }
-              }
+              options={filterOptions.data ?? EMPTY_FILTER_OPTIONS}
               filter={url.filter}
               hackathonId={selected.id}
               hackathons={hackathons}
