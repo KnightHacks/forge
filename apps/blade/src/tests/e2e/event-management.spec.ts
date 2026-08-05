@@ -125,7 +125,10 @@ test.describe("event management", () => {
     ).toHaveCount(0);
 
     await events.signIn(fixture.users.readerId, CHECK_IN_PATH);
-    await expect(page).toHaveURL(/\/member\/dashboard$/);
+    // Reader has no check-in capability, so the admin layout bounces it to the
+    // member dashboard — which redirects again, because this fixture seeds a
+    // bare User with no Member row. Same two hops as the cases above.
+    await expect(page).toHaveURL(/\/form\/member-signup$/);
   });
 
   test("TC-006 TC-007 TC-030 preserves URL state and responsive event detail", async ({
