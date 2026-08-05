@@ -585,6 +585,11 @@ function AdminMemberFiles({
                   {detail.member.profilePictureUrl ? "Replace" : "Upload"}
                   <Input
                     type="file"
+                    // Named explicitly: the wrapping label reads "Upload" or
+                    // "Replace" depending on state, which tells a screen reader
+                    // nothing about what is being uploaded and changes out from
+                    // under anyone targeting it.
+                    aria-label="Upload profile picture"
                     accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
                     className="sr-only"
                     disabled={isPending}
