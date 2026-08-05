@@ -2,7 +2,7 @@ import type { Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
 import type { InsertMember } from "@forge/db/schemas/knight-hacks";
-import { DISCORD, PERMISSIONS } from "@forge/consts";
+import { EVENTS, PERMISSIONS } from "@forge/consts";
 import { inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
@@ -16,6 +16,7 @@ import {
   EventAttendee,
   Member,
 } from "@forge/db/schemas/knight-hacks";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 import { getDuesAcademicYear, MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 const ANALYTICS_PATH = "/admin/analytics";
@@ -45,11 +46,71 @@ const DISCORD_MESSAGE_IDS = [
   "9000000000000000932",
   "9000000000000000933",
   "9000000000000000934",
+  "9000000000000000935",
 ] as const;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
 
 function required<T>(value: T | undefined, label: string): T {
   if (value === undefined) throw new Error(`Missing ${label}.`);
   return value;
+}
+
+/**
+ * Fixture dates relative to the run.
+ *
+ * Hard-coded fixture dates expire. Analytics defaults to the current academic
+ * year — August 1 to August 1 in club time — so literals that sat inside that
+ * window the day this spec was written fall out of it on a calendar date nobody
+ * chose, and the seeded events, profiles, and messages stop being reported at
+ * all rather than failing an assertion about what they contain.
+ */
+function clubParts(reference = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: EVENTS.CALENDAR_TIME_ZONE,
+    year: "numeric",
+  }).formatToParts(reference);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(
+      required(
+        parts.find((candidate) => candidate.type === type)?.value,
+        `club ${type}`,
+      ),
+    );
+  return { month: part("month"), year: part("year") };
+}
+
+/** The start year of the academic year the dashboard opens on. */
+function academicYearStartYear() {
+  const { month, year } = clubParts();
+  return month >= 8 ? year : year - 1;
+}
+
+/** An evening `days` into that academic year, in club time. */
+function daysIntoAcademicYear(days: number) {
+  return new Date(Date.UTC(academicYearStartYear(), 7, 1, 22) + days * DAY_MS);
+}
+
+/** The first of the month `monthsIn` months after that academic year opens. */
+function academicYearMonthStart(monthsIn: number) {
+  return new Date(Date.UTC(academicYearStartYear(), 7 + monthsIn, 1, 12))
+    .toISOString()
+    .slice(0, 10);
+}
+
+/**
+ * The activity heatmap labels months in club time and opens on the month the
+ * run happens in, so the labels it shows are only knowable at run time.
+ */
+function clubMonthLabel(monthsBefore: number) {
+  const { month, year } = clubParts();
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1 - monthsBefore, 15, 12)));
 }
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
@@ -133,7 +194,9 @@ async function seed() {
   });
   const members: InsertMember[] = MEMBER_IDS.map((id, index) => ({
     age: 18 + index,
-    dateCreated: `2025-${String(8 + (index % 4)).padStart(2, "0")}-01`,
+    // Joined across the first four months of the academic year on screen, so
+    // the audience section counts them as profiles created inside the period.
+    dateCreated: academicYearMonthStart(index % 4),
     discordUser: `club-analytics-member-${index}`,
     dob: `${2007 - index}-02-03`,
     email: `club-analytics-member-${index}@example.test`,
@@ -144,7 +207,7 @@ async function seed() {
       "Member first name",
     ),
     gender: index % 3 === 0 ? "Woman" : "Prefer not to answer",
-    gradDate: `${2026 + (index % 4)}-05-02`,
+    gradDate: `${academicYearStartYear() + 1 + (index % 4)}-05-02`,
     id,
     lastName: "Analytics",
     levelOfStudy:
@@ -174,16 +237,14 @@ async function seed() {
       userId: UNAUTHORIZED_USER_ID,
     },
   ]);
-  const eventStarts = [
-    "2025-09-10T22:00:00.000Z",
-    "2025-10-08T22:00:00.000Z",
-    "2026-01-20T23:00:00.000Z",
-    "2026-03-18T22:00:00.000Z",
-    "2026-04-01T22:00:00.000Z",
-  ];
+  // September, October, January, March, and April of the academic year on
+  // screen. Events are selected by period end rather than by now, so future
+  // ones still count — but the spread across both terms is what the section's
+  // grouping, comparison, and month bands are reading.
+  const eventStarts = [40, 68, 172, 229, 243].map(daysIntoAcademicYear);
   await db.insert(Event).values(
     EVENT_IDS.map((id, index) => {
-      const start = new Date(required(eventStarts[index], "Event start"));
+      const start = required(eventStarts[index], "Event start");
       return {
         description: `Analytics event fixture ${index}`,
         end_datetime: new Date(start.getTime() + 90 * 60 * 1000),
@@ -213,31 +274,39 @@ async function seed() {
     })),
   );
   await db.insert(EventAttendee).values(attendanceValues);
+  // Every Discord query in the report scopes to the guild in
+  // `knight_hacks_discord_config`, not to the deprecated compile-time constant,
+  // and that row is officer-editable. Seeding against the constant made the
+  // fixtures invisible the moment the two disagreed — the section then rendered
+  // its empty state, so even the region under assertion was absent.
+  const guildId = await getKnightHacksGuildId();
   await db.insert(DiscordArchiveChannel).values({
-    discordUpdatedAt: new Date("2026-07-15T12:00:00Z"),
-    guildId: DISCORD.KNIGHTHACKS_GUILD,
+    discordUpdatedAt: new Date(),
+    guildId,
     id: DISCORD_CHANNEL_ID,
     name: "analytics-member-e2e",
     type: 0,
   });
+  // The Discord report counts messages between the academic-year boundary and
+  // now, so the four reported ones are minutes old: on a run just after August 1
+  // the academic year itself is only minutes old, and anything older would fall
+  // into the previous one. The fifth sits a week before the boundary, which
+  // keeps it out of the reported count and gives the member dialog's activity
+  // heatmap — which is not period-filtered — an earlier month to page back to.
+  const messageTimes = [
+    new Date(Date.UTC(academicYearStartYear(), 7, 1, 16) - 7 * DAY_MS),
+    ...[20, 15, 10, 5].map(
+      (minutesAgo) => new Date(Date.now() - minutesAgo * MINUTE_MS),
+    ),
+  ];
   await db.insert(DiscordArchiveMessage).values(
     DISCORD_MESSAGE_IDS.map((id, index) => ({
       authorDiscordUserId: DISCORD_AUTHOR_ID,
       authorIsBot: false,
       channelId: DISCORD_CHANNEL_ID,
       content: "E2E message content must not surface",
-      createdAt: new Date(
-        required(
-          [
-            "2026-06-20T12:00:00Z",
-            "2026-07-13T12:00:00Z",
-            "2026-07-14T12:00:00Z",
-            "2026-07-15T12:00:00Z",
-          ][index],
-          "Discord message date",
-        ),
-      ),
-      guildId: DISCORD.KNIGHTHACKS_GUILD,
+      createdAt: required(messageTimes[index], "Discord message date"),
+      guildId,
       id,
       messageType: 0,
     })),
@@ -343,11 +412,11 @@ test.describe("admin Club analytics", () => {
     });
     await discordHeading.scrollIntoViewIfNeeded();
     await expect(
-      memberDialog.getByText("July 2026", { exact: true }),
+      memberDialog.getByText(clubMonthLabel(0), { exact: true }),
     ).toBeVisible();
     await memberDialog.getByRole("button", { name: "Previous month" }).click();
     await expect(
-      memberDialog.getByText("June 2026", { exact: true }),
+      memberDialog.getByText(clubMonthLabel(1), { exact: true }),
     ).toBeVisible();
     await memberDialog.getByRole("button", { name: "Next month" }).click();
     await page.keyboard.press("Escape");
@@ -427,9 +496,13 @@ test.describe("admin Club analytics", () => {
   }) => {
     await signInAs(page, UNAUTHORIZED_USER_ID);
     await expect(page).toHaveURL(new RegExp(`${MEMBER_DASHBOARD_PATH}$`));
-    await expect(page.getByRole("heading", { name: "Analytics" })).toHaveCount(
-      0,
-    );
+    // `exact`, because Playwright matches accessible names by substring and
+    // this fixture's member is called "Unauthorized Analytics" — their own name
+    // renders as a heading on the dashboard, so the loose form matched the
+    // person rather than the page and proved nothing about the redirect.
+    await expect(
+      page.getByRole("heading", { exact: true, name: "Analytics" }),
+    ).toHaveCount(0);
   });
 
   test("keeps the reports page responsive while a resume bundle is prepared", async ({

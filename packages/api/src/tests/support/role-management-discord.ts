@@ -1,9 +1,9 @@
 import type { APIGuildMember, APIRole } from "discord-api-types/v10";
 
 import type { Session } from "@forge/auth/server";
-import { DISCORD } from "@forge/consts";
 import { db } from "@forge/db/client";
 import { Permissions, Roles } from "@forge/db/schemas/auth";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import type { RoleDiscordGateway } from "../../utils/roles/discord-gateway";
 
@@ -11,13 +11,6 @@ const missingDiscordRoleId = "990000000000009999";
 const synchronizedDiscordRoleId = "990000000000000006";
 
 const discordRoles = [
-  {
-    color: 0,
-    id: DISCORD.KNIGHTHACKS_GUILD,
-    managed: false,
-    name: "@everyone",
-    position: 0,
-  },
   {
     color: 0x6d28d9,
     id: "990000000000000001",
@@ -62,6 +55,25 @@ const discordRoles = [
   },
 ] as const;
 
+/**
+ * `@everyone` is not a real role: Discord gives it the guild's own ID, which is
+ * exactly what `filterDiscordRolesForLinking` and `assertEligibleDiscordRole`
+ * refuse. Officers repoint that guild at runtime through
+ * `discordConfig.update`, so the ID has to be resolved from the config table
+ * the same way the procedures resolve it. Pinning the compile-time constant
+ * detached this fixture's `@everyone` from the ID the filter excludes, and it
+ * was then offered as an ordinary linkable role.
+ */
+async function everyoneRole() {
+  return {
+    color: 0,
+    id: await getKnightHacksGuildId(),
+    managed: false,
+    name: "@everyone",
+    position: 0,
+  };
+}
+
 async function getAssignmentRows() {
   return db
     .select({ roleId: Permissions.roleId, userId: Permissions.userId })
@@ -101,13 +113,16 @@ const roleManagementE2EDiscordGateway: RoleDiscordGateway = {
   },
 
   async getGuildRoles() {
-    const linked = await db
-      .select({
-        discordRoleId: Roles.discordRoleId,
-        name: Roles.name,
-        teamHexcodeColor: Roles.teamHexcodeColor,
-      })
-      .from(Roles);
+    const [everyone, linked] = await Promise.all([
+      everyoneRole(),
+      db
+        .select({
+          discordRoleId: Roles.discordRoleId,
+          name: Roles.name,
+          teamHexcodeColor: Roles.teamHexcodeColor,
+        })
+        .from(Roles),
+    ]);
     const linkedRoles = linked
       .filter((role) => role.discordRoleId !== missingDiscordRoleId)
       .map((role, index) => ({
@@ -120,13 +135,17 @@ const roleManagementE2EDiscordGateway: RoleDiscordGateway = {
         position: 50 - index,
       }));
     const byId = new Map(
-      [...linkedRoles, ...discordRoles].map((role) => [role.id, role]),
+      [...linkedRoles, everyone, ...discordRoles].map((role) => [
+        role.id,
+        role,
+      ]),
     );
     return { available: true, roles: [...byId.values()] as APIRole[] };
   },
 
   async getRoleCounts() {
-    const [roles, assignments] = await Promise.all([
+    const [everyone, roles, assignments] = await Promise.all([
+      everyoneRole(),
       db
         .select({ id: Roles.id, discordRoleId: Roles.discordRoleId })
         .from(Roles),
@@ -144,7 +163,7 @@ const roleManagementE2EDiscordGateway: RoleDiscordGateway = {
       usersByRole.set(discordRoleId, users);
     }
     return Object.fromEntries(
-      [...discordRoles, ...roles].map((role) => {
+      [everyone, ...discordRoles, ...roles].map((role) => {
         const id = "discordRoleId" in role ? role.discordRoleId : role.id;
         return [id, usersByRole.get(id)?.size ?? 0];
       }),

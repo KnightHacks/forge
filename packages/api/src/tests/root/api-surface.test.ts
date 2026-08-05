@@ -83,6 +83,11 @@ describe("client-facing API surface", () => {
       "event",
       "forms",
       "guild",
+      // Added together: this list had already drifted — `hackathon` shipped a
+      // slice ago without being added here, so the check silently stopped
+      // covering the whole surface it claims to.
+      "hackathon",
+      "hacker",
       "issues",
       "member",
       "memberAdmin",

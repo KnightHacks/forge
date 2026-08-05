@@ -41,12 +41,11 @@ const testPhones = ["321-555-0101", "321-555-0102", "321-555-0103"];
 
 const validSignup = {
   about: "I like building useful Knight Hacks tools.",
-  company: "Knight Hacks",
   dob: "2000-02-03",
   email: "blade-e2e-created@example.test",
   firstName: "Ada",
   githubProfileUrl: "https://github.com/knighthacks",
-  gradYear: 2027,
+  gradYear: new Date().getUTCFullYear() + 1,
   lastName: "Lovelace",
   levelOfStudy: "Undergraduate University (3+ year)",
   linkedinProfileUrl: "https://www.linkedin.com/company/knight-hacks",
@@ -128,7 +127,10 @@ async function seedE2EData() {
     firstName: "Casey",
     gender: "Prefer not to answer",
     githubProfileUrl: "https://github.com/knighthacks",
-    gradDate: "2027-05-02",
+    // Relative: a graduation date in the past flips this member to
+    // `needs_confirmation`, which renders the graduation dialog over the
+    // dashboard and breaks every welcome assertion in this file.
+    gradDate: `${new Date().getUTCFullYear() + 1}-05-02`,
     guildProfileVisible: true,
     lastName: "Member",
     levelOfStudy: "Undergraduate University (3+ year)",
@@ -194,9 +196,6 @@ async function fillSignupForm(
   );
   await chooseComboBox(page, "Select your major", "Search major", values.major);
   await page.locator('input[type="number"]').fill(String(values.gradYear));
-  await page
-    .getByPlaceholder("Knight Hacks, UCF, a company, or self-employed")
-    .fill(values.company);
   await page
     .getByPlaceholder("Builder, designer, first-time hacker")
     .fill(values.tagline);
@@ -436,19 +435,19 @@ test.describe("initial member onboarding", () => {
     page,
   }) => {
     await signInAs(page, DEFAULT_USER_ID, `/form/${MEMBER_SIGNUP_FORM_SLUG}`);
-    await page.getByText("Guild profile visibility").scrollIntoViewIfNeeded();
+    const guildProfileVisible = page.getByRole("switch", {
+      name: "Show my profile on Guild",
+    });
+    await guildProfileVisible.scrollIntoViewIfNeeded();
 
     await expect(
       page.getByText(
-        "Public profiles can be seen by other members on guild.knighthacks.org and by sponsors.",
+        "Guild is public. Turn this off to remove your profile from the public directory and profile pages.",
       ),
     ).toBeVisible();
-    await page.getByRole("switch").click();
-    await expect(
-      page.getByText(
-        "Private profiles are still visible to sponsors. Public profiles are also visible to other members on guild.knighthacks.org.",
-      ),
-    ).toBeVisible();
+    await expect(guildProfileVisible).toBeChecked();
+    await guildProfileVisible.click();
+    await expect(guildProfileVisible).not.toBeChecked();
 
     await fillSignupForm(page);
     await submitSignup(page);
@@ -513,12 +512,12 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByText("Resume must be a PDF.")).toBeVisible();
 
     await page
-      .locator('input[accept="image/jpeg,image/png,image/gif,image/webp"]')
+      .getByLabel("Upload profile picture", { exact: true })
       .setInputFiles(pngPayload);
     await expect(page.locator('img[src^="blob:"]').first()).toBeVisible();
 
     await page
-      .locator('input[accept="image/jpeg,image/png,image/gif,image/webp"]')
+      .getByLabel("Upload profile picture", { exact: true })
       .setInputFiles({
         buffer: Buffer.from("not an image"),
         mimeType: "text/plain",
@@ -555,7 +554,7 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByRole("button", { name: "View" })).toBeDisabled();
 
     await page
-      .locator('input[accept="image/jpeg,image/png,image/gif,image/webp"]')
+      .getByLabel("Upload profile picture", { exact: true })
       .setInputFiles(pngPayload);
     await expect(
       page.getByAltText("Casey Member profile picture"),

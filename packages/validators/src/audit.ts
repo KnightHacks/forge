@@ -348,6 +348,93 @@ export const AUDIT_ACTION_CATALOG = {
     ["name", "discordRoleId", "color"],
   ),
   "hackathon.class_deleted": policy("hackathons", "Deleted hackathon class"),
+  // Hacker management. The status is carried **both** ways on purpose: as a
+  // change diff, so the log renders "pending → denied" like every other edit,
+  // and as metadata, so `previousStatus` and the `sendId` that carried the mail
+  // are queryable. Note the stored value is what appears — an officer performs
+  // a "capacity reject" and the log reads `denied`, because that is the value
+  // in the column and a log that renamed it would not match the database.
+  "hacker.status_changed": policy(
+    "hackathons",
+    "Changed hacker status",
+    ["previousStatus", "status", "sendId"],
+    ["status"],
+  ),
+  // One event per bulk action, not per hacker: the officer performed one act.
+  // Counts rather than a name list, because a bulk of two hundred would
+  // otherwise write a payload nobody reads.
+  //
+  // The trade-off is real and worth stating: an individual applicant's bulk
+  // move is **not** separately recoverable from the log. Answering "who denied
+  // me?" for someone caught in a bulk means finding the event by hackathon and
+  // time, not by searching for that person. Per-hacker events for a
+  // two-hundred-person bulk were judged worse.
+  "hacker.bulk_status_changed": policy(
+    "hackathons",
+    "Bulk changed hacker status",
+    // `skippedDuplicateEmail` is broken out because it is the only skip reason
+    // that leaves no other trace: a blacklist leaves `blacklistedAt`, an
+    // already-at-status leaves the status, a missing applicant leaves no row.
+    // A collapsed duplicate exists nowhere else once the officer closes the
+    // toast, and "why was I never told?" has to be answerable weeks later.
+    [
+      "status",
+      "movedCount",
+      "skippedCount",
+      "skippedDuplicateEmail",
+      "sendId",
+      // True when the bulk moved more applicants than the event names
+      // individually, so a partial subject list is never read as the whole set.
+      "subjectsTruncated",
+      // Non-zero only outside production, where sends are narrowed to the team.
+      "withheldCount",
+    ],
+  ),
+  // The reason is recorded here as well as on the row, because the row's
+  // reason is overwritten by the next blacklist and the log is what survives.
+  /*
+    Manual point awards live in the audit log rather than a ledger table.
+
+    `HackerAttendee.points` is a single integer with no history of its own, and
+    the audit event already records actor, time, subject and metadata — which is
+    exactly the ledger a manual award needs. Adding a table would duplicate that
+    and require a migration; this does not.
+  */
+  "hacker.points_awarded": policy("hackathons", "Adjusted hacker points", [
+    "delta",
+    "reason",
+    "resultingPoints",
+  ]),
+  // The correctable fields, named so the log shows which one an officer
+  // touched. Deliberately not school, major or the MLH consent answers — those
+  // are the applicant's own answers, not an officer's to rewrite.
+  "hacker.profile_updated": policy(
+    "hackathons",
+    "Edited hacker profile",
+    [],
+    [
+      "country",
+      "dob",
+      "discordUser",
+      "email",
+      "firstName",
+      "foodAllergies",
+      "gender",
+      "githubProfileUrl",
+      "gradDate",
+      "lastName",
+      "levelOfStudy",
+      "linkedinProfileUrl",
+      "major",
+      "phoneNumber",
+      "raceOrEthnicity",
+      "school",
+      "shirtSize",
+      "websiteUrl",
+    ],
+  ),
+  "hacker.blacklisted": policy("hackathons", "Blacklisted hacker", ["reason"]),
+  "hacker.unblacklisted": policy("hackathons", "Removed hacker blacklist"),
   "role.synced": policy("roles", "Synced linked role", [
     "checkedCount",
     "addedCount",
@@ -661,6 +748,7 @@ export const AUDIT_TARGET_TYPES = [
   "form_section",
   "hackathon",
   "hackathon_class",
+  "hacker_attendee",
   "issue",
   "issue_template",
   "issue_tree",

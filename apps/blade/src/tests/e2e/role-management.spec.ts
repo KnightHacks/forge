@@ -1,14 +1,22 @@
 import type { Locator, Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
-import { DISCORD, PERMISSIONS } from "@forge/consts";
+import { PERMISSIONS } from "@forge/consts";
 import { eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { FormSectionRoles, FormSections } from "@forge/db/schemas/knight-hacks";
-import { ROLE_UNLINK_CONFIRMATION } from "@forge/validators";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
+import {
+  MEMBER_SIGNUP_FORM_SLUG,
+  ROLE_UNLINK_CONFIRMATION,
+} from "@forge/validators";
 
 const ADMIN_PATH = "/admin/roles";
+// /admin/* bounces users without admin access to the member dashboard, and the
+// dashboard forwards anyone who has no Member profile into signup. Every user
+// this spec seeds is a bare User row, so that is where a rejection lands.
+const SIGNUP_PATH = `/form/${MEMBER_SIGNUP_FORM_SLUG}`;
 const CONFIGURE_USER_ID = "00000000-0000-4000-8000-000000000901";
 const ASSIGN_USER_ID = "00000000-0000-4000-8000-000000000902";
 const OFFICER_USER_ID = "00000000-0000-4000-8000-000000000903";
@@ -347,7 +355,7 @@ test.describe("role management", () => {
     expect(unauthenticated.status).toBe(401);
 
     await signInAs(page, UNAUTHORIZED_USER_ID);
-    await expect(page).toHaveURL(/\/member\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`${SIGNUP_PATH}$`));
     const forbidden = await callTRPCMutation(page, "roles.createLink", {
       discordRoleId: "990000000000000002",
       permissions: [],
@@ -471,7 +479,7 @@ test.describe("role management", () => {
     const cosmeticContext = await browser.newContext();
     const cosmeticPage = await cosmeticContext.newPage();
     await signInAs(cosmeticPage, targetUsers[0]?.id ?? "");
-    await expect(cosmeticPage).toHaveURL(/\/member\/dashboard$/);
+    await expect(cosmeticPage).toHaveURL(new RegExp(`${SIGNUP_PATH}$`));
     await cosmeticContext.close();
 
     await targetRow.getByRole("checkbox").click();
@@ -594,7 +602,10 @@ test.describe("role management", () => {
     await expect(
       dialog.getByText("That Discord role cannot be linked in Blade."),
     ).toBeVisible();
-    await manualId.fill(DISCORD.KNIGHTHACKS_GUILD);
+    // The guild's own ID is `@everyone`'s role ID. It is resolved rather than
+    // hardcoded because officers repoint the guild through `discordConfig`, and
+    // the procedure under test compares against whatever that table says.
+    await manualId.fill(await getKnightHacksGuildId());
     await expect(
       dialog.getByText("That Discord role cannot be linked in Blade."),
     ).toBeVisible();

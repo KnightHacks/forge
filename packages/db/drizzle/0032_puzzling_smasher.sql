@@ -1,0 +1,2 @@
+CREATE INDEX "knight_hacks_hacker_attendee_blacklisted_by_idx" ON "knight_hacks_hacker_attendee" USING btree ("blacklisted_by");--> statement-breakpoint
+CREATE INDEX "knight_hacks_hacker_attendee_last_status_send_idx" ON "knight_hacks_hacker_attendee" USING btree ("last_status_send_id");

@@ -342,11 +342,20 @@ test.describe("forms platform cross-surface journey", () => {
     await expect(
       page.getByRole("heading", { name: "Forms Platform E2E" }),
     ).toBeVisible();
-    await expect(page.getByText(/More club tools 60/)).toBeAttached();
-    await expect(page.getByText("60 responses")).toBeVisible();
+    // The streamed copy of this page stays parked in a hidden buffer div, so a
+    // raw text match finds every answer twice. Querying the accessibility tree
+    // reaches only the rendered analytics table, which is the surface that has
+    // to list the newest answer among all 60.
+    const newestAnswer = page.getByRole("cell", {
+      name: /^More club tools 60\b/,
+    });
+    await expect(newestAnswer).toBeVisible();
+    await expect(
+      page.getByRole("main").getByText("60 responses"),
+    ).toBeVisible();
     await page.setViewportSize({ width: 320, height: 740 });
     await page.reload();
-    await expect(page.getByText(/More club tools 60/)).toBeAttached();
+    await expect(newestAnswer).toBeVisible();
     await expect
       .poll(() =>
         page.evaluate(
@@ -363,6 +372,8 @@ test.describe("forms platform cross-surface journey", () => {
       .filter({ visible: true })
       .first()
       .click();
-    await expect(page.getByText("More club tools")).toBeVisible();
+    await expect(
+      page.getByRole("dialog").getByText("More club tools"),
+    ).toBeVisible();
   });
 });

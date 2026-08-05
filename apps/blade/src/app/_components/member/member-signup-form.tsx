@@ -49,6 +49,7 @@ import { Textarea } from "@forge/ui/textarea";
 import {
   MEMBER_CODE_OF_CONDUCT_URL,
   memberFormSchema,
+  memberSignupFormJsonSchema,
 } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
@@ -156,6 +157,14 @@ function RevealOnView({
     </div>
   );
 }
+
+// `memberFormSchema` covers the whole member profile, including fields only the
+// settings page collects, so its parsed output carries keys the signup form
+// never renders. The code-owned form rejects any response key it does not
+// declare, so the payload has to be narrowed to the declared contract.
+const signupResponseFields = new Set<string>(
+  Object.keys(memberSignupFormJsonSchema.properties),
+);
 
 function getDefaultValues(): MemberFormValues {
   return {
@@ -275,6 +284,7 @@ function FieldControl({
           )}
         </div>
         <Switch
+          aria-label={fieldConfig.label}
           className="shrink-0"
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked === true)}
@@ -422,7 +432,11 @@ export function MemberSignupForm({
               setSubmitError(null);
               submitSignup.mutate({
                 form: definition.id,
-                responseData: Object.fromEntries(Object.entries(values)),
+                responseData: Object.fromEntries(
+                  Object.entries(values).filter(([field]) =>
+                    signupResponseFields.has(field),
+                  ),
+                ),
               });
             })}
           >

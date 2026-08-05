@@ -556,8 +556,11 @@ test.describe("member field editing", () => {
       .poll(async () => (await getMember(EDIT_USER_ID))?.resumeUrl)
       .toContain(EDIT_USER_ID);
 
+    // Addressed by its label rather than its `accept` list: the attribute is
+    // derived from the upload policy, so pinning its exact value made this fail
+    // the moment file extensions joined the MIME types.
     await page
-      .locator('input[accept="image/jpeg,image/png,image/gif,image/webp"]')
+      .getByLabel("Upload profile picture", { exact: true })
       .setInputFiles(pngPayload);
     await expect(
       page.getByAltText("Casey Member profile picture"),

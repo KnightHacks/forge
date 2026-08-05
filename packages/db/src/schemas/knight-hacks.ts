@@ -716,6 +716,39 @@ export const HackerAttendee = createTable(
      * database, so it is dropped at cutover rather than here.
      */
     class: t.varchar({ length: 20 }).$type<string | null>().default(null),
+    /**
+     * Soft blacklist: "do not accept this person by accident".
+     *
+     * Deliberately **not** a status. Legacy expressed this by rewriting the
+     * hacker's status to `denied` on read, from a hardcoded uuid
+     * (`legacy/packages/api/src/routers/hackers/queries.ts`), which meant the
+     * flag was invisible, unattributable, and only ever true for one person.
+     * Here it sits beside the status and changes nothing about it — a
+     * blacklisted applicant stays `pending` until an officer capacity-rejects
+     * them like anyone else.
+     *
+     * Officer-only, per hackathon, and never rendered to the applicant. No
+     * member-facing procedure and no SDK payload may carry these three columns.
+     */
+    blacklistedAt: t.timestamp({ withTimezone: true }),
+    blacklistedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    blacklistReason: t.text(),
+    /**
+     * The `EmailSend` that carried this attendee's most recent status mail.
+     *
+     * Many attendees to one send: a bulk accept of two hundred shares one row,
+     * which is what the pipeline produces. This exists so a failed delivery is
+     * still attributable to a person — `EmailSendRecipient`, the obvious place
+     * to look, is deleted by the delivery cycle once a send passes retention,
+     * so "who was in that failed send" stops being answerable exactly when an
+     * officer goes looking.
+     *
+     * `set null` because expired drafts are hard-deleted; completed and failed
+     * sends are not, so the status stays readable indefinitely.
+     */
+    lastStatusSendId: t.uuid().references(() => EmailSend.id, {
+      onDelete: "set null",
+    }),
   }),
   (table) => ({
     /**
@@ -741,6 +774,42 @@ export const HackerAttendee = createTable(
     hackathonClass: index(
       "knight_hacks_hacker_attendee_hackathon_class_idx",
     ).on(table.hackathonId, table.classId),
+    /**
+     * A blacklist with no reason is the thing a year-later officer cannot
+     * interpret, so the database refuses it rather than trusting the form.
+     * Either the flag is unset entirely, or both the timestamp and the reason
+     * are present.
+     */
+    blacklistNeedsReason: check(
+      "knight_hacks_hacker_attendee_blacklist_reason_check",
+      sql`(${table.blacklistedAt} is null and ${table.blacklistReason} is null)
+          or (${table.blacklistedAt} is not null and ${table.blacklistReason} is not null)`,
+    ),
+    /**
+     * The roster's default read: one hackathon, ordered and filtered by status.
+     * `hackathonId` alone was already covered by the composite above only as a
+     * prefix; this pairs it with `status`, which every roster query filters or
+     * groups by.
+     */
+    hackathonStatus: index(
+      "knight_hacks_hacker_attendee_hackathon_status_idx",
+    ).on(table.hackathonId, table.status),
+    /**
+     * Both new FK columns get their own index, for the same reason `classId`
+     * has one: Postgres does not auto-index a referencing column, and every
+     * `ON DELETE SET NULL` fires a referential-integrity probe against this
+     * table per deleted parent row.
+     *
+     * `lastStatusSendId` is the sharper of the two — the delivery cycle deletes
+     * up to 500 expired draft sends per tick, which without this is 500
+     * sequential scans of every attendee ever recorded, every two minutes.
+     */
+    blacklistedByOnly: index(
+      "knight_hacks_hacker_attendee_blacklisted_by_idx",
+    ).on(table.blacklistedBy),
+    lastStatusSend: index(
+      "knight_hacks_hacker_attendee_last_status_send_idx",
+    ).on(table.lastStatusSendId),
   }),
 );
 
