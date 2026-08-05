@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { TRPCError } from "@trpc/server";
 
 import {
   formDefinitionSchema,
@@ -35,10 +36,25 @@ export default async function FormPage({
   const effectivePermissions = await api.roles.getPermissions();
 
   if (slug !== MEMBER_SIGNUP_FORM_SLUG) {
-    const result = await api.forms.getRespondentForm({
-      responseId,
-      slugName: slug,
-    });
+    /*
+      An unknown slug is a 404, not a 500.
+
+      `getFormBySlug` throws NOT_FOUND, and nothing caught it — so
+      `/form/anything` rendered Next's error boundary and returned a server
+      error. A mistyped or expired form link is an ordinary miss, and reporting
+      it as a crash both misleads the person and buries real failures in the
+      logs. Same handling as `admin/hackathon/[id]`.
+    */
+    let result;
+    try {
+      result = await api.forms.getRespondentForm({
+        responseId,
+        slugName: slug,
+      });
+    } catch (error) {
+      if (error instanceof TRPCError && error.code === "NOT_FOUND") notFound();
+      throw error;
+    }
     const definition = formDefinitionSchema.parse(result.definition);
     const respondentState =
       result.respondentState.status === "scheduled"
