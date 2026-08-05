@@ -496,9 +496,13 @@ test.describe("admin Club analytics", () => {
   }) => {
     await signInAs(page, UNAUTHORIZED_USER_ID);
     await expect(page).toHaveURL(new RegExp(`${MEMBER_DASHBOARD_PATH}$`));
-    await expect(page.getByRole("heading", { name: "Analytics" })).toHaveCount(
-      0,
-    );
+    // `exact`, because Playwright matches accessible names by substring and
+    // this fixture's member is called "Unauthorized Analytics" — their own name
+    // renders as a heading on the dashboard, so the loose form matched the
+    // person rather than the page and proved nothing about the redirect.
+    await expect(
+      page.getByRole("heading", { exact: true, name: "Analytics" }),
+    ).toHaveCount(0);
   });
 
   test("keeps the reports page responsive while a resume bundle is prepared", async ({
