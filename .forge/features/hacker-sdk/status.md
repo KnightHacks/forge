@@ -1,6 +1,6 @@
 # Hacker SDK Status
 
-Current phase: Research complete / product reverse-prompting
+Current phase: Spec approved / SRD architecture review
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -38,17 +38,49 @@ Current phase: Research complete / product reverse-prompting
 - 2026-08-06: The feature covers application, profile, status lifecycle, resume,
   QR, Hackathon Events-backed schedule/timeline, personal attendance, points,
   and leaderboard. Past-hackathon history is out of scope.
+- 2026-08-06: The SDK is intentionally Forge- and React-opinionated for better
+  developer experience. Portability outside Forge is not a goal.
+- 2026-08-06: Profile edits update all applications whose hackathons have not
+  started. Each application pins its sponsor-visible profile revision when its
+  hackathon starts, avoiding a global lock across overlapping hacks.
+- 2026-08-06: Pending, waitlisted, accepted, and confirmed hackers may withdraw
+  before the event starts. An explicit confirmation dialog states that it is
+  irreversible. There is no hacker-facing undo; denied and checked-in hackers
+  cannot withdraw, while officers retain correction authority.
+- 2026-08-06: MLH and Knight Hacks agreements are versioned per application with
+  acceptance times; confirmation records its own terms acceptance. Marketing
+  consent remains optional.
+- 2026-08-06: Minors may apply and confirm. Age is derived from DOB; organizers
+  receive a minor flag and check-in retains its prominent under-18 warning.
+- 2026-08-06: Authenticated confirmed and checked-in hackers may view overall
+  and arbitrary-class leaderboards derived only from Hackathon Event points.
+  Rows show first name plus last initial; the signed-in row is identified, and
+  VIPs remain ranked in their normal class.
+- 2026-08-06: Schedule and timeline stay hidden until `checkedin`, preserving
+  the intended surprise even though Discord and Google calendars may be public.
+- 2026-08-06: Explicitly added independent per-hack Discord and Google Calendar
+  publication controls. Disabled providers keep events database-only. Enabling
+  reconciles all existing events and future changes; disabling removes all
+  remote projections but retains Forge rows. Bulk work needs visible progress,
+  durable retry, partial-failure health, and manual repair.
+- 2026-08-06: The owner granted blanket approval for the artifact bundle and
+  implementation, delegating remaining architecture and test choices to three
+  independent Forge-skilled reviews.
+- 2026-08-06: Publication controls live beside the selected hackathon's event
+  actions and require hackathon configuration authority. New hackathons default
+  both providers off; existing hackathons backfill both on.
+- 2026-08-06: Publication includes primary check-in. Disabling requires a
+  provider-and-count confirmation. Requested state persists while visible
+  progress, automatic retry, manual retry, and Discord ambiguity repair
+  converge remote state.
+- 2026-08-06: Provider payload limits remain enforced while disabled. Discord
+  reminders stop immediately when Discord publication is off; Google Calendar
+  state does not control them.
 
 ## Open questions
 
-- Profile revision behavior when one user has multiple not-yet-started or
-  overlapping hackathons.
-- Self-withdrawal graph and whether withdrawal can be reversed.
-- Required versioned MLH and Knight Hacks agreement records.
-- Under-18 application and participation policy. Age storage itself is settled:
-  derive it from DOB and the relevant timestamp.
-- Leaderboard identity/privacy/access policy.
-- Schedule/timeline access policy.
+None at the product level. Technical ambiguities are being resolved by the
+delegated adversarial SRD review.
 
 ## Task list
 
@@ -56,10 +88,10 @@ Current phase: Research complete / product reverse-prompting
 - [x] Mine current Reforge, Legacy, and authoritative `origin/main` KH IX/Bloom
       participant behavior.
 - [x] Record the evidence and unresolved product boundaries in `research.md`.
-- [ ] Complete reverse-prompting for `spec.md`.
-- [ ] Complete reverse-prompting for `srd.md`.
-- [ ] Complete reverse-prompting for `test-cases.md`.
-- [ ] Human approves artifact bundle before implementation/test generation.
+- [x] Complete and approve `spec.md` under the owner's blanket approval.
+- [ ] Complete and approve `srd.md` after three independent architecture passes.
+- [ ] Complete and approve `test-cases.md` under the delegated approval.
+- [x] Owner approved the full artifact and implementation pipeline.
 
 ## Validation / commands
 

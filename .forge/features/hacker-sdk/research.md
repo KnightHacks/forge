@@ -33,6 +33,43 @@ The owner approved these boundaries on 2026-08-06:
   personal event attendance, points, and leaderboard.
 - Schedule and timeline data come from Hackathon Events. Past-hackathon history
   is not part of this feature.
+- The SDK may make Forge- and React-specific decisions when that gives yearly
+  site developers a clearer, safer API. Portability outside Forge is not a goal.
+- A profile edit updates every application whose hackathon has not started.
+  Each application pins the sponsor-visible profile revision when its own
+  hackathon starts, so overlapping events do not create a global profile lock.
+- Pending, waitlisted, accepted, and confirmed hackers may withdraw before the
+  event starts. Withdrawal requires a confirmation dialog stating that the
+  action is irreversible. There is no hacker-facing undo; officers may correct
+  mistakes. Denied and checked-in hackers cannot withdraw.
+- MLH and Knight Hacks agreement versions and acceptance times are recorded per
+  application. Confirmation records its own terms acceptance. Marketing email
+  consent remains optional.
+- Minors may apply. Forge derives age from DOB, flags minors to organizers, and
+  keeps the prominent check-in warning. The SDK does not reject them or block
+  confirmation automatically.
+- The leaderboard is available to authenticated confirmed and checked-in
+  hackers, uses only Hackathon Event points, and includes overall and configured
+  class rankings. It shows first name plus last initial and identifies the
+  signed-in hacker's row. VIPs remain in their normal class ranking.
+- Schedule and timeline remain hidden until the hacker is checked in. This is an
+  intentional surprise-and-delight rule even though provider calendars may make
+  the same events public elsewhere.
+
+The owner also added per-hack provider publication controls to this slice:
+
+- Hackathon Events need independent Discord and Google Calendar enablement at
+  the selected-hackathon level.
+- While a provider is disabled, events live only in Forge's database for that
+  provider. Creating and editing events does not publish them there.
+- Enabling a provider reconciles every event for the hackathon from Forge's
+  database and keeps future creates, edits, and deletes synchronized.
+- Disabling a provider removes every projected event for that hackathon while
+  retaining the Forge event rows.
+- Bulk enablement and removal need visible progress, durable retries, graceful
+  partial-failure handling, and actionable repair state.
+- Forge owns the Discord integration because yearly sites should not implement
+  Discord Scheduled Event access.
 
 ## Goal stated by the owner
 
@@ -362,34 +399,53 @@ implementation slice may be smaller after reverse-prompting.
   depend on it.
 - The SDK contains no required UI, styles, assets, or theme copy.
 
-## Decisions still needed before `spec.md`
+## Delegated publication decisions
 
-These questions change the product or its security boundary and cannot be
-filled from repository evidence.
+The owner gave blanket approval on 2026-08-06 and delegated remaining choices.
+The implementation will use these defaults:
 
-1. A single mutable profile conflicts with per-hack event locks when hackathons
-   overlap. Should an edit update every not-yet-started application, with each
-   application pinning the sponsor-visible profile revision at its own start?
-   This avoids a global profile lock while keeping one reusable profile.
-2. Which statuses can an applicant withdraw from, and can they undo withdrawal
-   or reapply? Legacy permits only `confirmed -> withdrawn` and treats it as
-   terminal.
-3. Which agreement records are required? MLH and Knight Hacks terms can be
-   stored with document version and acceptance time instead of editable profile
-   booleans.
-4. Is being 18 at hackathon start an application requirement, or may minors
-   apply and proceed with an organizer-managed consent process? Age itself will
-   always be derived from DOB at the relevant timestamp.
-5. For leaderboards, which identity is visible, can a hacker opt out, and are
-   rankings public, authenticated, or checked-in only?
-6. Should schedule/timeline data be public or limited by application status?
-   The production prototype limits schedule to checked-in participants.
+- Discord and Google Calendar are independent switches beside the selected
+  hackathon's event actions. Existing hackathons backfill enabled; new
+  hackathons start disabled.
+- Publication covers every Hackathon Event, including primary check-in.
+- Disabling a provider requires confirmation naming the provider and projected
+  removal count.
+- The switch stores requested state. Progress and degraded health remain
+  visible while durable automatic and manual retries converge remote state.
+- Provider payload constraints remain enforced while disabled so later bulk
+  publication does not uncover avoidable invalid records.
+- Discord reminders are suppressed immediately while Discord publication is
+  disabled. Google publication does not control Discord reminders.
+- Changing full-hack publication requires hackathon configuration authority,
+  even though the controls live on the Hackathon Events page.
+
+## Sync implementation evidence
+
+Reforge already has most of the difficult per-event safety machinery:
+
+- Provider creation keys, attempt tokens, renewable leases, applied revisions,
+  Google identity recovery, and Discord ambiguous-outcome handling are durable
+  per event.
+- Current create and update paths mark both providers pending and reconcile both
+  immediately. Provider selection must become desired-state driven.
+- Current deletion waits for both external projections to disappear before
+  deleting the database event. Provider disablement can reuse the projection
+  cleanup behavior but must retain the event row.
+- `publishedAt` currently means both destinations are synchronized and gates
+  check-in and reminders. Disabled destinations must count as converged so a
+  database-only event remains operational inside Forge.
+- There is no general provider retry worker. The reminder cron retries only
+  reminder delivery, so publication needs its own bounded-backoff worker.
+- Existing provider error persistence clears the recorded message. Publication
+  health requires safe error details and next-retry state.
+- Reminder selection requires a Discord event ID. It must also check desired
+  Discord publication immediately so a reminder cannot fire while deletion is
+  still converging.
 
 ## Recommended next artifact sequence
 
-1. Resolve the product and deployment questions above.
-2. Draft and approve the non-technical `spec.md`.
-3. Write an SRD that defines the auth/audience model, data migration, contract
+1. Draft and approve the non-technical `spec.md`.
+2. Write an SRD that defines the auth/audience model, data migration, contract
    versioning, package boundaries, and compatibility with `origin/main` portals.
-4. Draft contract, lifecycle, migration, security, and two-renderer behavioral
+3. Draft contract, lifecycle, migration, security, and two-renderer behavioral
    tests before implementation.
