@@ -1,0 +1,175 @@
+.swarm {
+  /* Vertical band the swarm crawls within (percent of the footer height).
+   * Each bug's --bug-band (0–1) maps onto this range; mobile widens it so the
+   * critters spread up toward the top of the taller footer too. */
+  --band-top: 58%;
+  --band-bottom: 90%;
+
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bug {
+  --bug-scale: 1;
+  --bug-dir: 1;
+
+  position: absolute;
+  top: calc(
+    var(--band-top) + var(--bug-band) * (var(--band-bottom) - var(--band-top))
+  );
+  left: -12%;
+  width: clamp(2.4rem, 4.5vw, 3.4rem);
+  transform: scaleX(calc(var(--bug-dir) * var(--bug-scale)))
+    scaleY(var(--bug-scale));
+  will-change: left;
+  animation: crawl var(--bug-duration) linear var(--bug-delay) infinite;
+}
+
+.bug[data-direction="rtl"] {
+  --bug-dir: -1;
+
+  animation-direction: reverse;
+}
+
+.bug[data-color="cyan"] {
+  --bug-tint: #4df0ff;
+  --bug-shade: #12aecb;
+}
+
+.bug[data-color="purple"] {
+  --bug-tint: #bf7bff;
+  --bug-shade: #7d3ad6;
+}
+
+.bug[data-color="yellow"] {
+  --bug-tint: #ffe14d;
+  --bug-shade: #d1a406;
+}
+
+.bug[data-color="green"] {
+  --bug-tint: #7cff6b;
+  --bug-shade: #2fbc42;
+}
+
+/* Gentle up/down bob + tilt so the crawl doesn't glide flatly. */
+.bugBob {
+  display: block;
+  animation: bob 2.4s ease-in-out calc(var(--bug-delay) / 2) infinite alternate;
+}
+
+.bugSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 0.35rem var(--bug-tint))
+    drop-shadow(0 0.2rem 0.3rem rgba(2, 6, 20, 0.55));
+}
+
+.body {
+  fill: var(--bug-tint);
+}
+
+.head {
+  fill: var(--bug-shade);
+}
+
+.seam {
+  stroke: var(--bug-shade);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.antenna {
+  stroke: var(--bug-shade);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.legs path {
+  stroke: var(--bug-shade);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.legs {
+  transform-box: view-box;
+  transform-origin: 48px 35px;
+}
+
+.legsA {
+  animation: scuttle 0.36s ease-in-out infinite alternate;
+}
+
+.legsB {
+  animation: scuttle 0.36s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes crawl {
+  from {
+    left: -12%;
+  }
+
+  to {
+    left: 112%;
+  }
+}
+
+@keyframes bob {
+  0% {
+    transform: translateY(0.06rem) rotate(-2deg);
+  }
+
+  100% {
+    transform: translateY(-0.14rem) rotate(2deg);
+  }
+}
+
+@keyframes scuttle {
+  from {
+    transform: rotate(-6deg);
+  }
+
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+/* The footer grows much taller on narrow screens (large top padding), so the
+ * desktop band would strand every bug near the bottom. Widen it upward. */
+@media (max-width: 820px) {
+  .swarm {
+    --band-top: 30%;
+    --band-bottom: 92%;
+  }
+}
+
+@media (max-width: 680px) {
+  .swarm {
+    --band-top: 12%;
+    --band-bottom: 94%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bug,
+  .bugBob,
+  .legsA,
+  .legsB {
+    animation: none;
+  }
+
+  /* Park a few visible so it still reads as a cave floor of critters. */
+  .bug {
+    left: clamp(1rem, 8vw, 6rem);
+  }
+
+  .bug[data-direction="rtl"] {
+    left: auto;
+    right: clamp(1rem, 8vw, 6rem);
+  }
+}

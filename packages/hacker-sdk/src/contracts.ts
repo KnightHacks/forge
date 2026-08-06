@@ -14,6 +14,7 @@ import type {
   hackerConfirmAttendanceSchema,
   hackerIssueCheckInPassSchema,
   hackerLeaderboardInputSchema,
+  hackerParticipantUpdateSchema,
   hackerProfileDtoSchema,
   hackerProfileFieldsSchema,
   hackerProfileUpdateSchema,
@@ -59,6 +60,9 @@ export type UpdateHackerProfileInput = z.input<
 >;
 export type UpdateHackerApplicationInput = z.input<
   typeof hackerApplicationUpdateSchema
+>;
+export type UpdateHackerParticipantInput = z.input<
+  typeof hackerParticipantUpdateSchema
 >;
 export type ParticipantMutationResultDto = z.output<
   typeof participantMutationResultDtoSchema
@@ -121,12 +125,16 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   removeResume: "mutation",
   submitApplication: "mutation",
   updateApplication: "mutation",
+  updateParticipant: "mutation",
   updateProfile: "mutation",
   withdrawApplication: "mutation",
 } as const satisfies Record<HackerParticipantProcedure, "mutation" | "query">;
 
 /** Strict contract validators used by the SDK client and API implementation. */
-export const HACKER_PARTICIPANT_V1_SCHEMAS = {
+export const HACKER_PARTICIPANT_V1_SCHEMAS: {
+  readonly input: InputSchemaMap;
+  readonly output: OutputSchemaMap;
+} = {
   input: hackerPortalV1InputSchemas,
   output: hackerPortalV1OutputSchemas,
 } as const;

@@ -1,0 +1,43 @@
+.corruption {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.front {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.front {
+  top: var(--khix-front-top);
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: var(--khix-front-height);
+  background-image: url("https://assets.knighthacks.org/khix/extended-front.webp");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: 100% auto;
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  .front {
+    bottom: 0;
+    height: auto;
+    background-size: cover;
+  }
+}
+
+@media (max-width: 760px) {
+  .front {
+    bottom: 0;
+    height: auto;
+    background-image: url("https://assets.knighthacks.org/khix/extended-front-mobile.webp");
+    background-position: center -25vw;
+    background-size: 120% auto;
+  }
+}

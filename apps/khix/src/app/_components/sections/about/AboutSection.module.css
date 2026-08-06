@@ -1,0 +1,609 @@
+.about {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 160vh;
+  min-height: 160svh;
+  padding: clamp(10rem, 24svh, 18rem) clamp(1.5rem, 8vw, 8rem)
+    clamp(20rem, 38svh, 32rem);
+  align-content: center;
+  justify-items: center;
+  isolation: isolate;
+}
+
+.leftRune {
+  --asset-credit-width: clamp(15rem, 24vw, 27rem);
+
+  position: absolute;
+  top: 50%;
+  left: clamp(-3rem, -2vw, -0.75rem);
+  z-index: 4;
+  width: var(--asset-credit-width);
+  aspect-ratio: 518 / 840;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.rockImage,
+.glowImage {
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rockImage {
+  z-index: 1;
+}
+
+.glowImage {
+  z-index: 2;
+  filter: brightness(1.12) saturate(1.18)
+    drop-shadow(0 0 0.42rem rgb(0 228 255 / 0.82))
+    drop-shadow(0 0 1.15rem rgb(0 195 255 / 0.48));
+  opacity: 0.88;
+  animation: aboutRuneGlowPulse 2.8s ease-in-out infinite alternate;
+  will-change: filter, opacity;
+}
+
+.content {
+  position: relative;
+  z-index: 6;
+  display: grid;
+  width: min(64rem, calc(100% - clamp(14rem, 24vw, 22rem)));
+  justify-items: center;
+  justify-self: end;
+  gap: clamp(3rem, 7svh, 6rem);
+  margin-right: clamp(0rem, 2vw, 2rem);
+}
+
+.metricsPanel {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: clamp(1.6rem, 3svh, 2.4rem);
+}
+
+.copy {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  color: rgba(249, 255, 246, 0.94);
+  font-family:
+    var(--font-geist-sans, ui-sans-serif),
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: clamp(1rem, 0.72vw + 0.72rem, 1.2rem);
+  line-height: 1.58;
+  text-align: left;
+  text-shadow:
+    0 0.1rem 0.75rem rgba(0, 0, 0, 0.58),
+    0 0 1.2rem rgba(13, 38, 32, 0.48);
+  transition:
+    color 220ms ease,
+    text-shadow 260ms ease,
+    transform 220ms ease;
+}
+
+.storyTitle,
+.storySubtitle {
+  margin: 0;
+  color: rgba(255, 252, 245, 0.96);
+  font-family: var(--font-khix), Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 1.05;
+  text-shadow:
+    0 0 0.38rem rgba(235, 251, 255, 0.42),
+    0 0 1.4rem rgba(129, 225, 255, 0.22);
+  text-wrap: balance;
+}
+
+.storyTitle {
+  font-size: clamp(2.15rem, 3.4vw, 3.3rem);
+}
+
+.storySubtitle {
+  margin-top: clamp(2rem, 4svh, 3rem);
+  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+}
+
+.copy p {
+  margin: 0;
+}
+
+.copy p + p {
+  margin-top: 1rem;
+}
+
+.storyTitle + p,
+.storySubtitle + p {
+  margin-top: 1rem;
+}
+
+.storyRow {
+  display: grid;
+  grid-template-columns: minmax(24rem, 1.2fr) minmax(20rem, 0.8fr);
+  width: 100%;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5.5rem);
+}
+
+.rightStump {
+  --asset-credit-width: clamp(18rem, 34vw, 38rem);
+
+  position: absolute;
+  top: clamp(10rem, 22svh, 17rem);
+  right: 0;
+  z-index: 5;
+  display: block;
+  width: var(--asset-credit-width);
+  opacity: 0.96;
+  filter: drop-shadow(0 1.2rem 1.6rem rgb(0 0 0 / 0.38));
+  pointer-events: none;
+}
+
+.rightStump img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gallery {
+  position: relative;
+  min-width: 0;
+  isolation: isolate;
+}
+
+.galleryViewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 1px solid rgb(207 255 224 / 0.24);
+  border-radius: 0.5rem;
+  background: #112522;
+  box-shadow:
+    0 1.2rem 3rem rgb(0 0 0 / 0.32),
+    0 0 2.5rem rgb(73 255 196 / 0.09);
+}
+
+.galleryViewport::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(180deg, transparent 52%, rgb(2 18 15 / 0.7));
+}
+
+.galleryImage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transform: scale(1.045);
+  transition:
+    opacity 560ms ease,
+    transform 4.6s ease;
+}
+
+.galleryImage[data-active="true"] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.galleryControls {
+  position: absolute;
+  right: clamp(0.55rem, 1.35vw, 1rem);
+  bottom: clamp(0.55rem, 1.35vw, 1rem);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.galleryArrow {
+  display: inline-grid;
+  width: 2.15rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  color: rgb(255 255 255 / 0.96);
+  background: rgb(7 20 17 / 0.68);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.galleryArrow svg {
+  width: 1.65rem;
+  height: 1.65rem;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+.galleryArrow:hover,
+.galleryArrow:focus-visible {
+  color: #d7ff76;
+  background: rgb(7 20 17 / 0.9);
+  outline: 1px solid rgb(215 255 118 / 0.74);
+  outline-offset: 2px;
+  transform: translateY(-1px);
+}
+
+.galleryCount {
+  min-width: 3.4rem;
+  margin: 0;
+  color: rgb(255 255 255 / 0.82);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.successTitle {
+  margin: 0;
+  color: rgba(255, 252, 245, 0.98);
+  font-size: clamp(1.7rem, 2.8vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-shadow:
+    0 0 0.38rem rgba(235, 251, 255, 0.42),
+    0 0 1.4rem rgba(129, 225, 255, 0.22);
+  text-wrap: balance;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(64rem, 100%);
+  align-items: flex-start;
+  gap: clamp(2rem, 5svh, 3.75rem) clamp(2rem, 8vw, 7rem);
+  margin: 0;
+}
+
+.metric {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 0.55rem;
+  color: rgba(255, 252, 245, 0.98);
+  text-align: center;
+  text-shadow:
+    0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+    0 0 1.2rem rgba(20, 94, 89, 0.35);
+}
+
+.metric dt {
+  margin: 0;
+  font-size: clamp(2.25rem, 3.6vw, 4rem);
+  font-weight: 800;
+  line-height: 0.9;
+  white-space: nowrap;
+}
+
+.metricNumber {
+  color: #ca96f8;
+  text-shadow:
+    0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+    0 0 0.42rem rgb(202 150 248 / 0.58),
+    0 0 1.05rem rgb(202 150 248 / 0.38);
+  animation: aboutMetricGlowPulse 2.8s ease-in-out infinite alternate;
+}
+
+.metric dd {
+  margin: 0;
+  font-size: clamp(0.92rem, 1.25vw, 1.18rem);
+  font-weight: 800;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+@media (min-width: 1200px) {
+  .about {
+    --about-closing-offset: clamp(3.75rem, 10svh, 6.5rem);
+    --about-gallery-growth: clamp(2rem, 4vw, 4rem);
+    --about-row-spread: clamp(2rem, 8svh, 5rem);
+
+    padding-top: clamp(9rem, 16svh, 11rem);
+    padding-right: clamp(3rem, 4vw, 5rem);
+    padding-bottom: calc(
+      clamp(20rem, 38svh, 32rem) - var(--about-row-spread) -
+        var(--about-row-spread) - var(--about-closing-offset) -
+        var(--about-gallery-growth)
+    );
+    padding-left: clamp(3rem, 4vw, 5rem);
+    align-content: start;
+  }
+
+  .content {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    width: 100%;
+    justify-self: stretch;
+    column-gap: clamp(1.25rem, 2vw, 2.5rem);
+    row-gap: calc(clamp(4rem, 8svh, 7rem) + var(--about-row-spread));
+    margin-right: 0;
+  }
+
+  .leftRune {
+    top: 54%;
+  }
+
+  .metricsPanel {
+    grid-row: 2;
+    grid-column: 6 / 12;
+    box-sizing: border-box;
+    width: 100%;
+    margin-right: 0;
+    padding-left: clamp(1rem, 2vw, 2.5rem);
+  }
+
+  .storyRow,
+  .copy {
+    display: contents;
+  }
+
+  .introStory {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    width: min(54rem, 100%);
+    justify-self: start;
+    /* Follow the desktop navbar logo's responsive left edge. */
+    margin-left: max(0rem, calc(46vw - 39.25rem));
+  }
+
+  .secondaryStory {
+    grid-row: 3;
+    grid-column: 1 / 8;
+    width: min(42rem, 100%);
+    align-self: center;
+    justify-self: start;
+    margin-top: var(--about-closing-offset);
+    margin-left: max(0rem, calc(46vw - 39.25rem));
+  }
+
+  .secondaryStory .storySubtitle {
+    margin-top: 0;
+  }
+
+  .gallery {
+    grid-row: 3;
+    grid-column: 9 / -1;
+    width: min(34rem, 100%);
+    align-self: start;
+    justify-self: end;
+    margin-top: var(--about-closing-offset);
+  }
+
+  .metrics {
+    column-gap: clamp(1rem, 3vw, 3rem);
+  }
+
+  .metric dt {
+    font-size: clamp(2.25rem, 3vw, 4rem);
+  }
+}
+
+@media (min-width: 1500px) {
+  .introStory,
+  .secondaryStory {
+    margin-left: max(
+      0rem,
+      calc(
+        46vw - clamp(40.5rem, 39vw, 58rem) + clamp(1.5rem, 1.51vw, 2.02rem) -
+          0.25rem
+      )
+    );
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .content {
+    width: min(52rem, calc(100% - 14rem));
+  }
+
+  .storyRow {
+    grid-template-columns: 1fr;
+    width: min(44rem, 100%);
+  }
+
+  .gallery {
+    width: min(40rem, 100%);
+    justify-self: center;
+  }
+
+  .metrics {
+    column-gap: clamp(1rem, 4vw, 2.5rem);
+  }
+}
+
+@media (max-width: 900px) and (min-width: 761px) {
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .about {
+    min-height: auto;
+    padding: clamp(3rem, 6svh, 4rem) clamp(1.35rem, 8vw, 2rem)
+      clamp(4rem, 10svh, 7rem);
+    align-content: start;
+    justify-items: center;
+  }
+
+  .rightStump {
+    top: clamp(7rem, 15svh, 10rem);
+    width: clamp(15rem, 62vw, 22rem);
+    opacity: 0.9;
+  }
+
+  .content {
+    width: 100%;
+    justify-self: center;
+    gap: clamp(2.5rem, 7svh, 3.5rem);
+    margin-right: 0;
+  }
+
+  .metricsPanel {
+    gap: clamp(1.4rem, 4svh, 2rem);
+  }
+
+  .copy {
+    width: 100%;
+    font-size: clamp(0.92rem, 3.5vw, 1rem);
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .storyRow {
+    grid-template-columns: 1fr;
+    width: min(32rem, 100%);
+    gap: clamp(1.8rem, 5svh, 2.5rem);
+  }
+
+  .leftRune {
+    top: 58%;
+    left: clamp(-3.25rem, -10vw, -2rem);
+    width: clamp(10rem, 48vw, 13rem);
+  }
+
+  .storyTitle {
+    font-size: clamp(2rem, 9vw, 2.75rem);
+  }
+
+  .storySubtitle {
+    font-size: clamp(1.65rem, 7.5vw, 2.2rem);
+  }
+
+  .successTitle {
+    font-size: clamp(1.65rem, 8vw, 2.25rem);
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: clamp(1.4rem, 6vw, 2rem) 0.85rem;
+  }
+
+  .metric {
+    min-width: 0;
+  }
+
+  .metric dt {
+    font-size: clamp(1.9rem, 9vw, 2.5rem);
+  }
+
+  .metric dd {
+    font-size: clamp(0.78rem, 3.6vw, 0.94rem);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .copy:hover {
+    color: white;
+    text-shadow:
+      0 0.08rem 0.7rem rgba(0, 0, 0, 0.58),
+      0 0 0.38rem rgb(238 255 255 / 0.6),
+      0 0 1.35rem rgb(49 222 255 / 0.48);
+    transform: translateY(-0.18rem);
+  }
+
+  .copy:hover::after {
+    opacity: 0.9;
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 760px) {
+  .copy {
+    animation: aboutCopyGlow 3.8s ease-in-out infinite alternate;
+  }
+
+  .copy::after {
+    animation: aboutCopyLineGlow 3.8s ease-in-out infinite alternate;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glowImage,
+  .copy,
+  .copy::after,
+  .galleryImage,
+  .metricNumber {
+    animation: none;
+    transition: none;
+  }
+}
+
+@keyframes aboutRuneGlowPulse {
+  from {
+    filter: brightness(1.02) saturate(1.08)
+      drop-shadow(0 0 0.28rem rgb(0 228 255 / 0.58))
+      drop-shadow(0 0 0.78rem rgb(0 195 255 / 0.34));
+    opacity: 0.72;
+  }
+
+  to {
+    filter: brightness(1.2) saturate(1.28)
+      drop-shadow(0 0 0.55rem rgb(0 238 255 / 0.94))
+      drop-shadow(0 0 1.45rem rgb(0 195 255 / 0.58));
+    opacity: 1;
+  }
+}
+
+@keyframes aboutCopyGlow {
+  from {
+    color: rgba(249, 255, 246, 0.9);
+    text-shadow:
+      0 0.1rem 0.75rem rgba(0, 0, 0, 0.58),
+      0 0 0.5rem rgb(49 222 255 / 0.12);
+  }
+
+  to {
+    color: white;
+    text-shadow:
+      0 0.08rem 0.7rem rgba(0, 0, 0, 0.58),
+      0 0 0.4rem rgb(238 255 255 / 0.48),
+      0 0 1.15rem rgb(49 222 255 / 0.34);
+  }
+}
+
+@keyframes aboutCopyLineGlow {
+  from {
+    opacity: 0.24;
+    transform: scaleX(0.35);
+  }
+
+  to {
+    opacity: 0.78;
+    transform: scaleX(0.9);
+  }
+}
+
+@keyframes aboutMetricGlowPulse {
+  from {
+    text-shadow:
+      0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+      0 0 0.3rem rgb(202 150 248 / 0.48),
+      0 0 0.82rem rgb(202 150 248 / 0.3);
+  }
+
+  to {
+    text-shadow:
+      0 0.12rem 0.8rem rgba(0, 0, 0, 0.62),
+      0 0 0.6rem rgb(202 150 248 / 0.98),
+      0 0 1.55rem rgb(202 150 248 / 0.72);
+  }
+}

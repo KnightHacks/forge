@@ -158,6 +158,10 @@ publication has no effect on Discord reminders.
 - SDK documentation and an example consumer suitable for future yearly sites.
 - A complete Knight Hacks IX consumer, with its checked-in schedule sourced
   from Hackathon Events.
+- The complete current Knight Hacks IX frontend from regular `main`, including
+  its landing page, navigation, themed application, dashboard, responsive
+  interactions, credits, and assets. Its legacy platform integration is
+  replaced by the SDK without substituting an older KH IX presentation.
 - Static historical KH VIII, GemiKnights, and BloomKnights sites with dead
   application entry points and legacy participant dependencies removed.
 

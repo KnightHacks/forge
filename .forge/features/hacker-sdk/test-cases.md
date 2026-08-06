@@ -11,8 +11,10 @@ reconciliation, reminders, migration, access, and the Blade controls.
 
 Custom questions, past-hackathon participant history, team leaderboards, club
 attendance behavior, and a KH IX theme redesign are excluded. KH IX SDK
-integration and responsive behavior are included; ended hackathon sites are
-checked only for static rendering and removal of dead participant entry points.
+integration and responsive behavior are included. The current regular-`main`
+KH IX frontend is transplanted rather than redesigned; ended hackathon sites
+are checked only for static rendering and removal of dead participant entry
+points.
 
 ## Test placement plan
 
@@ -139,6 +141,33 @@ Expected observations:
 
 - The first input fails client and server validation.
 - The acknowledged request reaches the lifecycle mutation.
+
+### TC-SDK-007: Authoritative KH IX frontend uses only the SDK participant boundary
+
+Setup:
+
+- The complete current `origin/main:apps/khix` route, component, and asset tree
+  has been transplanted into the feature branch.
+
+Action:
+
+- Static dependency checks inspect KH IX, and browser tests exercise sign-in,
+  application, profile, status, QR, schedule, attendance, points, leaderboard,
+  agreements, and withdrawal.
+
+Expected observations:
+
+- The current landing page, navigation, credits, themed form/dashboard, and
+  responsive interactions remain present.
+- Confirmed hackers can open the themed My Hack surface for configured class,
+  VIP, age-at-event, and overall/class leaderboards. Checked-in hackers also
+  receive personal points and attendance; these values are never hardcoded.
+- Resume deletion is explicit and confirmed. Withdrawal first presents an
+  irreversible warning and then requires the intentional hold action.
+- Participant behavior travels through `@forge/hacker-sdk` and its same-origin
+  adapter, with no KH IX import of the legacy participant router, direct
+  database access, or yearly-app auth session implementation.
+- The app does not regress to the older KH IX portal presentation.
 
 ## Authentication and portal-scope cases
 
@@ -1077,6 +1106,59 @@ Expected observations:
 - New revisions, portal/auth records, provider intent, and work survive.
 - After a provider is disabled, rollback documentation blocks an unsafe old
   writer from resuming without deliberate reconciliation.
+
+### TC-SDK-010: Local portal cookies do not collide
+
+Setup:
+
+- Two Hacker SDK Next adapters use the same provisioned development client ID
+  on different localhost ports.
+
+Action:
+
+- Both adapters begin PKCE sign-in on the shared `localhost` hostname.
+
+Expected observations:
+
+- Access, refresh, state, and verifier cookie names differ by request origin.
+- One portal cannot overwrite or consume the other portal's auth cookies.
+
+### TC-PROFILE-006: Composite profile edit is atomic
+
+Setup:
+
+- A hacker has an editable application and current profile revision.
+
+Action:
+
+- `updateParticipant` submits profile fields, hackathon answers, and agreements
+  with a stale expected revision.
+
+Expected observations:
+
+- Blade returns `STALE_PROFILE_REVISION`.
+- The transaction rolls back profile fields, attendee answers, first-time state,
+  and agreement writes together.
+- Retrying edited input receives a new idempotency key while an unchanged retry
+  keeps the original key.
+
+### TC-JOURNEY-002: Live-data failures are not shown as zero
+
+Setup:
+
+- A checked-in hacker opens My Hack while attendance, points, or leaderboard
+  requests fail.
+
+Action:
+
+- The UI settles after SDK retry policy is exhausted.
+
+Expected observations:
+
+- A visible error notice and retry controls appear.
+- Affected stats say `Unavailable`; the UI does not show zero points, empty
+  attendance, or an empty leaderboard as authoritative data.
+- Attendance timestamps use the hackathon-configured IANA timezone.
 
 ## Open questions
 

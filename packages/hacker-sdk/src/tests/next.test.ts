@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createHackerSdkNextHandler, getHackerSdkSignInPath } from "../next";
+import {
+  createHackerSdkNextHandler,
+  getHackerSdkCookieNames,
+  getHackerSdkSignInPath,
+} from "../next";
+
+const TEST_CLIENT_ID = "kh-x-client";
+const TEST_PORTAL_ORIGIN = "https://khx.knighthacks.org";
+const TEST_COOKIE_NAMES = getHackerSdkCookieNames(
+  TEST_CLIENT_ID,
+  TEST_PORTAL_ORIGIN,
+);
 
 function readCookie(header: string, name: string) {
   const match = new RegExp(`(?:^|, )${name}=([^;]+)`).exec(header);
@@ -20,7 +31,7 @@ describe("Hacker SDK Next adapter", () => {
     );
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
 
@@ -45,17 +56,17 @@ describe("Hacker SDK Next adapter", () => {
     expect(signInCookies).toContain("HttpOnly");
     expect(signInCookies).not.toContain("Domain=");
 
-    const stateCookie = readCookie(signInCookies, "forge_hacker_oauth_state");
+    const stateCookie = readCookie(signInCookies, TEST_COOKIE_NAMES.state);
     const verifierCookie = readCookie(
       signInCookies,
-      "forge_hacker_oauth_verifier",
+      TEST_COOKIE_NAMES.verifier,
     );
     const callback = await handler(
       new Request(
         `https://khx.knighthacks.org/api/hacker-sdk/callback?code=one-use&state=${authorize.searchParams.get("state")}`,
         {
           headers: {
-            cookie: `forge_hacker_oauth_state=${stateCookie}; forge_hacker_oauth_verifier=${verifierCookie}`,
+            cookie: `${TEST_COOKIE_NAMES.state}=${stateCookie}; ${TEST_COOKIE_NAMES.verifier}=${verifierCookie}`,
           },
         },
       ),
@@ -66,7 +77,7 @@ describe("Hacker SDK Next adapter", () => {
       "https://khx.knighthacks.org/dashboard",
     );
     expect(callback.headers.get("set-cookie")).toContain(
-      "forge_hacker_access=opaque-access",
+      `${TEST_COOKIE_NAMES.access}=opaque-access`,
     );
     expect(callback.headers.get("set-cookie")).toContain("HttpOnly");
     expect(await callback.text()).not.toContain("opaque-access");
@@ -107,7 +118,7 @@ describe("Hacker SDK Next adapter", () => {
     });
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
 
@@ -118,8 +129,7 @@ describe("Hacker SDK Next adapter", () => {
           body: "{}",
           headers: {
             "content-type": "application/json",
-            cookie:
-              "forge_hacker_access=expired; forge_hacker_refresh=refresh-me",
+            cookie: `${TEST_COOKIE_NAMES.access}=expired; ${TEST_COOKIE_NAMES.refresh}=refresh-me`,
             origin: "https://khx.knighthacks.org",
           },
           method: "POST",
@@ -170,7 +180,7 @@ describe("Hacker SDK Next adapter", () => {
     });
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
     const request = () =>
@@ -181,8 +191,7 @@ describe("Hacker SDK Next adapter", () => {
             body: "{}",
             headers: {
               "content-type": "application/json",
-              cookie:
-                "forge_hacker_access=expired; forge_hacker_refresh=refresh-me",
+              cookie: `${TEST_COOKIE_NAMES.access}=expired; ${TEST_COOKIE_NAMES.refresh}=refresh-me`,
               origin: "https://khx.knighthacks.org",
             },
             method: "POST",
@@ -195,10 +204,10 @@ describe("Hacker SDK Next adapter", () => {
     expect(refreshCalls).toBe(1);
     expect(responses.map((response) => response.status)).toEqual([200, 200]);
     expect(responses[0].headers.get("set-cookie")).toContain(
-      "forge_hacker_access=shared-access",
+      `${TEST_COOKIE_NAMES.access}=shared-access`,
     );
     expect(responses[1].headers.get("set-cookie")).toContain(
-      "forge_hacker_access=shared-access",
+      `${TEST_COOKIE_NAMES.access}=shared-access`,
     );
   });
 
@@ -230,7 +239,7 @@ describe("Hacker SDK Next adapter", () => {
     });
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
 
@@ -241,8 +250,7 @@ describe("Hacker SDK Next adapter", () => {
           body: "{}",
           headers: {
             "content-type": "application/json",
-            cookie:
-              "forge_hacker_access=expired; forge_hacker_refresh=refresh-me",
+            cookie: `${TEST_COOKIE_NAMES.access}=expired; ${TEST_COOKIE_NAMES.refresh}=refresh-me`,
             origin: "https://khx.knighthacks.org",
           },
           method: "POST",
@@ -263,15 +271,14 @@ describe("Hacker SDK Next adapter", () => {
     );
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
 
     const response = await handler(
       new Request("https://khx.knighthacks.org/api/hacker-sdk/sign-out", {
         headers: {
-          cookie:
-            "forge_hacker_access=stale-access; forge_hacker_refresh=stale-refresh",
+          cookie: `${TEST_COOKIE_NAMES.access}=stale-access; ${TEST_COOKIE_NAMES.refresh}=stale-refresh`,
           origin: "https://khx.knighthacks.org",
         },
         method: "POST",
@@ -282,7 +289,7 @@ describe("Hacker SDK Next adapter", () => {
     const revokeInit = requestFetch.mock.calls[0]?.[1];
     expect(typeof revokeInit?.body).toBe("string");
     expect(JSON.parse(revokeInit?.body as string)).toEqual({
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       refreshToken: "stale-refresh",
     });
     expect(new Headers(revokeInit?.headers).get("authorization")).toBe(
@@ -294,7 +301,7 @@ describe("Hacker SDK Next adapter", () => {
     const requestFetch = vi.fn<typeof fetch>();
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
     const stream = new ReadableStream<Uint8Array>({
@@ -328,7 +335,7 @@ describe("Hacker SDK Next adapter", () => {
     const requestFetch = vi.fn<typeof fetch>();
     const handler = createHackerSdkNextHandler({
       bladeOrigin: "https://blade.knighthacks.org",
-      clientId: "kh-x-client",
+      clientId: TEST_CLIENT_ID,
       fetch: requestFetch,
     });
 
@@ -354,5 +361,39 @@ describe("Hacker SDK Next adapter", () => {
     expect(getHackerSdkSignInPath("https://attacker.example")).toBe(
       "/api/hacker-sdk/sign-in?returnTo=%2F",
     );
+  });
+
+  it("namespaces auth cookies for the same client on multiple localhost ports", async () => {
+    const first = createHackerSdkNextHandler({
+      bladeOrigin: "http://localhost:3000",
+      clientId: "shared-local-client",
+      fetch: vi.fn<typeof fetch>(),
+    });
+    const second = createHackerSdkNextHandler({
+      bladeOrigin: "http://localhost:3000",
+      clientId: "shared-local-client",
+      fetch: vi.fn<typeof fetch>(),
+    });
+
+    const [firstResponse, secondResponse] = await Promise.all([
+      first(new Request("http://localhost:3007/api/hacker-sdk/sign-in")),
+      second(new Request("http://localhost:3008/api/hacker-sdk/sign-in")),
+    ]);
+    const firstCookies = firstResponse.headers.get("set-cookie") ?? "";
+    const secondCookies = secondResponse.headers.get("set-cookie") ?? "";
+    const firstNames = getHackerSdkCookieNames(
+      "shared-local-client",
+      "http://localhost:3007",
+    );
+    const secondNames = getHackerSdkCookieNames(
+      "shared-local-client",
+      "http://localhost:3008",
+    );
+
+    expect(firstNames).not.toEqual(secondNames);
+    expect(firstCookies).toContain(`${firstNames.state}=`);
+    expect(firstCookies).not.toContain(`${secondNames.state}=`);
+    expect(secondCookies).toContain(`${secondNames.state}=`);
+    expect(secondCookies).not.toContain(`${firstNames.state}=`);
   });
 });

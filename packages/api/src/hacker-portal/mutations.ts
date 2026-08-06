@@ -5,6 +5,7 @@ import type {
   ConfirmAttendanceInput,
   SubmitApplicationInput,
   UpdateHackerApplicationInput,
+  UpdateHackerParticipantInput,
   UpdateHackerProfileInput,
   WithdrawApplicationInput,
 } from "@forge/hacker-sdk/contracts";
@@ -460,6 +461,133 @@ export async function updateApplication(
           },
           tx,
         );
+        return mutationResult(tx, ctx);
+      },
+    }),
+  );
+}
+
+export async function updateParticipant(
+  ctx: AuthenticatedPortalContext,
+  input: UpdateHackerParticipantInput,
+) {
+  return db.transaction(async (tx) =>
+    runParticipantCommand({
+      hackathonId: ctx.session.hackathonId,
+      idempotencyKey: input.idempotencyKey,
+      input,
+      operation: "update_participant",
+      tx,
+      userId: ctx.session.userId,
+      work: async () => {
+        const { application, hackathon, now } =
+          await requireEditableApplication(tx, ctx);
+        const [current] = await tx
+          .select()
+          .from(HackerProfile)
+          .where(eq(HackerProfile.userId, ctx.session.userId))
+          .limit(1);
+        if (!current) throw new Error("Hacker profile is missing.");
+
+        if (input.agreements) {
+          await validateAndWriteAgreements({
+            acceptances: input.agreements,
+            attendeeId: application.attendeeId,
+            hackathonId: hackathon.id,
+            now,
+            stage: "application",
+            tx,
+          });
+        }
+
+        const applicationFields = {
+          ...(input.firstTime !== undefined
+            ? { isFirstTime: input.firstTime }
+            : {}),
+          ...(input.survey1 !== undefined ? { survey1: input.survey1 } : {}),
+          ...(input.survey2 !== undefined ? { survey2: input.survey2 } : {}),
+        };
+        const updatesApplication = Object.keys(applicationFields).length > 0;
+        if (updatesApplication) {
+          await tx
+            .update(HackerAttendee)
+            .set(applicationFields)
+            .where(eq(HackerAttendee.id, application.attendeeId));
+          await tx
+            .update(Hacker)
+            .set(applicationFields)
+            .where(eq(Hacker.id, application.hackerId));
+        }
+
+        const updatesProfile = Object.keys(input.profile).length > 0;
+        let profile = current;
+        if (updatesProfile) {
+          const {
+            id: _id,
+            createdAt: _createdAt,
+            resumeUrl: _resumeUrl,
+            revision: _revision,
+            updatedAt: _updatedAt,
+            userId: _userId,
+            ...currentFields
+          } = current;
+          const profileState = await createOrReviseProfile({
+            expectedRevision: input.expectedRevision,
+            fields: { ...currentFields, ...input.profile },
+            now,
+            tx,
+            userId: ctx.session.userId,
+          });
+          profile = profileState.profile;
+        }
+
+        const actor = participantActor(
+          ctx.session.userId,
+          profile.firstName,
+          profile.lastName,
+        );
+        if (updatesApplication || input.agreements) {
+          await createAdminAuditEvent(
+            {
+              actionKey: "hacker.application_updated",
+              actor,
+              metadata: { revision: profile.revision },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: application.attendeeId,
+                  targetLabel: hackathon.displayName,
+                  targetType: "hacker_attendee",
+                },
+              ],
+            },
+            tx,
+          );
+        }
+        if (updatesProfile) {
+          await createAdminAuditEvent(
+            {
+              actionKey: "hacker.profile_updated",
+              actor,
+              metadata: { revision: profile.revision },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: profile.id,
+                  targetLabel: `${profile.firstName} ${profile.lastName}`,
+                  targetType: "hacker_profile",
+                },
+                {
+                  relation: "secondary",
+                  targetId: application.attendeeId,
+                  targetLabel: hackathon.displayName,
+                  targetType: "hacker_attendee",
+                },
+              ],
+            },
+            tx,
+          );
+        }
         return mutationResult(tx, ctx);
       },
     }),

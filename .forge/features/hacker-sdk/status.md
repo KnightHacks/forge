@@ -1,6 +1,6 @@
 # Hacker SDK Status
 
-Current phase: Final review / manual UI pass
+Current phase: KH IX manual UI pass
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -109,6 +109,13 @@ Current phase: Final review / manual UI pass
 - 2026-08-06: Final deep review requires event deletion to preserve attendance
   and scanner-attempt history, and exact concurrent creation-key retries to
   converge on one event and one creation audit.
+- 2026-08-06: Manual review found that the SDK consumer was adapted from the
+  older KH IX tree inherited through `reforge/main`, while authoritative KH IX
+  frontend work continued on `origin/main`. The complete current
+  `origin/main:apps/khix` presentation is now the visual and interaction source
+  of truth. This slice will transplant that app in isolation and replace only
+  its legacy auth/API coupling with the Hacker SDK; regular `main` Blade/API
+  architecture will not be merged into Reforge.
 
 ## Open questions
 
@@ -148,6 +155,13 @@ None. The delegated adversarial SRD review completed.
 - [x] Run React analysis and visible Playwright QA at desktop and 320 px for
       Blade admin, historical static sites, and authenticated KH IX status/QR.
 - [x] Complete deep Forge Review and prepare the manual UI-pass server.
+- [x] Audit the complete authoritative `origin/main:apps/khix` tree against the
+      working SDK consumer and record the transplant boundary.
+- [x] Transplant the authoritative KH IX app and assets without merging regular
+      `main` Blade/backend implementation.
+- [x] Reconnect application, profile, status, agreements, resume, QR, schedule,
+      attendance, points, and leaderboard through `@forge/hacker-sdk`.
+- [ ] Re-run the final deep Forge Review gate after the manual UI pass.
 
 ## Validation / commands
 
@@ -197,6 +211,44 @@ None. The delegated adversarial SRD review completed.
   submission/editability timing windows.
 - `pnpm knip:strict` reports only the pre-existing `US_CITY_SOURCE` export in
   `packages/api/src/data/us-cities-2025.ts`; this feature adds no Knip finding.
+- Isolated transplant pinned `origin/main:apps/khix` at `0aa390a0`, preserved
+  its full marketing/credits/font asset tree, and removed the transplanted local
+  Better Auth, participant tRPC proxy, direct database, and hackathon-package
+  seams. The Team Cascade remains an explicit public-read Blade tRPC consumer.
+- KH IX now exposes a themed My Hack page backed by SDK attendance, points,
+  overall/class leaderboards, configured class, VIP, and age-at-event data.
+  Resume removal and irreversible withdrawal have confirmation UI.
+- Post-transplant checks passed: KH IX typecheck; SDK/API typecheck; KH IX 10/10
+  tests; SDK 23/23 tests; KH IX lint with zero errors; React analysis across 44
+  files and 34 components with zero failures; KH IX production build across 14
+  routes.
+- Authenticated Playwright against the populated development database completed
+  Blade PKCE sign-in and rendered checked-in dashboard plus My Hack at 1440px
+  and 390px. Points (300), attendance (4), configured Alchemist class, and both
+  rank-one leaderboards came from Blade. The authoritative public landing page
+  rendered with no console errors after preserving its current roster-image
+  host configuration. Desktop/mobile screenshots were inspected with vision.
+- Post-review hardening added an atomic `updateParticipant` contract so KH IX
+  profile, application-answer, and agreement edits commit or roll back together.
+  A stale-revision database regression asserts that no hackathon answer leaks
+  through a failed composite save.
+- Portal adapter cookies are now deterministically namespaced by public client
+  ID and request origin. The SDK adapter suite includes two instances of the
+  same client on different localhost ports without access, refresh, state, or
+  verifier-cookie collisions.
+- Visible Playwright network tracing confirmed dashboard, lore, events, and My
+  Hack fetch only their rendered participant datasets. A forced batched Blade
+  failure rendered responsive `Unavailable` and retry states rather than false
+  zero/empty data; `/tmp/khix-journey-error-mobile.png` was inspected with
+  vision. Attendance timestamps now use the configured hackathon timezone.
+- Latest `pnpm verify:precommit`: 29/29 tasks passed after the transplant review
+  fixes.
+- Latest `pnpm verify:push`: 29/29 tasks passed after the final retry,
+  origin-isolation, atomic-update, and journey-key hardening.
+- Final KH IX production build passed across all 14 routes, including the
+  SDK-backed application, dashboard, profile, events, and My Hack journey.
+- Final three-agent adversarial Forge Review returned GREEN with no remaining
+  P0-P2 findings. The branch is ready for the owner's manual UI pass.
 
 ## Links
 

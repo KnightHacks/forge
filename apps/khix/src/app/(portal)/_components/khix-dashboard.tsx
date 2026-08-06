@@ -29,6 +29,9 @@ import {
   Printer,
   QrCode,
   ScrollText,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
   UserRound,
   X,
 } from "lucide-react";
@@ -36,6 +39,9 @@ import {
 import type {
   HackerAgreementAcceptanceInput,
   HackerAgreementDefinitionDto,
+  HackerAttendanceDto,
+  HackerLeaderboardDto,
+  HackerPointsDto,
 } from "@forge/hacker-sdk";
 import { FORMS } from "@forge/consts";
 import { useHackerDashboard } from "@forge/hacker-sdk/react";
@@ -374,7 +380,7 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     resumeUrl,
     withdrawAttendance,
     withdrawMutation,
-  } = useHackerDashboardFlow();
+  } = useHackerDashboardFlow({ resume: true });
   const [issue, setIssue] = useState("");
   const [issueOpen, setIssueOpen] = useState(false);
 
@@ -506,6 +512,7 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
       toast.error(
         getToastErrorMessage(error, "Could not withdraw attendance."),
       );
+      throw error;
     }
   };
 
@@ -632,7 +639,7 @@ export function KhixEvents({ sessionUser }: KhixDashboardProps) {
     reportIssueMutation,
     schedule,
     scheduleQuery,
-  } = useHackerDashboardFlow();
+  } = useHackerDashboardFlow({ schedule: true });
   const [issue, setIssue] = useState("");
   const [issueOpen, setIssueOpen] = useState(false);
 
@@ -758,6 +765,156 @@ export function KhixEvents({ sessionUser }: KhixDashboardProps) {
   );
 }
 
+export function KhixJourney({ sessionUser }: KhixDashboardProps) {
+  const {
+    attendance,
+    attendanceQuery,
+    classLeaderboard,
+    classLeaderboardQuery,
+    dashboard,
+    dashboardQuery,
+    isMinorAtHackStart,
+    overallLeaderboard,
+    overallLeaderboardQuery,
+    points,
+    pointsQuery,
+    reportIssue,
+    reportIssueMutation,
+  } = useHackerDashboardFlow({
+    attendance: true,
+    leaderboards: true,
+    points: true,
+  });
+  const [issue, setIssue] = useState("");
+  const [issueOpen, setIssueOpen] = useState(false);
+
+  const handleIssueReport = async () => {
+    const trimmedIssue = issue.trim();
+    if (!trimmedIssue) return;
+
+    try {
+      await reportIssue(trimmedIssue);
+      setIssue("");
+      setIssueOpen(false);
+      toast.success("Discord support opened; your note is ready to paste.");
+    } catch (error) {
+      toast.error(getToastErrorMessage(error, "Could not report the issue."));
+    }
+  };
+
+  const reportIssueNavAction = (
+    <ReportIssueNavAction
+      issue={issue}
+      isOpen={issueOpen}
+      isPending={reportIssueMutation.isPending}
+      onChange={setIssue}
+      onOpenChange={setIssueOpen}
+      onReport={handleIssueReport}
+    />
+  );
+
+  if (dashboardQuery.isPending) {
+    return (
+      <KhixDashboardShell
+        activeItem="journey"
+        navAction={reportIssueNavAction}
+        sessionUser={sessionUser}
+      >
+        <JourneySkeleton />
+      </KhixDashboardShell>
+    );
+  }
+
+  const participant = dashboard?.participant;
+  const journeyUnlocked =
+    participant?.status === "confirmed" || participant?.status === "checkedin";
+
+  if (dashboardQuery.isError || !dashboard || !participant) {
+    return (
+      <KhixDashboardShell
+        activeItem="journey"
+        navAction={reportIssueNavAction}
+        sessionUser={sessionUser}
+      >
+        <ScheduleState
+          action={
+            <Button asChild className={styles.primaryButton}>
+              <Link href="/dashboard/journey">Try again</Link>
+            </Button>
+          }
+          copy="Refresh the page or try again in a moment."
+          title="Your hack details could not be loaded."
+        />
+      </KhixDashboardShell>
+    );
+  }
+
+  if (!journeyUnlocked) {
+    return (
+      <KhixDashboardShell
+        activeItem="journey"
+        navAction={reportIssueNavAction}
+        sessionUser={sessionUser}
+      >
+        <StatusStage
+          action={
+            <Button asChild className={styles.primaryButton}>
+              <Link href="/dashboard">Back to dashboard</Link>
+            </Button>
+          }
+          body="Class assignments, points, attendance, and the leaderboard appear after your seat is confirmed."
+          headline="Your journey has not started yet."
+          greeting="The path is still forming"
+          statusLabel="Locked"
+          statusClassName={styles.statusPending}
+        />
+      </KhixDashboardShell>
+    );
+  }
+
+  const retryJourneyData = async () => {
+    const requests: Promise<unknown>[] = [overallLeaderboardQuery.refetch()];
+    if (participant.classId) requests.push(classLeaderboardQuery.refetch());
+    if (participant.status === "checkedin") {
+      requests.push(attendanceQuery.refetch(), pointsQuery.refetch());
+    }
+    await Promise.all(requests);
+  };
+
+  return (
+    <KhixDashboardShell
+      activeItem="journey"
+      navAction={reportIssueNavAction}
+      sessionUser={sessionUser}
+    >
+      <HackerJourneySummary
+        attendance={attendance}
+        attendanceError={attendanceQuery.isError}
+        attendancePending={attendanceQuery.isPending}
+        classLeaderboard={classLeaderboard}
+        classLeaderboardError={classLeaderboardQuery.isError}
+        classLeaderboardPending={classLeaderboardQuery.isPending}
+        isMinorAtHackStart={isMinorAtHackStart}
+        onRetry={() => void retryJourneyData()}
+        overallLeaderboard={overallLeaderboard}
+        overallLeaderboardError={overallLeaderboardQuery.isError}
+        overallLeaderboardPending={overallLeaderboardQuery.isPending}
+        participant={participant}
+        points={points}
+        pointsError={pointsQuery.isError}
+        pointsPending={pointsQuery.isPending}
+        retrying={
+          attendanceQuery.isFetching ||
+          classLeaderboardQuery.isFetching ||
+          overallLeaderboardQuery.isFetching ||
+          pointsQuery.isFetching
+        }
+        timeZone={dashboard.hackathon.timezone}
+      />
+    </KhixDashboardShell>
+  );
+}
+
 export function KhixProfile({ sessionUser }: KhixDashboardProps) {
   const {
     agreementAcceptances,
@@ -766,6 +923,8 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
     editable,
     participant,
     profileSchema,
+    removeResume,
+    removeResumeMutation,
     reportIssue,
     reportIssueMutation,
     updateMutation,
@@ -867,7 +1026,13 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
         editable={editable}
         participant={participant}
         profileSchema={profileSchema}
-        saving={updateMutation.isPending || uploadMutation.isPending}
+        removeResume={removeResume}
+        removingResume={removeResumeMutation.isPending}
+        saving={
+          updateMutation.isPending ||
+          uploadMutation.isPending ||
+          removeResumeMutation.isPending
+        }
         updateProfile={updateProfile}
         uploadResume={uploadResume}
       />
@@ -931,7 +1096,7 @@ function KhixDashboardShell({
   navAction,
   sessionUser,
 }: {
-  activeItem?: "events" | "lore" | "profile" | "status";
+  activeItem?: "events" | "journey" | "lore" | "profile" | "status";
   children: ReactNode;
   navAction?: ReactNode;
   sessionUser?: KhixSessionUser;
@@ -954,6 +1119,9 @@ function KhixDashboardShell({
   const loreHref = "/dashboard/lore";
   const statusHref = "/dashboard";
   const eventsUnlocked =
+    dashboardQuery.data?.application?.status === "checkedin";
+  const journeyUnlocked =
+    dashboardQuery.data?.application?.status === "confirmed" ||
     dashboardQuery.data?.application?.status === "checkedin";
   const mobileMenuMounted = mobileMenuState !== "closed";
   const mobileMenuExpanded =
@@ -1289,6 +1457,44 @@ function KhixDashboardShell({
                   </span>
                 </button>
               )}
+              {journeyUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "journey" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/journey"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Trophy className="size-4" />
+                  </span>
+                  <span className={styles.railLinkText}>
+                    <span className={styles.railLinkLabel}>My Hack</span>
+                  </span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="My Hack page locked until confirmation"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Trophy className="size-4" />
+                  </span>
+                  <span className={styles.railLinkText}>
+                    <span className={styles.railLockedLabel}>
+                      <span className={styles.railLinkLabel}>My Hack</span>
+                      <LockKeyhole className={styles.railLockIcon} />
+                    </span>
+                  </span>
+                </button>
+              )}
               <button
                 type="button"
                 className={joinClasses(
@@ -1357,6 +1563,7 @@ function KhixDashboardShell({
             styles.main,
             activeItem === "status" && styles.statusMain,
             activeItem === "events" && styles.eventsMain,
+            activeItem === "journey" && styles.journeyMain,
             activeItem === "lore" && styles.loreMain,
             activeItem === "profile" && styles.profileMain,
           )}
@@ -1388,6 +1595,360 @@ function KhixDashboardShell({
         </div>
       </div>
     </main>
+  );
+}
+
+function HackerJourneySummary({
+  attendance,
+  attendanceError,
+  attendancePending,
+  classLeaderboard,
+  classLeaderboardError,
+  classLeaderboardPending,
+  isMinorAtHackStart,
+  onRetry,
+  overallLeaderboard,
+  overallLeaderboardError,
+  overallLeaderboardPending,
+  participant,
+  points,
+  pointsError,
+  pointsPending,
+  retrying,
+  timeZone,
+}: {
+  attendance: HackerAttendanceDto["occurrences"];
+  attendanceError: boolean;
+  attendancePending: boolean;
+  classLeaderboard: HackerLeaderboardDto | undefined;
+  classLeaderboardError: boolean;
+  classLeaderboardPending: boolean;
+  isMinorAtHackStart: boolean | null;
+  onRetry: () => void;
+  overallLeaderboard: HackerLeaderboardDto | undefined;
+  overallLeaderboardError: boolean;
+  overallLeaderboardPending: boolean;
+  participant: PortalParticipant;
+  points: HackerPointsDto | undefined;
+  pointsError: boolean;
+  pointsPending: boolean;
+  retrying: boolean;
+  timeZone: string;
+}) {
+  const checkedIn = participant.status === "checkedin";
+  const overallRank = overallLeaderboard?.viewerRank;
+  const hasDataError =
+    overallLeaderboardError ||
+    classLeaderboardError ||
+    (checkedIn && (attendanceError || pointsError));
+
+  return (
+    <section
+      className={styles.journeyExperience}
+      aria-labelledby="khix-journey-title"
+    >
+      <header className={styles.journeyHero}>
+        <p className={styles.journeyEyebrow}>Your Knight Hacks IX journey</p>
+        <h1 id="khix-journey-title" className={styles.journeyTitle}>
+          The path you&apos;re making
+        </h1>
+        <p className={styles.journeyIntro}>
+          Your assignment, progress, and place among the adventurers—all sourced
+          live from Blade.
+        </p>
+      </header>
+
+      {isMinorAtHackStart === true ? (
+        <div className={styles.journeyMinorNotice} role="alert">
+          <ShieldCheck className="size-5" aria-hidden="true" />
+          <div>
+            <strong>Under 18 at hackathon start</strong>
+            <span>
+              Keep any required guardian or identification documents ready for
+              arrival.
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      {hasDataError ? (
+        <div className={styles.journeyDataNotice} role="alert">
+          <AlertCircle className="size-5" aria-hidden="true" />
+          <div>
+            <strong>Some live journey details are unavailable.</strong>
+            <span>
+              We have not replaced missing data with zeroes. Try Blade again to
+              load the current totals.
+            </span>
+          </div>
+          <Button
+            className={styles.ghostButton}
+            disabled={retrying}
+            onClick={onRetry}
+            type="button"
+            variant="outline"
+          >
+            {retrying ? <Loader2 className="size-4 animate-spin" /> : null}
+            Try again
+          </Button>
+        </div>
+      ) : null}
+
+      <dl className={styles.journeyStats}>
+        <JourneyStat
+          label="Class"
+          value={participant.className ?? "Assignment pending"}
+        />
+        <JourneyStat
+          label="Access"
+          value={participant.isVip ? "VIP hacker" : "Hacker"}
+        />
+        <JourneyStat
+          label="Points"
+          value={
+            checkedIn
+              ? pointsError
+                ? "Unavailable"
+                : pointsPending
+                  ? "Loading…"
+                  : `${points?.total ?? 0}`
+              : "Unlocks at check-in"
+          }
+        />
+        <JourneyStat
+          label="Events visited"
+          value={
+            checkedIn
+              ? attendanceError
+                ? "Unavailable"
+                : attendancePending
+                  ? "Loading…"
+                  : `${attendance.length}`
+              : "Unlocks at check-in"
+          }
+        />
+        <JourneyStat
+          label="Overall rank"
+          value={
+            overallLeaderboardError
+              ? "Unavailable"
+              : overallLeaderboardPending
+                ? "Loading…"
+                : overallRank
+                  ? `#${overallRank}`
+                  : "Not ranked yet"
+          }
+        />
+        <JourneyStat
+          label="Age at event"
+          value={
+            isMinorAtHackStart == null
+              ? "Not available"
+              : isMinorAtHackStart
+                ? "Under 18"
+                : "18 or older"
+          }
+        />
+      </dl>
+
+      <div className={styles.journeyColumns}>
+        <LeaderboardPanel
+          data={overallLeaderboard}
+          error={overallLeaderboardError}
+          onRetry={onRetry}
+          pending={overallLeaderboardPending}
+          retrying={retrying}
+          title="Overall leaderboard"
+        />
+        {participant.classId ? (
+          <LeaderboardPanel
+            data={classLeaderboard}
+            error={classLeaderboardError}
+            onRetry={onRetry}
+            pending={classLeaderboardPending}
+            retrying={retrying}
+            title={`${participant.className ?? "Class"} leaderboard`}
+          />
+        ) : (
+          <JourneyPanelEmpty
+            copy="Your class leaderboard appears as soon as an organizer assigns your class."
+            title="Class leaderboard"
+          />
+        )}
+      </div>
+
+      {checkedIn ? (
+        <section
+          className={styles.journeyPanel}
+          aria-labelledby="attendance-title"
+        >
+          <div className={styles.journeyPanelHeading}>
+            <div>
+              <p className={styles.journeyPanelEyebrow}>Attendance</p>
+              <h2 id="attendance-title">Places you&apos;ve visited</h2>
+            </div>
+            <Sparkles className="size-5" aria-hidden="true" />
+          </div>
+          {attendanceError ? (
+            <JourneyDataError
+              copy="Your attendance history could not be loaded."
+              onRetry={onRetry}
+              retrying={retrying}
+            />
+          ) : attendancePending ? (
+            <p className={styles.journeyEmpty}>Loading your attendance…</p>
+          ) : attendance.length === 0 ? (
+            <p className={styles.journeyEmpty}>
+              Your first event check-in will appear here.
+            </p>
+          ) : (
+            <ol className={styles.attendanceList}>
+              {attendance.map((occurrence, index) => (
+                <li
+                  key={`${occurrence.eventId}:${occurrence.checkedInAt}:${index}`}
+                >
+                  <div>
+                    <strong>{occurrence.eventName}</strong>
+                    <span>
+                      {new Intl.DateTimeFormat("en-US", {
+                        dateStyle: "medium",
+                        timeZone,
+                        timeStyle: "short",
+                      }).format(new Date(occurrence.checkedInAt))}
+                    </span>
+                  </div>
+                  <span className={styles.attendancePoints}>
+                    +{occurrence.pointsAwarded} pts
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      ) : (
+        <JourneyPanelEmpty
+          copy="Points and attendance stay hidden until you arrive and complete the main hackathon check-in."
+          title="Progress unlocks at check-in"
+        />
+      )}
+    </section>
+  );
+}
+
+function JourneyStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={styles.journeyStat}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function LeaderboardPanel({
+  data,
+  error,
+  onRetry,
+  pending,
+  retrying,
+  title,
+}: {
+  data: HackerLeaderboardDto | undefined;
+  error: boolean;
+  onRetry: () => void;
+  pending: boolean;
+  retrying: boolean;
+  title: string;
+}) {
+  return (
+    <section className={styles.journeyPanel}>
+      <div className={styles.journeyPanelHeading}>
+        <div>
+          <p className={styles.journeyPanelEyebrow}>Live standings</p>
+          <h2>{title}</h2>
+        </div>
+        <Trophy className="size-5" aria-hidden="true" />
+      </div>
+      {error ? (
+        <JourneyDataError
+          copy="These standings could not be loaded."
+          onRetry={onRetry}
+          retrying={retrying}
+        />
+      ) : pending ? (
+        <p className={styles.journeyEmpty}>Loading the leaderboard…</p>
+      ) : !data || data.rows.length === 0 ? (
+        <p className={styles.journeyEmpty}>
+          The first point award will start this leaderboard.
+        </p>
+      ) : (
+        <ol className={styles.leaderboardList}>
+          {data.rows.slice(0, 8).map((row, index) => (
+            <li
+              key={`${row.rank}:${row.displayName}:${row.classId ?? "none"}:${index}`}
+              data-current={row.isCurrentUser ? "true" : undefined}
+            >
+              <span className={styles.leaderboardRank}>#{row.rank}</span>
+              <strong>{row.displayName}</strong>
+              <span>{row.points} pts</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function JourneyDataError({
+  copy,
+  onRetry,
+  retrying,
+}: {
+  copy: string;
+  onRetry: () => void;
+  retrying: boolean;
+}) {
+  return (
+    <div className={styles.journeyPanelError} role="alert">
+      <p>{copy}</p>
+      <Button
+        className={styles.ghostButton}
+        disabled={retrying}
+        onClick={onRetry}
+        type="button"
+        variant="outline"
+      >
+        {retrying ? <Loader2 className="size-4 animate-spin" /> : null}
+        Try again
+      </Button>
+    </div>
+  );
+}
+
+function JourneyPanelEmpty({ copy, title }: { copy: string; title: string }) {
+  return (
+    <section className={styles.journeyPanel}>
+      <div className={styles.journeyPanelHeading}>
+        <div>
+          <p className={styles.journeyPanelEyebrow}>Your progress</p>
+          <h2>{title}</h2>
+        </div>
+        <ShieldCheck className="size-5" aria-hidden="true" />
+      </div>
+      <p className={styles.journeyEmpty}>{copy}</p>
+    </section>
+  );
+}
+
+function JourneySkeleton() {
+  return (
+    <section
+      className={joinClasses(styles.journeyExperience, styles.journeySkeleton)}
+      aria-label="Loading your hack journey"
+    >
+      <div />
+      <div />
+      <div />
+    </section>
   );
 }
 
@@ -1966,6 +2527,8 @@ function ProfileSection({
   editable,
   participant,
   profileSchema,
+  removeResume,
+  removingResume,
   saving,
   updateProfile,
   uploadResume,
@@ -1978,6 +2541,8 @@ function ProfileSection({
   editable: boolean;
   participant: PortalParticipant;
   profileSchema: HackerProfileFlow["profileSchema"];
+  removeResume: HackerProfileFlow["removeResume"];
+  removingResume: boolean;
   saving: boolean;
   updateProfile: HackerProfileFlow["updateProfile"];
   uploadResume: HackerProfileFlow["uploadResume"];
@@ -2683,6 +3248,27 @@ function ProfileSection({
                             <FormMessage
                               className={styles.profileFormMessage}
                             />
+                            {participant.resumeUrl ? (
+                              <RemoveResumeDialog
+                                disabled={!editable || disabled}
+                                onRemove={async () => {
+                                  try {
+                                    await removeResume();
+                                    form.setValue("resumeUrl", "");
+                                    toast.success("Your resume was removed.");
+                                  } catch (error) {
+                                    toast.error(
+                                      getToastErrorMessage(
+                                        error,
+                                        "Could not remove your resume.",
+                                      ),
+                                    );
+                                    throw error;
+                                  }
+                                }}
+                                pending={removingResume}
+                              />
+                            ) : null}
                           </FormItem>
                         )}
                       />
@@ -3221,32 +3807,7 @@ function WithdrawalDialog({
   disabled: boolean;
   onWithdraw: () => Promise<void>;
 }) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className={styles.ghostButton}
-          disabled={disabled}
-          type="button"
-        >
-          Withdraw attendance
-        </Button>
-      </DialogTrigger>
-      <DialogContent className={styles.dialog}>
-        <DialogHeader>
-          <DialogTitle>Withdraw from Knight Hacks IX?</DialogTitle>
-          <DialogDescription>
-            This is irreversible. Your place will be released and you cannot
-            restore this application yourself.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <HoldToWithdrawButton disabled={disabled} onWithdraw={onWithdraw} />
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+  return <HoldToWithdrawButton disabled={disabled} onWithdraw={onWithdraw} />;
 }
 
 function HoldToWithdrawButton({
@@ -3256,6 +3817,7 @@ function HoldToWithdrawButton({
   disabled: boolean;
   onWithdraw: () => Promise<void>;
 }) {
+  const [open, setOpen] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
   const holdFrameRef = useRef<number | null>(null);
@@ -3294,13 +3856,16 @@ function HoldToWithdrawButton({
     setIsHolding(true);
     setHoldProgress(1);
 
-    void onWithdraw().finally(() => {
-      if (!mountedRef.current) return;
+    void onWithdraw()
+      .then(() => setOpen(false))
+      .catch(() => undefined)
+      .finally(() => {
+        if (!mountedRef.current) return;
 
-      window.setTimeout(() => {
-        if (mountedRef.current) resetHold();
-      }, 180);
-    });
+        window.setTimeout(() => {
+          if (mountedRef.current) resetHold();
+        }, 180);
+      });
   };
 
   const updateHold = (now: number) => {
@@ -3378,36 +3943,137 @@ function HoldToWithdrawButton({
   } as CSSProperties;
 
   return (
-    <Button
-      variant="outline"
-      className={joinClasses(styles.ghostButton, styles.withdrawHoldButton)}
-      data-hold-active={isHolding ? "true" : undefined}
-      disabled={disabled}
-      onClick={(event) => event.preventDefault()}
-      onKeyDown={handleKeyDown}
-      onKeyUp={handleKeyUp}
-      onPointerCancel={handlePointerEnd}
-      onPointerDown={handlePointerDown}
-      onPointerLeave={(event) => {
-        if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
-          handlePointerEnd(event);
-        }
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) resetHold();
+        setOpen(nextOpen);
       }}
-      onPointerUp={handlePointerEnd}
-      style={holdStyle}
-      type="button"
-      aria-label={
-        disabled ? "Withdrawing attendance" : "Hold to withdraw attendance"
-      }
-      title={
-        disabled ? "Withdrawing attendance" : "Hold to withdraw attendance"
-      }
     >
-      <span className={styles.withdrawHoldSpinnerSlot} aria-hidden="true">
-        {disabled ? <Loader2 className="size-4 animate-spin" /> : null}
-      </span>
-      <span>Withdraw attendance</span>
-    </Button>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className={styles.ghostButton}
+          disabled={disabled}
+          type="button"
+        >
+          Withdraw attendance
+        </Button>
+      </DialogTrigger>
+      <DialogContent className={styles.dialog}>
+        <DialogHeader>
+          <DialogTitle>Withdraw from Knight Hacks IX?</DialogTitle>
+          <DialogDescription>
+            This is irreversible. Your place will be released, and you will not
+            be able to confirm again. Hold the button below only if you are
+            sure.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            disabled={disabled}
+            onClick={() => setOpen(false)}
+            type="button"
+            variant="outline"
+          >
+            Keep my spot
+          </Button>
+          <Button
+            variant="destructive"
+            className={styles.withdrawHoldButton}
+            data-hold-active={isHolding ? "true" : undefined}
+            disabled={disabled}
+            onClick={(event) => event.preventDefault()}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+            onPointerCancel={handlePointerEnd}
+            onPointerDown={handlePointerDown}
+            onPointerLeave={(event) => {
+              if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+                handlePointerEnd(event);
+              }
+            }}
+            onPointerUp={handlePointerEnd}
+            style={holdStyle}
+            type="button"
+            aria-label={
+              disabled
+                ? "Withdrawing attendance"
+                : "Hold to permanently withdraw attendance"
+            }
+            title={
+              disabled
+                ? "Withdrawing attendance"
+                : "Hold to permanently withdraw attendance"
+            }
+          >
+            <span className={styles.withdrawHoldSpinnerSlot} aria-hidden="true">
+              {disabled ? <Loader2 className="size-4 animate-spin" /> : null}
+            </span>
+            <span>Hold to withdraw</span>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RemoveResumeDialog({
+  disabled,
+  onRemove,
+  pending,
+}: {
+  disabled: boolean;
+  onRemove: () => Promise<void>;
+  pending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className={styles.profileRemoveResume}
+          disabled={disabled}
+          type="button"
+          variant="outline"
+        >
+          Remove current resume
+        </Button>
+      </DialogTrigger>
+      <DialogContent className={styles.dialog}>
+        <DialogHeader>
+          <DialogTitle>Remove your resume?</DialogTitle>
+          <DialogDescription>
+            The attached PDF will be deleted from this hacker profile. You can
+            upload a replacement while profile editing remains open.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            disabled={pending}
+            onClick={() => setOpen(false)}
+            type="button"
+            variant="outline"
+          >
+            Keep resume
+          </Button>
+          <Button
+            disabled={pending}
+            onClick={() =>
+              void onRemove()
+                .then(() => setOpen(false))
+                .catch(() => undefined)
+            }
+            type="button"
+            variant="destructive"
+          >
+            {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+            Remove resume
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

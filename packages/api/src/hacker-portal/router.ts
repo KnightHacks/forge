@@ -5,6 +5,7 @@ import {
   getCheckInPass,
   submitApplication,
   updateApplication,
+  updateParticipant,
   updateProfile,
   withdrawApplication,
 } from "./mutations";
@@ -84,6 +85,10 @@ export const hackerParticipantV1Router: ReturnType<
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.updateApplication)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.updateApplication)
     .mutation(({ ctx, input }) => updateApplication(ctx, input)),
+  updateParticipant: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.updateParticipant)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.updateParticipant)
+    .mutation(({ ctx, input }) => updateParticipant(ctx, input)),
   updateProfile: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.updateProfile)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.updateProfile)

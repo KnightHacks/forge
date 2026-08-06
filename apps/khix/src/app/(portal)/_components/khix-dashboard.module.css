@@ -891,6 +891,12 @@
   padding-top: clamp(8.5rem, 16dvh, 12rem);
 }
 
+.journeyMain .mainCanvas {
+  align-content: start;
+  padding-top: clamp(6.5rem, 11vw, 9rem);
+  padding-bottom: 5rem;
+}
+
 .mainCanvas::before,
 .main::after {
   position: absolute;
@@ -3011,6 +3017,315 @@
 .profileAllergyTrigger:active,
 .profileAllergyOption:active {
   transform: translateY(1px) scale(0.99);
+}
+
+.journeyExperience {
+  display: grid;
+  width: min(70rem, 100%);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-self: start;
+  color: rgb(255 252 244 / 0.94);
+}
+
+.journeyHero {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 48rem;
+}
+
+.journeyEyebrow,
+.journeyPanelEyebrow {
+  margin: 0;
+  color: rgb(210 211 131 / 0.86);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.journeyTitle {
+  margin: 0;
+  color: rgb(255 252 244 / 0.98);
+  font-family: var(--khix-display-font);
+  font-size: clamp(2.4rem, 5vw, 4.8rem);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.journeyIntro {
+  max-width: 42rem;
+  margin: 0;
+  color: rgb(255 252 244 / 0.7);
+  font-size: clamp(0.92rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+}
+
+.journeyMinorNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  border: 1px solid rgb(248 187 82 / 0.48);
+  border-radius: 1rem;
+  background: rgb(96 48 26 / 0.54);
+  padding: 1rem 1.15rem;
+  color: rgb(255 241 206 / 0.96);
+}
+
+.journeyMinorNotice svg {
+  flex: none;
+  margin-top: 0.08rem;
+}
+
+.journeyMinorNotice div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.journeyMinorNotice strong {
+  font-size: 0.95rem;
+}
+
+.journeyMinorNotice span {
+  color: rgb(255 241 206 / 0.76);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.journeyDataNotice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid rgb(248 187 82 / 0.42);
+  border-radius: 1rem;
+  background: rgb(75 39 33 / 0.58);
+  padding: 0.9rem 1rem;
+  color: rgb(255 241 206 / 0.94);
+}
+
+.journeyDataNotice div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.journeyDataNotice strong {
+  font-size: 0.9rem;
+}
+
+.journeyDataNotice span {
+  color: rgb(255 241 206 / 0.7);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.journeyPanelError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.journeyPanelError p {
+  margin: 0;
+  color: rgb(255 205 180 / 0.82);
+  font-size: 0.84rem;
+}
+
+.journeyStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.journeyStat,
+.journeyPanel {
+  border: 1px solid rgb(210 211 131 / 0.2);
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgb(71 80 67 / 0.42), rgb(25 9 37 / 0.72)),
+    rgb(25 9 37 / 0.7);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  backdrop-filter: blur(18px);
+}
+
+.journeyStat {
+  display: grid;
+  min-height: 6.2rem;
+  align-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.journeyStat dt {
+  color: rgb(255 252 244 / 0.58);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.journeyStat dd {
+  margin: 0;
+  color: rgb(255 252 244 / 0.96);
+  font-family: var(--khix-display-font);
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  line-height: 1.05;
+}
+
+.journeyColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.journeyPanel {
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.journeyPanelHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  color: rgb(210 211 131 / 0.9);
+}
+
+.journeyPanelHeading div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.journeyPanelHeading h2 {
+  margin: 0;
+  color: rgb(255 252 244 / 0.95);
+  font-family: var(--khix-display-font);
+  font-size: clamp(1.3rem, 2.2vw, 1.85rem);
+  font-weight: 500;
+}
+
+.leaderboardList,
+.attendanceList {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leaderboardList li,
+.attendanceList li {
+  display: grid;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 0.035);
+  padding: 0.7rem 0.8rem;
+  color: rgb(255 252 244 / 0.7);
+  font-size: 0.82rem;
+}
+
+.leaderboardList li {
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+}
+
+.leaderboardList li[data-current="true"] {
+  outline: 1px solid rgb(145 181 97 / 0.58);
+  background: rgb(93 171 103 / 0.13);
+}
+
+.leaderboardList strong,
+.attendanceList strong {
+  overflow: hidden;
+  color: rgb(255 252 244 / 0.92);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboardRank {
+  color: rgb(210 211 131 / 0.9);
+  font-weight: 850;
+}
+
+.attendanceList li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.attendanceList div {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.attendanceList div span {
+  color: rgb(255 252 244 / 0.5);
+  font-size: 0.72rem;
+}
+
+.attendancePoints {
+  color: rgb(210 211 131 / 0.92);
+  font-weight: 850;
+}
+
+.journeyEmpty {
+  margin: 0;
+  color: rgb(255 252 244 / 0.58);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.profileRemoveResume {
+  width: fit-content;
+  min-height: 2rem;
+  border-color: rgb(248 113 113 / 0.32);
+  background: rgb(127 29 29 / 0.14);
+  color: rgb(254 202 202 / 0.88);
+  font-size: 0.72rem;
+}
+
+.journeySkeleton > div {
+  min-height: 8rem;
+  border-radius: 1rem;
+  background: linear-gradient(
+    100deg,
+    rgb(255 255 255 / 0.04),
+    rgb(255 255 255 / 0.1),
+    rgb(255 255 255 / 0.04)
+  );
+  background-size: 200% 100%;
+  animation: khixDashboardSkeleton 1.6s ease-in-out infinite;
+}
+
+@keyframes khixDashboardSkeleton {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .journeyColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .journeyDataNotice {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .journeyDataNotice > button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .journeyMain .mainCanvas {
+    padding-top: 6.5rem;
+  }
 }
 
 .toolDock {

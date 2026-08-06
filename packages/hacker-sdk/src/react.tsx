@@ -21,6 +21,7 @@ import type {
   IssueHackerCheckInPassInput,
   SubmitApplicationInput,
   UpdateHackerApplicationInput,
+  UpdateHackerParticipantInput,
   UpdateHackerProfileInput,
   WithdrawApplicationInput,
 } from "./contracts";
@@ -145,58 +146,68 @@ export function useHackerDashboard() {
   });
 }
 
-export function useHackerResume() {
+interface HackerSdkQueryOptions {
+  enabled?: boolean;
+}
+
+export function useHackerResume(options: HackerSdkQueryOptions = {}) {
   const { client, portalKey } = useHackerSdkClient();
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () => client.getResume(),
     queryKey: hackerSdkQueryKeys.resume(portalKey),
   });
 }
 
-export function useHackerSchedule() {
+export function useHackerSchedule(options: HackerSdkQueryOptions = {}) {
   const { client, portalKey } = useHackerSdkClient();
   const dashboard = useHackerDashboard();
   return useQuery({
-    enabled: canLoadCheckedInParticipantData(
-      dashboard.data?.application?.status,
-    ),
+    enabled:
+      (options.enabled ?? true) &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
     queryFn: () => client.getSchedule(),
     queryKey: hackerSdkQueryKeys.schedule(portalKey),
   });
 }
 
-export function useHackerAttendance() {
+export function useHackerAttendance(options: HackerSdkQueryOptions = {}) {
   const { client, portalKey } = useHackerSdkClient();
   const dashboard = useHackerDashboard();
   return useQuery({
-    enabled: canLoadCheckedInParticipantData(
-      dashboard.data?.application?.status,
-    ),
+    enabled:
+      (options.enabled ?? true) &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
     queryFn: () => client.getMyAttendance(),
     queryKey: hackerSdkQueryKeys.attendance(portalKey),
   });
 }
 
-export function useHackerPoints() {
+export function useHackerPoints(options: HackerSdkQueryOptions = {}) {
   const { client, portalKey } = useHackerSdkClient();
   const dashboard = useHackerDashboard();
   return useQuery({
-    enabled: canLoadCheckedInParticipantData(
-      dashboard.data?.application?.status,
-    ),
+    enabled:
+      (options.enabled ?? true) &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
     queryFn: () => client.getMyPoints(),
     queryKey: hackerSdkQueryKeys.points(portalKey),
   });
 }
 
-export function useHackerLeaderboard(scope: HackerLeaderboardScopeInput) {
+export function useHackerLeaderboard(
+  scope: HackerLeaderboardScopeInput,
+  options: HackerSdkQueryOptions = {},
+) {
   const { client, portalKey } = useHackerSdkClient();
   const dashboard = useHackerDashboard();
   const status = dashboard.data?.application?.status;
   const scopeKey =
     scope.scope === "overall" ? "overall" : `class:${scope.classId}`;
   return useQuery({
-    enabled: status === "confirmed" || status === "checkedin",
+    enabled:
+      (options.enabled ?? true) &&
+      (status === "confirmed" || status === "checkedin"),
     queryFn: () => client.getLeaderboard(scope),
     queryKey: hackerSdkQueryKeys.leaderboard(portalKey, scopeKey),
   });
@@ -235,6 +246,13 @@ export function useUpdateHackerApplication() {
   const { client } = useHackerSdkClient();
   return useParticipantMutation((input: UpdateHackerApplicationInput) =>
     client.updateApplication(input),
+  );
+}
+
+export function useUpdateHackerParticipant() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: UpdateHackerParticipantInput) =>
+    client.updateParticipant(input),
   );
 }
 

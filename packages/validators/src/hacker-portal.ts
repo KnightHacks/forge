@@ -121,6 +121,34 @@ export const hackerApplicationUpdateSchema = z
     "Provide at least one application field.",
   );
 
+/**
+ * Atomic participant edit used by yearly portals whose profile form also owns
+ * hackathon-scoped answers and agreement acceptances.
+ */
+export const hackerParticipantUpdateSchema = z
+  .object({
+    agreements: z
+      .array(hackerAgreementAcceptanceInputSchema)
+      .max(32)
+      .optional(),
+    expectedRevision: z.number().int().min(1),
+    firstTime: z.boolean().optional(),
+    idempotencyKey: participantIdempotencyKeySchema,
+    profile: hackerProfileInputFieldsSchema.partial().strict(),
+    survey1: z.string().trim().min(1).max(5_000).optional(),
+    survey2: z.string().trim().min(1).max(5_000).optional(),
+  })
+  .strict()
+  .refine(
+    (input) =>
+      Object.keys(input.profile).length > 0 ||
+      input.firstTime !== undefined ||
+      input.survey1 !== undefined ||
+      input.survey2 !== undefined ||
+      input.agreements !== undefined,
+    "Provide at least one participant field.",
+  );
+
 export const hackerConfirmAttendanceSchema = z
   .object({
     agreements: z.array(hackerAgreementAcceptanceInputSchema).max(32),
@@ -449,6 +477,7 @@ export const hackerPortalV1InputSchemas = {
   removeResume: hackerRemoveResumeSchema,
   submitApplication: hackerApplicationSubmitSchema,
   updateApplication: hackerApplicationUpdateSchema,
+  updateParticipant: hackerParticipantUpdateSchema,
   updateProfile: hackerProfileUpdateSchema,
   withdrawApplication: hackerWithdrawApplicationSchema,
 } as const;
@@ -468,6 +497,7 @@ export interface HackerPortalV1OutputSchemaMap {
   removeResume: typeof participantMutationResultDtoSchema;
   submitApplication: typeof participantMutationResultDtoSchema;
   updateApplication: typeof participantMutationResultDtoSchema;
+  updateParticipant: typeof participantMutationResultDtoSchema;
   updateProfile: typeof participantMutationResultDtoSchema;
   withdrawApplication: typeof participantMutationResultDtoSchema;
 }
@@ -487,6 +517,7 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   removeResume: participantMutationResultDtoSchema,
   submitApplication: participantMutationResultDtoSchema,
   updateApplication: participantMutationResultDtoSchema,
+  updateParticipant: participantMutationResultDtoSchema,
   updateProfile: participantMutationResultDtoSchema,
   withdrawApplication: participantMutationResultDtoSchema,
 };

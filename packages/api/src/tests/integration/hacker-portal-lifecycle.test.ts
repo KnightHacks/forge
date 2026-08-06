@@ -191,6 +191,9 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       updateApplication: (
         input: Parameters<typeof mutations.updateApplication>[1],
       ) => mutations.updateApplication(context, input),
+      updateParticipant: (
+        input: Parameters<typeof mutations.updateParticipant>[1],
+      ) => mutations.updateParticipant(context, input),
       withdrawApplication: (
         input: Parameters<typeof mutations.withdrawApplication>[1],
       ) => mutations.withdrawApplication(context, input),
@@ -649,6 +652,47 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       .from(knightHacks.HackerAttendee)
       .where(eq(knightHacks.HackerAttendee.id, openAttendee.id));
     expect(unchanged?.survey1).toBe(openAttendee.survey1);
+  });
+
+  it("atomically rolls back hackathon answers when a composite profile edit is stale", async () => {
+    const userId = await seedUser("Atomic Profile Hacker");
+    const hackathon = await seedHackathon();
+    if (!hackathon.applicationAgreementId) {
+      throw new Error("Application agreement was not seeded.");
+    }
+    const caller = await participantCaller(userId, hackathon.id);
+    await caller.submitApplication(
+      submissionInput("atomic-profile", hackathon.applicationAgreementId),
+    );
+
+    await expectDomainError(
+      caller.updateParticipant({
+        expectedRevision: 999,
+        firstTime: true,
+        idempotencyKey: randomUUID(),
+        profile: { firstName: "Must Roll Back" },
+        survey1: "This answer must roll back too.",
+      }),
+      "STALE_PROFILE_REVISION",
+    );
+
+    const context = await caller.getApplicationContext();
+    expect(context.profile?.firstName).toBe("atomic-profile");
+    expect(context.application?.survey1).toBe("I want to build useful things.");
+    expect(context.application?.firstTime).toBe(false);
+
+    const agreementOnly = await caller.updateParticipant({
+      agreements: [
+        { accepted: true, definitionId: hackathon.applicationAgreementId },
+      ],
+      expectedRevision: context.profile?.revision ?? 1,
+      idempotencyKey: randomUUID(),
+      profile: {},
+    });
+    expect(agreementOnly.profile?.revision).toBe(context.profile?.revision);
+    expect(agreementOnly.application?.survey1).toBe(
+      "I want to build useful things.",
+    );
   });
 
   it("[TC-LIFE-001/003] confirms accepted hackers only and serializes the final capacity slot", async () => {

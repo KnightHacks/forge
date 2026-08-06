@@ -25,16 +25,19 @@ import {
   HackerSdkProvider,
   useConfirmHackerAttendance,
   useHackerApplication,
+  useHackerAttendance,
   useHackerDashboard,
+  useHackerLeaderboard,
+  useHackerPoints,
   useHackerResume,
   useHackerSchedule,
   useHackerSdkClient,
   useHackerSession,
   useIssueHackerCheckInPass,
   usePublicHackathon,
+  useRemoveHackerResume,
   useSubmitHackerApplication,
-  useUpdateHackerApplication,
-  useUpdateHackerProfile,
+  useUpdateHackerParticipant,
   useUploadHackerResume,
   useWithdrawHackerApplication,
 } from "@forge/hacker-sdk/react";
@@ -136,7 +139,10 @@ export type ApplicationFieldName =
 export type HackerStatus = HackerApplicationStatus;
 
 export interface PortalParticipant extends HackerApplicationFormValues {
-  points: number;
+  checkedInAt: Date | null;
+  classId: string | null;
+  className: string | null;
+  isVip: boolean;
   status: HackerStatus;
   timeApplied: Date;
   timeConfirmed: Date | null;
@@ -167,13 +173,19 @@ function idempotencyKey(operation: string) {
 }
 
 function useIdempotencyLease(operation: string) {
-  const keyRef = useRef<string | null>(null);
-  const acquire = useCallback(() => {
-    keyRef.current ??= idempotencyKey(operation);
-    return keyRef.current;
-  }, [operation]);
+  const leaseRef = useRef<{ fingerprint: string; key: string } | null>(null);
+  const acquire = useCallback(
+    (payload: unknown) => {
+      const fingerprint = JSON.stringify(payload);
+      if (leaseRef.current?.fingerprint !== fingerprint) {
+        leaseRef.current = { fingerprint, key: idempotencyKey(operation) };
+      }
+      return leaseRef.current.key;
+    },
+    [operation],
+  );
   const release = useCallback(() => {
-    keyRef.current = null;
+    leaseRef.current = null;
   }, []);
   return { acquire, release };
 }
@@ -185,6 +197,22 @@ function dateOnly(value: string) {
 function nullable(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+async function resumeFingerprint(file: File) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    await file.arrayBuffer(),
+  );
+  const contentHash = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return JSON.stringify({
+    contentHash,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
 }
 
 function profileInput(input: PortalApplicationInput) {
@@ -230,7 +258,12 @@ function toParticipant(
     agreesToMLHCodeOfConduct: false,
     agreesToMLHDataSharing: false,
     agreesToReceiveEmailsFromMLH: false,
-    points: 0,
+    checkedInAt: application.checkedInAt
+      ? new Date(application.checkedInAt)
+      : null,
+    classId: application.classId,
+    className: application.className,
+    isVip: application.isVip,
     status: application.status,
     timeApplied: new Date(application.submittedAt),
     timeConfirmed: application.confirmedAt
@@ -416,7 +449,7 @@ export function useHackerApplicationFlow({
       const result = await submitMutation.mutateAsync({
         agreements,
         firstTime: input.isFirstTime,
-        idempotencyKey: submitKey.acquire(),
+        idempotencyKey: submitKey.acquire({ agreements, input }),
         profile: profileInput(input),
         survey1: input.survey1,
         survey2: input.survey2,
@@ -428,10 +461,11 @@ export function useHackerApplicationFlow({
     tosError,
     transitionStep,
     uploadResume: async (file: File) => {
+      const fingerprint = await resumeFingerprint(file);
       await uploadMutation.mutateAsync({
         file,
         fileName: file.name,
-        idempotencyKey: resumeKey.acquire(),
+        idempotencyKey: resumeKey.acquire(fingerprint),
       });
       resumeKey.release();
       return "/api/hacker-sdk/resume/download";
@@ -440,12 +474,33 @@ export function useHackerApplicationFlow({
   };
 }
 
-export function useHackerDashboardFlow() {
+export function useHackerDashboardFlow(
+  data: {
+    attendance?: boolean;
+    leaderboards?: boolean;
+    points?: boolean;
+    resume?: boolean;
+    schedule?: boolean;
+  } = {},
+) {
   const config = usePortalConfig();
   const publicQuery = usePublicHackathon();
   const dashboardQuery = useHackerDashboard();
-  const resumeQuery = useHackerResume();
-  const scheduleQuery = useHackerSchedule();
+  const attendanceQuery = useHackerAttendance({
+    enabled: data.attendance === true,
+  });
+  const pointsQuery = useHackerPoints({ enabled: data.points === true });
+  const overallLeaderboardQuery = useHackerLeaderboard(
+    { scope: "overall" },
+    { enabled: data.leaderboards === true },
+  );
+  const classId = dashboardQuery.data?.application?.classId;
+  const classLeaderboardQuery = useHackerLeaderboard(
+    classId ? { classId, scope: "class" } : { scope: "overall" },
+    { enabled: data.leaderboards === true && Boolean(classId) },
+  );
+  const resumeQuery = useHackerResume({ enabled: data.resume === true });
+  const scheduleQuery = useHackerSchedule({ enabled: data.schedule === true });
   const issuePassMutation = useIssueHackerCheckInPass();
   const confirmMutation = useConfirmHackerAttendance();
   const withdrawMutation = useWithdrawHackerApplication();
@@ -456,7 +511,7 @@ export function useHackerDashboardFlow() {
   const qrMutation = useMutation({
     mutationFn: async () => {
       const pass = await issuePassMutation.mutateAsync({
-        idempotencyKey: checkInPassKey.acquire(),
+        idempotencyKey: checkInPassKey.acquire("issue"),
       });
       checkInPassKey.release();
       return QRCode.toDataURL(pass.payload, { margin: 1, width: 320 });
@@ -499,6 +554,10 @@ export function useHackerDashboardFlow() {
       : undefined;
 
   return {
+    attendance: attendanceQuery.data?.occurrences ?? [],
+    attendanceQuery,
+    classLeaderboard: classId ? classLeaderboardQuery.data : undefined,
+    classLeaderboardQuery,
     config,
     confirmationAgreements:
       publicQuery.data?.agreements.filter(
@@ -507,7 +566,7 @@ export function useHackerDashboardFlow() {
     confirmAttendance: async (agreements: HackerAgreementAcceptanceInput[]) => {
       const result = await confirmMutation.mutateAsync({
         agreements,
-        idempotencyKey: confirmKey.acquire(),
+        idempotencyKey: confirmKey.acquire(agreements),
       });
       confirmKey.release();
       return result;
@@ -519,7 +578,12 @@ export function useHackerDashboardFlow() {
       isPending: dashboardQuery.isPending || publicQuery.isPending,
       isError: dashboardQuery.isError || publicQuery.isError,
     },
+    isMinorAtHackStart: dashboardQuery.data?.isMinorAtHackStart ?? null,
     loadQRCode: qrMutation.mutateAsync,
+    overallLeaderboard: overallLeaderboardQuery.data,
+    overallLeaderboardQuery,
+    points: pointsQuery.data,
+    pointsQuery,
     qrCode: qrMutation.data,
     qrMutation,
     reportIssue: reportIssueMutation.mutateAsync,
@@ -538,7 +602,7 @@ export function useHackerDashboardFlow() {
     withdrawAttendance: async () => {
       const result = await withdrawMutation.mutateAsync({
         acknowledgement: WITHDRAWAL_ACKNOWLEDGEMENT,
-        idempotencyKey: withdrawKey.acquire(),
+        idempotencyKey: withdrawKey.acquire(WITHDRAWAL_ACKNOWLEDGEMENT),
       });
       withdrawKey.release();
       return result;
@@ -551,22 +615,21 @@ export function useHackerProfileFlow() {
   const config = usePortalConfig();
   const dashboardQuery = useHackerDashboard();
   const applicationQuery = useHackerApplication();
-  const updateProfileMutation = useUpdateHackerProfile();
-  const updateApplicationMutation = useUpdateHackerApplication();
+  const updateParticipantMutation = useUpdateHackerParticipant();
   const uploadMutation = useUploadHackerResume();
+  const removeResumeMutation = useRemoveHackerResume();
   const { client } = useHackerSdkClient();
-  const profileKey = useIdempotencyLease("profile");
-  const applicationKey = useIdempotencyLease("application");
+  const participantKey = useIdempotencyLease("participant");
   const resumeKey = useIdempotencyLease("resume");
+  const removeResumeKey = useIdempotencyLease("remove-resume");
   const participant = toParticipant(
     dashboardQuery.data?.profile ?? null,
     dashboardQuery.data?.application ?? null,
     dashboardQuery.data?.resume ? client.resumeDownloadPath : "",
   );
   const updateMutation = {
-    error: updateProfileMutation.error ?? updateApplicationMutation.error,
-    isPending:
-      updateProfileMutation.isPending || updateApplicationMutation.isPending,
+    error: updateParticipantMutation.error,
+    isPending: updateParticipantMutation.isPending,
   };
 
   return {
@@ -592,33 +655,40 @@ export function useHackerProfileFlow() {
       return { submitted: true as const };
     },
     reportIssueMutation: { isPending: false },
+    removeResume: async () => {
+      await removeResumeMutation.mutateAsync({
+        idempotencyKey: removeResumeKey.acquire("remove"),
+      });
+      removeResumeKey.release();
+    },
+    removeResumeMutation,
     updateProfile: async (
       input: PortalApplicationInput,
       agreements: HackerAgreementAcceptanceInput[],
     ) => {
       const revision = dashboardQuery.data?.profile?.revision;
       if (!revision) throw new Error("Your profile could not be loaded.");
-      await updateApplicationMutation.mutateAsync({
+      const payload = {
         agreements,
+        expectedRevision: revision,
         firstTime: input.isFirstTime,
-        idempotencyKey: applicationKey.acquire(),
+        profile: profileInput(input),
         survey1: input.survey1,
         survey2: input.survey2,
+      };
+      await updateParticipantMutation.mutateAsync({
+        ...payload,
+        idempotencyKey: participantKey.acquire(payload),
       });
-      applicationKey.release();
-      await updateProfileMutation.mutateAsync({
-        expectedRevision: revision,
-        idempotencyKey: profileKey.acquire(),
-        profile: profileInput(input),
-      });
-      profileKey.release();
+      participantKey.release();
     },
     updateMutation,
     uploadResume: async (file: File) => {
+      const fingerprint = await resumeFingerprint(file);
       await uploadMutation.mutateAsync({
         file,
         fileName: file.name,
-        idempotencyKey: resumeKey.acquire(),
+        idempotencyKey: resumeKey.acquire(fingerprint),
       });
       resumeKey.release();
       return client.resumeDownloadPath;

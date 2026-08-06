@@ -16,12 +16,23 @@ const DEFAULT_BLADE_PATHS = {
   trpc: "/api/hacker/v1/trpc",
 } as const;
 
-const COOKIE_NAMES = {
-  access: "forge_hacker_access",
-  refresh: "forge_hacker_refresh",
-  state: "forge_hacker_oauth_state",
-  verifier: "forge_hacker_oauth_verifier",
-} as const;
+export function getHackerSdkCookieNames(
+  clientId: string,
+  portalOrigin: string,
+) {
+  let hash = 2_166_136_261;
+  for (const character of `${clientId}\0${portalOrigin}`) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  const namespace = (hash >>> 0).toString(36);
+  return {
+    access: `forge_hacker_${namespace}_access`,
+    refresh: `forge_hacker_${namespace}_refresh`,
+    state: `forge_hacker_${namespace}_oauth_state`,
+    verifier: `forge_hacker_${namespace}_oauth_verifier`,
+  } as const;
+}
 
 const PRIVATE_HEADERS = {
   "cache-control": "private, no-store",
@@ -141,14 +152,18 @@ function serializeCookie(
   return attributes.join("; ");
 }
 
-function clearSessionCookies(headers: Headers, secure: boolean) {
+function clearSessionCookies(
+  headers: Headers,
+  secure: boolean,
+  cookieNames: ReturnType<typeof getHackerSdkCookieNames>,
+) {
   headers.append(
     "set-cookie",
-    serializeCookie(COOKIE_NAMES.access, "", { maxAge: 0, secure }),
+    serializeCookie(cookieNames.access, "", { maxAge: 0, secure }),
   );
   headers.append(
     "set-cookie",
-    serializeCookie(COOKIE_NAMES.refresh, "", { maxAge: 0, secure }),
+    serializeCookie(cookieNames.refresh, "", { maxAge: 0, secure }),
   );
 }
 
@@ -156,17 +171,18 @@ function setSessionCookies(
   headers: Headers,
   tokens: PortalTokenResponse,
   secure: boolean,
+  cookieNames: ReturnType<typeof getHackerSdkCookieNames>,
 ) {
   headers.append(
     "set-cookie",
-    serializeCookie(COOKIE_NAMES.access, tokens.accessToken, {
+    serializeCookie(cookieNames.access, tokens.accessToken, {
       maxAge: tokens.accessTokenExpiresIn ?? 15 * 60,
       secure,
     }),
   );
   headers.append(
     "set-cookie",
-    serializeCookie(COOKIE_NAMES.refresh, tokens.refreshToken, {
+    serializeCookie(cookieNames.refresh, tokens.refreshToken, {
       maxAge: tokens.refreshTokenExpiresIn ?? 30 * 24 * 60 * 60,
       secure,
     }),
@@ -364,6 +380,10 @@ export function createHackerSdkNextHandler(
 
   return async function hackerSdkNextHandler(request) {
     const requestUrl = new URL(request.url);
+    const cookieNames = getHackerSdkCookieNames(
+      options.clientId,
+      requestUrl.origin,
+    );
     const path = routePath(requestUrl, adapterBasePath);
     const secure = requestUrl.protocol === "https:";
 
@@ -399,14 +419,14 @@ export function createHackerSdkNextHandler(
       const headers = new Headers({ location: authorizeUrl.toString() });
       headers.append(
         "set-cookie",
-        serializeCookie(COOKIE_NAMES.state, encodedState, {
+        serializeCookie(cookieNames.state, encodedState, {
           maxAge: 10 * 60,
           secure,
         }),
       );
       headers.append(
         "set-cookie",
-        serializeCookie(COOKIE_NAMES.verifier, verifier, {
+        serializeCookie(cookieNames.verifier, verifier, {
           maxAge: 10 * 60,
           secure,
         }),
@@ -416,8 +436,8 @@ export function createHackerSdkNextHandler(
 
     if (path === "callback" && request.method === "GET") {
       const cookies = parseCookies(request);
-      const expectedState = parseAuthState(cookies.get(COOKIE_NAMES.state));
-      const verifier = cookies.get(COOKIE_NAMES.verifier);
+      const expectedState = parseAuthState(cookies.get(cookieNames.state));
+      const verifier = cookies.get(cookieNames.verifier);
       const code = requestUrl.searchParams.get("code");
       const state = requestUrl.searchParams.get("state");
       if (
@@ -460,13 +480,13 @@ export function createHackerSdkNextHandler(
         });
         headers.append(
           "set-cookie",
-          serializeCookie(COOKIE_NAMES.state, "", { maxAge: 0, secure }),
+          serializeCookie(cookieNames.state, "", { maxAge: 0, secure }),
         );
         headers.append(
           "set-cookie",
-          serializeCookie(COOKIE_NAMES.verifier, "", { maxAge: 0, secure }),
+          serializeCookie(cookieNames.verifier, "", { maxAge: 0, secure }),
         );
-        setSessionCookies(headers, tokens, secure);
+        setSessionCookies(headers, tokens, secure, cookieNames);
         return new Response(null, { headers, status: 302 });
       } catch (cause) {
         return jsonError(parseHackerSdkError(cause), 401);
@@ -485,8 +505,8 @@ export function createHackerSdkNextHandler(
         );
       }
       const cookies = parseCookies(request);
-      const accessToken = cookies.get(COOKIE_NAMES.access);
-      const refreshToken = cookies.get(COOKIE_NAMES.refresh);
+      const accessToken = cookies.get(cookieNames.access);
+      const refreshToken = cookies.get(cookieNames.refresh);
       if (refreshToken || accessToken) {
         await requestFetch(new URL(paths.revoke, bladeOrigin), {
           body: JSON.stringify({
@@ -503,7 +523,7 @@ export function createHackerSdkNextHandler(
         }).catch(() => undefined);
       }
       const headers = new Headers(PRIVATE_HEADERS);
-      clearSessionCookies(headers, secure);
+      clearSessionCookies(headers, secure, cookieNames);
       return new Response(null, { headers, status: 204 });
     }
 
@@ -565,8 +585,8 @@ export function createHackerSdkNextHandler(
     }
 
     const cookies = parseCookies(request);
-    let accessToken = cookies.get(COOKIE_NAMES.access);
-    const refreshToken = cookies.get(COOKIE_NAMES.refresh);
+    let accessToken = cookies.get(cookieNames.access);
+    const refreshToken = cookies.get(cookieNames.refresh);
     const targetBase = new URL(isTrpc ? paths.trpc : paths.resume, bladeOrigin);
     const targetSuffix = path.slice(path.indexOf("/") + 1);
     targetBase.pathname = `${targetBase.pathname.replace(/\/$/, "")}/${targetSuffix}`;
@@ -599,20 +619,20 @@ export function createHackerSdkNextHandler(
       try {
         const tokens = await refreshSession(refreshToken);
         accessToken = tokens.accessToken;
-        setSessionCookies(responseHeaders, tokens, secure);
+        setSessionCookies(responseHeaders, tokens, secure, cookieNames);
         response = await forward(accessToken);
       } catch (cause) {
         const error = parseHackerSdkError(cause);
         if (error.code === "REFRESH_RETRY") {
           return jsonError(error, 409, responseHeaders);
         }
-        clearSessionCookies(responseHeaders, secure);
+        clearSessionCookies(responseHeaders, secure, cookieNames);
         return jsonError(error, 401, responseHeaders);
       }
     }
 
     if (await isExpiredSession(response)) {
-      clearSessionCookies(responseHeaders, secure);
+      clearSessionCookies(responseHeaders, secure, cookieNames);
     }
     return copyProxyResponse(response, responseHeaders);
   };

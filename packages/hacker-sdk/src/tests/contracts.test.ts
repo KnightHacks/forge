@@ -24,6 +24,7 @@ describe("Hacker participant v1 contract", () => {
       removeResume: "mutation",
       submitApplication: "mutation",
       updateApplication: "mutation",
+      updateParticipant: "mutation",
       updateProfile: "mutation",
       withdrawApplication: "mutation",
     });

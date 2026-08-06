@@ -20,11 +20,14 @@
     "e2e": "playwright test --pass-with-no-tests"
   },
   "dependencies": {
+    "@forge/api": "workspace:*",
     "@forge/consts": "workspace:*",
     "@forge/hacker-sdk": "workspace:*",
     "@forge/ui": "workspace:*",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
     "next": "^16.2.7",
@@ -32,6 +35,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-icons": "^5.5.0",
+    "superjson": "2.2.6",
     "zod": "catalog:"
   },
   "devDependencies": {

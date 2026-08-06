@@ -116,6 +116,7 @@ describe("Hacker Portal validators", () => {
       "removeResume",
       "submitApplication",
       "updateApplication",
+      "updateParticipant",
       "updateProfile",
       "withdrawApplication",
     ];

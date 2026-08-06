@@ -853,6 +853,9 @@ importers:
 
   apps/khix:
     dependencies:
+      '@forge/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@forge/consts':
         specifier: workspace:*
         version: link:../../packages/consts
@@ -868,6 +871,12 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.90.21(react@19.2.4)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.10.0(@trpc/server@11.10.0(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.10.0(typescript@5.9.3)
       framer-motion:
         specifier: ^12.34.3
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -889,6 +898,9 @@ importers:
       react-icons:
         specifier: ^5.5.0
         version: 5.5.0(react@19.2.4)
+      superjson:
+        specifier: 2.2.6
+        version: 2.2.6
       zod:
         specifier: 'catalog:'
         version: 4.3.6

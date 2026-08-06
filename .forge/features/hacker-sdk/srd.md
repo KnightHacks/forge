@@ -124,7 +124,9 @@ The portal uses an OAuth public-client-style flow without a client secret:
 1. Blade provisions one enabled portal client for a hackathon with a public
    client ID and exact production origin.
 2. The Next adapter creates a random state value and PKCE verifier in
-   short-lived host-only, HttpOnly, SameSite=Lax cookies.
+   short-lived host-only, HttpOnly, SameSite=Lax cookies namespaced by portal
+   client and request origin so local portals on different ports cannot
+   overwrite one another, even when they share a development client.
 3. Blade validates the client and callback. If the browser lacks a Better Auth
    session, Blade performs Discord sign-in and returns to the authorization
    request.
@@ -221,6 +223,7 @@ The isolated participant router exposes:
 - `submitApplication`
 - `updateProfile`
 - `updateApplication`
+- `updateParticipant` for an atomic shared-profile and hackathon-answer save
 - `getDashboard`
 - `confirmAttendance`
 - `withdrawApplication`
@@ -454,6 +457,15 @@ Would this require a developer change next year?
 KH IX migration must preserve its themed presentation. The SDK replaces
 data/auth plumbing, not its pixels. Ended hackathon sites remain static themed
 history and do not implement the SDK.
+
+The authoritative KH IX presentation is the complete `origin/main:apps/khix`
+tree at integration time, not the older portal copy inherited by Reforge. The
+transplant is app-scoped: bring over the full KH IX route/component/asset tree,
+then remove its direct `@forge/api`, `@forge/auth`, `@forge/db`, and legacy
+participant-router coupling. Do not merge regular `main` Blade or platform
+implementation into Reforge. The resulting KH IX app must use only the public
+Hacker SDK participant contract for application and dashboard behavior while
+retaining the authoritative site's nonparticipant public data integrations.
 
 ## Testing / verification strategy
 
