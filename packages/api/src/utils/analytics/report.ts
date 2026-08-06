@@ -9,14 +9,15 @@ import { EVENTS, FORMS } from "@forge/consts";
 import { buildDuesAcademicYear } from "@forge/validators";
 
 import { buildDuesStatus } from "../dues/status";
+import { deriveAgeBand, inferAcademicYear } from "./demographics";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const METRIC_VERSION = "club-analytics-v1";
+const METRIC_VERSION = "club-analytics-v2";
 const RELIABLE_FEEDBACK_COUNT = 5;
 
 export interface AnalyticsMemberSource {
-  age: number | null;
   dateCreated: Date | string;
+  dob: Date | string | null;
   firstName: string;
   gender: string | null;
   gradDate: Date | string | null;
@@ -793,16 +794,6 @@ function returnCohorts({
   });
 }
 
-function ageCategory(age: number | null) {
-  if (age === null || !Number.isInteger(age) || age < 0 || age > 120)
-    return "Invalid";
-  if (age < 18) return "Under 18";
-  if (age <= 20) return "18–20";
-  if (age <= 24) return "21–24";
-  if (age <= 34) return "25–34";
-  return "35+";
-}
-
 function textCategory(value: string | null) {
   if (value === null || value.trim() === "") return "Missing";
   return value.trim();
@@ -813,19 +804,32 @@ function graduationCategory(value: Date | string | null) {
   return date ? String(date.getUTCFullYear()) : "Invalid";
 }
 
+function isUsableDemographicCategory(category: string) {
+  return !["Missing", "Invalid", "Unknown", "Not applicable"].includes(
+    category,
+  );
+}
+
 function demographicCategory(
   member: AnalyticsMemberSource,
   demographic: AnalyticsDemographic,
+  referenceDate: Date,
 ) {
   switch (demographic) {
     case "age":
-      return ageCategory(member.age);
+      return deriveAgeBand(member.dob ?? null, referenceDate);
     case "school":
       return textCategory(member.school);
     case "major":
       return textCategory(member.major);
     case "level_of_study":
       return textCategory(member.levelOfStudy);
+    case "inferred_year_of_study":
+      return inferAcademicYear(
+        member.gradDate,
+        member.levelOfStudy,
+        referenceDate,
+      );
     case "graduation":
       return graduationCategory(member.gradDate);
     case "gender":
@@ -842,18 +846,20 @@ function demographicRows({
   demographic,
   members,
   paidByMember,
+  referenceDate,
 }: {
   attendedByMember: ReadonlyMap<string, Set<string>>;
   demographic: AnalyticsDemographic;
   members: readonly AnalyticsMemberSource[];
   paidByMember: ReadonlyMap<string, boolean>;
+  referenceDate: Date;
 }) {
   const attendeeCount = [...attendedByMember.values()].filter(
     (events) => events.size > 0,
   ).length;
   const categories = new Map<string, AnalyticsMemberSource[]>();
   members.forEach((member) => {
-    const category = demographicCategory(member, demographic);
+    const category = demographicCategory(member, demographic, referenceDate);
     const rows = categories.get(category) ?? [];
     rows.push(member);
     categories.set(category, rows);
@@ -897,11 +903,13 @@ function affinityRows({
   demographic,
   eventById,
   memberById,
+  referenceDate,
 }: {
   attendance: readonly AnalyticsAttendanceSource[];
   demographic: AnalyticsDemographic;
   eventById: ReadonlyMap<string, AnalyticsEventSource>;
   memberById: ReadonlyMap<string, AnalyticsMemberSource>;
+  referenceDate: Date;
 }) {
   const groups = new Map<
     string,
@@ -917,7 +925,7 @@ function affinityRows({
     const event = eventById.get(row.eventId);
     const member = memberById.get(row.memberId);
     if (!event || !member) return;
-    const category = demographicCategory(member, demographic);
+    const category = demographicCategory(member, demographic, referenceDate);
     const key = `${category}\u0000${event.tag}`;
     const group = groups.get(key) ?? {
       attendanceCount: 0,
@@ -1700,6 +1708,7 @@ export function buildClubAnalyticsReport({
         "school",
         "major",
         "level_of_study",
+        "inferred_year_of_study",
         "graduation",
         "gender",
         "race_or_ethnicity",
@@ -1709,11 +1718,10 @@ export function buildClubAnalyticsReport({
       demographic,
       {
         coverageRate: ratio(
-          members.filter(
-            (member) =>
-              !["Missing", "Invalid"].includes(
-                demographicCategory(member, demographic),
-              ),
+          members.filter((member) =>
+            isUsableDemographicCategory(
+              demographicCategory(member, demographic, referenceDate),
+            ),
           ).length,
           members.length,
         ),
@@ -1722,6 +1730,7 @@ export function buildClubAnalyticsReport({
           demographic,
           members,
           paidByMember,
+          referenceDate,
         }),
       },
     ]),
@@ -1734,7 +1743,7 @@ export function buildClubAnalyticsReport({
       const lastEvent = lastEvents.get(member.id) ?? null;
       return {
         attendanceCount: attendedByMember.get(member.id)?.size ?? 0,
-        category: demographicCategory(member, input.demographic),
+        category: demographicCategory(member, input.demographic, referenceDate),
         lastEventAt: lastEvent?.startAt ?? null,
         lastEventName: lastEvent?.name ?? null,
         memberId: member.id,
@@ -1877,6 +1886,7 @@ export function buildClubAnalyticsReport({
         demographic: input.demographic,
         eventById,
         memberById,
+        referenceDate,
       }),
     },
     dues: {

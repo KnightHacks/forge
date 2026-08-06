@@ -8,6 +8,8 @@ import {
 describe("club analytics inputs", () => {
   it("[TC-003] applies stable defaults and normalizes event tags", () => {
     expect(analyticsReportInputSchema.parse({})).toEqual({
+      audienceView: "composition",
+      clubAudienceCohort: "all_profiles",
       comparison: "previous_academic_year",
       demographic: "level_of_study",
       eventId: null,

@@ -8,7 +8,12 @@ import {
   createTRPCRouter,
   permProcedure,
 } from "../../trpc";
-import { requireClubAnalyticsRead } from "../../utils/analytics/access";
+import {
+  requireClubAnalyticsRead,
+  requireHackathonAnalyticsIdentifiedRead,
+  requireHackathonAnalyticsRead,
+  requireHackathonResumeBundlePrepare,
+} from "../../utils/analytics/access";
 
 const mocks = vi.hoisted(() => ({
   db: { select: vi.fn() },
@@ -18,6 +23,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@forge/db/client", () => ({ db: mocks.db }));
 
 const testRouter = createTRPCRouter({
+  exportHackathonAggregate: permProcedure.query(({ ctx }) => {
+    requireHackathonAnalyticsRead(ctx);
+    return "hack-export" as const;
+  }),
+  exportHackathonPointsLeaderboard: permProcedure.query(({ ctx }) => {
+    requireHackathonAnalyticsIdentifiedRead(ctx);
+    return "points-export" as const;
+  }),
   exportReport: permProcedure.query(({ ctx }) => {
     requireClubAnalyticsRead(ctx);
     return "csv" as const;
@@ -29,6 +42,18 @@ const testRouter = createTRPCRouter({
   getReport: permProcedure.query(({ ctx }) => {
     requireClubAnalyticsRead(ctx);
     return "report" as const;
+  }),
+  getHackathonIdentifiedRows: permProcedure.query(({ ctx }) => {
+    requireHackathonAnalyticsIdentifiedRead(ctx);
+    return "identified" as const;
+  }),
+  getHackathonReport: permProcedure.query(({ ctx }) => {
+    requireHackathonAnalyticsRead(ctx);
+    return "hack-report" as const;
+  }),
+  prepareHackathonResumeBundle: permProcedure.query(({ ctx }) => {
+    requireHackathonResumeBundlePrepare(ctx);
+    return "resume-bundle" as const;
   }),
 });
 
@@ -102,5 +127,71 @@ describe("club analytics API access", () => {
         "discord-report",
       );
     }
+  });
+});
+
+describe("hackathon analytics API access", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.permissionRows = [];
+    mocks.db.select.mockImplementation(() => ({
+      from: vi.fn(() => ({
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve(mocks.permissionRows)),
+        })),
+      })),
+    }));
+  });
+
+  it("[TC-005] separates aggregate, identified, and resume capabilities", async () => {
+    mocks.permissionRows = [
+      { permissions: permissionBitstring("READ_HACK_DATA") },
+    ];
+    await expect(createCaller().getHackathonReport()).resolves.toBe(
+      "hack-report",
+    );
+    await expect(createCaller().exportHackathonAggregate()).resolves.toBe(
+      "hack-export",
+    );
+    await expect(
+      createCaller().exportHackathonPointsLeaderboard(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      createCaller().getHackathonIdentifiedRows(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      createCaller().prepareHackathonResumeBundle(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    mocks.permissionRows = [
+      {
+        permissions: permissionBitstring("READ_HACK_DATA", "READ_HACKERS"),
+      },
+    ];
+    await expect(createCaller().getHackathonIdentifiedRows()).resolves.toBe(
+      "identified",
+    );
+    await expect(
+      createCaller().exportHackathonPointsLeaderboard(),
+    ).resolves.toBe("points-export");
+    await expect(
+      createCaller().prepareHackathonResumeBundle(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("[TC-005] allows officers to use every analytics capability", async () => {
+    mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
+    await expect(createCaller().getHackathonReport()).resolves.toBe(
+      "hack-report",
+    );
+    await expect(createCaller().getHackathonIdentifiedRows()).resolves.toBe(
+      "identified",
+    );
+    await expect(
+      createCaller().exportHackathonPointsLeaderboard(),
+    ).resolves.toBe("points-export");
+    await expect(createCaller().prepareHackathonResumeBundle()).resolves.toBe(
+      "resume-bundle",
+    );
   });
 });

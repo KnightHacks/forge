@@ -35,8 +35,8 @@ function member(
   overrides: Partial<AnalyticsMemberSource> = {},
 ): AnalyticsMemberSource {
   return {
-    age: 20,
     dateCreated: "2025-09-01",
+    dob: "2005-01-01",
     firstName: `Member-${id.at(-1)}`,
     gender: "Prefer not to answer",
     gradDate: "2027-05-01",
@@ -77,6 +77,8 @@ function attendance(
 }
 
 const defaultInput = {
+  audienceView: "composition" as const,
+  clubAudienceCohort: "all_profiles" as const,
   comparison: "none" as const,
   demographic: "level_of_study" as const,
   eventId: null,
@@ -90,6 +92,49 @@ const defaultInput = {
 };
 
 describe("club analytics report builder", () => {
+  it("derives age from DOB and excludes unusable inferred-year coverage", () => {
+    const members = [
+      member(MEMBER_IDS.alex, {
+        dob: "1990-01-01",
+        gradDate: "2028-05-01",
+        levelOfStudy: "Undergraduate University (3+ year)",
+      }),
+      member(MEMBER_IDS.blair, {
+        dob: null,
+        gradDate: null,
+        levelOfStudy: "Undergraduate University (3+ year)",
+      }),
+      member(MEMBER_IDS.casey, {
+        dob: "bad",
+        gradDate: "bad",
+        levelOfStudy: "Undergraduate University (3+ year)",
+      }),
+      member(MEMBER_IDS.drew, {
+        dob: "2000-01-01",
+        gradDate: "2028-05-01",
+        levelOfStudy: "Unrecognized legacy level",
+      }),
+    ];
+    const report = buildClubAnalyticsReport({
+      attendances: [],
+      dues: [],
+      events: [],
+      feedback: [],
+      input: { ...defaultInput, demographic: "age" },
+      members,
+      referenceDate: new Date("2026-08-01T16:00:00.000Z"),
+    });
+
+    expect(
+      report.audience.demographics.age.rows.find(
+        (row) => row.category === "35+",
+      )?.baseCount,
+    ).toBe(1);
+    expect(
+      report.audience.demographics.inferred_year_of_study.coverageRate,
+    ).toBe(0.25);
+  });
+
   it("[TC-001] resolves academic-year midnight in the Club event time zone", () => {
     const resolved = resolveAnalyticsPeriod(
       { kind: "current_academic_year" },

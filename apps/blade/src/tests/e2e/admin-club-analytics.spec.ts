@@ -159,7 +159,11 @@ async function seed() {
     discordRoleId: "club-analytics-reader-e2e",
     id: ANALYTICS_ROLE_ID,
     name: "Club analytics reader E2E",
-    permissions: permissionBitstring("READ_CLUB_DATA", "READ_MEMBERS"),
+    permissions: permissionBitstring(
+      "IS_OFFICER",
+      "READ_CLUB_DATA",
+      "READ_MEMBERS",
+    ),
   });
   await db.insert(User).values([
     {
@@ -215,7 +219,7 @@ async function seed() {
         ? "Undergraduate University (3+ year)"
         : "Graduate University (Masters, Professional, Doctoral, etc)",
     major: "Computer Science",
-    phoneNumber: `407-555-${String(1900 + index)}`,
+    phoneNumber: `689-555-${String(8100 + index)}`,
     points: index * 10,
     raceOrEthnicity: "Prefer not to answer",
     school:
@@ -233,7 +237,7 @@ async function seed() {
       email: "club-analytics-unauthorized@example.test",
       firstName: "Unauthorized",
       id: UNAUTHORIZED_MEMBER_ID,
-      phoneNumber: "407-555-1999",
+      phoneNumber: "689-555-8199",
       userId: UNAUTHORIZED_USER_ID,
     },
   ]);
@@ -362,7 +366,10 @@ test.describe("admin Club analytics", () => {
     await expect(page.getByText("club-analytics-v1")).toHaveCount(0);
     await expect(page.getByText(/@example\.test/)).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Events", exact: true }).click();
+    const analyticsSections = page.getByLabel("Analytics sections");
+    await analyticsSections
+      .getByRole("link", { name: "Events", exact: true })
+      .click();
     await expect(page.getByText("TypeScript Workshop")).toBeVisible();
     await page.getByRole("combobox", { name: "Individual event" }).click();
     await page.getByRole("option", { name: /^Internal Planning ·/ }).click();
@@ -378,7 +385,9 @@ test.describe("admin Club analytics", () => {
     await expect(page).toHaveURL(/tag=Workshop/);
     await expect(page.getByText("Fall Social")).toHaveCount(0);
 
-    await page.getByRole("link", { name: "Discord", exact: true }).click();
+    await analyticsSections
+      .getByRole("link", { name: "Discord", exact: true })
+      .click();
     await expect(page.getByText("Message activity")).toBeVisible();
     await expect(
       page.locator('[data-analytics-metric-card="true"]'),
@@ -423,8 +432,38 @@ test.describe("admin Club analytics", () => {
     await expect(memberDialog).toHaveCount(0);
     await settleSectionNavigation(page);
 
-    await page.getByRole("link", { name: "Audience", exact: true }).click();
+    await analyticsSections
+      .getByRole("link", { name: "Audience", exact: true })
+      .click();
     await expect(page).toHaveURL(/section=audience/);
+    await expect(
+      page.getByRole("heading", { name: /composition/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "People", exact: true }),
+    ).toBeVisible();
+    const priorityDemographics = page.getByLabel("Priority demographics");
+    for (const demographic of [
+      "Gender",
+      "Race / ethnicity",
+      "Age group",
+      "Class year (inferred)",
+      "Level of study",
+      "Major",
+    ]) {
+      await priorityDemographics
+        .getByRole("link", { name: demographic, exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", {
+          name: `${demographic} composition`,
+        }),
+      ).toBeVisible();
+    }
+    await page
+      .getByLabel("Audience view")
+      .getByRole("link", { name: "Engagement" })
+      .click();
     await expect(page.getByText("Program affinity")).toBeVisible();
     await expect(page.getByText("Avery Analytics")).toBeVisible();
     await expect(page.getByText("Discord audience context")).toHaveCount(0);
@@ -436,7 +475,9 @@ test.describe("admin Club analytics", () => {
     ).toHaveCount(8);
     await settleSectionNavigation(page);
 
-    await page.getByRole("link", { name: "Dues", exact: true }).click();
+    await analyticsSections
+      .getByRole("link", { name: "Dues", exact: true })
+      .click();
     await expect(page.getByText("Academic-year collection pace")).toBeVisible();
     await expect(page.getByText("Discord community context")).toHaveCount(0);
     await expect(
@@ -447,11 +488,13 @@ test.describe("admin Club analytics", () => {
     ).toHaveCount(8);
     await settleSectionNavigation(page);
 
-    await page.getByRole("link", { name: "Reports", exact: true }).click();
+    await analyticsSections
+      .getByRole("link", { name: "Reports", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Sponsor-safe report" }),
     ).toBeVisible();
-    const reportsLink = page.getByRole("link", {
+    const reportsLink = analyticsSections.getByRole("link", {
       name: "Reports",
       exact: true,
     });
@@ -505,65 +548,36 @@ test.describe("admin Club analytics", () => {
     ).toHaveCount(0);
   });
 
-  test("keeps the reports page responsive while a resume bundle is prepared", async ({
+  test("requires resume-policy consent and keeps the preview responsive", async ({
     page,
   }) => {
     await signInAs(page, ANALYTICS_USER_ID);
-    await page.getByRole("link", { name: "Reports", exact: true }).click();
-
-    await page.evaluate(() => {
-      const testWindow = window as Window & {
-        resumeBundleTestHref?: string;
-      };
-      HTMLAnchorElement.prototype.click = function captureResumeBundleHref() {
-        testWindow.resumeBundleTestHref = this.href;
-      };
-    });
+    await page
+      .getByLabel("Analytics sections")
+      .getByRole("link", { name: "Reports", exact: true })
+      .click();
 
     const resumeSection = page
       .getByRole("heading", { name: "Member resume bundle" })
       .locator("xpath=ancestor::section");
-    const resumeButton = resumeSection.getByRole("button", {
-      name: "Download ZIP",
-    });
-    await resumeButton.click();
-
     await expect(
-      resumeSection.getByRole("button", { name: "Preparing ZIP…" }),
-    ).toBeDisabled();
+      resumeSection.getByRole("button", { name: /Download part/ }),
+    ).toHaveCount(0);
+    await resumeSection
+      .getByRole("checkbox", { name: "Acknowledge sensitive resume policy" })
+      .click();
     await expect(
-      resumeSection.getByText(
-        "Checking available resumes and building folders. This usually takes about a minute; keep this page open.",
-      ),
+      resumeSection.getByText(/\d+ valid · \d+ skipped · \d+ ZIP part\(s\)/),
     ).toBeVisible();
-
-    const downloadHref = await page.evaluate(
+    await expect(
+      resumeSection.getByRole("button", { name: /Download part 1 of/ }),
+    ).toBeVisible();
+    await page.setViewportSize({ height: 900, width: 320 });
+    const overflow = await page.evaluate(
       () =>
-        (
-          window as Window & {
-            resumeBundleTestHref?: string;
-          }
-        ).resumeBundleTestHref,
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth,
     );
-    expect(downloadHref).toBeTruthy();
-    const capturedDownloadHref = required(
-      downloadHref,
-      "resume bundle download href",
-    );
-    const downloadToken = required(
-      new URL(capturedDownloadHref).searchParams.get("downloadToken") ??
-        undefined,
-      "resume bundle download token",
-    );
-    await page.context().addCookies([
-      {
-        name: "resume-bundle-download",
-        url: new URL(capturedDownloadHref).origin,
-        value: `${downloadToken}.ready`,
-      },
-    ]);
-
-    await expect(resumeButton).toBeEnabled();
-    await expect(resumeButton).toHaveText("Download ZIP");
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 });

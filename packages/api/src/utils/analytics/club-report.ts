@@ -20,8 +20,8 @@ async function loadClubAnalyticsSources() {
   const [members, events, attendances, dues, feedback] = await Promise.all([
     db
       .select({
-        age: Member.age,
         dateCreated: Member.dateCreated,
+        dob: Member.dob,
         firstName: Member.firstName,
         gender: Member.gender,
         gradDate: Member.gradDate,

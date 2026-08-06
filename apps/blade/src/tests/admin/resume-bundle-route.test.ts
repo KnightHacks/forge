@@ -51,7 +51,7 @@ describe("GET /api/admin/resume-bundle", () => {
     stream.end(Buffer.from("zip-content"));
     mocks.auth.mockResolvedValue(session);
     mocks.getPermissions.mockResolvedValue({
-      IS_OFFICER: false,
+      IS_OFFICER: true,
       READ_CLUB_DATA: true,
     });
     mocks.createMemberResumeBundle.mockResolvedValue({
@@ -62,7 +62,7 @@ describe("GET /api/admin/resume-bundle", () => {
 
     const response = await GET(
       new Request(
-        "http://localhost/api/admin/resume-bundle?downloadToken=resume-download-token-123",
+        "http://localhost/api/admin/resume-bundle?downloadToken=resume-download-token-123&policyAcknowledged=true&policyVersion=resume-sensitive-index-v1&partNumber=1&planFingerprint=plan-fingerprint-123",
       ),
     );
 
@@ -80,6 +80,10 @@ describe("GET /api/admin/resume-bundle", () => {
     );
     expect(mocks.createMemberResumeBundle).toHaveBeenCalledWith({
       actor: session.user,
+      partNumber: 1,
+      planFingerprint: "plan-fingerprint-123",
+      policyAcknowledged: true,
+      policyVersion: "resume-sensitive-index-v1",
     });
   });
 
@@ -95,7 +99,7 @@ describe("GET /api/admin/resume-bundle", () => {
 
     const response = await GET(
       new Request(
-        "https://reforge.example/api/admin/resume-bundle?downloadToken=resume-download-token-456",
+        "https://reforge.example/api/admin/resume-bundle?downloadToken=resume-download-token-456&policyAcknowledged=true&policyVersion=resume-sensitive-index-v1&partNumber=1&planFingerprint=plan-fingerprint-123",
       ),
     );
 
@@ -126,7 +130,7 @@ describe("GET /api/admin/resume-bundle", () => {
 
     const response = await GET(
       new Request(
-        "http://localhost/api/admin/resume-bundle?downloadToken=bad%0Atoken",
+        "http://localhost/api/admin/resume-bundle?downloadToken=bad%0Atoken&policyAcknowledged=true&policyVersion=resume-sensitive-index-v1&partNumber=1&planFingerprint=plan-fingerprint-123",
       ),
     );
 

@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 import { createMemberResumeBundle } from "@forge/api/resume-bundle.server";
 import { logger } from "@forge/utils";
+import { resumeBundlePartInputSchema } from "@forge/validators";
 
 import { RESUME_BUNDLE_DOWNLOAD_COOKIE } from "~/consts/browser-storage";
-import { canAccessAnalytics } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 
@@ -46,7 +46,7 @@ export async function GET(request?: Request) {
   }
 
   const permissions = await api.roles.getPermissions();
-  if (!canAccessAnalytics(permissions)) {
+  if (permissions.IS_OFFICER !== true) {
     return withDownloadSignal(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
       request,
@@ -54,8 +54,34 @@ export async function GET(request?: Request) {
     );
   }
 
+  const requestUrl = request ? new URL(request.url) : null;
+  const parsed = resumeBundlePartInputSchema.safeParse({
+    partNumber: Number(requestUrl?.searchParams.get("partNumber")),
+    planFingerprint: requestUrl?.searchParams.get("planFingerprint"),
+    policyAcknowledged:
+      requestUrl?.searchParams.get("policyAcknowledged") === "true",
+    policyVersion: requestUrl?.searchParams.get("policyVersion"),
+    scope: "club",
+  });
+  if (!parsed.success || parsed.data.scope !== "club") {
+    return withDownloadSignal(
+      NextResponse.json(
+        { error: "The current sensitive resume policy must be acknowledged." },
+        { status: 400 },
+      ),
+      request,
+      "error",
+    );
+  }
+
   try {
-    const bundle = await createMemberResumeBundle({ actor: session.user });
+    const bundle = await createMemberResumeBundle({
+      actor: session.user,
+      partNumber: parsed.data.partNumber,
+      planFingerprint: parsed.data.planFingerprint,
+      policyAcknowledged: parsed.data.policyAcknowledged,
+      policyVersion: parsed.data.policyVersion,
+    });
     const stream = Readable.toWeb(bundle.stream) as ReadableStream<Uint8Array>;
     return withDownloadSignal(
       new Response(stream, {

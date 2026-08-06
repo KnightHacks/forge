@@ -27,8 +27,11 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   XAxis,
   YAxis,
 } from "recharts";
@@ -46,6 +49,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@forge/ui/chart";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -87,6 +91,7 @@ import {
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import {
+  buildCompositionPieRows,
   COMBINED_UNDERGRADUATE_LABEL,
   isUndergraduateLevel,
   mergeUndergraduateAffinityRows,
@@ -128,6 +133,7 @@ interface AnalyticsAccess {
   canEditMembers: boolean;
   canOpenEvents: boolean;
   canOpenMembers: boolean;
+  canPrepareResumes?: boolean;
 }
 
 const sections = [
@@ -191,15 +197,25 @@ const highlightGroups = [
 }[];
 
 const demographicLabels = {
-  age: "Age band",
   gender: "Gender",
-  graduation: "Graduation cohort",
+  race_or_ethnicity: "Race / ethnicity",
+  age: "Age group",
+  inferred_year_of_study: "Class year (inferred)",
   level_of_study: "Level of study",
   major: "Major",
-  race_or_ethnicity: "Race / ethnicity",
   school: "School",
+  graduation: "Graduation cohort",
   shirt_size: "Shirt size",
 } as const;
+
+const priorityDemographics = [
+  "gender",
+  "race_or_ethnicity",
+  "age",
+  "inferred_year_of_study",
+  "level_of_study",
+  "major",
+] as const;
 
 const chartConfig = {
   attendanceCount: {
@@ -385,7 +401,7 @@ function Panel({
   title: string;
 }) {
   return (
-    <section className="min-w-0 rounded-lg border border-border/70 bg-background/60 shadow-inner shadow-black/10">
+    <section className="min-w-0 rounded-lg border border-white/10 bg-card/95 shadow-lg shadow-black/15">
       <div className="border-b border-border/60 px-4 py-3 sm:px-5">
         <h2 className="text-sm font-semibold tracking-tight sm:text-base">
           {title}
@@ -661,11 +677,6 @@ function AnalyticsFilters({
     (value: string) => update({ eventId: value === "all" ? null : value }),
     [update],
   );
-  const handleDemographic = useCallback(
-    (value: AnalyticsReportInput["demographic"]) =>
-      update({ demographic: value }),
-    [update],
-  );
   const handleCustomFrom = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       if (input.period.kind !== "custom" || !event.target.value) return;
@@ -693,6 +704,8 @@ function AnalyticsFilters({
   const clearFilters = useCallback(
     () =>
       navigate({
+        audienceView: "composition",
+        clubAudienceCohort: "all_profiles",
         comparison: "previous_academic_year",
         demographic: "level_of_study",
         eventId: null,
@@ -788,23 +801,6 @@ function AnalyticsFilters({
             </SelectContent>
           </Select>
         )}
-        {input.section === "audience" ? (
-          <Select onValueChange={handleDemographic} value={input.demographic}>
-            <SelectTrigger
-              aria-label="Audience demographic"
-              className="h-11 w-full"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(demographicLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : null}
         <Button
           className="h-11 w-full gap-2 xl:w-auto"
           disabled={isPending}
@@ -848,27 +844,38 @@ function AnalyticsFilters({
 
 function SectionNavigation({ input }: { input: AnalyticsReportInput }) {
   return (
-    <nav aria-label="Analytics sections" className="overflow-x-auto pb-1">
-      <div className="flex min-w-max gap-1 rounded-lg border border-border/70 bg-background/60 p-1">
+    <nav aria-label="Analytics sections" className="-mx-1 overflow-x-auto px-1">
+      <div className="flex min-w-max gap-1 rounded-lg border border-border/70 bg-card/80 p-1">
         {sections.map((section) => {
           const params = buildAnalyticsSearchParams({
             ...input,
             section: section.id,
           });
           const active = input.section === section.id;
+          const Icon =
+            section.id === "events"
+              ? CalendarRange
+              : section.id === "discord"
+                ? MessagesSquare
+                : section.id === "audience"
+                  ? UsersRound
+                  : section.id === "dues"
+                    ? CircleDollarSign
+                    : section.id === "reports"
+                      ? FileBarChart
+                      : ChartNoAxesCombined;
           return (
             <Button
               asChild
-              className="h-10 min-w-24"
               key={section.id}
-              size="sm"
-              variant={active ? "primary" : "ghost"}
+              variant={active ? "secondary" : "ghost"}
             >
               <Link
                 aria-current={active ? "page" : undefined}
                 href={`/admin/analytics?${params.toString()}`}
                 scroll={false}
               >
+                <Icon className="mr-2 size-4" />
                 {section.label}
               </Link>
             </Button>
@@ -1012,7 +1019,7 @@ function OverviewSection({
               return (
                 <section
                   aria-labelledby={`highlight-group-${group.id}`}
-                  className="min-w-0 rounded-lg border border-border/70 bg-card/60 p-4"
+                  className="min-w-0 rounded-lg border border-border/70 bg-card/95 p-4"
                   key={group.id}
                 >
                   <div className="min-w-0">
@@ -1048,7 +1055,7 @@ function OverviewSection({
                       });
                       return (
                         <Link
-                          className="group flex min-h-32 flex-col rounded-lg border border-border/70 bg-background/55 p-4 transition-colors hover:border-primary/35 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="group flex min-h-32 flex-col rounded-lg border border-border/70 bg-card/95 p-4 transition-colors hover:border-primary/35 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           href={`/admin/analytics?${params.toString()}`}
                           key={highlight.kind}
                           scroll={false}
@@ -1353,14 +1360,17 @@ function EventsSection({ report }: { report: AnalyticsReport }) {
 function AudienceSection({
   access,
   discordReport,
+  input,
   onMemberSelect,
   report,
 }: {
   access: AnalyticsAccess;
   discordReport: DiscordAnalyticsReport;
+  input: AnalyticsReportInput;
   onMemberSelect: (memberId: string) => void;
   report: AnalyticsReport;
 }) {
+  const router = useRouter();
   const selected =
     report.audience.demographics[report.audience.selectedDemographic];
   const shouldMergeUndergraduate =
@@ -1382,6 +1392,26 @@ function AudienceSection({
       }))
     : report.audience.memberRows;
   const chartRows = selectedRows.slice(0, 12);
+  const compositionRows = selectedRows.map((row) => ({
+    category: row.category,
+    count:
+      input.clubAudienceCohort === "reached"
+        ? row.attendeeCount
+        : row.baseCount,
+  }));
+  const pieRows = buildCompositionPieRows(compositionRows);
+  const pieTotal = compositionRows.reduce((sum, row) => sum + row.count, 0);
+  const audienceHref = (
+    patch: Partial<
+      Pick<
+        AnalyticsReportInput,
+        "audienceView" | "clubAudienceCohort" | "demographic"
+      >
+    >,
+  ) => {
+    const params = buildAnalyticsSearchParams({ ...input, ...patch });
+    return params.size ? `?${params.toString()}` : "?";
+  };
   return (
     <div className="space-y-4">
       <MetricGrid>
@@ -1411,218 +1441,392 @@ function AudienceSection({
         />
       </MetricGrid>
       <DiscordParticipationMetrics report={discordReport} />
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-card/70 p-2">
+        <div
+          className="flex rounded-md bg-muted/60 p-1"
+          aria-label="Audience view"
+        >
+          {(["composition", "engagement"] as const).map((view) => (
+            <Button
+              asChild
+              className="min-h-11"
+              key={view}
+              size="sm"
+              variant={input.audienceView === view ? "secondary" : "ghost"}
+            >
+              <Link href={audienceHref({ audienceView: view })}>
+                {view === "composition" ? "Composition" : "Engagement"}
+              </Link>
+            </Button>
+          ))}
+        </div>
+        <span className="ml-1 text-sm font-medium">Break down by</span>
+        <div
+          className="flex max-w-full gap-1 overflow-x-auto"
+          aria-label="Priority demographics"
+        >
+          {priorityDemographics.map((demographic) => (
+            <Button
+              asChild
+              className="min-h-11"
+              key={demographic}
+              size="sm"
+              variant={
+                input.demographic === demographic ? "secondary" : "ghost"
+              }
+            >
+              <Link href={audienceHref({ demographic })}>
+                {demographicLabels[demographic]}
+              </Link>
+            </Button>
+          ))}
+        </div>
+        <Select
+          onValueChange={(demographic: AnalyticsReportInput["demographic"]) =>
+            router.push(audienceHref({ demographic }))
+          }
+          value={
+            priorityDemographics.some(
+              (demographic) => demographic === input.demographic,
+            )
+              ? ""
+              : input.demographic
+          }
+        >
+          <SelectTrigger
+            aria-label="All audience demographics"
+            className="min-h-11 w-44"
+          >
+            <SelectValue placeholder="More demographics" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(demographicLabels)
+              .filter(
+                ([value]) =>
+                  !priorityDemographics.some(
+                    (demographic) => demographic === value,
+                  ),
+              )
+              .map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        {input.audienceView === "composition" ? (
+          <Select
+            value={input.clubAudienceCohort}
+            onValueChange={(value: "all_profiles" | "reached") =>
+              router.push(audienceHref({ clubAudienceCohort: value }))
+            }
+          >
+            <SelectTrigger
+              aria-label="Composition cohort"
+              className="min-h-11 w-48"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_profiles">All profiles</SelectItem>
+              <SelectItem value="reached">Reached profiles</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : null}
+      </div>
       <Panel
-        description="Base profiles and matching attendees use the same complete demographic categories."
-        title={`${demographicLabels[report.audience.selectedDemographic]} composition`}
+        description={
+          input.audienceView === "composition"
+            ? "A complete demographic composition of the selected cohort. Missing and prefer-not-to-answer values remain visible."
+            : "Base profiles and matching attendees use the same complete demographic categories."
+        }
+        title={`${demographicLabels[report.audience.selectedDemographic]} ${input.audienceView}`}
       >
         {chartRows.length === 0 ? (
           <EmptyInline message="No retained Member profiles are available." />
         ) : (
-          <div
-            aria-label="Member base and attendee demographic comparison"
-            role="img"
-          >
+          <div>
             <ShadChart className="aspect-auto h-80 w-full">
-              <BarChart
-                accessibilityLayer
-                data={chartRows}
-                margin={{ left: 4, right: 8 }}
-              >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  axisLine={false}
-                  dataKey="category"
-                  minTickGap={16}
-                  tickFormatter={(value: string) =>
-                    truncateChartLabel(value, 14)
-                  }
-                  tickLine={false}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                  width={32}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar
-                  dataKey="baseCount"
-                  fill="var(--color-baseCount)"
-                  isAnimationActive={false}
-                  radius={[3, 3, 0, 0]}
-                />
-                <Bar
-                  dataKey="attendeeCount"
-                  fill="var(--color-attendeeCount)"
-                  isAnimationActive={false}
-                  radius={[3, 3, 0, 0]}
-                />
-              </BarChart>
+              {input.audienceView === "composition" ? (
+                <PieChart accessibilityLayer>
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="category" />}
+                  />
+                  <Pie
+                    data={pieRows}
+                    dataKey="count"
+                    innerRadius="48%"
+                    isAnimationActive={false}
+                    nameKey="category"
+                    outerRadius="78%"
+                    paddingAngle={1}
+                  >
+                    {pieRows.map((row) => (
+                      <Cell fill={row.color} key={row.category} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              ) : (
+                <BarChart
+                  accessibilityLayer
+                  data={chartRows}
+                  margin={{ left: 4, right: 8 }}
+                >
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis
+                    axisLine={false}
+                    dataKey="category"
+                    minTickGap={16}
+                    tickFormatter={(value: string) =>
+                      truncateChartLabel(value, 14)
+                    }
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    width={32}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar
+                    dataKey="baseCount"
+                    fill="var(--color-baseCount)"
+                    isAnimationActive={false}
+                    radius={[3, 3, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="attendeeCount"
+                    fill="var(--color-attendeeCount)"
+                    isAnimationActive={false}
+                    radius={[3, 3, 0, 0]}
+                  />
+                </BarChart>
+              )}
             </ShadChart>
-            <div className="sr-only">
-              {chartRows.map((row) => (
-                <p key={row.category}>
-                  {row.category}: {row.baseCount} profiles and{" "}
-                  {row.attendeeCount} attendees
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
-      </Panel>
-      <Panel
-        description="Representation gap is attendee share minus Member-base share. Positive and negative values are associations, not explanations."
-        title="Complete segment analysis"
-      >
-        <PaginatedTableRegion
-          label="Complete demographic segment analysis"
-          renderTable={(segmentRows) => (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Segment</TableHead>
-                  <TableHead className="text-right">Profiles</TableHead>
-                  <TableHead className="text-right">Attendees</TableHead>
-                  <TableHead className="text-right">Participation</TableHead>
-                  <TableHead className="text-right">Audience share</TableHead>
-                  <TableHead className="text-right">Gap</TableHead>
-                  <TableHead className="text-right">Repeat</TableHead>
-                  <TableHead className="text-right">Dues paid</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {segmentRows.map((row) => (
-                  <TableRow key={row.category}>
-                    <TableCell className="min-w-48 font-medium">
-                      {row.category}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {row.baseCount}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {row.attendeeCount}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatPercent(row.participationRate)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatPercent(row.audienceShare)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {row.representationGap !== null &&
-                      row.representationGap > 0
-                        ? "+"
-                        : ""}
-                      {formatPercent(row.representationGap)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatPercent(row.repeatAttendeeRate)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatPercent(row.duesPaidRate)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          rows={selectedRows}
-        />
-      </Panel>
-      <div className="grid min-w-0 gap-4">
-        <Panel
-          description="Distinct selected attendance crossed with the selected demographic and event type."
-          title="Program affinity"
-        >
-          {affinityRows.length === 0 ? (
-            <EmptyInline message="No matching affinity data." />
-          ) : (
-            <PaginatedTableRegion
-              label="Demographic and event-type affinity"
-              renderTable={(affinityRows) => (
-                <Table>
+            {input.audienceView === "composition" ? (
+              <div className="mt-4 grid gap-4">
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {pieRows.map((row) => (
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-card/95 px-3 py-2 text-sm"
+                      key={row.category}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: row.color }}
+                        />
+                        <span className="truncate">{row.category}</span>
+                      </span>
+                      <span className="shrink-0 font-mono text-xs">
+                        {formatNumber(row.count)} ·{" "}
+                        {formatPercent(ratio(row.count, pieTotal))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Table
+                  aria-label={`${demographicLabels[report.audience.selectedDemographic]} composition details`}
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>Segment</TableHead>
-                      <TableHead>Event type</TableHead>
-                      <TableHead className="text-right">Members</TableHead>
-                      <TableHead className="text-right">Attendances</TableHead>
+                      <TableHead className="text-right">People</TableHead>
+                      <TableHead className="text-right">Share</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {affinityRows.map((row) => (
-                      <TableRow key={`${row.category}-${row.label}`}>
-                        <TableCell>{row.category}</TableCell>
-                        <TableCell>{row.label}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {row.memberCount}
+                    {compositionRows.map((row) => (
+                      <TableRow key={row.category}>
+                        <TableCell className="min-w-48 font-medium">
+                          {row.category}
                         </TableCell>
                         <TableCell className="text-right font-mono">
-                          {row.attendanceCount}
+                          {formatNumber(row.count)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {formatPercent(ratio(row.count, pieTotal))}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              )}
-              rows={affinityRows}
-            />
-          )}
-        </Panel>
+              </div>
+            ) : null}
+            {input.audienceView === "engagement" ? (
+              <div className="sr-only">
+                {selectedRows.map((row) => (
+                  <p key={row.category}>
+                    {row.category}: {row.baseCount} profiles and{" "}
+                    {row.attendeeCount} attendees
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
+      </Panel>
+      {input.audienceView === "engagement" ? (
         <Panel
-          description="Read-only analytical context. Contact information and editing are intentionally absent."
-          title="Member drill-down"
+          description="Representation gap is attendee share minus Member-base share. Positive and negative values are associations, not explanations."
+          title="Complete segment analysis"
         >
           <PaginatedTableRegion
-            label="Named member analytical rows"
-            renderTable={(memberRows) => (
+            label="Complete demographic segment analysis"
+            renderTable={(segmentRows) => (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Member</TableHead>
                     <TableHead>Segment</TableHead>
-                    <TableHead className="text-right">Events</TableHead>
-                    <TableHead>Last attendance</TableHead>
-                    <TableHead>Dues</TableHead>
+                    <TableHead className="text-right">Profiles</TableHead>
+                    <TableHead className="text-right">Attendees</TableHead>
+                    <TableHead className="text-right">Participation</TableHead>
+                    <TableHead className="text-right">Audience share</TableHead>
+                    <TableHead className="text-right">Gap</TableHead>
+                    <TableHead className="text-right">Repeat</TableHead>
+                    <TableHead className="text-right">Dues paid</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {memberRows.map((row) => (
-                    <TableRow key={row.memberId}>
-                      <TableCell className="min-w-40 font-medium">
-                        <MemberDrilldownName
-                          access={access}
-                          memberId={row.memberId}
-                          name={row.name}
-                          onOpen={onMemberSelect}
-                        />
+                  {segmentRows.map((row) => (
+                    <TableRow key={row.category}>
+                      <TableCell className="min-w-48 font-medium">
+                        {row.category}
                       </TableCell>
-                      <TableCell>{row.category}</TableCell>
                       <TableCell className="text-right font-mono">
-                        {row.attendanceCount}
+                        {row.baseCount}
                       </TableCell>
-                      <TableCell className="min-w-48">
-                        <span>
-                          {row.lastEventName ?? "No matching attendance"}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">
-                          {formatDate(row.lastEventAt)}
-                        </span>
+                      <TableCell className="text-right font-mono">
+                        {row.attendeeCount}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={row.paid ? "default" : "outline"}>
-                          {row.paid ? "Paid" : "Unpaid"}
-                        </Badge>
+                      <TableCell className="text-right font-mono">
+                        {formatPercent(row.participationRate)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatPercent(row.audienceShare)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {row.representationGap !== null &&
+                        row.representationGap > 0
+                          ? "+"
+                          : ""}
+                        {formatPercent(row.representationGap)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatPercent(row.repeatAttendeeRate)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatPercent(row.duesPaidRate)}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             )}
-            rows={memberRows}
+            rows={selectedRows}
           />
         </Panel>
-      </div>
+      ) : null}
+      {input.audienceView === "engagement" ? (
+        <div className="grid min-w-0 gap-4">
+          <Panel
+            description="Distinct selected attendance crossed with the selected demographic and event type."
+            title="Program affinity"
+          >
+            {affinityRows.length === 0 ? (
+              <EmptyInline message="No matching affinity data." />
+            ) : (
+              <PaginatedTableRegion
+                label="Demographic and event-type affinity"
+                renderTable={(affinityRows) => (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Segment</TableHead>
+                        <TableHead>Event type</TableHead>
+                        <TableHead className="text-right">Members</TableHead>
+                        <TableHead className="text-right">
+                          Attendances
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {affinityRows.map((row) => (
+                        <TableRow key={`${row.category}-${row.label}`}>
+                          <TableCell>{row.category}</TableCell>
+                          <TableCell>{row.label}</TableCell>
+                          <TableCell className="text-right font-mono">
+                            {row.memberCount}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {row.attendanceCount}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+                rows={affinityRows}
+              />
+            )}
+          </Panel>
+          <Panel
+            description="Read-only analytical context. Contact information and editing are intentionally absent."
+            title="Member drill-down"
+          >
+            <PaginatedTableRegion
+              label="Named member analytical rows"
+              renderTable={(memberRows) => (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Member</TableHead>
+                      <TableHead>Segment</TableHead>
+                      <TableHead className="text-right">Events</TableHead>
+                      <TableHead>Last attendance</TableHead>
+                      <TableHead>Dues</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {memberRows.map((row) => (
+                      <TableRow key={row.memberId}>
+                        <TableCell className="min-w-40 font-medium">
+                          <MemberDrilldownName
+                            access={access}
+                            memberId={row.memberId}
+                            name={row.name}
+                            onOpen={onMemberSelect}
+                          />
+                        </TableCell>
+                        <TableCell>{row.category}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {row.attendanceCount}
+                        </TableCell>
+                        <TableCell className="min-w-48">
+                          <span>
+                            {row.lastEventName ?? "No matching attendance"}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {formatDate(row.lastEventAt)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={row.paid ? "default" : "outline"}>
+                            {row.paid ? "Paid" : "Unpaid"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+              rows={memberRows}
+            />
+          </Panel>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1930,23 +2134,84 @@ function ExportButton({
 
 function ResumeBundleButton() {
   const { isPreparing, startDownload } = useResumeBundleDownload();
+  const [policyAcknowledged, setPolicyAcknowledged] = useState(false);
+  const preview = api.analytics.previewResumeBundle.useQuery(
+    {
+      policyAcknowledged: true,
+      policyVersion: "resume-sensitive-index-v1",
+      scope: "club",
+    },
+    { enabled: policyAcknowledged, retry: false },
+  );
 
   return (
-    <div className="grid w-full gap-2 sm:w-auto">
-      <Button
-        className="h-11 w-full sm:w-auto sm:justify-self-start"
-        disabled={isPreparing}
-        aria-busy={isPreparing}
-        onClick={startDownload}
-        type="button"
-      >
-        {isPreparing ? (
+    <div className="grid w-full max-w-xl gap-3 sm:w-auto">
+      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-amber-400/25 bg-amber-400/5 p-3 text-xs leading-relaxed text-muted-foreground">
+        <Checkbox
+          aria-label="Acknowledge sensitive resume policy"
+          checked={policyAcknowledged}
+          className="mt-0.5"
+          onCheckedChange={(checked) => setPolicyAcknowledged(checked === true)}
+        />
+        <span>
+          I acknowledge policy <strong>resume-sensitive-index-v1</strong>. This
+          archive contains sensitive candidate material for authorized
+          recruiting only, and I will delete it when no longer needed.
+        </span>
+      </label>
+      {policyAcknowledged && preview.isLoading ? (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Validating available resumes…
+        </p>
+      ) : null}
+      {preview.error ? (
+        <p className="text-sm text-destructive">
+          The resume preview could not be prepared. Try again.
+        </p>
+      ) : null}
+      {preview.data ? (
+        preview.data.validCount === 0 ? (
+          <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+            No valid stored resumes are available. {preview.data.skippedCount}{" "}
+            reference(s) were skipped.
+          </p>
         ) : (
-          <Download className="size-4" aria-hidden="true" />
-        )}
-        {isPreparing ? "Preparing ZIP…" : "Download ZIP"}
-      </Button>
+          <div className="grid gap-2">
+            <p className="text-xs text-muted-foreground">
+              {preview.data.validCount} valid · {preview.data.skippedCount}{" "}
+              skipped · {preview.data.partCount} ZIP part(s)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {preview.data.parts.map((part) => (
+                <Button
+                  aria-busy={isPreparing}
+                  disabled={isPreparing}
+                  key={part.partNumber}
+                  onClick={() =>
+                    startDownload({
+                      partNumber: part.partNumber,
+                      planFingerprint: preview.data.planFingerprint,
+                      policyAcknowledged,
+                    })
+                  }
+                  type="button"
+                >
+                  {isPreparing ? (
+                    <Loader2
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Download className="size-4" aria-hidden="true" />
+                  )}
+                  Download part {part.partNumber} of {preview.data.partCount}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )
+      ) : null}
       <p
         className={
           isPreparing
@@ -1963,7 +2228,13 @@ function ResumeBundleButton() {
   );
 }
 
-function ReportsSection({ input }: { input: AnalyticsReportInput }) {
+function ReportsSection({
+  canPrepareResumes,
+  input,
+}: {
+  canPrepareResumes: boolean;
+  input: AnalyticsReportInput;
+}) {
   const exports = [
     {
       description:
@@ -2033,13 +2304,22 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
             <div>
               <h2 className="font-semibold">Member resume bundle</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Every available Member resume, organized by graduation term and
-                year, university, and major with a complete All folder.
+                Every valid Member resume, organized into independent
+                recruiting-horizon, graduation-term, inferred-year, level,
+                major, university, age, gender, and race indexes with a complete
+                All folder. Preview validates files and creates bounded ZIP
+                parts.
               </p>
             </div>
           </div>
           <div className="mt-auto shrink-0">
-            <ResumeBundleButton />
+            {canPrepareResumes ? (
+              <ResumeBundleButton />
+            ) : (
+              <Button disabled variant="outline">
+                Officer access required
+              </Button>
+            )}
           </div>
         </section>
       </div>
@@ -2088,11 +2368,13 @@ function ReportsSection({ input }: { input: AnalyticsReportInput }) {
 
 export function AnalyticsDashboard({
   access,
+  canAccessHackathon = false,
   discordReport,
   input,
   report,
 }: {
   access: AnalyticsAccess;
+  canAccessHackathon?: boolean;
   discordReport: DiscordAnalyticsReport;
   input: AnalyticsReportInput;
   report: AnalyticsReport;
@@ -2104,6 +2386,7 @@ export function AnalyticsDashboard({
       <AudienceSection
         access={access}
         discordReport={discordReport}
+        input={input}
         onMemberSelect={setSelectedMemberId}
         report={report}
       />
@@ -2131,7 +2414,12 @@ export function AnalyticsDashboard({
         report={report}
       />
     ),
-    reports: <ReportsSection input={input} />,
+    reports: (
+      <ReportsSection
+        canPrepareResumes={access.canPrepareResumes !== false}
+        input={input}
+      />
+    ),
   };
   return (
     <main className={adminPageLayoutClassName}>
@@ -2190,6 +2478,14 @@ export function AnalyticsDashboard({
         icon={ChartNoAxesCombined}
         title="Analytics"
       />
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary">Club analytics</Button>
+        {canAccessHackathon ? (
+          <Button asChild variant="outline">
+            <Link href="?scope=hackathon">Hackathon analytics</Link>
+          </Button>
+        ) : null}
+      </div>
       <AnalyticsFilters input={input} report={report} />
       <SectionNavigation input={input} />
       {content[input.section]}
