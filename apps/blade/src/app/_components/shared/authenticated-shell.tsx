@@ -20,6 +20,8 @@ type NavigationItem =
   | "eventCheckIn"
   | "events"
   | "forms"
+  | "hackathonCheckIn"
+  | "hackathonEvents"
   | "logs"
   | "members"
   | "roles"

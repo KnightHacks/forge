@@ -67,4 +67,19 @@ describe("hackathon admin navigation", () => {
     expect(isAdminNavigationActive("hackathon", "/admin/members")).toBe(false);
     expect(isAdminNavigationActive("members", "/admin/hackathon")).toBe(false);
   });
+
+  it("does not let the configuration prefix steal event routes", () => {
+    expect(
+      isAdminNavigationActive("hackathonEvents", "/admin/hackathon-events"),
+    ).toBe(true);
+    expect(
+      isAdminNavigationActive("hackathonCheckIn", "/admin/hackathon-check-in"),
+    ).toBe(true);
+    expect(
+      isAdminNavigationActive("hackathon", "/admin/hackathon-events"),
+    ).toBe(false);
+    expect(
+      isAdminNavigationActive("hackathon", "/admin/hackathon-check-in"),
+    ).toBe(false);
+  });
 });

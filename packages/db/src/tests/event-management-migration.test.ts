@@ -1093,6 +1093,7 @@ describe.runIf(runDatabaseContract)(
     });
 
     it("keeps the migration ledger and tag catalog through a truncate restore", async () => {
+      const localOnlyHackathonId = "00000000-0000-4000-8000-0000000001f8";
       await db().query(`CREATE SCHEMA IF NOT EXISTS "drizzle";
         CREATE TABLE IF NOT EXISTS "drizzle"."__drizzle_migrations" (
           "id" serial PRIMARY KEY,
@@ -1101,6 +1102,19 @@ describe.runIf(runDatabaseContract)(
         );
         INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at")
         VALUES ('event-restore-proof', 1);`);
+      await db().query(
+        `INSERT INTO "knight_hacks_hackathon"
+          ("id", "name", "display_name", "theme", "start_date", "end_date")
+         VALUES ($1, 'local-only-restore-hack', 'Local-only restore hack',
+          'Restore', NOW(), NOW() + INTERVAL '1 day')`,
+        [localOnlyHackathonId],
+      );
+      await db().query(
+        `INSERT INTO "knight_hacks_event_tag"
+          ("name", "normalized_name", "color", "default_points", "hackathon_id")
+         VALUES ('Local only tag', 'local only tag', '#123456', 5, $1)`,
+        [localOnlyHackathonId],
+      );
       const tagsBefore = await db().query<{ count: number }>(
         `SELECT count(*)::int AS "count" FROM "knight_hacks_event_tag"`,
       );
@@ -1125,8 +1139,15 @@ describe.runIf(runDatabaseContract)(
       );
       expect(restored.rows[0]).toEqual({
         ledger: 1,
-        tags: tagsBefore.rows[0]?.count,
+        tags: (tagsBefore.rows[0]?.count ?? 1) - 1,
       });
+      const orphanedTag = await db().query<{ count: number }>(
+        `SELECT count(*)::int AS "count"
+           FROM "knight_hacks_event_tag"
+          WHERE "hackathon_id" = $1`,
+        [localOnlyHackathonId],
+      );
+      expect(orphanedTag.rows[0]?.count).toBe(0);
     });
   },
 );

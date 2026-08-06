@@ -4,7 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
-import { AdminLogsDashboard } from "~/app/_components/admin/logs/admin-logs-dashboard";
+import {
+  AdminLogsDashboard,
+  auditDateBoundary,
+  auditUuidParam,
+} from "~/app/_components/admin/logs/admin-logs-dashboard";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 vi.mock("~/trpc/react", () => ({
   api: {
@@ -25,6 +34,12 @@ vi.mock("~/trpc/react", () => ({
         }),
       },
       searchMembers: {
+        useQuery: () => ({
+          data: undefined,
+          isPending: false,
+        }),
+      },
+      searchHackers: {
         useQuery: () => ({
           data: undefined,
           isPending: false,
@@ -66,7 +81,7 @@ const events: RouterOutputs["audit"]["list"] = {
 
 function renderDashboard() {
   return renderToStaticMarkup(
-    createElement(AdminLogsDashboard, { events, members: [] }),
+    createElement(AdminLogsDashboard, { events, hackers: [], members: [] }),
   );
 }
 
@@ -76,7 +91,16 @@ describe("AdminLogsDashboard", () => {
 
     expect(html).toContain("Search actor, action, target, or ID");
     expect(html).toContain("Member involved");
+    expect(html).toContain("Hacker involved");
+    expect(html).toContain("Domain");
+    expect(html).toContain("Commit status");
+    expect(html).toContain("Check-in result");
     expect(html).toContain("Action");
+    expect(html).toContain('aria-label="Filter by domain"');
+    expect(html).toContain('aria-label="Filter by action"');
+    expect(html).toContain('aria-label="Filter by commit status"');
+    expect(html).toContain('aria-label="Filter by check-in result"');
+    expect(html).toContain('aria-label="Filter by target type"');
     expect(html).toContain("Officer Example");
     expect(html).toContain("President");
     expect(html).toContain("color:#A855F7");
@@ -90,5 +114,21 @@ describe("AdminLogsDashboard", () => {
     // 2026-07-25T20:00Z is 4:00 PM in club time. Rendering it in the browser's
     // own zone was what made this column disagree with the member surfaces.
     expect(html).toContain("Jul 25, 2026, 4:00 PM");
+  });
+
+  it("interprets date filters as complete club-time days", () => {
+    expect(auditDateBoundary("2026-08-05", "start")?.toISOString()).toBe(
+      "2026-08-05T04:00:00.000Z",
+    );
+    expect(auditDateBoundary("2026-08-05", "end")?.toISOString()).toBe(
+      "2026-08-06T03:59:59.999Z",
+    );
+  });
+
+  it("ignores malformed entity identifiers from stale filter URLs", () => {
+    expect(auditUuidParam("not-an-id")).toBeNull();
+    expect(auditUuidParam("00000000-0000-4000-8000-000000000004")).toBe(
+      "00000000-0000-4000-8000-000000000004",
+    );
   });
 });

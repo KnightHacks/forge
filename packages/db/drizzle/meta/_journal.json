@@ -232,6 +232,20 @@
       "when": 1785782573330,
       "tag": "0032_puzzling_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1785958667656,
+      "tag": "0033_dry_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1785961938288,
+      "tag": "0034_narrow_tattoo",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,7 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
+import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
 /**
  * A hackathon is *configured* only when every sending status has mail. There is
@@ -191,6 +192,27 @@ const HACKATHON_CLASS_CHANGE_FIELDS = [
   "discordRoleId",
   "color",
 ] as const;
+
+async function assertHackathonDiscordRole(
+  session: Parameters<typeof resolveRoleDiscordGateway>[0],
+  roleId: string,
+) {
+  const roles = await (
+    await resolveRoleDiscordGateway(session)
+  ).getGuildRoles();
+  if (!roles.available) {
+    throw new TRPCError({
+      code: "CONFLICT",
+      message: "Discord roles are temporarily unavailable. Try again.",
+    });
+  }
+  if (!roles.roles.some(({ id }) => id === roleId)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Choose a role in this Discord server.",
+    });
+  }
+}
 
 /**
  * Same shape `company.updated` uses: only fields that actually moved.
@@ -699,6 +721,7 @@ export const hackathonRouter = createTRPCRouter({
     .input(hackathonClassCreateSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
+      await assertHackathonDiscordRole(ctx.session, input.discordRoleId);
       await requireHackathon(input.hackathonId);
 
       if (input.kind === "vip") {
@@ -720,6 +743,9 @@ export const hackathonRouter = createTRPCRouter({
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       return db.transaction(async (tx) => {
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`blade:hackathon-allocation:${input.hackathonId}`}, 0))`,
+        );
         const [created] = await tx
           .insert(HackathonClass)
           .values(input)
@@ -760,10 +786,21 @@ export const hackathonRouter = createTRPCRouter({
     .input(hackathonClassUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
+      await assertHackathonDiscordRole(ctx.session, input.discordRoleId);
       const { id, ...fields } = input;
       const auditActor = await captureAdminAuditActor(ctx.session.user);
+      const classScope = await db.query.HackathonClass.findFirst({
+        columns: { hackathonId: true },
+        where: eq(HackathonClass.id, id),
+      });
+      if (!classScope) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Class not found." });
+      }
 
       return db.transaction(async (tx) => {
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`blade:hackathon-allocation:${classScope.hackathonId}`}, 0))`,
+        );
         // Read before the write, in the same transaction, so the diff below
         // cannot be built from a row another officer has already moved.
         const [before] = await tx
@@ -836,6 +873,9 @@ export const hackathonRouter = createTRPCRouter({
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       await db.transaction(async (tx) => {
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(hashtextextended(${`blade:hackathon-allocation:${hackathonClass.hackathonId}`}, 0))`,
+        );
         // Lock the class row first, exactly as `remove` locks the hackathon.
         // Counting inside the transaction is not enough on its own: under READ
         // COMMITTED an in-flight check-in can insert a `HackerAttendee` row

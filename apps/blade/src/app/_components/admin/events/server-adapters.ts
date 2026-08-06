@@ -226,7 +226,7 @@ export function eventQueryInput(input: EventAdminInput) {
     sortField: input.sort,
     ...(input.startDate ? { startDate: input.startDate } : {}),
     tags: input.tags,
-    timing: input.timing,
+    timing: input.view === "calendar" ? ("all" as const) : input.timing,
     view: input.view,
   };
 }

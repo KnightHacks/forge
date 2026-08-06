@@ -91,10 +91,20 @@ export function activeFilters(filter: RosterFilter): ActiveFilter[] {
     const high = filter.ageMax ?? "any";
     chips.push({ field: "ageMin", label: `Age ${low}–${high}` });
   }
-  if (filter.isFirstTime !== undefined) {
+  if (filter.firstTimeStatus !== undefined) {
+    chips.push({
+      field: "firstTimeStatus",
+      label:
+        filter.firstTimeStatus === "first"
+          ? "First-time hacker"
+          : filter.firstTimeStatus === "returning"
+            ? "Returning hacker"
+            : "First-time status not recorded",
+    });
+  } else if (filter.isFirstTime !== undefined) {
     chips.push({
       field: "isFirstTime",
-      label: filter.isFirstTime ? "First hackathon" : "Returning hacker",
+      label: filter.isFirstTime ? "First-time hacker" : "Returning hacker",
     });
   }
   if (filter.hasDietaryNeeds !== undefined) {
@@ -427,25 +437,30 @@ export function HackerFilters({
             </div>
 
             <div className="grid gap-2">
-              <Label>First hackathon</Label>
-              {/* Self-declared on the profile, so it does not reset between
-                  events — "they said so", not "this is provably their first". */}
+              <Label>First-time hacker</Label>
               <div className="flex flex-wrap gap-2">
                 {(
                   [
                     ["Either", undefined],
-                    ["First-timers", true],
-                    ["Returning", false],
+                    ["First-time", "first"],
+                    ["Returning", "returning"],
+                    ["Not recorded", "unknown"],
                   ] as const
                 ).map(([label, value]) => (
                   <Button
-                    aria-pressed={draft.isFirstTime === value}
+                    aria-pressed={draft.firstTimeStatus === value}
                     className="min-h-11 text-sm"
                     key={label}
-                    onClick={() => setDraft({ ...draft, isFirstTime: value })}
+                    onClick={() =>
+                      setDraft({
+                        ...draft,
+                        firstTimeStatus: value,
+                        isFirstTime: undefined,
+                      })
+                    }
                     size="sm"
                     variant={
-                      draft.isFirstTime === value ? "secondary" : "outline"
+                      draft.firstTimeStatus === value ? "secondary" : "outline"
                     }
                   >
                     {label}

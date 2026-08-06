@@ -229,19 +229,22 @@ function dbTagService(
       async getTag(tagId) {
         return (
           (await executor().query.EventTag.findFirst({
-            where: eq(EventTag.id, tagId),
+            where: and(eq(EventTag.id, tagId), isNull(EventTag.hackathonId)),
           })) ?? null
         );
       },
       async listTags() {
-        return executor().select().from(EventTag);
+        return executor()
+          .select()
+          .from(EventTag)
+          .where(isNull(EventTag.hackathonId));
       },
       async saveTag(tag) {
         let saved: typeof EventTag.$inferSelect | undefined;
         try {
           [saved] = await executor()
             .insert(EventTag)
-            .values(tag)
+            .values({ ...tag, hackathonId: null })
             .onConflictDoUpdate({
               set: tag,
               target: EventTag.id,
@@ -269,7 +272,7 @@ function dbTagService(
           await tx
             .select({ id: EventTag.id })
             .from(EventTag)
-            .where(eq(EventTag.id, tagId))
+            .where(and(eq(EventTag.id, tagId), isNull(EventTag.hackathonId)))
             .for("update");
           return context.run(tx, operation);
         });
@@ -889,7 +892,9 @@ export const eventRouter = {
         const [tag] = await tx
           .select()
           .from(EventTag)
-          .where(eq(EventTag.id, input.tagId))
+          .where(
+            and(eq(EventTag.id, input.tagId), isNull(EventTag.hackathonId)),
+          )
           .for("share");
         if (!tag) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Tag not found." });
@@ -1352,7 +1357,7 @@ export const eventRouter = {
       requireEventEdit(ctx);
       const gateways = await resolveEventGateways(ctx.session);
       const before = await db.query.EventTag.findFirst({
-        where: eq(EventTag.id, input.tagId),
+        where: and(eq(EventTag.id, input.tagId), isNull(EventTag.hackathonId)),
       });
       const result = await dbTagService(gateways.audit.tag).update({
         ...input,

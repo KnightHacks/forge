@@ -2,12 +2,18 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CHECK_IN_QR_SCANNER_OPTIONS,
+  claimCheckInQrPayload,
+  observeCheckInQrPayloads,
+  rearmAbsentCheckInQrPayloads,
+  releaseCheckInQrPayload,
+} from "~/app/_components/admin/check-in-qr-scanner";
 import { EventCheckInPage } from "~/app/_components/admin/events/event-check-in-page";
 import {
-  CHECK_IN_SCANNER_OPTIONS,
   checkInEventLabel,
   CheckInFeedback,
-  rearmQrPayloadsOutsideFrame,
+  isCurrentCheckInRequest,
 } from "~/app/_components/admin/events/event-check-in-panel";
 
 vi.mock("~/trpc/react", () => ({
@@ -27,18 +33,42 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 describe("EventCheckInPage", () => {
-  it("TC-022A requires a QR to leave frame before repeat mode can scan it again", () => {
-    expect(CHECK_IN_SCANNER_OPTIONS).toEqual({
+  it("TC-022A re-arms after a QR leaves view and accepts the next visible code", () => {
+    expect(CHECK_IN_QR_SCANNER_OPTIONS).toEqual({
       allowMultiple: true,
       scanDelay: 3000,
     });
-    const handled = new Set(["user:00000000-0000-4000-8000-000000000501"]);
-    rearmQrPayloadsOutsideFrame(handled, [
-      { rawValue: "user:00000000-0000-4000-8000-000000000501" },
-    ]);
-    expect(handled.size).toBe(1);
-    rearmQrPayloadsOutsideFrame(handled, []);
-    expect(handled.size).toBe(0);
+    const lock = { current: false };
+    const handled = new Set<string>();
+    const lastSeenAt = new Map<string, number>();
+    const first = "user:00000000-0000-4000-8000-000000000501";
+    const second = "user:00000000-0000-4000-8000-000000000502";
+
+    observeCheckInQrPayloads(lastSeenAt, [{ rawValue: first }], 1000);
+    expect(claimCheckInQrPayload(lock, handled, [{ rawValue: first }])).toBe(
+      first,
+    );
+    expect(
+      claimCheckInQrPayload(lock, handled, [{ rawValue: second }]),
+    ).toBeNull();
+    releaseCheckInQrPayload(lock);
+    expect(
+      claimCheckInQrPayload(lock, handled, [{ rawValue: first }]),
+    ).toBeNull();
+
+    rearmAbsentCheckInQrPayloads(handled, lastSeenAt, 1999);
+    expect(handled.has(first)).toBe(true);
+    rearmAbsentCheckInQrPayloads(handled, lastSeenAt, 2000);
+    expect(claimCheckInQrPayload(lock, handled, [{ rawValue: first }])).toBe(
+      first,
+    );
+    releaseCheckInQrPayload(lock);
+    expect(
+      claimCheckInQrPayload(lock, handled, [
+        { rawValue: first },
+        { rawValue: second },
+      ]),
+    ).toBe(second);
   });
 
   it("TC-005 TC-020 TC-022A TC-030 TC-032 renders the isolated operational surface", () => {
@@ -109,5 +139,10 @@ describe("EventCheckInPage", () => {
     expect(html).toContain("@ada.builds");
     expect(html).toContain("Backend builder");
     expect(html).not.toContain("member@example.test");
+  });
+
+  it("ignores a completed request after the station context changes", () => {
+    expect(isCurrentCheckInRequest(4, 4)).toBe(true);
+    expect(isCurrentCheckInRequest(4, 5)).toBe(false);
   });
 });

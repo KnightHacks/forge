@@ -73,12 +73,12 @@ export function DesktopAdminNavigation({
   };
 
   return (
-    <nav className="flex flex-1 flex-col gap-2 p-2" aria-label="Primary">
-      <div className="flex flex-col gap-2">
+    <nav className="flex min-h-0 flex-1 flex-col p-2" aria-label="Primary">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden">
         {memberNavigationItems.map(renderItem)}
         {getVisibleAdminNavigation(access).map(renderItem)}
       </div>
-      <div className="mt-auto border-t border-border/70 pt-2">
+      <div className="mt-2 shrink-0 border-t border-border/70 pt-2">
         {renderItem(settingsNavigationItem)}
       </div>
     </nav>

@@ -19,6 +19,13 @@ import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import type { CheckInEventGroups } from "./types";
+import {
+  CHECK_IN_QR_SCANNER_OPTIONS,
+  claimCheckInQrPayload,
+  observeCheckInQrPayloads,
+  rearmAbsentCheckInQrPayloads,
+  releaseCheckInQrPayload,
+} from "~/app/_components/admin/check-in-qr-scanner";
 import { formatEventDateTime } from "./event-presenters";
 
 export interface CheckInMemberChoice {
@@ -47,25 +54,15 @@ export type CheckInRequest =
 
 type EventTiming = "past" | "upcoming";
 
-export const CHECK_IN_SCANNER_OPTIONS = {
-  allowMultiple: true,
-  scanDelay: 3000,
-} as const;
-
-export function rearmQrPayloadsOutsideFrame(
-  handledPayloads: Set<string>,
-  detectedCodes: readonly { rawValue: string }[],
-) {
-  const visiblePayloads = new Set(
-    detectedCodes.map(({ rawValue }) => rawValue).filter(Boolean),
-  );
-  for (const payload of handledPayloads) {
-    if (!visiblePayloads.has(payload)) handledPayloads.delete(payload);
-  }
-}
-
 export function checkInEventLabel(event: { startAt: string; title: string }) {
   return `${event.title} · ${formatEventDateTime(event.startAt)}`;
+}
+
+export function isCurrentCheckInRequest(
+  requestGeneration: number,
+  currentGeneration: number,
+) {
+  return requestGeneration === currentGeneration;
 }
 
 function initials(name: string) {
@@ -150,6 +147,8 @@ export function EventCheckInPanel({
   const [pending, setPending] = useState(false);
   const scanning = useRef(false);
   const handledQrPayloads = useRef(new Set<string>());
+  const qrLastSeenAt = useRef(new Map<string, number>());
+  const contextGeneration = useRef(0);
 
   const eventChoices = useMemo(
     () =>
@@ -201,6 +200,19 @@ export function EventCheckInPanel({
     };
   }, [memberQuery, searchMembers]);
 
+  useEffect(() => {
+    if (!cameraOpen) return;
+    const interval = window.setInterval(
+      () =>
+        rearmAbsentCheckInQrPayloads(
+          handledQrPayloads.current,
+          qrLastSeenAt.current,
+        ),
+      250,
+    );
+    return () => window.clearInterval(interval);
+  }, [cameraOpen]);
+
   async function submit(
     input: { memberId?: string; qrPayload?: string },
     repeat = false,
@@ -214,27 +226,32 @@ export function EventCheckInPanel({
     }
     if (!checkIn) return;
 
+    const requestGeneration = contextGeneration.current;
     setPending(true);
     try {
-      setFeedback(
-        await checkIn(
-          input.memberId
-            ? { eventId, memberId: input.memberId }
-            : {
-                allowRepeat: repeat,
-                eventId,
-                qrPayload: input.qrPayload ?? "",
-              },
-        ),
+      const next = await checkIn(
+        input.memberId
+          ? { eventId, memberId: input.memberId }
+          : {
+              allowRepeat: repeat,
+              eventId,
+              qrPayload: input.qrPayload ?? "",
+            },
       );
+      if (isCurrentCheckInRequest(requestGeneration, contextGeneration.current))
+        setFeedback(next);
     } catch (cause) {
-      setFeedback({
-        message:
-          cause instanceof Error
-            ? cause.message
-            : "Check-in could not be completed.",
-        state: "error",
-      });
+      if (
+        isCurrentCheckInRequest(requestGeneration, contextGeneration.current)
+      ) {
+        setFeedback({
+          message:
+            cause instanceof Error
+              ? cause.message
+              : "Check-in could not be completed.",
+          state: "error",
+        });
+      }
     } finally {
       setPending(false);
     }
@@ -242,6 +259,7 @@ export function EventCheckInPanel({
 
   function selectTiming(nextTiming: EventTiming) {
     if (nextTiming === timing) return;
+    contextGeneration.current += 1;
     setTiming(nextTiming);
     setEventId("");
     setCameraOpen(false);
@@ -265,6 +283,7 @@ export function EventCheckInPanel({
             className="grid grid-cols-2 rounded-lg border border-white/10 bg-background/60 p-1"
           >
             <Button
+              disabled={pending}
               type="button"
               variant={timing === "upcoming" ? "primary" : "ghost"}
               aria-pressed={timing === "upcoming"}
@@ -275,6 +294,7 @@ export function EventCheckInPanel({
               Upcoming
             </Button>
             <Button
+              disabled={pending}
               type="button"
               variant={timing === "past" ? "primary" : "ghost"}
               aria-pressed={timing === "past"}
@@ -290,6 +310,8 @@ export function EventCheckInPanel({
             <Label htmlFor="check-in-event">Event</Label>
             <ResponsiveComboBox
               ariaLabel="Event"
+              isDisabled={pending}
+              key={`event-picker-${pending ? "locked" : "ready"}`}
               triggerId="check-in-event"
               items={eventChoices}
               value={eventId || null}
@@ -311,6 +333,7 @@ export function EventCheckInPanel({
                 </span>
               )}
               onValueChange={(value) => {
+                contextGeneration.current += 1;
                 setEventId(value);
                 setFeedback(null);
               }}
@@ -326,11 +349,19 @@ export function EventCheckInPanel({
           }}
         >
           <TabsList className="grid h-auto w-full grid-cols-2">
-            <TabsTrigger value="scanner" className="min-h-11 gap-2">
+            <TabsTrigger
+              disabled={pending}
+              value="scanner"
+              className="min-h-11 gap-2"
+            >
               <QrCode className="h-4 w-4" aria-hidden="true" />
               Scanner
             </TabsTrigger>
-            <TabsTrigger value="manual" className="min-h-11 gap-2">
+            <TabsTrigger
+              disabled={pending}
+              value="manual"
+              className="min-h-11 gap-2"
+            >
               <UserCheck className="h-4 w-4" aria-hidden="true" />
               Manual
             </TabsTrigger>
@@ -344,6 +375,7 @@ export function EventCheckInPanel({
               <Switch
                 id="allow-repeat-check-ins"
                 checked={allowRepeat}
+                disabled={pending}
                 onCheckedChange={setAllowRepeat}
               />
             </div>
@@ -351,10 +383,13 @@ export function EventCheckInPanel({
             <Button
               type="button"
               className="min-h-11 gap-2"
-              disabled={!eventId}
+              disabled={!eventId || pending}
               onClick={() => {
                 setCameraOpen((current) => {
-                  if (!current) handledQrPayloads.current.clear();
+                  if (!current) {
+                    handledQrPayloads.current.clear();
+                    qrLastSeenAt.current.clear();
+                  }
                   return !current;
                 });
                 setCameraError(null);
@@ -371,38 +406,29 @@ export function EventCheckInPanel({
             {cameraOpen && (
               <div className="overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
                 <Scanner
-                  allowMultiple={CHECK_IN_SCANNER_OPTIONS.allowMultiple}
-                  scanDelay={CHECK_IN_SCANNER_OPTIONS.scanDelay}
-                  constraints={{ facingMode: "environment" }}
-                  formats={["qr_code"]}
+                  allowMultiple={CHECK_IN_QR_SCANNER_OPTIONS.allowMultiple}
+                  scanDelay={CHECK_IN_QR_SCANNER_OPTIONS.scanDelay}
                   components={{
                     tracker: (codes) =>
-                      rearmQrPayloadsOutsideFrame(
-                        handledQrPayloads.current,
-                        codes,
-                      ),
+                      observeCheckInQrPayloads(qrLastSeenAt.current, codes),
                   }}
+                  constraints={{ facingMode: "environment" }}
+                  formats={["qr_code"]}
                   onError={() =>
                     setCameraError(
                       "Camera access is unavailable. Use Manual entry instead.",
                     )
                   }
                   onScan={(codes) => {
-                    const payload = codes[0]?.rawValue;
-                    if (
-                      !payload ||
-                      scanning.current ||
-                      handledQrPayloads.current.has(payload)
-                    )
-                      return;
-                    handledQrPayloads.current.add(payload);
-                    scanning.current = true;
+                    if (pending) return;
+                    const payload = claimCheckInQrPayload(
+                      scanning,
+                      handledQrPayloads.current,
+                      codes,
+                    );
+                    if (!payload) return;
                     void submit({ qrPayload: payload }, allowRepeat).finally(
-                      () => {
-                        window.setTimeout(() => {
-                          scanning.current = false;
-                        }, 1000);
-                      },
+                      () => releaseCheckInQrPayload(scanning),
                     );
                   }}
                 />
@@ -418,6 +444,8 @@ export function EventCheckInPanel({
               <Label htmlFor="member-search">Member</Label>
               <ResponsiveComboBox
                 ariaLabel="Member"
+                isDisabled={pending}
+                key={`member-picker-${pending ? "locked" : "ready"}`}
                 triggerId="member-search"
                 items={memberChoices}
                 value={selectedMember?.id ?? null}

@@ -43,6 +43,10 @@ describe("AuthenticatedShell", () => {
         eventCheckIn: true,
         events: true,
         forms: true,
+        hackathon: true,
+        hackathonCheckIn: true,
+        hackathonEvents: true,
+        hackers: true,
         issues: true,
         logs: true,
         members: true,
@@ -58,6 +62,10 @@ describe("AuthenticatedShell", () => {
       "Event Check-in",
       "Events",
       "Forms",
+      "Hackathon Check-in",
+      "Hackathon Events",
+      "Hackathons",
+      "Hackers",
       "Issues",
       "Members",
       "Roles",
@@ -104,6 +112,23 @@ describe("AuthenticatedShell", () => {
 
     expect(html).toContain('href="/admin/roles"');
     expect(html).not.toContain('href="/admin/members"');
+  });
+
+  it("renders independently permissioned hackathon event destinations", () => {
+    const html = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        adminNavigation: {
+          hackathonCheckIn: true,
+          hackathonEvents: false,
+        },
+        children: createElement("main", null, "Hackathon check-in"),
+        session,
+      }),
+    );
+
+    expect(html).toContain('href="/admin/hackathon-check-in"');
+    expect(html).not.toContain('href="/admin/hackathon-events"');
+    expect(html).not.toContain('href="/admin/hackathon"');
   });
 
   it("gives ordinary members Dashboard, Guild, and bottom-pinned Settings", () => {

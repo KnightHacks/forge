@@ -64,6 +64,11 @@ const ROSTER_COLUMNS = {
   blacklistedAt: HackerAttendee.blacklistedAt,
   discordUser: Hacker.discordUser,
   email: Hacker.email,
+  firstTimeStatus: sql<"first" | "returning" | "unknown">`case
+    when coalesce(${HackerAttendee.isFirstTime}, ${Hacker.isFirstTime}) = true then 'first'
+    when coalesce(${HackerAttendee.isFirstTime}, ${Hacker.isFirstTime}) = false then 'returning'
+    else 'unknown'
+  end`,
   firstName: Hacker.firstName,
   gradDate: Hacker.gradDate,
   lastName: Hacker.lastName,
@@ -79,6 +84,10 @@ const ROSTER_COLUMNS = {
   sendStatus: EmailSend.status,
   status: HackerAttendee.status,
 } as const;
+
+const effectiveFirstTime = sql<
+  boolean | null
+>`coalesce(${HackerAttendee.isFirstTime}, ${Hacker.isFirstTime})`;
 
 /**
  * Age as of today, derived from the date of birth.
@@ -146,25 +155,18 @@ function rosterWhere(hackathonId: string, filter: HackerRosterFilter) {
   if (filter.ageMax !== undefined) {
     clauses.push(sql`${currentAge} <= ${filter.ageMax}`);
   }
-  if (filter.isFirstTime !== undefined) {
-    /*
-      Self-declared, and declared on the *profile* rather than per hackathon.
-
-      So it does not reset between events: someone who ticked it for their first
-      Knight Hacks still reads as a first-timer at the next one unless they go
-      back and change it. Treated as "they said so" rather than "this is their
-      first", which is the honest reading of the column and the only one the data
-      supports today. Deriving it from a prior attendance record would be a
-      different filter and is deliberately not what this is.
-
-      `isFirstTime` is nullable, and a null has never been answered — which is
-      not the same as "no", so it only ever matches the false case explicitly.
-    */
+  if (filter.firstTimeStatus) {
     clauses.push(
-      filter.isFirstTime
-        ? eq(Hacker.isFirstTime, true)
-        : sql`coalesce(${Hacker.isFirstTime}, false) = false`,
+      filter.firstTimeStatus === "first"
+        ? sql`${effectiveFirstTime} = true`
+        : filter.firstTimeStatus === "returning"
+          ? sql`${effectiveFirstTime} = false`
+          : sql`${effectiveFirstTime} is null`,
     );
+  } else if (filter.isFirstTime !== undefined) {
+    // Compatibility for bookmarked pre-cutover filters. Unlike the old profile
+    // filter, null remains unknown and never silently joins Returning.
+    clauses.push(sql`${effectiveFirstTime} = ${filter.isFirstTime}`);
   }
   if (filter.hasDietaryNeeds !== undefined) {
     // Blank and null both mean "nothing to accommodate" — the form writes an
@@ -499,7 +501,12 @@ export const hackerRouter = createTRPCRouter({
           foodAllergies: Hacker.foodAllergies,
           githubProfileUrl: Hacker.githubProfileUrl,
           gradDate: Hacker.gradDate,
-          isFirstTime: Hacker.isFirstTime,
+          isFirstTime: effectiveFirstTime,
+          firstTimeStatus: sql<"first" | "returning" | "unknown">`case
+            when ${effectiveFirstTime} = true then 'first'
+            when ${effectiveFirstTime} = false then 'returning'
+            else 'unknown'
+          end`,
           lastName: Hacker.lastName,
           levelOfStudy: Hacker.levelOfStudy,
           linkedinProfileUrl: Hacker.linkedinProfileUrl,
@@ -702,6 +709,13 @@ export const hackerRouter = createTRPCRouter({
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
             message: `That applicant is already ${input.status}.`,
+          });
+        }
+        if (attendee.status === "checkedin") {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "Checked-in applicants cannot be moved from the roster. Their admission state is permanent in this release.",
           });
         }
 
@@ -1264,6 +1278,10 @@ async function resolveBulkTargets(
     // acceptance — and mail already queued cannot be recalled.
     if (row.status === input.status) {
       skipped.push({ attendeeId, name, reason: "already" });
+      continue;
+    }
+    if (row.status === "checkedin") {
+      skipped.push({ attendeeId, name, reason: "checked_in" });
       continue;
     }
     const normalizedEmail = row.email.trim().toLowerCase();

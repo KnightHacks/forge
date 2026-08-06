@@ -477,7 +477,10 @@ export function createDbEventFeedbackState(database: WriteDb = db) {
   return state;
 }
 
-export async function createDbEventFeedbackService(database: WriteDb = db) {
+export async function createDbEventFeedbackService(
+  database: WriteDb = db,
+  options: { includeHackathonEvents?: boolean } = {},
+) {
   const protectedRows = await database
     .select({ id: Roles.id })
     .from(Roles)
@@ -485,6 +488,7 @@ export async function createDbEventFeedbackService(database: WriteDb = db) {
   return createEventFeedbackService({
     audit: () => Promise.resolve(),
     clock: () => new Date(),
+    ...(options.includeHackathonEvents ? { eventQualifier: () => true } : {}),
     protectedRoleIds: new Set(protectedRows.map(({ id }) => id)),
     state: createDbEventFeedbackState(database),
   });

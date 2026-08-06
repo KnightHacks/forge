@@ -6,7 +6,34 @@ import { analyzeReactFile } from "react-analyzer/src/index.ts";
 
 const exts = new Set([".tsx", ".jsx"]);
 const baseArg = process.argv.find((arg) => arg.startsWith("--base="));
-const base = baseArg?.slice("--base=".length) ?? "origin/main";
+
+function currentBranch() {
+  try {
+    return execFileSync("git", ["branch", "--show-current"], {
+      encoding: "utf8",
+    }).trim();
+  } catch {
+    return "";
+  }
+}
+
+function refExists(ref: string) {
+  try {
+    execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], {
+      stdio: "ignore",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const defaultBase = currentBranch().startsWith("reforge/")
+  ? refExists("reforge/main")
+    ? "reforge/main"
+    : "origin/reforge/main"
+  : "origin/main";
+const base = baseArg?.slice("--base=".length) ?? defaultBase;
 
 function git(args: string[]): string[] {
   try {

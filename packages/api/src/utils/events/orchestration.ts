@@ -8,6 +8,11 @@ import { assertClubEvent } from "./access";
 type ProviderName = "discord" | "google";
 type ProviderState = "error" | "pending" | "synced" | "unknown";
 
+export type EventProjectionDescriptionFormatter = (
+  event: EventWorkflowRecord,
+  provider: ProviderName,
+) => string;
+
 export interface EventProjection {
   appliedDestination: string | null;
   appliedRevision: number | null;
@@ -214,10 +219,25 @@ function desiredDestination(
   return `${event.discordChannel.type}:${event.discordChannel.id}`;
 }
 
+export function formatEventProjectionDescription(
+  event: Pick<EventWorkflowRecord, "description" | "location" | "points">,
+) {
+  return `${event.description}\n\nLocation: ${event.location}\nPoints: ${event.points}`;
+}
+
+export function formatHackathonDiscordEventDescription(input: {
+  description: string;
+  hackathonName: string;
+  points: number;
+}) {
+  return `⚔️ **${input.hackathonName}** ⚔️\n${input.description}\n\n⭐ **${input.points} Points**`;
+}
+
 function projectionRequest(
   event: EventWorkflowRecord,
   provider: ProviderName,
   googleCalendars: { internal: string; public: string },
+  formatDescription: EventProjectionDescriptionFormatter,
 ): EventProjectionRequest {
   if (!event.creationKey) {
     throw new TRPCError({
@@ -235,7 +255,7 @@ function projectionRequest(
         ? (event.discordChannel?.id ?? null)
         : null,
     creationKey: event.creationKey,
-    description: `${event.description}\n\nLocation: ${event.location}\nPoints: ${event.points}`,
+    description: formatDescription(event, provider),
     destination,
     endAt: event.endAt,
     entityType,
@@ -264,7 +284,7 @@ export function assertEventProviderPayloadLimits(input: {
   tag: string;
 }) {
   const title = `[${input.tag}] ${input.name}`;
-  const description = `${input.description}\n\nLocation: ${input.location}\nPoints: ${input.points}`;
+  const description = formatEventProjectionDescription(input);
   if (Array.from(title).length > 100) {
     throw new TRPCError({
       code: "BAD_REQUEST",
@@ -276,6 +296,22 @@ export function assertEventProviderPayloadLimits(input: {
       code: "BAD_REQUEST",
       message:
         "The event description, location, and points must fit within 1,000 characters.",
+    });
+  }
+}
+
+export function assertHackathonEventProviderPayloadLimits(
+  input: Parameters<typeof assertEventProviderPayloadLimits>[0] & {
+    hackathonName: string;
+  },
+) {
+  assertEventProviderPayloadLimits(input);
+  const discordDescription = formatHackathonDiscordEventDescription(input);
+  if (Array.from(discordDescription).length > 1_000) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "The hackathon name, event description, and points must fit within 1,000 characters.",
     });
   }
 }
@@ -332,16 +368,22 @@ function projectionPayloadMatches(
 }
 
 export function createEventSyncOrchestrator({
+  assertEventScope = assertClubEvent,
   audit,
   clock,
   config,
   discord,
+  formatProjectionDescription = (event) =>
+    formatEventProjectionDescription(event),
   google,
   reportAuditFailure = () => logger.warn("Event audit transport failed."),
   reportLeaseFailure = () => logger.warn("Event sync lease heartbeat failed."),
   state,
   tokenFactory,
 }: {
+  assertEventScope?: <T extends { hackathonId: string | null }>(
+    event: T | null | undefined,
+  ) => T;
   audit: EventAudit;
   clock: () => Date;
   config: {
@@ -349,6 +391,7 @@ export function createEventSyncOrchestrator({
     leaseDurationMs: number;
   };
   discord: EventProviderGateway;
+  formatProjectionDescription?: EventProjectionDescriptionFormatter;
   google: EventProviderGateway;
   reportAuditFailure?: () => void;
   reportLeaseFailure?: () => void;
@@ -439,6 +482,7 @@ export function createEventSyncOrchestrator({
         event,
         provider,
         config.googleCalendars,
+        formatProjectionDescription,
       );
       return operation === "update" && id
         ? await gateway.update(id, request)
@@ -455,16 +499,21 @@ export function createEventSyncOrchestrator({
     revision: number,
     forceReconcile: boolean,
   ) => {
-    let event = assertClubEvent(await state.getEvent(eventId));
+    let event = assertEventScope(await state.getEvent(eventId));
     let prior = event[provider];
-    const request = projectionRequest(event, provider, config.googleCalendars);
+    const request = projectionRequest(
+      event,
+      provider,
+      config.googleCalendars,
+      formatProjectionDescription,
+    );
 
     if (prior.attemptToken && prior.state !== "unknown") {
       const ambiguous = { ...prior, state: "unknown" as const };
       if (!(await persist(event.id, provider, ambiguous, revision, token))) {
         return false;
       }
-      event = assertClubEvent(await state.getEvent(eventId));
+      event = assertEventScope(await state.getEvent(eventId));
       prior = event[provider];
     }
 
@@ -500,7 +549,7 @@ export function createEventSyncOrchestrator({
         ) {
           return false;
         }
-        event = assertClubEvent(await state.getEvent(eventId));
+        event = assertEventScope(await state.getEvent(eventId));
         prior = event[provider];
       } else if (observed.kind !== "success") {
         return persist(
@@ -566,7 +615,7 @@ export function createEventSyncOrchestrator({
           ) {
             return false;
           }
-          event = assertClubEvent(await state.getEvent(eventId));
+          event = assertEventScope(await state.getEvent(eventId));
           prior = event[provider];
         } else if (observed.kind === "success" && observed.request) {
           if (projectionPayloadMatches(provider, observed.request, request)) {
@@ -603,7 +652,7 @@ export function createEventSyncOrchestrator({
           ) {
             return false;
           }
-          event = assertClubEvent(await state.getEvent(eventId));
+          event = assertEventScope(await state.getEvent(eventId));
           prior = event[provider];
         } else {
           return true;
@@ -647,7 +696,7 @@ export function createEventSyncOrchestrator({
           ) {
             return false;
           }
-          event = assertClubEvent(await state.getEvent(eventId));
+          event = assertEventScope(await state.getEvent(eventId));
           prior = event[provider];
         } catch {
           return true;
@@ -704,7 +753,7 @@ export function createEventSyncOrchestrator({
         ))
       )
         return false;
-      event = assertClubEvent(await state.getEvent(eventId));
+      event = assertEventScope(await state.getEvent(eventId));
     }
 
     const current = event[provider];
@@ -735,7 +784,7 @@ export function createEventSyncOrchestrator({
           ))
         )
           return false;
-        event = assertClubEvent(await state.getEvent(eventId));
+        event = assertEventScope(await state.getEvent(eventId));
       } else {
         return persist(
           event.id,
@@ -770,7 +819,7 @@ export function createEventSyncOrchestrator({
       forceProviders?: readonly ProviderName[];
     },
   ) => {
-    const initial = assertClubEvent(await state.getEvent(eventId));
+    const initial = assertEventScope(await state.getEvent(eventId));
     if (initial.deletionIntentAt) {
       throw new TRPCError({
         code: "CONFLICT",
@@ -815,7 +864,7 @@ export function createEventSyncOrchestrator({
       ) {
         return { eventId, status: "syncing" as const };
       }
-      const current = assertClubEvent(await state.getEvent(eventId));
+      const current = assertEventScope(await state.getEvent(eventId));
       const synchronized = (["discord", "google"] as const).every(
         (provider) =>
           current[provider].state === "synced" &&
@@ -875,7 +924,7 @@ export function createEventSyncOrchestrator({
     },
 
     async delete(eventId: string, { actorId }: { actorId: string }) {
-      let event = assertClubEvent(await state.getEvent(eventId));
+      let event = assertEventScope(await state.getEvent(eventId));
       const token = tokenFactory();
       const now = clock();
       if (
@@ -936,7 +985,7 @@ export function createEventSyncOrchestrator({
       if (preparation === "in_flight_attempt") {
         let fenceValid = true;
         try {
-          event = assertClubEvent(await state.getEvent(eventId));
+          event = assertEventScope(await state.getEvent(eventId));
           for (const provider of ["discord", "google"] as const) {
             const projection = event[provider];
             if (!projection.id || !projection.attemptToken) continue;
@@ -961,7 +1010,7 @@ export function createEventSyncOrchestrator({
         };
       }
 
-      event = assertClubEvent(await state.getEvent(eventId));
+      event = assertEventScope(await state.getEvent(eventId));
       if (event.legacy) {
         let deleted: boolean;
         try {
@@ -985,7 +1034,7 @@ export function createEventSyncOrchestrator({
       let deletionFailure: unknown;
       try {
         let fenceValid = true;
-        event = assertClubEvent(await state.getEvent(eventId));
+        event = assertEventScope(await state.getEvent(eventId));
         if (
           event.google.state === "unknown" &&
           !event.google.id &&
@@ -1033,7 +1082,7 @@ export function createEventSyncOrchestrator({
 
         for (const provider of ["discord", "google"] as const) {
           if (!fenceValid) break;
-          event = assertClubEvent(await state.getEvent(eventId));
+          event = assertEventScope(await state.getEvent(eventId));
           let projection = event[provider];
           if (projection.attemptToken || projection.state === "unknown") {
             if (projection.state !== "unknown") {
@@ -1049,7 +1098,7 @@ export function createEventSyncOrchestrator({
                 fenceValid = false;
                 continue;
               }
-              event = assertClubEvent(await state.getEvent(eventId));
+              event = assertEventScope(await state.getEvent(eventId));
               projection = event[provider];
             }
             if (!projection.id) continue;
@@ -1123,7 +1172,7 @@ export function createEventSyncOrchestrator({
               fenceValid = false;
               continue;
             }
-            event = assertClubEvent(await state.getEvent(eventId));
+            event = assertEventScope(await state.getEvent(eventId));
             projection = event[provider];
           }
           if (!projection.id) continue;
@@ -1164,7 +1213,7 @@ export function createEventSyncOrchestrator({
           );
           if (!fenceValid) break;
         }
-        event = assertClubEvent(await state.getEvent(eventId));
+        event = assertEventScope(await state.getEvent(eventId));
         const discordAbsent =
           !event.discord.id &&
           (event.discord.state !== "unknown" ||
@@ -1204,7 +1253,7 @@ export function createEventSyncOrchestrator({
     },
 
     async listDiscordRepairCandidates(eventId: string) {
-      assertClubEvent(await state.getEvent(eventId));
+      assertEventScope(await state.getEvent(eventId));
       return discord.list();
     },
 
@@ -1223,7 +1272,7 @@ export function createEventSyncOrchestrator({
             phrase: string;
           },
     ) {
-      const event = assertClubEvent(await state.getEvent(eventId));
+      const event = assertEventScope(await state.getEvent(eventId));
       if (resolution.mode === "confirm_no_projection") {
         if (
           resolution.phrase !==
@@ -1270,7 +1319,7 @@ export function createEventSyncOrchestrator({
       let linked = false;
       let linkFailure: unknown;
       try {
-        const current = assertClubEvent(await state.getEvent(eventId));
+        const current = assertEventScope(await state.getEvent(eventId));
         if (
           current.discord.id &&
           (current.discord.attemptToken || current.discord.state === "unknown")
@@ -1292,6 +1341,7 @@ export function createEventSyncOrchestrator({
           current,
           "discord",
           config.googleCalendars,
+          formatProjectionDescription,
         );
         if (candidate.request?.entityType !== request.entityType) {
           throw new TRPCError({
@@ -1369,7 +1419,7 @@ export function createEventSyncOrchestrator({
         patch,
       }: { actorId: string; patch: Partial<EventWorkflowRecord> },
     ) {
-      const event = assertClubEvent(await state.getEvent(eventId));
+      const event = assertEventScope(await state.getEvent(eventId));
       if (!event.legacy) {
         throw new TRPCError({
           code: "CONFLICT",

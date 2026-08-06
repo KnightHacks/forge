@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, MailWarning } from "lucide-react";
+import { Ban, MailWarning, Sparkles } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
@@ -14,6 +14,8 @@ import {
   TableRow,
 } from "@forge/ui/table";
 import { HACKER_STATUS_LABELS } from "@forge/validators";
+
+import { resolveFirstTimeStatus } from "./first-time-status";
 
 type Roster = RouterOutputs["hacker"]["listForHackathon"]["hackers"];
 type Hacker = Roster[number];
@@ -91,6 +93,12 @@ export function HackerTable({
       <TableBody>
         {hackers.map((hacker) => {
           const isSelected = selected.has(hacker.attendeeId);
+          const firstTimeStatus = resolveFirstTimeStatus(
+            hacker as typeof hacker & {
+              firstTimeStatus?: "first" | "returning" | "unknown" | null;
+              isFirstTime?: boolean | null;
+            },
+          );
           return (
             <TableRow
               aria-selected={isSelected}
@@ -180,6 +188,12 @@ export function HackerTable({
                   <span className="break-words font-medium underline decoration-muted-foreground/40 underline-offset-4 group-hover/row:decoration-foreground">
                     {hacker.name}
                   </span>
+                  {firstTimeStatus === "first" ? (
+                    <Badge className="gap-1 text-sm" variant="outline">
+                      <Sparkles className="size-3" aria-hidden="true" />
+                      First-time hacker
+                    </Badge>
+                  ) : null}
                   {hacker.blacklisted ? (
                     <Badge className="gap-1 text-sm" variant="destructive">
                       <Ban className="size-3" aria-hidden="true" />

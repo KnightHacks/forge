@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { EventProjectionRequest } from "../../utils/events/orchestration";
 import {
   assertEventProviderPayloadLimits,
+  assertHackathonEventProviderPayloadLimits,
   createEventSyncOrchestrator,
+  formatEventProjectionDescription,
+  formatHackathonDiscordEventDescription,
 } from "../../utils/events/orchestration";
 import { createTestClock } from "../support/events/fake-clock";
 import {
@@ -82,7 +85,12 @@ function requestFor(
   };
 }
 
-function setup(events = [pendingEvent()]) {
+function setup(
+  events = [pendingEvent()],
+  formatProjectionDescription?: Parameters<
+    typeof createEventSyncOrchestrator
+  >[0]["formatProjectionDescription"],
+) {
   const audit = vi.fn().mockResolvedValue(undefined);
   const clock = createTestClock(NOW);
   const discord = new FakeEventProviderGateway();
@@ -100,6 +108,7 @@ function setup(events = [pendingEvent()]) {
       leaseDurationMs: 30_000,
     },
     discord,
+    formatProjectionDescription,
     google,
     state,
     tokenFactory: () => `sync-token-${++token}`,
@@ -924,6 +933,43 @@ describe("event provider orchestration", () => {
     expect(() =>
       assertEventProviderPayloadLimits({
         description: "d".repeat(978),
+        location: "x",
+        name: "safe",
+        points: 1,
+        tag: "t",
+      }),
+    ).toThrow();
+  });
+
+  it("formats Legacy-style Hackathon Discord descriptions without changing Google", async () => {
+    const event = pendingEvent({ description: "aaaaa", points: 35 });
+    const { discord, google, orchestrator } = setup(
+      [event],
+      (record, provider) =>
+        provider === "discord"
+          ? formatHackathonDiscordEventDescription({
+              description: record.description,
+              hackathonName: "GemiKnights",
+              points: record.points,
+            })
+          : formatEventProjectionDescription(record),
+    );
+
+    await orchestrator.sync(event.id, { actorId: USER_IDS.operator });
+
+    expect(discord.calls[0]?.request?.description).toBe(
+      "⚔️ **GemiKnights** ⚔️\naaaaa\n\n⭐ **35 Points**",
+    );
+    expect(google.calls[0]?.request?.description).toBe(
+      `${event.description}\n\nLocation: ${event.location}\nPoints: ${event.points}`,
+    );
+  });
+
+  it("validates the Hackathon-specific Discord description limit", () => {
+    expect(() =>
+      assertHackathonEventProviderPayloadLimits({
+        description: "short",
+        hackathonName: "h".repeat(980),
         location: "x",
         name: "safe",
         points: 1,

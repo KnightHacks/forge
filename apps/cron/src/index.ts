@@ -5,9 +5,10 @@ import { discordArchive } from "./crons/discord-archive";
 import { emailDelivery } from "./crons/email-delivery";
 import { formAttachmentCleanup } from "./crons/form-attachment-cleanup";
 import { formCallbacks } from "./crons/form-callbacks";
+import { hackCheckInCleanup } from "./crons/hack-check-in-cleanup";
 import { issueReminders } from "./crons/issue-reminders";
 import { leetcode } from "./crons/leetcode";
-import { preReminders, reminders } from "./crons/reminder";
+import { hackReminders, preReminders, reminders } from "./crons/reminder";
 import { roleSync } from "./crons/role-sync";
 
 alumniAssign.schedule();
@@ -24,9 +25,8 @@ leetcode.schedule();
 
 preReminders.schedule();
 reminders.schedule();
-
-// Silencing for now, needs to be manually re-enabled for hacks @WHOEVER_IS_DEV_LEAD_RN
-// hackReminders.schedule();
+hackReminders.schedule();
+hackCheckInCleanup.schedule();
 
 roleSync.schedule();
 

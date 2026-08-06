@@ -44,6 +44,31 @@ describe("admin audit contracts", () => {
     );
   });
 
+  it("files hackathon event operations separately from Club events", () => {
+    expect(AUDIT_ACTION_CATALOG["hackathon_event.created"].domain).toBe(
+      "hackathons",
+    );
+    expect(AUDIT_ACTION_CATALOG["hackathon_event.updated"]).toMatchObject({
+      changeFields: ["name", "startAt", "endAt", "location", "tagId", "points"],
+      domain: "hackathons",
+    });
+    expect(AUDIT_ACTION_CATALOG["hackathon_event.checked_in"]).toMatchObject({
+      domain: "attendance",
+      label: "Processed hackathon event check-in",
+    });
+    expect(
+      auditListInputSchema.parse({
+        checkInOutcomes: ["checked_in", "wrong_class"],
+        domains: ["attendance"],
+        hackerAttendeeId: "00000000-0000-4000-8000-000000000001",
+      }),
+    ).toMatchObject({
+      checkInOutcomes: ["checked_in", "wrong_class"],
+      domains: ["attendance"],
+      hackerAttendeeId: "00000000-0000-4000-8000-000000000001",
+    });
+  });
+
   it("TC-024 files the console actions by effect and keeps the target type unique", () => {
     expect(AUDIT_ACTION_CATALOG["discord_config.updated"]).toMatchObject({
       // A new domain, because none of the existing ten fits a Discord guild

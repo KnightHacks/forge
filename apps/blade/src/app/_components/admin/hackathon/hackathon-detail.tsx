@@ -41,6 +41,7 @@ import {
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { ClassSection } from "./class-section";
+import { HackathonDiscordEventConfig } from "./hackathon-discord-event-config";
 import { HackathonFormDialog } from "./hackathon-form-dialog";
 import { formatHackathonDateTime } from "./hackathon-formatting";
 import { StatusEmailSection } from "./status-email-section";
@@ -217,6 +218,12 @@ export function HackathonDetail({
         isRefreshing={isRefreshing}
         onSaved={refresh}
         templates={templates}
+      />
+
+      <HackathonDiscordEventConfig
+        hackathonId={hackathon.id}
+        isRefreshing={isRefreshing}
+        onSaved={refresh}
       />
 
       <ClassSection

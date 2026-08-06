@@ -91,6 +91,7 @@ const SCALAR_KEYS = [
   "ageMax",
   "hasDietaryNeeds",
   "isFirstTime",
+  "firstTimeStatus",
 ] as const;
 
 /**
@@ -118,6 +119,7 @@ export const FACET_KEYS = [
   "graduationYears",
   "hasDietaryNeeds",
   "isFirstTime",
+  "firstTimeStatus",
   "levelsOfStudy",
   "majors",
   "racesOrEthnicities",
@@ -227,6 +229,12 @@ function parseFilter(params: {
     // cannot collapse to `undefined` the way the other booleans do.
     hasDietaryNeeds: triState(params.get("hasDietaryNeeds")),
     isFirstTime: triState(params.get("isFirstTime")),
+    firstTimeStatus: (() => {
+      const value = params.get("firstTimeStatus");
+      return value === "first" || value === "returning" || value === "unknown"
+        ? value
+        : undefined;
+    })(),
     // Years are the one list that is not strings.
     graduationYears: list("graduationYears")
       ?.map(Number)

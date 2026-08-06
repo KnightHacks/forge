@@ -40,6 +40,26 @@ export function canAccessEventCheckIn(permissions: EffectivePermissions) {
   );
 }
 
+export function canAccessHackathonEvents(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_HACK_EVENT === true ||
+    permissions.EDIT_HACK_EVENT === true
+  );
+}
+
+export function canEditHackathonEvents(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true || permissions.EDIT_HACK_EVENT === true
+  );
+}
+
+export function canAccessHackathonCheckIn(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true || permissions.CHECKIN_HACK_EVENT === true
+  );
+}
+
 export function canAccessFormAdmin(permissions: EffectivePermissions) {
   return (
     permissions.IS_OFFICER === true ||
@@ -91,6 +111,8 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     events: canAccessEventAdmin(permissions),
     forms: canAccessFormAdmin(permissions),
     hackathon: canAccessHackathonAdmin(permissions),
+    hackathonCheckIn: canAccessHackathonCheckIn(permissions),
+    hackathonEvents: canAccessHackathonEvents(permissions),
     // Same tier: both screens are officer-only and one links to the other.
     hackers: canAccessHackathonAdmin(permissions),
     issues: canAccessIssues(permissions),

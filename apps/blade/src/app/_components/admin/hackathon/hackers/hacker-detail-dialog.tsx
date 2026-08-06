@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   Ban,
-  CalendarCheck,
   ExternalLink,
   GraduationCap,
   Loader2,
@@ -40,6 +39,11 @@ import {
 } from "~/app/_components/admin/shared/detail-panel";
 import { DiscordActivityTracker } from "~/app/_components/admin/shared/discord-activity-tracker";
 import { api } from "~/trpc/react";
+import {
+  firstTimeStatusLabel,
+  resolveFirstTimeStatus,
+} from "./first-time-status";
+import { HackerEventAttendancePanel } from "./hacker-event-attendance-panel";
 
 type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
@@ -90,12 +94,14 @@ export function HackerDetailDialog({
   attendeeId,
   blocked,
   blockedReason,
+  hackathonId,
   onOpenChange,
   onSaved,
 }: {
   attendeeId: string | null;
   blocked: boolean;
   blockedReason: string | null;
+  hackathonId: string;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
@@ -124,6 +130,13 @@ export function HackerDetailDialog({
     { enabled: attendeeId !== null },
   );
   const hacker = detail.data;
+  const firstTimeStatus = hacker
+    ? resolveFirstTimeStatus(
+        hacker as typeof hacker & {
+          firstTimeStatus?: "first" | "returning" | "unknown" | null;
+        },
+      )
+    : "unknown";
 
   const setStatus = api.hacker.setStatus.useMutation({
     onError: (error) => toast.error(error.message),
@@ -226,6 +239,12 @@ export function HackerDetailDialog({
                     <Badge className="text-sm" variant="secondary">
                       {statusLabel(hacker.status)}
                     </Badge>
+                    {firstTimeStatus === "first" ? (
+                      <Badge className="gap-1 text-sm" variant="outline">
+                        <Sparkles className="size-3" aria-hidden="true" />
+                        First-time hacker
+                      </Badge>
+                    ) : null}
                     {hacker.blacklisted ? (
                       <Badge className="gap-1 text-sm" variant="destructive">
                         <Ban className="size-3" aria-hidden="true" />{" "}
@@ -533,7 +552,7 @@ export function HackerDetailDialog({
                   <DetailRow label="Shirt" value={hacker.shirtSize} />
                   <DetailRow
                     label="First hackathon"
-                    value={hacker.isFirstTime ? "Yes" : "No"}
+                    value={firstTimeStatusLabel(firstTimeStatus)}
                   />
                 </DetailSection>
 
@@ -696,23 +715,10 @@ export function HackerDetailDialog({
                   </DetailSection>
                 ) : null}
 
-                <DetailSection
-                  description="Check-ins for this hackathon's own events."
-                  icon={CalendarCheck}
-                  title="Hackathon events"
-                >
-                  {/*
-                  TODO: hackathon events do not exist yet. When they do, this
-                  becomes attendance for *this hackathon's* events — workshops,
-                  ceremonies, meals — and deliberately not the club event feed:
-                  during a hackathon an organiser cares who came to the opening
-                  ceremony, not who came to a GBM in March.
-                */}
-                  <p className="px-3 py-6 text-center text-sm text-muted-foreground sm:px-4">
-                    Hackathon events are not built yet, so there is no
-                    attendance to show.
-                  </p>
-                </DetailSection>
+                <HackerEventAttendancePanel
+                  attendeeId={hacker.attendeeId}
+                  hackathonId={hackathonId}
+                />
 
                 {(hacker.resumeUrl ??
                 hacker.githubProfileUrl ??

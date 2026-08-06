@@ -488,6 +488,7 @@ export function HackerRoster({
         attendeeId={url.hackerId}
         blocked={blocked}
         blockedReason={blockedReason}
+        hackathonId={selected.id}
         onOpenChange={(open) => {
           if (!open) url.setHackerId(null);
         }}

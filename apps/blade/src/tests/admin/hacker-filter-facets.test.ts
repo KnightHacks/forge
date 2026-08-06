@@ -104,6 +104,9 @@ describe("changedFacets", () => {
     expect(
       changedFacets({ isFirstTime: true }, { isFirstTime: false }),
     ).toEqual({ isFirstTime: false });
+    expect(changedFacets({}, { firstTimeStatus: "unknown" })).toEqual({
+      firstTimeStatus: "unknown",
+    });
   });
 
   it("sends the age range and the dietary toggle", () => {

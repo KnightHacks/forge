@@ -9,6 +9,14 @@ import {
 } from "../support/events/fixtures";
 
 describe("Club reminder candidate selection", () => {
+  it("never selects hackathon-owned events for the Club reminder", () => {
+    const hackEvent = eventRecord({
+      hackathonId: "10000000-0000-4000-8000-000000000001",
+    });
+
+    expect(selectClubReminderCandidates([hackEvent], { now: NOW })).toEqual([]);
+  });
+
   it("[TC-028] selects only eligible Public and Dues-paying Club events", () => {
     const result = selectClubReminderCandidates(safeEventFixtureSet(), {
       now: NOW,

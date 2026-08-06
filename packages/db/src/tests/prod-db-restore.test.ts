@@ -47,5 +47,11 @@ describe("production database restore safety", () => {
     expect(truncateRestorePostlude()).toMatch(/orphan event attendance/i);
     expect(truncateRestorePostlude()).toMatch(/event tag catalog empty/i);
     expect(truncateRestorePostlude()).toMatch(/migration ledger/i);
+    expect(truncateRestorePostlude()).toMatch(
+      /saved\."hackathon_id" IS NULL OR EXISTS/,
+    );
+    expect(truncateRestorePostlude()).toMatch(
+      /knight_hacks_hackathon" AS hackathon/,
+    );
   });
 });
