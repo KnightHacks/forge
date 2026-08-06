@@ -3,7 +3,6 @@ import DiscordCTAButton from "./_components/discord/discord";
 import FAQ from "./_components/faq/faq";
 import Logo from "./_components/graphics/logo";
 import Partners from "./_components/partners/partners";
-import Register from "./_components/register/registerButton";
 
 export default function HomePage() {
   return (
@@ -11,9 +10,6 @@ export default function HomePage() {
       <div className="flex h-screen w-full flex-col items-center justify-center gap-6">
         <div className="animate-fade-up">
           <Logo />
-        </div>
-        <div className="animate-fade-up">
-          <Register />
         </div>
       </div>
 

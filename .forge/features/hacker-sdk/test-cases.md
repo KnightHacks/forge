@@ -10,7 +10,9 @@ Hackathon Events-backed participant reads, event publication controls,
 reconciliation, reminders, migration, access, and the Blade controls.
 
 Custom questions, past-hackathon participant history, team leaderboards, club
-attendance behavior, and redesigned KH IX/Bloom visuals are excluded.
+attendance behavior, and a KH IX theme redesign are excluded. KH IX SDK
+integration and responsive behavior are included; ended hackathon sites are
+checked only for static rendering and removal of dead participant entry points.
 
 ## Test placement plan
 

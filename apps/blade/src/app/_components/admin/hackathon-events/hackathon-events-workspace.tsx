@@ -66,6 +66,7 @@ import { api } from "~/trpc/react";
 import { HackathonEventFilters } from "./hackathon-event-filters";
 import { HackathonEventFormDialog } from "./hackathon-event-form-dialog";
 import { HackathonTagImportDialog } from "./hackathon-tag-import-dialog";
+import { PublicationControls } from "./publication-controls";
 
 type EventRow = RouterOutputs["hackathonEvent"]["listEvents"]["rows"][number];
 type View = "calendar" | "list" | "tags";
@@ -568,6 +569,13 @@ export function HackathonEventsWorkspace({
                   <Plus className="size-4" aria-hidden="true" /> Create event
                 </Button>
               </>
+            ) : null}
+            {selectedHackathon ? (
+              <PublicationControls
+                canEdit={canEdit}
+                hackathonId={selectedHackathon.id}
+                hackathonName={selectedHackathon.displayName}
+              />
             ) : null}
           </>
         }

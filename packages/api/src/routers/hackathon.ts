@@ -1,11 +1,17 @@
+import { randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
-import { and, count, desc, eq, isNotNull, sql } from "@forge/db";
+import { and, asc, count, desc, eq, isNotNull, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   EmailTemplate,
+  Event,
   Hackathon,
+  HackathonAgreementDefinition,
   HackathonClass,
+  HackathonPortalAuthorizationCode,
+  HackathonPortalClient,
+  HackathonPortalSession,
   HackathonStatusEmail,
   HackerAttendee,
 } from "@forge/db/schemas/knight-hacks";
@@ -17,11 +23,14 @@ import {
   deriveHackathonRouteName,
   getHackathonDateWindowIssues,
   HACKATHON_SENDING_STATUSES,
+  hackathonAgreementDefinitionCreateSchema,
+  hackathonAgreementSetActiveSchema,
   hackathonClassCreateSchema,
   hackathonClassIdSchema,
   hackathonClassUpdateSchema,
   hackathonCreateSchema,
   hackathonIdSchema,
+  hackathonPortalClientUpsertSchema,
   hackathonStatusEmailClearSchema,
   hackathonStatusEmailSetSchema,
   hackathonUpdateSchema,
@@ -34,6 +43,8 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { assertHackathonEventProviderPayloadLimits } from "../utils/events/orchestration";
+import { ensureEventPublicationWork } from "../utils/hackathon-events/publication";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
@@ -62,11 +73,13 @@ const HACKATHON_COLUMNS = {
   applicationOpen: true,
   applicationUrl: true,
   confirmationDeadline: true,
+  confirmationCapacity: true,
   displayName: true,
   endDate: true,
   id: true,
   startDate: true,
   theme: true,
+  timezone: true,
 } as const;
 
 /**
@@ -80,11 +93,13 @@ const HACKATHON_RETURNING = {
   applicationOpen: Hackathon.applicationOpen,
   applicationUrl: Hackathon.applicationUrl,
   confirmationDeadline: Hackathon.confirmationDeadline,
+  confirmationCapacity: Hackathon.confirmationCapacity,
   displayName: Hackathon.displayName,
   endDate: Hackathon.endDate,
   id: Hackathon.id,
   startDate: Hackathon.startDate,
   theme: Hackathon.theme,
+  timezone: Hackathon.timezone,
 } as const;
 
 async function requireHackathon(id: string) {
@@ -136,12 +151,18 @@ async function allocateRouteName(tx: WriteDb, displayName: string) {
  * loses, so the constraint is the real guard and this maps it back to a message.
  */
 function hasPgCode(error: unknown, code: string) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === code
-  );
+  let current = error;
+  const visited = new Set<unknown>();
+  for (let depth = 0; depth < 6; depth += 1) {
+    if (typeof current !== "object" || current === null) return false;
+    if (visited.has(current)) return false;
+    visited.add(current);
+    if ("code" in current && (current as { code?: unknown }).code === code) {
+      return true;
+    }
+    current = "cause" in current ? current.cause : undefined;
+  }
+  return false;
 }
 
 function asConflict(error: unknown, message: string): never {
@@ -185,6 +206,8 @@ const HACKATHON_CHANGE_FIELDS = [
   "confirmationDeadline",
   "startDate",
   "endDate",
+  "confirmationCapacity",
+  "timezone",
 ] as const;
 
 const HACKATHON_CLASS_CHANGE_FIELDS = [
@@ -221,13 +244,15 @@ async function assertHackathonDiscordRole(
  * and because "what was the deadline before" has to survive as a readable value
  * rather than whatever a `Date` happens to stringify to in a log viewer.
  */
-function auditValue(value: Date | string | null): string | null {
+function auditValue(
+  value: Date | number | string | null,
+): number | string | null {
   return value instanceof Date ? value.toISOString() : value;
 }
 
 function diffChanges<Field extends string>(
-  before: Record<Field, Date | string | null>,
-  after: Record<Field, Date | string | null>,
+  before: Record<Field, Date | number | string | null>,
+  after: Record<Field, Date | number | string | null>,
   fields: readonly Field[],
 ): AuditChangeInput[] {
   return fields.flatMap((field) => {
@@ -304,46 +329,80 @@ export const hackathonRouter = createTRPCRouter({
     assertCanManagePlatformConfig(ctx.session.permissions);
     const hackathon = await requireHackathon(input.id);
 
-    const [statusEmails, classes] = await Promise.all([
-      db
-        .select({
-          status: HackathonStatusEmail.status,
-          subject: HackathonStatusEmail.subject,
-          // Both surfaced so the screen can say which of the two went wrong.
-          // The `restrict` FK cannot see a soft delete, and it cannot see a
-          // domain change at all, so neither is visible without asking.
-          //
-          // Read from the join rather than inferred client-side by checking
-          // whether the id appears in the picker list: that list is capped, so
-          // absence from it would accuse a valid binding of being retired.
-          templateArchived: sql<boolean>`${EmailTemplate.archivedAt} is not null`,
-          templateDomain: EmailTemplate.domain,
-          templateId: HackathonStatusEmail.templateId,
-          templateName: EmailTemplate.name,
-        })
-        .from(HackathonStatusEmail)
-        .innerJoin(
-          EmailTemplate,
-          eq(EmailTemplate.id, HackathonStatusEmail.templateId),
-        )
-        .where(eq(HackathonStatusEmail.hackathonId, hackathon.id))
-        .orderBy(HackathonStatusEmail.status),
-      db
-        .select({
-          color: HackathonClass.color,
-          discordRoleId: HackathonClass.discordRoleId,
-          id: HackathonClass.id,
-          kind: HackathonClass.kind,
-          name: HackathonClass.name,
-        })
-        .from(HackathonClass)
-        .where(eq(HackathonClass.hackathonId, hackathon.id))
-        // Without an explicit order Postgres returns heap order, so deleting a
-        // class and adding another visibly reshuffles the list on the next
-        // refresh with nothing on screen explaining why. VIP sorts last because
-        // it is one entry that behaves differently from the flat class list.
-        .orderBy(HackathonClass.kind, HackathonClass.name),
-    ]);
+    const [statusEmails, classes, portalClient, agreements] = await Promise.all(
+      [
+        db
+          .select({
+            status: HackathonStatusEmail.status,
+            subject: HackathonStatusEmail.subject,
+            // Both surfaced so the screen can say which of the two went wrong.
+            // The `restrict` FK cannot see a soft delete, and it cannot see a
+            // domain change at all, so neither is visible without asking.
+            //
+            // Read from the join rather than inferred client-side by checking
+            // whether the id appears in the picker list: that list is capped, so
+            // absence from it would accuse a valid binding of being retired.
+            templateArchived: sql<boolean>`${EmailTemplate.archivedAt} is not null`,
+            templateDomain: EmailTemplate.domain,
+            templateId: HackathonStatusEmail.templateId,
+            templateName: EmailTemplate.name,
+          })
+          .from(HackathonStatusEmail)
+          .innerJoin(
+            EmailTemplate,
+            eq(EmailTemplate.id, HackathonStatusEmail.templateId),
+          )
+          .where(eq(HackathonStatusEmail.hackathonId, hackathon.id))
+          .orderBy(HackathonStatusEmail.status),
+        db
+          .select({
+            color: HackathonClass.color,
+            discordRoleId: HackathonClass.discordRoleId,
+            id: HackathonClass.id,
+            kind: HackathonClass.kind,
+            name: HackathonClass.name,
+          })
+          .from(HackathonClass)
+          .where(eq(HackathonClass.hackathonId, hackathon.id))
+          // Without an explicit order Postgres returns heap order, so deleting a
+          // class and adding another visibly reshuffles the list on the next
+          // refresh with nothing on screen explaining why. VIP sorts last because
+          // it is one entry that behaves differently from the flat class list.
+          .orderBy(HackathonClass.kind, HackathonClass.name),
+        db.query.HackathonPortalClient.findFirst({
+          columns: {
+            clientId: true,
+            createdAt: true,
+            enabled: true,
+            id: true,
+            name: true,
+            productionOrigin: true,
+            updatedAt: true,
+          },
+          where: eq(HackathonPortalClient.hackathonId, hackathon.id),
+        }),
+        db
+          .select({
+            active: HackathonAgreementDefinition.active,
+            createdAt: HackathonAgreementDefinition.createdAt,
+            id: HackathonAgreementDefinition.id,
+            key: HackathonAgreementDefinition.key,
+            legalText: HackathonAgreementDefinition.legalText,
+            required: HackathonAgreementDefinition.required,
+            stage: HackathonAgreementDefinition.stage,
+            title: HackathonAgreementDefinition.title,
+            url: HackathonAgreementDefinition.url,
+            version: HackathonAgreementDefinition.version,
+          })
+          .from(HackathonAgreementDefinition)
+          .where(eq(HackathonAgreementDefinition.hackathonId, hackathon.id))
+          .orderBy(
+            asc(HackathonAgreementDefinition.stage),
+            asc(HackathonAgreementDefinition.key),
+            desc(HackathonAgreementDefinition.createdAt),
+          ),
+      ],
+    );
 
     // Reads zero until check-in exists to assign anyone. The screen says so
     // rather than implying the split is live.
@@ -382,10 +441,353 @@ export const hackathonRouter = createTRPCRouter({
       })),
       hackathon,
       isConfigured: isConfigured(statusEmails.length),
+      portalClient: portalClient ?? null,
+      agreements,
       sendingStatuses: HACKATHON_SENDING_STATUSES,
       statusEmails,
     };
   }),
+
+  /** Officer-only. Creates or updates the one public portal registration for a hackathon. */
+  upsertPortalClient: permProcedure
+    .input(hackathonPortalClientUpsertSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        }
+
+        const [existing] = await tx
+          .select({
+            enabled: HackathonPortalClient.enabled,
+            id: HackathonPortalClient.id,
+            productionOrigin: HackathonPortalClient.productionOrigin,
+          })
+          .from(HackathonPortalClient)
+          .where(eq(HackathonPortalClient.hackathonId, hackathon.id))
+          .for("update")
+          .limit(1);
+        const values = {
+          enabled: input.enabled,
+          name: input.name,
+          productionOrigin: input.productionOrigin,
+        };
+        const [saved] = existing
+          ? await tx
+              .update(HackathonPortalClient)
+              .set(values)
+              .where(eq(HackathonPortalClient.id, existing.id))
+              .returning()
+              .catch((error: unknown) =>
+                asConflict(
+                  error,
+                  "That production origin is already registered to another hackathon.",
+                ),
+              )
+          : await tx
+              .insert(HackathonPortalClient)
+              .values({
+                ...values,
+                clientId: `forge_${randomBytes(24).toString("base64url")}`,
+                createdBy: ctx.session.user.id,
+                hackathonId: hackathon.id,
+              })
+              .returning()
+              .catch((error: unknown) =>
+                asConflict(
+                  error,
+                  "That production origin is already registered to another hackathon.",
+                ),
+              );
+        if (!saved) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not save the portal client.",
+          });
+        }
+
+        const securityBoundaryChanged =
+          existing !== undefined &&
+          (existing.productionOrigin !== saved.productionOrigin ||
+            (existing.enabled && !saved.enabled));
+        if (securityBoundaryChanged) {
+          await tx
+            .delete(HackathonPortalAuthorizationCode)
+            .where(
+              eq(HackathonPortalAuthorizationCode.portalClientId, saved.id),
+            );
+          await tx
+            .update(HackathonPortalSession)
+            .set({ revokedAt: new Date() })
+            .where(
+              and(
+                eq(HackathonPortalSession.portalClientId, saved.id),
+                isNull(HackathonPortalSession.revokedAt),
+              ),
+            );
+        }
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hackathon.portal_client_updated",
+            actor: auditActor,
+            metadata: {
+              enabled: saved.enabled,
+              originHost: new URL(saved.productionOrigin).hostname,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return {
+          clientId: saved.clientId,
+          createdAt: saved.createdAt,
+          enabled: saved.enabled,
+          id: saved.id,
+          name: saved.name,
+          productionOrigin: saved.productionOrigin,
+          updatedAt: saved.updatedAt,
+        };
+      });
+    }),
+
+  /** Officer-only. Adds a legal agreement version without rewriting history. */
+  createAgreement: permProcedure
+    .input(hackathonAgreementDefinitionCreateSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        }
+
+        if (input.active) {
+          await tx
+            .update(HackathonAgreementDefinition)
+            .set({ active: false })
+            .where(
+              and(
+                eq(HackathonAgreementDefinition.hackathonId, hackathon.id),
+                eq(HackathonAgreementDefinition.stage, input.stage),
+                eq(HackathonAgreementDefinition.key, input.key),
+                eq(HackathonAgreementDefinition.active, true),
+              ),
+            );
+        }
+
+        const [created] = await tx
+          .insert(HackathonAgreementDefinition)
+          .values({
+            ...input,
+            createdBy: ctx.session.user.id,
+            legalText: input.legalText ?? null,
+            url: input.url ?? null,
+          })
+          .returning()
+          .catch((error: unknown) =>
+            asConflict(
+              error,
+              "That agreement key and version already exist for this stage.",
+            ),
+          );
+        if (!created) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not create the agreement version.",
+          });
+        }
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hackathon.agreement_created",
+            actor: auditActor,
+            metadata: {
+              key: created.key,
+              required: created.required,
+              stage: created.stage,
+              version: created.version,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: created.id,
+                targetLabel: created.title,
+                targetType: "hackathon_agreement",
+              },
+              {
+                relation: "secondary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+
+        if (created.active) {
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon.agreement_activated",
+              actor: auditActor,
+              metadata: {
+                key: created.key,
+                required: created.required,
+                stage: created.stage,
+                version: created.version,
+              },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: created.id,
+                  targetLabel: created.title,
+                  targetType: "hackathon_agreement",
+                },
+                {
+                  relation: "secondary",
+                  targetId: hackathon.id,
+                  targetLabel: hackathon.displayName,
+                  targetType: "hackathon",
+                },
+              ],
+            },
+            tx,
+          );
+        }
+
+        return created;
+      });
+    }),
+
+  /** Officer-only. Makes one historical agreement version the active version. */
+  activateAgreement: permProcedure
+    .input(hackathonAgreementSetActiveSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      if (!input.active) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose another version to replace the active agreement.",
+        });
+      }
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        }
+
+        const [definition] = await tx
+          .select()
+          .from(HackathonAgreementDefinition)
+          .where(
+            and(
+              eq(HackathonAgreementDefinition.id, input.definitionId),
+              eq(HackathonAgreementDefinition.hackathonId, hackathon.id),
+            ),
+          )
+          .limit(1);
+        if (!definition) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Agreement version not found.",
+          });
+        }
+
+        await tx
+          .update(HackathonAgreementDefinition)
+          .set({ active: false })
+          .where(
+            and(
+              eq(HackathonAgreementDefinition.hackathonId, hackathon.id),
+              eq(HackathonAgreementDefinition.stage, definition.stage),
+              eq(HackathonAgreementDefinition.key, definition.key),
+              eq(HackathonAgreementDefinition.active, true),
+            ),
+          );
+        const [activated] = await tx
+          .update(HackathonAgreementDefinition)
+          .set({ active: true })
+          .where(eq(HackathonAgreementDefinition.id, definition.id))
+          .returning();
+        if (!activated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Agreement version not found.",
+          });
+        }
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hackathon.agreement_activated",
+            actor: auditActor,
+            metadata: {
+              key: activated.key,
+              required: activated.required,
+              stage: activated.stage,
+              version: activated.version,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: activated.id,
+                targetLabel: activated.title,
+                targetType: "hackathon_agreement",
+              },
+              {
+                relation: "secondary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return activated;
+      });
+    }),
 
   /** Officer-only. Creates a hackathon; its mail and classes are configured after. */
   create: permProcedure
@@ -466,6 +868,31 @@ export const hackathonRouter = createTRPCRouter({
           });
         }
 
+        const hackathonEvents =
+          before.displayName === input.displayName
+            ? []
+            : await tx
+                .select({
+                  description: Event.description,
+                  id: Event.id,
+                  location: Event.location,
+                  name: Event.name,
+                  points: Event.points,
+                  tag: Event.tag,
+                })
+                .from(Event)
+                .where(and(eq(Event.hackathonId, id), eq(Event.legacy, false)));
+        for (const event of hackathonEvents) {
+          assertHackathonEventProviderPayloadLimits({
+            description: event.description,
+            hackathonName: input.displayName,
+            location: event.location,
+            name: event.name,
+            points: event.points ?? 0,
+            tag: event.tag,
+          });
+        }
+
         // `name` is deliberately absent: production Blade routes on it, and
         // re-deriving it here would 404 live links on a display-name typo fix.
         const [updated] = await tx
@@ -477,6 +904,23 @@ export const hackathonRouter = createTRPCRouter({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Hackathon not found.",
+          });
+        }
+
+        if (hackathonEvents.length > 0) {
+          const events = await tx
+            .update(Event)
+            .set({
+              discordSyncState: sql`case when ${Event.discordSyncState} = 'unknown' then 'unknown'::event_sync_state else 'pending'::event_sync_state end`,
+              googleAppliedRevision: sql`case when ${Event.googleSyncState} = 'synced' and ${Event.googleAppliedRevision} = ${Event.syncRevision} then ${Event.syncRevision} + 1 else ${Event.googleAppliedRevision} end`,
+              syncRevision: sql`${Event.syncRevision} + 1`,
+            })
+            .where(and(eq(Event.hackathonId, id), eq(Event.legacy, false)))
+            .returning({ id: Event.id });
+          await ensureEventPublicationWork({
+            database: tx,
+            eventIds: events.map((event) => event.id),
+            hackathonId: id,
           });
         }
 

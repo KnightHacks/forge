@@ -1,7 +1,8 @@
+import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
 import type { HackathonEventCheckInInput } from "@forge/validators";
-import { and, asc, count, eq, sql } from "@forge/db";
+import { and, asc, count, eq, gt, isNull, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
@@ -11,6 +12,7 @@ import {
   Hacker,
   HackerAttendee,
   HackerCheckInAttempt,
+  HackerCheckInPass,
   HackerDiscordRoleGrant,
   HackerEventAttendee,
 } from "@forge/db/schemas/knight-hacks";
@@ -21,6 +23,14 @@ import { createAdminAuditEvent } from "../audit/service";
 
 const FAILURE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
 const CHECK_IN_TIME_ZONE = "America/New_York";
+
+export function parseOpaqueHackerCheckInPass(payload: string) {
+  return /^fhp1\.[A-Za-z0-9_-]{43}$/.test(payload) ? payload : null;
+}
+
+export function hashOpaqueHackerCheckInPass(payload: string) {
+  return createHash("sha256").update(payload).digest("hex");
+}
 
 type CheckInOutcome =
   | "already_checked_in"
@@ -47,9 +57,13 @@ function calendarDateParts(value: Date, timeZone: string) {
   };
 }
 
-export function isMinorAt(dob: string, at: Date) {
+export function isMinorAt(
+  dob: string,
+  at: Date,
+  timeZone = CHECK_IN_TIME_ZONE,
+) {
   const [year, month, day] = dob.split("-").map(Number);
-  const current = calendarDateParts(at, CHECK_IN_TIME_ZONE);
+  const current = calendarDateParts(at, timeZone);
   let age = current.year - (year ?? current.year);
   if (
     current.month < (month ?? current.month) ||
@@ -170,11 +184,10 @@ export async function performHackathonEventCheckIn({
         hackathonId: Event.hackathonId,
         hackathonName: Hackathon.displayName,
         id: Event.id,
-        legacy: Event.legacy,
         name: Event.name,
         points: Event.points,
-        publishedAt: Event.publishedAt,
         purpose: Event.purpose,
+        timezone: Hackathon.timezone,
       })
       .from(Event)
       .innerJoin(Hackathon, eq(Hackathon.id, Event.hackathonId))
@@ -189,7 +202,7 @@ export async function performHackathonEventCheckIn({
     if (!event) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
     }
-    if (event.deletionIntentAt || (!event.legacy && !event.publishedAt)) {
+    if (event.deletionIntentAt) {
       throw new TRPCError({
         code: "CONFLICT",
         message: "This event is not ready for check-in.",
@@ -200,12 +213,38 @@ export async function performHackathonEventCheckIn({
       input.source === "scanner"
         ? parseHackathonQrPayload(input.qrPayload)
         : null;
+    const opaquePayload =
+      input.source === "scanner"
+        ? parseOpaqueHackerCheckInPass(input.qrPayload)
+        : null;
+    const [opaquePass] = opaquePayload
+      ? await tx
+          .select({ attendeeId: HackerCheckInPass.attendeeId })
+          .from(HackerCheckInPass)
+          .where(
+            and(
+              eq(HackerCheckInPass.hackathonId, input.hackathonId),
+              eq(
+                HackerCheckInPass.tokenHash,
+                hashOpaqueHackerCheckInPass(opaquePayload),
+              ),
+              isNull(HackerCheckInPass.revokedAt),
+              or(
+                isNull(HackerCheckInPass.expiresAt),
+                gt(HackerCheckInPass.expiresAt, now),
+              ),
+            ),
+          )
+          .limit(1)
+      : [];
     const resolveBy =
       input.source === "manual"
         ? eq(HackerAttendee.id, input.attendeeId)
-        : qr
-          ? eq(Hacker.userId, qr.userId)
-          : undefined;
+        : opaquePass
+          ? eq(HackerAttendee.id, opaquePass.attendeeId)
+          : qr
+            ? eq(Hacker.userId, qr.userId)
+            : undefined;
 
     let hacker: ResolvedHacker | null = null;
     if (resolveBy) {
@@ -278,7 +317,7 @@ export async function performHackathonEventCheckIn({
           outcome,
           pointsAwarded,
           wasMinorAtAttempt: hackerRecord
-            ? isMinorAt(hackerRecord.dob, now)
+            ? isMinorAt(hackerRecord.dob, now, event.timezone)
             : null,
         })
         .returning({ id: HackerCheckInAttempt.id });
@@ -316,7 +355,7 @@ export async function performHackathonEventCheckIn({
       return attempt.id;
     };
 
-    if (input.source === "scanner" && !qr) {
+    if (input.source === "scanner" && !qr && !opaquePass) {
       const attemptId = await writeAttempt({
         hackerRecord: null,
         outcome: "invalid_qr",
@@ -375,7 +414,7 @@ export async function performHackathonEventCheckIn({
             isVip: hacker.isVip,
             pointsAwarded: 0,
             status: "already_checked_in" as const,
-            wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+            wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
           },
         };
       }
@@ -392,7 +431,7 @@ export async function performHackathonEventCheckIn({
             ...publicIdentity(hacker),
             currentStatus: hacker.status,
             status: "wrong_status" as const,
-            wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+            wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
           },
         };
       }
@@ -435,7 +474,7 @@ export async function performHackathonEventCheckIn({
           result: {
             ...publicIdentity(hacker),
             status: "not_ready" as const,
-            wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+            wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
           },
         };
       }
@@ -557,7 +596,7 @@ export async function performHackathonEventCheckIn({
           isVip: hacker.isVip,
           pointsAwarded: event.points ?? 0,
           status: "checked_in" as const,
-          wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+          wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
         },
       };
     }
@@ -574,7 +613,7 @@ export async function performHackathonEventCheckIn({
         result: {
           ...publicIdentity(hacker),
           status: "not_checked_in" as const,
-          wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+          wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
         },
       };
     }
@@ -605,7 +644,7 @@ export async function performHackathonEventCheckIn({
           class: existingClass,
           isVip: hacker.isVip,
           status: "wrong_class" as const,
-          wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+          wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
         },
       };
     }
@@ -649,7 +688,7 @@ export async function performHackathonEventCheckIn({
           isVip: hacker.isVip,
           pointsAwarded: 0,
           status: "already_checked_in" as const,
-          wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+          wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
         },
       };
     }
@@ -692,7 +731,7 @@ export async function performHackathonEventCheckIn({
         isVip: hacker.isVip,
         pointsAwarded,
         status: "checked_in" as const,
-        wasMinorAtAttempt: isMinorAt(hacker.dob, now),
+        wasMinorAtAttempt: isMinorAt(hacker.dob, now, event.timezone),
       },
     };
   });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { User } from "@forge/db/schemas/auth";
+import { Session, User } from "@forge/db/schemas/auth";
 
 import { env } from "~/env";
 import {
@@ -38,6 +38,26 @@ export async function GET(req: Request) {
       { status: 404 },
     );
   }
+
+  const now = new Date();
+  const sessionId = `e2e-session-${user.id}`;
+  await db
+    .insert(Session)
+    .values({
+      id: sessionId,
+      sessionToken: `e2e-token-${user.id}`,
+      userId: user.id,
+      expires: new Date(now.getTime() + 60 * 60 * 1000),
+      ipAddress: "127.0.0.1",
+      userAgent: "blade-playwright",
+    })
+    .onConflictDoUpdate({
+      target: Session.id,
+      set: {
+        expires: new Date(now.getTime() + 60 * 60 * 1000),
+        updatedAt: now,
+      },
+    });
 
   const response = NextResponse.redirect(new URL(callbackURL, req.url));
   response.cookies.set(E2E_AUTH_COOKIE, user.id, {

@@ -44,6 +44,10 @@ import {
   hackathonEventDiscordConfigSchema,
   hackathonEventDiscordResolutionSchema,
   hackathonEventIdSchema,
+  hackathonEventPublicationHealthDtoSchema,
+  hackathonEventPublicationHealthInputSchema,
+  hackathonEventPublicationRetrySchema,
+  hackathonEventPublicationSetDesiredStateSchema,
   hackathonEventScopeSchema,
   hackathonEventTagArchiveSchema,
   hackathonEventTagCreateSchema,
@@ -63,17 +67,9 @@ import {
   createDbEventFeedbackService,
   loadEventFeedbackListMetrics,
 } from "../utils/events/database-feedback";
-import { createDbEventWorkflowState } from "../utils/events/database-state";
 import { resolveEventGateways } from "../utils/events/gateway-resolver";
+import { assertHackathonEventProviderPayloadLimits } from "../utils/events/orchestration";
 import {
-  assertHackathonEventProviderPayloadLimits,
-  createEventSyncOrchestrator,
-  formatEventProjectionDescription,
-  formatHackathonDiscordEventDescription,
-} from "../utils/events/orchestration";
-import { eventGoogleCalendars } from "../utils/events/provider-gateways";
-import {
-  assertHackathonEvent,
   requireAnyHackathonEventCapability,
   requireHackathonEventCheckIn,
   requireHackathonEventEdit,
@@ -81,6 +77,15 @@ import {
 } from "../utils/hackathon-events/access";
 import { performHackathonEventCheckIn } from "../utils/hackathon-events/check-in";
 import { correctHackathonEventAttendance } from "../utils/hackathon-events/correction";
+import { hasHackathonEventHistory } from "../utils/hackathon-events/deletion";
+import { createHackEventOrchestrator } from "../utils/hackathon-events/orchestrator";
+import {
+  ensureEventPublicationWork,
+  loadEventPublicationHealth,
+  lockHackathonEventPublicationScope,
+  retryEventPublication,
+  setEventPublicationDesiredState,
+} from "../utils/hackathon-events/publication";
 import {
   deliverHackathonRoleGrants,
   loadHackathonRoleGrantHealth,
@@ -291,46 +296,6 @@ async function buildTagImportPreview(database: WriteDb, hackathonId: string) {
   };
 }
 
-async function createHackEventOrchestrator(
-  session: Parameters<typeof resolveEventGateways>[0],
-  hackathonId: string,
-  channelTypes: ReadonlyMap<string, "stage" | "voice"> = new Map(),
-) {
-  const [gateways, hackathon] = await Promise.all([
-    resolveEventGateways(session),
-    db.query.Hackathon.findFirst({
-      columns: { displayName: true },
-      where: eq(Hackathon.id, hackathonId),
-    }),
-  ]);
-  if (!hackathon) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Hackathon not found." });
-  }
-  const googleCalendars = eventGoogleCalendars();
-  return createEventSyncOrchestrator({
-    assertEventScope: (event) => assertHackathonEvent(event, hackathonId),
-    audit: gateways.audit.event,
-    clock: () => new Date(),
-    config: { googleCalendars, leaseDurationMs: 45_000 },
-    discord: gateways.discord,
-    formatProjectionDescription: (event, provider) =>
-      provider === "discord"
-        ? formatHackathonDiscordEventDescription({
-            description: event.description,
-            hackathonName: hackathon.displayName,
-            points: event.points,
-          })
-        : formatEventProjectionDescription(event),
-    google: gateways.google,
-    state: createDbEventWorkflowState({
-      channelTypes,
-      googleCalendars,
-      hackathonId,
-    }),
-    tokenFactory: randomUUID,
-  });
-}
-
 async function claimHackathonDiscordCandidate({
   candidateId,
   eventId,
@@ -477,6 +442,79 @@ export const hackathonEventRouter = {
       .orderBy(desc(Hackathon.startDate));
   }),
 
+  getPublicationHealth: permProcedure
+    .input(hackathonEventPublicationHealthInputSchema)
+    .output(hackathonEventPublicationHealthDtoSchema)
+    .query(async ({ ctx, input }) => {
+      requireHackathonEventRead(ctx);
+      return loadEventPublicationHealth(input.hackathonId);
+    }),
+
+  setPublicationDesiredState: permProcedure
+    .input(hackathonEventPublicationSetDesiredStateSchema)
+    .output(hackathonEventPublicationHealthDtoSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackathonEventEdit(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const health = await setEventPublicationDesiredState({
+        actorId: ctx.session.user.id,
+        audit: async (result, tx) => {
+          const hackathon = await hackathonAuditSubject(tx, input.hackathonId);
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon_event.publication_desired_state.updated",
+              actor,
+              metadata: {
+                desiredEnabled: input.desiredEnabled,
+                provider: input.provider,
+                revision: result.revision,
+                workItemCount: result.workItemCount,
+              },
+              subjects: [{ ...hackathon, relation: "primary" }],
+            },
+            tx,
+          );
+        },
+        desiredEnabled: input.desiredEnabled,
+        expectedRemoteCount: input.expectedRemoteCount,
+        expectedRevision: input.expectedRevision,
+        hackathonId: input.hackathonId,
+        provider: input.provider,
+      });
+      return health;
+    }),
+
+  retryPublication: permProcedure
+    .input(hackathonEventPublicationRetrySchema)
+    .output(hackathonEventPublicationHealthDtoSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackathonEventEdit(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const result = await retryEventPublication({
+        ...input,
+        audit: async (summary, tx) => {
+          const hackathon = await hackathonAuditSubject(tx, input.hackathonId);
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon_event.publication_retried",
+              actor,
+              metadata: {
+                blockedCount: summary.blockedCount,
+                provider: input.provider,
+                requeuedCount: summary.requeuedCount,
+                revision: summary.revision,
+              },
+              outcome:
+                summary.blockedCount > 0 ? "partial_external" : "committed",
+              subjects: [{ ...hackathon, relation: "primary" }],
+            },
+            tx,
+          );
+        },
+      });
+      return result.health;
+    }),
+
   createEvent: permProcedure
     .input(hackathonEventCreateSchema)
     .mutation(async ({ ctx, input }) => {
@@ -485,7 +523,7 @@ export const hackathonEventRouter = {
       const payloadHash = createHash("sha256")
         .update(JSON.stringify(input))
         .digest("hex");
-      const eventId = await db
+      await db
         .transaction(async (tx) => {
           const existing = await tx.query.Event.findFirst({
             columns: { creationPayloadHash: true, hackathonId: true, id: true },
@@ -502,6 +540,11 @@ export const hackathonEventRouter = {
                   "That creation key belongs to different event details.",
               });
             }
+            await ensureEventPublicationWork({
+              database: tx,
+              eventIds: [existing.id],
+              hackathonId: input.hackathonId,
+            });
             return existing.id;
           }
           const [hackathon, tag] = await Promise.all([
@@ -558,47 +601,88 @@ export const hackathonEventRouter = {
               tag: tag.name,
               tagColor: tag.color,
             })
+            .onConflictDoNothing({ target: Event.creationKey })
             .returning({ id: Event.id });
-          if (!created) throw new Error("Event insert did not return a row.");
+          if (!created) {
+            const concurrent = await tx.query.Event.findFirst({
+              columns: {
+                creationPayloadHash: true,
+                hackathonId: true,
+                id: true,
+              },
+              where: eq(Event.creationKey, input.creationKey),
+            });
+            if (!concurrent) {
+              throw new Error("Concurrent event creation row was not found.");
+            }
+            if (
+              concurrent.hackathonId !== input.hackathonId ||
+              concurrent.creationPayloadHash !== payloadHash
+            ) {
+              throw new TRPCError({
+                code: "CONFLICT",
+                message:
+                  "That creation key belongs to different event details.",
+              });
+            }
+            await ensureEventPublicationWork({
+              database: tx,
+              eventIds: [concurrent.id],
+              hackathonId: input.hackathonId,
+            });
+            return concurrent.id;
+          }
           await (
             await createDbEventFeedbackService(tx, {
               includeHackathonEvents: true,
             })
           ).provisionForEvent({ eventId: created.id });
+          await ensureEventPublicationWork({
+            database: tx,
+            eventIds: [created.id],
+            hackathonId: input.hackathonId,
+          });
+          const current = await tx.query.Event.findFirst({
+            where: and(
+              eq(Event.id, created.id),
+              eq(Event.hackathonId, input.hackathonId),
+            ),
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon_event.created",
+              actor,
+              metadata: {
+                creationSource: "new",
+                discordStatus: current?.discordSyncState ?? null,
+                endAt: input.end,
+                googleStatus: current?.googleSyncState ?? null,
+                startAt: input.start,
+                tagId: input.tagId,
+              },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: created.id,
+                  targetLabel: input.name,
+                  targetType: "event",
+                },
+                await hackathonAuditSubject(tx, input.hackathonId),
+              ],
+            },
+            tx,
+          );
           return created.id;
         })
         .catch(asHackEventWriteConflict);
-      const result = await (
-        await createHackEventOrchestrator(ctx.session, input.hackathonId)
-      ).sync(eventId, { actorId: ctx.session.user.id, auditAction: "create" });
-      const current = await db.query.Event.findFirst({
-        where: and(
-          eq(Event.id, eventId),
-          eq(Event.hackathonId, input.hackathonId),
-        ),
-      });
-      await createAdminAuditEvent({
-        actionKey: "hackathon_event.created",
-        actor,
-        metadata: {
-          creationSource: "new",
-          discordStatus: current?.discordSyncState ?? null,
-          endAt: input.end,
-          googleStatus: current?.googleSyncState ?? null,
-          startAt: input.start,
-          tagId: input.tagId,
-        },
-        subjects: [
-          {
-            relation: "primary",
-            targetId: eventId,
-            targetLabel: input.name,
-            targetType: "event",
-          },
-          await hackathonAuditSubject(db, input.hackathonId),
-        ],
-      });
-      return result;
+      const health = await loadEventPublicationHealth(input.hackathonId);
+      return {
+        status: health.providers.some(
+          (provider) => provider.status !== "off" && provider.status !== "on",
+        )
+          ? "syncing"
+          : "published",
+      };
     }),
 
   updateEvent: permProcedure
@@ -606,7 +690,7 @@ export const hackathonEventRouter = {
     .mutation(async ({ ctx, input }) => {
       requireHackathonEventEdit(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      const updated = await db
+      await db
         .transaction(async (tx) => {
           const [event] = await tx
             .select()
@@ -714,60 +798,75 @@ export const hackathonEventRouter = {
           });
           await feedback.provisionForEvent({ eventId: row.id });
           await feedback.recomputeWindowForEvent({ eventId: row.id });
-          return { before: event, row };
+          await ensureEventPublicationWork({
+            database: tx,
+            eventIds: [row.id],
+            hackathonId: input.hackathonId,
+          });
+          const current = await tx.query.Event.findFirst({
+            where: and(
+              eq(Event.id, input.eventId),
+              eq(Event.hackathonId, input.hackathonId),
+            ),
+          });
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon_event.updated",
+              actor,
+              changes: [
+                {
+                  field: "name",
+                  before: event.name,
+                  after: row.name,
+                },
+                {
+                  field: "startAt",
+                  before: event.start_datetime.toISOString(),
+                  after: row.start_datetime.toISOString(),
+                },
+                {
+                  field: "endAt",
+                  before: event.end_datetime.toISOString(),
+                  after: row.end_datetime.toISOString(),
+                },
+                {
+                  field: "location",
+                  before: event.location,
+                  after: row.location,
+                },
+                {
+                  field: "points",
+                  before: event.points,
+                  after: row.points,
+                },
+              ].filter(({ before, after }) => String(before) !== String(after)),
+              metadata: {
+                discordStatus: current?.discordSyncState ?? null,
+                googleStatus: current?.googleSyncState ?? null,
+              },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: row.id,
+                  targetLabel: row.name,
+                  targetType: "event",
+                },
+                await hackathonAuditSubject(tx, input.hackathonId),
+              ],
+            },
+            tx,
+          );
+          return row;
         })
         .catch(asHackEventWriteConflict);
-      const result = await (
-        await createHackEventOrchestrator(ctx.session, input.hackathonId)
-      ).sync(input.eventId, {
-        actorId: ctx.session.user.id,
-        auditAction: "update",
-      });
-      await createAdminAuditEvent({
-        actionKey: "hackathon_event.updated",
-        actor,
-        changes: [
-          {
-            field: "name",
-            before: updated.before.name,
-            after: updated.row.name,
-          },
-          {
-            field: "startAt",
-            before: updated.before.start_datetime.toISOString(),
-            after: updated.row.start_datetime.toISOString(),
-          },
-          {
-            field: "endAt",
-            before: updated.before.end_datetime.toISOString(),
-            after: updated.row.end_datetime.toISOString(),
-          },
-          {
-            field: "location",
-            before: updated.before.location,
-            after: updated.row.location,
-          },
-          {
-            field: "points",
-            before: updated.before.points,
-            after: updated.row.points,
-          },
-        ].filter(({ before, after }) => String(before) !== String(after)),
-        metadata: {
-          discordStatus: updated.row.discordSyncState,
-          googleStatus: updated.row.googleSyncState,
-        },
-        subjects: [
-          {
-            relation: "primary",
-            targetId: updated.row.id,
-            targetLabel: updated.row.name,
-            targetType: "event",
-          },
-          await hackathonAuditSubject(db, input.hackathonId),
-        ],
-      });
-      return result;
+      const health = await loadEventPublicationHealth(input.hackathonId);
+      return {
+        status: health.providers.some(
+          (provider) => provider.status !== "off" && provider.status !== "on",
+        )
+          ? "syncing"
+          : "published",
+      };
     }),
 
   deleteEvent: permProcedure
@@ -775,42 +874,125 @@ export const hackathonEventRouter = {
     .mutation(async ({ ctx, input }) => {
       requireHackathonEventEdit(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      const before = await db.query.Event.findFirst({
-        where: and(
-          eq(Event.id, input.eventId),
-          eq(Event.hackathonId, input.hackathonId),
-        ),
-      });
-      if (!before)
-        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
-      const result = await (
-        await createHackEventOrchestrator(ctx.session, input.hackathonId)
-      ).delete(input.eventId, { actorId: ctx.session.user.id });
-      const after = await db.query.Event.findFirst({
-        where: and(
-          eq(Event.id, input.eventId),
-          eq(Event.hackathonId, input.hackathonId),
-        ),
-      });
-      await createAdminAuditEvent({
-        actionKey: "hackathon_event.deleted",
-        actor,
-        metadata: {
-          discordStatus: after?.discordSyncState ?? "deleted",
-          googleStatus: after?.googleSyncState ?? "deleted",
-          stage: result.status === "deleted" ? "completed" : "syncing",
-        },
-        subjects: [
+      const deletion = await db.transaction(async (tx) => {
+        await lockHackathonEventPublicationScope(tx, input.hackathonId);
+        const [before] = await tx
+          .select()
+          .from(Event)
+          .where(
+            and(
+              eq(Event.id, input.eventId),
+              eq(Event.hackathonId, input.hackathonId),
+            ),
+          )
+          .for("update")
+          .limit(1);
+        if (!before) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Event not found.",
+          });
+        }
+        if (
+          await hasHackathonEventHistory(tx, {
+            eventId: before.id,
+            hackathonId: input.hackathonId,
+          })
+        ) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Events with attendance or check-in history cannot be deleted.",
+          });
+        }
+        const [event] = before.deletionIntentAt
+          ? [before]
+          : await tx
+              .update(Event)
+              .set({
+                deletionIntentAt: new Date(),
+                discordSyncState:
+                  before.discordSyncState === "unknown"
+                    ? "unknown"
+                    : before.discordId
+                      ? "pending"
+                      : "disabled",
+                googleSyncState:
+                  before.googleSyncState === "unknown"
+                    ? "unknown"
+                    : before.googleId
+                      ? "pending"
+                      : "disabled",
+                syncRevision: before.syncRevision + 1,
+              })
+              .where(eq(Event.id, before.id))
+              .returning();
+        if (!event) throw new Error("Event deletion intent was not saved.");
+        const canDeleteImmediately =
+          event.discordId === null &&
+          event.googleId === null &&
+          event.discordSyncState !== "unknown" &&
+          event.googleSyncState !== "unknown";
+        if (canDeleteImmediately) {
+          await tx.delete(Event).where(eq(Event.id, event.id));
+          await createAdminAuditEvent(
+            {
+              actionKey: "hackathon_event.deleted",
+              actor,
+              metadata: {
+                discordStatus: "deleted",
+                googleStatus: "deleted",
+                stage: "completed",
+              },
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: before.id,
+                  targetLabel: before.name,
+                  targetType: "event",
+                },
+                await hackathonAuditSubject(tx, input.hackathonId),
+              ],
+            },
+            tx,
+          );
+          return { deleted: true };
+        }
+        await ensureEventPublicationWork({
+          database: tx,
+          eventIds: [event.id],
+          hackathonId: input.hackathonId,
+        });
+        const after = await tx.query.Event.findFirst({
+          where: and(
+            eq(Event.id, input.eventId),
+            eq(Event.hackathonId, input.hackathonId),
+          ),
+        });
+        await createAdminAuditEvent(
           {
-            relation: "primary",
-            targetId: before.id,
-            targetLabel: before.name,
-            targetType: "event",
+            actionKey: "hackathon_event.deleted",
+            actor,
+            metadata: {
+              discordStatus: after?.discordSyncState ?? "deleted",
+              googleStatus: after?.googleSyncState ?? "deleted",
+              stage: "syncing",
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: before.id,
+                targetLabel: before.name,
+                targetType: "event",
+              },
+              await hackathonAuditSubject(tx, input.hackathonId),
+            ],
           },
-          await hackathonAuditSubject(db, input.hackathonId),
-        ],
+          tx,
+        );
+        return { deleted: false };
       });
-      return result;
+      return { status: deletion.deleted ? "deleted" : "syncing" };
     }),
 
   retrySync: permProcedure
@@ -827,30 +1009,22 @@ export const hackathonEventRouter = {
       if (!event) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
       }
-      const channelTypes = new Map<string, "stage" | "voice">();
-      if (event.isOperationsCalendar && event.discordChannelId) {
-        const gateways = await resolveEventGateways(ctx.session);
-        const type = await gateways.resolveDiscordChannelType(
-          event.discordChannelId,
-        );
-        if (!type) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "The configured Discord channel is unavailable.",
-          });
-        }
-        channelTypes.set(event.discordChannelId, type);
-      }
-      const result = await (
-        await createHackEventOrchestrator(
-          ctx.session,
-          input.hackathonId,
-          channelTypes,
-        )
-      ).sync(input.eventId, {
-        actorId: ctx.session.user.id,
-        auditAction: "repair",
+      await ensureEventPublicationWork({
+        eventIds: [event.id],
+        hackathonId: input.hackathonId,
       });
+      const health = await Promise.all([
+        retryEventPublication({
+          eventIds: [event.id],
+          hackathonId: input.hackathonId,
+          provider: "discord",
+        }),
+        retryEventPublication({
+          eventIds: [event.id],
+          hackathonId: input.hackathonId,
+          provider: "google",
+        }),
+      ]).then(([value]) => value.health);
       const current = await db.query.Event.findFirst({
         where: and(
           eq(Event.id, input.eventId),
@@ -875,7 +1049,13 @@ export const hackathonEventRouter = {
           await hackathonAuditSubject(db, input.hackathonId),
         ],
       });
-      return result;
+      return {
+        status: health.providers.some(
+          (provider) => provider.status !== "off" && provider.status !== "on",
+        )
+          ? "syncing"
+          : "published",
+      };
     }),
 
   /** Hackathon-scoped event administration rows; never Club rows. */
@@ -1695,10 +1875,8 @@ export const hackathonEventRouter = {
             purpose: Event.purpose,
             deletionIntentAt: Event.deletionIntentAt,
             endDateTime: Event.end_datetime,
-            legacy: Event.legacy,
             name: Event.name,
             points: Event.points,
-            publishedAt: Event.publishedAt,
             startDateTime: Event.start_datetime,
           })
           .from(Event)
@@ -1706,7 +1884,6 @@ export const hackathonEventRouter = {
             and(
               eq(Event.hackathonId, input.hackathonId),
               isNull(Event.deletionIntentAt),
-              or(eq(Event.legacy, true), sql`${Event.publishedAt} is not null`),
             ),
           )
           .orderBy(desc(Event.start_datetime), asc(Event.id)),
@@ -1735,12 +1912,10 @@ export const hackathonEventRouter = {
       return {
         classes,
         configReady,
-        events: eventRows.map(
-          ({ deletionIntentAt, legacy, publishedAt, ...event }) => ({
-            ...event,
-            ready: !deletionIntentAt && (legacy || Boolean(publishedAt)),
-          }),
-        ),
+        events: eventRows.map(({ deletionIntentAt, ...event }) => ({
+          ...event,
+          ready: !deletionIntentAt,
+        })),
       };
     }),
 

@@ -1,4 +1,10 @@
-import { AlertTriangle, CheckCircle2, Clock3, HelpCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleOff,
+  Clock3,
+  HelpCircle,
+} from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
@@ -21,21 +27,25 @@ export function IntegrationStatus({
   label: string;
 }) {
   const Icon =
-    health === "synced"
-      ? CheckCircle2
-      : health === "pending"
-        ? Clock3
-        : health === "unknown"
-          ? HelpCircle
-          : AlertTriangle;
+    health === "disabled"
+      ? CircleOff
+      : health === "synced"
+        ? CheckCircle2
+        : health === "pending"
+          ? Clock3
+          : health === "unknown"
+            ? HelpCircle
+            : AlertTriangle;
   const text =
-    health === "synced"
-      ? `${label} synchronized`
-      : health === "pending"
-        ? `${label} pending`
-        : health === "unknown"
-          ? `${label} status unknown`
-          : `${label} needs attention`;
+    health === "disabled"
+      ? `${label} not published`
+      : health === "synced"
+        ? `${label} synchronized`
+        : health === "pending"
+          ? `${label} pending`
+          : health === "unknown"
+            ? `${label} status unknown`
+            : `${label} needs attention`;
 
   return (
     <Badge
@@ -46,6 +56,7 @@ export function IntegrationStatus({
           "border-[hsl(var(--chart-2)/0.35)] text-[hsl(var(--chart-2))]",
         health === "error" && "border-destructive/35 text-destructive",
         health === "pending" && "text-muted-foreground",
+        health === "disabled" && "text-muted-foreground",
         health === "unknown" &&
           "border-[hsl(var(--chart-3)/0.35)] text-[hsl(var(--chart-3))]",
       )}

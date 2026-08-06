@@ -116,12 +116,52 @@ describe("resume storage", () => {
     const where = vi
       .fn()
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ resumeUrl: sharedResume }]);
+      .mockResolvedValueOnce([{ resumeUrl: sharedResume }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const builder = {
+      innerJoin: vi.fn(() => builder),
+      where,
+    };
     mocks.db.select.mockImplementation(() => ({
-      from: vi.fn(() => ({ where })),
+      from: vi.fn(() => builder),
     }));
     mocks.listObjects.mockReturnValue(
       Readable.from([{ name: sharedResume }, { name: orphanedResume }]),
+    );
+
+    await removeUnreferencedResumeObjectsForUser(userId);
+
+    expect(mocks.removeObject).toHaveBeenCalledTimes(1);
+    expect(mocks.removeObject).toHaveBeenCalledWith(
+      "member-resumes",
+      orphanedResume,
+    );
+  });
+
+  it("preserves canonical and hack-pinned profile resumes", async () => {
+    const currentResume = `${userId}/resume-00000000-0000-4000-8000-000000000003.pdf`;
+    const pinnedResume = `${userId}/resume-00000000-0000-4000-8000-000000000004.pdf`;
+    const orphanedResume = `${userId}/resume-00000000-0000-4000-8000-000000000005.pdf`;
+    const where = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ resumeUrl: currentResume }])
+      .mockResolvedValueOnce([{ resumeUrl: pinnedResume }]);
+    const builder = {
+      innerJoin: vi.fn(() => builder),
+      where,
+    };
+    mocks.db.select.mockImplementation(() => ({
+      from: vi.fn(() => builder),
+    }));
+    mocks.listObjects.mockReturnValue(
+      Readable.from([
+        { name: currentResume },
+        { name: pinnedResume },
+        { name: orphanedResume },
+      ]),
     );
 
     await removeUnreferencedResumeObjectsForUser(userId);

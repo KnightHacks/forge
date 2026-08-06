@@ -1,6 +1,7 @@
 import type { EventWorkflowRecord } from "./orchestration";
 
 export type AdminEventIntegrationHealth =
+  | "disabled"
   | "error"
   | "pending"
   | "synced"

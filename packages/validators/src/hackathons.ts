@@ -16,6 +16,20 @@ export const hackathonThemeSchema = z
   .min(1, "Theme is required.")
   .max(255, "Theme must be 255 characters or fewer.");
 
+export const ianaTimeZoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .refine((value) => {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Choose a valid IANA timezone.");
+
 /** Same rule and reason as `platform-config`: a cleared field means "not set". */
 const emptyToNull = (value: string | null) => (value === "" ? null : value);
 
@@ -211,11 +225,22 @@ const hackathonWritableFields = {
   theme: hackathonThemeSchema,
 };
 
-export const hackathonCreateSchema = z.object(hackathonWritableFields);
+export const hackathonConfirmationCapacitySchema = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.coerce.number().int().min(0).nullable(),
+);
+
+export const hackathonCreateSchema = z.object({
+  ...hackathonWritableFields,
+  confirmationCapacity: hackathonConfirmationCapacitySchema.default(null),
+  timezone: ianaTimeZoneSchema.default("America/New_York"),
+});
 
 export const hackathonUpdateSchema = z.object({
   ...hackathonWritableFields,
+  confirmationCapacity: hackathonConfirmationCapacitySchema,
   id: z.string().uuid(),
+  timezone: ianaTimeZoneSchema,
 });
 
 export const hackathonIdSchema = z.object({ id: z.string().uuid() });

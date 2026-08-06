@@ -18,7 +18,6 @@ import {
 } from "./_components/graphics/AnimatedBirds";
 import Logo from "./_components/graphics/logo";
 import Partners from "./_components/partners/partners";
-import Register from "./_components/register/registerButton";
 import { EVENT_DATE_LABEL } from "./seo";
 
 const heroReveal: Variants = {
@@ -47,11 +46,6 @@ export default function HomePage() {
     [0, 0.65],
     prefersReducedMotion ? [0, 0] : [0, -30],
   );
-  const ctaYRaw = useTransform(
-    scrollYProgress,
-    [0, 0.65],
-    prefersReducedMotion ? [0, 0] : [0, -14],
-  );
   const logoScaleRaw = useTransform(
     scrollYProgress,
     [0, 0.65],
@@ -60,7 +54,6 @@ export default function HomePage() {
   const scrollSpring = { stiffness: 34, damping: 32, mass: 0.75 };
   const logoY = useSpring(logoYRaw, scrollSpring);
   const dateY = useSpring(dateYRaw, scrollSpring);
-  const ctaY = useSpring(ctaYRaw, scrollSpring);
   const logoScale = useSpring(logoScaleRaw, scrollSpring);
 
   return (
@@ -95,19 +88,6 @@ export default function HomePage() {
             <h2 className="font-dm-sans text-2xl font-black italic tracking-normal text-white [-webkit-text-stroke:0px_transparent] [text-shadow:0_3px_0_rgba(126,126,126,0.88),0_7px_12px_rgba(42,42,42,0.24)] sm:text-3xl md:text-4xl">
               Orlando, Florida | {EVENT_DATE_LABEL}
             </h2>
-          </motion.div>
-        </motion.div>
-        <motion.div
-          className="bloom-depth-layer -mt-15 sm:mt-0"
-          style={{ y: ctaY }}
-        >
-          <motion.div
-            variants={heroReveal}
-            initial={prefersReducedMotion ? false : "hidden"}
-            animate="visible"
-            custom={0.25}
-          >
-            <Register />
           </motion.div>
         </motion.div>
       </div>

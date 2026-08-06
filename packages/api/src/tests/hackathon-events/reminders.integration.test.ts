@@ -123,7 +123,10 @@ describe.skipIf(!canRunDatabaseTests())(
           creationPayloadHash: null,
           legacy: true,
         }),
-        event(UNHEALTHY_ID, { discordSyncState: "error" }),
+        event(UNHEALTHY_ID, {
+          discordSyncState: "error",
+          start_datetime: new Date("2026-08-05T16:17:00.000Z"),
+        }),
         event(DELETING_ID, { deletionIntentAt: NOW }),
         event(OUTSIDE_ID, {
           start_datetime: new Date("2026-08-05T16:17:00.000Z"),
@@ -138,6 +141,26 @@ describe.skipIf(!canRunDatabaseTests())(
 
       expect(hack.map(({ eventId }) => eventId)).toEqual([ELIGIBLE_ID]);
       expect(club.map(({ id }) => id)).toEqual([CLUB_ID]);
+    });
+
+    it("[TC-PUB-012] plans reminders without a Discord Scheduled Event", async () => {
+      await client.insert(knightHacks.Event).values(
+        event(ELIGIBLE_ID, {
+          discordAppliedEntityType: null,
+          discordAppliedRevision: null,
+          discordId: null,
+          discordSyncState: "disabled",
+          publishedAt: null,
+        }),
+      );
+
+      const [delivery] = await claim({ guildId: GUILD_ID, now: NOW });
+
+      expect(delivery).toMatchObject({
+        discordEventId: null,
+        eventId: ELIGIBLE_ID,
+        roleId: "990000000000000003",
+      });
     });
 
     it("[TC-REM-003] deduplicates concurrent planning and definite retries", async () => {

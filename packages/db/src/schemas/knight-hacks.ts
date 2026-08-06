@@ -15,7 +15,7 @@ import z from "zod";
 
 import { CAREER, EVENTS, FORMS, GUILD, ISSUE } from "@forge/consts";
 
-import { Roles, User } from "./auth";
+import { Roles, Session, User } from "./auth";
 
 const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
 
@@ -62,6 +62,26 @@ export const hackerDiscordRoleAttemptOutcomeEnum = pgEnum(
 export const hackathonEventReminderStateEnum = pgEnum(
   "hackathon_event_reminder_state",
   ["pending", "delivering", "delivered", "failed", "unknown"],
+);
+export const hackerAgreementStageEnum = pgEnum("hacker_agreement_stage", [
+  "application",
+  "confirmation",
+]);
+export const hackerAgreementProvenanceEnum = pgEnum(
+  "hacker_agreement_provenance",
+  ["explicit", "legacy_unversioned"],
+);
+export const hackerParticipantCommandStateEnum = pgEnum(
+  "hacker_participant_command_state",
+  ["started", "completed"],
+);
+export const hackathonEventPublicationProviderEnum = pgEnum(
+  "hackathon_event_publication_provider",
+  ["discord", "google"],
+);
+export const eventPublicationWorkStateEnum = pgEnum(
+  "event_publication_work_state",
+  ["pending", "processing", "succeeded", "failed", "blocked"],
 );
 export const formKindEnum = pgEnum("form_kind", [
   "general",
@@ -122,6 +142,7 @@ export const Hackathon = createTable(
     name: t.varchar({ length: 255 }).notNull(),
     displayName: t.varchar({ length: 255 }).notNull().default(""),
     theme: t.varchar({ length: 255 }).notNull(),
+    timezone: t.varchar({ length: 64 }).notNull().default("America/New_York"),
     /**
      * Where the hackathon's own site hosts its application. Typed in rather
      * than built from `name`, because that site owns its paths and changes
@@ -143,6 +164,8 @@ export const Hackathon = createTable(
     confirmationDeadline: t.timestamp().notNull().defaultNow(),
     startDate: t.timestamp().notNull(),
     endDate: t.timestamp().notNull(),
+    /** Maximum confirmed hackers. NULL means confirmation has no capacity cap. */
+    confirmationCapacity: t.integer(),
     /** Granted to every hacker admitted to this hackathon. */
     generalHackerDiscordRoleId: t.varchar({ length: 20 }),
     /** Destination for this hackathon's event reminders. */
@@ -157,6 +180,10 @@ export const Hackathon = createTable(
     validGeneralHackerRoleId: check(
       "knight_hacks_hackathon_general_hacker_discord_role_id_check",
       sql`${t.generalHackerDiscordRoleId} IS NULL OR ${t.generalHackerDiscordRoleId} ~ '^[0-9]{17,20}$'`,
+    ),
+    validConfirmationCapacity: check(
+      "knight_hacks_hackathon_confirmation_capacity_check",
+      sql`${t.confirmationCapacity} IS NULL OR ${t.confirmationCapacity} >= 0`,
     ),
   }),
 );
@@ -392,6 +419,455 @@ export const Hacker = createTable("hacker", (t) => ({
 
 export type InsertHacker = typeof Hacker.$inferInsert;
 export type SelectHacker = typeof Hacker.$inferSelect;
+
+/** One reusable participant profile, independent of any yearly application. */
+export const HackerProfile = createTable(
+  "hacker_profile",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    firstName: t.varchar({ length: 255 }).notNull(),
+    lastName: t.varchar({ length: 255 }).notNull(),
+    gender: genderEnum().notNull(),
+    discordUser: t.varchar({ length: 255 }).notNull(),
+    country: t.text({ enum: FORMS.COUNTRIES }).notNull(),
+    email: t.varchar({ length: 255 }).notNull(),
+    phoneNumber: t.varchar({ length: 255 }).notNull(),
+    school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+    levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
+    major: t.text({ enum: FORMS.MAJORS }).notNull(),
+    raceOrEthnicity: raceOrEthnicityEnum().notNull(),
+    shirtSize: shirtSizeEnum().notNull(),
+    githubProfileUrl: t.varchar({ length: 255 }),
+    linkedinProfileUrl: t.varchar({ length: 255 }),
+    websiteUrl: t.varchar({ length: 255 }),
+    resumeUrl: t.varchar({ length: 255 }),
+    dob: t.date().notNull(),
+    gradDate: t.date().notNull(),
+    foodAllergies: t.text(),
+    revision: t.integer().notNull().default(1),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    userUnique: unique("knight_hacks_hacker_profile_user_unique").on(
+      table.userId,
+    ),
+    validRevision: check(
+      "knight_hacks_hacker_profile_revision_check",
+      sql`${table.revision} >= 1`,
+    ),
+  }),
+);
+
+export type InsertHackerProfile = typeof HackerProfile.$inferInsert;
+export type SelectHackerProfile = typeof HackerProfile.$inferSelect;
+
+/** Immutable sponsor-visible snapshot of reusable profile data. */
+export const HackerProfileRevision = createTable(
+  "hacker_profile_revision",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    profileId: t
+      .uuid()
+      .notNull()
+      .references(() => HackerProfile.id, { onDelete: "cascade" }),
+    legacyHackerId: t
+      .uuid()
+      .unique()
+      .references(() => Hacker.id, { onDelete: "set null" }),
+    revision: t.integer().notNull(),
+    firstName: t.varchar({ length: 255 }).notNull(),
+    lastName: t.varchar({ length: 255 }).notNull(),
+    gender: genderEnum().notNull(),
+    discordUser: t.varchar({ length: 255 }).notNull(),
+    country: t.text({ enum: FORMS.COUNTRIES }).notNull(),
+    email: t.varchar({ length: 255 }).notNull(),
+    phoneNumber: t.varchar({ length: 255 }).notNull(),
+    school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+    levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
+    major: t.text({ enum: FORMS.MAJORS }).notNull(),
+    raceOrEthnicity: raceOrEthnicityEnum().notNull(),
+    shirtSize: shirtSizeEnum().notNull(),
+    githubProfileUrl: t.varchar({ length: 255 }),
+    linkedinProfileUrl: t.varchar({ length: 255 }),
+    websiteUrl: t.varchar({ length: 255 }),
+    resumeUrl: t.varchar({ length: 255 }),
+    dob: t.date().notNull(),
+    gradDate: t.date().notNull(),
+    foodAllergies: t.text(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+  }),
+  (table) => ({
+    profileRevisionUnique: unique(
+      "knight_hacks_hacker_profile_revision_profile_version_unique",
+    ).on(table.profileId, table.revision),
+    scopedIdentity: unique(
+      "knight_hacks_hacker_profile_revision_id_profile_unique",
+    ).on(table.id, table.profileId),
+    profileCreated: index(
+      "knight_hacks_hacker_profile_revision_profile_created_idx",
+    ).on(table.profileId, table.createdAt),
+    validRevision: check(
+      "knight_hacks_hacker_profile_revision_version_check",
+      sql`${table.revision} >= 1`,
+    ),
+  }),
+);
+
+export type InsertHackerProfileRevision =
+  typeof HackerProfileRevision.$inferInsert;
+export type SelectHackerProfileRevision =
+  typeof HackerProfileRevision.$inferSelect;
+
+/** Versioned legal text that a participant accepts for one lifecycle stage. */
+export const HackathonAgreementDefinition = createTable(
+  "hackathon_agreement_definition",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    stage: hackerAgreementStageEnum().notNull(),
+    key: t.varchar({ length: 64 }).notNull(),
+    version: t.varchar({ length: 64 }).notNull(),
+    title: t.varchar({ length: 255 }).notNull(),
+    legalText: t.text(),
+    url: t.text(),
+    required: t.boolean().notNull().default(true),
+    active: t.boolean().notNull().default(false),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+  }),
+  (table) => ({
+    versionUnique: unique(
+      "knight_hacks_hackathon_agreement_definition_version_unique",
+    ).on(table.hackathonId, table.stage, table.key, table.version),
+    scopedIdentity: unique(
+      "knight_hacks_hackathon_agreement_definition_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    oneActiveVersion: uniqueIndex(
+      "knight_hacks_hackathon_agreement_definition_active_unique",
+    )
+      .on(table.hackathonId, table.stage, table.key)
+      .where(sql`${table.active} = true`),
+    contentPresent: check(
+      "knight_hacks_hackathon_agreement_definition_content_check",
+      sql`${table.legalText} IS NOT NULL OR ${table.url} IS NOT NULL`,
+    ),
+  }),
+);
+
+export type InsertHackathonAgreementDefinition =
+  typeof HackathonAgreementDefinition.$inferInsert;
+export type SelectHackathonAgreementDefinition =
+  typeof HackathonAgreementDefinition.$inferSelect;
+
+/** Public portal registration. The browser receives only `clientId`. */
+export const HackathonPortalClient = createTable(
+  "hackathon_portal_client",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    clientId: t.varchar({ length: 128 }).notNull(),
+    name: t.varchar({ length: 120 }).notNull(),
+    productionOrigin: t.varchar({ length: 2048 }).notNull(),
+    enabled: t.boolean().notNull().default(true),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+    createdBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+  }),
+  (table) => ({
+    clientIdUnique: unique(
+      "knight_hacks_hackathon_portal_client_client_id_unique",
+    ).on(table.clientId),
+    hackathonUnique: unique(
+      "knight_hacks_hackathon_portal_client_hackathon_unique",
+    ).on(table.hackathonId),
+    productionOriginUnique: unique(
+      "knight_hacks_hackathon_portal_client_origin_unique",
+    ).on(table.productionOrigin),
+    scopedIdentity: unique(
+      "knight_hacks_hackathon_portal_client_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    productionOriginShape: check(
+      "knight_hacks_hackathon_portal_client_origin_check",
+      sql`${table.productionOrigin} ~ '^https://[a-z0-9-]+([.][a-z0-9-]+)*[.]knighthacks[.]org$'`,
+    ),
+  }),
+);
+
+export type InsertHackathonPortalClient =
+  typeof HackathonPortalClient.$inferInsert;
+export type SelectHackathonPortalClient =
+  typeof HackathonPortalClient.$inferSelect;
+
+/** Hashed, short-lived, one-use PKCE authorization code. */
+export const HackathonPortalAuthorizationCode = createTable(
+  "hackathon_portal_authorization_code",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    portalClientId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    betterAuthSessionId: t
+      .text()
+      .notNull()
+      .references(() => Session.id, { onDelete: "cascade" }),
+    codeHash: t.varchar({ length: 64 }).notNull(),
+    codeChallenge: t.varchar({ length: 128 }).notNull(),
+    codeChallengeMethod: t.varchar({ length: 8 }).notNull().default("S256"),
+    redirectUri: t.text().notNull(),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    consumedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (table) => ({
+    codeHashUnique: unique(
+      "knight_hacks_hackathon_portal_authorization_code_hash_unique",
+    ).on(table.codeHash),
+    expiryIdx: index(
+      "knight_hacks_hackathon_portal_authorization_code_expiry_idx",
+    ).on(table.expiresAt),
+    clientExpiryIdx: index(
+      "knight_hacks_hackathon_portal_authorization_code_client_expiry_idx",
+    ).on(table.portalClientId, table.expiresAt),
+    scopedClientReference: foreignKey({
+      columns: [table.portalClientId, table.hackathonId],
+      foreignColumns: [
+        HackathonPortalClient.id,
+        HackathonPortalClient.hackathonId,
+      ],
+      name: "knight_hacks_hackathon_portal_authorization_code_scoped_client_fk",
+    }).onDelete("cascade"),
+    codeHashShape: check(
+      "knight_hacks_hackathon_portal_authorization_code_hash_check",
+      sql`${table.codeHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    challengeMethod: check(
+      "knight_hacks_hackathon_portal_authorization_code_method_check",
+      sql`${table.codeChallengeMethod} = 'S256'`,
+    ),
+  }),
+);
+
+export type InsertHackathonPortalAuthorizationCode =
+  typeof HackathonPortalAuthorizationCode.$inferInsert;
+export type SelectHackathonPortalAuthorizationCode =
+  typeof HackathonPortalAuthorizationCode.$inferSelect;
+
+/** Hashed portal access/refresh credentials derived from a Better Auth session. */
+export const HackathonPortalSession = createTable(
+  "hackathon_portal_session",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    portalClientId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    betterAuthSessionId: t
+      .text()
+      .notNull()
+      .references(() => Session.id, { onDelete: "cascade" }),
+    accessTokenHash: t.varchar({ length: 64 }).notNull(),
+    refreshTokenHash: t.varchar({ length: 64 }).notNull(),
+    accessExpiresAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull(),
+    refreshExpiresAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull(),
+    refreshVersion: t.integer().notNull().default(1),
+    revokedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    lastUsedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    accessHashUnique: unique(
+      "knight_hacks_hackathon_portal_session_access_hash_unique",
+    ).on(table.accessTokenHash),
+    refreshHashUnique: unique(
+      "knight_hacks_hackathon_portal_session_refresh_hash_unique",
+    ).on(table.refreshTokenHash),
+    scopedClientReference: foreignKey({
+      columns: [table.portalClientId, table.hackathonId],
+      foreignColumns: [
+        HackathonPortalClient.id,
+        HackathonPortalClient.hackathonId,
+      ],
+      name: "knight_hacks_hackathon_portal_session_scoped_client_fk",
+    }).onDelete("cascade"),
+    activeAccessIdx: index(
+      "knight_hacks_hackathon_portal_session_access_expiry_idx",
+    ).on(table.accessExpiresAt, table.revokedAt),
+    refreshExpiryIdx: index(
+      "knight_hacks_hackathon_portal_session_refresh_expiry_idx",
+    ).on(table.refreshExpiresAt),
+    userClientIdx: index(
+      "knight_hacks_hackathon_portal_session_user_client_idx",
+    ).on(table.userId, table.portalClientId),
+    accessHashShape: check(
+      "knight_hacks_hackathon_portal_session_access_hash_check",
+      sql`${table.accessTokenHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    refreshHashShape: check(
+      "knight_hacks_hackathon_portal_session_refresh_hash_check",
+      sql`${table.refreshTokenHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    validRefreshVersion: check(
+      "knight_hacks_hackathon_portal_session_refresh_version_check",
+      sql`${table.refreshVersion} >= 1`,
+    ),
+  }),
+);
+
+export type InsertHackathonPortalSession =
+  typeof HackathonPortalSession.$inferInsert;
+export type SelectHackathonPortalSession =
+  typeof HackathonPortalSession.$inferSelect;
+
+/**
+ * Hashed credentials retained for the lifetime of a portal session family.
+ * Historical hashes let logout revoke a family after rotation and let refresh
+ * distinguish an unknown token from replay of a credential we issued.
+ */
+export const HackathonPortalSessionCredential = createTable(
+  "hackathon_portal_session_credential",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    portalSessionId: t
+      .uuid()
+      .notNull()
+      .references(() => HackathonPortalSession.id, { onDelete: "cascade" }),
+    tokenHash: t.varchar({ length: 64 }).notNull(),
+    tokenKind: t.varchar({ length: 8 }).notNull(),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    rotatedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (table) => ({
+    tokenHashUnique: unique(
+      "knight_hacks_hackathon_portal_session_credential_hash_unique",
+    ).on(table.tokenHash),
+    sessionIdx: index(
+      "knight_hacks_hackathon_portal_session_credential_session_idx",
+    ).on(table.portalSessionId),
+    tokenHashShape: check(
+      "knight_hacks_hackathon_portal_session_credential_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    tokenKindShape: check(
+      "knight_hacks_hackathon_portal_session_credential_kind_check",
+      sql`${table.tokenKind} IN ('access', 'refresh')`,
+    ),
+  }),
+);
+
+export type InsertHackathonPortalSessionCredential =
+  typeof HackathonPortalSessionCredential.$inferInsert;
+export type SelectHackathonPortalSessionCredential =
+  typeof HackathonPortalSessionCredential.$inferSelect;
+
+/** Durable result for one participant mutation idempotency key. */
+export const HackerParticipantCommand = createTable(
+  "hacker_participant_command",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    operation: t.varchar({ length: 64 }).notNull(),
+    idempotencyKey: t.varchar({ length: 128 }).notNull(),
+    payloadHash: t.varchar({ length: 64 }).notNull(),
+    state: hackerParticipantCommandStateEnum().notNull().default("started"),
+    result: t.jsonb(),
+    safeErrorCode: t.varchar({ length: 64 }),
+    startedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    completedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+  }),
+  (table) => ({
+    commandUnique: unique(
+      "knight_hacks_hacker_participant_command_identity_unique",
+    ).on(
+      table.userId,
+      table.hackathonId,
+      table.operation,
+      table.idempotencyKey,
+    ),
+    expiryIdx: index("knight_hacks_hacker_participant_command_expiry_idx").on(
+      table.expiresAt,
+    ),
+    payloadHashShape: check(
+      "knight_hacks_hacker_participant_command_payload_hash_check",
+      sql`${table.payloadHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    completionState: check(
+      "knight_hacks_hacker_participant_command_completion_check",
+      sql`(${table.state} = 'started' AND ${table.completedAt} IS NULL) OR (${table.state} <> 'started' AND ${table.completedAt} IS NOT NULL)`,
+    ),
+  }),
+);
+
+export type InsertHackerParticipantCommand =
+  typeof HackerParticipantCommand.$inferInsert;
+export type SelectHackerParticipantCommand =
+  typeof HackerParticipantCommand.$inferSelect;
 
 export type InsertMember = typeof Member.$inferInsert;
 export type SelectMember = typeof Member.$inferSelect;
@@ -712,6 +1188,136 @@ export const InsertEventSchema = createInsertSchema(Event).extend({
   hackathonName: z.string().nullable().optional(),
 });
 
+/** Requested external-calendar state for one hackathon and provider. */
+export const HackathonEventPublication = createTable(
+  "hackathon_event_publication",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    provider: hackathonEventPublicationProviderEnum().notNull(),
+    desiredEnabled: t.boolean().notNull().default(false),
+    revision: t.integer().notNull().default(1),
+    requestedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    requestedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    lastReconciledAt: t.timestamp({ mode: "date", withTimezone: true }),
+    lastConvergedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    providerUnique: unique(
+      "knight_hacks_hackathon_event_publication_provider_unique",
+    ).on(table.hackathonId, table.provider),
+    scopedIdentity: unique(
+      "knight_hacks_hackathon_event_publication_id_scope_unique",
+    ).on(table.id, table.hackathonId, table.provider),
+    validRevision: check(
+      "knight_hacks_hackathon_event_publication_revision_check",
+      sql`${table.revision} >= 1`,
+    ),
+  }),
+);
+
+export type InsertHackathonEventPublication =
+  typeof HackathonEventPublication.$inferInsert;
+export type SelectHackathonEventPublication =
+  typeof HackathonEventPublication.$inferSelect;
+
+/** Durable, leaseable reconciliation work for one event/provider pair. */
+export const EventPublicationWork = createTable(
+  "event_publication_work",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    publicationId: t.uuid().notNull(),
+    eventId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    provider: hackathonEventPublicationProviderEnum().notNull(),
+    targetEnabled: t.boolean().notNull(),
+    eventRevision: t.integer().notNull(),
+    publicationRevision: t.integer().notNull(),
+    state: eventPublicationWorkStateEnum().notNull().default("pending"),
+    attemptCount: t.integer().notNull().default(0),
+    nextAttemptAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .defaultNow(),
+    lastAttemptAt: t.timestamp({ mode: "date", withTimezone: true }),
+    lastError: t.varchar({ length: 500 }),
+    leaseToken: t.uuid(),
+    leaseExpiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    completedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    eventProviderUnique: unique(
+      "knight_hacks_event_publication_work_event_provider_unique",
+    ).on(table.eventId, table.provider),
+    dueQueue: index("knight_hacks_event_publication_work_due_idx").on(
+      table.state,
+      table.nextAttemptAt,
+    ),
+    hackathonHealth: index("knight_hacks_event_publication_work_health_idx").on(
+      table.hackathonId,
+      table.provider,
+      table.state,
+    ),
+    leaseExpiry: index(
+      "knight_hacks_event_publication_work_lease_expiry_idx",
+    ).on(table.leaseExpiresAt),
+    scopedPublicationReference: foreignKey({
+      columns: [table.publicationId, table.hackathonId, table.provider],
+      foreignColumns: [
+        HackathonEventPublication.id,
+        HackathonEventPublication.hackathonId,
+        HackathonEventPublication.provider,
+      ],
+      name: "knight_hacks_event_publication_work_scoped_publication_fk",
+    }).onDelete("cascade"),
+    scopedEventReference: foreignKey({
+      columns: [table.eventId, table.hackathonId],
+      foreignColumns: [Event.id, Event.hackathonId],
+      name: "knight_hacks_event_publication_work_scoped_event_fk",
+    }).onDelete("cascade"),
+    validAttempts: check(
+      "knight_hacks_event_publication_work_attempt_count_check",
+      sql`${table.attemptCount} >= 0`,
+    ),
+    validRevisions: check(
+      "knight_hacks_event_publication_work_revisions_check",
+      sql`${table.eventRevision} >= 1 AND ${table.publicationRevision} >= 1`,
+    ),
+    leasePair: check(
+      "knight_hacks_event_publication_work_lease_pair_check",
+      sql`(${table.leaseToken} IS NULL) = (${table.leaseExpiresAt} IS NULL)`,
+    ),
+  }),
+);
+
+export type InsertEventPublicationWork =
+  typeof EventPublicationWork.$inferInsert;
+export type SelectEventPublicationWork =
+  typeof EventPublicationWork.$inferSelect;
+
 export const EventAttendee = createTable(
   "event_attendee",
   (t) => ({
@@ -760,6 +1366,12 @@ export const HackerAttendee = createTable(
       .references(() => Hacker.id, {
         onDelete: "cascade",
       }),
+    /** Canonical identity for SDK applications; nullable for mixed-version writers. */
+    profileId: t.uuid().references(() => HackerProfile.id, {
+      onDelete: "restrict",
+    }),
+    /** Sponsor-visible immutable revision pinned for this hackathon. */
+    profileRevisionId: t.uuid(),
     hackathonId: t
       .uuid()
       .notNull()
@@ -781,6 +1393,9 @@ export const HackerAttendee = createTable(
     isVip: t.boolean().notNull().default(false),
     /** Stable per-hackathon answer. NULL means the application did not record it. */
     isFirstTime: t.boolean(),
+    /** Fixed per-hack application answers retained outside the reusable profile. */
+    survey1: t.text(),
+    survey2: t.text(),
     /** Whole-hack admission metadata. Legacy checked-in rows leave this NULL. */
     checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
     checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
@@ -863,6 +1478,17 @@ export const HackerAttendee = createTable(
     hackerHackathonUnique: unique(
       "knight_hacks_hacker_attendee_hacker_hackathon_unique",
     ).on(table.hackerId, table.hackathonId),
+    profileHackathonUnique: uniqueIndex(
+      "knight_hacks_hacker_attendee_profile_hackathon_unique",
+    )
+      .on(table.profileId, table.hackathonId)
+      .where(sql`${table.profileId} IS NOT NULL`),
+    profileIdx: index("knight_hacks_hacker_attendee_profile_idx").on(
+      table.profileId,
+    ),
+    profileRevisionIdx: index(
+      "knight_hacks_hacker_attendee_profile_revision_idx",
+    ).on(table.profileRevisionId),
     scopedIdentity: unique(
       "knight_hacks_hacker_attendee_id_hackathon_unique",
     ).on(table.id, table.hackathonId),
@@ -870,6 +1496,14 @@ export const HackerAttendee = createTable(
       columns: [table.classId, table.hackathonId],
       foreignColumns: [HackathonClass.id, HackathonClass.hackathonId],
       name: "knight_hacks_hacker_attendee_scoped_class_fk",
+    }).onDelete("restrict"),
+    scopedProfileRevisionReference: foreignKey({
+      columns: [table.profileRevisionId, table.profileId],
+      foreignColumns: [
+        HackerProfileRevision.id,
+        HackerProfileRevision.profileId,
+      ],
+      name: "knight_hacks_hacker_attendee_scoped_profile_revision_fk",
     }).onDelete("restrict"),
     /**
      * A blacklist with no reason is the thing a year-later officer cannot
@@ -912,6 +1546,101 @@ export const HackerAttendee = createTable(
 
 export type InsertHackerAttendee = typeof HackerAttendee.$inferInsert;
 export type SelectHackerAttendee = typeof HackerAttendee.$inferSelect;
+
+/** Per-hack evidence for a versioned legal agreement. */
+export const HackerAgreementAcceptance = createTable(
+  "hacker_agreement_acceptance",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    attendeeId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    agreementDefinitionId: t.uuid().notNull(),
+    accepted: t.boolean().notNull(),
+    provenance: hackerAgreementProvenanceEnum().notNull().default("explicit"),
+    acceptedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    recordedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (table) => ({
+    attendeeAgreementUnique: unique(
+      "knight_hacks_hacker_agreement_acceptance_attendee_definition_unique",
+    ).on(table.attendeeId, table.agreementDefinitionId),
+    attendeeIdx: index(
+      "knight_hacks_hacker_agreement_acceptance_attendee_idx",
+    ).on(table.attendeeId),
+    scopedAttendeeReference: foreignKey({
+      columns: [table.attendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_hacker_agreement_acceptance_scoped_attendee_fk",
+    }).onDelete("cascade"),
+    scopedDefinitionReference: foreignKey({
+      columns: [table.agreementDefinitionId, table.hackathonId],
+      foreignColumns: [
+        HackathonAgreementDefinition.id,
+        HackathonAgreementDefinition.hackathonId,
+      ],
+      name: "knight_hacks_hacker_agreement_acceptance_scoped_definition_fk",
+    }).onDelete("restrict"),
+    acceptanceTimestamp: check(
+      "knight_hacks_hacker_agreement_acceptance_timestamp_check",
+      sql`(${table.accepted} = true AND ${table.acceptedAt} IS NOT NULL) OR (${table.accepted} = false AND ${table.acceptedAt} IS NULL)`,
+    ),
+  }),
+);
+
+export type InsertHackerAgreementAcceptance =
+  typeof HackerAgreementAcceptance.$inferInsert;
+export type SelectHackerAgreementAcceptance =
+  typeof HackerAgreementAcceptance.$inferSelect;
+
+/** Opaque, revocable whole-hack check-in pass. Only the token hash is stored. */
+export const HackerCheckInPass = createTable(
+  "hacker_check_in_pass",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    attendeeId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    tokenHash: t.varchar({ length: 64 }).notNull(),
+    version: t.integer().notNull().default(1),
+    issuedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    revokedAt: t.timestamp({ mode: "date", withTimezone: true }),
+  }),
+  (table) => ({
+    tokenHashUnique: unique(
+      "knight_hacks_hacker_check_in_pass_token_hash_unique",
+    ).on(table.tokenHash),
+    oneActivePass: uniqueIndex(
+      "knight_hacks_hacker_check_in_pass_active_attendee_unique",
+    )
+      .on(table.attendeeId)
+      .where(sql`${table.revokedAt} IS NULL`),
+    attendeeIdx: index("knight_hacks_hacker_check_in_pass_attendee_idx").on(
+      table.attendeeId,
+    ),
+    scopedAttendeeReference: foreignKey({
+      columns: [table.attendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_hacker_check_in_pass_scoped_attendee_fk",
+    }).onDelete("cascade"),
+    tokenHashShape: check(
+      "knight_hacks_hacker_check_in_pass_token_hash_check",
+      sql`${table.tokenHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    validVersion: check(
+      "knight_hacks_hacker_check_in_pass_version_check",
+      sql`${table.version} >= 1`,
+    ),
+  }),
+);
+
+export type InsertHackerCheckInPass = typeof HackerCheckInPass.$inferInsert;
+export type SelectHackerCheckInPass = typeof HackerCheckInPass.$inferSelect;
 
 export const HackerEventAttendee = createTable(
   "hacker_event_attendee",
@@ -1214,7 +1943,7 @@ export const HackathonEventReminderDelivery = createTable(
     reminderKey: t.varchar({ length: 32 }).notNull(),
     destinationChannelIdSnapshot: t.varchar({ length: 20 }).notNull(),
     roleIdSnapshot: t.varchar({ length: 20 }).notNull(),
-    discordEventIdSnapshot: t.varchar({ length: 255 }).notNull(),
+    discordEventIdSnapshot: t.varchar({ length: 255 }),
     contentSnapshot: t.text().notNull(),
     state: hackathonEventReminderStateEnum().notNull().default("pending"),
     attemptCount: t.integer().notNull().default(0),

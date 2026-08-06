@@ -40,10 +40,12 @@ import {
 } from "~/app/_components/shared/admin-page";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
+import { AgreementSection } from "./agreement-section";
 import { ClassSection } from "./class-section";
 import { HackathonDiscordEventConfig } from "./hackathon-discord-event-config";
 import { HackathonFormDialog } from "./hackathon-form-dialog";
 import { formatHackathonDateTime } from "./hackathon-formatting";
+import { PortalConfigurationSection } from "./portal-configuration-section";
 import { StatusEmailSection } from "./status-email-section";
 
 type Detail = RouterOutputs["hackathon"]["get"];
@@ -210,8 +212,33 @@ export function HackathonDetail({
               <p className="font-medium text-muted-foreground">Not set</p>
             )}
           </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Timezone</p>
+            <p className="font-medium">{hackathon.timezone}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Confirmation capacity
+            </p>
+            <p className="font-medium">
+              {hackathon.confirmationCapacity?.toLocaleString() ?? "No limit"}
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      <PortalConfigurationSection
+        detail={detail}
+        isRefreshing={isRefreshing}
+        key={`${detail.portalClient?.id ?? "unprovisioned"}:${detail.portalClient?.updatedAt.toString() ?? "new"}`}
+        onSaved={refresh}
+      />
+
+      <AgreementSection
+        detail={detail}
+        isRefreshing={isRefreshing}
+        onSaved={refresh}
+      />
 
       <StatusEmailSection
         detail={detail}

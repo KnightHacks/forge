@@ -24,6 +24,7 @@ const OPERATOR_ID = "10000000-0000-4000-8000-000000000101";
 const HACKATHON_ID = "20000000-0000-4000-8000-000000000101";
 const PRIMARY_EVENT_ID = "30000000-0000-4000-8000-000000000101";
 const ORDINARY_EVENT_ID = "30000000-0000-4000-8000-000000000102";
+const DATABASE_ONLY_EVENT_ID = "30000000-0000-4000-8000-000000000103";
 const CLASS_A_ID = "40000000-0000-4000-8000-000000000101";
 const CLASS_B_ID = "40000000-0000-4000-8000-000000000102";
 const CLASS_C_ID = "40000000-0000-4000-8000-000000000103";
@@ -161,6 +162,16 @@ describe.skipIf(!canRunDatabaseTests())("hackathon event check-in core", () => {
         id: ORDINARY_EVENT_ID,
         name: "Dinner",
         points: 11,
+      },
+      {
+        ...event,
+        creationKey: "30000000-0000-4000-8000-000000000201",
+        creationPayloadHash: "a".repeat(64),
+        id: DATABASE_ONLY_EVENT_ID,
+        legacy: false,
+        name: "Database-only workshop",
+        points: 13,
+        publishedAt: null,
       },
     ]);
     await client.insert(knightHacks.Hacker).values(
@@ -437,6 +448,30 @@ describe.skipIf(!canRunDatabaseTests())("hackathon event check-in core", () => {
         .from(knightHacks.HackerEventAttendee)
         .where(eq(knightHacks.HackerEventAttendee.hackerAttId, ids.attendeeId)),
     ).toHaveLength(0);
+  });
+
+  it("[TC-PUB-010] checks into a database-only event without calendar publication", async () => {
+    const ids = personIds(people.regular);
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({
+        checkedInAt: NOW,
+        checkedInBy: OPERATOR_ID,
+        classId: CLASS_A_ID,
+        status: "checkedin",
+      })
+      .where(eq(knightHacks.HackerAttendee.id, ids.attendeeId));
+
+    const outcome = await checkIn({
+      actor,
+      input: manualInput(DATABASE_ONLY_EVENT_ID, people.regular),
+      now: LATER,
+    });
+
+    expect(outcome.result).toMatchObject({
+      pointsAwarded: 13,
+      status: "checked_in",
+    });
   });
 
   it("enforces a called class while allowing VIP bypass", async () => {

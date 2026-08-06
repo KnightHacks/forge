@@ -14,6 +14,11 @@ The SDK gives Forge React apps a stable set of participant actions and state.
 It should make a new hacker portal fast to build without prescribing the page's
 theme, layout, components, or form steps.
 
+Knight Hacks IX is the sole live SDK consumer in this release. Ended hackathon
+sites retain their historical presentation, but their application calls to
+action and participant/auth routes are removed silently so they do not depend
+on either the SDK or retired legacy APIs.
+
 This feature also gives officers explicit control over whether a hackathon's
 events appear in Discord and Google Calendar. Officers can prepare a complete
 schedule privately in Forge, then publish or remove the full calendar without
@@ -151,6 +156,10 @@ publication has no effect on Discord reminders.
 - Bulk reconciliation, progress, durable retry, and manual repair visibility.
 - Safe migration of existing hackathons and external events.
 - SDK documentation and an example consumer suitable for future yearly sites.
+- A complete Knight Hacks IX consumer, with its checked-in schedule sourced
+  from Hackathon Events.
+- Static historical KH VIII, GemiKnights, and BloomKnights sites with dead
+  application entry points and legacy participant dependencies removed.
 
 ### Out of scope
 
@@ -165,6 +174,7 @@ publication has no effect on Discord reminders.
 - Changes to officer application review, primary check-in, class assignment,
   VIP behavior, or club event attendance.
 - Automatic legal or participation rejection based only on age.
+- Retrofitting ended hackathon sites with the SDK.
 
 ## Vocabulary
 

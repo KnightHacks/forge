@@ -66,6 +66,7 @@ export const EVENT_TAG_COLORS: Record<EventTag, string> = {
 } as const;
 
 export const EVENT_SYNC_STATES = [
+  "disabled",
   "pending",
   "synced",
   "error",

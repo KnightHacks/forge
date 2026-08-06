@@ -8,7 +8,12 @@ export interface EventAdminAccess {
 }
 
 export type EventAudience = "dues" | "public" | "roles";
-export type EventIntegrationHealth = "error" | "pending" | "synced" | "unknown";
+export type EventIntegrationHealth =
+  | "disabled"
+  | "error"
+  | "pending"
+  | "synced"
+  | "unknown";
 
 export interface EventListItem {
   attendanceCount: number;

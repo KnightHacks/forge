@@ -1,0 +1,58 @@
+{
+  "name": "@forge/hacker-sdk",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./contracts": {
+      "types": "./dist/src/contracts.d.ts",
+      "default": "./src/contracts.ts"
+    },
+    "./next": {
+      "types": "./dist/src/next.d.ts",
+      "default": "./src/next.ts"
+    },
+    "./react": {
+      "types": "./dist/src/react.d.ts",
+      "default": "./src/react.tsx"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@forge/validators": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.9"
+  },
+  "peerDependencies": {
+    "react": "catalog:react18"
+  },
+  "prettier": "@forge/prettier-config"
+}

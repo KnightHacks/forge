@@ -9,7 +9,7 @@ export interface HackReminderDelivery {
   channelId: string;
   deliveryId: string;
   description: string;
-  discordEventId: string;
+  discordEventId: string | null;
   endDateTime: Date | string;
   eventId: string;
   guildId: string;
@@ -53,7 +53,11 @@ export function buildHackReminderMessage(
       },
     ],
     title: delivery.name,
-    url: `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`,
+    ...(delivery.discordEventId
+      ? {
+          url: `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`,
+        }
+      : {}),
   };
 
   return {

@@ -5,7 +5,7 @@ import { normalizeSearchValue, scoreSearchCandidate } from "../search-ranking";
 interface ProviderProjection {
   appliedRevision: number | null;
   id: string | null;
-  state: "error" | "pending" | "synced" | "unknown" | null;
+  state: "disabled" | "error" | "pending" | "synced" | "unknown" | null;
 }
 
 type Audience = "dues" | "public" | "roles";

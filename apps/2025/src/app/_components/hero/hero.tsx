@@ -1,10 +1,7 @@
 import HeroSVG from "./hero-svg";
 import KnightHacksSVG from "./knight-hacks-svg";
-import RegisterButton from "./register-button";
-import { env } from "~/env";
 
 export default function Hero() {
-  const registerUrl = env.BLADE_URL + "hacker/application/knighthacks-viii";
   return (
     <div className="relative mb-[400px] flex min-h-[450px] -translate-y-[10%] transform flex-col items-center justify-center pt-64 sm:mb-0 sm:h-screen sm:translate-y-0 sm:pt-0">
       {/* @DVidal1205 ty for the knowledge king*/}
@@ -45,15 +42,6 @@ export default function Hero() {
           Central Florida's Largest Hackathon
         </p>
       </div> */}
-      <div
-        className="flex w-full items-center justify-center"
-        style={{
-          opacity: 0,
-          animation: "slideInFromBottom 0.8s 0.8s ease-out forwards",
-        }}
-      >
-        <RegisterButton url={registerUrl} />
-      </div>
     </div>
   );
 }

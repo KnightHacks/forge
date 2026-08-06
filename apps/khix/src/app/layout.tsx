@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Faculty_Glyphic } from "next/font/google";
 
-import WispCursor from "./_components/WispCursor";
+import { MarketingWispCursor } from "./_components/MarketingWispCursor";
 import {
   eventJsonLd,
   OG_IMAGE_ALT,
@@ -91,7 +91,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${font.className} ${font.variable} antialiased`}>
         {children}
-        <WispCursor />
+        <MarketingWispCursor />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

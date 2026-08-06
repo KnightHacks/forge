@@ -62,10 +62,6 @@ export async function claimHackathonEventReminderDeliveries({
         eq(Event.purpose, "event"),
         eq(Event.legacy, false),
         isNull(Event.deletionIntentAt),
-        sql`${Event.publishedAt} is not null`,
-        eq(Event.discordSyncState, "synced"),
-        eq(Event.discordAppliedRevision, Event.syncRevision),
-        sql`${Event.discordId} is not null`,
         sql`${Hackathon.eventAnnouncementChannelId} is not null`,
         sql`${Hackathon.generalHackerDiscordRoleId} is not null`,
         gt(Event.start_datetime, now),
@@ -74,7 +70,7 @@ export async function claimHackathonEventReminderDeliveries({
     );
 
   for (const event of candidates) {
-    if (!event.channelId || !event.discordEventId || !event.roleId) continue;
+    if (!event.channelId || !event.roleId) continue;
     const contentSnapshot = JSON.stringify({
       description: event.description,
       endDateTime: event.endDateTime.toISOString(),
@@ -127,10 +123,7 @@ export async function claimHackathonEventReminderDeliveries({
               HackathonEventReminderDelivery.destinationChannelIdSnapshot,
               event.channelId,
             ),
-            ne(
-              HackathonEventReminderDelivery.discordEventIdSnapshot,
-              event.discordEventId,
-            ),
+            sql`${HackathonEventReminderDelivery.discordEventIdSnapshot} IS DISTINCT FROM ${event.discordEventId}`,
             ne(HackathonEventReminderDelivery.eventStartAt, event.eventStartAt),
             ne(HackathonEventReminderDelivery.roleIdSnapshot, event.roleId),
           ),
@@ -194,10 +187,6 @@ export async function claimHackathonEventReminderDeliveries({
             eq(Event.purpose, "event"),
             eq(Event.legacy, false),
             isNull(Event.deletionIntentAt),
-            sql`${Event.publishedAt} is not null`,
-            eq(Event.discordSyncState, "synced"),
-            eq(Event.discordAppliedRevision, Event.syncRevision),
-            sql`${Event.discordId} is not null`,
             sql`${Hackathon.eventAnnouncementChannelId} is not null`,
             sql`${Hackathon.generalHackerDiscordRoleId} is not null`,
             gt(Event.start_datetime, now),
@@ -206,7 +195,7 @@ export async function claimHackathonEventReminderDeliveries({
         )
         .for("update")
         .limit(1);
-      if (!current?.channelId || !current.discordEventId || !current.roleId) {
+      if (!current?.channelId || !current.roleId) {
         return null;
       }
       const contentSnapshot = JSON.stringify({

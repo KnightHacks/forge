@@ -70,16 +70,19 @@ type Caller = ReturnType<typeof createCaller>;
 const HACKATHON_ID = "00000000-0000-4000-8000-0000000000aa";
 const CLASS_ID = "00000000-0000-4000-8000-0000000000bb";
 const TEMPLATE_ID = "00000000-0000-4000-8000-0000000000cc";
+const AGREEMENT_ID = "00000000-0000-4000-8000-0000000000dd";
 
 const WINDOW = {
   applicationDeadline: new Date("2026-09-01T00:00:00Z"),
   applicationOpen: new Date("2026-08-01T00:00:00Z"),
   applicationUrl: null,
+  confirmationCapacity: null,
   confirmationDeadline: new Date("2026-09-15T00:00:00Z"),
   displayName: "Knight Hacks X",
   endDate: new Date("2026-10-03T00:00:00Z"),
   startDate: new Date("2026-10-01T00:00:00Z"),
   theme: "Neon",
+  timezone: "America/New_York",
 };
 
 /** Every procedure the router exposes, with input its schema accepts. */
@@ -89,6 +92,40 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
   ["create", (caller) => caller.create(WINDOW)],
   ["update", (caller) => caller.update({ ...WINDOW, id: HACKATHON_ID })],
   ["remove", (caller) => caller.remove({ id: HACKATHON_ID })],
+  [
+    "upsertPortalClient",
+    (caller) =>
+      caller.upsertPortalClient({
+        enabled: true,
+        hackathonId: HACKATHON_ID,
+        name: "Knight Hacks X",
+        productionOrigin: "https://x.knighthacks.org",
+      }),
+  ],
+  [
+    "createAgreement",
+    (caller) =>
+      caller.createAgreement({
+        active: true,
+        hackathonId: HACKATHON_ID,
+        key: "mlh-terms",
+        legalText: "I agree.",
+        required: true,
+        stage: "application",
+        title: "MLH terms",
+        url: null,
+        version: "2026-08",
+      }),
+  ],
+  [
+    "activateAgreement",
+    (caller) =>
+      caller.activateAgreement({
+        active: true,
+        definitionId: AGREEMENT_ID,
+        hackathonId: HACKATHON_ID,
+      }),
+  ],
   [
     "setStatusEmail",
     (caller) =>
@@ -144,7 +181,7 @@ describe("hackathon configuration access policy", () => {
     }));
   });
 
-  it("exposes exactly the ten documented procedures", () => {
+  it("exposes exactly the documented procedures", () => {
     // A procedure added without an access decision fails here before review.
     expect(Object.keys(hackathonRouter._def.procedures).sort()).toEqual(
       PROCEDURES.map(([name]) => name).sort(),

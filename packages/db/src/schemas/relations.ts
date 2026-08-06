@@ -7,7 +7,22 @@ import {
   Employment,
   Event,
   EventAttendee,
+  EventPublicationWork,
   FormsSchemas,
+  Hackathon,
+  HackathonAgreementDefinition,
+  HackathonEventPublication,
+  HackathonPortalAuthorizationCode,
+  HackathonPortalClient,
+  HackathonPortalSession,
+  HackathonPortalSessionCredential,
+  Hacker,
+  HackerAgreementAcceptance,
+  HackerAttendee,
+  HackerCheckInPass,
+  HackerParticipantCommand,
+  HackerProfile,
+  HackerProfileRevision,
   Issue,
   IssueHistory,
   IssueReminderDelivery,
@@ -172,7 +187,179 @@ export const AlumniBulletinPostRelations = relations(
 
 export const EventRelations = relations(Event, ({ many }) => ({
   attendees: many(EventAttendee),
+  publicationWork: many(EventPublicationWork),
 }));
+
+export const HackathonRelations = relations(Hackathon, ({ many }) => ({
+  agreementDefinitions: many(HackathonAgreementDefinition),
+  attendees: many(HackerAttendee),
+  participantCommands: many(HackerParticipantCommand),
+  portalClients: many(HackathonPortalClient),
+  publications: many(HackathonEventPublication),
+}));
+
+export const HackerProfileRelations = relations(
+  HackerProfile,
+  ({ many, one }) => ({
+    attendees: many(HackerAttendee),
+    revisions: many(HackerProfileRevision),
+    user: one(User, {
+      fields: [HackerProfile.userId],
+      references: [User.id],
+    }),
+  }),
+);
+
+export const HackerProfileRevisionRelations = relations(
+  HackerProfileRevision,
+  ({ one }) => ({
+    legacyHacker: one(Hacker, {
+      fields: [HackerProfileRevision.legacyHackerId],
+      references: [Hacker.id],
+    }),
+    profile: one(HackerProfile, {
+      fields: [HackerProfileRevision.profileId],
+      references: [HackerProfile.id],
+    }),
+  }),
+);
+
+export const HackerAttendeeRelations = relations(
+  HackerAttendee,
+  ({ many, one }) => ({
+    agreementAcceptances: many(HackerAgreementAcceptance),
+    checkInPasses: many(HackerCheckInPass),
+    hackathon: one(Hackathon, {
+      fields: [HackerAttendee.hackathonId],
+      references: [Hackathon.id],
+    }),
+    profile: one(HackerProfile, {
+      fields: [HackerAttendee.profileId],
+      references: [HackerProfile.id],
+    }),
+    profileRevision: one(HackerProfileRevision, {
+      fields: [HackerAttendee.profileRevisionId],
+      references: [HackerProfileRevision.id],
+    }),
+  }),
+);
+
+export const HackathonAgreementDefinitionRelations = relations(
+  HackathonAgreementDefinition,
+  ({ many, one }) => ({
+    acceptances: many(HackerAgreementAcceptance),
+    hackathon: one(Hackathon, {
+      fields: [HackathonAgreementDefinition.hackathonId],
+      references: [Hackathon.id],
+    }),
+  }),
+);
+
+export const HackerAgreementAcceptanceRelations = relations(
+  HackerAgreementAcceptance,
+  ({ one }) => ({
+    attendee: one(HackerAttendee, {
+      fields: [HackerAgreementAcceptance.attendeeId],
+      references: [HackerAttendee.id],
+    }),
+    definition: one(HackathonAgreementDefinition, {
+      fields: [HackerAgreementAcceptance.agreementDefinitionId],
+      references: [HackathonAgreementDefinition.id],
+    }),
+  }),
+);
+
+export const HackerCheckInPassRelations = relations(
+  HackerCheckInPass,
+  ({ one }) => ({
+    attendee: one(HackerAttendee, {
+      fields: [HackerCheckInPass.attendeeId],
+      references: [HackerAttendee.id],
+    }),
+  }),
+);
+
+export const HackerParticipantCommandRelations = relations(
+  HackerParticipantCommand,
+  ({ one }) => ({
+    hackathon: one(Hackathon, {
+      fields: [HackerParticipantCommand.hackathonId],
+      references: [Hackathon.id],
+    }),
+    user: one(User, {
+      fields: [HackerParticipantCommand.userId],
+      references: [User.id],
+    }),
+  }),
+);
+
+export const HackathonPortalClientRelations = relations(
+  HackathonPortalClient,
+  ({ many, one }) => ({
+    authorizationCodes: many(HackathonPortalAuthorizationCode),
+    hackathon: one(Hackathon, {
+      fields: [HackathonPortalClient.hackathonId],
+      references: [Hackathon.id],
+    }),
+    sessions: many(HackathonPortalSession),
+  }),
+);
+
+export const HackathonPortalSessionCredentialRelations = relations(
+  HackathonPortalSessionCredential,
+  ({ one }) => ({
+    session: one(HackathonPortalSession, {
+      fields: [HackathonPortalSessionCredential.portalSessionId],
+      references: [HackathonPortalSession.id],
+    }),
+  }),
+);
+
+export const HackathonPortalAuthorizationCodeRelations = relations(
+  HackathonPortalAuthorizationCode,
+  ({ one }) => ({
+    client: one(HackathonPortalClient, {
+      fields: [HackathonPortalAuthorizationCode.portalClientId],
+      references: [HackathonPortalClient.id],
+    }),
+  }),
+);
+
+export const HackathonPortalSessionRelations = relations(
+  HackathonPortalSession,
+  ({ many, one }) => ({
+    client: one(HackathonPortalClient, {
+      fields: [HackathonPortalSession.portalClientId],
+      references: [HackathonPortalClient.id],
+    }),
+    credentials: many(HackathonPortalSessionCredential),
+  }),
+);
+
+export const HackathonEventPublicationRelations = relations(
+  HackathonEventPublication,
+  ({ many, one }) => ({
+    hackathon: one(Hackathon, {
+      fields: [HackathonEventPublication.hackathonId],
+      references: [Hackathon.id],
+    }),
+    work: many(EventPublicationWork),
+  }),
+);
+
+export const EventPublicationWorkRelations = relations(
+  EventPublicationWork,
+  ({ one }) => ({
+    event: one(Event, {
+      fields: [EventPublicationWork.eventId],
+      references: [Event.id],
+    }),
+    publication: one(HackathonEventPublication, {
+      fields: [EventPublicationWork.publicationId],
+      references: [HackathonEventPublication.id],
+    }),
+  }),
+);
 
 export const EventAttendeeRelations = relations(EventAttendee, ({ one }) => ({
   event: one(Event, {

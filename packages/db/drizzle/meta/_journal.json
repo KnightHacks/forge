@@ -246,6 +246,20 @@
       "when": 1785961938288,
       "tag": "0034_narrow_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786042227594,
+      "tag": "0035_motionless_captain_britain",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1786048697317,
+      "tag": "0036_sudden_slyde",
+      "breakpoints": true
     }
   ]
 }

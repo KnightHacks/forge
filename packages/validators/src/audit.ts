@@ -107,6 +107,16 @@ export const AUDIT_ACTION_CATALOG = {
     "Repaired hackathon event integration",
     ["providerScope", "discordStatus", "googleStatus"],
   ),
+  "hackathon_event.publication_desired_state.updated": policy(
+    "hackathons",
+    "Changed hackathon event publication",
+    ["provider", "desiredEnabled", "revision", "workItemCount"],
+  ),
+  "hackathon_event.publication_retried": policy(
+    "hackathons",
+    "Retried hackathon event publication",
+    ["provider", "requeuedCount", "blockedCount", "revision"],
+  ),
   "hackathon_event.discord_projection.resolved": policy(
     "hackathons",
     "Resolved hackathon Discord event projection",
@@ -142,6 +152,21 @@ export const AUDIT_ACTION_CATALOG = {
     "Archived hackathon event tag",
     [],
     ["active"],
+  ),
+  "hackathon.portal_client_updated": policy(
+    "hackathons",
+    "Updated hackathon portal client",
+    ["enabled", "originHost"],
+  ),
+  "hackathon.agreement_created": policy(
+    "hackathons",
+    "Created hackathon agreement",
+    ["stage", "key", "version", "required"],
+  ),
+  "hackathon.agreement_activated": policy(
+    "hackathons",
+    "Activated hackathon agreement",
+    ["stage", "key", "version", "required"],
   ),
   "member.dues.granted": policy("members", "Granted member dues", [
     "academicYear",
@@ -391,8 +416,10 @@ export const AUDIT_ACTION_CATALOG = {
       "applicationOpen",
       "applicationDeadline",
       "confirmationDeadline",
+      "confirmationCapacity",
       "startDate",
       "endDate",
+      "timezone",
       "eventAnnouncementChannelId",
       "generalHackerDiscordRoleId",
     ],
@@ -488,7 +515,7 @@ export const AUDIT_ACTION_CATALOG = {
   "hacker.profile_updated": policy(
     "hackathons",
     "Edited hacker profile",
-    [],
+    ["revision"],
     [
       "country",
       "dob",
@@ -509,6 +536,48 @@ export const AUDIT_ACTION_CATALOG = {
       "shirtSize",
       "websiteUrl",
     ],
+  ),
+  "hacker.application_submitted": policy(
+    "hackathons",
+    "Submitted hackathon application",
+    ["status", "revision"],
+  ),
+  "hacker.application_updated": policy(
+    "hackathons",
+    "Updated hackathon application",
+    ["revision"],
+  ),
+  "hacker.application_confirmed": policy(
+    "hackathons",
+    "Confirmed hackathon attendance",
+    ["status"],
+  ),
+  "hacker.application_withdrawn": policy(
+    "hackathons",
+    "Withdrew hackathon application",
+    ["status"],
+  ),
+  "hacker.resume_uploaded": policy("hackathons", "Uploaded hacker résumé", [
+    "byteSize",
+    "hadPrevious",
+    "revision",
+  ]),
+  "hacker.resume_replaced": policy("hackathons", "Replaced hacker résumé", [
+    "byteSize",
+    "hadPrevious",
+    "revision",
+  ]),
+  "hacker.resume_removed": policy("hackathons", "Removed hacker résumé", [
+    "hadPrevious",
+    "revision",
+  ]),
+  "hacker.resume_accessed": policy("hackathons", "Accessed hacker résumé", [
+    "hadPrevious",
+  ]),
+  "hacker.check_in_pass_issued": policy(
+    "hackathons",
+    "Issued hacker check-in pass",
+    ["version"],
   ),
   "hacker.blacklisted": policy("hackathons", "Blacklisted hacker", ["reason"]),
   "hacker.unblacklisted": policy("hackathons", "Removed hacker blacklist"),
@@ -825,8 +894,10 @@ export const AUDIT_TARGET_TYPES = [
   "form_response",
   "form_section",
   "hackathon",
+  "hackathon_agreement",
   "hackathon_class",
   "hacker_attendee",
+  "hacker_profile",
   "issue",
   "issue_template",
   "issue_tree",

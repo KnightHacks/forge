@@ -37,9 +37,9 @@ const liveEventGateways: EventGatewayBundle = {
 };
 
 export async function resolveEventGateways(
-  session: Session,
+  session?: Session | null,
 ): Promise<EventGatewayBundle> {
-  if (nodeEnv !== "production") {
+  if (nodeEnv !== "production" && session) {
     const { resolveEventGatewayOverride } =
       await import("../../tests/support/events/event-gateway-override");
     const override = resolveEventGatewayOverride(session);

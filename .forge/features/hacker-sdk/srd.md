@@ -23,8 +23,8 @@ can be checked into or read through the checked-in participant schedule.
 - Follow `.claude/skills/forge-api/SKILL.md` for participant and publication
   procedures, audit coverage, transactions, DTOs, and external side effects.
 - Follow `.claude/skills/forge-placement/SKILL.md`. The SDK is a justified new
-  package because KH IX and Bloom are independent consumers of a stable
-  cross-app contract.
+  package because KH IX is the first consumer of a stable boundary intended for
+  successive yearly Forge hackathon frontends.
 - Follow `.claude/skills/forge-react/SKILL.md` and the Blade design system for
   the admin controls. Hooks own reusable server-state orchestration; they do not
   own form steps, dialogs, theme copy, animation, or layout.
@@ -369,8 +369,10 @@ Discord description.
    Existing remote IDs and applied revisions remain untouched.
 7. Deploy participant auth, v1 reads, event writers, and the worker before
    exposing portal or publication UI.
-8. Provision KH IX and Bloom clients, migrate both consumers, then expose
-   publication controls.
+8. Provision and migrate KH IX as the sole live consumer, then expose
+   publication controls. Remove dead participant entry points and legacy API
+   dependencies from the ended KH VIII, GemiKnights, and BloomKnights sites
+   without changing their historical presentation.
 9. Keep legacy Hacker columns and the old participant surface through the
    proving window. Destructive contract cleanup belongs to a later cutover.
 
@@ -449,8 +451,9 @@ Would this require a developer change next year?
   failure states, and at least 60 events. Controls keep 44px mobile targets and
   create no document-level overflow.
 
-KH IX and Bloom migration must preserve their themed presentation. The SDK
-replaces data/auth plumbing, not their pixels.
+KH IX migration must preserve its themed presentation. The SDK replaces
+data/auth plumbing, not its pixels. Ended hackathon sites remain static themed
+history and do not implement the SDK.
 
 ## Testing / verification strategy
 

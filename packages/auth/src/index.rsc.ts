@@ -13,6 +13,10 @@ import {
 import { env } from "./env";
 
 export { validateToken, invalidateSessionToken, isSecureContext };
+export * from "./portal-auth";
+export * from "./portal-session";
+export * from "./portal-session-store";
+export * from "./request-body";
 
 export type Session = Omit<typeof betterAuthInstance.$Infer.Session, "user"> & {
   user: (typeof betterAuthInstance.$Infer.Session)["user"] & {

@@ -6,7 +6,13 @@ import type { Session } from "@forge/auth/server";
 import { MINIO } from "@forge/consts";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Hacker, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  Hacker,
+  HackerAttendee,
+  HackerProfile,
+  HackerProfileRevision,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
 
 import type { WriteDb } from "../db";
@@ -81,7 +87,12 @@ export async function uploadResumeForUser({
 }
 
 async function getReferencedResumeObjectsForUser(userId: string) {
-  const [memberResumes, hackerResumes] = await Promise.all([
+  const [
+    memberResumes,
+    hackerResumes,
+    currentProfileResumes,
+    pinnedProfileResumes,
+  ] = await Promise.all([
     db
       .select({ resumeUrl: Member.resumeUrl })
       .from(Member)
@@ -90,10 +101,31 @@ async function getReferencedResumeObjectsForUser(userId: string) {
       .select({ resumeUrl: Hacker.resumeUrl })
       .from(Hacker)
       .where(eq(Hacker.userId, userId)),
+    db
+      .select({ resumeUrl: HackerProfile.resumeUrl })
+      .from(HackerProfile)
+      .where(eq(HackerProfile.userId, userId)),
+    db
+      .select({ resumeUrl: HackerProfileRevision.resumeUrl })
+      .from(HackerProfileRevision)
+      .innerJoin(
+        HackerAttendee,
+        eq(HackerAttendee.profileRevisionId, HackerProfileRevision.id),
+      )
+      .innerJoin(
+        HackerProfile,
+        eq(HackerProfile.id, HackerProfileRevision.profileId),
+      )
+      .where(eq(HackerProfile.userId, userId)),
   ]);
 
   return new Set(
-    [...memberResumes, ...hackerResumes]
+    [
+      ...memberResumes,
+      ...hackerResumes,
+      ...currentProfileResumes,
+      ...pinnedProfileResumes,
+    ]
       .map(({ resumeUrl }) => resumeUrl)
       .filter((resumeUrl): resumeUrl is string => Boolean(resumeUrl)),
   );

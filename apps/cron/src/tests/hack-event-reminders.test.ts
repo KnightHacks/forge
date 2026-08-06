@@ -35,6 +35,16 @@ describe("hackathon event reminders", () => {
     expect(body.embeds?.[0]?.url).toContain(DELIVERY.discordEventId);
   });
 
+  it("[TC-PUB-012] omits the Scheduled Event link when publication is off", () => {
+    const body = buildHackReminderMessage({
+      ...DELIVERY,
+      discordEventId: null,
+    });
+
+    expect(body.content).toContain(`<@&${DELIVERY.roleId}>`);
+    expect(body.embeds?.[0]?.url).toBeUndefined();
+  });
+
   it("records success only after the Discord message returns", async () => {
     const complete = vi.fn(() => Promise.resolve());
     const fail = vi.fn(() => Promise.resolve());

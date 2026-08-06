@@ -41,16 +41,22 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_form_sections",
   "knight_hacks_form_single_response_claim",
   "knight_hacks_hackathon",
+  "knight_hacks_hackathon_agreement_definition",
   // Configuration, not personal data: which Discord role and colour each class
   // maps to, and which template and subject each status sends. Losing these
   // from a dev backup means an officer's whole hackathon setup silently comes
   // back empty — the same failure `knight_hacks_discord_config` had.
   "knight_hacks_hackathon_class",
+  "knight_hacks_hackathon_event_publication",
+  "knight_hacks_hackathon_portal_client",
   "knight_hacks_hackathon_sponsor",
   "knight_hacks_hackathon_status_email",
   "knight_hacks_hacker",
+  "knight_hacks_hacker_agreement_acceptance",
   "knight_hacks_hacker_attendee",
   "knight_hacks_hacker_event_attendee",
+  "knight_hacks_hacker_profile",
+  "knight_hacks_hacker_profile_revision",
   "knight_hacks_member",
   "knight_hacks_sponsor",
   "knight_hacks_submissions",
@@ -89,9 +95,15 @@ export const TABLES_TO_DROP = [
   // Live check-in identity/result history and Discord delivery state. These are
   // tied to real applicants and are operational queues, not developer fixtures.
   "knight_hacks_hackathon_event_reminder_delivery",
+  "knight_hacks_hackathon_portal_authorization_code",
+  "knight_hacks_hackathon_portal_session",
+  "knight_hacks_hackathon_portal_session_credential",
   "knight_hacks_hacker_check_in_attempt",
+  "knight_hacks_hacker_check_in_pass",
   "knight_hacks_hacker_discord_role_grant",
   "knight_hacks_hacker_discord_role_grant_attempt",
+  "knight_hacks_hacker_participant_command",
+  "knight_hacks_event_publication_work",
   // Work queues. Real assignments and reminders aimed at real officers.
   "knight_hacks_issue",
   "knight_hacks_issue_history",

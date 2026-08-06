@@ -15,6 +15,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import { toast } from "@forge/ui/toast";
 
 import { api } from "~/trpc/react";
@@ -29,11 +30,13 @@ interface HackathonDraft {
   applicationDeadline: string;
   applicationOpen: string;
   applicationUrl: string;
+  confirmationCapacity: string;
   confirmationDeadline: string;
   displayName: string;
   endDate: string;
   startDate: string;
   theme: string;
+  timezone: string;
 }
 
 /** Ordered as the window runs, so the form reads like a timeline. */
@@ -45,17 +48,21 @@ const DATE_FIELDS = [
   ["endDate", "Ends"],
 ] as const;
 
+const TIMEZONES = Intl.supportedValuesOf("timeZone");
+
 function seed(hackathon?: Hackathon): HackathonDraft {
   if (!hackathon) {
     return {
       applicationDeadline: "",
       applicationOpen: "",
       applicationUrl: "",
+      confirmationCapacity: "",
       confirmationDeadline: "",
       displayName: "",
       endDate: "",
       startDate: "",
       theme: "",
+      timezone: "America/New_York",
     };
   }
   return {
@@ -64,11 +71,13 @@ function seed(hackathon?: Hackathon): HackathonDraft {
     // Nullable in the database; an `<Input>` cannot hold null, so the draft
     // carries "" and the validator coerces it back.
     applicationUrl: hackathon.applicationUrl ?? "",
+    confirmationCapacity: hackathon.confirmationCapacity?.toString() ?? "",
     confirmationDeadline: toDateTimeLocalValue(hackathon.confirmationDeadline),
     displayName: hackathon.displayName,
     endDate: toDateTimeLocalValue(hackathon.endDate),
     startDate: toDateTimeLocalValue(hackathon.startDate),
     theme: hackathon.theme,
+    timezone: hackathon.timezone,
   };
 }
 
@@ -135,11 +144,16 @@ export function HackathonFormDialog({
       applicationDeadline: fromDateTimeLocalValue(draft.applicationDeadline),
       applicationOpen: fromDateTimeLocalValue(draft.applicationOpen),
       applicationUrl: draft.applicationUrl.trim() || null,
+      confirmationCapacity:
+        draft.confirmationCapacity.trim() === ""
+          ? null
+          : Number.parseInt(draft.confirmationCapacity, 10),
       confirmationDeadline: fromDateTimeLocalValue(draft.confirmationDeadline),
       displayName: draft.displayName,
       endDate: fromDateTimeLocalValue(draft.endDate),
       startDate: fromDateTimeLocalValue(draft.startDate),
       theme: draft.theme,
+      timezone: draft.timezone,
     };
     if (hackathon) edit.mutate({ ...payload, id: hackathon.id });
     else create.mutate(payload);
@@ -187,6 +201,47 @@ export function HackathonFormDialog({
             <p className="text-xs text-muted-foreground">
               What officers and applicants see.
             </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="hackathon-timezone">Timezone</Label>
+              <ResponsiveComboBox
+                ariaLabel="Hackathon timezone"
+                buttonPlaceholder="Choose a timezone"
+                getItemLabel={(timezone) => timezone}
+                getItemValue={(timezone) => timezone}
+                inputPlaceholder="Search timezones"
+                items={TIMEZONES}
+                onValueChange={(timezone) => update({ timezone })}
+                renderItem={(timezone) => timezone}
+                triggerClassName="h-11 bg-background/70"
+                triggerId="hackathon-timezone"
+                value={draft.timezone}
+              />
+              <p className="text-sm text-muted-foreground">
+                IANA timezone used for date-only age and event boundaries.
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="hackathon-confirmation-capacity">
+                Confirmation capacity (optional)
+              </Label>
+              <Input
+                id="hackathon-confirmation-capacity"
+                min={0}
+                onChange={(event) =>
+                  update({ confirmationCapacity: event.target.value })
+                }
+                placeholder="No limit"
+                type="number"
+                value={draft.confirmationCapacity}
+              />
+              <p className="text-sm text-muted-foreground">
+                Accepted hackers cannot confirm after this many spots fill.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-2">

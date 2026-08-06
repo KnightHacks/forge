@@ -1,6 +1,6 @@
 # Hacker SDK Status
 
-Current phase: Artifact bundle approved / test generation
+Current phase: Final review / manual UI pass
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -40,9 +40,10 @@ Current phase: Artifact bundle approved / test generation
   and leaderboard. Past-hackathon history is out of scope.
 - 2026-08-06: The SDK is intentionally Forge- and React-opinionated for better
   developer experience. Portability outside Forge is not a goal.
-- 2026-08-06: Profile edits update all applications whose hackathons have not
-  started. Each application pins its sponsor-visible profile revision when its
-  hackathon starts, avoiding a global lock across overlapping hacks.
+- 2026-08-06: Profile edits update non-terminal applications whose hackathons
+  have not started. Denied and withdrawn applications retain their pinned
+  profile and resume snapshots, and each remaining application pins its
+  sponsor-visible revision when its hackathon starts.
 - 2026-08-06: Pending, waitlisted, accepted, and confirmed hackers may withdraw
   before the event starts. An explicit confirmation dialog states that it is
   irreversible. There is no hacker-facing undo; denied and checked-in hackers
@@ -89,6 +90,25 @@ Current phase: Artifact bundle approved / test generation
 - 2026-08-06: Provider publication uses per-hack/provider desired-state rows
   and durable per-event/provider work. External projection health no longer
   gates hack check-in, schedule, attendance, or points.
+- 2026-08-06: Knight Hacks IX is the sole live SDK consumer for this release.
+  Ended KH VIII, GemiKnights, and BloomKnights sites keep their historical
+  themed presentation while dead application entry points and legacy runtime
+  dependencies are removed silently.
+- 2026-08-06: Portal QR issuance is an explicit idempotent mutation. The Next
+  adapter coalesces concurrent refreshes, buffers replayable request bodies
+  within explicit byte caps, and treats Discord identity as Blade-owned
+  authenticated data.
+- 2026-08-06: Deep review hardened portal credentials around a fixed 30-day
+  family lifetime, historical hash-only replay detection, serialized origin
+  cutovers, bounded request bodies, and retryable cross-instance refresh races.
+- 2026-08-06: Check-in QR payloads are HMAC-derived from safe command identity;
+  durable command results retain metadata rather than usable bearer secrets.
+- 2026-08-06: KH IX renders and submits the exact active Blade agreement
+  definitions. It never infers or records consent for an agreement the hacker
+  was not shown.
+- 2026-08-06: Final deep review requires event deletion to preserve attendance
+  and scanner-attempt history, and exact concurrent creation-key retries to
+  converge on one event and one creation audit.
 
 ## Open questions
 
@@ -104,6 +124,30 @@ None. The delegated adversarial SRD review completed.
 - [x] Complete and approve `srd.md` after three independent architecture passes.
 - [x] Complete and approve `test-cases.md` under the delegated approval.
 - [x] Owner approved the full artifact and implementation pipeline.
+- [x] Add canonical profile/revision, agreement, portal-session, check-in-pass,
+      idempotency, publication, and durable-work schemas.
+- [x] Add aborting migration preflight and legacy-safe profile, agreement, and
+      publication backfills.
+- [x] Add strict participant/auth/publication/admin validators.
+- [x] Implement the headless @forge/hacker-sdk contracts, client, React hooks,
+      Next adapter, lifecycle helpers, documentation, and tests.
+- [x] Implement Blade-brokered PKCE primitives, hashed portal sessions,
+      rotation/replay protection, and auth protocol routes.
+- [x] Decouple Hackathon Event readiness and reminders from external projection
+      availability.
+- [x] Implement durable Discord/Google desired-state reconciliation and cron
+      processing.
+- [x] Complete the isolated participant v1 API, binary resume routes, lifecycle
+      transactions, opaque QR scanner support, and participant audit.
+- [x] Complete Blade portal/agreement provisioning and publication controls.
+- [x] Migrate KH IX to the SDK; decouple ended KH VIII, GemiKnights, and
+      BloomKnights sites from live participant flows.
+- [x] Run focused database-backed participant, publication, reminder, and
+      check-in integration checks.
+- [x] Run full precommit/push/build validation.
+- [x] Run React analysis and visible Playwright QA at desktop and 320 px for
+      Blade admin, historical static sites, and authenticated KH IX status/QR.
+- [x] Complete deep Forge Review and prepare the manual UI-pass server.
 
 ## Validation / commands
 
@@ -116,6 +160,43 @@ None. The delegated adversarial SRD review completed.
 - Read-only repository archaeology: current Reforge, Legacy, `origin/main` KH IX
   and Bloom, participant router, `@forge/hackathon`, forms, resume, QR, auth,
   audit, feature decisions, and architecture rules inspected.
+- pnpm --filter @forge/hacker-sdk typecheck: passed.
+- pnpm --filter @forge/hacker-sdk test: 18 tests passed.
+- pnpm --filter @forge/auth typecheck: passed.
+- pnpm --filter @forge/auth test: 8 tests passed.
+- pnpm --filter @forge/validators typecheck: passed.
+- Validator suite: 218 tests passed.
+- pnpm --filter @forge/db typecheck: passed.
+- Database suite: 117 passed against a disposable database.
+- Drizzle schema check and no-diff generation check passed.
+- Participant/auth/publication integration: 25 database-backed cases passed;
+  Hackathon Event check-in integration: 12 passed.
+- Authenticated Playwright: Blade → KH IX PKCE sign-in, dashboard, responsive
+  status, QR issuance, and checked-in Hackathon Events schedule rendered without
+  console errors or horizontal overflow at 1440px and 320px.
+- `pnpm verify:precommit`: passed after the deep-review fixes.
+- Full workspace test graph: 25/25 tasks passed, including API 660/660, Blade
+  653/653, SDK 23/23, auth 18/18, KH IX 10/10, and database 117/117.
+- Full production build graph: 17/17 tasks passed, including Blade, KH IX,
+  Club, Guild, KH VIII, GemiKnights, and BloomKnights.
+- Deep Forge Review resolved token-family revocation and replay, origin-cutover
+  races, fixed refresh-family retention, streamed request limits, QR secret
+  persistence, participant-command expiry, event publication serialization,
+  audit atomicity, resume sequencing, dynamic consent, stable retry identity,
+  shared validation, and locked-profile UX findings with regression coverage.
+- Final authenticated 390 px Playwright pass: dashboard, regenerated QR,
+  checked-in schedule, and editable pre-start profile rendered with no console
+  errors or horizontal overflow.
+- Final post-review Playwright pass: authenticated Blade provisioning at 390
+  px, KH IX profile at 390 px, and KH IX event schedule at 1440 px rendered
+  without console errors or horizontal overflow; screenshots were inspected
+  with vision for consistency.
+- Final three-way adversarial re-review: GREEN after protecting terminal
+  snapshots, preserving event attendance/check-in history, eliminating
+  duplicate and concurrent creation-key audit races, and closing KH IX
+  submission/editability timing windows.
+- `pnpm knip:strict` reports only the pre-existing `US_CITY_SOURCE` export in
+  `packages/api/src/data/us-cities-2025.ts`; this feature adds no Knip finding.
 
 ## Links
 

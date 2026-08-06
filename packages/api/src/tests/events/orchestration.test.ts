@@ -244,6 +244,51 @@ describe("event provider orchestration", () => {
     ]);
   });
 
+  it("[TC-PUB-002] synchronizes only the requested provider", async () => {
+    const { discord, google, orchestrator, state } = setup();
+
+    await expect(
+      orchestrator.sync(EVENT_IDS.public, {
+        actorId: USER_IDS.operator,
+        providers: ["discord"],
+      }),
+    ).resolves.toMatchObject({ status: "synced" });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["create"]);
+    expect(google.calls).toEqual([]);
+    expect(await state.getEvent(EVENT_IDS.public)).toMatchObject({
+      discord: { state: "synced" },
+      google: { state: "pending" },
+      publishedAt: null,
+    });
+  });
+
+  it("[TC-PUB-005] removes one provider projection without deleting the event", async () => {
+    const { discord, google, orchestrator, state } = setup();
+    await orchestrator.sync(EVENT_IDS.public, {
+      actorId: USER_IDS.operator,
+      providers: ["discord"],
+    });
+    discord.resetCalls();
+
+    await expect(
+      orchestrator.disableProvider(EVENT_IDS.public, {
+        actorId: USER_IDS.operator,
+        provider: "discord",
+      }),
+    ).resolves.toMatchObject({ status: "disabled" });
+
+    expect(discord.calls.map(({ operation }) => operation)).toEqual(["delete"]);
+    expect(google.calls).toEqual([]);
+    expect(await state.getEvent(EVENT_IDS.public)).toMatchObject({
+      discord: {
+        id: null,
+        state: "disabled",
+      },
+      google: { state: "pending" },
+    });
+  });
+
   it("[TC-010] maps Internal voice and stage channels to the internal destinations", async () => {
     const voice = pendingEvent({
       discordChannel: { id: "voice-channel", type: "voice" },

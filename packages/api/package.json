@@ -21,6 +21,10 @@
       "types": "./src/resume-bundle.server.ts",
       "default": "./src/resume-bundle.server.ts"
     },
+    "./hacker-portal": {
+      "types": "./src/hacker-portal/index.ts",
+      "default": "./src/hacker-portal/index.ts"
+    },
     "./utils": {
       "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
@@ -43,6 +47,7 @@
     "@forge/consts": "workspace:*",
     "@forge/db": "workspace:*",
     "@forge/email": "workspace:^",
+    "@forge/hacker-sdk": "workspace:*",
     "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
     "@t3-oss/env-core": "^0.13.10",

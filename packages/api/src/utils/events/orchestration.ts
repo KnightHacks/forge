@@ -5,8 +5,8 @@ import { logger } from "@forge/utils";
 
 import { assertClubEvent } from "./access";
 
-type ProviderName = "discord" | "google";
-type ProviderState = "error" | "pending" | "synced" | "unknown";
+export type ProviderName = "discord" | "google";
+type ProviderState = "disabled" | "error" | "pending" | "synced" | "unknown";
 
 export type EventProjectionDescriptionFormatter = (
   event: EventWorkflowRecord,
@@ -813,10 +813,12 @@ export function createEventSyncOrchestrator({
       actorId,
       auditAction = "sync",
       forceProviders = [],
+      providers = ["discord", "google"],
     }: {
       actorId: string;
       auditAction?: "create" | "repair" | "resolve_discord" | "sync" | "update";
       forceProviders?: readonly ProviderName[];
+      providers?: readonly ProviderName[];
     },
   ) => {
     const initial = assertEventScope(await state.getEvent(eventId));
@@ -842,27 +844,18 @@ export function createEventSyncOrchestrator({
     }
 
     try {
-      if (
-        !(await reconcileProvider(
-          eventId,
-          "discord",
-          token,
-          initial.revision,
-          forceProviders.includes("discord"),
-        ))
-      ) {
-        return { eventId, status: "syncing" as const };
-      }
-      if (
-        !(await reconcileProvider(
-          eventId,
-          "google",
-          token,
-          initial.revision,
-          forceProviders.includes("google"),
-        ))
-      ) {
-        return { eventId, status: "syncing" as const };
+      for (const provider of providers) {
+        if (
+          !(await reconcileProvider(
+            eventId,
+            provider,
+            token,
+            initial.revision,
+            forceProviders.includes(provider),
+          ))
+        ) {
+          return { eventId, status: "syncing" as const };
+        }
       }
       const current = assertEventScope(await state.getEvent(eventId));
       const synchronized = (["discord", "google"] as const).every(
@@ -889,9 +882,16 @@ export function createEventSyncOrchestrator({
         eventId,
         status: published
           ? ("published" as const)
-          : synchronized
-            ? ("syncing" as const)
-            : ("needs_attention" as const),
+          : providers.every(
+                (provider) =>
+                  current[provider].state === "synced" &&
+                  current[provider].id !== null &&
+                  current[provider].appliedRevision === current.revision,
+              )
+            ? ("synced" as const)
+            : synchronized
+              ? ("syncing" as const)
+              : ("needs_attention" as const),
       };
     } finally {
       await state.releaseSyncLease(eventId, token);
@@ -1250,6 +1250,99 @@ export function createEventSyncOrchestrator({
         throw new Error("Event deletion failed.");
       }
       return outcome;
+    },
+
+    async disableProvider(
+      eventId: string,
+      { actorId, provider }: { actorId: string; provider: ProviderName },
+    ) {
+      let event = assertEventScope(await state.getEvent(eventId));
+      if (event.legacy) return { eventId, status: "legacy" as const };
+      const token = tokenFactory();
+      const now = clock();
+      if (
+        !(await state.acquireSyncLease({
+          eventId,
+          expiresAt: new Date(now.getTime() + config.leaseDurationMs),
+          now,
+          revision: event.revision,
+          token,
+        }))
+      ) {
+        return { eventId, status: "syncing" as const };
+      }
+
+      try {
+        event = assertEventScope(await state.getEvent(eventId));
+        const projection = event[provider];
+        if (projection.state === "unknown" || projection.attemptToken) {
+          return { eventId, status: "needs_attention" as const };
+        }
+        if (!projection.id) {
+          const saved = await persist(
+            event.id,
+            provider,
+            {
+              appliedDestination: null,
+              appliedRevision: null,
+              attemptRevision: null,
+              attemptToken: null,
+              id: null,
+              state: "disabled",
+            },
+            event.revision,
+            token,
+          );
+          return {
+            eventId,
+            status: saved ? ("disabled" as const) : ("syncing" as const),
+          };
+        }
+
+        const result = await callProvider(
+          event,
+          provider,
+          token,
+          "delete",
+          projection.id,
+        );
+        if (!result) return { eventId, status: "syncing" as const };
+        const absent = result.kind === "success" || result.kind === "not_found";
+        const saved = await persist(
+          event.id,
+          provider,
+          absent
+            ? {
+                appliedDestination: null,
+                appliedRevision: null,
+                attemptRevision: null,
+                attemptToken: null,
+                id: null,
+                state: "disabled",
+              }
+            : {
+                ...projection,
+                attemptRevision:
+                  result.kind === "unknown" ? event.revision : null,
+                attemptToken: result.kind === "unknown" ? token : null,
+                state: result.kind === "unknown" ? "unknown" : "error",
+              },
+          event.revision,
+          token,
+        );
+        if (!saved) return { eventId, status: "syncing" as const };
+        return {
+          eventId,
+          status: absent
+            ? ("disabled" as const)
+            : result.kind === "unknown"
+              ? ("needs_attention" as const)
+              : ("error" as const),
+        };
+      } finally {
+        await state.releaseSyncLease(eventId, token);
+        await attemptAudit({ action: "sync", actorId, eventId });
+      }
     },
 
     async listDiscordRepairCandidates(eventId: string) {
