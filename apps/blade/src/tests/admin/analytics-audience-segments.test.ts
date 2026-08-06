@@ -2,11 +2,66 @@ import { describe, expect, it } from "vitest";
 
 import type { AnalyticsReport } from "~/app/_components/admin/analytics/analytics-report-types";
 import {
+  buildCompositionPieRows,
   COMBINED_UNDERGRADUATE_LABEL,
   isUndergraduateLevel,
   mergeUndergraduateAffinityRows,
   mergeUndergraduateDemographicRows,
 } from "~/app/_components/admin/analytics/analytics-audience-segments";
+
+describe("buildCompositionPieRows", () => {
+  it("keeps stable category colors and combines only the deterministic tail", () => {
+    const rows = Array.from({ length: 14 }, (_, index) => ({
+      category: `Category ${String.fromCharCode(65 + index)}`,
+      count: 20 - index,
+    }));
+    const first = buildCompositionPieRows(rows);
+    const reordered = buildCompositionPieRows([...rows].reverse());
+
+    expect(first).toEqual(reordered);
+    expect(first).toHaveLength(12);
+    expect(first.at(-1)).toMatchObject({
+      category: "Other categories (3)",
+      count: 24,
+    });
+    const firstRow = rows[0];
+    expect(firstRow).toBeDefined();
+    if (!firstRow) return;
+    expect(first[0]?.color).toBe(buildCompositionPieRows([firstRow])[0]?.color);
+  });
+
+  it("keeps protected truth categories and stored Other outside the tail", () => {
+    const substantive = Array.from({ length: 14 }, (_, index) => ({
+      category: `School ${String.fromCharCode(65 + index)}`,
+      count: 30 - index,
+    }));
+    const protectedRows = [
+      { category: "Missing", count: 1 },
+      { category: "Invalid", count: 1 },
+      { category: "Unknown", count: 1 },
+      { category: "Not applicable", count: 1 },
+      { category: "Prefer not to answer", count: 1 },
+      { category: "Other", count: 1 },
+    ];
+
+    const result = buildCompositionPieRows([...substantive, ...protectedRows]);
+
+    for (const row of protectedRows) {
+      expect(result).toContainEqual(
+        expect.objectContaining({ category: row.category, count: row.count }),
+      );
+    }
+    expect(
+      result.find((row) => row.category.startsWith("Other categories")),
+    ).toMatchObject({ count: 74 });
+    expect(result.reduce((sum, row) => sum + row.count, 0)).toBe(
+      [...substantive, ...protectedRows].reduce(
+        (sum, row) => sum + row.count,
+        0,
+      ),
+    );
+  });
+});
 
 type DemographicRows =
   AnalyticsReport["audience"]["demographics"]["level_of_study"]["rows"];

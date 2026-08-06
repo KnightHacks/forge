@@ -13,6 +13,15 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("~/trpc/react", () => ({
   api: {
+    analytics: {
+      previewResumeBundle: {
+        useQuery: vi.fn(() => ({
+          data: undefined,
+          error: null,
+          isLoading: false,
+        })),
+      },
+    },
     useUtils: () => ({
       analytics: { exportReport: { fetch: vi.fn() } },
     }),
@@ -248,12 +257,13 @@ function renderSection(
     canOpenEvents: false,
     canOpenMembers: false,
   },
+  inputPatch: Record<string, unknown> = {},
 ) {
   return renderToStaticMarkup(
     createElement(AnalyticsDashboard, {
       access,
       discordReport,
-      input: analyticsReportInputSchema.parse({ section }),
+      input: analyticsReportInputSchema.parse({ section, ...inputPatch }),
       report: selectedReport,
     }),
   );
@@ -350,9 +360,11 @@ describe("AnalyticsDashboard", () => {
       canOpenMembers: true,
     };
 
-    expect(renderSection("audience", namedReport, memberAccess)).toMatch(
-      /<button[^>]*>Ada Lovelace<\/button>/,
-    );
+    expect(
+      renderSection("audience", namedReport, memberAccess, {
+        audienceView: "engagement",
+      }),
+    ).toMatch(/<button[^>]*>Ada Lovelace<\/button>/);
     expect(renderSection("dues", namedReport, memberAccess)).toMatch(
       /<button[^>]*>Ada Lovelace<\/button>/,
     );
@@ -384,6 +396,22 @@ describe("AnalyticsDashboard", () => {
     expect(dues).not.toContain("authorDiscordUserId");
   });
 
+  it("puts every priority demographic directly in the Audience workspace", () => {
+    const html = renderSection("audience");
+
+    expect(html).toContain("Break down by");
+    for (const demographic of [
+      "Gender",
+      "Race / ethnicity",
+      "Age group",
+      "Class year (inferred)",
+      "Level of study",
+      "Major",
+    ]) {
+      expect(html).toContain(demographic);
+    }
+  });
+
   it("[TC-020, TC-022] separates internal exports from the sponsor-safe report", () => {
     const html = renderSection("reports");
 
@@ -392,7 +420,7 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("Dues data");
     expect(html).toContain("Discord summary");
     expect(html).toContain("Member resume bundle");
-    expect(html).toContain("Download ZIP");
+    expect(html).toContain("Acknowledge sensitive resume policy");
     expect(html).toContain("Sponsor-safe report");
     expect(html).toContain("Privacy reduced");
     expect(html).toContain(
@@ -453,8 +481,25 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("Undergraduate University");
     expect(html).not.toContain("community college or similar");
     expect(html).not.toContain("Undergraduate University (3+ year)");
-    expect(html).toContain(">20<");
-    expect(html).toContain(">10<");
+    expect(html).toContain("20 · 100%");
+    expect(html).toContain('aria-label="Level of study composition details"');
+    expect(html).toContain("<th");
+    expect(html).toContain(">People</th>");
+    expect(html).toContain(">Share</th>");
+    expect(html).not.toContain(
+      'aria-label="Member base and attendee demographic comparison"',
+    );
+    expect(html).not.toContain("Complete segment analysis");
+
+    const engagementHtml = renderSection(
+      "audience",
+      audienceReport,
+      undefined,
+      { audienceView: "engagement" },
+    );
+    expect(engagementHtml).toContain("Complete segment analysis");
+    expect(engagementHtml).toContain(">20<");
+    expect(engagementHtml).toContain(">10<");
   });
 
   it("[TC-024] contains labeled horizontal table regions", () => {

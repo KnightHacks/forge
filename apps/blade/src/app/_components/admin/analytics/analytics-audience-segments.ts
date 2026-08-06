@@ -101,3 +101,77 @@ export function mergeUndergraduateAffinityRows(
       left.label.localeCompare(right.label),
   );
 }
+
+function stableCategoryColor(category: string) {
+  let hash = 2166136261;
+  for (const character of category.normalize("NFKC")) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 16777619);
+  }
+  return `hsl(${Math.abs(hash) % 360} 62% 55%)`;
+}
+
+const PROTECTED_COMPOSITION_CATEGORIES = new Set([
+  "Prefer not to answer",
+  "Missing",
+  "Invalid",
+  "Unknown",
+  "Not applicable",
+]);
+
+/** Keeps demographic pies truthful while bounding visual density. */
+export function buildCompositionPieRows(
+  rows: readonly { category: string; count: number }[],
+  maxSlices = 12,
+) {
+  const sorted = [...rows]
+    .filter((row) => row.count > 0)
+    .sort(
+      (left, right) =>
+        right.count - left.count || left.category.localeCompare(right.category),
+    );
+  if (sorted.length <= maxSlices) {
+    return sorted.map((row) => ({
+      ...row,
+      color: stableCategoryColor(row.category),
+    }));
+  }
+  const protectedRows = sorted.filter((row) =>
+    PROTECTED_COMPOSITION_CATEGORIES.has(row.category),
+  );
+  const storedOther = sorted.filter((row) => row.category === "Other");
+  const substantive = sorted.filter(
+    (row) =>
+      !PROTECTED_COMPOSITION_CATEGORIES.has(row.category) &&
+      row.category !== "Other",
+  );
+  const needsTail = substantive.length + storedOther.length > maxSlices;
+  const visibleCount = needsTail
+    ? Math.max(0, maxSlices - storedOther.length - 1)
+    : substantive.length;
+  const visible = substantive.slice(0, visibleCount);
+  const tail = substantive.slice(visibleCount);
+  return [
+    ...visible.map((row) => ({
+      ...row,
+      color: stableCategoryColor(row.category),
+    })),
+    ...storedOther.map((row) => ({
+      ...row,
+      color: stableCategoryColor(row.category),
+    })),
+    ...(tail.length
+      ? [
+          {
+            category: `Other categories (${tail.length})`,
+            color: "hsl(215 16% 58%)",
+            count: tail.reduce((sum, row) => sum + row.count, 0),
+          },
+        ]
+      : []),
+    ...protectedRows.map((row) => ({
+      ...row,
+      color: stableCategoryColor(row.category),
+    })),
+  ];
+}

@@ -34,6 +34,8 @@ function period(params: SearchParams): AnalyticsReportInput["period"] {
 
 export function parseAnalyticsSearchParams(params: SearchParams) {
   const parsed = analyticsReportInputSchema.safeParse({
+    audienceView: first(params.audienceView),
+    clubAudienceCohort: first(params.audienceCohort),
     comparison: first(params.comparison),
     demographic: first(params.demographic),
     eventId: first(params.event) ?? null,
@@ -50,6 +52,12 @@ function dateParam(value: Date) {
 
 export function buildAnalyticsSearchParams(input: AnalyticsReportInput) {
   const params = new URLSearchParams();
+  if (input.audienceView !== "composition") {
+    params.set("audienceView", input.audienceView);
+  }
+  if (input.clubAudienceCohort !== "all_profiles") {
+    params.set("audienceCohort", input.clubAudienceCohort);
+  }
   if (input.section !== "overview") params.set("section", input.section);
   if (input.demographic !== "level_of_study") {
     params.set("demographic", input.demographic);

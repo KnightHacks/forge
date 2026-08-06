@@ -39,51 +39,68 @@ export function useResumeBundleDownload() {
 
   useEffect(() => clearTimers, [clearTimers]);
 
-  const startDownload = useCallback(() => {
-    if (isPreparing) return;
-
-    clearTimers();
-    clearResumeDownloadSignal();
-    setIsPreparing(true);
-
-    const token = window.crypto.randomUUID().replaceAll("-", "");
-    const readySignal = `${token}.ready`;
-    const errorSignal = `${token}.error`;
-
-    pollTimerRef.current = window.setInterval(() => {
-      const signal = readResumeDownloadSignal();
-      if (signal !== readySignal && signal !== errorSignal) return;
-
-      clearTimers();
-      clearResumeDownloadSignal();
-      setIsPreparing(false);
-
-      if (signal === readySignal) {
-        toast.success("Resume bundle download started.");
-      } else {
+  const startDownload = useCallback(
+    ({
+      partNumber,
+      planFingerprint,
+      policyAcknowledged,
+    }: {
+      partNumber: number;
+      planFingerprint: string;
+      policyAcknowledged: boolean;
+    }) => {
+      if (isPreparing) return;
+      if (!policyAcknowledged) {
         toast.error(
-          "The resume bundle could not be prepared. Please try again.",
+          "Acknowledge the sensitive resume policy before downloading.",
         );
+        return;
       }
-    }, POLL_INTERVAL_MS);
 
-    timeoutTimerRef.current = window.setTimeout(() => {
       clearTimers();
       clearResumeDownloadSignal();
-      setIsPreparing(false);
-      toast.error(
-        "Resume preparation is taking longer than expected. Please try again.",
-      );
-    }, PREPARATION_TIMEOUT_MS);
+      setIsPreparing(true);
 
-    const downloadLink = document.createElement("a");
-    downloadLink.href = `/api/admin/resume-bundle?downloadToken=${encodeURIComponent(token)}`;
-    downloadLink.download = "";
-    downloadLink.hidden = true;
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-  }, [clearTimers, isPreparing]);
+      const token = window.crypto.randomUUID().replaceAll("-", "");
+      const readySignal = `${token}.ready`;
+      const errorSignal = `${token}.error`;
+
+      pollTimerRef.current = window.setInterval(() => {
+        const signal = readResumeDownloadSignal();
+        if (signal !== readySignal && signal !== errorSignal) return;
+
+        clearTimers();
+        clearResumeDownloadSignal();
+        setIsPreparing(false);
+
+        if (signal === readySignal) {
+          toast.success("Resume bundle download started.");
+        } else {
+          toast.error(
+            "The resume bundle could not be prepared. Please try again.",
+          );
+        }
+      }, POLL_INTERVAL_MS);
+
+      timeoutTimerRef.current = window.setTimeout(() => {
+        clearTimers();
+        clearResumeDownloadSignal();
+        setIsPreparing(false);
+        toast.error(
+          "Resume preparation is taking longer than expected. Please try again.",
+        );
+      }, PREPARATION_TIMEOUT_MS);
+
+      const downloadLink = document.createElement("a");
+      downloadLink.href = `/api/admin/resume-bundle?downloadToken=${encodeURIComponent(token)}&policyAcknowledged=true&policyVersion=resume-sensitive-index-v1&partNumber=${partNumber}&planFingerprint=${encodeURIComponent(planFingerprint)}`;
+      downloadLink.download = "";
+      downloadLink.hidden = true;
+      document.body.append(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+    },
+    [clearTimers, isPreparing],
+  );
 
   return { isPreparing, startDownload };
 }

@@ -57,15 +57,20 @@ afterEach(() => {
 });
 
 describe("useResumeBundleDownload", () => {
+  const acknowledgedPart = {
+    partNumber: 1,
+    planFingerprint: "plan-fingerprint-123",
+    policyAcknowledged: true,
+  };
   it("requests the archive with a fresh token and clears any stale signal", () => {
     setSignal("leftover.ready");
     const { result } = renderHook(() => useResumeBundleDownload());
 
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     expect(result.current.isPreparing).toBe(true);
     expect(clickedHrefs).toEqual([
-      `/api/admin/resume-bundle?downloadToken=${TOKEN}`,
+      `/api/admin/resume-bundle?downloadToken=${TOKEN}&policyAcknowledged=true&policyVersion=resume-sensitive-index-v1&partNumber=1&planFingerprint=plan-fingerprint-123`,
     ]);
     expect(readSignal()).toBeNull();
   });
@@ -74,7 +79,7 @@ describe("useResumeBundleDownload", () => {
     // The cookie is a single slot shared by every attempt, so a stale value
     // would otherwise end this preparation before the ZIP is built.
     const { result } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     setSignal("someothertoken.ready");
     advance(250);
@@ -87,7 +92,7 @@ describe("useResumeBundleDownload", () => {
 
   it("confirms the download and stops polling once the route reports ready", () => {
     const { result } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     setSignal(`${TOKEN}.ready`);
     advance(250);
@@ -107,7 +112,7 @@ describe("useResumeBundleDownload", () => {
 
   it("reports a failure the route signalled", () => {
     const { result } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     setSignal(`${TOKEN}.error`);
     advance(250);
@@ -121,7 +126,7 @@ describe("useResumeBundleDownload", () => {
 
   it("gives up after five minutes rather than polling forever", () => {
     const { result } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     advance(5 * 60 * 1000 - 1);
 
@@ -137,15 +142,15 @@ describe("useResumeBundleDownload", () => {
 
   it("ignores a second request while one is already in flight", () => {
     const { result } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
+    act(() => result.current.startDownload(acknowledgedPart));
 
     expect(clickedHrefs).toHaveLength(1);
   });
 
   it("stops both timers when the page moves on", () => {
     const { result, unmount } = renderHook(() => useResumeBundleDownload());
-    act(() => result.current.startDownload());
+    act(() => result.current.startDownload(acknowledgedPart));
 
     unmount();
 

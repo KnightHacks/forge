@@ -3,7 +3,28 @@ import type { RouterOutputs } from "@forge/api";
 type EffectivePermissions = RouterOutputs["roles"]["getPermissions"];
 
 export function canAccessAnalytics(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_CLUB_DATA === true ||
+    permissions.READ_HACK_DATA === true
+  );
+}
+
+export function canAccessClubAnalytics(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true || permissions.READ_CLUB_DATA === true;
+}
+
+export function canAccessHackathonAnalytics(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.READ_HACK_DATA === true;
+}
+
+export function canAccessIdentifiedHackathonAnalytics(
+  permissions: EffectivePermissions,
+) {
+  return (
+    permissions.IS_OFFICER === true ||
+    (permissions.READ_HACK_DATA === true && permissions.READ_HACKERS === true)
+  );
 }
 
 export function canAccessDiscordArchive(permissions: EffectivePermissions) {
