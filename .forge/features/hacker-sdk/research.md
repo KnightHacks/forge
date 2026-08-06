@@ -2,6 +2,38 @@
 
 Status: Evidence gathered for reverse-prompting on 2026-08-06
 
+## Owner decisions after research
+
+The owner approved these boundaries on 2026-08-06:
+
+- Supported consumers are React apps in the Forge monorepo, hosted on a Knight
+  Hacks subdomain or any localhost port in development. Arbitrary frameworks,
+  external repositories, and unrelated production domains are not requirements.
+- React hooks are a first-class SDK surface. A small lower-level client may
+  support those hooks, server routes, and tests, but "framework-neutral SDK" is
+  not a separate product goal.
+- Blade hosts the participant API. Hack sites use an adapter and do not mount the
+  participant backend or receive database, storage, email, Discord, or auth
+  secrets.
+- The current `main` auth proxy is prototype debt. This feature must define a
+  predictable sign-in, callback, session, retry, and local-development flow.
+- Forge should have one reusable Hacker profile. Per-hack data must not reuse the
+  profile's first-time answer; every application records first-time status for
+  that hackathon.
+- Age is derived from DOB at the relevant time and is not copied as another
+  mutable profile value.
+- Per-hack custom questions are deferred. KH IX applications are already in
+  progress, so this feature will not add or change the question set. The contract
+  should leave room for a later revisioned custom-question capability.
+- Hacker-controlled application/profile data remains editable until that
+  hackathon starts. It is locked for the event so organizers and sponsors use a
+  stable record.
+- The feature covers the complete current participant contract: application,
+  profile, status, confirmation/withdrawal, resume, QR, schedule/timeline,
+  personal event attendance, points, and leaderboard.
+- Schedule and timeline data come from Hackathon Events. Past-hackathon history
+  is not part of this feature.
+
 ## Goal stated by the owner
 
 Blade should remain the system of record and the administrative control plane for
@@ -191,17 +223,17 @@ Member rows or route hacker applications through the club respondent model.
 
 This is a research recommendation, pending owner approval.
 
-The recommended deployment boundary is a centrally hosted, versioned
-participant API on Blade with a headless client package. Yearly hack sites should
+The approved deployment boundary is a centrally hosted, versioned participant
+API on Blade with a headless client package. Yearly hack sites should
 not mount `@forge/api`, connect to the production database, or receive storage,
 email, Discord, and auth secrets. That is the largest security correction from
 the `origin/main` prototype.
 
 The likely package split is:
 
-- a framework-neutral `@forge/hacker-sdk` client with explicit DTOs, Zod
-  schemas, domain error codes, and application-definition helpers;
-- optional `@forge/hacker-sdk/react` TanStack Query hooks;
+- a small `@forge/hacker-sdk` client with explicit DTOs, Zod schemas, domain
+  error codes, and application-definition helpers;
+- first-class `@forge/hacker-sdk/react` TanStack Query hooks;
 - optional `@forge/hacker-sdk/server` helpers for a same-origin site adapter,
   auth return, and token exchange.
 
@@ -211,15 +243,15 @@ an internal server implementation detail. A stable JSON contract makes a yearly
 portal independently deployable and prevents an added database column from
 becoming public data by accident.
 
-The recommended auth default is a thin same-origin server adapter on the hack
+The approved auth boundary is a thin same-origin server adapter on the hack
 site. Blade handles Discord login, validates an allowlisted return URL, and
 exchanges a one-time handoff for short-lived user credentials scoped to one
 provisioned portal client and one hackathon ID. A browser-supplied slug may help
-with routing but must never select the authoritative hackathon. This design can
-support both Knight Hacks subdomains and a future branded domain without giving
-the themed site platform credentials.
+with routing but must never select the authoritative hackathon. Production
+origins are Knight Hacks subdomains; development accepts registered localhost
+origins and ports without weakening the production allowlist.
 
-Direct browser calls with shared cookies should not be the first contract. The
+Direct browser calls with shared cookies are not the first contract. The
 current Blade edge combines wildcard CORS with cookie-backed sessions, callback
 sanitization permits only the Blade origin, and production shared cookies work
 only for Knight Hacks subdomains. Supporting browser-direct access later would
@@ -330,46 +362,28 @@ implementation slice may be smaller after reverse-prompting.
   depend on it.
 - The SDK contains no required UI, styles, assets, or theme copy.
 
-## Decisions needed before `spec.md`
+## Decisions still needed before `spec.md`
 
 These questions change the product or its security boundary and cannot be
 filled from repository evidence.
 
-1. Where will yearly hackathon sites live? Supporting only Forge monorepo apps
-   under `*.knighthacks.org` permits the current shared-session model. Supporting
-   another domain, repository, or deployment requires a portable auth handoff
-   and a remote API boundary.
-2. Should browser code call Blade directly, should each hack site use a thin
-   server adapter/BFF, or should the SDK support both? This decides package
-   shape, secrets, CORS/CSRF controls, and framework support.
-3. Should Forge establish one canonical Hacker profile per Blade user, with
-   separate per-hack application snapshots, or keep per-application Hacker rows
-   and make copy-forward explicit? The canonical profile plus immutable
-   application snapshots is the research recommendation.
-4. Which base fields are reusable profile facts, and which must also freeze on
-   each application for review and historical analytics?
-5. Who authors custom questions: officers in Blade, each frontend in code, or a
-   combination? If both, which source wins and can a frontend add an undeclared
-   question?
-6. Can applicants edit their application after submission? If yes, which fields
-   and until which state or deadline? A reusable profile edit and a current
-   application correction need distinct semantics.
-7. Which statuses can an applicant withdraw from, and can they undo withdrawal
+1. A single mutable profile conflicts with per-hack event locks when hackathons
+   overlap. Should an edit update every not-yet-started application, with each
+   application pinning the sponsor-visible profile revision at its own start?
+   This avoids a global profile lock while keeping one reusable profile.
+2. Which statuses can an applicant withdraw from, and can they undo withdrawal
    or reapply? Legacy permits only `confirmed -> withdrawn` and treats it as
    terminal.
-8. Which agreement records are required? MLH and Knight Hacks terms can be
+3. Which agreement records are required? MLH and Knight Hacks terms can be
    stored with document version and acceptance time instead of editable profile
    booleans.
-9. Is 18 at hackathon start a permanent Knight Hacks rule or a per-hack policy?
-   The current KH IX browser schema enforces it, while Reforge check-in now
-   presents an under-18 warning rather than defining application eligibility.
-10. Does the first SDK release include schedule/timeline, attendance, points,
-    leaderboard, QR, and past history, or should the first release stop after
-    application, profile, and status lifecycle?
-11. For leaderboards, which identity is visible, can a hacker opt out, and are
-    rankings public, authenticated, or checked-in only?
-12. Should schedule/timeline data be public or limited by application status?
-    The production prototype limits schedule to checked-in participants.
+4. Is being 18 at hackathon start an application requirement, or may minors
+   apply and proceed with an organizer-managed consent process? Age itself will
+   always be derived from DOB at the relevant timestamp.
+5. For leaderboards, which identity is visible, can a hacker opt out, and are
+   rankings public, authenticated, or checked-in only?
+6. Should schedule/timeline data be public or limited by application status?
+   The production prototype limits schedule to checked-in participants.
 
 ## Recommended next artifact sequence
 

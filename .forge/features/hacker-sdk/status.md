@@ -19,22 +19,34 @@ Current phase: Research complete / product reverse-prompting
   orthogonal VIP, primary-check-in-only `checkedin`, and separate hacker points.
 - 2026-08-06: `origin/main` KH IX/Bloom portal code is prototype evidence. It
   is not treated as the final SDK contract or silently merged into this branch.
+- 2026-08-06: Supported SDK consumers are React apps in the Forge monorepo on
+  Knight Hacks subdomains, plus registered localhost origins and ports for
+  development. React hooks are a first-class surface; arbitrary frameworks,
+  repositories, and production domains are out of scope.
+- 2026-08-06: Approved a Blade-hosted participant API with a thin site adapter.
+  Hack sites do not mount the platform backend or hold database, storage, email,
+  Discord, or auth secrets. The current `main` auth proxy must be replaced with
+  a defined sign-in, callback, session, retry, and localhost flow.
+- 2026-08-06: Approved one reusable Hacker profile with per-hack facts kept
+  separate. First-time status is always asked and recorded per hackathon. Age is
+  derived from DOB at the relevant timestamp rather than stored again.
+- 2026-08-06: Per-hack custom questions are deferred because KH IX applications
+  are already active. The contract may leave a future extension point, but this
+  feature does not add officer question authoring or change the current form.
+- 2026-08-06: Hacker-controlled application/profile data remains editable until
+  the selected hackathon starts, then locks for organizer and sponsor use.
+- 2026-08-06: The feature covers application, profile, status lifecycle, resume,
+  QR, Hackathon Events-backed schedule/timeline, personal attendance, points,
+  and leaderboard. Past-hackathon history is out of scope.
 
 ## Open questions
 
-- Supported site/deployment boundary: Forge monorepo and Knight Hacks subdomains
-  only, or arbitrary repositories/domains/deployments.
-- Browser-direct API, site-local server adapter/BFF, or both.
-- Canonical reusable Hacker profile plus per-hack snapshots, or deliberately
-  retained per-application Hacker rows.
-- Exact reusable profile fields and per-application snapshot fields.
-- Officer-authored, frontend-authored, or combined custom questions.
-- Application/profile edit windows and historical correction behavior.
+- Profile revision behavior when one user has multiple not-yet-started or
+  overlapping hackathons.
 - Self-withdrawal graph and whether withdrawal can be reversed.
 - Required versioned MLH and Knight Hacks agreement records.
-- Global or configurable age eligibility.
-- First-release capability boundary for QR, schedule/timeline, attendance,
-  points, leaderboard, and past history.
+- Under-18 application and participation policy. Age storage itself is settled:
+  derive it from DOB and the relevant timestamp.
 - Leaderboard identity/privacy/access policy.
 - Schedule/timeline access policy.
 
