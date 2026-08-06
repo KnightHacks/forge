@@ -53,6 +53,7 @@ import {
   IntegrationStatus,
 } from "./event-presenters";
 import { EventTagManagement } from "./event-tag-management";
+import { EventWorkspaceSections } from "./event-workspace-sections";
 import { buildAdminEventSearchParams } from "./params";
 
 interface EventAdminActions {
@@ -126,31 +127,15 @@ function EventSections({
   }
 
   return (
-    <nav
-      aria-label="Event management sections"
-      className="flex min-w-0 gap-1 overflow-x-auto rounded-lg border border-white/10 bg-card/95 p-1 shadow-lg shadow-black/15"
-    >
-      {sections.map((section) => {
-        const Icon = section.icon;
-        const active = section.view === input.view;
-        return (
-          <Link
-            key={section.view}
-            href={section.href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active
-                ? "bg-primary/15 text-foreground"
-                : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            {section.label}
-          </Link>
-        );
-      })}
-    </nav>
+    <EventWorkspaceSections
+      current={input.view}
+      sections={sections.map(({ href, icon, label, view }) => ({
+        href,
+        icon,
+        label,
+        value: view,
+      }))}
+    />
   );
 }
 
@@ -724,65 +709,53 @@ export function EventAdminDashboard({
         (input.view === "list" || input.view === "calendar") &&
         data && (
           <section className="rounded-lg border border-white/10 bg-card/95 p-3 shadow-xl shadow-black/15 sm:p-4">
-            <div className="mb-4 flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Event timing</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Switch between active planning and completed event history.
-                </p>
-              </div>
-              <div
-                role="group"
-                aria-label="Event timing"
-                className="grid grid-cols-2 rounded-lg border border-white/10 bg-background/60 p-1"
-              >
-                <Button
-                  type="button"
-                  variant={input.timing === "upcoming" ? "primary" : "ghost"}
-                  aria-pressed={input.timing === "upcoming"}
-                  className="min-h-11 gap-2"
-                  onClick={() =>
-                    navigate({
-                      ...input,
-                      direction: "asc",
-                      health: [],
-                      page: 1,
-                      timing: "upcoming",
-                    })
-                  }
+            <div className="flex min-w-0 flex-wrap items-end gap-2">
+              {input.view === "list" && (
+                <div
+                  role="group"
+                  aria-label="Event timing"
+                  className="grid grid-cols-2 rounded-lg border border-white/10 bg-background/60 p-1"
                 >
-                  <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                  Upcoming
-                </Button>
-                <Button
-                  type="button"
-                  variant={input.timing === "past" ? "primary" : "ghost"}
-                  aria-pressed={input.timing === "past"}
-                  className="min-h-11 gap-2"
-                  onClick={() =>
-                    navigate({
-                      ...input,
-                      direction: "desc",
-                      health: [],
-                      page: 1,
-                      timing: "past",
-                    })
-                  }
-                >
-                  <History className="h-4 w-4" aria-hidden="true" />
-                  Past
-                </Button>
-              </div>
-            </div>
-            {input.timing === "past" && (
-              <p className="mb-4 rounded-md border border-white/10 bg-background/50 p-3 text-sm text-muted-foreground">
-                Provider health is no longer tracked for completed events.
-                Discord and Google Calendar repair actions are hidden.
-              </p>
-            )}
-            <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(16rem,1fr)_auto_auto_auto_auto] lg:items-end">
+                  <Button
+                    type="button"
+                    variant={input.timing === "upcoming" ? "primary" : "ghost"}
+                    aria-pressed={input.timing === "upcoming"}
+                    className="min-h-10 gap-2"
+                    onClick={() =>
+                      navigate({
+                        ...input,
+                        direction: "asc",
+                        health: [],
+                        page: 1,
+                        timing: "upcoming",
+                      })
+                    }
+                  >
+                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                    Upcoming
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={input.timing === "past" ? "primary" : "ghost"}
+                    aria-pressed={input.timing === "past"}
+                    className="min-h-10 gap-2"
+                    onClick={() =>
+                      navigate({
+                        ...input,
+                        direction: "desc",
+                        health: [],
+                        page: 1,
+                        timing: "past",
+                      })
+                    }
+                  >
+                    <History className="h-4 w-4" aria-hidden="true" />
+                    Past
+                  </Button>
+                </div>
+              )}
               <form
-                className="relative min-w-0"
+                className="relative min-w-[14rem] flex-1"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const form = new FormData(event.currentTarget);
@@ -812,11 +785,11 @@ export function EventAdminDashboard({
                 options={data.filterOptions}
                 onApply={(next) => navigate(next)}
               />
-              <label className="grid gap-1 text-sm text-muted-foreground">
-                <span>Sort</span>
+              <label>
+                <span className="sr-only">Sort</span>
                 <select
                   aria-label="Sort events"
-                  className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                  className="h-11 rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground"
                   value={input.sort}
                   onChange={(event) =>
                     navigate({
@@ -850,31 +823,32 @@ export function EventAdminDashboard({
                 ) : (
                   <ArrowDownUp className="h-4 w-4" aria-hidden="true" />
                 )}
-                {input.direction === "asc" ? "Ascending" : "Descending"}
               </Button>
-              <label className="grid gap-1 text-sm text-muted-foreground">
-                <span>Page size</span>
-                <select
-                  aria-label="Page size"
-                  className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground"
-                  value={input.pageSize}
-                  onChange={(event) =>
-                    navigate({
-                      ...input,
-                      page: 1,
-                      pageSize: Number(
-                        event.target.value,
-                      ) as AdminEventInput["pageSize"],
-                    })
-                  }
-                >
-                  {[25, 50, 100, 250, 500].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {input.view === "list" && (
+                <label>
+                  <span className="sr-only">Page size</span>
+                  <select
+                    aria-label="Page size"
+                    className="h-11 rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground"
+                    value={input.pageSize}
+                    onChange={(event) =>
+                      navigate({
+                        ...input,
+                        page: 1,
+                        pageSize: Number(
+                          event.target.value,
+                        ) as AdminEventInput["pageSize"],
+                      })
+                    }
+                  >
+                    {[25, 50, 100, 250, 500].map((size) => (
+                      <option key={size} value={size}>
+                        {size} per page
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
             </div>
 
             {(input.audiences.length > 0 ||
@@ -1037,6 +1011,7 @@ export function EventAdminDashboard({
       {input.view === "calendar" && canRead && data && (
         <EventCalendar
           events={data.events}
+          initialView={input.calendarMode}
           initialDate={
             input.calendarStart && input.calendarEnd
               ? new Date(
@@ -1047,13 +1022,18 @@ export function EventAdminDashboard({
               : undefined
           }
           onOpenEvent={openEvent}
-          onRangeChange={({ end, start }) => {
-            if (input.calendarStart === start && input.calendarEnd === end) {
+          onRangeChange={({ end, start, view }) => {
+            if (
+              input.calendarStart === start &&
+              input.calendarEnd === end &&
+              input.calendarMode === view
+            ) {
               return;
             }
             navigate({
               ...input,
               calendarEnd: end,
+              calendarMode: view,
               calendarStart: start,
               page: 1,
             });

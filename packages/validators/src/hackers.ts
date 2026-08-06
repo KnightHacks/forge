@@ -43,6 +43,11 @@ export const HACKER_STATUS_LABELS: Record<
  * is.
  */
 export const GRADUATION_TERMS = ["Spring", "Summer", "Fall"] as const;
+export const FIRST_TIME_HACKER_STATUSES = [
+  "first",
+  "returning",
+  "unknown",
+] as const;
 export type GraduationTerm = (typeof GRADUATION_TERMS)[number];
 
 /**
@@ -70,13 +75,10 @@ export const hackerRosterFilterSchema = z.object({
   ageMax: z.number().int().min(0).max(120).optional(),
   /** Applicants who wrote something in the dietary field. */
   hasDietaryNeeds: z.boolean().optional(),
-  /**
-   * Whether this is their first hackathon.
-   *
-   * Read from `Hacker.isFirstTime`, which is declared once on the profile rather
-   * than per hackathon — see the note on the filter clause.
-   */
+  /** @deprecated Transitional boolean filter. Prefer `firstTimeStatus`. */
   isFirstTime: z.boolean().optional(),
+  /** Stable per-hackathon answer; unknown is not folded into returning. */
+  firstTimeStatus: z.enum(FIRST_TIME_HACKER_STATUSES).optional(),
   graduationTerms: z.array(z.enum(GRADUATION_TERMS)).max(3).optional(),
   graduationYears: z
     .array(z.number().int().min(1900).max(2200))
@@ -188,6 +190,7 @@ export const hackerSelectionSurvivalSchema = z.object({
 export type SkipReason =
   | "already"
   | "blacklisted"
+  | "checked_in"
   | "duplicate_email"
   | "missing"
   | "no_email";

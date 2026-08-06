@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -14,6 +15,8 @@ import {
 import type { RouterOutputs } from "@forge/api";
 import type {
   AuditActionKey,
+  AuditCheckInOutcome,
+  AuditDomain,
   AuditOutcome,
   AuditTargetType,
 } from "@forge/validators";
@@ -23,13 +26,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@forge/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -48,6 +44,7 @@ import {
 import {
   AUDIT_ACTION_CATALOG,
   AUDIT_ACTION_KEYS,
+  AUDIT_DOMAINS,
   AUDIT_TARGET_TYPES,
 } from "@forge/validators";
 
@@ -56,11 +53,15 @@ import {
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
-import { formatClubDateTime } from "~/lib/dates";
+import { formatClubDateTime, localNewYorkDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
+import { auditUuidParam } from "./admin-log-options";
+
+export { auditUuidParam } from "./admin-log-options";
 
 type AuditEvent = RouterOutputs["audit"]["list"]["items"][number];
 type AuditMember = RouterOutputs["audit"]["searchMembers"][number];
+type AuditHacker = RouterOutputs["audit"]["searchHackers"][number];
 type AuditDetail = RouterOutputs["audit"]["detail"];
 
 interface Cursor {
@@ -70,12 +71,129 @@ interface Cursor {
 
 const ALL = "__all__";
 
+interface AuditFilterOption {
+  label: string;
+  searchValue: string;
+  value: string;
+}
+
+const CHECK_IN_OUTCOMES = [
+  "checked_in",
+  "already_checked_in",
+  "invalid_qr",
+  "hacker_not_found",
+  "wrong_status",
+  "not_checked_in",
+  "wrong_class",
+  "not_ready",
+] as const satisfies readonly AuditCheckInOutcome[];
+
+function titleCaseFilterValue(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function option(value: string, label = titleCaseFilterValue(value)) {
+  return { label, searchValue: `${label} ${value}`, value };
+}
+
+const DOMAIN_OPTIONS: readonly AuditFilterOption[] = [
+  option(ALL, "Any domain"),
+  ...AUDIT_DOMAINS.map((value) => option(value)),
+];
+const ACTION_OPTIONS: readonly AuditFilterOption[] = [
+  option(ALL, "Any action"),
+  ...AUDIT_ACTION_KEYS.map((key) => ({
+    label: AUDIT_ACTION_CATALOG[key].label,
+    searchValue: `${AUDIT_ACTION_CATALOG[key].label} ${key} ${AUDIT_ACTION_CATALOG[key].domain}`,
+    value: key,
+  })),
+];
+const OUTCOME_OPTIONS: readonly AuditFilterOption[] = [
+  option(ALL, "Any status"),
+  option("committed", "Committed"),
+  option("partial_external", "Partial external"),
+];
+const CHECK_IN_OUTCOME_OPTIONS: readonly AuditFilterOption[] = [
+  option(ALL, "Any result"),
+  ...CHECK_IN_OUTCOMES.map((value) => option(value)),
+];
+const TARGET_TYPE_OPTIONS: readonly AuditFilterOption[] = [
+  option(ALL, "Any target type"),
+  ...AUDIT_TARGET_TYPES.map((value) => option(value)),
+];
+
+function AuditFilterComboBox({
+  ariaLabel,
+  inputPlaceholder,
+  items,
+  onValueChange,
+  triggerId,
+  value,
+}: {
+  ariaLabel: string;
+  inputPlaceholder: string;
+  items: readonly AuditFilterOption[];
+  onValueChange: (value: string) => void;
+  triggerId: string;
+  value: string;
+}) {
+  return (
+    <ResponsiveComboBox
+      ariaLabel={ariaLabel}
+      buttonPlaceholder={items[0]?.label ?? "Any"}
+      emptyMessage="No matching options."
+      getItemLabel={(item) => item.label}
+      getItemSearchValue={(item) => item.searchValue}
+      getItemValue={(item) => item.value}
+      inputPlaceholder={inputPlaceholder}
+      items={items}
+      onValueChange={onValueChange}
+      renderItem={(item) => (
+        <span className="min-w-0 truncate">{item.label}</span>
+      )}
+      triggerClassName="mt-2"
+      triggerId={triggerId}
+      value={value}
+    />
+  );
+}
+
 function memberLabel(member: AuditMember) {
   return `${member.firstName} ${member.lastName}`.trim();
 }
 
+function hackerLabel(hacker: AuditHacker) {
+  return `${hacker.firstName} ${hacker.lastName}`.trim();
+}
+
+function keepSelected<T>(
+  items: readonly T[],
+  selected: T | null,
+  key: (item: T) => string,
+) {
+  if (!selected || items.some((item) => key(item) === key(selected))) {
+    return items;
+  }
+  return [selected, ...items];
+}
+
 function formatTimestamp(value: Date) {
   return formatClubDateTime(value);
+}
+
+export function auditDateBoundary(date: string, edge: "end" | "start") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return undefined;
+  if (edge === "start") {
+    return new Date(localNewYorkDateTime(`${date}T00:00:00`));
+  }
+  const nextDay = new Date(`${date}T12:00:00.000Z`);
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  const nextDate = nextDay.toISOString().slice(0, 10);
+  return new Date(
+    new Date(localNewYorkDateTime(`${nextDate}T00:00:00`)).getTime() - 1,
+  );
 }
 
 function formatAuditValue(value: unknown) {
@@ -114,7 +232,7 @@ function OutcomeBadge({ outcome }: { outcome: AuditOutcome }) {
   );
 }
 
-function DetailSheet({
+export function DetailSheet({
   eventId,
   onOpenChange,
 }: {
@@ -130,13 +248,27 @@ function DetailSheet({
     <Sheet open={Boolean(eventId)} onOpenChange={onOpenChange}>
       <SheetContent className="w-full border-white/10 bg-card sm:max-w-xl">
         {detail.isPending ? (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Loading audit detail…
-          </div>
+          <>
+            <SheetHeader className="sr-only">
+              <SheetTitle>Audit event detail</SheetTitle>
+              <SheetDescription>Loading audit event detail.</SheetDescription>
+            </SheetHeader>
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Loading audit detail…
+            </div>
+          </>
         ) : detail.error ? (
-          <div className="flex gap-3 rounded-md border border-destructive/35 bg-destructive/10 p-4 text-sm text-destructive-foreground">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            {detail.error.message}
+          <div className="space-y-4">
+            <SheetHeader className="pr-8">
+              <SheetTitle>Audit detail unavailable</SheetTitle>
+              <SheetDescription>
+                The selected audit event could not be loaded.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="flex gap-3 rounded-md border border-destructive/35 bg-destructive/10 p-4 text-sm text-destructive-foreground">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              {detail.error.message}
+            </div>
           </div>
         ) : eventId ? (
           <AuditDetailContent detail={detail.data} />
@@ -351,49 +483,180 @@ function EventRow({
   );
 }
 
+function EventCard({
+  event,
+  onSelect,
+}: {
+  event: AuditEvent;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <button
+      className="grid w-full gap-3 border-b border-border/70 p-4 text-left last:border-b-0"
+      onClick={() => onSelect(event.id)}
+      type="button"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold">{event.actionLabel}</p>
+          <p className="truncate font-mono text-xs text-muted-foreground">
+            {event.actionKey}
+          </p>
+        </div>
+        <OutcomeBadge outcome={event.outcome} />
+      </div>
+      <div className="rounded-md border border-white/10 bg-background/45 p-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Target
+        </p>
+        <p className="mt-1 break-words font-medium">
+          {event.primaryTarget?.label ?? "Unknown target"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {event.primaryTarget?.type ?? "unknown"}
+        </p>
+      </div>
+      <div className="flex items-end justify-between gap-3 text-sm">
+        <div className="min-w-0">
+          <p
+            className="truncate font-semibold"
+            style={actorStyle(event.actor.roleColor)}
+          >
+            {event.actor.label}
+          </p>
+          {event.actor.roleLabel ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {event.actor.roleLabel}
+            </p>
+          ) : null}
+        </div>
+        <time className="shrink-0 text-xs text-muted-foreground">
+          {formatTimestamp(event.occurredAt)}
+        </time>
+      </div>
+    </button>
+  );
+}
+
 export function AdminLogsDashboard({
   events,
+  hackers,
   members,
 }: {
   events: RouterOutputs["audit"]["list"];
+  hackers: RouterOutputs["audit"]["searchHackers"];
   members: RouterOutputs["audit"]["searchMembers"];
 }) {
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pendingSearchRef = useRef<string | null>(null);
+  const searchQuery = searchParams.get("q") ?? "";
+  const [search, setSearch] = useState(searchQuery);
   const deferredSearch = useDeferredValue(search.trim());
   const [memberSearch, setMemberSearch] = useState("");
   const deferredMemberSearch = useDeferredValue(memberSearch.trim());
-  const [memberId, setMemberId] = useState<string | null>(null);
-  const [actorUserId, setActorUserId] = useState<string | null>(null);
-  const [actionKey, setActionKey] = useState<AuditActionKey | null>(null);
-  const [targetType, setTargetType] = useState<AuditTargetType | null>(null);
-  const [outcome, setOutcome] = useState<AuditOutcome | null>(null);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [actorSearch, setActorSearch] = useState("");
+  const deferredActorSearch = useDeferredValue(actorSearch.trim());
+  const [hackerSearch, setHackerSearch] = useState("");
+  const deferredHackerSearch = useDeferredValue(hackerSearch.trim());
+  const memberId = auditUuidParam(searchParams.get("member"));
+  const actorUserId = auditUuidParam(searchParams.get("actor"));
+  const hackerAttendeeId = auditUuidParam(searchParams.get("hacker"));
+  const [selectedMember, setSelectedMember] = useState<AuditMember | null>(
+    () => members.find((member) => member.id === memberId) ?? null,
+  );
+  const [selectedActor, setSelectedActor] = useState<AuditMember | null>(
+    () => members.find((member) => member.userId === actorUserId) ?? null,
+  );
+  const [selectedHacker, setSelectedHacker] = useState<AuditHacker | null>(
+    () =>
+      hackers.find((hacker) => hacker.attendeeId === hackerAttendeeId) ?? null,
+  );
+  const actionParam = searchParams.get("action");
+  const actionKey = AUDIT_ACTION_KEYS.includes(actionParam as AuditActionKey)
+    ? (actionParam as AuditActionKey)
+    : null;
+  const domainParam = searchParams.get("domain");
+  const domain = AUDIT_DOMAINS.includes(domainParam as AuditDomain)
+    ? (domainParam as AuditDomain)
+    : null;
+  const checkInOutcomeParam = searchParams.get("checkInResult");
+  const checkInOutcome = CHECK_IN_OUTCOMES.includes(
+    checkInOutcomeParam as AuditCheckInOutcome,
+  )
+    ? (checkInOutcomeParam as AuditCheckInOutcome)
+    : null;
+  const targetParam = searchParams.get("target");
+  const targetType = AUDIT_TARGET_TYPES.includes(targetParam as AuditTargetType)
+    ? (targetParam as AuditTargetType)
+    : null;
+  const outcome = ["committed", "partial_external"].includes(
+    searchParams.get("status") ?? "",
+  )
+    ? (searchParams.get("status") as AuditOutcome)
+    : null;
+  const from = searchParams.get("from") ?? "";
+  const to = searchParams.get("to") ?? "";
   const [cursorStack, setCursorStack] = useState<(Cursor | undefined)[]>([
     undefined,
   ]);
   const [page, setPage] = useState(0);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
+  useEffect(() => {
+    setSearch(searchQuery);
+  }, [searchQuery]);
+
+  function latestParams() {
+    const committed = searchParams.toString();
+    if (pendingSearchRef.current === committed) {
+      pendingSearchRef.current = null;
+    }
+    return new URLSearchParams(pendingSearchRef.current ?? committed);
+  }
+
+  function replaceParams(params: URLSearchParams) {
+    params.sort();
+    const query = params.toString();
+    pendingSearchRef.current = query;
+    router.replace(`/admin/logs${query ? `?${query}` : ""}`, {
+      scroll: false,
+    });
+  }
+
+  function setFilter(key: string, value: string | null) {
+    const params = latestParams();
+    if (value) params.set(key, value);
+    else params.delete(key);
+    replaceParams(params);
+    resetPagination();
+  }
+
   const queryInput = useMemo(
     () => ({
       ...(actionKey ? { actionKeys: [actionKey] } : {}),
       ...(actorUserId ? { actorUserId } : {}),
+      ...(checkInOutcome ? { checkInOutcomes: [checkInOutcome] } : {}),
       cursor: cursorStack[page],
-      ...(from ? { from: new Date(`${from}T00:00:00`) } : {}),
+      ...(domain ? { domains: [domain] } : {}),
+      ...(from ? { from: auditDateBoundary(from, "start") } : {}),
       limit: 50,
+      ...(hackerAttendeeId ? { hackerAttendeeId } : {}),
       ...(memberId ? { memberId } : {}),
       ...(outcome ? { outcomes: [outcome] } : {}),
       ...(deferredSearch ? { search: deferredSearch } : {}),
       ...(targetType ? { targetTypes: [targetType] } : {}),
-      ...(to ? { to: new Date(`${to}T23:59:59.999`) } : {}),
+      ...(to ? { to: auditDateBoundary(to, "end") } : {}),
     }),
     [
       actionKey,
       actorUserId,
+      checkInOutcome,
       cursorStack,
       deferredSearch,
+      domain,
       from,
+      hackerAttendeeId,
       memberId,
       outcome,
       page,
@@ -404,9 +667,12 @@ export function AdminLogsDashboard({
   const isDefaultEventQuery =
     !actionKey &&
     !actorUserId &&
+    !checkInOutcome &&
     !cursorStack[page] &&
     !deferredSearch &&
+    !domain &&
     !from &&
+    !hackerAttendeeId &&
     !memberId &&
     !outcome &&
     !targetType &&
@@ -424,14 +690,57 @@ export function AdminLogsDashboard({
     },
     { enabled: Boolean(deferredMemberSearch) },
   );
+  const matchingActors = api.audit.searchMembers.useQuery(
+    {
+      limit: 20,
+      search: deferredActorSearch,
+    },
+    { enabled: Boolean(deferredActorSearch) },
+  );
+  const matchingHackers = api.audit.searchHackers.useQuery(
+    {
+      limit: 20,
+      search: deferredHackerSearch,
+    },
+    { enabled: Boolean(deferredHackerSearch) },
+  );
   const eventPage = isDefaultEventQuery ? events : filteredEvents.data;
   const eventsError = isDefaultEventQuery ? null : filteredEvents.error;
   const eventsFetching = !isDefaultEventQuery && filteredEvents.isFetching;
-  const memberOptions = deferredMemberSearch
-    ? (matchingMembers.data ?? [])
-    : members;
+  const effectiveMember =
+    selectedMember?.id === memberId
+      ? selectedMember
+      : (members.find((member) => member.id === memberId) ?? null);
+  const effectiveActor =
+    selectedActor?.userId === actorUserId
+      ? selectedActor
+      : (members.find((member) => member.userId === actorUserId) ?? null);
+  const effectiveHacker =
+    selectedHacker?.attendeeId === hackerAttendeeId
+      ? selectedHacker
+      : (hackers.find((hacker) => hacker.attendeeId === hackerAttendeeId) ??
+        null);
+  const memberOptions = keepSelected(
+    deferredMemberSearch ? (matchingMembers.data ?? []) : members,
+    effectiveMember,
+    (member) => member.id,
+  );
+  const actorOptions = keepSelected(
+    deferredActorSearch ? (matchingActors.data ?? []) : members,
+    effectiveActor,
+    (member) => member.id,
+  );
+  const hackerOptions = keepSelected(
+    deferredHackerSearch ? (matchingHackers.data ?? []) : hackers,
+    effectiveHacker,
+    (hacker) => hacker.attendeeId,
+  );
   const memberOptionsPending =
     Boolean(deferredMemberSearch) && matchingMembers.isPending;
+  const actorOptionsPending =
+    Boolean(deferredActorSearch) && matchingActors.isPending;
+  const hackerOptionsPending =
+    Boolean(deferredHackerSearch) && matchingHackers.isPending;
 
   const resetPagination = () => {
     setCursorStack([undefined]);
@@ -441,13 +750,12 @@ export function AdminLogsDashboard({
   const resetFilters = () => {
     setSearch("");
     setMemberSearch("");
-    setMemberId(null);
-    setActorUserId(null);
-    setActionKey(null);
-    setTargetType(null);
-    setOutcome(null);
-    setFrom("");
-    setTo("");
+    setActorSearch("");
+    setHackerSearch("");
+    setSelectedMember(null);
+    setSelectedActor(null);
+    setSelectedHacker(null);
+    replaceParams(new URLSearchParams());
     resetPagination();
   };
 
@@ -476,8 +784,9 @@ export function AdminLogsDashboard({
                 id="audit-search"
                 value={search}
                 onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPagination();
+                  const value = event.target.value;
+                  setSearch(value);
+                  setFilter("q", value.trim() || null);
                 }}
                 placeholder="Search actor, action, target, or ID"
                 className="pl-9"
@@ -493,9 +802,9 @@ export function AdminLogsDashboard({
                 items={memberOptions}
                 value={memberId}
                 onSearchValueChange={setMemberSearch}
-                onValueChange={(value) => {
-                  setMemberId(value);
-                  resetPagination();
+                onItemSelect={(member) => {
+                  setSelectedMember(member);
+                  setFilter("member", member.id);
                 }}
                 getItemValue={(member) => member.id}
                 getItemLabel={memberLabel}
@@ -516,18 +825,53 @@ export function AdminLogsDashboard({
             </div>
 
             <div>
+              <Label htmlFor="audit-hacker">Hacker involved</Label>
+              <ResponsiveComboBox
+                ariaLabel="Filter by involved hacker"
+                items={hackerOptions}
+                value={hackerAttendeeId}
+                onSearchValueChange={setHackerSearch}
+                onItemSelect={(hacker) => {
+                  setSelectedHacker(hacker);
+                  setFilter("hacker", hacker.attendeeId);
+                }}
+                getItemValue={(hacker) => hacker.attendeeId}
+                getItemLabel={(hacker) =>
+                  `${hackerLabel(hacker)} · ${hacker.hackathonName}`
+                }
+                getItemSearchValue={(hacker) =>
+                  `${hackerLabel(hacker)} ${hacker.email} ${hacker.hackathonName} ${hacker.attendeeId} ${hacker.hackerId} ${hacker.userId}`
+                }
+                renderItem={(hacker) => (
+                  <span className="min-w-0">
+                    <span className="block truncate">
+                      {hackerLabel(hacker)}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {hacker.hackathonName}
+                    </span>
+                  </span>
+                )}
+                buttonPlaceholder="Any hacker"
+                emptyMessage="No hackers found."
+                filterItems={false}
+                inputPlaceholder="Find a hacker…"
+                isLoading={hackerOptionsPending}
+                triggerClassName="mt-2"
+                triggerId="audit-hacker"
+              />
+            </div>
+
+            <div>
               <Label htmlFor="audit-actor">Actor only</Label>
               <ResponsiveComboBox
                 ariaLabel="Filter by actor"
-                items={memberOptions}
-                value={
-                  memberOptions.find((member) => member.userId === actorUserId)
-                    ?.id ?? null
-                }
-                onSearchValueChange={setMemberSearch}
+                items={actorOptions}
+                value={effectiveActor?.id ?? null}
+                onSearchValueChange={setActorSearch}
                 onItemSelect={(member) => {
-                  setActorUserId(member.userId);
-                  resetPagination();
+                  setSelectedActor(member);
+                  setFilter("actor", member.userId);
                 }}
                 getItemValue={(member) => member.id}
                 getItemLabel={memberLabel}
@@ -538,82 +882,80 @@ export function AdminLogsDashboard({
                 emptyMessage="No members found."
                 filterItems={false}
                 inputPlaceholder="Find an administrator…"
-                isLoading={memberOptionsPending}
+                isLoading={actorOptionsPending}
                 triggerClassName="mt-2"
                 triggerId="audit-actor"
               />
             </div>
 
             <div>
-              <Label htmlFor="audit-action">Action</Label>
-              <Select
-                value={actionKey ?? ALL}
+              <Label htmlFor="audit-domain">Domain</Label>
+              <AuditFilterComboBox
+                ariaLabel="Filter by domain"
+                inputPlaceholder="Search domains…"
+                items={DOMAIN_OPTIONS}
+                triggerId="audit-domain"
+                value={domain ?? ALL}
                 onValueChange={(value) => {
-                  setActionKey(
-                    value === ALL ? null : (value as AuditActionKey),
-                  );
-                  resetPagination();
+                  setFilter("domain", value === ALL ? null : value);
                 }}
-              >
-                <SelectTrigger id="audit-action" className="mt-2">
-                  <SelectValue placeholder="Any action" />
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  <SelectItem value={ALL}>Any action</SelectItem>
-                  {AUDIT_ACTION_KEYS.map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {AUDIT_ACTION_CATALOG[key].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div>
-              <Label htmlFor="audit-outcome">Outcome</Label>
-              <Select
+              <Label htmlFor="audit-action">Action</Label>
+              <AuditFilterComboBox
+                ariaLabel="Filter by action"
+                inputPlaceholder="Search actions or keys…"
+                items={ACTION_OPTIONS}
+                triggerId="audit-action"
+                value={actionKey ?? ALL}
+                onValueChange={(value) => {
+                  setFilter("action", value === ALL ? null : value);
+                }}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="audit-outcome">Commit status</Label>
+              <AuditFilterComboBox
+                ariaLabel="Filter by commit status"
+                inputPlaceholder="Search commit statuses…"
+                items={OUTCOME_OPTIONS}
+                triggerId="audit-outcome"
                 value={outcome ?? ALL}
                 onValueChange={(value) => {
-                  setOutcome(value === ALL ? null : (value as AuditOutcome));
-                  resetPagination();
+                  setFilter("status", value === ALL ? null : value);
                 }}
-              >
-                <SelectTrigger id="audit-outcome" className="mt-2">
-                  <SelectValue placeholder="Any outcome" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Any outcome</SelectItem>
-                  <SelectItem value="committed">Committed</SelectItem>
-                  <SelectItem value="partial_external">
-                    Partial external
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="audit-check-in-outcome">Check-in result</Label>
+              <AuditFilterComboBox
+                ariaLabel="Filter by check-in result"
+                inputPlaceholder="Search check-in results…"
+                items={CHECK_IN_OUTCOME_OPTIONS}
+                triggerId="audit-check-in-outcome"
+                value={checkInOutcome ?? ALL}
+                onValueChange={(value) => {
+                  setFilter("checkInResult", value === ALL ? null : value);
+                }}
+              />
             </div>
 
             <div>
               <Label htmlFor="audit-target-type">Target type</Label>
-              <Select
+              <AuditFilterComboBox
+                ariaLabel="Filter by target type"
+                inputPlaceholder="Search target types…"
+                items={TARGET_TYPE_OPTIONS}
+                triggerId="audit-target-type"
                 value={targetType ?? ALL}
                 onValueChange={(value) => {
-                  setTargetType(
-                    value === ALL ? null : (value as AuditTargetType),
-                  );
-                  resetPagination();
+                  setFilter("target", value === ALL ? null : value);
                 }}
-              >
-                <SelectTrigger id="audit-target-type" className="mt-2">
-                  <SelectValue placeholder="Any target" />
-                </SelectTrigger>
-                <SelectContent className="max-h-80">
-                  <SelectItem value={ALL}>Any target</SelectItem>
-                  {AUDIT_TARGET_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type.replaceAll("_", " ")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div>
@@ -624,8 +966,7 @@ export function AdminLogsDashboard({
                 className="mt-2"
                 value={from}
                 onChange={(event) => {
-                  setFrom(event.target.value);
-                  resetPagination();
+                  setFilter("from", event.target.value || null);
                 }}
               />
             </div>
@@ -638,8 +979,7 @@ export function AdminLogsDashboard({
                 className="mt-2"
                 value={to}
                 onChange={(event) => {
-                  setTo(event.target.value);
-                  resetPagination();
+                  setFilter("to", event.target.value || null);
                 }}
               />
             </div>
@@ -678,26 +1018,39 @@ export function AdminLogsDashboard({
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Outcome</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="md:hidden">
                 {eventPage.items.map((event) => (
-                  <EventRow
+                  <EventCard
                     key={event.id}
                     event={event}
                     onSelect={setSelectedEventId}
                   />
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Actor</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Target</TableHead>
+                      <TableHead>Outcome</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {eventPage.items.map((event) => (
+                      <EventRow
+                        key={event.id}
+                        event={event}
+                        onSelect={setSelectedEventId}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

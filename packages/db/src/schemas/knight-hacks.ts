@@ -32,6 +32,37 @@ export const eventDiscordEntityTypeEnum = pgEnum(
   "event_discord_entity_type",
   EVENTS.EVENT_DISCORD_ENTITY_TYPES,
 );
+export const eventPurposeEnum = pgEnum("event_purpose", [
+  "event",
+  "primary_check_in",
+]);
+export const hackerCheckInOutcomeEnum = pgEnum("hacker_check_in_outcome", [
+  "checked_in",
+  "already_checked_in",
+  "invalid_qr",
+  "hacker_not_found",
+  "wrong_status",
+  "not_checked_in",
+  "wrong_class",
+  "not_ready",
+]);
+export const hackerDiscordRoleKindEnum = pgEnum("hacker_discord_role_kind", [
+  "general",
+  "class",
+  "vip",
+]);
+export const hackerDiscordRoleGrantStateEnum = pgEnum(
+  "hacker_discord_role_grant_state",
+  ["pending", "succeeded", "failed", "unknown"],
+);
+export const hackerDiscordRoleAttemptOutcomeEnum = pgEnum(
+  "hacker_discord_role_attempt_outcome",
+  ["pending", "succeeded", "failed", "unknown"],
+);
+export const hackathonEventReminderStateEnum = pgEnum(
+  "hackathon_event_reminder_state",
+  ["pending", "delivering", "delivered", "failed", "unknown"],
+);
 export const formKindEnum = pgEnum("form_kind", [
   "general",
   "event_feedback",
@@ -112,9 +143,21 @@ export const Hackathon = createTable(
     confirmationDeadline: t.timestamp().notNull().defaultNow(),
     startDate: t.timestamp().notNull(),
     endDate: t.timestamp().notNull(),
+    /** Granted to every hacker admitted to this hackathon. */
+    generalHackerDiscordRoleId: t.varchar({ length: 20 }),
+    /** Destination for this hackathon's event reminders. */
+    eventAnnouncementChannelId: t.varchar({ length: 20 }),
   }),
   (t) => ({
     uniqueName: unique("knight_hacks_hackathon_name_unique").on(t.name),
+    validAnnouncementChannelId: check(
+      "knight_hacks_hackathon_event_announcement_channel_id_check",
+      sql`${t.eventAnnouncementChannelId} IS NULL OR ${t.eventAnnouncementChannelId} ~ '^[0-9]{17,20}$'`,
+    ),
+    validGeneralHackerRoleId: check(
+      "knight_hacks_hackathon_general_hacker_discord_role_id_check",
+      sql`${t.generalHackerDiscordRoleId} IS NULL OR ${t.generalHackerDiscordRoleId} ~ '^[0-9]{17,20}$'`,
+    ),
   }),
 );
 
@@ -180,6 +223,9 @@ export const HackathonClass = createTable(
       "knight_hacks_hackathon_class_color_check",
       sql`${table.color} ~ '^#[0-9a-fA-F]{6}$'`,
     ),
+    scopedIdentity: unique(
+      "knight_hacks_hackathon_class_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
   }),
 );
 
@@ -445,7 +491,11 @@ export const EventTag = createTable(
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
     name: t.varchar({ length: 64 }).notNull(),
-    normalizedName: t.varchar({ length: 64 }).notNull().unique(),
+    normalizedName: t.varchar({ length: 64 }).notNull(),
+    /** NULL is the Club tag catalog; a UUID owns a hackathon-local catalog. */
+    hackathonId: t.uuid().references(() => Hackathon.id, {
+      onDelete: "cascade",
+    }),
     defaultPoints: t.integer().notNull().default(0),
     color: t.varchar({ length: 7 }).notNull(),
     active: t.boolean().notNull().default(true),
@@ -467,6 +517,19 @@ export const EventTag = createTable(
     validColor: check(
       "knight_hacks_event_tag_color_check",
       sql`${table.color} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    clubNormalizedNameUnique: uniqueIndex(
+      "knight_hacks_event_tag_club_normalized_name_unique",
+    )
+      .on(table.normalizedName)
+      .where(sql`${table.hackathonId} IS NULL`),
+    hackathonNormalizedNameUnique: uniqueIndex(
+      "knight_hacks_event_tag_hackathon_normalized_name_unique",
+    )
+      .on(table.hackathonId, table.normalizedName)
+      .where(sql`${table.hackathonId} IS NOT NULL`),
+    hackathonIdx: index("knight_hacks_event_tag_hackathon_idx").on(
+      table.hackathonId,
     ),
   }),
 );
@@ -499,6 +562,7 @@ export const Event = createTable(
     hackathonId: t.uuid().references(() => Hackathon.id, {
       onDelete: "cascade",
     }),
+    purpose: eventPurposeEnum().notNull().default("event"),
     discordChannelId: t.varchar({ length: 255 }),
     // Old Blade writers omit Reforge workflow fields. Defaulting those writes
     // to Legacy keeps mixed-version deploys and rollbacks safe; Reforge creates
@@ -553,6 +617,19 @@ export const Event = createTable(
     clubScopeIdx: index("knight_hacks_event_hackathon_id_idx").on(
       table.hackathonId,
     ),
+    scopedIdentity: unique("knight_hacks_event_id_hackathon_unique").on(
+      table.id,
+      table.hackathonId,
+    ),
+    onePrimaryPerHackathon: uniqueIndex(
+      "knight_hacks_event_one_primary_per_hackathon",
+    )
+      .on(table.hackathonId)
+      .where(sql`${table.purpose} = 'primary_check_in'`),
+    primaryRequiresHackathon: check(
+      "knight_hacks_event_primary_requires_hackathon_check",
+      sql`${table.purpose} <> 'primary_check_in' OR ${table.hackathonId} IS NOT NULL`,
+    ),
     validTagColor: check(
       "knight_hacks_event_tag_color_check",
       sql`${table.tagColor} ~ '^#[0-9A-Fa-f]{6}$'`,
@@ -561,9 +638,9 @@ export const Event = createTable(
       "knight_hacks_event_sync_revision_check",
       sql`${table.syncRevision} >= 0`,
     ),
-    validNewClubPoints: check(
-      "knight_hacks_event_new_club_points_check",
-      sql`${table.legacy} OR ${table.hackathonId} IS NOT NULL OR (${table.points} IS NOT NULL AND ${table.points} >= 0)`,
+    validNewEventPoints: check(
+      "knight_hacks_event_new_points_check",
+      sql`${table.legacy} OR (${table.points} IS NOT NULL AND ${table.points} >= 0)`,
     ),
     nonLegacySyncStates: check(
       "knight_hacks_event_nonlegacy_sync_states_check",
@@ -573,9 +650,9 @@ export const Event = createTable(
       "knight_hacks_event_creation_identity_pair_check",
       sql`(${table.creationKey} IS NULL) = (${table.creationPayloadHash} IS NULL)`,
     ),
-    newClubCreationIdentity: check(
-      "knight_hacks_event_new_club_creation_identity_check",
-      sql`${table.legacy} OR ${table.hackathonId} IS NOT NULL OR (${table.creationKey} IS NOT NULL AND ${table.creationPayloadHash} IS NOT NULL)`,
+    newEventCreationIdentity: check(
+      "knight_hacks_event_new_creation_identity_check",
+      sql`${table.legacy} OR (${table.creationKey} IS NOT NULL AND ${table.creationPayloadHash} IS NOT NULL)`,
     ),
     syncLeaseSet: check(
       "knight_hacks_event_sync_lease_set_check",
@@ -699,11 +776,14 @@ export const HackerAttendee = createTable(
     timeConfirmed: t.timestamp(),
     points: t.integer().notNull().default(0),
     /** Assigned at check-in to whichever class currently has the fewest people. */
-    classId: t.uuid().references(() => HackathonClass.id, {
-      onDelete: "restrict",
-    }),
+    classId: t.uuid(),
     /** Bypasses class gating. Held alongside `classId`, not instead of it. */
     isVip: t.boolean().notNull().default(false),
+    /** Stable per-hackathon answer. NULL means the application did not record it. */
+    isFirstTime: t.boolean(),
+    /** Whole-hack admission metadata. Legacy checked-in rows leave this NULL. */
+    checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
+    checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
     /**
      * Retired by hackathon-configuration, in favour of `classId`/`isVip`.
      *
@@ -774,6 +854,23 @@ export const HackerAttendee = createTable(
     hackathonClass: index(
       "knight_hacks_hacker_attendee_hackathon_class_idx",
     ).on(table.hackathonId, table.classId),
+    checkedInByOnly: index("knight_hacks_hacker_attendee_checked_in_by_idx").on(
+      table.checkedInBy,
+    ),
+    hackathonCheckedIn: index(
+      "knight_hacks_hacker_attendee_hackathon_checked_in_idx",
+    ).on(table.hackathonId, table.checkedInAt),
+    hackerHackathonUnique: unique(
+      "knight_hacks_hacker_attendee_hacker_hackathon_unique",
+    ).on(table.hackerId, table.hackathonId),
+    scopedIdentity: unique(
+      "knight_hacks_hacker_attendee_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    scopedClassReference: foreignKey({
+      columns: [table.classId, table.hackathonId],
+      foreignColumns: [HackathonClass.id, HackathonClass.hackathonId],
+      name: "knight_hacks_hacker_attendee_scoped_class_fk",
+    }).onDelete("restrict"),
     /**
      * A blacklist with no reason is the thing a year-later officer cannot
      * interpret, so the database refuses it rather than trusting the form.
@@ -820,26 +917,352 @@ export const HackerEventAttendee = createTable(
   "hacker_event_attendee",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
-    hackerAttId: t
-      .uuid()
-      .notNull()
-      .references(() => HackerAttendee.id, {
-        onDelete: "cascade",
-      }),
+    hackerAttId: t.uuid().notNull(),
     hackathonId: t
       .uuid()
       .notNull()
       .references(() => Hackathon.id, {
         onDelete: "cascade",
       }),
-    eventId: t
-      .uuid()
-      .notNull()
-      .references(() => Event.id, {
-        onDelete: "cascade",
-      }),
+    eventId: t.uuid().notNull(),
+    /** NULL only for Legacy rows whose occurrence time cannot be recovered. */
+    checkedInAt: t.timestamp({ mode: "date", withTimezone: true }),
+    checkedInBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    /** NULL only for Legacy awards that cannot be reconstructed safely. */
+    pointsAwarded: t.integer(),
+    /** NULL identifies a Legacy row with unknown first-occurrence ordering. */
+    isInitialAttendance: t.boolean(),
+    voidedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    voidedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    voidReason: t.varchar({ length: 300 }),
+  }),
+  (table) => ({
+    eventAttendeeHistory: index(
+      "knight_hacks_hacker_event_attendee_event_attendee_history_idx",
+    ).on(table.eventId, table.hackerAttId, table.checkedInAt, table.id),
+    attendeeEventHistory: index(
+      "knight_hacks_hacker_event_attendee_attendee_event_history_idx",
+    ).on(table.hackerAttId, table.eventId, table.checkedInAt, table.id),
+    hackathonHistory: index(
+      "knight_hacks_hacker_event_attendee_hackathon_history_idx",
+    ).on(table.hackathonId, table.checkedInAt, table.id),
+    checkedInByOnly: index(
+      "knight_hacks_hacker_event_attendee_checked_in_by_idx",
+    ).on(table.checkedInBy),
+    voidedByOnly: index("knight_hacks_hacker_event_attendee_voided_by_idx").on(
+      table.voidedBy,
+    ),
+    oneActiveInitialAttendance: uniqueIndex(
+      "knight_hacks_hacker_event_attendee_one_active_initial",
+    )
+      .on(table.eventId, table.hackerAttId)
+      .where(
+        sql`${table.isInitialAttendance} = true AND ${table.voidedAt} IS NULL`,
+      ),
+    scopedAttemptIdentity: unique(
+      "knight_hacks_hacker_event_attendee_attempt_scope_unique",
+    ).on(table.id, table.hackathonId, table.eventId, table.hackerAttId),
+    nonNegativePoints: check(
+      "knight_hacks_hacker_event_attendee_points_awarded_check",
+      sql`${table.pointsAwarded} IS NULL OR ${table.pointsAwarded} >= 0`,
+    ),
+    voidMetadataPair: check(
+      "knight_hacks_hacker_event_attendee_void_metadata_check",
+      sql`(${table.voidedAt} IS NULL AND ${table.voidReason} IS NULL) OR (${table.voidedAt} IS NOT NULL AND ${table.voidReason} IS NOT NULL)`,
+    ),
+    scopedAttendeeReference: foreignKey({
+      columns: [table.hackerAttId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_hacker_event_attendee_scoped_attendee_fk",
+    }).onDelete("cascade"),
+    scopedEventReference: foreignKey({
+      columns: [table.eventId, table.hackathonId],
+      foreignColumns: [Event.id, Event.hackathonId],
+      name: "knight_hacks_hacker_event_attendee_scoped_event_fk",
+    }).onDelete("cascade"),
   }),
 );
+
+export type InsertHackerEventAttendee = typeof HackerEventAttendee.$inferInsert;
+export type SelectHackerEventAttendee = typeof HackerEventAttendee.$inferSelect;
+
+/**
+ * One operator-visible result. Successful occurrences are permanent; rejected
+ * results receive an expiry and are pruned without retaining the scanned QR or
+ * a second copy of the hacker's date of birth.
+ */
+export const HackerCheckInAttempt = createTable(
+  "hacker_check_in_attempt",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    eventId: t.uuid().notNull(),
+    hackerAttendeeId: t.uuid(),
+    attendanceId: t.uuid().unique(),
+    operatorId: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    operatorDisplayNameSnapshot: t.varchar({ length: 255 }),
+    mode: t.varchar({ length: 16, enum: ["scanner", "manual"] }).notNull(),
+    outcome: hackerCheckInOutcomeEnum().notNull(),
+    eventPurpose: eventPurposeEnum().notNull(),
+    eventNameSnapshot: t.varchar({ length: 255 }).notNull(),
+    hackerNameSnapshot: t.varchar({ length: 511 }),
+    classId: t.uuid(),
+    classNameSnapshot: t.varchar({ length: 64 }),
+    classColorSnapshot: t.varchar({ length: 7 }),
+    isVipSnapshot: t.boolean().notNull().default(false),
+    wasMinorAtAttempt: t.boolean(),
+    isRepeatOccurrence: t.boolean().notNull().default(false),
+    pointsAwarded: t.integer().notNull().default(0),
+    attemptedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+  }),
+  (table) => ({
+    hackathonHistory: index(
+      "knight_hacks_hacker_check_in_attempt_hackathon_history_idx",
+    ).on(table.hackathonId, table.attemptedAt, table.id),
+    attendeeHistory: index(
+      "knight_hacks_hacker_check_in_attempt_attendee_history_idx",
+    ).on(table.hackerAttendeeId, table.attemptedAt, table.id),
+    expiring: index("knight_hacks_hacker_check_in_attempt_expiring_idx")
+      .on(table.expiresAt)
+      .where(sql`${table.expiresAt} IS NOT NULL`),
+    validMode: check(
+      "knight_hacks_hacker_check_in_attempt_mode_check",
+      sql`${table.mode} IN ('scanner', 'manual')`,
+    ),
+    validClassColor: check(
+      "knight_hacks_hacker_check_in_attempt_class_color_check",
+      sql`${table.classColorSnapshot} IS NULL OR ${table.classColorSnapshot} ~ '^#[0-9A-Fa-f]{6}$'`,
+    ),
+    nonNegativePoints: check(
+      "knight_hacks_hacker_check_in_attempt_points_check",
+      sql`${table.pointsAwarded} >= 0`,
+    ),
+    successfulAttendanceRetention: check(
+      "knight_hacks_hacker_check_in_attempt_success_retention_check",
+      sql`(${table.outcome} = 'checked_in' AND ${table.attendanceId} IS NOT NULL AND ${table.expiresAt} IS NULL) OR (${table.outcome} <> 'checked_in' AND ${table.attendanceId} IS NULL AND ${table.expiresAt} IS NOT NULL)`,
+    ),
+    scopedAttendeeReference: foreignKey({
+      columns: [table.hackerAttendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_hacker_check_in_attempt_scoped_attendee_fk",
+    }).onDelete("cascade"),
+    scopedAttendanceReference: foreignKey({
+      columns: [
+        table.attendanceId,
+        table.hackathonId,
+        table.eventId,
+        table.hackerAttendeeId,
+      ],
+      foreignColumns: [
+        HackerEventAttendee.id,
+        HackerEventAttendee.hackathonId,
+        HackerEventAttendee.eventId,
+        HackerEventAttendee.hackerAttId,
+      ],
+      name: "knight_hacks_hacker_check_in_attempt_scoped_attendance_fk",
+    }).onDelete("cascade"),
+    scopedClassReference: foreignKey({
+      columns: [table.classId, table.hackathonId],
+      foreignColumns: [HackathonClass.id, HackathonClass.hackathonId],
+      name: "knight_hacks_hacker_check_in_attempt_scoped_class_fk",
+    }).onDelete("restrict"),
+    scopedEventReference: foreignKey({
+      columns: [table.eventId, table.hackathonId],
+      foreignColumns: [Event.id, Event.hackathonId],
+      name: "knight_hacks_hacker_check_in_attempt_scoped_event_fk",
+    }).onDelete("cascade"),
+  }),
+);
+
+export type InsertHackerCheckInAttempt =
+  typeof HackerCheckInAttempt.$inferInsert;
+export type SelectHackerCheckInAttempt =
+  typeof HackerCheckInAttempt.$inferSelect;
+
+/** Current repair state for one logical role granted by primary admission. */
+export const HackerDiscordRoleGrant = createTable(
+  "hacker_discord_role_grant",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackerAttendeeId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    sourceAttendanceId: t.uuid().notNull(),
+    sourceEventId: t.uuid().notNull(),
+    kind: hackerDiscordRoleKindEnum().notNull(),
+    desiredRoleId: t.varchar({ length: 20 }).notNull(),
+    state: hackerDiscordRoleGrantStateEnum().notNull().default("pending"),
+    attemptCount: t.integer().notNull().default(0),
+    lastAttemptAt: t.timestamp({ mode: "date", withTimezone: true }),
+    succeededAt: t.timestamp({ mode: "date", withTimezone: true }),
+    lastError: t.varchar({ length: 500 }),
+    leaseToken: t.uuid(),
+    leaseExpiresAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    logicalGrant: unique(
+      "knight_hacks_hacker_discord_role_grant_logical_unique",
+    ).on(table.hackerAttendeeId, table.kind),
+    repairQueue: index(
+      "knight_hacks_hacker_discord_role_grant_repair_queue_idx",
+    ).on(table.state, table.leaseExpiresAt),
+    validDesiredRole: check(
+      "knight_hacks_hacker_discord_role_grant_role_id_check",
+      sql`${table.desiredRoleId} ~ '^[0-9]{17,20}$'`,
+    ),
+    nonNegativeAttempts: check(
+      "knight_hacks_hacker_discord_role_grant_attempt_count_check",
+      sql`${table.attemptCount} >= 0`,
+    ),
+    leasePair: check(
+      "knight_hacks_hacker_discord_role_grant_lease_pair_check",
+      sql`(${table.leaseToken} IS NULL) = (${table.leaseExpiresAt} IS NULL)`,
+    ),
+    scopedAttendeeReference: foreignKey({
+      columns: [table.hackerAttendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_hacker_discord_role_grant_scoped_attendee_fk",
+    }).onDelete("cascade"),
+    scopedAttendanceReference: foreignKey({
+      columns: [
+        table.sourceAttendanceId,
+        table.hackathonId,
+        table.sourceEventId,
+        table.hackerAttendeeId,
+      ],
+      foreignColumns: [
+        HackerEventAttendee.id,
+        HackerEventAttendee.hackathonId,
+        HackerEventAttendee.eventId,
+        HackerEventAttendee.hackerAttId,
+      ],
+      name: "knight_hacks_hacker_discord_role_grant_scoped_attendance_fk",
+    }).onDelete("cascade"),
+  }),
+);
+
+export type InsertHackerDiscordRoleGrant =
+  typeof HackerDiscordRoleGrant.$inferInsert;
+export type SelectHackerDiscordRoleGrant =
+  typeof HackerDiscordRoleGrant.$inferSelect;
+
+/** Append-only evidence for each idempotent Discord role PUT. */
+export const HackerDiscordRoleGrantAttempt = createTable(
+  "hacker_discord_role_grant_attempt",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    grantId: t
+      .uuid()
+      .notNull()
+      .references(() => HackerDiscordRoleGrant.id, { onDelete: "cascade" }),
+    attemptToken: t.uuid().notNull().unique(),
+    roleIdSnapshot: t.varchar({ length: 20 }).notNull(),
+    discordUserIdSnapshot: t.varchar({ length: 20 }).notNull(),
+    attemptedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    outcome: hackerDiscordRoleAttemptOutcomeEnum().notNull().default("pending"),
+    error: t.varchar({ length: 500 }),
+    startedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    finishedAt: t.timestamp({ mode: "date", withTimezone: true }),
+  }),
+  (table) => ({
+    grantHistory: index(
+      "knight_hacks_hacker_discord_role_grant_attempt_history_idx",
+    ).on(table.grantId, table.startedAt, table.id),
+    validRoleId: check(
+      "knight_hacks_hacker_discord_role_grant_attempt_role_id_check",
+      sql`${table.roleIdSnapshot} ~ '^[0-9]{17,20}$'`,
+    ),
+    validDiscordUserId: check(
+      "knight_hacks_hacker_discord_role_grant_attempt_user_id_check",
+      sql`${table.discordUserIdSnapshot} ~ '^[0-9]{17,20}$'`,
+    ),
+    completionPair: check(
+      "knight_hacks_hacker_discord_role_grant_attempt_completion_check",
+      sql`(${table.outcome} = 'pending' AND ${table.finishedAt} IS NULL) OR (${table.outcome} <> 'pending' AND ${table.finishedAt} IS NOT NULL)`,
+    ),
+  }),
+);
+
+export type InsertHackerDiscordRoleGrantAttempt =
+  typeof HackerDiscordRoleGrantAttempt.$inferInsert;
+export type SelectHackerDiscordRoleGrantAttempt =
+  typeof HackerDiscordRoleGrantAttempt.$inferSelect;
+
+/** Durable at-most-once delivery claim for one event start/reminder window. */
+export const HackathonEventReminderDelivery = createTable(
+  "hackathon_event_reminder_delivery",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    eventId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    eventStartAt: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
+    reminderKey: t.varchar({ length: 32 }).notNull(),
+    destinationChannelIdSnapshot: t.varchar({ length: 20 }).notNull(),
+    roleIdSnapshot: t.varchar({ length: 20 }).notNull(),
+    discordEventIdSnapshot: t.varchar({ length: 255 }).notNull(),
+    contentSnapshot: t.text().notNull(),
+    state: hackathonEventReminderStateEnum().notNull().default("pending"),
+    attemptCount: t.integer().notNull().default(0),
+    lastError: t.varchar({ length: 500 }),
+    lockedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    nextAttemptAt: t.timestamp({ mode: "date", withTimezone: true }),
+    deliveredAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    deliveryIdentity: unique(
+      "knight_hacks_hackathon_event_reminder_delivery_identity_unique",
+    ).on(table.eventId, table.reminderKey),
+    pendingQueue: index(
+      "knight_hacks_hackathon_event_reminder_delivery_pending_idx",
+    ).on(table.state, table.nextAttemptAt),
+    validDestinationChannelId: check(
+      "knight_hacks_hackathon_event_reminder_channel_id_check",
+      sql`${table.destinationChannelIdSnapshot} ~ '^[0-9]{17,20}$'`,
+    ),
+    validRoleId: check(
+      "knight_hacks_hackathon_event_reminder_role_id_check",
+      sql`${table.roleIdSnapshot} ~ '^[0-9]{17,20}$'`,
+    ),
+    nonNegativeAttempts: check(
+      "knight_hacks_hackathon_event_reminder_attempt_count_check",
+      sql`${table.attemptCount} >= 0`,
+    ),
+    scopedEventReference: foreignKey({
+      columns: [table.eventId, table.hackathonId],
+      foreignColumns: [Event.id, Event.hackathonId],
+      name: "knight_hacks_hackathon_event_reminder_scoped_event_fk",
+    }).onDelete("cascade"),
+  }),
+);
+
+export type InsertHackathonEventReminderDelivery =
+  typeof HackathonEventReminderDelivery.$inferInsert;
+export type SelectHackathonEventReminderDelivery =
+  typeof HackathonEventReminderDelivery.$inferSelect;
 
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
 export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);

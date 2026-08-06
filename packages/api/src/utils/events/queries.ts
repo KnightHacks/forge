@@ -426,11 +426,15 @@ export async function loadMinimalAttendees(eventId: string) {
 
 export async function loadEventTags(includeArchived: boolean) {
   const rows = includeArchived
-    ? await db.select().from(EventTag).orderBy(asc(EventTag.name))
+    ? await db
+        .select()
+        .from(EventTag)
+        .where(isNull(EventTag.hackathonId))
+        .orderBy(asc(EventTag.name))
     : await db
         .select()
         .from(EventTag)
-        .where(eq(EventTag.active, true))
+        .where(and(eq(EventTag.active, true), isNull(EventTag.hackathonId)))
         .orderBy(asc(EventTag.name));
   return rows;
 }

@@ -105,6 +105,19 @@ describe("useRosterUrlState", () => {
     });
   });
 
+  it("round-trips unknown first-time status without treating it as returning", () => {
+    const { result, rerender } = renderHook(() => useRosterUrlState());
+
+    act(() => void result.current.setFilter({ firstTimeStatus: "unknown" }));
+    act(() => {
+      land(queryOf(0));
+      rerender();
+    });
+
+    expect(result.current.filter.firstTimeStatus).toBe("unknown");
+    expect(result.current.filter.isFirstTime).toBeUndefined();
+  });
+
   describe("two writes inside one navigation window", () => {
     /**
      * The defect this replaces: the second write rebuilt every filter key from

@@ -15,7 +15,13 @@ import {
 import { db } from "@forge/db/client";
 import { AdminAuditEvent, AdminAuditSubject } from "@forge/db/schemas/audit";
 import { User } from "@forge/db/schemas/auth";
-import { Member } from "@forge/db/schemas/knight-hacks";
+import {
+  Hackathon,
+  Hacker,
+  HackerAttendee,
+  HackerCheckInAttempt,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import { AUDIT_ACTION_CATALOG, AUDIT_ACTION_KEYS } from "@forge/validators";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,7 +51,10 @@ function searchCondition(search: string): SQL {
     ${AdminAuditEvent.actorLabel} ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.actionKey} ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.domain} ILIKE ${pattern} ESCAPE '\\'
+    OR ${AdminAuditEvent.id}::text ILIKE ${pattern} ESCAPE '\\'
+    OR ${AdminAuditEvent.operationId}::text ILIKE ${pattern} ESCAPE '\\'
     OR ${AdminAuditEvent.actorUserId}::text ILIKE ${pattern} ESCAPE '\\'
+    OR ${AdminAuditEvent.metadata}::text ILIKE ${pattern} ESCAPE '\\'
     ${actionLabelCondition}
     OR EXISTS (
       SELECT 1
@@ -57,6 +66,146 @@ function searchCondition(search: string): SQL {
         )
     )
   )`;
+}
+
+function hackerAttendeeCondition(hackerAttendeeId: string): SQL {
+  return sql`(
+    EXISTS (
+      SELECT 1
+      FROM ${AdminAuditSubject} hacker_subject
+      WHERE hacker_subject.event_id = ${AdminAuditEvent.id}
+        AND hacker_subject.target_type = 'hacker_attendee'
+        AND hacker_subject.target_id = ${hackerAttendeeId}
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM ${AdminAuditSubject} attempt_subject
+      INNER JOIN ${HackerCheckInAttempt} legacy_attempt
+        ON attempt_subject.target_type = 'check_in_attempt'
+        AND attempt_subject.target_id = legacy_attempt.id::text
+      WHERE attempt_subject.event_id = ${AdminAuditEvent.id}
+        AND legacy_attempt.hacker_attendee_id = ${hackerAttendeeId}::uuid
+    )
+  )`;
+}
+
+interface CheckInAttemptAuditContext {
+  attendanceId: string | null;
+  attendeeId: string | null;
+  hackerName: string | null;
+  hackathonId: string;
+  hackathonName: string;
+  id: string;
+}
+
+async function loadCheckInAttemptContexts(
+  subjects: readonly (typeof AdminAuditSubject.$inferSelect)[],
+) {
+  const attemptIds = subjects
+    .filter(({ targetType }) => targetType === "check_in_attempt")
+    .map(({ targetId }) => targetId)
+    .filter((id) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        id,
+      ),
+    );
+  if (attemptIds.length === 0) {
+    return new Map<string, CheckInAttemptAuditContext>();
+  }
+  const rows = await db
+    .select({
+      attendanceId: HackerCheckInAttempt.attendanceId,
+      attendeeId: HackerCheckInAttempt.hackerAttendeeId,
+      hackerName: HackerCheckInAttempt.hackerNameSnapshot,
+      hackathonId: HackerCheckInAttempt.hackathonId,
+      hackathonName: Hackathon.displayName,
+      id: HackerCheckInAttempt.id,
+    })
+    .from(HackerCheckInAttempt)
+    .innerJoin(Hackathon, eq(Hackathon.id, HackerCheckInAttempt.hackathonId))
+    .where(inArray(HackerCheckInAttempt.id, attemptIds));
+  return new Map(rows.map((row) => [row.id, row]));
+}
+
+function legacyCheckInContext(
+  subjects: readonly (typeof AdminAuditSubject.$inferSelect)[],
+  contexts: ReadonlyMap<string, CheckInAttemptAuditContext>,
+) {
+  const attemptSubject = subjects.find(
+    ({ targetType }) => targetType === "check_in_attempt",
+  );
+  return attemptSubject ? contexts.get(attemptSubject.targetId) : undefined;
+}
+
+export function enrichLegacyCheckInSubjects(
+  eventId: string,
+  subjects: readonly (typeof AdminAuditSubject.$inferSelect)[],
+  context: CheckInAttemptAuditContext | undefined,
+) {
+  if (!context?.attendeeId || !context.hackerName) return [...subjects];
+  if (subjects.some(({ targetType }) => targetType === "hacker_attendee")) {
+    return [...subjects];
+  }
+  const normalized = subjects.map((subject) =>
+    subject.relation === "primary"
+      ? { ...subject, relation: "secondary" as const }
+      : subject,
+  );
+  return [
+    {
+      id: `derived-attendee:${eventId}`,
+      eventId,
+      memberId: null,
+      metadata: {},
+      position: 0,
+      relation: "primary" as const,
+      resultOutcome: null,
+      targetId: context.attendeeId,
+      targetLabel: context.hackerName,
+      targetType: "hacker_attendee",
+    },
+    ...normalized,
+    ...(subjects.some(({ targetType }) => targetType === "hackathon")
+      ? []
+      : [
+          {
+            id: `derived-hackathon:${eventId}`,
+            eventId,
+            memberId: null,
+            metadata: {},
+            position: normalized.length + 1,
+            relation: "secondary" as const,
+            resultOutcome: null,
+            targetId: context.hackathonId,
+            targetLabel: context.hackathonName,
+            targetType: "hackathon",
+          },
+        ]),
+    ...(context.attendanceId &&
+    !subjects.some(({ targetType }) => targetType === "attendance")
+      ? [
+          {
+            id: `derived-attendance:${eventId}`,
+            eventId,
+            memberId: null,
+            metadata: {},
+            position: normalized.length + 2,
+            relation: "secondary" as const,
+            resultOutcome: null,
+            targetId: context.attendanceId,
+            targetLabel: `Attendance for ${context.hackerName}`,
+            targetType: "attendance",
+          },
+        ]
+      : []),
+  ];
+}
+
+function checkInOutcomeCondition(outcomes: readonly string[]): SQL {
+  return sql`${AdminAuditEvent.metadata}->>'outcome' IN (${sql.join(
+    outcomes.map((outcome) => sql`${outcome}`),
+    sql`, `,
+  )})`;
 }
 
 function memberCondition(memberId: string): SQL {
@@ -115,11 +264,17 @@ export async function listAdminAuditEvents(input: AuditListInput) {
   if (input.actorUserId) {
     conditions.push(eq(AdminAuditEvent.actorUserId, input.actorUserId));
   }
+  if (input.checkInOutcomes?.length) {
+    conditions.push(checkInOutcomeCondition(input.checkInOutcomes));
+  }
   if (input.domains?.length) {
     conditions.push(inArray(AdminAuditEvent.domain, input.domains));
   }
   if (input.memberId) {
     conditions.push(memberCondition(input.memberId));
+  }
+  if (input.hackerAttendeeId) {
+    conditions.push(hackerAttendeeCondition(input.hackerAttendeeId));
   }
   if (input.outcomes?.length) {
     const condition = outcomeCondition(input.outcomes);
@@ -172,6 +327,7 @@ export async function listAdminAuditEvents(input: AuditListInput) {
     values.push(subject);
     subjectsByEventId.set(subject.eventId, values);
   }
+  const checkInContexts = await loadCheckInAttemptContexts(subjects);
 
   const items = events.map((event) => {
     const eventSubjects = subjectsByEventId.get(event.id) ?? [];
@@ -185,9 +341,18 @@ export async function listAdminAuditEvents(input: AuditListInput) {
       )
         ? ("partial_external" as const)
         : ("committed" as const);
-    const primaryTarget = eventSubjects.find(
-      (subject) => subject.relation === "primary",
-    );
+    const checkInContext = legacyCheckInContext(eventSubjects, checkInContexts);
+    const primaryTarget =
+      event.actionKey === "hackathon_event.checked_in" &&
+      checkInContext?.attendeeId &&
+      checkInContext.hackerName
+        ? {
+            memberId: null,
+            targetId: checkInContext.attendeeId,
+            targetLabel: checkInContext.hackerName,
+            targetType: "hacker_attendee",
+          }
+        : eventSubjects.find((subject) => subject.relation === "primary");
 
     return {
       actionKey: event.actionKey as AuditActionKey,
@@ -242,9 +407,18 @@ export async function getAdminAuditEvent(eventId: string) {
     .from(AdminAuditSubject)
     .where(eq(AdminAuditSubject.eventId, event.id))
     .orderBy(AdminAuditSubject.position, AdminAuditSubject.id);
+  const contexts = await loadCheckInAttemptContexts(subjects);
+  const enrichedSubjects =
+    event.actionKey === "hackathon_event.checked_in"
+      ? enrichLegacyCheckInSubjects(
+          event.id,
+          subjects,
+          legacyCheckInContext(subjects, contexts),
+        )
+      : subjects;
   const outcome =
     event.outcome === "partial_external" ||
-    subjects.some(
+    enrichedSubjects.some(
       (subject) =>
         subject.relation === "result" &&
         (subject.resultOutcome === "failed_external" ||
@@ -258,7 +432,7 @@ export async function getAdminAuditEvent(eventId: string) {
     actionKey: event.actionKey as AuditActionKey,
     actionLabel: auditActionLabel(event.actionKey),
     outcome,
-    subjects,
+    subjects: enrichedSubjects,
   };
 }
 
@@ -285,5 +459,41 @@ export async function searchAuditMembers(search: string, limit: number) {
     .innerJoin(User, eq(User.id, Member.userId))
     .where(conditions)
     .orderBy(Member.firstName, Member.lastName, Member.id)
+    .limit(limit);
+}
+
+export async function searchAuditHackers(search: string, limit: number) {
+  const pattern = `%${search.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_")}%`;
+  const conditions = search
+    ? or(
+        ilike(Hacker.firstName, pattern),
+        ilike(Hacker.lastName, pattern),
+        ilike(Hacker.email, pattern),
+        ilike(Hacker.discordUser, pattern),
+        ilike(User.name, pattern),
+        ilike(Hackathon.displayName, pattern),
+        sql`${HackerAttendee.id}::text ILIKE ${pattern} ESCAPE '\\'`,
+        sql`${Hacker.id}::text ILIKE ${pattern} ESCAPE '\\'`,
+        sql`${Hacker.userId}::text ILIKE ${pattern} ESCAPE '\\'`,
+      )
+    : undefined;
+
+  return db
+    .select({
+      attendeeId: HackerAttendee.id,
+      email: Hacker.email,
+      firstName: Hacker.firstName,
+      hackathonId: Hackathon.id,
+      hackathonName: Hackathon.displayName,
+      hackerId: Hacker.id,
+      lastName: Hacker.lastName,
+      userId: Hacker.userId,
+    })
+    .from(HackerAttendee)
+    .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+    .innerJoin(User, eq(User.id, Hacker.userId))
+    .innerJoin(Hackathon, eq(Hackathon.id, HackerAttendee.hackathonId))
+    .where(conditions)
+    .orderBy(desc(Hackathon.startDate), Hacker.firstName, Hacker.lastName)
     .limit(limit);
 }

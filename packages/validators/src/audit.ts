@@ -68,6 +68,81 @@ export const AUDIT_ACTION_CATALOG = {
     "pointsReversed",
     "originalCheckInAt",
   ]),
+  "hackathon_event.checked_in": policy(
+    "attendance",
+    "Processed hackathon event check-in",
+    ["method", "purpose", "pointsAwarded", "repeatAllowed", "outcome"],
+  ),
+  "hackathon_event.attendance_voided": policy(
+    "attendance",
+    "Voided hackathon event attendance",
+    ["pointsReversed", "reason"],
+  ),
+  "hackathon_event.roles_retried": policy(
+    "attendance",
+    "Retried hackathon Discord roles",
+    ["grantCount", "succeededCount", "failedCount"],
+  ),
+  "hackathon_event.created": policy("hackathons", "Created hackathon event", [
+    "creationSource",
+    "discordStatus",
+    "endAt",
+    "googleStatus",
+    "startAt",
+    "tagId",
+  ]),
+  "hackathon_event.updated": policy(
+    "hackathons",
+    "Updated hackathon event",
+    ["discordStatus", "googleStatus"],
+    ["name", "startAt", "endAt", "location", "tagId", "points"],
+  ),
+  "hackathon_event.deleted": policy("hackathons", "Deleted hackathon event", [
+    "stage",
+    "discordStatus",
+    "googleStatus",
+  ]),
+  "hackathon_event.integration_repaired": policy(
+    "hackathons",
+    "Repaired hackathon event integration",
+    ["providerScope", "discordStatus", "googleStatus"],
+  ),
+  "hackathon_event.discord_projection.resolved": policy(
+    "hackathons",
+    "Resolved hackathon Discord event projection",
+    ["mode", "projectionId", "projectionType", "result"],
+  ),
+  "hackathon_event.feedback_form_provisioned": policy(
+    "hackathons",
+    "Provisioned hackathon event feedback form",
+    ["formId", "result"],
+  ),
+  "hackathon_event.tag.created": policy(
+    "hackathons",
+    "Created hackathon event tag",
+    [
+      "name",
+      "color",
+      "defaultPoints",
+      "creationSource",
+      "operationId",
+      "sourceHackathonId",
+      "sourceTagId",
+      "targetHackathonId",
+    ],
+  ),
+  "hackathon_event.tag.updated": policy(
+    "hackathons",
+    "Updated hackathon event tag",
+    [],
+    ["name", "color", "defaultPoints"],
+  ),
+  "hackathon_event.tag.archived": policy(
+    "hackathons",
+    "Archived hackathon event tag",
+    [],
+    ["active"],
+  ),
   "member.dues.granted": policy("members", "Granted member dues", [
     "academicYear",
     "created",
@@ -318,6 +393,8 @@ export const AUDIT_ACTION_CATALOG = {
       "confirmationDeadline",
       "startDate",
       "endDate",
+      "eventAnnouncementChannelId",
+      "generalHackerDiscordRoleId",
     ],
   ),
   "hackathon.deleted": policy("hackathons", "Deleted hackathon"),
@@ -732,6 +809,7 @@ export const AUDIT_TARGET_TYPES = [
   "bulletin_image",
   "bulletin_post",
   "callback_execution",
+  "check_in_attempt",
   "company",
   "discord_config",
   "discord_role",
@@ -836,13 +914,28 @@ export const auditCursorSchema = z
   })
   .strict();
 
+export const auditCheckInOutcomeSchema = z.enum([
+  "checked_in",
+  "already_checked_in",
+  "invalid_qr",
+  "hacker_not_found",
+  "wrong_status",
+  "not_checked_in",
+  "wrong_class",
+  "not_ready",
+]);
+
+export type AuditCheckInOutcome = z.infer<typeof auditCheckInOutcomeSchema>;
+
 export const auditListInputSchema = z
   .object({
     actionKeys: z.array(auditActionKeySchema).max(20).optional(),
     actorUserId: z.string().uuid().optional(),
+    checkInOutcomes: z.array(auditCheckInOutcomeSchema).max(8).optional(),
     cursor: auditCursorSchema.optional(),
     domains: z.array(auditDomainSchema).max(AUDIT_DOMAINS.length).optional(),
     from: z.date().optional(),
+    hackerAttendeeId: z.string().uuid().optional(),
     limit: z.number().int().min(1).max(100).default(50),
     memberId: z.string().uuid().optional(),
     outcomes: z.array(auditOutcomeSchema).max(2).optional(),
@@ -871,3 +964,5 @@ export const auditMemberSearchInputSchema = z
     search: z.string().trim().max(100).default(""),
   })
   .strict();
+
+export const auditHackerSearchInputSchema = auditMemberSearchInputSchema;

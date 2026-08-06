@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Archive, Pencil, Plus } from "lucide-react";
 
@@ -143,11 +144,15 @@ function TagEditor({
 }
 
 export function EventTagManagement({
+  description = "Set the label, color, and default points for future club events.",
+  headerActions,
   onArchive,
   onCreate,
   onUpdate,
   tags,
 }: {
+  description?: string;
+  headerActions?: ReactNode;
   onArchive?: (tagId: string) => Promise<void> | void;
   onCreate?: (values: TagValues) => Promise<void> | void;
   onUpdate?: (tagId: string, values: TagValues) => Promise<void> | void;
@@ -177,18 +182,19 @@ export function EventTagManagement({
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/70 p-4 sm:p-6">
         <div>
           <h2 className="text-xl font-semibold">Event tags</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Set the label, color, and default points for future club events.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
-        <Button
-          type="button"
-          className="min-h-11 gap-2"
-          onClick={() => setEditing("new")}
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          Create tag
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {headerActions}
+          <Button
+            type="button"
+            className="min-h-11 gap-2"
+            onClick={() => setEditing("new")}
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Create tag
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-2 p-3 sm:p-5">

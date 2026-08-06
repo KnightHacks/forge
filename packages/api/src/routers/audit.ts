@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import {
   AUDIT_ACTION_CATALOG,
   auditDetailInputSchema,
+  auditHackerSearchInputSchema,
   auditListInputSchema,
   auditMemberSearchInputSchema,
 } from "@forge/validators";
@@ -13,6 +14,7 @@ import { assertCanReadAdminAudit } from "../utils/audit/access";
 import {
   getAdminAuditEvent,
   listAdminAuditEvents,
+  searchAuditHackers,
   searchAuditMembers,
 } from "../utils/audit/queries";
 
@@ -38,6 +40,12 @@ export const auditRouter = {
     assertCanReadAdminAudit(ctx.session.permissions);
     return listAdminAuditEvents(input);
   }),
+  searchHackers: permProcedure
+    .input(auditHackerSearchInputSchema)
+    .query(({ ctx, input }) => {
+      assertCanReadAdminAudit(ctx.session.permissions);
+      return searchAuditHackers(input.search, input.limit);
+    }),
   searchMembers: permProcedure
     .input(auditMemberSearchInputSchema)
     .query(({ ctx, input }) => {

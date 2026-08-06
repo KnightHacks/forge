@@ -30,7 +30,7 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
  * `undefined`, which React renders as nothing. A blank explanation on the one
  * list whose job is saying who was *not* mailed is worse than an ugly one.
  */
-function skipLabel(reason: string) {
+export function skipLabel(reason: string) {
   // `hasOwn`, not `in`: `in` walks the prototype, so `"toString"` would pass the
   // guard and return a function, which React refuses to render — an error
   // boundary in place of the fallback this helper exists to provide.
@@ -52,6 +52,7 @@ function skipLabel(reason: string) {
 const SKIP_REASONS: Record<SkipReason, string> = {
   already: "Already has this status",
   blacklisted: "Blacklisted",
+  checked_in: "Already checked into this hackathon",
   duplicate_email: "Shares an email with another selected applicant",
   missing: "No longer in this hackathon",
   no_email: "No email address",

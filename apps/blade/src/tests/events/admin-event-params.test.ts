@@ -76,6 +76,7 @@ describe("admin event URL state", () => {
   it("TC-006 preserves bounded calendar state without discarding list paging", () => {
     const parsed = parseAdminEventSearchParams({
       calendarEnd: "2026-09-01T04:00:00.000Z",
+      calendarMode: "day",
       calendarStart: "2026-08-01T04:00:00.000Z",
       page: "4",
       pageSize: "50",
@@ -89,6 +90,7 @@ describe("admin event URL state", () => {
 
     expect(parsed.input).toMatchObject({
       calendarEnd: "2026-09-01T04:00:00.000Z",
+      calendarMode: "day",
       calendarStart: "2026-08-01T04:00:00.000Z",
       page: 4,
       pageSize: 50,
@@ -99,12 +101,14 @@ describe("admin event URL state", () => {
     expect(params.get("pageSize")).toBe("50");
     expect(params.get("calendarStart")).toBe("2026-08-01T04:00:00.000Z");
     expect(params.get("calendarEnd")).toBe("2026-09-01T04:00:00.000Z");
+    expect(params.get("calendarMode")).toBe("day");
   });
 
   it("TC-005 TC-006 rejects malformed state and uses safe defaults", () => {
     const result = parseAdminEventSearchParams({
       audience: "everyone",
       calendarEnd: "not-a-date",
+      calendarMode: "agenda",
       direction: "sideways",
       event: "not-a-uuid",
       health: "broken-ish",
@@ -119,6 +123,7 @@ describe("admin event URL state", () => {
 
     expect(result.input).toMatchObject({
       audiences: [],
+      calendarMode: "month",
       direction: "asc",
       health: [],
       page: 1,

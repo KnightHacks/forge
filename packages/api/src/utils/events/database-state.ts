@@ -8,6 +8,7 @@ import {
   Event,
   EventAttendee,
   EventTag,
+  HackerEventAttendee,
   Issue,
   IssueHistory,
 } from "@forge/db/schemas/knight-hacks";
@@ -28,6 +29,10 @@ function discordDestination(event: SelectEvent) {
   return event.discordAppliedChannelId
     ? `${event.discordAppliedEntityType}:${event.discordAppliedChannelId}`
     : null;
+}
+
+export function maintainsClubEventDependents(hackathonId: string | null) {
+  return hackathonId === null;
 }
 
 export function eventRowToWorkflowRecord(
@@ -131,6 +136,7 @@ export function createDbEventWorkflowState({
   channelTypes = new Map<string, "stage" | "voice">(),
   creationReferences,
   googleCalendars,
+  hackathonId = null,
 }: {
   channelTypes?: ReadonlyMap<string, "stage" | "voice">;
   creationReferences?: {
@@ -139,10 +145,13 @@ export function createDbEventWorkflowState({
     tagId: string;
   };
   googleCalendars: { internal: string; public: string };
+  hackathonId?: string | null;
 }) {
+  const scope = (column: typeof Event.hackathonId) =>
+    hackathonId === null ? isNull(column) : eq(column, hackathonId);
   const getEvent = async (eventId: string) => {
     const row = await db.query.Event.findFirst({
-      where: eq(Event.id, eventId),
+      where: and(eq(Event.id, eventId), scope(Event.hackathonId)),
     });
     return row
       ? eventRowToWorkflowRecord(
@@ -190,6 +199,19 @@ export function createDbEventWorkflowState({
     },
 
     async countAttendance(eventId: string) {
+      if (hackathonId !== null) {
+        const [row] = await db
+          .select({ value: count(HackerEventAttendee.id) })
+          .from(HackerEventAttendee)
+          .where(
+            and(
+              eq(HackerEventAttendee.eventId, eventId),
+              eq(HackerEventAttendee.hackathonId, hackathonId),
+              isNull(HackerEventAttendee.voidedAt),
+            ),
+          );
+        return row?.value ?? 0;
+      }
       const [row] = await db
         .select({ value: count(EventAttendee.id) })
         .from(EventAttendee)
@@ -207,9 +229,11 @@ export function createDbEventWorkflowState({
           where: eq(Event.creationKey, creationKey),
         });
         if (existing) {
-          await (
-            await createDbEventFeedbackService(tx)
-          ).provisionForEvent({ eventId: existing.id });
+          if (maintainsClubEventDependents(hackathonId)) {
+            await (
+              await createDbEventFeedbackService(tx)
+            ).provisionForEvent({ eventId: existing.id });
+          }
           return { created: false, row: existing };
         }
 
@@ -217,7 +241,14 @@ export function createDbEventWorkflowState({
           const [tag] = await tx
             .select()
             .from(EventTag)
-            .where(eq(EventTag.id, creationReferences.tagId))
+            .where(
+              and(
+                eq(EventTag.id, creationReferences.tagId),
+                hackathonId === null
+                  ? isNull(EventTag.hackathonId)
+                  : eq(EventTag.hackathonId, hackathonId),
+              ),
+            )
             .for("share");
           if (!tag) {
             throw new TRPCError({
@@ -270,7 +301,7 @@ export function createDbEventWorkflowState({
             discordSyncState: "pending",
             end_datetime: event.endAt,
             googleSyncState: "pending",
-            hackathonId: null,
+            hackathonId,
             id: event.id,
             isOperationsCalendar: event.internal,
             legacy: false,
@@ -284,7 +315,7 @@ export function createDbEventWorkflowState({
           })
           .onConflictDoNothing({ target: Event.creationKey })
           .returning();
-        if (created) {
+        if (created && maintainsClubEventDependents(hackathonId)) {
           await (
             await createDbEventFeedbackService(tx)
           ).provisionForEvent({ eventId: created.id });
@@ -294,9 +325,11 @@ export function createDbEventWorkflowState({
           where: eq(Event.creationKey, creationKey),
         });
         if (!raced) throw new Error("Event creation reservation was lost.");
-        await (
-          await createDbEventFeedbackService(tx)
-        ).provisionForEvent({ eventId: raced.id });
+        if (maintainsClubEventDependents(hackathonId)) {
+          await (
+            await createDbEventFeedbackService(tx)
+          ).provisionForEvent({ eventId: raced.id });
+        }
         return { created: false, row: raced };
       });
       return {
@@ -314,16 +347,19 @@ export function createDbEventWorkflowState({
       fence?: { revision: number; token: string },
     ) {
       return db.transaction(async (tx) => {
-        const linkedIssues = await tx
-          .select({ id: Issue.id })
-          .from(Issue)
-          .where(eq(Issue.event, eventId));
+        const linkedIssues = maintainsClubEventDependents(hackathonId)
+          ? await tx
+              .select({ id: Issue.id })
+              .from(Issue)
+              .where(eq(Issue.event, eventId))
+          : [];
         const issueIds = linkedIssues.map((issue) => issue.id);
         const rows = await tx
           .delete(Event)
           .where(
             and(
               eq(Event.id, eventId),
+              scope(Event.hackathonId),
               ...(fence
                 ? [
                     eq(Event.syncRevision, fence.revision),
@@ -383,7 +419,7 @@ export function createDbEventWorkflowState({
         const [event] = await tx
           .select()
           .from(Event)
-          .where(and(eq(Event.id, eventId), isNull(Event.hackathonId)))
+          .where(and(eq(Event.id, eventId), scope(Event.hackathonId)))
           .for("update");
         if (!event) return "not_found" as const;
         if (
@@ -396,10 +432,20 @@ export function createDbEventWorkflowState({
           return "fence_lost" as const;
         }
 
-        const [attendance] = await tx
-          .select({ value: count(EventAttendee.id) })
-          .from(EventAttendee)
-          .where(eq(EventAttendee.eventId, event.id));
+        const [attendance] = hackathonId
+          ? await tx
+              .select({ value: count(HackerEventAttendee.id) })
+              .from(HackerEventAttendee)
+              .where(
+                and(
+                  eq(HackerEventAttendee.eventId, event.id),
+                  eq(HackerEventAttendee.hackathonId, hackathonId),
+                ),
+              )
+          : await tx
+              .select({ value: count(EventAttendee.id) })
+              .from(EventAttendee)
+              .where(eq(EventAttendee.eventId, event.id));
         if ((attendance?.value ?? 0) > 0) {
           return "attendance_exists" as const;
         }

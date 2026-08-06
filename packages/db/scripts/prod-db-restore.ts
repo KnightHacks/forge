@@ -65,10 +65,17 @@ DECLARE
 BEGIN
   IF to_regclass('public.knight_hacks_event_tag') IS NOT NULL THEN
     IF to_regclass('forge_local_restore.event_tags') IS NOT NULL THEN
-      EXECUTE 'INSERT INTO "public"."knight_hacks_event_tag" SELECT * FROM "forge_local_restore"."event_tags" ON CONFLICT ("normalized_name") DO NOTHING';
+      -- Tag identity is scoped: Club tags and each hackathon may reuse the same
+      -- normalized name. Targetless conflict handling respects either partial
+      -- unique index instead of naming the retired global constraint.
+      -- A local-only hackathon tag is safe to preserve only when its parent
+      -- hackathon also exists in the restored production data. Otherwise the
+      -- scoped foreign key would roll back the entire single-transaction
+      -- restore.
+      EXECUTE 'INSERT INTO "public"."knight_hacks_event_tag" SELECT saved.* FROM "forge_local_restore"."event_tags" AS saved WHERE saved."hackathon_id" IS NULL OR EXISTS (SELECT 1 FROM "public"."knight_hacks_hackathon" AS hackathon WHERE hackathon."id" = saved."hackathon_id") ON CONFLICT DO NOTHING';
     END IF;
-    EXECUTE 'UPDATE "public"."knight_hacks_event" AS event SET "tag_color" = tag."color" FROM "public"."knight_hacks_event_tag" AS tag WHERE event."legacy" = true AND tag."name" = event."tag"';
-    EXECUTE 'UPDATE "public"."knight_hacks_event_attendee" AS attendance SET "points_awarded" = COALESCE(event."points", (SELECT tag."default_points" FROM "public"."knight_hacks_event_tag" AS tag WHERE tag."name" = event."tag" LIMIT 1), 0), "points_awarded_estimated" = true FROM "public"."knight_hacks_event" AS event WHERE attendance."event_id" = event."id" AND attendance."points_awarded" IS NULL';
+    EXECUTE 'UPDATE "public"."knight_hacks_event" AS event SET "tag_color" = tag."color" FROM "public"."knight_hacks_event_tag" AS tag WHERE event."legacy" = true AND tag."name" = event."tag" AND tag."hackathon_id" IS NOT DISTINCT FROM event."hackathon_id"';
+    EXECUTE 'UPDATE "public"."knight_hacks_event_attendee" AS attendance SET "points_awarded" = COALESCE(event."points", (SELECT tag."default_points" FROM "public"."knight_hacks_event_tag" AS tag WHERE tag."name" = event."tag" AND tag."hackathon_id" IS NOT DISTINCT FROM event."hackathon_id" LIMIT 1), 0), "points_awarded_estimated" = true FROM "public"."knight_hacks_event" AS event WHERE attendance."event_id" = event."id" AND attendance."points_awarded" IS NULL';
   END IF;
 
   IF EXISTS (

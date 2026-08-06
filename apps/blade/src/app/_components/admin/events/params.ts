@@ -11,6 +11,7 @@ export type EventInternalFilter = "all" | "external" | "internal";
 export interface AdminEventInput {
   audiences: EventAudienceFilter[];
   calendarEnd?: string;
+  calendarMode: "day" | "month";
   calendarStart?: string;
   direction: EventAdminDirection;
   endDate?: string;
@@ -151,6 +152,7 @@ export function parseAdminEventSearchParams(params: SearchParams) {
     input: {
       audiences: enumValues(params.audience, ["dues", "public", "roles"]),
       calendarEnd: hasValidCalendarWindow ? calendarEndCandidate : undefined,
+      calendarMode: oneOf(params.calendarMode, ["day", "month"], "month"),
       calendarStart: hasValidCalendarWindow
         ? calendarStartCandidate
         : undefined,
@@ -204,6 +206,9 @@ export function buildAdminEventSearchParams(
   if (input.endDate) params.set("end", input.endDate);
   if (input.calendarStart) params.set("calendarStart", input.calendarStart);
   if (input.calendarEnd) params.set("calendarEnd", input.calendarEnd);
+  if (input.view === "calendar" && input.calendarMode === "day") {
+    params.set("calendarMode", "day");
+  }
   if (input.internal !== "all") params.set("internal", input.internal);
   appendMany(params, "audience", input.audiences);
   appendMany(params, "health", input.health);

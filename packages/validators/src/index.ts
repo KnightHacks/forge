@@ -1,4 +1,5 @@
 export * from "./hackathons";
+export * from "./hackathon-events";
 export * from "./forms";
 export * from "./forms-platform";
 export * from "./upload-policy";

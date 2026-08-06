@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarClock,
   CalendarDays,
   ChartNoAxesCombined,
   ClipboardList,
@@ -9,6 +10,7 @@ import {
   ListTodo,
   Mail,
   QrCode,
+  ScanLine,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -28,6 +30,8 @@ export interface AdminNavigationAccess {
   events?: boolean;
   forms?: boolean;
   hackathon?: boolean;
+  hackathonCheckIn?: boolean;
+  hackathonEvents?: boolean;
   hackers?: boolean;
   issues?: boolean;
   logs?: boolean;
@@ -116,11 +120,18 @@ export const adminNavigationItems = [
     label: "Forms",
   },
   {
-    access: "hackers",
-    href: "/admin/hackers",
-    icon: UserSearch,
-    id: "hackers",
-    label: "Hackers",
+    access: "hackathonCheckIn",
+    href: "/admin/hackathon-check-in",
+    icon: ScanLine,
+    id: "hackathonCheckIn",
+    label: "Hackathon Check-in",
+  },
+  {
+    access: "hackathonEvents",
+    href: "/admin/hackathon-events",
+    icon: CalendarClock,
+    id: "hackathonEvents",
+    label: "Hackathon Events",
   },
   {
     access: "hackathon",
@@ -128,6 +139,13 @@ export const adminNavigationItems = [
     icon: Swords,
     id: "hackathon",
     label: "Hackathons",
+  },
+  {
+    access: "hackers",
+    href: "/admin/hackers",
+    icon: UserSearch,
+    id: "hackers",
+    label: "Hackers",
   },
   {
     access: "issues",
@@ -171,8 +189,16 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "events") return pathname.startsWith("/admin/events");
   if (id === "email") return pathname.startsWith("/admin/email");
   if (id === "forms") return pathname.startsWith("/admin/forms");
+  if (id === "hackathonCheckIn")
+    return pathname.startsWith("/admin/hackathon-check-in");
+  if (id === "hackathonEvents")
+    return pathname.startsWith("/admin/hackathon-events");
+  if (id === "hackathon")
+    return (
+      pathname === "/admin/hackathon" ||
+      pathname.startsWith("/admin/hackathon/")
+    );
   if (id === "hackers") return pathname.startsWith("/admin/hackers");
-  if (id === "hackathon") return pathname.startsWith("/admin/hackathon");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "companies") return pathname.startsWith("/admin/companies");

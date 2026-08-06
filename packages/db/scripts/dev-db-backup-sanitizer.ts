@@ -86,6 +86,12 @@ export const TABLES_TO_DROP = [
   // Applicant-uploaded files and the execution log of what ran against them.
   "knight_hacks_form_attachment",
   "knight_hacks_form_callback_execution",
+  // Live check-in identity/result history and Discord delivery state. These are
+  // tied to real applicants and are operational queues, not developer fixtures.
+  "knight_hacks_hackathon_event_reminder_delivery",
+  "knight_hacks_hacker_check_in_attempt",
+  "knight_hacks_hacker_discord_role_grant",
+  "knight_hacks_hacker_discord_role_grant_attempt",
   // Work queues. Real assignments and reminders aimed at real officers.
   "knight_hacks_issue",
   "knight_hacks_issue_history",

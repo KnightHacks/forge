@@ -364,12 +364,17 @@ function customCsvColumns(
 export function createEventFeedbackService({
   audit,
   clock,
+  eventQualifier = isQualifyingEvent,
   idFactory = randomUUID,
   protectedRoleIds,
   state,
 }: {
   audit: FeedbackAudit;
   clock: () => Date;
+  eventQualifier?: (
+    event: FeedbackEvent,
+    protectedRoleIds: ReadonlySet<string>,
+  ) => boolean;
   idFactory?: () => string;
   protectedRoleIds: ReadonlySet<string>;
   state: FeedbackState;
@@ -384,7 +389,7 @@ export function createEventFeedbackService({
 
   const requireQualifyingEvent = async (eventId: string) => {
     const event = await state.getEvent(eventId);
-    if (!event || !isQualifyingEvent(event, protectedRoleIds)) {
+    if (!event || !eventQualifier(event, protectedRoleIds)) {
       return notFound("Event feedback is not available.");
     }
     return event;
@@ -402,7 +407,7 @@ export function createEventFeedbackService({
       !config ||
       !event ||
       !attended ||
-      !isQualifyingEvent(event, protectedRoleIds)
+      !eventQualifier(event, protectedRoleIds)
     ) {
       return {
         eventId,
@@ -615,7 +620,7 @@ export function createEventFeedbackService({
     async provisionForEvent(input: { eventId: string }) {
       const event = await state.getEvent(input.eventId);
       if (!event) return notFound("Event not found.");
-      if (!isQualifyingEvent(event, protectedRoleIds)) {
+      if (!eventQualifier(event, protectedRoleIds)) {
         return { status: "not_applicable" as const };
       }
       const existing = await state.getFeedbackConfigByEventId(event.id);
