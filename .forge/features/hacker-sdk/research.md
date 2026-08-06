@@ -414,10 +414,12 @@ The implementation will use these defaults:
   visible while durable automatic and manual retries converge remote state.
 - Provider payload constraints remain enforced while disabled so later bulk
   publication does not uncover avoidable invalid records.
-- Discord reminders are suppressed immediately while Discord publication is
-  disabled. Google publication does not control Discord reminders.
-- Changing full-hack publication requires hackathon configuration authority,
-  even though the controls live on the Hackathon Events page.
+- Discord announcement reminders remain independent. While Scheduled Event
+  publication is disabled, reminders still use Forge data, ping the configured
+  hackathon role, and omit the Scheduled Event link. Google publication does
+  not control Discord reminders.
+- Changing full-hack publication requires `EDIT_HACK_EVENT`; read-only event
+  access may inspect health, and check-in-only volunteers cannot change it.
 
 ## Sync implementation evidence
 
@@ -438,9 +440,10 @@ Reforge already has most of the difficult per-event safety machinery:
   reminder delivery, so publication needs its own bounded-backoff worker.
 - Existing provider error persistence clears the recorded message. Publication
   health requires safe error details and next-retry state.
-- Reminder selection requires a Discord event ID. It must also check desired
-  Discord publication immediately so a reminder cannot fire while deletion is
-  still converging.
+- Reminder delivery currently requires a Discord event ID. Hack reminders must
+  instead build from the database event and treat the Scheduled Event link as
+  optional, preserving the configured announcement and role ping while calendar
+  publication is off.
 
 ## Recommended next artifact sequence
 

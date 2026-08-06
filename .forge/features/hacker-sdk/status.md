@@ -1,6 +1,6 @@
 # Hacker SDK Status
 
-Current phase: Spec approved / SRD architecture review
+Current phase: Artifact bundle approved / test generation
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -67,20 +67,32 @@ Current phase: Spec approved / SRD architecture review
   implementation, delegating remaining architecture and test choices to three
   independent Forge-skilled reviews.
 - 2026-08-06: Publication controls live beside the selected hackathon's event
-  actions and require hackathon configuration authority. New hackathons default
-  both providers off; existing hackathons backfill both on.
+  actions. Reads use Hackathon Event read/edit access; changes use
+  `EDIT_HACK_EVENT`. New hackathons default both providers off; existing
+  hackathons with current projections backfill the matching provider on.
 - 2026-08-06: Publication includes primary check-in. Disabling requires a
   provider-and-count confirmation. Requested state persists while visible
   progress, automatic retry, manual retry, and Discord ambiguity repair
   converge remote state.
-- 2026-08-06: Provider payload limits remain enforced while disabled. Discord
-  reminders stop immediately when Discord publication is off; Google Calendar
-  state does not control them.
+- 2026-08-06: Provider payload limits remain enforced while disabled. By a
+  two-to-one adversarial review decision, Discord announcement reminders remain
+  independent of Scheduled Event publication. With publication off, the
+  reminder still pings the hack role from Forge data and omits the event link.
+- 2026-08-06: Three independent reviewers unanimously selected a versioned
+  `@forge/hacker-sdk` package, isolated participant API, same-origin Next
+  adapter, Blade-brokered PKCE authorization-code handoff, and opaque portal
+  sessions. Browser inputs never select authoritative hackathon scope.
+- 2026-08-06: Three independent reviewers unanimously selected an additive
+  canonical `HackerProfile` plus immutable revisions. Legacy `Hacker` rows stay
+  as mixed-version application snapshots until current `main` consumers are
+  retired.
+- 2026-08-06: Provider publication uses per-hack/provider desired-state rows
+  and durable per-event/provider work. External projection health no longer
+  gates hack check-in, schedule, attendance, or points.
 
 ## Open questions
 
-None at the product level. Technical ambiguities are being resolved by the
-delegated adversarial SRD review.
+None. The delegated adversarial SRD review completed.
 
 ## Task list
 
@@ -89,8 +101,8 @@ delegated adversarial SRD review.
       participant behavior.
 - [x] Record the evidence and unresolved product boundaries in `research.md`.
 - [x] Complete and approve `spec.md` under the owner's blanket approval.
-- [ ] Complete and approve `srd.md` after three independent architecture passes.
-- [ ] Complete and approve `test-cases.md` under the delegated approval.
+- [x] Complete and approve `srd.md` after three independent architecture passes.
+- [x] Complete and approve `test-cases.md` under the delegated approval.
 - [x] Owner approved the full artifact and implementation pipeline.
 
 ## Validation / commands

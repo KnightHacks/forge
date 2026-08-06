@@ -101,7 +101,7 @@ history but never awards the same event's points again.
 
 The Hackathon Events page shows independent Discord and Google Calendar
 publication switches beside the selected hackathon's event actions. Only
-officers with hackathon configuration authority may change them.
+officers who can edit Hackathon Events may change them.
 
 For a new hackathon, both providers start off. Events can be created, edited,
 duplicated, and deleted in Forge without appearing in either external calendar.
@@ -123,9 +123,11 @@ failures automatically and provides an immediate retry action. Ambiguous
 Discord outcomes use the existing candidate review instead of risking duplicate
 events.
 
-When Discord publication is off, Forge does not send Discord event reminders
-for that hackathon. Google Calendar publication has no effect on Discord
-reminders.
+Discord announcement reminders are independent of Discord Scheduled Event
+publication. When the calendar is off, the configured announcement channel
+still receives the reminder and configured hackathon-role ping from Forge's
+database event. The reminder omits the Scheduled Event link. Google Calendar
+publication has no effect on Discord reminders.
 
 ## Scope
 
@@ -217,7 +219,8 @@ reminders.
 - Publication progress and provider errors remain visible across refreshes.
 - Safe failures retry automatically. Ambiguous Discord writes do not create
   duplicates and remain actionable for an officer.
-- Discord reminders do not run while Discord publication is disabled.
+- Discord reminders still run from Forge data while Discord publication is
+  disabled, without a Scheduled Event link.
 - All meaningful participant and publication mutations are auditable without
   recording sensitive payloads.
 
