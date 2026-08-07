@@ -259,7 +259,12 @@ test.describe("initial member onboarding", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /Everything Knight Hacks, in one platform\./,
+        name: /Your Knight Hacks membership, all in one place\./,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "What you can do in Blade",
       }),
     ).toBeVisible();
     await expect(
