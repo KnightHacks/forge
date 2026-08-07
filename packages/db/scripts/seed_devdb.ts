@@ -24,7 +24,7 @@ import { unlink } from "fs/promises";
 import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Client } from "pg";
-import { Routes } from "discord-api-types/v10";
+import { ChannelType, Routes } from "discord-api-types/v10";
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import Pool from "pg-pool";
@@ -40,9 +40,13 @@ import * as authSchema from "../src/schemas/auth";
 import * as discordConfigSchema from "../src/schemas/discord-config";
 import * as knightHacksSchema from "../src/schemas/knight-hacks";
 import {
+  formConfigurationSanitizerSql,
+  hackathonPublicationSanitizerSql,
   sanitizedEventProviderState,
-  TABLES_TO_KEEP,
+  sanitizedHackathonEventProviderState,
+  TABLES_TO_DROP,
   teamDataSanitizerSql,
+  unclassifiedDatabaseTables,
 } from "./dev-db-backup-sanitizer";
 
 const execAsync = promisify(exec);
@@ -91,6 +95,7 @@ async function cleanUp() {
 
 const roleIdMappings: Record<string, string> = {};
 const eventIdMappings: Record<string, string> = {};
+const channelIdMappings: Record<string, string> = {};
 
 /**
  * This script is the one place that needs *both* environments' guild IDs at
@@ -117,11 +122,21 @@ async function guildIds() {
 async function truncateExcludedTable(name: string) {
   if (!backupDb) return;
 
-  if (!TABLES_TO_KEEP.includes(name as (typeof TABLES_TO_KEEP)[number])) {
+  if (TABLES_TO_DROP.includes(name as (typeof TABLES_TO_DROP)[number])) {
     await backupDb.execute(
       sql.raw(`TRUNCATE TABLE "${name}" RESTART IDENTITY CASCADE`),
     );
   }
+}
+
+function requiredRoleMapping(roleId: string, owner: string) {
+  const mapped = roleIdMappings[roleId];
+  if (!mapped) {
+    throw new Error(
+      `No development Discord mapping for ${owner} role ${roleId}.`,
+    );
+  }
+  return mapped;
 }
 
 async function sanitizeRoles() {
@@ -129,10 +144,10 @@ async function sanitizeRoles() {
 
   const roles = await backupDb.query.Roles.findMany();
   for (const role of roles) {
-    const mappedRoleId = roleIdMappings[role.discordRoleId];
-    if (!mappedRoleId) {
-      throw new Error(`No development Discord mapping for role ${role.id}.`);
-    }
+    const mappedRoleId = requiredRoleMapping(
+      role.discordRoleId,
+      `permission ${role.id}`,
+    );
 
     await backupDb
       .update(authSchema.Roles)
@@ -141,6 +156,49 @@ async function sanitizeRoles() {
         issueReminderChannel: ISSUE.DEV_ISSUE_REMINDER_CHANNEL_ID,
       })
       .where(eq(authSchema.Roles.id, role.id));
+  }
+}
+
+async function sanitizeHackathonDiscordConfiguration() {
+  if (!backupDb) return;
+
+  const hackathons = await backupDb.query.Hackathon.findMany({
+    columns: {
+      eventAnnouncementChannelId: true,
+      generalHackerDiscordRoleId: true,
+      id: true,
+    },
+  });
+  for (const hackathon of hackathons) {
+    await backupDb
+      .update(knightHacksSchema.Hackathon)
+      .set({
+        eventAnnouncementChannelId: hackathon.eventAnnouncementChannelId
+          ? (channelIdMappings[hackathon.eventAnnouncementChannelId] ?? null)
+          : null,
+        generalHackerDiscordRoleId: hackathon.generalHackerDiscordRoleId
+          ? requiredRoleMapping(
+              hackathon.generalHackerDiscordRoleId,
+              `hackathon ${hackathon.id} general hacker`,
+            )
+          : null,
+      })
+      .where(eq(knightHacksSchema.Hackathon.id, hackathon.id));
+  }
+
+  const classes = await backupDb.query.HackathonClass.findMany({
+    columns: { discordRoleId: true, id: true },
+  });
+  for (const hackathonClass of classes) {
+    await backupDb
+      .update(knightHacksSchema.HackathonClass)
+      .set({
+        discordRoleId: requiredRoleMapping(
+          hackathonClass.discordRoleId,
+          `hackathon class ${hackathonClass.id}`,
+        ),
+      })
+      .where(eq(knightHacksSchema.HackathonClass.id, hackathonClass.id));
   }
 }
 
@@ -155,7 +213,11 @@ async function sanitizeEvents() {
 
     await backupDb
       .update(knightHacksSchema.Event)
-      .set(sanitizedEventProviderState(event.legacy, mappedDiscordId))
+      .set(
+        event.hackathonId
+          ? sanitizedHackathonEventProviderState()
+          : sanitizedEventProviderState(event.legacy, mappedDiscordId),
+      )
       .where(eq(knightHacksSchema.Event.id, event.id));
   }
 }
@@ -224,15 +286,26 @@ async function syncRoles() {
   if (!backupDb) return;
 
   const guild = await guildIds();
-  const prodRolesWithPerms = new Set(
-    (
-      await backupDb.query.Roles.findMany({ columns: { discordRoleId: true } })
-    ).map((row) => row.discordRoleId),
-  );
+  const [permissionRoles, hackathons, hackathonClasses] = await Promise.all([
+    backupDb.query.Roles.findMany({ columns: { discordRoleId: true } }),
+    backupDb.query.Hackathon.findMany({
+      columns: { generalHackerDiscordRoleId: true },
+    }),
+    backupDb.query.HackathonClass.findMany({
+      columns: { discordRoleId: true },
+    }),
+  ]);
+  const referencedRoleIds = new Set([
+    ...permissionRoles.map((row) => row.discordRoleId),
+    ...hackathons.flatMap((row) =>
+      row.generalHackerDiscordRoleId ? [row.generalHackerDiscordRoleId] : [],
+    ),
+    ...hackathonClasses.map((row) => row.discordRoleId),
+  ]);
   let prodRoles = (await discord.api.get(
     Routes.guildRoles(guild.production),
   )) as DiscordRole[];
-  prodRoles = prodRoles.filter((role) => prodRolesWithPerms.has(role.id));
+  prodRoles = prodRoles.filter((role) => referencedRoleIds.has(role.id));
 
   const devRolesArr = (await discord.api.get(
     Routes.guildRoles(guild.development),
@@ -264,6 +337,65 @@ async function syncRoles() {
   }
 }
 
+interface DiscordGuildChannel {
+  id: string;
+  name?: string;
+  type: ChannelType;
+}
+
+function textChannelName(channel: DiscordGuildChannel) {
+  if (
+    channel.type !== ChannelType.GuildText &&
+    channel.type !== ChannelType.GuildAnnouncement
+  ) {
+    return null;
+  }
+  return channel.name?.trim().toLowerCase() ?? null;
+}
+
+async function syncAnnouncementChannels() {
+  if (!backupDb) return;
+
+  const configuredIds = new Set(
+    (
+      await backupDb.query.Hackathon.findMany({
+        columns: { eventAnnouncementChannelId: true },
+      })
+    ).flatMap((row) =>
+      row.eventAnnouncementChannelId ? [row.eventAnnouncementChannelId] : [],
+    ),
+  );
+  if (configuredIds.size === 0) return;
+
+  const guild = await guildIds();
+  const [productionChannels, developmentChannels] = (await Promise.all([
+    discord.api.get(Routes.guildChannels(guild.production)),
+    discord.api.get(Routes.guildChannels(guild.development)),
+  ])) as [DiscordGuildChannel[], DiscordGuildChannel[]];
+  const developmentByName = new Map<string, DiscordGuildChannel[]>();
+  for (const channel of developmentChannels) {
+    const name = textChannelName(channel);
+    if (!name) continue;
+    developmentByName.set(name, [
+      ...(developmentByName.get(name) ?? []),
+      channel,
+    ]);
+  }
+
+  for (const channel of productionChannels) {
+    if (!configuredIds.has(channel.id)) continue;
+    const name = textChannelName(channel);
+    const candidates = name ? developmentByName.get(name) : undefined;
+    if (candidates?.length === 1 && candidates[0]) {
+      channelIdMappings[channel.id] = candidates[0].id;
+      continue;
+    }
+    console.warn(
+      `No unique development text-channel match for hackathon announcement channel ${channel.id}; the restored setting will be cleared.`,
+    );
+  }
+}
+
 interface DiscordGuildScheduledEvent {
   id: string;
   guild_id: string;
@@ -290,9 +422,20 @@ async function syncEvents() {
   if (!backupDb) return;
 
   const guild = await guildIds();
-  const prodEvents = (await discord.api.get(
-    Routes.guildScheduledEvents(guild.production),
-  )) as DiscordGuildScheduledEvent[];
+  const linkedClubEventIds = new Set(
+    (
+      await backupDb.query.Event.findMany({
+        columns: { discordId: true, hackathonId: true },
+      })
+    ).flatMap((event) =>
+      event.hackathonId === null && event.discordId ? [event.discordId] : [],
+    ),
+  );
+  const prodEvents = (
+    (await discord.api.get(
+      Routes.guildScheduledEvents(guild.production),
+    )) as DiscordGuildScheduledEvent[]
+  ).filter((event) => linkedClubEventIds.has(event.id));
 
   const devEventsArr = (await discord.api.get(
     Routes.guildScheduledEvents(guild.development),
@@ -334,7 +477,7 @@ async function minio() {
   const envN = { ...process.env, PGPASSWORD: password };
 
   await execAsync(
-    `pg_dump -h ${host} -p ${port} -U ${user} --data-only --column-inserts --disable-triggers --no-owner --no-acl ${backupDbName} > ${filePath}`,
+    `pg_dump -h ${host} -p ${port} -U ${user} --schema=public --data-only --column-inserts --disable-triggers --no-owner --no-acl ${backupDbName} > ${filePath}`,
     { env: envN },
   );
 
@@ -375,10 +518,6 @@ async function main() {
       casing: "snake_case",
     });
 
-    console.log("Syncing roles and events from prod server to dev server");
-    await syncRoles();
-    await syncEvents();
-
     const { rows: tablesJSON } = await backupDb.execute(sql`
 		  SELECT table_name 
 		  FROM information_schema.tables 
@@ -387,7 +526,18 @@ async function main() {
 		`);
 
     let tables = tablesJSON.map((t) => t.table_name as string);
+    const unclassified = unclassifiedDatabaseTables(tables);
+    if (unclassified.length > 0) {
+      throw new Error(
+        `Refusing to sanitize unclassified public tables: ${unclassified.join(", ")}`,
+      );
+    }
     tables = [...tables.filter((x) => x !== "auth_user"), "auth_user"];
+
+    console.log("Syncing roles, channels, and events from prod to dev Discord");
+    await syncRoles();
+    await syncAnnouncementChannels();
+    await syncEvents();
 
     console.log("Removing tables that are not approved for development");
     for (const tableName of tables) {
@@ -396,7 +546,14 @@ async function main() {
 
     console.log("Mapping development Discord roles and events");
     await sanitizeRoles();
+    await sanitizeHackathonDiscordConfiguration();
     await sanitizeEvents();
+
+    console.log("Disabling external hackathon publication in the dev backup");
+    await backupDb.execute(sql.raw(hackathonPublicationSanitizerSql()));
+
+    console.log("Removing form media whose objects are not copied to dev");
+    await backupDb.execute(sql.raw(formConfigurationSanitizerSql()));
 
     console.log("Keeping team data and scrubbing credentials");
     await backupDb.execute(sql.raw(teamDataSanitizerSql()));

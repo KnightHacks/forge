@@ -2,10 +2,14 @@ import { getTableName, is, Table } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import {
+  formConfigurationSanitizerSql,
+  hackathonPublicationSanitizerSql,
   sanitizedEventProviderState,
+  sanitizedHackathonEventProviderState,
   TABLES_TO_DROP,
   TABLES_TO_KEEP,
   teamDataSanitizerSql,
+  unclassifiedDatabaseTables,
 } from "../../scripts/dev-db-backup-sanitizer";
 import * as auditSchema from "../schemas/audit";
 import * as authSchema from "../schemas/auth";
@@ -57,6 +61,19 @@ describe("development database backup sanitizer", () => {
     expect(TABLES_TO_DROP.filter((table) => kept.has(table))).toEqual([]);
   });
 
+  it("reports actual database tables without an explicit backup policy", () => {
+    expect(
+      unclassifiedDatabaseTables([
+        "auth_user",
+        "knight_hacks_issue",
+        "future_operational_queue",
+        "another_future_table",
+        "future_operational_queue",
+      ]),
+    ).toEqual(["another_future_table", "future_operational_queue"]);
+    expect(unclassifiedDatabaseTables(schemaTableNames())).toEqual([]);
+  });
+
   // The bug the gate above was written for: configuration that an officer set
   // in Blade, truncated out of every dev backup since `becc28d1`. Migrations
   // cannot restore it — the backfill has already been recorded as applied — so
@@ -89,8 +106,14 @@ describe("development database backup sanitizer", () => {
         "knight_hacks_form_section_edit_role",
         "knight_hacks_form_section_view_role",
         "knight_hacks_form_single_response_claim",
+        "knight_hacks_template",
       ]),
     );
+  });
+
+  it("keeps the active issue-template catalog", () => {
+    expect(TABLES_TO_KEEP).toContain("knight_hacks_template");
+    expect(TABLES_TO_DROP).not.toContain("knight_hacks_template");
   });
 
   it("does not retain protected content, work queues, or recipient snapshots", () => {
@@ -175,5 +198,72 @@ describe("development database backup sanitizer", () => {
       googleId: null,
       googleSyncState: null,
     });
+  });
+
+  it("makes retained Hackathon events inert without provider identities", () => {
+    expect(sanitizedHackathonEventProviderState()).toEqual({
+      deletionIntentAt: null,
+      discordAppliedChannelId: null,
+      discordAppliedEntityType: null,
+      discordAppliedRevision: null,
+      discordChannelId: null,
+      discordId: null,
+      discordLastError: null,
+      discordNoProjectionAcknowledgedAt: null,
+      discordNoProjectionAcknowledgedBy: null,
+      discordOutboundAttemptRevision: null,
+      discordOutboundAttemptToken: null,
+      discordOutboundAttemptedAt: null,
+      discordSyncState: "disabled",
+      googleAppliedCalendarId: null,
+      googleAppliedDestination: null,
+      googleAppliedRevision: null,
+      googleId: null,
+      googleLastError: null,
+      googleOutboundAttemptRevision: null,
+      googleOutboundAttemptToken: null,
+      googleOutboundAttemptedAt: null,
+      googleSyncState: "disabled",
+      publishedAt: null,
+      syncLeaseExpiresAt: null,
+      syncLeaseRevision: null,
+      syncLeaseToken: null,
+      visibilityDuesPaying: null,
+      visibilityInternal: null,
+      visibilityRevision: null,
+      visibilityRoles: null,
+    });
+  });
+
+  it("disables retained publication intent idempotently", () => {
+    const sanitizer = hackathonPublicationSanitizerSql();
+
+    expect(sanitizer).toContain(
+      "UPDATE knight_hacks_hackathon_event_publication",
+    );
+    expect(sanitizer).toContain("desired_enabled = FALSE");
+    expect(sanitizer).toContain("requested_by = NULL");
+    expect(sanitizer).toContain("last_reconciled_at = NULL");
+    expect(sanitizer).toContain("last_converged_at = NULL");
+    expect(sanitizer).toContain(
+      "revision = revision + CASE WHEN desired_enabled THEN 1 ELSE 0 END",
+    );
+    expect(sanitizer).toMatch(
+      /requested_at = CASE\s+WHEN desired_enabled THEN CURRENT_TIMESTAMP\s+ELSE requested_at\s+END/,
+    );
+  });
+
+  it("removes object-backed form instructions while preserving form content", () => {
+    const sanitizer = formConfigurationSanitizerSql();
+
+    expect(sanitizer).toContain("UPDATE knight_hacks_form_schemas AS form");
+    expect(sanitizer).toContain("jsonb_set(");
+    expect(sanitizer).toContain("'{instructions}'");
+    expect(sanitizer).toContain("instruction->>'type' = 'text'");
+    expect(sanitizer).toContain("NOT (instruction ? 'attachmentId')");
+    expect(sanitizer).toContain(
+      "jsonb_agg(instruction ORDER BY instruction_position)",
+    );
+    expect(sanitizer).not.toMatch(/questions\s*[),=]/);
   });
 });

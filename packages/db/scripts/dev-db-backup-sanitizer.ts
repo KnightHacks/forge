@@ -43,8 +43,10 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_hackathon",
   "knight_hacks_hackathon_agreement_definition",
   // Configuration, not personal data: which Discord role and colour each class
-  // maps to, and which template and subject each status sends. Losing these
-  // from a dev backup means an officer's whole hackathon setup silently comes
+  // maps to, and which template and subject each status sends. Publication
+  // rows keep their stable identity but are explicitly reset off below so a
+  // restored development database cannot write to external calendars by
+  // surprise. Losing the rest means an officer's whole hackathon setup comes
   // back empty — the same failure `knight_hacks_discord_config` had.
   "knight_hacks_hackathon_class",
   "knight_hacks_hackathon_event_publication",
@@ -61,16 +63,19 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_sponsor",
   "knight_hacks_submissions",
   "knight_hacks_teams",
+  // Officer-authored issue-tree configuration. This is unrelated to the email
+  // template catalog despite the older table's generic name.
+  "knight_hacks_template",
   "knight_hacks_trpc_form_connection",
 ] as const;
 
 /**
  * Tables deliberately emptied, grouped by the reason they are emptied.
  *
- * This list is not consumed by the sanitizer — truncation is "everything not
- * kept". It exists so that adding a table forces a decision instead of
- * defaulting to silent truncation, and so the reason is written down next to
- * the name rather than inferred later from the absence of one.
+ * The runtime truncates only these names and refuses any actual public table
+ * that appears in neither list. That makes adding a table require a decision
+ * instead of defaulting to silent truncation, and keeps the reason next to the
+ * name rather than inferring it later from absence.
  */
 export const TABLES_TO_DROP = [
   // Records of who did what, tied to real people. Not developer data.
@@ -89,7 +94,9 @@ export const TABLES_TO_DROP = [
   "email_send",
   "email_send_event",
   "email_send_recipient",
-  // Applicant-uploaded files and the execution log of what ran against them.
+  // Uploaded objects are not copied with this data-only export. Response files
+  // are private, and retained form definitions have object-backed instruction
+  // references removed below so they do not point at missing MinIO content.
   "knight_hacks_form_attachment",
   "knight_hacks_form_callback_execution",
   // Live check-in identity/result history and Discord delivery state. These are
@@ -113,9 +120,16 @@ export const TABLES_TO_DROP = [
   // Judging data: scores attached to named people.
   "knight_hacks_judged_submission",
   "knight_hacks_judges",
-  // Per-hackathon message templates, superseded by `email_template`.
-  "knight_hacks_template",
 ] as const;
+
+/** Actual database tables that have no explicit development-backup policy. */
+export function unclassifiedDatabaseTables(actualNames: readonly string[]) {
+  const classified = new Set<string>([...TABLES_TO_KEEP, ...TABLES_TO_DROP]);
+
+  return [...new Set(actualNames)]
+    .filter((name) => !classified.has(name))
+    .sort();
+}
 
 /**
  * Removes non-team people after non-retained tables have been truncated.
@@ -281,4 +295,92 @@ export function sanitizedEventProviderState(
     syncLeaseRevision: null,
     syncLeaseToken: null,
   };
+}
+
+/**
+ * Makes a retained Hackathon event inert until development explicitly enables
+ * publication. Unlike the legacy mapper above, no production provider identity
+ * survives this reset.
+ */
+export function sanitizedHackathonEventProviderState() {
+  return {
+    deletionIntentAt: null,
+    discordAppliedChannelId: null,
+    discordAppliedEntityType: null,
+    discordAppliedRevision: null,
+    discordChannelId: null,
+    discordId: null,
+    discordLastError: null,
+    discordNoProjectionAcknowledgedAt: null,
+    discordNoProjectionAcknowledgedBy: null,
+    discordOutboundAttemptRevision: null,
+    discordOutboundAttemptToken: null,
+    discordOutboundAttemptedAt: null,
+    discordSyncState: "disabled" as const,
+    googleAppliedCalendarId: null,
+    googleAppliedDestination: null,
+    googleAppliedRevision: null,
+    googleId: null,
+    googleLastError: null,
+    googleOutboundAttemptRevision: null,
+    googleOutboundAttemptToken: null,
+    googleOutboundAttemptedAt: null,
+    googleSyncState: "disabled" as const,
+    publishedAt: null,
+    syncLeaseExpiresAt: null,
+    syncLeaseRevision: null,
+    syncLeaseToken: null,
+    visibilityDuesPaying: null,
+    visibilityInternal: null,
+    visibilityRevision: null,
+    visibilityRoles: null,
+  };
+}
+
+/** Disables retained publication intent without advancing an already inert row. */
+export function hackathonPublicationSanitizerSql() {
+  return `
+UPDATE knight_hacks_hackathon_event_publication
+SET desired_enabled = FALSE,
+    requested_by = NULL,
+    last_reconciled_at = NULL,
+    last_converged_at = NULL,
+    revision = revision + CASE WHEN desired_enabled THEN 1 ELSE 0 END,
+    requested_at = CASE
+      WHEN desired_enabled THEN CURRENT_TIMESTAMP
+      ELSE requested_at
+    END;
+`;
+}
+
+/**
+ * Removes form instructions whose backing MinIO objects are not part of the
+ * database export while preserving text instructions and every other form key.
+ */
+export function formConfigurationSanitizerSql() {
+  return `
+UPDATE knight_hacks_form_schemas AS form
+SET form_data = jsonb_set(
+  form.form_data,
+  '{instructions}',
+  COALESCE(
+    (
+      SELECT jsonb_agg(instruction ORDER BY instruction_position)
+      FROM jsonb_array_elements(form.form_data->'instructions')
+        WITH ORDINALITY AS entry(instruction, instruction_position)
+      WHERE instruction->>'type' = 'text'
+        AND NOT (instruction ? 'attachmentId')
+    ),
+    '[]'::jsonb
+  )
+)
+WHERE jsonb_typeof(form.form_data) = 'object'
+  AND jsonb_typeof(form.form_data->'instructions') = 'array'
+  AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(form.form_data->'instructions') AS instruction
+    WHERE instruction->>'type' IS DISTINCT FROM 'text'
+       OR instruction ? 'attachmentId'
+  );
+`;
 }
