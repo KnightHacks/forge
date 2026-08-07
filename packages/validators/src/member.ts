@@ -13,6 +13,7 @@ import {
   requiredText,
 } from "./forms";
 import { guildOpportunityStatusesSchema } from "./guild";
+import { optionalSocialProfileUrl } from "./social-profile";
 import { IMAGE_UPLOAD_POLICY } from "./upload-policy";
 
 export const MEMBER_SIGNUP_FORM_ID = "f0000000-0000-4000-8000-000000000001";
@@ -110,8 +111,8 @@ export const memberProfileFormSchema = z.object({
   employmentHistory: employmentHistorySchema.optional(),
   currentCityKey: usCityKeySchema.nullable().or(z.literal("")).optional(),
   guildLocationVisible: z.boolean().optional(),
-  githubProfileUrl: optionalUrl("GitHub profile URL"),
-  linkedinProfileUrl: optionalUrl("LinkedIn profile URL"),
+  githubProfileUrl: optionalSocialProfileUrl("GitHub profile", "github"),
+  linkedinProfileUrl: optionalSocialProfileUrl("LinkedIn profile", "linkedin"),
   websiteUrl: optionalUrl("Website URL"),
   profilePictureUrl: optionalStorageObjectName("Profile picture"),
   resumeUrl: optionalStorageObjectName("Resume"),
@@ -426,17 +427,17 @@ export const memberSignupFields: readonly MemberSignupFieldDefinition[] = [
   },
   {
     name: "githubProfileUrl",
-    label: "GitHub profile URL",
+    label: "GitHub profile",
     kind: "url",
     section: "Guild",
-    placeholder: "https://github.com/knighthacks",
+    placeholder: "Username or full profile URL",
   },
   {
     name: "linkedinProfileUrl",
-    label: "LinkedIn profile URL",
+    label: "LinkedIn profile",
     kind: "url",
     section: "Guild",
-    placeholder: "https://www.linkedin.com/company/knight-hacks",
+    placeholder: "Username or full profile URL",
   },
   {
     name: "websiteUrl",

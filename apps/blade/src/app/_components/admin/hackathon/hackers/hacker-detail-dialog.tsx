@@ -39,6 +39,7 @@ import {
   SummaryMetric,
 } from "~/app/_components/admin/shared/detail-panel";
 import { DiscordActivityTracker } from "~/app/_components/admin/shared/discord-activity-tracker";
+import { DiscordEngagementMetrics } from "~/app/_components/admin/shared/discord-engagement-metrics";
 import { api } from "~/trpc/react";
 import {
   firstTimeStatusLabel,
@@ -715,32 +716,20 @@ export function HackerDetailDialog({
                     icon={MessageSquareText}
                     title="Discord engagement"
                   >
-                    <div className="grid grid-cols-2 gap-2 border-b border-border/70 p-3 sm:grid-cols-4 sm:p-4">
-                      <SummaryMetric
-                        label="Messages"
-                        value={hacker.discord.messageCount}
-                      />
-                      <SummaryMetric
-                        label="Active days"
-                        value={hacker.discord.activeDayCount}
-                      />
-                      <SummaryMetric
-                        label="Surfaces"
-                        value={hacker.discord.activeChannelCount}
-                      />
-                      <SummaryMetric
-                        label="Last message"
-                        value={
-                          <span className="font-sans text-sm font-medium">
-                            {hacker.discord.lastMessageAt
-                              ? new Date(
-                                  hacker.discord.lastMessageAt,
-                                ).toLocaleDateString()
-                              : "None"}
-                          </span>
-                        }
-                      />
-                    </div>
+                    <DiscordEngagementMetrics
+                      activeChannelCount={hacker.discord.activeChannelCount}
+                      activeDayCount={hacker.discord.activeDayCount}
+                      currentStreakDays={hacker.discord.currentStreakDays}
+                      lastMessage={
+                        hacker.discord.lastMessageAt
+                          ? new Date(
+                              hacker.discord.lastMessageAt,
+                            ).toLocaleDateString()
+                          : "None"
+                      }
+                      longestStreakDays={hacker.discord.longestStreakDays}
+                      messageCount={hacker.discord.messageCount}
+                    />
                     {/* The same tracker the member panel renders, not a second
                       implementation that would drift from it. */}
                     <DiscordActivityTracker

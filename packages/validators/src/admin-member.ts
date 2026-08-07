@@ -63,6 +63,7 @@ export const adminMemberListSchema = z
       .default([]),
     genders: z.array(z.enum(FORMS.GENDERS)).default([]),
     racesOrEthnicities: z.array(z.enum(FORMS.RACES_OR_ETHNICITIES)).default([]),
+    roleIds: z.array(z.uuid()).max(100).default([]),
     joinedFrom: strictDateString.optional(),
     joinedTo: strictDateString.optional(),
   })

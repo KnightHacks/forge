@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   analyticsExportInputSchema,
   analyticsReportInputSchema,
+  teamPerformanceReportInputSchema,
 } from "../analytics";
 
 describe("club analytics inputs", () => {
@@ -95,6 +96,18 @@ describe("club analytics inputs", () => {
     ).toThrow();
     expect(() =>
       analyticsReportInputSchema.parse({ eventId: "not-a-uuid" }),
+    ).toThrow();
+  });
+
+  it("validates a team performance scope and period", () => {
+    expect(
+      teamPerformanceReportInputSchema.parse({ teamSlug: "development" }),
+    ).toEqual({
+      period: { kind: "current_academic_year" },
+      teamSlug: "development",
+    });
+    expect(() =>
+      teamPerformanceReportInputSchema.parse({ teamSlug: "" }),
     ).toThrow();
   });
 });

@@ -280,6 +280,13 @@ export const analyticsPeriodSchema = z.discriminatedUnion("kind", [
     }),
 ]);
 
+export const teamPerformanceReportInputSchema = z
+  .object({
+    period: analyticsPeriodSchema.default({ kind: "current_academic_year" }),
+    teamSlug: z.string().trim().min(1).max(64),
+  })
+  .strict();
+
 const eventTagSchema = z.string().trim().min(1).max(100);
 
 const analyticsReportInputBaseSchema = z.object({
@@ -335,6 +342,9 @@ export type AnalyticsExportInput = z.infer<typeof analyticsExportInputSchema>;
 export type AnalyticsExportKind = z.infer<typeof analyticsExportKindSchema>;
 export type AnalyticsPeriod = z.infer<typeof analyticsPeriodSchema>;
 export type AnalyticsReportInput = z.infer<typeof analyticsReportInputSchema>;
+export type TeamPerformanceReportInput = z.infer<
+  typeof teamPerformanceReportInputSchema
+>;
 export type AnalyticsSection = z.infer<typeof analyticsSectionSchema>;
 export type ClubAudienceCohort = z.infer<typeof clubAudienceCohortSchema>;
 export type HackathonAnalyticsDemographic = z.infer<

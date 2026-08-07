@@ -10,6 +10,7 @@ import {
   isSecureContext,
   validateToken,
 } from "./config";
+import { normalizeDiscordAuthorizationURL } from "./discord-authorization-url";
 import { env } from "./env";
 
 export { validateToken, invalidateSessionToken, isSecureContext };
@@ -85,7 +86,9 @@ export async function signInRoute(req: Request) {
   }
 
   // Forward cookies and redirect
-  const response = NextResponse.redirect(data.url);
+  const response = NextResponse.redirect(
+    normalizeDiscordAuthorizationURL(data.url),
+  );
   const setCookie = res.headers.get("set-cookie");
   if (setCookie) response.headers.set("set-cookie", setCookie);
 

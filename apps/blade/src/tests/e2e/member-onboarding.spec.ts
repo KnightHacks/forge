@@ -362,9 +362,18 @@ test.describe("initial member onboarding", () => {
       { acceptCodeOfConduct: false },
     );
 
-    await expect(
-      page.getByRole("link", { name: "Knight Hacks Code of Conduct" }),
-    ).toHaveAttribute("href", MEMBER_CODE_OF_CONDUCT_URL);
+    const codeOfConductLink = page.getByRole("link", {
+      name: "Knight Hacks Code of Conduct",
+    });
+    await expect(codeOfConductLink).toHaveAttribute(
+      "href",
+      MEMBER_CODE_OF_CONDUCT_URL,
+    );
+    await expect(codeOfConductLink).toHaveAttribute("target", "_blank");
+    await expect(codeOfConductLink).toHaveAttribute(
+      "rel",
+      "noopener noreferrer",
+    );
     await submitSignup(page);
 
     await expect(

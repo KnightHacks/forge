@@ -210,10 +210,12 @@ const discordReport = {
     {
       activeChannels: 4,
       activeDays: 8,
+      currentStreakDays: 3,
       discordUser: "ada",
       lastMessageAt: new Date("2026-07-16T11:00:00.000Z"),
       memberId: "00000000-0000-4000-8000-000000000001",
       messageCount: 32,
+      longestStreakDays: 5,
       name: "Ada Lovelace",
     },
   ],
@@ -298,6 +300,10 @@ describe("AnalyticsDashboard", () => {
     expect(html).toContain("Messages per person");
     expect(html).toContain("Most active surfaces");
     expect(html).toContain("Member message drill-down");
+    expect(html).toContain("Current streak");
+    expect(html).toContain("Longest streak");
+    expect(html).toContain("3 days");
+    expect(html).toContain("5 days");
     expect(html).toContain("Ada Lovelace");
     expect(html).toContain(">32<");
     expect(html).toContain("general");

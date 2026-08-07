@@ -14,7 +14,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("~/trpc/react", () => ({
   api: {
     roles: {
-      batchAssign: { useMutation: vi.fn(() => ({ mutate: vi.fn() })) },
+      batchAssign: {
+        useMutation: vi.fn(() => ({ isPending: false, mutate: vi.fn() })),
+      },
       createLink: { useMutation: vi.fn(() => ({ mutate: vi.fn() })) },
       listDiscordOptions: {
         useQuery: vi.fn(() => ({ data: [], isLoading: false })),
@@ -129,6 +131,9 @@ describe("RoleManagementDashboard", () => {
     expect(html).not.toContain("Sync Design");
     expect(html).toContain("Alice Archive");
     expect(html).toContain("Select Alice Archive");
+    expect(html).toContain("Filter users by role");
+    expect(html).toContain("Select people to assign roles");
+    expect(html).not.toContain("Assignment tray");
     expect(html).not.toMatch(/<th[^>]*>Email<\/th>/);
   });
 

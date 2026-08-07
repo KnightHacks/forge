@@ -402,6 +402,24 @@ explicit “Other school” action for manual entry. The participant contract
 accepts any non-empty school name up to 255 characters, trims surrounding
 whitespace, and returns the same string when the profile is reused or edited.
 
+GitHub and LinkedIn fields accept either a bare username, a provider-relative
+URL, or a full URL. The contract stores a canonical full URL and removes
+tracking parameters. Portals can apply the same behavior on blur so hackers see
+what will be saved:
+
+```tsx
+import { normalizeSocialProfileUrl } from "@forge/hacker-sdk";
+
+const githubUrl = normalizeSocialProfileUrl("knighthacks", "github");
+// https://github.com/knighthacks
+
+const linkedinUrl = normalizeSocialProfileUrl(
+  "linkedin.com/in/example?trk=signup",
+  "linkedin",
+);
+// https://www.linkedin.com/in/example
+```
+
 Do not submit Discord identity. Blade derives Discord identity from the signed-
 in user.
 

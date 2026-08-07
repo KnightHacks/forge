@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { FORMS } from "@forge/consts";
+import { normalizeSocialProfileUrl } from "@forge/hacker-sdk";
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -2091,8 +2092,17 @@ export function HackerFormPage({
                               <FieldLabel optional>GitHub Profile</FieldLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="https://github.com/knighthacks"
+                                  placeholder="Username or full profile URL"
                                   {...field}
+                                  onBlur={() => {
+                                    field.onBlur();
+                                    const normalized =
+                                      normalizeSocialProfileUrl(
+                                        field.value,
+                                        "github",
+                                      );
+                                    if (normalized) field.onChange(normalized);
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -2112,8 +2122,17 @@ export function HackerFormPage({
                               <FieldLabel optional>LinkedIn Profile</FieldLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="https://www.linkedin.com/company/knight-hacks"
+                                  placeholder="Username or full profile URL"
                                   {...field}
+                                  onBlur={() => {
+                                    field.onBlur();
+                                    const normalized =
+                                      normalizeSocialProfileUrl(
+                                        field.value,
+                                        "linkedin",
+                                      );
+                                    if (normalized) field.onChange(normalized);
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -2348,6 +2367,7 @@ export function HackerFormPage({
                           const showError =
                             tosError && definition.required && !accepted;
                           const labelId = `agreement-${definition.id}`;
+                          const checkboxId = `agreement-checkbox-${definition.id}`;
                           return (
                             <div
                               key={definition.id}
@@ -2357,6 +2377,7 @@ export function HackerFormPage({
                               )}
                             >
                               <Checkbox
+                                id={checkboxId}
                                 aria-invalid={showError}
                                 aria-labelledby={labelId}
                                 checked={accepted}
@@ -2380,33 +2401,46 @@ export function HackerFormPage({
                                     showError && agreementErrorLabelClassName,
                                   )}
                                 >
-                                  <span className="font-semibold text-white">
-                                    {definition.title}
-                                  </span>{" "}
-                                  {definition.required ? (
-                                    <span className={requiredMarkClassName}>
-                                      *
-                                    </span>
+                                  <label htmlFor={checkboxId}>
+                                    I agree to the{" "}
+                                  </label>
+                                  {definition.contentUrl ? (
+                                    <Link
+                                      className={agreementLinkClassName}
+                                      href={definition.contentUrl}
+                                      rel="noopener noreferrer"
+                                      target="_blank"
+                                    >
+                                      {definition.title}
+                                    </Link>
                                   ) : (
-                                    <span className={optionalTextClassName}>
+                                    <label
+                                      className="font-semibold text-white"
+                                      htmlFor={checkboxId}
+                                    >
+                                      {definition.title}
+                                    </label>
+                                  )}{" "}
+                                  {definition.required ? (
+                                    <label
+                                      className={requiredMarkClassName}
+                                      htmlFor={checkboxId}
+                                    >
+                                      *
+                                    </label>
+                                  ) : (
+                                    <label
+                                      className={optionalTextClassName}
+                                      htmlFor={checkboxId}
+                                    >
                                       Optional
-                                    </span>
+                                    </label>
                                   )}
                                 </div>
                                 {definition.content ? (
                                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/65">
                                     {definition.content}
                                   </p>
-                                ) : null}
-                                {definition.contentUrl ? (
-                                  <Link
-                                    className={agreementLinkClassName}
-                                    href={definition.contentUrl}
-                                    rel="noopener noreferrer"
-                                    target="_blank"
-                                  >
-                                    Review {definition.title}
-                                  </Link>
                                 ) : null}
                               </div>
                             </div>

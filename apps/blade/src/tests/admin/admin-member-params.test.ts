@@ -12,6 +12,10 @@ describe("admin member URL state", () => {
       dues: "unpaid",
       member: "00000000-0000-4000-8000-000000000001",
       page: "3",
+      role: [
+        "00000000-0000-4000-8000-000000000101",
+        "00000000-0000-4000-8000-000000000102",
+      ],
       school: "University of Central Florida",
     });
 
@@ -19,6 +23,10 @@ describe("admin member URL state", () => {
       companies: ["Knight Hacks", "NVIDIA"],
       duesStatuses: ["unpaid"],
       page: 3,
+      roleIds: [
+        "00000000-0000-4000-8000-000000000101",
+        "00000000-0000-4000-8000-000000000102",
+      ],
       schools: ["University of Central Florida"],
     });
     expect(result.selectedMemberId).toBe(
@@ -55,6 +63,19 @@ describe("admin member URL state", () => {
     expect(result.input.pageSize).toBe(25);
     expect(result.input.schools).toEqual([]);
     expect(result.selectedMemberId).toBeNull();
+  });
+
+  it("round-trips role IDs as repeated filters", () => {
+    const roleIds = [
+      "00000000-0000-4000-8000-000000000101",
+      "00000000-0000-4000-8000-000000000102",
+    ];
+    const parsed = parseAdminMemberSearchParams({ role: roleIds });
+
+    expect(parsed.input.roleIds).toEqual(roleIds);
+    expect(buildAdminMemberSearchParams(parsed.input).getAll("role")).toEqual(
+      roleIds,
+    );
   });
 
   it("serializes non-default filters without losing arrays", () => {

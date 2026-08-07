@@ -44,6 +44,7 @@ import type {
   HackerPointsDto,
 } from "@forge/hacker-sdk";
 import { FORMS } from "@forge/consts";
+import { normalizeSocialProfileUrl } from "@forge/hacker-sdk";
 import { useHackerDashboard } from "@forge/hacker-sdk/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Badge } from "@forge/ui/badge";
@@ -3172,8 +3173,16 @@ function ProfileSection({
                             <FormControl>
                               <Input
                                 className={styles.profileInput}
-                                placeholder="https://github.com/knighthacks"
+                                placeholder="Username or full profile URL"
                                 {...field}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  const normalized = normalizeSocialProfileUrl(
+                                    field.value,
+                                    "github",
+                                  );
+                                  if (normalized) field.onChange(normalized);
+                                }}
                               />
                             </FormControl>
                             <FormMessage
@@ -3193,8 +3202,16 @@ function ProfileSection({
                             <FormControl>
                               <Input
                                 className={styles.profileInput}
-                                placeholder="https://www.linkedin.com/company/knight-hacks"
+                                placeholder="Username or full profile URL"
                                 {...field}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  const normalized = normalizeSocialProfileUrl(
+                                    field.value,
+                                    "linkedin",
+                                  );
+                                  if (normalized) field.onChange(normalized);
+                                }}
                               />
                             </FormControl>
                             <FormMessage

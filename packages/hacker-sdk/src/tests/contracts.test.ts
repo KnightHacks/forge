@@ -21,6 +21,36 @@ describe("Hacker participant v1 contract", () => {
     );
   });
 
+  it("canonicalizes bare and pasted social profile inputs", () => {
+    const profileSchema =
+      HACKER_PARTICIPANT_V1_SCHEMAS.input.submitApplication.shape.profile;
+    const input = {
+      country: "United States of America" as const,
+      dob: "2004-02-29",
+      email: "hacker@example.com",
+      firstName: "Ada",
+      foodAllergies: null,
+      gender: "Woman" as const,
+      githubProfileUrl: "ada-lovelace",
+      gradDate: "2027-05-01",
+      lastName: "Lovelace",
+      levelOfStudy: "Undergraduate University (3+ year)" as const,
+      linkedinProfileUrl:
+        "https://linkedin.com/in/ada-lovelace/?trk=application",
+      major: "Computer Science" as const,
+      phoneNumber: "555-0100",
+      raceOrEthnicity: "Prefer not to answer" as const,
+      school: "Acadia University",
+      shirtSize: "M" as const,
+      websiteUrl: null,
+    };
+
+    expect(profileSchema.parse(input)).toMatchObject({
+      githubProfileUrl: "https://github.com/ada-lovelace",
+      linkedinProfileUrl: "https://www.linkedin.com/in/ada-lovelace",
+    });
+  });
+
   it("exposes only the narrow participant procedure manifest", () => {
     expect(HACKER_PARTICIPANT_V1_PROCEDURES).toEqual({
       confirmAttendance: "mutation",

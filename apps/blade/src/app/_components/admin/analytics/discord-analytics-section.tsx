@@ -50,6 +50,10 @@ function formatDateTime(value: Date | null) {
   return formatClubDateTime(value, "No matching activity");
 }
 
+function formatDays(value: number) {
+  return `${formatNumber(value)} ${value === 1 ? "day" : "days"}`;
+}
+
 const mixIcons = {
   bot: Bot,
   human: UsersRound,
@@ -292,6 +296,8 @@ export function DiscordAnalyticsSection({
                     <TableHead className="text-right">Messages</TableHead>
                     <TableHead className="text-right">Active days</TableHead>
                     <TableHead className="text-right">Surfaces</TableHead>
+                    <TableHead className="text-right">Current streak</TableHead>
+                    <TableHead className="text-right">Longest streak</TableHead>
                     <TableHead>Last message</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -322,6 +328,12 @@ export function DiscordAnalyticsSection({
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {formatNumber(row.activeChannels)}
+                      </TableCell>
+                      <TableCell className="min-w-32 text-right font-mono">
+                        {formatDays(row.currentStreakDays)}
+                      </TableCell>
+                      <TableCell className="min-w-32 text-right font-mono">
+                        {formatDays(row.longestStreakDays)}
                       </TableCell>
                       <TableCell className="min-w-44">
                         {formatDateTime(row.lastMessageAt)}

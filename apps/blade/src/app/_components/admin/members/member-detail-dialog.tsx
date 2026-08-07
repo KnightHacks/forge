@@ -67,6 +67,7 @@ import {
   SummaryMetric,
 } from "~/app/_components/admin/shared/detail-panel";
 import { DiscordActivityTracker } from "~/app/_components/admin/shared/discord-activity-tracker";
+import { DiscordEngagementMetrics } from "~/app/_components/admin/shared/discord-engagement-metrics";
 import {
   memberProfileFormDefaults,
   MemberSettingsFieldControl,
@@ -289,28 +290,17 @@ function DiscordEngagement({ detail }: { detail: AdminMemberDetail }) {
       icon={MessageSquareText}
       description="Human-authored, non-deleted messages matched through the member's stable Discord account."
     >
-      <div className="grid grid-cols-2 gap-2 border-b border-border/70 p-3 sm:grid-cols-4 sm:p-4">
-        <SummaryMetric
-          label="Messages"
-          value={formatNumber(detail.discord.messageCount)}
-        />
-        <SummaryMetric
-          label="Active days"
-          value={formatNumber(detail.discord.activeDayCount)}
-        />
-        <SummaryMetric
-          label="Active surfaces"
-          value={formatNumber(detail.discord.activeChannelCount)}
-        />
-        <SummaryMetric
-          label="Last message"
-          value={
-            <span className="font-sans text-sm font-medium">
-              {formatTimestamp(detail.discord.lastMessageAt, "No messages")}
-            </span>
-          }
-        />
-      </div>
+      <DiscordEngagementMetrics
+        activeChannelCount={detail.discord.activeChannelCount}
+        activeDayCount={detail.discord.activeDayCount}
+        currentStreakDays={detail.discord.currentStreakDays}
+        lastMessage={formatTimestamp(
+          detail.discord.lastMessageAt,
+          "No messages",
+        )}
+        longestStreakDays={detail.discord.longestStreakDays}
+        messageCount={detail.discord.messageCount}
+      />
       <DiscordActivityTracker
         activity={detail.discord.activity}
         activityEndDate={detail.discord.activityEndDate}

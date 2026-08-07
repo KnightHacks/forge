@@ -13,6 +13,8 @@ import type {
   DiscordAnalyticsChannelRow,
   DiscordAnalyticsMixRow,
 } from "./discord-shares";
+import { dateInCalendarTimeZone } from "../discord/engagement";
+import { calculateActivityStreaks } from "../discord/streaks";
 import {
   buildDiscordAnalyticsMix,
   buildDiscordChannelDistribution,
@@ -52,6 +54,7 @@ export interface DiscordAnalyticsTrendRow extends Record<string, unknown> {
 export interface DiscordAnalyticsMemberRow extends Record<string, unknown> {
   activeChannels: number;
   activeDays: number;
+  activityDates: string[];
   discordUser: string;
   firstName: string;
   lastMessageAt: Date | string | null;
@@ -203,6 +206,12 @@ export async function getDiscordAnalyticsReport(
               message.created_at at time zone ${EVENTS.CALENDAR_TIME_ZONE}
             )::date
           )::int as "activeDays",
+          array_agg(
+            distinct to_char(
+              message.created_at at time zone ${EVENTS.CALENDAR_TIME_ZONE},
+              'YYYY-MM-DD'
+            )
+          ) as "activityDates",
           discord_members.discord_user as "discordUser",
           discord_members.first_name as "firstName",
           max(message.created_at) as "lastMessageAt",
@@ -329,15 +338,22 @@ export async function getDiscordAnalyticsReport(
         start: period.start,
       },
     },
-    memberRows: memberResult.rows.map((row) => ({
-      activeChannels: row.activeChannels,
-      activeDays: row.activeDays,
-      discordUser: row.discordUser,
-      lastMessageAt: dateOrNull(row.lastMessageAt),
-      memberId: row.memberId,
-      messageCount: row.messageCount,
-      name: `${row.firstName} ${row.lastName}`.trim(),
-    })),
+    memberRows: memberResult.rows.map((row) => {
+      const streaks = calculateActivityStreaks(
+        row.activityDates,
+        dateInCalendarTimeZone(observationEnd),
+      );
+      return {
+        activeChannels: row.activeChannels,
+        activeDays: row.activeDays,
+        ...streaks,
+        discordUser: row.discordUser,
+        lastMessageAt: dateOrNull(row.lastMessageAt),
+        memberId: row.memberId,
+        messageCount: row.messageCount,
+        name: `${row.firstName} ${row.lastName}`.trim(),
+      };
+    }),
     mix: buildDiscordAnalyticsMix(mixResult.rows, messageCount),
     summary: {
       activeDays: summary.activeDays,

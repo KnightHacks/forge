@@ -5,7 +5,13 @@ import { HACKER_PARTICIPANT_V1_SCHEMAS } from "@forge/hacker-sdk";
 const submitApplicationSchema =
   HACKER_PARTICIPANT_V1_SCHEMAS.input.submitApplication;
 const sharedProfileSchema = submitApplicationSchema.shape.profile;
-const optionalUrlSchema = sharedProfileSchema.shape.githubProfileUrl
+const optionalGithubUrlSchema = sharedProfileSchema.shape.githubProfileUrl
+  .unwrap()
+  .or(z.literal(""));
+const optionalLinkedinUrlSchema = sharedProfileSchema.shape.linkedinProfileUrl
+  .unwrap()
+  .or(z.literal(""));
+const optionalWebsiteUrlSchema = sharedProfileSchema.shape.websiteUrl
   .unwrap()
   .or(z.literal(""));
 
@@ -52,9 +58,9 @@ export const portalFormSchema = z.object({
   foodAllergies: sharedProfileSchema.shape.foodAllergies
     .unwrap()
     .or(z.literal("")),
-  githubProfileUrl: optionalUrlSchema,
-  linkedinProfileUrl: optionalUrlSchema,
-  websiteUrl: optionalUrlSchema,
+  githubProfileUrl: optionalGithubUrlSchema,
+  linkedinProfileUrl: optionalLinkedinUrlSchema,
+  websiteUrl: optionalWebsiteUrlSchema,
   resumeUrl: z.string(),
   resumeUpload: resumeUploadSchema,
   agreesToMLHCodeOfConduct: z.boolean(),

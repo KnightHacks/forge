@@ -15,7 +15,9 @@ function date(value: string | undefined) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function period(params: SearchParams): AnalyticsReportInput["period"] {
+export function parseAnalyticsPeriodSearchParams(
+  params: SearchParams,
+): AnalyticsReportInput["period"] {
   const selection = first(params.period);
   if (selection === "semester") return { kind: "current_semester" };
   if (selection === "all-time") return { kind: "all_time" };
@@ -40,7 +42,7 @@ export function parseAnalyticsSearchParams(params: SearchParams) {
     demographic: first(params.demographic),
     eventId: first(params.event) ?? null,
     eventTags: list(params.tag),
-    period: period(params),
+    period: parseAnalyticsPeriodSearchParams(params),
     section: first(params.section),
   });
   return parsed.success ? parsed.data : analyticsReportInputSchema.parse({});
@@ -67,23 +69,30 @@ export function buildAnalyticsSearchParams(input: AnalyticsReportInput) {
   }
   input.eventTags.forEach((tag) => params.append("tag", tag));
   if (input.eventId) params.set("event", input.eventId);
-  switch (input.period.kind) {
+  appendAnalyticsPeriodSearchParams(params, input.period);
+  return params;
+}
+
+export function appendAnalyticsPeriodSearchParams(
+  params: URLSearchParams,
+  period: AnalyticsReportInput["period"],
+) {
+  switch (period.kind) {
     case "current_semester":
       params.set("period", "semester");
       break;
     case "academic_year":
-      params.set("period", `ay:${input.period.startYear}`);
+      params.set("period", `ay:${period.startYear}`);
       break;
     case "all_time":
       params.set("period", "all-time");
       break;
     case "custom":
       params.set("period", "custom");
-      params.set("from", dateParam(input.period.from));
-      params.set("to", dateParam(input.period.to));
+      params.set("from", dateParam(period.from));
+      params.set("to", dateParam(period.to));
       break;
     case "current_academic_year":
       break;
   }
-  return params;
 }

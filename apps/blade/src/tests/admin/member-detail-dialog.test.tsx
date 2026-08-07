@@ -65,8 +65,10 @@ const detail = {
     activityEndDate: "2026-07-16",
     activeChannelCount: 3,
     activeDayCount: 12,
+    currentStreakDays: 4,
     firstMessageAt: new Date("2025-09-01T12:00:00Z"),
     lastMessageAt: new Date("2026-07-16T11:00:00Z"),
+    longestStreakDays: 9,
     messageCount: 124,
     topChannels: [
       { count: 80, isThread: false, name: "general" },
@@ -203,6 +205,9 @@ describe("MemberDetailDialog", () => {
     expect(html).toContain("View resume");
     expect(html).toContain("Event engagement");
     expect(html).toContain("Discord engagement");
+    expect(html).toContain("Current streak");
+    expect(html).toContain("Longest streak");
+    expect(html).toContain("9 days");
     expect(html).toContain("Employment history");
     expect(html).toContain("Roles");
     expect(html).toContain("TypeScript Workshop");

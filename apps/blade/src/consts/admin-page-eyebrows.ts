@@ -13,6 +13,7 @@
 export const ADMIN_PAGE_EYEBROWS = {
   alumni: "Alumni communications",
   analytics: "Club intelligence",
+  teamAnalytics: "Team intelligence",
   checkIn: "Event attendance",
   companies: "Company intelligence",
   companyDetail: "Company record",

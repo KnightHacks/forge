@@ -78,6 +78,7 @@ type FilterField =
   | "level"
   | "major"
   | "race"
+  | "role"
   | "school"
   | "visibility";
 
@@ -107,11 +108,16 @@ function clearAllFilters(input: AdminMemberListInput): AdminMemberListInput {
     majors: [],
     page: 1,
     racesOrEthnicities: [],
+    roleIds: [],
     schools: [],
   };
 }
 
-function getActiveFilters(input: AdminMemberListInput): ActiveFilter[] {
+function getActiveFilters(
+  input: AdminMemberListInput,
+  roles: DashboardData["filterOptions"]["roles"],
+): ActiveFilter[] {
+  const roleNames = new Map(roles.map((role) => [role.id, role.name] as const));
   return [
     ...input.duesStatuses.map((value) => ({
       field: "dues" as const,
@@ -166,6 +172,11 @@ function getActiveFilters(input: AdminMemberListInput): ActiveFilter[] {
     ...input.racesOrEthnicities.map((value) => ({
       field: "race" as const,
       label: `Race/ethnicity: ${value}`,
+      value,
+    })),
+    ...input.roleIds.map((value) => ({
+      field: "role" as const,
+      label: `Role: ${roleNames.get(value) ?? "Unknown role"}`,
       value,
     })),
     ...(input.joinedFrom
@@ -229,6 +240,8 @@ function removeFilter(
         ...next,
         racesOrEthnicities: without(input.racesOrEthnicities),
       };
+    case "role":
+      return { ...next, roleIds: without(input.roleIds) };
     case "joinedFrom":
       return { ...next, joinedFrom: undefined };
     case "joinedTo":
@@ -324,7 +337,10 @@ export function MemberAdminDashboard({
     null,
   );
   const [search, setSearch] = useState(input.query);
-  const activeFilters = useMemo(() => getActiveFilters(input), [input]);
+  const activeFilters = useMemo(
+    () => getActiveFilters(input, data.filterOptions.roles),
+    [data.filterOptions.roles, input],
+  );
   const exportQuery = api.memberAdmin.exportAdminMembers.useQuery(input, {
     enabled: false,
   });

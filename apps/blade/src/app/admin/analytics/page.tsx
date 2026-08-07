@@ -8,6 +8,8 @@ import { AnalyticsDashboard } from "~/app/_components/admin/analytics/analytics-
 import { HackathonAnalyticsDashboard } from "~/app/_components/admin/analytics/hackathon-analytics-dashboard";
 import { parseHackathonAnalyticsSearchParams } from "~/app/_components/admin/analytics/hackathon-params";
 import { parseAnalyticsSearchParams } from "~/app/_components/admin/analytics/params";
+import { TeamPerformanceAnalyticsDashboard } from "~/app/_components/admin/analytics/team-performance-analytics-dashboard";
+import { parseTeamPerformanceSearchParams } from "~/app/_components/admin/analytics/team-performance-params";
 import {
   canAccessAnalytics,
   canAccessClubAnalytics,
@@ -41,11 +43,54 @@ export default async function AdminAnalyticsPage({
   const scope =
     requestedScope === "hackathon" && canAccessHackathon
       ? "hackathon"
-      : requestedScope === "club" && canAccessClub
-        ? "club"
-        : canAccessClub
+      : requestedScope === "team" && canAccessClub
+        ? "team"
+        : requestedScope === "club" && canAccessClub
           ? "club"
-          : "hackathon";
+          : canAccessClub
+            ? "club"
+            : "hackathon";
+
+  if (scope === "team") {
+    const options = await api.analytics.listTeamPerformanceOptions();
+    const defaultTeamSlug = options.defaultTeamSlug;
+    if (!defaultTeamSlug) {
+      return (
+        <main className="mx-auto w-full max-w-7xl p-4 sm:p-6">
+          <h1 className="text-2xl font-semibold">Team performance</h1>
+          <p className="mt-2 text-muted-foreground">
+            No Club teams are configured yet.
+          </p>
+        </main>
+      );
+    }
+    const { input, rankBy } = parseTeamPerformanceSearchParams(
+      params,
+      defaultTeamSlug,
+    );
+    const selectedInput = options.options.some(
+      (option) => option.id === input.teamSlug,
+    )
+      ? input
+      : { ...input, teamSlug: defaultTeamSlug };
+    const report = await api.analytics.getTeamPerformanceReport(selectedInput);
+    if (!report) redirect("/admin/analytics?scope=team");
+    return (
+      <TeamPerformanceAnalyticsDashboard
+        access={{
+          canEditMembers:
+            permissions.IS_OFFICER === true ||
+            permissions.EDIT_MEMBERS === true,
+          canOpenMembers: canAccessMemberAdmin(permissions),
+        }}
+        canAccessHackathon={canAccessHackathon}
+        input={selectedInput}
+        options={options}
+        rankBy={rankBy}
+        report={report}
+      />
+    );
+  }
 
   if (scope === "hackathon") {
     const optionsResult = await api.analytics.listHackathonOptions();

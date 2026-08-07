@@ -6,6 +6,7 @@ import {
   hackerRosterListSchema,
   hackerSetBlacklistSchema,
   hackerSetStatusSchema,
+  hackerUpdateProfileSchema,
 } from "../hackers";
 
 describe("TC-NEG-004: checked-in is unreachable from the roster", () => {
@@ -153,5 +154,20 @@ describe("officer-facing status labels", () => {
       "withdrawn",
     ];
     expect(Object.keys(HACKER_STATUS_LABELS).sort()).toEqual(settable.sort());
+  });
+});
+
+describe("hacker profile corrections", () => {
+  it("canonicalizes username-friendly social profile edits", () => {
+    expect(
+      hackerUpdateProfileSchema.parse({
+        attendeeId: "00000000-0000-4000-8000-000000000001",
+        githubProfileUrl: "knighthacks",
+        linkedinProfileUrl: "linkedin.com/in/example",
+      }),
+    ).toMatchObject({
+      githubProfileUrl: "https://github.com/knighthacks",
+      linkedinProfileUrl: "https://www.linkedin.com/in/example",
+    });
   });
 });

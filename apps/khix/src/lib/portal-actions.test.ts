@@ -126,6 +126,19 @@ describe("KH IX participant actions", () => {
     ).toBe(false);
   });
 
+  it("accepts usernames and canonicalizes social links before submission", () => {
+    const result = portalFormSchema.parse({
+      ...validForm,
+      githubProfileUrl: "ada-lovelace",
+      linkedinProfileUrl: "linkedin.com/in/ada-lovelace",
+    });
+
+    expect(result.githubProfileUrl).toBe("https://github.com/ada-lovelace");
+    expect(result.linkedinProfileUrl).toBe(
+      "https://www.linkedin.com/in/ada-lovelace",
+    );
+  });
+
   it("does not redirect a newly committed application during resume upload", () => {
     expect(
       shouldRedirectExistingApplication({

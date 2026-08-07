@@ -6,6 +6,7 @@ import {
   hackathonAnalyticsExportInputSchema,
   hackathonAnalyticsReportInputSchema,
   resumeBundlePreviewInputSchema,
+  teamPerformanceReportInputSchema,
 } from "@forge/validators";
 
 import {
@@ -28,9 +29,25 @@ import {
   getHackerAnalyticsProfile,
   listHackathonAnalyticsOptions,
 } from "../utils/analytics/hackathon-report.server";
+import {
+  getTeamPerformanceReport,
+  listTeamPerformanceOptions,
+} from "../utils/analytics/team-performance-report";
 import { createAdminAuditEvent } from "../utils/audit/service";
 
 export const analyticsRouter = createTRPCRouter({
+  listTeamPerformanceOptions: permProcedure.query(({ ctx }) => {
+    requireClubAnalyticsRead(ctx);
+    return listTeamPerformanceOptions();
+  }),
+
+  getTeamPerformanceReport: permProcedure
+    .input(teamPerformanceReportInputSchema)
+    .query(({ ctx, input }) => {
+      requireClubAnalyticsRead(ctx);
+      return getTeamPerformanceReport(input);
+    }),
+
   /** Validates resume objects on demand and returns only aggregate part plans. */
   previewResumeBundle: permProcedure
     .input(resumeBundlePreviewInputSchema)

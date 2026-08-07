@@ -46,6 +46,7 @@ describe("admin member contracts", () => {
     const defaults = adminMemberListSchema.parse({});
     expect(defaults.graduationStatuses).toEqual([]);
     expect(defaults.alumniConfirmations).toEqual([]);
+    expect(defaults.roleIds).toEqual([]);
 
     // Graduated-but-unconfirmed is the common case, so the two must be
     // expressible together rather than as one tri-state control.
@@ -67,6 +68,17 @@ describe("admin member contracts", () => {
     ).toThrow();
     expect(() =>
       adminMemberListSchema.parse({ alumniConfirmations: ["maybe"] }),
+    ).toThrow();
+  });
+
+  it("accepts only UUID role filters", () => {
+    expect(
+      adminMemberListSchema.parse({
+        roleIds: ["00000000-0000-4000-8000-000000000123"],
+      }).roleIds,
+    ).toEqual(["00000000-0000-4000-8000-000000000123"]);
+    expect(() =>
+      adminMemberListSchema.parse({ roleIds: ["dev-team"] }),
     ).toThrow();
   });
 

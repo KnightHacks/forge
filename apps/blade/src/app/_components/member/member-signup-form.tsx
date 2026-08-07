@@ -50,6 +50,7 @@ import {
   MEMBER_CODE_OF_CONDUCT_URL,
   memberFormSchema,
   memberSignupFormJsonSchema,
+  normalizeSocialProfileUrl,
 } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
@@ -248,29 +249,29 @@ function FieldControl({
           checked={Boolean(value)}
           onCheckedChange={(checked) => onChange(checked === true)}
         />
-        <div className="min-w-0 space-y-1">
-          <label
-            htmlFor={fieldConfig.name}
-            className="text-sm font-medium leading-5"
-          >
-            {fieldConfig.label}
-            {fieldConfig.required && (
-              <span className="text-destructive"> *</span>
-            )}
-          </label>
-          {isCodeOfConduct && (
-            <p className="text-sm leading-5 text-muted-foreground">
-              Read the{" "}
+        <div className="min-w-0 text-sm font-medium leading-5">
+          {isCodeOfConduct ? (
+            <>
+              <label htmlFor={fieldConfig.name}>I agree to follow the </label>
               <a
                 href={MEMBER_CODE_OF_CONDUCT_URL}
                 target="_blank"
-                rel="noreferrer"
-                className="font-medium text-primary underline-offset-4 hover:underline"
+                rel="noopener noreferrer"
+                className="text-primary underline underline-offset-4 hover:text-primary/80"
               >
                 Knight Hacks Code of Conduct
               </a>
-              .
-            </p>
+              {fieldConfig.required && (
+                <span className="text-destructive"> *</span>
+              )}
+            </>
+          ) : (
+            <label htmlFor={fieldConfig.name}>
+              {fieldConfig.label}
+              {fieldConfig.required && (
+                <span className="text-destructive"> *</span>
+              )}
+            </label>
           )}
         </div>
       </div>
@@ -294,12 +295,17 @@ function FieldControl({
     );
   }
 
-  const inputType =
-    fieldConfig.kind === "phone"
+  const socialProvider =
+    fieldConfig.name === "githubProfileUrl"
+      ? "github"
+      : fieldConfig.name === "linkedinProfileUrl"
+        ? "linkedin"
+        : null;
+  const inputType = socialProvider
+    ? "text"
+    : fieldConfig.kind === "phone"
       ? "tel"
-      : fieldConfig.kind === "url"
-        ? "url"
-        : fieldConfig.kind;
+      : fieldConfig.kind;
 
   return (
     <Input
@@ -309,6 +315,14 @@ function FieldControl({
       maxLength={fieldConfig.name === "tagline" ? 80 : undefined}
       placeholder={fieldConfig.placeholder}
       onChange={(event) => onChange(event.target.value)}
+      onBlur={() => {
+        if (!socialProvider || !stringValue) return;
+        const normalized = normalizeSocialProfileUrl(
+          stringValue,
+          socialProvider,
+        );
+        if (normalized) onChange(normalized);
+      }}
     />
   );
 }

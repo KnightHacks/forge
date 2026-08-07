@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
+  Check,
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
   Filter,
   Loader2,
   Plus,
@@ -14,8 +16,6 @@ import {
   Search,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
-  UserRoundCheck,
   UsersRound,
   X,
 } from "lucide-react";
@@ -33,6 +33,14 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@forge/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -42,6 +50,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
 import {
   Select,
   SelectContent,
@@ -294,7 +303,7 @@ function AssignmentRoleFilters({
           setOpen(true);
         }}
       >
-        <Filter className="h-4 w-4" /> Assigned roles
+        <Filter className="h-4 w-4" /> Filter users by role
         {input.userRoleIds.length > 0 && (
           <Badge variant="secondary">{input.userRoleIds.length}</Badge>
         )}
@@ -694,6 +703,123 @@ function RoleList({
   );
 }
 
+function AssignmentRolePicker({
+  onChange,
+  roles,
+  selectedRoleIds,
+}: {
+  onChange: (roleIds: string[]) => void;
+  roles: LinkedRoles;
+  selectedRoleIds: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedRoles = roles.filter((role) =>
+    selectedRoleIds.includes(role.id),
+  );
+  const toggleRole = (roleId: string) => {
+    onChange(
+      selectedRoleIds.includes(roleId)
+        ? selectedRoleIds.filter((id) => id !== roleId)
+        : [...selectedRoleIds, roleId],
+    );
+  };
+
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="assignment-role-picker">Roles</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            aria-expanded={open}
+            aria-haspopup="listbox"
+            className="h-11 w-full justify-between bg-background/70 font-normal"
+            id="assignment-role-picker"
+            role="combobox"
+            type="button"
+            variant="outline"
+          >
+            <span className="truncate">
+              {selectedRoleIds.length === 0
+                ? "Choose one or more roles"
+                : `${selectedRoleIds.length} role${selectedRoleIds.length === 1 ? "" : "s"} selected`}
+            </span>
+            <ChevronsUpDown
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+            />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-[min(30rem,calc(100vw-2rem))] p-0"
+        >
+          <Command>
+            <CommandInput placeholder="Search roles" />
+            <CommandList>
+              <CommandEmpty>No assignable roles found.</CommandEmpty>
+              <CommandGroup>
+                {roles.map((role) => {
+                  const selected = selectedRoleIds.includes(role.id);
+                  return (
+                    <CommandItem
+                      className="min-h-11"
+                      key={role.id}
+                      onSelect={() => toggleRole(role.id)}
+                      value={`${role.name} ${role.discordRoleId}`}
+                    >
+                      <span
+                        className={cn(
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-primary/40",
+                          selected && "bg-primary text-primary-foreground",
+                        )}
+                      >
+                        {selected && (
+                          <Check className="h-3 w-3" aria-hidden="true" />
+                        )}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="h-3 w-3 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: role.teamHexcodeColor ?? "#64748b",
+                        }}
+                      />
+                      <span className="min-w-0 flex-1 truncate">
+                        {role.name}
+                      </span>
+                      {role.isCosmetic && (
+                        <Badge variant="secondary">Cosmetic</Badge>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {selectedRoles.length > 0 && (
+        <div className="flex flex-wrap gap-2" aria-label="Selected roles">
+          {selectedRoles.map((role) => (
+            <Badge className="gap-1.5 py-1.5 pl-2.5 pr-1" key={role.id}>
+              {role.name}
+              <button
+                aria-label={`Remove ${role.name}`}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-primary-foreground/75 hover:bg-primary-foreground/15 hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => toggleRole(role.id)}
+                type="button"
+              >
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AssignmentPanel({
   canManageOfficer,
   input,
@@ -714,8 +840,12 @@ function AssignmentPanel({
   const [query, setQuery] = useState(input.userQuery);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-  const [pendingAction, setPendingAction] = useState<"grant" | "revoke" | null>(
-    null,
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [assignmentStep, setAssignmentStep] = useState<"compose" | "confirm">(
+    "compose",
+  );
+  const [assignmentAction, setAssignmentAction] = useState<"grant" | "revoke">(
+    "grant",
   );
   const batch = api.roles.batchAssign.useMutation({
     onSuccess(result) {
@@ -725,7 +855,9 @@ function AssignmentPanel({
       const message = `${succeeded} succeeded, ${skipped} skipped, ${failed} failed.`;
       if (failed > 0) toast.error(`Batch finished with failures. ${message}`);
       else toast.success(`Batch complete. ${message}`);
-      setPendingAction(null);
+      setAssignmentOpen(false);
+      setAssignmentStep("compose");
+      setSelectedRoles([]);
       setSelectedUsers([]);
       onRefresh();
     },
@@ -735,7 +867,6 @@ function AssignmentPanel({
       );
     },
   });
-  const pairCount = selectedUsers.length * selectedRoles.length;
   const availableRoles = roles.filter(
     (role) =>
       !role.isMissing &&
@@ -744,6 +875,20 @@ function AssignmentPanel({
   const { page, pageCount, pageSize, totalCount } = users.pagination;
   const firstResult = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastResult = Math.min(page * pageSize, totalCount);
+  const selectedUserRows = users.users.filter((user) =>
+    selectedUsers.includes(user.id),
+  );
+  const selectedRoleRows = availableRoles.filter((role) =>
+    selectedRoles.includes(role.id),
+  );
+  const pairCount = selectedUserRows.length * selectedRoleRows.length;
+  const actionVerb = assignmentAction === "grant" ? "Add" : "Remove";
+  const selectedPeopleLabel = `${selectedUserRows.length} ${
+    selectedUserRows.length === 1 ? "person" : "people"
+  }`;
+  const selectedRolesLabel = `${selectedRoleRows.length} role${
+    selectedRoleRows.length === 1 ? "" : "s"
+  }`;
 
   const toggleUser = (userId: string, checked: boolean) =>
     setSelectedUsers((current) =>
@@ -751,16 +896,22 @@ function AssignmentPanel({
         ? [...new Set([...current, userId])]
         : current.filter((id) => id !== userId),
     );
-  const toggleRole = (roleId: string, checked: boolean) =>
-    setSelectedRoles((current) =>
-      checked
-        ? [...new Set([...current, roleId])]
-        : current.filter((id) => id !== roleId),
-    );
+  const openAssignment = () => {
+    setAssignmentStep("compose");
+    setSelectedRoles([]);
+    setAssignmentOpen(true);
+  };
+  const navigateAssignments = (next: RoleManagementInput) => {
+    setAssignmentOpen(false);
+    setAssignmentStep("compose");
+    setSelectedRoles([]);
+    setSelectedUsers([]);
+    onNavigate(next);
+  };
 
   return (
     <>
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="min-w-0">
         <Card className="min-w-0 border-white/10 bg-card/95 shadow-2xl shadow-black/25">
           <CardHeader className="gap-4 border-b border-border/70 p-4 sm:p-6">
             <div>
@@ -774,7 +925,7 @@ function AssignmentPanel({
               className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center"
               onSubmit={(event) => {
                 event.preventDefault();
-                onNavigate({ ...input, page: 1, userQuery: query });
+                navigateAssignments({ ...input, page: 1, userQuery: query });
               }}
             >
               <div className="relative min-w-0 flex-1">
@@ -802,15 +953,30 @@ function AssignmentPanel({
               <AssignmentRoleFilters
                 input={input}
                 roles={roles}
-                onApply={onNavigate}
+                onApply={navigateAssignments}
               />
             </form>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                {selectedUsers.length} user
-                {selectedUsers.length === 1 ? "" : "s"}
-                {" selected"}
-              </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+                <p className="text-sm text-muted-foreground">
+                  {selectedPeopleLabel} selected
+                </p>
+                <Button
+                  className={cn(
+                    "min-h-11 gap-2",
+                    selectedUsers.length > 0 &&
+                      "max-md:fixed max-md:bottom-[calc(env(safe-area-inset-bottom)+1rem)] max-md:left-1/2 max-md:z-40 max-md:w-[calc(100vw-2rem)] max-md:-translate-x-1/2 max-md:shadow-2xl max-md:shadow-black/50",
+                  )}
+                  disabled={selectedUsers.length === 0}
+                  onClick={openAssignment}
+                  type="button"
+                >
+                  <UsersRound className="h-4 w-4" aria-hidden="true" />
+                  {selectedUsers.length === 0
+                    ? "Select people to assign roles"
+                    : `Assign roles to ${selectedPeopleLabel}`}
+                </Button>
+              </div>
               <div className="flex items-center gap-2">
                 <Label htmlFor="role-user-page-size" className="text-sm">
                   Per page
@@ -818,7 +984,7 @@ function AssignmentPanel({
                 <Select
                   value={String(input.pageSize)}
                   onValueChange={(value) =>
-                    onNavigate({
+                    navigateAssignments({
                       ...input,
                       page: 1,
                       pageSize: Number(value) as RoleManagementPageSize,
@@ -848,7 +1014,7 @@ function AssignmentPanel({
                       type="button"
                       aria-label="Remove assigned-role filter"
                       onClick={() =>
-                        onNavigate({
+                        navigateAssignments({
                           ...input,
                           page: 1,
                           userRoleIds: input.userRoleIds.filter(
@@ -906,11 +1072,21 @@ function AssignmentPanel({
                     </TableHeader>
                     <TableBody>
                       {users.users.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow
+                          className="cursor-pointer"
+                          key={user.id}
+                          onClick={() =>
+                            toggleUser(
+                              user.id,
+                              !selectedUsers.includes(user.id),
+                            )
+                          }
+                        >
                           <TableCell>
                             <Checkbox
                               aria-label={`Select ${displayUserName(user)}`}
                               checked={selectedUsers.includes(user.id)}
+                              onClick={(event) => event.stopPropagation()}
                               onCheckedChange={(checked) =>
                                 toggleUser(user.id, checked === true)
                               }
@@ -1000,7 +1176,9 @@ function AssignmentPanel({
                   variant="outline"
                   className="sm:order-1"
                   disabled={page <= 1 || isNavigating}
-                  onClick={() => onNavigate({ ...input, page: page - 1 })}
+                  onClick={() =>
+                    navigateAssignments({ ...input, page: page - 1 })
+                  }
                 >
                   <ChevronLeft className="h-4 w-4" /> Previous
                 </Button>
@@ -1009,7 +1187,9 @@ function AssignmentPanel({
                   variant="outline"
                   className="sm:order-3"
                   disabled={page >= pageCount || isNavigating}
-                  onClick={() => onNavigate({ ...input, page: page + 1 })}
+                  onClick={() =>
+                    navigateAssignments({ ...input, page: page + 1 })
+                  }
                 >
                   Next <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -1017,117 +1197,174 @@ function AssignmentPanel({
             </div>
           </CardContent>
         </Card>
-
-        <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
-          <div className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-xl shadow-black/20">
-            <div className="border-b border-border/70 p-4">
-              <h2 className="font-semibold">Assignment tray</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Choose roles, then grant or revoke every selected pair.
-              </p>
-            </div>
-            <div className="max-h-72 space-y-2 overflow-y-auto p-3">
-              {availableRoles.map((role) => (
-                <label
-                  key={role.id}
-                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-white/10 bg-background/60 px-3 py-2"
-                >
-                  <Checkbox
-                    aria-label={`Select role ${role.name}`}
-                    checked={selectedRoles.includes(role.id)}
-                    onCheckedChange={(checked) =>
-                      toggleRole(role.id, checked === true)
-                    }
-                  />
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: role.teamHexcodeColor ?? "#64748b",
-                    }}
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {role.name}
-                  </span>
-                  {role.isCosmetic && (
-                    <Sparkles className="h-4 w-4 shrink-0 text-primary" />
-                  )}
-                </label>
-              ))}
-            </div>
-            <div className="space-y-3 border-t border-border/70 p-4">
-              <div className="rounded-md border border-primary/25 bg-primary/10 p-3">
-                <p className="text-sm text-muted-foreground">Batch preview</p>
-                <p className="mt-1 text-lg font-semibold">
-                  {pairCount} user-role pair{pairCount === 1 ? "" : "s"}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  disabled={pairCount === 0 || batch.isPending}
-                  onClick={() => setPendingAction("grant")}
-                >
-                  <UserRoundCheck className="h-4 w-4" /> Grant
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={pairCount === 0 || batch.isPending}
-                  onClick={() => setPendingAction("revoke")}
-                >
-                  <X className="h-4 w-4" /> Revoke
-                </Button>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
 
       <Dialog
-        open={pendingAction != null}
-        onOpenChange={(open) => !open && setPendingAction(null)}
+        open={assignmentOpen}
+        onOpenChange={(open) => {
+          if (!open && batch.isPending) return;
+          setAssignmentOpen(open);
+          if (!open) {
+            setAssignmentStep("compose");
+            setSelectedRoles([]);
+          }
+        }}
       >
-        <DialogContent className="max-w-md border-white/10 bg-card">
-          <DialogHeader className="text-left">
-            <DialogTitle>
-              {pendingAction === "grant" ? "Grant" : "Revoke"} selected roles?
-            </DialogTitle>
-            <DialogDescription>
-              This will attempt {pairCount} user-role pair
-              {pairCount === 1 ? "" : "s"}. Discord must succeed before Blade
-              changes each pair.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-md border border-white/10 bg-background/60 p-3 text-sm">
-            {selectedUsers.length} users × {selectedRoles.length} roles ={" "}
-            <strong>{pairCount} pairs</strong>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setPendingAction(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant={pendingAction === "revoke" ? "destructive" : "primary"}
-              disabled={batch.isPending || pendingAction == null}
-              onClick={() =>
-                pendingAction &&
-                batch.mutate({
-                  action: pendingAction,
-                  roleIds: selectedRoles,
-                  userIds: selectedUsers,
-                })
-              }
-            >
-              {batch.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirm {pendingAction}
-            </Button>
-          </DialogFooter>
+        <DialogContent className="flex max-h-[92svh] max-w-xl flex-col overflow-hidden border-white/10 bg-card p-0">
+          {assignmentStep === "compose" ? (
+            <>
+              <DialogHeader className="border-b border-border/70 px-4 py-4 pr-12 text-left sm:px-6">
+                <DialogTitle>Assign roles</DialogTitle>
+                <DialogDescription>
+                  Choose whether to add or remove roles for the selected people.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid min-h-0 gap-5 overflow-y-auto px-4 py-4 sm:px-6">
+                <section className="rounded-md border border-white/10 bg-background/60 p-3">
+                  <p className="text-sm font-medium">
+                    {selectedPeopleLabel} selected
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selectedUserRows
+                      .slice(0, 4)
+                      .map(displayUserName)
+                      .join(", ")}
+                    {selectedUserRows.length > 4
+                      ? `, +${selectedUserRows.length - 4} more`
+                      : ""}
+                  </p>
+                </section>
+
+                <fieldset className="grid gap-2">
+                  <legend className="text-sm font-medium">Change</legend>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      aria-pressed={assignmentAction === "grant"}
+                      className="min-h-11"
+                      onClick={() => setAssignmentAction("grant")}
+                      type="button"
+                      variant={
+                        assignmentAction === "grant" ? "primary" : "outline"
+                      }
+                    >
+                      Add roles
+                    </Button>
+                    <Button
+                      aria-pressed={assignmentAction === "revoke"}
+                      className="min-h-11"
+                      onClick={() => setAssignmentAction("revoke")}
+                      type="button"
+                      variant={
+                        assignmentAction === "revoke"
+                          ? "destructive"
+                          : "outline"
+                      }
+                    >
+                      Remove roles
+                    </Button>
+                  </div>
+                </fieldset>
+
+                <AssignmentRolePicker
+                  onChange={setSelectedRoles}
+                  roles={availableRoles}
+                  selectedRoleIds={selectedRoles}
+                />
+              </div>
+              <DialogFooter className="border-t border-border/70 px-4 py-3 sm:px-6">
+                <Button
+                  onClick={() => setAssignmentOpen(false)}
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={pairCount === 0}
+                  onClick={() => setAssignmentStep("confirm")}
+                  type="button"
+                  variant={
+                    assignmentAction === "revoke" ? "destructive" : "primary"
+                  }
+                >
+                  {actionVerb} {selectedRolesLabel}{" "}
+                  {assignmentAction === "grant" ? "to" : "from"}{" "}
+                  {selectedPeopleLabel}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader className="border-b border-border/70 px-4 py-4 pr-12 text-left sm:px-6">
+                <DialogTitle>Confirm role changes</DialogTitle>
+                <DialogDescription>
+                  {actionVerb} {selectedRolesLabel}{" "}
+                  {assignmentAction === "grant" ? "to" : "from"}{" "}
+                  {selectedPeopleLabel}. Discord must succeed before Blade
+                  changes each assignment.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid min-h-0 gap-4 overflow-y-auto px-4 py-4 sm:px-6">
+                <section className="rounded-md border border-white/10 bg-background/60 p-3">
+                  <h3 className="text-sm font-semibold">Roles</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedRoleRows.slice(0, 6).map((role) => (
+                      <Badge key={role.id} variant="secondary">
+                        {role.name}
+                      </Badge>
+                    ))}
+                    {selectedRoleRows.length > 6 && (
+                      <Badge variant="outline">
+                        +{selectedRoleRows.length - 6} more
+                      </Badge>
+                    )}
+                  </div>
+                </section>
+                <section className="rounded-md border border-white/10 bg-background/60 p-3">
+                  <h3 className="text-sm font-semibold">People</h3>
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                    {selectedUserRows.slice(0, 6).map((user) => (
+                      <li key={user.id}>{displayUserName(user)}</li>
+                    ))}
+                    {selectedUserRows.length > 6 && (
+                      <li>+{selectedUserRows.length - 6} more</li>
+                    )}
+                  </ul>
+                </section>
+              </div>
+              <DialogFooter className="border-t border-border/70 px-4 py-3 sm:px-6">
+                <Button
+                  disabled={batch.isPending}
+                  onClick={() => setAssignmentStep("compose")}
+                  type="button"
+                  variant="outline"
+                >
+                  Back
+                </Button>
+                <Button
+                  disabled={batch.isPending || pairCount === 0}
+                  onClick={() =>
+                    batch.mutate({
+                      action: assignmentAction,
+                      roleIds: selectedRoles,
+                      userIds: selectedUserRows.map((user) => user.id),
+                    })
+                  }
+                  type="button"
+                  variant={
+                    assignmentAction === "revoke" ? "destructive" : "primary"
+                  }
+                >
+                  {batch.isPending && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  Confirm: {actionVerb} {selectedRolesLabel}{" "}
+                  {assignmentAction === "grant" ? "to" : "from"}{" "}
+                  {selectedPeopleLabel}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>

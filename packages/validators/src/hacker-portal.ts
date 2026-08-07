@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
+import { nullableSocialProfileUrl } from "./social-profile";
 
 export const HACKER_WITHDRAWAL_ACKNOWLEDGEMENT =
   "I understand that withdrawing is irreversible" as const;
@@ -53,11 +54,14 @@ export const hackerProfileFieldsSchema = z
     firstName: z.string().trim().min(1).max(255),
     foodAllergies: z.string().trim().max(500).nullable(),
     gender: z.enum(FORMS.GENDERS),
-    githubProfileUrl: nullableUrlSchema,
+    githubProfileUrl: nullableSocialProfileUrl("GitHub profile", "github"),
     gradDate: dateOnlySchema,
     lastName: z.string().trim().min(1).max(255),
     levelOfStudy: z.enum(FORMS.LEVELS_OF_STUDY),
-    linkedinProfileUrl: nullableUrlSchema,
+    linkedinProfileUrl: nullableSocialProfileUrl(
+      "LinkedIn profile",
+      "linkedin",
+    ),
     major: z.enum(FORMS.MAJORS),
     phoneNumber: z.string().trim().min(1).max(255),
     raceOrEthnicity: z.enum(FORMS.RACES_OR_ETHNICITIES),

@@ -56,6 +56,13 @@ const data = {
     levelsOfStudy: ["Undergraduate University (3+ year)"],
     majors: ["Computer Science"],
     racesOrEthnicities: ["Prefer not to answer"],
+    roles: [
+      {
+        color: "#6D28D9",
+        id: "00000000-0000-4000-8000-000000000101",
+        name: "Development Team",
+      },
+    ],
     schools: ["University of Central Florida"],
   },
   members: [

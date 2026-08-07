@@ -32,6 +32,7 @@ export function parseAdminMemberSearchParams(params: SearchParams) {
     pageSize: Number(first(params.pageSize) ?? 25),
     query: first(params.q) ?? "",
     racesOrEthnicities: list(params.race),
+    roleIds: list(params.role),
     schools: list(params.school),
     sortDirection: first(params.direction) ?? "desc",
     sortField: first(params.sort) ?? "joined",
@@ -76,6 +77,7 @@ export function buildAdminMemberSearchParams(
   append("alumni", input.alumniConfirmations);
   append("gender", input.genders);
   append("race", input.racesOrEthnicities);
+  append("role", input.roleIds);
   if (input.joinedFrom) params.set("joinedFrom", input.joinedFrom);
   if (input.joinedTo) params.set("joinedTo", input.joinedTo);
   if (selectedMemberId) params.set("member", selectedMemberId);

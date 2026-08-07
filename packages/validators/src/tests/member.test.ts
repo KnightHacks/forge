@@ -126,6 +126,19 @@ describe("member onboarding validation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("stores username-friendly social links as canonical profile URLs", () => {
+    const result = memberSchema.parse({
+      ...validResponse,
+      githubProfileUrl: "knighthacks",
+      linkedinProfileUrl: "linkedin.com/in/lenny-dragonson?trk=signup",
+    });
+
+    expect(result.githubProfileUrl).toBe("https://github.com/knighthacks");
+    expect(result.linkedinProfileUrl).toBe(
+      "https://www.linkedin.com/in/lenny-dragonson",
+    );
+  });
+
   it("rejects underage members", () => {
     const nextYear = new Date().getUTCFullYear() + 1;
     const result = memberSchema.safeParse({

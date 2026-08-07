@@ -468,9 +468,16 @@ test.describe("role management", () => {
       .getByRole("row")
       .filter({ hasText: "Role Target 00" });
     await targetRow.getByRole("checkbox").click();
-    await page.getByLabel("Select role Purple Cosmetic E2E").click();
-    await page.getByRole("button", { name: "Grant" }).click();
-    await page.getByRole("button", { name: "Confirm grant" }).click();
+    await page
+      .getByRole("button", { name: "Assign roles to 1 person" })
+      .click();
+    await page.getByRole("combobox", { name: "Roles" }).click();
+    await page.getByRole("option", { name: /Purple Cosmetic E2E/ }).click();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Add 1 role to 1 person" }).click();
+    await page
+      .getByRole("button", { name: "Confirm: Add 1 role to 1 person" })
+      .click();
     await expect(page.getByText(/Batch complete\. 1 succeeded/)).toBeVisible();
     await expect(
       page.getByRole("row").filter({ hasText: "Role Target 00" }),
@@ -483,8 +490,21 @@ test.describe("role management", () => {
     await cosmeticContext.close();
 
     await targetRow.getByRole("checkbox").click();
-    await page.getByRole("button", { name: "Revoke" }).click();
-    await page.getByRole("button", { name: "Confirm revoke" }).click();
+    await page
+      .getByRole("button", { name: "Assign roles to 1 person" })
+      .click();
+    await page.getByRole("button", { name: "Remove roles" }).click();
+    await page.getByRole("combobox", { name: "Roles" }).click();
+    await page.getByRole("option", { name: /Purple Cosmetic E2E/ }).click();
+    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Remove 1 role from 1 person" })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Confirm: Remove 1 role from 1 person",
+      })
+      .click();
     await expect(page.getByText(/Batch complete\. 1 succeeded/)).toBeVisible();
 
     await page
@@ -803,11 +823,18 @@ test.describe("role management", () => {
     const failed = page.getByRole("row").filter({ hasText: "Role Target 29" });
     await successful.getByRole("checkbox").click();
     await failed.getByRole("checkbox").click();
-    await page.getByLabel("Select role Existing Filter E2E").click();
-    await expect(page.getByText("2 user-role pairs")).toBeVisible();
-    await page.getByRole("button", { name: "Grant" }).click();
-    await expect(page.getByText("2 users × 1 roles =")).toBeVisible();
-    await page.getByRole("button", { name: "Confirm grant" }).click();
+    await page
+      .getByRole("button", { name: "Assign roles to 2 people" })
+      .click();
+    await page.getByRole("combobox", { name: "Roles" }).click();
+    await page.getByRole("option", { name: /Existing Filter E2E/ }).click();
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Add 1 role to 2 people" }).click();
+    await expect(page.getByText("Role Target 28")).toBeVisible();
+    await expect(page.getByText("Role Target 29")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Confirm: Add 1 role to 2 people" })
+      .click();
     await expect(
       page.getByText(
         "Batch finished with failures. 1 succeeded, 0 skipped, 1 failed.",

@@ -34,6 +34,7 @@ interface FilterOptions {
   levelsOfStudy: string[];
   majors: string[];
   racesOrEthnicities: string[];
+  roles: { color: string | null; id: string; name: string }[];
   schools: string[];
 }
 
@@ -50,6 +51,7 @@ function cloneFilters(input: AdminMemberListInput): AdminMemberListInput {
     levelsOfStudy: [...input.levelsOfStudy],
     majors: [...input.majors],
     racesOrEthnicities: [...input.racesOrEthnicities],
+    roleIds: [...input.roleIds],
     schools: [...input.schools],
   };
 }
@@ -70,16 +72,19 @@ function clearFilters(input: AdminMemberListInput): AdminMemberListInput {
     majors: [],
     page: 1,
     racesOrEthnicities: [],
+    roleIds: [],
     schools: [],
   };
 }
 
 function MultiSelectFilter({
+  labels,
   label,
   onChange,
   options,
   selected,
 }: {
+  labels?: ReadonlyMap<string, string>;
   label: string;
   onChange: (values: string[]) => void;
   options: readonly string[];
@@ -121,7 +126,7 @@ function MultiSelectFilter({
                 {uniqueOptions.map((option) => (
                   <CommandItem
                     key={option}
-                    value={option}
+                    value={`${labels?.get(option) ?? option} ${option}`}
                     className="min-h-11"
                     onSelect={() => toggle(option)}
                   >
@@ -136,7 +141,9 @@ function MultiSelectFilter({
                         <Check className="h-3 w-3" />
                       )}
                     </span>
-                    <span className="truncate">{option}</span>
+                    <span className="truncate">
+                      {labels?.get(option) ?? option}
+                    </span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -161,6 +168,9 @@ export function MemberFilters({
   const [draft, setDraft] = useState(() => cloneFilters(input));
   const invalidDateRange = Boolean(
     draft.joinedFrom && draft.joinedTo && draft.joinedFrom > draft.joinedTo,
+  );
+  const roleLabels = new Map(
+    options.roles.map((role) => [role.id, role.name] as const),
   );
 
   const openDialog = () => {
@@ -190,6 +200,15 @@ export function MemberFilters({
           </DialogHeader>
 
           <div className="grid gap-5 px-5 py-5 md:grid-cols-2 md:px-6">
+            <MultiSelectFilter
+              label="Role"
+              labels={roleLabels}
+              options={options.roles.map((role) => role.id)}
+              selected={draft.roleIds}
+              onChange={(values) =>
+                setDraft((current) => ({ ...current, roleIds: values }))
+              }
+            />
             <MultiSelectFilter
               label="Dues status"
               options={["paid", "unpaid"]}

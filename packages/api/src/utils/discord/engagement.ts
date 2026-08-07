@@ -6,6 +6,9 @@ import {
   DiscordArchiveChannel,
   DiscordArchiveMessage,
 } from "@forge/db/schemas/discord";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
+
+import { calculateActivityStreaks } from "./streaks";
 
 /**
  * The calendar day a timestamp falls on, in the club's own time zone.
@@ -36,18 +39,23 @@ export function dateInCalendarTimeZone(value: Date) {
  * can call it.
  */
 export async function getDiscordEngagement(userId: string, now = new Date()) {
-  const user = await db.query.User.findFirst({
-    columns: { discordUserId: true },
-    where: eq(User.id, userId),
-  });
-  if (!user) {
+  const [user, guildId] = await Promise.all([
+    db.query.User.findFirst({
+      columns: { discordUserId: true },
+      where: eq(User.id, userId),
+    }),
+    getKnightHacksGuildId(),
+  ]);
+  if (!user?.discordUserId) {
     return {
       activity: [],
       activityEndDate: dateInCalendarTimeZone(now),
       activeChannelCount: 0,
       activeDayCount: 0,
+      currentStreakDays: 0,
       firstMessageAt: null,
       lastMessageAt: null,
+      longestStreakDays: 0,
       messageCount: 0,
       topChannels: [],
     };
@@ -55,6 +63,7 @@ export async function getDiscordEngagement(userId: string, now = new Date()) {
 
   const activityEndDate = dateInCalendarTimeZone(now);
   const humanMessageConditions = [
+    eq(DiscordArchiveMessage.guildId, guildId),
     eq(DiscordArchiveMessage.authorDiscordUserId, user.discordUserId),
     isNull(DiscordArchiveMessage.deletedAt),
     eq(DiscordArchiveMessage.authorIsBot, false),
@@ -107,12 +116,17 @@ export async function getDiscordEngagement(userId: string, now = new Date()) {
       .limit(5),
   ]);
   const summary = summaryRows[0];
+  const streaks = calculateActivityStreaks(
+    activityRows.map((row) => row.date),
+    activityEndDate,
+  );
 
   return {
     activity: activityRows,
     activityEndDate,
     activeChannelCount: summary?.activeChannelCount ?? 0,
     activeDayCount: summary?.activeDayCount ?? 0,
+    ...streaks,
     firstMessageAt: summary?.firstMessageAt ?? null,
     lastMessageAt: summary?.lastMessageAt ?? null,
     messageCount: summary?.messageCount ?? 0,

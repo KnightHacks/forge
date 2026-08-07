@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import { hackathonSendingStatusSchema } from "./hackathons";
+import { nullableSocialProfileUrl } from "./social-profile";
 
 /**
  * The statuses an officer can move an applicant to.
@@ -246,7 +247,10 @@ export const hackerUpdateProfileSchema = z.object({
   firstName: z.string().trim().min(1).max(255).optional(),
   foodAllergies: z.string().trim().max(500).nullish(),
   gender: z.enum(FORMS.GENDERS).optional(),
-  githubProfileUrl: z.string().trim().url().max(255).nullish(),
+  githubProfileUrl: nullableSocialProfileUrl(
+    "GitHub profile",
+    "github",
+  ).optional(),
   gradDate: z
     .string()
     .trim()
@@ -254,7 +258,10 @@ export const hackerUpdateProfileSchema = z.object({
     .optional(),
   lastName: z.string().trim().min(1).max(255).optional(),
   levelOfStudy: z.enum(FORMS.LEVELS_OF_STUDY).optional(),
-  linkedinProfileUrl: z.string().trim().url().max(255).nullish(),
+  linkedinProfileUrl: nullableSocialProfileUrl(
+    "LinkedIn profile",
+    "linkedin",
+  ).optional(),
   major: z.enum(FORMS.MAJORS).optional(),
   phoneNumber: z.string().trim().min(1).max(255).optional(),
   raceOrEthnicity: z.enum(FORMS.RACES_OR_ETHNICITIES).optional(),

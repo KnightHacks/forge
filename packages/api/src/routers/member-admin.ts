@@ -132,6 +132,7 @@ export interface AdminMemberFilterOptions {
   levelsOfStudy: string[];
   majors: string[];
   racesOrEthnicities: string[];
+  roles: { color: string | null; id: string; name: string }[];
   schools: string[];
 }
 
@@ -177,6 +178,7 @@ function activeMemberFilterFacets(input: AdminMemberListInput) {
     input.alumniConfirmations.length > 0 ? "alumniConfirmations" : null,
     input.genders.length > 0 ? "genders" : null,
     input.racesOrEthnicities.length > 0 ? "racesOrEthnicities" : null,
+    input.roleIds.length > 0 ? "roleIds" : null,
     input.joinedFrom ? "joinedFrom" : null,
     input.joinedTo ? "joinedTo" : null,
   ].filter((facet): facet is string => facet !== null);
@@ -255,6 +257,17 @@ function structuredMemberConditions(input: AdminMemberListInput) {
   }
   if (input.racesOrEthnicities.length > 0) {
     conditions.push(inArray(Member.raceOrEthnicity, input.racesOrEthnicities));
+  }
+  if (input.roleIds.length > 0) {
+    conditions.push(
+      inArray(
+        Member.userId,
+        db
+          .select({ userId: Permissions.userId })
+          .from(Permissions)
+          .where(inArray(Permissions.roleId, input.roleIds)),
+      ),
+    );
   }
   if (input.guildVisibilities.length === 1) {
     conditions.push(
@@ -468,18 +481,30 @@ async function getMembersInOrder(memberIds: string[]) {
 }
 
 async function getFilterOptions(): Promise<AdminMemberFilterOptions> {
-  const rows = await db
-    .select({
-      company: Member.company,
-      gender: Member.gender,
-      gradDate: Member.gradDate,
-      guildProfileVisible: Member.guildProfileVisible,
-      levelOfStudy: Member.levelOfStudy,
-      major: Member.major,
-      raceOrEthnicity: Member.raceOrEthnicity,
-      school: Member.school,
-    })
-    .from(Member);
+  const [rows, roles] = await Promise.all([
+    db
+      .select({
+        company: Member.company,
+        gender: Member.gender,
+        gradDate: Member.gradDate,
+        guildProfileVisible: Member.guildProfileVisible,
+        levelOfStudy: Member.levelOfStudy,
+        major: Member.major,
+        raceOrEthnicity: Member.raceOrEthnicity,
+        school: Member.school,
+      })
+      .from(Member),
+    db
+      .selectDistinct({
+        color: Roles.teamHexcodeColor,
+        id: Roles.id,
+        name: Roles.name,
+      })
+      .from(Roles)
+      .innerJoin(Permissions, eq(Permissions.roleId, Roles.id))
+      .innerJoin(Member, eq(Member.userId, Permissions.userId))
+      .orderBy(asc(Roles.name)),
+  ]);
 
   const distinct = (values: readonly string[]): string[] =>
     [...new Set(values)].sort((left, right) => left.localeCompare(right));
@@ -498,6 +523,7 @@ async function getFilterOptions(): Promise<AdminMemberFilterOptions> {
     levelsOfStudy: distinct(rows.map((row) => row.levelOfStudy)),
     majors: distinct(rows.map((row) => row.major)),
     racesOrEthnicities: distinct(rows.map((row) => row.raceOrEthnicity)),
+    roles,
     schools: distinct(rows.map((row) => row.school)),
   };
 }

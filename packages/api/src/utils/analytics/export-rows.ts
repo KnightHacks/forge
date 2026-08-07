@@ -90,8 +90,10 @@ export function discordRows(
     ...report.memberRows.map((row) => ({
       active_days: row.activeDays,
       active_surfaces: row.activeChannels,
+      current_streak_days: row.currentStreakDays,
       discord_username: row.discordUser,
       last_message_at: row.lastMessageAt,
+      longest_streak_days: row.longestStreakDays,
       member_id: row.memberId,
       member_name: row.name,
       message_count: row.messageCount,

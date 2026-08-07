@@ -68,6 +68,7 @@ import { Textarea } from "@forge/ui/textarea";
 import {
   MEMBER_DASHBOARD_PATH,
   memberUpdateFormSchema,
+  normalizeSocialProfileUrl,
 } from "@forge/validators";
 
 import type { CareerSettingsState } from "~/app/_components/member/member-career-settings";
@@ -229,12 +230,17 @@ export function MemberSettingsFieldControl({
     );
   }
 
-  const inputType =
-    fieldConfig.kind === "phone"
+  const socialProvider =
+    fieldConfig.name === "githubProfileUrl"
+      ? "github"
+      : fieldConfig.name === "linkedinProfileUrl"
+        ? "linkedin"
+        : null;
+  const inputType = socialProvider
+    ? "text"
+    : fieldConfig.kind === "phone"
       ? "tel"
-      : fieldConfig.kind === "url"
-        ? "url"
-        : fieldConfig.kind;
+      : fieldConfig.kind;
 
   return (
     <Input
@@ -244,6 +250,14 @@ export function MemberSettingsFieldControl({
       maxLength={fieldConfig.name === "tagline" ? 80 : undefined}
       placeholder={fieldConfig.placeholder}
       onChange={(event) => onChange(event.target.value)}
+      onBlur={() => {
+        if (!socialProvider || !stringValue) return;
+        const normalized = normalizeSocialProfileUrl(
+          stringValue,
+          socialProvider,
+        );
+        if (normalized) onChange(normalized);
+      }}
     />
   );
 }

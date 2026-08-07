@@ -2911,9 +2911,14 @@ export function HackathonAnalyticsDashboard({
       />
       <div className="flex flex-wrap gap-2">
         {canAccessClub ? (
-          <Button asChild variant="outline">
-            <Link href="?scope=club">Club analytics</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="?scope=club">Club analytics</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="?scope=team">Team performance</Link>
+            </Button>
+          </>
         ) : null}
         <Button variant="secondary">Hackathon analytics</Button>
       </div>
