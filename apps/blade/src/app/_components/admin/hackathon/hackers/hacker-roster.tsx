@@ -12,6 +12,7 @@ import {
 
 import type { RouterOutputs } from "@forge/api";
 import type { HackerRosterFilter } from "@forge/validators";
+import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
@@ -29,6 +30,7 @@ import { BulkConfirmDialog } from "./bulk-confirm-dialog";
 import { FilterChangeDialog } from "./filter-change-dialog";
 import { HackerDetailDialog } from "./hacker-detail-dialog";
 import { FilterChips, HackerFilters, StatusTabs } from "./hacker-filters";
+import { HackerRosterSkeleton } from "./hacker-roster-skeleton";
 import { HackerTable } from "./hacker-table";
 import { useFilterFlow } from "./use-filter-flow";
 import { useHackerSelection } from "./use-hacker-selection";
@@ -123,7 +125,7 @@ export function HackerRoster({
       hackathonId,
       limit: url.showAll ? SHOW_ALL_SIZE : PAGE_SIZE,
     },
-    { enabled },
+    { enabled, placeholderData: (previousData) => previousData },
   );
   // `status` is excluded from the key as well as from the query: the server
   // strips it, so including it made every tab click a cache miss that returned
@@ -132,12 +134,15 @@ export function HackerRoster({
   const { status: _ignored, ...countFilter } = url.filter;
   const counts = api.hacker.statusCounts.useQuery(
     { filter: countFilter, hackathonId },
-    { enabled },
+    { enabled, placeholderData: (previousData) => previousData },
   );
   const filterOptions = api.hacker.filterOptions.useQuery(
     { hackathonId },
     { enabled },
   );
+
+  const displayedRoster = roster.data;
+  const displayedCounts = counts.data;
 
   /**
    * A stable array for the bulk dialog.
@@ -152,7 +157,7 @@ export function HackerRoster({
     [selection.selected],
   );
 
-  const hackers = roster.data?.hackers ?? [];
+  const hackers = displayedRoster?.hackers ?? [];
   const shownIds = hackers.map((row) => row.attendeeId);
   const shownKey = shownIds.join(",");
   const selectedCount = selection.selected.size;
@@ -227,11 +232,18 @@ export function HackerRoster({
     );
   }
 
+  if (
+    (roster.isPending && displayedRoster === undefined) ||
+    (counts.isPending && displayedCounts === undefined)
+  ) {
+    return <HackerRosterSkeleton />;
+  }
+
   // From the server's own "there is more after this", not from the page being
   // exactly full. A hackathon with precisely 1000 matches otherwise rendered
   // "1000 of 1000 shown · capped at 1000; narrow the filter to reach the rest"
   // — telling an officer to go hunting for rows that were all on screen.
-  const atCap = url.showAll && roster.data?.nextCursor != null;
+  const atCap = url.showAll && displayedRoster?.nextCursor != null;
   /**
    * The total for the rows actually on screen.
    *
@@ -240,9 +252,11 @@ export function HackerRoster({
    * Using it here put "3 of 903 shown" beside a tab reading "Applied 3".
    */
   const shownTotal = url.filter.status
-    ? counts.data?.byStatus[url.filter.status]
-    : counts.data?.total;
+    ? displayedCounts?.byStatus[url.filter.status]
+    : displayedCounts?.total;
   const failedToLoad = roster.isError || counts.isError;
+  const resultsUpdating =
+    roster.isFetching || counts.isFetching || url.navigating || filterBusy;
   const blocked = selected.hasEnded || failedToLoad;
   const blockedReason = selected.hasEnded
     ? `${selected.displayName} ended, so its roster is read-only.`
@@ -295,6 +309,8 @@ export function HackerRoster({
             <HackerFilters
               busy={filterBusy}
               options={filterOptions.data ?? EMPTY_FILTER_OPTIONS}
+              optionsError={filterOptions.isError}
+              optionsLoading={filterOptions.isPending}
               filter={url.filter}
               hackathonId={selected.id}
               hackathons={hackathons}
@@ -341,7 +357,7 @@ export function HackerRoster({
             {url.filter.deliveryFailed ? null : (
               <StatusTabs
                 busy={filterBusy}
-                counts={counts.data ?? { byStatus: {}, total: 0 }}
+                counts={displayedCounts ?? { byStatus: {}, total: 0 }}
                 filter={url.filter}
                 onFilterChange={(patch) => void requestFilter(patch)}
               />
@@ -416,15 +432,21 @@ export function HackerRoster({
           </div>
         ) : null}
 
-        <CardContent className="px-0 py-0">
-          {roster.isFetching || url.navigating || filterBusy ? (
-            <div className="flex items-center gap-2 border-b border-border/70 px-4 py-2 text-sm text-muted-foreground md:px-6">
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        <CardContent aria-busy={resultsUpdating} className="px-0 py-0">
+          {resultsUpdating ? (
+            <div
+              aria-live="polite"
+              className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-2 text-sm text-muted-foreground md:px-6"
+            >
+              <Loader2
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
               Updating results
             </div>
           ) : null}
 
-          {hackers.length === 0 && !roster.isPending && !failedToLoad ? (
+          {hackers.length === 0 && !failedToLoad ? (
             <div className="px-6 py-12 text-center">
               <p className="font-medium">No applicants match these filters.</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -432,9 +454,14 @@ export function HackerRoster({
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div
+              className={cn(
+                "overflow-x-auto transition-opacity duration-150 motion-reduce:transition-none",
+                resultsUpdating && "opacity-70",
+              )}
+            >
               <HackerTable
-                busy={filterBusy}
+                busy={resultsUpdating}
                 hackers={hackers}
                 onOpen={(hacker) => url.setHackerId(hacker.attendeeId)}
                 onSelectAllShown={(next) =>

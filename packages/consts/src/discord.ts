@@ -111,12 +111,3 @@ export const DEV_KNIGHTHACKS_GUILD = "1151877367434850364";
 export const KNIGHTHACKS_GUILD = IS_PROD
   ? PROD_KNIGHTHACKS_GUILD
   : DEV_KNIGHTHACKS_GUILD;
-
-/**
- * The club's vanity invite link. Deliberately *not* moved into the config
- * table: it is a URL rather than a Discord snowflake, it has no
- * production/development pair, and every remaining reference to it lives in
- * `legacy/`. Storing it would mean loosening the snowflake check constraint
- * that guards every other row for the sake of one archival value.
- */
-export const PERMANENT_INVITE = "https://discord.com/invite/Kv5g9vf";

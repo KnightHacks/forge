@@ -58,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Skeleton } from "@forge/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -354,13 +355,27 @@ function HackerAnalyticsProfile({
           </DialogDescription>
         </DialogHeader>
         {!profile.data ? (
-          <div className="grid min-h-40 place-items-center">
+          <div className="min-h-40">
             {profile.error ? (
-              <p className="text-sm text-destructive">
+              <p className="grid min-h-40 place-items-center text-sm text-destructive">
                 {profile.error.message}
               </p>
             ) : (
-              <Loader2 className="size-5 animate-spin text-primary" />
+              <div
+                aria-label="Hacker analytics profile loading"
+                aria-busy="true"
+                className="grid gap-3 sm:grid-cols-2"
+              >
+                {Array.from({ length: 10 }).map((_, index) => (
+                  <div
+                    className="rounded-md border border-border/60 bg-card/95 p-3"
+                    key={index}
+                  >
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="mt-2 h-4 w-32 max-w-full" />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         ) : (

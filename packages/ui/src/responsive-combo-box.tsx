@@ -19,6 +19,7 @@ import {
   DrawerTrigger,
 } from "@forge/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
+import { Skeleton } from "@forge/ui/skeleton";
 import { useMediaQuery } from "@forge/ui/use-media-query";
 
 interface ResponsiveComboBoxProps<T> {
@@ -346,24 +347,39 @@ function ItemList<T>({
           onSearchValueChange?.(nextValue);
         }}
       />
-      <CommandList>
-        <CommandEmpty>{isLoading ? "Searching..." : emptyMessage}</CommandEmpty>
-        <CommandGroup>
-          {filteredItems.map((item, index) => (
-            <CommandItem
-              key={`${getItemValue(item)}-${index}`}
-              value={getItemValue(item)}
-              onSelect={(value) => {
-                const selectedItem =
-                  items.find((i) => getItemValue(i) === value) ?? null;
-                setSelectedItem(selectedItem);
-                setOpen(false);
-              }}
-            >
-              {renderItem(item)}
-            </CommandItem>
-          ))}
-        </CommandGroup>
+      <CommandList aria-busy={isLoading}>
+        {isLoading ? (
+          <CommandGroup aria-label="Searching options">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div className="flex h-10 items-center gap-3 px-2" key={index}>
+                <Skeleton className="size-5 shrink-0" />
+                <Skeleton
+                  className={cn("h-4", index % 2 === 0 ? "w-2/3" : "w-1/2")}
+                />
+              </div>
+            ))}
+          </CommandGroup>
+        ) : (
+          <>
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            <CommandGroup>
+              {filteredItems.map((item, index) => (
+                <CommandItem
+                  key={`${getItemValue(item)}-${index}`}
+                  value={getItemValue(item)}
+                  onSelect={(value) => {
+                    const selectedItem =
+                      items.find((i) => getItemValue(i) === value) ?? null;
+                    setSelectedItem(selectedItem);
+                    setOpen(false);
+                  }}
+                >
+                  {renderItem(item)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
       </CommandList>
     </Command>
   );

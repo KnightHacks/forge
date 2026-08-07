@@ -37,6 +37,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Skeleton } from "@forge/ui/skeleton";
 import { toast } from "@forge/ui/toast";
 import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
 
@@ -69,6 +70,7 @@ import { HackathonTagImportDialog } from "./hackathon-tag-import-dialog";
 import { PublicationControls } from "./publication-controls";
 
 type EventRow = RouterOutputs["hackathonEvent"]["listEvents"]["rows"][number];
+type EventListResult = RouterOutputs["hackathonEvent"]["listEvents"];
 type View = "calendar" | "list" | "tags";
 type Timing = "past" | "upcoming";
 type SortField = "attendance" | "name" | "start" | "tag";
@@ -184,6 +186,95 @@ function healthNeedsAttention(event: EventRow) {
   );
 }
 
+function EventResultsSkeleton({ view }: { view: Exclude<View, "tags"> }) {
+  if (view === "calendar") {
+    return (
+      <section
+        aria-label="Loading hackathon event calendar"
+        className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-2xl shadow-black/25"
+      >
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-28" />
+        </div>
+        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-white/10 bg-border/50">
+          {Array.from({ length: 35 }, (_, index) => (
+            <div className="min-h-20 bg-background/60 p-2" key={index}>
+              <Skeleton className="h-3 w-5" />
+              {index % 4 === 0 ? (
+                <Skeleton className="mt-3 h-7 w-full" />
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      aria-label="Loading hackathon events"
+      className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25"
+    >
+      <div className="hidden md:block">
+        <div className="grid grid-cols-[2fr_1.2fr_1fr_.7fr_.8fr_1fr_1fr] gap-4 border-b border-border/70 px-4 py-3">
+          {Array.from({ length: 7 }, (_, index) => (
+            <Skeleton className="h-4" key={index} />
+          ))}
+        </div>
+        {Array.from({ length: 6 }, (_, row) => (
+          <div
+            className="grid grid-cols-[2fr_1.2fr_1fr_.7fr_.8fr_1fr_1fr] gap-4 border-b border-border/60 px-4 py-4 last:border-b-0"
+            key={row}
+          >
+            {Array.from({ length: 7 }, (_, column) => (
+              <Skeleton className={column === 0 ? "h-9" : "h-5"} key={column} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-0 divide-y divide-border/60 md:hidden">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div className="grid gap-3 p-4" key={index}>
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-11 w-full" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TagManagementSkeleton() {
+  return (
+    <section
+      aria-label="Loading hackathon event tags"
+      className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-2xl shadow-black/25 sm:p-6"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="grid flex-1 gap-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </div>
+        <Skeleton className="h-11 w-28" />
+      </div>
+      <div className="mt-5 grid gap-3">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div
+            className="grid gap-3 rounded-md border border-white/10 bg-background/60 p-3 sm:grid-cols-[1fr_8rem_7rem] sm:items-center"
+            key={index}
+          >
+            <Skeleton className="h-11" />
+            <Skeleton className="h-11" />
+            <Skeleton className="h-11" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function HackathonEventsWorkspace({
   canEdit,
   isOfficer,
@@ -215,6 +306,10 @@ export function HackathonEventsWorkspace({
   } | null>(null);
   const [searchDraft, setSearchDraft] = useState(searchQuery);
   const pendingSearchRef = useRef<string | null>(null);
+  const [retainedEvents, setRetainedEvents] = useState<{
+    data: EventListResult;
+    hackathonId: string;
+  } | null>(null);
 
   useEffect(() => {
     setSearchDraft(searchQuery);
@@ -323,6 +418,22 @@ export function HackathonEventsWorkspace({
   const createTag = api.hackathonEvent.createTag.useMutation();
   const updateTag = api.hackathonEvent.updateTag.useMutation();
   const archiveTag = api.hackathonEvent.archiveTag.useMutation();
+
+  useEffect(() => {
+    if (!events.data || !selectedHackathon) return;
+    setRetainedEvents({
+      data: events.data,
+      hackathonId: selectedHackathon.id,
+    });
+  }, [events.data, selectedHackathon]);
+
+  const previousEvents = retainedEvents;
+  const displayedEvents =
+    events.data ??
+    (previousEvents && previousEvents.hackathonId === selectedHackathon?.id
+      ? previousEvents.data
+      : undefined);
+  const updatingEvents = events.isFetching && displayedEvents !== undefined;
 
   const tagItems = (tags.data ?? []) satisfies EventTagItem[];
   const activeTags = tagItems.filter(({ active }) => active);
@@ -521,7 +632,7 @@ export function HackathonEventsWorkspace({
     await refresh();
   }
 
-  const rows = events.data?.rows ?? [];
+  const rows = displayedEvents?.rows ?? [];
 
   return (
     <main className={adminPageLayoutClassName}>
@@ -792,12 +903,8 @@ export function HackathonEventsWorkspace({
         </section>
       ) : null}
 
-      {view !== "tags" && events.isPending ? (
-        <Card>
-          <CardContent className="flex items-center gap-2 py-8 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Loading events…
-          </CardContent>
-        </Card>
+      {view !== "tags" && events.isPending && !displayedEvents ? (
+        <EventResultsSkeleton view={view} />
       ) : null}
       {view !== "tags" && events.isError ? (
         <Card className="border-destructive/40">
@@ -807,8 +914,23 @@ export function HackathonEventsWorkspace({
         </Card>
       ) : null}
 
-      {view === "list" && events.data ? (
-        <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25">
+      {view === "list" && displayedEvents ? (
+        <section
+          aria-busy={updatingEvents}
+          className="relative overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25"
+        >
+          {updatingEvents ? (
+            <div
+              aria-live="polite"
+              className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-2 text-sm text-muted-foreground"
+            >
+              <Loader2
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              Updating events
+            </div>
+          ) : null}
           {rows.length ? (
             <>
               <div className="hidden overflow-x-auto md:block">
@@ -974,19 +1096,20 @@ export function HackathonEventsWorkspace({
               </div>
               <div className="flex flex-col gap-3 border-t border-border/70 p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <span>
-                  Showing {(events.data.pagination.page - 1) * pageSize + 1}-
+                  Showing {(displayedEvents.pagination.page - 1) * pageSize + 1}
+                  -
                   {Math.min(
-                    events.data.pagination.page * pageSize,
-                    events.data.pagination.totalCount,
+                    displayedEvents.pagination.page * pageSize,
+                    displayedEvents.pagination.totalCount,
                   )}{" "}
-                  of {events.data.pagination.totalCount} events
+                  of {displayedEvents.pagination.totalCount} events
                 </span>
                 <div className="flex items-center gap-2">
                   <Button
-                    disabled={events.data.pagination.page <= 1}
+                    disabled={displayedEvents.pagination.page <= 1}
                     onClick={() =>
                       navigate({
-                        page: String(events.data.pagination.page - 1),
+                        page: String(displayedEvents.pagination.page - 1),
                       })
                     }
                     size="sm"
@@ -995,17 +1118,17 @@ export function HackathonEventsWorkspace({
                     Previous
                   </Button>
                   <span className="font-mono">
-                    {events.data.pagination.page}/
-                    {events.data.pagination.pageCount}
+                    {displayedEvents.pagination.page}/
+                    {displayedEvents.pagination.pageCount}
                   </span>
                   <Button
                     disabled={
-                      events.data.pagination.page >=
-                      events.data.pagination.pageCount
+                      displayedEvents.pagination.page >=
+                      displayedEvents.pagination.pageCount
                     }
                     onClick={() =>
                       navigate({
-                        page: String(events.data.pagination.page + 1),
+                        page: String(displayedEvents.pagination.page + 1),
                       })
                     }
                     size="sm"
@@ -1027,38 +1150,48 @@ export function HackathonEventsWorkspace({
         </section>
       ) : null}
 
-      {view === "calendar" && events.data ? (
-        <EventCalendar
-          events={rows.map(asCalendarEvent)}
-          initialView={calendarMode}
-          initialDate={calendarWindow?.initialDate}
-          onOpenEvent={(eventId) =>
-            setSelected(rows.find((event) => event.id === eventId) ?? null)
-          }
-          onRangeChange={({ end, start, view: nextCalendarMode }) => {
-            if (
-              calendarStart === start &&
-              calendarEnd === end &&
-              calendarMode === nextCalendarMode
-            )
-              return;
-            navigate({
-              calendarEnd: end,
-              calendarMode: nextCalendarMode === "day" ? "day" : null,
-              calendarStart: start,
-              page: null,
-            });
-          }}
-        />
+      {view === "calendar" && displayedEvents ? (
+        <div
+          aria-busy={updatingEvents}
+          className="relative transition-opacity duration-150 motion-reduce:transition-none"
+        >
+          {updatingEvents ? (
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-md border border-white/10 bg-card/95 px-3 py-2 text-sm text-muted-foreground shadow-lg">
+              <Loader2
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              Updating calendar
+            </div>
+          ) : null}
+          <EventCalendar
+            events={rows.map(asCalendarEvent)}
+            initialView={calendarMode}
+            initialDate={calendarWindow?.initialDate}
+            onOpenEvent={(eventId) =>
+              setSelected(rows.find((event) => event.id === eventId) ?? null)
+            }
+            onRangeChange={({ end, start, view: nextCalendarMode }) => {
+              if (
+                calendarStart === start &&
+                calendarEnd === end &&
+                calendarMode === nextCalendarMode
+              )
+                return;
+              navigate({
+                calendarEnd: end,
+                calendarMode: nextCalendarMode === "day" ? "day" : null,
+                calendarStart: start,
+                page: null,
+              });
+            }}
+          />
+        </div>
       ) : null}
 
       {view === "tags" && canEdit ? (
         tags.isPending ? (
-          <Card>
-            <CardContent className="flex items-center gap-2 py-8 text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Loading tags…
-            </CardContent>
-          </Card>
+          <TagManagementSkeleton />
         ) : tags.isError ? (
           <Card className="border-destructive/40">
             <CardContent className="py-6 text-destructive">

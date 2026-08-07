@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, SlidersHorizontal, X } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Loader2,
+  SlidersHorizontal,
+  TriangleAlert,
+  X,
+} from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
@@ -25,6 +32,7 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@forge/ui/popover";
+import { Skeleton } from "@forge/ui/skeleton";
 import { GRADUATION_TERMS, HACKER_STATUS_LABELS } from "@forge/validators";
 
 import type { RosterFilter } from "./hacker-roster";
@@ -222,6 +230,8 @@ export function HackerFilters({
   onFilterChange,
   onHackathonChange,
   options,
+  optionsError,
+  optionsLoading,
 }: {
   filter: RosterFilter;
   hackathonId: string;
@@ -230,6 +240,8 @@ export function HackerFilters({
   onFilterChange: (patch: RosterFilterPatch) => void;
   onHackathonChange: (next: string) => void;
   options: FilterOptions;
+  optionsError: boolean;
+  optionsLoading: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<RosterFilter>(filter);
@@ -288,13 +300,20 @@ export function HackerFilters({
 
       <Button
         className="h-11 gap-2 bg-background/70"
-        disabled={busy}
+        disabled={busy || optionsLoading}
         onClick={() => openWith(true)}
         type="button"
         variant="outline"
       >
-        <SlidersHorizontal className="size-4" aria-hidden="true" />
-        Filters
+        {optionsLoading ? (
+          <Loader2
+            className="size-4 animate-spin motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+        ) : (
+          <SlidersHorizontal className="size-4" aria-hidden="true" />
+        )}
+        {optionsLoading ? "Loading filters" : "Filters"}
         {appliedCount > 0 ? (
           <span className="rounded-full bg-primary/15 px-2 text-sm text-primary">
             {appliedCount}
@@ -318,207 +337,235 @@ export function HackerFilters({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 px-5 py-5 md:grid-cols-2 md:px-6">
-            <MultiSelectFilter
-              label="School"
-              onChange={(schools) => setDraft({ ...draft, schools })}
-              options={options.schools}
-              selected={draft.schools ?? []}
-            />
-            <MultiSelectFilter
-              label="Level of study"
-              onChange={(levelsOfStudy) =>
-                setDraft({ ...draft, levelsOfStudy })
-              }
-              options={options.levelsOfStudy}
-              selected={draft.levelsOfStudy ?? []}
-            />
-            <MultiSelectFilter
-              label="Major"
-              onChange={(majors) => setDraft({ ...draft, majors })}
-              options={options.majors}
-              selected={draft.majors ?? []}
-            />
-            <MultiSelectFilter
-              label="Race or ethnicity"
-              onChange={(racesOrEthnicities) =>
-                setDraft({ ...draft, racesOrEthnicities })
-              }
-              options={options.racesOrEthnicities}
-              selected={draft.racesOrEthnicities ?? []}
-            />
-            <MultiSelectFilter
-              label="Gender"
-              onChange={(genders) => setDraft({ ...draft, genders })}
-              options={options.genders}
-              selected={draft.genders ?? []}
-            />
-            <MultiSelectFilter
-              label="Shirt size"
-              onChange={(shirtSizes) => setDraft({ ...draft, shirtSizes })}
-              options={options.shirtSizes}
-              selected={draft.shirtSizes ?? []}
-            />
+          {optionsLoading ? (
+            <div
+              aria-label="Loading applicant filters"
+              aria-busy="true"
+              className="grid gap-5 px-5 py-5 md:grid-cols-2 md:px-6"
+            >
+              {Array.from({ length: 8 }, (_, index) => (
+                <div className="grid gap-2" key={index}>
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-11 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : optionsError ? (
+            <div className="flex items-start gap-3 px-5 py-8 text-sm text-destructive md:px-6">
+              <TriangleAlert
+                className="mt-0.5 size-5 shrink-0"
+                aria-hidden="true"
+              />
+              Applicant filter choices could not be loaded. Close this dialog
+              and try again.
+            </div>
+          ) : (
+            <div className="grid gap-5 px-5 py-5 md:grid-cols-2 md:px-6">
+              <MultiSelectFilter
+                label="School"
+                onChange={(schools) => setDraft({ ...draft, schools })}
+                options={options.schools}
+                selected={draft.schools ?? []}
+              />
+              <MultiSelectFilter
+                label="Level of study"
+                onChange={(levelsOfStudy) =>
+                  setDraft({ ...draft, levelsOfStudy })
+                }
+                options={options.levelsOfStudy}
+                selected={draft.levelsOfStudy ?? []}
+              />
+              <MultiSelectFilter
+                label="Major"
+                onChange={(majors) => setDraft({ ...draft, majors })}
+                options={options.majors}
+                selected={draft.majors ?? []}
+              />
+              <MultiSelectFilter
+                label="Race or ethnicity"
+                onChange={(racesOrEthnicities) =>
+                  setDraft({ ...draft, racesOrEthnicities })
+                }
+                options={options.racesOrEthnicities}
+                selected={draft.racesOrEthnicities ?? []}
+              />
+              <MultiSelectFilter
+                label="Gender"
+                onChange={(genders) => setDraft({ ...draft, genders })}
+                options={options.genders}
+                selected={draft.genders ?? []}
+              />
+              <MultiSelectFilter
+                label="Shirt size"
+                onChange={(shirtSizes) => setDraft({ ...draft, shirtSizes })}
+                options={options.shirtSizes}
+                selected={draft.shirtSizes ?? []}
+              />
 
-            {/*
+              {/*
               Term and year as two boxes, because an officer thinks "Spring
               2027", not "a date in the first five months of 2027". Term is
               derived from the graduation month rather than stored — see
               GRADUATION_TERMS.
             */}
-            <div className="grid grid-cols-2 gap-2">
-              <MultiSelectFilter
-                label="Grad term"
-                onChange={(terms) =>
-                  setDraft({
-                    ...draft,
-                    graduationTerms: terms as RosterFilter["graduationTerms"],
-                  })
-                }
-                options={GRADUATION_TERMS}
-                selected={draft.graduationTerms ?? []}
-              />
-              <MultiSelectFilter
-                label="Grad year"
-                onChange={(years) =>
-                  setDraft({
-                    ...draft,
-                    graduationYears: years.map(Number),
-                  })
-                }
-                options={options.graduationYears.map(String)}
-                selected={(draft.graduationYears ?? []).map(String)}
-              />
-            </div>
-
-            {/* An inclusive range, because "18 to 20" is one thought and two
-                multi-selects of discrete ages is not. */}
-            <div className="grid gap-2">
-              <Label htmlFor="hacker-age-min">Age</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  className="h-11 bg-background/70"
-                  id="hacker-age-min"
-                  inputMode="numeric"
-                  max={120}
-                  min={0}
-                  onChange={(event) =>
+              <div className="grid grid-cols-2 gap-2">
+                <MultiSelectFilter
+                  label="Grad term"
+                  onChange={(terms) =>
                     setDraft({
                       ...draft,
-                      ageMin: event.target.value
-                        ? Number(event.target.value)
-                        : undefined,
+                      graduationTerms: terms as RosterFilter["graduationTerms"],
                     })
                   }
-                  placeholder="Min"
-                  type="number"
-                  value={draft.ageMin ?? ""}
+                  options={GRADUATION_TERMS}
+                  selected={draft.graduationTerms ?? []}
                 />
-                <span className="text-sm text-muted-foreground">to</span>
-                <Input
-                  aria-label="Maximum age"
-                  className="h-11 bg-background/70"
-                  inputMode="numeric"
-                  max={120}
-                  min={0}
-                  onChange={(event) =>
+                <MultiSelectFilter
+                  label="Grad year"
+                  onChange={(years) =>
                     setDraft({
                       ...draft,
-                      ageMax: event.target.value
-                        ? Number(event.target.value)
-                        : undefined,
+                      graduationYears: years.map(Number),
                     })
                   }
-                  placeholder="Max"
-                  type="number"
-                  value={draft.ageMax ?? ""}
+                  options={options.graduationYears.map(String)}
+                  selected={(draft.graduationYears ?? []).map(String)}
                 />
               </div>
-            </div>
 
-            <div className="grid gap-2">
-              <Label>First-time hacker</Label>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    ["Either", undefined],
-                    ["First-time", "first"],
-                    ["Returning", "returning"],
-                    ["Not recorded", "unknown"],
-                  ] as const
-                ).map(([label, value]) => (
+              {/* An inclusive range, because "18 to 20" is one thought and two
+                multi-selects of discrete ages is not. */}
+              <div className="grid gap-2">
+                <Label htmlFor="hacker-age-min">Age</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="h-11 bg-background/70"
+                    id="hacker-age-min"
+                    inputMode="numeric"
+                    max={120}
+                    min={0}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        ageMin: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                    placeholder="Min"
+                    type="number"
+                    value={draft.ageMin ?? ""}
+                  />
+                  <span className="text-sm text-muted-foreground">to</span>
+                  <Input
+                    aria-label="Maximum age"
+                    className="h-11 bg-background/70"
+                    inputMode="numeric"
+                    max={120}
+                    min={0}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        ageMax: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                    placeholder="Max"
+                    type="number"
+                    value={draft.ageMax ?? ""}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>First-time hacker</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["Either", undefined],
+                      ["First-time", "first"],
+                      ["Returning", "returning"],
+                      ["Not recorded", "unknown"],
+                    ] as const
+                  ).map(([label, value]) => (
+                    <Button
+                      aria-pressed={draft.firstTimeStatus === value}
+                      className="min-h-11 text-sm"
+                      key={label}
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          firstTimeStatus: value,
+                          isFirstTime: undefined,
+                        })
+                      }
+                      size="sm"
+                      variant={
+                        draft.firstTimeStatus === value
+                          ? "secondary"
+                          : "outline"
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Dietary needs</Label>
+                {/* Three states, not a checkbox: "either" is the default and has
+                  to stay reachable after picking one. */}
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["Either", undefined],
+                      ["Has needs", true],
+                      ["None stated", false],
+                    ] as const
+                  ).map(([label, value]) => (
+                    <Button
+                      aria-pressed={draft.hasDietaryNeeds === value}
+                      className="min-h-11 text-sm"
+                      key={label}
+                      onClick={() =>
+                        setDraft({ ...draft, hasDietaryNeeds: value })
+                      }
+                      size="sm"
+                      variant={
+                        draft.hasDietaryNeeds === value
+                          ? "secondary"
+                          : "outline"
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Only show</Label>
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    aria-pressed={draft.firstTimeStatus === value}
+                    aria-pressed={draft.blacklisted === true}
                     className="min-h-11 text-sm"
-                    key={label}
                     onClick={() =>
                       setDraft({
                         ...draft,
-                        firstTimeStatus: value,
-                        isFirstTime: undefined,
+                        blacklisted: draft.blacklisted ? undefined : true,
                       })
                     }
                     size="sm"
-                    variant={
-                      draft.firstTimeStatus === value ? "secondary" : "outline"
-                    }
+                    variant={draft.blacklisted ? "secondary" : "outline"}
                   >
-                    {label}
+                    Blacklisted
                   </Button>
-                ))}
+                </div>
               </div>
             </div>
-
-            <div className="grid gap-2">
-              <Label>Dietary needs</Label>
-              {/* Three states, not a checkbox: "either" is the default and has
-                  to stay reachable after picking one. */}
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    ["Either", undefined],
-                    ["Has needs", true],
-                    ["None stated", false],
-                  ] as const
-                ).map(([label, value]) => (
-                  <Button
-                    aria-pressed={draft.hasDietaryNeeds === value}
-                    className="min-h-11 text-sm"
-                    key={label}
-                    onClick={() =>
-                      setDraft({ ...draft, hasDietaryNeeds: value })
-                    }
-                    size="sm"
-                    variant={
-                      draft.hasDietaryNeeds === value ? "secondary" : "outline"
-                    }
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Only show</Label>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  aria-pressed={draft.blacklisted === true}
-                  className="min-h-11 text-sm"
-                  onClick={() =>
-                    setDraft({
-                      ...draft,
-                      blacklisted: draft.blacklisted ? undefined : true,
-                    })
-                  }
-                  size="sm"
-                  variant={draft.blacklisted ? "secondary" : "outline"}
-                >
-                  Blacklisted
-                </Button>
-              </div>
-            </div>
-          </div>
+          )}
 
           <DialogFooter className="border-t border-border/70 px-5 py-4 md:px-6">
             <Button

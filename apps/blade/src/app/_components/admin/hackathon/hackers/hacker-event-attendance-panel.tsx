@@ -1,9 +1,10 @@
 "use client";
 
-import { CalendarCheck, Loader2, RotateCcw } from "lucide-react";
+import { CalendarCheck, RotateCcw } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import { Skeleton } from "@forge/ui/skeleton";
 
 import { DetailSection } from "~/app/_components/admin/shared/detail-panel";
 import { formatClubDateTime } from "~/lib/dates";
@@ -98,10 +99,24 @@ export function HackerEventAttendancePanel({
           attendee.
         </p>
       ) : attendance.isPending ? (
-        <p className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground sm:px-4">
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          Loading event attendance…
-        </p>
+        <div
+          aria-label="Event attendance loading"
+          aria-busy="true"
+          className="divide-y divide-border/70"
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div className="grid gap-2 px-3 py-3 sm:px-4" key={index}>
+              <div className="flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-40 max-w-[50%]" />
+                <div className="flex gap-1.5">
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                  <Skeleton className="h-6 w-14 rounded-full" />
+                </div>
+              </div>
+              <Skeleton className="h-3 w-52 max-w-full" />
+            </div>
+          ))}
+        </div>
       ) : attendance.isError ? (
         <div className="grid justify-items-center gap-3 px-3 py-6 text-center sm:px-4">
           <p className="text-sm text-destructive">

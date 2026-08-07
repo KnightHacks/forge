@@ -34,7 +34,7 @@ Ask about:
 - validators and Zod schemas in `@forge/validators`
 - access tiers and control-permission requirements
 - Discord integration/side effects, role sync, role hashes/mappings
-- data/config tables, migration/cutover, rollback
+- data/config tables, rollout, data migration, and rollback
 - React constraints: server-first, no page-level `use client`, custom hooks, loading/error/success states
 - API context generation: names, descriptions, docs for future tRPC manifest
 - test placement and verification commands

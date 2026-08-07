@@ -50,5 +50,11 @@ export default async function AdminHackersPage({
 
   const selected = matched ?? hackathons[0];
 
-  return <HackerRoster hackathons={hackathons} selected={selected ?? null} />;
+  return (
+    <HackerRoster
+      key={selected?.id ?? "no-hackathon"}
+      hackathons={hackathons}
+      selected={selected ?? null}
+    />
+  );
 }

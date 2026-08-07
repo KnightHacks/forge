@@ -63,10 +63,9 @@ function isConfigured(configuredStatusCount: number) {
 }
 
 /**
- * The four retired columns are excluded deliberately, not incidentally.
- * "No Reforge code path reads these" is the stated precondition for dropping
- * them at cutover, and a bare `findFirst` would hand them to any future
- * component — which would typecheck today and break the moment the column goes.
+ * The four compatibility columns are excluded deliberately, not incidentally.
+ * Current workflows do not read them, and a bare `findFirst` would hand them to
+ * a future component and quietly reintroduce a retired contract.
  */
 const HACKATHON_COLUMNS = {
   applicationDeadline: true,
@@ -86,7 +85,7 @@ const HACKATHON_COLUMNS = {
  * The same allowlist shaped for `.returning()`, which takes columns rather than
  * the boolean map `findFirst` wants. A bare `.returning()` on create/update
  * would hand back all four retired columns and defeat the point of the map
- * above — the invariant is "no Reforge read path", not "no Reforge query".
+ * above — the invariant is "no current read path", not "no query".
  */
 const HACKATHON_RETURNING = {
   applicationDeadline: Hackathon.applicationDeadline,
@@ -114,14 +113,12 @@ async function requireHackathon(id: string) {
 }
 
 /**
- * `Hackathon.name` is `NOT NULL UNIQUE` and production Blade still routes on
- * it, so a value has to exist even though officers no longer choose one and no
- * Reforge code reads it.
+ * `Hackathon.name` is `NOT NULL UNIQUE`, so a compatibility value has to exist
+ * even though officers no longer choose one and current routes do not read it.
  *
  * Allocated **on create only**. Re-deriving it on update would rewrite a live
- * production route every time an officer corrected a display-name typo — the
- * database is shared, so `/hacker/application/bloomknights-2026` would start
- * 404ing because someone added a space. `update` preserves whatever is stored.
+ * stored identity every time an officer corrected a display-name typo. `update`
+ * preserves whatever is stored.
  *
  * Runs inside the caller's transaction so the read and the insert cannot be
  * interleaved by a concurrent create; the unique violation is still caught

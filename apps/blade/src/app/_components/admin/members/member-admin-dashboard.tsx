@@ -511,10 +511,13 @@ export function MemberAdminDashboard({
             )}
           </CardHeader>
 
-          <CardContent className="px-0 py-0">
+          <CardContent aria-busy={isNavigating} className="px-0 py-0">
             {isNavigating && (
-              <div className="flex items-center gap-2 border-b border-border/70 px-4 py-2 text-sm text-muted-foreground md:px-6">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div
+                aria-live="polite"
+                className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-2 text-sm text-muted-foreground md:px-6"
+              >
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />
                 Updating results
               </div>
             )}
@@ -544,7 +547,12 @@ export function MemberAdminDashboard({
               </div>
             ) : (
               <>
-                <div className="hidden overflow-x-auto md:block">
+                <div
+                  className={cn(
+                    "hidden overflow-x-auto transition-opacity duration-150 motion-reduce:transition-none md:block",
+                    isNavigating && "opacity-70",
+                  )}
+                >
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -629,7 +637,12 @@ export function MemberAdminDashboard({
                   </Table>
                 </div>
 
-                <div className="grid min-w-0 gap-2 p-2 sm:gap-3 sm:p-3 md:hidden">
+                <div
+                  className={cn(
+                    "grid min-w-0 gap-2 p-2 transition-opacity duration-150 motion-reduce:transition-none sm:gap-3 sm:p-3 md:hidden",
+                    isNavigating && "opacity-70",
+                  )}
+                >
                   {data.members.map((member) => (
                     <div
                       key={member.id}

@@ -236,6 +236,7 @@ export function MemberEventFeedback({
           submit.mutate({ answers, formId: opportunity.formId });
         }}
         open={open}
+        submitting={submit.isPending}
         state={
           completed
             ? {

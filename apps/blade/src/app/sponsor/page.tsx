@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
+import { PageEntrance, RevealOnView } from "~/app/_components/shared/motion";
 import { OG_IMAGE_URL, SITE_NAME, SITE_URL } from "../seo";
 
 const SPONSOR_EMAIL = "sponsorship@knighthacks.org";
@@ -97,11 +98,21 @@ export default function SponsorPage() {
 
       <div className="container relative z-10 min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10">
         <div className="mx-auto max-w-6xl space-y-4 sm:space-y-6">
-          <PageHeading />
-          <SponsorOverview />
-          <PartnershipPanel />
-          <VideoPanel />
-          <ContactPanel />
+          <PageEntrance>
+            <PageHeading />
+          </PageEntrance>
+          <PageEntrance delay={90}>
+            <SponsorOverview />
+          </PageEntrance>
+          <RevealOnView>
+            <PartnershipPanel />
+          </RevealOnView>
+          <RevealOnView>
+            <VideoPanel />
+          </RevealOnView>
+          <RevealOnView>
+            <ContactPanel />
+          </RevealOnView>
           <SponsorFooter />
         </div>
       </div>

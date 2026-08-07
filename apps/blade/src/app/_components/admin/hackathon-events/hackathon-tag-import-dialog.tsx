@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
+import { Skeleton } from "@forge/ui/skeleton";
 import { toast } from "@forge/ui/toast";
 
 import { EventTag } from "~/app/_components/admin/events/event-presenters";
@@ -72,10 +73,27 @@ export function HackathonTagImportDialog({
 
           <div className="min-h-0 overflow-y-auto overscroll-contain rounded-lg border border-border/70 [scrollbar-gutter:stable]">
             {preview.isPending ? (
-              <p className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                Loading previous tags…
-              </p>
+              <div
+                aria-label="Previous hackathon tags loading"
+                aria-busy="true"
+                className="divide-y divide-border/70"
+              >
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    className="grid gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                    key={index}
+                  >
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-28 rounded-full" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                      <Skeleton className="h-4 w-64 max-w-full" />
+                    </div>
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                ))}
+              </div>
             ) : preview.isError ? (
               <p className="p-6 text-sm text-destructive">
                 {preview.error.message}

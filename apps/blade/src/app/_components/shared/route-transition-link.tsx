@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@forge/ui";
 
 const ROUTE_TRANSITION_EVENT = "blade:route-transition";
-const ROUTE_TRANSITION_DELAY_MS = 280;
+const ROUTE_TRANSITION_DELAY_MS = 80;
 
 function shouldUseNormalLink(event: MouseEvent<HTMLAnchorElement>) {
   return (
@@ -38,10 +38,11 @@ export function RouteTransitionSurface({ children }: { children: ReactNode }) {
   return (
     <div
       data-member-route-exiting={isExiting}
+      aria-busy={isExiting}
       className={cn(
-        "animate-in fade-in-0 duration-300 ease-out motion-reduce:animate-none",
-        "will-change-opacity transition-opacity duration-300 ease-out motion-reduce:transition-none",
-        isExiting && "opacity-0",
+        "animate-in fade-in-0 duration-200 ease-out motion-reduce:animate-none",
+        "transition-opacity duration-150 ease-out motion-reduce:transition-none",
+        isExiting && "opacity-60",
       )}
     >
       {children}
@@ -65,7 +66,7 @@ export const RouteTransitionLink = forwardRef<
       href={href}
       data-exiting={isExiting}
       className={cn(
-        "group transition-opacity duration-200 ease-out motion-reduce:transition-none",
+        "group transition-opacity duration-150 ease-out motion-reduce:transition-none",
         "animate-in fade-in-0 motion-reduce:animate-none",
         isExiting && "opacity-70",
         className,

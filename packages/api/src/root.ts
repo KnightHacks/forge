@@ -25,7 +25,7 @@ import { createTRPCRouter, publicProcedure } from "./trpc";
 
 const healthProcedure = publicProcedure.query(() => ({
   ok: true,
-  service: "forge-api-reforge-scaffold",
+  service: "forge-api",
 }));
 
 export interface AppRouterShape {

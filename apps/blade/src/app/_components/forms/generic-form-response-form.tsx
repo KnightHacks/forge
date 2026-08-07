@@ -8,6 +8,7 @@ import type { FormDefinition, FormQuestion } from "@forge/validators";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
 import {
   FORM_LINEAR_SCALE_ENDPOINT_MAX,
@@ -47,8 +48,19 @@ function InstructionMedia({
   type: "image" | "video";
 }) {
   const download = api.forms.getAttachmentDownload.useQuery({ attachmentId });
-  if (!download.data?.url) {
-    return <p className="text-sm text-muted-foreground">Loading media…</p>;
+  if (download.isPending) {
+    return (
+      <div aria-label="Instruction media loading" aria-busy="true">
+        <Skeleton className="h-56 w-full rounded-md sm:h-80" />
+      </div>
+    );
+  }
+  if (download.isError || !download.data.url) {
+    return (
+      <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        Instruction media could not be loaded.
+      </p>
+    );
   }
   return type === "image" ? (
     // eslint-disable-next-line @next/next/no-img-element -- private presigned form media
@@ -127,7 +139,23 @@ function PresetChoice({
       />
       <div className="max-h-56 overflow-y-auto rounded-md border border-white/10 bg-card/50 p-1">
         {catalog.isLoading ? (
-          <p className="p-3 text-sm text-muted-foreground">Loading options…</p>
+          <div aria-label="Form options loading" aria-busy="true">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                className="flex min-h-11 items-center gap-3 rounded px-3"
+                key={index}
+              >
+                <Skeleton
+                  className={
+                    multiple ? "size-4 rounded" : "size-4 rounded-full"
+                  }
+                />
+                <Skeleton
+                  className={index % 2 === 0 ? "h-4 w-2/3" : "h-4 w-1/2"}
+                />
+              </div>
+            ))}
+          </div>
         ) : catalog.data?.length ? (
           catalog.data.map((option) => {
             const selected = selectedValues.has(option.value);

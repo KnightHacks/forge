@@ -72,7 +72,7 @@ describe("development database backup sanitizer", () => {
     );
   });
 
-  it("keeps the approved Reforge configuration and team-owned tables", () => {
+  it("keeps the approved Forge configuration and team-owned tables", () => {
     expect(TABLES_TO_KEEP).toEqual(
       expect.arrayContaining([
         "auth_account",

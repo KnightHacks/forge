@@ -30,7 +30,7 @@ Status: Draft
 
 ## Data / migration / compatibility
 
-<!-- Data changes, config/admin tables, migration caveats, rollback/cutover notes if relevant. Separate migration.md only if this becomes too large. -->
+<!-- Data changes, config/admin tables, migration caveats, rollout and rollback notes if relevant. Separate migration.md only if this becomes too large. -->
 
 ## Discord integration
 

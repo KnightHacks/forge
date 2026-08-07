@@ -27,7 +27,6 @@ forge/
 │   ├── ui/            # Shared UI components
 │   ├── utils/         # Reusable non-UI helpers and integrations
 │   └── validators/    # Shared Zod schemas and validation helpers
-├── legacy/            # Behavioral reference; excluded from the workspace
 └── tooling/           # Shared configuration
     ├── eslint/        # ESLint config
     ├── prettier/      # Prettier config
@@ -35,27 +34,12 @@ forge/
     └── typescript/    # TypeScript config
 ```
 
-## Reforge Branch State
+## Workspace State
 
-`reforge/main` is the active Blade Reforge development line. Production
-maintenance continues on `main`; Reforge changes should preserve important
-production behavior without copying legacy file boundaries or known debt.
-
-The completed Reforge feature bundles currently cover:
-
-- initial member onboarding and profile editing;
-- the mobile member experience, member QR codes, and dues payments;
-- the admin member dashboard and Discord-backed role management; and
-- club event management, member event discovery, attendance, and check-in.
-
-The active API currently registers `auth`, `dues`, `event`, `forms`, `health`,
-`member`, `profilePicture`, `qr`, `resume`, and `roles` capabilities in
-`packages/api/src/root.ts`. Member-administration procedures are composed into
-the member capability rather than exposed as a separate root router.
-
-The `legacy/` tree is deliberately excluded from `pnpm-workspace.yaml`. Its
-`CURRENT.md` inventories are evidence for behavior that Reforge may need to
-preserve; legacy source is not an implementation target.
+The checked-in `apps/*`, `packages/*`, and `tooling/*` directories are the
+supported Forge source. Historical implementation snapshots are not shipped in
+the workspace; current behavior and compatibility requirements belong in code,
+tests, feature artifacts, and maintained documentation.
 
 ### The workspace gate is green — keep it that way
 
@@ -63,13 +47,7 @@ There is no longer an accepted baseline failure. The `guild` router is restored
 and registered, and every root command passes: `format`, `lint`, `typecheck`,
 `test`, and `build`.
 
-This section previously said the workspace gate failed at Guild and that
-targeted filtered commands were the authoritative validation instead. That
-guidance outlived the condition it described, and it cost something: run only
-filtered checks and a repo-wide failure has nowhere to surface. Three of the
-four gates were red on committed code for some time, including a test that
-correctly detects a permission-aware procedure with no declared audit policy.
-
+Root validation is authoritative; filtered checks are only a fast inner loop.
 Run the root commands. If one fails, the failure is real.
 
 ## How Apps Communicate
@@ -95,8 +73,7 @@ are frontend-only sites. Where they need platform data, they consume
 `@forge/api` capabilities exposed by Blade.
 
 - **club**: Reads member count and other club stats
-- **guild**: Will read member profiles once the intentionally absent Reforge
-  Guild capability is restored.
+- **guild**: Reads public member profiles and directory data through Blade.
 - **2025/bloomknights/gemiknights/khix**: Primarily static hackathon sites with
   minimal backend needs.
 
@@ -362,7 +339,7 @@ pnpm --filter=@forge/blade typecheck
 Filtered commands are useful for a fast inner loop, but the root commands are
 the authoritative validation — a repo-wide failure has nowhere to surface if you
 only ever run filtered ones. Meaningful Blade UI changes should also run
-`pnpm analyze:react:changed --base=reforge/main` and the relevant Playwright
+`pnpm analyze:react:changed` and the relevant Playwright
 specs. The main CI workflow does not run Blade Playwright tests.
 
 One caveat worth knowing: `pnpm lint` caches, and it will replay a stale failure

@@ -41,6 +41,7 @@ import {
   LandingFooter,
   landingPanelClassName as panelClassName,
 } from "~/app/_components/public/member-landing-support";
+import { PageEntrance, RevealOnView } from "~/app/_components/shared/motion";
 import { GUILD_URL } from "~/lib/guild-urls";
 import { auth } from "~/server/auth";
 
@@ -65,12 +66,24 @@ export default async function HomePage() {
       <Hero />
 
       <div className="relative z-10">
-        <MemberHomeIntro />
-        <EventsBand />
-        <CheckInBand />
-        <GuildBand />
-        <ContinuityPanel />
-        <ClosingCallToAction />
+        <RevealOnView>
+          <MemberHomeIntro />
+        </RevealOnView>
+        <RevealOnView>
+          <EventsBand />
+        </RevealOnView>
+        <RevealOnView>
+          <CheckInBand />
+        </RevealOnView>
+        <RevealOnView>
+          <GuildBand />
+        </RevealOnView>
+        <RevealOnView>
+          <ContinuityPanel />
+        </RevealOnView>
+        <RevealOnView>
+          <ClosingCallToAction />
+        </RevealOnView>
         <LandingFooter />
       </div>
     </main>
@@ -80,7 +93,7 @@ export default async function HomePage() {
 function Hero() {
   return (
     <section className="container relative z-10 grid min-h-[100svh] items-center gap-8 px-4 py-10 sm:px-8 md:grid-cols-[minmax(0,0.95fr)_minmax(20rem,0.8fr)] md:py-14 lg:gap-12">
-      <div className="space-y-7">
+      <PageEntrance className="space-y-7">
         <Image
           src="/blade-logo.svg"
           alt="Blade by Knight Hacks"
@@ -129,9 +142,12 @@ function Hero() {
             in.
           </p>
         </div>
-      </div>
+      </PageEntrance>
 
-      <div className="relative min-h-[20rem] sm:min-h-[26rem] md:min-h-[34rem]">
+      <PageEntrance
+        delay={100}
+        className="relative min-h-[20rem] sm:min-h-[26rem] md:min-h-[34rem]"
+      >
         <Image
           src="/tech-knight.png"
           alt="Tech Knight"
@@ -140,7 +156,7 @@ function Hero() {
           sizes="(min-width: 768px) 44vw, 92vw"
           className="object-contain object-center"
         />
-      </div>
+      </PageEntrance>
     </section>
   );
 }

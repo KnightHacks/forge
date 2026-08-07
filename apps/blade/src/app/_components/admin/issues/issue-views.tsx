@@ -428,6 +428,10 @@ export function IssueCalendarView({
 
 export function IssueKanbanView({ issues }: { issues: IssueWorkspaceItem[] }) {
   const statusState = useIssueStatus(issues);
+  const [draggedIssueId, setDraggedIssueId] = useState<string | null>(null);
+  const [targetStatus, setTargetStatus] = useState<
+    IssueWorkspaceItem["status"] | null
+  >(null);
   return (
     <section className="min-w-0" aria-label="Issue kanban board">
       <div className="grid min-w-[64rem] grid-cols-4 gap-3 overflow-x-auto pb-3 lg:min-w-0">
@@ -438,13 +442,27 @@ export function IssueKanbanView({ issues }: { issues: IssueWorkspaceItem[] }) {
           return (
             <section
               key={status}
-              className="min-w-0 rounded-lg border border-white/10 bg-card/95"
-              onDragOver={(event) => event.preventDefault()}
+              className={cn(
+                "min-w-0 rounded-lg border border-white/10 bg-card/95 transition-[border-color,background-color,box-shadow] duration-150 motion-reduce:transition-none",
+                draggedIssueId && targetStatus === status
+                  ? "border-primary/60 bg-primary/5 shadow-lg shadow-primary/5"
+                  : "",
+              )}
+              data-drop-target={
+                draggedIssueId && targetStatus === status ? "active" : undefined
+              }
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                if (targetStatus !== status) setTargetStatus(status);
+              }}
               onDrop={(event) => {
                 const issue = statusState.issues.find(
                   (item) =>
                     item.id === event.dataTransfer.getData("text/issue-id"),
                 );
+                setDraggedIssueId(null);
+                setTargetStatus(null);
                 if (issue) void statusState.changeStatus(issue, status);
               }}
             >
@@ -464,9 +482,20 @@ export function IssueKanbanView({ issues }: { issues: IssueWorkspaceItem[] }) {
               <div className="grid max-h-[65svh] gap-2 overflow-y-auto p-2">
                 {rows.map((issue) => (
                   <div
+                    className={cn(
+                      "rounded-md transition-[opacity,transform,box-shadow] duration-150 motion-reduce:transition-none",
+                      draggedIssueId === issue.id
+                        ? "scale-[1.015] opacity-70 shadow-xl motion-reduce:scale-100"
+                        : "",
+                    )}
                     draggable={issue.canEdit}
                     key={issue.id}
+                    onDragEnd={() => {
+                      setDraggedIssueId(null);
+                      setTargetStatus(null);
+                    }}
                     onDragStart={(event) => {
+                      setDraggedIssueId(issue.id);
                       event.dataTransfer.effectAllowed = "move";
                       event.dataTransfer.setData("text/issue-id", issue.id);
                     }}

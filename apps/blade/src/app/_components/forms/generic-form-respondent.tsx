@@ -12,6 +12,7 @@ import {
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
+import { Skeleton } from "@forge/ui/skeleton";
 
 import { formatClubLongDate } from "~/lib/dates";
 import { FormResponseValue } from "./form-response-value";
@@ -43,6 +44,45 @@ function formatDate(value: string) {
 }
 
 const NOTICE_ICON_CLASS = "mt-0.5 h-5 w-5 shrink-0";
+
+export function RespondentFormSkeleton() {
+  return (
+    <main
+      aria-label="Form loading"
+      aria-busy="true"
+      data-form-respondent-layout="mobile-first"
+      data-loading-surface="respondent-form"
+      className="container min-w-0 overflow-x-clip px-3 pb-28 pt-4 sm:px-4 sm:pb-16 sm:pt-10"
+    >
+      <Card className="mx-auto min-w-0 max-w-3xl gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
+        <CardHeader className="border-b border-border/70 p-4 sm:p-6">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <Skeleton className="h-6 w-28 rounded-full" />
+            <Skeleton className="h-11 w-40 rounded-md" />
+          </div>
+          <Skeleton className="h-9 w-3/4 max-w-lg" />
+          <Skeleton className="h-4 w-full max-w-xl" />
+          <Skeleton className="h-4 w-4/5 max-w-lg" />
+        </CardHeader>
+        <CardContent className="grid min-w-0 gap-5 p-3 sm:p-6">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div className="grid gap-2" key={index}>
+              <Skeleton className="h-4 w-40 max-w-[66%]" />
+              <Skeleton
+                className={
+                  index === 2
+                    ? "h-28 w-full rounded-md"
+                    : "h-11 w-full rounded-md"
+                }
+              />
+            </div>
+          ))}
+          <Skeleton className="h-11 w-full rounded-md sm:ml-auto sm:w-36" />
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
 
 /**
  * Copy for every state where the form exists but cannot be answered. Returns

@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Use for meaningful UI creation or reshaping in Forge, especially forms, builders, dashboards, data-dense response views, responsive workflows, dialogs, and interaction-state design. Applies the Forge and Blade design systems, legacy-flow mining, density strategy, and desktop/mobile verification.
+description: Use for meaningful UI creation or reshaping in Forge, especially forms, builders, dashboards, data-dense response views, responsive workflows, dialogs, and interaction-state design. Applies the Forge and Blade design systems, existing-flow mining, density strategy, and desktop/mobile verification.
 ---
 
 # Frontend Design

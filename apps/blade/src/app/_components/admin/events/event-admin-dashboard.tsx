@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -10,6 +10,7 @@ import {
   Copy,
   History,
   List,
+  Loader2,
   Pencil,
   Plus,
   RefreshCw,
@@ -495,6 +496,7 @@ export function EventAdminDashboard({
   tags = [],
 }: EventAdminDashboardProps & EventAdminActions) {
   const router = useRouter();
+  const [isNavigating, startTransition] = useTransition();
   const utils = api.useUtils();
   const createEvent = api.event.createEvent.useMutation();
   const updateEvent = api.event.updateEvent.useMutation();
@@ -628,9 +630,11 @@ export function EventAdminDashboard({
 
   function navigate(next: AdminEventInput, eventId: string | null = null) {
     const params = buildAdminEventSearchParams(next, eventId);
-    router.replace(
-      `/admin/events${params.size ? `?${params.toString()}` : ""}`,
-    );
+    startTransition(() => {
+      router.replace(
+        `/admin/events${params.size ? `?${params.toString()}` : ""}`,
+      );
+    });
   }
 
   function openEvent(eventId: string) {
@@ -994,51 +998,74 @@ export function EventAdminDashboard({
           </section>
         )}
 
+      {isNavigating && (input.view === "list" || input.view === "calendar") ? (
+        <div
+          aria-live="polite"
+          className="flex items-center gap-2 rounded-md border border-white/10 bg-primary/5 px-4 py-2 text-sm text-muted-foreground"
+        >
+          <Loader2
+            className="size-4 animate-spin motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+          Updating events
+        </div>
+      ) : null}
+
       {input.view === "list" && canRead && data && (
-        <EventListView
-          access={access}
-          data={data}
-          input={input}
-          onChangeInput={(next) => navigate(next)}
-          onDuplicate={(event) => openForm("duplicate", event)}
-          onEdit={(event) => openForm("edit", event)}
-          onOpen={openEvent}
-          onRepair={repairFromList}
-          repairingEventId={repairingEventId}
-        />
+        <div
+          aria-busy={isNavigating}
+          className={`transition-opacity duration-150 motion-reduce:transition-none ${isNavigating ? "opacity-70" : ""}`}
+        >
+          <EventListView
+            access={access}
+            data={data}
+            input={input}
+            onChangeInput={(next) => navigate(next)}
+            onDuplicate={(event) => openForm("duplicate", event)}
+            onEdit={(event) => openForm("edit", event)}
+            onOpen={openEvent}
+            onRepair={repairFromList}
+            repairingEventId={repairingEventId}
+          />
+        </div>
       )}
 
       {input.view === "calendar" && canRead && data && (
-        <EventCalendar
-          events={data.events}
-          initialView={input.calendarMode}
-          initialDate={
-            input.calendarStart && input.calendarEnd
-              ? new Date(
-                  (Date.parse(input.calendarStart) +
-                    Date.parse(input.calendarEnd)) /
-                    2,
-                ).toISOString()
-              : undefined
-          }
-          onOpenEvent={openEvent}
-          onRangeChange={({ end, start, view }) => {
-            if (
-              input.calendarStart === start &&
-              input.calendarEnd === end &&
-              input.calendarMode === view
-            ) {
-              return;
+        <div
+          aria-busy={isNavigating}
+          className={`transition-opacity duration-150 motion-reduce:transition-none ${isNavigating ? "opacity-70" : ""}`}
+        >
+          <EventCalendar
+            events={data.events}
+            initialView={input.calendarMode}
+            initialDate={
+              input.calendarStart && input.calendarEnd
+                ? new Date(
+                    (Date.parse(input.calendarStart) +
+                      Date.parse(input.calendarEnd)) /
+                      2,
+                  ).toISOString()
+                : undefined
             }
-            navigate({
-              ...input,
-              calendarEnd: end,
-              calendarMode: view,
-              calendarStart: start,
-              page: 1,
-            });
-          }}
-        />
+            onOpenEvent={openEvent}
+            onRangeChange={({ end, start, view }) => {
+              if (
+                input.calendarStart === start &&
+                input.calendarEnd === end &&
+                input.calendarMode === view
+              ) {
+                return;
+              }
+              navigate({
+                ...input,
+                calendarEnd: end,
+                calendarMode: view,
+                calendarStart: start,
+                page: 1,
+              });
+            }}
+          />
+        </div>
       )}
 
       {input.view === "tags" && canEdit && (

@@ -194,6 +194,49 @@ function PaymentSkeleton() {
   );
 }
 
+export function MemberDuesSkeleton() {
+  return (
+    <main
+      aria-label="Member dues loading"
+      aria-busy="true"
+      data-loading-surface="member-dues"
+      className="container py-7 md:py-10"
+    >
+      <div className="mx-auto max-w-5xl space-y-5 md:space-y-7">
+        <Skeleton className="h-11 w-28 rounded-md" />
+
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64 max-w-full md:h-14 md:w-96" />
+          <Skeleton className="h-5 w-full max-w-xl" />
+        </div>
+
+        <Card
+          className={cn(
+            duesPaymentCardClass,
+            "mx-auto min-h-[clamp(36rem,calc(100svh-10rem),46rem)] w-full gap-0 overflow-hidden",
+          )}
+        >
+          <CardHeader className="border-b border-border/70 px-5 py-5 md:px-6">
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-5 p-4 md:p-6 lg:p-8">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+              <Skeleton className="h-32 w-full rounded-md" />
+              <Skeleton className="h-32 w-full rounded-md" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-11 w-full rounded-md" />
+              <Skeleton className="h-14 w-full rounded-md" />
+              <Skeleton className="h-32 w-full rounded-md" />
+              <Skeleton className="h-11 w-full rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  );
+}
+
 function PaymentSetupError({
   message,
   onRetry,

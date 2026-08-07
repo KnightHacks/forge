@@ -149,6 +149,28 @@ describe("EventFeedbackDialog", () => {
     expect(html).not.toContain("Save changes");
   });
 
+  it("keeps feedback submission visibly pending and prevents another submit", () => {
+    const html = renderToStaticMarkup(
+      createElement(EventFeedbackDialog, {
+        definition,
+        event,
+        onClose: vi.fn(),
+        onSubmit: vi.fn(),
+        open: true,
+        state: {
+          closesAt: "2026-08-29T23:00:00.000Z",
+          rewardAmount: 5,
+          status: "available" as const,
+        },
+        submitting: true,
+      }),
+    );
+
+    expect(html).toContain('aria-busy="true"');
+    expect(html).toContain("Submitting feedback");
+    expect(html).toContain("disabled");
+  });
+
   it("TC-052 preserves completed/reward copy when the retained answer was deleted", () => {
     const html = renderToStaticMarkup(
       createElement(EventFeedbackDialog, {

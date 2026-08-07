@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ExternalLink,
@@ -57,6 +57,7 @@ import { EmploymentHistoryEditor } from "~/app/_components/member/employment-his
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
+import { RevealOnView } from "~/app/_components/shared/motion";
 import { GUILD_URL } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 
@@ -100,63 +101,6 @@ const sectionMeta = {
   SignupSection,
   { description: ReactNode; icon: typeof UserRound; title: string }
 >;
-
-function RevealOnView({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    if (
-      !("IntersectionObserver" in window) ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      const frame = window.requestAnimationFrame(() => setIsVisible(true));
-      return () => window.cancelAnimationFrame(frame);
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-
-        setIsVisible(true);
-        observer.disconnect();
-      },
-      {
-        rootMargin: "0px 0px -12% 0px",
-        threshold: 0.14,
-      },
-    );
-
-    observer.observe(node);
-
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "transition duration-500 ease-out motion-reduce:transition-none",
-        isVisible ? "opacity-100" : "opacity-0",
-        className,
-      )}
-      style={{ transitionDelay: isVisible ? `${delay}ms` : "0ms" }}
-    >
-      {children}
-    </div>
-  );
-}
 
 // `memberFormSchema` covers the whole member profile, including fields only the
 // settings page collects, so its parsed output carries keys the signup form

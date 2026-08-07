@@ -54,6 +54,35 @@ function badgeVariant(provider: ProviderHealth) {
   return "secondary" as const;
 }
 
+function PublicationProgress({ provider }: { provider: ProviderHealth }) {
+  if (provider.status !== "publishing" && provider.status !== "removing") {
+    return null;
+  }
+
+  const total = provider.counts.total;
+  const complete = Math.min(provider.counts.converged, total);
+  const percent = total === 0 ? 0 : Math.round((complete / total) * 100);
+
+  return (
+    <div
+      aria-label={`${LABELS[provider.provider]} publication progress`}
+      aria-valuemax={Math.max(total, 1)}
+      aria-valuemin={0}
+      aria-valuenow={total === 0 ? undefined : complete}
+      aria-valuetext={
+        total === 0 ? "Preparing events" : `${complete} of ${total} events`
+      }
+      className="h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:w-28"
+      role="progressbar"
+    >
+      <div
+        className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out motion-reduce:transition-none"
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+  );
+}
+
 export function PublicationControls({
   canEdit,
   hackathonId,
@@ -170,7 +199,10 @@ export function PublicationControls({
             </Badge>
           );
           return (
-            <div className="flex items-center gap-2" key={provider.provider}>
+            <div
+              className="flex flex-wrap items-center gap-x-2 gap-y-1"
+              key={provider.provider}
+            >
               <Switch
                 aria-label={LABELS[provider.provider] + " calendar publication"}
                 checked={provider.desiredEnabled}
@@ -243,6 +275,7 @@ export function PublicationControls({
               ) : (
                 status
               )}
+              <PublicationProgress provider={provider} />
             </div>
           );
         })}

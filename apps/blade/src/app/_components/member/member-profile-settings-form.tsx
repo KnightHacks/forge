@@ -291,9 +291,14 @@ export function MemberProfileSettingsForm({
   );
 }
 
-function MemberProfileSettingsSkeleton() {
+export function MemberProfileSettingsSkeleton() {
   return (
-    <main className="container pb-40 pt-6 md:pb-16 md:pt-12">
+    <main
+      aria-label="Member settings loading"
+      aria-busy="true"
+      data-loading-surface="member-settings"
+      className="container pb-40 pt-6 md:pb-16 md:pt-12"
+    >
       <div className="mx-auto max-w-5xl space-y-5 md:space-y-8">
         <div className="space-y-4 md:space-y-5">
           <Skeleton className="h-9 w-32" />

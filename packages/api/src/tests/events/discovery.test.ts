@@ -77,7 +77,7 @@ describe("event discovery policy", () => {
     ).toEqual(["00000000-0000-4000-8000-000000000120"]);
   });
 
-  it("keeps future legacy events discoverable during the Reforge cutover", () => {
+  it("keeps future historical events discoverable", () => {
     const futureLegacy = eventRecord({
       id: EVENT_IDS.legacy,
       legacy: true,

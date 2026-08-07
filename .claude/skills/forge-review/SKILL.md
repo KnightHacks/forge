@@ -1,16 +1,12 @@
 ---
 name: forge-review
-description: Reviews a working diff or branch in Forge with scope-derived agents, running the static gate first and refusing to spend agents on a red diff. Use this whenever someone asks to review, check, sanity-check, or look over their changes, before committing meaningful work, before opening a PR, before merging toward reforge/main, and at cutover. Especially important when a procedure was removed or renamed, or when the work was written by an agent and nobody has read it. CI does not run on reforge/main, so this is the substitute.
+description: Reviews a working diff or branch in Forge with scope-derived agents, running the static gate first and refusing to spend agents on a red diff. Use this whenever someone asks to review, check, sanity-check, or look over changes; before committing meaningful work, opening a PR, or merging; and especially when a procedure was removed or renamed or agent-written work has not received human review.
 ---
 
 # Forge Review
 
-CI does not run on `reforge/main`. `.github/workflows/ci.yml` triggers on pull
-requests and on pushes to `main` only, and Reforge merges locally, so 88 commits
-reached this branch without a single CI execution. Three of the four quality
-gates were red on committed code before anyone noticed.
-
-This skill is the substitute. Treat a red result the way you would treat red CI.
+Run the local static gate before allocating judgment-heavy review. This skill
+complements CI; treat a red local result with the same seriousness as red CI.
 
 ## Run the static gate first, and stop if it fails
 
@@ -81,8 +77,8 @@ Default to **standard**. Say which tier you ran.
   agents. This is the default.
 - **deep** — standard plus an adversarial pass: every finding goes to a separate
   agent instructed to **refute** it, and a finding that cannot survive is
-  dropped. Reserve for cutover, merges toward `main`, and anything touching auth,
-  payments, migrations, or uploads.
+  dropped. Reserve for changes touching auth, payments, data migrations,
+  uploads, cross-package contract removals, or other broad production risk.
 
 Adversarial verification is not ceremony. On the dead-code audit it killed 8 of
 roughly 85 candidates, including several that every mechanical signal called dead.

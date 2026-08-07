@@ -148,7 +148,10 @@ export function CheckInResultDialog({
       >
         {result && outcome ? (
           <>
-            <DialogHeader className="shrink-0 border-b border-border/70 bg-background/40 px-4 py-4 pr-16 text-left sm:px-6 sm:py-5 sm:pr-16">
+            <DialogHeader
+              aria-live="assertive"
+              className="animate-in fade-in slide-in-from-top-1 shrink-0 border-b border-border/70 bg-background/40 px-4 py-4 pr-16 text-left duration-200 motion-reduce:animate-none sm:px-6 sm:py-5 sm:pr-16"
+            >
               <div className="flex items-start gap-3">
                 {outcome.tone === "success" ? (
                   <CheckCircle2

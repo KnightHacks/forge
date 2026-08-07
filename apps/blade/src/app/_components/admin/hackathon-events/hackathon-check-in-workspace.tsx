@@ -20,6 +20,7 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Skeleton } from "@forge/ui/skeleton";
 import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
@@ -225,6 +226,66 @@ export function showHackathonRepeatControl(
   return !primary && mode === "scanner";
 }
 
+function CheckInWorkspaceSkeleton() {
+  return (
+    <section
+      aria-label="Loading hackathon check-in station"
+      className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]"
+    >
+      <Card className="min-w-0 border-white/10 bg-card/95 shadow-2xl shadow-black/25">
+        <CardHeader>
+          <Skeleton className="h-6 w-24" />
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+          </div>
+          <Skeleton className="h-14" />
+          <Skeleton className="h-12" />
+          <Skeleton className="h-11" />
+          <Skeleton className="h-40" />
+        </CardContent>
+      </Card>
+      <Card className="min-w-0 border-white/10 bg-card/95 shadow-xl shadow-black/20">
+        <CardHeader className="grid gap-2">
+          <Skeleton className="h-6 w-36" />
+          <Skeleton className="h-4 w-56 max-w-full" />
+        </CardHeader>
+        <CardContent className="grid gap-0 px-0 py-0">
+          {Array.from({ length: 5 }, (_, index) => (
+            <div
+              className="grid gap-2 border-t border-border/70 px-4 py-3 first:border-t-0"
+              key={index}
+            >
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+function CheckInHistorySkeleton() {
+  return (
+    <div aria-label="Loading recent check-in history">
+      {Array.from({ length: 5 }, (_, index) => (
+        <div
+          className="grid gap-2 border-t border-border/70 px-4 py-3 first:border-t-0"
+          key={index}
+        >
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function HackathonCheckInWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -275,6 +336,9 @@ export function HackathonCheckInWorkspace() {
   );
   const [result, setResult] = useState<HackathonCheckInResult | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
+  const [highlightedAttemptId, setHighlightedAttemptId] = useState<
+    string | null
+  >(null);
   const scanning = useRef(false);
   const generation = useRef(0);
   const handledQrPayloads = useRef(new Set<string>());
@@ -318,6 +382,15 @@ export function HackathonCheckInWorkspace() {
     return () => window.clearInterval(interval);
   }, [cameraOpen]);
 
+  useEffect(() => {
+    if (!highlightedAttemptId) return;
+    const timeout = window.setTimeout(
+      () => setHighlightedAttemptId(null),
+      1800,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [highlightedAttemptId]);
+
   function replaceSelection(hackathonId: string, eventId?: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("hackathon", hackathonId);
@@ -327,15 +400,15 @@ export function HackathonCheckInWorkspace() {
   }
 
   function present(value: unknown) {
-    setResult(
-      adaptResult(
-        value,
-        selectedEvent
-          ? { name: selectedEvent.name, purpose: selectedEvent.purpose }
-          : undefined,
-      ),
+    const nextResult = adaptResult(
+      value,
+      selectedEvent
+        ? { name: selectedEvent.name, purpose: selectedEvent.purpose }
+        : undefined,
     );
+    setResult(nextResult);
     setResultOpen(true);
+    return nextResult;
   }
 
   async function submit(
@@ -354,7 +427,10 @@ export function HackathonCheckInWorkspace() {
         hackathonId: selectedHackathon.id,
       });
       if (requestGeneration !== generation.current) return;
-      present(next);
+      const presented = present(next);
+      if (presented.attemptId !== "unknown") {
+        setHighlightedAttemptId(presented.attemptId);
+      }
       void history.refetch().catch(() => undefined);
     } catch {
       if (requestGeneration !== generation.current) return;
@@ -373,6 +449,27 @@ export function HackathonCheckInWorkspace() {
       hackathonId: selectedHackathon.id,
     });
     present(attempt);
+  }
+
+  const stationLoading =
+    hackathons.isPending ||
+    (selectedHackathon !== null && eventData.isPending && !eventData.data);
+
+  if (stationLoading) {
+    return (
+      <main
+        className={adminPageLayoutClassName}
+        data-testid="hackathon-check-in-workspace"
+      >
+        <AdminPageHeader
+          description="Select a hackathon and event, set this station's class policy, then scan or search."
+          eyebrow={ADMIN_PAGE_EYEBROWS.hackathonCheckIn}
+          icon={ScanLine}
+          title="Hackathon Check-in"
+        />
+        <CheckInWorkspaceSkeleton />
+      </main>
+    );
   }
 
   return (
@@ -545,7 +642,10 @@ export function HackathonCheckInWorkspace() {
                   <UserCheck className="size-4" aria-hidden="true" /> Manual
                 </TabsTrigger>
               </TabsList>
-              <TabsContent className="mt-4 grid gap-4" value="scanner">
+              <TabsContent
+                className="data-[state=active]:animate-in data-[state=active]:fade-in mt-4 grid gap-4 data-[state=active]:duration-150 motion-reduce:animate-none"
+                value="scanner"
+              >
                 <Button
                   className="min-h-11 gap-2"
                   disabled={!stationReady || checkIn.isPending || resultOpen}
@@ -568,7 +668,7 @@ export function HackathonCheckInWorkspace() {
                   {cameraOpen ? "Close scanner" : "Open scanner"}
                 </Button>
                 {cameraOpen ? (
-                  <div className="overflow-hidden rounded-md border border-white/10 bg-background/60 p-2">
+                  <div className="animate-in fade-in overflow-hidden rounded-md border border-white/10 bg-background/60 p-2 duration-200 motion-reduce:animate-none">
                     <Scanner
                       allowMultiple={CHECK_IN_QR_SCANNER_OPTIONS.allowMultiple}
                       components={{
@@ -608,7 +708,10 @@ export function HackathonCheckInWorkspace() {
                   </div>
                 ) : null}
               </TabsContent>
-              <TabsContent className="mt-4 grid gap-3" value="manual">
+              <TabsContent
+                className="data-[state=active]:animate-in data-[state=active]:fade-in mt-4 grid gap-3 data-[state=active]:duration-150 motion-reduce:animate-none"
+                value="manual"
+              >
                 <div className="grid gap-2">
                   <Label htmlFor="hackathon-hacker-search">Hacker</Label>
                   <Input
@@ -695,15 +798,19 @@ export function HackathonCheckInWorkspace() {
           </CardHeader>
           <CardContent className="px-0 py-0">
             {history.isPending ? (
-              <p className="flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                Loading history…
-              </p>
+              <CheckInHistorySkeleton />
             ) : historyRows.length ? (
               <>
                 <ol className="max-h-[22rem] divide-y divide-border/70 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
                   {historyRows.map((attempt) => (
-                    <li key={attempt.attemptId}>
+                    <li
+                      className={`transition-colors duration-700 motion-reduce:transition-none ${
+                        highlightedAttemptId === attempt.attemptId
+                          ? "bg-primary/15 ring-1 ring-inset ring-primary/35"
+                          : ""
+                      }`}
+                      key={attempt.attemptId}
+                    >
                       <button
                         className="min-h-11 w-full min-w-0 px-4 py-3 text-left hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         onClick={() => void reopenAttempt(attempt.attemptId)}

@@ -1,8 +1,6 @@
 # Local quality gates.
 #
-# `reforge/main` is a staging branch and CI only runs on `main` and pull
-# requests, so on this branch these hooks are the only automated checks that ever
-# run. They mirror the CI jobs deliberately.
+# These hooks mirror the CI jobs so contributors catch failures before pushing.
 #
 # The split matters: a pre-commit hook that runs the whole gate gets slow, people
 # learn `--no-verify`, and the hook becomes decoration. Commit-time work is
@@ -26,7 +24,6 @@ pre-push:
     - name: verify
       run: pnpm verify:push
 
-    # CI runs this as its own job. Included because nothing else will run it
-    # before this code reaches a branch other people build on.
+    # CI runs this as its own job; keep the local push gate aligned with it.
     - name: test
       run: pnpm test

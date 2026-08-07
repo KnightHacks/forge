@@ -23,6 +23,7 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { MarkdownContent } from "@forge/ui/markdown-content";
+import { Skeleton } from "@forge/ui/skeleton";
 import { EVENT_DISCORD_NO_PROJECTION_CONFIRMATION } from "@forge/validators";
 
 import type { EventAdminAccess, EventDetailData } from "./types";
@@ -58,10 +59,35 @@ function EventFeedbackAdmin({
 
   if (feedback.isLoading) {
     return (
-      <section className="rounded-md border border-white/10 bg-background/60 p-4 lg:col-span-2">
-        <p className="text-sm text-muted-foreground" role="status">
-          Loading event feedback…
-        </p>
+      <section
+        aria-label="Event feedback loading"
+        aria-busy="true"
+        className="rounded-md border border-white/10 bg-background/60 p-3 sm:p-4 lg:col-span-2"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-10 w-32 rounded-md" />
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              className="rounded-md border border-white/10 bg-card/60 p-3"
+              key={index}
+            >
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-3 h-8 w-16" />
+              <Skeleton className="mt-3 h-2 w-full rounded-full" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 space-y-2">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-12 w-full rounded-md" />
+          <Skeleton className="h-12 w-full rounded-md" />
+        </div>
       </section>
     );
   }

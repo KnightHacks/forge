@@ -77,7 +77,7 @@ export function eventDeletionIssueHistoryRows({
 }) {
   return issueIds.map((issueId) => ({
     action: "event_unlinked",
-    actorDisplayName: "Reforge system",
+    actorDisplayName: "Forge system",
     actorId: null,
     after: { eventId: null },
     before: { eventId },

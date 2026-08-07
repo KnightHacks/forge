@@ -20,8 +20,7 @@ import { DISCORD } from "@forge/consts";
 
 const workspaceRoot = new URL("../../../../", import.meta.url);
 
-// Only each workspace member's `src` directory is walked, which is what keeps
-// the top-level `legacy/` tree out of the scan by construction.
+// Only each workspace member's `src` directory is walked.
 const SCAN_ROOTS = ["apps", "packages"];
 const SKIPPED_DIRECTORIES = new Set(["node_modules", "dist", "tests"]);
 

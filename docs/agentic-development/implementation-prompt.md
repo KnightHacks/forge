@@ -36,7 +36,7 @@ Use these during code implementation and validation. Do not substitute spec/SRD/
 | Frontend design  | `.claude/skills/frontend-design`  | Any meaningful UI creation, reshaping, dashboard, form, data-display, responsive, or interaction work.                         |
 | React analyzer   | `.claude/skills/react-analyzer`   | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`.           |
 | Playwright skill | `.claude/skills/playwright-skill` | Agent-driven browser verification of implemented UI flows, forms, responsive behavior, or runtime UX.                          |
-| Forge review     | `.claude/skills/forge-review`     | Reviewing a diff or branch before committing meaningful work, before a PR, or at cutover.                                      |
+| Forge review     | `.claude/skills/forge-review`     | Reviewing a diff or branch before committing meaningful work, before a PR, or before merging.                                  |
 | Deslop           | `.claude/skills/deslop`           | Reviewing user-facing copy, comments, or `status.md` prose for AI-sounding filler.                                             |
 
 ### Out of scope for this prompt
@@ -121,4 +121,4 @@ pnpm --filter=@forge/api typecheck
 pnpm --filter=@forge/db typecheck
 ```
 
-Before pushing Reforge work, `pnpm verify:push` should pass unless a blocker is explicitly documented. Before committing meaningful React changes, run `pnpm analyze:react:changed`; use `pnpm analyze:react <path>`, `pnpm analyze:react:all`, or filtered package scripts for broader frontend analysis. For high-value UI flows, run the owning app's `e2e` script or use the Playwright skill for targeted browser verification. Do not claim a command passed unless it actually ran and passed.
+Before pushing, `pnpm verify:push` should pass unless a blocker is explicitly documented. Before committing meaningful React changes, run `pnpm analyze:react:changed`; use `pnpm analyze:react <path>`, `pnpm analyze:react:all`, or filtered package scripts for broader frontend analysis. For high-value UI flows, run the owning app's `e2e` script or use the Playwright skill for targeted browser verification. Do not claim a command passed unless it actually ran and passed.

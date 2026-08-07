@@ -28,6 +28,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 import { HACKER_STATUS_LABELS } from "@forge/validators";
@@ -78,6 +79,54 @@ function statusLabel(status: string) {
   return Object.hasOwn(HACKER_STATUS_LABELS, status)
     ? HACKER_STATUS_LABELS[status as SendingStatus]
     : "Checked in";
+}
+
+function HackerDetailSkeleton() {
+  return (
+    <div aria-label="Applicant details loading" aria-busy="true">
+      <DialogHeader className="border-b border-border/70 bg-background/40 px-4 py-4 sm:px-6">
+        <DialogTitle className="sr-only">Applicant</DialogTitle>
+        <DialogDescription className="sr-only">
+          Loading applicant details.
+        </DialogDescription>
+        <div className="flex items-start gap-3" aria-hidden="true">
+          <Skeleton className="size-12 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-7 w-56 max-w-full" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </DialogHeader>
+      <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-2" aria-hidden="true">
+        {Array.from({ length: 4 }).map((_, section) => (
+          <section
+            className="overflow-hidden rounded-md border border-white/10 bg-background/60"
+            key={section}
+          >
+            <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+              <Skeleton className="size-5 rounded" />
+              <Skeleton className="h-5 w-36" />
+            </div>
+            <div className="grid gap-3 p-4">
+              {Array.from({ length: section === 0 ? 5 : 3 }).map((_, row) => (
+                <div
+                  className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-3"
+                  key={row}
+                >
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -189,32 +238,18 @@ export function HackerDetailDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={attendeeId !== null}>
       <DialogContent className="z-[60] h-[100svh] max-h-[100svh] w-screen max-w-none gap-0 overflow-y-auto overflow-x-hidden rounded-none border-0 bg-card p-0 shadow-2xl motion-reduce:animate-none sm:h-auto sm:max-h-[92svh] sm:w-[calc(100svw-1rem)] sm:max-w-5xl sm:rounded-lg sm:border sm:border-white/10">
-        {/*
-          Always rendered, even while loading or on failure. A DialogContent
-          without a DialogTitle is an unnamed dialog to a screen reader, and
-          Radix logs it.
-        */}
-        {hacker ? null : (
-          <DialogHeader>
-            <DialogTitle>
-              {detail.isError ? "Could not load applicant" : "Applicant"}
-            </DialogTitle>
-            <DialogDescription>
-              {detail.isError ? detail.error.message : "Loading their record…"}
-            </DialogDescription>
+        {detail.isError ? (
+          <DialogHeader className="px-4 py-4 sm:px-6">
+            <DialogTitle>Could not load applicant</DialogTitle>
+            <DialogDescription>{detail.error.message}</DialogDescription>
           </DialogHeader>
-        )}
-
-        {detail.isPending ? (
-          <p className="flex items-center gap-2 py-8 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            Loading applicant…
-          </p>
         ) : null}
+
+        {detail.isPending ? <HackerDetailSkeleton /> : null}
 
         {detail.isError ? (
           <Button
-            className="min-h-11 justify-self-start"
+            className="mx-4 mb-4 min-h-11 justify-self-start sm:mx-6 sm:mb-6"
             onClick={() => void detail.refetch()}
             variant="secondary"
           >

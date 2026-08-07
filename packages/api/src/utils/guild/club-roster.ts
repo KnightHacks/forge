@@ -12,10 +12,9 @@ import {
 } from "./club-team-config";
 
 // Backs the public Club site's team page, which reads it over HTTP tRPC because
-// apps/club builds with `output: "export"` and has no server runtime. Reforge's
-// guild router rewrite dropped this, so the Club roster rendered empty; it is
-// restored here rather than inline because the role-bucketing rules below are
-// the bulk of the logic and are worth testing without a tRPC context.
+// apps/club builds with `output: "export"` and has no server runtime. This stays
+// outside the router because the role-bucketing rules below are the bulk of the
+// logic and are worth testing without a tRPC context.
 //
 // Which teams exist, and which role belongs to which, used to be constants in
 // `@forge/consts` matched against `Roles.name`. Both now come from

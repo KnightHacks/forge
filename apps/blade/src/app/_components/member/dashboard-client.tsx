@@ -23,9 +23,14 @@ import {
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { api } from "~/trpc/react";
 
-function DashboardSkeleton() {
+export function DashboardSkeleton() {
   return (
-    <main className="container py-4 md:py-8 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-stretch">
+    <main
+      aria-label="Member dashboard loading"
+      aria-busy="true"
+      data-loading-surface="member-dashboard"
+      className="container py-4 md:py-8 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-stretch"
+    >
       <section className={dashboardGridClass}>
         <Card
           role="region"

@@ -102,3 +102,11 @@ a {
     transform: rotate(-360deg) scale(10);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  /* Loading copy remains visible, so the status does not rely on rotation. */
+  .animate-spin,
+  .moving-border {
+    animation: none !important;
+  }
+}

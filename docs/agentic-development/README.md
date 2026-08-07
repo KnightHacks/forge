@@ -1,6 +1,6 @@
 # Agentic Development Framework
 
-This is the active development framework for Blade Reforge work.
+This is the active development framework for Forge work.
 
 ## What this is
 
@@ -54,7 +54,7 @@ Owns the technical truth needed to build consistently:
 - tRPC/API procedure expectations
 - validator/schema expectations
 - compatibility constraints
-- rollout/cutover notes
+- rollout and rollback notes
 - migration constraints if production data is involved
 
 A separate `interfaces.md`, `design.md`, or `migration.md` should exist only when that concern becomes too large for the SRD.
@@ -119,9 +119,8 @@ Do not update every Markdown file for every change.
 
 Tiny non-behavioral changes may not need this workflow.
 
-## Reforge branch policy
+## Branch policy
 
-- `main` remains current production/current dev-team delivery.
-- Reforge implementation stays off `main` until cutover.
-- Reforge work targets `reforge/main` through reviewed `reforge/*` branches.
-- The eventual merge to `main` is a release/cutover review, not first-pass implementation review.
+- Create a task branch before implementation; do not work directly on `main`.
+- Keep meaningful changes reviewable and merge them only after the relevant local and CI gates pass.
+- Document important conflict resolutions and release constraints in the feature's `status.md`.

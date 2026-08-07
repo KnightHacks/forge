@@ -279,7 +279,7 @@ async function findTagTable(client: Client): Promise<string> {
 }
 
 describe("event management migration contract", () => {
-  it("TC-NEG-010 includes one reviewed legacy-to-Reforge migration", async () => {
+  it("TC-NEG-010 includes one reviewed event-platform migration", async () => {
     const migration = findEventMigration(await readMigrations());
     expect(migration?.name).toMatch(/^\d{4}_.+\.sql$/);
   });
@@ -561,7 +561,7 @@ describe.runIf(runDatabaseContract)(
           `UPDATE "knight_hacks_event"
               SET "discord_sync_state" = 'synced'
             WHERE "id" = $1`,
-          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+          [requireRow(inserted.rows[0], "inserted Forge event").id],
         ),
       ).rejects.toThrow();
 
@@ -572,7 +572,7 @@ describe.runIf(runDatabaseContract)(
                   "discord_applied_revision" = "sync_revision",
                   "discord_sync_state" = 'synced'
             WHERE "id" = $1`,
-          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+          [requireRow(inserted.rows[0], "inserted Forge event").id],
         ),
       ).rejects.toThrow();
 
@@ -584,7 +584,7 @@ describe.runIf(runDatabaseContract)(
                   "discord_applied_entity_type" = 'external',
                   "discord_sync_state" = 'synced'
             WHERE "id" = $1`,
-          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+          [requireRow(inserted.rows[0], "inserted Forge event").id],
         ),
       ).rejects.toThrow();
 
@@ -597,7 +597,7 @@ describe.runIf(runDatabaseContract)(
                   "google_applied_calendar_id" = 'public-calendar',
                   "google_sync_state" = 'synced'
             WHERE "id" = $1`,
-          [requireRow(inserted.rows[0], "inserted Reforge event").id],
+          [requireRow(inserted.rows[0], "inserted Forge event").id],
         ),
       ).rejects.toThrow();
 

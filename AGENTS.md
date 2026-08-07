@@ -1,12 +1,10 @@
-# Reforge Branch Notice
+# Forge Agent Instructions
 
-This branch is the Blade Reforge development branch. Do not assume files here match production `main`. Current production Blade maintenance should happen on `main`, not this branch. Reforge work follows `docs/agentic-development/README.md` and `docs/agentic-development/forge-engineering-principles.md`. When changing shared packages, document compatibility with current `main`. For meaningful React changes, run `pnpm analyze:react:changed` before committing.
+Forge work follows `docs/agentic-development/README.md` and `docs/agentic-development/forge-engineering-principles.md`. Develop on a task branch rather than directly on `main`. When changing shared packages, verify every affected consumer. For meaningful React changes, run `pnpm analyze:react:changed` before committing.
 
----
+## Feature artifacts
 
-## Reforge feature artifacts
-
-For Reforge feature/change planning, use `.forge/features/<feature-slug>/` bundles:
+For meaningful feature/change planning, use `.forge/features/<feature-slug>/` bundles:
 
 ```txt
 .forge/features/<feature-slug>/
@@ -27,8 +25,6 @@ Before filling or implementing a bundle, read `docs/agentic-development/README.m
 ## Frontend design work
 
 For meaningful UI work, follow `docs/agentic-development/frontend-design-skill.md` before implementation. For Blade UI work, read `apps/blade/DESIGN_SYSTEM.md` as the active design contract before changing layouts, colors, cards, forms, dashboards, navigation, icons, animation, or profile/upload UI. Treat the active design system as a product constraint: use the existing tokens, components, and visual language first, then make one deliberate domain-specific move that fits Knight Hacks. Check real screenshots before calling UI work done.
-
-# Forge Agent Instructions
 
 Instructions for AI coding agents working in Forge, including Codex, Claude Code, and similar tools.
 

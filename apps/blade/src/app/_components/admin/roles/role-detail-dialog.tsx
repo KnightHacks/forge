@@ -253,8 +253,8 @@ export function RoleDetailDialog({
                         key={blocker.eventId}
                         className="break-all text-sm text-muted-foreground"
                       >
-                        Hackathon event {blocker.eventId} requires maintenance;
-                        hackathon event editing is not available in Reforge yet.
+                        Hackathon event {blocker.eventId} must be updated from
+                        the Hackathon Events workspace.
                       </p>
                     ),
                   )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Gift, LockKeyhole } from "lucide-react";
+import { CheckCircle2, Gift, Loader2, LockKeyhole } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -160,6 +160,7 @@ export function EventFeedbackDialog({
   onSubmit,
   open,
   state,
+  submitting = false,
 }: {
   definition: EventFeedbackDefinition;
   error?: string | null;
@@ -177,6 +178,7 @@ export function EventFeedbackDialog({
   }) => void;
   open: boolean;
   state: EventFeedbackDialogState;
+  submitting?: boolean;
 }) {
   const formText = (value: FormDataEntryValue | null) =>
     typeof value === "string" ? value : "";
@@ -211,9 +213,11 @@ export function EventFeedbackDialog({
 
         {state.status === "available" ? (
           <form
+            aria-busy={submitting}
             className="grid min-w-0 gap-4 overflow-y-auto p-4 sm:p-6"
             onSubmit={(formEvent) => {
               formEvent.preventDefault();
+              if (submitting) return;
               const data = new FormData(formEvent.currentTarget);
               const coreQuestionIds = new Set([
                 "overall",
@@ -273,8 +277,15 @@ export function EventFeedbackDialog({
               <Button
                 type="submit"
                 className="min-h-11 w-full focus-visible:ring-2 sm:w-auto"
+                disabled={submitting}
               >
-                Submit feedback
+                {submitting ? (
+                  <Loader2
+                    className="size-4 animate-spin motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                {submitting ? "Submitting feedback" : "Submit feedback"}
               </Button>
             </DialogFooter>
           </form>

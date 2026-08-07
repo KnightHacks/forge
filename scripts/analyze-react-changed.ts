@@ -7,16 +7,6 @@ import { analyzeReactFile } from "react-analyzer/src/index.ts";
 const exts = new Set([".tsx", ".jsx"]);
 const baseArg = process.argv.find((arg) => arg.startsWith("--base="));
 
-function currentBranch() {
-  try {
-    return execFileSync("git", ["branch", "--show-current"], {
-      encoding: "utf8",
-    }).trim();
-  } catch {
-    return "";
-  }
-}
-
 function refExists(ref: string) {
   try {
     execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], {
@@ -28,11 +18,42 @@ function refExists(ref: string) {
   }
 }
 
-const defaultBase = currentBranch().startsWith("reforge/")
-  ? refExists("reforge/main")
-    ? "reforge/main"
-    : "origin/reforge/main"
-  : "origin/main";
+function readGit(args: string[]) {
+  try {
+    return execFileSync("git", args, { encoding: "utf8" }).trim();
+  } catch {
+    return "";
+  }
+}
+
+function findDefaultBase() {
+  const mainRefs = readGit([
+    "for-each-ref",
+    "--format=%(refname:short)",
+    "refs/heads",
+    "refs/remotes",
+  ])
+    .split("\n")
+    .filter((ref) => ref === "main" || ref.endsWith("/main"));
+
+  const rankedRefs = mainRefs
+    .map((ref) => {
+      const mergeBase = readGit(["merge-base", "HEAD", ref]);
+      if (!mergeBase) {
+        return { ref, distance: Number.POSITIVE_INFINITY };
+      }
+      const distance = Number(
+        readGit(["rev-list", "--count", `${mergeBase}..HEAD`]),
+      );
+      return { ref, distance };
+    })
+    .filter(({ distance }) => Number.isFinite(distance))
+    .sort((a, b) => a.distance - b.distance);
+
+  return rankedRefs[0]?.ref ?? (refExists("main") ? "main" : "origin/main");
+}
+
+const defaultBase = findDefaultBase();
 const base = baseArg?.slice("--base=".length) ?? defaultBase;
 
 function git(args: string[]): string[] {

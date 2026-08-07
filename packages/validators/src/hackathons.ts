@@ -197,12 +197,10 @@ export const hackathonSendingStatusSchema = z.enum(
 /**
  * Route name is no longer an officer-facing field.
  *
- * It was Legacy's application URL segment; applications now live on each
- * hackathon's own site, which owns its paths, so nothing links to it and no
- * Reforge code reads it. The column survives only because production Blade
- * still routes on it, and it is `NOT NULL UNIQUE` — so it is derived from the
- * display name rather than typed, and drops at cutover with the other retired
- * columns.
+ * Applications live on each hackathon's own site, which owns its paths, so
+ * current routes do not read this compatibility column. It remains `NOT NULL
+ * UNIQUE`, so Blade derives a stable value from the display name rather than
+ * asking officers to type one.
  */
 export function deriveHackathonRouteName(displayName: string) {
   return displayName

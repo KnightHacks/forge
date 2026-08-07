@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   RotateCcw,
   ScrollText,
   Search,
@@ -33,6 +34,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@forge/ui/sheet";
+import { Skeleton } from "@forge/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -249,12 +251,41 @@ export function DetailSheet({
       <SheetContent className="w-full border-white/10 bg-card sm:max-w-xl">
         {detail.isPending ? (
           <>
-            <SheetHeader className="sr-only">
+            <SheetHeader className="pr-8">
               <SheetTitle>Audit event detail</SheetTitle>
-              <SheetDescription>Loading audit event detail.</SheetDescription>
+              <SheetDescription>
+                Loading the selected audit event.
+              </SheetDescription>
             </SheetHeader>
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Loading audit detail…
+            <div
+              aria-label="Audit event detail loading"
+              aria-busy="true"
+              className="mt-6 space-y-6"
+            >
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+              <div className="space-y-3 rounded-md border border-white/10 bg-background/60 p-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3"
+                    key={index}
+                  >
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-24 w-full rounded-md" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-16 w-full rounded-md" />
+                <Skeleton className="h-16 w-full rounded-md" />
+              </div>
             </div>
           </>
         ) : detail.error ? (
@@ -1000,58 +1031,77 @@ export function AdminLogsDashboard({
       </Card>
 
       <Card className="gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
-        <CardContent className="p-0">
-          {eventsError ? (
-            <div className="flex gap-3 p-6 text-sm text-destructive-foreground">
-              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {eventsError.message}
+        <CardContent aria-busy={eventsFetching} className="p-0">
+          {eventsFetching ? (
+            <div
+              aria-live="polite"
+              className="flex items-center gap-2 border-b border-border/70 bg-primary/5 px-4 py-2 text-sm text-muted-foreground sm:px-6"
+            >
+              <Loader2
+                className="size-4 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              Updating admin logs
             </div>
-          ) : !eventPage ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">
-              Loading admin logs…
-            </div>
-          ) : eventPage.items.length === 0 ? (
-            <div className="p-10 text-center">
-              <p className="font-medium">No matching admin actions</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Adjust the search or filters to broaden the history.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="md:hidden">
-                {eventPage.items.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    onSelect={setSelectedEventId}
-                  />
-                ))}
+          ) : null}
+          <div
+            className={`transition-opacity duration-150 motion-reduce:transition-none ${eventsFetching ? "opacity-70" : ""}`}
+          >
+            {eventsError ? (
+              <div className="flex gap-3 p-6 text-sm text-destructive-foreground">
+                <AlertTriangle
+                  className="h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                />
+                {eventsError.message}
               </div>
-              <div className="hidden overflow-x-auto md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Actor</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Target</TableHead>
-                      <TableHead>Outcome</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {eventPage.items.map((event) => (
-                      <EventRow
-                        key={event.id}
-                        event={event}
-                        onSelect={setSelectedEventId}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
+            ) : !eventPage ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">
+                Loading admin logs…
               </div>
-            </>
-          )}
+            ) : eventPage.items.length === 0 ? (
+              <div className="p-10 text-center">
+                <p className="font-medium">No matching admin actions</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Adjust the search or filters to broaden the history.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="md:hidden">
+                  {eventPage.items.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onSelect={setSelectedEventId}
+                    />
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Actor</TableHead>
+                        <TableHead>Action</TableHead>
+                        <TableHead>Target</TableHead>
+                        <TableHead>Outcome</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {eventPage.items.map((event) => (
+                        <EventRow
+                          key={event.id}
+                          event={event}
+                          onSelect={setSelectedEventId}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 

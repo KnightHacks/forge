@@ -33,9 +33,9 @@ than guessing.
 
 ## Verification skills
 
-- `forge-review` — scope-derived swarm review of a diff or branch. Runs the
-  static gate first and refuses to spend agents on a red diff. This is the
-  substitute for CI, which does not run on `reforge/main`.
+- `forge-review` — scope-derived review of a diff or branch. Runs the static
+  gate first and refuses to spend agents on a red diff; complements CI with
+  judgment-heavy review selected from the changed surface.
 - `react-analyzer` — React component surface analysis; pairs with the
   `pnpm analyze:react` scripts.
 - `playwright-skill` — agent-driven browser verification for high-value flows.

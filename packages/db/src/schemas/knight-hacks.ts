@@ -150,10 +150,8 @@ export const Hackathon = createTable(
      */
     applicationUrl: t.text(),
     /**
-     * Retired by hackathon-configuration. Production Blade on `main` still
-     * reads all four against this shared database, so they are dropped at
-     * cutover rather than here. No Reforge code path may read or write them —
-     * that is the precondition making the drop safe.
+     * Retired application-template fields retained for stored-data
+     * compatibility. Current workflows must not read or write them.
      */
     applicationBackgroundEnabled: t.boolean().notNull().default(false),
     applicationBackgroundKey: t.varchar({ length: 255 }),
@@ -1040,9 +1038,9 @@ export const Event = createTable(
     }),
     purpose: eventPurposeEnum().notNull().default("event"),
     discordChannelId: t.varchar({ length: 255 }),
-    // Old Blade writers omit Reforge workflow fields. Defaulting those writes
-    // to Legacy keeps mixed-version deploys and rollbacks safe; Reforge creates
-    // explicitly persist legacy=false.
+    // Historical event rows may omit workflow fields. Defaulting those rows to
+    // legacy keeps imports and rollback recovery safe; current event creation
+    // explicitly persists legacy=false.
     legacy: t.boolean().notNull().default(true),
     discordSyncState: eventSyncStateEnum().default("pending"),
     googleSyncState: eventSyncStateEnum().default("pending"),
@@ -1407,17 +1405,16 @@ export const HackerAttendee = createTable(
      * no class". Those values are deliberately abandoned rather than backfilled,
      * so nothing here may be reinterpreted as a class reference.
      *
-     * Production Blade on `main` still writes this at check-in against the same
-     * database, so it is dropped at cutover rather than here.
+     * The column remains only for stored-data compatibility. Current check-in
+     * and assignment flows do not read or write it.
      */
     class: t.varchar({ length: 20 }).$type<string | null>().default(null),
     /**
      * Soft blacklist: "do not accept this person by accident".
      *
-     * Deliberately **not** a status. Legacy expressed this by rewriting the
-     * hacker's status to `denied` on read, from a hardcoded uuid
-     * (`legacy/packages/api/src/routers/hackers/queries.ts`), which meant the
-     * flag was invisible, unattributable, and only ever true for one person.
+     * Deliberately **not** a status. The previous implementation expressed this
+     * by rewriting the hacker's status to `denied` on read from a hard-coded
+     * account ID, which made the flag invisible and unattributable.
      * Here it sits beside the status and changes nothing about it — a
      * blacklisted applicant stays `pending` until an officer capacity-rejects
      * them like anyone else.

@@ -1,8 +1,8 @@
 # Forge Engineering Principles
 
-These principles describe the ideal future Forge/Blade architecture for agentic work on `reforge/main`. They are intentionally opinionated so humans and agents write SRDs consistently instead of letting every implementation depend on what the model feels like that day.
+These principles describe the Forge/Blade architecture for agentic work. They are intentionally opinionated so humans and agents write SRDs consistently instead of letting every implementation depend on what the model feels like that day.
 
-Current Forge conventions are useful for understanding the repo, but they are not automatically the target architecture. Preserve important behavior, not accidental debt.
+Current Forge architecture, maintained documentation, and nearby code are the starting point. Preserve established behavior and boundaries; challenge accidental debt only when the task scope and SRD support it.
 
 ## Product/architecture philosophy
 
@@ -44,14 +44,13 @@ Examples of the desired direction:
 
 Frontend-only hackathon sites and small frontend-heavy apps are valuable contribution surfaces. They let newer contributors ship visible work without needing to understand the entire platform. Preserve that contributor pathway.
 
-The parts most in need of Reforge are Blade/club/guild-style platform behavior, Discord/cron operational logic, hard-coded constants, and workflows that require dev intervention for routine organizational changes.
+Continue improving Blade/club/guild-style platform behavior, Discord/cron operational logic, hard-coded constants, and workflows that require dev intervention for routine organizational changes.
 
 ## Branch and review policy
 
-- Current production work targets `main`.
-- Reforge work targets `reforge/main` through reviewed `reforge/*` branches.
-- Do not put Reforge implementation on `main` until cutover.
-- Regularly merge `main` into `reforge/main` and document meaningful conflict decisions in the relevant feature/change `status.md`.
+- Create a task branch before implementation; do not work directly on `main`.
+- Keep branches current with `main` and document meaningful conflict decisions in the relevant feature/change `status.md`.
+- Merge only after the relevant local checks, review, and CI gates pass.
 
 ## Existing docs to read
 
@@ -61,7 +60,7 @@ Before editing code, read the relevant current Forge docs:
 - `CONTRIBUTING.md`
 - `docs/REPO-CONVENTIONS.md`
 - `docs/DATABASE-USAGE.md` before schema/table/query semantics changes
-- the relevant `spec.md`, `srd.md`, `test-cases.md`, and `status.md` for Reforge work
+- the relevant `spec.md`, `srd.md`, `test-cases.md`, and `status.md` for feature work
 
 ## React and Next.js principles
 
@@ -136,7 +135,7 @@ Useful reference points:
 - `@trpc/openapi` can generate an OpenAPI 3.1 document from a tRPC router by statically analyzing TypeScript types. It is currently alpha and version-aligned with newer tRPC versions than Forge currently uses, so treat it as a future/candidate tool rather than a required dependency today.
 - The older `trpc-openapi` project generated OpenAPI docs and REST handlers, but that repository is archived and is not the direction we want.
 
-Desired Reforge direction:
+Desired direction:
 
 - keep business logic in tRPC
 - do not expose REST for internal business APIs
@@ -152,14 +151,14 @@ SRDs that create or reshape routers should consider whether the router needs doc
 - Do not put product queries, business workflows, Discord calls, email sends, auth gates, or UI-oriented helpers in `@forge/db`.
 - Queries should live in `@forge/api`, close to the router/procedure that needs them.
 - Migration commands live in the DB package, but migration planning belongs in the feature/change `srd.md` by default.
-- SRDs that touch production data should include data-change flows, caveats, validation expectations, and rollback/cutover notes.
+- SRDs that touch production data should include data-change flows, caveats, validation expectations, rollout plans, and rollback notes.
 - Create a separate `migration.md` only if the migration plan becomes too large or operationally complex for the SRD.
 
 ## Auth, Discord, and permission principles
 
 Knight Hacks' production Discord guild is a first-class operational hub. Blade is not merely a web app; it is also a Discord-integrated management plane.
 
-Blade/Future Forge should treat Discord integration as core platform behavior. Reuse Discord logic where applicable and integrate Discord side effects intentionally through the platform rather than scattering one-off calls.
+Forge treats Discord integration as core platform behavior. Reuse Discord logic where applicable and integrate Discord side effects intentionally through the platform rather than scattering one-off calls.
 
 Examples include:
 
@@ -188,7 +187,7 @@ Prefer permission-aware procedures/mutations over ad-hoc admin mutations. Each p
 
 ## Configurability principles
 
-A core Reforge review question:
+A core Forge review question:
 
 > Would this require a developer change next year?
 
@@ -271,7 +270,7 @@ Code should be readable to future student contributors, not just agents.
 
 Agent verification should use more than tests when useful. Prefer cheap static checks and purpose-built CLI verification before broad manual review.
 
-Baseline pre-commit gate for Reforge work:
+Baseline pre-commit gate for Forge work:
 
 ```bash
 pnpm verify:precommit
@@ -291,7 +290,7 @@ pnpm lint
 pnpm typecheck
 ```
 
-These should pass before pushing unless the PR explicitly documents a blocker. For release/cutover readiness, `pnpm build` should also pass.
+These should pass before pushing unless the PR explicitly documents a blocker. For release readiness, `pnpm build` should also pass.
 
 React/UI analysis:
 
@@ -303,7 +302,7 @@ pnpm analyze:react:all
 pnpm --filter=@forge/blade analyze:react
 ```
 
-Use React analysis before broad frontend refactors or when an SRD needs component-surface context. For pre-commit checks, prefer `pnpm analyze:react:changed` so Reforge does not inherit all existing React debt at once. Use `pnpm analyze:react:all` or filtered package scripts when intentionally auditing an app/package.
+Use React analysis before broad frontend refactors or when an SRD needs component-surface context. For pre-commit checks, prefer `pnpm analyze:react:changed` so a scoped change is not blocked by unrelated existing React debt. Use `pnpm analyze:react:all` or filtered package scripts when intentionally auditing an app/package.
 
 React analyzer is useful for component-surface context: exported components, props, optionality, and wrapper patterns. It is not a complete React quality linter. Pair it with TypeScript, ESLint/react-hooks, review against these principles, and SRD/test expectations for proper hook design, accessibility, loading/error states, and data flow.
 

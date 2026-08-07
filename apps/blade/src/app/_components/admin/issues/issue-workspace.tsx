@@ -186,17 +186,23 @@ export function IssueWorkspace({
           view={view}
         />
 
-        {view === "calendar" ? (
-          <IssueCalendarView
-            issues={data.issues}
-            mode={input.calendarMode}
-            month={calendarFocus}
-          />
-        ) : view === "kanban" ? (
-          <IssueKanbanView issues={data.issues} />
-        ) : (
-          <IssueListView issues={data.issues} />
-        )}
+        <div
+          className="animate-in fade-in duration-150 motion-reduce:animate-none"
+          data-issue-view={view}
+          key={view}
+        >
+          {view === "calendar" ? (
+            <IssueCalendarView
+              issues={data.issues}
+              mode={input.calendarMode}
+              month={calendarFocus}
+            />
+          ) : view === "kanban" ? (
+            <IssueKanbanView issues={data.issues} />
+          ) : (
+            <IssueListView issues={data.issues} />
+          )}
+        </div>
 
         {(view === "list" || view === "archive") &&
           data.pagination.pageCount > 1 && (
