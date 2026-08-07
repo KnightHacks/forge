@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_issue" ADD COLUMN "discord_thread_id" varchar(32);

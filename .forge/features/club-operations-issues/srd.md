@@ -54,8 +54,8 @@ authorization and partial-write flaws.
 
 - `packages/api` owns the Issues router, role-aware authorization, issue-tree
   orchestration, history diffing, archive batches, template application,
-  event-link checks, and server-side reminder selection, delivery planning,
-  and formatting.
+  event-link checks, issue-creation thread delivery, and server-side reminder
+  selection, delivery planning, and formatting.
 - `packages/validators` owns reusable list/filter, issue write, tree, template,
   archive/restore, event-link, and URL-state schemas.
 - `packages/db` owns only schema, relations, migration, types, and the client.
@@ -82,6 +82,15 @@ authorization and partial-write flaws.
 - Create validates the complete root/child tree before opening a transaction.
   The transaction inserts issues, ownership visibility, assignments, and
   history together; any failure rolls back the complete tree.
+- After that transaction commits, root creation starts one Discord thread from
+  an idempotent starter message in the owning role's configured delivery
+  channel. It posts bounded details, description, links, and an explicit
+  audience message inside the thread. Provider calls never run in the issue
+  transaction.
+- Discord delivery failure returns a truthful retryable error after preserving
+  the committed issue and browser draft. Replaying the exact creation key
+  repairs delivery with stable Discord nonces and thread-existence recovery;
+  it does not create another issue.
 - Updates and status moves accept the revision observed by the editor. The
   server locks and reauthorizes the target, rejects an archived target, and
   increments the revision with the mutation and history row. A stale revision
@@ -98,9 +107,9 @@ authorization and partial-write flaws.
   its own durable creation key. The later issue create/update submits only the
   returned Event UUID and its independent issue creation key/revision.
 - Event-link validation requires a non-hackathon Club event available to the
-  caller. Issues never mutates event data or calls Discord/Google. Failed issue
-  creation leaves a valid created event and permits an exact retry without
-  another provider create.
+  caller. Issues never mutates event data or invokes Event Management's
+  Discord/Google projection logic. Failed issue creation leaves a valid created
+  event and permits an exact retry without another provider create.
 - Event Management keeps its existing deletion rules. In the final event-row
   deletion transaction, lock and clear all linked Issue event fields, increment
   their revisions, and insert a system history entry with safe deleted-event
@@ -153,6 +162,9 @@ authorization and partial-write flaws.
 - Add immutable structured issue-history storage for issue, actor, action,
   changed fields, safe before/after values, and occurrence time. History rows
   are inserted in the same transaction as their issue mutation.
+- Add nullable `Issue.discordThreadId` storage. It is written only after
+  Discord confirms or recovers the thread, remains null for historical issues
+  and suppressed/failed delivery, and requires no backfill.
 - Add a durable reminder-delivery ledger with deterministic uniqueness for the
   issue, due instant, and reminder window or overdue local day. Destination and
   sanitized message content are delivery snapshots, not identity fields, so a
@@ -230,6 +242,28 @@ authorization and partial-write flaws.
   that the channel belongs to the configured Knight Hacks guild and the bot can
   view and send messages there. A manual snowflake fallback is available when
   live discovery fails and receives the same server validation.
+- Root issue creation uses that same configured channel even when scheduled
+  reminders are disabled. It creates a thread from a nonce-protected starter
+  embed, uses the issue title as the bounded thread name, and posts a matching
+  role-colored starter with status, priority, owning team, due time,
+  association count, description, and a clickable Blade title. Discord carries
+  that starter into the attached thread, so Forge does not post a duplicate
+  details message. Long descriptions and external links continue in bounded
+  matching embeds.
+  Assigned Discord users receive the final plain-text `cc:`; an unassigned
+  issue mentions only the owning Discord role.
+- Creation thread messages use explicit allowed mentions, neutralize mention
+  syntax from user-controlled text, and split at Discord's content limit. Only
+  production performs the external write by default. A local operator may opt
+  one development process in with `ISSUE_DISCORD_THREADS_ENABLED=true` for an
+  explicit live smoke. Thread creation is checked before retry and rechecked
+  after an ambiguous provider response; messages use stable nonce values. This
+  side effect runs after the database transaction, and a failure preserves the
+  issue plus client draft for exact-key repair.
+- Reminder rows keep the title linked to Blade's canonical issue page and add a
+  compact `Discuss` link when `discordThreadId` is present and the configured
+  Discord guild ID resolves. Missing thread/config data omits only the Discord
+  link and never suppresses the Blade reminder.
 - The reminder planner runs at 09:00 in `America/New_York`, with the timezone
   passed explicitly to the scheduler so host timezone and daylight-saving
   changes do not alter delivery time.

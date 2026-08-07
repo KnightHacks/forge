@@ -75,9 +75,16 @@ Club-wide view.
 - External links to the systems where teams perform and discuss their work.
 - A Club-wide catalog of reusable nested issue templates with replacement
   values and due-date offsets.
+- Root issue creation starts a Discord thread in the owning team's configured
+  delivery channel. The thread carries the issue description and operational
+  details in a role-colored embed with a linked Blade title, then mentions
+  assigned members or the owning team when unassigned. The attached thread
+  reuses that starter instead of posting a duplicate details embed.
 - Discord reminders 14, 7, 3, and 1 days before an issue is due and daily while
   it remains overdue. Reminders mention assignees when present and the owning
-  team otherwise; Finished and archived issues are excluded.
+  team otherwise; Finished and archived issues are excluded. Reminder rows keep
+  Blade as the canonical issue link and add a Discord discussion link whenever
+  the issue has a delivered thread.
 
 ### Out of scope
 
@@ -132,8 +139,13 @@ Club-wide view.
 - Deleting a linked event under Event Management's existing rules clears its
   issue links without deleting those issues, and the removal remains visible
   in issue history.
+- Creating a root issue creates one attached Discord thread in the owning
+  team's configured channel with bounded description, detail, link, and
+  audience messages. Exact creation retries do not intentionally duplicate it.
 - Active unfinished issues produce the approved Discord reminder cadence;
-  Finished and archived issues do not.
+  Finished and archived issues do not. A reminder for a thread-backed issue
+  links both its Blade record and Discord discussion; older or failed-delivery
+  issues remain Blade-only.
 - Unauthorized and invalid actions fail without exposing inaccessible issues
   or leaving partially applied issue-tree changes.
 

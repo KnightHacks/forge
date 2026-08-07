@@ -5,6 +5,10 @@ const migration = new URL(
   "../../drizzle/0016_breezy_sphinx.sql",
   import.meta.url,
 );
+const threadMigration = new URL(
+  "../../drizzle/0037_left_nocturne.sql",
+  import.meta.url,
+);
 
 describe("Club Operations Issues migration contract", () => {
   it("TC-MIGRATION-003 backfills legacy due instants as Eastern wall time", async () => {
@@ -26,5 +30,12 @@ describe("Club Operations Issues migration contract", () => {
     );
     expect(sql).toContain("disabled_reason");
     expect(sql).not.toMatch(/UPDATE "knight_hacks_template"[\s\S]+SET "body"/);
+  });
+
+  it("TC-REM-009 adds nullable Discord thread storage without a backfill", async () => {
+    const sql = await readFile(threadMigration, "utf8");
+    expect(sql).toBe(
+      'ALTER TABLE "knight_hacks_issue" ADD COLUMN "discord_thread_id" varchar(32);',
+    );
   });
 });

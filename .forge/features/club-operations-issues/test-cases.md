@@ -580,6 +580,8 @@ Expected observations:
   Development and test payloads contain no mention syntax and explicitly parse
   no mentions.
 - Issue links use the configured Blade origin and canonical issue path.
+- Thread-backed issues show a separate `Discuss` link while retaining the
+  canonical Blade title link. Issues without a stored thread remain Blade-only.
 
 ### TC-REM-006: Deterministic grouping and splitting
 
@@ -632,6 +634,38 @@ Expected observations:
 - Transient work records one eventual success without duplicate sends.
 - Terminal failure is recorded/logged without changing issues/history or
   blocking other channels.
+
+### TC-REM-009: Issue creation thread delivery and exact retry
+
+Setup:
+
+- An owning team has a configured writable delivery channel and Discord role.
+- Prepare assigned and unassigned root issues with long descriptions, links,
+  due/status/priority details, and user-controlled mention syntax.
+
+Action:
+
+- Create each issue, then replay the same creation key after successful,
+  transient-failure, and ambiguous-thread-create outcomes.
+
+Expected observations:
+
+- The configured delivery channel receives one starter per issue and an
+  attached thread named from the bounded issue title.
+- The channel starter is a role-colored embed with a clickable Blade issue
+  title. Discord carries that same starter into the attached thread; Forge does
+  not post a duplicate details embed or redundant text link. Description/link
+  continuations and the final plain-text `cc:` stay within Discord limits.
+- Assigned Discord users are explicitly permitted and mentioned; an unassigned
+  issue mentions only the owning role. User-controlled text cannot add pings.
+- Discord calls occur after the issue transaction. Failure preserves the saved
+  issue and client draft; exact retry repairs the same thread without creating
+  another issue record or intentionally duplicating Discord messages.
+- Successful or recovered delivery persists the thread ID. Reminder rows retain
+  the Blade title link and add a Discord `Discuss` link; null/legacy thread IDs
+  omit only that optional link.
+- Development and test make no live Discord write unless an operator explicitly
+  opts one process in for a controlled smoke.
 
 ### TC-VAL-001: Scalar normalization and enums
 

@@ -22,6 +22,7 @@ import {
 import { db } from "@forge/db/client";
 import { Roles } from "@forge/db/schemas/auth";
 import { Issue, IssueReminderDelivery } from "@forge/db/schemas/knight-hacks";
+import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 const MESSAGE_LIMIT = 2_000;
 const COMPONENT_TEXT_LIMIT = 2_000;
@@ -43,6 +44,7 @@ export interface IssueReminderCandidate {
   assigneeDiscordUserIds: string[];
   assigneeNames: string[];
   channelId: string;
+  discordThreadUrl?: string | null;
   dueAt: Date | null;
   id: string;
   name: string;
@@ -191,7 +193,10 @@ function priorityMarks(priority: IssueReminderTarget["priority"]) {
 function targetBlock(target: IssueReminderTarget, bladeUrl: string) {
   const url = targetUrl(target, bladeUrl);
   const title = escapeMarkdown(truncate(target.name, TARGET_TITLE_LIMIT));
-  const heading = `**(${priorityMarks(target.priority)}) [${title} (${shortDate(target.dueAt)})](<${url}>)**`;
+  const discussion = target.discordThreadUrl
+    ? ` · [Discuss](<${target.discordThreadUrl}>)`
+    : "";
+  const heading = `**(${priorityMarks(target.priority)}) [${title} (${shortDate(target.dueAt)})](<${url}>)**${discussion}`;
   const audience = truncate(
     targetAudienceNames(target),
     TARGET_BLOCK_LIMIT - heading.length - 4,
@@ -621,6 +626,15 @@ async function loadCandidates(): Promise<IssueReminderCandidate[]> {
     },
   });
   if (issues.length === 0) return [];
+  let discordGuildId: string | null = null;
+  if (issues.some((issue) => issue.discordThreadId)) {
+    try {
+      discordGuildId = await getKnightHacksGuildId();
+    } catch {
+      // A missing Discord configuration must not suppress the canonical Blade
+      // reminder. It only removes the optional discussion link.
+    }
+  }
   const roles = await db
     .select({
       channelId: Roles.issueReminderChannel,
@@ -657,6 +671,10 @@ async function loadCandidates(): Promise<IssueReminderCandidate[]> {
         ),
         assigneeNames: assignees.map((assignee) => assignee.name),
         channelId: role.channelId,
+        discordThreadUrl:
+          discordGuildId && issue.discordThreadId
+            ? `https://discord.com/channels/${discordGuildId}/${issue.discordThreadId}`
+            : null,
         dueAt: issue.dueAt,
         id: issue.id,
         name: issue.name,

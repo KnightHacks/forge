@@ -6,6 +6,25 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-07: Root issue creation now starts a Discord thread in the owning
+  role's configured issue-delivery channel. The thread mirrors operational
+  details, description, and links, then mentions assigned users or the owning
+  role when unassigned. The provider call runs after commit; exact creation-key
+  retries use stable Discord nonces and thread recovery. Development/test
+  delivery is suppressed by default, with an explicit process-level opt-in for
+  controlled live smoke testing. No Blade UI change is required.
+- 2026-08-07: Persist the confirmed Discord thread ID on the issue. Reminder
+  rows keep their canonical Blade title link and add `Discuss` when that ID is
+  available. Historical issues and failed/suppressed deliveries remain
+  Blade-only. This adds one nullable column with no backfill.
+- 2026-08-07: Visual smoke feedback replaced the raw delivery-channel starter
+  with a role-colored embed linked directly to Blade. Long descriptions and
+  links continue as bounded embeds, while the final audience notification
+  remains plain text so explicit pings work.
+- 2026-08-07: Removed the duplicate details embed inside the thread because
+  Discord already carries the linked channel starter into it. The embed title
+  remains the sole Blade link; the redundant `Open in Blade` line is removed.
+
 - 2026-07-20: Named the feature `Club Operations Issues` with slug
   `club-operations-issues`.
 - 2026-07-20: The feature will be the primary task-management system for every
@@ -316,7 +335,7 @@ Assets`, owned by `Design Team`): either restore assignee Kaitlyn Awai
 
 - `pnpm forge:feature club-operations-issues "Club Operations Issues"`:
   feature bundle created successfully.
-- `rg -c '^### TC-' .forge/features/club-operations-issues/test-cases.md`: 50
+- `rg -c '^### TC-' .forge/features/club-operations-issues/test-cases.md`: 51
   consolidated feature-level cases.
 - `pnpm exec prettier --check '.forge/features/club-operations-issues/*.md'`:
   all four bundle files formatted successfully.
@@ -347,6 +366,12 @@ apps/blade/src/app/admin/issues`: 15 files, 6 components, zero failures.
   analysis is clean.
 - Read-only production-shaped preflight correctly exits nonzero for the two
   legacy records listed under Rollout prerequisites; it made no data changes.
+- 2026-08-07 issue-creation thread patch: focused DB tests passed 6/6 and
+  focused API thread/reminder tests passed 9/9 with one worker; `@forge/db` and
+  `@forge/api` typechecks passed. Changed files lint with zero errors and only
+  existing file/function-size warnings; formatting and `git diff --check`
+  passed. Migration `0037_left_nocturne.sql` adds only the nullable thread ID;
+  it was generated but not applied locally. No live Discord message was sent.
 
 ## Links
 

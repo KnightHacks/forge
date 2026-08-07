@@ -46,6 +46,7 @@ import {
   issueAccessForRoles,
   roleHasIssueCapability,
 } from "../utils/issues/access";
+import { deliverLiveIssueCreationThread } from "../utils/issues/creation-thread";
 import {
   canonicalIssueCreationHash,
   issueHistoryChanges,
@@ -123,6 +124,48 @@ async function issueRecord(id: string) {
       userAssignments: { with: { user: { with: { member: true } } } },
     },
   });
+}
+
+async function deliverCreationThread(
+  record: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+) {
+  if (record.discordThreadId) return;
+  try {
+    const bladeUrl = process.env.BLADE_URL;
+    if (!bladeUrl) throw new Error("BLADE_URL is required for issue delivery.");
+    const delivery = await deliverLiveIssueCreationThread({
+      assigneeDiscordUserIds: record.userAssignments.map(
+        ({ user }) => user.discordUserId,
+      ),
+      channelId: record.team.issueReminderChannel,
+      description: record.description,
+      dueAt: record.dueAt,
+      eventId: record.event,
+      id: record.id,
+      links: record.links ?? [],
+      name: record.name,
+      parentId: record.parent,
+      priority: record.priority,
+      status: record.status,
+      teamColor: record.team.teamHexcodeColor,
+      teamDiscordRoleId: record.team.discordRoleId,
+      teamName: record.team.name,
+      url: `${bladeUrl.replace(/\/$/, "")}/admin/issues/${record.id}`,
+    });
+    if (delivery.status === "delivered") {
+      await db
+        .update(Issue)
+        .set({ discordThreadId: delivery.threadId })
+        .where(and(eq(Issue.id, record.id), isNull(Issue.discordThreadId)));
+    }
+  } catch (cause) {
+    throw new TRPCError({
+      cause,
+      code: "INTERNAL_SERVER_ERROR",
+      message:
+        "The issue was saved, but its Discord thread could not be created. Retry issue creation to finish delivery.",
+    });
+  }
 }
 
 function requireRecordAccess(
@@ -601,6 +644,9 @@ export const issuesRouter = {
         const record = await issueRecord(existing.id);
         if (!record) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         requireRecordAccess(record, roles, "read");
+        // Discord is deliberately outside the issue transaction. The creation
+        // key plus stable Discord nonces make this exact replay repairable.
+        await deliverCreationThread(record);
         return { issue: issueDto(record, roles), replayed: true };
       }
       const actorDisplayName = nonBlankDisplayName(
@@ -674,6 +720,10 @@ export const issuesRouter = {
       }
       const record = await issueRecord(created.id);
       if (!record) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // A Discord outage does not roll back the committed issue. Returning an
+      // error preserves the client draft so the same creation key can repair
+      // the idempotent thread delivery without duplicating the issue.
+      await deliverCreationThread(record);
       return { issue: issueDto(record, roles), replayed: false };
     }),
 

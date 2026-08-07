@@ -28,6 +28,8 @@ const baseIssue = {
   assigneeDiscordUserIds: ["111111111111111111"],
   assigneeNames: ["Alex"],
   channelId: "222222222222222222",
+  discordThreadUrl:
+    "https://discord.com/channels/999999999999999999/888888888888888888",
   dueAt: new Date("2026-08-05T03:00:00.000Z"),
   id: "00000000-0000-4000-8000-000000000001",
   name: "Publish semester plan",
@@ -146,6 +148,9 @@ describe("Club Operations Issues reminders", () => {
     expect(displays[1]).toContain("**(!!!)");
     expect(displays[1]).toContain("\n-# Alex");
     expect(displays[1]).toContain("\n-# Development Team");
+    expect(displays[1]).toContain(
+      "[Discuss](<https://discord.com/channels/999999999999999999/888888888888888888>)",
+    );
     expect(displays[1]).not.toContain("Open in Blade");
     const [productionMessage] = splitIssueReminderMessages(
       [assigned],
@@ -154,6 +159,17 @@ describe("Club Operations Issues reminders", () => {
     expect(
       productionMessage && containerTextDisplays(productionMessage).join("\n"),
     ).toContain(`https://blade.knighthacks.org/admin/issues/${assigned.id}`);
+    const [bladeOnlyMessage] = splitIssueReminderMessages(
+      [{ ...assigned, discordThreadUrl: null }],
+      "https://blade.knighthacks.org",
+    );
+    const bladeOnlyText = bladeOnlyMessage
+      ? containerTextDisplays(bladeOnlyMessage).join("\n")
+      : "";
+    expect(bladeOnlyText).toContain(
+      `https://blade.knighthacks.org/admin/issues/${assigned.id}`,
+    );
+    expect(bladeOnlyText).not.toContain("[Discuss]");
     expect(issueReminderAllowedMentions(message.targets)).toEqual({
       parse: [],
       roles: ["333333333333333333"],

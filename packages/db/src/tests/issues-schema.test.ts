@@ -18,6 +18,7 @@ describe("Club Operations Issues additive storage", () => {
         "archivedBy",
         "creationHash",
         "creationKey",
+        "discordThreadId",
         "dueAt",
         "revision",
       ]),

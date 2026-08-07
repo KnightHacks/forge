@@ -2624,6 +2624,7 @@ export const Issue = createTable(
     description: t.text().notNull(),
     links: t.text().array(),
     event: t.uuid().references(() => Event.id, { onDelete: "set null" }),
+    discordThreadId: t.varchar({ length: 32 }),
     date: t.timestamp(),
     dueAt: t.timestamp({ mode: "date", withTimezone: true }),
     priority: issuePriority().notNull(),
