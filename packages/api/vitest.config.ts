@@ -2,6 +2,12 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  test: {
+    // Integration files replace the process-wide DATABASE_URL before importing
+    // the singleton DB pool. Parallel teardown can otherwise race a disposable
+    // database drop and surface Postgres 57P01 after every assertion passed.
+    fileParallelism: false,
+  },
   resolve: {
     alias: {
       // Several modules reachable from `appRouter` import `server-only`, which

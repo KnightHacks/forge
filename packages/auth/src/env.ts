@@ -19,8 +19,7 @@ export const env = createEnv({
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_BLADE_URL:
-      process.env.NEXT_PUBLIC_BLADE_URL || "http://localhost:3000",
+    NEXT_PUBLIC_BLADE_URL: process.env.NEXT_PUBLIC_BLADE_URL,
   },
   // Tests never reach the services these validate, so a checkout without a
   // local .env can still run the suite. Without this, `pnpm test` fails on

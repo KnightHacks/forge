@@ -10,7 +10,7 @@ const config = {
   typescript: { ignoreBuildErrors: true },
 
   /** Disable image optimization for static export */
-  images: { unoptimized: true },
+  images: { qualities: [75, 100], unoptimized: true },
 };
 
 export default config;
