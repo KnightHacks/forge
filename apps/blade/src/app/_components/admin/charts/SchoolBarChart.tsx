@@ -9,7 +9,6 @@ import {
   YAxis,
 } from "recharts";
 
-import type { FORMS } from "@forge/consts";
 import type { ChartConfig } from "@forge/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { ChartContainer, ChartTooltip } from "@forge/ui/chart";
@@ -22,7 +21,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 interface Person {
-  school?: (typeof FORMS.SCHOOLS)[number];
+  school?: string | null;
 }
 
 export default function SchoolBarChart({ people }: { people: Person[] }) {

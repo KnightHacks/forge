@@ -77,7 +77,7 @@ export function createHackerApplicationClientSchema(
       .min(1, "Required")
       .regex(/^\d{10}$|^\d{3}-\d{3}-\d{4}$/, "Invalid phone number"),
     country: z.enum(FORMS.COUNTRIES, { error: "Select your country" }),
-    school: z.enum(FORMS.SCHOOLS, { error: "Select a school" }),
+    school: z.string().trim().min(1, "Select a school").max(255),
     levelOfStudy: z.enum(FORMS.LEVELS_OF_STUDY, {
       error: "Select your level of study",
     }),

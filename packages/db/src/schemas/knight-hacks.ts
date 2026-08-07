@@ -71,7 +71,7 @@ export const Member = createTable(
     age: t.integer().notNull(),
     email: t.varchar({ length: 255 }).notNull(),
     phoneNumber: t.varchar({ length: 255 }),
-    school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+    school: t.text().notNull(),
     levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
     major: t.text({ enum: FORMS.MAJORS }).notNull().default("Computer Science"),
     gender: genderEnum().default("Prefer not to answer").notNull(),
@@ -117,7 +117,7 @@ export const Hacker = createTable("hacker", (t) => ({
     .default("United States of America"),
   email: t.varchar({ length: 255 }).notNull(),
   phoneNumber: t.varchar({ length: 255 }).notNull(),
-  school: t.text({ enum: FORMS.SCHOOLS }).notNull(),
+  school: t.text().notNull(),
   levelOfStudy: t.text({ enum: FORMS.LEVELS_OF_STUDY }).notNull(),
   major: t.text({ enum: FORMS.MAJORS }).notNull().default("Computer Science"),
   raceOrEthnicity: raceOrEthnicityEnum()

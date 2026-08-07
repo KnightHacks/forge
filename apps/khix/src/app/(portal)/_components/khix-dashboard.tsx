@@ -95,6 +95,12 @@ const WITHDRAW_HOLD_READY_MS = 1100;
 const MOBILE_DRAWER_TRANSITION_MS = 280;
 const KHIX_EVENT_DETAILS =
   "October 9 - 11, 2026 at University of Central Florida";
+const OTHER_SCHOOL_OPTION = "Other / my school isn't listed";
+const SCHOOL_OPTIONS = [...FORMS.SCHOOLS, OTHER_SCHOOL_OPTION] as const;
+
+function isListedSchool(school: string | null | undefined) {
+  return FORMS.SCHOOLS.some((listedSchool) => listedSchool === school);
+}
 const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
   String(index + 1),
 );
@@ -1676,6 +1682,14 @@ function ProfileSection({
     defaultValues: getProfileFormDefaults(participant),
   });
   const fileRef = form.register("resumeUpload");
+  const [isCustomSchoolSelected, setIsCustomSchoolSelected] = useState(false);
+  const selectedSchool = form.watch("school");
+  const hasCustomSchoolValue =
+    typeof selectedSchool === "string" &&
+    selectedSchool.length > 0 &&
+    !isListedSchool(selectedSchool);
+  const shouldShowCustomSchoolInput =
+    isCustomSchoolSelected || hasCustomSchoolValue;
   const disabled = isSaving || saving;
   const profileName =
     [participant.firstName, participant.lastName]
@@ -2084,16 +2098,45 @@ function ProfileSection({
                           </FormLabel>
                           <FormControl>
                             <ResponsiveComboBox
-                              items={FORMS.SCHOOLS}
+                              items={SCHOOL_OPTIONS}
                               renderItem={(school) => <div>{school}</div>}
                               getItemValue={(school) => school}
                               getItemLabel={(school) => school}
-                              onItemSelect={(school) => field.onChange(school)}
-                              buttonPlaceholder={field.value}
+                              onItemSelect={(school) => {
+                                if (school === OTHER_SCHOOL_OPTION) {
+                                  setIsCustomSchoolSelected(true);
+                                  field.onChange("");
+                                  return;
+                                }
+
+                                setIsCustomSchoolSelected(false);
+                                field.onChange(school);
+                              }}
+                              buttonPlaceholder={
+                                shouldShowCustomSchoolInput
+                                  ? OTHER_SCHOOL_OPTION
+                                  : field.value || "Select a school"
+                              }
                               inputPlaceholder="Search for your school"
                               triggerClassName={styles.profileComboboxTrigger}
                             />
                           </FormControl>
+                          {shouldShowCustomSchoolInput && (
+                            <div className="mt-3 space-y-2">
+                              <p className="text-sm font-medium text-white/70">
+                                Enter your school name
+                              </p>
+                              <Input
+                                className={styles.profileInput}
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                onChange={field.onChange}
+                                placeholder="Lake-Sumter State College"
+                                ref={field.ref}
+                                value={field.value}
+                              />
+                            </div>
+                          )}
                           <FormMessage className={styles.profileFormMessage} />
                         </FormItem>
                       )}

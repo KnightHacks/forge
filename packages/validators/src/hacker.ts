@@ -13,7 +13,7 @@ export const hackerApplicationWireSchema = z.object({
   email: z.string().email().max(255),
   phoneNumber: z.string().max(255),
   country: z.enum(FORMS.COUNTRIES),
-  school: z.enum(FORMS.SCHOOLS),
+  school: z.string().trim().min(1).max(255),
   major: z.enum(FORMS.MAJORS),
   levelOfStudy: z.enum(FORMS.LEVELS_OF_STUDY),
   gender: z.enum(FORMS.GENDERS).default("Prefer not to answer"),

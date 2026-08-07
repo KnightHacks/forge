@@ -86,12 +86,7 @@ export const hackerPaginationRouter = {
         }
       }
       if (input.schoolFilter) {
-        conditions.push(
-          eq(
-            Hacker.school,
-            input.schoolFilter as (typeof Hacker.school.enumValues)[number],
-          ),
-        );
+        conditions.push(eq(Hacker.school, input.schoolFilter));
       }
       if (input.majorFilter) {
         conditions.push(
@@ -251,12 +246,7 @@ export const hackerPaginationRouter = {
         }
       }
       if (input.schoolFilter) {
-        conditions.push(
-          eq(
-            Hacker.school,
-            input.schoolFilter as (typeof Hacker.school.enumValues)[number],
-          ),
-        );
+        conditions.push(eq(Hacker.school, input.schoolFilter));
       }
       if (input.majorFilter) {
         conditions.push(

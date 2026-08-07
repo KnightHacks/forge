@@ -77,6 +77,12 @@ const actionButtonClassName =
   "kh-nav-button size-14 rounded-full bg-white p-0 text-[#21103d] shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-white/90 sm:size-16";
 const secondaryActionButtonClassName =
   "kh-nav-button size-14 rounded-full border-white/45 bg-[#12071f]/75 p-0 text-white shadow-[0_18px_46px_rgba(0,0,0,0.42)] hover:bg-[#12071f]/90 hover:text-white disabled:opacity-35 sm:size-16";
+const OTHER_SCHOOL_OPTION = "Other / my school isn't listed";
+const SCHOOL_OPTIONS = [...FORMS.SCHOOLS, OTHER_SCHOOL_OPTION] as const;
+
+function isListedSchool(school: string | null | undefined) {
+  return FORMS.SCHOOLS.some((listedSchool) => listedSchool === school);
+}
 const resumeSponsorDisclosure =
   "Uploaded resumes will be shared with sponsors for potential internships and outreach.";
 const DEFAULT_TEXT_EXIT_MS = 420;
@@ -959,6 +965,14 @@ export function HackerFormPage({
   });
 
   const fileRef = form.register("resumeUpload");
+  const [isCustomSchoolSelected, setIsCustomSchoolSelected] = useState(false);
+  const selectedSchool = form.watch("school");
+  const hasCustomSchoolValue =
+    typeof selectedSchool === "string" &&
+    selectedSchool.length > 0 &&
+    !isListedSchool(selectedSchool);
+  const shouldShowCustomSchoolInput =
+    isCustomSchoolSelected || hasCustomSchoolValue;
 
   useEffect(() => {
     if (
@@ -1906,22 +1920,48 @@ export function HackerFormPage({
                               <FieldLabel required>School</FieldLabel>
                               <FormControl>
                                 <ResponsiveComboBox
-                                  items={FORMS.SCHOOLS}
+                                  items={SCHOOL_OPTIONS}
                                   renderItem={(school) => <div>{school}</div>}
                                   getItemValue={(school) => school}
                                   getItemLabel={(school) => school}
                                   value={field.value}
-                                  onItemSelect={(school) =>
-                                    field.onChange(school)
+                                  onItemSelect={(school) => {
+                                    if (school === OTHER_SCHOOL_OPTION) {
+                                      setIsCustomSchoolSelected(true);
+                                      field.onChange("");
+                                      return;
+                                    }
+
+                                    setIsCustomSchoolSelected(false);
+                                    field.onChange(school);
+                                  }}
+                                  buttonPlaceholder={
+                                    shouldShowCustomSchoolInput
+                                      ? OTHER_SCHOOL_OPTION
+                                      : getComboBoxDisplayValue(
+                                          field.value,
+                                          "Select a school",
+                                        )
                                   }
-                                  buttonPlaceholder={getComboBoxDisplayValue(
-                                    field.value,
-                                    "Select a school",
-                                  )}
                                   inputPlaceholder="Search for your school"
                                   triggerClassName={fieldTriggerClassName}
                                 />
                               </FormControl>
+                              {shouldShowCustomSchoolInput && (
+                                <div className="mt-4 space-y-2">
+                                  <p className="text-sm font-medium text-white/70">
+                                    Enter your school name
+                                  </p>
+                                  <Input
+                                    name={field.name}
+                                    onBlur={field.onBlur}
+                                    onChange={field.onChange}
+                                    placeholder="Lake-Sumter State College"
+                                    ref={field.ref}
+                                    value={field.value}
+                                  />
+                                </div>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}

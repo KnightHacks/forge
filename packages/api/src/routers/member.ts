@@ -403,12 +403,7 @@ export const memberRouter = {
       }
 
       if (input.schoolFilter) {
-        conditions.push(
-          eq(
-            Member.school,
-            input.schoolFilter as (typeof Member.school.enumValues)[number],
-          ),
-        );
+        conditions.push(eq(Member.school, input.schoolFilter));
       }
 
       if (input.majorFilter) {
@@ -477,12 +472,7 @@ export const memberRouter = {
       }
 
       if (input?.schoolFilter) {
-        conditions.push(
-          eq(
-            Member.school,
-            input.schoolFilter as (typeof Member.school.enumValues)[number],
-          ),
-        );
+        conditions.push(eq(Member.school, input.schoolFilter));
       }
       if (input?.majorFilter) {
         conditions.push(
@@ -510,7 +500,7 @@ export const memberRouter = {
       .where(isNotNull(Member.school))
       .orderBy(asc(Member.school));
 
-    return results.map((r) => r.school).filter(Boolean) as string[];
+    return results.map((r) => r.school).filter(Boolean);
   }),
 
   getDistinctMajors: permProcedure.query(async ({ ctx }) => {
