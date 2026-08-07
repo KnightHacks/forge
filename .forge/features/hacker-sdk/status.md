@@ -6,6 +6,11 @@ Current phase: KH IX manual UI pass
 
 ## Decision log
 
+- 2026-08-07: School selection remains catalog-first, with an explicit Other
+  school action in KH IX application and profile forms. The SDK contract accepts
+  a trimmed, non-empty custom school name up to 255 characters; the database
+  remains a text column and stores no UI sentinel.
+
 - 2026-08-06: Blade remains the data, validation, lifecycle, audit, and admin
   owner. Hackathon frontends own the complete participant presentation and
   interaction design.

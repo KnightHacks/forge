@@ -101,6 +101,7 @@ import {
   buildDisplayedAgreementInputs,
   requiredAgreementsAccepted,
 } from "~/lib/portal-agreements";
+import { CustomSchoolField } from "./custom-school-field";
 import styles from "./khix-dashboard.module.css";
 
 const profileDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -3026,20 +3027,15 @@ function ProfileSection({
                             <FormLabel className={styles.profileFormLabel}>
                               School <RequiredMark />
                             </FormLabel>
-                            <FormControl>
-                              <ResponsiveComboBox
-                                items={FORMS.SCHOOLS}
-                                renderItem={(school) => <div>{school}</div>}
-                                getItemValue={(school) => school}
-                                getItemLabel={(school) => school}
-                                onItemSelect={(school) =>
-                                  field.onChange(school)
-                                }
-                                buttonPlaceholder={field.value}
-                                inputPlaceholder="Search for your school"
-                                triggerClassName={styles.profileComboboxTrigger}
-                              />
-                            </FormControl>
+                            <CustomSchoolField
+                              customInputClassName={styles.profileInput}
+                              name={field.name}
+                              onBlur={field.onBlur}
+                              onChange={field.onChange}
+                              switchButtonClassName="text-[#d2d383]"
+                              triggerClassName={styles.profileComboboxTrigger}
+                              value={field.value}
+                            />
                             <FormMessage
                               className={styles.profileFormMessage}
                             />

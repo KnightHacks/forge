@@ -374,6 +374,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       firstHack.applicationAgreementId,
       { firstTime: true },
     );
+    firstInput.profile.school = "North Lake Technical Academy";
     await firstCaller.submitApplication(firstInput);
 
     const secondCaller = await participantCaller(userId, secondHack.id);
@@ -385,6 +386,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
         email: firstInput.profile.email,
         firstName: firstInput.profile.firstName,
         revision: 1,
+        school: "North Lake Technical Academy",
       },
     });
 

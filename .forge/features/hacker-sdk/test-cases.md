@@ -383,6 +383,26 @@ Expected observations:
 - Only one attendee exists for the user/hackathon.
 - Different data with the same key returns an idempotency conflict.
 
+### TC-APP-003A: A hacker can enter a school missing from the catalog
+
+Setup:
+
+- Applications are open.
+- The hacker's school is absent from the shared school catalog.
+
+Action:
+
+- The hacker chooses the Other school action, enters a non-empty school name,
+  and submits the application.
+
+Expected observations:
+
+- The custom school is trimmed, stored as the profile's school, and returned by
+  subsequent application and profile reads.
+- The same value can be edited from the yearly site's profile form.
+- Blank values, values over 255 characters, and the UI's internal Other-school
+  sentinel are not stored.
+
 ### TC-APP-004: Application window is server-authoritative
 
 Setup:

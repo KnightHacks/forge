@@ -36,6 +36,14 @@ export function calculateAgeOnDate(dob: string, onDate: string) {
 
 const nullableUrlSchema = z.string().trim().url().max(255).nullable();
 
+/** Catalog schools remain the primary UI path, but portals may submit a school
+ * that is not yet present in the shared list. */
+export const hackerSchoolSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter your school.")
+  .max(255, "School must be 255 characters or fewer.");
+
 export const hackerProfileFieldsSchema = z
   .object({
     country: z.enum(FORMS.COUNTRIES),
@@ -53,7 +61,7 @@ export const hackerProfileFieldsSchema = z
     major: z.enum(FORMS.MAJORS),
     phoneNumber: z.string().trim().min(1).max(255),
     raceOrEthnicity: z.enum(FORMS.RACES_OR_ETHNICITIES),
-    school: z.enum(FORMS.SCHOOLS),
+    school: hackerSchoolSchema,
     shirtSize: z.enum(FORMS.SHIRT_SIZES),
     websiteUrl: nullableUrlSchema,
   })

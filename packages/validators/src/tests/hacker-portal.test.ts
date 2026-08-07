@@ -11,11 +11,20 @@ import {
   HACKER_WITHDRAWAL_ACKNOWLEDGEMENT,
   hackerPortalV1InputSchemas,
   hackerPortalV1OutputSchemas,
+  hackerSchoolSchema,
   portalLogoutRequestSchema,
   portalRefreshSchema,
 } from "../hacker-portal";
 
 describe("Hacker Portal validators", () => {
+  it("accepts a trimmed custom school without weakening the school field", () => {
+    expect(hackerSchoolSchema.parse("  North Lake Technical Academy  ")).toBe(
+      "North Lake Technical Academy",
+    );
+    expect(hackerSchoolSchema.safeParse("   ").success).toBe(false);
+    expect(hackerSchoolSchema.safeParse("x".repeat(256)).success).toBe(false);
+  });
+
   it("TC-SDK-006 requires the irreversible withdrawal acknowledgement", () => {
     expect(
       hackerPortalV1InputSchemas.withdrawApplication.safeParse({

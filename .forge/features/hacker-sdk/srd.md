@@ -319,6 +319,9 @@ Discord description.
 - Add `@forge/validators/hacker-portal` schemas for all participant inputs and
   DTOs. Shared profile fields use one schema so application and edit rules
   cannot diverge.
+- School remains one stored profile string. The shared catalog is the primary
+  portal affordance, while the participant contract also accepts a trimmed
+  user-entered value from 1 to 255 characters. No sentinel value is persisted.
 - Date of birth and graduation date are date-only values. Age calculations have
   leap-day and exact-birthday coverage and use the relevant configured timezone.
 - Required agreement versions come from active database definitions, never a

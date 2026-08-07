@@ -56,6 +56,7 @@ import {
   buildDisplayedAgreementInputs,
   requiredAgreementsAccepted as haveRequiredAgreements,
 } from "~/lib/portal-agreements";
+import { CustomSchoolField } from "../custom-school-field";
 import {
   getHackerApplicationBackground,
   getHackerApplicationBackgroundKey,
@@ -1933,24 +1934,14 @@ export function HackerFormPage({
                               )}
                             >
                               <FieldLabel required>School</FieldLabel>
-                              <FormControl>
-                                <ResponsiveComboBox
-                                  items={FORMS.SCHOOLS}
-                                  renderItem={(school) => <div>{school}</div>}
-                                  getItemValue={(school) => school}
-                                  getItemLabel={(school) => school}
-                                  value={field.value}
-                                  onItemSelect={(school) =>
-                                    field.onChange(school)
-                                  }
-                                  buttonPlaceholder={getComboBoxDisplayValue(
-                                    field.value,
-                                    "Select a school",
-                                  )}
-                                  inputPlaceholder="Search for your school"
-                                  triggerClassName={fieldTriggerClassName}
-                                />
-                              </FormControl>
+                              <CustomSchoolField
+                                name={field.name}
+                                onBlur={field.onBlur}
+                                onChange={field.onChange}
+                                switchButtonClassName="text-white/70"
+                                triggerClassName={fieldTriggerClassName}
+                                value={field.value}
+                              />
                               <FormMessage />
                             </FormItem>
                           )}

@@ -8,6 +8,19 @@ import {
 import { WITHDRAWAL_ACKNOWLEDGEMENT } from "../lifecycle";
 
 describe("Hacker participant v1 contract", () => {
+  it("accepts catalog and user-entered schools through the shared profile contract", () => {
+    const schoolSchema =
+      HACKER_PARTICIPANT_V1_SCHEMAS.input.submitApplication.shape.profile.shape
+        .school;
+
+    expect(schoolSchema.parse("University of Central Florida")).toBe(
+      "University of Central Florida",
+    );
+    expect(schoolSchema.parse("  North Lake Technical Academy  ")).toBe(
+      "North Lake Technical Academy",
+    );
+  });
+
   it("exposes only the narrow participant procedure manifest", () => {
     expect(HACKER_PARTICIPANT_V1_PROCEDURES).toEqual({
       confirmAttendance: "mutation",

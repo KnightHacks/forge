@@ -47,6 +47,8 @@ capabilities:
 
 - Sign in through Forge and return to the same hackathon site.
 - Start an application with reusable profile details prefilled.
+- Choose a school from the shared catalog or enter its name when it is not
+  listed.
 - Submit the base Knight Hacks application and the current hackathon's
   first-time-hacker answer.
 - Return to an existing application without creating a duplicate.
@@ -215,6 +217,8 @@ publication has no effect on Discord reminders.
   user and hackathon.
 - A returning hacker receives reusable profile prefill but must answer
   first-time status again.
+- A school missing from the shared catalog can be entered, saved, prefilled,
+  and edited like a catalog school.
 - A hacker can edit allowed data until the hackathon starts. The pinned
   organizer/sponsor view for a started hackathon does not change afterward.
 - Confirmation, withdrawal, resume, QR, status, schedule, attendance, points,

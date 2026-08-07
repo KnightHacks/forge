@@ -397,6 +397,11 @@ const submitApplicationSchema =
 const profileSchema = submitApplicationSchema.shape.profile;
 ```
 
+School pickers should offer the shared `FORMS.SCHOOLS` catalog first and an
+explicit “Other school” action for manual entry. The participant contract
+accepts any non-empty school name up to 255 characters, trims surrounding
+whitespace, and returns the same string when the profile is reused or edited.
+
 Do not submit Discord identity. Blade derives Discord identity from the signed-
 in user.
 
