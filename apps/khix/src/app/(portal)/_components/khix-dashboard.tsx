@@ -91,9 +91,9 @@ import {
 } from "~/lib/event-schedule";
 import {
   getHackerLifecycleState,
-  signOut,
   useHackerDashboardFlow,
   useHackerProfileFlow,
+  usePortalSignOut,
 } from "~/lib/hacker-portal";
 import { persistBeforeOptionalResumeUpload } from "~/lib/portal-actions";
 import {
@@ -1102,6 +1102,7 @@ function KhixDashboardShell({
   sessionUser?: KhixSessionUser;
 }) {
   const dashboardQuery = useHackerDashboard();
+  const logout = usePortalSignOut();
   const [mobileMenuState, setMobileMenuState] =
     useState<MobileDrawerState>("closed");
   const [drawerDragOffset, setDrawerDragOffset] = useState(0);
@@ -1548,10 +1549,15 @@ function KhixDashboardShell({
               <button
                 type="button"
                 className={styles.logoutButton}
-                onClick={() => void signOut({ redirectTo: "/" })}
+                disabled={logout.isPending}
+                onClick={() => {
+                  void logout.signOut().catch(() => {
+                    toast.error("Could not log out. Please try again.");
+                  });
+                }}
               >
                 <LogOut className="size-4" aria-hidden="true" />
-                Log out
+                {logout.isPending ? "Logging out…" : "Log out"}
               </button>
             </div>
           </div>
@@ -3321,23 +3327,28 @@ function ProfileSection({
                                 className={styles.profilePopoverContent}
                               >
                                 <div className={styles.profileAllergyList}>
-                                  {FORMS.ALLERGIES.map((allergy) => (
-                                    <button
+                                  {FORMS.ALLERGIES.map((allergy, index) => (
+                                    <label
                                       key={allergy}
                                       className={styles.profileAllergyOption}
-                                      onClick={() =>
-                                        updateAllergies(allergy, field.onChange)
-                                      }
-                                      type="button"
+                                      htmlFor={`profile-allergy-${index}`}
                                     >
                                       <Checkbox
+                                        id={`profile-allergy-${index}`}
+                                        aria-label={allergy}
                                         checked={selectedAllergies.includes(
                                           allergy,
                                         )}
                                         className={styles.profileCheckbox}
+                                        onCheckedChange={() =>
+                                          updateAllergies(
+                                            allergy,
+                                            field.onChange,
+                                          )
+                                        }
                                       />
                                       <span>{allergy}</span>
-                                    </button>
+                                    </label>
                                   ))}
                                 </div>
                               </PopoverContent>

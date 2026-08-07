@@ -277,7 +277,9 @@ describe("Hacker SDK Next adapter", () => {
 
     const response = await handler(
       new Request("https://khx.knighthacks.org/api/hacker-sdk/sign-out", {
+        body: JSON.stringify({ returnTo: "/goodbye" }),
         headers: {
+          "content-type": "application/json",
           cookie: `${TEST_COOKIE_NAMES.access}=stale-access; ${TEST_COOKIE_NAMES.refresh}=stale-refresh`,
           origin: "https://khx.knighthacks.org",
         },
@@ -285,7 +287,11 @@ describe("Hacker SDK Next adapter", () => {
       }),
     );
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      redirectTo:
+        "https://blade.knighthacks.org/api/hacker/v1/auth/logout?client_id=kh-x-client&return_to=https%3A%2F%2Fkhx.knighthacks.org%2Fgoodbye",
+    });
     const revokeInit = requestFetch.mock.calls[0]?.[1];
     expect(typeof revokeInit?.body).toBe("string");
     expect(JSON.parse(revokeInit?.body as string)).toEqual({
@@ -295,6 +301,69 @@ describe("Hacker SDK Next adapter", () => {
     expect(new Headers(revokeInit?.headers).get("authorization")).toBe(
       "Bearer stale-access",
     );
+  });
+
+  it.each([
+    {
+      name: "transport failure",
+      response: () => Promise.reject(new Error("Blade unavailable")),
+    },
+    {
+      name: "non-success response",
+      response: () =>
+        Promise.resolve(Response.json({ error: "failed" }, { status: 500 })),
+    },
+  ])(
+    "preserves portal credentials when revoke has a $name",
+    async ({ response: revoke }) => {
+      const handler = createHackerSdkNextHandler({
+        bladeOrigin: "https://blade.knighthacks.org",
+        clientId: TEST_CLIENT_ID,
+        fetch: vi.fn<typeof fetch>(revoke),
+      });
+
+      const response = await handler(
+        new Request("https://khx.knighthacks.org/api/hacker-sdk/sign-out", {
+          body: JSON.stringify({ returnTo: "/" }),
+          headers: {
+            "content-type": "application/json",
+            cookie: `${TEST_COOKIE_NAMES.access}=access; ${TEST_COOKIE_NAMES.refresh}=refresh`,
+            origin: "https://khx.knighthacks.org",
+          },
+          method: "POST",
+        }),
+      );
+
+      expect(response.status).toBe(502);
+      expect(response.headers.get("set-cookie")).toBeNull();
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: "NETWORK_ERROR", retryable: true },
+      });
+    },
+  );
+
+  it("normalizes an external front-channel logout return to the portal root", async () => {
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      fetch: vi.fn<typeof fetch>(),
+    });
+
+    const response = await handler(
+      new Request("https://khx.knighthacks.org/api/hacker-sdk/sign-out", {
+        body: JSON.stringify({ returnTo: "https://attacker.example/steal" }),
+        headers: {
+          "content-type": "application/json",
+          origin: "https://khx.knighthacks.org",
+        },
+        method: "POST",
+      }),
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      redirectTo:
+        "https://blade.knighthacks.org/api/hacker/v1/auth/logout?client_id=kh-x-client&return_to=https%3A%2F%2Fkhx.knighthacks.org%2F",
+    });
   });
 
   it("bounds streamed request bodies even without Content-Length", async () => {

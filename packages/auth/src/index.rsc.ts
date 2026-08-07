@@ -26,6 +26,16 @@ export type Session = Omit<typeof betterAuthInstance.$Infer.Session, "user"> & {
 
 export const handlers = toNextJsHandler(betterAuthInstance);
 
+/**
+ * Runs Better Auth's server-side sign-out endpoint for a front-channel portal
+ * logout. Callers must forward the returned Set-Cookie header to the browser.
+ */
+export const signOutSession = (requestHeaders: Headers) =>
+  betterAuthInstance.api.signOut({
+    asResponse: true,
+    headers: requestHeaders,
+  });
+
 export const auth = async () => {
   try {
     const headersList = await headers();

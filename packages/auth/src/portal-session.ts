@@ -122,9 +122,15 @@ export function createPortalSessionService(input: {
 }) {
   const now = input.now ?? (() => new Date());
 
-  async function requireClient(clientId: string) {
+  async function requireExistingClient(clientId: string) {
     const client = await input.store.findClient(clientId);
-    if (!client?.enabled) throw new PortalAuthError("INVALID_CLIENT");
+    if (!client) throw new PortalAuthError("INVALID_CLIENT");
+    return client;
+  }
+
+  async function requireClient(clientId: string) {
+    const client = await requireExistingClient(clientId);
+    if (!client.enabled) throw new PortalAuthError("INVALID_CLIENT");
     return client;
   }
 
@@ -275,7 +281,9 @@ export function createPortalSessionService(input: {
       clientId: string,
       tokens: { accessToken?: string; refreshToken?: string },
     ) {
-      const client = await requireClient(clientId);
+      // Disabling a portal prevents new authorization, but must not strand
+      // existing credentials that still need to be revoked during logout.
+      const client = await requireExistingClient(clientId);
       await input.store.revokeSession({
         accessTokenHash: tokens.accessToken
           ? hashPortalToken(tokens.accessToken)

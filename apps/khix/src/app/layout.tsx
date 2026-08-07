@@ -3,6 +3,10 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
+import { Toaster } from "@forge/ui/toast";
+
+import { HackathonPortalProvider } from "~/lib/hacker-portal";
+import { KHIX_PORTAL_CONFIG } from "~/lib/portal-config";
 import {
   OG_IMAGE_ALT,
   OG_IMAGE_URL,
@@ -108,7 +112,12 @@ export default function RootLayout({
       className={`${bagnard.variable} dark h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <HackathonPortalProvider config={KHIX_PORTAL_CONFIG} portalKey="khix">
+          {children}
+          <Toaster />
+        </HackathonPortalProvider>
+      </body>
     </html>
   );
 }

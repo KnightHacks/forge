@@ -959,21 +959,18 @@ export function HackerFormPage({
   const previousHacker = applicationContext?.previousHacker;
   const existingApplication = applicationContext?.existingApplication;
 
-  const toggleAllergy = (allergy: string) => {
-    setSelectedAllergies((prev) => {
-      const next = prev.includes(allergy)
-        ? prev.filter((a) => a !== allergy)
-        : [...prev, allergy];
-
-      form.setValue("foodAllergies", next.join(","));
-      return next;
-    });
-  };
-
   const form = useForm<HackerApplicationFormValues>({
     schema: applicationSchema,
     defaultValues,
   });
+
+  const toggleAllergy = (allergy: string) => {
+    const next = selectedAllergies.includes(allergy)
+      ? selectedAllergies.filter((item) => item !== allergy)
+      : [...selectedAllergies, allergy];
+    setSelectedAllergies(next);
+    form.setValue("foodAllergies", next.join(","));
+  };
 
   const fileRef = form.register("resumeUpload");
 

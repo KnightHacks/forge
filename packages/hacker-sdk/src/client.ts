@@ -35,7 +35,7 @@ export type HackerParticipantClient = {
   readonly portalKey: string;
   readonly resumeDownloadPath: string;
   signInPath(returnTo?: string): string;
-  signOut(): Promise<void>;
+  signOut(returnTo?: string): Promise<{ redirectTo: string }>;
   uploadResume(
     file: Blob,
     options: { fileName: string; idempotencyKey: string },
@@ -186,10 +186,11 @@ export function createHackerParticipantClient(
     signInPath(returnTo = "/") {
       return getHackerSdkSignInPath(returnTo, adapterBasePath);
     },
-    async signOut() {
+    async signOut(returnTo = "/") {
       const response = await requestFetch(
         getHackerSdkSignOutPath(adapterBasePath),
         {
+          body: JSON.stringify({ returnTo }),
           headers: { "content-type": "application/json" },
           method: "POST",
         },
@@ -201,6 +202,20 @@ export function createHackerParticipantClient(
           status: response.status,
         });
       }
+      const body: unknown = await response.json().catch(() => undefined);
+      if (
+        typeof body !== "object" ||
+        body === null ||
+        !("redirectTo" in body) ||
+        typeof body.redirectTo !== "string"
+      ) {
+        throw new HackerSdkError({
+          code: "BAD_RESPONSE",
+          message: "Blade returned an invalid logout response.",
+          retryable: false,
+        });
+      }
+      return { redirectTo: body.redirectTo };
     },
     async uploadResume(
       file: Blob,

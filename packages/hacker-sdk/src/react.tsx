@@ -297,7 +297,8 @@ export function useHackerSignOut() {
   const { client, portalKey } = useHackerSdkClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => client.signOut(),
+    mutationFn: (options?: { returnTo?: string }) =>
+      client.signOut(options?.returnTo),
     async onSuccess() {
       await queryClient.resetQueries({
         queryKey: hackerSdkQueryKeys.participant(portalKey),

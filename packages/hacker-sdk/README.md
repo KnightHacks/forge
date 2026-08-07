@@ -163,6 +163,49 @@ export function HackerSessionBoundary({ children }: { children: ReactNode }) {
 ```
 
 The adapter validates `returnTo`. It only accepts a path on the yearly site.
+Choose the post-authentication destination from the portal's own configuration.
+For example, KH IX sends its public navigation sign-in action back to the
+application flow:
+
+```tsx
+const signInHref = client.signInPath(portalConfig.routes.apply);
+
+return <a href={signInHref}>Sign in</a>;
+```
+
+### Sign out of both the portal and Blade
+
+Use `useHackerSignOut` or `client.signOut`. The mutation first revokes the
+portal tokens, then returns a validated Blade logout URL. Navigate to that URL
+so Blade can clear its own session before returning to the yearly site.
+
+```tsx
+"use client";
+
+import { useHackerSignOut } from "@forge/hacker-sdk/react";
+
+export function LogoutButton() {
+  const logout = useHackerSignOut();
+
+  return (
+    <button
+      disabled={logout.isPending}
+      onClick={() => {
+        void logout
+          .mutateAsync({ returnTo: "/" })
+          .then(({ redirectTo }) => window.location.assign(redirectTo));
+      }}
+      type="button"
+    >
+      {logout.isPending ? "Logging out…" : "Log out"}
+    </button>
+  );
+}
+```
+
+Do not redirect directly to Blade or treat deleting the portal cookies as a
+complete logout. Blade validates the final return origin against the
+provisioned portal client.
 
 ## Build the application flow
 

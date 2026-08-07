@@ -13,8 +13,6 @@ import {
 } from "@forge/db/testing";
 import { HACKER_WITHDRAWAL_ACKNOWLEDGEMENT } from "@forge/validators";
 
-import { hashOpaqueHackerCheckInPass } from "../../utils/hackathon-events/check-in";
-
 type DatabaseClient = typeof db;
 type AuthSchemas = typeof AuthSchemaModule;
 type KnightHacksSchemas = typeof KnightHacksSchemaModule;
@@ -32,6 +30,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
   let auth: AuthSchemas;
   let client: DatabaseClient;
   let disposable: DisposableDatabase | undefined;
+  let hashOpaqueHackerCheckInPass: (typeof import("../../utils/hackathon-events/check-in"))["hashOpaqueHackerCheckInPass"];
   let knightHacks: KnightHacksSchemas;
   let templateId: string;
   let templateOwnerId: string;
@@ -323,6 +322,8 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     // eslint-disable-next-line no-restricted-properties
     process.env.BLADE_E2E_AUTH = "true";
 
+    ({ hashOpaqueHackerCheckInPass } =
+      await import("../../utils/hackathon-events/check-in"));
     ({ db: client } = await import("@forge/db/client"));
     auth = await import("@forge/db/schemas/auth");
     knightHacks = await import("@forge/db/schemas/knight-hacks");

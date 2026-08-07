@@ -2,8 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Instagram, Menu } from "lucide-react";
+import Link from "next/link";
+import { Instagram, LayoutDashboard, LogIn, LogOut, Menu } from "lucide-react";
 
+import { useHackerSdkClient, useHackerSession } from "@forge/hacker-sdk/react";
+import { toast } from "@forge/ui/toast";
+
+import { usePortalConfig, usePortalSignOut } from "~/lib/hacker-portal";
 import { MLHBadge } from "./MLHBadge";
 import styles from "./Navbar.module.css";
 
@@ -37,6 +42,10 @@ export function Navbar({
   socialLinks = [],
   homeHref = "#home",
 }: NavbarProps) {
+  const config = usePortalConfig();
+  const { client } = useHackerSdkClient();
+  const session = useHackerSession();
+  const logout = usePortalSignOut();
   const [isHidden, setIsHidden] = useState(false);
   const [isMlhHidden, setIsMlhHidden] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -167,6 +176,13 @@ export function Navbar({
     setIsHidden(false);
   };
   const isNavHidden = isHidden && !isMenuVisible;
+  const accountName = session.data?.displayName ?? "Signed in";
+
+  const handleLogout = () => {
+    void logout.signOut(config.routes.home).catch(() => {
+      toast.error("Could not log out. Please try again.");
+    });
+  };
 
   return (
     <>
@@ -209,22 +225,77 @@ export function Navbar({
             ))}
           </nav>
 
-          {socialLinks.length > 0 ? (
-            <nav className={styles.socialLinks} aria-label="Social links">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.href}
-                  className={styles.socialLink}
-                  href={link.href}
-                  aria-label={link.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          <div className={styles.navActions}>
+            {socialLinks.length > 0 ? (
+              <nav className={styles.socialLinks} aria-label="Social links">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    className={styles.socialLink}
+                    href={link.href}
+                    aria-label={link.label}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <SocialIcon icon={link.icon} />
+                  </a>
+                ))}
+              </nav>
+            ) : null}
+            <div className={styles.accountActions}>
+              {session.isPending || session.isError ? (
+                <span
+                  aria-label={
+                    session.isError ? "Account unavailable" : "Loading account"
+                  }
+                  className={`${styles.accountLink} ${styles.accountPending}`}
                 >
-                  <SocialIcon icon={link.icon} />
+                  {session.isPending ? (
+                    <span
+                      aria-hidden="true"
+                      className={styles.accountPendingDot}
+                    />
+                  ) : null}
+                  <span className={styles.accountLabel}>
+                    {session.isError ? "Unavailable" : "Account"}
+                  </span>
+                </span>
+              ) : session.data.authenticated ? (
+                <>
+                  <Link
+                    className={styles.accountLink}
+                    href={config.routes.dashboard}
+                    title={`Signed in as ${accountName}`}
+                  >
+                    <LayoutDashboard aria-hidden="true" />
+                    <span className={styles.accountName}>{accountName}</span>
+                    <span className={styles.accountLabel}>Dashboard</span>
+                  </Link>
+                  <button
+                    aria-label={
+                      logout.isPending
+                        ? "Logging out"
+                        : `Log out ${accountName}`
+                    }
+                    className={styles.accountLogout}
+                    disabled={logout.isPending}
+                    onClick={handleLogout}
+                    type="button"
+                  >
+                    <LogOut aria-hidden="true" />
+                  </button>
+                </>
+              ) : (
+                <a
+                  className={styles.accountLink}
+                  href={client.signInPath(config.routes.apply)}
+                >
+                  <LogIn aria-hidden="true" />
+                  <span className={styles.accountLabel}>Sign in</span>
                 </a>
-              ))}
-            </nav>
-          ) : null}
+              )}
+            </div>
+          </div>
 
           <button
             type="button"
@@ -315,6 +386,44 @@ export function Navbar({
                   {link.label}
                 </a>
               ))}
+              {session.isPending || session.isError ? (
+                <span
+                  aria-label={
+                    session.isError ? "Account unavailable" : "Loading account"
+                  }
+                  className={`${styles.mobileLink} ${styles.mobileAccountPending}`}
+                >
+                  {session.isError ? "Account unavailable" : "Account"}
+                </span>
+              ) : session.data.authenticated ? (
+                <>
+                  <Link
+                    className={styles.mobileLink}
+                    href={config.routes.dashboard}
+                    tabIndex={isMenuOpen ? 0 : -1}
+                    onClick={handleNavigation}
+                  >
+                    Dashboard · {accountName}
+                  </Link>
+                  <button
+                    className={styles.mobileLink}
+                    disabled={logout.isPending}
+                    onClick={handleLogout}
+                    tabIndex={isMenuOpen ? 0 : -1}
+                    type="button"
+                  >
+                    {logout.isPending ? "Logging out…" : "Log out"}
+                  </button>
+                </>
+              ) : (
+                <a
+                  className={styles.mobileLink}
+                  href={client.signInPath(config.routes.apply)}
+                  tabIndex={isMenuOpen ? 0 : -1}
+                >
+                  Sign in
+                </a>
+              )}
             </div>
             {socialLinks.length > 0 ? (
               <div

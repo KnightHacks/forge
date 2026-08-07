@@ -1,10 +1,13 @@
 import { cookies } from "next/headers";
 
 import type { Session } from "@forge/auth/server";
-import { auth as realAuth } from "@forge/auth/server";
+import {
+  auth as realAuth,
+  signOutSession as realSignOutSession,
+} from "@forge/auth/server";
 import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { User } from "@forge/db/schemas/auth";
+import { Session as AuthSession, User } from "@forge/db/schemas/auth";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { env } from "~/env";
@@ -74,6 +77,28 @@ export async function auth() {
   }
 
   return await realAuth();
+}
+
+export async function signOutSession(requestHeaders: Headers) {
+  if (!isE2EAuthEnabled()) return realSignOutSession(requestHeaders);
+
+  const cookieHeader = requestHeaders.get("cookie") ?? "";
+  const e2eUserId = cookieHeader
+    .split(";")
+    .map((part) => part.trim().split("="))
+    .find(([name]) => name === E2E_AUTH_COOKIE)?.[1];
+  if (e2eUserId) {
+    await db
+      .delete(AuthSession)
+      .where(eq(AuthSession.id, `e2e-session-${e2eUserId}`));
+  }
+
+  const response = new Response(null, { status: 204 });
+  response.headers.append(
+    "set-cookie",
+    `${E2E_AUTH_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`,
+  );
+  return response;
 }
 
 export type { Session };

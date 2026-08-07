@@ -212,6 +212,13 @@ export const portalRevokeSchema = z
   })
   .strict();
 
+export const portalLogoutRequestSchema = z
+  .object({
+    clientId: z.string().trim().min(1).max(128),
+    returnTo: z.string().url().max(2_048),
+  })
+  .strict();
+
 const isoDateTimeSchema = z.string().datetime({ offset: true });
 const nullableIsoDateTimeSchema = isoDateTimeSchema.nullable();
 

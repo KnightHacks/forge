@@ -116,6 +116,22 @@ Current phase: KH IX manual UI pass
   of truth. This slice will transplant that app in isolation and replace only
   its legacy auth/API coupling with the Hacker SDK; regular `main` Blade/API
   architecture will not be merged into Reforge.
+- 2026-08-06: Portal sign-in destinations are yearly-site configuration. KH IX
+  sends its public sign-in action to `/apply`; the SDK still rejects external
+  return paths.
+- 2026-08-06: Sign-out revokes the portal token family and performs a validated
+  Blade front-channel logout before returning to the yearly site. Clearing
+  only SDK cookies is incomplete because the Blade session can otherwise issue
+  a new portal session immediately.
+- 2026-08-06: The owner approved clearing both portal and Blade auth state.
+  Logout preserves local portal credentials and reports a retryable failure if
+  Blade revocation does not commit, permits disabled clients to finish cleanup,
+  blocks cross-site front-channel initiation, and invalidates the backing E2E
+  session with its cascading portal credentials.
+- 2026-08-06: Manual review traced 159 `Portal <hash>` hackathons to historical
+  lifecycle-test fixtures in the shared development database. Those exact
+  fixtures and their orphan participant records were removed; KH IX itself was
+  never missing or disabled.
 
 ## Open questions
 
@@ -161,7 +177,11 @@ None. The delegated adversarial SRD review completed.
       `main` Blade/backend implementation.
 - [x] Reconnect application, profile, status, agreements, resume, QR, schedule,
       attendance, points, and leaderboard through `@forge/hacker-sdk`.
-- [ ] Re-run the final deep Forge Review gate after the manual UI pass.
+- [x] Expose authenticated account state and logout in KH IX public and portal
+      navigation, and return public sign-in to the configured `/apply` route.
+- [x] Merge the hackathon analytics commit from `reforge/main` and remove exact
+      historical portal lifecycle fixtures from the shared development data.
+- [x] Re-run the final deep Forge Review gate after the manual UI pass.
 
 ## Validation / commands
 
@@ -243,6 +263,17 @@ None. The delegated adversarial SRD review completed.
   vision. Attendance timestamps now use the configured hackathon timezone.
 - Latest `pnpm verify:precommit`: 29/29 tasks passed after the transplant review
   fixes.
+- Final auth/navigation Playwright pass: public sign-in returns to `/apply`;
+  authenticated desktop/mobile navigation exposes Dashboard and Logout; logout
+  clears SDK and Blade cookies and returns home; fresh-account application UI
+  rendered at 1440 px and 390 px with no console errors or horizontal overflow.
+- Final logout hardening suites: SDK 28/28, Blade 670/670, KH IX 10/10, and the
+  full workspace test graph 25/25 tasks with API 697/697.
+- Final production build graph: 17/17 tasks passed with the shared development
+  environment and an explicit build-only KH IX portal client ID.
+- Final deep Forge Review: GREEN from auth/security, React/UX/accessibility, and
+  contracts/test reviewers after independent adversarial adjudication of every
+  reported finding.
 - Latest `pnpm verify:push`: 29/29 tasks passed after the final retry,
   origin-isolation, atomic-update, and journey-key hardening.
 - Final KH IX production build passed across all 14 routes, including the

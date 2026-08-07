@@ -11,6 +11,7 @@ import {
   HACKER_WITHDRAWAL_ACKNOWLEDGEMENT,
   hackerPortalV1InputSchemas,
   hackerPortalV1OutputSchemas,
+  portalLogoutRequestSchema,
   portalRefreshSchema,
 } from "../hacker-portal";
 
@@ -152,6 +153,21 @@ describe("Hacker Portal validators", () => {
         refreshToken: "x".repeat(32),
       }).success,
     ).toBe(true);
+  });
+
+  it("binds front-channel logout to a client and absolute return URL", () => {
+    expect(
+      portalLogoutRequestSchema.safeParse({
+        clientId: "khix",
+        returnTo: "https://2026.knighthacks.org/",
+      }).success,
+    ).toBe(true);
+    expect(
+      portalLogoutRequestSchema.safeParse({
+        clientId: "khix",
+        returnTo: "/",
+      }).success,
+    ).toBe(false);
   });
 
   it("TC-APP-010 requires agreement content without prescribing its renderer", () => {

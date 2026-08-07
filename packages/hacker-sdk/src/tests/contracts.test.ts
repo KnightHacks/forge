@@ -71,6 +71,30 @@ describe("Hacker participant v1 contract", () => {
     expect(client.resumeDownloadPath).toBe("/api/kh/resume/download");
   });
 
+  it("returns the validated front-channel destination when signing out", async () => {
+    const requestFetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(input).toBe("/api/kh/sign-out");
+      expect(init?.method).toBe("POST");
+      expect(init?.body).toBe(JSON.stringify({ returnTo: "/apply" }));
+      return Promise.resolve(
+        Response.json({
+          redirectTo:
+            "https://blade.knighthacks.org/api/hacker/v1/auth/logout?client_id=khix",
+        }),
+      );
+    };
+    const client = createHackerParticipantClient({
+      adapterBasePath: "/api/kh",
+      fetch: requestFetch,
+      portalKey: "kh-x",
+    });
+
+    await expect(client.signOut("/apply")).resolves.toEqual({
+      redirectTo:
+        "https://blade.knighthacks.org/api/hacker/v1/auth/logout?client_id=khix",
+    });
+  });
+
   it("requires a stable idempotency key when issuing a check-in pass", () => {
     expect(() =>
       HACKER_PARTICIPANT_V1_SCHEMAS.input.getCheckInPass.parse(undefined),

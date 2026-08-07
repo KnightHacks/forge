@@ -33,6 +33,7 @@ import {
   useHackerSchedule,
   useHackerSdkClient,
   useHackerSession,
+  useHackerSignOut,
   useIssueHackerCheckInPass,
   usePublicHackathon,
   useRemoveHackerResume,
@@ -41,6 +42,7 @@ import {
   useUploadHackerResume,
   useWithdrawHackerApplication,
 } from "@forge/hacker-sdk/react";
+import { toast } from "@forge/ui/toast";
 
 import type {
   HackerApplicationFormValues,
@@ -328,7 +330,7 @@ export function HackathonPortalProvider({
   );
 }
 
-function usePortalConfig() {
+export function usePortalConfig() {
   const config = useContext(PortalConfigContext);
   if (!config) throw new Error("Portal hooks require HackathonPortalProvider.");
   return config;
@@ -377,6 +379,56 @@ export function PortalAuthBoundary({ children }: { children: ReactNode }) {
   }
 
   return children;
+}
+
+export function usePortalSignOut() {
+  const { error, isPending, mutateAsync } = useHackerSignOut();
+
+  return {
+    error,
+    isPending,
+    signOut: useCallback(
+      async (returnTo = "/") => {
+        const result = await mutateAsync({ returnTo });
+        window.location.assign(result.redirectTo);
+      },
+      [mutateAsync],
+    ),
+  };
+}
+
+export function PortalSessionControl() {
+  const pathname = usePathname();
+  const session = useHackerSession();
+  const logout = usePortalSignOut();
+
+  if (pathname.startsWith("/dashboard") || !session.data?.authenticated) {
+    return null;
+  }
+
+  return (
+    <aside
+      aria-label="Signed-in hacker account"
+      className="fixed right-3 top-3 z-[140] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-full border border-white/20 bg-[#07150f]/90 px-3 py-2 text-xs text-white shadow-xl backdrop-blur-md sm:right-5 sm:top-5"
+    >
+      <span className="max-w-32 truncate text-white/75 sm:max-w-48">
+        {session.data.displayName ?? "Signed in"}
+      </span>
+      <span className="h-4 w-px bg-white/20" aria-hidden="true" />
+      <button
+        className="font-bold text-[#d7ff76] transition hover:text-white disabled:cursor-wait disabled:opacity-60"
+        disabled={logout.isPending}
+        onClick={() => {
+          void logout.signOut().catch(() => {
+            toast.error("Could not log out. Please try again.");
+          });
+        }}
+        type="button"
+      >
+        {logout.isPending ? "Logging out…" : "Log out"}
+      </button>
+    </aside>
+  );
 }
 
 export function useHackerApplicationFlow({
@@ -695,13 +747,4 @@ export function useHackerProfileFlow() {
     },
     uploadMutation,
   };
-}
-
-export async function signOut({ redirectTo }: { redirectTo: string }) {
-  const response = await fetch("/api/hacker-sdk/sign-out", {
-    headers: { "content-type": "application/json" },
-    method: "POST",
-  });
-  if (!response.ok) throw new Error("Could not sign out.");
-  window.location.assign(redirectTo);
 }

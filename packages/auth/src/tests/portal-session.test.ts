@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type {
   PortalSessionRecord,
@@ -175,6 +175,29 @@ function createStore() {
 
 describe("portal session service", () => {
   const callback = "https://khix.knighthacks.org/api/hacker-sdk/callback";
+
+  it("allows a disabled client to revoke existing credentials", async () => {
+    const { store } = createStore();
+    const revokeSession = vi.fn(() => Promise.resolve());
+    store.revokeSession = revokeSession;
+    store.findClient = () =>
+      Promise.resolve({
+        id: "client-record",
+        clientId: "khix",
+        hackathonId: "hackathon",
+        origin: "https://khix.knighthacks.org",
+        enabled: false,
+      });
+    const service = createPortalSessionService({
+      store,
+      environment: "production",
+    });
+
+    await expect(
+      service.revoke("khix", { accessToken: "stale-access" }),
+    ).resolves.toBeUndefined();
+    expect(revokeSession).toHaveBeenCalledOnce();
+  });
 
   it("issues, consumes, and authenticates a PKCE-bound session", async () => {
     const { store } = createStore();

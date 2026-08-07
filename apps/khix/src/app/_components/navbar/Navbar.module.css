@@ -205,7 +205,7 @@
   transform: scaleX(1);
 }
 
-.socialLinks {
+.navActions {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -213,6 +213,110 @@
   gap: 0.5rem;
   /* Taper the fixed badge clearance away once the centered nav is naturally clear. */
   margin-right: clamp(0rem, calc((100rem - 100vw) / 2 + 1rem), 9rem);
+}
+
+.socialLinks,
+.accountActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.accountActions {
+  padding-left: 0.25rem;
+}
+
+.accountLink,
+.accountLogout {
+  display: inline-flex;
+  min-height: 2.72rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.24);
+  background: rgb(2 26 25 / 0.58);
+  color: #fff;
+  box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 0.24);
+  text-decoration: none;
+  backdrop-filter: blur(0.55rem);
+  -webkit-backdrop-filter: blur(0.55rem);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.accountLink {
+  gap: 0.42rem;
+  max-width: 13rem;
+  padding: 0 0.82rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.accountLogout {
+  width: 2.72rem;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.accountLink:hover,
+.accountLink:focus-visible,
+.accountLogout:hover,
+.accountLogout:focus-visible {
+  border-color: rgb(215 255 118 / 0.68);
+  background: rgb(7 42 30 / 0.82);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.accountLogout:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.accountPending {
+  pointer-events: none;
+  opacity: 0.58;
+}
+
+.accountPendingDot {
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0.55rem rgb(215 255 118 / 0.46);
+  animation: account-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes account-pulse {
+  from {
+    opacity: 0.38;
+  }
+
+  to {
+    opacity: 0.9;
+  }
+}
+
+.accountLink svg,
+.accountLogout svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+.accountName {
+  max-width: 5.5rem;
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.72);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountLabel {
+  white-space: nowrap;
 }
 
 .socialLink {
@@ -442,6 +546,23 @@
   transition-delay: 0ms, 0ms, 0ms;
 }
 
+button.mobileLink {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button.mobileLink:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.mobileAccountPending {
+  pointer-events: none;
+  opacity: 0.62;
+}
+
 .mobileLink:hover,
 .mobileLink:focus-visible {
   color: #ffffff;
@@ -456,6 +577,11 @@
 .mobileLayer[data-state="open"] .mobileLink {
   opacity: 1;
   transform: translate3d(0, 0, 0);
+}
+
+.mobileLayer[data-state="open"] button.mobileLink:disabled,
+.mobileLayer[data-state="open"] .mobileAccountPending {
+  opacity: 0.62;
 }
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(1) {
@@ -488,6 +614,14 @@
 
 .mobileLayer[data-state="open"] .mobileLink:nth-child(8) {
   transition-delay: 0ms, 404ms, 404ms;
+}
+
+.mobileLayer[data-state="open"] .mobileLink:nth-child(9) {
+  transition-delay: 0ms, 436ms, 436ms;
+}
+
+.mobileLayer[data-state="open"] .mobileLink:nth-child(10) {
+  transition-delay: 0ms, 468ms, 468ms;
 }
 
 .mobileSocialLinks {
@@ -594,6 +728,9 @@
 
   .socialLinks {
     gap: clamp(0.5rem, 0.48vw, 0.72rem);
+  }
+
+  .navActions {
     margin-right: 0;
   }
 
@@ -615,6 +752,10 @@
 
   .link {
     font-size: 0.84rem;
+  }
+
+  .accountName {
+    display: none;
   }
 }
 
@@ -662,7 +803,7 @@
   }
 
   .links,
-  .socialLinks {
+  .navActions {
     display: none;
   }
 
@@ -688,6 +829,7 @@
   }
 
   .brand,
+  .accountPendingDot,
   .link,
   .link::after,
   .socialLink,

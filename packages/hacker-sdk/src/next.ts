@@ -9,6 +9,7 @@ import {
 
 const DEFAULT_BLADE_PATHS = {
   authorize: "/api/hacker/v1/auth/authorize",
+  logout: "/api/hacker/v1/auth/logout",
   refresh: "/api/hacker/v1/auth/refresh",
   resume: "/api/hacker/v1/resume",
   revoke: "/api/hacker/v1/auth/revoke",
@@ -505,26 +506,92 @@ export function createHackerSdkNextHandler(
         );
       }
       const cookies = parseCookies(request);
+      let returnTo = "/";
+      try {
+        const body = await readReplayableBody(request, 2_048);
+        if (body) {
+          const parsed: unknown = JSON.parse(new TextDecoder().decode(body));
+          if (
+            typeof parsed === "object" &&
+            parsed !== null &&
+            "returnTo" in parsed &&
+            typeof parsed.returnTo === "string"
+          ) {
+            returnTo = normalizeHackerSdkReturnPath(parsed.returnTo);
+          }
+        }
+      } catch {
+        return jsonError(
+          new HackerSdkError({
+            code: "VALIDATION_ERROR",
+            message: "The sign-out request is invalid.",
+            retryable: false,
+          }),
+          400,
+        );
+      }
       const accessToken = cookies.get(cookieNames.access);
       const refreshToken = cookies.get(cookieNames.refresh);
       if (refreshToken || accessToken) {
-        await requestFetch(new URL(paths.revoke, bladeOrigin), {
-          body: JSON.stringify({
-            clientId: options.clientId,
-            ...(refreshToken ? { refreshToken } : {}),
-          }),
-          headers: {
-            ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
-            "content-type": "application/json",
-            "x-forge-portal-client": options.clientId,
-          },
-          method: "POST",
-          redirect: "manual",
-        }).catch(() => undefined);
+        let revokeResponse: Response;
+        try {
+          revokeResponse = await requestFetch(
+            new URL(paths.revoke, bladeOrigin),
+            {
+              body: JSON.stringify({
+                clientId: options.clientId,
+                ...(refreshToken ? { refreshToken } : {}),
+              }),
+              headers: {
+                ...(accessToken
+                  ? { authorization: `Bearer ${accessToken}` }
+                  : {}),
+                "content-type": "application/json",
+                "x-forge-portal-client": options.clientId,
+              },
+              method: "POST",
+              redirect: "manual",
+            },
+          );
+        } catch (cause) {
+          return jsonError(
+            new HackerSdkError(
+              {
+                code: "NETWORK_ERROR",
+                message: "Could not finish signing out. Please try again.",
+                retryable: true,
+              },
+              cause instanceof Error ? { cause } : undefined,
+            ),
+            502,
+          );
+        }
+        if (!revokeResponse.ok) {
+          return jsonError(
+            new HackerSdkError({
+              code: "NETWORK_ERROR",
+              message: "Could not finish signing out. Please try again.",
+              requestId:
+                revokeResponse.headers.get("x-request-id") ?? undefined,
+              retryable: true,
+            }),
+            502,
+          );
+        }
       }
       const headers = new Headers(PRIVATE_HEADERS);
       clearSessionCookies(headers, secure, cookieNames);
-      return new Response(null, { headers, status: 204 });
+      headers.set("content-type", "application/json; charset=utf-8");
+      const logoutUrl = new URL(paths.logout, bladeOrigin);
+      logoutUrl.searchParams.set("client_id", options.clientId);
+      logoutUrl.searchParams.set(
+        "return_to",
+        new URL(returnTo, requestUrl.origin).toString(),
+      );
+      return Response.json(
+        { redirectTo: logoutUrl.toString() },
+        { headers, status: 200 },
+      );
     }
 
     const isTrpc = path.startsWith("trpc/");
