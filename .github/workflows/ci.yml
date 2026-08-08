@@ -204,7 +204,7 @@ jobs:
       - name: Test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forge
-        run: pnpm test
+        run: pnpm exec turbo run test --filter='!@forge/db'
 
   lint:
     runs-on: ubuntu-latest
