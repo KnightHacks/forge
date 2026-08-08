@@ -116,6 +116,12 @@ export const hackerSetStatusSchema = z.object({
   status: hackerTransitionStatusSchema,
 });
 
+/** Destructive reset that lets a participant submit to this hackathon again. */
+export const hackerDeleteApplicationSchema = z.object({
+  attendeeId: z.string().uuid(),
+  confirmed: z.literal(true),
+});
+
 /**
  * A bulk action carries the ids the officer actually selected.
  *

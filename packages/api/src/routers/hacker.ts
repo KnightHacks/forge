@@ -22,11 +22,13 @@ import {
   HackathonStatusEmail,
   Hacker,
   HackerAttendee,
+  HackerParticipantCommand,
 } from "@forge/db/schemas/knight-hacks";
 import {
   HACKATHON_SENDING_STATUSES,
   hackerAwardPointsSchema,
   hackerBulkPreviewSchema,
+  hackerDeleteApplicationSchema,
   hackerFilterOptionsSchema,
   hackerRosterCountsSchema,
   hackerRosterListSchema,
@@ -1152,6 +1154,91 @@ export const hackerRouter = createTRPCRouter({
         );
 
         return { blacklisted: input.blacklisted };
+      });
+    }),
+
+  /**
+   * Removes one hackathon application so the participant can submit it again.
+   *
+   * The reusable profile and account deliberately survive. The legacy Hacker
+   * row is only a compatibility snapshot, but old data can share one across
+   * hackathons, so it is removed only when this was its final attendee row.
+   */
+  deleteApplication: permProcedure
+    .input(hackerDeleteApplicationSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const [application] = await tx
+          .select({
+            firstName: Hacker.firstName,
+            hackerId: HackerAttendee.hackerId,
+            hackathonId: HackerAttendee.hackathonId,
+            lastName: Hacker.lastName,
+            userId: Hacker.userId,
+          })
+          .from(HackerAttendee)
+          .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(HackerAttendee.id, input.attendeeId))
+          .for("update", { of: HackerAttendee })
+          .limit(1);
+
+        if (!application) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "That applicant is no longer in this hackathon.",
+          });
+        }
+
+        const clearedCommands = await tx
+          .delete(HackerParticipantCommand)
+          .where(
+            and(
+              eq(HackerParticipantCommand.userId, application.userId),
+              eq(HackerParticipantCommand.hackathonId, application.hackathonId),
+            ),
+          )
+          .returning({ id: HackerParticipantCommand.id });
+
+        await tx
+          .delete(HackerAttendee)
+          .where(eq(HackerAttendee.id, input.attendeeId));
+
+        const [remainingReference] = await tx
+          .select({ id: HackerAttendee.id })
+          .from(HackerAttendee)
+          .where(eq(HackerAttendee.hackerId, application.hackerId))
+          .limit(1);
+        const legacySnapshotDeleted = !remainingReference;
+        if (legacySnapshotDeleted) {
+          await tx.delete(Hacker).where(eq(Hacker.id, application.hackerId));
+        }
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "hacker.application_deleted",
+            actor: auditActor,
+            metadata: {
+              clearedCommandCount: clearedCommands.length,
+              hackathonId: application.hackathonId,
+              legacySnapshotDeleted,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.attendeeId,
+                targetLabel:
+                  `${application.firstName} ${application.lastName}`.trim(),
+                targetType: "hacker_attendee",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return { deleted: true };
       });
     }),
 });

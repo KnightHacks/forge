@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
-import { eq, inArray } from "@forge/db";
+import { and, eq, inArray } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -1237,6 +1237,135 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         .from(knightHacks.HackerAttendee)
         .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
       expect(attendee?.lastStatusSendId).toBe(result.sendId);
+    });
+  });
+
+  describe("application deletion", () => {
+    it("removes the application while preserving the reusable profile", async () => {
+      const userId = "10000000-0000-4000-8000-0000000000f1";
+      const hackerId = "70000000-0000-4000-8000-0000000000f1";
+      const attendeeId = "60000000-0000-4000-8000-0000000000f1";
+      const profileId = "90000000-0000-4000-8000-0000000000f1";
+      const profileRevisionId = "91000000-0000-4000-8000-0000000000f1";
+
+      await client.insert(auth.User).values({
+        discordUserId: "discord-resettable",
+        id: userId,
+      });
+
+      try {
+        const profileFields = {
+          country: "United States of America" as const,
+          discordUser: "resettable",
+          dob: "2006-01-01",
+          email: "resettable@example.test",
+          firstName: "Resettable",
+          foodAllergies: null,
+          gender: "Prefer not to answer" as const,
+          githubProfileUrl: null,
+          gradDate: "2030-05-01",
+          lastName: "Applicant",
+          levelOfStudy: "Undergraduate University (3+ year)" as const,
+          linkedinProfileUrl: null,
+          major: "Computer Science" as const,
+          phoneNumber: "0000000001",
+          raceOrEthnicity: "Prefer not to answer" as const,
+          school: "University of Central Florida",
+          shirtSize: "M" as const,
+          websiteUrl: null,
+        };
+        await client.insert(knightHacks.HackerProfile).values({
+          ...profileFields,
+          id: profileId,
+          resumeUrl: null,
+          userId,
+        });
+        await client.insert(knightHacks.Hacker).values({
+          ...profileFields,
+          age: 20,
+          id: hackerId,
+          resumeUrl: null,
+          survey1: "",
+          survey2: "",
+          userId,
+        });
+        await client.insert(knightHacks.HackerProfileRevision).values({
+          ...profileFields,
+          id: profileRevisionId,
+          legacyHackerId: hackerId,
+          profileId,
+          resumeUrl: null,
+          revision: 1,
+        });
+        await client.insert(knightHacks.HackerAttendee).values({
+          hackerId,
+          hackathonId: READY_HACKATHON,
+          id: attendeeId,
+          profileId,
+          profileRevisionId,
+          status: "pending",
+        });
+        await client.insert(knightHacks.HackerParticipantCommand).values({
+          completedAt: new Date(),
+          expiresAt: since(1),
+          hackathonId: READY_HACKATHON,
+          idempotencyKey: "original-submit",
+          operation: "submit_application",
+          payloadHash: "a".repeat(64),
+          result: { attendeeId },
+          state: "completed",
+          userId,
+        });
+
+        await expect(
+          caller.hacker.deleteApplication({
+            attendeeId,
+            confirmed: true,
+          }),
+        ).resolves.toEqual({ deleted: true });
+
+        const [application, legacy, profile, revision, command] =
+          await Promise.all([
+            client
+              .select({ id: knightHacks.HackerAttendee.id })
+              .from(knightHacks.HackerAttendee)
+              .where(eq(knightHacks.HackerAttendee.id, attendeeId)),
+            client
+              .select({ id: knightHacks.Hacker.id })
+              .from(knightHacks.Hacker)
+              .where(eq(knightHacks.Hacker.id, hackerId)),
+            client
+              .select({ id: knightHacks.HackerProfile.id })
+              .from(knightHacks.HackerProfile)
+              .where(eq(knightHacks.HackerProfile.id, profileId)),
+            client
+              .select({ id: knightHacks.HackerProfileRevision.id })
+              .from(knightHacks.HackerProfileRevision)
+              .where(
+                eq(knightHacks.HackerProfileRevision.id, profileRevisionId),
+              ),
+            client
+              .select({ id: knightHacks.HackerParticipantCommand.id })
+              .from(knightHacks.HackerParticipantCommand)
+              .where(
+                and(
+                  eq(knightHacks.HackerParticipantCommand.userId, userId),
+                  eq(
+                    knightHacks.HackerParticipantCommand.hackathonId,
+                    READY_HACKATHON,
+                  ),
+                ),
+              ),
+          ]);
+
+        expect(application).toHaveLength(0);
+        expect(legacy).toHaveLength(0);
+        expect(profile).toHaveLength(1);
+        expect(revision).toHaveLength(1);
+        expect(command).toHaveLength(0);
+      } finally {
+        await client.delete(auth.User).where(eq(auth.User.id, userId));
+      }
     });
   });
 });

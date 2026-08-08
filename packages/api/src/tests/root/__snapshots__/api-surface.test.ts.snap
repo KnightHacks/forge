@@ -185,6 +185,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "hackathonEvent.voidAttendance",
   "hacker.awardPoints",
   "hacker.confirmBulk",
+  "hacker.deleteApplication",
   "hacker.filterOptions",
   "hacker.get",
   "hacker.listForHackathon",

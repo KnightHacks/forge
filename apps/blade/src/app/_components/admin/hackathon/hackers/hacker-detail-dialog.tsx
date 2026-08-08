@@ -12,6 +12,7 @@ import {
   Send,
   ShieldAlert,
   Sparkles,
+  Trash2,
   UserRound,
   Utensils,
 } from "lucide-react";
@@ -19,10 +20,12 @@ import {
 import { FORMS } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import { Checkbox } from "@forge/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
@@ -759,12 +762,133 @@ export function HackerDetailDialog({
                     <LinkRow label="Website" url={hacker.websiteUrl} />
                   </DetailSection>
                 ) : null}
+
+                <DetailSection
+                  className="border-destructive/30 lg:col-span-2"
+                  description="Remove this hackathon application so the participant can submit it again."
+                  icon={Trash2}
+                  title="Delete application"
+                >
+                  <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                    <p className="text-sm leading-5 text-muted-foreground">
+                      Their Blade account and reusable profile remain. Status,
+                      points, agreements, and check-ins for this hackathon are
+                      removed permanently.
+                    </p>
+                    <DeleteApplicationDialog
+                      attendeeId={hacker.attendeeId}
+                      blocked={blocked}
+                      name={hacker.name}
+                      onDeleted={() => {
+                        onOpenChange(false);
+                        onSaved();
+                      }}
+                    />
+                  </div>
+                </DetailSection>
               </div>
             )}
           </>
         ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function DeleteApplicationDialog({
+  attendeeId,
+  blocked,
+  name,
+  onDeleted,
+}: {
+  attendeeId: string;
+  blocked: boolean;
+  name: string;
+  onDeleted: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) setConfirmed(false);
+  };
+  const remove = api.hacker.deleteApplication.useMutation({
+    onError: (error) =>
+      toast.error(error.message || "Application could not be deleted."),
+    onSuccess: () => {
+      toast.success("Application deleted. They can apply again now.");
+      setOpen(false);
+      setConfirmed(false);
+      onDeleted();
+    },
+  });
+
+  return (
+    <>
+      <Button
+        className="min-h-11 shrink-0 gap-2"
+        disabled={blocked}
+        onClick={() => setOpen(true)}
+        type="button"
+        variant="destructive"
+      >
+        <Trash2 className="size-4" aria-hidden="true" />
+        Delete application
+      </Button>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="z-[70] border-destructive/30 bg-card/95 motion-reduce:animate-none">
+          <DialogHeader>
+            <DialogTitle>Delete {name}&apos;s application?</DialogTitle>
+            <DialogDescription>
+              This permanently removes this hackathon application, including its
+              status, points, agreements, and check-ins. Their Blade account and
+              reusable profile remain, so they can apply again. Past emails and
+              the admin audit record remain.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <Checkbox
+              checked={confirmed}
+              id="delete-hacker-application-confirmation"
+              onCheckedChange={(checked) => setConfirmed(checked === true)}
+            />
+            <Label
+              className="cursor-pointer text-sm leading-5"
+              htmlFor="delete-hacker-application-confirmation"
+            >
+              I understand this permanently deletes this application and its
+              hackathon activity.
+            </Label>
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={remove.isPending}
+              onClick={() => handleOpenChange(false)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={remove.isPending || !confirmed}
+              onClick={() =>
+                remove.mutate({
+                  attendeeId,
+                  confirmed: true,
+                })
+              }
+              type="button"
+              variant="destructive"
+            >
+              {remove.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              Delete application
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

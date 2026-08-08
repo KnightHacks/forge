@@ -326,6 +326,56 @@ function registerField(
   });
 }
 
+/**
+ * CSS properties whose numeric values are ratios/counts rather than lengths.
+ *
+ * React's style API adds `px` to other non-zero numeric declarations. The safe
+ * compiler accepts the same TSX dialect, so mirroring that behavior prevents
+ * valid React Email source from becoming invalid CSS such as `max-width:660`.
+ */
+const UNITLESS_CSS_PROPERTIES = new Set([
+  "animationIterationCount",
+  "borderImageOutset",
+  "borderImageSlice",
+  "borderImageWidth",
+  "boxFlex",
+  "boxFlexGroup",
+  "boxOrdinalGroup",
+  "columnCount",
+  "columns",
+  "flex",
+  "flexGrow",
+  "flexPositive",
+  "flexShrink",
+  "flexNegative",
+  "flexOrder",
+  "fontWeight",
+  "gridArea",
+  "gridColumn",
+  "gridColumnEnd",
+  "gridColumnSpan",
+  "gridColumnStart",
+  "gridRow",
+  "gridRowEnd",
+  "gridRowSpan",
+  "gridRowStart",
+  "lineClamp",
+  "lineHeight",
+  "opacity",
+  "order",
+  "orphans",
+  "scale",
+  "tabSize",
+  "widows",
+  "zIndex",
+  "zoom",
+]);
+
+function cssValue(key: string, value: number | string) {
+  if (typeof value === "string" || value === 0) return String(value);
+  return UNITLESS_CSS_PROPERTIES.has(key) ? String(value) : `${value}px`;
+}
+
 function styleToString(value: unknown): string | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return undefined;
@@ -337,7 +387,7 @@ function styleToString(value: unknown): string | undefined {
       /[A-Z]/g,
       (letter) => `-${letter.toLowerCase()}`,
     );
-    declarations.push(`${cssKey}:${String(item)}`);
+    declarations.push(`${cssKey}:${cssValue(key, item)}`);
   }
   return declarations.join(";");
 }
@@ -378,6 +428,28 @@ function htmlAttributes(
     output.push(`${htmlName}="${escapeHtml(value)}"`);
   }
   return output.length > 0 ? ` ${output.join(" ")}` : "";
+}
+
+function legacyBackgroundAttribute(attributes: Record<string, unknown>) {
+  const style = attributes.style;
+  if (typeof style !== "object" || style === null || Array.isArray(style)) {
+    return "";
+  }
+  const backgroundColor = (style as Record<string, unknown>).backgroundColor;
+  return typeof backgroundColor === "string"
+    ? ` bgcolor="${escapeHtml(backgroundColor)}"`
+    : "";
+}
+
+function legacyAlignmentAttribute(attributes: Record<string, unknown>) {
+  const style = attributes.style;
+  if (typeof style !== "object" || style === null || Array.isArray(style)) {
+    return "";
+  }
+  const textAlign = (style as Record<string, unknown>).textAlign;
+  return textAlign === "center" || textAlign === "left" || textAlign === "right"
+    ? ` align="${textAlign}"`
+    : "";
 }
 
 function renderChildren(
@@ -545,6 +617,33 @@ function renderElement(
   if (!tag) fail(`Unsupported template component "${component}"`, node);
   const childResult = renderChildren(children, context, depth + 1);
   const attrs = htmlAttributes(component, attributes, node);
+
+  // React Email's layout primitives are tables because Outlook and several
+  // mobile clients do not consistently honor layout, alignment, or padding on
+  // HTML5 section/div elements. Keep the authoring dialect pleasant while
+  // emitting the deliberately old-fashioned structure email clients agree on.
+  if (component === "Container") {
+    const background = legacyBackgroundAttribute(attributes);
+    return {
+      html: `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" align="center"${background}${attrs}><tbody><tr><td${background}>${childResult.html}</td></tr></tbody></table>`,
+      text: `${childResult.text}\n`.trim(),
+    };
+  }
+  if (component === "Section") {
+    const background = legacyBackgroundAttribute(attributes);
+    const alignment = legacyAlignmentAttribute(attributes);
+    return {
+      html: `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"${background}><tbody><tr><td${background}${alignment}${attrs}>${childResult.html}</td></tr></tbody></table>`,
+      text: `${childResult.text}\n`.trim(),
+    };
+  }
+  if (component === "Body") {
+    const background = legacyBackgroundAttribute(attributes);
+    return {
+      html: `<body${background}${attrs}>${childResult.html}</body>`,
+      text: `${childResult.text}\n`.trim(),
+    };
+  }
   if (VOID_TAGS.has(tag)) {
     return { html: `<${tag}${attrs} />`, text: childResult.text };
   }
@@ -679,7 +778,17 @@ function finalize(
   // Both compile paths pass through here with a complete contract, so this is
   // the one place the domain rule has to hold.
   if (domain) assertFieldsAllowedForDomain(contract, domain);
-  const html = `<!doctype html>${rendered.html}`.trim();
+  const emailHead =
+    '<meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+    '<meta name="x-apple-disable-message-reformatting" />' +
+    '<meta name="color-scheme" content="light only" />' +
+    '<meta name="supported-color-schemes" content="light only" />' +
+    "<style>:root{color-scheme:light only;supported-color-schemes:light only}</style>";
+  const documentHtml = rendered.html.includes("<head>")
+    ? rendered.html.replace("<head>", `<head>${emailHead}`)
+    : rendered.html.replace("<html>", `<html><head>${emailHead}</head>`);
+  const html = `<!doctype html>${documentHtml}`.trim();
   const text = rendered.text
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")

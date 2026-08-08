@@ -113,6 +113,11 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
       }),
   ],
   [
+    "deleteApplication",
+    (caller) =>
+      caller.deleteApplication({ attendeeId: ATTENDEE_ID, confirmed: true }),
+  ],
+  [
     "setBlacklist",
     (caller) =>
       caller.setBlacklist({

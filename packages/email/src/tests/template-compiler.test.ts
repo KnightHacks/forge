@@ -37,6 +37,11 @@ describe("safe email template compilation", () => {
     });
 
     expect(result.kind).toBe("code");
+    expect(result.html).toContain("charset=UTF-8");
+    expect(result.html).toContain(
+      'name="viewport" content="width=device-width, initial-scale=1.0"',
+    );
+    expect(result.html).toContain('name="color-scheme" content="light only"');
     expect(result.html).toContain("Hello Ada");
     expect(result.html).toContain("confirmed for BloomKnights");
     expect(result.text).toContain("Design");
@@ -58,6 +63,34 @@ describe("safe email template compilation", () => {
           type: "string[]",
         }),
       ]),
+    );
+  });
+
+  it("emits table-based email layout primitives with legacy alignment and backgrounds", () => {
+    const result = compileCodeEmailTemplate({
+      sample: {},
+      source: `
+import { Body, Container, Html, Section, Text } from "@react-email/components";
+
+export default (
+  <Html>
+    <Body style={{ backgroundColor: "#ffffff" }}>
+      <Container style={{ backgroundColor: "#071522", maxWidth: 660 }}>
+        <Section style={{ backgroundColor: "#0a1a29", padding: 24, textAlign: "center" }}>
+          <Text>Hello</Text>
+        </Section>
+      </Container>
+    </Body>
+  </Html>
+);`,
+    });
+
+    expect(result.html).toContain('<body bgcolor="#ffffff"');
+    expect(result.html).toContain(
+      '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#071522"',
+    );
+    expect(result.html).toContain(
+      '<td bgcolor="#0a1a29" align="center" style="background-color:#0a1a29;padding:24px;text-align:center">',
     );
   });
 
@@ -115,6 +148,32 @@ describe("safe email template compilation", () => {
         field: "recipient.firstName",
       }),
     );
+  });
+
+  it("serializes React numeric dimensions as pixels", () => {
+    const result = compileCodeEmailTemplate({
+      sample: {},
+      source: `
+        import { Container, Html, Text } from "@react-email/components";
+        export default (
+          <Html>
+            <Container style={{ borderRadius: 12, maxWidth: 660, opacity: 0.8 }}>
+              <Text style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.5, margin: 0 }}>
+                Hello
+              </Text>
+            </Container>
+          </Html>
+        );
+      `,
+    });
+
+    expect(result.html).toContain("border-radius:12px");
+    expect(result.html).toContain("max-width:660px");
+    expect(result.html).toContain("font-size:16px");
+    expect(result.html).toContain("font-weight:700");
+    expect(result.html).toContain("line-height:1.5");
+    expect(result.html).toContain("margin:0");
+    expect(result.html).toContain("opacity:0.8");
   });
 
   it("TC-006 reports required and fallback personalization coverage", () => {

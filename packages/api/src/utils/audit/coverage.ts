@@ -84,6 +84,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "hackathon-event.voidAttendance",
   "hacker.awardPoints",
   "hacker.confirmBulk",
+  "hacker.deleteApplication",
   "hacker.setBlacklist",
   "hacker.updateProfile",
   "hacker.setStatus",

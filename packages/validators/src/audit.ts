@@ -571,6 +571,11 @@ export const AUDIT_ACTION_CATALOG = {
     "Confirmed hackathon attendance",
     ["status"],
   ),
+  "hacker.application_deleted": policy(
+    "hackathons",
+    "Deleted hackathon application",
+    ["hackathonId", "legacySnapshotDeleted", "clearedCommandCount"],
+  ),
   "hacker.application_withdrawn": policy(
     "hackathons",
     "Withdrew hackathon application",
