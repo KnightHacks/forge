@@ -15,13 +15,17 @@ describe("KH IX school selection", () => {
   });
 
   it("puts the manual-entry action before catalog results", () => {
-    expect(SCHOOL_CHOICES[0]).toMatchObject({
+    const customSchoolChoice = SCHOOL_CHOICES[0];
+    expect(customSchoolChoice).toMatchObject({
       kind: "custom",
       label: "Other school — enter manually",
     });
+    if (!customSchoolChoice) {
+      throw new Error("Expected the custom school choice to be first");
+    }
     expect(
       getSchoolChoiceSearchValue(
-        SCHOOL_CHOICES[0]!,
+        customSchoolChoice,
         "School that is not listed",
       ),
     ).toContain("School that is not listed");

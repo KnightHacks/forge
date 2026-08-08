@@ -1,6 +1,6 @@
 {
-  "id": "56652235-974f-47d8-9ae5-845a034bb92f",
-  "prevId": "dd8fbd68-9463-4c31-9e22-6032ce03022d",
+  "id": "17bc7e7f-c795-497d-aae5-57a412ba08a4",
+  "prevId": "00a107e0-c9ac-45da-98d0-b19213100e8c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -232,13 +232,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'1459204271655489567'"
-        },
-        "issue_reminders_enabled": {
-          "name": "issue_reminders_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
         },
         "team_hexcode_color": {
           "name": "team_hexcode_color",
@@ -2588,6 +2581,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -3071,12 +3076,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "due_at": {
-          "name": "due_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "priority": {
           "name": "priority",
           "type": "issue_priority",
@@ -3099,43 +3098,6 @@
         "parent": {
           "name": "parent",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "revision": {
-          "name": "revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "archived_by": {
-          "name": "archived_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "archive_batch_id": {
-          "name": "archive_batch_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "creation_key": {
-          "name": "creation_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "creation_hash": {
-          "name": "creation_hash",
-          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3215,42 +3177,6 @@
           "method": "btree",
           "with": {}
         },
-        "issue_due_at_idx": {
-          "name": "issue_due_at_idx",
-          "columns": [
-            {
-              "expression": "due_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "issue_archive_idx": {
-          "name": "issue_archive_idx",
-          "columns": [
-            {
-              "expression": "archived_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "archive_batch_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "issue_parent_idx": {
           "name": "issue_parent_idx",
           "columns": [
@@ -3310,15 +3236,6 @@
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
-        "knight_hacks_issue_archived_by_auth_user_id_fk": {
-          "name": "knight_hacks_issue_archived_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_issue",
-          "tableTo": "auth_user",
-          "columnsFrom": ["archived_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
         "issue_parent_fk": {
           "name": "issue_parent_fk",
           "tableFrom": "knight_hacks_issue",
@@ -3330,270 +3247,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_issue_creation_key_unique": {
-          "name": "knight_hacks_issue_creation_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["creation_key"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_issue_history": {
-      "name": "knight_hacks_issue_history",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "issue_id": {
-          "name": "issue_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_display_name": {
-          "name": "actor_display_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "action": {
-          "name": "action",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "changed_fields": {
-          "name": "changed_fields",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "ARRAY[]::text[]"
-        },
-        "before": {
-          "name": "before",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "after": {
-          "name": "after",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "issue_history_issue_created_idx": {
-          "name": "issue_history_issue_created_idx",
-          "columns": [
-            {
-              "expression": "issue_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_issue_history_issue_id_knight_hacks_issue_id_fk": {
-          "name": "knight_hacks_issue_history_issue_id_knight_hacks_issue_id_fk",
-          "tableFrom": "knight_hacks_issue_history",
-          "tableTo": "knight_hacks_issue",
-          "columnsFrom": ["issue_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_issue_history_actor_id_auth_user_id_fk": {
-          "name": "knight_hacks_issue_history_actor_id_auth_user_id_fk",
-          "tableFrom": "knight_hacks_issue_history",
-          "tableTo": "auth_user",
-          "columnsFrom": ["actor_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_issue_reminder_delivery": {
-      "name": "knight_hacks_issue_reminder_delivery",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "issue_id": {
-          "name": "issue_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "due_at": {
-          "name": "due_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reminder_key": {
-          "name": "reminder_key",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "destination_snapshot": {
-          "name": "destination_snapshot",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_snapshot": {
-          "name": "content_snapshot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(24)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "attempt_count": {
-          "name": "attempt_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "locked_at": {
-          "name": "locked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "delivered_at": {
-          "name": "delivered_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "next_attempt_at": {
-          "name": "next_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "issue_reminder_delivery_pending_idx": {
-          "name": "issue_reminder_delivery_pending_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "next_attempt_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_issue_reminder_delivery_issue_id_knight_hacks_issue_id_fk": {
-          "name": "knight_hacks_issue_reminder_delivery_issue_id_knight_hacks_issue_id_fk",
-          "tableFrom": "knight_hacks_issue_reminder_delivery",
-          "tableTo": "knight_hacks_issue",
-          "columnsFrom": ["issue_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "issue_reminder_delivery_identity_unique": {
-          "name": "issue_reminder_delivery_identity_unique",
-          "nullsNotDistinct": false,
-          "columns": ["issue_id", "due_at", "reminder_key"]
-        }
-      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -4308,29 +3962,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "normalized_name": {
-          "name": "normalized_name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "body": {
           "name": "body",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
-        },
-        "disabled_at": {
-          "name": "disabled_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "disabled_reason": {
-          "name": "disabled_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -4350,13 +3986,7 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_template_normalized_name_unique": {
-          "name": "knight_hacks_template_normalized_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

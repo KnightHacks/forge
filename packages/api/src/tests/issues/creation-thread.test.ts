@@ -33,19 +33,14 @@ describe("issue creation Discord threads", () => {
     });
 
     expect(Array.from(payload.threadName).length).toBeLessThanOrEqual(100);
-    expect(payload.starter).toMatchObject({
-      content: "",
-      embeds: [
-        {
-          color: 0x93ceff,
-          title: expect.any(String),
-          url: target.url,
-        },
-      ],
+    const starterEmbed = payload.starter.embeds[0];
+    expect(payload.starter.content).toBe("");
+    expect(starterEmbed).toMatchObject({
+      color: 0x93ceff,
+      url: target.url,
     });
-    expect(payload.starter.embeds[0]?.description).not.toContain(
-      "Open in Blade",
-    );
+    expect(typeof starterEmbed?.title).toBe("string");
+    expect(starterEmbed?.description).not.toContain("Open in Blade");
     expect(
       payload.messages.every(({ content }) => content.length <= 2_000),
     ).toBe(true);
@@ -60,14 +55,17 @@ describe("issue creation Discord threads", () => {
     expect(
       `${embedText}\n${payload.messages.map(({ content }) => content).join("\n")}`,
     ).not.toMatch(/@everyone|<@999999999999999999>/);
-    expect(payload.starter.embeds[0]).toMatchObject({
-      fields: expect.arrayContaining([
-        expect.objectContaining({ name: "Team", value: "Development Team" }),
-        expect.objectContaining({ name: "Status", value: "Planning" }),
-      ]),
-      title: expect.any(String),
-      url: target.url,
-    });
+    const starterFields = starterEmbed?.fields ?? [];
+    expect(
+      starterFields.some(
+        (field) => field.name === "Team" && field.value === "Development Team",
+      ),
+    ).toBe(true);
+    expect(
+      starterFields.some(
+        (field) => field.name === "Status" && field.value === "Planning",
+      ),
+    ).toBe(true);
     expect(payload.messages[0]?.embeds[0]).toMatchObject({
       title: "Description continued",
     });

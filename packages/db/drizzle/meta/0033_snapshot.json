@@ -1,6 +1,6 @@
 {
-  "id": "a1da03b5-e13d-40fa-bb27-2ddd2fda7d0b",
-  "prevId": "0d25d6c6-b1b7-4c1b-8a04-c7683891b0e5",
+  "id": "2e890262-d580-4b60-8300-9e39c897eb48",
+  "prevId": "85bb8ba4-64c1-4f66-917e-97612651b800",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3517,14 +3517,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "purpose": {
-          "name": "purpose",
-          "type": "event_purpose",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'event'"
-        },
         "discord_channel_id": {
           "name": "discord_channel_id",
           "type": "varchar(255)",
@@ -3756,22 +3748,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "knight_hacks_event_one_primary_per_hackathon": {
-          "name": "knight_hacks_event_one_primary_per_hackathon",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_event\".\"purpose\" = 'primary_check_in'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -3800,19 +3776,10 @@
           "name": "knight_hacks_event_creationKey_unique",
           "nullsNotDistinct": false,
           "columns": ["creation_key"]
-        },
-        "knight_hacks_event_id_hackathon_unique": {
-          "name": "knight_hacks_event_id_hackathon_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "hackathon_id"]
         }
       },
       "policies": {},
       "checkConstraints": {
-        "knight_hacks_event_primary_requires_hackathon_check": {
-          "name": "knight_hacks_event_primary_requires_hackathon_check",
-          "value": "\"knight_hacks_event\".\"purpose\" <> 'primary_check_in' OR \"knight_hacks_event\".\"hackathon_id\" IS NOT NULL"
-        },
         "knight_hacks_event_tag_color_check": {
           "name": "knight_hacks_event_tag_color_check",
           "value": "\"knight_hacks_event\".\"tag_color\" ~ '^#[0-9A-Fa-f]{6}$'"
@@ -3821,9 +3788,9 @@
           "name": "knight_hacks_event_sync_revision_check",
           "value": "\"knight_hacks_event\".\"sync_revision\" >= 0"
         },
-        "knight_hacks_event_new_points_check": {
-          "name": "knight_hacks_event_new_points_check",
-          "value": "\"knight_hacks_event\".\"legacy\" OR (\"knight_hacks_event\".\"points\" IS NOT NULL AND \"knight_hacks_event\".\"points\" >= 0)"
+        "knight_hacks_event_new_club_points_check": {
+          "name": "knight_hacks_event_new_club_points_check",
+          "value": "\"knight_hacks_event\".\"legacy\" OR \"knight_hacks_event\".\"hackathon_id\" IS NOT NULL OR (\"knight_hacks_event\".\"points\" IS NOT NULL AND \"knight_hacks_event\".\"points\" >= 0)"
         },
         "knight_hacks_event_nonlegacy_sync_states_check": {
           "name": "knight_hacks_event_nonlegacy_sync_states_check",
@@ -3833,9 +3800,9 @@
           "name": "knight_hacks_event_creation_identity_pair_check",
           "value": "(\"knight_hacks_event\".\"creation_key\" IS NULL) = (\"knight_hacks_event\".\"creation_payload_hash\" IS NULL)"
         },
-        "knight_hacks_event_new_creation_identity_check": {
-          "name": "knight_hacks_event_new_creation_identity_check",
-          "value": "\"knight_hacks_event\".\"legacy\" OR (\"knight_hacks_event\".\"creation_key\" IS NOT NULL AND \"knight_hacks_event\".\"creation_payload_hash\" IS NOT NULL)"
+        "knight_hacks_event_new_club_creation_identity_check": {
+          "name": "knight_hacks_event_new_club_creation_identity_check",
+          "value": "\"knight_hacks_event\".\"legacy\" OR \"knight_hacks_event\".\"hackathon_id\" IS NOT NULL OR (\"knight_hacks_event\".\"creation_key\" IS NOT NULL AND \"knight_hacks_event\".\"creation_payload_hash\" IS NOT NULL)"
         },
         "knight_hacks_event_sync_lease_set_check": {
           "name": "knight_hacks_event_sync_lease_set_check",
@@ -4328,12 +4295,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "default_points": {
           "name": "default_points",
           "type": "integer",
@@ -4369,74 +4330,16 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "knight_hacks_event_tag_club_normalized_name_unique": {
-          "name": "knight_hacks_event_tag_club_normalized_name_unique",
-          "columns": [
-            {
-              "expression": "normalized_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_event_tag\".\"hackathon_id\" IS NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_event_tag_hackathon_normalized_name_unique": {
-          "name": "knight_hacks_event_tag_hackathon_normalized_name_unique",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "normalized_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_event_tag\".\"hackathon_id\" IS NOT NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_event_tag_hackathon_idx": {
-          "name": "knight_hacks_event_tag_hackathon_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_event_tag_hackathon_id_knight_hacks_hackathon_id_fk": {
-          "name": "knight_hacks_event_tag_hackathon_id_knight_hacks_hackathon_id_fk",
-          "tableFrom": "knight_hacks_event_tag",
-          "tableTo": "knight_hacks_hackathon",
-          "columnsFrom": ["hackathon_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "knight_hacks_event_tag_normalizedName_unique": {
+          "name": "knight_hacks_event_tag_normalizedName_unique",
+          "nullsNotDistinct": false,
+          "columns": ["normalized_name"]
+        }
+      },
       "policies": {},
       "checkConstraints": {
         "knight_hacks_event_tag_default_points_check": {
@@ -5534,15 +5437,15 @@
           "primaryKey": false,
           "notNull": true
         },
-        "general_hacker_discord_role_id": {
-          "name": "general_hacker_discord_role_id",
-          "type": "varchar(20)",
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
           "primaryKey": false,
           "notNull": false
         },
-        "event_announcement_channel_id": {
-          "name": "event_announcement_channel_id",
-          "type": "varchar(20)",
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         }
@@ -5558,16 +5461,7 @@
         }
       },
       "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hackathon_event_announcement_channel_id_check": {
-          "name": "knight_hacks_hackathon_event_announcement_channel_id_check",
-          "value": "\"knight_hacks_hackathon\".\"event_announcement_channel_id\" IS NULL OR \"knight_hacks_hackathon\".\"event_announcement_channel_id\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hackathon_general_hacker_discord_role_id_check": {
-          "name": "knight_hacks_hackathon_general_hacker_discord_role_id_check",
-          "value": "\"knight_hacks_hackathon\".\"general_hacker_discord_role_id\" IS NULL OR \"knight_hacks_hackathon\".\"general_hacker_discord_role_id\" ~ '^[0-9]{17,20}$'"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.knight_hacks_hackathon_class": {
@@ -5657,13 +5551,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hackathon_class_id_hackathon_unique": {
-          "name": "knight_hacks_hackathon_class_id_hackathon_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "hackathon_id"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
         "knight_hacks_hackathon_class_discord_role_id_check": {
@@ -5673,178 +5561,6 @@
         "knight_hacks_hackathon_class_color_check": {
           "name": "knight_hacks_hackathon_class_color_check",
           "value": "\"knight_hacks_hackathon_class\".\"color\" ~ '^#[0-9a-fA-F]{6}$'"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hackathon_event_reminder_delivery": {
-      "name": "knight_hacks_hackathon_event_reminder_delivery",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_start_at": {
-          "name": "event_start_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reminder_key": {
-          "name": "reminder_key",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "destination_channel_id_snapshot": {
-          "name": "destination_channel_id_snapshot",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role_id_snapshot": {
-          "name": "role_id_snapshot",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "discord_event_id_snapshot": {
-          "name": "discord_event_id_snapshot",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_snapshot": {
-          "name": "content_snapshot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "hackathon_event_reminder_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "attempt_count": {
-          "name": "attempt_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "locked_at": {
-          "name": "locked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "next_attempt_at": {
-          "name": "next_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "delivered_at": {
-          "name": "delivered_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_hackathon_event_reminder_delivery_pending_idx": {
-          "name": "knight_hacks_hackathon_event_reminder_delivery_pending_idx",
-          "columns": [
-            {
-              "expression": "state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "next_attempt_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_hackathon_event_reminder_scoped_event_fk": {
-          "name": "knight_hacks_hackathon_event_reminder_scoped_event_fk",
-          "tableFrom": "knight_hacks_hackathon_event_reminder_delivery",
-          "tableTo": "knight_hacks_event",
-          "columnsFrom": ["event_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hackathon_event_reminder_delivery_identity_unique": {
-          "name": "knight_hacks_hackathon_event_reminder_delivery_identity_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id", "reminder_key"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hackathon_event_reminder_channel_id_check": {
-          "name": "knight_hacks_hackathon_event_reminder_channel_id_check",
-          "value": "\"knight_hacks_hackathon_event_reminder_delivery\".\"destination_channel_id_snapshot\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hackathon_event_reminder_role_id_check": {
-          "name": "knight_hacks_hackathon_event_reminder_role_id_check",
-          "value": "\"knight_hacks_hackathon_event_reminder_delivery\".\"role_id_snapshot\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hackathon_event_reminder_attempt_count_check": {
-          "name": "knight_hacks_hackathon_event_reminder_attempt_count_check",
-          "value": "\"knight_hacks_hackathon_event_reminder_delivery\".\"attempt_count\" >= 0"
         }
       },
       "isRLSEnabled": false
@@ -6254,24 +5970,6 @@
           "notNull": true,
           "default": false
         },
-        "is_first_time": {
-          "name": "is_first_time",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_in_at": {
-          "name": "checked_in_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_in_by": {
-          "name": "checked_in_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "class": {
           "name": "class",
           "type": "varchar(20)",
@@ -6331,42 +6029,6 @@
             },
             {
               "expression": "class_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_attendee_checked_in_by_idx": {
-          "name": "knight_hacks_hacker_attendee_checked_in_by_idx",
-          "columns": [
-            {
-              "expression": "checked_in_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_attendee_hackathon_checked_in_idx": {
-          "name": "knight_hacks_hacker_attendee_hackathon_checked_in_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "checked_in_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -6448,13 +6110,13 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "knight_hacks_hacker_attendee_checked_in_by_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_attendee_checked_in_by_auth_user_id_fk",
+        "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk": {
+          "name": "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk",
           "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "auth_user",
-          "columnsFrom": ["checked_in_by"],
+          "tableTo": "knight_hacks_hackathon_class",
+          "columnsFrom": ["class_id"],
           "columnsTo": ["id"],
-          "onDelete": "set null",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         },
         "knight_hacks_hacker_attendee_blacklisted_by_auth_user_id_fk": {
@@ -6474,634 +6136,15 @@
           "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_attendee_scoped_class_fk": {
-          "name": "knight_hacks_hacker_attendee_scoped_class_fk",
-          "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "knight_hacks_hackathon_class",
-          "columnsFrom": ["class_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hacker_attendee_hacker_hackathon_unique": {
-          "name": "knight_hacks_hacker_attendee_hacker_hackathon_unique",
-          "nullsNotDistinct": false,
-          "columns": ["hacker_id", "hackathon_id"]
-        },
-        "knight_hacks_hacker_attendee_id_hackathon_unique": {
-          "name": "knight_hacks_hacker_attendee_id_hackathon_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "hackathon_id"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
         "knight_hacks_hacker_attendee_blacklist_reason_check": {
           "name": "knight_hacks_hacker_attendee_blacklist_reason_check",
           "value": "(\"knight_hacks_hacker_attendee\".\"blacklisted_at\" is null and \"knight_hacks_hacker_attendee\".\"blacklist_reason\" is null)\n          or (\"knight_hacks_hacker_attendee\".\"blacklisted_at\" is not null and \"knight_hacks_hacker_attendee\".\"blacklist_reason\" is not null)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hacker_check_in_attempt": {
-      "name": "knight_hacks_hacker_check_in_attempt",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hacker_attendee_id": {
-          "name": "hacker_attendee_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "attendance_id": {
-          "name": "attendance_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "operator_id": {
-          "name": "operator_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "operator_display_name_snapshot": {
-          "name": "operator_display_name_snapshot",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mode": {
-          "name": "mode",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outcome": {
-          "name": "outcome",
-          "type": "hacker_check_in_outcome",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_purpose": {
-          "name": "event_purpose",
-          "type": "event_purpose",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_name_snapshot": {
-          "name": "event_name_snapshot",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hacker_name_snapshot": {
-          "name": "hacker_name_snapshot",
-          "type": "varchar(511)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "class_id": {
-          "name": "class_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "class_name_snapshot": {
-          "name": "class_name_snapshot",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "class_color_snapshot": {
-          "name": "class_color_snapshot",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_vip_snapshot": {
-          "name": "is_vip_snapshot",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "was_minor_at_attempt": {
-          "name": "was_minor_at_attempt",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_repeat_occurrence": {
-          "name": "is_repeat_occurrence",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "points_awarded": {
-          "name": "points_awarded",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "attempted_at": {
-          "name": "attempted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "knight_hacks_hacker_check_in_attempt_hackathon_history_idx": {
-          "name": "knight_hacks_hacker_check_in_attempt_hackathon_history_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "attempted_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_check_in_attempt_attendee_history_idx": {
-          "name": "knight_hacks_hacker_check_in_attempt_attendee_history_idx",
-          "columns": [
-            {
-              "expression": "hacker_attendee_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "attempted_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_check_in_attempt_expiring_idx": {
-          "name": "knight_hacks_hacker_check_in_attempt_expiring_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"knight_hacks_hacker_check_in_attempt\".\"expires_at\" IS NOT NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_hacker_check_in_attempt_attendance_id_knight_hacks_hacker_event_attendee_id_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_attendance_id_knight_hacks_hacker_event_attendee_id_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "knight_hacks_hacker_event_attendee",
-          "columnsFrom": ["attendance_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_check_in_attempt_operator_id_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_operator_id_auth_user_id_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "auth_user",
-          "columnsFrom": ["operator_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_check_in_attempt_scoped_attendee_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_scoped_attendee_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "knight_hacks_hacker_attendee",
-          "columnsFrom": ["hacker_attendee_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_check_in_attempt_scoped_class_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_scoped_class_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "knight_hacks_hackathon_class",
-          "columnsFrom": ["class_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_check_in_attempt_scoped_event_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_scoped_event_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "knight_hacks_event",
-          "columnsFrom": ["event_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hacker_check_in_attempt_attendanceId_unique": {
-          "name": "knight_hacks_hacker_check_in_attempt_attendanceId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["attendance_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hacker_check_in_attempt_mode_check": {
-          "name": "knight_hacks_hacker_check_in_attempt_mode_check",
-          "value": "\"knight_hacks_hacker_check_in_attempt\".\"mode\" IN ('scanner', 'manual')"
-        },
-        "knight_hacks_hacker_check_in_attempt_class_color_check": {
-          "name": "knight_hacks_hacker_check_in_attempt_class_color_check",
-          "value": "\"knight_hacks_hacker_check_in_attempt\".\"class_color_snapshot\" IS NULL OR \"knight_hacks_hacker_check_in_attempt\".\"class_color_snapshot\" ~ '^#[0-9A-Fa-f]{6}$'"
-        },
-        "knight_hacks_hacker_check_in_attempt_points_check": {
-          "name": "knight_hacks_hacker_check_in_attempt_points_check",
-          "value": "\"knight_hacks_hacker_check_in_attempt\".\"points_awarded\" >= 0"
-        },
-        "knight_hacks_hacker_check_in_attempt_success_retention_check": {
-          "name": "knight_hacks_hacker_check_in_attempt_success_retention_check",
-          "value": "(\"knight_hacks_hacker_check_in_attempt\".\"outcome\" = 'checked_in' AND \"knight_hacks_hacker_check_in_attempt\".\"attendance_id\" IS NOT NULL AND \"knight_hacks_hacker_check_in_attempt\".\"expires_at\" IS NULL) OR (\"knight_hacks_hacker_check_in_attempt\".\"outcome\" <> 'checked_in' AND \"knight_hacks_hacker_check_in_attempt\".\"attendance_id\" IS NULL AND \"knight_hacks_hacker_check_in_attempt\".\"expires_at\" IS NOT NULL)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hacker_discord_role_grant": {
-      "name": "knight_hacks_hacker_discord_role_grant",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "hacker_attendee_id": {
-          "name": "hacker_attendee_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_attendance_id": {
-          "name": "source_attendance_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "kind": {
-          "name": "kind",
-          "type": "hacker_discord_role_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "desired_role_id": {
-          "name": "desired_role_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "hacker_discord_role_grant_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "attempt_count": {
-          "name": "attempt_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_attempt_at": {
-          "name": "last_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "succeeded_at": {
-          "name": "succeeded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lease_token": {
-          "name": "lease_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lease_expires_at": {
-          "name": "lease_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_hacker_discord_role_grant_repair_queue_idx": {
-          "name": "knight_hacks_hacker_discord_role_grant_repair_queue_idx",
-          "columns": [
-            {
-              "expression": "state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "lease_expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_hacker_discord_role_grant_source_attendance_id_knight_hacks_hacker_event_attendee_id_fk": {
-          "name": "knight_hacks_hacker_discord_role_grant_source_attendance_id_knight_hacks_hacker_event_attendee_id_fk",
-          "tableFrom": "knight_hacks_hacker_discord_role_grant",
-          "tableTo": "knight_hacks_hacker_event_attendee",
-          "columnsFrom": ["source_attendance_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_discord_role_grant_scoped_attendee_fk": {
-          "name": "knight_hacks_hacker_discord_role_grant_scoped_attendee_fk",
-          "tableFrom": "knight_hacks_hacker_discord_role_grant",
-          "tableTo": "knight_hacks_hacker_attendee",
-          "columnsFrom": ["hacker_attendee_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hacker_discord_role_grant_logical_unique": {
-          "name": "knight_hacks_hacker_discord_role_grant_logical_unique",
-          "nullsNotDistinct": false,
-          "columns": ["hacker_attendee_id", "kind"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hacker_discord_role_grant_role_id_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_role_id_check",
-          "value": "\"knight_hacks_hacker_discord_role_grant\".\"desired_role_id\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hacker_discord_role_grant_attempt_count_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_count_check",
-          "value": "\"knight_hacks_hacker_discord_role_grant\".\"attempt_count\" >= 0"
-        },
-        "knight_hacks_hacker_discord_role_grant_lease_pair_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_lease_pair_check",
-          "value": "(\"knight_hacks_hacker_discord_role_grant\".\"lease_token\" IS NULL) = (\"knight_hacks_hacker_discord_role_grant\".\"lease_expires_at\" IS NULL)"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hacker_discord_role_grant_attempt": {
-      "name": "knight_hacks_hacker_discord_role_grant_attempt",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "grant_id": {
-          "name": "grant_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "attempt_token": {
-          "name": "attempt_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role_id_snapshot": {
-          "name": "role_id_snapshot",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "discord_user_id_snapshot": {
-          "name": "discord_user_id_snapshot",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "attempted_by": {
-          "name": "attempted_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "outcome": {
-          "name": "outcome",
-          "type": "hacker_discord_role_attempt_outcome",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "error": {
-          "name": "error",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "finished_at": {
-          "name": "finished_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "knight_hacks_hacker_discord_role_grant_attempt_history_idx": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_history_idx",
-          "columns": [
-            {
-              "expression": "grant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "started_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_hacker_discord_role_grant_attempt_grant_id_knight_hacks_hacker_discord_role_grant_id_fk": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_grant_id_knight_hacks_hacker_discord_role_grant_id_fk",
-          "tableFrom": "knight_hacks_hacker_discord_role_grant_attempt",
-          "tableTo": "knight_hacks_hacker_discord_role_grant",
-          "columnsFrom": ["grant_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_discord_role_grant_attempt_attempted_by_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_attempted_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_hacker_discord_role_grant_attempt",
-          "tableTo": "auth_user",
-          "columnsFrom": ["attempted_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hacker_discord_role_grant_attempt_attemptToken_unique": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_attemptToken_unique",
-          "nullsNotDistinct": false,
-          "columns": ["attempt_token"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hacker_discord_role_grant_attempt_role_id_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_role_id_check",
-          "value": "\"knight_hacks_hacker_discord_role_grant_attempt\".\"role_id_snapshot\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hacker_discord_role_grant_attempt_user_id_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_user_id_check",
-          "value": "\"knight_hacks_hacker_discord_role_grant_attempt\".\"discord_user_id_snapshot\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hacker_discord_role_grant_attempt_completion_check": {
-          "name": "knight_hacks_hacker_discord_role_grant_attempt_completion_check",
-          "value": "(\"knight_hacks_hacker_discord_role_grant_attempt\".\"outcome\" = 'pending' AND \"knight_hacks_hacker_discord_role_grant_attempt\".\"finished_at\" IS NULL) OR (\"knight_hacks_hacker_discord_role_grant_attempt\".\"outcome\" <> 'pending' AND \"knight_hacks_hacker_discord_role_grant_attempt\".\"finished_at\" IS NOT NULL)"
         }
       },
       "isRLSEnabled": false
@@ -7134,198 +6177,19 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
-        },
-        "checked_in_at": {
-          "name": "checked_in_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_in_by": {
-          "name": "checked_in_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "points_awarded": {
-          "name": "points_awarded",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_initial_attendance": {
-          "name": "is_initial_attendance",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "voided_at": {
-          "name": "voided_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "voided_by": {
-          "name": "voided_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "void_reason": {
-          "name": "void_reason",
-          "type": "varchar(300)",
-          "primaryKey": false,
-          "notNull": false
         }
       },
-      "indexes": {
-        "knight_hacks_hacker_event_attendee_event_attendee_history_idx": {
-          "name": "knight_hacks_hacker_event_attendee_event_attendee_history_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "hacker_att_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "checked_in_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_event_attendee_attendee_event_history_idx": {
-          "name": "knight_hacks_hacker_event_attendee_attendee_event_history_idx",
-          "columns": [
-            {
-              "expression": "hacker_att_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "checked_in_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_event_attendee_hackathon_history_idx": {
-          "name": "knight_hacks_hacker_event_attendee_hackathon_history_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "checked_in_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_event_attendee_checked_in_by_idx": {
-          "name": "knight_hacks_hacker_event_attendee_checked_in_by_idx",
-          "columns": [
-            {
-              "expression": "checked_in_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_event_attendee_voided_by_idx": {
-          "name": "knight_hacks_hacker_event_attendee_voided_by_idx",
-          "columns": [
-            {
-              "expression": "voided_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_event_attendee_one_active_initial": {
-          "name": "knight_hacks_hacker_event_attendee_one_active_initial",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "hacker_att_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_hacker_event_attendee\".\"is_initial_attendance\" = true AND \"knight_hacks_hacker_event_attendee\".\"voided_at\" IS NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
+        "knight_hacks_hacker_event_attendee_hacker_att_id_knight_hacks_hacker_attendee_id_fk": {
+          "name": "knight_hacks_hacker_event_attendee_hacker_att_id_knight_hacks_hacker_attendee_id_fk",
+          "tableFrom": "knight_hacks_hacker_event_attendee",
+          "tableTo": "knight_hacks_hacker_attendee",
+          "columnsFrom": ["hacker_att_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "knight_hacks_hacker_event_attendee_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hacker_event_attendee_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hacker_event_attendee",
@@ -7335,39 +6199,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "knight_hacks_hacker_event_attendee_checked_in_by_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_event_attendee_checked_in_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "auth_user",
-          "columnsFrom": ["checked_in_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_event_attendee_voided_by_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_event_attendee_voided_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "auth_user",
-          "columnsFrom": ["voided_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_event_attendee_scoped_attendee_fk": {
-          "name": "knight_hacks_hacker_event_attendee_scoped_attendee_fk",
-          "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "knight_hacks_hacker_attendee",
-          "columnsFrom": ["hacker_att_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_event_attendee_scoped_event_fk": {
-          "name": "knight_hacks_hacker_event_attendee_scoped_event_fk",
+        "knight_hacks_hacker_event_attendee_event_id_knight_hacks_event_id_fk": {
+          "name": "knight_hacks_hacker_event_attendee_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_hacker_event_attendee",
           "tableTo": "knight_hacks_event",
-          "columnsFrom": ["event_id", "hackathon_id"],
-          "columnsTo": ["id", "hackathon_id"],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7375,16 +6212,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hacker_event_attendee_points_awarded_check": {
-          "name": "knight_hacks_hacker_event_attendee_points_awarded_check",
-          "value": "\"knight_hacks_hacker_event_attendee\".\"points_awarded\" IS NULL OR \"knight_hacks_hacker_event_attendee\".\"points_awarded\" >= 0"
-        },
-        "knight_hacks_hacker_event_attendee_void_metadata_check": {
-          "name": "knight_hacks_hacker_event_attendee_void_metadata_check",
-          "value": "(\"knight_hacks_hacker_event_attendee\".\"voided_at\" IS NULL AND \"knight_hacks_hacker_event_attendee\".\"void_reason\" IS NULL) OR (\"knight_hacks_hacker_event_attendee\".\"voided_at\" IS NOT NULL AND \"knight_hacks_hacker_event_attendee\".\"void_reason\" IS NOT NULL)"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.knight_hacks_issue": {
@@ -8852,11 +7680,6 @@
       "schema": "public",
       "values": ["public", "internal"]
     },
-    "public.event_purpose": {
-      "name": "event_purpose",
-      "schema": "public",
-      "values": ["event", "primary_check_in"]
-    },
     "public.event_sync_state": {
       "name": "event_sync_state",
       "schema": "public",
@@ -8905,40 +7728,6 @@
         "confirmed",
         "denied"
       ]
-    },
-    "public.hackathon_event_reminder_state": {
-      "name": "hackathon_event_reminder_state",
-      "schema": "public",
-      "values": ["pending", "delivering", "delivered", "failed", "unknown"]
-    },
-    "public.hacker_check_in_outcome": {
-      "name": "hacker_check_in_outcome",
-      "schema": "public",
-      "values": [
-        "checked_in",
-        "already_checked_in",
-        "invalid_qr",
-        "hacker_not_found",
-        "wrong_status",
-        "not_checked_in",
-        "wrong_class",
-        "not_ready"
-      ]
-    },
-    "public.hacker_discord_role_attempt_outcome": {
-      "name": "hacker_discord_role_attempt_outcome",
-      "schema": "public",
-      "values": ["pending", "succeeded", "failed", "unknown"]
-    },
-    "public.hacker_discord_role_grant_state": {
-      "name": "hacker_discord_role_grant_state",
-      "schema": "public",
-      "values": ["pending", "succeeded", "failed", "unknown"]
-    },
-    "public.hacker_discord_role_kind": {
-      "name": "hacker_discord_role_kind",
-      "schema": "public",
-      "values": ["general", "class", "vip"]
     },
     "public.issue_priority": {
       "name": "issue_priority",

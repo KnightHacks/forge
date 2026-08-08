@@ -1,6 +1,6 @@
 {
-  "id": "dd8fbd68-9463-4c31-9e22-6032ce03022d",
-  "prevId": "10d2d356-f23e-489c-9c24-a4c9a0f9a9b6",
+  "id": "00a107e0-c9ac-45da-98d0-b19213100e8c",
+  "prevId": "d3270c1c-51fb-4807-9288-925536e548c5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1934,50 +1934,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "knight_hacks_form_response_form_created_idx": {
-          "name": "knight_hacks_form_response_form_created_idx",
-          "columns": [
-            {
-              "expression": "form",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_form_response_user_created_idx": {
-          "name": "knight_hacks_form_response_user_created_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "knight_hacks_form_response_form_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_response_form_knight_hacks_form_schemas_id_fk",
@@ -2581,6 +2538,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

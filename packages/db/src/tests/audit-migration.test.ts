@@ -18,7 +18,7 @@ describe("admin audit migration contract", () => {
   it("lands after the alumni migration and creates indexed append-only tables", async () => {
     const { file, sql } = await readAuditMigration();
 
-    expect(file.startsWith("0021_")).toBe(true);
+    expect(file.startsWith("0022_")).toBe(true);
     expect(sql).toContain(`CREATE TABLE "audit_event"`);
     expect(sql).toContain(`CREATE TABLE "audit_subject"`);
     expect(sql).toContain(`audit_subject_one_primary_idx`);

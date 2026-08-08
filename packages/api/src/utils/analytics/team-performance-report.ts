@@ -57,6 +57,17 @@ function dateOrNull(value: Date | string | null) {
   return value instanceof Date ? value : new Date(value);
 }
 
+function memberDisplayName(
+  firstName: string | null,
+  lastName: string | null,
+  userDisplayName: string | null,
+) {
+  const profileName = [firstName, lastName].filter(Boolean).join(" ");
+  if (profileName.length > 0) return profileName;
+  const displayName = userDisplayName?.trim() ?? "";
+  return displayName.length > 0 ? displayName : "Unknown member";
+}
+
 export async function listTeamPerformanceOptions() {
   const config = await loadClubTeamConfig();
   const teamDefinitions = config.teams.filter((team) => team.kind === "team");
@@ -331,10 +342,11 @@ export async function getTeamPerformanceReport(
           overdueCount: issue?.overdueCount ?? 0,
         },
         memberId: person.memberId,
-        name:
-          [person.firstName, person.lastName].filter(Boolean).join(" ") ||
-          person.userDisplayName ||
-          "Unknown member",
+        name: memberDisplayName(
+          person.firstName,
+          person.lastName,
+          person.userDisplayName,
+        ),
         roles,
         userId,
       };

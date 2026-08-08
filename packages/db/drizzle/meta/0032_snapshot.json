@@ -1,6 +1,6 @@
 {
-  "id": "0d25d6c6-b1b7-4c1b-8a04-c7683891b0e5",
-  "prevId": "f4d7f515-4d26-4846-98cd-d8cedb07fc35",
+  "id": "85bb8ba4-64c1-4f66-917e-97612651b800",
+  "prevId": "fcc18baa-4af7-437f-bd4f-98419b5b2c36",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5436,6 +5436,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -6038,36 +6050,6 @@
             },
             {
               "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_attendee_blacklisted_by_idx": {
-          "name": "knight_hacks_hacker_attendee_blacklisted_by_idx",
-          "columns": [
-            {
-              "expression": "blacklisted_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hacker_attendee_last_status_send_idx": {
-          "name": "knight_hacks_hacker_attendee_last_status_send_idx",
-          "columns": [
-            {
-              "expression": "last_status_send_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

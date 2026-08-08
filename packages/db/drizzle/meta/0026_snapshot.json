@@ -1,6 +1,6 @@
 {
-  "id": "cf8d675b-06cc-4c37-8294-71c8559fa146",
-  "prevId": "17dcadd1-3350-423f-864c-310f919ee00b",
+  "id": "7fdd5243-1dcf-4517-99b1-81610cf9a716",
+  "prevId": "01298f07-52bc-4344-b3e6-097bb1a59908",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -928,203 +928,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_club_team": {
-      "name": "knight_hacks_club_team",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "heading": {
-          "name": "heading",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "display_order": {
-          "name": "display_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_club_team_display_order_unique": {
-          "name": "knight_hacks_club_team_display_order_unique",
-          "columns": [
-            {
-              "expression": "display_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_club_team_kind_unique": {
-          "name": "knight_hacks_club_team_kind_unique",
-          "columns": [
-            {
-              "expression": "kind",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_club_team\".\"kind\" <> 'team'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_club_team_slug_unique": {
-          "name": "knight_hacks_club_team_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": ["slug"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_club_team_kind_check": {
-          "name": "knight_hacks_club_team_kind_check",
-          "value": "\"knight_hacks_club_team\".\"kind\" IN ('executive', 'director', 'team')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_club_team_role": {
-      "name": "knight_hacks_club_team_role",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rank": {
-          "name": "rank",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "team_id": {
-          "name": "team_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "roster_label": {
-          "name": "roster_label",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "callout_label": {
-          "name": "callout_label",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_club_team_role_role_id_auth_roles_id_fk": {
-          "name": "knight_hacks_club_team_role_role_id_auth_roles_id_fk",
-          "tableFrom": "knight_hacks_club_team_role",
-          "tableTo": "auth_roles",
-          "columnsFrom": ["role_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_club_team_role_team_id_knight_hacks_club_team_id_fk": {
-          "name": "knight_hacks_club_team_role_team_id_knight_hacks_club_team_id_fk",
-          "tableFrom": "knight_hacks_club_team_role",
-          "tableTo": "knight_hacks_club_team",
-          "columnsFrom": ["team_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_club_team_role_roleId_unique": {
-          "name": "knight_hacks_club_team_role_roleId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["role_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_club_team_role_kind_check": {
-          "name": "knight_hacks_club_team_role_kind_check",
-          "value": "\"knight_hacks_club_team_role\".\"kind\" IN ('executive', 'director', 'team')"
-        },
-        "knight_hacks_club_team_role_team_check": {
-          "name": "knight_hacks_club_team_role_team_check",
-          "value": "\"knight_hacks_club_team_role\".\"kind\" <> 'team' OR \"knight_hacks_club_team_role\".\"team_id\" IS NOT NULL"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_discord_config": {
@@ -5423,6 +5226,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -67,7 +67,7 @@ describe("Email Portal migration contract", () => {
   it("TC-052 adds an aggregate manual-exclusion count without recipient PII", async () => {
     const sql = await readFile(
       new URL(
-        "../../drizzle/0023_email_manual_exclusions.sql",
+        "../../drizzle/0024_email_manual_exclusions.sql",
         import.meta.url,
       ),
       "utf8",

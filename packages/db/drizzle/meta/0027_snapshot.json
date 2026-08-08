@@ -1,6 +1,6 @@
 {
-  "id": "5055c7ae-a957-42b1-ac7d-8fbd846b1f07",
-  "prevId": "cf8d675b-06cc-4c37-8294-71c8559fa146",
+  "id": "3f800630-e216-45cd-b21e-369d2b5cdff7",
+  "prevId": "7fdd5243-1dcf-4517-99b1-81610cf9a716",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2992,13 +2992,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "domain": {
-          "name": "domain",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'club'"
-        },
         "archived_at": {
           "name": "archived_at",
           "type": "timestamp with time zone",
@@ -5372,12 +5365,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "application_url": {
-          "name": "application_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "application_background_enabled": {
           "name": "application_background_enabled",
           "type": "boolean",
@@ -5436,6 +5423,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -5450,107 +5449,6 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hackathon_class": {
-      "name": "knight_hacks_hackathon_class",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "discord_role_id": {
-          "name": "discord_role_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "color": {
-          "name": "color",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "knight_hacks_hackathon_class_hackathon_idx": {
-          "name": "knight_hacks_hackathon_class_hackathon_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_hackathon_class_one_vip_per_hackathon": {
-          "name": "knight_hacks_hackathon_class_one_vip_per_hackathon",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_hackathon_class\".\"kind\" = 'vip'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_hackathon_class_hackathon_id_knight_hacks_hackathon_id_fk": {
-          "name": "knight_hacks_hackathon_class_hackathon_id_knight_hacks_hackathon_id_fk",
-          "tableFrom": "knight_hacks_hackathon_class",
-          "tableTo": "knight_hacks_hackathon",
-          "columnsFrom": ["hackathon_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hackathon_class_discord_role_id_check": {
-          "name": "knight_hacks_hackathon_class_discord_role_id_check",
-          "value": "\"knight_hacks_hackathon_class\".\"discord_role_id\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hackathon_class_color_check": {
-          "name": "knight_hacks_hackathon_class_color_check",
-          "value": "\"knight_hacks_hackathon_class\".\"color\" ~ '^#[0-9a-fA-F]{6}$'"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_hackathon_sponsor": {
@@ -5602,80 +5500,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hackathon_status_email": {
-      "name": "knight_hacks_hackathon_status_email",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "template_id": {
-          "name": "template_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subject": {
-          "name": "subject",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_hackathon_status_email_hackathon_id_knight_hacks_hackathon_id_fk": {
-          "name": "knight_hacks_hackathon_status_email_hackathon_id_knight_hacks_hackathon_id_fk",
-          "tableFrom": "knight_hacks_hackathon_status_email",
-          "tableTo": "knight_hacks_hackathon",
-          "columnsFrom": ["hackathon_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hackathon_status_email_template_id_email_template_id_fk": {
-          "name": "knight_hacks_hackathon_status_email_template_id_email_template_id_fk",
-          "tableFrom": "knight_hacks_hackathon_status_email",
-          "tableTo": "email_template",
-          "columnsFrom": ["template_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hackathon_status_email_hackathon_status_unique": {
-          "name": "knight_hacks_hackathon_status_email_hackathon_status_unique",
-          "nullsNotDistinct": false,
-          "columns": ["hackathon_id", "status"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hackathon_status_email_status_check": {
-          "name": "knight_hacks_hackathon_status_email_status_check",
-          "value": "\"knight_hacks_hackathon_status_email\".\"status\" <> 'checkedin'"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_hacker": {
@@ -5945,19 +5769,6 @@
           "notNull": true,
           "default": 0
         },
-        "class_id": {
-          "name": "class_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_vip": {
-          "name": "is_vip",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "class": {
           "name": "class",
           "type": "varchar(20)",
@@ -5984,15 +5795,6 @@
           "columnsFrom": ["hackathon_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk": {
-          "name": "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk",
-          "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "knight_hacks_hackathon_class",
-          "columnsFrom": ["class_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },

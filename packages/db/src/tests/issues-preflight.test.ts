@@ -94,4 +94,25 @@ describe("Club Operations Issues integrity preflight", () => {
     );
     expect(report.canEnable).toBe(false);
   });
+
+  it("preserves historical ownership when a finished issue assignee has left the team", () => {
+    const report = inspectIssueIntegrity({
+      assignments: [{ issueId: "issue-a", userId: "former-member" }],
+      issues: [
+        {
+          id: "issue-a",
+          parentId: null,
+          status: "Finished",
+          teamId: "team-a",
+        },
+      ],
+      roleAssignments: [],
+      roleIds: ["team-a"],
+      templates: [],
+      userIds: ["former-member"],
+    });
+
+    expect(report.blockingIssues).toEqual([]);
+    expect(report.canEnable).toBe(true);
+  });
 });

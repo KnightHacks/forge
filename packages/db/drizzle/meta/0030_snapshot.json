@@ -1,6 +1,6 @@
 {
-  "id": "db539e0c-f9e8-41ef-b380-c1ed7706c79a",
-  "prevId": "23e601df-6d1c-4b4f-9f8d-13c509c28975",
+  "id": "49ba8ac5-149d-4bbc-87c3-5f29d4f4d6c1",
+  "prevId": "fc25c99e-2268-47d5-b640-c878e5e8eb2d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -121,9 +121,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_actor_occurred_idx": {
           "name": "audit_event_actor_occurred_idx",
@@ -148,9 +148,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_actor_member_occurred_idx": {
           "name": "audit_event_actor_member_occurred_idx",
@@ -175,9 +175,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_domain_occurred_idx": {
           "name": "audit_event_domain_occurred_idx",
@@ -202,9 +202,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_occurred_idx": {
           "name": "audit_event_occurred_idx",
@@ -223,9 +223,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_operation_idx": {
           "name": "audit_event_operation_idx",
@@ -238,9 +238,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_event_outcome_occurred_idx": {
           "name": "audit_event_outcome_occurred_idx",
@@ -265,9 +265,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -378,9 +378,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_subject_member_event_idx": {
           "name": "audit_subject_member_event_idx",
@@ -399,9 +399,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "audit_subject_one_primary_idx": {
           "name": "audit_subject_one_primary_idx",
@@ -414,10 +414,10 @@
             }
           ],
           "isUnique": true,
-          "where": "\"audit_subject\".\"relation\" = 'primary'",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"audit_subject\".\"relation\" = 'primary'",
+          "concurrently": false
         },
         "audit_subject_target_event_idx": {
           "name": "audit_subject_target_event_idx",
@@ -442,20 +442,20 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "audit_subject_event_id_audit_event_id_fk": {
           "name": "audit_subject_event_id_audit_event_id_fk",
           "tableFrom": "audit_subject",
-          "tableTo": "audit_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "audit_event",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -555,11 +555,11 @@
         "auth_account_user_id_auth_user_id_fk": {
           "name": "auth_account_user_id_auth_user_id_fk",
           "tableFrom": "auth_account",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -640,20 +640,20 @@
         "auth_permissions_role_id_auth_roles_id_fk": {
           "name": "auth_permissions_role_id_auth_roles_id_fk",
           "tableFrom": "auth_permissions",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "auth_permissions_user_id_auth_user_id_fk": {
           "name": "auth_permissions_user_id_auth_user_id_fk",
           "tableFrom": "auth_permissions",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -733,8 +733,8 @@
       "uniqueConstraints": {
         "auth_roles_discordRoleId_unique": {
           "name": "auth_roles_discordRoleId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["discord_role_id"]
+          "columns": ["discord_role_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -801,11 +801,11 @@
         "auth_session_user_id_auth_user_id_fk": {
           "name": "auth_session_user_id_auth_user_id_fk",
           "tableFrom": "auth_session",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -991,9 +991,9 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_club_team_kind_unique": {
           "name": "knight_hacks_club_team_kind_unique",
@@ -1006,10 +1006,10 @@
             }
           ],
           "isUnique": true,
-          "where": "\"knight_hacks_club_team\".\"kind\" <> 'team'",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"knight_hacks_club_team\".\"kind\" <> 'team'",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1017,8 +1017,8 @@
       "uniqueConstraints": {
         "knight_hacks_club_team_slug_unique": {
           "name": "knight_hacks_club_team_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": ["slug"]
+          "columns": ["slug"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1090,28 +1090,28 @@
         "knight_hacks_club_team_role_role_id_auth_roles_id_fk": {
           "name": "knight_hacks_club_team_role_role_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_club_team_role",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_club_team_role_team_id_knight_hacks_club_team_id_fk": {
           "name": "knight_hacks_club_team_role_team_id_knight_hacks_club_team_id_fk",
           "tableFrom": "knight_hacks_club_team_role",
-          "tableTo": "knight_hacks_club_team",
           "columnsFrom": ["team_id"],
+          "tableTo": "knight_hacks_club_team",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_club_team_role_roleId_unique": {
           "name": "knight_hacks_club_team_role_roleId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["role_id"]
+          "columns": ["role_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1188,8 +1188,8 @@
       "uniqueConstraints": {
         "knight_hacks_discord_config_key_unique": {
           "name": "knight_hacks_discord_config_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["key"]
+          "columns": ["key"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -1315,9 +1315,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "discord_archive_channel_parent_idx": {
           "name": "discord_archive_channel_parent_idx",
@@ -1330,9 +1330,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -1465,20 +1465,20 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "discord_archive_checkpoint_channel_id_discord_archive_channel_id_fk": {
           "name": "discord_archive_checkpoint_channel_id_discord_archive_channel_id_fk",
           "tableFrom": "discord_archive_checkpoint",
-          "tableTo": "discord_archive_channel",
           "columnsFrom": ["channel_id"],
+          "tableTo": "discord_archive_channel",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -1676,9 +1676,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "discord_archive_message_channel_created_idx": {
           "name": "discord_archive_message_channel_created_idx",
@@ -1703,9 +1703,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "discord_archive_message_guild_created_idx": {
           "name": "discord_archive_message_guild_created_idx",
@@ -1730,9 +1730,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "discord_archive_message_non_deleted_created_idx": {
           "name": "discord_archive_message_non_deleted_created_idx",
@@ -1751,21 +1751,21 @@
             }
           ],
           "isUnique": false,
-          "where": "\"discord_archive_message\".\"deleted_at\" IS NULL",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"discord_archive_message\".\"deleted_at\" IS NULL",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "discord_archive_message_channel_id_discord_archive_channel_id_fk": {
           "name": "discord_archive_message_channel_id_discord_archive_channel_id_fk",
           "tableFrom": "discord_archive_message",
-          "tableTo": "discord_archive_channel",
           "columnsFrom": ["channel_id"],
+          "tableTo": "discord_archive_channel",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2016,9 +2016,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_alumni_bulletin_publication_window_idx": {
           "name": "knight_hacks_alumni_bulletin_publication_window_idx",
@@ -2037,38 +2037,38 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_alumni_bulletin_post_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_alumni_bulletin_post_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_alumni_bulletin_post",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "knight_hacks_alumni_bulletin_post_created_by_user_id_auth_user_id_fk": {
           "name": "knight_hacks_alumni_bulletin_post_created_by_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_alumni_bulletin_post",
-          "tableTo": "auth_user",
           "columnsFrom": ["created_by_user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_alumni_bulletin_post_updated_by_user_id_auth_user_id_fk": {
           "name": "knight_hacks_alumni_bulletin_post_updated_by_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_alumni_bulletin_post",
-          "tableTo": "auth_user",
           "columnsFrom": ["updated_by_user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
@@ -2139,19 +2139,19 @@
         "knight_hacks_challenges_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_challenges_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_challenges",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_challenges_title_hackathonId_unique": {
           "name": "knight_hacks_challenges_title_hackathonId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["title", "hackathon_id"]
+          "columns": ["title", "hackathon_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -2253,9 +2253,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_company_domain_idx": {
           "name": "knight_hacks_company_domain_idx",
@@ -2268,9 +2268,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_company_created_by_user_idx": {
           "name": "knight_hacks_company_created_by_user_idx",
@@ -2283,37 +2283,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_company_created_by_user_id_auth_user_id_fk": {
           "name": "knight_hacks_company_created_by_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_company",
-          "tableTo": "auth_user",
           "columnsFrom": ["created_by_user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "knight_hacks_company_merged_into_fk": {
           "name": "knight_hacks_company_merged_into_fk",
           "tableFrom": "knight_hacks_company",
-          "tableTo": "knight_hacks_company",
           "columnsFrom": ["merged_into_company_id"],
+          "tableTo": "knight_hacks_company",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_company_normalized_display_name_unique": {
           "name": "knight_hacks_company_normalized_display_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_display_name"]
+          "columns": ["normalized_display_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -2379,24 +2379,24 @@
         "knight_hacks_dues_payment_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_dues_payment_member_id_knight_hacks_member_id_fk",
           "tableFrom": "knight_hacks_dues_payment",
-          "tableTo": "knight_hacks_member",
           "columnsFrom": ["member_id"],
+          "tableTo": "knight_hacks_member",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_dues_payment_memberId_year_unique": {
           "name": "knight_hacks_dues_payment_memberId_year_unique",
-          "nullsNotDistinct": false,
-          "columns": ["member_id", "year"]
+          "columns": ["member_id", "year"],
+          "nullsNotDistinct": false
         },
         "knight_hacks_dues_payment_stripe_payment_intent_id_unique": {
           "name": "knight_hacks_dues_payment_stripe_payment_intent_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["stripe_payment_intent_id"]
+          "columns": ["stripe_payment_intent_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -2670,9 +2670,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "email_send_retry_idx": {
           "name": "email_send_retry_idx",
@@ -2697,46 +2697,46 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "email_send_template_revision_id_email_template_revision_id_fk": {
           "name": "email_send_template_revision_id_email_template_revision_id_fk",
           "tableFrom": "email_send",
-          "tableTo": "email_template_revision",
           "columnsFrom": ["template_revision_id"],
+          "tableTo": "email_template_revision",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "email_send_created_by_auth_user_id_fk": {
           "name": "email_send_created_by_auth_user_id_fk",
           "tableFrom": "email_send",
-          "tableTo": "auth_user",
           "columnsFrom": ["created_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "email_send_cancelled_by_auth_user_id_fk": {
           "name": "email_send_cancelled_by_auth_user_id_fk",
           "tableFrom": "email_send",
-          "tableTo": "auth_user",
           "columnsFrom": ["cancelled_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "email_send_provider_tag_unique": {
           "name": "email_send_provider_tag_unique",
-          "nullsNotDistinct": false,
-          "columns": ["provider_tag"]
+          "columns": ["provider_tag"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -2823,29 +2823,29 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "email_send_event_send_id_email_send_id_fk": {
           "name": "email_send_event_send_id_email_send_id_fk",
           "tableFrom": "email_send_event",
-          "tableTo": "email_send",
           "columnsFrom": ["send_id"],
+          "tableTo": "email_send",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "email_send_event_actor_id_auth_user_id_fk": {
           "name": "email_send_event_actor_id_auth_user_id_fk",
           "tableFrom": "email_send_event",
-          "tableTo": "auth_user",
           "columnsFrom": ["actor_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -2935,28 +2935,28 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "email_send_recipient_send_id_email_send_id_fk": {
           "name": "email_send_recipient_send_id_email_send_id_fk",
           "tableFrom": "email_send_recipient",
-          "tableTo": "email_send",
           "columnsFrom": ["send_id"],
+          "tableTo": "email_send",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "email_send_recipient_send_id_normalized_email_unique": {
           "name": "email_send_recipient_send_id_normalized_email_unique",
-          "nullsNotDistinct": false,
-          "columns": ["send_id", "normalized_email"]
+          "columns": ["send_id", "normalized_email"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -3050,37 +3050,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "email_template_created_by_auth_user_id_fk": {
           "name": "email_template_created_by_auth_user_id_fk",
           "tableFrom": "email_template",
-          "tableTo": "auth_user",
           "columnsFrom": ["created_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "email_template_updated_by_auth_user_id_fk": {
           "name": "email_template_updated_by_auth_user_id_fk",
           "tableFrom": "email_template",
-          "tableTo": "auth_user",
           "columnsFrom": ["updated_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "email_template_normalized_name_unique": {
           "name": "email_template_normalized_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
+          "columns": ["normalized_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -3198,37 +3198,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "email_template_revision_template_id_email_template_id_fk": {
           "name": "email_template_revision_template_id_email_template_id_fk",
           "tableFrom": "email_template_revision",
-          "tableTo": "email_template",
           "columnsFrom": ["template_id"],
+          "tableTo": "email_template",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "email_template_revision_created_by_auth_user_id_fk": {
           "name": "email_template_revision_created_by_auth_user_id_fk",
           "tableFrom": "email_template_revision",
-          "tableTo": "auth_user",
           "columnsFrom": ["created_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "email_template_revision_template_version_unique": {
           "name": "email_template_revision_template_version_unique",
-          "nullsNotDistinct": false,
-          "columns": ["template_id", "version"]
+          "columns": ["template_id", "version"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -3330,9 +3330,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_employment_company_idx": {
           "name": "knight_hacks_employment_company_idx",
@@ -3345,9 +3345,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_employment_company_state_idx": {
           "name": "knight_hacks_employment_company_state_idx",
@@ -3366,29 +3366,29 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_employment_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_employment_member_id_knight_hacks_member_id_fk",
           "tableFrom": "knight_hacks_employment",
-          "tableTo": "knight_hacks_member",
           "columnsFrom": ["member_id"],
+          "tableTo": "knight_hacks_member",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_employment_company_id_knight_hacks_company_id_fk": {
           "name": "knight_hacks_employment_company_id_knight_hacks_company_id_fk",
           "tableFrom": "knight_hacks_employment",
-          "tableTo": "knight_hacks_company",
           "columnsFrom": ["company_id"],
+          "tableTo": "knight_hacks_company",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
@@ -3730,9 +3730,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_event_hackathon_id_idx": {
           "name": "knight_hacks_event_hackathon_id_idx",
@@ -3745,37 +3745,37 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_event_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_event_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_event",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_event_discord_no_projection_acknowledged_by_auth_user_id_fk": {
           "name": "knight_hacks_event_discord_no_projection_acknowledged_by_auth_user_id_fk",
           "tableFrom": "knight_hacks_event",
-          "tableTo": "auth_user",
           "columnsFrom": ["discord_no_projection_acknowledged_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_event_creationKey_unique": {
           "name": "knight_hacks_event_creationKey_unique",
-          "nullsNotDistinct": false,
-          "columns": ["creation_key"]
+          "columns": ["creation_key"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -3918,9 +3918,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_event_attendee_member_event_idx": {
           "name": "knight_hacks_event_attendee_member_event_idx",
@@ -3939,38 +3939,38 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_event_attendee_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_event_attendee_member_id_knight_hacks_member_id_fk",
           "tableFrom": "knight_hacks_event_attendee",
-          "tableTo": "knight_hacks_member",
           "columnsFrom": ["member_id"],
+          "tableTo": "knight_hacks_member",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_event_attendee_event_id_knight_hacks_event_id_fk": {
           "name": "knight_hacks_event_attendee_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_event_attendee",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_event_attendee_checked_in_by_auth_user_id_fk": {
           "name": "knight_hacks_event_attendee_checked_in_by_auth_user_id_fk",
           "tableFrom": "knight_hacks_event_attendee",
-          "tableTo": "auth_user",
           "columnsFrom": ["checked_in_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -4051,20 +4051,20 @@
         "knight_hacks_event_feedback_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_event_feedback_member_id_knight_hacks_member_id_fk",
           "tableFrom": "knight_hacks_event_feedback",
-          "tableTo": "knight_hacks_member",
           "columnsFrom": ["member_id"],
+          "tableTo": "knight_hacks_member",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_event_feedback_event_id_knight_hacks_event_id_fk": {
           "name": "knight_hacks_event_feedback_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_event_feedback",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -4143,33 +4143,33 @@
         "knight_hacks_event_feedback_config_event_id_knight_hacks_event_id_fk": {
           "name": "knight_hacks_event_feedback_config_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_event_feedback_config",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_event_feedback_config_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_event_feedback_config_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_event_feedback_config",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_event_feedback_config_eventId_unique": {
           "name": "knight_hacks_event_feedback_config_eventId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id"]
+          "columns": ["event_id"],
+          "nullsNotDistinct": false
         },
         "knight_hacks_event_feedback_config_formId_unique": {
           "name": "knight_hacks_event_feedback_config_formId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["form_id"]
+          "columns": ["form_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -4230,37 +4230,37 @@
         "knight_hacks_event_feedback_reward_event_id_knight_hacks_event_id_fk": {
           "name": "knight_hacks_event_feedback_reward_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_event_feedback_reward_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_event_feedback_reward_member_id_knight_hacks_member_id_fk",
           "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_member",
           "columnsFrom": ["member_id"],
+          "tableTo": "knight_hacks_member",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_event_feedback_reward_response_id_knight_hacks_form_response_id_fk": {
           "name": "knight_hacks_event_feedback_reward_response_id_knight_hacks_form_response_id_fk",
           "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_form_response",
           "columnsFrom": ["response_id"],
+          "tableTo": "knight_hacks_form_response",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_event_feedback_reward_event_member_unique": {
           "name": "knight_hacks_event_feedback_reward_event_member_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id", "member_id"]
+          "columns": ["event_id", "member_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -4336,8 +4336,8 @@
       "uniqueConstraints": {
         "knight_hacks_event_tag_normalizedName_unique": {
           "name": "knight_hacks_event_tag_normalizedName_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
+          "columns": ["normalized_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -4439,9 +4439,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_form_attachment_response_idx": {
           "name": "knight_hacks_form_attachment_response_idx",
@@ -4454,46 +4454,46 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_form_attachment_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_attachment_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_attachment_response_id_knight_hacks_form_response_id_fk": {
           "name": "knight_hacks_form_attachment_response_id_knight_hacks_form_response_id_fk",
           "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "knight_hacks_form_response",
           "columnsFrom": ["response_id"],
+          "tableTo": "knight_hacks_form_response",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_attachment_owner_user_id_auth_user_id_fk": {
           "name": "knight_hacks_form_attachment_owner_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "auth_user",
           "columnsFrom": ["owner_user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_form_attachment_objectName_unique": {
           "name": "knight_hacks_form_attachment_objectName_unique",
-          "nullsNotDistinct": false,
-          "columns": ["object_name"]
+          "columns": ["object_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -4561,19 +4561,19 @@
         "knight_hacks_form_callback_configuration_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_callback_configuration_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_form_callback_configuration",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_form_callback_configuration_form_slug_unique": {
           "name": "knight_hacks_form_callback_configuration_form_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": ["form_id", "callback_slug"]
+          "columns": ["form_id", "callback_slug"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -4694,29 +4694,29 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_form_callback_execution_configuration_id_knight_hacks_form_callback_configuration_id_fk": {
           "name": "knight_hacks_form_callback_execution_configuration_id_knight_hacks_form_callback_configuration_id_fk",
           "tableFrom": "knight_hacks_form_callback_execution",
-          "tableTo": "knight_hacks_form_callback_configuration",
           "columnsFrom": ["configuration_id"],
+          "tableTo": "knight_hacks_form_callback_configuration",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_form_callback_execution_response_id_knight_hacks_form_response_id_fk": {
           "name": "knight_hacks_form_callback_execution_response_id_knight_hacks_form_response_id_fk",
           "tableFrom": "knight_hacks_form_callback_execution",
-          "tableTo": "knight_hacks_form_response",
           "columnsFrom": ["response_id"],
+          "tableTo": "knight_hacks_form_response",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -4801,9 +4801,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_form_response_user_created_idx": {
           "name": "knight_hacks_form_response_user_created_idx",
@@ -4822,29 +4822,29 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_form_response_form_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_response_form_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_form_response",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "knight_hacks_form_response_user_id_auth_user_id_fk": {
           "name": "knight_hacks_form_response_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_form_response",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -4875,20 +4875,20 @@
         "knight_hacks_form_response_roles_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_response_roles_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_form_response_roles",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_response_roles_role_id_auth_roles_id_fk": {
           "name": "knight_hacks_form_response_roles_role_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_form_response_roles",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -4924,20 +4924,20 @@
         "knight_hacks_form_section_edit_role_section_id_knight_hacks_form_sections_id_fk": {
           "name": "knight_hacks_form_section_edit_role_section_id_knight_hacks_form_sections_id_fk",
           "tableFrom": "knight_hacks_form_section_edit_role",
-          "tableTo": "knight_hacks_form_sections",
           "columnsFrom": ["section_id"],
+          "tableTo": "knight_hacks_form_sections",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_section_edit_role_role_id_auth_roles_id_fk": {
           "name": "knight_hacks_form_section_edit_role_role_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_form_section_edit_role",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -4973,20 +4973,20 @@
         "knight_hacks_form_section_roles_section_id_knight_hacks_form_sections_id_fk": {
           "name": "knight_hacks_form_section_roles_section_id_knight_hacks_form_sections_id_fk",
           "tableFrom": "knight_hacks_form_section_roles",
-          "tableTo": "knight_hacks_form_sections",
           "columnsFrom": ["section_id"],
+          "tableTo": "knight_hacks_form_sections",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_section_roles_role_id_auth_roles_id_fk": {
           "name": "knight_hacks_form_section_roles_role_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_form_section_roles",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -5022,20 +5022,20 @@
         "knight_hacks_form_section_view_role_section_id_knight_hacks_form_sections_id_fk": {
           "name": "knight_hacks_form_section_view_role_section_id_knight_hacks_form_sections_id_fk",
           "tableFrom": "knight_hacks_form_section_view_role",
-          "tableTo": "knight_hacks_form_sections",
           "columnsFrom": ["section_id"],
+          "tableTo": "knight_hacks_form_sections",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_section_view_role_role_id_auth_roles_id_fk": {
           "name": "knight_hacks_form_section_view_role_role_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_form_section_view_role",
-          "tableTo": "auth_roles",
           "columnsFrom": ["role_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -5087,8 +5087,8 @@
       "uniqueConstraints": {
         "knight_hacks_form_sections_name_unique": {
           "name": "knight_hacks_form_sections_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["name"]
+          "columns": ["name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -5130,29 +5130,29 @@
         "knight_hacks_form_single_response_claim_form_id_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_form_single_response_claim_form_id_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form_id"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_single_response_claim_user_id_auth_user_id_fk": {
           "name": "knight_hacks_form_single_response_claim_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_form_single_response_claim_response_id_knight_hacks_form_response_id_fk": {
           "name": "knight_hacks_form_single_response_claim_response_id_knight_hacks_form_response_id_fk",
           "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "knight_hacks_form_response",
           "columnsFrom": ["response_id"],
+          "tableTo": "knight_hacks_form_response",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -5164,8 +5164,8 @@
       "uniqueConstraints": {
         "knight_hacks_form_single_response_claim_responseId_unique": {
           "name": "knight_hacks_form_single_response_claim_responseId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["response_id"]
+          "columns": ["response_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -5323,19 +5323,19 @@
         "knight_hacks_form_schemas_section_id_knight_hacks_form_sections_id_fk": {
           "name": "knight_hacks_form_schemas_section_id_knight_hacks_form_sections_id_fk",
           "tableFrom": "knight_hacks_form_schemas",
-          "tableTo": "knight_hacks_form_sections",
           "columnsFrom": ["section_id"],
+          "tableTo": "knight_hacks_form_sections",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_form_schemas_slugName_unique": {
           "name": "knight_hacks_form_schemas_slugName_unique",
-          "nullsNotDistinct": false,
-          "columns": ["slug_name"]
+          "columns": ["slug_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -5436,6 +5436,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -5444,8 +5456,8 @@
       "uniqueConstraints": {
         "knight_hacks_hackathon_name_unique": {
           "name": "knight_hacks_hackathon_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["name"]
+          "columns": ["name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -5506,9 +5518,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "knight_hacks_hackathon_class_one_vip_per_hackathon": {
           "name": "knight_hacks_hackathon_class_one_vip_per_hackathon",
@@ -5521,21 +5533,21 @@
             }
           ],
           "isUnique": true,
-          "where": "\"knight_hacks_hackathon_class\".\"kind\" = 'vip'",
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "where": "\"knight_hacks_hackathon_class\".\"kind\" = 'vip'",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_hackathon_class_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hackathon_class_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hackathon_class",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -5582,20 +5594,20 @@
         "knight_hacks_hackathon_sponsor_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hackathon_sponsor_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hackathon_sponsor",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hackathon_sponsor_sponsor_id_knight_hacks_sponsor_id_fk": {
           "name": "knight_hacks_hackathon_sponsor_sponsor_id_knight_hacks_sponsor_id_fk",
           "tableFrom": "knight_hacks_hackathon_sponsor",
-          "tableTo": "knight_hacks_sponsor",
           "columnsFrom": ["sponsor_id"],
+          "tableTo": "knight_hacks_sponsor",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -5645,28 +5657,28 @@
         "knight_hacks_hackathon_status_email_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hackathon_status_email_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hackathon_status_email",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hackathon_status_email_template_id_email_template_id_fk": {
           "name": "knight_hacks_hackathon_status_email_template_id_email_template_id_fk",
           "tableFrom": "knight_hacks_hackathon_status_email",
-          "tableTo": "email_template",
           "columnsFrom": ["template_id"],
+          "tableTo": "email_template",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_hackathon_status_email_hackathon_status_unique": {
           "name": "knight_hacks_hackathon_status_email_hackathon_status_unique",
-          "nullsNotDistinct": false,
-          "columns": ["hackathon_id", "status"]
+          "columns": ["hackathon_id", "status"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -5882,11 +5894,11 @@
         "knight_hacks_hacker_user_id_auth_user_id_fk": {
           "name": "knight_hacks_hacker_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_hacker",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -5967,21 +5979,6 @@
         }
       },
       "indexes": {
-        "knight_hacks_hacker_attendee_class_idx": {
-          "name": "knight_hacks_hacker_attendee_class_idx",
-          "columns": [
-            {
-              "expression": "class_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "knight_hacks_hacker_attendee_hackathon_class_idx": {
           "name": "knight_hacks_hacker_attendee_hackathon_class_idx",
           "columns": [
@@ -5999,38 +5996,38 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_hacker_attendee_hacker_id_knight_hacks_hacker_id_fk": {
           "name": "knight_hacks_hacker_attendee_hacker_id_knight_hacks_hacker_id_fk",
           "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "knight_hacks_hacker",
           "columnsFrom": ["hacker_id"],
+          "tableTo": "knight_hacks_hacker",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hacker_attendee_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hacker_attendee_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk": {
           "name": "knight_hacks_hacker_attendee_class_id_knight_hacks_hackathon_class_id_fk",
           "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "knight_hacks_hackathon_class",
           "columnsFrom": ["class_id"],
+          "tableTo": "knight_hacks_hackathon_class",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
@@ -6074,29 +6071,29 @@
         "knight_hacks_hacker_event_attendee_hacker_att_id_knight_hacks_hacker_attendee_id_fk": {
           "name": "knight_hacks_hacker_event_attendee_hacker_att_id_knight_hacks_hacker_attendee_id_fk",
           "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "knight_hacks_hacker_attendee",
           "columnsFrom": ["hacker_att_id"],
+          "tableTo": "knight_hacks_hacker_attendee",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hacker_event_attendee_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_hacker_event_attendee_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_hacker_event_attendee_event_id_knight_hacks_event_id_fk": {
           "name": "knight_hacks_hacker_event_attendee_event_id_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_hacker_event_attendee",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event_id"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -6248,9 +6245,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_creator_idx": {
           "name": "issue_creator_idx",
@@ -6263,9 +6260,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_status_idx": {
           "name": "issue_status_idx",
@@ -6278,9 +6275,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_date_idx": {
           "name": "issue_date_idx",
@@ -6293,9 +6290,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_due_at_idx": {
           "name": "issue_due_at_idx",
@@ -6308,9 +6305,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_archive_idx": {
           "name": "issue_archive_idx",
@@ -6329,9 +6326,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_parent_idx": {
           "name": "issue_parent_idx",
@@ -6344,9 +6341,9 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         },
         "issue_priority_idx": {
           "name": "issue_priority_idx",
@@ -6359,64 +6356,64 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_issue_event_knight_hacks_event_id_fk": {
           "name": "knight_hacks_issue_event_knight_hacks_event_id_fk",
           "tableFrom": "knight_hacks_issue",
-          "tableTo": "knight_hacks_event",
           "columnsFrom": ["event"],
+          "tableTo": "knight_hacks_event",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "knight_hacks_issue_team_auth_roles_id_fk": {
           "name": "knight_hacks_issue_team_auth_roles_id_fk",
           "tableFrom": "knight_hacks_issue",
-          "tableTo": "auth_roles",
           "columnsFrom": ["team"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_issue_creator_auth_user_id_fk": {
           "name": "knight_hacks_issue_creator_auth_user_id_fk",
           "tableFrom": "knight_hacks_issue",
-          "tableTo": "auth_user",
           "columnsFrom": ["creator"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_issue_archived_by_auth_user_id_fk": {
           "name": "knight_hacks_issue_archived_by_auth_user_id_fk",
           "tableFrom": "knight_hacks_issue",
-          "tableTo": "auth_user",
           "columnsFrom": ["archived_by"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         },
         "issue_parent_fk": {
           "name": "issue_parent_fk",
           "tableFrom": "knight_hacks_issue",
-          "tableTo": "knight_hacks_issue",
           "columnsFrom": ["parent"],
+          "tableTo": "knight_hacks_issue",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_issue_creation_key_unique": {
           "name": "knight_hacks_issue_creation_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["creation_key"]
+          "columns": ["creation_key"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -6509,29 +6506,29 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_issue_history_issue_id_knight_hacks_issue_id_fk": {
           "name": "knight_hacks_issue_history_issue_id_knight_hacks_issue_id_fk",
           "tableFrom": "knight_hacks_issue_history",
-          "tableTo": "knight_hacks_issue",
           "columnsFrom": ["issue_id"],
+          "tableTo": "knight_hacks_issue",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         },
         "knight_hacks_issue_history_actor_id_auth_user_id_fk": {
           "name": "knight_hacks_issue_history_actor_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_issue_history",
-          "tableTo": "auth_user",
           "columnsFrom": ["actor_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "set null"
         }
       },
       "compositePrimaryKeys": {},
@@ -6652,28 +6649,28 @@
             }
           ],
           "isUnique": false,
-          "concurrently": false,
+          "with": {},
           "method": "btree",
-          "with": {}
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "knight_hacks_issue_reminder_delivery_issue_id_knight_hacks_issue_id_fk": {
           "name": "knight_hacks_issue_reminder_delivery_issue_id_knight_hacks_issue_id_fk",
           "tableFrom": "knight_hacks_issue_reminder_delivery",
-          "tableTo": "knight_hacks_issue",
           "columnsFrom": ["issue_id"],
+          "tableTo": "knight_hacks_issue",
           "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "issue_reminder_delivery_identity_unique": {
           "name": "issue_reminder_delivery_identity_unique",
-          "nullsNotDistinct": false,
-          "columns": ["issue_id", "due_at", "reminder_key"]
+          "columns": ["issue_id", "due_at", "reminder_key"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -6702,20 +6699,20 @@
         "knight_hacks_issues_to_teams_visibility_issue_id_knight_hacks_issue_id_fk": {
           "name": "knight_hacks_issues_to_teams_visibility_issue_id_knight_hacks_issue_id_fk",
           "tableFrom": "knight_hacks_issues_to_teams_visibility",
-          "tableTo": "knight_hacks_issue",
           "columnsFrom": ["issue_id"],
+          "tableTo": "knight_hacks_issue",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_issues_to_teams_visibility_team_id_auth_roles_id_fk": {
           "name": "knight_hacks_issues_to_teams_visibility_team_id_auth_roles_id_fk",
           "tableFrom": "knight_hacks_issues_to_teams_visibility",
-          "tableTo": "auth_roles",
           "columnsFrom": ["team_id"],
+          "tableTo": "auth_roles",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -6751,20 +6748,20 @@
         "knight_hacks_issues_to_users_assignment_issue_id_knight_hacks_issue_id_fk": {
           "name": "knight_hacks_issues_to_users_assignment_issue_id_knight_hacks_issue_id_fk",
           "tableFrom": "knight_hacks_issues_to_users_assignment",
-          "tableTo": "knight_hacks_issue",
           "columnsFrom": ["issue_id"],
+          "tableTo": "knight_hacks_issue",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_issues_to_users_assignment_user_id_auth_user_id_fk": {
           "name": "knight_hacks_issues_to_users_assignment_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_issues_to_users_assignment",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -6855,29 +6852,29 @@
         "knight_hacks_judged_submission_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_judged_submission_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_judged_submission",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "knight_hacks_judged_submission_submission_id_knight_hacks_submissions_id_fk": {
           "name": "knight_hacks_judged_submission_submission_id_knight_hacks_submissions_id_fk",
           "tableFrom": "knight_hacks_judged_submission",
-          "tableTo": "knight_hacks_submissions",
           "columnsFrom": ["submission_id"],
+          "tableTo": "knight_hacks_submissions",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "knight_hacks_judged_submission_judge_id_knight_hacks_judges_id_fk": {
           "name": "knight_hacks_judged_submission_judge_id_knight_hacks_judges_id_fk",
           "tableFrom": "knight_hacks_judged_submission",
-          "tableTo": "knight_hacks_judges",
           "columnsFrom": ["judge_id"],
+          "tableTo": "knight_hacks_judges",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -6921,11 +6918,11 @@
         "knight_hacks_judges_challenge_id_knight_hacks_challenges_id_fk": {
           "name": "knight_hacks_judges_challenge_id_knight_hacks_challenges_id_fk",
           "tableFrom": "knight_hacks_judges",
-          "tableTo": "knight_hacks_challenges",
           "columnsFrom": ["challenge_id"],
+          "tableTo": "knight_hacks_challenges",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -7156,24 +7153,24 @@
         "knight_hacks_member_user_id_auth_user_id_fk": {
           "name": "knight_hacks_member_user_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_member",
-          "tableTo": "auth_user",
           "columnsFrom": ["user_id"],
+          "tableTo": "auth_user",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_member_email_unique": {
           "name": "knight_hacks_member_email_unique",
-          "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": ["email"],
+          "nullsNotDistinct": false
         },
         "knight_hacks_member_phoneNumber_unique": {
           "name": "knight_hacks_member_phoneNumber_unique",
-          "nullsNotDistinct": false,
-          "columns": ["phone_number"]
+          "columns": ["phone_number"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -7277,37 +7274,37 @@
         "knight_hacks_submissions_challenge_id_knight_hacks_challenges_id_fk": {
           "name": "knight_hacks_submissions_challenge_id_knight_hacks_challenges_id_fk",
           "tableFrom": "knight_hacks_submissions",
-          "tableTo": "knight_hacks_challenges",
           "columnsFrom": ["challenge_id"],
+          "tableTo": "knight_hacks_challenges",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_submissions_team_id_knight_hacks_teams_id_fk": {
           "name": "knight_hacks_submissions_team_id_knight_hacks_teams_id_fk",
           "tableFrom": "knight_hacks_submissions",
-          "tableTo": "knight_hacks_teams",
           "columnsFrom": ["team_id"],
+          "tableTo": "knight_hacks_teams",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "knight_hacks_submissions_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_submissions_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_submissions",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_submissions_teamId_challengeId_unique": {
           "name": "knight_hacks_submissions_teamId_challengeId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["team_id", "challenge_id"]
+          "columns": ["team_id", "challenge_id"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -7392,19 +7389,19 @@
         "knight_hacks_teams_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_teams_hackathon_id_knight_hacks_hackathon_id_fk",
           "tableFrom": "knight_hacks_teams",
-          "tableTo": "knight_hacks_hackathon",
           "columnsFrom": ["hackathon_id"],
+          "tableTo": "knight_hacks_hackathon",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "knight_hacks_teams_matchKey_unique": {
           "name": "knight_hacks_teams_matchKey_unique",
-          "nullsNotDistinct": false,
-          "columns": ["match_key"]
+          "columns": ["match_key"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -7473,8 +7470,8 @@
       "uniqueConstraints": {
         "knight_hacks_template_normalized_name_unique": {
           "name": "knight_hacks_template_normalized_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
+          "columns": ["normalized_name"],
+          "nullsNotDistinct": false
         }
       },
       "policies": {},
@@ -7516,11 +7513,11 @@
         "knight_hacks_trpc_form_connection_form_knight_hacks_form_schemas_id_fk": {
           "name": "knight_hacks_trpc_form_connection_form_knight_hacks_form_schemas_id_fk",
           "tableFrom": "knight_hacks_trpc_form_connection",
-          "tableTo": "knight_hacks_form_schemas",
           "columnsFrom": ["form"],
+          "tableTo": "knight_hacks_form_schemas",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -7656,10 +7653,10 @@
     }
   },
   "schemas": {},
+  "views": {},
   "sequences": {},
   "roles": {},
   "policies": {},
-  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},

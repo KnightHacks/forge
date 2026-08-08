@@ -2,11 +2,11 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const migration = new URL(
-  "../../drizzle/0018_guild_career_network.sql",
+  "../../drizzle/0019_guild_career_network.sql",
   import.meta.url,
 );
 const companyImageMigration = new URL(
-  "../../drizzle/0019_panoramic_silk_fever.sql",
+  "../../drizzle/0020_panoramic_silk_fever.sql",
   import.meta.url,
 );
 

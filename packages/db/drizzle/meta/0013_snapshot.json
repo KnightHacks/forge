@@ -1,6 +1,6 @@
 {
-  "id": "94b026cb-3f7f-49e3-b121-75f9b543dc80",
-  "prevId": "c875d7e6-bb3d-4222-b3c4-205ae5168390",
+  "id": "ad28db0f-cd08-4527-b13b-3fa474ec05d0",
+  "prevId": "2abd2d81-c8fc-4e37-8c07-1fb4a9a617c3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -218,13 +218,6 @@
           "type": "varchar",
           "primaryKey": false,
           "notNull": true
-        },
-        "event_feedback_excluded": {
-          "name": "event_feedback_excluded",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "issue_reminder_channel": {
           "name": "issue_reminder_channel",
@@ -1236,215 +1229,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.knight_hacks_event_feedback_config": {
-      "name": "knight_hacks_event_feedback_config",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "form_id": {
-          "name": "form_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "opens_at": {
-          "name": "opens_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "closes_at": {
-          "name": "closes_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reward_points": {
-          "name": "reward_points",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 5
-        },
-        "template_revision": {
-          "name": "template_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "custom_questions": {
-          "name": "custom_questions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_event_feedback_config_event_id_knight_hacks_event_id_fk": {
-          "name": "knight_hacks_event_feedback_config_event_id_knight_hacks_event_id_fk",
-          "tableFrom": "knight_hacks_event_feedback_config",
-          "tableTo": "knight_hacks_event",
-          "columnsFrom": ["event_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_event_feedback_config_form_id_knight_hacks_form_schemas_id_fk": {
-          "name": "knight_hacks_event_feedback_config_form_id_knight_hacks_form_schemas_id_fk",
-          "tableFrom": "knight_hacks_event_feedback_config",
-          "tableTo": "knight_hacks_form_schemas",
-          "columnsFrom": ["form_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_event_feedback_config_eventId_unique": {
-          "name": "knight_hacks_event_feedback_config_eventId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id"]
-        },
-        "knight_hacks_event_feedback_config_formId_unique": {
-          "name": "knight_hacks_event_feedback_config_formId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["form_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_event_feedback_config_window_check": {
-          "name": "knight_hacks_event_feedback_config_window_check",
-          "value": "\"knight_hacks_event_feedback_config\".\"closes_at\" > \"knight_hacks_event_feedback_config\".\"opens_at\""
-        },
-        "knight_hacks_event_feedback_config_reward_check": {
-          "name": "knight_hacks_event_feedback_config_reward_check",
-          "value": "\"knight_hacks_event_feedback_config\".\"reward_points\" = 5"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_event_feedback_reward": {
-      "name": "knight_hacks_event_feedback_reward",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "response_id": {
-          "name": "response_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "points_awarded": {
-          "name": "points_awarded",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 5
-        },
-        "awarded_at": {
-          "name": "awarded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_event_feedback_reward_event_id_knight_hacks_event_id_fk": {
-          "name": "knight_hacks_event_feedback_reward_event_id_knight_hacks_event_id_fk",
-          "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_event",
-          "columnsFrom": ["event_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_event_feedback_reward_member_id_knight_hacks_member_id_fk": {
-          "name": "knight_hacks_event_feedback_reward_member_id_knight_hacks_member_id_fk",
-          "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_member",
-          "columnsFrom": ["member_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_event_feedback_reward_response_id_knight_hacks_form_response_id_fk": {
-          "name": "knight_hacks_event_feedback_reward_response_id_knight_hacks_form_response_id_fk",
-          "tableFrom": "knight_hacks_event_feedback_reward",
-          "tableTo": "knight_hacks_form_response",
-          "columnsFrom": ["response_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_event_feedback_reward_event_member_unique": {
-          "name": "knight_hacks_event_feedback_reward_event_member_unique",
-          "nullsNotDistinct": false,
-          "columns": ["event_id", "member_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_event_feedback_reward_points_check": {
-          "name": "knight_hacks_event_feedback_reward_points_check",
-          "value": "\"knight_hacks_event_feedback_reward\".\"points_awarded\" = 5"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.knight_hacks_event_tag": {
       "name": "knight_hacks_event_tag",
       "schema": "",
@@ -1526,366 +1310,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.knight_hacks_form_attachment": {
-      "name": "knight_hacks_form_attachment",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "form_id": {
-          "name": "form_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "response_id": {
-          "name": "response_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "owner_user_id": {
-          "name": "owner_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "object_name": {
-          "name": "object_name",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "file_name": {
-          "name": "file_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "size": {
-          "name": "size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "finalized_at": {
-          "name": "finalized_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_form_attachment_form_idx": {
-          "name": "knight_hacks_form_attachment_form_idx",
-          "columns": [
-            {
-              "expression": "form_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_form_attachment_response_idx": {
-          "name": "knight_hacks_form_attachment_response_idx",
-          "columns": [
-            {
-              "expression": "response_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_form_attachment_form_id_knight_hacks_form_schemas_id_fk": {
-          "name": "knight_hacks_form_attachment_form_id_knight_hacks_form_schemas_id_fk",
-          "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "knight_hacks_form_schemas",
-          "columnsFrom": ["form_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_attachment_response_id_knight_hacks_form_response_id_fk": {
-          "name": "knight_hacks_form_attachment_response_id_knight_hacks_form_response_id_fk",
-          "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "knight_hacks_form_response",
-          "columnsFrom": ["response_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_attachment_owner_user_id_auth_user_id_fk": {
-          "name": "knight_hacks_form_attachment_owner_user_id_auth_user_id_fk",
-          "tableFrom": "knight_hacks_form_attachment",
-          "tableTo": "auth_user",
-          "columnsFrom": ["owner_user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_form_attachment_objectName_unique": {
-          "name": "knight_hacks_form_attachment_objectName_unique",
-          "nullsNotDistinct": false,
-          "columns": ["object_name"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_form_callback_configuration": {
-      "name": "knight_hacks_form_callback_configuration",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "form_id": {
-          "name": "form_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "callback_slug": {
-          "name": "callback_slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "mappings": {
-          "name": "mappings",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_form_callback_configuration_form_id_knight_hacks_form_schemas_id_fk": {
-          "name": "knight_hacks_form_callback_configuration_form_id_knight_hacks_form_schemas_id_fk",
-          "tableFrom": "knight_hacks_form_callback_configuration",
-          "tableTo": "knight_hacks_form_schemas",
-          "columnsFrom": ["form_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_form_callback_configuration_form_slug_unique": {
-          "name": "knight_hacks_form_callback_configuration_form_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": ["form_id", "callback_slug"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_form_callback_execution": {
-      "name": "knight_hacks_form_callback_execution",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "configuration_id": {
-          "name": "configuration_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "response_id": {
-          "name": "response_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "callback_slug": {
-          "name": "callback_slug",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "input": {
-          "name": "input",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "form_callback_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "attempts": {
-          "name": "attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "available_at": {
-          "name": "available_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "lease_token": {
-          "name": "lease_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lease_expires_at": {
-          "name": "lease_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "succeeded_at": {
-          "name": "succeeded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_form_callback_execution_status_available_idx": {
-          "name": "knight_hacks_form_callback_execution_status_available_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "available_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_form_callback_execution_configuration_id_knight_hacks_form_callback_configuration_id_fk": {
-          "name": "knight_hacks_form_callback_execution_configuration_id_knight_hacks_form_callback_configuration_id_fk",
-          "tableFrom": "knight_hacks_form_callback_execution",
-          "tableTo": "knight_hacks_form_callback_configuration",
-          "columnsFrom": ["configuration_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_callback_execution_response_id_knight_hacks_form_response_id_fk": {
-          "name": "knight_hacks_form_callback_execution_response_id_knight_hacks_form_response_id_fk",
-          "tableFrom": "knight_hacks_form_callback_execution",
-          "tableTo": "knight_hacks_form_response",
-          "columnsFrom": ["response_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.knight_hacks_form_response": {
       "name": "knight_hacks_form_response",
       "schema": "",
@@ -1914,20 +1338,6 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
-        },
-        "form_revision": {
-          "name": "form_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "response_snapshot": {
-          "name": "response_snapshot",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
         },
         "created_at": {
           "name": "created_at",
@@ -2020,55 +1430,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.knight_hacks_form_section_edit_role": {
-      "name": "knight_hacks_form_section_edit_role",
-      "schema": "",
-      "columns": {
-        "section_id": {
-          "name": "section_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_form_section_edit_role_section_id_knight_hacks_form_sections_id_fk": {
-          "name": "knight_hacks_form_section_edit_role_section_id_knight_hacks_form_sections_id_fk",
-          "tableFrom": "knight_hacks_form_section_edit_role",
-          "tableTo": "knight_hacks_form_sections",
-          "columnsFrom": ["section_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_section_edit_role_role_id_auth_roles_id_fk": {
-          "name": "knight_hacks_form_section_edit_role_role_id_auth_roles_id_fk",
-          "tableFrom": "knight_hacks_form_section_edit_role",
-          "tableTo": "auth_roles",
-          "columnsFrom": ["role_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "knight_hacks_form_section_edit_role_section_id_role_id_pk": {
-          "name": "knight_hacks_form_section_edit_role_section_id_role_id_pk",
-          "columns": ["section_id", "role_id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.knight_hacks_form_section_roles": {
       "name": "knight_hacks_form_section_roles",
       "schema": "",
@@ -2110,55 +1471,6 @@
       "compositePrimaryKeys": {
         "knight_hacks_form_section_roles_section_id_role_id_pk": {
           "name": "knight_hacks_form_section_roles_section_id_role_id_pk",
-          "columns": ["section_id", "role_id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_form_section_view_role": {
-      "name": "knight_hacks_form_section_view_role",
-      "schema": "",
-      "columns": {
-        "section_id": {
-          "name": "section_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_form_section_view_role_section_id_knight_hacks_form_sections_id_fk": {
-          "name": "knight_hacks_form_section_view_role_section_id_knight_hacks_form_sections_id_fk",
-          "tableFrom": "knight_hacks_form_section_view_role",
-          "tableTo": "knight_hacks_form_sections",
-          "columnsFrom": ["section_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_section_view_role_role_id_auth_roles_id_fk": {
-          "name": "knight_hacks_form_section_view_role_role_id_auth_roles_id_fk",
-          "tableFrom": "knight_hacks_form_section_view_role",
-          "tableTo": "auth_roles",
-          "columnsFrom": ["role_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "knight_hacks_form_section_view_role_section_id_role_id_pk": {
-          "name": "knight_hacks_form_section_view_role_section_id_role_id_pk",
           "columns": ["section_id", "role_id"]
         }
       },
@@ -2213,83 +1525,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.knight_hacks_form_single_response_claim": {
-      "name": "knight_hacks_form_single_response_claim",
-      "schema": "",
-      "columns": {
-        "form_id": {
-          "name": "form_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "response_id": {
-          "name": "response_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_form_single_response_claim_form_id_knight_hacks_form_schemas_id_fk": {
-          "name": "knight_hacks_form_single_response_claim_form_id_knight_hacks_form_schemas_id_fk",
-          "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "knight_hacks_form_schemas",
-          "columnsFrom": ["form_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_single_response_claim_user_id_auth_user_id_fk": {
-          "name": "knight_hacks_form_single_response_claim_user_id_auth_user_id_fk",
-          "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "auth_user",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_form_single_response_claim_response_id_knight_hacks_form_response_id_fk": {
-          "name": "knight_hacks_form_single_response_claim_response_id_knight_hacks_form_response_id_fk",
-          "tableFrom": "knight_hacks_form_single_response_claim",
-          "tableTo": "knight_hacks_form_response",
-          "columnsFrom": ["response_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "knight_hacks_form_single_response_claim_form_id_user_id_pk": {
-          "name": "knight_hacks_form_single_response_claim_form_id_user_id_pk",
-          "columns": ["form_id", "user_id"]
-        }
-      },
-      "uniqueConstraints": {
-        "knight_hacks_form_single_response_claim_responseId_unique": {
-          "name": "knight_hacks_form_single_response_claim_responseId_unique",
-          "nullsNotDistinct": false,
-          "columns": ["response_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.knight_hacks_form_schemas": {
       "name": "knight_hacks_form_schemas",
       "schema": "",
@@ -2319,68 +1554,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "kind": {
-          "name": "kind",
-          "type": "form_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'general'"
-        },
-        "state": {
-          "name": "state",
-          "type": "form_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'draft'"
-        },
-        "opens_at": {
-          "name": "opens_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "closes_at": {
-          "name": "closes_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "manually_closed": {
-          "name": "manually_closed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "response_mode": {
-          "name": "response_mode",
-          "type": "form_response_mode",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'single_locked'"
-        },
-        "published_at": {
-          "name": "published_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "revision": {
-          "name": "revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
         },
         "dues_only": {
           "name": "dues_only",
@@ -2426,7 +1599,7 @@
           "name": "section_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "is_closed": {
           "name": "is_closed",
@@ -2444,7 +1617,7 @@
           "tableTo": "knight_hacks_form_sections",
           "columnsFrom": ["section_id"],
           "columnsTo": ["id"],
-          "onDelete": "restrict",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -2548,6 +1721,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -4010,26 +3195,6 @@
       "name": "event_sync_state",
       "schema": "public",
       "values": ["pending", "synced", "error", "unknown"]
-    },
-    "public.form_callback_status": {
-      "name": "form_callback_status",
-      "schema": "public",
-      "values": ["pending", "running", "succeeded", "failed", "cancelled"]
-    },
-    "public.form_kind": {
-      "name": "form_kind",
-      "schema": "public",
-      "values": ["general", "event_feedback", "system"]
-    },
-    "public.form_response_mode": {
-      "name": "form_response_mode",
-      "schema": "public",
-      "values": ["single_locked", "single_editable", "multiple_locked"]
-    },
-    "public.form_state": {
-      "name": "form_state",
-      "schema": "public",
-      "values": ["draft", "published", "archived"]
     },
     "public.gender": {
       "name": "gender",

@@ -14,7 +14,7 @@ import { canRunDatabaseTests, provisionDisposableDatabase } from "../testing";
 /**
  * `scripts/classify-club-roles.ts`, exercised the way a contributor meets it:
  * migrate an empty database, link Discord roles in Blade afterwards, then run
- * the tool. That sequence is the one migration `0026` alone cannot serve — its
+ * the tool. That sequence is the one migration `0027` alone cannot serve — its
  * backfill runs once, at migrate time, when `auth_roles` is still empty — and
  * it is the sequence `docs/GETTING-STARTED.md` tells everyone to follow.
  */
@@ -24,7 +24,7 @@ const migrationSourceUrl = new URL(
   import.meta.url,
 );
 const clubTeamMigrationUrl = new URL(
-  "../../drizzle/0026_cute_sersi.sql",
+  "../../drizzle/0027_cute_sersi.sql",
   import.meta.url,
 );
 

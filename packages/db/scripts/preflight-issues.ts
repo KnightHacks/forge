@@ -26,6 +26,7 @@ const [
       eventId: Issue.event,
       id: Issue.id,
       parentId: Issue.parent,
+      status: Issue.status,
       teamId: Issue.team,
     })
     .from(Issue),

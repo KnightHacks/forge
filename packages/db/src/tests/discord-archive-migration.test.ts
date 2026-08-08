@@ -20,7 +20,7 @@ describe("Discord archive migration contract", () => {
   it("TC-043 lands after the email migrations as an additive migration", async () => {
     const { file, sql } = await readDiscordArchiveMigration();
 
-    expect(file.startsWith("0024_")).toBe(true);
+    expect(file.startsWith("0025_")).toBe(true);
     expect(sql).toContain(`CREATE TABLE "discord_archive_channel"`);
     expect(sql).toContain(`CREATE TABLE "discord_archive_message"`);
     expect(sql).toContain(`CREATE TABLE "discord_archive_checkpoint"`);

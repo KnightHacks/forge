@@ -41,9 +41,15 @@ vi.mock("~/trpc/react", () => ({
 vi.stubGlobal(
   "ResizeObserver",
   class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
   },
 );
 
@@ -114,6 +120,14 @@ function renderAssignments() {
   );
 }
 
+function getFirstUserCheckbox(name: string) {
+  const checkbox = screen.getAllByRole("checkbox", { name })[0];
+  if (!checkbox) {
+    throw new Error(`Expected a checkbox named "${name}"`);
+  }
+  return checkbox;
+}
+
 describe("role assignment flow", () => {
   beforeEach(() => batchMutate.mockClear());
 
@@ -131,9 +145,7 @@ describe("role assignment flow", () => {
     });
     expect(start).toBeDisabled();
 
-    await user.click(
-      screen.getAllByRole("checkbox", { name: "Select Alice Archive" })[0]!,
-    );
+    await user.click(getFirstUserCheckbox("Select Alice Archive"));
     await user.click(
       screen.getByRole("button", { name: "Assign roles to 1 person" }),
     );
@@ -152,12 +164,8 @@ describe("role assignment flow", () => {
     const user = userEvent.setup();
     renderAssignments();
 
-    await user.click(
-      screen.getAllByRole("checkbox", { name: "Select Alice Archive" })[0]!,
-    );
-    await user.click(
-      screen.getAllByRole("checkbox", { name: "Select Bob Builder" })[0]!,
-    );
+    await user.click(getFirstUserCheckbox("Select Alice Archive"));
+    await user.click(getFirstUserCheckbox("Select Bob Builder"));
     await user.click(
       screen.getByRole("button", { name: "Assign roles to 2 people" }),
     );

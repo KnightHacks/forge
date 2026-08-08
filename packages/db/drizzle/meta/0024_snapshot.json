@@ -1,482 +1,9 @@
 {
-  "id": "731c4a06-90e0-4a2e-ba8d-fafb03bc37ef",
-  "prevId": "6ddf5d92-f664-4e6f-b3c2-d3fd127a115a",
+  "id": "f25a8361-e8ed-4d70-aef0-329063eee38e",
+  "prevId": "b240d64d-1981-4e97-8fe7-52c0efb7345e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.audit_event": {
-      "name": "audit_event",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "occurred_at": {
-          "name": "occurred_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "action_key": {
-          "name": "action_key",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "domain": {
-          "name": "domain",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outcome": {
-          "name": "outcome",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "operation_id": {
-          "name": "operation_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_user_id": {
-          "name": "actor_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_member_id": {
-          "name": "actor_member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_discord_user_id": {
-          "name": "actor_discord_user_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_label": {
-          "name": "actor_label",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_role_label": {
-          "name": "actor_role_label",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_role_color": {
-          "name": "actor_role_color",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "changes": {
-          "name": "changes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        }
-      },
-      "indexes": {
-        "audit_event_action_occurred_idx": {
-          "name": "audit_event_action_occurred_idx",
-          "columns": [
-            {
-              "expression": "action_key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_actor_occurred_idx": {
-          "name": "audit_event_actor_occurred_idx",
-          "columns": [
-            {
-              "expression": "actor_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_actor_member_occurred_idx": {
-          "name": "audit_event_actor_member_occurred_idx",
-          "columns": [
-            {
-              "expression": "actor_member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_domain_occurred_idx": {
-          "name": "audit_event_domain_occurred_idx",
-          "columns": [
-            {
-              "expression": "domain",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_occurred_idx": {
-          "name": "audit_event_occurred_idx",
-          "columns": [
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_operation_idx": {
-          "name": "audit_event_operation_idx",
-          "columns": [
-            {
-              "expression": "operation_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_outcome_occurred_idx": {
-          "name": "audit_event_outcome_occurred_idx",
-          "columns": [
-            {
-              "expression": "outcome",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "audit_event_actor_role_color_check": {
-          "name": "audit_event_actor_role_color_check",
-          "value": "\"audit_event\".\"actor_role_color\" IS NULL OR \"audit_event\".\"actor_role_color\" ~ '^#[0-9A-Fa-f]{6}$'"
-        },
-        "audit_event_outcome_check": {
-          "name": "audit_event_outcome_check",
-          "value": "\"audit_event\".\"outcome\" IN ('committed', 'partial_external')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.audit_subject": {
-      "name": "audit_subject",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "relation": {
-          "name": "relation",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_type": {
-          "name": "target_type",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_id": {
-          "name": "target_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_label": {
-          "name": "target_label",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "result_outcome": {
-          "name": "result_outcome",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        }
-      },
-      "indexes": {
-        "audit_subject_event_position_idx": {
-          "name": "audit_subject_event_position_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "position",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_member_event_idx": {
-          "name": "audit_subject_member_event_idx",
-          "columns": [
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_one_primary_idx": {
-          "name": "audit_subject_one_primary_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"audit_subject\".\"relation\" = 'primary'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_target_event_idx": {
-          "name": "audit_subject_target_event_idx",
-          "columns": [
-            {
-              "expression": "target_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "target_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "audit_subject_event_id_audit_event_id_fk": {
-          "name": "audit_subject_event_id_audit_event_id_fk",
-          "tableFrom": "audit_subject",
-          "tableTo": "audit_event",
-          "columnsFrom": ["event_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "audit_subject_relation_check": {
-          "name": "audit_subject_relation_check",
-          "value": "\"audit_subject\".\"relation\" IN ('primary', 'secondary', 'result')"
-        },
-        "audit_subject_result_outcome_check": {
-          "name": "audit_subject_result_outcome_check",
-          "value": "\"audit_subject\".\"result_outcome\" IS NULL OR \"audit_subject\".\"result_outcome\" IN ('succeeded', 'skipped', 'failed_external', 'failed_internal', 'compensated')"
-        },
-        "audit_subject_result_outcome_shape_check": {
-          "name": "audit_subject_result_outcome_shape_check",
-          "value": "(\"audit_subject\".\"relation\" = 'result') = (\"audit_subject\".\"result_outcome\" IS NOT NULL)"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.auth_account": {
       "name": "auth_account",
       "schema": "",
@@ -928,682 +455,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.discord_archive_channel": {
-      "name": "discord_archive_channel",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(20)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "guild_id": {
-          "name": "guild_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "type": {
-          "name": "type",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "topic": {
-          "name": "topic",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_thread": {
-          "name": "is_thread",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_private_thread": {
-          "name": "is_private_thread",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "archived": {
-          "name": "archived",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "locked": {
-          "name": "locked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "discovered_at": {
-          "name": "discovered_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "discord_updated_at": {
-          "name": "discord_updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "discord_archive_channel_guild_type_idx": {
-          "name": "discord_archive_channel_guild_type_idx",
-          "columns": [
-            {
-              "expression": "guild_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "discord_archive_channel_parent_idx": {
-          "name": "discord_archive_channel_parent_idx",
-          "columns": [
-            {
-              "expression": "parent_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.discord_archive_checkpoint": {
-      "name": "discord_archive_checkpoint",
-      "schema": "",
-      "columns": {
-        "channel_id": {
-          "name": "channel_id",
-          "type": "varchar(20)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "guild_id": {
-          "name": "guild_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "oldest_message_id": {
-          "name": "oldest_message_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "newest_message_id": {
-          "name": "newest_message_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "backfill_before_message_id": {
-          "name": "backfill_before_message_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "backfill_status": {
-          "name": "backfill_status",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "backfill_completed_at": {
-          "name": "backfill_completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_backfill_at": {
-          "name": "last_backfill_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_discovered_at": {
-          "name": "last_discovered_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_reconciled_at": {
-          "name": "last_reconciled_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "processed_message_count": {
-          "name": "processed_message_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "retry_count": {
-          "name": "retry_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_error_code": {
-          "name": "last_error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_error_message": {
-          "name": "last_error_message",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "discord_archive_checkpoint_guild_status_updated_idx": {
-          "name": "discord_archive_checkpoint_guild_status_updated_idx",
-          "columns": [
-            {
-              "expression": "guild_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "backfill_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "updated_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "discord_archive_checkpoint_channel_id_discord_archive_channel_id_fk": {
-          "name": "discord_archive_checkpoint_channel_id_discord_archive_channel_id_fk",
-          "tableFrom": "discord_archive_checkpoint",
-          "tableTo": "discord_archive_channel",
-          "columnsFrom": ["channel_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "discord_archive_checkpoint_status_check": {
-          "name": "discord_archive_checkpoint_status_check",
-          "value": "\"discord_archive_checkpoint\".\"backfill_status\" IN ('pending', 'running', 'complete', 'failed')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.discord_archive_message": {
-      "name": "discord_archive_message",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(20)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "guild_id": {
-          "name": "guild_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "channel_id": {
-          "name": "channel_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "author_discord_user_id": {
-          "name": "author_discord_user_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "author_label": {
-          "name": "author_label",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "author_avatar_url": {
-          "name": "author_avatar_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "author_is_bot": {
-          "name": "author_is_bot",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "webhook_id": {
-          "name": "webhook_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "application_id": {
-          "name": "application_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "message_type": {
-          "name": "message_type",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "edited_at": {
-          "name": "edited_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reply_to_message_id": {
-          "name": "reply_to_message_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pinned": {
-          "name": "pinned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "flags": {
-          "name": "flags",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0'"
-        },
-        "mentions": {
-          "name": "mentions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{\"everyone\":false,\"roleIds\":[],\"userIds\":[]}'::jsonb"
-        },
-        "embeds": {
-          "name": "embeds",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "attachments": {
-          "name": "attachments",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "components": {
-          "name": "components",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "stickers": {
-          "name": "stickers",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "poll": {
-          "name": "poll",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ingested_at": {
-          "name": "ingested_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "last_observed_at": {
-          "name": "last_observed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "discord_archive_message_author_created_idx": {
-          "name": "discord_archive_message_author_created_idx",
-          "columns": [
-            {
-              "expression": "author_discord_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "discord_archive_message_channel_created_idx": {
-          "name": "discord_archive_message_channel_created_idx",
-          "columns": [
-            {
-              "expression": "channel_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "discord_archive_message_guild_created_idx": {
-          "name": "discord_archive_message_guild_created_idx",
-          "columns": [
-            {
-              "expression": "guild_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "discord_archive_message_non_deleted_created_idx": {
-          "name": "discord_archive_message_non_deleted_created_idx",
-          "columns": [
-            {
-              "expression": "guild_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"discord_archive_message\".\"deleted_at\" IS NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "discord_archive_message_channel_id_discord_archive_channel_id_fk": {
-          "name": "discord_archive_message_channel_id_discord_archive_channel_id_fk",
-          "tableFrom": "discord_archive_message",
-          "tableTo": "discord_archive_channel",
-          "columnsFrom": ["channel_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.discord_archive_state": {
-      "name": "discord_archive_state",
-      "schema": "",
-      "columns": {
-        "guild_id": {
-          "name": "guild_id",
-          "type": "varchar(20)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'idle'"
-        },
-        "last_gateway_event_at": {
-          "name": "last_gateway_event_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_live_write_at": {
-          "name": "last_live_write_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_discovery_started_at": {
-          "name": "last_discovery_started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_discovery_completed_at": {
-          "name": "last_discovery_completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_reconciliation_started_at": {
-          "name": "last_reconciliation_started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_reconciliation_completed_at": {
-          "name": "last_reconciliation_completed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_backfill_progress_at": {
-          "name": "last_backfill_progress_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lease_owner": {
-          "name": "lease_owner",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lease_expires_at": {
-          "name": "lease_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_error_code": {
-          "name": "last_error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_error_message": {
-          "name": "last_error_message",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "failure_count": {
-          "name": "failure_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "discord_archive_state_status_check": {
-          "name": "discord_archive_state_status_check",
-          "value": "\"discord_archive_state\".\"status\" IN ('disabled', 'idle', 'healthy', 'degraded', 'failed')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_alumni_bulletin_post": {
@@ -5144,6 +3995,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -7001,6 +5864,479 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_event": {
+      "name": "audit_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "action_key": {
+          "name": "action_key",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "domain": {
+          "name": "domain",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_member_id": {
+          "name": "actor_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_discord_user_id": {
+          "name": "actor_discord_user_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_role_label": {
+          "name": "actor_role_label",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_role_color": {
+          "name": "actor_role_color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "changes": {
+          "name": "changes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        }
+      },
+      "indexes": {
+        "audit_event_action_occurred_idx": {
+          "name": "audit_event_action_occurred_idx",
+          "columns": [
+            {
+              "expression": "action_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_actor_occurred_idx": {
+          "name": "audit_event_actor_occurred_idx",
+          "columns": [
+            {
+              "expression": "actor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_actor_member_occurred_idx": {
+          "name": "audit_event_actor_member_occurred_idx",
+          "columns": [
+            {
+              "expression": "actor_member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_domain_occurred_idx": {
+          "name": "audit_event_domain_occurred_idx",
+          "columns": [
+            {
+              "expression": "domain",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_occurred_idx": {
+          "name": "audit_event_occurred_idx",
+          "columns": [
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_operation_idx": {
+          "name": "audit_event_operation_idx",
+          "columns": [
+            {
+              "expression": "operation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_outcome_occurred_idx": {
+          "name": "audit_event_outcome_occurred_idx",
+          "columns": [
+            {
+              "expression": "outcome",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_event_actor_role_color_check": {
+          "name": "audit_event_actor_role_color_check",
+          "value": "\"audit_event\".\"actor_role_color\" IS NULL OR \"audit_event\".\"actor_role_color\" ~ '^#[0-9A-Fa-f]{6}$'"
+        },
+        "audit_event_outcome_check": {
+          "name": "audit_event_outcome_check",
+          "value": "\"audit_event\".\"outcome\" IN ('committed', 'partial_external')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_subject": {
+      "name": "audit_subject",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relation": {
+          "name": "relation",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_label": {
+          "name": "target_label",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_outcome": {
+          "name": "result_outcome",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        }
+      },
+      "indexes": {
+        "audit_subject_event_position_idx": {
+          "name": "audit_subject_event_position_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_member_event_idx": {
+          "name": "audit_subject_member_event_idx",
+          "columns": [
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_one_primary_idx": {
+          "name": "audit_subject_one_primary_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"audit_subject\".\"relation\" = 'primary'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_target_event_idx": {
+          "name": "audit_subject_target_event_idx",
+          "columns": [
+            {
+              "expression": "target_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_subject_event_id_audit_event_id_fk": {
+          "name": "audit_subject_event_id_audit_event_id_fk",
+          "tableFrom": "audit_subject",
+          "tableTo": "audit_event",
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_subject_relation_check": {
+          "name": "audit_subject_relation_check",
+          "value": "\"audit_subject\".\"relation\" IN ('primary', 'secondary', 'result')"
+        },
+        "audit_subject_result_outcome_check": {
+          "name": "audit_subject_result_outcome_check",
+          "value": "\"audit_subject\".\"result_outcome\" IS NULL OR \"audit_subject\".\"result_outcome\" IN ('succeeded', 'skipped', 'failed_external', 'failed_internal', 'compensated')"
+        },
+        "audit_subject_result_outcome_shape_check": {
+          "name": "audit_subject_result_outcome_shape_check",
+          "value": "(\"audit_subject\".\"relation\" = 'result') = (\"audit_subject\".\"result_outcome\" IS NOT NULL)"
+        }
+      },
       "isRLSEnabled": false
     }
   },

@@ -2,11 +2,11 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 
 const migration = new URL(
-  "../../drizzle/0016_breezy_sphinx.sql",
+  "../../drizzle/0017_breezy_sphinx.sql",
   import.meta.url,
 );
 const threadMigration = new URL(
-  "../../drizzle/0037_left_nocturne.sql",
+  "../../drizzle/0038_left_nocturne.sql",
   import.meta.url,
 );
 

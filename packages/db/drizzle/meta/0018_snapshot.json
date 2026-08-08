@@ -1,6 +1,6 @@
 {
-  "id": "985a1923-4d04-49f4-96b8-45b8f7f8e2f3",
-  "prevId": "840a5e85-755d-4828-a815-ec63a86d79a4",
+  "id": "2e07302a-3e82-4a04-bcbd-472234f80666",
+  "prevId": "378ef051-206a-4e73-9874-82bb50f3b9a6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -510,167 +510,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.knight_hacks_company": {
-      "name": "knight_hacks_company",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalized_display_name": {
-          "name": "normalized_display_name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "legal_name": {
-          "name": "legal_name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "domain": {
-          "name": "domain",
-          "type": "varchar(253)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "aliases": {
-          "name": "aliases",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "ARRAY[]::text[]"
-        },
-        "review_state": {
-          "name": "review_state",
-          "type": "company_review_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "merged_into_company_id": {
-          "name": "merged_into_company_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_company_review_state_idx": {
-          "name": "knight_hacks_company_review_state_idx",
-          "columns": [
-            {
-              "expression": "review_state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_company_domain_idx": {
-          "name": "knight_hacks_company_domain_idx",
-          "columns": [
-            {
-              "expression": "domain",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_company_created_by_user_idx": {
-          "name": "knight_hacks_company_created_by_user_idx",
-          "columns": [
-            {
-              "expression": "created_by_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_company_created_by_user_id_auth_user_id_fk": {
-          "name": "knight_hacks_company_created_by_user_id_auth_user_id_fk",
-          "tableFrom": "knight_hacks_company",
-          "tableTo": "auth_user",
-          "columnsFrom": ["created_by_user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_company_merged_into_fk": {
-          "name": "knight_hacks_company_merged_into_fk",
-          "tableFrom": "knight_hacks_company",
-          "tableTo": "knight_hacks_company",
-          "columnsFrom": ["merged_into_company_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_company_normalized_display_name_unique": {
-          "name": "knight_hacks_company_normalized_display_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_display_name"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_company_merged_state_consistency": {
-          "name": "knight_hacks_company_merged_state_consistency",
-          "value": "(\"knight_hacks_company\".\"review_state\" = 'merged') = (\"knight_hacks_company\".\"merged_into_company_id\" IS NOT NULL)"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.knight_hacks_dues_payment": {
       "name": "knight_hacks_dues_payment",
       "schema": "",
@@ -747,189 +586,6 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_employment": {
-      "name": "knight_hacks_employment",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "company_id": {
-          "name": "company_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "experience_type": {
-          "name": "experience_type",
-          "type": "employment_experience_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "state": {
-          "name": "state",
-          "type": "employment_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "start_month": {
-          "name": "start_month",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "end_month": {
-          "name": "end_month",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "city_key": {
-          "name": "city_key",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "guild_visible": {
-          "name": "guild_visible",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "knight_hacks_employment_member_idx": {
-          "name": "knight_hacks_employment_member_idx",
-          "columns": [
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_employment_company_idx": {
-          "name": "knight_hacks_employment_company_idx",
-          "columns": [
-            {
-              "expression": "company_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_employment_company_state_idx": {
-          "name": "knight_hacks_employment_company_state_idx",
-          "columns": [
-            {
-              "expression": "company_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "knight_hacks_employment_member_id_knight_hacks_member_id_fk": {
-          "name": "knight_hacks_employment_member_id_knight_hacks_member_id_fk",
-          "tableFrom": "knight_hacks_employment",
-          "tableTo": "knight_hacks_member",
-          "columnsFrom": ["member_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_employment_company_id_knight_hacks_company_id_fk": {
-          "name": "knight_hacks_employment_company_id_knight_hacks_company_id_fk",
-          "tableFrom": "knight_hacks_employment",
-          "tableTo": "knight_hacks_company",
-          "columnsFrom": ["company_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_employment_current_has_no_end": {
-          "name": "knight_hacks_employment_current_has_no_end",
-          "value": "\"knight_hacks_employment\".\"state\" <> 'current' OR \"knight_hacks_employment\".\"end_month\" IS NULL"
-        },
-        "knight_hacks_employment_start_month_shape": {
-          "name": "knight_hacks_employment_start_month_shape",
-          "value": "\"knight_hacks_employment\".\"start_month\" IS NULL OR \"knight_hacks_employment\".\"start_month\" ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'"
-        },
-        "knight_hacks_employment_end_month_shape": {
-          "name": "knight_hacks_employment_end_month_shape",
-          "value": "\"knight_hacks_employment\".\"end_month\" IS NULL OR \"knight_hacks_employment\".\"end_month\" ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'"
-        },
-        "knight_hacks_employment_date_order": {
-          "name": "knight_hacks_employment_date_order",
-          "value": "\"knight_hacks_employment\".\"start_month\" IS NULL OR \"knight_hacks_employment\".\"end_month\" IS NULL OR \"knight_hacks_employment\".\"end_month\" >= \"knight_hacks_employment\".\"start_month\""
-        },
-        "knight_hacks_employment_city_key_shape": {
-          "name": "knight_hacks_employment_city_key_shape",
-          "value": "\"knight_hacks_employment\".\"city_key\" IS NULL OR \"knight_hacks_employment\".\"city_key\" ~ '^[0-9]{2}-[0-9]{5}$'"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_event": {
@@ -2932,6 +2588,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -4372,19 +4040,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "current_city_key": {
-          "name": "current_city_key",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "guild_location_visible": {
-          "name": "guild_location_visible",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
         "points": {
           "name": "points",
           "type": "integer",
@@ -4787,30 +4442,6 @@
     }
   },
   "enums": {
-    "public.company_review_state": {
-      "name": "company_review_state",
-      "schema": "public",
-      "values": ["pending", "approved", "rejected", "merged"]
-    },
-    "public.employment_experience_type": {
-      "name": "employment_experience_type",
-      "schema": "public",
-      "values": [
-        "internship",
-        "full_time",
-        "part_time",
-        "co_op",
-        "contract",
-        "fellowship",
-        "self_employed",
-        "other"
-      ]
-    },
-    "public.employment_state": {
-      "name": "employment_state",
-      "schema": "public",
-      "values": ["current", "past", "unknown"]
-    },
     "public.event_discord_entity_type": {
       "name": "event_discord_entity_type",
       "schema": "public",

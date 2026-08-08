@@ -1,6 +1,6 @@
 {
-  "id": "840a5e85-755d-4828-a815-ec63a86d79a4",
-  "prevId": "56652235-974f-47d8-9ae5-845a034bb92f",
+  "id": "378ef051-206a-4e73-9874-82bb50f3b9a6",
+  "prevId": "17bc7e7f-c795-497d-aae5-57a412ba08a4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2588,6 +2588,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -3947,20 +3959,6 @@
           "notNull": true,
           "default": true
         },
-        "guild_resume_visible": {
-          "name": "guild_resume_visible",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "guild_opportunity_statuses": {
-          "name": "guild_opportunity_statuses",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "ARRAY[]::text[]"
-        },
         "tagline": {
           "name": "tagline",
           "type": "varchar(80)",
@@ -4076,12 +4074,7 @@
         }
       },
       "policies": {},
-      "checkConstraints": {
-        "knight_hacks_member_valid_guild_opportunity_statuses": {
-          "name": "knight_hacks_member_valid_guild_opportunity_statuses",
-          "value": "\"knight_hacks_member\".\"guild_opportunity_statuses\" <@ ARRAY['internships', 'full-time', 'freelance-contract', 'project-collaboration', 'offering-mentorship', 'seeking-mentorship']::text[] AND cardinality(\"knight_hacks_member\".\"guild_opportunity_statuses\") <= 3"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.knight_hacks_companies": {

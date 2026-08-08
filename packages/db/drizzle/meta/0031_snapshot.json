@@ -1,6 +1,6 @@
 {
-  "id": "f4d7f515-4d26-4846-98cd-d8cedb07fc35",
-  "prevId": "db539e0c-f9e8-41ef-b380-c1ed7706c79a",
+  "id": "fcc18baa-4af7-437f-bd4f-98419b5b2c36",
+  "prevId": "49ba8ac5-149d-4bbc-87c3-5f29d4f4d6c1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5436,6 +5436,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -5964,30 +5976,6 @@
           "primaryKey": false,
           "notNull": false,
           "default": null
-        },
-        "blacklisted_at": {
-          "name": "blacklisted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "blacklisted_by": {
-          "name": "blacklisted_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "blacklist_reason": {
-          "name": "blacklist_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_status_send_id": {
-          "name": "last_status_send_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -6026,27 +6014,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "knight_hacks_hacker_attendee_hackathon_status_idx": {
-          "name": "knight_hacks_hacker_attendee_hackathon_status_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -6076,35 +6043,12 @@
           "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_attendee_blacklisted_by_auth_user_id_fk": {
-          "name": "knight_hacks_hacker_attendee_blacklisted_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "auth_user",
-          "columnsFrom": ["blacklisted_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_attendee_last_status_send_id_email_send_id_fk": {
-          "name": "knight_hacks_hacker_attendee_last_status_send_id_email_send_id_fk",
-          "tableFrom": "knight_hacks_hacker_attendee",
-          "tableTo": "email_send",
-          "columnsFrom": ["last_status_send_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "knight_hacks_hacker_attendee_blacklist_reason_check": {
-          "name": "knight_hacks_hacker_attendee_blacklist_reason_check",
-          "value": "(\"knight_hacks_hacker_attendee\".\"blacklisted_at\" is null and \"knight_hacks_hacker_attendee\".\"blacklist_reason\" is null)\n          or (\"knight_hacks_hacker_attendee\".\"blacklisted_at\" is not null and \"knight_hacks_hacker_attendee\".\"blacklist_reason\" is not null)"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.knight_hacks_hacker_event_attendee": {

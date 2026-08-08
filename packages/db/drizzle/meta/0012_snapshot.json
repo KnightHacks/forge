@@ -1,6 +1,6 @@
 {
-  "id": "c875d7e6-bb3d-4222-b3c4-205ae5168390",
-  "prevId": "fbf87f80-f65d-435e-b57c-518451eb1ced",
+  "id": "2abd2d81-c8fc-4e37-8c07-1fb4a9a617c3",
+  "prevId": "34cb6945-8590-4fb9-8ad2-8431c4e63007",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -613,8 +613,7 @@
           "name": "tag_color",
           "type": "varchar(7)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'#0D9488'"
+          "notNull": true
         },
         "description": {
           "name": "description",
@@ -684,7 +683,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "discord_sync_state": {
           "name": "discord_sync_state",
@@ -1056,50 +1055,7 @@
           "default": false
         }
       },
-      "indexes": {
-        "knight_hacks_event_attendee_event_member_idx": {
-          "name": "knight_hacks_event_attendee_event_member_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_event_attendee_member_event_idx": {
-          "name": "knight_hacks_event_attendee_member_event_idx",
-          "columns": [
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "knight_hacks_event_attendee_member_id_knight_hacks_member_id_fk": {
           "name": "knight_hacks_event_attendee_member_id_knight_hacks_member_id_fk",
@@ -1721,6 +1677,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

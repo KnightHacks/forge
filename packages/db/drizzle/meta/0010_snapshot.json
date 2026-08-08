@@ -1,5 +1,5 @@
 {
-  "id": "1b490a1f-0fe2-409d-97f6-9eb4a93302ee",
+  "id": "69a4131f-f9ee-46a5-9dc0-82cadcb6a2ce",
   "prevId": "a91721d0-54e4-4a90-9b5a-ffdd13a6e889",
   "version": "7",
   "dialect": "postgresql",
@@ -530,19 +530,6 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
-        },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "stripe_payment_intent_id": {
-          "name": "stripe_payment_intent_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -563,11 +550,6 @@
           "name": "knight_hacks_dues_payment_memberId_year_unique",
           "nullsNotDistinct": false,
           "columns": ["member_id", "year"]
-        },
-        "knight_hacks_dues_payment_stripe_payment_intent_id_unique": {
-          "name": "knight_hacks_dues_payment_stripe_payment_intent_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["stripe_payment_intent_id"]
         }
       },
       "policies": {},
@@ -1213,6 +1195,18 @@
         "email_template_key": {
           "name": "email_template_key",
           "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

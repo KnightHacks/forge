@@ -1,6 +1,6 @@
 {
-  "id": "cc38ebfa-1837-43f7-9406-0f029ba8792d",
-  "prevId": "a1da03b5-e13d-40fa-bb27-2ddd2fda7d0b",
+  "id": "fa9fc0c0-9e46-41aa-a5eb-1dab05dcfaa5",
+  "prevId": "2e890262-d580-4b60-8300-9e39c897eb48",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5545,6 +5545,18 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -6718,6 +6730,15 @@
         }
       },
       "foreignKeys": {
+        "knight_hacks_hacker_check_in_attempt_attendance_id_knight_hacks_hacker_event_attendee_id_fk": {
+          "name": "knight_hacks_hacker_check_in_attempt_attendance_id_knight_hacks_hacker_event_attendee_id_fk",
+          "tableFrom": "knight_hacks_hacker_check_in_attempt",
+          "tableTo": "knight_hacks_hacker_event_attendee",
+          "columnsFrom": ["attendance_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "knight_hacks_hacker_check_in_attempt_operator_id_auth_user_id_fk": {
           "name": "knight_hacks_hacker_check_in_attempt_operator_id_auth_user_id_fk",
           "tableFrom": "knight_hacks_hacker_check_in_attempt",
@@ -6733,20 +6754,6 @@
           "tableTo": "knight_hacks_hacker_attendee",
           "columnsFrom": ["hacker_attendee_id", "hackathon_id"],
           "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_check_in_attempt_scoped_attendance_fk": {
-          "name": "knight_hacks_hacker_check_in_attempt_scoped_attendance_fk",
-          "tableFrom": "knight_hacks_hacker_check_in_attempt",
-          "tableTo": "knight_hacks_hacker_event_attendee",
-          "columnsFrom": [
-            "attendance_id",
-            "hackathon_id",
-            "event_id",
-            "hacker_attendee_id"
-          ],
-          "columnsTo": ["id", "hackathon_id", "event_id", "hacker_att_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6825,13 +6832,7 @@
           "name": "source_attendance_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
-        },
-        "source_event_id": {
-          "name": "source_event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "kind": {
           "name": "kind",
@@ -6930,26 +6931,21 @@
         }
       },
       "foreignKeys": {
+        "knight_hacks_hacker_discord_role_grant_source_attendance_id_knight_hacks_hacker_event_attendee_id_fk": {
+          "name": "knight_hacks_hacker_discord_role_grant_source_attendance_id_knight_hacks_hacker_event_attendee_id_fk",
+          "tableFrom": "knight_hacks_hacker_discord_role_grant",
+          "tableTo": "knight_hacks_hacker_event_attendee",
+          "columnsFrom": ["source_attendance_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
         "knight_hacks_hacker_discord_role_grant_scoped_attendee_fk": {
           "name": "knight_hacks_hacker_discord_role_grant_scoped_attendee_fk",
           "tableFrom": "knight_hacks_hacker_discord_role_grant",
           "tableTo": "knight_hacks_hacker_attendee",
           "columnsFrom": ["hacker_attendee_id", "hackathon_id"],
           "columnsTo": ["id", "hackathon_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_hacker_discord_role_grant_scoped_attendance_fk": {
-          "name": "knight_hacks_hacker_discord_role_grant_scoped_attendance_fk",
-          "tableFrom": "knight_hacks_hacker_discord_role_grant",
-          "tableTo": "knight_hacks_hacker_event_attendee",
-          "columnsFrom": [
-            "source_attendance_id",
-            "hackathon_id",
-            "source_event_id",
-            "hacker_attendee_id"
-          ],
-          "columnsTo": ["id", "hackathon_id", "event_id", "hacker_att_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7389,13 +7385,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_hacker_event_attendee_attempt_scope_unique": {
-          "name": "knight_hacks_hacker_event_attendee_attempt_scope_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "hackathon_id", "event_id", "hacker_att_id"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
         "knight_hacks_hacker_event_attendee_points_awarded_check": {

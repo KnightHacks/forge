@@ -1,6 +1,6 @@
 {
-  "id": "5daf02f7-223f-4a81-9f60-f30c8d463083",
-  "prevId": "985a1923-4d04-49f4-96b8-45b8f7f8e2f3",
+  "id": "248a53c1-494e-4715-8a54-cab3d5fb6f25",
+  "prevId": "2e07302a-3e82-4a04-bcbd-472234f80666",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -542,12 +542,6 @@
         "domain": {
           "name": "domain",
           "type": "varchar(253)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "logo_object_name": {
-          "name": "logo_object_name",
-          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2938,6 +2932,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

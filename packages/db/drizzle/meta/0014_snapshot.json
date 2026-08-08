@@ -1,6 +1,6 @@
 {
-  "id": "10d2d356-f23e-489c-9c24-a4c9a0f9a9b6",
-  "prevId": "94b026cb-3f7f-49e3-b121-75f9b543dc80",
+  "id": "d3270c1c-51fb-4807-9288-925536e548c5",
+  "prevId": "ad28db0f-cd08-4527-b13b-3fa474ec05d0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1259,6 +1259,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "opens_at": {
+          "name": "opens_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
         "closes_at": {
           "name": "closes_at",
           "type": "timestamp with time zone",
@@ -1337,6 +1343,10 @@
       },
       "policies": {},
       "checkConstraints": {
+        "knight_hacks_event_feedback_config_window_check": {
+          "name": "knight_hacks_event_feedback_config_window_check",
+          "value": "\"knight_hacks_event_feedback_config\".\"closes_at\" > \"knight_hacks_event_feedback_config\".\"opens_at\""
+        },
         "knight_hacks_event_feedback_config_reward_check": {
           "name": "knight_hacks_event_feedback_config_reward_check",
           "value": "\"knight_hacks_event_feedback_config\".\"reward_points\" = 5"
@@ -2538,6 +2548,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

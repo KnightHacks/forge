@@ -1,6 +1,6 @@
 {
-  "id": "682d745b-df2f-4233-ba70-be1c667d2d1f",
-  "prevId": "5055c7ae-a957-42b1-ac7d-8fbd846b1f07",
+  "id": "296569d4-bb44-4bdf-b69c-599d4057f107",
+  "prevId": "3f800630-e216-45cd-b21e-369d2b5cdff7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5436,6 +5436,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -5966,29 +5978,7 @@
           "default": null
         }
       },
-      "indexes": {
-        "knight_hacks_hacker_attendee_hackathon_class_idx": {
-          "name": "knight_hacks_hacker_attendee_hackathon_class_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "class_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "knight_hacks_hacker_attendee_hacker_id_knight_hacks_hacker_id_fk": {
           "name": "knight_hacks_hacker_attendee_hacker_id_knight_hacks_hacker_id_fk",

@@ -143,7 +143,7 @@ describe("Discord config migration contract", () => {
   it("adds the table without touching anything that already exists", async () => {
     const { file, sql } = await readDiscordConfigMigration();
 
-    expect(file.startsWith("0025_")).toBe(true);
+    expect(file.startsWith("0026_")).toBe(true);
     expect(sql).toContain(`CREATE TABLE "knight_hacks_discord_config"`);
     expect(sql).toContain(`knight_hacks_discord_config_kind_check`);
     expect(sql).toContain(`knight_hacks_discord_config_production_id_check`);

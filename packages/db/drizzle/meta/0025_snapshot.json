@@ -1,6 +1,6 @@
 {
-  "id": "17dcadd1-3350-423f-864c-310f919ee00b",
-  "prevId": "731c4a06-90e0-4a2e-ba8d-fafb03bc37ef",
+  "id": "01298f07-52bc-4344-b3e6-097bb1a59908",
+  "prevId": "f25a8361-e8ed-4d70-aef0-329063eee38e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -928,88 +928,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_discord_config": {
-      "name": "knight_hacks_discord_config",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "key": {
-          "name": "key",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "production_id": {
-          "name": "production_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "development_id": {
-          "name": "development_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_discord_config_key_unique": {
-          "name": "knight_hacks_discord_config_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["key"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_discord_config_kind_check": {
-          "name": "knight_hacks_discord_config_kind_check",
-          "value": "\"knight_hacks_discord_config\".\"kind\" IN ('channel', 'guild', 'role')"
-        },
-        "knight_hacks_discord_config_production_id_check": {
-          "name": "knight_hacks_discord_config_production_id_check",
-          "value": "\"knight_hacks_discord_config\".\"production_id\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_discord_config_development_id_check": {
-          "name": "knight_hacks_discord_config_development_id_check",
-          "value": "\"knight_hacks_discord_config\".\"development_id\" IS NULL OR \"knight_hacks_discord_config\".\"development_id\" ~ '^[0-9]{17,20}$'"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.discord_archive_channel": {
@@ -5226,6 +5144,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -1,9 +1,482 @@
 {
-  "id": "1111f009-0a84-4ac8-941e-af912b9ebe04",
-  "prevId": "ba0f525c-afe7-48cb-a53a-a41bef1a0c91",
+  "id": "f9ba7a30-ede5-45cb-b5e2-0ccf44649efa",
+  "prevId": "6f729623-37cf-49b1-9d33-3562ece6f25e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.audit_event": {
+      "name": "audit_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "action_key": {
+          "name": "action_key",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "domain": {
+          "name": "domain",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_member_id": {
+          "name": "actor_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_discord_user_id": {
+          "name": "actor_discord_user_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_label": {
+          "name": "actor_label",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_role_label": {
+          "name": "actor_role_label",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_role_color": {
+          "name": "actor_role_color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "changes": {
+          "name": "changes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        }
+      },
+      "indexes": {
+        "audit_event_action_occurred_idx": {
+          "name": "audit_event_action_occurred_idx",
+          "columns": [
+            {
+              "expression": "action_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_actor_occurred_idx": {
+          "name": "audit_event_actor_occurred_idx",
+          "columns": [
+            {
+              "expression": "actor_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_actor_member_occurred_idx": {
+          "name": "audit_event_actor_member_occurred_idx",
+          "columns": [
+            {
+              "expression": "actor_member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_domain_occurred_idx": {
+          "name": "audit_event_domain_occurred_idx",
+          "columns": [
+            {
+              "expression": "domain",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_occurred_idx": {
+          "name": "audit_event_occurred_idx",
+          "columns": [
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_operation_idx": {
+          "name": "audit_event_operation_idx",
+          "columns": [
+            {
+              "expression": "operation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_event_outcome_occurred_idx": {
+          "name": "audit_event_outcome_occurred_idx",
+          "columns": [
+            {
+              "expression": "outcome",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "occurred_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_event_actor_role_color_check": {
+          "name": "audit_event_actor_role_color_check",
+          "value": "\"audit_event\".\"actor_role_color\" IS NULL OR \"audit_event\".\"actor_role_color\" ~ '^#[0-9A-Fa-f]{6}$'"
+        },
+        "audit_event_outcome_check": {
+          "name": "audit_event_outcome_check",
+          "value": "\"audit_event\".\"outcome\" IN ('committed', 'partial_external')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.audit_subject": {
+      "name": "audit_subject",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relation": {
+          "name": "relation",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_label": {
+          "name": "target_label",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_outcome": {
+          "name": "result_outcome",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        }
+      },
+      "indexes": {
+        "audit_subject_event_position_idx": {
+          "name": "audit_subject_event_position_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "position",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_member_event_idx": {
+          "name": "audit_subject_member_event_idx",
+          "columns": [
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_one_primary_idx": {
+          "name": "audit_subject_one_primary_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"audit_subject\".\"relation\" = 'primary'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_subject_target_event_idx": {
+          "name": "audit_subject_target_event_idx",
+          "columns": [
+            {
+              "expression": "target_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "target_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_subject_event_id_audit_event_id_fk": {
+          "name": "audit_subject_event_id_audit_event_id_fk",
+          "tableFrom": "audit_subject",
+          "tableTo": "audit_event",
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "audit_subject_relation_check": {
+          "name": "audit_subject_relation_check",
+          "value": "\"audit_subject\".\"relation\" IN ('primary', 'secondary', 'result')"
+        },
+        "audit_subject_result_outcome_check": {
+          "name": "audit_subject_result_outcome_check",
+          "value": "\"audit_subject\".\"result_outcome\" IS NULL OR \"audit_subject\".\"result_outcome\" IN ('succeeded', 'skipped', 'failed_external', 'failed_internal', 'compensated')"
+        },
+        "audit_subject_result_outcome_shape_check": {
+          "name": "audit_subject_result_outcome_shape_check",
+          "value": "(\"audit_subject\".\"relation\" = 'result') = (\"audit_subject\".\"result_outcome\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.auth_account": {
       "name": "auth_account",
       "schema": "",
@@ -221,13 +694,6 @@
         },
         "event_feedback_excluded": {
           "name": "event_feedback_excluded",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "email_audience_enabled": {
-          "name": "email_audience_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -969,824 +1435,6 @@
           "name": "knight_hacks_dues_payment_stripe_payment_intent_id_unique",
           "nullsNotDistinct": false,
           "columns": ["stripe_payment_intent_id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_send": {
-      "name": "email_send",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "subject": {
-          "name": "subject",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "template_revision_id": {
-          "name": "template_revision_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "plain_text_source": {
-          "name": "plain_text_source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compiled_html": {
-          "name": "compiled_html",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compiled_text": {
-          "name": "compiled_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "content_hash": {
-          "name": "content_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "audience_definition": {
-          "name": "audience_definition",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "audience_version": {
-          "name": "audience_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "audience_hash": {
-          "name": "audience_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "preview_version": {
-          "name": "preview_version",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "preview_expires_at": {
-          "name": "preview_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "raw_match_count": {
-          "name": "raw_match_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "duplicate_count": {
-          "name": "duplicate_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "excluded_invalid_count": {
-          "name": "excluded_invalid_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "excluded_suppressed_count": {
-          "name": "excluded_suppressed_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "excluded_missing_field_count": {
-          "name": "excluded_missing_field_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "final_recipient_count": {
-          "name": "final_recipient_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'draft'"
-        },
-        "scheduled_for": {
-          "name": "scheduled_for",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "listmonk_list_id": {
-          "name": "listmonk_list_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "listmonk_campaign_id": {
-          "name": "listmonk_campaign_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "provider_tag": {
-          "name": "provider_tag",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_may_have_started": {
-          "name": "provider_may_have_started",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "provider_sent_count": {
-          "name": "provider_sent_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "provider_bounce_count": {
-          "name": "provider_bounce_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "retry_attempt_count": {
-          "name": "retry_attempt_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "retry_lease_expires_at": {
-          "name": "retry_lease_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "next_retry_at": {
-          "name": "next_retry_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "safe_error": {
-          "name": "safe_error",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "confirmed_at": {
-          "name": "confirmed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancelled_at": {
-          "name": "cancelled_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancelled_by": {
-          "name": "cancelled_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "terminal_at": {
-          "name": "terminal_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_send_status_scheduled_for_idx": {
-          "name": "email_send_status_scheduled_for_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "scheduled_for",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "email_send_retry_idx": {
-          "name": "email_send_retry_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "next_retry_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "retry_lease_expires_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "email_send_template_revision_id_email_template_revision_id_fk": {
-          "name": "email_send_template_revision_id_email_template_revision_id_fk",
-          "tableFrom": "email_send",
-          "tableTo": "email_template_revision",
-          "columnsFrom": ["template_revision_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "email_send_created_by_auth_user_id_fk": {
-          "name": "email_send_created_by_auth_user_id_fk",
-          "tableFrom": "email_send",
-          "tableTo": "auth_user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "email_send_cancelled_by_auth_user_id_fk": {
-          "name": "email_send_cancelled_by_auth_user_id_fk",
-          "tableFrom": "email_send",
-          "tableTo": "auth_user",
-          "columnsFrom": ["cancelled_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "email_send_provider_tag_unique": {
-          "name": "email_send_provider_tag_unique",
-          "nullsNotDistinct": false,
-          "columns": ["provider_tag"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_send_event": {
-      "name": "email_send_event",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "send_id": {
-          "name": "send_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "from_status": {
-          "name": "from_status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "to_status": {
-          "name": "to_status",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_send_event_send_created_idx": {
-          "name": "email_send_event_send_created_idx",
-          "columns": [
-            {
-              "expression": "send_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "email_send_event_send_id_email_send_id_fk": {
-          "name": "email_send_event_send_id_email_send_id_fk",
-          "tableFrom": "email_send_event",
-          "tableTo": "email_send",
-          "columnsFrom": ["send_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "email_send_event_actor_id_auth_user_id_fk": {
-          "name": "email_send_event_actor_id_auth_user_id_fk",
-          "tableFrom": "email_send_event",
-          "tableTo": "auth_user",
-          "columnsFrom": ["actor_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_send_recipient": {
-      "name": "email_send_recipient",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "send_id": {
-          "name": "send_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(320)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalized_email": {
-          "name": "normalized_email",
-          "type": "varchar(320)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "attributes": {
-          "name": "attributes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "match_reasons": {
-          "name": "match_reasons",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "ARRAY[]::text[]"
-        },
-        "exclusion_reason": {
-          "name": "exclusion_reason",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "listmonk_subscriber_id": {
-          "name": "listmonk_subscriber_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_send_recipient_send_id_idx": {
-          "name": "email_send_recipient_send_id_idx",
-          "columns": [
-            {
-              "expression": "send_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "exclusion_reason",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "email_send_recipient_send_id_email_send_id_fk": {
-          "name": "email_send_recipient_send_id_email_send_id_fk",
-          "tableFrom": "email_send_recipient",
-          "tableTo": "email_send",
-          "columnsFrom": ["send_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "email_send_recipient_send_id_normalized_email_unique": {
-          "name": "email_send_recipient_send_id_normalized_email_unique",
-          "nullsNotDistinct": false,
-          "columns": ["send_id", "normalized_email"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_template": {
-      "name": "email_template",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalized_name": {
-          "name": "normalized_name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_template_archived_updated_idx": {
-          "name": "email_template_archived_updated_idx",
-          "columns": [
-            {
-              "expression": "archived_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "updated_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "email_template_created_by_auth_user_id_fk": {
-          "name": "email_template_created_by_auth_user_id_fk",
-          "tableFrom": "email_template",
-          "tableTo": "auth_user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "email_template_updated_by_auth_user_id_fk": {
-          "name": "email_template_updated_by_auth_user_id_fk",
-          "tableFrom": "email_template",
-          "tableTo": "auth_user",
-          "columnsFrom": ["updated_by"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "email_template_normalized_name_unique": {
-          "name": "email_template_normalized_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_template_revision": {
-      "name": "email_template_revision",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "template_id": {
-          "name": "template_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'draft'"
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visual_document": {
-          "name": "visual_document",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compiled_html": {
-          "name": "compiled_html",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compiled_text": {
-          "name": "compiled_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "personalization_contract": {
-          "name": "personalization_contract",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "checksum": {
-          "name": "checksum",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "published_at": {
-          "name": "published_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_template_revision_template_state_idx": {
-          "name": "email_template_revision_template_state_idx",
-          "columns": [
-            {
-              "expression": "template_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "state",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "email_template_revision_template_id_email_template_id_fk": {
-          "name": "email_template_revision_template_id_email_template_id_fk",
-          "tableFrom": "email_template_revision",
-          "tableTo": "email_template",
-          "columnsFrom": ["template_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "email_template_revision_created_by_auth_user_id_fk": {
-          "name": "email_template_revision_created_by_auth_user_id_fk",
-          "tableFrom": "email_template_revision",
-          "tableTo": "auth_user",
-          "columnsFrom": ["created_by"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "email_template_revision_template_version_unique": {
-          "name": "email_template_revision_template_version_unique",
-          "nullsNotDistinct": false,
-          "columns": ["template_id", "version"]
         }
       },
       "policies": {},
@@ -3988,6 +3636,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -5845,479 +5505,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.audit_event": {
-      "name": "audit_event",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "occurred_at": {
-          "name": "occurred_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "action_key": {
-          "name": "action_key",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "domain": {
-          "name": "domain",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outcome": {
-          "name": "outcome",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "operation_id": {
-          "name": "operation_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_user_id": {
-          "name": "actor_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_member_id": {
-          "name": "actor_member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_discord_user_id": {
-          "name": "actor_discord_user_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_label": {
-          "name": "actor_label",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actor_role_label": {
-          "name": "actor_role_label",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor_role_color": {
-          "name": "actor_role_color",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "changes": {
-          "name": "changes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        }
-      },
-      "indexes": {
-        "audit_event_action_occurred_idx": {
-          "name": "audit_event_action_occurred_idx",
-          "columns": [
-            {
-              "expression": "action_key",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_actor_occurred_idx": {
-          "name": "audit_event_actor_occurred_idx",
-          "columns": [
-            {
-              "expression": "actor_user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_actor_member_occurred_idx": {
-          "name": "audit_event_actor_member_occurred_idx",
-          "columns": [
-            {
-              "expression": "actor_member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_domain_occurred_idx": {
-          "name": "audit_event_domain_occurred_idx",
-          "columns": [
-            {
-              "expression": "domain",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_occurred_idx": {
-          "name": "audit_event_occurred_idx",
-          "columns": [
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_operation_idx": {
-          "name": "audit_event_operation_idx",
-          "columns": [
-            {
-              "expression": "operation_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_event_outcome_occurred_idx": {
-          "name": "audit_event_outcome_occurred_idx",
-          "columns": [
-            {
-              "expression": "outcome",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "occurred_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "audit_event_actor_role_color_check": {
-          "name": "audit_event_actor_role_color_check",
-          "value": "\"audit_event\".\"actor_role_color\" IS NULL OR \"audit_event\".\"actor_role_color\" ~ '^#[0-9A-Fa-f]{6}$'"
-        },
-        "audit_event_outcome_check": {
-          "name": "audit_event_outcome_check",
-          "value": "\"audit_event\".\"outcome\" IN ('committed', 'partial_external')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.audit_subject": {
-      "name": "audit_subject",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "relation": {
-          "name": "relation",
-          "type": "varchar(16)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_type": {
-          "name": "target_type",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_id": {
-          "name": "target_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "target_label": {
-          "name": "target_label",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "result_outcome": {
-          "name": "result_outcome",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        }
-      },
-      "indexes": {
-        "audit_subject_event_position_idx": {
-          "name": "audit_subject_event_position_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "position",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_member_event_idx": {
-          "name": "audit_subject_member_event_idx",
-          "columns": [
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_one_primary_idx": {
-          "name": "audit_subject_one_primary_idx",
-          "columns": [
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"audit_subject\".\"relation\" = 'primary'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "audit_subject_target_event_idx": {
-          "name": "audit_subject_target_event_idx",
-          "columns": [
-            {
-              "expression": "target_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "target_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "audit_subject_event_id_audit_event_id_fk": {
-          "name": "audit_subject_event_id_audit_event_id_fk",
-          "tableFrom": "audit_subject",
-          "tableTo": "audit_event",
-          "columnsFrom": ["event_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "audit_subject_relation_check": {
-          "name": "audit_subject_relation_check",
-          "value": "\"audit_subject\".\"relation\" IN ('primary', 'secondary', 'result')"
-        },
-        "audit_subject_result_outcome_check": {
-          "name": "audit_subject_result_outcome_check",
-          "value": "\"audit_subject\".\"result_outcome\" IS NULL OR \"audit_subject\".\"result_outcome\" IN ('succeeded', 'skipped', 'failed_external', 'failed_internal', 'compensated')"
-        },
-        "audit_subject_result_outcome_shape_check": {
-          "name": "audit_subject_result_outcome_shape_check",
-          "value": "(\"audit_subject\".\"relation\" = 'result') = (\"audit_subject\".\"result_outcome\" IS NOT NULL)"
-        }
-      },
       "isRLSEnabled": false
     }
   },

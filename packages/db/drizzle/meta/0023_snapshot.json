@@ -1,6 +1,6 @@
 {
-  "id": "6ddf5d92-f664-4e6f-b3c2-d3fd127a115a",
-  "prevId": "1111f009-0a84-4ac8-941e-af912b9ebe04",
+  "id": "b240d64d-1981-4e97-8fe7-52c0efb7345e",
+  "prevId": "f9ba7a30-ede5-45cb-b5e2-0ccf44649efa",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1083,13 +1083,6 @@
         },
         "excluded_missing_field_count": {
           "name": "excluded_missing_field_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "excluded_manual_count": {
-          "name": "excluded_manual_count",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -3995,6 +3988,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

@@ -4,7 +4,7 @@ import { Routes } from "discord-api-types/v10";
 
 import * as discord from "@forge/utils/discord";
 
-import { nodeEnv } from "../../env";
+import { env, nodeEnv } from "../../env";
 
 const DISCORD_MESSAGE_LIMIT = 2_000;
 const DISCORD_THREAD_NAME_LIMIT = 100;
@@ -348,8 +348,7 @@ export async function deliverLiveIssueCreationThread(
   target: IssueCreationThreadTarget,
 ) {
   const enabled =
-    nodeEnv === "production" ||
-    process.env.ISSUE_DISCORD_THREADS_ENABLED === "true";
+    nodeEnv === "production" || env.ISSUE_DISCORD_THREADS_ENABLED === "true";
   if (!enabled) return { status: "suppressed" as const };
   const delivery = await deliverIssueCreationThread(
     target,

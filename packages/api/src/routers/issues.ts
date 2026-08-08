@@ -40,6 +40,7 @@ import {
 } from "@forge/validators";
 
 import type { AssignedIssueRole } from "../utils/issues/access";
+import { env } from "../env";
 import { permProcedure } from "../trpc";
 import { createAdminAuditEvent } from "../utils/audit/service";
 import {
@@ -131,8 +132,6 @@ async function deliverCreationThread(
 ) {
   if (record.discordThreadId) return;
   try {
-    const bladeUrl = process.env.BLADE_URL;
-    if (!bladeUrl) throw new Error("BLADE_URL is required for issue delivery.");
     const delivery = await deliverLiveIssueCreationThread({
       assigneeDiscordUserIds: record.userAssignments.map(
         ({ user }) => user.discordUserId,
@@ -150,7 +149,7 @@ async function deliverCreationThread(
       teamColor: record.team.teamHexcodeColor,
       teamDiscordRoleId: record.team.discordRoleId,
       teamName: record.team.name,
-      url: `${bladeUrl.replace(/\/$/, "")}/admin/issues/${record.id}`,
+      url: `${env.BLADE_URL.replace(/\/$/, "")}/admin/issues/${record.id}`,
     });
     if (delivery.status === "delivered") {
       await db

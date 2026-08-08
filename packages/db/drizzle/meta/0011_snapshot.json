@@ -1,6 +1,6 @@
 {
-  "id": "fbf87f80-f65d-435e-b57c-518451eb1ced",
-  "prevId": "1b490a1f-0fe2-409d-97f6-9eb4a93302ee",
+  "id": "34cb6945-8590-4fb9-8ad2-8431c4e63007",
+  "prevId": "69a4131f-f9ee-46a5-9dc0-82cadcb6a2ce",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -589,13 +589,13 @@
           "name": "discord_id",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "google_id": {
           "name": "google_id",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "name": {
           "name": "name",
@@ -605,13 +605,8 @@
         },
         "tag": {
           "name": "tag",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tag_color": {
-          "name": "tag_color",
-          "type": "varchar(7)",
+          "type": "event_tag",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -623,13 +618,13 @@
         },
         "start_datetime": {
           "name": "start_datetime",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
         "end_datetime": {
           "name": "end_datetime",
-          "type": "timestamp with time zone",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
@@ -677,234 +672,9 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
-        },
-        "legacy": {
-          "name": "legacy",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "discord_sync_state": {
-          "name": "discord_sync_state",
-          "type": "event_sync_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'pending'"
-        },
-        "google_sync_state": {
-          "name": "google_sync_state",
-          "type": "event_sync_state",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'pending'"
-        },
-        "discord_last_error": {
-          "name": "discord_last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_last_error": {
-          "name": "google_last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "published_at": {
-          "name": "published_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deletion_intent_at": {
-          "name": "deletion_intent_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "creation_key": {
-          "name": "creation_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "creation_payload_hash": {
-          "name": "creation_payload_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sync_revision": {
-          "name": "sync_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "sync_lease_token": {
-          "name": "sync_lease_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sync_lease_expires_at": {
-          "name": "sync_lease_expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sync_lease_revision": {
-          "name": "sync_lease_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_outbound_attempt_token": {
-          "name": "discord_outbound_attempt_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_outbound_attempted_at": {
-          "name": "discord_outbound_attempted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_outbound_attempt_revision": {
-          "name": "discord_outbound_attempt_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_outbound_attempt_token": {
-          "name": "google_outbound_attempt_token",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_outbound_attempted_at": {
-          "name": "google_outbound_attempted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_outbound_attempt_revision": {
-          "name": "google_outbound_attempt_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_applied_revision": {
-          "name": "discord_applied_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_applied_entity_type": {
-          "name": "discord_applied_entity_type",
-          "type": "event_discord_entity_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_applied_channel_id": {
-          "name": "discord_applied_channel_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_applied_revision": {
-          "name": "google_applied_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_applied_destination": {
-          "name": "google_applied_destination",
-          "type": "event_google_destination",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_applied_calendar_id": {
-          "name": "google_applied_calendar_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visibility_revision": {
-          "name": "visibility_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visibility_dues_paying": {
-          "name": "visibility_dues_paying",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visibility_roles": {
-          "name": "visibility_roles",
-          "type": "varchar(255)[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "visibility_internal": {
-          "name": "visibility_internal",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_no_projection_acknowledged_at": {
-          "name": "discord_no_projection_acknowledged_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "discord_no_projection_acknowledged_by": {
-          "name": "discord_no_projection_acknowledged_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         }
       },
-      "indexes": {
-        "knight_hacks_event_start_datetime_idx": {
-          "name": "knight_hacks_event_start_datetime_idx",
-          "columns": [
-            {
-              "expression": "start_datetime",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "knight_hacks_event_hackathon_id_idx": {
-          "name": "knight_hacks_event_hackathon_id_idx",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "knight_hacks_event_hackathon_id_knight_hacks_hackathon_id_fk": {
           "name": "knight_hacks_event_hackathon_id_knight_hacks_hackathon_id_fk",
@@ -914,96 +684,12 @@
           "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
-        },
-        "knight_hacks_event_discord_no_projection_acknowledged_by_auth_user_id_fk": {
-          "name": "knight_hacks_event_discord_no_projection_acknowledged_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_event",
-          "tableTo": "auth_user",
-          "columnsFrom": ["discord_no_projection_acknowledged_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_event_creationKey_unique": {
-          "name": "knight_hacks_event_creationKey_unique",
-          "nullsNotDistinct": false,
-          "columns": ["creation_key"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "knight_hacks_event_tag_color_check": {
-          "name": "knight_hacks_event_tag_color_check",
-          "value": "\"knight_hacks_event\".\"tag_color\" ~ '^#[0-9A-Fa-f]{6}$'"
-        },
-        "knight_hacks_event_sync_revision_check": {
-          "name": "knight_hacks_event_sync_revision_check",
-          "value": "\"knight_hacks_event\".\"sync_revision\" >= 0"
-        },
-        "knight_hacks_event_new_club_points_check": {
-          "name": "knight_hacks_event_new_club_points_check",
-          "value": "\"knight_hacks_event\".\"legacy\" OR \"knight_hacks_event\".\"hackathon_id\" IS NOT NULL OR (\"knight_hacks_event\".\"points\" IS NOT NULL AND \"knight_hacks_event\".\"points\" >= 0)"
-        },
-        "knight_hacks_event_nonlegacy_sync_states_check": {
-          "name": "knight_hacks_event_nonlegacy_sync_states_check",
-          "value": "\"knight_hacks_event\".\"legacy\" OR (\"knight_hacks_event\".\"discord_sync_state\" IS NOT NULL AND \"knight_hacks_event\".\"google_sync_state\" IS NOT NULL)"
-        },
-        "knight_hacks_event_creation_identity_pair_check": {
-          "name": "knight_hacks_event_creation_identity_pair_check",
-          "value": "(\"knight_hacks_event\".\"creation_key\" IS NULL) = (\"knight_hacks_event\".\"creation_payload_hash\" IS NULL)"
-        },
-        "knight_hacks_event_new_club_creation_identity_check": {
-          "name": "knight_hacks_event_new_club_creation_identity_check",
-          "value": "\"knight_hacks_event\".\"legacy\" OR \"knight_hacks_event\".\"hackathon_id\" IS NOT NULL OR (\"knight_hacks_event\".\"creation_key\" IS NOT NULL AND \"knight_hacks_event\".\"creation_payload_hash\" IS NOT NULL)"
-        },
-        "knight_hacks_event_sync_lease_set_check": {
-          "name": "knight_hacks_event_sync_lease_set_check",
-          "value": "(\"knight_hacks_event\".\"sync_lease_token\" IS NULL AND \"knight_hacks_event\".\"sync_lease_expires_at\" IS NULL AND \"knight_hacks_event\".\"sync_lease_revision\" IS NULL) OR (\"knight_hacks_event\".\"sync_lease_token\" IS NOT NULL AND \"knight_hacks_event\".\"sync_lease_expires_at\" IS NOT NULL AND \"knight_hacks_event\".\"sync_lease_revision\" IS NOT NULL)"
-        },
-        "knight_hacks_event_discord_attempt_set_check": {
-          "name": "knight_hacks_event_discord_attempt_set_check",
-          "value": "(\"knight_hacks_event\".\"discord_outbound_attempt_token\" IS NULL AND \"knight_hacks_event\".\"discord_outbound_attempted_at\" IS NULL AND \"knight_hacks_event\".\"discord_outbound_attempt_revision\" IS NULL) OR (\"knight_hacks_event\".\"discord_outbound_attempt_token\" IS NOT NULL AND \"knight_hacks_event\".\"discord_outbound_attempted_at\" IS NOT NULL AND \"knight_hacks_event\".\"discord_outbound_attempt_revision\" IS NOT NULL)"
-        },
-        "knight_hacks_event_google_attempt_set_check": {
-          "name": "knight_hacks_event_google_attempt_set_check",
-          "value": "(\"knight_hacks_event\".\"google_outbound_attempt_token\" IS NULL AND \"knight_hacks_event\".\"google_outbound_attempted_at\" IS NULL AND \"knight_hacks_event\".\"google_outbound_attempt_revision\" IS NULL) OR (\"knight_hacks_event\".\"google_outbound_attempt_token\" IS NOT NULL AND \"knight_hacks_event\".\"google_outbound_attempted_at\" IS NOT NULL AND \"knight_hacks_event\".\"google_outbound_attempt_revision\" IS NOT NULL)"
-        },
-        "knight_hacks_event_visibility_set_check": {
-          "name": "knight_hacks_event_visibility_set_check",
-          "value": "(\"knight_hacks_event\".\"visibility_revision\" IS NULL AND \"knight_hacks_event\".\"visibility_dues_paying\" IS NULL AND \"knight_hacks_event\".\"visibility_roles\" IS NULL AND \"knight_hacks_event\".\"visibility_internal\" IS NULL) OR (\"knight_hacks_event\".\"visibility_revision\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_dues_paying\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_roles\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_internal\" IS NOT NULL)"
-        },
-        "knight_hacks_event_visibility_revision_check": {
-          "name": "knight_hacks_event_visibility_revision_check",
-          "value": "\"knight_hacks_event\".\"visibility_revision\" IS NULL OR \"knight_hacks_event\".\"visibility_revision\" <= \"knight_hacks_event\".\"sync_revision\""
-        },
-        "knight_hacks_event_discord_applied_revision_check": {
-          "name": "knight_hacks_event_discord_applied_revision_check",
-          "value": "\"knight_hacks_event\".\"discord_applied_revision\" IS NULL OR \"knight_hacks_event\".\"discord_applied_revision\" <= \"knight_hacks_event\".\"sync_revision\""
-        },
-        "knight_hacks_event_google_applied_revision_check": {
-          "name": "knight_hacks_event_google_applied_revision_check",
-          "value": "\"knight_hacks_event\".\"google_applied_revision\" IS NULL OR \"knight_hacks_event\".\"google_applied_revision\" <= \"knight_hacks_event\".\"sync_revision\""
-        },
-        "knight_hacks_event_discord_synced_state_check": {
-          "name": "knight_hacks_event_discord_synced_state_check",
-          "value": "\"knight_hacks_event\".\"discord_sync_state\" IS DISTINCT FROM 'synced' OR (\"knight_hacks_event\".\"discord_id\" IS NOT NULL AND \"knight_hacks_event\".\"discord_applied_revision\" IS NOT NULL AND \"knight_hacks_event\".\"discord_applied_revision\" = \"knight_hacks_event\".\"sync_revision\" AND \"knight_hacks_event\".\"discord_applied_entity_type\" IS NOT NULL AND ((\"knight_hacks_event\".\"discord_applied_entity_type\" = 'external' AND \"knight_hacks_event\".\"discord_applied_channel_id\" IS NULL) OR (\"knight_hacks_event\".\"discord_applied_entity_type\" IN ('voice', 'stage') AND \"knight_hacks_event\".\"discord_applied_channel_id\" IS NOT NULL)))"
-        },
-        "knight_hacks_event_google_synced_state_check": {
-          "name": "knight_hacks_event_google_synced_state_check",
-          "value": "\"knight_hacks_event\".\"google_sync_state\" IS DISTINCT FROM 'synced' OR (\"knight_hacks_event\".\"google_id\" IS NOT NULL AND \"knight_hacks_event\".\"google_applied_revision\" IS NOT NULL AND \"knight_hacks_event\".\"google_applied_revision\" = \"knight_hacks_event\".\"sync_revision\" AND \"knight_hacks_event\".\"google_applied_destination\" IS NOT NULL AND \"knight_hacks_event\".\"google_applied_calendar_id\" IS NOT NULL)"
-        },
-        "knight_hacks_event_published_visibility_check": {
-          "name": "knight_hacks_event_published_visibility_check",
-          "value": "\"knight_hacks_event\".\"published_at\" IS NULL OR (\"knight_hacks_event\".\"visibility_revision\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_dues_paying\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_roles\" IS NOT NULL AND \"knight_hacks_event\".\"visibility_internal\" IS NOT NULL)"
-        },
-        "knight_hacks_event_discord_acknowledgement_time_check": {
-          "name": "knight_hacks_event_discord_acknowledgement_time_check",
-          "value": "\"knight_hacks_event\".\"discord_no_projection_acknowledged_by\" IS NULL OR \"knight_hacks_event\".\"discord_no_projection_acknowledged_at\" IS NOT NULL"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.knight_hacks_event_attendee": {
@@ -1028,31 +714,6 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
-        },
-        "checked_in_at": {
-          "name": "checked_in_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_in_by": {
-          "name": "checked_in_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "points_awarded": {
-          "name": "points_awarded",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "points_awarded_estimated": {
-          "name": "points_awarded_estimated",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {},
@@ -1073,15 +734,6 @@
           "columnsFrom": ["event_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "knight_hacks_event_attendee_checked_in_by_auth_user_id_fk": {
-          "name": "knight_hacks_event_attendee_checked_in_by_auth_user_id_fk",
-          "tableFrom": "knight_hacks_event_attendee",
-          "tableTo": "auth_user",
-          "columnsFrom": ["checked_in_by"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -1183,87 +835,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_event_tag": {
-      "name": "knight_hacks_event_tag",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalized_name": {
-          "name": "normalized_name",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "default_points": {
-          "name": "default_points",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "color": {
-          "name": "color",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "active": {
-          "name": "active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "knight_hacks_event_tag_normalizedName_unique": {
-          "name": "knight_hacks_event_tag_normalizedName_unique",
-          "nullsNotDistinct": false,
-          "columns": ["normalized_name"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "knight_hacks_event_tag_default_points_check": {
-          "name": "knight_hacks_event_tag_default_points_check",
-          "value": "\"knight_hacks_event_tag\".\"default_points\" >= 0"
-        },
-        "knight_hacks_event_tag_color_check": {
-          "name": "knight_hacks_event_tag_color_check",
-          "value": "\"knight_hacks_event_tag\".\"color\" ~ '^#[0-9A-Fa-f]{6}$'"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_form_response": {
@@ -1677,6 +1248,18 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
+        },
+        "portal_base_url": {
+          "name": "portal_base_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmation_capacity": {
+          "name": "confirmation_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -3125,20 +2708,28 @@
     }
   },
   "enums": {
-    "public.event_discord_entity_type": {
-      "name": "event_discord_entity_type",
+    "public.event_tag": {
+      "name": "event_tag",
       "schema": "public",
-      "values": ["external", "voice", "stage"]
-    },
-    "public.event_google_destination": {
-      "name": "event_google_destination",
-      "schema": "public",
-      "values": ["public", "internal"]
-    },
-    "public.event_sync_state": {
-      "name": "event_sync_state",
-      "schema": "public",
-      "values": ["pending", "synced", "error", "unknown"]
+      "values": [
+        "GBM",
+        "Social",
+        "Kickstart",
+        "Project Launch",
+        "Hello World",
+        "Sponsorship",
+        "Tech Exploration",
+        "Class Support",
+        "Workshop",
+        "OPS",
+        "Collabs",
+        "Check-in",
+        "Merch",
+        "Food",
+        "Ceremony",
+        "CAREER-FAIR",
+        "RSO-FAIR"
+      ]
     },
     "public.gender": {
       "name": "gender",

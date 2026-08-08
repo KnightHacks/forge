@@ -1,6 +1,6 @@
 {
-  "id": "0b763713-f89e-47f6-8feb-c801b57abf1a",
-  "prevId": "a6862438-da5f-43f4-ba1c-47f671b28594",
+  "id": "397907be-8ff9-4fc0-8eea-7e8a5ed96665",
+  "prevId": "116efc9d-fb4b-4367-b360-2dd9e570354a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5789,12 +5789,6 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false
-        },
-        "portal_base_url": {
-          "name": "portal_base_url",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -6869,6 +6863,104 @@
         "knight_hacks_hackathon_portal_session_refresh_version_check": {
           "name": "knight_hacks_hackathon_portal_session_refresh_version_check",
           "value": "\"knight_hacks_hackathon_portal_session\".\"refresh_version\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.knight_hacks_hackathon_portal_session_credential": {
+      "name": "knight_hacks_hackathon_portal_session_credential",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "portal_session_id": {
+          "name": "portal_session_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_kind": {
+          "name": "token_kind",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rotated_at": {
+          "name": "rotated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "knight_hacks_hackathon_portal_session_credential_session_idx": {
+          "name": "knight_hacks_hackathon_portal_session_credential_session_idx",
+          "columns": [
+            {
+              "expression": "portal_session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "knight_hacks_hackathon_portal_session_credential_portal_session_id_knight_hacks_hackathon_portal_session_id_fk": {
+          "name": "knight_hacks_hackathon_portal_session_credential_portal_session_id_knight_hacks_hackathon_portal_session_id_fk",
+          "tableFrom": "knight_hacks_hackathon_portal_session_credential",
+          "tableTo": "knight_hacks_hackathon_portal_session",
+          "columnsFrom": ["portal_session_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "knight_hacks_hackathon_portal_session_credential_hash_unique": {
+          "name": "knight_hacks_hackathon_portal_session_credential_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": ["token_hash"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "knight_hacks_hackathon_portal_session_credential_hash_check": {
+          "name": "knight_hacks_hackathon_portal_session_credential_hash_check",
+          "value": "\"knight_hacks_hackathon_portal_session_credential\".\"token_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "knight_hacks_hackathon_portal_session_credential_kind_check": {
+          "name": "knight_hacks_hackathon_portal_session_credential_kind_check",
+          "value": "\"knight_hacks_hackathon_portal_session_credential\".\"token_kind\" IN ('access', 'refresh')"
         }
       },
       "isRLSEnabled": false
@@ -9361,6 +9453,12 @@
         "event": {
           "name": "event",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discord_thread_id": {
+          "name": "discord_thread_id",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": false
         },

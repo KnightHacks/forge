@@ -255,7 +255,7 @@ const EXPECTED_ROLES: {
 ];
 
 /**
- * `EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES`, which migration `0013` already wrote to
+ * `EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES`, which migration `0014` already wrote to
  * `auth_roles.event_feedback_excluded`. Restated so the assertion below can show
  * that the constant is genuinely redundant with the column and not merely
  * deleted.
@@ -360,7 +360,7 @@ describe("Club team migration contract", () => {
   it("adds two tables without altering anything that already exists", async () => {
     const { file, sql } = await readClubTeamMigration();
 
-    expect(file.startsWith("0026_")).toBe(true);
+    expect(file.startsWith("0027_")).toBe(true);
     expect(sql).toContain(`CREATE TABLE "knight_hacks_club_team"`);
     expect(sql).toContain(`CREATE TABLE "knight_hacks_club_team_role"`);
     expect(sql).not.toMatch(/DROP TABLE/);
@@ -400,14 +400,14 @@ describe("Club team migration contract", () => {
     expect(backfill).toContain(`ON CONFLICT ("role_id") DO NOTHING`);
   });
 
-  it("leaves the event feedback exclusion set where migration 0013 put it", async () => {
+  it("leaves the event feedback exclusion set where migration 0014 put it", async () => {
     // `EVENT_FEEDBACK_EXCLUDED_ROLE_NAMES` and its hand-copied twin in
     // `routers/roles.ts` are both deleted. Neither was the source of truth:
     // `auth_roles.event_feedback_excluded` is, and 0013 already wrote it. This
     // migration therefore adds nothing for it, and this test says why rather
     // than leaving a reviewer to wonder what happened to the eighteen names.
     const [file] = (await readdir(migrationsDirectory))
-      .filter((name) => name.startsWith("0013_"))
+      .filter((name) => name.startsWith("0014_"))
       .sort();
 
     if (!file) throw new Error("Migration 0013 was not found.");

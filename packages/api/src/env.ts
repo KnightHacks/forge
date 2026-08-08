@@ -3,6 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    BLADE_URL: z.string().url(),
+    ISSUE_DISCORD_THREADS_ENABLED: z.enum(["true", "false"]).default("false"),
     MINIO_ENDPOINT: z.string().min(1),
     MINIO_ACCESS_KEY: z.string().min(1),
     MINIO_SECRET_KEY: z.string().min(1),

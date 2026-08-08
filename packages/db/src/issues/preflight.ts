@@ -2,6 +2,7 @@ export interface LegacyIssueRecord {
   eventId?: string | null;
   id: string;
   parentId: string | null;
+  status?: string;
   teamId: string;
 }
 
@@ -168,10 +169,14 @@ export function inspectIssueIntegrity({
 
   for (const assignment of assignments) {
     const issue = byId.get(assignment.issueId);
+    const assigneeExists = knownUserIds.has(assignment.userId);
+    const assigneeBelongsToOwningRole = issue
+      ? assignedRoleUsers.has(`${issue.teamId}:${assignment.userId}`)
+      : false;
     if (
       !issue ||
-      !knownUserIds.has(assignment.userId) ||
-      !assignedRoleUsers.has(`${issue.teamId}:${assignment.userId}`)
+      !assigneeExists ||
+      (issue.status !== "Finished" && !assigneeBelongsToOwningRole)
     ) {
       addBlocking(
         "INVALID_ASSIGNEE",
