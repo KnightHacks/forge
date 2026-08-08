@@ -1,6 +1,6 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
-import Pool from "pg-pool";
+import { Pool } from "pg";
 
 import { env } from "./env";
 import * as auditSchema from "./schemas/audit";
@@ -11,6 +11,10 @@ import * as discordConfigSchema from "./schemas/discord-config";
 import * as knightHacksSchema from "./schemas/knight-hacks";
 import * as relations from "./schemas/relations";
 
+// Drizzle identifies a node-postgres pool with `instanceof pg.Pool` before it
+// checks out one connection for a transaction. Do not instantiate `pg-pool`
+// directly: production bundling can erase that class name, causing BEGIN,
+// statements, and COMMIT to run on different pooled connections.
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
 });

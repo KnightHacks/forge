@@ -67,13 +67,16 @@ const health = {
 } as RouterOutputs["discordArchive"]["getHealth"];
 
 describe("DiscordArchiveHealthDashboard", () => {
-  it("requires the literal effective officer permission", () => {
+  it("accepts the dedicated permission or officer override", () => {
     const permissions = (values: Record<string, boolean>) =>
       values as Parameters<typeof canAccessDiscordArchive>[0];
 
     expect(canAccessDiscordArchive(permissions({ IS_OFFICER: true }))).toBe(
       true,
     );
+    expect(
+      canAccessDiscordArchive(permissions({ READ_DISCORD_ARCHIVE: true })),
+    ).toBe(true);
     expect(
       canAccessDiscordArchive(
         permissions({

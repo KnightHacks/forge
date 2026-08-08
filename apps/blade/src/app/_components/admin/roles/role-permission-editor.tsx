@@ -19,6 +19,10 @@ const permissionGroups = [
     label: "Members",
   },
   {
+    keys: ["READ_COMPANIES", "EDIT_COMPANIES"],
+    label: "Companies",
+  },
+  {
     keys: ["MANAGE_ALUMNI_DASHBOARD"],
     label: "Alumni",
   },
@@ -44,6 +48,10 @@ const permissionGroups = [
   {
     keys: ["ASSIGN_ROLES", "CONFIGURE_ROLES"],
     label: "Roles",
+  },
+  {
+    keys: ["READ_DISCORD_ARCHIVE"],
+    label: "Discord",
   },
   {
     keys: [

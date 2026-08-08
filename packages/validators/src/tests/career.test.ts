@@ -98,6 +98,22 @@ describe("career validation", () => {
     });
   });
 
+  it("normalizes cleared optional company metadata", () => {
+    expect(
+      companyAdminUpdateSchema.parse({
+        aliases: [],
+        displayName: "AMD",
+        domain: "",
+        legalName: "",
+      }),
+    ).toEqual({
+      aliases: [],
+      displayName: "AMD",
+      domain: null,
+      legalName: null,
+    });
+  });
+
   it("TC-001 accepts current and former employment history", () => {
     expect(
       employmentHistorySchema.parse([

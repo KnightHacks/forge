@@ -1,6 +1,8 @@
+import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { DisposableDatabase } from "@forge/db/testing";
+import { sql } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -62,6 +64,31 @@ describe.runIf(canRunDatabaseTests())("disposable database harness", () => {
     expect(tables).toContain("knight_hacks_member");
     expect(tables).toContain("knight_hacks_event");
     expect(tables).toContain("auth_user");
+  });
+
+  it("uses the pg Pool class Drizzle recognizes in production bundles", () => {
+    expect(client.$client).toBeInstanceOf(Pool);
+  });
+
+  it("rolls back every statement on the same checked-out connection", async () => {
+    await database().client.query(
+      "CREATE TABLE transaction_atomicity_probe (id integer PRIMARY KEY)",
+    );
+
+    const rollback = new Error("rollback transaction atomicity probe");
+    await expect(
+      client.transaction(async (tx) => {
+        await tx.execute(
+          sql`INSERT INTO transaction_atomicity_probe (id) VALUES (1)`,
+        );
+        throw rollback;
+      }),
+    ).rejects.toBe(rollback);
+
+    const result = await database().client.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM transaction_atomicity_probe",
+    );
+    expect(result.rows[0]?.count).toBe(0);
   });
 
   it("agrees with the migrated SQL on every column Drizzle declares", async () => {

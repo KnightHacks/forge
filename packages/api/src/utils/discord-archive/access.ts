@@ -1,12 +1,7 @@
-import { TRPCError } from "@trpc/server";
+import { permissions } from "@forge/utils";
 
-import type { PermissionMap } from "../permissions";
+type PermissionContext = Parameters<typeof permissions.controlPerms.or>[1];
 
-export function assertCanReadDiscordArchiveHealth(permissions: PermissionMap) {
-  if (permissions.IS_OFFICER !== true) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Officer permission is required to view Discord archive health",
-    });
-  }
+export function assertCanReadDiscordArchiveHealth(ctx: PermissionContext) {
+  permissions.controlPerms.or(["READ_DISCORD_ARCHIVE"], ctx);
 }

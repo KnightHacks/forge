@@ -88,7 +88,7 @@ function requireTeamEdit(
   if (!access.canEdit) throw new TRPCError({ code: "FORBIDDEN" });
 }
 
-function roleVisibilityPredicate(roles: readonly AssignedIssueRole[]) {
+export function roleVisibilityPredicate(roles: readonly AssignedIssueRole[]) {
   if (roles.some((role) => roleHasIssueCapability([role], "IS_OFFICER"))) {
     return sql`TRUE`;
   }
@@ -102,16 +102,12 @@ function roleVisibilityPredicate(roles: readonly AssignedIssueRole[]) {
   if (qualifyingRoleIds.length === 0) return sql`FALSE`;
   return or(
     inArray(Issue.team, qualifyingRoleIds),
-    exists(
+    inArray(
+      Issue.id,
       db
         .select({ issueId: IssuesToTeamsVisibility.issueId })
         .from(IssuesToTeamsVisibility)
-        .where(
-          and(
-            eq(IssuesToTeamsVisibility.issueId, Issue.id),
-            inArray(IssuesToTeamsVisibility.teamId, qualifyingRoleIds),
-          ),
-        ),
+        .where(inArray(IssuesToTeamsVisibility.teamId, qualifyingRoleIds)),
     ),
   );
 }

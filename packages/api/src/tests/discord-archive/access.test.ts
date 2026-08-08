@@ -4,16 +4,24 @@ import { assertCanReadDiscordArchiveHealth } from "../../utils/discord-archive/a
 import { createEmptyPermissionMap } from "../../utils/permissions";
 
 describe("Discord archive health access", () => {
-  it("allows effective officers", () => {
-    expect(() =>
-      assertCanReadDiscordArchiveHealth({
-        ...createEmptyPermissionMap(),
-        IS_OFFICER: true,
-      }),
-    ).not.toThrow();
-  });
+  function actor(
+    ...allowed: (keyof ReturnType<typeof createEmptyPermissionMap>)[]
+  ) {
+    const permissions = createEmptyPermissionMap();
+    for (const permission of allowed) permissions[permission] = true;
+    return { session: { permissions } };
+  }
 
-  it("rejects directors and data readers without effective officer access", () => {
+  it.each(["READ_DISCORD_ARCHIVE", "IS_OFFICER"] as const)(
+    "allows %s",
+    (permission) => {
+      expect(() =>
+        assertCanReadDiscordArchiveHealth(actor(permission)),
+      ).not.toThrow();
+    },
+  );
+
+  it("rejects unrelated administrative permissions", () => {
     for (const permission of [
       "READ_CLUB_DATA",
       "CONFIGURE_ROLES",
@@ -22,10 +30,7 @@ describe("Discord archive health access", () => {
       "MANAGE_ALUMNI_DASHBOARD",
     ] as const) {
       expect(() =>
-        assertCanReadDiscordArchiveHealth({
-          ...createEmptyPermissionMap(),
-          [permission]: true,
-        }),
+        assertCanReadDiscordArchiveHealth(actor(permission)),
       ).toThrowError(expect.objectContaining({ code: "FORBIDDEN" }));
     }
   });

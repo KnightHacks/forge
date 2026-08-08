@@ -7,6 +7,7 @@ import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell
 import {
   canAccessAlumniAdmin,
   canAccessAnalytics,
+  canAccessCompanyAdmin,
   canAccessDiscordArchive,
   canAccessEmailPortal,
   canAccessEventAdmin,
@@ -34,6 +35,7 @@ export default async function AdminLayout({
   const effectivePermissions = await api.roles.getPermissions();
   if (
     !canAccessAnalytics(effectivePermissions) &&
+    !canAccessCompanyAdmin(effectivePermissions) &&
     !canAccessDiscordArchive(effectivePermissions) &&
     !canAccessAlumniAdmin(effectivePermissions) &&
     !canAccessEventAdmin(effectivePermissions) &&

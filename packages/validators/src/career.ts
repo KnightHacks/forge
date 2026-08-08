@@ -92,7 +92,7 @@ export const companyAdminUpdateSchema = z
       }),
     displayName: companyNameSchema,
     domain: companyDomainSchema.nullable().optional(),
-    legalName: companyNameSchema.nullable().optional(),
+    legalName: companyNameSchema.or(z.literal("")).nullable().optional(),
   })
   .strict()
   .transform((input) => ({

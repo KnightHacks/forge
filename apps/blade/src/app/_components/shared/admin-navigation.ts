@@ -24,6 +24,7 @@ import { GUILD_URL } from "~/lib/guild-urls";
 export interface AdminNavigationAccess {
   alumni?: boolean;
   analytics?: boolean;
+  companies?: boolean;
   discordArchive?: boolean;
   email?: boolean;
   eventCheckIn?: boolean;
@@ -78,7 +79,7 @@ export const adminNavigationItems = [
     label: "Analytics",
   },
   {
-    access: "members",
+    access: "companies",
     href: "/admin/companies",
     icon: Building2,
     id: "companies",

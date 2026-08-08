@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { CompanyAdminDetail } from "~/app/_components/admin/companies/company-admin-detail";
-import { canAccessMemberAdmin } from "~/lib/admin-access";
+import { canAccessCompanyAdmin, canEditCompanyAdmin } from "~/lib/admin-access";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 
@@ -21,7 +21,7 @@ export default async function AdminCompanyPage({
   if (!session) redirect("/");
 
   const effectivePermissions = await api.roles.getPermissions();
-  if (!canAccessMemberAdmin(effectivePermissions)) {
+  if (!canAccessCompanyAdmin(effectivePermissions)) {
     redirect(MEMBER_DASHBOARD_PATH);
   }
   const { companyId } = await params;
@@ -34,10 +34,7 @@ export default async function AdminCompanyPage({
   return (
     <CompanyAdminDetail
       allCompanies={allCompanies}
-      canEdit={
-        effectivePermissions.IS_OFFICER === true ||
-        effectivePermissions.EDIT_MEMBERS === true
-      }
+      canEdit={canEditCompanyAdmin(effectivePermissions)}
       detail={detail}
     />
   );

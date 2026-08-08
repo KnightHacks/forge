@@ -23,11 +23,10 @@ import { exec } from "child_process";
 import { unlink } from "fs/promises";
 import { promisify } from "util";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type { Client } from "pg";
 import { ChannelType, Routes } from "discord-api-types/v10";
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import Pool from "pg-pool";
+import { Pool } from "pg";
 import { stringify } from "superjson";
 
 import { ISSUE, MINIO } from "@forge/consts";
@@ -65,7 +64,7 @@ const adminPool = new Pool({
   database: "postgres",
 });
 
-let backupPool: Pool<Client> | null = null;
+let backupPool: Pool | null = null;
 let backupDb: NodePgDatabase<DatabaseSchema> | null = null;
 
 async function cleanUp() {

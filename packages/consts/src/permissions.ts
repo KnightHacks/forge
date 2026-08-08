@@ -130,6 +130,21 @@ export const PERMISSION_DATA = {
     name: "Manage Alumni Dashboard",
     desc: "Allows managing and publishing alumni bulletin content.",
   },
+  READ_COMPANIES: {
+    idx: 25,
+    name: "Read Companies",
+    desc: "Grants access to company administration and linked employment data.",
+  },
+  EDIT_COMPANIES: {
+    idx: 26,
+    name: "Edit Companies",
+    desc: "Allows approving, editing, merging, and managing company records.",
+  },
+  READ_DISCORD_ARCHIVE: {
+    idx: 27,
+    name: "Read Discord Archive",
+    desc: "Grants access to Discord archive health and ingestion diagnostics.",
+  },
 } as const satisfies Record<string, PermissionDataObj>;
 
 export const PERMISSIONS = Object.fromEntries(

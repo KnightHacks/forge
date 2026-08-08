@@ -28,7 +28,21 @@ export function canAccessIdentifiedHackathonAnalytics(
 }
 
 export function canAccessDiscordArchive(permissions: EffectivePermissions) {
-  return permissions.IS_OFFICER === true;
+  return (
+    permissions.IS_OFFICER === true || permissions.READ_DISCORD_ARCHIVE === true
+  );
+}
+
+export function canAccessCompanyAdmin(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_COMPANIES === true ||
+    permissions.EDIT_COMPANIES === true
+  );
+}
+
+export function canEditCompanyAdmin(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.EDIT_COMPANIES === true;
 }
 
 export function canAccessMemberAdmin(permissions: EffectivePermissions) {
@@ -126,6 +140,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     alumni: canAccessAlumniAdmin(permissions),
     analytics: canAccessAnalytics(permissions),
+    companies: canAccessCompanyAdmin(permissions),
     discordArchive: canAccessDiscordArchive(permissions),
     email: canAccessEmailPortal(permissions),
     eventCheckIn: canAccessEventCheckIn(permissions),

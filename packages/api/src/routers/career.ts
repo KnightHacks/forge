@@ -26,6 +26,10 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import {
+  assertCanEditCompanies,
+  assertCanReadCompanies,
+} from "../utils/career/access";
+import {
   getCompanyImageUrl,
   removeCompanyImage,
   uploadCompanyImage as uploadCompanyImageObject,
@@ -37,10 +41,6 @@ import {
   searchUsCities,
 } from "../utils/career/us-cities";
 import { isUniqueViolation } from "../utils/db";
-import {
-  assertCanEditMembers,
-  assertCanReadMembers,
-} from "../utils/member/access";
 import { MAX_PROFILE_PICTURE_DATA_URL_LENGTH } from "../utils/profile-picture/security";
 
 async function getMemberForUser(userId: string) {
@@ -265,7 +265,7 @@ export const careerRouter = {
     .query(({ input }) => searchUsCities(input.query, input.limit)),
 
   listAdminCompanies: permProcedure.query(async ({ ctx }) => {
-    assertCanReadMembers(ctx);
+    assertCanReadCompanies(ctx);
     const companies = await db
       .select({
         aliases: Company.aliases,
@@ -307,7 +307,7 @@ export const careerRouter = {
   getAdminCompany: permProcedure
     .input(companyIdInputSchema)
     .query(async ({ ctx, input }) => {
-      assertCanReadMembers(ctx);
+      assertCanReadCompanies(ctx);
       const company = await db.query.Company.findFirst({
         where: eq(Company.id, input.companyId),
       });
@@ -358,7 +358,7 @@ export const careerRouter = {
   updateCompany: permProcedure
     .input(z.intersection(companyIdInputSchema, companyAdminUpdateSchema))
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
       const { companyId, ...metadata } = input;
       let company: typeof Company.$inferSelect | undefined;
       try {
@@ -448,7 +448,7 @@ export const careerRouter = {
         .strict(),
     )
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
       const company = await db.query.Company.findFirst({
         where: eq(Company.id, input.companyId),
         columns: { displayName: true, id: true, logoObjectName: true },
@@ -531,7 +531,7 @@ export const careerRouter = {
   removeCompanyImage: permProcedure
     .input(companyIdInputSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
       const company = await db.query.Company.findFirst({
         where: eq(Company.id, input.companyId),
         columns: { displayName: true, id: true, logoObjectName: true },
@@ -593,7 +593,7 @@ export const careerRouter = {
   approveCompany: permProcedure
     .input(companyIdInputSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
       return db.transaction(async (tx) => {
         const [before] = await tx
           .select()
@@ -650,7 +650,7 @@ export const careerRouter = {
   rejectCompany: permProcedure
     .input(companyIdInputSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
       return db.transaction(async (tx) => {
         const [before] = await tx
           .select()
@@ -707,7 +707,7 @@ export const careerRouter = {
   mergeCompanies: permProcedure
     .input(mergeCompaniesInputSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanEditMembers(ctx);
+      assertCanEditCompanies(ctx);
 
       return await db.transaction(async (tx) => {
         const operationId = randomUUID();

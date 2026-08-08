@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -45,12 +45,14 @@ import { toast } from "@forge/ui/toast";
 import {
   checkUploadMetadata,
   COMPANY_IMAGE_UPLOAD_POLICY,
+  companyAdminUpdateSchema,
   uploadAccept,
 } from "@forge/validators";
 
 import { adminPageClassName } from "~/app/_components/shared/admin-page";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatUtcShortMonth } from "~/lib/dates";
+import { getGuildCompanyUrl } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 import { CompanyAdminMark } from "./company-admin-mark";
 
@@ -101,12 +103,14 @@ export function CompanyAdminDetail({
   detail: CompanyDetail;
 }) {
   const router = useRouter();
-  const [isRefreshing, startTransition] = useTransition();
   const [displayName, setDisplayName] = useState(detail.company.displayName);
   const [legalName, setLegalName] = useState(detail.company.legalName ?? "");
   const [domain, setDomain] = useState(detail.company.domain ?? "");
   const [aliases, setAliases] = useState(detail.company.aliases.join(", "));
   const [logoUrl, setLogoUrl] = useState(detail.company.logoUrl);
+  const [reviewStateOverride, setReviewStateOverride] = useState<
+    CompanyDetail["company"]["reviewState"] | null
+  >(null);
   const [mergeTargetId, setMergeTargetId] = useState("");
   const [mergeOpen, setMergeOpen] = useState(false);
   const mergeTargets = useMemo(
@@ -119,11 +123,13 @@ export function CompanyAdminDetail({
       ),
     [allCompanies, detail.company.id],
   );
-  const refresh = () => startTransition(() => router.refresh());
   const updateCompany = api.career.updateCompany.useMutation({
-    onSuccess() {
+    onSuccess(company) {
+      setDisplayName(company.displayName);
+      setLegalName(company.legalName ?? "");
+      setDomain(company.domain ?? "");
+      setAliases(company.aliases.join(", "));
       toast.success("Company details saved.");
-      refresh();
     },
     onError(error) {
       toast.error(error.message || "Company details could not be saved.");
@@ -133,7 +139,6 @@ export function CompanyAdminDetail({
     onSuccess(result) {
       setLogoUrl(result.logoUrl);
       toast.success("Company image updated.");
-      refresh();
     },
     onError(error) {
       toast.error(error.message || "Company image could not be uploaded.");
@@ -143,25 +148,24 @@ export function CompanyAdminDetail({
     onSuccess() {
       setLogoUrl(null);
       toast.success("Company image removed.");
-      refresh();
     },
     onError(error) {
       toast.error(error.message || "Company image could not be removed.");
     },
   });
   const approve = api.career.approveCompany.useMutation({
-    onSuccess() {
+    onSuccess(company) {
+      setReviewStateOverride(company.reviewState);
       toast.success("Company approved for the public Guild.");
-      refresh();
     },
     onError(error) {
       toast.error(error.message || "Company could not be approved.");
     },
   });
   const reject = api.career.rejectCompany.useMutation({
-    onSuccess() {
+    onSuccess(company) {
+      setReviewStateOverride(company.reviewState);
       toast.success("Company hidden from public Guild surfaces.");
-      refresh();
     },
     onError(error) {
       toast.error(error.message || "Company could not be rejected.");
@@ -193,6 +197,7 @@ export function CompanyAdminDetail({
     },
   ].filter((group) => group.items.length > 0);
   const imagePending = uploadImage.isPending || removeImage.isPending;
+  const reviewState = reviewStateOverride ?? detail.company.reviewState;
 
   const handleImage = async (file: File | undefined) => {
     if (!file) return;
@@ -216,6 +221,28 @@ export function CompanyAdminDetail({
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
     }
+  };
+
+  const saveCompany = () => {
+    const result = companyAdminUpdateSchema.safeParse({
+      aliases: aliases
+        .split(",")
+        .map((alias) => alias.trim())
+        .filter(Boolean),
+      displayName,
+      domain,
+      legalName,
+    });
+    if (!result.success) {
+      toast.error(
+        result.error.issues[0]?.message ?? "Check the company details.",
+      );
+      return;
+    }
+    updateCompany.mutate({
+      companyId: detail.company.id,
+      ...result.data,
+    });
   };
 
   return (
@@ -242,12 +269,9 @@ export function CompanyAdminDetail({
               </span>
               <Badge
                 variant="outline"
-                className={cn(
-                  "w-fit capitalize",
-                  reviewClass(detail.company.reviewState),
-                )}
+                className={cn("w-fit capitalize", reviewClass(reviewState))}
               >
-                {detail.company.reviewState}
+                {reviewState}
               </Badge>
             </div>
             <h1 className="mt-2 break-words text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl">
@@ -259,10 +283,10 @@ export function CompanyAdminDetail({
             </p>
           </div>
         </div>
-        {detail.company.reviewState === "approved" ? (
+        {reviewState === "approved" ? (
           <Button asChild variant="outline" className="w-fit gap-2">
             <a
-              href={`https://guild.knighthacks.org/companies/${detail.company.id}`}
+              href={getGuildCompanyUrl(detail.company.id)}
               target="_blank"
               rel="noreferrer"
             >
@@ -273,9 +297,7 @@ export function CompanyAdminDetail({
         ) : null}
       </header>
 
-      {canEdit &&
-      detail.company.reviewState !== "merged" &&
-      detail.company.reviewState !== "approved" ? (
+      {canEdit && reviewState !== "merged" && reviewState !== "approved" ? (
         <section className="mt-8 flex flex-col gap-4 rounded-lg border border-amber-500/25 bg-amber-500/[0.07] p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-semibold">Review this company</h2>
@@ -298,7 +320,7 @@ export function CompanyAdminDetail({
               )}
               Approve company
             </Button>
-            {detail.company.reviewState !== "rejected" ? (
+            {reviewState !== "rejected" ? (
               <Button
                 type="button"
                 variant="outline"
@@ -323,7 +345,7 @@ export function CompanyAdminDetail({
                 The name, image, and search terms shown across Blade and Guild.
               </p>
             </div>
-            {canEdit && detail.company.reviewState !== "merged" ? (
+            {canEdit && reviewState !== "merged" ? (
               <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="w-fit gap-2">
@@ -474,19 +496,8 @@ export function CompanyAdminDetail({
                   <Button
                     type="button"
                     className="w-fit gap-2"
-                    disabled={updateCompany.isPending || isRefreshing}
-                    onClick={() =>
-                      updateCompany.mutate({
-                        aliases: aliases
-                          .split(",")
-                          .map((alias) => alias.trim())
-                          .filter(Boolean),
-                        companyId: detail.company.id,
-                        displayName,
-                        domain,
-                        legalName,
-                      })
-                    }
+                    disabled={updateCompany.isPending}
+                    onClick={saveCompany}
                   >
                     {updateCompany.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -617,7 +628,7 @@ export function CompanyAdminDetail({
         </CardContent>
       </Card>
 
-      {canEdit && detail.company.reviewState === "approved" ? (
+      {canEdit && reviewState === "approved" ? (
         <div className="mt-6 flex justify-end">
           <Button
             type="button"

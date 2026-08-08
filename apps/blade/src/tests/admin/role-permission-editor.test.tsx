@@ -18,11 +18,13 @@ describe("RolePermissionEditor", () => {
     for (const heading of [
       "Global",
       "Members",
+      "Companies",
       "Alumni",
       "Hackers",
       "Events",
       "Forms",
       "Roles",
+      "Discord",
       "Issues",
     ]) {
       expect(html).toContain(heading);

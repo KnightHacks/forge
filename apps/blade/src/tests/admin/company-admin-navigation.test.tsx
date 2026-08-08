@@ -36,6 +36,7 @@ describe("company admin navigation", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         adminNavigation: {
+          companies: true,
           members: true,
           roles: false,
         },

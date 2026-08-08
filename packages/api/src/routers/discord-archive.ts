@@ -9,7 +9,7 @@ export const discordArchiveRouter = createTRPCRouter({
   getHealth: permProcedure
     .input(discordArchiveHealthInputSchema)
     .query(async ({ ctx, input }) => {
-      assertCanReadDiscordArchiveHealth(ctx.session.permissions);
+      assertCanReadDiscordArchiveHealth(ctx);
       return getDiscordArchiveHealth(input);
     }),
 });
