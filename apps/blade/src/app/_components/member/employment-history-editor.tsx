@@ -479,6 +479,7 @@ export function EmploymentHistoryEditor({
                   </label>
                   <Input
                     type="month"
+                    placeholder="YYYY-MM"
                     value={entry.startMonth ?? ""}
                     className="h-11 bg-background/70"
                     onChange={(event) =>
@@ -496,6 +497,7 @@ export function EmploymentHistoryEditor({
                     </label>
                     <Input
                       type="month"
+                      placeholder="YYYY-MM"
                       value={entry.endMonth ?? ""}
                       className="h-11 bg-background/70"
                       onChange={(event) =>

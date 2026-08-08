@@ -1,4 +1,5 @@
 import type { RouterOutputs } from "@forge/api";
+import { employmentHistorySchema } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
 
@@ -77,9 +78,22 @@ export function careerHistoryValidationError(history: CareerHistoryDraft[]) {
     (employment) =>
       employment.state === "unknown" || !employment.experienceType,
   );
-  return unconfirmed
-    ? "Confirm whether each legacy entry is current or former before saving career history."
-    : null;
+  if (unconfirmed) {
+    return "Confirm whether each legacy entry is current or former before saving career history.";
+  }
+
+  const result = employmentHistorySchema.safeParse(
+    careerHistoryMutationInput(history),
+  );
+  if (result.success) return null;
+
+  const issue = result.error.issues[0];
+  const entryIndex = issue?.path[0];
+  const prefix =
+    typeof entryIndex === "number"
+      ? `Employment entry ${entryIndex + 1}: `
+      : "";
+  return `${prefix}${issue?.message ?? "Check your career history and try again."}`;
 }
 
 /**

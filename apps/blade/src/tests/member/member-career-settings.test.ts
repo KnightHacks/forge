@@ -217,6 +217,24 @@ describe("careerHistoryValidationError", () => {
     ).toBeNull();
   });
 
+  it("accepts month text produced by browsers without a native month picker", () => {
+    expect(
+      careerHistoryValidationError([
+        draft({
+          endMonth: "August 2026",
+          startMonth: "05/2026",
+          state: "past",
+        }),
+      ]),
+    ).toBeNull();
+  });
+
+  it("turns schema failures into a concise entry-specific message", () => {
+    expect(
+      careerHistoryValidationError([draft({ startMonth: "not a month" })]),
+    ).toBe("Employment entry 1: Use a valid month and year.");
+  });
+
   it("rejects a legacy entry that has not been confirmed current or former", () => {
     expect(careerHistoryValidationError([draft({ state: "unknown" })])).toBe(
       "Confirm whether each legacy entry is current or former before saving career history.",

@@ -105,9 +105,57 @@ export const usCityKeySchema = z
   .string()
   .regex(/^\d{2}-\d{5}$/, "Choose a city from the U.S. city search.");
 
+const EMPLOYMENT_MONTHS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
+] as const;
+
+/**
+ * Browsers that do not implement `input[type="month"]` expose it as a plain
+ * text field. Accept the month formats people naturally enter there, while
+ * keeping the database representation sortable and constrained as YYYY-MM.
+ */
+export function normalizeEmploymentMonth(value: string) {
+  const input = value.trim();
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(input)) return input;
+
+  const numeric = /^(0?[1-9]|1[0-2])[/-](\d{4})$/.exec(input);
+  if (numeric) {
+    return `${numeric[2]}-${numeric[1]?.padStart(2, "0")}`;
+  }
+
+  const named = /^([a-z]+)\.?\s+(\d{4})$/i.exec(input);
+  if (named) {
+    const monthName = named[1]?.toLowerCase() ?? "";
+    const monthIndex = EMPLOYMENT_MONTHS.findIndex(
+      (month) =>
+        month === monthName ||
+        (monthName.length >= 3 && month.startsWith(monthName)),
+    );
+    if (monthIndex >= 0) {
+      return `${named[2]}-${String(monthIndex + 1).padStart(2, "0")}`;
+    }
+  }
+
+  return input;
+}
+
 const employmentMonthSchema = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use a valid month and year.");
+  .transform(normalizeEmploymentMonth)
+  .pipe(
+    z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use a valid month and year."),
+  );
 
 export const memberEmploymentStateSchema = z.enum(
   CAREER.MEMBER_EMPLOYMENT_STATES,

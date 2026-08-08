@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import type { z } from "zod";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   companyAdminUpdateSchema,
@@ -7,6 +8,7 @@ import {
   employmentInputSchema,
   guildLocationInputSchema,
   normalizeCompanyName,
+  normalizeEmploymentMonth,
   usCityKeySchema,
 } from "../career";
 
@@ -22,6 +24,37 @@ const currentEmployment = {
 } as const;
 
 describe("career validation", () => {
+  it("keeps employment month inputs typed as strings", () => {
+    expectTypeOf<
+      z.input<typeof employmentInputSchema>["startMonth"]
+    >().toEqualTypeOf<string | null | undefined>();
+  });
+
+  it.each([
+    ["2026-05", "2026-05"],
+    ["05/2026", "2026-05"],
+    ["5-2026", "2026-05"],
+    ["May 2026", "2026-05"],
+    ["Aug. 2026", "2026-08"],
+    ["september 2026", "2026-09"],
+  ])("normalizes employment month %s", (input, expected) => {
+    expect(normalizeEmploymentMonth(input)).toBe(expected);
+  });
+
+  it("accepts human-readable employment months and emits canonical values", () => {
+    expect(
+      employmentInputSchema.parse({
+        ...currentEmployment,
+        endMonth: "August 2026",
+        startMonth: "05/2026",
+        state: "past",
+      }),
+    ).toMatchObject({
+      endMonth: "2026-08",
+      startMonth: "2026-05",
+    });
+  });
+
   it("TC-003 normalizes insignificant company punctuation and whitespace", () => {
     expect(normalizeCompanyName("  Advanced Micro-Devices, Inc. ")).toBe(
       "advanced micro devices inc",
