@@ -11,10 +11,6 @@ import * as discordConfigSchema from "./schemas/discord-config";
 import * as knightHacksSchema from "./schemas/knight-hacks";
 import * as relations from "./schemas/relations";
 
-// Drizzle identifies a node-postgres pool with `instanceof pg.Pool` before it
-// checks out one connection for a transaction. Do not instantiate `pg-pool`
-// directly: production bundling can erase that class name, causing BEGIN,
-// statements, and COMMIT to run on different pooled connections.
 const pool = new Pool({
   connectionString: env.DATABASE_URL,
 });
@@ -35,21 +31,57 @@ type DatabaseSchema = AuditSchema &
   KnightHacksSchema &
   RelationsSchema;
 
+const schema = {
+  ...auditSchema,
+  ...authSchema,
+  ...clubTeamSchema,
+  ...discordSchema,
+  ...discordConfigSchema,
+  ...knightHacksSchema,
+  ...relations,
+};
+
+// Drizzle normally decides whether to check out a dedicated connection by
+// inspecting the pool's runtime class. Next.js can bundle `pg` separately from
+// Drizzle, making that class check fail even when the client really is a Pool.
+// In that failure mode BEGIN, the mutation, the audit rows, and COMMIT can each
+// land on different pooled connections. Always check out the connection here,
+// then let Drizzle transact on that concrete PoolClient.
+export function createDatabase(clientPool: Pool) {
+  const database = drizzle({
+    client: clientPool,
+    schema,
+    casing: "snake_case",
+  });
+  const runTransaction: typeof database.transaction = async (
+    transaction,
+    config,
+  ) => {
+    const client = await clientPool.connect();
+    try {
+      const connectionDatabase = drizzle({
+        client,
+        schema,
+        casing: "snake_case",
+      });
+      return await connectionDatabase.transaction(transaction, config);
+    } finally {
+      client.release();
+    }
+  };
+
+  Object.defineProperty(database, "transaction", {
+    configurable: false,
+    value: runTransaction,
+    writable: false,
+  });
+
+  return database;
+}
+
 // `drizzle()` returns the database plus its underlying pool as `$client`. The
 // annotation is written out for stable declaration output, so it has to include
 // `$client` too — otherwise the pool is invisible to callers that need to shut
 // it down, such as the disposable-database test harness.
 export const db: NodePgDatabase<DatabaseSchema> & { $client: typeof pool } =
-  drizzle({
-    client: pool,
-    schema: {
-      ...auditSchema,
-      ...authSchema,
-      ...clubTeamSchema,
-      ...discordSchema,
-      ...discordConfigSchema,
-      ...knightHacksSchema,
-      ...relations,
-    },
-    casing: "snake_case",
-  });
+  createDatabase(pool);

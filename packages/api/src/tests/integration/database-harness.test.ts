@@ -66,7 +66,7 @@ describe.runIf(canRunDatabaseTests())("disposable database harness", () => {
     expect(tables).toContain("auth_user");
   });
 
-  it("uses the pg Pool class Drizzle recognizes in production bundles", () => {
+  it("exposes the underlying pg Pool for lifecycle management", () => {
     expect(client.$client).toBeInstanceOf(Pool);
   });
 
