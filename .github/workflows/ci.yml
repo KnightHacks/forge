@@ -201,6 +201,9 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
+      - name: Copy test env
+        run: cp .env.example .env
+
       - name: Test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/forge
