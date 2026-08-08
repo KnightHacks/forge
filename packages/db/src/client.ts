@@ -31,6 +31,8 @@ type DatabaseSchema = AuditSchema &
   KnightHacksSchema &
   RelationsSchema;
 
+type ForgeDatabase = NodePgDatabase<DatabaseSchema> & { $client: Pool };
+
 const schema = {
   ...auditSchema,
   ...authSchema,
@@ -47,8 +49,8 @@ const schema = {
 // In that failure mode BEGIN, the mutation, the audit rows, and COMMIT can each
 // land on different pooled connections. Always check out the connection here,
 // then let Drizzle transact on that concrete PoolClient.
-export function createDatabase(clientPool: Pool) {
-  const database = drizzle({
+export function createDatabase(clientPool: Pool): ForgeDatabase {
+  const database: ForgeDatabase = drizzle({
     client: clientPool,
     schema,
     casing: "snake_case",
@@ -83,5 +85,4 @@ export function createDatabase(clientPool: Pool) {
 // annotation is written out for stable declaration output, so it has to include
 // `$client` too — otherwise the pool is invisible to callers that need to shut
 // it down, such as the disposable-database test harness.
-export const db: NodePgDatabase<DatabaseSchema> & { $client: typeof pool } =
-  createDatabase(pool);
+export const db: ForgeDatabase = createDatabase(pool);

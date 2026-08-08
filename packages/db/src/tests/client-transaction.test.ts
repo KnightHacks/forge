@@ -1,7 +1,6 @@
 import type { Pool } from "pg";
-import { describe, expect, it, vi } from "vitest";
-
 import { sql } from "drizzle-orm";
+import { describe, expect, it, vi } from "vitest";
 
 import { createDatabase } from "../client";
 
