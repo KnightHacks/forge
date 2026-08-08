@@ -37,7 +37,7 @@ beforeAll(() => {
 });
 
 describe("EmploymentMonthPicker", () => {
-  it("emits a canonical value only after both explicit parts are selected", async () => {
+  it("always emits a complete canonical value", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<ControlledMonthPicker label="Start month" onChange={onChange} />);
@@ -46,7 +46,10 @@ describe("EmploymentMonthPicker", () => {
       screen.getByRole("combobox", { name: "Start month: month" }),
     );
     await user.click(screen.getByRole("option", { name: "May" }));
-    expect(onChange).toHaveBeenLastCalledWith("--05");
+    expect(onChange).toHaveBeenLastCalledWith(`${new Date().getFullYear()}-05`);
+    expect(
+      screen.getByRole("combobox", { name: "Start month: year" }),
+    ).toHaveTextContent(String(new Date().getFullYear()));
 
     await user.click(
       screen.getByRole("combobox", { name: "Start month: year" }),
@@ -81,5 +84,20 @@ describe("EmploymentMonthPicker", () => {
     expect(
       screen.getByRole("combobox", { name: "End month: year" }),
     ).toHaveTextContent("Year");
+  });
+
+  it("can begin with either selector without creating an invalid value", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<ControlledMonthPicker label="Start month" onChange={onChange} />);
+
+    await user.click(
+      screen.getByRole("combobox", { name: "Start month: year" }),
+    );
+    await user.click(screen.getByRole("option", { name: "2025" }));
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      `2025-${String(new Date().getMonth() + 1).padStart(2, "0")}`,
+    );
   });
 });

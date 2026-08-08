@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
 import {
-  employmentMonthDraftValue,
   employmentMonthParts,
+  employmentMonthValue,
 } from "~/app/_components/member/employment-month";
 
 vi.mock("~/trpc/react", () => ({
@@ -85,10 +85,8 @@ describe("EmploymentHistoryEditor", () => {
       month: "05",
       year: "2026",
     });
-    expect(employmentMonthDraftValue("05", "2026")).toBe("2026-05");
-    expect(employmentMonthDraftValue("05", "")).toBe("--05");
-    expect(employmentMonthDraftValue("", "2026")).toBe("2026-");
-    expect(employmentMonthDraftValue("13", "2026")).toBeNull();
-    expect(employmentMonthParts("--05")).toEqual({ month: "05", year: "" });
+    expect(employmentMonthValue("05", "2026")).toBe("2026-05");
+    expect(employmentMonthValue("05", "")).toBeNull();
+    expect(employmentMonthValue("13", "2026")).toBeNull();
   });
 });

@@ -26,10 +26,7 @@ import {
 import { Switch } from "@forge/ui/switch";
 
 import { api } from "~/trpc/react";
-import {
-  employmentMonthDraftValue,
-  employmentMonthParts,
-} from "./employment-month";
+import { employmentMonthParts, employmentMonthValue } from "./employment-month";
 
 type CompanyResult = RouterOutputs["career"]["searchCompanies"][number];
 type CityResult = RouterOutputs["career"]["searchUsCities"][number];
@@ -107,8 +104,8 @@ function employmentYearOptions(selectedYear: string) {
 /**
  * Two explicit selects avoid the browser-dependent behavior of
  * `input[type="month"]`, which degrades to an unrestricted text field on some
- * devices. Partial selections remain in the client draft so Save can explain
- * what is missing; complete selections use the database-safe `YYYY-MM` format.
+ * devices. The first choice fills its missing counterpart from the current
+ * month/year, so the form can never hold or submit an incomplete pair.
  */
 export function EmploymentMonthPicker({
   label,
@@ -122,10 +119,17 @@ export function EmploymentMonthPicker({
   const { month, year } = employmentMonthParts(value);
 
   const chooseMonth = (nextMonth: string) => {
-    onChange(employmentMonthDraftValue(nextMonth, year));
+    onChange(
+      employmentMonthValue(nextMonth, year || String(new Date().getFullYear())),
+    );
   };
   const chooseYear = (nextYear: string) => {
-    onChange(employmentMonthDraftValue(month, nextYear));
+    onChange(
+      employmentMonthValue(
+        month || String(new Date().getMonth() + 1).padStart(2, "0"),
+        nextYear,
+      ),
+    );
   };
   const clear = () => {
     onChange(null);

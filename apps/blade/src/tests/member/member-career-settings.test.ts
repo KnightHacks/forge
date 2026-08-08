@@ -182,15 +182,6 @@ describe("hasCareerSettingsChanged", () => {
     ).toBe(true);
   });
 
-  it("treats a partial month selection as an unsaved change", () => {
-    expect(
-      hasCareerSettingsChanged(
-        state({ history: [draft({ startMonth: "--05" })] }),
-        state(),
-      ),
-    ).toBe(true);
-  });
-
   it("detects an added and a removed entry", () => {
     expect(
       hasCareerSettingsChanged(
@@ -243,19 +234,6 @@ describe("careerHistoryValidationError", () => {
     expect(
       careerHistoryValidationError([draft({ startMonth: "not a month" })]),
     ).toBe("Employment entry 1: Use a valid month and year.");
-  });
-
-  it("explains which half-selected date needs its other part", () => {
-    expect(careerHistoryValidationError([draft({ startMonth: "--05" })])).toBe(
-      "Employment entry 1: Choose both a month and year for the start month.",
-    );
-    expect(
-      careerHistoryValidationError([
-        draft({ endMonth: "2026-", state: "past" }),
-      ]),
-    ).toBe(
-      "Employment entry 1: Choose both a month and year for the end month.",
-    );
   });
 
   it("rejects a legacy entry that has not been confirmed current or former", () => {

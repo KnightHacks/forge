@@ -2,7 +2,6 @@ import type { RouterOutputs } from "@forge/api";
 import { employmentHistorySchema } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
-import { isPartialEmploymentMonth } from "~/app/_components/member/employment-month";
 
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
 
@@ -81,15 +80,6 @@ export function careerHistoryValidationError(history: CareerHistoryDraft[]) {
   );
   if (unconfirmed) {
     return "Confirm whether each legacy entry is current or former before saving career history.";
-  }
-
-  for (const [index, employment] of history.entries()) {
-    if (isPartialEmploymentMonth(employment.startMonth)) {
-      return `Employment entry ${index + 1}: Choose both a month and year for the start month.`;
-    }
-    if (isPartialEmploymentMonth(employment.endMonth)) {
-      return `Employment entry ${index + 1}: Choose both a month and year for the end month.`;
-    }
   }
 
   const result = employmentHistorySchema.safeParse(
