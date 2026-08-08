@@ -4,11 +4,19 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["BLADE_URL", "KHIX_HACKER_PORTAL_CLIENT_ID"],
+      "env": [
+        "BLADE_URL",
+        "KHIX_HACKER_PORTAL_CLIENT_ID",
+        "KHIX_HACKER_PORTAL_ORIGIN"
+      ],
       "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts"]
     },
     "dev": {
-      "env": ["BLADE_URL", "KHIX_HACKER_PORTAL_CLIENT_ID"],
+      "env": [
+        "BLADE_URL",
+        "KHIX_HACKER_PORTAL_CLIENT_ID",
+        "KHIX_HACKER_PORTAL_ORIGIN"
+      ],
       "persistent": true
     }
   }

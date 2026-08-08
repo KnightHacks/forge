@@ -48,6 +48,7 @@ yearly app:
 ```dotenv
 BLADE_URL=https://blade.knighthacks.org
 HACKER_PORTAL_CLIENT_ID=forge_public_id_from_blade
+HACKER_PORTAL_ORIGIN=https://your-hackathon.knighthacks.org
 ```
 
 There is no client secret. The client ID selects the provisioned hackathon.
@@ -65,12 +66,19 @@ import { createHackerSdkNextHandler } from "@forge/hacker-sdk/next";
 
 const bladeOrigin = process.env.BLADE_URL;
 const clientId = process.env.HACKER_PORTAL_CLIENT_ID;
+const portalOrigin = process.env.HACKER_PORTAL_ORIGIN;
 
-if (!bladeOrigin || !clientId) {
-  throw new Error("BLADE_URL and HACKER_PORTAL_CLIENT_ID are required.");
+if (!bladeOrigin || !clientId || !portalOrigin) {
+  throw new Error(
+    "BLADE_URL, HACKER_PORTAL_CLIENT_ID, and HACKER_PORTAL_ORIGIN are required.",
+  );
 }
 
-const handler = createHackerSdkNextHandler({ bladeOrigin, clientId });
+const handler = createHackerSdkNextHandler({
+  bladeOrigin,
+  clientId,
+  portalOrigin,
+});
 
 interface RouteContext {
   params: Promise<{ hackerSdk: string[] }>;

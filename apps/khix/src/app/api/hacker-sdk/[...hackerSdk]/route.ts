@@ -5,6 +5,7 @@ import { env } from "~/env";
 const handler = createHackerSdkNextHandler({
   bladeOrigin: env.BLADE_URL,
   clientId: env.KHIX_HACKER_PORTAL_CLIENT_ID,
+  portalOrigin: env.KHIX_HACKER_PORTAL_ORIGIN,
 });
 
 interface RouteContext {

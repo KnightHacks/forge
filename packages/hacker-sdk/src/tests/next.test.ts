@@ -432,6 +432,48 @@ describe("Hacker SDK Next adapter", () => {
     );
   });
 
+  it("uses the configured public origin behind an internal reverse-proxy URL", async () => {
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      portalOrigin: "https://2026.knighthacks.org",
+    });
+
+    const signIn = await handler(
+      new Request(
+        "https://localhost:3007/api/hacker-sdk/sign-in?returnTo=%2Fdashboard",
+      ),
+    );
+    const authorize = new URL(signIn.headers.get("location") ?? "");
+
+    expect(authorize.searchParams.get("redirect_uri")).toBe(
+      "https://2026.knighthacks.org/api/hacker-sdk/callback",
+    );
+    expect(signIn.headers.get("set-cookie")).toContain("Secure");
+    expect(signIn.headers.get("set-cookie")).toContain(
+      `${getHackerSdkCookieNames(TEST_CLIENT_ID, "https://2026.knighthacks.org").state}=`,
+    );
+
+    const signOut = await handler(
+      new Request("https://localhost:3007/api/hacker-sdk/sign-out", {
+        body: JSON.stringify({ returnTo: "/dashboard" }),
+        headers: {
+          "content-type": "application/json",
+          origin: "https://2026.knighthacks.org",
+        },
+        method: "POST",
+      }),
+    );
+    const logout = new URL(
+      ((await signOut.json()) as { redirectTo: string }).redirectTo,
+    );
+
+    expect(signOut.status).toBe(200);
+    expect(logout.searchParams.get("return_to")).toBe(
+      "https://2026.knighthacks.org/dashboard",
+    );
+  });
+
   it("namespaces auth cookies for the same client on multiple localhost ports", async () => {
     const first = createHackerSdkNextHandler({
       bladeOrigin: "http://localhost:3000",

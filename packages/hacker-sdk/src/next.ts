@@ -48,6 +48,11 @@ export interface HackerSdkNextOptions {
   bladeOrigin: string;
   /** The public portal client provisioned for this hackathon. */
   clientId: string;
+  /**
+   * The browser-facing portal origin. Set this in production when the portal
+   * runs behind a reverse proxy whose internal request URL uses another host.
+   */
+  portalOrigin?: string;
   adapterBasePath?: string;
   fetch?: typeof globalThis.fetch;
   paths?: Partial<typeof DEFAULT_BLADE_PATHS>;
@@ -85,6 +90,19 @@ function validateBladeOrigin(value: string) {
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     throw new Error("bladeOrigin must use HTTP or HTTPS.");
+  }
+  return parsed.origin;
+}
+
+function validatePortalOrigin(value: string) {
+  const parsed = new URL(value);
+  if (parsed.username || parsed.password || parsed.pathname !== "/") {
+    throw new Error(
+      "portalOrigin must be an origin without credentials or a path.",
+    );
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error("portalOrigin must use HTTP or HTTPS.");
   }
   return parsed.origin;
 }
@@ -227,9 +245,9 @@ function routePath(requestUrl: URL, adapterBasePath: string) {
   return requestUrl.pathname.slice(adapterBasePath.length).replace(/^\/+/, "");
 }
 
-function ensureSameOrigin(request: Request) {
+function ensureSameOrigin(request: Request, expectedOrigin: string) {
   const origin = request.headers.get("origin");
-  return origin !== null && origin === new URL(request.url).origin;
+  return origin !== null && origin === expectedOrigin;
 }
 
 function jsonError(error: HackerSdkError, status = 400, headers?: Headers) {
@@ -346,6 +364,9 @@ export function createHackerSdkNextHandler(
   options: HackerSdkNextOptions,
 ): HackerSdkNextHandler {
   const bladeOrigin = validateBladeOrigin(options.bladeOrigin);
+  const configuredPortalOrigin = options.portalOrigin
+    ? validatePortalOrigin(options.portalOrigin)
+    : undefined;
   const adapterBasePath = normalizeHackerSdkBasePath(
     options.adapterBasePath ?? DEFAULT_HACKER_SDK_ADAPTER_PATH,
   );
@@ -381,12 +402,18 @@ export function createHackerSdkNextHandler(
 
   return async function hackerSdkNextHandler(request) {
     const requestUrl = new URL(request.url);
+    const publicRequestUrl = configuredPortalOrigin
+      ? new URL(
+          `${requestUrl.pathname}${requestUrl.search}`,
+          configuredPortalOrigin,
+        )
+      : requestUrl;
     const cookieNames = getHackerSdkCookieNames(
       options.clientId,
-      requestUrl.origin,
+      publicRequestUrl.origin,
     );
     const path = routePath(requestUrl, adapterBasePath);
-    const secure = requestUrl.protocol === "https:";
+    const secure = publicRequestUrl.protocol === "https:";
 
     if (path === undefined) {
       return jsonError(
@@ -413,7 +440,7 @@ export function createHackerSdkNextHandler(
       authorizeUrl.searchParams.set("code_challenge_method", "S256");
       authorizeUrl.searchParams.set(
         "redirect_uri",
-        callbackUrl(requestUrl, adapterBasePath),
+        callbackUrl(publicRequestUrl, adapterBasePath),
       );
       authorizeUrl.searchParams.set("state", state);
 
@@ -465,7 +492,7 @@ export function createHackerSdkNextHandler(
               clientId: options.clientId,
               code,
               codeVerifier: verifier,
-              redirectUri: callbackUrl(requestUrl, adapterBasePath),
+              redirectUri: callbackUrl(publicRequestUrl, adapterBasePath),
             }),
             headers: { "content-type": "application/json" },
             method: "POST",
@@ -476,7 +503,7 @@ export function createHackerSdkNextHandler(
         const headers = new Headers({
           location: new URL(
             expectedState.returnTo,
-            requestUrl.origin,
+            publicRequestUrl.origin,
           ).toString(),
         });
         headers.append(
@@ -495,7 +522,7 @@ export function createHackerSdkNextHandler(
     }
 
     if (path === "sign-out" && request.method === "POST") {
-      if (!ensureSameOrigin(request)) {
+      if (!ensureSameOrigin(request, publicRequestUrl.origin)) {
         return jsonError(
           new HackerSdkError({
             code: "FORBIDDEN",
@@ -586,7 +613,7 @@ export function createHackerSdkNextHandler(
       logoutUrl.searchParams.set("client_id", options.clientId);
       logoutUrl.searchParams.set(
         "return_to",
-        new URL(returnTo, requestUrl.origin).toString(),
+        new URL(returnTo, publicRequestUrl.origin).toString(),
       );
       return Response.json(
         { redirectTo: logoutUrl.toString() },
@@ -610,7 +637,7 @@ export function createHackerSdkNextHandler(
     if (
       request.method !== "GET" &&
       request.method !== "HEAD" &&
-      !ensureSameOrigin(request)
+      !ensureSameOrigin(request, publicRequestUrl.origin)
     ) {
       return jsonError(
         new HackerSdkError({
