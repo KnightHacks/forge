@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { PERMISSIONS } from "@forge/consts";
 import { db } from "@forge/db/client";
-import { Issue } from "@forge/db/schemas/knight-hacks";
 
 import { roleVisibilityPredicate } from "../../routers/issues";
 
