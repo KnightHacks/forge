@@ -44,7 +44,7 @@ export async function GET(request: Request) {
 
     const session = await auth();
     if (!session) {
-      const signIn = new URL("/api/auth/signin", url.origin);
+      const signIn = new URL("/api/auth/signin", env.BLADE_URL);
       signIn.searchParams.set("provider", "discord");
       signIn.searchParams.set("callbackURL", `${url.pathname}${url.search}`);
       return NextResponse.redirect(signIn);
