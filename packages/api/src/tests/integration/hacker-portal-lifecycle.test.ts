@@ -443,6 +443,50 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     );
   });
 
+  it("supports participant self-service when status emails are not configured", async () => {
+    const userId = await seedUser("No Status Mail Hacker");
+    const hackathon = await seedHackathon();
+    if (!hackathon.applicationAgreementId || !hackathon.confirmationAgreementId)
+      throw new Error("Lifecycle agreements were not seeded.");
+
+    await client
+      .delete(knightHacks.HackathonStatusEmail)
+      .where(eq(knightHacks.HackathonStatusEmail.hackathonId, hackathon.id));
+
+    const caller = await participantCaller(userId, hackathon.id);
+    const submitted = await caller.submitApplication(
+      submissionInput("no-status-mail", hackathon.applicationAgreementId),
+    );
+    expect(submitted.application).toMatchObject({ status: "pending" });
+
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({ status: "accepted" })
+      .where(eq(knightHacks.HackerAttendee.hackathonId, hackathon.id));
+    const confirmed = await caller.confirmAttendance({
+      agreements: [
+        {
+          accepted: true,
+          definitionId: hackathon.confirmationAgreementId,
+        },
+      ],
+      idempotencyKey: randomUUID(),
+    });
+    expect(confirmed.application).toMatchObject({ status: "confirmed" });
+
+    const withdrawn = await caller.withdrawApplication({
+      acknowledgement: HACKER_WITHDRAWAL_ACKNOWLEDGEMENT,
+      idempotencyKey: randomUUID(),
+    });
+    expect(withdrawn.application).toMatchObject({ status: "withdrawn" });
+
+    const sends = await client
+      .select({ value: count(knightHacks.EmailSend.id) })
+      .from(knightHacks.EmailSend)
+      .where(eq(knightHacks.EmailSend.createdBy, userId));
+    expect(sends[0]?.value).toBe(0);
+  });
+
   it("preserves denied and withdrawn future-hack profile snapshots", async () => {
     const userId = await seedUser("Terminal Snapshot Hacker");
     const activeHack = await seedHackathon();

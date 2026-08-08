@@ -44,6 +44,9 @@ export async function GET(request: Request) {
 
     const session = await auth();
     if (!session) {
+      // The request URL can contain the container's internal origin behind a
+      // reverse proxy (for example, https://localhost:3000 in Coolify). Always
+      // send the browser back through Blade's configured public origin.
       const signIn = new URL("/api/auth/signin", env.BLADE_URL);
       signIn.searchParams.set("provider", "discord");
       signIn.searchParams.set("callbackURL", `${url.pathname}${url.search}`);

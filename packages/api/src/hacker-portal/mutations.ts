@@ -140,6 +140,7 @@ export async function submitApplication(
     });
   const preparedMail = await prepareStatusMail({
     hackathon: statusMailHackathon({ ...configured, databaseNow: new Date() }),
+    optional: true,
     status: "pending",
   });
 
@@ -244,21 +245,18 @@ export async function submitApplication(
           stage: "application",
           tx,
         });
-        const sendId = await writeStatusMail(
-          tx,
-          preparedMail,
-          ctx.session.userId,
-          [
-            {
-              attendeeId: attendee.id,
-              email: input.profile.email,
-              firstName: input.profile.firstName,
-              name: `${input.profile.firstName} ${input.profile.lastName}`,
-              status: "pending",
-              userId: ctx.session.userId,
-            },
-          ],
-        );
+        const sendId = preparedMail
+          ? await writeStatusMail(tx, preparedMail, ctx.session.userId, [
+              {
+                attendeeId: attendee.id,
+                email: input.profile.email,
+                firstName: input.profile.firstName,
+                name: `${input.profile.firstName} ${input.profile.lastName}`,
+                status: "pending",
+                userId: ctx.session.userId,
+              },
+            ])
+          : null;
         if (sendId) {
           await tx
             .update(HackerAttendee)
@@ -609,6 +607,7 @@ export async function confirmAttendance(
     });
   const preparedMail = await prepareStatusMail({
     hackathon: statusMailHackathon({ ...configured, databaseNow: new Date() }),
+    optional: true,
     status: "confirmed",
   });
   return db.transaction(async (tx) =>
@@ -676,21 +675,18 @@ export async function confirmAttendance(
           .where(eq(HackerProfile.userId, ctx.session.userId))
           .limit(1);
         if (!profile) throw new Error("Hacker profile is missing.");
-        const sendId = await writeStatusMail(
-          tx,
-          preparedMail,
-          ctx.session.userId,
-          [
-            {
-              attendeeId: application.attendeeId,
-              email: profile.email,
-              firstName: profile.firstName,
-              name: `${profile.firstName} ${profile.lastName}`,
-              status: "confirmed",
-              userId: ctx.session.userId,
-            },
-          ],
-        );
+        const sendId = preparedMail
+          ? await writeStatusMail(tx, preparedMail, ctx.session.userId, [
+              {
+                attendeeId: application.attendeeId,
+                email: profile.email,
+                firstName: profile.firstName,
+                name: `${profile.firstName} ${profile.lastName}`,
+                status: "confirmed",
+                userId: ctx.session.userId,
+              },
+            ])
+          : null;
         await tx
           .update(HackerAttendee)
           .set({
@@ -745,6 +741,7 @@ export async function withdrawApplication(
     });
   const preparedMail = await prepareStatusMail({
     hackathon: statusMailHackathon({ ...configured, databaseNow: new Date() }),
+    optional: true,
     status: "withdrawn",
   });
   return db.transaction(async (tx) =>
@@ -784,21 +781,18 @@ export async function withdrawApplication(
           .where(eq(HackerProfile.userId, ctx.session.userId))
           .limit(1);
         if (!profile) throw new Error("Hacker profile is missing.");
-        const sendId = await writeStatusMail(
-          tx,
-          preparedMail,
-          ctx.session.userId,
-          [
-            {
-              attendeeId: application.attendeeId,
-              email: profile.email,
-              firstName: profile.firstName,
-              name: `${profile.firstName} ${profile.lastName}`,
-              status: "withdrawn",
-              userId: ctx.session.userId,
-            },
-          ],
-        );
+        const sendId = preparedMail
+          ? await writeStatusMail(tx, preparedMail, ctx.session.userId, [
+              {
+                attendeeId: application.attendeeId,
+                email: profile.email,
+                firstName: profile.firstName,
+                name: `${profile.firstName} ${profile.lastName}`,
+                status: "withdrawn",
+                userId: ctx.session.userId,
+              },
+            ])
+          : null;
         await tx
           .update(HackerAttendee)
           .set({ lastStatusSendId: sendId, status: "withdrawn" })

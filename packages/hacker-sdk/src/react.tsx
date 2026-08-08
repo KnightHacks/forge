@@ -294,15 +294,12 @@ export function useUploadHackerResume() {
 }
 
 export function useHackerSignOut() {
-  const { client, portalKey } = useHackerSdkClient();
-  const queryClient = useQueryClient();
+  const { client } = useHackerSdkClient();
+  // The caller must navigate to Blade's front-channel logout URL immediately.
+  // Refetching the now-cookie-less session here races that navigation and can
+  // start a fresh authorization against the still-active Blade session.
   return useMutation({
     mutationFn: (options?: { returnTo?: string }) =>
       client.signOut(options?.returnTo),
-    async onSuccess() {
-      await queryClient.resetQueries({
-        queryKey: hackerSdkQueryKeys.participant(portalKey),
-      });
-    },
   });
 }

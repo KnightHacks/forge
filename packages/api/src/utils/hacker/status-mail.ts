@@ -120,13 +120,31 @@ async function resolveTeamUserIds(): Promise<Set<string> | null> {
   return new Set(rows.map((row) => row.userId));
 }
 
-export async function prepareStatusMail({
+export function prepareStatusMail({
   hackathon,
   status,
 }: {
   hackathon: StatusMailHackathon;
   status: HackathonSendingStatus;
-}): Promise<PreparedStatusMail> {
+}): Promise<PreparedStatusMail>;
+export function prepareStatusMail({
+  hackathon,
+  optional,
+  status,
+}: {
+  hackathon: StatusMailHackathon;
+  optional: true;
+  status: HackathonSendingStatus;
+}): Promise<PreparedStatusMail | null>;
+export async function prepareStatusMail({
+  hackathon,
+  optional = false,
+  status,
+}: {
+  hackathon: StatusMailHackathon;
+  optional?: boolean;
+  status: HackathonSendingStatus;
+}): Promise<PreparedStatusMail | null> {
   const [configured] = await db
     .select({
       subject: HackathonStatusEmail.subject,
@@ -150,6 +168,7 @@ export async function prepareStatusMail({
   // Named, not generic. An officer told "this hackathon is not configured" when
   // five of six statuses are set has to open the config screen and compare.
   if (!configured) {
+    if (optional) return null;
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: `No email is configured for "${status}". Set one on the hackathon before moving anyone to it.`,
