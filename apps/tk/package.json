@@ -25,7 +25,7 @@
     "discord.js": "^14.25.1",
     "jimp": "^1.6.0",
     "natural": "^8.1.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.0",
     "zod": "catalog:"
   },
   "devDependencies": {

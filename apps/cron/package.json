@@ -27,7 +27,7 @@
     "drizzle-orm": "^0.45.1",
     "natural": "^8.1.0",
     "node-cron": "^4.2.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.0",
     "zod": "catalog:"
   },
   "devDependencies": {
