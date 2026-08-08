@@ -7,6 +7,7 @@ import type { CareerSettingsState } from "~/app/_components/member/member-career
 import {
   careerHistoryMutationInput,
   careerHistoryValidationError,
+  careerSaveErrorMessage,
   careerSettingsStateFromCareerData,
   hasCareerSettingsChanged,
 } from "~/app/_components/member/member-career-settings";
@@ -181,6 +182,15 @@ describe("hasCareerSettingsChanged", () => {
     ).toBe(true);
   });
 
+  it("treats a partial month selection as an unsaved change", () => {
+    expect(
+      hasCareerSettingsChanged(
+        state({ history: [draft({ startMonth: "--05" })] }),
+        state(),
+      ),
+    ).toBe(true);
+  });
+
   it("detects an added and a removed entry", () => {
     expect(
       hasCareerSettingsChanged(
@@ -233,6 +243,19 @@ describe("careerHistoryValidationError", () => {
     expect(
       careerHistoryValidationError([draft({ startMonth: "not a month" })]),
     ).toBe("Employment entry 1: Use a valid month and year.");
+  });
+
+  it("explains which half-selected date needs its other part", () => {
+    expect(careerHistoryValidationError([draft({ startMonth: "--05" })])).toBe(
+      "Employment entry 1: Choose both a month and year for the start month.",
+    );
+    expect(
+      careerHistoryValidationError([
+        draft({ endMonth: "2026-", state: "past" }),
+      ]),
+    ).toBe(
+      "Employment entry 1: Choose both a month and year for the end month.",
+    );
   });
 
   it("rejects a legacy entry that has not been confirmed current or former", () => {
@@ -314,5 +337,32 @@ describe("careerHistoryMutationInput", () => {
     expect(() =>
       careerHistoryMutationInput([draft({ state: "unknown" })]),
     ).not.toThrow();
+  });
+});
+
+describe("careerSaveErrorMessage", () => {
+  it("extracts the actionable message from a serialized Zod issue array", () => {
+    expect(
+      careerSaveErrorMessage(
+        new Error(
+          JSON.stringify([
+            {
+              code: "invalid_format",
+              message: "Use a valid month and year.",
+              path: [0, "startMonth"],
+            },
+          ]),
+        ),
+      ),
+    ).toBe("Use a valid month and year.");
+  });
+
+  it("keeps an ordinary server message and hides non-issue JSON", () => {
+    expect(careerSaveErrorMessage(new Error("Company was not found."))).toBe(
+      "Company was not found.",
+    );
+    expect(careerSaveErrorMessage(new Error('{"unexpected":true}'))).toBe(
+      "Career history could not be saved.",
+    );
   });
 });

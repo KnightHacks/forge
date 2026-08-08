@@ -79,6 +79,7 @@ import { EmploymentHistoryEditor } from "~/app/_components/member/employment-his
 import {
   careerHistoryMutationInput,
   careerHistoryValidationError,
+  careerSaveErrorMessage,
   careerSettingsStateFromCareerData,
   hasCareerSettingsChanged,
 } from "~/app/_components/member/member-career-settings";
@@ -503,11 +504,7 @@ function MemberProfileSettingsEditor({
       try {
         await persistCareer();
       } catch (error) {
-        setCareerError(
-          error instanceof Error
-            ? error.message
-            : "Career history could not be saved.",
-        );
+        setCareerError(careerSaveErrorMessage(error));
         return false;
       }
     }

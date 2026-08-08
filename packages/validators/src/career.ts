@@ -42,6 +42,14 @@ const companyNameSchema = z
     message: "Choose an appropriate company name.",
   });
 
+const optionalCompanyNameSchema = z
+  .string()
+  .trim()
+  .transform((value) => (value.length > 0 ? value : null))
+  .pipe(companyNameSchema.nullable())
+  .nullable()
+  .optional();
+
 const companyDomainSchema = z
   .string()
   .trim()
@@ -92,13 +100,13 @@ export const companyAdminUpdateSchema = z
       }),
     displayName: companyNameSchema,
     domain: companyDomainSchema.nullable().optional(),
-    legalName: companyNameSchema.or(z.literal("")).nullable().optional(),
+    legalName: optionalCompanyNameSchema,
   })
   .strict()
   .transform((input) => ({
     ...input,
     domain: input.domain ?? null,
-    legalName: trimmedOrNull(input.legalName),
+    legalName: input.legalName ?? input.displayName,
   }));
 
 export const usCityKeySchema = z

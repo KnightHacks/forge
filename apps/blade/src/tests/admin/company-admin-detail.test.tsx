@@ -26,6 +26,8 @@ const mocks = vi.hoisted(() => ({
   approveMutate: vi.fn(),
   approveOptions: null as MutationOptions | null,
   refresh: vi.fn(),
+  toastError: vi.fn(),
+  updateMutate: vi.fn(),
   uploadOptions: null as UploadMutationOptions | null,
 }));
 
@@ -37,7 +39,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@forge/ui/toast", () => ({
-  toast: { error: vi.fn(), success: vi.fn() },
+  toast: { error: mocks.toastError, success: vi.fn() },
 }));
 
 vi.mock("~/trpc/react", () => ({
@@ -59,7 +61,7 @@ vi.mock("~/trpc/react", () => ({
         useMutation: () => ({ isPending: false, mutate: vi.fn() }),
       },
       updateCompany: {
-        useMutation: () => ({ isPending: false, mutate: vi.fn() }),
+        useMutation: () => ({ isPending: false, mutate: mocks.updateMutate }),
       },
       uploadCompanyImage: {
         useMutation: (options: UploadMutationOptions) => {
@@ -89,7 +91,36 @@ describe("CompanyAdminDetail", () => {
     mocks.approveMutate.mockReset();
     mocks.approveOptions = null;
     mocks.refresh.mockReset();
+    mocks.toastError.mockReset();
+    mocks.updateMutate.mockReset();
     mocks.uploadOptions = null;
+  });
+
+  it("saves a blank legal name as the display name", async () => {
+    const user = userEvent.setup();
+    render(<CompanyAdminDetail allCompanies={[]} canEdit detail={detail} />);
+
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(mocks.updateMutate).toHaveBeenCalledWith({
+      aliases: [],
+      companyId: detail.company.id,
+      displayName: "Antithesis",
+      domain: "antithesis.com",
+      legalName: "Antithesis",
+    });
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+
+  it("shows a friendly validation message for an invalid legal name", async () => {
+    const user = userEvent.setup();
+    render(<CompanyAdminDetail allCompanies={[]} canEdit detail={detail} />);
+
+    await user.type(screen.getByLabelText("Legal name"), "A");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(mocks.updateMutate).not.toHaveBeenCalled();
+    expect(mocks.toastError).toHaveBeenCalledWith("Enter a company name.");
   });
 
   it("reflects a successful approval immediately", async () => {

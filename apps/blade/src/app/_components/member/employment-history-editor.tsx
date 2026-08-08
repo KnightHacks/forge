@@ -26,6 +26,10 @@ import {
 import { Switch } from "@forge/ui/switch";
 
 import { api } from "~/trpc/react";
+import {
+  employmentMonthDraftValue,
+  employmentMonthParts,
+} from "./employment-month";
 
 type CompanyResult = RouterOutputs["career"]["searchCompanies"][number];
 type CityResult = RouterOutputs["career"]["searchUsCities"][number];
@@ -66,6 +70,116 @@ const blankExperience = (): CareerHistoryDraft => ({
   state: "current",
   title: "",
 });
+
+const EMPLOYMENT_MONTH_OPTIONS = [
+  ["01", "January"],
+  ["02", "February"],
+  ["03", "March"],
+  ["04", "April"],
+  ["05", "May"],
+  ["06", "June"],
+  ["07", "July"],
+  ["08", "August"],
+  ["09", "September"],
+  ["10", "October"],
+  ["11", "November"],
+  ["12", "December"],
+] as const;
+
+const EARLIEST_EMPLOYMENT_YEAR = 1950;
+const FUTURE_EMPLOYMENT_YEAR_WINDOW = 10;
+
+function employmentYearOptions(selectedYear: string) {
+  const currentYear = new Date().getFullYear();
+  const parsedSelectedYear = /^\d{4}$/.test(selectedYear)
+    ? Number(selectedYear)
+    : currentYear;
+  const firstYear = Math.min(EARLIEST_EMPLOYMENT_YEAR, parsedSelectedYear);
+  const lastYear = Math.max(
+    currentYear + FUTURE_EMPLOYMENT_YEAR_WINDOW,
+    parsedSelectedYear,
+  );
+  return Array.from({ length: lastYear - firstYear + 1 }, (_, index) =>
+    String(lastYear - index),
+  );
+}
+
+/**
+ * Two explicit selects avoid the browser-dependent behavior of
+ * `input[type="month"]`, which degrades to an unrestricted text field on some
+ * devices. Partial selections remain in the client draft so Save can explain
+ * what is missing; complete selections use the database-safe `YYYY-MM` format.
+ */
+export function EmploymentMonthPicker({
+  label,
+  onChange,
+  value,
+}: {
+  label: string;
+  onChange: (value: string | null) => void;
+  value: string | null;
+}) {
+  const { month, year } = employmentMonthParts(value);
+
+  const chooseMonth = (nextMonth: string) => {
+    onChange(employmentMonthDraftValue(nextMonth, year));
+  };
+  const chooseYear = (nextYear: string) => {
+    onChange(employmentMonthDraftValue(month, nextYear));
+  };
+  const clear = () => {
+    onChange(null);
+  };
+
+  return (
+    <fieldset className="min-w-0">
+      <div className="mb-2 flex min-h-5 items-center justify-between gap-3">
+        <legend className="text-sm font-medium">{label}</legend>
+        {(month || year) && (
+          <button
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={clear}
+            type="button"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(7rem,0.72fr)] gap-2">
+        <Select value={month} onValueChange={chooseMonth}>
+          <SelectTrigger
+            aria-label={`${label}: month`}
+            className="h-11 min-w-0 bg-background/70"
+          >
+            <SelectValue placeholder="Month" />
+          </SelectTrigger>
+          <SelectContent>
+            {EMPLOYMENT_MONTH_OPTIONS.map(([monthValue, monthLabel]) => (
+              <SelectItem key={monthValue} value={monthValue}>
+                {monthLabel}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={year} onValueChange={chooseYear}>
+          <SelectTrigger
+            aria-label={`${label}: year`}
+            className="h-11 min-w-0 bg-background/70"
+          >
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent>
+            {employmentYearOptions(year).map((yearOption) => (
+              <SelectItem key={yearOption} value={yearOption}>
+                {yearOption}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </fieldset>
+  );
+}
 
 function SearchResults({
   children,
@@ -473,41 +587,21 @@ export function EmploymentHistoryEditor({
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium">
-                    Start month
-                  </label>
-                  <Input
-                    type="month"
-                    placeholder="YYYY-MM"
-                    value={entry.startMonth ?? ""}
-                    className="h-11 bg-background/70"
-                    onChange={(event) =>
-                      updateEntry(index, {
-                        ...entry,
-                        startMonth: event.target.value || null,
-                      })
+                <EmploymentMonthPicker
+                  label="Start month"
+                  value={entry.startMonth ?? null}
+                  onChange={(startMonth) =>
+                    updateEntry(index, { ...entry, startMonth })
+                  }
+                />
+                {entry.state !== "current" && (
+                  <EmploymentMonthPicker
+                    label="End month"
+                    value={entry.endMonth ?? null}
+                    onChange={(endMonth) =>
+                      updateEntry(index, { ...entry, endMonth })
                     }
                   />
-                </div>
-                {entry.state !== "current" && (
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      End month
-                    </label>
-                    <Input
-                      type="month"
-                      placeholder="YYYY-MM"
-                      value={entry.endMonth ?? ""}
-                      className="h-11 bg-background/70"
-                      onChange={(event) =>
-                        updateEntry(index, {
-                          ...entry,
-                          endMonth: event.target.value || null,
-                        })
-                      }
-                    />
-                  </div>
                 )}
                 <div className="md:col-span-2">
                   <CityPicker

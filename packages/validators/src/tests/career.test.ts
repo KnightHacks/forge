@@ -98,22 +98,57 @@ describe("career validation", () => {
     });
   });
 
-  it("normalizes cleared optional company metadata", () => {
+  it.each(["", "   ", null, undefined])(
+    "defaults a cleared legal name (%s) to the display name",
+    (legalName) => {
+      expect(
+        companyAdminUpdateSchema.parse({
+          aliases: [],
+          displayName: "AMD",
+          domain: "",
+          legalName,
+        }),
+      ).toEqual({
+        aliases: [],
+        displayName: "AMD",
+        domain: null,
+        legalName: "AMD",
+      });
+    },
+  );
+
+  it("returns a friendly error for an invalid legal name", () => {
+    const result = companyAdminUpdateSchema.safeParse({
+      aliases: [],
+      displayName: "AMD",
+      domain: "",
+      legalName: "A",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("Enter a company name.");
+    }
+  });
+
+  it("normalizes a cleared optional domain", () => {
     expect(
       companyAdminUpdateSchema.parse({
         aliases: [],
         displayName: "AMD",
         domain: "",
-        legalName: "",
+        legalName: "Advanced Micro Devices, Inc.",
       }),
     ).toEqual({
       aliases: [],
       displayName: "AMD",
       domain: null,
-      legalName: null,
+      legalName: "Advanced Micro Devices, Inc.",
     });
   });
+});
 
+describe("career employment validation", () => {
   it("TC-001 accepts current and former employment history", () => {
     expect(
       employmentHistorySchema.parse([

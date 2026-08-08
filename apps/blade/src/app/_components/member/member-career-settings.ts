@@ -2,6 +2,7 @@ import type { RouterOutputs } from "@forge/api";
 import { employmentHistorySchema } from "@forge/validators";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
+import { isPartialEmploymentMonth } from "~/app/_components/member/employment-month";
 
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
 
@@ -82,6 +83,15 @@ export function careerHistoryValidationError(history: CareerHistoryDraft[]) {
     return "Confirm whether each legacy entry is current or former before saving career history.";
   }
 
+  for (const [index, employment] of history.entries()) {
+    if (isPartialEmploymentMonth(employment.startMonth)) {
+      return `Employment entry ${index + 1}: Choose both a month and year for the start month.`;
+    }
+    if (isPartialEmploymentMonth(employment.endMonth)) {
+      return `Employment entry ${index + 1}: Choose both a month and year for the end month.`;
+    }
+  }
+
   const result = employmentHistorySchema.safeParse(
     careerHistoryMutationInput(history),
   );
@@ -94,6 +104,29 @@ export function careerHistoryValidationError(history: CareerHistoryDraft[]) {
       ? `Employment entry ${entryIndex + 1}: `
       : "";
   return `${prefix}${issue?.message ?? "Check your career history and try again."}`;
+}
+
+/**
+ * tRPC uses Zod's serialized issue array as the default message for input
+ * parse failures. Keep those implementation details out of the settings UI and
+ * surface the first actionable validation message instead.
+ */
+export function careerSaveErrorMessage(error: unknown) {
+  const fallback = "Career history could not be saved.";
+  if (!(error instanceof Error) || !error.message.trim()) return fallback;
+
+  try {
+    const parsed: unknown = JSON.parse(error.message);
+    if (!Array.isArray(parsed)) return fallback;
+    const firstMessage = parsed.flatMap((issue) => {
+      if (typeof issue !== "object" || issue === null) return [];
+      const message: unknown = (issue as Record<string, unknown>).message;
+      return typeof message === "string" && message.trim() ? [message] : [];
+    })[0];
+    return firstMessage?.trim() || fallback;
+  } catch {
+    return error.message;
+  }
 }
 
 /**

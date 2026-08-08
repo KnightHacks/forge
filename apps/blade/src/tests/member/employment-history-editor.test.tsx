@@ -3,6 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
+import {
+  employmentMonthDraftValue,
+  employmentMonthParts,
+} from "~/app/_components/member/employment-month";
 
 vi.mock("~/trpc/react", () => ({
   api: {
@@ -68,9 +72,23 @@ describe("EmploymentHistoryEditor", () => {
     expect(html).toContain("Software Engineer");
     expect(html).toContain("Unconfirmed legacy entry");
     expect(html).toContain("Make this experience public");
-    expect(html).toContain('type="month"');
+    expect(html).toContain('aria-label="Start month: month"');
+    expect(html).toContain('aria-label="Start month: year"');
+    expect(html).not.toContain('type="month"');
     expect(html).toContain("Move experience up");
     expect(html).toContain("Remove experience");
     expect(html).toContain('data-career-draft-id="employment-draft-one"');
+  });
+
+  it("keeps employment months in the canonical wire format", () => {
+    expect(employmentMonthParts("2026-05")).toEqual({
+      month: "05",
+      year: "2026",
+    });
+    expect(employmentMonthDraftValue("05", "2026")).toBe("2026-05");
+    expect(employmentMonthDraftValue("05", "")).toBe("--05");
+    expect(employmentMonthDraftValue("", "2026")).toBe("2026-");
+    expect(employmentMonthDraftValue("13", "2026")).toBeNull();
+    expect(employmentMonthParts("--05")).toEqual({ month: "05", year: "" });
   });
 });
