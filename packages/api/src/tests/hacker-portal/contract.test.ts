@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { SelectHackerProfile } from "@forge/db/schemas/knight-hacks";
 import { HACKER_PARTICIPANT_V1_PROCEDURES } from "@forge/hacker-sdk/contracts";
+import { hackerProfileDtoSchema } from "@forge/validators";
 
 import { participantPayloadHash } from "../../hacker-portal/commands";
 
@@ -15,6 +17,33 @@ vi.mock("../../utils/resume/storage", () => ({
 }));
 
 describe("hacker participant v1 API contract", () => {
+  const profile = {
+    country: "United States of America",
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    discordUser: "participant",
+    dob: "2005-02-14",
+    email: "participant@example.test",
+    firstName: "Portal",
+    foodAllergies: null,
+    gender: "Prefer not to answer",
+    githubProfileUrl: "https://github.com/knighthacks",
+    gradDate: "2028-05-01",
+    id: "00000000-0000-4000-8000-000000000001",
+    lastName: "Participant",
+    levelOfStudy: "Undergraduate University (3+ year)",
+    linkedinProfileUrl: "https://www.linkedin.com/in/knighthacks",
+    major: "Computer Science",
+    phoneNumber: "4075550100",
+    raceOrEthnicity: "Prefer not to answer",
+    resumeUrl: null,
+    revision: 1,
+    school: "University of Central Florida",
+    shirtSize: "M",
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    userId: "00000000-0000-4000-8000-000000000002",
+    websiteUrl: "https://knighthacks.org",
+  } satisfies SelectHackerProfile;
+
   it("implements every SDK contract procedure and no extra participant surface", async () => {
     const { hackerParticipantV1Router } =
       await import("../../hacker-portal/router");
@@ -68,6 +97,33 @@ describe("hacker participant v1 API contract", () => {
       accepted: false,
       acceptedAt: null,
       definitionId: "00000000-0000-4000-8000-000000000001",
+    });
+  });
+
+  it("omits malformed optional legacy profile links from portal responses", async () => {
+    const { profileDto } = await import("../../hacker-portal/data");
+    const dto = profileDto({
+      ...profile,
+      githubProfileUrl: "not a valid GitHub profile",
+      linkedinProfileUrl: "https://example.com/not-linkedin",
+      websiteUrl: "not a URL",
+    });
+
+    expect(dto).toMatchObject({
+      githubProfileUrl: null,
+      linkedinProfileUrl: null,
+      websiteUrl: null,
+    });
+    expect(hackerProfileDtoSchema.safeParse(dto).success).toBe(true);
+  });
+
+  it("preserves valid optional profile links in portal responses", async () => {
+    const { profileDto } = await import("../../hacker-portal/data");
+
+    expect(profileDto(profile)).toMatchObject({
+      githubProfileUrl: "https://github.com/knighthacks",
+      linkedinProfileUrl: "https://www.linkedin.com/in/knighthacks",
+      websiteUrl: "https://knighthacks.org",
     });
   });
 });

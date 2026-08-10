@@ -1,3 +1,5 @@
+import type { z } from "zod";
+
 import { and, asc, eq, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -10,6 +12,7 @@ import {
   HackerProfile,
   HackerProfileRevision,
 } from "@forge/db/schemas/knight-hacks";
+import { hackerProfileFieldsSchema } from "@forge/validators";
 
 import type { WriteDb } from "../utils/db";
 import { RESUME_BUCKET_NAME } from "../utils/resume/security";
@@ -119,6 +122,14 @@ export async function loadParticipantProfile(userId: string) {
   return profile ?? null;
 }
 
+function parseLegacyOptionalField<T>(
+  schema: z.ZodType<T>,
+  value: string | null,
+): T | null {
+  const result = schema.safeParse(value);
+  return result.success ? result.data : null;
+}
+
 export function profileDto(profile: NonNullable<ParticipantProfileRow>) {
   return {
     country: profile.country,
@@ -128,18 +139,27 @@ export function profileDto(profile: NonNullable<ParticipantProfileRow>) {
     firstName: profile.firstName,
     foodAllergies: profile.foodAllergies,
     gender: profile.gender,
-    githubProfileUrl: profile.githubProfileUrl,
+    githubProfileUrl: parseLegacyOptionalField(
+      hackerProfileFieldsSchema.shape.githubProfileUrl,
+      profile.githubProfileUrl,
+    ),
     gradDate: profile.gradDate,
     lastName: profile.lastName,
     levelOfStudy: profile.levelOfStudy,
-    linkedinProfileUrl: profile.linkedinProfileUrl,
+    linkedinProfileUrl: parseLegacyOptionalField(
+      hackerProfileFieldsSchema.shape.linkedinProfileUrl,
+      profile.linkedinProfileUrl,
+    ),
     major: profile.major,
     phoneNumber: profile.phoneNumber,
     raceOrEthnicity: profile.raceOrEthnicity,
     revision: profile.revision,
     school: profile.school,
     shirtSize: profile.shirtSize,
-    websiteUrl: profile.websiteUrl,
+    websiteUrl: parseLegacyOptionalField(
+      hackerProfileFieldsSchema.shape.websiteUrl,
+      profile.websiteUrl,
+    ),
   };
 }
 
