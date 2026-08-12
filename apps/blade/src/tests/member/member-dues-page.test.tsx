@@ -91,6 +91,7 @@ const duesStatus = {
   lateYearWarning: false,
   paid: false,
   paidAt: null,
+  paymentsLocked: false,
   payableAcademicYear: {
     endYear: 2027,
     label: "2026-2027 academic school year",
@@ -137,5 +138,21 @@ describe("MemberDuesPayment", () => {
     );
     expect(html).toContain("Continue to payment");
     expect(html).toContain("Return home");
+  });
+
+  it("renders the admin-paused state without a payment action", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDuesPayment, {
+        duesStatus: {
+          ...duesStatus,
+          lateYearWarning: true,
+          paymentsLocked: true,
+        },
+      }),
+    );
+
+    expect(html).toContain("Dues payments are paused until further notice");
+    expect(html).not.toContain("Complete test payment");
+    expect(html).not.toContain("The school year is almost over");
   });
 });

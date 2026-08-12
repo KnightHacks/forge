@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Switch } from "@forge/ui/switch";
 import {
   Table,
   TableBody,
@@ -65,6 +66,8 @@ import { buildAdminMemberSearchParams } from "./params";
 
 type DashboardData = RouterOutputs["memberAdmin"]["getAdminMembers"];
 type MemberDetail = RouterOutputs["memberAdmin"]["getAdminMember"];
+type DuesPaymentConfiguration =
+  RouterOutputs["memberAdmin"]["getDuesPaymentConfiguration"];
 type DashboardMember = DashboardData["members"][number];
 type FilterField =
   | "alumni"
@@ -322,12 +325,14 @@ export function MemberAdminDashboard({
   canEdit,
   data,
   detail,
+  duesPaymentConfiguration,
   input,
   isOfficer,
 }: {
   canEdit: boolean;
   data: DashboardData;
   detail: MemberDetail | null;
+  duesPaymentConfiguration: DuesPaymentConfiguration;
   input: AdminMemberListInput;
   isOfficer: boolean;
 }) {
@@ -356,6 +361,26 @@ export function MemberAdminDashboard({
       setPendingDuesMemberId(null);
     },
   });
+  const paymentAvailability =
+    api.memberAdmin.setDuesPaymentsEnabled.useMutation({
+      onSuccess(result) {
+        toast.success(
+          result.paymentsEnabled
+            ? "Member dues payments enabled."
+            : "Member dues payments paused.",
+        );
+        startTransition(() => router.refresh());
+      },
+      onError(error) {
+        toast.error(
+          error.message || "Dues payment availability could not be updated.",
+        );
+      },
+    });
+  const paymentsEnabled = paymentAvailability.isPending
+    ? paymentAvailability.variables.paymentsEnabled
+    : (paymentAvailability.data?.paymentsEnabled ??
+      duesPaymentConfiguration.paymentsEnabled);
 
   const navigate = useCallback(
     (next: AdminMemberListInput, selectedMemberId?: string | null) => {
@@ -423,6 +448,32 @@ export function MemberAdminDashboard({
         <AdminPageHeader
           actions={
             <>
+              <div className="flex min-h-11 items-center gap-3 rounded-md border border-white/10 bg-background/60 px-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Member payments
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {paymentsEnabled ? "Enabled" : "Paused"}
+                  </p>
+                </div>
+                {canEdit ? (
+                  <Switch
+                    aria-label="Allow member dues payments"
+                    checked={paymentsEnabled}
+                    disabled={paymentAvailability.isPending}
+                    onCheckedChange={(enabled) => {
+                      paymentAvailability.mutate({
+                        paymentsEnabled: enabled,
+                      });
+                    }}
+                  />
+                ) : (
+                  <Badge variant="outline">
+                    {paymentsEnabled ? "Open" : "Closed"}
+                  </Badge>
+                )}
+              </div>
               <Button
                 type="button"
                 variant="outline"

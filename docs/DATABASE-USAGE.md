@@ -30,19 +30,22 @@ Notes:
 
 ## Club membership, dues, and events
 
-| Table export     | SQL table                     | Usage                                                                                                                                                                                     |
-| ---------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Member`         | `knight_hacks_member`         | Stores Blade club member profiles used for signup/profile updates, admin search/filtering, guild profiles, resumes, dues, event check-in, attendance, alumni roles, and bot leaderboards. |
-| `DuesPayment`    | `knight_hacks_dues_payment`   | Records yearly dues payments from Stripe/admin flows and gates dues-only event check-in and dues-paying member queries.                                                                   |
-| `OtherCompanies` | `knight_hacks_companies`      | Stores custom company names entered during member create/update when they are not in the constants list.                                                                                  |
-| `Event`          | `knight_hacks_event`          | Stores club and hackathon events synchronized with Discord/Google Calendar and used for listings, reminders, forms, feedback, issues, check-in, and attendance.                           |
-| `EventAttendee`  | `knight_hacks_event_attendee` | Records club member check-ins to events for attendee lists, attendance counts, member event history, and point awards.                                                                    |
-| `EventFeedback`  | `knight_hacks_event_feedback` | Legacy/unused feedback table; current feedback flows appear to use dynamic `FormsSchemas` and `FormResponse` records instead.                                                             |
+| Table export        | SQL table                         | Usage                                                                                                                                                                                     |
+| ------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Member`            | `knight_hacks_member`             | Stores Blade club member profiles used for signup/profile updates, admin search/filtering, guild profiles, resumes, dues, event check-in, attendance, alumni roles, and bot leaderboards. |
+| `DuesConfiguration` | `knight_hacks_dues_configuration` | Singleton configuration for whether members may start Stripe dues payments. This is operational state, not payment history.                                                               |
+| `DuesPayment`       | `knight_hacks_dues_payment`       | Records yearly dues payments from Stripe/admin flows and gates dues-only event check-in and dues-paying member queries.                                                                   |
+| `OtherCompanies`    | `knight_hacks_companies`          | Stores custom company names entered during member create/update when they are not in the constants list.                                                                                  |
+| `Event`             | `knight_hacks_event`              | Stores club and hackathon events synchronized with Discord/Google Calendar and used for listings, reminders, forms, feedback, issues, check-in, and attendance.                           |
+| `EventAttendee`     | `knight_hacks_event_attendee`     | Records club member check-ins to events for attendee lists, attendance counts, member event history, and point awards.                                                                    |
+| `EventFeedback`     | `knight_hacks_event_feedback`     | Legacy/unused feedback table; current feedback flows appear to use dynamic `FormsSchemas` and `FormResponse` records instead.                                                             |
 
 Notes:
 
 - `Member.discordUser` stores `ctx.session.user.name`, not the numeric Discord user ID.
 - `Member.phoneNumber` is nullable but unique.
+- `DuesConfiguration` accepts only the `global` row. A missing row is treated
+  as payments paused, and the migration seeds that safe default.
 - `DuesPayment` is unique per `(memberId, year)`.
 - `Event.roles` is a string array used by reminders and role-scoped event filtering.
 - `Event.start_datetime`/`end_datetime` are sometimes adjusted in create/update flows; preserve existing timezone/date behavior unless the task is explicitly to change it.

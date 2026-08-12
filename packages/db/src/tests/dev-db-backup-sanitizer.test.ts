@@ -85,6 +85,7 @@ describe("development database backup sanitizer", () => {
         "knight_hacks_club_team",
         "knight_hacks_club_team_role",
         "knight_hacks_discord_config",
+        "knight_hacks_dues_configuration",
       ]),
     );
   });
@@ -164,7 +165,7 @@ describe("development database backup sanitizer", () => {
     );
   });
 
-  it("removes non-team users and production credentials", () => {
+  it("removes production access and disables dues payments", () => {
     const sanitizer = teamDataSanitizerSql();
 
     expect(sanitizer).toMatch(/DELETE FROM auth_user/);
@@ -173,6 +174,9 @@ describe("development database backup sanitizer", () => {
     expect(sanitizer).toMatch(/access_token = NULL/);
     expect(sanitizer).toMatch(/id_token = NULL/);
     expect(sanitizer).toMatch(/stripe_payment_intent_id = NULL/);
+    expect(sanitizer).toMatch(
+      /UPDATE knight_hacks_dues_configuration\s+SET payments_enabled = FALSE;/,
+    );
   });
 
   it("keeps a mapped dev Discord event but resets production provider state", () => {

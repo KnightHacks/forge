@@ -6,8 +6,9 @@ Status: Complete
 
 These cases cover effective permission evaluation, admin member access,
 search/filter/pagination, enriched detail display, editing, deletion, and
-current dues controls. Role configuration, bulk operations, club analytics,
-and Discord role writes are excluded.
+current dues controls, and global member-payment availability. Role
+configuration, bulk operations, club analytics, and Discord role writes are
+excluded.
 
 ## Test placement plan
 
@@ -177,6 +178,23 @@ Expected observations:
 - Historical and unrelated active rows remain unchanged.
 - The UI reports the affected-member count.
 
+### TC-010: Editor manages target-owned files
+
+Setup:
+
+- A member has a profile picture and a resume; their Hacker may reference the
+  same resume.
+
+Action:
+
+- Preview, replace, and remove files from the member dialog.
+
+Expected observations:
+
+- Short-lived previews work and replacement objects belong to the target User.
+- Superseded profile pictures are removed.
+- A resume still referenced by Hacker is preserved.
+
 ### TC-011: Admin shell remains stable across member and admin routes
 
 Setup:
@@ -245,22 +263,26 @@ Expected observations:
   history render from the existing sources.
 - Dates are human-readable and neither Member ID nor User ID is presented.
 
-### TC-010: Editor manages target-owned files
+### TC-014: Editor controls member payment availability
 
 Setup:
 
-- A member has a profile picture and a resume; their Hacker may reference the
-  same resume.
+- An editor and a read-only member admin open `/admin/members` while member
+  payments are paused.
 
 Action:
 
-- Preview, replace, and remove files from the member dialog.
+- The editor enables member payments and reloads `/admin/members`.
+- The editor pauses member payments and reloads `/admin/members` again.
+- While payments are paused, an unpaid member attempts to start checkout.
 
 Expected observations:
 
-- Short-lived previews work and replacement objects belong to the target User.
-- Superseded profile pictures are removed.
-- A resume still referenced by Hacker is preserved.
+- After each reload, the control reflects the persisted state.
+- The paused checkout request returns `PRECONDITION_FAILED`.
+- Stripe is not called and no PaymentIntent is created for the rejected request.
+- The read-only admin sees the current state without an interactive switch.
+- Existing dues payment rows and paid statuses are unchanged.
 
 ## Negative / regression cases
 

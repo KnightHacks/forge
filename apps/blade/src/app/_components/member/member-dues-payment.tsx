@@ -10,7 +10,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Loader2 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
@@ -175,6 +175,21 @@ function PaymentSummary({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
           Dues support Knight Hacks membership programming and access for the
           selected academic school year.
         </p>
+      </div>
+    </div>
+  );
+}
+
+function DuesPaymentsLocked() {
+  return (
+    <div className={cn(dashboardNestedSurfaceClass, "space-y-4 p-5 md:p-6")}>
+      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-muted/20 text-muted-foreground">
+        <CalendarClock className="h-5 w-5" aria-hidden="true" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold tracking-normal">
+          Dues payments are paused until further notice
+        </h2>
       </div>
     </div>
   );
@@ -500,7 +515,7 @@ export function MemberDuesPayment({
   const router = useRouter();
   const apiUtils = api.useUtils();
   const [lateWarningOpen, setLateWarningOpen] = useState(
-    duesStatus.lateYearWarning,
+    duesStatus.lateYearWarning && !duesStatus.paymentsLocked,
   );
   const [successAcademicYear, setSuccessAcademicYear] = useState<string | null>(
     null,
@@ -544,10 +559,14 @@ export function MemberDuesPayment({
 
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-normal md:text-5xl">
-            Pay member dues
+            {duesStatus.paymentsLocked
+              ? "Member dues paused"
+              : "Pay member dues"}
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
-            Complete dues for the {duesStatus.payableAcademicYear.label}.
+            {duesStatus.paymentsLocked
+              ? "Dues payments are paused until further notice."
+              : `Complete dues for the ${duesStatus.payableAcademicYear.label}.`}
           </p>
         </div>
 
@@ -555,22 +574,32 @@ export function MemberDuesPayment({
           <Card
             className={cn(
               duesPaymentCardClass,
-              "mx-auto min-h-[clamp(36rem,calc(100svh-10rem),46rem)] w-full gap-0 overflow-visible",
+              "mx-auto w-full gap-0 overflow-visible",
+              !duesStatus.paymentsLocked &&
+                "min-h-[clamp(36rem,calc(100svh-10rem),46rem)]",
             )}
           >
             <CardHeader className="border-b border-border/70 px-5 py-5 md:px-6">
               <CardTitle className="text-lg leading-none tracking-normal">
-                Payment method
+                {duesStatus.paymentsLocked
+                  ? "Payments paused"
+                  : "Payment method"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 p-4 md:p-6 lg:p-8">
-              <PaymentSummary duesStatus={duesStatus} />
-              <DuesPaymentForm
-                duesStatus={duesStatus}
-                initialPaymentError={initialPaymentError}
-                initialPaymentIntent={initialPaymentIntent}
-                onPaid={handlePaid}
-              />
+              {duesStatus.paymentsLocked ? (
+                <DuesPaymentsLocked />
+              ) : (
+                <>
+                  <PaymentSummary duesStatus={duesStatus} />
+                  <DuesPaymentForm
+                    duesStatus={duesStatus}
+                    initialPaymentError={initialPaymentError}
+                    initialPaymentIntent={initialPaymentIntent}
+                    onPaid={handlePaid}
+                  />
+                </>
+              )}
             </CardContent>
           </Card>
         </section>

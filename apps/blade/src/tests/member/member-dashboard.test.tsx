@@ -104,6 +104,7 @@ const paidDuesStatus = {
   lateYearWarning: false,
   paid: true,
   paidAt: new Date("2026-08-15T12:00:00Z"),
+  paymentsLocked: false,
   payableAcademicYear: {
     endYear: 2027,
     label: "2026-2027 academic school year",
@@ -295,5 +296,21 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Unpaid");
     expect(html).toContain("Pay dues");
     expect(html).toContain('href="/member/dues"');
+  });
+
+  it("renders the admin-paused dues state without a pay link", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, {
+        duesStatus: { ...unpaidDuesStatus, paymentsLocked: true },
+        attendance,
+        events,
+        member,
+      }),
+    );
+
+    expect(html).toContain("Dues payments are paused until further notice");
+    expect(html).toContain("Payments paused");
+    expect(html).toContain("Paused");
+    expect(html).not.toContain('href="/member/dues"');
   });
 });

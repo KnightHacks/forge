@@ -25,6 +25,7 @@ import "@forge/db/schemas/discord";
 
 import {
   Company,
+  DuesConfiguration,
   DuesPayment,
   Employment,
   Event,
@@ -35,6 +36,7 @@ import {
 import { logger, serializeCsvRows } from "@forge/utils";
 import {
   adminMemberDeleteSchema,
+  adminMemberDuesConfigurationSchema,
   adminMemberDuesStatusSchema,
   adminMemberIdSchema,
   adminMemberListSchema,
@@ -61,6 +63,10 @@ import { getUsCity } from "../utils/career/us-cities";
 import { dataUrlByteSize, dataUrlMimeType } from "../utils/data-url";
 import { isUniqueViolation } from "../utils/db";
 import { getDiscordEngagement } from "../utils/discord/engagement";
+import {
+  DUES_CONFIGURATION_ID,
+  getDuesPaymentsEnabled,
+} from "../utils/dues/configuration";
 import {
   buildDuesStatus,
   getDuesPaymentIdsToInvalidate,
@@ -656,6 +662,11 @@ async function findMemberOrThrow(memberId: string) {
 }
 
 export const memberAdminRouter = {
+  getDuesPaymentConfiguration: permProcedure.query(async ({ ctx }) => {
+    assertCanReadMembers(ctx);
+    return { paymentsEnabled: await getDuesPaymentsEnabled() };
+  }),
+
   getAdminMembers: permProcedure
     .input(adminMemberListSchema)
     .query(async ({ ctx, input }) => {
@@ -926,6 +937,81 @@ export const memberAdminRouter = {
           color: "uhoh_red",
           message: `Failed to delete Member profile ${input.memberId}.`,
           title: "Admin Member Delete Failed",
+          userId: ctx.session.user.discordUserId,
+        });
+        throw error;
+      }
+    }),
+
+  setDuesPaymentsEnabled: permProcedure
+    .input(adminMemberDuesConfigurationSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanEditMembers(ctx);
+      try {
+        const result = await db.transaction(async (tx) => {
+          const currentPaymentsEnabled = await getDuesPaymentsEnabled(tx);
+          if (currentPaymentsEnabled === input.paymentsEnabled) {
+            return {
+              changed: false,
+              paymentsEnabled: currentPaymentsEnabled,
+            };
+          }
+
+          const now = new Date();
+          await tx
+            .insert(DuesConfiguration)
+            .values({
+              id: DUES_CONFIGURATION_ID,
+              paymentsEnabled: input.paymentsEnabled,
+              updatedAt: now,
+            })
+            .onConflictDoUpdate({
+              set: {
+                paymentsEnabled: input.paymentsEnabled,
+                updatedAt: now,
+              },
+              target: DuesConfiguration.id,
+            });
+          await createAdminAuditEvent(
+            {
+              actionKey: "member.dues.payment_availability_updated",
+              actor: ctx.session.user,
+              changes: [
+                {
+                  after: input.paymentsEnabled,
+                  before: currentPaymentsEnabled,
+                  field: "paymentsEnabled",
+                },
+              ],
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: DUES_CONFIGURATION_ID,
+                  targetLabel: "Member dues payments",
+                  targetType: "dues_configuration",
+                },
+              ],
+            },
+            tx,
+          );
+
+          return { changed: true, paymentsEnabled: input.paymentsEnabled };
+        });
+
+        if (result.changed) {
+          await auditAdminMutation({
+            color: "success_green",
+            message: `${input.paymentsEnabled ? "Enabled" : "Paused"} member dues payments.`,
+            title: "Member Dues Payment Availability Changed",
+            userId: ctx.session.user.discordUserId,
+          });
+        }
+        return result;
+      } catch (error) {
+        await auditAdminMutation({
+          color: "uhoh_red",
+          message: "Failed to change member dues payment availability.",
+          title: "Member Dues Payment Availability Change Failed",
           userId: ctx.session.user.discordUserId,
         });
         throw error;

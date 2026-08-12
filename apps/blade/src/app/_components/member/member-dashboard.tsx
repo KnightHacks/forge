@@ -78,6 +78,17 @@ function DuesStatusBadge({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
     );
   }
 
+  if (duesStatus.paymentsLocked) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-white/10 bg-muted/20 text-muted-foreground"
+      >
+        Paused
+      </Badge>
+    );
+  }
+
   return (
     <Badge
       variant="outline"
@@ -121,13 +132,21 @@ function DuesStatusTile({
           >
             {duesStatus.paid
               ? `Paid for the ${duesStatus.paymentAcademicYear.label}.`
-              : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
+              : duesStatus.paymentsLocked
+                ? "Dues payments are paused until further notice."
+                : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
           </p>
         </div>
         <DuesStatusBadge duesStatus={duesStatus} />
       </div>
 
-      {!duesStatus.paid && (
+      {!duesStatus.paid && duesStatus.paymentsLocked && (
+        <Button disabled size={compact ? "sm" : "md"} className="w-full">
+          Payments paused
+        </Button>
+      )}
+
+      {!duesStatus.paid && !duesStatus.paymentsLocked && (
         <Button asChild size={compact ? "sm" : "md"} className="w-full gap-2">
           <RouteTransitionLink href={MEMBER_DUES_PATH}>
             Pay dues

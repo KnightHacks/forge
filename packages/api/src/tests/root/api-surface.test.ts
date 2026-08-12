@@ -59,7 +59,7 @@ describe("client-facing API surface", () => {
     );
     expect(
       surface.filter((path) => path.startsWith("memberAdmin.")),
-    ).toHaveLength(12);
+    ).toHaveLength(14);
     expect(surface.some((path) => path.startsWith("member-admin."))).toBe(
       false,
     );

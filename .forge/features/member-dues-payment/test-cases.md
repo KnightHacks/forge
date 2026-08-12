@@ -36,8 +36,12 @@ pnpm --filter=@forge/blade e2e
 
 ## Implementation coverage
 
-- All 22 approved cases have direct automated coverage.
-- No cases are partially covered or missing.
+- All 23 approved cases have automated coverage at the appropriate layer.
+- TC-021 is intentionally split across the admin control component test, API
+  authorization/configuration tests, dues-router payment gate tests, and member
+  E2E paused/enabled scenarios rather than duplicated as one monolithic browser
+  test.
+- No cases are missing.
 - Stripe network calls remain mocked by design, while Playwright covers the
   Blade payment orchestration, durable database result, and redirects through
   deterministic E2E payment mode.
@@ -370,6 +374,33 @@ Expected observations:
 - Guild/profile content remains primary.
 - Dues status/action is visible as a compact quick action.
 - No desktop-only oversized dues panel dominates the first mobile screen.
+
+### TC-021: Admin payment availability controls payment setup
+
+Setup:
+
+- An authenticated member is unpaid.
+- An authorized member editor can access `/admin/members`.
+
+Action:
+
+- Pause member payments from the admin member page, then read dues status and
+  attempt to create a PaymentIntent.
+- Render the unpaid member dashboard and `/member/dues` paused states.
+- Enable member payments and retry.
+
+Expected observations:
+
+- While paused, status reports payments locked, direct PaymentIntent creation
+  returns `PRECONDITION_FAILED`, and Stripe is not called.
+- The dashboard shows a neutral paused state without a pay link.
+- `/member/dues` says that payments are paused until further notice and renders
+  no Stripe or E2E payment action.
+- When enabled, the existing dues flow is available immediately without
+  changing its paid-status or academic-year logic.
+- A read-only member admin calling
+  `memberAdmin.setDuesPaymentsEnabled` receives `FORBIDDEN`, and a subsequent
+  configuration read confirms that the persisted setting is unchanged.
 
 ## Negative / regression cases
 

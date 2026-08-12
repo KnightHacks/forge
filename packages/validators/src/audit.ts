@@ -201,6 +201,12 @@ export const AUDIT_ACTION_CATALOG = {
     "Invalidated effective dues",
     ["affectedMemberCount", "referenceAcademicYear", "referenceDate"],
   ),
+  "member.dues.payment_availability_updated": policy(
+    "members",
+    "Changed member dues payment availability",
+    [],
+    ["paymentsEnabled"],
+  ),
   "member.dues.payment_started": policy(
     "members",
     "Started member dues payment",
@@ -907,6 +913,7 @@ export const AUDIT_TARGET_TYPES = [
   "discord_config",
   "discord_role",
   "dues_population",
+  "dues_configuration",
   "employment",
   "email_send",
   "email_template",

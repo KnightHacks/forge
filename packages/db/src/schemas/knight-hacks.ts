@@ -1993,6 +1993,27 @@ export type SelectHackathonEventReminderDelivery =
 export const InsertEventAttendeeSchema = createInsertSchema(EventAttendee);
 export const InsertHackerAttendeeSchema = createInsertSchema(HackerAttendee);
 
+export const DuesConfiguration = createTable(
+  "dues_configuration",
+  (t) => ({
+    id: t.varchar({ length: 32 }).notNull().primaryKey(),
+    paymentsEnabled: t.boolean().notNull().default(false),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (table) => ({
+    singleton: check(
+      "knight_hacks_dues_configuration_singleton_check",
+      sql`${table.id} = 'global'`,
+    ),
+  }),
+);
+
+export type InsertDuesConfiguration = typeof DuesConfiguration.$inferInsert;
+export type SelectDuesConfiguration = typeof DuesConfiguration.$inferSelect;
+
 export const DuesPayment = createTable(
   "dues_payment",
   (t) => ({

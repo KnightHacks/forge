@@ -25,8 +25,8 @@ reusable inputs live in `@forge/validators`.
   redirected to sign-in by the page.
 - `READ_MEMBERS`, `EDIT_MEMBERS`, or `IS_OFFICER` may list/filter members and
   read a member detail.
-- `EDIT_MEMBERS` or `IS_OFFICER` may update/delete members and change current
-  dues status.
+- `EDIT_MEMBERS` or `IS_OFFICER` may update/delete members, change current dues
+  status, and control member-initiated payment availability.
 - `IS_OFFICER` remains the global override implemented by `controlPerms`.
 - `READ_CLUB_DATA` alone does not grant access to member PII.
 - Client-side visibility is UX only; every query and mutation enforces policy
@@ -59,30 +59,35 @@ reusable inputs live in `@forge/validators`.
   typed boolean map.
 - `roles.hasPermission`: permission-aware query accepting a validated `or` or
   `and` expression and returning a boolean for navigation/page gates.
-- `member.getAdminMembers`: requires read-member access and returns rows,
+- `memberAdmin.getAdminMembers`: requires read-member access and returns rows,
   total count, page count, normalized page, and available facet values/counts.
-- `member.getAdminMember`: requires read-member access and returns one full
+- `memberAdmin.getAdminMember`: requires read-member access and returns one full
   member record with derived current dues status plus retained dues history,
   event check-ins and operator attribution, event totals, normalized
   employment/company/location history, Guild location, linked roles, and
   archived Discord engagement.
-- `member.updateAdminMember`: requires edit-member access, validates a member
+- `memberAdmin.updateAdminMember`: requires edit-member access, validates a member
   ID plus member profile values, updates the selected member rather than the
   caller, and keeps the code-owned signup response consistent.
-- `member.deleteAdminMember`: requires edit-member access and deletes the
+- `memberAdmin.deleteAdminMember`: requires edit-member access and deletes the
   selected Member row, signup response, dues rows, and unreferenced member
   uploads. It retains the User, roles, permissions, sessions, and Hacker data.
-- `member.setAdminDuesStatus`: requires edit-member access. Marking paid creates
+- `memberAdmin.setAdminDuesStatus`: requires edit-member access. Marking paid creates
   a manual active record for the payable year with the configured dues amount
   and no Stripe intent, or reactivates an existing payable-year record without
   rewriting its payment metadata. Revoking repeatedly resolves effective rows
   and marks them inactive until the member is unpaid; it does not delete
   history.
-- `member.invalidateEffectiveDues`: requires officer access and, in one
+- `memberAdmin.getDuesPaymentConfiguration`: requires read-member access and
+  returns the persisted global payment-availability setting.
+- `memberAdmin.setDuesPaymentsEnabled`: requires edit-member access, upserts the
+  singleton setting transactionally, and records the before/after value in the
+  durable admin audit log.
+- `memberAdmin.invalidateEffectiveDues`: requires officer access and, in one
   transaction, repeatedly resolves and invalidates rows until every affected
   member is unpaid. The returned count is distinct affected members rather than
   modified rows.
-- `member.exportAdminMembers`: requires read-member access and returns an
+- `memberAdmin.exportAdminMembers`: requires read-member access and returns an
   escaped CSV for every result matching the current filters and fuzzy search.
 - Admin profile-picture and resume procedures resolve the target User from the
   Member UUID, preserve object-prefix ownership, and require edit-member access.
@@ -105,9 +110,11 @@ reusable inputs live in `@forge/validators`.
 
 ## Data / migration / compatibility
 
-- No schema migration is required. Existing `Roles`, `Permissions`, `Member`,
-  `FormResponse`, `DuesPayment`, `Event`, `EventAttendee`, `Company`,
-  `Employment`, and Discord archive rows remain authoritative.
+- Existing `Roles`, `Permissions`, `Member`, `FormResponse`, `DuesPayment`,
+  `Event`, `EventAttendee`, `Company`, `Employment`, and Discord archive rows
+  remain authoritative for their existing domains.
+- Add one `DuesConfiguration` singleton row keyed by `global`. It defaults to
+  `paymentsEnabled = false`; a missing row also reads as paused.
 - Manual dues records use cents, the same configured price, academic-year
   calculation, unique member/year rule, and active/stale semantics as Stripe
   records.

@@ -6,6 +6,15 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-11: Human replaced the hardcoded August 31 cutoff with an
+  admin-controlled payment-availability setting on `/admin/members`. The
+  persisted setting defaults to paused, uses existing edit-member access, and
+  is enforced before Stripe PaymentIntent creation.
+- 2026-08-11: Superseded decision: the initial request was a one-time
+  dues-payment pause through `2026-08-31T00:00:00Z`. It was replaced later that
+  day by the admin-controlled payment-availability setting above. The approved
+  member-facing paused copy and unchanged paid-status/academic-year behavior
+  remain in effect.
 - 2026-07-15: Human confirmed the feature bundle is complete; normalized all
   artifact status fields to `Complete`.
 - 2026-06-26: Human selected member dues payment as the next feature before the admin member dashboard because admin member management needs real dues status/history to build on.
@@ -70,6 +79,12 @@ Current phase: Complete
 - [x] Resolve and implement the card-only vs. durable bank-payment-attempt decision.
 - [x] Add a visible five-second success countdown and immediate dashboard action.
 - [x] Re-run Blade E2E after the separate Blade dev server releases the Next.js development lock.
+- [x] Replace the temporary date cutoff in the feature artifacts.
+- [x] Add persisted dues configuration and admin API contracts.
+- [x] Enforce admin-controlled availability before Stripe setup.
+- [x] Add the payment-availability control to `/admin/members`.
+- [x] Generate and verify the dues configuration migration.
+- [x] Run targeted and repository validation for the admin-controlled setting.
 
 ## Validation / commands
 
@@ -123,6 +138,31 @@ Current phase: Complete
 - 2026-06-27: Card-only/countdown update targeted API and Blade typecheck/lint: passed.
 - 2026-06-27: `pnpm analyze:react apps/blade/src/app/_components/member/member-dues-payment.tsx`: passed, 1 file / 1 exported component / 0 failures.
 - 2026-06-27: Targeted `member-dues-payment.spec.ts` Playwright run: passed, 5 tests. The success-flow case verifies the visible countdown changes from 5 to 4 and the immediate dashboard action works.
+- 2026-08-11: `pnpm --filter=@forge/validators test`: passed, 21 files / 255 tests.
+- 2026-08-11: `NEXT_PUBLIC_BLADE_URL=http://localhost:3000 pnpm --filter=@forge/api test`: passed, 83 files / 574 tests; 16 files / 148 tests skipped by their existing conditions.
+- 2026-08-11: `NEXT_PUBLIC_BLADE_URL=http://localhost:3000 pnpm --filter=@forge/blade test`: passed, 123 files / 701 tests.
+- 2026-08-11: Final focused validator/API/Blade lock suites passed, 5 / 16 / 10 tests respectively.
+- 2026-08-11: `pnpm --filter=@forge/validators typecheck`, `pnpm --filter=@forge/api typecheck`, and `pnpm --filter=@forge/blade typecheck`: passed after refreshing ignored generated declarations/route types from the rewritten main branch.
+- 2026-08-11: `pnpm analyze:react:changed`: passed, 5 files / 3 components / 0 failures.
+- 2026-08-11: `pnpm format`: passed across the workspace.
+- 2026-08-11: `pnpm lint`: passed across the workspace with existing warnings only and no errors.
+- 2026-08-11: `pnpm typecheck`: dues-touched packages passed; the workspace command remains blocked by unrelated stale Khix `.next` route types that reference three removed auth/TRPC routes.
+- 2026-08-11: Targeted `member-dues-payment.spec.ts` Playwright run: passed, 5 tests in the locked state.
+- 2026-08-11: `git diff --check`: passed.
+- 2026-08-11: Admin-controlled availability follow-up: `pnpm db:generate`
+  generated migration `0040`; `pnpm db:migrate` passed against the local
+  development database.
+- 2026-08-11: Full tests passed for `@forge/db` (97), `@forge/validators`
+  (255), `@forge/api` (577), and `@forge/blade` (703), excluding each suite's
+  existing conditional skips.
+- 2026-08-11: Targeted dues Playwright coverage passed all 6 scenarios with
+  payment availability explicitly configured per test. Desktop and 390px
+  mobile visual review passed, including a live enabled/paused toggle cycle.
+- 2026-08-11: `pnpm analyze:react:changed` passed, 8 files / 4 components / 0
+  failures.
+- 2026-08-11: Final repository gates passed: `pnpm format` (20 tasks),
+  `pnpm lint` (27 tasks, warnings only), and `pnpm typecheck` (29 tasks).
+- 2026-08-11: Focused admin dues-configuration API tests passed, 3 tests.
 
 ## Links
 

@@ -38,9 +38,9 @@ history for future admin/alumni surfaces.
   payment for their own member row only.
 - Stripe webhook fulfillment can record a successful payment only when the
   PaymentIntent metadata points to an existing member/user pair.
-- Officer/admin dues management, manual comp/revoke, and rollover controls are
-  out of scope for this slice. Future admin work must enforce permissions at the
-  tRPC boundary.
+- Admins with read-member access can read global payment availability. Admins
+  with edit-member access can update it. Other dues management continues to
+  use its existing access rules.
 
 ## Architecture / data flow
 
@@ -52,6 +52,8 @@ history for future admin/alumni surfaces.
    component for unpaid members. In normal mode, the server route creates the
    Stripe PaymentIntent before rendering so the client receives an initial
    `clientSecret` and does not sit on an indefinite setup skeleton.
+   While admin configuration has payments disabled, it skips PaymentIntent
+   creation and renders the paused state instead.
 3. The payment component renders Stripe's Payment Element with the initial
    `clientSecret`, confirms payment with
    `stripe.confirmPayment({ redirect: "if_required" })`, and can retry
@@ -61,7 +63,7 @@ history for future admin/alumni surfaces.
    records the dues row idempotently before the UI shows success and redirects.
 5. `/api/membership` handles Stripe webhook `payment_intent.succeeded` events and
    calls the same shared idempotent recording helper used by `confirmPayment`.
-6. `@forge/db` owns the `DuesPayment` schema and migration only.
+6. `@forge/db` owns dues payment history and the singleton dues configuration.
 7. `@forge/validators` owns pure dues helper functions and output/input schemas
    that are shared by API, Blade, and tests.
 
@@ -72,7 +74,8 @@ history for future admin/alumni surfaces.
   - Access: protected member.
   - Input: none.
   - Output: current/base academic year, payable year, formatted labels,
-    `paid`, `paymentYear`, `paidAt`, `amount`, `lateYearWarning`.
+    `paid`, `paymentYear`, `paidAt`, `amount`, `lateYearWarning`, and the
+    admin-controlled payment-availability state.
   - Error: `NOT_FOUND` when the authenticated user has no `Member` row.
 - `dues.createPaymentIntent`
   - Access: protected member.
@@ -81,6 +84,7 @@ history for future admin/alumni surfaces.
     - `NOT_FOUND` when no member exists.
     - `CONFLICT` when an active dues row already counts the member as paid for
       the relevant academic year.
+    - `PRECONDITION_FAILED` while admins have payments paused.
     - `INTERNAL_SERVER_ERROR` when Stripe does not return a client secret.
   - Stripe metadata must include `member_id`, `user_id`, and
     `academic_year_start`.
@@ -107,6 +111,7 @@ history for future admin/alumni surfaces.
 - Add reusable dues schemas/helpers to `@forge/validators`.
 - `paymentIntentId` is a non-empty Stripe PaymentIntent id string.
 - Academic-year helpers use UTC dates to avoid local timezone rollover bugs.
+- Admin payment-availability input is a strict boolean.
 - Amounts are represented in cents for new writes.
 
 ## Data / migration / compatibility
@@ -128,6 +133,10 @@ history for future admin/alumni surfaces.
 - If an inactive row already exists for the current base academic year, the
   payable year becomes the next academic year. The inactive row remains history;
   the new payment gets a separate row and does not overwrite/delete history.
+- Add a singleton `DuesConfiguration` row keyed by `global`, with
+  `paymentsEnabled boolean not null default false`. Missing configuration is
+  also treated as paused so a partial deployment cannot accidentally open
+  payments.
 
 ## Discord integration
 
@@ -145,6 +154,8 @@ Would this require a developer change next year?
   configurable pricing is out of scope.
 - Active/stale rollover requires future admin UI, but the database/API model in
   this slice preserves the state needed for that admin-controlled path.
+- Payment availability no longer requires a developer change because authorized
+  member editors can change the persisted setting from `/admin/members`.
 
 ## React / frontend constraints
 
@@ -157,6 +168,9 @@ Would this require a developer change next year?
   styling.
 - The late-year warning is a dialog shown on `/member/dues` entry from May 31
   through July 31. It has a continue/dismiss action and a return-home action.
+- While payments are paused, the member dashboard replaces the pay action with
+  a neutral unavailable state and `/member/dues` says that payments are paused
+  until further notice. No Stripe form or retry action is rendered.
 - After successful confirmation, show a short centered success dialog/state
   with a visible countdown from five seconds. Redirect to `/member/dashboard`
   when it completes and provide a button that returns there immediately.
@@ -176,13 +190,18 @@ Would this require a developer change next year?
 - `packages/api/src/tests/dues/router.test.ts`
   - status: unpaid, paid active, stale current-year unpaid/payable next year
   - create PaymentIntent: no member, duplicate paid, Stripe metadata/options
+  - create PaymentIntent: admin pause rejects before Stripe
   - confirm PaymentIntent: succeeded inserts, idempotent repeat, processing,
     failed/incomplete, wrong member/user
+- `packages/api/src/tests/admin/dues-configuration.test.ts`
+  - read-member access can inspect payment availability
+  - edit-member access can update and audit payment availability
+  - read-only mutation attempts return `FORBIDDEN` without changing the setting
 - `apps/blade/src/tests/member/member-dashboard.test.tsx`
   - dashboard paid/unpaid rendering and dues link/status styles.
 - `apps/blade/src/tests/member/member-dues-page.test.tsx`
-  - payment page copy, late warning dialog copy, and success/processing/error
-    client states where practical with mocks.
+  - payment page copy, paused state, late warning dialog copy, and
+    success/processing/error client states where practical with mocks.
 - `apps/blade/src/tests/e2e/member-dues-payment.spec.ts`
   - unpaid member dashboard CTA routes to `/member/dues`
   - E2E payment shows the countdown/early-return action, marks dues paid, and
