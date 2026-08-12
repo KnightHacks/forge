@@ -14,6 +14,10 @@ export const FORM_LINEAR_SCALE_ENDPOINT_MIN = -1_000;
 export const FORM_LINEAR_SCALE_ENDPOINT_MAX = 1_000;
 export const FORM_LINEAR_SCALE_MAX_SPAN = 20;
 
+export function countNonWhitespaceCharacters(value: string) {
+  return value.replace(/\s/g, "").length;
+}
+
 export const formKindSchema = z.enum(["general", "event_feedback", "system"]);
 export const formStateSchema = z.enum(["draft", "published", "archived"]);
 export const formResponseModeSchema = z.enum([
@@ -280,7 +284,13 @@ function parseQuestionValue(
   switch (question.type) {
     case "short_text":
     case "paragraph":
-      return z.string().max(question.maxLength).parse(value);
+      return z
+        .string()
+        .refine(
+          (text) => countNonWhitespaceCharacters(text) <= question.maxLength,
+          `${question.prompt} must be ${question.maxLength} non-whitespace characters or fewer.`,
+        )
+        .parse(value);
     case "multiple_choice":
     case "dropdown":
       return parseChoiceValue(question, value, preserved);

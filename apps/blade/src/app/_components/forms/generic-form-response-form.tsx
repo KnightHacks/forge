@@ -11,6 +11,7 @@ import { Label } from "@forge/ui/label";
 import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
 import {
+  countNonWhitespaceCharacters,
   FORM_LINEAR_SCALE_ENDPOINT_MAX,
   FORM_LINEAR_SCALE_ENDPOINT_MIN,
   FORM_LINEAR_SCALE_MAX_SPAN,
@@ -382,15 +383,41 @@ function QuestionControl({
     );
   }
 
-  if (question.type === "paragraph") {
+  if (question.type === "short_text" || question.type === "paragraph") {
+    const textValue = typeof value === "string" ? value : "";
+    const characterCount = countNonWhitespaceCharacters(textValue);
+    const countId = `${question.id}-character-count`;
+    const isOverLimit = characterCount > question.maxLength;
+
     return (
-      <Textarea
-        aria-label={question.prompt}
-        className="min-h-32 min-w-0 bg-background/70 text-base sm:text-sm"
-        maxLength={question.maxLength}
-        onChange={(event) => onChange(event.target.value)}
-        value={typeof value === "string" ? value : ""}
-      />
+      <div className="grid min-w-0 gap-2">
+        {question.type === "paragraph" ? (
+          <Textarea
+            aria-describedby={countId}
+            aria-invalid={isOverLimit}
+            aria-label={question.prompt}
+            className="min-h-32 min-w-0 bg-background/70 text-base sm:text-sm"
+            onChange={(event) => onChange(event.target.value)}
+            value={textValue}
+          />
+        ) : (
+          <Input
+            aria-describedby={countId}
+            aria-invalid={isOverLimit}
+            aria-label={question.prompt}
+            className="h-11 min-w-0 bg-background/70 text-base sm:text-sm"
+            onChange={(event) => onChange(event.target.value)}
+            type="text"
+            value={textValue}
+          />
+        )}
+        <p
+          className={`text-right font-mono text-sm ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}
+          id={countId}
+        >
+          {characterCount} / {question.maxLength} non-whitespace characters
+        </p>
+      </div>
     );
   }
 
@@ -462,19 +489,16 @@ function QuestionControl({
   }
 
   const inputType =
-    question.type === "short_text"
-      ? "text"
-      : question.type === "phone"
-        ? "tel"
-        : question.type === "link"
-          ? "url"
-          : question.type;
+    question.type === "phone"
+      ? "tel"
+      : question.type === "link"
+        ? "url"
+        : question.type;
   return (
     <Input
       aria-label={question.prompt}
       className="h-11 min-w-0 bg-background/70 text-base sm:text-sm"
       max={"max" in question ? question.max : undefined}
-      maxLength={"maxLength" in question ? question.maxLength : undefined}
       min={"min" in question ? question.min : undefined}
       inputMode={question.type === "phone" ? "tel" : undefined}
       onChange={(event) =>
