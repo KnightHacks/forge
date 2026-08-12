@@ -11,7 +11,10 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
   const [disableButton, setDisableButton] = useState<boolean>(false);
 
   useEffect(() => {
-    const month = new Date().getMonth();
+    const currentDate = new Date();
+    const month = currentDate.getMonth();
+    const constitutionDuesUnlockDate = new Date(2026, 7, 31);
+    const constitutionDuesLockActive = currentDate < constitutionDuesUnlockDate;
 
     if (
       (member.school !== "University of Central Florida" &&
@@ -21,7 +24,8 @@ export default function PaymentButton({ member }: { member: InsertMember }) {
         member.school !== "DeVry University Orlando" &&
         member.school !== "Johnson University Florida" &&
         member.school !== "Full Sail University") ||
-      (month > 3 && month < 7) // disable during summer months
+      (month > 3 && month < 7) || // disable during summer months
+      constitutionDuesLockActive
     ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisableButton(true);
