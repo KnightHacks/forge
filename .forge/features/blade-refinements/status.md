@@ -4,9 +4,11 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Decision log
 
-- 2026-08-12: Start from production `origin/main`, not `reforge/main` or an
-  existing dirty worktree. Created `/Users/dvidal/Documents/forge-refinements`
-  on `reforge/refinements` at `78857b85`.
+- 2026-08-12: Start from production `origin/main` in the isolated
+  `/Users/dvidal/Documents/forge-refinements` worktree at `78857b85`.
+- 2026-08-12: Forge is the current product/project name. Reforge is retired and
+  must not be used for new branch or workflow naming. The shared branch is
+  `forge/refinements`.
 - 2026-08-12: Use one `blade-refinements` bundle for the long refinement slice;
   the human explicitly waived the preference to split unrelated small changes.
 - 2026-08-12: Desktop admin navigation uses a top-left explicit opener, never
@@ -54,7 +56,7 @@ Current phase: Bundle approved / ready for technical discovery
 - 2026-08-12: The human approved all five remaining product decisions and the
   spec/SRD/test-case bundle for implementation.
 - 2026-08-12: Contributors may implement directly on the shared
-  `reforge/refinements` branch for this agent-first trial.
+  `forge/refinements` branch for this agent-first trial.
 - 2026-08-12: Treat agent-assisted development as a first-class contribution
   experience. Agent use is encouraged, while each contributor remains responsible
   for the scope, code, decisions, validation, and result they submit. The bundle
@@ -73,7 +75,7 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Contributor coordination
 
-- `reforge/refinements` is the shared implementation branch and bundle source of
+- `forge/refinements` is the shared implementation branch and bundle source of
   truth. Contributors work and push directly on this branch for now.
 - This is an agent-first development trial. Contributors are encouraged to use
   coding agents as real collaborators, not as an afterthought. The approved
@@ -158,8 +160,8 @@ Current phase: Bundle approved / ready for technical discovery
 ## Validation / commands
 
 - `git fetch origin main`: fetched production base successfully.
-- `git worktree add -b reforge/refinements /Users/dvidal/Documents/forge-refinements origin/main`:
-  created isolated worktree at `78857b85`.
+- Isolated worktree creation from `origin/main`: created
+  `/Users/dvidal/Documents/forge-refinements` at `78857b85`.
 - `/Users/dvidal/Documents/forge/node_modules/.bin/tsx scripts/create-forge-feature.ts blade-refinements "Blade Refinements"`:
   created the four-file bundle. The fresh worktree has no local `node_modules`, so
   the already-installed runtime from the source worktree was used without
@@ -195,8 +197,8 @@ Current phase: Bundle approved / ready for technical discovery
 - Triage artifact:
   `/Users/dvidal/Documents/Codex/2026-08-12/pleas/outputs/forge-refinements-triage.md`
 - Worktree: `/Users/dvidal/Documents/forge-refinements`
-- Branch: `reforge/refinements`
-- Remote branch: `https://github.com/KnightHacks/forge/tree/reforge/refinements`
+- Branch: `forge/refinements`
+- Remote branch: `https://github.com/KnightHacks/forge/tree/forge/refinements`
 - Feature bundle: `.forge/features/blade-refinements/`
 - PRs: none
 - Issues: GitHub #503, GitHub #504, and the supplied Blade issue/thread context

@@ -11,7 +11,7 @@ form banner, and preserve current permission, audit, Forms, and Discord delivery
 invariants.
 
 This bundle starts from `origin/main` commit `78857b85` on branch
-`reforge/refinements` in `/Users/dvidal/Documents/forge-refinements`.
+`forge/refinements` in `/Users/dvidal/Documents/forge-refinements`.
 
 ## Relevant principles
 
