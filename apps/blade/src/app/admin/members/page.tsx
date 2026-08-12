@@ -31,13 +31,14 @@ export default async function AdminMembersPage({
   const { input, selectedMemberId } = parseAdminMemberSearchParams(
     await searchParams,
   );
-  const [data, detail] = await Promise.all([
+  const [data, detail, duesPaymentConfiguration] = await Promise.all([
     api.memberAdmin.getAdminMembers(input),
     selectedMemberId
       ? api.memberAdmin
           .getAdminMember({ memberId: selectedMemberId })
           .catch(() => null)
       : Promise.resolve(null),
+    api.memberAdmin.getDuesPaymentConfiguration(),
   ]);
 
   return (
@@ -49,6 +50,7 @@ export default async function AdminMembersPage({
       }
       data={data}
       detail={detail}
+      duesPaymentConfiguration={duesPaymentConfiguration}
       input={input}
       isOfficer={effectivePermissions.IS_OFFICER === true}
     />

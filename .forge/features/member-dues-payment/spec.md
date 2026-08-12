@@ -16,8 +16,8 @@ dues payment history instead of treating each year's rollover as deleted data.
 ## Users / actors
 
 - Signed-in members with completed member profiles.
-- Future admins/officers who need dues history and current dues status for the
-  admin member dashboard.
+- Admin member editors and officers who control whether self-service payments
+  are available.
 
 ## User-visible interface
 
@@ -26,6 +26,9 @@ dues payment history instead of treating each year's rollover as deleted data.
   `/member/dashboard` should show an unpaid dues section with a clear action to
   pay.
 - The payment action should take the member to `/member/dues`.
+- Admin member editors can enable or pause self-service dues payments from the
+  member administration page. While paused, unpaid members see that payments
+  are paused until further notice instead of an active payment action.
 - `/member/dues` should be a full payment page so it can be linked from the
   dashboard and future member/admin surfaces.
 - `/member/dues` should use the current Blade design system and embedded Stripe
@@ -61,6 +64,8 @@ dues payment history instead of treating each year's rollover as deleted data.
 - Let unpaid members reach a dedicated dues payment page.
 - Let completed members pay `$25` dues for the current academic school year.
 - Show safe loading, processing, success, and failure states around payment.
+- Show a clear, neutral paused state while member payments are disabled,
+  without changing paid members' current dues status.
 - Show a five-second redirect countdown and an immediate dashboard action after
   successful payment.
 - Preserve dues history for future alumni/admin surfaces.
@@ -77,7 +82,7 @@ dues payment history instead of treating each year's rollover as deleted data.
 ### Out of scope
 
 - Member-visible dues history.
-- Admin member dashboard UI.
+- Admin member management beyond the payment-availability control.
 - Admin manual dues payment, comp, revoke, or rollover controls.
 - Refund handling.
 - Coupon codes or discounts.
@@ -104,6 +109,8 @@ dues payment history instead of treating each year's rollover as deleted data.
 - `Late-year warning`: The May 31 through July 31 warning that paying now only
   covers the current school year and another dues payment will be needed in the
   fall semester.
+- `Payment availability`: The admin-controlled setting that determines whether
+  an unpaid member may start a new Stripe dues payment.
 
 ## Acceptance criteria
 
@@ -128,6 +135,10 @@ dues payment history instead of treating each year's rollover as deleted data.
 - Between May 31 and July 31, `/member/dues` shows the late-year warning before
   the member pays.
 - Old dues records are not deleted as part of this member-facing payment flow.
+- When an admin pauses member payments, unpaid members see that dues payments
+  are paused until further notice and cannot start checkout.
+- When an admin enables member payments, the existing dues payment flow becomes
+  available immediately without changing paid status or academic-year logic.
 
 ## Open questions
 

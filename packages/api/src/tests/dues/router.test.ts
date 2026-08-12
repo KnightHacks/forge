@@ -9,6 +9,9 @@ import { createCallerFactory, createTRPCRouter } from "../../trpc";
 const mocks = vi.hoisted(() => ({
   db: {
     query: {
+      DuesConfiguration: {
+        findFirst: vi.fn(),
+      },
       Member: {
         findFirst: vi.fn(),
       },
@@ -73,6 +76,12 @@ function createCaller(currentSession: Session | null = session) {
 
 function mockMember(memberRow: typeof member | null = member) {
   mocks.db.query.Member.findFirst.mockResolvedValue(memberRow);
+}
+
+function mockPaymentAvailability(paymentsEnabled: boolean) {
+  mocks.db.query.DuesConfiguration.findFirst.mockResolvedValue({
+    paymentsEnabled,
+  });
 }
 
 function mockDuesRows(rows: unknown[]) {
@@ -165,6 +174,7 @@ describe("duesRouter", () => {
     vi.setSystemTime(new Date("2026-06-26T12:00:00Z"));
     vi.clearAllMocks();
     mockMember();
+    mockPaymentAvailability(false);
     mockDuesRows([]);
   });
 
@@ -187,6 +197,7 @@ describe("duesRouter", () => {
       "2025-2026 academic school year",
     );
     expect(result.lateYearWarning).toBe(true);
+    expect(result.paymentsLocked).toBe(true);
   });
 
   it("returns paid status for an active current-year dues row", async () => {
@@ -252,7 +263,19 @@ describe("duesRouter", () => {
     expect(mocks.stripe.paymentIntents.create).not.toHaveBeenCalled();
   });
 
+  it("blocks PaymentIntent creation when admins have paused payments", async () => {
+    await expect(
+      createCaller().dues.createPaymentIntent(),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      message: "Dues payments are paused until further notice.",
+    });
+    expect(mocks.stripe.paymentIntents.create).not.toHaveBeenCalled();
+  });
+
   it("creates a card PaymentIntent with cents and metadata", async () => {
+    mockPaymentAvailability(true);
+    vi.setSystemTime(new Date("2026-08-31T00:00:00.000Z"));
     mocks.stripe.paymentIntents.create.mockResolvedValue(
       stripePaymentIntent({
         id: "pi_created",
@@ -266,10 +289,10 @@ describe("duesRouter", () => {
       amountLabel: "$25.00",
       clientSecret: "pi_test_secret_secret",
       paymentAcademicYear: {
-        endYear: 2026,
-        label: "2025-2026 academic school year",
-        shortLabel: "2025-2026",
-        startYear: 2025,
+        endYear: 2027,
+        label: "2026-2027 academic school year",
+        shortLabel: "2026-2027",
+        startYear: 2026,
       },
       paymentIntentId: "pi_created",
     });
@@ -278,7 +301,7 @@ describe("duesRouter", () => {
         amount: 2500,
         currency: "usd",
         metadata: {
-          academic_year_start: "2025",
+          academic_year_start: "2026",
           member_id: memberId,
           user_id: userId,
         },

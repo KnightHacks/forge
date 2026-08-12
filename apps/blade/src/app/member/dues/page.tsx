@@ -39,7 +39,7 @@ export default async function MemberDuesPage() {
   > | null = null;
   let paymentSetupError: string | null = null;
 
-  if (env.NEXT_PUBLIC_BLADE_E2E_AUTH !== "true") {
+  if (!duesStatus.paymentsLocked && env.NEXT_PUBLIC_BLADE_E2E_AUTH !== "true") {
     try {
       paymentIntent = await api.dues.createPaymentIntent();
     } catch (error) {

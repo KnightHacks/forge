@@ -8,6 +8,7 @@ import { and, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, Session, User } from "@forge/db/schemas/auth";
 import {
+  DuesConfiguration,
   DuesPayment,
   FormResponse,
   FormSections,
@@ -40,6 +41,7 @@ const ALICE_USER_ID = "00000000-0000-4000-8000-000000000610";
 const ALICE_MEMBER_ID = "00000000-0000-4000-8000-000000000710";
 const BOB_MEMBER_ID = "00000000-0000-4000-8000-000000000711";
 const CHARLIE_MEMBER_ID = "00000000-0000-4000-8000-000000000712";
+const DUES_CONFIGURATION_ID = "global";
 
 const adminUsers = [
   {
@@ -386,6 +388,24 @@ async function getAliceMember() {
   );
 }
 
+async function setPaymentAvailability(paymentsEnabled: boolean) {
+  await db
+    .insert(DuesConfiguration)
+    .values({ id: DUES_CONFIGURATION_ID, paymentsEnabled })
+    .onConflictDoUpdate({
+      set: { paymentsEnabled, updatedAt: new Date() },
+      target: DuesConfiguration.id,
+    });
+}
+
+async function getPaymentAvailability() {
+  const configuration = await db.query.DuesConfiguration.findFirst({
+    where: eq(DuesConfiguration.id, DUES_CONFIGURATION_ID),
+  });
+
+  return configuration?.paymentsEnabled ?? null;
+}
+
 test.describe("admin member dashboard", () => {
   test.describe.configure({ mode: "serial" });
   let existingDuesSnapshot: { active: boolean; id: string }[] = [];
@@ -564,6 +584,56 @@ test.describe("admin member dashboard", () => {
     await page.getByRole("link", { name: "Members", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${ADMIN_PATH}$`));
     await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
+  });
+
+  test("persists member payment availability across reloads", async ({
+    page,
+  }) => {
+    const originalPaymentsEnabled = await getPaymentAvailability();
+
+    try {
+      await setPaymentAvailability(false);
+      await signInAs(page, EDITOR_USER_ID);
+
+      const paymentSwitch = page.getByRole("switch", {
+        name: "Allow member dues payments",
+      });
+      await expect(paymentSwitch).not.toBeChecked();
+
+      await paymentSwitch.click();
+      await expect(
+        page.getByText("Member dues payments enabled."),
+      ).toBeVisible();
+      await expect.poll(getPaymentAvailability).toBe(true);
+      await page.reload();
+      await expect(paymentSwitch).toBeChecked();
+
+      await paymentSwitch.click();
+      await expect(
+        page.getByText("Member dues payments paused."),
+      ).toBeVisible();
+      await expect.poll(getPaymentAvailability).toBe(false);
+      await page.reload();
+      await expect(paymentSwitch).not.toBeChecked();
+
+      await signInAs(page, READER_USER_ID);
+      await expect(paymentSwitch).toHaveCount(0);
+      await expect(
+        page
+          .getByRole("main")
+          .getByText("Member payments", { exact: true })
+          .first()
+          .locator(".."),
+      ).toContainText("Paused");
+    } finally {
+      if (originalPaymentsEnabled === null) {
+        await db
+          .delete(DuesConfiguration)
+          .where(eq(DuesConfiguration.id, DUES_CONFIGURATION_ID));
+      } else {
+        await setPaymentAvailability(originalPaymentsEnabled);
+      }
+    }
   });
 
   test("searches fuzzily, persists table state, paginates, filters, sorts, and exports every match", async ({

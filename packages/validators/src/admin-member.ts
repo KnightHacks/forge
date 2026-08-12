@@ -112,6 +112,10 @@ export const adminMemberDuesStatusSchema = z.object({
   paid: z.boolean(),
 });
 
+export const adminMemberDuesConfigurationSchema = z.object({
+  paymentsEnabled: z.boolean(),
+});
+
 export type AdminMemberListInput = z.infer<typeof adminMemberListSchema>;
 export type AdminMemberEditableProfileValues = z.input<
   typeof adminMemberEditableProfileSchema

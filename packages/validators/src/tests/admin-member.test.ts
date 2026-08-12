@@ -4,6 +4,7 @@ import {
   ADMIN_MEMBER_DELETE_CONFIRMATION,
   ADMIN_MEMBER_DUES_INVALIDATION_CONFIRMATION,
   adminMemberDeleteSchema,
+  adminMemberDuesConfigurationSchema,
   adminMemberListSchema,
   adminMemberMassDuesInvalidationSchema,
   adminMemberPageSizes,
@@ -168,6 +169,15 @@ describe("admin member contracts", () => {
     ).toEqual({ confirmation: ADMIN_MEMBER_DUES_INVALIDATION_CONFIRMATION });
     expect(() =>
       adminMemberMassDuesInvalidationSchema.parse({ confirmation: "sure" }),
+    ).toThrow();
+  });
+
+  it("accepts only a boolean dues payment availability setting", () => {
+    expect(
+      adminMemberDuesConfigurationSchema.parse({ paymentsEnabled: true }),
+    ).toEqual({ paymentsEnabled: true });
+    expect(() =>
+      adminMemberDuesConfigurationSchema.parse({ paymentsEnabled: "yes" }),
     ).toThrow();
   });
 });

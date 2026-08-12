@@ -6,6 +6,9 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-11: Human requested a persisted admin toggle on `/admin/members` to
+  replace the hardcoded dues-payment cutoff. Existing edit-member access owns
+  the mutation; readers can see the operational state without changing it.
 - 2026-07-15: Human confirmed the feature bundle is complete; normalized all
   artifact status fields to `Complete`.
 - 2026-06-27: Work targets Blade and `@forge/api` on the
@@ -101,11 +104,11 @@ Current phase: Complete
       destinations into one hamburger dropdown.
 - [x] Anchor the responsive Edit member action to the dialog identity header.
 - [x] Complete targeted and repository validation.
+- [x] Add the persisted member-payment availability control and API contract.
+- [x] Validate the payment-availability follow-up and review the admin UI.
 
 ## Validation / commands
 
-- `git status --short --branch`: work remains on
-  `reforge/admin-member-dashboard`; no commit or merge was performed.
 - `pnpm forge:feature admin-member-dashboard "Admin Member Dashboard"`: passed.
 - Targeted package lint and typechecks pass for `@forge/api`, `@forge/blade`,
   `@forge/consts`, `@forge/utils`, and `@forge/validators`.
@@ -175,6 +178,9 @@ Current phase: Complete
   failures in current and legacy Blade. Repository formatting still reports the
   unchanged `apps/guild/src/app/_components/globe-renderer.tsx`; all changed
   files pass Prettier and `git diff --check`.
+- 2026-08-11 payment-availability follow-up: API and Blade test suites passed;
+  the 6-scenario dues Playwright run passed; desktop and 390px mobile visual
+  review confirmed the header control remains compact and overflow-free.
 
 ## Links
 

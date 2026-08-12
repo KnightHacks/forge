@@ -23,6 +23,7 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_companies",
   "knight_hacks_company",
   "knight_hacks_discord_config",
+  "knight_hacks_dues_configuration",
   "knight_hacks_dues_payment",
   "knight_hacks_employment",
   "knight_hacks_event",
@@ -215,6 +216,9 @@ SET refresh_token = NULL,
 
 UPDATE knight_hacks_dues_payment
 SET stripe_payment_intent_id = NULL;
+
+UPDATE knight_hacks_dues_configuration
+SET payments_enabled = FALSE;
 
 UPDATE knight_hacks_company
 SET logo_object_name = NULL;

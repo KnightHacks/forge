@@ -13,6 +13,7 @@ import {
 } from "@forge/validators";
 
 import { protectedProcedure } from "../trpc";
+import { getDuesPaymentsEnabled } from "../utils/dues/configuration";
 import {
   assertDuesPaymentIntentOwnership,
   recordSucceededDuesPayment,
@@ -55,9 +56,16 @@ async function getDuesRowsForMember(memberId: string) {
 }
 
 async function getStatusForMember(memberId: string) {
-  return buildDuesStatus({
-    duesRows: await getDuesRowsForMember(memberId),
-  });
+  const [duesRows, paymentsEnabled] = await Promise.all([
+    getDuesRowsForMember(memberId),
+    getDuesPaymentsEnabled(),
+  ]);
+  const status = buildDuesStatus({ duesRows });
+
+  return {
+    ...status,
+    paymentsLocked: !paymentsEnabled,
+  };
 }
 
 export const duesRouter = {
@@ -75,6 +83,13 @@ export const duesRouter = {
       throw new TRPCError({
         code: "CONFLICT",
         message: "Membership dues have already been paid.",
+      });
+    }
+
+    if (status.paymentsLocked) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Dues payments are paused until further notice.",
       });
     }
 

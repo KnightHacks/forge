@@ -1,11 +1,16 @@
+/** @vitest-environment jsdom */
+
 import { createElement } from "react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 import { adminMemberListSchema } from "@forge/validators";
 
 import { MemberAdminDashboard } from "~/app/_components/admin/members/member-admin-dashboard";
+
+const setDuesPaymentsEnabled = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -29,6 +34,13 @@ vi.mock("~/trpc/react", () => ({
           mutate: vi.fn(),
         })),
       },
+      setDuesPaymentsEnabled: {
+        useMutation: vi.fn(() => ({
+          data: undefined,
+          isPending: false,
+          mutate: setDuesPaymentsEnabled,
+        })),
+      },
     },
   },
 }));
@@ -47,6 +59,7 @@ vi.mock("~/app/_components/admin/members/member-detail-dialog", () => ({
 }));
 
 const input = adminMemberListSchema.parse({});
+const duesPaymentConfiguration = { paymentsEnabled: false };
 const data = {
   filterOptions: {
     companies: ["Knight Hacks"],
@@ -102,6 +115,7 @@ function renderWith(overrides: Partial<DashboardMember>) {
         members: data.members.map((member) => ({ ...member, ...overrides })),
       },
       detail: null,
+      duesPaymentConfiguration,
       input,
       isOfficer: false,
     }),
@@ -109,6 +123,10 @@ function renderWith(overrides: Partial<DashboardMember>) {
 }
 
 describe("MemberAdminDashboard", () => {
+  beforeEach(() => {
+    setDuesPaymentsEnabled.mockClear();
+  });
+
   it("drills into a member from the name rather than a separate View control", () => {
     const html = renderWith({});
 
@@ -158,6 +176,7 @@ describe("MemberAdminDashboard", () => {
         canEdit: false,
         data,
         detail: null,
+        duesPaymentConfiguration,
         input,
         isOfficer: false,
       }),
@@ -177,6 +196,7 @@ describe("MemberAdminDashboard", () => {
         canEdit: false,
         data,
         detail: null,
+        duesPaymentConfiguration,
         input,
         isOfficer: false,
       }),
@@ -186,6 +206,7 @@ describe("MemberAdminDashboard", () => {
         canEdit: true,
         data,
         detail: null,
+        duesPaymentConfiguration,
         input,
         isOfficer: true,
       }),
@@ -201,6 +222,7 @@ describe("MemberAdminDashboard", () => {
         canEdit: false,
         data,
         detail: null,
+        duesPaymentConfiguration,
         input,
         isOfficer: false,
       }),
@@ -210,6 +232,7 @@ describe("MemberAdminDashboard", () => {
         canEdit: true,
         data,
         detail: null,
+        duesPaymentConfiguration,
         input,
         isOfficer: false,
       }),
@@ -217,5 +240,55 @@ describe("MemberAdminDashboard", () => {
 
     expect(readerHtml).not.toContain("Revoke dues for Lenny Dragonson");
     expect(editorHtml).toContain("Revoke dues for Lenny Dragonson");
+  });
+
+  it("shows persisted payment availability and lets only editors toggle it", () => {
+    const readerHtml = renderToStaticMarkup(
+      createElement(MemberAdminDashboard, {
+        canEdit: false,
+        data,
+        detail: null,
+        duesPaymentConfiguration,
+        input,
+        isOfficer: false,
+      }),
+    );
+    const editorHtml = renderToStaticMarkup(
+      createElement(MemberAdminDashboard, {
+        canEdit: true,
+        data,
+        detail: null,
+        duesPaymentConfiguration: { paymentsEnabled: true },
+        input,
+        isOfficer: false,
+      }),
+    );
+
+    expect(readerHtml).toContain("Member payments");
+    expect(readerHtml).toContain("Paused");
+    expect(readerHtml).not.toContain('aria-label="Allow member dues payments"');
+    expect(editorHtml).toContain("Enabled");
+    expect(editorHtml).toContain('aria-label="Allow member dues payments"');
+  });
+
+  it("sends the editor's payment availability change to the API", () => {
+    render(
+      createElement(MemberAdminDashboard, {
+        canEdit: true,
+        data,
+        detail: null,
+        duesPaymentConfiguration,
+        input,
+        isOfficer: false,
+      }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("switch", { name: "Allow member dues payments" }),
+    );
+
+    expect(setDuesPaymentsEnabled).toHaveBeenCalledWith({
+      paymentsEnabled: true,
+    });
   });
 });

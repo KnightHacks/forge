@@ -4,7 +4,11 @@ import { expect, test } from "playwright/test";
 import { and, eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
-import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  DuesConfiguration,
+  DuesPayment,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import {
   buildDuesAcademicYear,
   getDuesAcademicYear,
@@ -17,6 +21,8 @@ const PAID_USER_ID = "00000000-0000-4000-8000-000000000502";
 const NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000503";
 const UNPAID_MEMBER_ID = "00000000-0000-4000-8000-000000000511";
 const PAID_MEMBER_ID = "00000000-0000-4000-8000-000000000512";
+const DUES_CONFIGURATION_ID = "global";
+let originalPaymentsEnabled: boolean | null = null;
 
 const testUsers = [
   {
@@ -119,6 +125,8 @@ async function cleanupE2EData() {
 async function seedE2EData() {
   await cleanupE2EData();
 
+  await setPaymentAvailability(true);
+
   await db.insert(User).values(
     testUsers.map((user) => ({
       discordUserId: user.discordUserId,
@@ -157,6 +165,16 @@ async function seedE2EData() {
   });
 }
 
+async function setPaymentAvailability(paymentsEnabled: boolean) {
+  await db
+    .insert(DuesConfiguration)
+    .values({ id: DUES_CONFIGURATION_ID, paymentsEnabled })
+    .onConflictDoUpdate({
+      set: { paymentsEnabled, updatedAt: new Date() },
+      target: DuesConfiguration.id,
+    });
+}
+
 async function signInAs(
   page: Page,
   userId: string,
@@ -172,6 +190,13 @@ async function signInAs(
 test.describe("member dues payment", () => {
   test.describe.configure({ mode: "serial" });
 
+  test.beforeAll(async () => {
+    const configuration = await db.query.DuesConfiguration.findFirst({
+      where: eq(DuesConfiguration.id, DUES_CONFIGURATION_ID),
+    });
+    originalPaymentsEnabled = configuration?.paymentsEnabled ?? null;
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await seedE2EData();
@@ -179,9 +204,53 @@ test.describe("member dues payment", () => {
 
   test.afterAll(async () => {
     await cleanupE2EData();
+    if (originalPaymentsEnabled === null) {
+      await db
+        .delete(DuesConfiguration)
+        .where(eq(DuesConfiguration.id, DUES_CONFIGURATION_ID));
+    } else {
+      await setPaymentAvailability(originalPaymentsEnabled);
+    }
   });
 
-  test("lets an unpaid member pay dues and return to the dashboard", async ({
+  test("shows the paused state when member payments are disabled", async ({
+    page,
+  }) => {
+    await setPaymentAvailability(false);
+    await signInAs(page, UNPAID_USER_ID);
+
+    await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
+    const unpaidStatus = page
+      .getByRole("group", { name: "Dues status" })
+      .filter({ visible: true });
+    await expect(
+      unpaidStatus.getByText("Dues payments are paused until further notice"),
+    ).toBeVisible();
+    await expect(
+      unpaidStatus.getByText("Paused", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      unpaidStatus.getByRole("button", {
+        name: "Payments paused",
+      }),
+    ).toBeDisabled();
+    await expect(
+      unpaidStatus.getByRole("link", { name: "Pay dues" }),
+    ).toHaveCount(0);
+
+    await page.goto("/member/dues");
+    await expect(
+      page.getByRole("heading", {
+        name: "Member dues paused",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Dues payments are paused until further notice.").first(),
+    ).toBeVisible();
+    await expect(page.getByText("Complete test payment")).toHaveCount(0);
+  });
+
+  test("lets an unpaid member pay when member payments are enabled", async ({
     page,
   }) => {
     await signInAs(page, UNPAID_USER_ID);
@@ -191,6 +260,7 @@ test.describe("member dues payment", () => {
       .getByRole("group", { name: "Dues status" })
       .filter({ visible: true });
     const currentAcademicYear = getDuesAcademicYear();
+
     await expect(
       unpaidStatus.getByText(
         `Dues unpaid for the ${currentAcademicYear.label}.`,
@@ -287,17 +357,15 @@ test.describe("member dues payment", () => {
     await signInAs(page, UNPAID_USER_ID);
 
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
+    const duesStatus = page
+      .getByRole("group", { name: "Dues status" })
+      .filter({ visible: true });
+
     await expect(
-      page
-        .getByRole("group", { name: "Dues status" })
-        .filter({ visible: true })
-        .getByText(`Dues unpaid for the ${nextAcademicYear.label}.`),
+      duesStatus.getByText(`Dues unpaid for the ${nextAcademicYear.label}.`),
     ).toBeVisible();
     await expect(
-      page
-        .getByRole("group", { name: "Dues status" })
-        .filter({ visible: true })
-        .getByRole("link", { name: "Pay dues" }),
+      duesStatus.getByRole("link", { name: "Pay dues" }),
     ).toBeVisible();
 
     const staleRows = await db.query.DuesPayment.findMany({
@@ -316,11 +384,7 @@ test.describe("member dues payment", () => {
       year: currentAcademicYear.startYear,
     });
 
-    await page
-      .getByRole("group", { name: "Dues status" })
-      .filter({ visible: true })
-      .getByRole("link", { name: "Pay dues" })
-      .click();
+    await duesStatus.getByRole("link", { name: "Pay dues" }).click();
     await expect(page).toHaveURL(routeURL("/member/dues"));
   });
 

@@ -64,6 +64,9 @@ manage current dues status, and remove invalid member accounts.
   identity/system-owned values.
 - Editors can click a member's Paid or Unpaid status directly to toggle it, or
   use the same controls from the full member view.
+- Editors can enable or pause member-initiated dues payments from a compact
+  control in the page header. Read-only administrators can see the current
+  state but cannot change it.
 - Editors can delete a member after a clear destructive-action confirmation.
 - Member deletion requires typing `I am absolutely sure` and removes the Member
   profile without deleting the Blade user or unrelated hacker/application data.
@@ -92,6 +95,7 @@ manage current dues status, and remove invalid member accounts.
 - Server and page gates for member administration.
 - Search, compound filtering, sorting, pagination, and page-size choices.
 - Member detail, editing, deletion, and individual current-dues controls.
+- Global member-payment availability control.
 - Read-only member enrichment from retained event attendance, Discord archive,
   employment, Guild profile, role assignment, and dues-history data.
 - Filtered CSV export across all matching pages.
@@ -116,6 +120,8 @@ manage current dues status, and remove invalid member accounts.
   linked to the signed-in user.
 - `Current dues status`: Whether an active dues record currently counts for the
   member under the academic-school-year rules.
+- `Payment availability`: Whether unpaid members may start a new Stripe dues
+  payment. It does not change any member's paid status or history.
 - `Revoke dues`: Mark every active row that would keep the member effectively
   paid as inactive while preserving it for future history.
 - `Mass invalidate dues`: Mark the dues records covered by the officer action
@@ -133,6 +139,8 @@ manage current dues status, and remove invalid member accounts.
 - An editor can mark an unpaid member paid for the payable academic school year
   and can click the status to revoke every record that would keep the member
   paid without deleting history.
+- An editor can pause or enable member-initiated payments; a read-only member
+  admin can see but cannot change that state.
 - Search covers name, email, Discord username, and company.
 - Search also covers school and tolerates minor search imprecision.
 - Filters can be combined and cleared, and query state is reflected in the URL.
