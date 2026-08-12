@@ -59,6 +59,10 @@ Current phase: Bundle approved / ready for technical discovery
   experience. Agent use is encouraged, while each contributor remains responsible
   for the scope, code, decisions, validation, and result they submit. The bundle
   exists to reduce errors and miscommunication between developers and agents.
+- 2026-08-12: The contributor entrypoint is the feature bundle. A developer may
+  point an agent at it and let the agent load the repository instructions,
+  relevant skills, and code context. Humans may read those materials themselves
+  if useful, but are not expected to study agent skill files before contributing.
 
 ## Open questions
 
@@ -75,6 +79,13 @@ Current phase: Bundle approved / ready for technical discovery
   coding agents as real collaborators, not as an afterthought. The approved
   artifacts give the developer and agent the same product, technical, and test
   contract before code changes begin.
+- The simplest way to start is to point an agent at
+  `.forge/features/blade-refinements/`, give it the refinement IDs being claimed,
+  and tell it to follow the repository's agent instructions. The agent should
+  read the bundle, `AGENTS.md`, and any relevant repo skills or code context it
+  needs. Contributors can read the bundle and supporting material themselves if
+  they are curious or prefer to work without an agent; they are not expected to
+  read skill files manually.
 - Agent assistance does not transfer ownership. The contributor is responsible
   for understanding and reviewing the changes, keeping the work in scope, asking
   when the contract is unclear, and verifying the result.
