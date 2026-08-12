@@ -218,6 +218,9 @@ jobs:
         uses: ./tooling/github/setup
 
       - name: Lint
+        env:
+          # Keep concurrent ESLint processes within GitHub-hosted runner memory.
+          TURBO_CONCURRENCY: "4"
         run: pnpm lint && pnpm lint:ws
 
   format:
