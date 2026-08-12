@@ -54,8 +54,11 @@ Current phase: Bundle approved / ready for technical discovery
 - 2026-08-12: The human approved all five remaining product decisions and the
   spec/SRD/test-case bundle for implementation.
 - 2026-08-12: Contributors may implement directly on the shared
-  `reforge/refinements` branch for this agent-first trial. Claims, frequent sync,
-  small commits, and no force-pushes are required to prevent collisions.
+  `reforge/refinements` branch for this agent-first trial.
+- 2026-08-12: Treat agent-assisted development as a first-class contribution
+  experience. Agent use is encouraged, while each contributor remains responsible
+  for the scope, code, decisions, validation, and result they submit. The bundle
+  exists to reduce errors and miscommunication between developers and agents.
 
 ## Open questions
 
@@ -68,22 +71,24 @@ Current phase: Bundle approved / ready for technical discovery
 
 - `reforge/refinements` is the shared implementation branch and bundle source of
   truth. Contributors work and push directly on this branch for now.
-- Before each work session, fetch and pull the latest remote branch with rebase,
-  then check this inventory, the shared development thread, and recent commits.
+- This is an agent-first development trial. Contributors are encouraged to use
+  coding agents as real collaborators, not as an afterthought. The approved
+  artifacts give the developer and agent the same product, technical, and test
+  contract before code changes begin.
+- Agent assistance does not transfer ownership. The contributor is responsible
+  for understanding and reviewing the changes, keeping the work in scope, asking
+  when the contract is unclear, and verifying the result.
 - Before editing implementation code, announce the refinement IDs and expected
   file areas you intend to claim in the shared development thread. Replace
   `Unclaimed` below with your name/handle and claim date, set the row to
-  `In progress`, and push that status-only claim so everyone can see it.
+  `In progress`, and make the claim visible to the other contributors.
 - If someone already owns an overlapping row or file set, coordinate before
-  continuing. Keep commits small, pull with rebase immediately before every
-  push, and never force-push the shared branch. Stop and coordinate instead of
-  resolving a conflict by discarding another contributor's work.
+  continuing.
 - Keep changes limited to the claimed rows. If implementation reveals a spec,
   SRD, test-case, access, upload, or schema conflict, stop and record it under
   Open questions instead of silently changing the approved contract.
-- Update each row to `In progress`, `Blocked`, or `Complete` as work moves. Add
-  focused checks, screenshots/video, and relevant commit or PR links to this file
-  before handoff.
+- Update each row to `In progress`, `Blocked`, or `Complete` as work moves, and
+  record the checks and visual evidence used to verify completed work.
 
 ## Refinement inventory
 
@@ -133,7 +138,7 @@ Current phase: Bundle approved / ready for technical discovery
 - [ ] Reproduce issue-assignee filter failure and document evidence.
 - [ ] Inspect attachment schema compatibility and document migration/no-migration
       decision before any schema change.
-- [ ] Contributors announce and push refinement-ID claims before editing
+- [ ] Contributors announce and record refinement-ID claims before editing
       implementation code.
 - [ ] Implement claimed slices in checkpoints and keep the inventory current.
 - [ ] Run focused verification, React analysis, `pnpm verify:precommit`, derived
