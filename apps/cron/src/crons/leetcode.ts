@@ -34,6 +34,13 @@ const DAILY_MESSAGES = [
   "Let's flex your brain muscles! 💪👅😈",
   "𝓛𝓮𝓽'𝓼 𝓬𝓸𝓭𝓮 𝓿𝓻𝓸 ❤️‍🔥⛓️👅",
   "I'm 𝓯𝓻𝓮𝓪𝓴𝔂 T.K! 🛡️👅",
+  "Lock in!",
+  "Time to use 101% of your brain power! 🧠",
+  "Time to beat 100% submissions with your algorithms!",
+  "1337 1337 1337...",
+  "Rise up, coding people!",
+  "Tuff problem, you got this tho.",
+  "Leetcodemaxxing time 🥶",
 ];
 
 export const leetcode = new CronBuilder({

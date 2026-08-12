@@ -110,6 +110,23 @@ export const EIGHTBALL_RESPONSES = [
   "The stars in the milky way are blinking in a decidedly good fashion!",
   "Yeah that ain't happening.",
   "Bro that's definitely happening.",
+  "Fosho.",
+  "Good question. I don't know.",
+  "I can't tell.",
+  "Yes. (trust me bro)",
+  "Of course.",
+  "No idea bro.",
+  "That seems potential.",
+  "Never. I'm telling you.",
+  "bool answer = true;",
+  "bool answer = false;",
+  "TK says no.",
+  "TK says yes.",
+  "6/7.",
+  "Lame question, sybau 💔",
+  "what 😭",
+  "yes lowkenuinely.",
+  "Based question, an insta yes from me.",
 ];
 
 export type WeatherMapKeys = Record<
