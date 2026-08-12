@@ -40,6 +40,14 @@ const definition = {
     },
     {
       id: "00000000-0000-4000-8000-000000001012",
+      maxLength: 750,
+      prompt: "What else should we know?",
+      required: false,
+      retired: false,
+      type: "paragraph" as const,
+    },
+    {
+      id: "00000000-0000-4000-8000-000000001017",
       max: 5,
       min: 1,
       prompt: "How useful was this?",
@@ -101,5 +109,46 @@ describe("GenericFormResponseForm", () => {
     expect(html).toContain('type="tel"');
     expect(html).toContain('inputMode="tel"');
     expect(html).toContain("Submit response");
+  });
+
+  it("[TC-001] renders whitespace-aware text counters without raw HTML limits", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormResponseForm, {
+        definition,
+        formId: "00000000-0000-4000-8000-000000001001",
+        initialAnswers: {
+          "00000000-0000-4000-8000-000000001011": "a b\tc",
+          "00000000-0000-4000-8000-000000001012": "x\ny z",
+        },
+      }),
+    );
+
+    expect(html).toContain("3 / 255 non-whitespace characters");
+    expect(html).toContain("3 / 750 non-whitespace characters");
+    expect(html.toLowerCase()).not.toContain("maxlength=");
+  });
+
+  it("[TC-NEG-001] marks a text response above its non-whitespace limit", () => {
+    const limitedDefinition = {
+      ...definition,
+      questions: definition.questions.map((question) =>
+        question.type === "short_text"
+          ? { ...question, maxLength: 3 }
+          : question,
+      ),
+    };
+    const html = renderToStaticMarkup(
+      createElement(GenericFormResponseForm, {
+        definition: limitedDefinition,
+        formId: "00000000-0000-4000-8000-000000001001",
+        initialAnswers: {
+          "00000000-0000-4000-8000-000000001011": "a b c d",
+        },
+      }),
+    );
+
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain("4 / 3 non-whitespace characters");
+    expect(html).toContain("text-destructive");
   });
 });

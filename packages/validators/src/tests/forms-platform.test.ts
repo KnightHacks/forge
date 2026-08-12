@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   callbackConfigurationSchema,
+  countNonWhitespaceCharacters,
   FORM_LINEAR_SCALE_ENDPOINT_MAX,
   FORM_LINEAR_SCALE_ENDPOINT_MIN,
   FORM_LINEAR_SCALE_MAX_SPAN,
@@ -172,6 +173,36 @@ const baseDefinition = {
 };
 
 describe("forms platform definition and runtime validation", () => {
+  it("[TC-001, TC-002, TC-NEG-001] enforces text limits without counting whitespace", () => {
+    expect(countNonWhitespaceCharacters(" a\tb\nc ")).toBe(3);
+
+    for (const type of ["short_text", "paragraph"] as const) {
+      const definition = {
+        ...baseDefinition,
+        questions: [
+          {
+            id: ids[type === "short_text" ? "short" : "paragraph"],
+            maxLength: 3,
+            prompt: "Text response",
+            required: true,
+            retired: false,
+            type,
+          },
+        ],
+      };
+      const [question] = definition.questions;
+      if (!question) throw new Error("Expected a text question fixture.");
+      const questionId = question.id;
+
+      expect(
+        validateFormAnswers(definition, [{ questionId, value: "a b\tc" }]),
+      ).toEqual({ [questionId]: "a b\tc" });
+      expect(() =>
+        validateFormAnswers(definition, [{ questionId, value: "a b c\nd" }]),
+      ).toThrow(/3 non-whitespace characters or fewer/);
+    }
+  });
+
   it("[TC-012] accepts all fourteen supported question families", () => {
     const result = formDefinitionSchema.safeParse(baseDefinition);
 
