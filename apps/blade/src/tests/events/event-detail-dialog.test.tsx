@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EventDetailDialog } from "~/app/_components/admin/events/event-detail-dialog";
 
@@ -83,6 +83,13 @@ const detail = {
 };
 
 describe("EventDetailDialog", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-12T23:00:00.000Z"));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
   it("TC-007 TC-023 renders one sectioned read-only hierarchy", () => {
     const html = renderToStaticMarkup(
       createElement(EventDetailDialog, {

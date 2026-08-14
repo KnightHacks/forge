@@ -38,8 +38,8 @@
     "studio": "pnpm with-env drizzle-kit studio",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "dotenv -e ../../.env --",
-    "test": "pnpm with-env vitest run --passWithNoTests",
-    "test:watch": "pnpm with-env vitest --passWithNoTests"
+    "test": "NODE_ENV=test pnpm with-env vitest run --passWithNoTests",
+    "test:watch": "NODE_ENV=test pnpm with-env vitest --passWithNoTests"
   },
   "dependencies": {
     "@forge/consts": "workspace:*",
