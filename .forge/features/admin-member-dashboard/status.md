@@ -6,6 +6,11 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-12: Issue #504 exposed that payment rows were serving as both recorded
+  history and mutable membership state. Payments are now immutable;
+  a separate member/year entitlement owns paid status. Admin grants,
+  revocations, and mass invalidation change entitlements only, and member
+  checkout always targets the current academic year.
 - 2026-08-11: Human requested a persisted admin toggle on `/admin/members` to
   replace the hardcoded dues-payment cutoff. Existing edit-member access owns
   the mutation; readers can see the operational state without changing it.
@@ -18,7 +23,7 @@ Current phase: Complete
   backed by page and tRPC authorization checks.
 - 2026-06-27: The legacy production dashboard is reference material only. The
   Reforge dashboard must use the current member and dues models, including
-  academic-year payment history and stale records.
+  academic-year payment history and inactive entitlements.
 - 2026-06-27: Human selected member editing, deletion, individual dues
   controls, first-class filtering, search, and page sizes 25/50/100/250/500;
   payment history is deferred. Detailed behavior still requires reverse-prompt
@@ -106,6 +111,7 @@ Current phase: Complete
 - [x] Complete targeted and repository validation.
 - [x] Add the persisted member-payment availability control and API contract.
 - [x] Validate the payment-availability follow-up and review the admin UI.
+- [x] Separate immutable dues payments from current-year entitlements.
 
 ## Validation / commands
 
@@ -181,9 +187,13 @@ Current phase: Complete
 - 2026-08-11 payment-availability follow-up: API and Blade test suites passed;
   the 6-scenario dues Playwright run passed; desktop and 390px mobile visual
   review confirmed the header control remains compact and overflow-free.
+- 2026-08-12 dues entitlement redesign: admin grant/revoke now changes only the
+  current-year entitlement, bulk invalidation leaves payment history and other
+  years unchanged, and the two focused admin Playwright regressions passed
+  against a disposable PostgreSQL database.
 
 ## Links
 
 - PRs:
-- Issues:
+- Issues: #504
 - Discord/thread context:

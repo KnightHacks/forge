@@ -77,7 +77,6 @@ const detail = {
   },
   duesHistory: [
     {
-      active: true,
       amount: 2500,
       paidAt: new Date("2026-06-27T12:00:00Z"),
       source: "Stripe",
@@ -87,11 +86,12 @@ const detail = {
   duesStatus: {
     amountDueLabel: "$25.00",
     amountPaid: 2500,
+    currentAcademicYear: { shortLabel: "2025-2026" },
     paid: true,
     paidAt: new Date("2026-06-27T12:00:00Z"),
-    payableAcademicYear: { shortLabel: "2025-2026" },
     paymentAcademicYear: { shortLabel: "2025-2026" },
   },
+  graduated: false,
   employment: [
     {
       city: {

@@ -108,18 +108,20 @@ Expected observations:
 
 Setup:
 
-- An editor views one unpaid and one paid member.
+- An editor views a member with active dues for the current academic year.
 
 Action:
 
-- Click the unpaid status to grant dues, then click the paid status to revoke
-  dues.
+- Revoke the member's dues, then grant them again.
 
 Expected observations:
 
-- Manual paid status uses the payable academic year and configured amount.
-- Revoke marks every row that would keep the member paid inactive without
-  deleting history.
+- Granting dues reactivates the same current-year entitlement without creating
+  a payment.
+- Revoking deactivates only the current-year entitlement.
+- Existing payment amount, date, Stripe PaymentIntent ID, and row count remain
+  unchanged.
+- No next-academic-year entitlement or payment is created.
 - The dashboard updates the status and no payment history UI appears.
 
 ### TC-007: Editor deletes a selected member
@@ -162,9 +164,8 @@ Expected observations:
 
 Setup:
 
-- An officer views members with effective, stale, historical, unrelated active,
-  and legacy calendar-year manual dues rows. At least one member has both a
-  current academic-year row and a manual calendar-year grant.
+- An officer views members with active current-year, inactive current-year,
+  historical, and future entitlements plus retained payment history.
 
 Action:
 
@@ -173,9 +174,9 @@ Action:
 Expected observations:
 
 - Paste is blocked in typed stages.
-- Rows are resolved and invalidated until every affected member is unpaid,
-  including legacy manual grants, in one transaction.
-- Historical and unrelated active rows remain unchanged.
+- Every active current-year entitlement is deactivated in one transaction.
+- Historical and future entitlements remain unchanged.
+- Payment history remains unchanged.
 - The UI reports the affected-member count.
 
 ### TC-010: Editor manages target-owned files
@@ -246,7 +247,7 @@ Setup:
 
 - A Member has event check-ins by a known operator, archived human Discord
   messages across channels and dates, employment rows, Guild profile data,
-  linked roles, and retained dues credits.
+  linked roles, and retained dues payment and entitlement rows.
 
 Action:
 
@@ -363,8 +364,8 @@ Expected observations:
 
 Setup:
 
-- A selected member was removed, or a current/payable dues record already
-  exists when a manual paid action races another write.
+- A selected member was removed, or their current-year entitlement changes
+  while a manual dues action races another write.
 
 Action:
 

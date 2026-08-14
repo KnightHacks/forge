@@ -118,14 +118,14 @@ manage current dues status, and remove invalid member accounts.
 - `Edit member access`: `EDIT_MEMBERS` or officer access.
 - `Effective permissions`: The union of permission bits granted by all roles
   linked to the signed-in user.
-- `Current dues status`: Whether an active dues record currently counts for the
-  member under the academic-school-year rules.
+- `Current dues status`: Whether the member has an active entitlement for the
+  current academic school year.
 - `Payment availability`: Whether unpaid members may start a new Stripe dues
   payment. It does not change any member's paid status or history.
-- `Revoke dues`: Mark every active row that would keep the member effectively
-  paid as inactive while preserving it for future history.
-- `Mass invalidate dues`: Mark the dues records covered by the officer action
-  inactive until every affected member is unpaid, while preserving them.
+- `Revoke dues`: Deactivate the member's current academic-year entitlement while
+  preserving recorded payment history.
+- `Mass invalidate dues`: Deactivate every active current academic-year
+  entitlement while preserving recorded payment history.
 
 ## Acceptance criteria
 
@@ -136,9 +136,8 @@ manage current dues status, and remove invalid member accounts.
 - An editor can update a selected member and sees the updated row/detail state.
 - An editor can delete a selected member after confirmation, and the deleted
   account no longer appears in results.
-- An editor can mark an unpaid member paid for the payable academic school year
-  and can click the status to revoke every record that would keep the member
-  paid without deleting history.
+- An editor can grant or revoke the selected member's current academic-year
+  entitlement without creating, rewriting, or deleting payment history.
 - An editor can pause or enable member-initiated payments; a read-only member
   admin can see but cannot change that state.
 - Search covers name, email, Discord username, and company.

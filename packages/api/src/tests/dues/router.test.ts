@@ -58,11 +58,20 @@ const member = {
 };
 
 const activeDues = {
-  active: true,
   amount: 2500,
   id: "dues-payment-id",
   paymentDate: new Date("2026-06-20T12:00:00Z"),
   stripePaymentIntentId: "pi_paid",
+  year: 2025,
+};
+
+const activeEntitlement = {
+  active: true,
+  createdAt: activeDues.paymentDate,
+  id: "dues-entitlement-id",
+  memberId,
+  sourcePaymentId: activeDues.id,
+  updatedAt: activeDues.paymentDate,
   year: 2025,
 };
 
@@ -84,18 +93,24 @@ function mockPaymentAvailability(paymentsEnabled: boolean) {
   });
 }
 
-function mockDuesRows(rows: unknown[]) {
-  const orderBy = vi.fn().mockResolvedValue(rows);
-  const where = vi.fn(() => ({ orderBy }));
-  const from = vi.fn(() => ({ where }));
-
-  mocks.db.select.mockReturnValue({ from });
-
-  return {
-    from,
-    orderBy,
-    where,
-  };
+function mockDuesState({
+  entitlements = [],
+  payments = [],
+}: {
+  entitlements?: unknown[];
+  payments?: unknown[];
+} = {}) {
+  mocks.db.select.mockReset();
+  const entitlementWhere = vi.fn().mockResolvedValue(entitlements);
+  const paymentOrderBy = vi.fn().mockResolvedValue(payments);
+  const paymentWhere = vi.fn(() => ({ orderBy: paymentOrderBy }));
+  mocks.db.select
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({ where: entitlementWhere })),
+    })
+    .mockReturnValueOnce({
+      from: vi.fn(() => ({ where: paymentWhere })),
+    });
 }
 
 function stripePaymentIntent(
@@ -120,7 +135,6 @@ function stripePaymentIntent(
 
 function mockTransaction({
   existingStripePayment = null,
-  existingYearPayment = null,
   insertedPayment = {
     ...activeDues,
     id: "inserted-dues-payment-id",
@@ -129,7 +143,6 @@ function mockTransaction({
   memberRow = member,
 }: {
   existingStripePayment?: typeof activeDues | null;
-  existingYearPayment?: typeof activeDues | null;
   insertedPayment?: typeof activeDues | null;
   memberRow?: typeof member | null;
 } = {}) {
@@ -137,12 +150,12 @@ function mockTransaction({
     .fn()
     .mockResolvedValue(insertedPayment ? [insertedPayment] : []);
   const onConflictDoNothing = vi.fn(() => ({ returning }));
-  const values = vi.fn(() => ({ onConflictDoNothing }));
+  const onConflictDoUpdate = vi.fn((_options: { setWhere?: unknown }) =>
+    Promise.resolve(undefined),
+  );
+  const values = vi.fn(() => ({ onConflictDoNothing, onConflictDoUpdate }));
   const insert = vi.fn(() => ({ values }));
-  const duesPaymentFindFirst = vi
-    .fn()
-    .mockResolvedValueOnce(existingStripePayment)
-    .mockResolvedValueOnce(existingYearPayment);
+  const duesPaymentFindFirst = vi.fn().mockResolvedValue(existingStripePayment);
   const tx = {
     insert,
     query: {
@@ -163,6 +176,7 @@ function mockTransaction({
   return {
     duesPaymentFindFirst,
     insert,
+    onConflictDoUpdate,
     returning,
     values,
   };
@@ -175,7 +189,7 @@ describe("duesRouter", () => {
     vi.clearAllMocks();
     mockMember();
     mockPaymentAvailability(false);
-    mockDuesRows([]);
+    mockDuesState();
   });
 
   afterEach(() => {
@@ -192,16 +206,18 @@ describe("duesRouter", () => {
       state: "unpaid",
     });
     expect(result.currentAcademicYear.shortLabel).toBe("2025-2026");
-    expect(result.payableAcademicYear.shortLabel).toBe("2025-2026");
-    expect(result.payableAcademicYear.label).toBe(
+    expect(result.currentAcademicYear.label).toBe(
       "2025-2026 academic school year",
     );
     expect(result.lateYearWarning).toBe(true);
     expect(result.paymentsLocked).toBe(true);
   });
 
-  it("returns paid status for an active current-year dues row", async () => {
-    mockDuesRows([activeDues]);
+  it("returns paid status for an active current-year entitlement", async () => {
+    mockDuesState({
+      entitlements: [activeEntitlement],
+      payments: [activeDues],
+    });
 
     const result = await createCaller().dues.getStatus();
 
@@ -214,30 +230,42 @@ describe("duesRouter", () => {
     expect(result.stripePaymentIntentId).toBe("pi_paid");
   });
 
-  it("treats a legacy calendar-year manual grant as paid", async () => {
-    const legacyManualGrant = {
-      ...activeDues,
-      id: "legacy-manual-grant",
-      stripePaymentIntentId: null,
-      year: 2026,
-    };
-    mockDuesRows([legacyManualGrant]);
+  it("returns paid status for an active manual entitlement", async () => {
+    mockDuesState({
+      entitlements: [{ ...activeEntitlement, sourcePaymentId: null }],
+    });
 
     const result = await createCaller().dues.getStatus();
 
-    expect(result.paid).toBe(true);
-    expect(result.paymentId).toBe(legacyManualGrant.id);
-    expect(result.paymentAcademicYear.shortLabel).toBe("2026-2027");
+    expect(result).toMatchObject({
+      amountPaid: null,
+      paid: true,
+      paidAt: activeEntitlement.updatedAt,
+      paymentId: null,
+      state: "paid",
+      stripePaymentIntentId: null,
+    });
   });
 
-  it("treats stale current-year dues as unpaid and payable next year", async () => {
-    mockDuesRows([{ ...activeDues, active: false }]);
+  it("does not treat payment history without an entitlement as paid", async () => {
+    mockDuesState({ payments: [activeDues] });
 
     const result = await createCaller().dues.getStatus();
 
     expect(result.paid).toBe(false);
-    expect(result.currentYearHasStaleDues).toBe(true);
-    expect(result.payableAcademicYear.shortLabel).toBe("2026-2027");
+    expect(result.paymentId).toBeNull();
+  });
+
+  it("treats an inactive current-year entitlement as unpaid for the current year", async () => {
+    mockDuesState({
+      entitlements: [{ ...activeEntitlement, active: false }],
+      payments: [activeDues],
+    });
+
+    const result = await createCaller().dues.getStatus();
+
+    expect(result.paid).toBe(false);
+    expect(result.currentAcademicYear.shortLabel).toBe("2025-2026");
     expect(mocks.db.transaction).not.toHaveBeenCalled();
   });
 
@@ -253,7 +281,7 @@ describe("duesRouter", () => {
   });
 
   it("blocks PaymentIntent creation when dues are already paid", async () => {
-    mockDuesRows([activeDues]);
+    mockDuesState({ entitlements: [activeEntitlement] });
 
     await expect(
       createCaller().dues.createPaymentIntent(),
@@ -279,6 +307,7 @@ describe("duesRouter", () => {
     mocks.stripe.paymentIntents.create.mockResolvedValue(
       stripePaymentIntent({
         id: "pi_created",
+        status: "requires_payment_method",
       }),
     );
 
@@ -329,13 +358,14 @@ describe("duesRouter", () => {
     });
     expect(transaction.values).toHaveBeenCalledWith(
       expect.objectContaining({
-        active: true,
         amount: 2500,
         memberId,
         stripePaymentIntentId: "pi_test",
         year: 2025,
       }),
     );
+    const entitlementUpdate = transaction.onConflictDoUpdate.mock.calls[0]?.[0];
+    expect(entitlementUpdate?.setWhere).toBeDefined();
 
     mocks.stripe.paymentIntents.retrieve.mockResolvedValue(
       stripePaymentIntent(),

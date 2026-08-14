@@ -84,7 +84,6 @@ describe("/api/membership Stripe webhook", () => {
     let storedPayment: Record<string, unknown> | null = null;
     const returning = vi.fn(() => {
       storedPayment = {
-        active: true,
         amount: 2500,
         id: "dues-payment-id",
         memberId: "member-id",
@@ -95,7 +94,8 @@ describe("/api/membership Stripe webhook", () => {
       return Promise.resolve([storedPayment]);
     });
     const onConflictDoNothing = vi.fn(() => ({ returning }));
-    const values = vi.fn(() => ({ onConflictDoNothing }));
+    const onConflictDoUpdate = vi.fn(() => Promise.resolve());
+    const values = vi.fn(() => ({ onConflictDoNothing, onConflictDoUpdate }));
     const insert = vi.fn(() => ({ values }));
     const transaction = {
       insert,
@@ -143,13 +143,20 @@ describe("/api/membership Stripe webhook", () => {
       database: mocks.db,
       paymentIntent,
     });
-    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledTimes(2);
     expect(values).toHaveBeenCalledWith(
       expect.objectContaining({
-        active: true,
         amount: 2500,
         memberId: "member-id",
         stripePaymentIntentId: "pi_webhook",
+        year: 2025,
+      }),
+    );
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        active: true,
+        memberId: "member-id",
+        sourcePaymentId: "dues-payment-id",
         year: 2025,
       }),
     );

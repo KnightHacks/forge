@@ -6,7 +6,6 @@ import {
   buildDuesAcademicYear,
   formatDuesAmount,
   getDuesAcademicYear,
-  getDuesPayableYear,
   isLateDuesPaymentWindow,
 } from "../dues";
 
@@ -42,21 +41,6 @@ describe("dues academic-year helpers", () => {
     expect(isLateDuesPaymentWindow(new Date("2026-08-01T00:00:00Z"))).toBe(
       false,
     );
-  });
-
-  it("bumps payable year forward when the current-year dues row is stale", () => {
-    expect(
-      getDuesPayableYear({
-        currentAcademicYearStart: 2026,
-        hasStaleCurrentYearDues: false,
-      }),
-    ).toBe(2026);
-    expect(
-      getDuesPayableYear({
-        currentAcademicYearStart: 2026,
-        hasStaleCurrentYearDues: true,
-      }),
-    ).toBe(2027);
   });
 
   it("formats dues amounts from cents", () => {

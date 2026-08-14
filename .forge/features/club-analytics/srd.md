@@ -91,7 +91,8 @@ Additional rules:
 2. Blade parses URL search parameters through shared validators and calls
    `analytics.getReport` with one normalized filter object.
 3. The API repeats access enforcement and selects only needed fields from
-   retained Member, non-hackathon Event, EventAttendee, DuesPayment,
+   retained Member, non-hackathon Event, EventAttendee, DuesEntitlement,
+   DuesPayment,
    EventFeedbackConfig, and linked FormResponse records.
 4. One pure report builder resolves periods, deduplicates attendance, normalizes
    feedback metrics, and builds all five section DTOs from the scoped records.
@@ -114,8 +115,9 @@ population metadata are returned with every report.
 - Attendance uses `EventAttendee.memberId` and `eventId`. Multiple rows for the
   same pair collapse to one distinct attendance. `checkedInAt` is metadata; the
   event's scheduled start selects the reporting period.
-- Dues status reuses `buildDuesStatus` so active, stale, payable-year, and
-  legacy calendar-year compatibility match existing Member surfaces.
+- Current dues status reads active `DuesEntitlement` rows for the selected
+  academic year. A linked `DuesPayment`, when present, supplies immutable
+  payment metadata without owning membership state.
 - Event feedback uses the explicit `EventFeedbackConfig` -> `FormResponse`
   association and the core `overall`, `fun`, `learning`, and `discovery`
   answers. Invalid stored values are excluded from that metric and reflected in
@@ -257,25 +259,25 @@ are non-negative integers.
 
 ### Dues definitions
 
-- Current paid/unpaid status is calculated for every current Member profile by
-  passing all of that member's retained dues rows through `buildDuesStatus` at
-  the report reference date.
+- Current paid/unpaid status is calculated from each Member's active
+  `DuesEntitlement` for the report reference date's academic year.
 - Current paid coverage is paid profiles divided by all current retained
   profiles. Every current profile is expected to pay; no waiver population is
   inferred.
-- Recorded-credit trends deduplicate `(memberId, year)` and group by
-  `paymentDate`. Active and stale counts remain separate.
-- Academic-year curves use the row's stored dues year and elapsed days from
-  August 1. They report distinct recorded credits, active credits, stale
-  credits, and recorded-credit coverage.
+- Entitlement trends are already unique by `(memberId, year)` and group by the
+  linked payment date when present, otherwise the entitlement creation date.
+  Active and inactive counts remain separate.
+- Academic-year curves use the entitlement's stored year and elapsed days from
+  August 1. They report distinct recorded entitlements, active entitlements,
+  inactive entitlements, and entitlement coverage.
 - A historical academic-year denominator contains retained profiles whose
   `dateCreated` is before that academic year's exclusive August 1 end. It is
   labeled `retained profiles by year end`.
-- Coverage milestones at 25%, 50%, 75%, and 90% use the first payment date on
-  which recorded-credit coverage met the threshold. An unreached milestone has
-  a null date.
-- Previous-year pace compares recorded credits at the same elapsed day of the
-  academic year. It does not compare dollars.
+- Coverage milestones at 25%, 50%, 75%, and 90% use the first recorded date on
+  which entitlement coverage met the threshold. An unreached milestone has a
+  null date.
+- Previous-year pace compares recorded entitlements at the same elapsed day of
+  the academic year. It does not compare dollars.
 - Paid/unpaid engagement uses current dues status crossed with selected-period
   distinct attendance, reach, and repeat attendance.
 - Named unpaid rows contain Member UUID, display name, graduation year,

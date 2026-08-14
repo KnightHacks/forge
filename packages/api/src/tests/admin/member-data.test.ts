@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { SQL } from "@forge/db";
 import { StringChunk } from "@forge/db";
 
-import { getDuesPaymentIdsToInvalidate } from "../../utils/dues/status";
 import { rankAdminMemberCandidates } from "../../utils/member/admin";
 import {
   graduatedCondition,
@@ -105,50 +104,5 @@ describe("admin member data utilities", () => {
     expect(
       hasGraduated(new Date("2027-05-02T00:00:00.000Z"), new Date(gradDay)),
     ).toBe(false);
-  });
-
-  it("invalidates every row that would keep dues effective while preserving unrelated history", () => {
-    const paymentDate = new Date("2026-06-20T12:00:00Z");
-    const duesRows = [
-      {
-        active: true,
-        amount: 2500,
-        id: "current-academic-year",
-        paymentDate,
-        stripePaymentIntentId: "pi_current",
-        year: 2025,
-      },
-      {
-        active: true,
-        amount: 2500,
-        id: "legacy-manual-calendar-year",
-        paymentDate,
-        stripePaymentIntentId: null,
-        year: 2026,
-      },
-      {
-        active: true,
-        amount: 2500,
-        id: "historical-row",
-        paymentDate,
-        stripePaymentIntentId: "pi_historical",
-        year: 2024,
-      },
-      {
-        active: true,
-        amount: 2500,
-        id: "unrelated-future-row",
-        paymentDate,
-        stripePaymentIntentId: null,
-        year: 2027,
-      },
-    ];
-
-    expect(
-      getDuesPaymentIdsToInvalidate({
-        duesRows,
-        referenceDate: new Date("2026-06-26T12:00:00Z"),
-      }),
-    ).toEqual(["current-academic-year", "legacy-manual-calendar-year"]);
   });
 });

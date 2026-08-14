@@ -335,13 +335,13 @@ Expected observations:
 - Changing demographic or event filters recomputes the rows without exposing
   contact or edit data.
 
-### TC-016: Current dues status reuses effective dues semantics
+### TC-016: Current dues status uses current-year entitlements
 
 Setup:
 
-- Retain Members with an active current academic-year credit, an inactive
-  current-year credit, an active payable-next-year credit after stale rollover,
-  an active compatible legacy calendar-year credit, and no dues rows.
+- Retain Members with an active current academic-year entitlement, an inactive
+  current-year entitlement, an active future-year entitlement, an active
+  prior-year entitlement, and no entitlement rows.
 
 Action:
 
@@ -349,7 +349,9 @@ Action:
 
 Expected observations:
 
-- Each Member's state matches `buildDuesStatus` for the same rows and date.
+- Only an active entitlement for the reference date's academic year is paid.
+- Payment history and inactive, prior-year, or future-year entitlements do not
+  make a Member current.
 - Paid plus unpaid equals every current retained Member profile.
 - Current coverage uses that full denominator and contains no dollar/provider
   fields.
@@ -359,7 +361,7 @@ Expected observations:
 Setup:
 
 - Retain Members created before and after the exclusive end of two academic
-  years. Include unique active/stale dues credits on several payment dates.
+  years. Include unique active/inactive entitlements on several recorded dates.
 
 Action:
 
@@ -369,11 +371,13 @@ Expected observations:
 
 - Each denominator includes only currently retained profiles created before
   that year's end and is labeled accordingly.
-- Curves deduplicate member/year, separate active/stale, and order elapsed-day
-  points chronologically.
+- Curves preserve one member/year entitlement, separate active/inactive, and
+  order elapsed-day points chronologically.
+- A payment-linked entitlement uses its payment date for chronology; a manual
+  entitlement with no source payment uses its entitlement creation timestamp.
 - Previous-year pace compares the same elapsed academic-year day.
-- Each reached 25/50/75/90-percent milestone uses the first qualifying payment
-  date; unreached milestones are null.
+- Each reached 25/50/75/90-percent milestone uses the first qualifying
+  entitlement chronology timestamp; unreached milestones are null.
 
 ### TC-018: Paid and unpaid engagement uses selected attendance
 
@@ -572,7 +576,7 @@ Setup:
 - Supply current and comparison event types with measured growth and decline,
   at least three events in two weekday/time windows, a mature 30-day return
   cohort, audience segments on both sides of the Member-profile distribution,
-  current and prior-year dues credits, attended unpaid profiles, and no linked
+  current and prior-year dues entitlements, attended unpaid profiles, and no linked
   feedback responses.
 
 Action:
@@ -626,7 +630,7 @@ Expected observations:
 Setup:
 
 - Supply test fixtures representing an attendance to an unselected event, a
-  dues row for an absent Member, a feedback response with malformed JSON
+  dues entitlement for an absent Member, a feedback response with malformed JSON
   values, and an unlinked feedback form.
 
 Action:

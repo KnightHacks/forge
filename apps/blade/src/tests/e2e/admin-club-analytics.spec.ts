@@ -11,6 +11,7 @@ import {
   DiscordArchiveMessage,
 } from "@forge/db/schemas/discord";
 import {
+  DuesEntitlement,
   DuesPayment,
   Event,
   EventAttendee,
@@ -316,13 +317,23 @@ async function seed() {
     })),
   );
   const currentYear = getDuesAcademicYear(new Date()).startYear;
-  await db.insert(DuesPayment).values(
-    MEMBER_IDS.slice(0, 5).map((memberId, index) => ({
+  const payments = await db
+    .insert(DuesPayment)
+    .values(
+      MEMBER_IDS.slice(0, 5).map((memberId, index) => ({
+        amount: 2500,
+        memberId,
+        paymentDate: new Date(Date.UTC(currentYear, 8 + index, 1, 12)),
+        stripePaymentIntentId: null,
+        year: currentYear,
+      })),
+    )
+    .returning({ id: DuesPayment.id, memberId: DuesPayment.memberId });
+  await db.insert(DuesEntitlement).values(
+    payments.map((payment) => ({
       active: true,
-      amount: 2500,
-      memberId,
-      paymentDate: new Date(Date.UTC(currentYear, 8 + index, 1, 12)),
-      stripePaymentIntentId: null,
+      memberId: payment.memberId,
+      sourcePaymentId: payment.id,
       year: currentYear,
     })),
   );

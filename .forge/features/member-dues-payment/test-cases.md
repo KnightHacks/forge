@@ -47,8 +47,9 @@ pnpm --filter=@forge/blade e2e
   deterministic E2E payment mode.
 - Repeated webhook delivery exercises the real shared dues-recording helper and
   proves that the same PaymentIntent inserts only one dues row.
-- Stale dues coverage runs from the seeded database row through API status and
-  dashboard rendering, then verifies that the historical row remains unchanged.
+- Inactive-entitlement coverage runs from the seeded database row through API
+  status and dashboard rendering, then verifies that payment history remains
+  unchanged.
 
 ## Test cases
 
@@ -83,29 +84,29 @@ Expected observations:
 - May 31 and July 31 return true.
 - May 30 and August 1 return false.
 
-### TC-003: Stale current-year dues bump the payable year forward
+### TC-003: Inactive entitlement does not advance checkout to a future year
 
 Setup:
 
 - Current academic year is `2026`.
-- A member has a `DuesPayment` row for `2026` with `active = false`.
+- A member has payment history and an inactive entitlement for `2026`.
 
 Action:
 
-- Compute dues status/payable year.
+- Compute dues status and begin checkout.
 
 Expected observations:
 
 - Member is unpaid.
-- Payable year is `2027`.
-- The stale `2026` row is not deleted or overwritten.
+- Checkout targets `2026`, the current academic year.
+- Existing payment history is not deleted or overwritten.
 
 ### TC-004: API status returns unpaid with neutral payment copy
 
 Setup:
 
 - Authenticated user has a completed member profile.
-- No active dues row exists for current/payable year.
+- No active entitlement exists for the current year.
 
 Action:
 
@@ -114,15 +115,16 @@ Action:
 Expected observations:
 
 - `paid` is false.
-- Returned unpaid copy uses the current/payable academic year.
+- Returned unpaid copy uses the current academic year.
 - The procedure does not throw for a valid member.
 
-### TC-005: API status returns paid for an active dues row
+### TC-005: API status returns paid for an active entitlement
 
 Setup:
 
 - Authenticated user has a completed member profile.
-- An active dues row exists for the current academic year.
+- An active entitlement exists for the current academic year and references a
+  Stripe payment.
 
 Action:
 
@@ -133,12 +135,32 @@ Expected observations:
 - `paid` is true.
 - The output includes the paid year label, amount, and payment date.
 
-### TC-006: API status treats stale current-year row as unpaid
+### TC-005A: API status returns paid for a manual entitlement
 
 Setup:
 
 - Authenticated user has a completed member profile.
-- Only an inactive dues row exists for the current academic year.
+- An active entitlement exists for the current academic year with no source
+  payment.
+
+Action:
+
+- Call `dues.getStatus` and open `/member/dues`.
+
+Expected observations:
+
+- `paid` is true even though no `DuesPayment` row is linked.
+- Payment-specific fields are null and the paid date uses the entitlement's
+  update timestamp.
+- `/member/dues` redirects to the member dashboard instead of offering
+  checkout.
+
+### TC-006: API status treats an inactive current-year entitlement as unpaid
+
+Setup:
+
+- Authenticated user has a completed member profile.
+- Payment history exists, but the current-year entitlement is inactive.
 
 Action:
 
@@ -147,7 +169,7 @@ Action:
 Expected observations:
 
 - `paid` is false.
-- Payable year is the next academic start year.
+- The current academic year remains the checkout target.
 
 ### TC-007: PaymentIntent creation requires a member profile
 
@@ -164,11 +186,11 @@ Expected observations:
 - Procedure throws `NOT_FOUND`.
 - Stripe is not called.
 
-### TC-008: PaymentIntent creation blocks duplicate active dues
+### TC-008: PaymentIntent creation blocks a duplicate entitlement
 
 Setup:
 
-- Authenticated member already has an active dues row for the payable year.
+- Authenticated member already has an active current-year entitlement.
 
 Action:
 
@@ -209,8 +231,10 @@ Action:
 
 Expected observations:
 
-- A `DuesPayment` row is inserted with amount in cents, `active = true`, and
+- An immutable `DuesPayment` row is inserted with amount in cents and
   `stripePaymentIntentId`.
+- The matching member/current-year entitlement is created or reactivated and
+  linked to the payment.
 - Calling the procedure again returns paid status without duplicating rows.
 
 ### TC-011: Confirming a processing PaymentIntent does not insert dues
@@ -326,13 +350,14 @@ Expected observations:
   action to return to the dashboard immediately.
 - Using the immediate action returns the browser to `/member/dashboard`.
 - Dashboard shows paid dues status.
-- Database contains one active dues row with amount `2500`.
+- Database contains one payment with amount `2500` and one active current-year
+  entitlement linked to it.
 
 ### TC-018: E2E paid member is redirected away from `/member/dues`
 
 Setup:
 
-- Seed an E2E member with an active dues row.
+- Seed an E2E member with an active current-year entitlement.
 
 Action:
 
@@ -418,11 +443,11 @@ Expected observations:
 
 - The value is `2500`, matching Stripe cents semantics.
 
-### TC-NEG-002: Paid status never depends on stale rows alone
+### TC-NEG-002: Paid status never depends on payment history alone
 
 Setup:
 
-- A member has only inactive dues rows.
+- A member has payment history but no active current-year entitlement.
 
 Action:
 

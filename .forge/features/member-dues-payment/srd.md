@@ -23,7 +23,7 @@ history for future admin/alumni surfaces.
   components.
 - `docs/agentic-development/forge-engineering-principles.md#configurability-principles`:
   price stays code-configured for the first slice, while year labeling is
-  derived from date and active/stale rollover is future admin-controlled.
+  derived from the current UTC date.
 - `apps/blade/DESIGN_SYSTEM.md`: dues UI must use the current Blade raised panel
   and darker inset surface hierarchy.
 
@@ -60,10 +60,12 @@ history for future admin/alumni surfaces.
    `dues.createPaymentIntent` from the client if server-side setup fails.
 4. After Stripe reports a succeeded PaymentIntent, the client calls
    `dues.confirmPayment`. The API retrieves the PaymentIntent from Stripe and
-   records the dues row idempotently before the UI shows success and redirects.
+   records the immutable payment and activates the matching current-year
+   entitlement in one transaction before the UI shows success and redirects.
 5. `/api/membership` handles Stripe webhook `payment_intent.succeeded` events and
    calls the same shared idempotent recording helper used by `confirmPayment`.
-6. `@forge/db` owns dues payment history and the singleton dues configuration.
+6. `@forge/db` owns immutable dues payment history, yearly dues entitlements,
+   and the singleton dues configuration.
 7. `@forge/validators` owns pure dues helper functions and output/input schemas
    that are shared by API, Blade, and tests.
 
@@ -73,8 +75,8 @@ history for future admin/alumni surfaces.
 - `dues.getStatus`
   - Access: protected member.
   - Input: none.
-  - Output: current/base academic year, payable year, formatted labels,
-    `paid`, `paymentYear`, `paidAt`, `amount`, `lateYearWarning`, and the
+  - Output: current academic year, formatted labels, `paid`, `paymentYear`,
+    `paidAt`, `amount`, `lateYearWarning`, and the
     admin-controlled payment-availability state.
   - Error: `NOT_FOUND` when the authenticated user has no `Member` row.
 - `dues.createPaymentIntent`
@@ -82,15 +84,14 @@ history for future admin/alumni surfaces.
   - Input: none.
   - Errors:
     - `NOT_FOUND` when no member exists.
-    - `CONFLICT` when an active dues row already counts the member as paid for
-      the relevant academic year.
+    - `CONFLICT` when an active current-year entitlement already makes the
+      member paid.
     - `PRECONDITION_FAILED` while admins have payments paused.
     - `INTERNAL_SERVER_ERROR` when Stripe does not return a client secret.
   - Stripe metadata must include `member_id`, `user_id`, and
     `academic_year_start`.
   - Payment method types are restricted to `card`. Delayed-notification bank
-    payments are out of scope because the first slice does not persist pending
-    PaymentIntent attempts for safe reuse.
+    payments remain out of scope for this slice.
 - `dues.confirmPayment`
   - Access: protected member.
   - Input: `{ paymentIntentId: string }`.
@@ -100,8 +101,8 @@ history for future admin/alumni surfaces.
     session.
   - Records only succeeded payments. Processing returns a processing status.
     Canceled/failed/incomplete statuses return a safe `BAD_REQUEST`.
-  - Uses idempotent insert behavior keyed by `stripePaymentIntentId` and the
-    existing member/year uniqueness.
+  - Uses idempotent payment inserts keyed by `stripePaymentIntentId` and upserts
+    one entitlement for the member/current-year pair.
 - `dues.getPaymentDates` remains deferred until admin analytics are reintroduced.
 - `/api/membership` is the only new REST route because Stripe webhooks require an
   HTTP protocol boundary; it must not own separate business behavior.
@@ -116,23 +117,30 @@ history for future admin/alumni surfaces.
 
 ## Data / migration / compatibility
 
-- Add `active boolean not null default true` to
-  `knight_hacks_dues_payment`. Existing production rows backfill to active so
-  current dues data keeps working after migration.
 - Add nullable `stripe_payment_intent_id varchar(255)` with a unique constraint.
   Legacy/manual rows can remain null while new Stripe rows become idempotent.
-- Preserve the existing unique member/year constraint.
+- `DuesPayment` is immutable recorded payment history. New rows come only from
+  Stripe; legacy manual rows remain preserved. Remove its `active` field and
+  member/year uniqueness so a revoked member can make another real payment for
+  the same academic year without overwriting the original transaction.
+- Add `DuesEntitlement` with one row per member/year, an active flag, and an
+  optional `sourcePaymentId` link. Current dues status reads only the active
+  current-year entitlement.
+- Activating an already-active entitlement must not replace its
+  `sourcePaymentId`; this preserves which payment funded the entitlement when
+  duplicate fulfillment paths race.
 - Keep `year integer` as the academic school-year start year, e.g. `2026` for
   `2026-2027`.
-- Update shared dues amount constants so new manual inserts and Stripe inserts
-  both store cents (`2500` for `$25`).
-- Normalize historical `amount = 25` rows to `2500` in the migration because the
-  existing manual dues constant used dollars while Stripe used cents. The current
-  member-facing status does not depend on amount, but normalizing now keeps
-  future admin/history reads coherent.
-- If an inactive row already exists for the current base academic year, the
-  payable year becomes the next academic year. The inactive row remains history;
-  the new payment gets a separate row and does not overwrite/delete history.
+- New Stripe payment rows store cents (`2500` for `$25`). Migration 0011 already
+  normalized historical `amount = 25` rows to `2500`; entitlement state does
+  not depend on amount.
+- Backfill one entitlement per normalized member/year from existing payment
+  rows. Preserve the aggregate active state and link the entitlement to the
+  newest active payment, or newest payment when all rows are inactive.
+- Normalize legacy January-July calendar-year values to the academic year that
+  began the previous August before backfilling entitlements.
+- Checkout always targets the current academic year. An inactive entitlement
+  never advances a payment into the next year.
 - Add a singleton `DuesConfiguration` row keyed by `global`, with
   `paymentsEnabled boolean not null default false`. Missing configuration is
   also treated as paused so a partial deployment cannot accidentally open
@@ -152,8 +160,8 @@ Would this require a developer change next year?
 - The `$25` price is still code-configured. That is acceptable for this first
   slice because the human explicitly said the price is always `$25`, while admin
   configurable pricing is out of scope.
-- Active/stale rollover requires future admin UI, but the database/API model in
-  this slice preserves the state needed for that admin-controlled path.
+- Academic-year membership state is admin-controllable through entitlements;
+  payment transactions remain unchanged by grants and revocations.
 - Payment availability no longer requires a developer change because authorized
   member editors can change the persisted setting from `/admin/members`.
 
@@ -186,10 +194,10 @@ Would this require a developer change next year?
 - `packages/validators/src/tests/dues.test.ts`
   - academic-year label boundaries
   - late-year warning boundaries
-  - payable-year bump when current-year dues are stale
 - `packages/api/src/tests/dues/router.test.ts`
-  - status: unpaid, paid active, stale current-year unpaid/payable next year
-  - create PaymentIntent: no member, duplicate paid, Stripe metadata/options
+  - status: unpaid without entitlement, paid with an active current-year
+    entitlement, inactive current-year entitlement remains unpaid
+  - create PaymentIntent: no member, duplicate paid, and Stripe metadata/options
   - create PaymentIntent: admin pause rejects before Stripe
   - confirm PaymentIntent: succeeded inserts, idempotent repeat, processing,
     failed/incomplete, wrong member/user
@@ -209,6 +217,8 @@ Would this require a developer change next year?
   - paid member visiting `/member/dues` redirects to dashboard
   - no-member user is routed to signup
   - mobile dashboard keeps dues compact and reachable
+- `packages/db/src/tests/dues-entitlement-migration.test.ts`
+  - payment/entitlement separation and legacy-year backfill ordering
 
 Expected commands:
 

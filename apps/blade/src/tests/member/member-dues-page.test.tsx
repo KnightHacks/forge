@@ -87,17 +87,10 @@ const duesStatus = {
     shortLabel: "2026-2027",
     startYear: 2026,
   },
-  currentYearHasStaleDues: false,
   lateYearWarning: false,
   paid: false,
   paidAt: null,
   paymentsLocked: false,
-  payableAcademicYear: {
-    endYear: 2027,
-    label: "2026-2027 academic school year",
-    shortLabel: "2026-2027",
-    startYear: 2026,
-  },
   paymentAcademicYear: {
     endYear: 2027,
     label: "2026-2027 academic school year",
