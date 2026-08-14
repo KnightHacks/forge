@@ -9,23 +9,22 @@ enable_free_tier: true
 
 # Max 250 chars — kept tight
 tone_instructions: >
-  Be concise, educational, and actionable. Show code fixes. Explain the "why."
-  Developers range from beginners to experienced. Reference CONTRIBUTING.md
-  conventions when relevant. Be constructive, not critical.
+  State only the concrete problem and smallest actionable fix. No praise,
+  preamble, repetition, severity discussion, or lengthy explanation.
 
 # ── Reviews ─────────────────────────────────────────────────────────────
 reviews:
-  profile: "chill"
+  profile: "quiet"
   request_changes_workflow: true
 
   # Summary & walkthrough
-  high_level_summary: true
+  high_level_summary: false
   high_level_summary_placeholder: "@coderabbitai summary"
   high_level_summary_in_walkthrough: false
   collapse_walkthrough: true
-  sequence_diagrams: true
-  changed_files_summary: true
-  estimate_code_review_effort: true
+  sequence_diagrams: false
+  changed_files_summary: false
+  estimate_code_review_effort: false
 
   # PR title
   auto_title_instructions: >
@@ -33,10 +32,10 @@ reviews:
     Example: "[#42] Add member registration endpoint"
 
   # Context & status
-  assess_linked_issues: true
-  related_issues: true
-  related_prs: true
-  review_status: true
+  assess_linked_issues: false
+  related_issues: false
+  related_prs: false
+  review_status: false
   review_details: false
   commit_status: true
   fail_commit_status: false
@@ -44,7 +43,7 @@ reviews:
   disable_cache: false
 
   # Labels
-  suggested_labels: true
+  suggested_labels: false
   auto_apply_labels: false
   labeling_instructions:
     # App labels
@@ -92,11 +91,11 @@ reviews:
       instructions: "Do not auto-suggest this label — it is manually applied to good first issues"
 
   # Reviewers
-  suggested_reviewers: true
+  suggested_reviewers: false
   auto_assign_reviewers: false
 
   # Misc
-  enable_prompt_for_ai_agents: true
+  enable_prompt_for_ai_agents: false
   poem: false
   in_progress_fortune: false
 
