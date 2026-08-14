@@ -105,35 +105,35 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Refinement inventory
 
-| ID   | Refinement                                                                                                                                                  | State     | Claim     | Proof                          |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------- | ------------------------------ |
-| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Ready     | Unclaimed | TC-001                         |
-| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Ready     | Unclaimed | TC-002                         |
-| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Unclaimed | TC-003, TC-NEG-001             |
-| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Unclaimed | TC-004                         |
-| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Unclaimed | TC-005                         |
-| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Unclaimed | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed | TC-006                         |
-| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Ready     | Unclaimed | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed | TC-009                         |
-| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Ready     | Unclaimed | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed | TC-012, TC-NEG-001             |
-| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed | TC-014                         |
-| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed | TC-015, TC-NEG-002, TC-NEG-003 |
-| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed | TC-016, TC-NEG-003             |
-| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Ready     | Unclaimed | TC-017                         |
-| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Unclaimed | TC-020                         |
-| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed | TC-018, TC-NEG-003             |
-| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed | TC-019, TC-NEG-002, TC-NEG-003 |
-| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed | Out of scope                   |
-| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed | Out of scope                   |
+| ID   | Refinement                                                                                                                                                  | State     | Claim                   | Proof                          |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------- | ------------------------------ |
+| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Ready     | Unclaimed               | TC-001                         |
+| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Ready     | Unclaimed               | TC-002                         |
+| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Unclaimed               | TC-003, TC-NEG-001             |
+| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Unclaimed               | TC-004                         |
+| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Unclaimed               | TC-005                         |
+| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Unclaimed               | TC-005                         |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed               | TC-007, TC-020                 |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed               | TC-007, TC-008                 |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed               | TC-007                         |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed               | TC-006                         |
+| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Ready     | Unclaimed               | TC-007                         |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed               | TC-008, TC-020                 |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed               | TC-009                         |
+| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14) | TC-010                         |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed               | TC-011                         |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed               | TC-012, TC-NEG-001             |
+| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed               | TC-013                         |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed               | TC-014                         |
+| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed               | TC-015, TC-NEG-002, TC-NEG-003 |
+| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed               | TC-016, TC-NEG-003             |
+| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Ready     | Unclaimed               | TC-017                         |
+| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed               | TC-021                         |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Unclaimed               | TC-020                         |
+| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed               | TC-018, TC-NEG-003             |
+| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed               | TC-019, TC-NEG-002, TC-NEG-003 |
+| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed               | Out of scope                   |
+| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed               | Out of scope                   |
 
 ## Task list
 
@@ -191,6 +191,33 @@ Current phase: Bundle approved / ready for technical discovery
 - `pnpm typecheck`: passed across all 29 tasks.
 - `pnpm verify:push`: passed after the contributor inventory and coordination
   instructions were added. It reran format, lint, and typecheck successfully.
+
+- 2026-08-14: R-14 implemented. Confirmation now gates saved-photo removal in
+  `MemberProfilePictureUpload` (used by the member dashboard and settings
+  page), which is the only shared component behind that surface. The signup
+  flow's `saveMode="deferred"` remove path is unaffected, since nothing is
+  saved yet there and the SRD scopes confirmation to saved-photo removal.
+  Cancel closes without a mutation call; confirm runs the existing
+  `saveMemberProfilePicture` mutation once and returns focus to the upload
+  file input (the only control still present after the remove button
+  unmounts). Checks run: `pnpm format` (pass), `pnpm --filter=@forge/blade
+typecheck` (pass), `pnpm --filter=@forge/blade lint` (0 errors; pre-existing
+  unrelated file/function-length warnings only), `pnpm analyze:react:changed`
+  (pass, prop API unchanged), and the two existing Vitest files that
+  reference this component (`member-profile-settings-form.test.tsx`,
+  `member-dashboard.test.tsx`, 8/8 passing — both mock the component and
+  don't cover the new confirm flow). No automated browser/E2E verification
+  was performed. Manual verification in a real logged-in session is still
+  recommended before merge.
+- 2026-08-14: `forge/refinements` was rebased onto latest `main` (through
+  `dfac35c1`, "Adding Leetcode and /eightball responses #487") and
+  force-pushed to origin at the human's explicit request, replacing an
+  already-pushed merge commit (`9583bdb5`, "Merge branch 'main' into
+  forge/refinements") with a linear history so `rename refinements branch
+for forge` is the branch tip again. The merged content was verified
+  byte-identical before rewriting history. Any other local clone of this
+  branch (e.g. the `dvidal` worktree referenced below) will need to reset to
+  the new tip rather than merge/pull normally.
 
 ## Links
 
