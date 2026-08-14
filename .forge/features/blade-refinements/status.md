@@ -117,7 +117,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed               | TC-007, TC-008                 |
 | R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed               | TC-007                         |
 | R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed               | TC-006                         |
-| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Ready     | Unclaimed               | TC-007                         |
+| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14) | TC-007                         |
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed               | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed               | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14) | TC-010                         |
@@ -127,7 +127,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed               | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed               | TC-015, TC-NEG-002, TC-NEG-003 |
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed               | TC-016, TC-NEG-003             |
-| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Ready     | Unclaimed               | TC-017                         |
+| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14) | TC-017                         |
 | R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed               | TC-021                         |
 | R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Unclaimed               | TC-020                         |
 | R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed               | TC-018, TC-NEG-003             |
@@ -218,6 +218,27 @@ for forge` is the branch tip again. The merged content was verified
   byte-identical before rewriting history. Any other local clone of this
   branch (e.g. the `dvidal` worktree referenced below) will need to reset to
   the new tip rather than merge/pull normally.
+- 2026-08-14: R-11 confirmed already satisfied by existing dashboard code
+  (both the desktop `Card` and the mobile `lg:hidden` block already render
+  Previous forms as a small `dashboardNestedSurfaceClass` row with a `size="sm"`
+  outline button) and marked Complete; no code change was needed.
+- 2026-08-14: R-21 implemented in `packages/api/src/utils/issues/reminders.ts`
+  (`targetBlock`). The Discord discussion link changed from ` · [Discuss](url)`
+  to ` | [Chat](url)`, appended after the bold linked-title heading only when
+  `target.discordThreadUrl` is set; omitted entirely otherwise. No other
+  reminder builder (events, hackathon events) shares this pattern, so the
+  change is scoped to issue reminders only. Existing `[Discuss]` assertions in
+  `packages/api/src/tests/issues/reminders.test.ts` were updated to `[Chat]`,
+  and a new `TC-017` test was added covering both the threaded and
+  threadless cases with a title containing a raw mention and a line break, to
+  confirm the existing sanitize/escape behavior around the new separator is
+  unchanged. Checks run: `pnpm --filter=@forge/api typecheck` (pass),
+  `pnpm --filter=@forge/cron typecheck` (pass, only consumer of
+  `deliverIssueReminders`), `pnpm --filter=@forge/api lint` (0 errors,
+  pre-existing unrelated file-length warning only), and
+  `packages/api/src/tests/issues/reminders.test.ts` (7/7 passing). No message
+  was sent to a live Discord channel; the cron job that calls this
+  (`apps/cron/src/crons/issue-reminders.ts`) was not run.
 
 ## Links
 
