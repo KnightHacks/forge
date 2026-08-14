@@ -9,10 +9,23 @@ pre-commit:
   parallel: false
   jobs:
     - name: format staged files
-      glob: "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,yml,yaml}"
+      glob: "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,yml,yaml,md}"
       run: pnpm exec prettier --write "{staged_files}"
       stage_fixed: true
 
     - name: lint staged files
       glob: "*.{ts,tsx,js,jsx,cjs,mjs}"
       run: pnpm exec eslint "{staged_files}"
+
+    - name: typecheck staged files
+      glob: "*.{ts,tsx,cts,mts}"
+      run: |
+        filters=$(
+          git diff --cached --name-only --diff-filter=ACMRD |
+            sed -nE 's#^((apps|packages|tooling)/[^/]+)/.*#--filter=./\1#p' |
+            sort -u
+        )
+
+        if [ -n "$filters" ]; then
+          pnpm exec turbo run typecheck $filters
+        fi
