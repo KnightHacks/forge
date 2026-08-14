@@ -1,7 +1,8 @@
 import type { AnalyticsReportInput } from "@forge/validators";
-import { eq, isNull } from "@forge/db";
+import { eq, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
+  DuesEntitlement,
   DuesPayment,
   Event,
   EventAttendee,
@@ -57,13 +58,17 @@ async function loadClubAnalyticsSources() {
       .where(isNull(Event.hackathonId)),
     db
       .select({
-        active: DuesPayment.active,
-        id: DuesPayment.id,
-        memberId: DuesPayment.memberId,
-        paymentDate: DuesPayment.paymentDate,
-        year: DuesPayment.year,
+        active: DuesEntitlement.active,
+        id: DuesEntitlement.id,
+        memberId: DuesEntitlement.memberId,
+        recordedAt: sql<Date>`coalesce(${DuesPayment.paymentDate}, ${DuesEntitlement.createdAt})`,
+        year: DuesEntitlement.year,
       })
-      .from(DuesPayment),
+      .from(DuesEntitlement)
+      .leftJoin(
+        DuesPayment,
+        eq(DuesPayment.id, DuesEntitlement.sourcePaymentId),
+      ),
     db
       .select({
         answers: FormResponse.responseData,

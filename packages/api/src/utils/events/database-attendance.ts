@@ -3,14 +3,9 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions } from "@forge/db/schemas/auth";
-import {
-  DuesPayment,
-  Event,
-  EventAttendee,
-  Member,
-} from "@forge/db/schemas/knight-hacks";
+import { Event, EventAttendee, Member } from "@forge/db/schemas/knight-hacks";
 
-import { buildDuesStatus } from "../dues/status";
+import { hasCurrentDuesEntitlement } from "../dues/entitlement";
 import { eventRowToWorkflowRecord } from "./database-state";
 
 type DbExecutor =
@@ -30,20 +25,17 @@ export function createDbAttendanceState({
       where: eq(Member.id, memberId),
     });
     if (!member) return null;
-    const [assignments, duesRows] = await Promise.all([
+    const [assignments, duesActive] = await Promise.all([
       executor()
         .select({ roleId: Permissions.roleId })
         .from(Permissions)
         .where(eq(Permissions.userId, member.userId)),
-      executor()
-        .select()
-        .from(DuesPayment)
-        .where(eq(DuesPayment.memberId, member.id)),
+      hasCurrentDuesEntitlement(member.id, executor()),
     ]);
     return {
       company: member.company,
       discordUsername: member.discordUser,
-      duesActive: buildDuesStatus({ duesRows }).paid,
+      duesActive,
       firstName: member.firstName,
       guildProfileVisible: member.guildProfileVisible,
       id: member.id,

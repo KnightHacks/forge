@@ -55,18 +55,6 @@ export function isLateDuesPaymentWindow(referenceDate = new Date()) {
   return currentDay >= warningStart && currentDay <= warningEnd;
 }
 
-export function getDuesPayableYear({
-  currentAcademicYearStart,
-  hasStaleCurrentYearDues,
-}: {
-  currentAcademicYearStart: number;
-  hasStaleCurrentYearDues: boolean;
-}) {
-  return hasStaleCurrentYearDues
-    ? currentAcademicYearStart + 1
-    : currentAcademicYearStart;
-}
-
 export function formatDuesAmount(cents = MEMBER_DUES_PRICE_CENTS) {
   return new Intl.NumberFormat("en-US", {
     currency: "USD",

@@ -24,6 +24,7 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_company",
   "knight_hacks_discord_config",
   "knight_hacks_dues_configuration",
+  "knight_hacks_dues_entitlement",
   "knight_hacks_dues_payment",
   "knight_hacks_employment",
   "knight_hacks_event",

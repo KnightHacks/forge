@@ -1196,7 +1196,7 @@ export function MemberDetailDialog({
                             <p className="mt-1 text-sm leading-5">
                               {detail.duesStatus.paid
                                 ? `Paid for ${detail.duesStatus.paymentAcademicYear.shortLabel}`
-                                : `Unpaid for ${detail.duesStatus.payableAcademicYear.shortLabel}`}
+                                : `Unpaid for ${detail.duesStatus.currentAcademicYear.shortLabel}`}
                             </p>
                           </div>
                           <Badge
@@ -1218,7 +1218,7 @@ export function MemberDetailDialog({
                               {detail.duesStatus.paid
                                 ? detail.duesStatus.paymentAcademicYear
                                     .shortLabel
-                                : detail.duesStatus.payableAcademicYear
+                                : detail.duesStatus.currentAcademicYear
                                     .shortLabel}
                             </dd>
                           </div>
@@ -1276,18 +1276,9 @@ export function MemberDetailDialog({
                                 key={`${payment.year}-${payment.paidAt.toISOString()}`}
                                 className="py-2.5 text-sm"
                               >
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="font-medium">
-                                    Stored year {payment.year}
-                                  </span>
-                                  <Badge
-                                    variant={
-                                      payment.active ? "default" : "outline"
-                                    }
-                                  >
-                                    {payment.active ? "Active" : "Inactive"}
-                                  </Badge>
-                                </div>
+                                <span className="font-medium">
+                                  Stored year {payment.year}
+                                </span>
                                 <p className="mt-1 text-muted-foreground">
                                   {formatTimestamp(payment.paidAt)} ·{" "}
                                   {formatDuesAmount(payment.amount)} ·{" "}
