@@ -51,7 +51,7 @@
     "lefthook": "^2.1.10",
     "playwright": "^1.61.1",
     "prettier": "catalog:",
-    "react-analyzer": "github:azer/react-analyzer",
+    "react-analyzer": "https://codeload.github.com/azer/react-analyzer/tar.gz/4ec2d217ac52f801aed9707c3279f9cce5c5ad29",
     "tsx": "^4.21.0",
     "turbo": "^2.8.11",
     "typescript": "catalog:",
