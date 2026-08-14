@@ -478,7 +478,7 @@ function GuildProfileCard({
         <DashboardContent
           className={cn(
             dashboardNestedSurfaceClass,
-            "hidden max-h-36 min-h-0 overflow-y-auto p-3 md:p-4 lg:block lg:flex-1",
+            "hidden min-h-36 resize-y overflow-y-auto p-3 md:p-4 lg:block lg:flex-1",
           )}
         >
           <div className="mb-2 flex items-center gap-2 text-sm font-medium">

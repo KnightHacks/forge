@@ -5,6 +5,7 @@ import { ExternalLink, Loader2, SlidersHorizontal } from "lucide-react";
 
 import type { GUILD } from "@forge/consts";
 import { GUILD as GUILD_CONSTS } from "@forge/consts";
+import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
@@ -19,6 +20,7 @@ import {
 import { Switch } from "@forge/ui/switch";
 
 import type { CurrentMember } from "~/hooks/use-member";
+import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { getGuildMemberUrl } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 
@@ -69,7 +71,13 @@ export function GuildPreferencesDialog({ member }: { member: CurrentMember }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full gap-2">
+        <Button
+          variant="ghost"
+          className={cn(
+            dashboardNestedSurfaceClass,
+            "min-h-11 w-full gap-2 px-4 py-3 hover:bg-background/80",
+          )}
+        >
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           Guild preferences
         </Button>
