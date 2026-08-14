@@ -1,29 +1,18 @@
 # Local quality gates.
 #
-# These hooks mirror the CI jobs so contributors catch failures before pushing.
+# Keep commit-time work quick and limited to staged files. Broader validation
+# remains available through the package scripts and CI rather than a push hook.
 #
-# The split matters: a pre-commit hook that runs the whole gate gets slow, people
-# learn `--no-verify`, and the hook becomes decoration. Commit-time work is
-# formatting only and touches staged files; the real gate runs once per push.
-#
-# Escape hatches: `git commit --no-verify`, or `LEFTHOOK=0 git push` to skip
-# everything. Use them when you mean to, not by habit.
+# Escape hatch: `git commit --no-verify`. Use it when you mean to, not by habit.
 
 pre-commit:
-  parallel: true
+  parallel: false
   jobs:
     - name: format staged files
       glob: "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,yml,yaml}"
-      run: npx prettier --write {staged_files}
+      run: pnpm exec prettier --write "{staged_files}"
       stage_fixed: true
 
-pre-push:
-  parallel: false
-  jobs:
-    # The same commands as CI's format, lint, and typecheck jobs.
-    - name: verify
-      run: pnpm verify:push
-
-    # CI runs this as its own job; keep the local push gate aligned with it.
-    - name: test
-      run: pnpm test
+    - name: lint staged files
+      glob: "*.{ts,tsx,js,jsx,cjs,mjs}"
+      run: pnpm exec eslint "{staged_files}"

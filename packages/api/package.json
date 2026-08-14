@@ -38,8 +38,8 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "test": "pnpm with-env vitest run --passWithNoTests",
-    "test:watch": "pnpm with-env vitest --passWithNoTests",
+    "test": "NODE_ENV=test pnpm with-env vitest run --passWithNoTests",
+    "test:watch": "NODE_ENV=test pnpm with-env vitest --passWithNoTests",
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
