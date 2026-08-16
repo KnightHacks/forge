@@ -71,19 +71,19 @@ dues payment history instead of treating each year's rollover as deleted data.
 - Preserve dues history for future alumni/admin surfaces.
 - Prevent members from paying twice for the same active academic school year.
 - Keep the first member-facing payment flow scoped to completed member profiles.
-- Treat the active/stale state of a dues payment as something future admins can
-  control, while this member-facing slice only reads and respects that state.
+- Keep financial payments as immutable history and determine current membership
+  from a separate academic-year entitlement. Admin grant and revoke controls
+  are specified in `.forge/features/admin-member-dashboard/spec.md`.
 - Store new member dues amounts in cents so Stripe payments and future manual
   inserts use the same amount semantics.
-- If a stale record already occupies the current academic school year, let the
-  member pay for the next academic school year instead of deleting or
-  overwriting that historical record.
+- Let an unpaid member pay for the current academic school year even when an
+  earlier payment for that year remains in history.
 
 ### Out of scope
 
 - Member-visible dues history.
 - Admin member management beyond the payment-availability control.
-- Admin manual dues payment, comp, revoke, or rollover controls.
+- Admin manual dues grant, revoke, or rollover controls.
 - Refund handling.
 - Coupon codes or discounts.
 - Admin-configurable pricing.
@@ -100,10 +100,10 @@ dues payment history instead of treating each year's rollover as deleted data.
   July 31, labeled by start and end year, such as `2026-2027`.
 - `Current dues status`: Whether the member is paid, unpaid, or processing for
   the current academic school year.
-- `Active dues record`: A dues payment that currently counts toward paid member
-  status.
-- `Stale dues record`: A dues payment that remains in history but no longer
-  counts toward current paid member status.
+- `Dues entitlement`: The current paid/unpaid membership state for one member
+  and academic school year. It may reference the payment that granted it.
+- `Inactive entitlement`: A revoked academic-year membership state. It does not
+  alter or delete the associated payment.
 - `Historical dues record`: A past payment record retained for future admin or
   alumni use, even when it no longer grants current dues status.
 - `Late-year warning`: The May 31 through July 31 warning that paying now only
@@ -135,6 +135,11 @@ dues payment history instead of treating each year's rollover as deleted data.
 - Between May 31 and July 31, `/member/dues` shows the late-year warning before
   the member pays.
 - Old dues records are not deleted as part of this member-facing payment flow.
+- Payment history alone never grants membership without an active entitlement
+  for the current academic school year.
+- After entitlement revocation, a member can make one new current-year payment;
+  prior payment history remains unchanged and the new payment activates the
+  current-year entitlement.
 - When an admin pauses member payments, unpaid members see that dues payments
   are paused until further notice and cannot start checkout.
 - When an admin enables member payments, the existing dues payment flow becomes

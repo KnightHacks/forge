@@ -6,6 +6,14 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-13: Durable checkout reservations and advisory locking are deferred.
+  Keep this change focused on the payment-history/entitlement split; checkout
+  creates a normal card PaymentIntent after confirming the member is unpaid.
+- 2026-08-12: Issue #504 supersedes the stale-payment rollover decisions below.
+  `DuesPayment` is immutable recorded history; `DuesEntitlement` owns one
+  active/inactive membership state per member and academic year. Checkout
+  targets the current year even after revocation, and successful Stripe payment
+  activates that year's entitlement.
 - 2026-08-11: Human replaced the hardcoded August 31 cutoff with an
   admin-controlled payment-availability setting on `/admin/members`. The
   persisted setting defaults to paused, uses existing edit-member access, and
@@ -19,7 +27,7 @@ Current phase: Complete
   artifact status fields to `Complete`.
 - 2026-06-26: Human selected member dues payment as the next feature before the admin member dashboard because admin member management needs real dues status/history to build on.
 - 2026-06-26: Dues are yearly membership dues, valid for the Knight Hacks school-year window from August 1 through the next August 1, regardless of when the member pays.
-- 2026-06-26: Admins should choose when to roll dues forward instead of deleting old dues payment records. Reforge should retain dues history and avoid legacy's "clear all dues deletes all records" behavior.
+- 2026-06-26: Reforge should retain dues history and avoid legacy's "clear all dues deletes all records" behavior.
 - 2026-06-26: First payment amount remains code-configured at `$25` / `2500` cents. Admin price configuration is out of scope for the first slice unless reverse-prompting changes that.
 - 2026-06-26: Member-facing payment should use Stripe's embedded Payment Element rather than redirect-only Checkout so Blade can keep the flow inside the current design system.
 - 2026-06-26: Dues status should be displayed in school-year language, for example `Paid for 2026-2027`.
@@ -31,25 +39,20 @@ Current phase: Complete
 - 2026-06-26: Admin rollover and manual admin dues changes are deferred to later admin/member dashboard features.
 - 2026-06-26: If a member pays between May 31 and July 31, `/member/dues` should warn that the new school year is close and they will need to pay again in the fall semester, without listing a specific date.
 - 2026-06-26: Keep non-refundable payment copy in the member-facing payment UX.
-- 2026-06-26: Calendar date determines the displayed academic school year and the May 31 through July 31 late-year warning. Admin-controlled active/stale state determines whether a dues record currently counts as paid.
-- 2026-06-26: A stale dues payment for the current displayed academic year should be eligible to roll/bump forward to the next academic year rather than forcing duplicate payment history for the same stale current-year record. This needs SRD-level precision before implementation.
+- 2026-06-26: Calendar date determines the displayed academic school year and the May 31 through July 31 late-year warning.
 - 2026-06-26: Stripe payment options should be similar to legacy Blade, including card plus bank account behavior where practical.
 - 2026-06-26: The member dashboard should avoid red/error styling for unpaid dues. Use neutral faded gray for unpaid and green for paid.
 - 2026-06-26: Paid members who visit `/member/dues` should be routed back to `/member/dashboard` instead of seeing the payment page.
 - 2026-06-26: After successful payment, `/member/dues` should show a short success state/dialog and route back to `/member/dashboard` after about five seconds.
-- 2026-06-26: Use `active` for dues records that currently count toward paid status. The migration should default existing dues rows to `active = true` for backporting old dues data.
 - 2026-06-26: Dues `year` should mean the academic school-year start year, for example `2026` for `2026-2027`.
-- 2026-06-26: Stale current-year dues bumping should only happen after Stripe succeeds, not when the member merely opens or starts `/member/dues`.
-- 2026-06-26: If an active dues record exists for the current academic school year, the member is paid. If only a stale record exists, the member is unpaid and can pay again.
+- 2026-06-26: A member is paid only when an active entitlement exists for the current academic school year.
 - 2026-06-26: The late-year warning should be a dialog on `/member/dues` entry with dismiss and return-home actions, not a permanent warning card.
-- 2026-06-26: Current `knight_hacks_dues_payment` only has `id`, `member_id`, `amount`, `payment_date`, and `year`, with a unique constraint on `(member_id, year)`. It does not currently store a Stripe PaymentIntent id.
 - 2026-06-26: Legacy/current constants are mixed: `MEMBERSHIP_PRICE = 2500`, while manual admin dues used `DUES_PAYMENT = 25`. Reforge should standardize new Stripe dues writes around cents and explicitly decide whether to normalize historical `25` rows.
 - 2026-06-26: Implementation default: normalize legacy/manual `amount = 25` rows to `2500` during migration so dues history uses cents consistently.
 - 2026-06-26: Implementation default: add nullable unique `stripePaymentIntentId` for Stripe idempotency while keeping legacy/manual rows valid with null.
-- 2026-06-26: Stale current-year dues are preserved as history. A new payment targets the next academic start year instead of mutating the stale row or deleting history.
 - 2026-06-26: Automated E2E tests may use a deterministic test-payment button in Blade E2E mode. Unit/API tests still cover Stripe PaymentIntent creation, retrieval, metadata, and error handling.
 - 2026-06-27: `/member/dues` now creates the Stripe PaymentIntent server-side in normal mode and passes the initial `clientSecret` into the client component, with a visible retryable setup error fallback instead of an indefinite skeleton.
-- 2026-06-26: Coverage hardening closed every partial test-artifact mapping. Payment ownership now validates both authenticated user and member metadata before recording, repeated webhook delivery exercises the real idempotent helper, and stale dues history is verified through the browser and database together.
+- 2026-06-26: Coverage hardening closed every partial test-artifact mapping. Payment ownership validates both authenticated user and member metadata before recording, and repeated webhook delivery exercises the real idempotent helper.
 - 2026-06-27: Restored the complete implementation from stash `wip: member dues payment before main fix`; the source stash remains intact as a backup.
 - 2026-06-27: Audit fixed a confirmation-boundary gap: processing PaymentIntents now require the same member/user metadata ownership check as succeeded PaymentIntents.
 - 2026-06-27: Audit found that the app does not persist or reuse an in-progress PaymentIntent. This is unsafe with US bank account payments because ACH can remain processing for multiple business days while a page reload can create another PaymentIntent. Human decision required: make the first slice card-only, or add durable payment-attempt state and reuse.
@@ -85,6 +88,13 @@ Current phase: Complete
 - [x] Add the payment-availability control to `/admin/members`.
 - [x] Generate and verify the dues configuration migration.
 - [x] Run targeted and repository validation for the admin-controlled setting.
+- [x] Separate immutable payment history from yearly membership entitlement.
+- [x] Make checkout, admin controls, forms, events, check-in, and analytics read
+      `DuesEntitlement` as the membership source of truth.
+- [x] Backfill entitlements and remove payment activity state in migration 0041.
+- [x] Add focused regression coverage for payment-history preservation and
+      current-year repayment.
+- [x] Keep checkout setup direct and defer durable concurrent-request handling.
 
 ## Validation / commands
 
@@ -163,9 +173,27 @@ Current phase: Complete
 - 2026-08-11: Final repository gates passed: `pnpm format` (20 tasks),
   `pnpm lint` (27 tasks, warnings only), and `pnpm typecheck` (29 tasks).
 - 2026-08-11: Focused admin dues-configuration API tests passed, 3 tests.
+- 2026-08-12: `pnpm db:generate`: passed after migration 0041 was generated;
+  the final rerun reported no schema drift.
+- 2026-08-12: Focused DB migration/sanitizer/lineage suites passed, 3 files / 19
+  tests. The real forms integration suite also applied all migrations to a
+  disposable PostgreSQL database and passed, 5 tests.
+- 2026-08-12: Focused API dues/admin/analytics/event suites passed, 6 files / 60
+  tests. Focused validator suites passed, 2 files / 9 tests; focused Blade
+  suites passed, 4 files / 16 tests.
+- 2026-08-12: Four focused Playwright regressions passed against a disposable
+  PostgreSQL database: admin revoke/re-grant, bulk current-year invalidation,
+  member checkout, and current-year repayment with immutable payment history.
+- 2026-08-12: `pnpm analyze:react:changed` passed, 12 files / 6 components / 0
+  failures. Repository gates passed: `pnpm format` (20 tasks), `pnpm lint` (27
+  tasks, warnings only), and `pnpm typecheck` (29 tasks).
+- 2026-08-13: Removed the deferred checkout-reservation/advisory-lock design and
+  regenerated entitlement-only migration `0041_unique_daredevil`. The schema
+  drift check passed; focused DB contracts passed 19 tests and the dues router
+  passed 17 tests. Repository format, lint, and typecheck gates passed.
 
 ## Links
 
 - PRs:
-- Issues:
+- Issues: #504
 - Discord/thread context:

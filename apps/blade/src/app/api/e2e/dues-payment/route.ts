@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { and, desc, eq } from "@forge/db";
+import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  DuesEntitlement,
+  DuesPayment,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import {
   getDuesAcademicYear,
-  getDuesPayableYear,
   MEMBER_DUES_PRICE_CENTS,
 } from "@forge/validators";
 
@@ -37,47 +40,48 @@ export async function POST() {
   }
 
   const currentAcademicYear = getDuesAcademicYear();
-  const currentRows = await db
-    .select({
-      active: DuesPayment.active,
-      year: DuesPayment.year,
-    })
-    .from(DuesPayment)
-    .where(
-      and(
-        eq(DuesPayment.memberId, member.id),
-        eq(DuesPayment.year, currentAcademicYear.startYear),
+  await db.transaction(async (tx) => {
+    const existingEntitlement = await tx.query.DuesEntitlement.findFirst({
+      where: and(
+        eq(DuesEntitlement.memberId, member.id),
+        eq(DuesEntitlement.year, currentAcademicYear.startYear),
+        eq(DuesEntitlement.active, true),
       ),
-    )
-    .orderBy(desc(DuesPayment.paymentDate));
-  const payableYear = getDuesPayableYear({
-    currentAcademicYearStart: currentAcademicYear.startYear,
-    hasStaleCurrentYearDues: currentRows.some((row) => !row.active),
+    });
+    if (existingEntitlement) return;
+
+    const paymentDate = new Date();
+    const [payment] = await tx
+      .insert(DuesPayment)
+      .values({
+        amount: MEMBER_DUES_PRICE_CENTS,
+        memberId: member.id,
+        paymentDate,
+        stripePaymentIntentId: `pi_e2e_${crypto.randomUUID()}`,
+        year: currentAcademicYear.startYear,
+      })
+      .returning({ id: DuesPayment.id });
+    if (!payment) throw new Error("Failed to record E2E dues payment.");
+    await tx
+      .insert(DuesEntitlement)
+      .values({
+        active: true,
+        createdAt: paymentDate,
+        memberId: member.id,
+        sourcePaymentId: payment.id,
+        updatedAt: paymentDate,
+        year: currentAcademicYear.startYear,
+      })
+      .onConflictDoUpdate({
+        set: {
+          active: true,
+          sourcePaymentId: payment.id,
+          updatedAt: paymentDate,
+        },
+        setWhere: eq(DuesEntitlement.active, false),
+        target: [DuesEntitlement.memberId, DuesEntitlement.year],
+      });
   });
-
-  const existingActivePayment = await db.query.DuesPayment.findFirst({
-    where: and(
-      eq(DuesPayment.memberId, member.id),
-      eq(DuesPayment.year, payableYear),
-      eq(DuesPayment.active, true),
-    ),
-  });
-
-  if (existingActivePayment) {
-    return NextResponse.json({ paid: true });
-  }
-
-  await db
-    .insert(DuesPayment)
-    .values({
-      active: true,
-      amount: MEMBER_DUES_PRICE_CENTS,
-      memberId: member.id,
-      paymentDate: new Date(),
-      stripePaymentIntentId: `pi_e2e_${crypto.randomUUID()}`,
-      year: payableYear,
-    })
-    .onConflictDoNothing();
 
   return NextResponse.json({ paid: true });
 }

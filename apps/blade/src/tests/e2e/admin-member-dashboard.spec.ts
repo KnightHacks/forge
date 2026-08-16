@@ -9,6 +9,7 @@ import { db } from "@forge/db/client";
 import { Permissions, Roles, Session, User } from "@forge/db/schemas/auth";
 import {
   DuesConfiguration,
+  DuesEntitlement,
   DuesPayment,
   FormResponse,
   FormSections,
@@ -336,7 +337,6 @@ async function seedE2EData() {
   const currentYear = getDuesAcademicYear(new Date()).startYear;
   await db.insert(DuesPayment).values([
     {
-      active: true,
       amount: 2500,
       id: "00000000-0000-4000-8000-000000000810",
       memberId: ALICE_MEMBER_ID,
@@ -345,7 +345,6 @@ async function seedE2EData() {
       year: currentYear,
     },
     {
-      active: true,
       amount: 2600,
       id: "00000000-0000-4000-8000-000000000812",
       memberId: CHARLIE_MEMBER_ID,
@@ -354,7 +353,6 @@ async function seedE2EData() {
       year: currentYear,
     },
     {
-      active: true,
       amount: 2500,
       id: "00000000-0000-4000-8000-000000000813",
       memberId: CHARLIE_MEMBER_ID,
@@ -363,12 +361,41 @@ async function seedE2EData() {
       year: currentYear + 1,
     },
     {
-      active: true,
       amount: 2500,
       id: "00000000-0000-4000-8000-000000000811",
       memberId: BOB_MEMBER_ID,
       paymentDate: new Date("2025-06-02T12:00:00Z"),
       stripePaymentIntentId: "pi_admin_bob_history_e2e",
+      year: currentYear - 1,
+    },
+  ]);
+  await db.insert(DuesEntitlement).values([
+    {
+      active: true,
+      id: "00000000-0000-4000-8000-000000000820",
+      memberId: ALICE_MEMBER_ID,
+      sourcePaymentId: "00000000-0000-4000-8000-000000000810",
+      year: currentYear,
+    },
+    {
+      active: true,
+      id: "00000000-0000-4000-8000-000000000822",
+      memberId: CHARLIE_MEMBER_ID,
+      sourcePaymentId: "00000000-0000-4000-8000-000000000812",
+      year: currentYear,
+    },
+    {
+      active: true,
+      id: "00000000-0000-4000-8000-000000000823",
+      memberId: CHARLIE_MEMBER_ID,
+      sourcePaymentId: "00000000-0000-4000-8000-000000000813",
+      year: currentYear + 1,
+    },
+    {
+      active: true,
+      id: "00000000-0000-4000-8000-000000000821",
+      memberId: BOB_MEMBER_ID,
+      sourcePaymentId: "00000000-0000-4000-8000-000000000811",
       year: currentYear - 1,
     },
   ]);
@@ -413,17 +440,17 @@ test.describe("admin member dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     existingDuesSnapshot = await db
-      .select({ active: DuesPayment.active, id: DuesPayment.id })
-      .from(DuesPayment);
+      .select({ active: DuesEntitlement.active, id: DuesEntitlement.id })
+      .from(DuesEntitlement);
     await seedE2EData();
   });
 
   test.afterEach(async () => {
     for (const row of existingDuesSnapshot) {
       await db
-        .update(DuesPayment)
+        .update(DuesEntitlement)
         .set({ active: row.active })
-        .where(eq(DuesPayment.id, row.id));
+        .where(eq(DuesEntitlement.id, row.id));
     }
   });
 
@@ -636,6 +663,63 @@ test.describe("admin member dashboard", () => {
     }
   });
 
+  test("keeps admin dues re-grants in the current academic year", async ({
+    page,
+  }) => {
+    const originalDues = await db.query.DuesPayment.findFirst({
+      where: eq(DuesPayment.memberId, ALICE_MEMBER_ID),
+    });
+    expect(originalDues).toMatchObject({
+      year: getDuesAcademicYear(new Date()).startYear,
+    });
+    const originalEntitlement = await db.query.DuesEntitlement.findFirst({
+      where: eq(DuesEntitlement.memberId, ALICE_MEMBER_ID),
+    });
+    expect(originalEntitlement).toMatchObject({
+      active: true,
+      sourcePaymentId: originalDues?.id,
+      year: getDuesAcademicYear(new Date()).startYear,
+    });
+
+    await signInAs(page, EDITOR_USER_ID);
+    await page
+      .getByRole("textbox", { name: "Search members" })
+      .fill("Alice Archive");
+    await page
+      .getByRole("button", { name: "Revoke dues for Alice Archive" })
+      .click();
+    await expect(page.getByText("Dues revoked.")).toBeVisible();
+    await expect
+      .poll(() =>
+        db.query.DuesEntitlement.findFirst({
+          where: eq(DuesEntitlement.id, originalEntitlement?.id ?? ""),
+        }),
+      )
+      .toMatchObject({ active: false });
+
+    await page
+      .getByRole("button", { name: "Grant dues for Alice Archive" })
+      .click();
+    await expect(page.getByText("Dues granted.")).toBeVisible();
+    await expect
+      .poll(() =>
+        db.query.DuesEntitlement.findFirst({
+          where: eq(DuesEntitlement.id, originalEntitlement?.id ?? ""),
+        }),
+      )
+      .toMatchObject({
+        active: true,
+        id: originalEntitlement?.id,
+        sourcePaymentId: originalDues?.id,
+        year: getDuesAcademicYear(new Date()).startYear,
+      });
+
+    const aliceDues = await db.query.DuesPayment.findMany({
+      where: eq(DuesPayment.memberId, ALICE_MEMBER_ID),
+    });
+    expect(aliceDues).toEqual([originalDues]);
+  });
+
   test("searches fuzzily, persists table state, paginates, filters, sorts, and exports every match", async ({
     page,
   }) => {
@@ -749,10 +833,14 @@ test.describe("admin member dashboard", () => {
     await expect(page.getByText("Dues revoked.")).toBeVisible();
     await expect
       .poll(async () => {
-        const rows = await db.query.DuesPayment.findMany({
-          where: eq(DuesPayment.memberId, CHARLIE_MEMBER_ID),
+        const rows = await db.query.DuesEntitlement.findMany({
+          where: eq(DuesEntitlement.memberId, CHARLIE_MEMBER_ID),
         });
-        return rows.filter((row) => row.active).length;
+        return rows.filter(
+          (row) =>
+            row.active &&
+            row.year === getDuesAcademicYear(new Date()).startYear,
+        ).length;
       })
       .toBe(0);
     await page
@@ -761,10 +849,14 @@ test.describe("admin member dashboard", () => {
     await expect(page.getByText("Dues granted.")).toBeVisible();
     await expect
       .poll(async () => {
-        const rows = await db.query.DuesPayment.findMany({
-          where: eq(DuesPayment.memberId, CHARLIE_MEMBER_ID),
+        const rows = await db.query.DuesEntitlement.findMany({
+          where: eq(DuesEntitlement.memberId, CHARLIE_MEMBER_ID),
         });
-        return rows.filter((row) => row.active).length;
+        return rows.filter(
+          (row) =>
+            row.active &&
+            row.year === getDuesAcademicYear(new Date()).startYear,
+        ).length;
       })
       .toBe(1);
 
@@ -837,64 +929,6 @@ test.describe("admin member dashboard", () => {
     ).toBe(sharedResume);
     await page.getByRole("button", { name: "Remove profile picture" }).click();
     await expect(page.getByText("Profile picture removed.")).toBeVisible();
-
-    await page.getByRole("button", { name: "Revoke dues" }).click();
-    await expect(page.getByText("Dues status updated.")).toBeVisible();
-    const originalDues = await db.query.DuesPayment.findFirst({
-      where: eq(DuesPayment.memberId, ALICE_MEMBER_ID),
-    });
-    expect(originalDues?.active).toBe(false);
-    await expect(
-      page.getByRole("button", { name: "Grant dues" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Grant dues" }).click();
-    await expect
-      .poll(async () => {
-        const rows = await db.query.DuesPayment.findMany({
-          where: eq(DuesPayment.memberId, ALICE_MEMBER_ID),
-        });
-        return rows.find((row) => row.active) ?? null;
-      })
-      .toMatchObject({
-        active: true,
-        amount: 2500,
-        stripePaymentIntentId: null,
-      });
-    const grantedDues = (
-      await db.query.DuesPayment.findMany({
-        where: eq(DuesPayment.memberId, ALICE_MEMBER_ID),
-      })
-    ).find((row) => row.active);
-    expect(grantedDues?.id).not.toBe(originalDues?.id);
-
-    await expect(
-      page.getByRole("button", { name: "Revoke dues" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Revoke dues" }).click();
-    await expect
-      .poll(async () =>
-        db.query.DuesPayment.findFirst({
-          where: eq(DuesPayment.id, grantedDues?.id ?? ""),
-        }),
-      )
-      .toMatchObject({ active: false });
-    await expect(
-      page.getByRole("button", { name: "Grant dues" }),
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Grant dues" }).click();
-    await expect
-      .poll(async () =>
-        db.query.DuesPayment.findFirst({
-          where: eq(DuesPayment.id, grantedDues?.id ?? ""),
-        }),
-      )
-      .toMatchObject({
-        active: true,
-        amount: grantedDues?.amount,
-        id: grantedDues?.id,
-        paymentDate: grantedDues?.paymentDate,
-        stripePaymentIntentId: grantedDues?.stripePaymentIntentId,
-      });
 
     await page.getByRole("button", { name: "Delete member" }).click();
     await page
@@ -975,23 +1009,23 @@ test.describe("admin member dashboard", () => {
     ).toBeVisible();
 
     expect(
-      await db.query.DuesPayment.findFirst({
-        where: eq(DuesPayment.id, "00000000-0000-4000-8000-000000000810"),
+      await db.query.DuesEntitlement.findFirst({
+        where: eq(DuesEntitlement.id, "00000000-0000-4000-8000-000000000820"),
       }),
     ).toMatchObject({ active: false });
     expect(
-      await db.query.DuesPayment.findFirst({
-        where: eq(DuesPayment.id, "00000000-0000-4000-8000-000000000812"),
+      await db.query.DuesEntitlement.findFirst({
+        where: eq(DuesEntitlement.id, "00000000-0000-4000-8000-000000000822"),
       }),
     ).toMatchObject({ active: false });
     expect(
-      await db.query.DuesPayment.findFirst({
-        where: eq(DuesPayment.id, "00000000-0000-4000-8000-000000000813"),
+      await db.query.DuesEntitlement.findFirst({
+        where: eq(DuesEntitlement.id, "00000000-0000-4000-8000-000000000823"),
       }),
-    ).toMatchObject({ active: false });
+    ).toMatchObject({ active: true });
     expect(
-      await db.query.DuesPayment.findFirst({
-        where: eq(DuesPayment.id, "00000000-0000-4000-8000-000000000811"),
+      await db.query.DuesEntitlement.findFirst({
+        where: eq(DuesEntitlement.id, "00000000-0000-4000-8000-000000000821"),
       }),
     ).toMatchObject({ active: true });
   });

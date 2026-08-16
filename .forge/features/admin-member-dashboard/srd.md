@@ -70,23 +70,21 @@ reusable inputs live in `@forge/validators`.
   ID plus member profile values, updates the selected member rather than the
   caller, and keeps the code-owned signup response consistent.
 - `memberAdmin.deleteAdminMember`: requires edit-member access and deletes the
-  selected Member row, signup response, dues rows, and unreferenced member
-  uploads. It retains the User, roles, permissions, sessions, and Hacker data.
-- `memberAdmin.setAdminDuesStatus`: requires edit-member access. Marking paid creates
-  a manual active record for the payable year with the configured dues amount
-  and no Stripe intent, or reactivates an existing payable-year record without
-  rewriting its payment metadata. Revoking repeatedly resolves effective rows
-  and marks them inactive until the member is unpaid; it does not delete
-  history.
+  selected Member row, signup response, dues payment and entitlement rows, and
+  unreferenced member uploads. It retains the User, roles, permissions,
+  sessions, and Hacker data.
+- `memberAdmin.setAdminDuesStatus`: requires edit-member access. Marking paid
+  creates or reactivates the current academic-year entitlement without creating
+  or rewriting a payment. Revoking deactivates that entitlement; neither action
+  changes recorded payment history.
 - `memberAdmin.getDuesPaymentConfiguration`: requires read-member access and
   returns the persisted global payment-availability setting.
 - `memberAdmin.setDuesPaymentsEnabled`: requires edit-member access, upserts the
   singleton setting transactionally, and records the before/after value in the
   durable admin audit log.
 - `memberAdmin.invalidateEffectiveDues`: requires officer access and, in one
-  transaction, repeatedly resolves and invalidates rows until every affected
-  member is unpaid. The returned count is distinct affected members rather than
-  modified rows.
+  transaction, deactivates every active current academic-year entitlement. The
+  returned count is distinct affected members.
 - `memberAdmin.exportAdminMembers`: requires read-member access and returns an
   escaped CSV for every result matching the current filters and fuzzy search.
 - Admin profile-picture and resume procedures resolve the target User from the
@@ -111,17 +109,17 @@ reusable inputs live in `@forge/validators`.
 ## Data / migration / compatibility
 
 - Existing `Roles`, `Permissions`, `Member`, `FormResponse`, `DuesPayment`,
-  `Event`, `EventAttendee`, `Company`, `Employment`, and Discord archive rows
-  remain authoritative for their existing domains.
+  `DuesEntitlement`, `Event`, `EventAttendee`, `Company`, `Employment`, and
+  Discord archive rows remain authoritative for their existing domains.
 - Add one `DuesConfiguration` singleton row keyed by `global`. It defaults to
   `paymentsEnabled = false`; a missing row also reads as paused.
-- Manual dues records use cents, the same configured price, academic-year
-  calculation, unique member/year rule, and active/stale semantics as Stripe
-  records.
+- Payment rows are immutable recorded history. New rows come from Stripe while
+  legacy manual rows remain preserved. Admin grants and revocations write only
+  the member/year entitlement and never synthesize a payment.
 - Legacy Blade dues rows used the UTC calendar year instead of the academic-year
-  start and did not reliably distinguish manual grants from Stripe payments.
-  Active current-calendar-year rows remain valid compatibility inputs for
-  status, individual revoke, filtering, CSV, and mass invalidation.
+  start. The entitlement migration normalizes January-July legacy years and
+  backfills the corresponding entitlement before removing payment activity
+  state.
 - Current production `main` continues to interpret the same permission
   bitstrings and tables. This feature adds no permission indices and therefore
   remains compatible with existing roles and the bootstrap-superadmin script.

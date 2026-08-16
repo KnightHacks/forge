@@ -9,7 +9,6 @@ import { and, eq, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions } from "@forge/db/schemas/auth";
 import {
-  DuesPayment,
   FormResponse,
   FormResponseRoles,
   FormSections,
@@ -21,7 +20,7 @@ import {
 import { formDefinitionSchema, validateFormAnswers } from "@forge/validators";
 
 import type { WriteDb } from "../db";
-import { buildDuesStatus } from "../dues/status";
+import { hasCurrentDuesEntitlement } from "../dues/entitlement";
 import { assertAndAttachResponseFiles } from "./attachments";
 
 export interface FormConnectionMapping {
@@ -267,11 +266,7 @@ async function assertDuesEligibility(
       message: "Paid dues are required.",
     });
   }
-  const duesRows = await database
-    .select()
-    .from(DuesPayment)
-    .where(eq(DuesPayment.memberId, member.id));
-  if (!buildDuesStatus({ duesRows }).paid) {
+  if (!(await hasCurrentDuesEntitlement(member.id, database))) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Paid dues are required.",

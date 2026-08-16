@@ -100,17 +100,10 @@ const paidDuesStatus = {
     shortLabel: "2026-2027",
     startYear: 2026,
   },
-  currentYearHasStaleDues: false,
   lateYearWarning: false,
   paid: true,
   paidAt: new Date("2026-08-15T12:00:00Z"),
   paymentsLocked: false,
-  payableAcademicYear: {
-    endYear: 2027,
-    label: "2026-2027 academic school year",
-    shortLabel: "2026-2027",
-    startYear: 2026,
-  },
   paymentAcademicYear: {
     endYear: 2027,
     label: "2026-2027 academic school year",

@@ -339,7 +339,7 @@ describe("club analytics report builder", () => {
         active: true,
         id: "00000000-0000-4000-8000-000000000501",
         memberId: MEMBER_IDS.alex,
-        paymentDate: new Date("2025-09-01T00:00:00.000Z"),
+        recordedAt: new Date("2025-09-01T00:00:00.000Z"),
         year: 2025,
       },
     ];
@@ -382,6 +382,64 @@ describe("club analytics report builder", () => {
     expect(report.dues.unpaidMembers[0]).not.toHaveProperty(
       "stripePaymentIntentId",
     );
+  });
+
+  it("uses the UTC dues-year boundary for current entitlement coverage", () => {
+    const members = [member(MEMBER_IDS.alex)];
+    const reportAt = (referenceDate: string, year: number) =>
+      buildClubAnalyticsReport({
+        attendances: [],
+        dues: [
+          {
+            active: true,
+            id: `dues-${year}`,
+            memberId: MEMBER_IDS.alex,
+            recordedAt: new Date(`${year}-08-01T00:00:00.000Z`),
+            year,
+          },
+        ],
+        events: [],
+        feedback: [],
+        input: defaultInput,
+        members,
+        referenceDate: new Date(referenceDate),
+      }).dues.summary.paidCount;
+
+    expect(reportAt("2026-07-31T23:59:59.999Z", 2025)).toBe(1);
+    expect(reportAt("2026-08-01T00:00:00.000Z", 2026)).toBe(1);
+    expect(reportAt("2026-08-01T03:59:59.999Z", 2026)).toBe(1);
+  });
+
+  it("uses an entitlement timestamp for manual-grant chronology", () => {
+    const recordedAt = new Date("2025-09-15T12:00:00.000Z");
+    const report = buildClubAnalyticsReport({
+      attendances: [],
+      dues: [
+        {
+          active: true,
+          id: "manual-entitlement",
+          memberId: MEMBER_IDS.alex,
+          recordedAt,
+          year: 2025,
+        },
+      ],
+      events: [],
+      feedback: [],
+      input: defaultInput,
+      members: [
+        member(MEMBER_IDS.alex),
+        member(MEMBER_IDS.blair),
+        member(MEMBER_IDS.casey),
+        member(MEMBER_IDS.drew),
+      ],
+      referenceDate: new Date("2026-07-16T12:00:00.000Z"),
+    });
+    const academicYear = report.dues.academicYears.find(
+      (row) => row.startYear === 2025,
+    );
+
+    expect(academicYear?.curve[0]?.date).toEqual(recordedAt);
+    expect(academicYear?.milestones[0]?.date).toEqual(recordedAt);
   });
 
   it("[TC-026] groups deterministic action-brief observations", () => {
@@ -449,21 +507,21 @@ describe("club analytics report builder", () => {
         active: true,
         id: "dues-current-1",
         memberId: required(undergraduates[0], "first undergraduate").id,
-        paymentDate: new Date("2025-09-01T00:00:00.000Z"),
+        recordedAt: new Date("2025-09-01T00:00:00.000Z"),
         year: 2025,
       },
       {
         active: true,
         id: "dues-current-2",
         memberId: required(undergraduates[1], "second undergraduate").id,
-        paymentDate: new Date("2025-09-02T00:00:00.000Z"),
+        recordedAt: new Date("2025-09-02T00:00:00.000Z"),
         year: 2025,
       },
       {
         active: true,
         id: "dues-previous-1",
         memberId: required(graduates[0], "first graduate").id,
-        paymentDate: new Date("2024-09-01T00:00:00.000Z"),
+        recordedAt: new Date("2024-09-01T00:00:00.000Z"),
         year: 2024,
       },
     ];

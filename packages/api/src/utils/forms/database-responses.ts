@@ -4,7 +4,6 @@ import { and, desc, eq, inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions } from "@forge/db/schemas/auth";
 import {
-  DuesPayment,
   FormAttachment,
   FormCallbackExecution,
   FormResponse,
@@ -15,7 +14,7 @@ import {
 
 import type { PlatformFormActor } from "./actor";
 import { createAdminAuditEvent } from "../audit/service";
-import { buildDuesStatus } from "../dues/status";
+import { hasCurrentDuesEntitlement } from "../dues/entitlement";
 import { requireFormCapability } from "./access";
 import { auditActor } from "./actor";
 import { summarizeFormResponses } from "./analytics";
@@ -248,13 +247,9 @@ export async function respondentForm(
     .select({ roleId: Permissions.roleId })
     .from(Permissions)
     .where(eq(Permissions.userId, userId));
-  const duesRows = await db
-    .select()
-    .from(DuesPayment)
-    .where(eq(DuesPayment.memberId, member.id));
   const respondentContext = {
     actor: {
-      duesPaid: buildDuesStatus({ duesRows }).paid,
+      duesPaid: await hasCurrentDuesEntitlement(member.id),
       memberId: member.id,
       roleIds: assignedRoles.map(({ roleId }) => roleId),
       userId,

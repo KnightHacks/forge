@@ -3,7 +3,11 @@ import { TRPCError } from "@trpc/server";
 
 import type { db as forgeDb } from "@forge/db/client";
 import { and, eq } from "@forge/db";
-import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  DuesEntitlement,
+  DuesPayment,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 
 interface RecordSucceededDuesPaymentOptions {
   database: typeof forgeDb;
@@ -102,13 +106,13 @@ export async function recordSucceededDuesPayment({
       };
     }
 
+    const paymentDate = new Date(paymentIntent.created * 1000);
     const [insertedPayment] = await tx
       .insert(DuesPayment)
       .values({
-        active: true,
         amount: paymentIntent.amount,
         memberId: metadata.memberId,
-        paymentDate: new Date(paymentIntent.created * 1000),
+        paymentDate,
         stripePaymentIntentId: paymentIntent.id,
         year: metadata.academicYearStart,
       })
@@ -116,24 +120,41 @@ export async function recordSucceededDuesPayment({
       .returning();
 
     if (insertedPayment) {
+      await tx
+        .insert(DuesEntitlement)
+        .values({
+          active: true,
+          createdAt: paymentDate,
+          memberId: metadata.memberId,
+          sourcePaymentId: insertedPayment.id,
+          updatedAt: paymentDate,
+          year: metadata.academicYearStart,
+        })
+        .onConflictDoUpdate({
+          set: {
+            active: true,
+            sourcePaymentId: insertedPayment.id,
+            updatedAt: new Date(),
+          },
+          setWhere: eq(DuesEntitlement.active, false),
+          target: [DuesEntitlement.memberId, DuesEntitlement.year],
+        });
       return {
         duesPayment: insertedPayment,
         inserted: true,
       };
     }
 
-    // A member/year conflict can happen if a webhook and client confirmation
-    // race, or if an admin marks dues manually before Stripe retries.
-    const existingYearPayment = await tx.query.DuesPayment.findFirst({
-      where: and(
-        eq(DuesPayment.memberId, metadata.memberId),
-        eq(DuesPayment.year, metadata.academicYearStart),
-      ),
+    // The webhook and client confirmation can race on the same PaymentIntent.
+    // The winner records both the immutable payment and its entitlement; the
+    // loser returns that payment without reactivating a later admin revocation.
+    const concurrentStripePayment = await tx.query.DuesPayment.findFirst({
+      where: eq(DuesPayment.stripePaymentIntentId, paymentIntent.id),
     });
 
-    if (existingYearPayment) {
+    if (concurrentStripePayment) {
       return {
-        duesPayment: existingYearPayment,
+        duesPayment: concurrentStripePayment,
         inserted: false,
       };
     }

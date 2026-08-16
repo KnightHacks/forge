@@ -26,6 +26,7 @@ import "@forge/db/schemas/discord";
 import {
   Company,
   DuesConfiguration,
+  DuesEntitlement,
   DuesPayment,
   Employment,
   Event,
@@ -43,8 +44,8 @@ import {
   adminMemberMassDuesInvalidationSchema,
   adminMemberUpdateSchema,
   formatDuesAmount,
+  getDuesAcademicYear,
   graduationTermYearFromDate,
-  MEMBER_DUES_PRICE_CENTS,
   MEMBER_SIGNUP_FORM_ID,
   memberUpdateSchema,
 } from "@forge/validators";
@@ -67,10 +68,7 @@ import {
   DUES_CONFIGURATION_ID,
   getDuesPaymentsEnabled,
 } from "../utils/dues/configuration";
-import {
-  buildDuesStatus,
-  getDuesPaymentIdsToInvalidate,
-} from "../utils/dues/status";
+import { buildDuesStatus } from "../utils/dues/status";
 import {
   assertCanEditMembers,
   assertCanInvalidateMemberDues,
@@ -321,22 +319,31 @@ async function getCandidateRows(input: AdminMemberListInput) {
     .where(structuredMemberConditions(input));
 }
 
-async function getDuesRows(memberIds: string[]) {
-  if (memberIds.length === 0) return [];
+async function getDuesState(memberIds: string[]) {
+  if (memberIds.length === 0) {
+    return { entitlements: [], payments: [] };
+  }
 
-  return await db
-    .select({
-      active: DuesPayment.active,
-      amount: DuesPayment.amount,
-      id: DuesPayment.id,
-      memberId: DuesPayment.memberId,
-      paymentDate: DuesPayment.paymentDate,
-      stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
-      year: DuesPayment.year,
-    })
-    .from(DuesPayment)
-    .where(inArray(DuesPayment.memberId, memberIds))
-    .orderBy(desc(DuesPayment.paymentDate));
+  const [entitlements, payments] = await Promise.all([
+    db
+      .select()
+      .from(DuesEntitlement)
+      .where(inArray(DuesEntitlement.memberId, memberIds)),
+    db
+      .select({
+        amount: DuesPayment.amount,
+        id: DuesPayment.id,
+        memberId: DuesPayment.memberId,
+        paymentDate: DuesPayment.paymentDate,
+        stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
+        year: DuesPayment.year,
+      })
+      .from(DuesPayment)
+      .where(inArray(DuesPayment.memberId, memberIds))
+      .orderBy(desc(DuesPayment.paymentDate)),
+  ]);
+
+  return { entitlements, payments };
 }
 
 async function getMemberEventHistory(memberId: string) {
@@ -410,19 +417,28 @@ async function getMemberRoles(userId: string) {
 
 function statusMapForCandidates(
   candidates: CandidateRow[],
-  duesRows: Awaited<ReturnType<typeof getDuesRows>>,
+  duesState: Awaited<ReturnType<typeof getDuesState>>,
 ) {
-  const rowsByMember = new Map<string, typeof duesRows>();
-  for (const row of duesRows) {
-    const rows = rowsByMember.get(row.memberId) ?? [];
+  const entitlementsByMember = new Map<string, typeof duesState.entitlements>();
+  for (const row of duesState.entitlements) {
+    const rows = entitlementsByMember.get(row.memberId) ?? [];
     rows.push(row);
-    rowsByMember.set(row.memberId, rows);
+    entitlementsByMember.set(row.memberId, rows);
+  }
+  const paymentsByMember = new Map<string, typeof duesState.payments>();
+  for (const row of duesState.payments) {
+    const rows = paymentsByMember.get(row.memberId) ?? [];
+    rows.push(row);
+    paymentsByMember.set(row.memberId, rows);
   }
 
   return new Map(
     candidates.map((candidate) => [
       candidate.id,
-      buildDuesStatus({ duesRows: rowsByMember.get(candidate.id) ?? [] }),
+      buildDuesStatus({
+        entitlements: entitlementsByMember.get(candidate.id) ?? [],
+        payments: paymentsByMember.get(candidate.id) ?? [],
+      }),
     ]),
   );
 }
@@ -448,10 +464,10 @@ function compareCandidates(
 
 async function getOrderedCandidates(input: AdminMemberListInput) {
   const candidates = await getCandidateRows(input);
-  const duesRows = await getDuesRows(
+  const duesState = await getDuesState(
     candidates.map((candidate) => candidate.id),
   );
-  const duesStatuses = statusMapForCandidates(candidates, duesRows);
+  const duesStatuses = statusMapForCandidates(candidates, duesState);
   const duesFiltered =
     input.duesStatuses.length === 0 || input.duesStatuses.length === 2
       ? candidates
@@ -685,7 +701,8 @@ export const memberAdminRouter = {
         members: members.map((member) =>
           toListItem(
             member,
-            duesStatuses.get(member.id) ?? buildDuesStatus({ duesRows: [] }),
+            duesStatuses.get(member.id) ??
+              buildDuesStatus({ entitlements: [], payments: [] }),
           ),
         ),
         pagination: { page, pageCount, pageSize: input.pageSize, totalCount },
@@ -697,10 +714,10 @@ export const memberAdminRouter = {
     .query(async ({ ctx, input }) => {
       assertCanReadMembers(ctx);
       const member = await findMemberOrThrow(input.memberId);
-      const [discord, duesRows, employment, events, profilePicture, roles] =
+      const [discord, duesState, employment, events, profilePicture, roles] =
         await Promise.all([
           getDiscordEngagement(member.userId),
-          getDuesRows([member.id]),
+          getDuesState([member.id]),
           getMemberEmploymentHistory(member.id),
           getMemberEventHistory(member.id),
           getProfilePictureDownloadUrlForUser(member.userId),
@@ -711,8 +728,7 @@ export const memberAdminRouter = {
 
       return {
         discord,
-        duesHistory: duesRows.map((row) => ({
-          active: row.active,
+        duesHistory: duesState.payments.map((row) => ({
           amount: row.amount,
           paidAt: row.paymentDate,
           source: row.stripePaymentIntentId
@@ -721,7 +737,7 @@ export const memberAdminRouter = {
           year: row.year,
         })),
         member: toAdminMemberRecord(member),
-        duesStatus: buildDuesStatus({ duesRows }),
+        duesStatus: buildDuesStatus(duesState),
         employment,
         engagement: {
           distinctEventCount,
@@ -780,7 +796,8 @@ export const memberAdminRouter = {
         ...members.map((member) =>
           memberCsvRow(
             member,
-            duesStatuses.get(member.id) ?? buildDuesStatus({ duesRows: [] }),
+            duesStatuses.get(member.id) ??
+              buildDuesStatus({ entitlements: [], payments: [] }),
           ),
         ),
       ]);
@@ -1039,38 +1056,29 @@ export const memberAdminRouter = {
               message: "Member not found.",
             });
           }
-          const duesRows = await tx
-            .select({
-              active: DuesPayment.active,
-              amount: DuesPayment.amount,
-              id: DuesPayment.id,
-              paymentDate: DuesPayment.paymentDate,
-              stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
-              year: DuesPayment.year,
-            })
-            .from(DuesPayment)
-            .where(eq(DuesPayment.memberId, member.id))
-            .orderBy(desc(DuesPayment.paymentDate));
-          const status = buildDuesStatus({ duesRows });
+          const academicYear = getDuesAcademicYear();
+          const entitlement = await tx.query.DuesEntitlement.findFirst({
+            where: and(
+              eq(DuesEntitlement.memberId, member.id),
+              eq(DuesEntitlement.year, academicYear.startYear),
+            ),
+          });
 
           if (input.paid) {
-            if (status.paid) {
+            if (entitlement?.active) {
               throw new TRPCError({
                 code: "CONFLICT",
                 message: "Member dues are already paid.",
               });
             }
-            const existingPayable = duesRows.find(
-              (row) => row.year === status.payableAcademicYear.startYear,
-            );
-            if (existingPayable) {
+            if (entitlement) {
               const [reactivated] = await tx
-                .update(DuesPayment)
-                .set({ active: true })
+                .update(DuesEntitlement)
+                .set({ active: true, updatedAt: new Date() })
                 .where(
                   and(
-                    eq(DuesPayment.id, existingPayable.id),
-                    eq(DuesPayment.active, false),
+                    eq(DuesEntitlement.id, entitlement.id),
+                    eq(DuesEntitlement.active, false),
                   ),
                 )
                 .returning();
@@ -1080,7 +1088,7 @@ export const memberAdminRouter = {
                   actionKey: "member.dues.granted",
                   actor: ctx.session.user,
                   metadata: {
-                    academicYear: status.payableAcademicYear.shortLabel,
+                    academicYear: academicYear.shortLabel,
                     created: false,
                     reactivated: true,
                   },
@@ -1091,14 +1099,12 @@ export const memberAdminRouter = {
               return reactivated;
             }
             const [created] = await tx
-              .insert(DuesPayment)
+              .insert(DuesEntitlement)
               .values({
                 active: true,
-                amount: MEMBER_DUES_PRICE_CENTS,
                 memberId: member.id,
-                paymentDate: new Date(),
-                stripePaymentIntentId: null,
-                year: status.payableAcademicYear.startYear,
+                sourcePaymentId: null,
+                year: academicYear.startYear,
               })
               .returning();
             if (!created) throw new TRPCError({ code: "CONFLICT" });
@@ -1107,7 +1113,7 @@ export const memberAdminRouter = {
                 actionKey: "member.dues.granted",
                 actor: ctx.session.user,
                 metadata: {
-                  academicYear: status.payableAcademicYear.shortLabel,
+                  academicYear: academicYear.shortLabel,
                   created: true,
                   reactivated: false,
                 },
@@ -1118,35 +1124,30 @@ export const memberAdminRouter = {
             return created;
           }
 
-          const paymentIds = getDuesPaymentIdsToInvalidate({ duesRows });
-          if (paymentIds.length === 0) {
+          const [revoked] = await tx
+            .update(DuesEntitlement)
+            .set({ active: false, updatedAt: new Date() })
+            .where(
+              and(
+                eq(DuesEntitlement.memberId, member.id),
+                eq(DuesEntitlement.year, academicYear.startYear),
+                eq(DuesEntitlement.active, true),
+              ),
+            )
+            .returning();
+          if (!revoked) {
             throw new TRPCError({
               code: "CONFLICT",
               message: "Member dues are already unpaid.",
             });
-          }
-          const revoked = await tx
-            .update(DuesPayment)
-            .set({ active: false })
-            .where(
-              and(
-                inArray(DuesPayment.id, paymentIds),
-                eq(DuesPayment.active, true),
-              ),
-            )
-            .returning();
-          if (revoked.length === 0) {
-            throw new TRPCError({ code: "CONFLICT" });
           }
           await createAdminAuditEvent(
             {
               actionKey: "member.dues.revoked",
               actor: ctx.session.user,
               metadata: {
-                academicYears: [
-                  ...new Set(revoked.map((payment) => payment.year)),
-                ].sort(),
-                affectedPaymentCount: revoked.length,
+                academicYear: academicYear.shortLabel,
+                affectedEntitlementCount: 1,
               },
               subjects: [memberAuditSubject(member)],
             },
@@ -1187,43 +1188,18 @@ export const memberAdminRouter = {
       try {
         const operationId = randomUUID();
         const affected = await db.transaction(async (tx) => {
-          const rows = await tx
-            .select({
-              active: DuesPayment.active,
-              amount: DuesPayment.amount,
-              id: DuesPayment.id,
-              memberId: DuesPayment.memberId,
-              paymentDate: DuesPayment.paymentDate,
-              stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
-              year: DuesPayment.year,
-            })
-            .from(DuesPayment)
-            .orderBy(desc(DuesPayment.paymentDate));
-          const byMember = new Map<string, typeof rows>();
-          for (const row of rows) {
-            const memberRows = byMember.get(row.memberId) ?? [];
-            memberRows.push(row);
-            byMember.set(row.memberId, memberRows);
-          }
           const referenceDate = new Date();
-          const referenceAcademicYear = buildDuesStatus({
-            duesRows: [],
-            referenceDate,
-          }).currentAcademicYear;
-          const effectiveIds = [...byMember.values()].flatMap((memberRows) =>
-            getDuesPaymentIdsToInvalidate({
-              duesRows: memberRows,
-              referenceDate,
-            }),
-          );
-          const updated =
-            effectiveIds.length === 0
-              ? []
-              : await tx
-                  .update(DuesPayment)
-                  .set({ active: false })
-                  .where(inArray(DuesPayment.id, effectiveIds))
-                  .returning({ memberId: DuesPayment.memberId });
+          const referenceAcademicYear = getDuesAcademicYear(referenceDate);
+          const updated = await tx
+            .update(DuesEntitlement)
+            .set({ active: false, updatedAt: referenceDate })
+            .where(
+              and(
+                eq(DuesEntitlement.year, referenceAcademicYear.startYear),
+                eq(DuesEntitlement.active, true),
+              ),
+            )
+            .returning({ memberId: DuesEntitlement.memberId });
           const affectedMemberIds = [
             ...new Set(updated.map((row) => row.memberId)),
           ];

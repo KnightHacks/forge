@@ -4,7 +4,11 @@ import { TRPCError } from "@trpc/server";
 import { CLUB } from "@forge/consts";
 import { desc, eq } from "@forge/db";
 import { db } from "@forge/db/client";
-import { DuesPayment, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  DuesEntitlement,
+  DuesPayment,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import { stripe } from "@forge/utils/stripe";
 import {
   buildDuesAcademicYear,
@@ -40,27 +44,34 @@ async function getMemberForSession(userId: string) {
   return member;
 }
 
-async function getDuesRowsForMember(memberId: string) {
-  return await db
-    .select({
-      active: DuesPayment.active,
-      amount: DuesPayment.amount,
-      id: DuesPayment.id,
-      paymentDate: DuesPayment.paymentDate,
-      stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
-      year: DuesPayment.year,
-    })
-    .from(DuesPayment)
-    .where(eq(DuesPayment.memberId, memberId))
-    .orderBy(desc(DuesPayment.paymentDate));
+async function getDuesStateForMember(memberId: string) {
+  const [entitlements, payments] = await Promise.all([
+    db
+      .select()
+      .from(DuesEntitlement)
+      .where(eq(DuesEntitlement.memberId, memberId)),
+    db
+      .select({
+        amount: DuesPayment.amount,
+        id: DuesPayment.id,
+        paymentDate: DuesPayment.paymentDate,
+        stripePaymentIntentId: DuesPayment.stripePaymentIntentId,
+        year: DuesPayment.year,
+      })
+      .from(DuesPayment)
+      .where(eq(DuesPayment.memberId, memberId))
+      .orderBy(desc(DuesPayment.paymentDate)),
+  ]);
+
+  return { entitlements, payments };
 }
 
 async function getStatusForMember(memberId: string) {
-  const [duesRows, paymentsEnabled] = await Promise.all([
-    getDuesRowsForMember(memberId),
+  const [duesState, paymentsEnabled] = await Promise.all([
+    getDuesStateForMember(memberId),
     getDuesPaymentsEnabled(),
   ]);
-  const status = buildDuesStatus({ duesRows });
+  const status = buildDuesStatus(duesState);
 
   return {
     ...status,
@@ -97,7 +108,7 @@ export const duesRouter = {
       amount: CLUB.MEMBERSHIP_PRICE,
       currency: "usd",
       metadata: {
-        academic_year_start: String(status.payableAcademicYear.startYear),
+        academic_year_start: String(status.currentAcademicYear.startYear),
         member_id: member.id,
         user_id: member.userId,
       },
@@ -116,7 +127,7 @@ export const duesRouter = {
       amount: CLUB.MEMBERSHIP_PRICE,
       amountLabel: formatDuesAmount(CLUB.MEMBERSHIP_PRICE),
       clientSecret: paymentIntent.client_secret,
-      paymentAcademicYear: status.payableAcademicYear,
+      paymentAcademicYear: status.currentAcademicYear,
       paymentIntentId: paymentIntent.id,
     };
   }),

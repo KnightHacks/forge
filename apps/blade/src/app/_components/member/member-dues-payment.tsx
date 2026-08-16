@@ -166,7 +166,7 @@ function PaymentSummary({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
           {duesStatus.amountDueLabel}
         </p>
         <p className="mt-1 text-sm leading-5 text-muted-foreground">
-          {duesStatus.payableAcademicYear.label}
+          {duesStatus.currentAcademicYear.label}
         </p>
       </div>
       <div className={cn(dashboardNestedSurfaceClass, "space-y-2 p-4")}>
@@ -471,7 +471,7 @@ function E2EDuesPaymentButton({
       return;
     }
 
-    onPaid(duesStatus.payableAcademicYear.label);
+    onPaid(duesStatus.currentAcademicYear.label);
   };
 
   return (
@@ -566,7 +566,7 @@ export function MemberDuesPayment({
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base md:leading-7">
             {duesStatus.paymentsLocked
               ? "Dues payments are paused until further notice."
-              : `Complete dues for the ${duesStatus.payableAcademicYear.label}.`}
+              : `Complete dues for the ${duesStatus.currentAcademicYear.label}.`}
           </p>
         </div>
 
@@ -613,7 +613,7 @@ export function MemberDuesPayment({
       <SuccessDialog
         open={Boolean(successAcademicYear)}
         academicYear={
-          successAcademicYear ?? duesStatus.payableAcademicYear.label
+          successAcademicYear ?? duesStatus.currentAcademicYear.label
         }
         countdownSeconds={redirectCountdown}
         onReturnToDashboard={returnToDashboard}
