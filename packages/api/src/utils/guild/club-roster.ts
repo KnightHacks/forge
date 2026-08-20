@@ -5,7 +5,6 @@ import { ClubTeamRole } from "@forge/db/schemas/club-team";
 import { Member } from "@forge/db/schemas/knight-hacks";
 
 import type { ClubTeamConfig } from "./club-team-config";
-import { getPublicProfilePictureUrl } from "../profile-picture/public-url";
 import {
   getClubRoleBuckets,
   holdsClubLeadershipRole,
@@ -50,7 +49,7 @@ export interface RosterRoleRow {
   memberId: string;
   firstName: string | null;
   lastName: string | null;
-  profilePictureReference: string | null;
+  guildProfilePictureUrl: string | null;
   linkedinProfileUrl: string | null;
 }
 
@@ -151,10 +150,7 @@ export function buildPublicClubRoster(
             displayName: row.displayName,
           }),
           teamRole,
-          imageUrl: getPublicProfilePictureUrl({
-            profilePictureReference: row.profilePictureReference,
-            userId: row.userId,
-          }),
+          imageUrl: toNonEmptyString(row.guildProfilePictureUrl),
           linkedinUrl: toNonEmptyString(row.linkedinProfileUrl),
           color: row.roleColor,
         },
@@ -196,7 +192,7 @@ export async function getVisiblePublicClubRoster() {
       memberId: Member.id,
       firstName: Member.firstName,
       lastName: Member.lastName,
-      profilePictureReference: Member.profilePictureUrl,
+      guildProfilePictureUrl: Member.profilePictureUrl,
       linkedinProfileUrl: Member.linkedinProfileUrl,
     })
     .from(ClubTeamRole)

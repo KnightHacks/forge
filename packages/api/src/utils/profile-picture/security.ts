@@ -47,9 +47,6 @@ export function isProfilePictureObjectOwnedByUser(
   return true;
 }
 
-// Older database rows store a full bucket URL; current uploads store an object
-// key. Every direct reader must accept both during the staged rollout, so remove
-// this parser only after the data migration and its rollback window are over.
 export function getProfilePictureObjectNameFromLegacyUrl(
   profilePictureUrl: string,
 ) {

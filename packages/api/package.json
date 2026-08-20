@@ -13,10 +13,6 @@
       "default": "./src/env.ts"
     },
     "./minio/minio-client": "./src/minio/minio-client.ts",
-    "./profile-picture": {
-      "types": "./src/utils/profile-picture/public-url.ts",
-      "default": "./src/utils/profile-picture/public-url.ts"
-    },
     "./discord-archive.server": {
       "types": "./src/discord-archive.server.ts",
       "default": "./src/discord-archive.server.ts"

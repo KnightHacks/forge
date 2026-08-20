@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import natural from "natural";
 import sharp from "sharp";
 
-import { getPublicProfilePictureUrl } from "@forge/api/profile-picture";
 import { db } from "@forge/db/client";
 import { Permissions } from "@forge/db/schemas/auth";
 import { Member } from "@forge/db/schemas/knight-hacks";
@@ -82,26 +81,19 @@ export const goat = new CronBuilder({
         githubProfileUrl: Member.githubProfileUrl,
         websiteUrl: Member.websiteUrl,
         linkedinProfileUrl: Member.linkedinProfileUrl,
-        profilePictureReference: Member.profilePictureUrl,
+        profilePictureUrl: Member.profilePictureUrl,
         guildProfileVisible: Member.guildProfileVisible,
-        userId: Member.userId,
       })
       .from(Member)
       .innerJoin(Permissions, eq(Permissions.userId, Member.userId))
       .where(eq(Member.guildProfileVisible, true));
 
-    const goatsShuffled = allGoats
-      .map(({ profilePictureReference, userId, ...member }) => ({
-        ...member,
-        profilePictureUrl: getPublicProfilePictureUrl({
-          profilePictureReference,
-          userId,
-        }),
-      }))
-      .sort(() => Math.random() - 0.5);
-    const goat = goatsShuffled.find((member) => member.profilePictureUrl);
+    const goatsShuffled = allGoats.sort(() => Math.random() - 0.5);
+    const goat = goatsShuffled.find((member) => {
+      return member.profilePictureUrl?.trim();
+    });
 
-    if (!goat?.profilePictureUrl)
+    if (!goat?.profilePictureUrl?.trim())
       throw new Error("No valid goat profile found");
 
     const url = [

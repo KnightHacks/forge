@@ -23,7 +23,7 @@ function rowsFor(name: string, ...roleNames: string[]): RosterRoleRow[] {
     memberId,
     firstName: firstName ?? name,
     lastName,
-    profilePictureReference: null,
+    guildProfilePictureUrl: null,
     linkedinProfileUrl: null,
   }));
 }
@@ -38,21 +38,6 @@ function labelsIn(
 }
 
 describe("public club roster bucketing", () => {
-  it("returns a canonical public URL for a stored picture object key", () => {
-    const [row] = rowsFor("Estefanie Parra", "KH IX Team");
-    if (!row) throw new Error("Expected a roster fixture row");
-
-    const profilePictureReference = `${row.userId}/profile-picture-4ac506f0-ab78-4722-88f6-2808763b65aa.jpg`;
-    const roster = buildPublicClubRoster(config, [
-      { ...row, profilePictureReference },
-    ]);
-
-    expect(roster.members.hackathon?.[0]?.imageUrl).toBe(
-      `https://minio-y44gsgsskc4ko4kkwsg0csoc.135.237.97.107.sslip.io/` +
-        `guild-profile-pictures/${profilePictureReference}`,
-    );
-  });
-
   it("returns every configured team, in tab order, even when empty", () => {
     const roster = buildPublicClubRoster(config, []);
 

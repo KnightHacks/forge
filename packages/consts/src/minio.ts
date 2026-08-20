@@ -1,5 +1,4 @@
-export const ENDPOINT =
-  "minio-y44gsgsskc4ko4kkwsg0csoc.135.237.97.107.sslip.io";
+export const ENDPOINT = "minio-g0soogg4gs8gwcggw4ococok.knighthacks.org";
 
 export const BUCKET_REGION = "us-east-1";
 
