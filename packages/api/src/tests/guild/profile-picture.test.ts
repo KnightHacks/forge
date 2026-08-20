@@ -25,8 +25,8 @@ describe("Guild public profile pictures", () => {
   it.each([
     ["current object name", objectName],
     [
-      "legacy MinIO URL",
-      `https://legacy-minio.example.test/guild-profile-pictures/${objectName}`,
+      "older absolute MinIO URL still stored in production",
+      `https://stored-minio.example.test/guild-profile-pictures/${objectName}`,
     ],
   ])("signs a user-owned %s", async (_label, profilePictureReference) => {
     await expect(
@@ -46,8 +46,8 @@ describe("Guild public profile pictures", () => {
     ["blank", "   "],
     ["malformed", "not-a-profile-picture"],
     [
-      "malformed legacy URL",
-      "https://legacy-minio.example.test/guild-profile-pictures/%E0%A4%A",
+      "malformed older absolute URL",
+      "https://stored-minio.example.test/guild-profile-pictures/%E0%A4%A",
     ],
     [
       "owned by another user",
