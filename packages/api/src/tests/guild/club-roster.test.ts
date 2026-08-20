@@ -1,7 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import type { RosterRoleRow } from "../../utils/guild/club-roster";
-import { buildPublicClubRoster } from "../../utils/guild/club-roster";
+import type {
+  RosterRoleReferenceRow,
+  RosterRoleRow,
+} from "../../utils/guild/club-roster";
+import {
+  buildPublicClubRoster,
+  resolveRosterRoleRows,
+} from "../../utils/guild/club-roster";
 import {
   clubRoleId,
   createClubTeamConfigFixture,
@@ -38,6 +44,34 @@ function labelsIn(
 }
 
 describe("public club roster bucketing", () => {
+  it("resolves stored picture references before exposing roster image URLs", async () => {
+    const [resolvedRow] = rowsFor("Estefanie Parra", "KH IX Team");
+    if (!resolvedRow) throw new Error("Expected a roster fixture row");
+
+    const { guildProfilePictureUrl: _picture, ...row } = resolvedRow;
+    const profilePictureReference = `${row.userId}/profile-picture-4ac506f0-ab78-4722-88f6-2808763b65aa.jpg`;
+    const referenceRows: RosterRoleReferenceRow[] = [
+      { ...row, profilePictureReference },
+    ];
+    const signedUrl = "https://storage.example.test/signed-estefanie";
+    const resolveProfilePicture = vi.fn().mockResolvedValue(signedUrl);
+
+    const resolvedRows = await resolveRosterRoleRows(
+      referenceRows,
+      resolveProfilePicture,
+    );
+    const roster = buildPublicClubRoster(config, resolvedRows);
+
+    expect(resolveProfilePicture).toHaveBeenCalledWith({
+      profilePictureReference,
+      userId: row.userId,
+    });
+    expect(roster.members.hackathon?.[0]?.imageUrl).toBe(signedUrl);
+    expect(roster.members.hackathon?.[0]?.imageUrl).not.toBe(
+      profilePictureReference,
+    );
+  });
+
   it("returns every configured team, in tab order, even when empty", () => {
     const roster = buildPublicClubRoster(config, []);
 

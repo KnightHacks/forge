@@ -23,17 +23,13 @@ import { getGlobeCity } from "../utils/career/globe-cities";
 import { getUsCity } from "../utils/career/us-cities";
 import { getVisiblePublicClubRoster } from "../utils/guild/club-roster";
 import { loadClubTeamConfig } from "../utils/guild/club-team-config";
+import { getPublicProfilePictureUrl } from "../utils/guild/profile-picture";
 import {
   normalizePublicGuildText,
   normalizePublicGuildUrl,
 } from "../utils/guild/public-profile";
 import { getGuildRoleCallout } from "../utils/guild/role-callout";
 import { graduatedCondition, hasGraduated } from "../utils/member/graduation";
-import {
-  PROFILE_PICTURE_BUCKET_NAME,
-  resolveProfilePictureObjectName,
-} from "../utils/profile-picture/security";
-import { profilePictureStorageClient } from "../utils/profile-picture/storage";
 import {
   normalizeOwnedResumeObjectName,
   RESUME_BUCKET_NAME,
@@ -319,27 +315,6 @@ async function getRoleCalloutsByUserId(
       getGuildRoleCallout(config, roles),
     ]),
   );
-}
-
-async function getPublicProfilePictureUrl(row: PublicMemberRow) {
-  if (!row.profilePictureReference) return null;
-
-  const objectName = resolveProfilePictureObjectName(
-    row.profilePictureReference,
-    row.userId,
-  );
-  if (!objectName) return null;
-
-  try {
-    return await profilePictureStorageClient.presignedUrl(
-      "GET",
-      PROFILE_PICTURE_BUCKET_NAME,
-      objectName,
-      60 * 60,
-    );
-  } catch {
-    return null;
-  }
 }
 
 async function toPublicProfile(

@@ -18,7 +18,6 @@ export interface TeamCascadeGroup {
 
 const featuredDesignerIds = [
   "design-f06cbff5-b5f8-49d5-8a3c-5b40a59dfcc6",
-  "design-3a0d6777-2276-4ae8-9281-ace2a26d6c94",
   "design-f56f4444-7962-4090-b937-f31674a6ac7e",
 ] as const;
 
