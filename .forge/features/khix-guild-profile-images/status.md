@@ -26,7 +26,8 @@ Current phase: Review / PR
 - [x] Remove Lena from KHIX featured designers.
 - [x] Add and run regression tests.
 - [x] Complete repository validation.
-- [ ] Open the draft PR and confirm CI is green.
+- [x] Open the draft PR.
+- [ ] Confirm CI is green.
 
 ## Validation / commands
 
@@ -48,6 +49,6 @@ Current phase: Review / PR
 
 ## Links
 
-- PRs:
+- PRs: https://github.com/KnightHacks/forge/pull/513
 - Issues:
 - Discord/thread context:
