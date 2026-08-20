@@ -3,6 +3,7 @@ import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import natural from "natural";
 import sharp from "sharp";
 
+import { getPublicProfilePictureUrl } from "@forge/api/profile-picture";
 import { db } from "@forge/db/client";
 import { logger } from "@forge/utils";
 
@@ -167,7 +168,13 @@ export const getGoatEmbed = async () => {
 
     if (!member) continue;
     const { guildProfileVisible, ...rest } = member;
-    if (guildProfileVisible) goat = rest;
+    const profilePictureUrl = getPublicProfilePictureUrl({
+      profilePictureReference: member.profilePictureUrl,
+      userId: goat_id,
+    });
+    if (guildProfileVisible && profilePictureUrl) {
+      goat = { ...rest, profilePictureUrl };
+    }
   }
 
   logger.log(goat);

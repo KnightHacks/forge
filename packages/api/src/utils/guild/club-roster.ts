@@ -5,13 +5,12 @@ import { ClubTeamRole } from "@forge/db/schemas/club-team";
 import { Member } from "@forge/db/schemas/knight-hacks";
 
 import type { ClubTeamConfig } from "./club-team-config";
-import type { PublicProfilePictureReference } from "./profile-picture";
+import { getPublicProfilePictureUrl } from "../profile-picture/public-url";
 import {
   getClubRoleBuckets,
   holdsClubLeadershipRole,
   loadClubTeamConfig,
 } from "./club-team-config";
-import { getPublicProfilePictureUrl } from "./profile-picture";
 
 // Backs the public Club site's team page, which reads it over HTTP tRPC because
 // apps/club builds with `output: "export"` and has no server runtime. This stays
@@ -51,20 +50,9 @@ export interface RosterRoleRow {
   memberId: string;
   firstName: string | null;
   lastName: string | null;
-  guildProfilePictureUrl: string | null;
+  profilePictureReference: string | null;
   linkedinProfileUrl: string | null;
 }
-
-export type RosterRoleReferenceRow = Omit<
-  RosterRoleRow,
-  "guildProfilePictureUrl"
-> & {
-  profilePictureReference: string | null;
-};
-
-type PublicProfilePictureResolver = (
-  reference: PublicProfilePictureReference,
-) => Promise<string | null> | string | null;
 
 /** A placed member plus the ranking that placed them. Never leaves this module. */
 interface RankedClubTeamMember {
@@ -163,7 +151,10 @@ export function buildPublicClubRoster(
             displayName: row.displayName,
           }),
           teamRole,
-          imageUrl: toNonEmptyString(row.guildProfilePictureUrl),
+          imageUrl: getPublicProfilePictureUrl({
+            profilePictureReference: row.profilePictureReference,
+            userId: row.userId,
+          }),
           linkedinUrl: toNonEmptyString(row.linkedinProfileUrl),
           color: row.roleColor,
         },
@@ -194,34 +185,6 @@ export function buildPublicClubRoster(
   };
 }
 
-export async function resolveRosterRoleRows(
-  rows: readonly RosterRoleReferenceRow[],
-  resolveProfilePicture: PublicProfilePictureResolver = getPublicProfilePictureUrl,
-): Promise<RosterRoleRow[]> {
-  const uniqueRowsByUserId = new Map(
-    rows.map((row) => [row.userId, row] as const),
-  );
-  const profilePicturesByUserId = new Map(
-    await Promise.all(
-      [...uniqueRowsByUserId.values()].map(
-        async (row) =>
-          [
-            row.userId,
-            await resolveProfilePicture({
-              profilePictureReference: row.profilePictureReference,
-              userId: row.userId,
-            }),
-          ] as const,
-      ),
-    ),
-  );
-
-  return rows.map(({ profilePictureReference: _reference, ...row }) => ({
-    ...row,
-    guildProfilePictureUrl: profilePicturesByUserId.get(row.userId) ?? null,
-  }));
-}
-
 export async function getVisiblePublicClubRoster() {
   const config = await loadClubTeamConfig();
   const rows = await db
@@ -244,5 +207,5 @@ export async function getVisiblePublicClubRoster() {
     .where(eq(Member.guildProfileVisible, true))
     .orderBy(Roles.name, Member.firstName, Member.lastName, User.name);
 
-  return buildPublicClubRoster(config, await resolveRosterRoleRows(rows));
+  return buildPublicClubRoster(config, rows);
 }
