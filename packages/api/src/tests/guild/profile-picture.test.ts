@@ -1,43 +1,35 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { getPublicProfilePictureUrl } from "../../utils/guild/profile-picture";
 
-const mocks = vi.hoisted(() => ({
-  presignedUrl: vi.fn(),
-}));
-
-vi.mock("../../utils/profile-picture/storage", () => ({
-  profilePictureStorageClient: {
-    presignedUrl: mocks.presignedUrl,
-  },
-}));
-
 const userId = "00000000-0000-4000-8000-000000000001";
 const objectName = `${userId}/profile-picture-4ac506f0-ab78-4722-88f6-2808763b65aa.jpg`;
-const signedUrl = "https://storage.example.test/signed-profile-picture";
+const publicUrl =
+  `https://minio-y44gsgsskc4ko4kkwsg0csoc.135.237.97.107.sslip.io/` +
+  `guild-profile-pictures/${objectName}`;
 
 describe("Guild public profile pictures", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mocks.presignedUrl.mockResolvedValue(signedUrl);
-  });
-
   it.each([
     ["current object name", objectName],
     [
-      "older absolute MinIO URL still stored in production",
+      "older absolute MinIO URL still stored for current roster members",
       `https://stored-minio.example.test/guild-profile-pictures/${objectName}`,
     ],
-  ])("signs a user-owned %s", async (_label, profilePictureReference) => {
-    await expect(
+  ])("resolves a user-owned %s", (_label, profilePictureReference) => {
+    expect(
       getPublicProfilePictureUrl({ profilePictureReference, userId }),
-    ).resolves.toBe(signedUrl);
+    ).toBe(publicUrl);
+  });
 
-    expect(mocks.presignedUrl).toHaveBeenCalledWith(
-      "GET",
-      "guild-profile-pictures",
-      objectName,
-      60 * 60,
+  it("encodes object-name path segments", () => {
+    expect(
+      getPublicProfilePictureUrl({
+        profilePictureReference: `${userId}/Carlos Catala #1.jpg`,
+        userId,
+      }),
+    ).toBe(
+      `https://minio-y44gsgsskc4ko4kkwsg0csoc.135.237.97.107.sslip.io/` +
+        `guild-profile-pictures/${userId}/Carlos%20Catala%20%231.jpg`,
     );
   });
 
@@ -53,25 +45,12 @@ describe("Guild public profile pictures", () => {
       "owned by another user",
       "00000000-0000-4000-8000-000000000002/profile-picture-4ac506f0-ab78-4722-88f6-2808763b65aa.jpg",
     ],
-  ])("returns null for a %s reference", async (_label, reference) => {
-    await expect(
+  ])("returns null for a %s reference", (_label, reference) => {
+    expect(
       getPublicProfilePictureUrl({
         profilePictureReference: reference,
         userId,
       }),
-    ).resolves.toBeNull();
-
-    expect(mocks.presignedUrl).not.toHaveBeenCalled();
-  });
-
-  it("returns null without leaking a storage failure", async () => {
-    mocks.presignedUrl.mockRejectedValue(new Error("private storage detail"));
-
-    await expect(
-      getPublicProfilePictureUrl({
-        profilePictureReference: objectName,
-        userId,
-      }),
-    ).resolves.toBeNull();
+    ).toBeNull();
   });
 });

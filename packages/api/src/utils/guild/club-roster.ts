@@ -64,7 +64,7 @@ export type RosterRoleReferenceRow = Omit<
 
 type PublicProfilePictureResolver = (
   reference: PublicProfilePictureReference,
-) => Promise<string | null>;
+) => Promise<string | null> | string | null;
 
 /** A placed member plus the ranking that placed them. Never leaves this module. */
 interface RankedClubTeamMember {
