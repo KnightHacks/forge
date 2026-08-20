@@ -46,6 +46,10 @@ describe("Guild public profile pictures", () => {
     ["blank", "   "],
     ["malformed", "not-a-profile-picture"],
     [
+      "malformed legacy URL",
+      "https://legacy-minio.example.test/guild-profile-pictures/%E0%A4%A",
+    ],
+    [
       "owned by another user",
       "00000000-0000-4000-8000-000000000002/profile-picture-4ac506f0-ab78-4722-88f6-2808763b65aa.jpg",
     ],

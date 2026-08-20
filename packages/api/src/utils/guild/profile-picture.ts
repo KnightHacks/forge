@@ -15,13 +15,13 @@ export async function getPublicProfilePictureUrl({
 }: PublicProfilePictureReference) {
   if (!profilePictureReference) return null;
 
-  const objectName = resolveProfilePictureObjectName(
-    profilePictureReference,
-    userId,
-  );
-  if (!objectName) return null;
-
   try {
+    const objectName = resolveProfilePictureObjectName(
+      profilePictureReference,
+      userId,
+    );
+    if (!objectName) return null;
+
     return await profilePictureStorageClient.presignedUrl(
       "GET",
       PROFILE_PICTURE_BUCKET_NAME,
