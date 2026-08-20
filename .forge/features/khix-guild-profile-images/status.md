@@ -27,7 +27,7 @@ Current phase: Review / PR
 - [x] Add and run regression tests.
 - [x] Complete repository validation.
 - [x] Open the draft PR.
-- [ ] Confirm CI is green.
+- [x] Confirm CI is green.
 
 ## Validation / commands
 
@@ -46,6 +46,7 @@ Current phase: Review / PR
 - `pnpm lint` — passed with existing repository warnings and no errors.
 - `pnpm typecheck` — passed (29 tasks).
 - Local browser contract verification — passed: all 29 rendered portraits loaded, Estefanie was present, and Lena was absent.
+- GitHub PR checks — passed: CodeQL Analyze, CodeQL, and CodeRabbit.
 
 ## Links
 
