@@ -74,11 +74,22 @@ export default function ApplyPage() {
   }
 
   return (
-    <HackerFormPage
-      applicationBackgroundKey="khix"
-      hackathonId={hackathon.data.id}
-      hackathonName={hackathon.data.displayName}
-      hackathonStartDate={hackathon.data.startDate}
-    />
+    <>
+      {(application.data.profileIssues?.length ?? 0) > 0 ? (
+        <aside className="fixed inset-x-4 top-4 z-[100] mx-auto max-w-xl rounded-lg border border-[#d7ff76]/50 bg-[#07150f]/95 p-4 text-sm leading-6 text-white shadow-2xl backdrop-blur-md">
+          <strong className="block text-[#d7ff76]">
+            Your saved profile needs an update
+          </strong>
+          Re-enter the missing profile details below before submitting your
+          application.
+        </aside>
+      ) : null}
+      <HackerFormPage
+        applicationBackgroundKey="khix"
+        hackathonId={hackathon.data.id}
+        hackathonName={hackathon.data.displayName}
+        hackathonStartDate={hackathon.data.startDate}
+      />
+    </>
   );
 }

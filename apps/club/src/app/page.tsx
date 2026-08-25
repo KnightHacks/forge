@@ -67,7 +67,6 @@ function HeroVideoBackground() {
         loop
         muted
         playsInline
-        poster="/hero/club-hero-poster.webp"
         preload="metadata"
       >
         <source src="/hero/club-hero.webm" type="video/webm" />
