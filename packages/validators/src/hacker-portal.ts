@@ -290,8 +290,27 @@ export const portalSessionDtoSchema = z
   })
   .strict();
 
+export const participantFieldIssueSchema = z
+  .object({
+    message: z.string(),
+    path: z.array(z.union([z.string(), z.number()])),
+  })
+  .strict();
+
+const storedDateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/**
+ * Read DTOs must represent legacy profiles so yearly portals can ask users to
+ * correct them. Submission and update inputs continue to use the stricter
+ * hackerProfileFieldsSchema above.
+ */
 export const hackerProfileDtoSchema = hackerProfileFieldsSchema
-  .extend({ revision: z.number().int().min(1) })
+  .extend({
+    dob: storedDateOnlySchema,
+    gradDate: storedDateOnlySchema,
+    phoneNumber: z.string().trim().max(255),
+    revision: z.number().int().min(1),
+  })
   .strict();
 
 export const hackerApplicationDtoSchema = z
@@ -313,7 +332,7 @@ export const hackerApplicationDtoSchema = z
 export const resumeDtoSchema = z
   .object({
     fileName: z.string(),
-    size: z.number().int().min(1).max(5_000_000).nullable(),
+    size: z.number().int().min(1).nullable(),
     updatedAt: isoDateTimeSchema,
   })
   .strict();
@@ -325,6 +344,7 @@ export const applicationContextDtoSchema = z
     agreements: z.array(hackerAgreementDefinitionDtoSchema),
     editable: z.boolean(),
     profile: hackerProfileDtoSchema.nullable(),
+    profileIssues: z.array(participantFieldIssueSchema).optional(),
     resume: resumeDtoSchema.nullable(),
   })
   .strict();
@@ -352,6 +372,7 @@ export const dashboardDtoSchema = z
     application: hackerApplicationDtoSchema.nullable(),
     isMinorAtHackStart: z.boolean().nullable(),
     profile: hackerProfileDtoSchema.nullable(),
+    profileIssues: z.array(participantFieldIssueSchema).optional(),
     resume: resumeDtoSchema.nullable(),
   })
   .strict();
@@ -445,13 +466,6 @@ export const leaderboardDtoSchema = z
         .strict(),
     ),
     viewerRank: z.number().int().min(1).nullable(),
-  })
-  .strict();
-
-export const participantFieldIssueSchema = z
-  .object({
-    message: z.string(),
-    path: z.array(z.union([z.string(), z.number()])),
   })
   .strict();
 
