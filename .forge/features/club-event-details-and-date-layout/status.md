@@ -1,6 +1,6 @@
 # Club Event Details and Date Layout Status
 
-Current phase: Draft PR preparation
+Current phase: Draft PR open
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -46,7 +46,7 @@ Current phase: Draft PR preparation
 
 ## Links
 
-- PRs: None.
+- PRs: https://github.com/KnightHacks/forge/pull/519
 - Issues: https://github.com/KnightHacks/forge/issues/518
 - Discord/thread context:
   - User reported truncated descriptions and disjoint date ordering with
