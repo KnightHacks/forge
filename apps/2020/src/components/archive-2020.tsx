@@ -1,11 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 
 import { AnimatedBoat } from "./animated-boat";
 
 type Page = "home" | "about" | "sponsors" | "schedule" | "faq";
+
+const desktopMediaQuery = "(min-width: 900px) and (min-height: 500px)";
+
+function subscribeToDesktopLayout(onStoreChange: () => void) {
+  const mediaQuery = window.matchMedia(desktopMediaQuery);
+  mediaQuery.addEventListener("change", onStoreChange);
+  return () => mediaQuery.removeEventListener("change", onStoreChange);
+}
+
+function getDesktopLayoutSnapshot() {
+  return window.matchMedia(desktopMediaQuery).matches;
+}
+
+function getServerDesktopLayoutSnapshot() {
+  return false;
+}
 
 const pages: { id: Page; label: string }[] = [
   { id: "home", label: "Home" },
@@ -474,16 +490,15 @@ function MobileArchive() {
 }
 
 export function Archive2020() {
+  const desktopLayout = useSyncExternalStore(
+    subscribeToDesktopLayout,
+    getDesktopLayoutSnapshot,
+    getServerDesktopLayoutSnapshot,
+  );
+
   return (
     <main className="global">
-      <div className="row no-gutters">
-        <div className="col-12 desktop-media">
-          <DesktopArchive />
-        </div>
-        <div className="col-12 mobile-media">
-          <MobileArchive />
-        </div>
-      </div>
+      {desktopLayout ? <DesktopArchive /> : <MobileArchive />}
     </main>
   );
 }

@@ -1,7 +1,7 @@
 # Legacy Hackathon Site Archives Status
 
-Current phase: Pull request preparation complete. Production changes remain
-blocked pending human approval.
+Current phase: Pull request #524 is open and awaiting review. Production rollout
+remains blocked until the review is approved and the user confirms deployment.
 
 ## Decision log
 
@@ -13,8 +13,8 @@ blocked pending human approval.
 - 2026-08-28: Cloudflare research was read-only. No DNS, Pages, Workers, Access,
   or account setting was changed.
 - 2026-08-28: No Coolify upgrade will be proposed as part of this work.
-- 2026-08-28: No branch push or production deployment is allowed until every year
-  builds locally and passes the full visual matrix with image-based inspection.
+- 2026-08-28: All four years had to build locally and pass the full visual matrix
+  before the branch push. That gate passed before PR #524 was opened.
 - 2026-08-28: Later deployment will be serialized one year at a time, with image,
   container, health, visual, link, resource, and disk inspection before advancing.
 - 2026-08-28: Approved current Forge Next.js static export plus an unprivileged
@@ -30,6 +30,10 @@ blocked pending human approval.
   ServiceNow, IBM, NextEra Energy, BNY Mellon, Siemens Energy; Silver — Impress
   Ink; Bronze — Kinde Auth, Synopsys, GEICO. Logo and website provenance will be
   researched and vendored during implementation.
+- 2026-08-28: Human explicitly approved one spec bundle and one PR for all four
+  archives. This is an approved exception to Forge's usual one-application PR
+  preference because the archives share one migration contract and review set.
+  Production rollout remains serialized one year at a time.
 
 ## Research findings
 
@@ -209,8 +213,8 @@ blocked pending human approval.
       repo build was also attempted; every archive built, but the unrelated KHIX app
       stopped the aggregate build because three required local environment variables
       are absent.
-- [ ] Human approves local evidence and authorizes push.
-- [ ] Push/open review only after approval and required Forge issue/PR metadata exist.
+- [x] Human approved the local evidence and authorized the branch push.
+- [x] Open PR #524 after approval and creation of the required Forge issue.
 - [ ] Human separately authorizes production rollout.
 - [ ] Deploy, inspect, and cut over one year at a time.
 
@@ -271,6 +275,9 @@ forge-archive-2020:test .`: passed using `turbo prune @forge/2020 --docker` and
   container cleanup checks passed. No test container remains running.
 - CI initially let Vitest discover the 2020 Playwright suite. The 2020 unit-test
   scripts now exclude `e2e/**`, matching the other archive packages.
+- The review follow-up passed targeted formatting, all four archive lint and
+  typecheck commands, explicit missing-container and Docker-error teardown checks,
+  and the 2020 production-image Playwright suite at 5/5 tests.
 
 ## Links
 

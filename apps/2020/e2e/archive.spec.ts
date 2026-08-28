@@ -21,6 +21,9 @@ test("renders the public archive without application controls", async ({
   await expect(
     page.getByRole("button", { name: /register|apply|dashboard/i }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: /register|apply|dashboard/i }),
+  ).toHaveCount(0);
   expect(legacyRequests).toEqual([]);
 });
 
@@ -29,6 +32,10 @@ test("desktop archive exposes the retained historical sections", async ({
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
+
+  await expect(page.locator(".kh-holder")).toHaveCount(1);
+  await expect(page.locator(".kh-mobile")).toHaveCount(0);
+  await expect(page.locator(".animated-boat")).toHaveCount(1);
 
   for (const section of ["About", "Sponsors", "Schedule", "FAQ"]) {
     const button = page.getByRole("button", { name: section, exact: true });
@@ -47,9 +54,19 @@ test("mobile archive preserves the public story without registration", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
 
+  await expect(page.locator(".kh-holder")).toHaveCount(0);
+  await expect(page.locator(".kh-mobile")).toHaveCount(1);
+  await expect(page.locator(".animated-boat")).toHaveCount(1);
+
   await expect(page.getByText("Connect.", { exact: false })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Schedule" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Sponsors" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /register|apply|dashboard/i }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: /register|apply|dashboard/i }),
+  ).toHaveCount(0);
   await expect(page.getByText(/register now/i)).toHaveCount(0);
 });
 

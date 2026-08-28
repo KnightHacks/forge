@@ -148,14 +148,14 @@
         "tags": ["Beginner"]
       },
       {
-        "time": "8:00 - 9:00 pm",
-        "title": "Introduction to Geospatial Data Science",
-        "tags": []
-      },
-      {
         "time": "7:30 - 8:30 pm",
         "title": "Tech Industry AMA",
         "tags": ["Professional Development"]
+      },
+      {
+        "time": "8:00 - 9:00 pm",
+        "title": "Introduction to Geospatial Data Science",
+        "tags": []
       },
       {
         "time": "9:00 - 10:00 pm",

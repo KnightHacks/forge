@@ -431,6 +431,7 @@ footer {
   }
 
   .past-event {
+    margin-right: 16px;
     padding: 8px 10px;
     font-size: 12px;
   }
@@ -488,6 +489,7 @@ footer {
   }
 
   .past-event {
+    margin-right: 36px;
     font-size: 11px;
   }
 
