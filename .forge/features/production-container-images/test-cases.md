@@ -24,13 +24,16 @@ Setup:
 
 Action:
 
-- Start the image and request `/` on its exposed port.
+- Start the image and request `/` plus one representative exported page or
+  asset on its exposed port.
 
 Expected observations:
 
 - The request returns a successful response.
+- The direct non-root request returns a successful response.
 - The runtime image contains the exported site and nginx, without Node build
   dependencies or unrelated Forge apps.
+- The nginx process runs as its unprivileged `nginx` user.
 
 ### TC-002: Standalone Next.js image starts with runtime variables
 

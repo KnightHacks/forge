@@ -38,13 +38,15 @@ None.
 - `pnpm lint`: passed with pre-existing warnings and no errors.
 - `pnpm typecheck`: passed.
 - All nine Dockerfiles built successfully on ARM64.
-- Local runtime image sizes: GemiKnights 43.6 MB, KH8 72.5 MB,
-  BloomKnights 26.4 MB, Guild 116.9 MB, Cron 357.4 MB, T.K 369.1 MB,
-  Club 30.9 MB, Blade 123.3 MB, and KH9 116.9 MB.
+- Local runtime image sizes: GemiKnights 40.8 MB, KH8 69.7 MB,
+  BloomKnights 23.6 MB, Guild 116.9 MB, Cron 357.4 MB, T.K 369.1 MB,
+  Club 28.2 MB, Blade 123.3 MB, and KH9 116.9 MB.
 - Static GemiKnights and BloomKnights images served successful root requests.
 - Cron and T.K production `tsx` entrypoints resolved from their runtime images.
 - Guild and Blade standalone entrypoints resolved, and sentinel server build
   values were absent from their runtime filesystems.
+- All four nginx images served root and representative direct URLs as UID 101
+  (`nginx`).
 
 ## Links
 

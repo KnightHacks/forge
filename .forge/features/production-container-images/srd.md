@@ -46,9 +46,11 @@ tracing must include the workspace packages used by Blade, Guild, and KHIX.
 ## Validation
 
 No Zod schema changes. Builds use the existing Coolify variables marked for
-build. Dockerfiles redeclare only variables required to produce static or
-client-side output. Coolify continues injecting runtime variables through the
-generated Compose environment file.
+build. Dockerfiles redeclare client variables that Next.js embeds and the
+server variables required while Next.js inspects server modules. Multi-stage
+builds keep those server values out of the final runtime image. Coolify
+continues injecting runtime variables through the generated Compose
+environment file.
 
 ## Data / migration / compatibility
 

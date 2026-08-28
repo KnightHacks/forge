@@ -17,11 +17,12 @@ RUN --mount=type=cache,id=forge-pnpm-store,target=/pnpm/store,sharing=locked \
 COPY --from=pruner /app/out/full/ .
 RUN pnpm --filter @forge/gemiknights build
 
-FROM nginx:1.29-alpine AS runner
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS runner
 ENV PORT=3005
 ENV NGINX_ENVSUBST_FILTER=PORT
 COPY deploy/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/apps/gemiknights/out/ /usr/share/nginx/html/
+USER nginx
 EXPOSE 3005
 STOPSIGNAL SIGQUIT
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
