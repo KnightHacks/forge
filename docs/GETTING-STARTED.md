@@ -181,7 +181,7 @@ When running the apps, they will be available at the following ports:
 | Guild           | `@forge/guild`        | 3003 | http://localhost:3003 | Member networking site (Knight Hacks LinkedIn)                      |
 | GemiKnights     | `@forge/gemiknights`  | 3005 | http://localhost:3005 | GemiKnights 2025 hackathon site (frontend only)                     |
 | BloomKnights    | `@forge/bloomknights` | 3006 | http://localhost:3006 | BloomKnights hackathon site (frontend only)                         |
-| 2026            | `@forge/2026`         | 3007 | http://localhost:3007 | Knight Hacks IX site and hacker portal                              |
+| Knight Hacks IX | `@forge/2026`         | 3007 | http://localhost:3007 | Knight Hacks IX site and hacker portal                              |
 | TK              | `@forge/tk`           | N/A  | N/A                   | Discord bot for Knight Hacks server                                 |
 | Cron            | `@forge/cron`         | N/A  | N/A                   | Cron job server                                                     |
 
