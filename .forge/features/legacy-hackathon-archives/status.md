@@ -272,7 +272,7 @@ forge-archive-2020:test .`: passed using `turbo prune @forge/2020 --docker` and
 
 ## Links
 
-- Branch: `repo/legacy-hackathon-archives` (local only; not pushed)
-- PRs: none
+- Branch: `repo/legacy-hackathon-archives` (pushed)
+- PR: [#524 — Archive legacy hackathon sites in Forge](https://github.com/KnightHacks/forge/pull/524)
 - Issue: [#523 — archive legacy hackathon sites in Forge](https://github.com/KnightHacks/forge/issues/523)
 - Discord/thread context: current Codex task; no DMs sent
