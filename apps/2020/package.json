@@ -14,8 +14,8 @@
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "serve out -l 3008",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests",
+    "test": "vitest run --passWithNoTests --exclude 'e2e/**'",
+    "test:watch": "vitest --passWithNoTests --exclude 'e2e/**'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -269,6 +269,8 @@ forge-archive-2020:test .`: passed using `turbo prune @forge/2020 --docker` and
   then interrupted by Turbo.
 - `pnpm lint:ws`, `git diff --check`, generated/source provider scans, and final
   container cleanup checks passed. No test container remains running.
+- CI initially let Vitest discover the 2020 Playwright suite. The 2020 unit-test
+  scripts now exclude `e2e/**`, matching the other archive packages.
 
 ## Links
 
