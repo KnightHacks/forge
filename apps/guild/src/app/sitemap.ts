@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 import { api } from "~/trpc/server";
 import { SITE_URL } from "./seo";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [profiles, companies] = await Promise.all([
     api.guild.getSitemapProfiles(),
