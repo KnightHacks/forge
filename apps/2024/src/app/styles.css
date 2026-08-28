@@ -1,0 +1,543 @@
+:root {
+  color-scheme: only light;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+body {
+  background: #0d3047;
+  color: white;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header {
+  align-items: center;
+  background: #0d3047;
+  display: flex;
+  height: 64px;
+  inset: 0 0 auto;
+  padding: 4px 24px;
+  position: fixed;
+  z-index: 50;
+}
+
+.brand {
+  align-items: center;
+  display: flex;
+}
+
+.brand img {
+  height: 48px;
+  object-fit: contain;
+  width: 180px;
+}
+
+.desktop-nav {
+  display: flex;
+  flex: 1;
+  gap: 32px;
+  justify-content: center;
+}
+
+.desktop-nav a,
+.mobile-nav a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.desktop-nav a:hover,
+.desktop-nav a:focus-visible,
+.mobile-nav a:hover,
+.mobile-nav a:focus-visible {
+  color: #ffd166;
+}
+
+.mlh-badge {
+  height: 160px;
+  object-fit: contain;
+  position: absolute;
+  right: 22px;
+  top: 0;
+  width: 80px;
+}
+
+.mobile-nav {
+  display: none;
+}
+
+.hero {
+  align-items: center;
+  background: #3d97d1 url("/sky.svg") center top / cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  justify-content: center;
+  min-height: 720px;
+  overflow: hidden;
+  padding-top: 76px;
+  position: relative;
+}
+
+.hero-title {
+  height: min(34vh, 300px);
+  object-fit: contain;
+  position: relative;
+  width: min(90vw, 720px);
+  z-index: 20;
+}
+
+.island {
+  height: min(54vh, 560px);
+  margin-top: -12px;
+  object-fit: contain;
+  position: relative;
+  width: min(82vw, 600px);
+  z-index: 15;
+}
+
+.cloud,
+.ship {
+  height: auto;
+  pointer-events: none;
+  position: absolute;
+}
+
+.cloud {
+  opacity: 0.7;
+  width: min(31vw, 450px);
+  z-index: 5;
+}
+
+.cloud-one {
+  left: -5%;
+  top: 15%;
+}
+
+.cloud-two {
+  right: 8%;
+  top: 8%;
+}
+
+.cloud-three {
+  right: -7%;
+  top: 31%;
+}
+
+.ship {
+  bottom: 3%;
+  left: 4%;
+  width: min(32vw, 470px);
+  z-index: 10;
+}
+
+.about-section {
+  align-items: center;
+  background: #16618e url("/ocean.svg") center / cover no-repeat;
+  display: flex;
+  justify-content: center;
+  min-height: 100svh;
+}
+
+.about-section img {
+  height: min(86vh, 850px);
+  object-fit: contain;
+  width: min(92vw, 850px);
+}
+
+.deep-ocean {
+  background: #0a4f79 url("/bottom-ocean.svg") center top / cover repeat-y;
+}
+
+.sponsors-section {
+  background: url("/sponsors.svg") center top / cover no-repeat;
+  min-height: 1200px;
+  padding: 220px 32px 100px;
+}
+
+.sponsors-section h1,
+.faq-section h1,
+.contact-section h1 {
+  color: #ffd166;
+  font-size: clamp(3rem, 7vw, 6rem);
+  margin: 0 0 52px;
+  text-align: center;
+}
+
+.sponsor-grid {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 1300px;
+}
+
+.sponsor-bubble {
+  align-items: center;
+  animation: bob 4s ease-in-out var(--delay) infinite;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  display: flex;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.sponsor-bubble.gold {
+  background-image: url("/large-bubble.svg");
+  height: 320px;
+  width: 320px;
+}
+
+.sponsor-bubble.silver {
+  background-image: url("/medium-bubble.svg");
+  height: 270px;
+  width: 270px;
+}
+
+.sponsor-bubble.bronze {
+  background-image: url("/small-bubble.svg");
+  height: 220px;
+  width: 220px;
+}
+
+.sponsor-bubble img {
+  height: auto;
+  max-height: 32%;
+  max-width: 52%;
+  object-fit: contain;
+  width: auto;
+}
+
+.sponsor-bubble[href*="siemens"] img {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 55%));
+  max-width: 60%;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+}
+
+.faq-section {
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: 80px 24px 140px;
+}
+
+.faq-section h1,
+.contact-section h1 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+.faq-list {
+  display: grid;
+  gap: 20px;
+}
+
+.faq-list details {
+  background: #7cccff;
+  border-radius: 20px;
+  color: #071a27;
+  padding: 22px 28px;
+}
+
+.faq-list summary {
+  cursor: pointer;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.faq-list p {
+  line-height: 1.65;
+  margin: 18px 0 2px;
+}
+
+.contact-section {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: 80px 24px 300px;
+  position: relative;
+  text-align: center;
+}
+
+.contact-copy {
+  color: #ffd166;
+  position: relative;
+  z-index: 10;
+}
+
+.contact-copy h1 {
+  margin-bottom: 12px;
+}
+
+.contact-copy p {
+  font-size: 1.1rem;
+  margin: 8px 0;
+}
+
+.sand {
+  bottom: 0;
+  height: 260px;
+  left: 0;
+  object-fit: cover;
+  position: absolute;
+  width: 100%;
+}
+
+.seafloor {
+  bottom: 0;
+  height: auto;
+  position: absolute;
+  z-index: 3;
+}
+
+.algae-left {
+  left: 0;
+  width: 16vw;
+}
+
+.treasure {
+  left: 22%;
+  width: 15vw;
+}
+
+.scuba {
+  left: 46%;
+  width: 14vw;
+}
+
+.skull {
+  right: 24%;
+  width: 10vw;
+}
+
+.algae-right {
+  right: 0;
+  width: 16vw;
+}
+
+.site-footer {
+  align-items: center;
+  background: #0d3047;
+  display: flex;
+  gap: 32px;
+  justify-content: space-between;
+  min-height: 120px;
+  padding: 20px 48px;
+}
+
+.site-footer > a img {
+  height: auto;
+  width: 190px;
+}
+
+.footer-links,
+.social-links {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+}
+
+.footer-links a {
+  color: #dbc04a;
+  font-weight: 700;
+}
+
+.social-links img {
+  height: 44px;
+  width: 44px;
+}
+
+@media (max-width: 767px) {
+  .site-header {
+    padding-inline: 12px 72px;
+  }
+
+  .brand img {
+    width: 130px;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: block;
+    margin-left: auto;
+    position: relative;
+  }
+
+  .mobile-nav summary {
+    background: #ffd166;
+    border-radius: 6px;
+    color: #0d3047;
+    cursor: pointer;
+    font-weight: 800;
+    list-style: none;
+    padding: 8px 12px;
+  }
+
+  .mobile-nav nav {
+    background: #0d3047;
+    border-radius: 8px;
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    position: absolute;
+    right: 0;
+    top: 44px;
+    width: 160px;
+  }
+
+  .mlh-badge {
+    height: 92px;
+    right: 8px;
+    width: 48px;
+  }
+
+  .hero {
+    min-height: 680px;
+  }
+
+  .hero-title {
+    height: 29vh;
+    width: 94vw;
+  }
+
+  .island {
+    height: 43vh;
+    width: 94vw;
+  }
+
+  .cloud {
+    width: 58vw;
+  }
+
+  .cloud-one {
+    left: -25%;
+  }
+
+  .cloud-two {
+    right: -22%;
+  }
+
+  .cloud-three,
+  .ship {
+    display: none;
+  }
+
+  .about-section {
+    min-height: 760px;
+  }
+
+  .about-section img {
+    height: auto;
+    width: 110vw;
+  }
+
+  .sponsors-section {
+    min-height: 0;
+    padding: 180px 10px 80px;
+  }
+
+  .sponsor-grid {
+    gap: 4px;
+  }
+
+  .sponsor-bubble.gold {
+    height: 185px;
+    width: 185px;
+  }
+
+  .sponsor-bubble.silver {
+    height: 165px;
+    width: 165px;
+  }
+
+  .sponsor-bubble.bronze {
+    height: 145px;
+    width: 145px;
+  }
+
+  .contact-section {
+    min-height: 760px;
+    padding-bottom: 220px;
+  }
+
+  .sand {
+    height: 190px;
+  }
+
+  .algae-left,
+  .algae-right {
+    width: 28vw;
+  }
+
+  .treasure {
+    left: 12%;
+    width: 28vw;
+  }
+
+  .scuba {
+    left: 42%;
+    width: 30vw;
+  }
+
+  .skull {
+    right: 12%;
+    width: 22vw;
+  }
+
+  .site-footer {
+    align-items: center;
+    flex-direction: column;
+    padding: 28px 18px;
+    text-align: center;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+
+  .sponsor-bubble {
+    animation: none;
+  }
+}

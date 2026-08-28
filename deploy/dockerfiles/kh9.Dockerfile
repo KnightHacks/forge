@@ -6,7 +6,7 @@ WORKDIR /app
 
 FROM tools AS pruner
 COPY . .
-RUN turbo prune @forge/khix --docker
+RUN turbo prune @forge/2026 --docker
 
 FROM tools AS builder
 ARG BLADE_URL
@@ -24,7 +24,7 @@ COPY --from=pruner /app/out/full/ .
 RUN test -n "${BLADE_URL}" \
     && test -n "${KHIX_HACKER_PORTAL_CLIENT_ID}" \
     && test -n "${KHIX_HACKER_PORTAL_ORIGIN}" \
-    && pnpm --filter @forge/khix build
+    && pnpm --filter @forge/2026 build
 
 FROM node:24-bookworm-slim AS runner
 RUN apt-get update \
@@ -35,11 +35,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3007
 WORKDIR /app
-COPY --from=builder --chown=node:node /app/apps/khix/.next/standalone/ ./
-COPY --from=builder --chown=node:node /app/apps/khix/.next/static/ ./apps/khix/.next/static/
-COPY --from=builder --chown=node:node /app/apps/khix/public/ ./apps/khix/public/
+COPY --from=builder --chown=node:node /app/apps/2026/.next/standalone/ ./
+COPY --from=builder --chown=node:node /app/apps/2026/.next/static/ ./apps/2026/.next/static/
+COPY --from=builder --chown=node:node /app/apps/2026/public/ ./apps/2026/public/
 USER node
-WORKDIR /app/apps/khix
+WORKDIR /app/apps/2026
 EXPOSE 3007
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD curl --fail --silent "http://127.0.0.1:${PORT}/" > /dev/null || exit 1
