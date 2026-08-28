@@ -73,5 +73,5 @@ Before handing off a parallax change:
   constantly changing inline style attributes
 - pointer movement still changes layer transforms differently by depth
 - scroll changes `--khix-hero-scroll-progress` without causing layout shifts
-- `pnpm --filter=@forge/khix lint` and
-  `pnpm --filter=@forge/khix typecheck` pass for KHIX changes
+- `pnpm --filter=@forge/2026 lint` and
+  `pnpm --filter=@forge/2026 typecheck` pass for KHIX changes

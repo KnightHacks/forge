@@ -47,7 +47,7 @@ that must be deliberately reopened.
 ### Excluded
 
 - Non-hackathon Legacy parity (covered by the companion spec).
-- `apps/khix`. No `@forge/api` dependency.
+- `apps/2026`. No `@forge/api` dependency.
 - `apps/tk`. No `hacker`/`hackathon` references found in `apps/tk/src`.
 
 ## What Reforge Already Carries

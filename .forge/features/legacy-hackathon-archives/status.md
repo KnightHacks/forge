@@ -34,6 +34,10 @@ remains blocked until the review is approved and the user confirms deployment.
   archives. This is an approved exception to Forge's usual one-application PR
   preference because the archives share one migration contract and review set.
   Production rollout remains serialized one year at a time.
+- 2026-08-28: Human approved renaming the active KH IX workspace from `khix` to
+  `2026` in this PR so yearly Knight Hacks apps use the same code naming scheme.
+  Event branding, runtime client IDs, asset paths, and `KHIX_*` variables remain
+  unchanged.
 
 ## Research findings
 
@@ -278,6 +282,15 @@ forge-archive-2020:test .`: passed using `turbo prune @forge/2020 --docker` and
 - The review follow-up passed targeted formatting, all four archive lint and
   typecheck commands, explicit missing-container and Docker-error teardown checks,
   and the 2020 production-image Playwright suite at 5/5 tests.
+- Active-site naming cleanup: moved `apps/khix` to `apps/2026`, renamed the
+  workspace package to `@forge/2026`, and updated maintained docs and the KH9
+  pruned Docker build. The KH IX product and runtime identifiers remain intact.
+- `pnpm lint:ws`, the 14 `@forge/2026` tests, filtered lint, filtered typecheck,
+  and the filtered production build passed after the rename.
+- `deploy/dockerfiles/kh9.Dockerfile` built the renamed pruned workspace. Its
+  116,905,476-byte image ran from `/app/apps/2026` and served `/` and `/apply`.
+- The complete 21-task workspace build passed with `.env.example` test values
+  under Turbo's loose environment mode, matching the CI build environment.
 
 ## Links
 
