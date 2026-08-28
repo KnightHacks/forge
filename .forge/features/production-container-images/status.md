@@ -45,6 +45,8 @@ None.
 - Cron and T.K production `tsx` entrypoints resolved from their runtime images.
 - Guild and Blade standalone entrypoints resolved, and sentinel server build
   values were absent from their runtime filesystems.
+- Guild and Blade builds use two non-sensitive placeholder build arguments
+  instead of exposing production secrets to Docker build history or cache.
 - All four nginx images served root and representative direct URLs as UID 101
   (`nginx`).
 
