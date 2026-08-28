@@ -1,4 +1,11 @@
 import { networkInterfaces } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const monorepoRoot = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 
 const localDevOrigins = Object.values(networkInterfaces()).flatMap(
   (addresses) =>
@@ -9,6 +16,8 @@ const localDevOrigins = Object.values(networkInterfaces()).flatMap(
 
 /** @type {import("next").NextConfig} */
 const config = {
+  output: "standalone",
+  outputFileTracingRoot: monorepoRoot,
   reactStrictMode: true,
   allowedDevOrigins: ["127.0.0.1", ...localDevOrigins],
   images: {
