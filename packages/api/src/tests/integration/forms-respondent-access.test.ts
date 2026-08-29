@@ -102,12 +102,23 @@ async function seed(
       memberRow(INSIDER, "insider"),
       memberRow(RESPONDED, "responded"),
     ]);
-  // `buildDuesStatus` reads the academic year the run happens in, so the row
-  // has to be dated relative to now rather than to a fixed year.
-  await client.insert(knightHacks.DuesPayment).values({
-    amount: 1_000,
+  const paymentDate = new Date();
+  const [payment] = await client
+    .insert(knightHacks.DuesPayment)
+    .values({
+      amount: 1_000,
+      memberId: INSIDER.memberId,
+      paymentDate,
+      year: getDuesAcademicYear().startYear,
+    })
+    .returning({ id: knightHacks.DuesPayment.id });
+  if (!payment) throw new Error("Failed to seed dues payment.");
+  await client.insert(knightHacks.DuesEntitlement).values({
+    active: true,
+    createdAt: paymentDate,
     memberId: INSIDER.memberId,
-    paymentDate: new Date(),
+    sourcePaymentId: payment.id,
+    updatedAt: paymentDate,
     year: getDuesAcademicYear().startYear,
   });
 

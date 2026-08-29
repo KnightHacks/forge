@@ -86,6 +86,7 @@ describe("development database backup sanitizer", () => {
         "knight_hacks_club_team_role",
         "knight_hacks_discord_config",
         "knight_hacks_dues_configuration",
+        "knight_hacks_dues_entitlement",
       ]),
     );
   });

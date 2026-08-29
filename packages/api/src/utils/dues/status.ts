@@ -1,14 +1,20 @@
 import {
-  buildDuesAcademicYear,
   formatDuesAmount,
   getDuesAcademicYear,
-  getDuesPayableYear,
   isLateDuesPaymentWindow,
   MEMBER_DUES_PRICE_CENTS,
 } from "@forge/validators";
 
-export interface DuesStatusRow {
+export interface DuesEntitlementStatusRow {
   active: boolean;
+  createdAt: Date;
+  id: string;
+  sourcePaymentId: string | null;
+  updatedAt: Date;
+  year: number;
+}
+
+export interface DuesPaymentStatusRow {
   amount: number;
   id: string;
   paymentDate: Date;
@@ -17,77 +23,35 @@ export interface DuesStatusRow {
 }
 
 export function buildDuesStatus({
-  duesRows,
+  entitlements,
+  payments,
   referenceDate = new Date(),
 }: {
-  duesRows: DuesStatusRow[];
+  entitlements: DuesEntitlementStatusRow[];
+  payments: DuesPaymentStatusRow[];
   referenceDate?: Date;
 }) {
   const currentAcademicYear = getDuesAcademicYear(referenceDate);
-  const currentYearRows = duesRows.filter(
-    (row) => row.year === currentAcademicYear.startYear,
+  const entitlement = entitlements.find(
+    (row) => row.year === currentAcademicYear.startYear && row.active,
   );
-  const activeCurrentYearPayment = currentYearRows.find((row) => row.active);
-  const hasStaleCurrentYearDues = currentYearRows.some((row) => !row.active);
-  const payableYearStart = getDuesPayableYear({
-    currentAcademicYearStart: currentAcademicYear.startYear,
-    hasStaleCurrentYearDues,
-  });
-  const activePayableYearPayment = duesRows.find(
-    (row) => row.year === payableYearStart && row.active,
-  );
-  // Legacy Blade stored the calendar year for both manual grants and Stripe
-  // payments. Keep those production rows effective while new writes use the
-  // academic-year start.
-  const activeLegacyCalendarYearPayment = duesRows.find(
-    (row) => row.year === referenceDate.getUTCFullYear() && row.active,
-  );
-  const paidPayment =
-    activeCurrentYearPayment ??
-    activePayableYearPayment ??
-    activeLegacyCalendarYearPayment;
-  const paymentYearStart = paidPayment?.year ?? payableYearStart;
+  const sourcePayment = entitlement?.sourcePaymentId
+    ? payments.find((row) => row.id === entitlement.sourcePaymentId)
+    : undefined;
 
   return {
     amountDue: MEMBER_DUES_PRICE_CENTS,
     amountDueLabel: formatDuesAmount(MEMBER_DUES_PRICE_CENTS),
-    amountPaid: paidPayment?.amount ?? null,
+    amountPaid: sourcePayment?.amount ?? null,
     currentAcademicYear,
-    currentYearHasStaleDues: hasStaleCurrentYearDues,
     lateYearWarning: isLateDuesPaymentWindow(referenceDate),
-    paid: Boolean(paidPayment),
-    paidAt: paidPayment?.paymentDate ?? null,
-    payableAcademicYear: buildDuesAcademicYear(payableYearStart),
-    paymentAcademicYear: buildDuesAcademicYear(paymentYearStart),
-    paymentId: paidPayment?.id ?? null,
-    state: paidPayment ? ("paid" as const) : ("unpaid" as const),
-    stripePaymentIntentId: paidPayment?.stripePaymentIntentId ?? null,
+    paid: Boolean(entitlement),
+    paidAt: entitlement
+      ? (sourcePayment?.paymentDate ?? entitlement.updatedAt)
+      : null,
+    paymentAcademicYear: currentAcademicYear,
+    paymentId: sourcePayment?.id ?? null,
+    state: entitlement ? ("paid" as const) : ("unpaid" as const),
+    stripePaymentIntentId: sourcePayment?.stripePaymentIntentId ?? null,
   };
-}
-
-export function getDuesPaymentIdsToInvalidate({
-  duesRows,
-  referenceDate = new Date(),
-}: {
-  duesRows: DuesStatusRow[];
-  referenceDate?: Date;
-}) {
-  const simulatedRows = duesRows.map((row) => ({ ...row }));
-  const paymentIds: string[] = [];
-
-  while (paymentIds.length < simulatedRows.length) {
-    const paymentId = buildDuesStatus({
-      duesRows: simulatedRows,
-      referenceDate,
-    }).paymentId;
-    if (!paymentId || paymentIds.includes(paymentId)) break;
-
-    const payment = simulatedRows.find((row) => row.id === paymentId);
-    if (!payment) break;
-
-    paymentIds.push(paymentId);
-    payment.active = false;
-  }
-
-  return paymentIds;
 }

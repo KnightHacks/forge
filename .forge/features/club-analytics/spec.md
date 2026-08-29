@@ -189,12 +189,12 @@ separate user-account count.
   counts, paid coverage rate, and the change from the comparable point in the
   previous academic year.
 - Dues history shows:
-  - recorded dues credits by week and month;
+  - recorded dues entitlements by week and month;
   - cumulative collection curves by academic school year;
-  - academic-year payment-count comparisons;
+  - academic-year entitlement-count comparisons;
   - progress toward 25%, 50%, 75%, and 90% profile coverage;
   - the date each reached milestone was met;
-  - active and stale retained dues credits;
+  - active and inactive retained dues entitlements;
   - attendance reach and repeat attendance for paid and unpaid profiles.
 - Historical academic-year coverage uses retained profiles that existed by the
   end of that academic year. The report identifies that denominator and does
@@ -206,9 +206,9 @@ separate user-account count.
   points. It contains no edit controls or contact fields.
 - A user with separate member-administration access may follow a link to the
   existing Members dashboard. Analytics access alone never grants edits.
-- Copy uses `Paid`, `Unpaid`, or `No active dues credit recorded`. It does not
-  call a member delinquent or overdue because Blade has no dues deadline or
-  waiver policy.
+- Copy uses `Paid`, `Unpaid`, or `No active dues credit recorded`. The
+  user-facing credit maps to `DuesEntitlement`; it does not call a member
+  delinquent or overdue because Blade has no dues deadline or waiver policy.
 
 ### Reports and exports
 
@@ -315,9 +315,10 @@ separate user-account count.
   90 days available to return before the report's observation end.
 - `Representation gap`: A segment's share of attendees minus its share of all
   Member profiles.
-- `Current dues status`: Whether an active dues credit counts for the Member
+- `Current dues status`: Whether an active dues entitlement counts for the Member
   profile under the shared academic-school-year rules.
-- `Dues credit`: A retained dues row that may be active or stale.
+- `Dues entitlement`: A retained member/year row whose active state determines
+  whether the member is current for that academic year.
 - `Data coverage`: Profiles with a usable value divided by the applicable
   profile population.
 - `Internal CSV`: A full read-only operational export for a user with
@@ -357,9 +358,9 @@ separate user-account count.
 - Discord matched-Member rows expose only the approved analytical identity and
   activity counts; full Member presentation opens only under the existing
   Member-admin read policy.
-- Dues reporting shows current paid/unpaid counts, payment timing, academic-year
-  comparisons, collection pace, milestones, and active/stale history without
-  showing dollars.
+- Dues reporting shows current paid/unpaid counts, entitlement timing,
+  academic-year comparisons, collection pace, milestones, and active/inactive
+  history without showing dollars.
 - The unpaid-member table contains names and analytical context but no contact
   fields or edits.
 - Internal CSVs match the active filters and include the full values and named

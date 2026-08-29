@@ -134,7 +134,7 @@ function DuesStatusTile({
               ? `Paid for the ${duesStatus.paymentAcademicYear.label}.`
               : duesStatus.paymentsLocked
                 ? "Dues payments are paused until further notice."
-                : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
+                : `Dues unpaid for the ${duesStatus.currentAcademicYear.label}.`}
           </p>
         </div>
         <DuesStatusBadge duesStatus={duesStatus} />

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- The centralized audit catalog is intentionally kept together for reviewability. */
 import { z } from "zod";
 
 const policy = <
@@ -193,8 +194,8 @@ export const AUDIT_ACTION_CATALOG = {
     "reactivated",
   ]),
   "member.dues.revoked": policy("members", "Revoked member dues", [
-    "academicYears",
-    "affectedPaymentCount",
+    "academicYear",
+    "affectedEntitlementCount",
   ]),
   "member.dues.invalidated_bulk": policy(
     "members",

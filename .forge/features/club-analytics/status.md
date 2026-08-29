@@ -6,6 +6,9 @@ Current phase: Complete
 
 ## Decision log
 
+- 2026-08-12: Issue #504 replaced payment-row activity with one active/inactive
+  `DuesEntitlement` per member and academic year. Club analytics now reads
+  those entitlements; its user-facing "dues credit" copy remains unchanged.
 - 2026-07-16: Created the feature bundle on `reforge/club-analytics`.
 - 2026-07-16: The user selected non-hackathon Club analytics and dues
   reporting; hackathon analytics remains deferred.

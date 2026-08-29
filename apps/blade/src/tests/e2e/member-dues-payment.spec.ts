@@ -6,11 +6,11 @@ import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
   DuesConfiguration,
+  DuesEntitlement,
   DuesPayment,
   Member,
 } from "@forge/db/schemas/knight-hacks";
 import {
-  buildDuesAcademicYear,
   getDuesAcademicYear,
   MEMBER_DASHBOARD_PATH,
   MEMBER_SIGNUP_FORM_SLUG,
@@ -97,6 +97,9 @@ function memberValues({
 
 async function cleanupE2EData() {
   await db
+    .delete(DuesEntitlement)
+    .where(inArray(DuesEntitlement.memberId, testMemberIds));
+  await db
     .delete(DuesPayment)
     .where(inArray(DuesPayment.memberId, testMemberIds));
 
@@ -155,12 +158,24 @@ async function seedE2EData() {
     }),
   ]);
 
-  await db.insert(DuesPayment).values({
+  const paymentDate = new Date("2026-06-20T12:00:00Z");
+  const [payment] = await db
+    .insert(DuesPayment)
+    .values({
+      amount: 2500,
+      memberId: PAID_MEMBER_ID,
+      paymentDate,
+      stripePaymentIntentId: "pi_e2e_paid_seed",
+      year: getDuesAcademicYear().startYear,
+    })
+    .returning({ id: DuesPayment.id });
+  if (!payment) throw new Error("Failed to seed paid dues.");
+  await db.insert(DuesEntitlement).values({
     active: true,
-    amount: 2500,
+    createdAt: paymentDate,
     memberId: PAID_MEMBER_ID,
-    paymentDate: new Date("2026-06-20T12:00:00Z"),
-    stripePaymentIntentId: "pi_e2e_paid_seed",
+    sourcePaymentId: payment.id,
+    updatedAt: paymentDate,
     year: getDuesAcademicYear().startYear,
   });
 }
@@ -304,10 +319,7 @@ test.describe("member dues payment", () => {
     await expect(page.getByText("Paid for the").first()).toBeVisible();
 
     const duesRows = await db.query.DuesPayment.findMany({
-      where: and(
-        eq(DuesPayment.memberId, UNPAID_MEMBER_ID),
-        eq(DuesPayment.active, true),
-      ),
+      where: eq(DuesPayment.memberId, UNPAID_MEMBER_ID),
     });
 
     expect(duesRows).toHaveLength(1);
@@ -336,21 +348,30 @@ test.describe("member dues payment", () => {
     await expect(page.getByText("Complete test payment")).toHaveCount(0);
   });
 
-  test("preserves stale dues history and exposes the next payable year", async ({
+  test("preserves payment history while inactive members repay the current year", async ({
     page,
   }) => {
     const currentAcademicYear = getDuesAcademicYear();
-    const nextAcademicYear = buildDuesAcademicYear(
-      currentAcademicYear.startYear + 1,
-    );
-    const stalePaymentDate = new Date("2026-06-01T12:00:00Z");
+    const historicalPaymentDate = new Date("2026-06-01T12:00:00Z");
 
-    await db.insert(DuesPayment).values({
+    const [historicalPayment] = await db
+      .insert(DuesPayment)
+      .values({
+        amount: 2500,
+        memberId: UNPAID_MEMBER_ID,
+        paymentDate: historicalPaymentDate,
+        stripePaymentIntentId: "pi_e2e_historical_seed",
+        year: currentAcademicYear.startYear,
+      })
+      .returning({ id: DuesPayment.id });
+    if (!historicalPayment)
+      throw new Error("Failed to seed historical dues payment.");
+    await db.insert(DuesEntitlement).values({
       active: false,
-      amount: 2500,
+      createdAt: historicalPaymentDate,
       memberId: UNPAID_MEMBER_ID,
-      paymentDate: stalePaymentDate,
-      stripePaymentIntentId: "pi_e2e_stale_seed",
+      sourcePaymentId: historicalPayment.id,
+      updatedAt: historicalPaymentDate,
       year: currentAcademicYear.startYear,
     });
 
@@ -362,25 +383,24 @@ test.describe("member dues payment", () => {
       .filter({ visible: true });
 
     await expect(
-      duesStatus.getByText(`Dues unpaid for the ${nextAcademicYear.label}.`),
+      duesStatus.getByText(`Dues unpaid for the ${currentAcademicYear.label}.`),
     ).toBeVisible();
     await expect(
       duesStatus.getByRole("link", { name: "Pay dues" }),
     ).toBeVisible();
 
-    const staleRows = await db.query.DuesPayment.findMany({
+    const paymentRows = await db.query.DuesPayment.findMany({
       where: and(
         eq(DuesPayment.memberId, UNPAID_MEMBER_ID),
         eq(DuesPayment.year, currentAcademicYear.startYear),
       ),
     });
 
-    expect(staleRows).toHaveLength(1);
-    expect(staleRows[0]?.paymentDate).toEqual(stalePaymentDate);
-    expect(staleRows[0]).toMatchObject({
-      active: false,
+    expect(paymentRows).toHaveLength(1);
+    expect(paymentRows[0]?.paymentDate).toEqual(historicalPaymentDate);
+    expect(paymentRows[0]).toMatchObject({
       amount: 2500,
-      stripePaymentIntentId: "pi_e2e_stale_seed",
+      stripePaymentIntentId: "pi_e2e_historical_seed",
       year: currentAcademicYear.startYear,
     });
 

@@ -23,7 +23,6 @@ import {
 import { db } from "@forge/db/client";
 import { Permissions, User } from "@forge/db/schemas/auth";
 import {
-  DuesPayment,
   Event,
   EventAttendee,
   EventTag,
@@ -31,7 +30,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import type { MemberDiscoveryRecord } from "./discovery";
-import { buildDuesStatus } from "../dues/status";
+import { hasCurrentDuesEntitlement } from "../dues/entitlement";
 import { toAdminEventDto } from "./admin-dto";
 import { eventRowToWorkflowRecord } from "./database-state";
 import { rankCheckInIdentityCandidates } from "./discovery";
@@ -359,11 +358,7 @@ export async function queryAdminEventRecords(
 }
 
 async function loadDuesStatus(memberId: string, now: Date) {
-  const rows = await db
-    .select()
-    .from(DuesPayment)
-    .where(eq(DuesPayment.memberId, memberId));
-  return buildDuesStatus({ duesRows: rows, referenceDate: now }).paid;
+  return await hasCurrentDuesEntitlement(memberId, db, now);
 }
 
 export async function loadMemberDiscoveryRecord(

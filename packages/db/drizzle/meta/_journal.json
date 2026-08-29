@@ -288,6 +288,13 @@
       "when": 1786501513660,
       "tag": "0040_gigantic_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1786670054437,
+      "tag": "0041_unique_daredevil",
+      "breakpoints": true
     }
   ]
 }

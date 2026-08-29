@@ -6,9 +6,8 @@ import type {
   AnalyticsReportInput,
 } from "@forge/validators";
 import { EVENTS, FORMS } from "@forge/consts";
-import { buildDuesAcademicYear } from "@forge/validators";
+import { buildDuesAcademicYear, getDuesAcademicYear } from "@forge/validators";
 
-import { buildDuesStatus } from "../dues/status";
 import { deriveAgeBand, inferAcademicYear } from "./demographics";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -50,7 +49,7 @@ export interface AnalyticsDuesSource {
   active: boolean;
   id: string;
   memberId: string;
-  paymentDate: Date;
+  recordedAt: Date;
   year: number;
 }
 
@@ -980,24 +979,14 @@ function currentDues(
   dues: readonly AnalyticsDuesSource[],
   referenceDate: Date,
 ) {
-  const rowsByMember = new Map<string, AnalyticsDuesSource[]>();
-  dues.forEach((row) => {
-    const rows = rowsByMember.get(row.memberId) ?? [];
-    rows.push(row);
-    rowsByMember.set(row.memberId, rows);
-  });
+  const currentYear = getDuesAcademicYear(referenceDate).startYear;
+  const paidMemberIds = new Set(
+    dues
+      .filter((row) => row.active && row.year === currentYear)
+      .map((row) => row.memberId),
+  );
   return new Map(
-    members.map((member) => [
-      member.id,
-      buildDuesStatus({
-        duesRows: (rowsByMember.get(member.id) ?? []).map((row) => ({
-          ...row,
-          amount: 0,
-          stripePaymentIntentId: null,
-        })),
-        referenceDate,
-      }).paid,
-    ]),
+    members.map((member) => [member.id, paidMemberIds.has(member.id)]),
   );
 }
 
@@ -1006,7 +995,7 @@ function academicYearHistory(
   dues: readonly AnalyticsDuesSource[],
   referenceDate: Date,
 ) {
-  const currentYear = academicYearStart(referenceDate);
+  const currentYear = getDuesAcademicYear(referenceDate).startYear;
   const years = new Set([
     currentYear,
     currentYear - 1,
@@ -1026,7 +1015,7 @@ function academicYearHistory(
             .filter((row) => row.year === year)
             .map((row) => [row.memberId, row] as const),
         ).values(),
-      ].sort((a, b) => a.paymentDate.getTime() - b.paymentDate.getTime());
+      ].sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime());
       let activeCount = 0;
       let staleCount = 0;
       const curve = rows.map((row) => {
@@ -1034,12 +1023,11 @@ function academicYearHistory(
         else staleCount += 1;
         return {
           activeCount,
-          date: row.paymentDate,
+          date: row.recordedAt,
           elapsedDays: Math.max(
             0,
             Math.floor(
-              (row.paymentDate.getTime() -
-                zonedMidnight(year, 7, 1).getTime()) /
+              (row.recordedAt.getTime() - zonedMidnight(year, 7, 1).getTime()) /
                 DAY_MS,
             ),
           ),
@@ -1174,7 +1162,7 @@ function duesLifecycle({
   members: readonly AnalyticsMemberSource[];
   referenceDate: Date;
 }) {
-  const currentYear = academicYearStart(referenceDate);
+  const currentYear = getDuesAcademicYear(referenceDate).startYear;
   const elapsedDays = Math.max(
     0,
     Math.floor(
@@ -1191,8 +1179,7 @@ function duesLifecycle({
             memberIds.has(row.memberId) &&
             row.year === year &&
             Math.floor(
-              (row.paymentDate.getTime() -
-                zonedMidnight(year, 7, 1).getTime()) /
+              (row.recordedAt.getTime() - zonedMidnight(year, 7, 1).getTime()) /
                 DAY_MS,
             ) <= elapsedDays,
         )
