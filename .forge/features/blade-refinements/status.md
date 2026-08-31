@@ -72,6 +72,11 @@ Current phase: Bundle approved / ready for technical discovery
    Issue/Form-banner owners without a database migration.
 2. Technical reproduction: capture the exact production-base issue-assignee
    filter failure before selecting a repair.
+3. Tooling: should `lefthook.yml` quote `{staged_files}` so commits touching
+   Next.js route-group paths work without `--no-verify`?
+4. Tooling: should the repository add a `.gitattributes` with
+   `* text=auto eol=lf` so Windows contributors are not blocked by
+   `pnpm format`?
 
 ## Contributor coordination
 
@@ -239,6 +244,31 @@ for forge` is the branch tip again. The merged content was verified
   `packages/api/src/tests/issues/reminders.test.ts` (7/7 passing). No message
   was sent to a live Discord channel; the cron job that calls this
   (`apps/cron/src/crons/issue-reminders.ts`) was not run.
+  - 2026-08-31: Merged `origin/main` (through the 7 commits the branch was
+    behind) into `forge/refinements` and pushed. Three environment issues
+    surfaced and are recorded here so other contributors do not rediscover
+    them. (1) The lefthook `pre-commit` hook fails on any commit that stages
+    files under `apps/2026/src/app/(portal)/`: `{staged_files}` expands
+    unquoted, so `sh` errors on the parenthesized route-group paths
+    (`syntax error near unexpected token '('`). The same expansion breaks the
+    `typecheck` job's `[ -n "$filters" ]` test. The merge was committed with
+    the `--no-verify` escape hatch documented in `lefthook.yml`, and
+    `pnpm verify:push` was run manually instead of skipped. (2) The repository
+    has no `.gitattributes` and the Prettier config does not set `endOfLine`,
+    so on Windows with `core.autocrlf=true` every file in all 24 packages
+    fails `pnpm format`. Resolved locally with `git config core.autocrlf false`
+    and a working-tree renormalization; this is a per-machine fix and does not
+    travel with the branch. (3) After the merge, `packages/validators/dist`
+    was stale while `packages/validators/package.json` resolves types from
+    `./dist/index.d.ts`, so `@forge/db` build failed with seven TS2305 errors
+    for members that do exist in source (`buildDuesAcademicYear`,
+    `formatDuesAmount`, `getDuesAcademicYear`, `getDuesPayableYear`,
+    `isLateDuesPaymentWindow`, `MEMBER_DUES_PRICE_CENTS`, `EventAdminQuery`).
+    The 71 `no-unsafe-call` errors in `@forge/blade` tests were downstream of
+    the same unresolved types. Clearing `dist` and `.cache` and rebuilding
+    resolved both. Checks after the fix: `pnpm format` (pass, 24/24),
+    `pnpm lint` (0 errors; pre-existing file-length and import-style warnings
+    only), `pnpm typecheck` (pass). No code changes were made.
 
 ## Links
 
