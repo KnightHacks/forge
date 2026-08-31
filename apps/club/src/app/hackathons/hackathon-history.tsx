@@ -673,11 +673,11 @@ export default function HackathonHistory({
         }
       >
         <div
-          className="relative z-20 mx-auto flex min-h-[calc(100svh-var(--club-nav-height))] w-full max-w-[24rem] flex-col items-center justify-start pb-10 pt-[var(--club-hero-logo-aligned-content-padding)] text-center sm:max-w-[32rem] sm:pb-14 md:max-w-[650px] md:pb-16 lg:absolute lg:left-1/2 lg:top-[var(--club-home-hero-logo-top)] lg:min-h-0 lg:w-[1060px] lg:max-w-[1060px] lg:-translate-x-1/2 lg:pb-0 lg:pt-0"
+          className="club-history-hero-content relative z-20 mx-auto flex min-h-[calc(100svh-var(--club-nav-height))] w-full max-w-[24rem] flex-col items-center justify-start pb-10 pt-[var(--club-hero-logo-aligned-content-padding)] text-center sm:max-w-[32rem] sm:pb-14 md:max-w-[650px] md:pb-16 lg:absolute lg:left-1/2 lg:top-[var(--club-home-hero-logo-top)] lg:min-h-0 lg:w-[1060px] lg:max-w-[1060px] lg:-translate-x-1/2 lg:pb-0 lg:pt-0"
           data-hero-content
           data-stagger
         >
-          <div className="mb-5 flex max-w-full flex-wrap items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.52)] sm:mb-6 sm:gap-4 sm:text-[13px] sm:tracking-[0.18em] lg:gap-5">
+          <div className="club-history-hero-eyebrow mb-5 flex max-w-full flex-wrap items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--club-gold)] [text-shadow:3px_3px_0_rgba(0,0,0,0.52)] sm:mb-6 sm:gap-4 sm:text-[13px] sm:tracking-[0.18em] lg:gap-5">
             <span className="text-white [text-shadow:3px_3px_0_rgba(0,0,0,0.45)]">
               {yearRange}
             </span>
@@ -689,7 +689,7 @@ export default function HackathonHistory({
           </div>
           <h1
             aria-label="Knight Hacks History"
-            className="text-[clamp(2rem,9.7vw,3.65rem)] font-black uppercase leading-[0.94] tracking-normal text-white [text-shadow:5px_5px_0_rgba(0,0,0,0.48)] sm:text-[58px] md:text-[88px] md:leading-none md:[text-shadow:7px_7px_0_rgba(0,0,0,0.48)] lg:text-[96px]"
+            className="club-history-hero-title text-[clamp(2rem,9.7vw,3.65rem)] font-black uppercase leading-[0.94] tracking-normal text-white [text-shadow:5px_5px_0_rgba(0,0,0,0.48)] sm:text-[58px] md:text-[88px] md:leading-none md:[text-shadow:7px_7px_0_rgba(0,0,0,0.48)] lg:text-[96px]"
             data-reveal="headline"
           >
             <span className="club-line">
@@ -699,13 +699,13 @@ export default function HackathonHistory({
               <span className="whitespace-nowrap">History</span>
             </span>
           </h1>
-          <p className="text-white/86 mx-auto mt-5 max-w-[22rem] text-[15px] font-medium leading-7 sm:mt-6 sm:max-w-[28rem] sm:text-base sm:leading-8 md:mt-7 md:max-w-[650px] md:text-[21px] md:leading-[34px]">
+          <p className="club-history-hero-description text-white/86 mx-auto mt-5 max-w-[22rem] text-[15px] font-medium leading-7 sm:mt-6 sm:max-w-[28rem] sm:text-base sm:leading-8 md:mt-7 md:max-w-[650px] md:text-[21px] md:leading-[34px]">
             Past Knight Hacks events, project counts, and site links from
             UCF&apos;s student-built hackathons and hackdays.
           </p>
           <Link
             href="#history-timeline"
-            className="club-button mt-8 inline-flex max-w-[calc(100vw-3rem)] justify-center bg-[var(--club-gold)] text-black shadow-[4px_4px_0_rgba(255,255,255,0.85)] md:mt-10 md:shadow-[5px_5px_0_rgba(255,255,255,0.85)]"
+            className="club-button club-history-hero-cta mt-8 inline-flex max-w-[calc(100vw-3rem)] justify-center bg-[var(--club-gold)] text-black shadow-[4px_4px_0_rgba(255,255,255,0.85)] md:mt-10 md:shadow-[5px_5px_0_rgba(255,255,255,0.85)]"
           >
             Enter The Timeline
             <span aria-hidden="true" className="pl-2 text-[18px]">

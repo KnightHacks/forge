@@ -34,7 +34,7 @@ expose Blade credentials from a yearly site.
 Add the SDK to the yearly app:
 
 ```bash
-pnpm --filter @forge/khix add @forge/hacker-sdk@workspace:*
+pnpm --filter @forge/2026 add @forge/hacker-sdk@workspace:*
 ```
 
 ### 2. Provision the portal
@@ -904,6 +904,6 @@ pnpm verify:precommit
   [`packages/validators/src/hacker-portal.ts`](../validators/src/hacker-portal.ts)
 - Participant API:
   [`packages/api/src/hacker-portal/`](../api/src/hacker-portal/)
-- Working themed consumer: [`apps/khix/`](../../apps/khix/)
+- Working themed consumer: [`apps/2026/`](../../apps/2026/)
 - Product and architecture decisions:
   [`.forge/features/hacker-sdk/`](../../.forge/features/hacker-sdk/)

@@ -12,7 +12,10 @@ import {
   HackerProfile,
   HackerProfileRevision,
 } from "@forge/db/schemas/knight-hacks";
-import { hackerProfileFieldsSchema } from "@forge/validators";
+import {
+  hackerProfileDtoSchema,
+  hackerProfileFieldsSchema,
+} from "@forge/validators";
 
 import type { WriteDb } from "../utils/db";
 import { RESUME_BUCKET_NAME } from "../utils/resume/security";
@@ -130,7 +133,16 @@ function parseLegacyOptionalField<T>(
   return result.success ? result.data : null;
 }
 
-export function profileDto(profile: NonNullable<ParticipantProfileRow>) {
+type StoredParticipantProfileRow = Omit<
+  NonNullable<ParticipantProfileRow>,
+  "country" | "levelOfStudy" | "major"
+> & {
+  country: string;
+  levelOfStudy: string;
+  major: string;
+};
+
+function storedProfileDto(profile: StoredParticipantProfileRow) {
   return {
     country: profile.country,
     discordUser: profile.discordUser,
@@ -160,6 +172,30 @@ export function profileDto(profile: NonNullable<ParticipantProfileRow>) {
       hackerProfileFieldsSchema.shape.websiteUrl,
       profile.websiteUrl,
     ),
+  };
+}
+
+export function profileDto(profile: NonNullable<ParticipantProfileRow>) {
+  return hackerProfileDtoSchema.parse(storedProfileDto(profile));
+}
+
+export function profileDtoResult(profile: StoredParticipantProfileRow) {
+  const result = hackerProfileDtoSchema.safeParse(storedProfileDto(profile));
+  if (result.success) {
+    return { profile: result.data, profileIssues: [] };
+  }
+  return {
+    profile: null,
+    profileIssues: result.error.issues.map((issue) => ({
+      message: "This saved profile field needs to be updated.",
+      path: [
+        "profile",
+        ...issue.path.filter(
+          (part): part is number | string =>
+            typeof part === "number" || typeof part === "string",
+        ),
+      ],
+    })),
   };
 }
 

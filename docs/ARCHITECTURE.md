@@ -15,7 +15,7 @@ forge/
 │   ├── bloomknights/  # BloomKnights hackathon site (frontend only)
 │   ├── gemiknights/   # GemiKnights 2025 site (frontend only)
 │   ├── guild/         # Member networking site (frontend only)
-│   ├── khix/          # Knight Hacks IX hackathon site (frontend only)
+│   ├── 2026/          # Knight Hacks IX hackathon site and hacker portal
 │   ├── tk/            # Discord bot
 │   └── cron/          # Cron job server
 ├── packages/          # Shared packages
@@ -68,13 +68,13 @@ high-level rendering.
 
 ### Frontend-Only Apps
 
-Apps such as `club`, `guild`, `2025`, `bloomknights`, `gemiknights`, and `khix`
+Apps such as `club`, `guild`, `2025`, `2026`, `bloomknights`, and `gemiknights`
 are frontend-only sites. Where they need platform data, they consume
 `@forge/api` capabilities exposed by Blade.
 
 - **club**: Reads member count and other club stats
 - **guild**: Reads public member profiles and directory data through Blade.
-- **2025/bloomknights/gemiknights/khix**: Primarily static hackathon sites with
+- **2025/2026/bloomknights/gemiknights**: Primarily hackathon sites with
   minimal backend needs.
 
 These apps use tRPC (via `@forge/api`) to make read-only API calls to `blade`.
