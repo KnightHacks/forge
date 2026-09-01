@@ -147,9 +147,11 @@ tested against an up-to-date local database.
    records are counted and excluded.
 7. Team cells after `Additional Team Member Count` are consumed as repeated
    first-name/last-name/email triples rather than trusted against the literal
-   trailing `...` header. The declared count is validated against parseable
-   triples; discrepancies become rejected-record diagnostics rather than silent
-   column shifts.
+   trailing `...` header. The declared count remains the authoritative,
+   independently stored participant count: complete triples become member rows,
+   blank triples are skipped, and partially populated or malformed triples
+   become rejected-record diagnostics. No member is fabricated to make the
+   parsed roster match the declared count.
 8. The submitter plus additional team members become ordered member rows. All
    event questionnaire columns, including Discord-handle questions, are
    discarded because Devpost does not provide a sufficiently reliable mapping.
@@ -253,11 +255,11 @@ Replacement import permanently replaces prior imported project rows, including
 soft-deleted rows, and replaces the selected hackathon's challenge set. This is
 the accepted bulk-reset behavior.
 
-Rollout is additive at the application surface but destructive to unused legacy
-tables. Deploy migration and compatible application code together. Before the
-production migration, run a read-only count assertion and stop if any legacy
-table unexpectedly contains rows; the owner's no-data premise must be verified,
-not assumed by the migration.
+Rollout is additive at the application surface but intentionally destructive to
+the six retired judging-only tables. Deploy migration and compatible application
+code together. Their rows are explicitly approved for deletion and do not need
+a preservation or pre-deploy emptiness gate; migration validation instead
+asserts that non-judging tables and rows remain unchanged.
 
 Rollback before new imports may restore the prior schema migration. After new
 imports, rollback requires exporting or intentionally discarding the new project
