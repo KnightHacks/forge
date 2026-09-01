@@ -87,6 +87,7 @@ describe("AuthenticatedShell", () => {
     expect(html).toContain('data-testid="member-navigation-rail-header"');
     expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
     expect(html).toContain('aria-label="Open navigation menu"');
+    expect(html).toContain('aria-label="Blade home"');
     expect(html).toContain('href="/admin/members"');
     expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/admin/issues/calendar"');
@@ -132,7 +133,7 @@ describe("AuthenticatedShell", () => {
     expect(html).not.toContain('href="/admin/hackathon"');
   });
 
-  it("gives ordinary members Dashboard, Guild, and bottom-pinned Settings", () => {
+  it("gives ordinary members header account controls instead of a rail or drawer", () => {
     const html = renderToStaticMarkup(
       createElement(AuthenticatedShell, {
         children: createElement("main", null, "Dashboard content"),
@@ -140,12 +141,22 @@ describe("AuthenticatedShell", () => {
       }),
     );
 
-    expect(html).toContain('data-testid="member-navigation-rail"');
-    expect(html).toContain('data-testid="mobile-admin-menu-trigger"');
-    expect(html).toContain('href="/member/dashboard"');
-    expect(html).toContain(`href="${GUILD_URL}"`);
+    // TC-002: no icon rail and no mobile drawer for a member with no admin destinations.
+    expect(html).not.toContain('data-testid="member-navigation-rail"');
+    expect(html).not.toContain('data-testid="mobile-admin-menu-trigger"');
+    expect(html).not.toContain("<aside");
+    expect(html).not.toContain('href="/admin/');
+
+    // Settings and Sign out sit together at the top right.
+    expect(html).toContain('data-testid="account-settings-link"');
     expect(html).toContain('href="/member/settings"');
-    expect(html).not.toContain('href="/admin/members"');
-    expect(html).not.toContain('href="/admin/roles"');
+    expect(html).toContain("Sign out");
+    expect(html.indexOf('data-testid="account-settings-link"')).toBeLessThan(
+      html.indexOf("Sign out"),
+    );
+
+    // TC-001: the product mark links back to the public landing page.
+    expect(html).toContain('aria-label="Blade home"');
+    expect(html).toContain('href="/"');
   });
 });

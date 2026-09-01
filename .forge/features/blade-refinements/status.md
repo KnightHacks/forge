@@ -65,6 +65,31 @@ Current phase: Bundle approved / ready for technical discovery
   point an agent at it and let the agent load the repository instructions,
   relevant skills, and code context. Humans may read those materials themselves
   if useful, but are not expected to study agent skill files before contributing.
+  - 2026-08-31 (R-01): The bundle does not specify the authenticated CTA
+    copy on `/`. Approved wording: eyebrow "You're signed in", heading
+    "Pick up in your dashboard", body "Events, dues, your check-in QR, and
+    your Guild profile are in the member dashboard.", button "Go to your
+    dashboard". The CTA always routes to `MEMBER_DASHBOARD_PATH` with no
+    role branching, preserving the destination of the removed redirect.
+- 2026-08-31 (R-01): `ClosingCallToAction` was adapted for authenticated
+  visitors rather than left unchanged, so a signed-in reader does not see
+  a sign-in prompt below a "go to your dashboard" hero.
+- 2026-08-31 (R-02): The header Settings control is scoped to members
+  with no admin destinations. Rendering it for admins would touch the
+  admin shell, which belongs to R-03; that row should revisit it when
+  Settings leaves the rail.
+- 2026-08-31 (R-02): The skeleton rail gap is left as-is.
+  `AuthenticatedShellSkeleton` renders only from route `loading.tsx`
+  files, which are Suspense fallbacks that paint while the page's
+  `getPermissions()` await is still pending and cannot receive props.
+  The authorized-destination signal is therefore unreachable without new
+  architecture that collides with R-03/R-05. An ordinary member briefly
+  sees a skeleton rail that disappears when the real shell streams in
+  (a fallback swap, not a hydration shift). Deferred to R-03/R-05.
+- 2026-09-01 (R-01, R-02): Verification for this pass is component tests
+  plus manual browser QA. No Playwright run was performed; stale
+  ordinary-member expectations in `mobile-member-experience.spec.ts`
+  were updated to the R-02/TC-002 contract for the next run.
 
 ## Open questions
 
@@ -77,6 +102,11 @@ Current phase: Bundle approved / ready for technical discovery
 4. Tooling: should the repository add a `.gitattributes` with
    `* text=auto eol=lf` so Windows contributors are not blocked by
    `pnpm format`?
+5. Onboarding: should the shared Notion env document be updated for the
+   nine environment variables this merge introduced? They are
+   enumerated only in `.env.example`.
+6. Cleanup: should the dead `ISSUES_FEATURE_ENABLED` entry be dropped
+   from `.env.example`? No env schema declares it.
 
 ## Contributor coordination
 
@@ -112,8 +142,8 @@ Current phase: Bundle approved / ready for technical discovery
 
 | ID   | Refinement                                                                                                                                                  | State     | Claim                         | Proof                          |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------- | ------------------------------ |
-| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Ready     | Claimed Spyderma9 (8/31/2026) | TC-001                         |
-| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Ready     | Claimed Spyderma9 (8/31/2026) | TC-002                         |
+| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)         | TC-001                         |
+| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)         | TC-002                         |
 | R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Claimed Spyderma9 (8/31/2026) | TC-003, TC-NEG-001             |
 | R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026) | TC-004                         |
 | R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
@@ -244,31 +274,52 @@ for forge` is the branch tip again. The merged content was verified
   `packages/api/src/tests/issues/reminders.test.ts` (7/7 passing). No message
   was sent to a live Discord channel; the cron job that calls this
   (`apps/cron/src/crons/issue-reminders.ts`) was not run.
-  - 2026-08-31: Merged `origin/main` (through the 7 commits the branch was
-    behind) into `forge/refinements` and pushed. Three environment issues
-    surfaced and are recorded here so other contributors do not rediscover
-    them. (1) The lefthook `pre-commit` hook fails on any commit that stages
-    files under `apps/2026/src/app/(portal)/`: `{staged_files}` expands
-    unquoted, so `sh` errors on the parenthesized route-group paths
-    (`syntax error near unexpected token '('`). The same expansion breaks the
-    `typecheck` job's `[ -n "$filters" ]` test. The merge was committed with
-    the `--no-verify` escape hatch documented in `lefthook.yml`, and
-    `pnpm verify:push` was run manually instead of skipped. (2) The repository
-    has no `.gitattributes` and the Prettier config does not set `endOfLine`,
-    so on Windows with `core.autocrlf=true` every file in all 24 packages
-    fails `pnpm format`. Resolved locally with `git config core.autocrlf false`
-    and a working-tree renormalization; this is a per-machine fix and does not
-    travel with the branch. (3) After the merge, `packages/validators/dist`
-    was stale while `packages/validators/package.json` resolves types from
-    `./dist/index.d.ts`, so `@forge/db` build failed with seven TS2305 errors
-    for members that do exist in source (`buildDuesAcademicYear`,
-    `formatDuesAmount`, `getDuesAcademicYear`, `getDuesPayableYear`,
-    `isLateDuesPaymentWindow`, `MEMBER_DUES_PRICE_CENTS`, `EventAdminQuery`).
-    The 71 `no-unsafe-call` errors in `@forge/blade` tests were downstream of
-    the same unresolved types. Clearing `dist` and `.cache` and rebuilding
-    resolved both. Checks after the fix: `pnpm format` (pass, 24/24),
-    `pnpm lint` (0 errors; pre-existing file-length and import-style warnings
-    only), `pnpm typecheck` (pass). No code changes were made.
+- 2026-08-31: Merged `origin/main` (through the 7 commits the branch was
+  behind) into `forge/refinements` and pushed. Three environment issues
+  surfaced and are recorded here so other contributors do not rediscover
+  them. (1) The lefthook `pre-commit` hook fails on any commit that stages
+  files under `apps/2026/src/app/(portal)/`: `{staged_files}` expands
+  unquoted, so `sh` errors on the parenthesized route-group paths
+  (`syntax error near unexpected token '('`). The same expansion breaks the
+  `typecheck` job's `[ -n "$filters" ]` test. The merge was committed with
+  the `--no-verify` escape hatch documented in `lefthook.yml`, and
+  `pnpm verify:push` was run manually instead of skipped. (2) The repository
+  has no `.gitattributes` and the Prettier config does not set `endOfLine`,
+  so on Windows with `core.autocrlf=true` every file in all 24 packages
+  fails `pnpm format`. Resolved locally with `git config core.autocrlf false`
+  and a working-tree renormalization; this is a per-machine fix and does not
+  travel with the branch. (3) After the merge, `packages/validators/dist`
+  was stale while `packages/validators/package.json` resolves types from
+  `./dist/index.d.ts`, so `@forge/db` build failed with seven TS2305 errors
+  for members that do exist in source (`buildDuesAcademicYear`,
+  `formatDuesAmount`, `getDuesAcademicYear`, `getDuesPayableYear`,
+  `isLateDuesPaymentWindow`, `MEMBER_DUES_PRICE_CENTS`, `EventAdminQuery`).
+  The 71 `no-unsafe-call` errors in `@forge/blade` tests were downstream of
+  the same unresolved types. Clearing `dist` and `.cache` and rebuilding
+  resolved both. Checks after the fix: `pnpm format` (pass, 24/24),
+  `pnpm lint` (0 errors; pre-existing file-length and import-style warnings
+  only), `pnpm typecheck` (pass). No code changes were made.
+  - 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
+    709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
+    `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
+    8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
+    113 pre-existing repo warnings, typecheck 33/33). An earlier
+    verify:precommit run failed on format for three newly written files;
+    resolved with prettier --write and re-run. One Vitest flake observed
+    under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
+    unrelated to this diff); passed 3/3 in isolation.
+    Browser verification on localhost: signed-in landing page stays at `/`
+    with the "Go to your dashboard" CTA; signed-out landing page unchanged;
+    product mark returns to `/`. TC-002 confirmed against a throwaway
+    no-role member session via the e2e signin route on a side-port server —
+    no desktop rail, no mobile drawer trigger, Settings and Sign out in the
+    header at both widths. Admin account confirmed to still render the rail
+    correctly. Scratch rows cleaned up afterward.
+    No Playwright run performed. Stale ordinary-member assertions in
+    mobile-member-experience.spec.ts (lines ~218-280) were updated to the
+    R-02/TC-002 contract for the next run.
+    Unauthenticated landing output is functionally identical and
+    DOM-equivalent, but not verified at byte level.
 
 ## Links
 

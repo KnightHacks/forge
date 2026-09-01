@@ -215,49 +215,25 @@ test.describe("mobile member experience", () => {
     await expect(page.getByRole("button", { name: "View" })).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
-    const drawer = page.getByTestId("mobile-navigation-drawer");
-    const navigation = page.getByRole("navigation", {
-      name: "Mobile primary navigation",
-    });
-    // `toBeVisible` alone would pass on a drawer still translated off-screen,
-    // so the open outcome needs a viewport check. This replaces exact transform
-    // and bounding-box pins, which asserted the animation rather than the
-    // behavior.
-    await expect(drawer).toBeInViewport();
+    // R-02/TC-002: an ordinary member has no mobile drawer; Settings and
+    // Sign out sit together at the top right of the header.
     await expect(
-      navigation.getByRole("link", { name: "Dashboard" }),
-    ).toBeVisible();
-    await expect(
-      navigation.getByRole("link", { name: "Guild" }),
-    ).toHaveAttribute("href", GUILD_URL);
-    await expect(
-      navigation.getByRole("link", { name: "Settings" }),
-    ).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Members" })).toHaveCount(
-      0,
-    );
-    await expect(
-      navigation.getByRole("link", { name: "Dashboard" }),
-    ).toHaveAttribute("aria-current", "page");
-    await expect
-      .poll(() =>
-        navigation.evaluate((element) => getComputedStyle(element).opacity),
-      )
-      .toBe("1");
+      page.getByRole("button", { name: "Open navigation menu" }),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("mobile-navigation-drawer")).toHaveCount(0);
+    const settingsLink = page.getByTestId("account-settings-link");
+    await expect(settingsLink).toBeVisible();
+    await expect(settingsLink).toHaveAttribute("href", MEMBER_SETTINGS_PATH);
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
     await page.screenshot({
       path: ".playwright-results/member-dashboard-mobile-navigation.png",
     });
-    await navigation.getByRole("link", { name: "Settings" }).click();
+    await settingsLink.click();
     await expect(page).toHaveURL(routeURL(MEMBER_SETTINGS_PATH));
-    await expect(drawer).toBeHidden();
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(
-      page
-        .getByRole("navigation", { name: "Mobile primary navigation" })
-        .getByRole("link", { name: "Settings" }),
-    ).toHaveAttribute("aria-current", "page");
-    await page.keyboard.press("Escape");
+      page.getByRole("button", { name: "Open navigation menu" }),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("account-settings-link")).toBeVisible();
   });
 
   test("keeps desktop dashboard order and profile-attached settings", async ({
@@ -272,13 +248,15 @@ test.describe("mobile member experience", () => {
     const detailsBox = await memberDetails.boundingBox();
 
     expect(detailsBox?.x ?? 0).toBeLessThan(guildBox?.x ?? 0);
-    await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
+    // R-02/TC-002: no desktop rail for an ordinary member; the header carries
+    // the Settings and Sign out account controls instead.
+    await expect(page.getByTestId("member-navigation-rail")).toHaveCount(0);
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
-    await page.getByTestId("member-navigation-rail").hover();
-    await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
+    await expect(page.getByTestId("account-settings-link")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
     await page.screenshot({
       path: ".playwright-results/member-dashboard-desktop-navigation.png",
     });
