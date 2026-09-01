@@ -295,6 +295,13 @@
       "when": 1788221261577,
       "tag": "0041_salty_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1788289956255,
+      "tag": "0042_aberrant_zarda",
+      "breakpoints": true
     }
   ]
 }

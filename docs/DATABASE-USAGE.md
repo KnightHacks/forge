@@ -9,15 +9,14 @@ Schemas live in:
 
 ## Auth, roles, and sessions
 
-| Table export    | SQL table            | Usage                                                                                                                                                                            |
-| --------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `User`          | `auth_user`          | Better Auth creates Discord OAuth users here, and app code uses the row for Discord guild joins, role/permission management, issue assignees, user lists, and bot point lookups. |
-| `Account`       | `auth_account`       | Better Auth stores provider credentials here, and Discord utilities read the latest Discord account token/scope when joining users to the Knight Hacks server.                   |
-| `Session`       | `auth_session`       | Better Auth owns normal Blade login sessions here, with explicit deletion when member/hacker delete flows need to log the user out.                                              |
-| `JudgeSession`  | `auth_judge_session` | Hackathon judge magic links create room-scoped judge sessions that are validated from a judge cookie and counted/deleted by room in the judge router.                            |
-| `Verifications` | `auth_verification`  | Better Auth's adapter uses this verification table; no direct app reads/writes were found outside auth configuration and migrations.                                             |
-| `Roles`         | `auth_roles`         | Stores Discord-linked Blade roles, permission bitstrings, issue reminder metadata, and team display colors for permissions, role sync, forms, issues, and reminders.             |
-| `Permissions`   | `auth_permissions`   | User-to-role join table used for Blade authorization, Discord role sync, manual/batch role grants, issue assignee validation, and permission checks.                             |
+| Table export    | SQL table           | Usage                                                                                                                                                                            |
+| --------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `User`          | `auth_user`         | Better Auth creates Discord OAuth users here, and app code uses the row for Discord guild joins, role/permission management, issue assignees, user lists, and bot point lookups. |
+| `Account`       | `auth_account`      | Better Auth stores provider credentials here, and Discord utilities read the latest Discord account token/scope when joining users to the Knight Hacks server.                   |
+| `Session`       | `auth_session`      | Better Auth owns normal Blade login sessions here, with explicit deletion when member/hacker delete flows need to log the user out.                                              |
+| `Verifications` | `auth_verification` | Better Auth's adapter uses this verification table; no direct app reads/writes were found outside auth configuration and migrations.                                             |
+| `Roles`         | `auth_roles`        | Stores Discord-linked Blade roles, permission bitstrings, issue reminder metadata, and team display colors for permissions, role sync, forms, issues, and reminders.             |
+| `Permissions`   | `auth_permissions`  | User-to-role join table used for Blade authorization, Discord role sync, manual/batch role grants, issue assignee validation, and permission checks.                             |
 
 Notes:
 
@@ -26,7 +25,6 @@ Notes:
 - `Account` has a compound primary key of `(provider, providerAccountId)`; `id` is not the primary key.
 - `Roles.permissions` is a raw varchar bitstring interpreted against `PERMISSIONS.PERMISSIONS`.
 - `Permissions` has no schema-level unique constraint on `(userId, roleId)`; code tries to avoid duplicates.
-- `JudgeSession.sessionToken` is separate from Better Auth sessions even though the naming overlaps.
 
 ## Club membership, dues, and events
 

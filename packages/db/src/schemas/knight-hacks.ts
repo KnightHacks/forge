@@ -2136,6 +2136,10 @@ export const Project = createTable(
     submissionUrlUnique: unique(
       "knight_hacks_project_hackathon_submission_url_unique",
     ).on(table.hackathonId, table.submissionUrl),
+    hackathonScopeUnique: unique("knight_hacks_project_id_hackathon_unique").on(
+      table.id,
+      table.hackathonId,
+    ),
   }),
 );
 
@@ -2190,25 +2194,36 @@ export const ProjectChallenge = createTable(
     labelUnique: unique(
       "knight_hacks_project_challenge_hackathon_label_unique",
     ).on(table.hackathonId, table.label),
+    hackathonScopeUnique: unique(
+      "knight_hacks_project_challenge_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
   }),
 );
 
 export const ProjectToChallenge = createTable(
   "project_to_challenge",
   (t) => ({
-    projectId: t
-      .uuid()
-      .notNull()
-      .references(() => Project.id, { onDelete: "cascade" }),
-    challengeId: t
-      .uuid()
-      .notNull()
-      .references(() => ProjectChallenge.id, { onDelete: "cascade" }),
+    projectId: t.uuid().notNull(),
+    challengeId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.projectId, table.challengeId] }),
+    projectScopeFk: foreignKey({
+      columns: [table.projectId, table.hackathonId],
+      foreignColumns: [Project.id, Project.hackathonId],
+      name: "knight_hacks_project_to_challenge_project_scope_fk",
+    }).onDelete("cascade"),
+    challengeScopeFk: foreignKey({
+      columns: [table.challengeId, table.hackathonId],
+      foreignColumns: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+      name: "knight_hacks_project_to_challenge_challenge_scope_fk",
+    }).onDelete("cascade"),
     challengeIdx: index("knight_hacks_project_to_challenge_challenge_idx").on(
       table.challengeId,
+    ),
+    hackathonIdx: index("knight_hacks_project_to_challenge_hackathon_idx").on(
+      table.hackathonId,
     ),
   }),
 );

@@ -240,12 +240,12 @@ export const ProjectToChallengeRelations = relations(
   ProjectToChallenge,
   ({ one }) => ({
     challenge: one(ProjectChallenge, {
-      fields: [ProjectToChallenge.challengeId],
-      references: [ProjectChallenge.id],
+      fields: [ProjectToChallenge.challengeId, ProjectToChallenge.hackathonId],
+      references: [ProjectChallenge.id, ProjectChallenge.hackathonId],
     }),
     project: one(Project, {
-      fields: [ProjectToChallenge.projectId],
-      references: [Project.id],
+      fields: [ProjectToChallenge.projectId, ProjectToChallenge.hackathonId],
+      references: [Project.id, Project.hackathonId],
     }),
   }),
 );

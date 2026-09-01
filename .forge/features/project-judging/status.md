@@ -142,7 +142,7 @@ Current phase: Implementation complete / PR preparation
 - [x] Complete reverse-prompting for `test-cases.md`.
 - [x] Human approves artifact bundle before implementation/test generation.
 - [x] Replace the unused legacy judging schema with project/member/challenge
-      tables and an empty-data migration guard.
+      tables, dropping the explicitly retired judging data.
 - [x] Implement the Devpost parser, atomic replacement service, PII-safe audit
       events, project router, and protected multipart upload route.
 - [x] Implement SSR-first `/admin/projects` and `/judge/projects` workspaces with
@@ -164,11 +164,15 @@ src/tests/root/api-surface.test.ts src/tests/audit/coverage.test.ts`: passed; 4
   files and 18 tests.
 - Supplied-export parser compatibility check: passed for all four exports; a
   missing project description is accepted rather than rejecting the project.
-- Migration preflight: correctly stopped on local legacy fixture rows. After
-  clearing only the six approved local legacy tables, `pnpm db:migrate` passed.
+- Legacy migration: `pnpm db:migrate` passed while dropping only the six
+  explicitly retired judging tables, including populated legacy fixtures.
 - `pnpm analyze:react apps/blade/src/app/_components/projects
 apps/blade/src/app/admin/projects apps/blade/src/app/judge`: passed; 12 files,
   7 components, 0 failures.
+- `pnpm analyze:react:changed`: passed; 13 files, 7 components, 0 failures.
+- Cross-hackathon constraint verification: local migration backfilled all
+  existing links, installed both scoped composite foreign keys, and reported 0
+  mismatched project/challenge rows.
 - `pnpm --filter=@forge/blade build`: passed; both project routes are dynamic
   SSR routes.
 - Playwright visible-browser verification: passed multipart import, desktop and

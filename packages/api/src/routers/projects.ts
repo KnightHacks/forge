@@ -74,6 +74,7 @@ function projectWhere(input: {
           .where(
             and(
               eq(ProjectToChallenge.projectId, Project.id),
+              eq(ProjectToChallenge.hackathonId, input.hackathonId),
               inArray(ProjectToChallenge.challengeId, input.challengeIds),
             ),
           ),
@@ -409,6 +410,7 @@ export const projectsRouter = createTRPCRouter({
         await tx.insert(ProjectToChallenge).values(
           Array.from(new Set(input.challengeIds)).map((challengeId) => ({
             challengeId,
+            hackathonId: existing.hackathonId,
             projectId: existing.id,
           })),
         );
@@ -438,12 +440,28 @@ export const projectsRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
+        const [project] = await tx
+          .select()
+          .from(Project)
+          .where(eq(Project.id, input.projectId))
+          .for("update")
+          .limit(1);
+        if (!project) throw new TRPCError({ code: "NOT_FOUND" });
+        if (project.deletedAt) return project;
+
         const [saved] = await tx
           .update(Project)
           .set({ deletedAt: new Date(), deletedByUserId: ctx.session.user.id })
-          .where(eq(Project.id, input.projectId))
+          .where(
+            and(eq(Project.id, input.projectId), isNull(Project.deletedAt)),
+          )
           .returning();
-        if (!saved) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!saved) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Project state changed while it was being deleted.",
+          });
+        }
         await createAdminAuditEvent(
           {
             actionKey: "project.deleted",

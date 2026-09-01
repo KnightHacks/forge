@@ -68,7 +68,7 @@ export function ProjectMembersEditor({
             </label>
             <label className="space-y-2">
               <Label htmlFor={`project-member-email-${member.key}`}>
-                Email
+                Email (optional)
               </Label>
               <Input
                 autoComplete="email"
@@ -78,7 +78,6 @@ export function ProjectMembersEditor({
                 onChange={(event) =>
                   updateMember(member.key, "email", event.target.value)
                 }
-                required
                 type="email"
                 value={member.email}
               />

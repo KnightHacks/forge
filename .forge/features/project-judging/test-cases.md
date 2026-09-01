@@ -289,13 +289,15 @@ Expected observations:
 - Stable `NOT_FOUND`, `BAD_REQUEST`, `FORBIDDEN`, or `CONFLICT` behavior is
   returned without database leakage.
 - No invalid edit or broken restoration becomes visible.
+- Direct project-to-challenge links across hackathons violate the scoped
+  composite foreign keys and are rejected by PostgreSQL.
 
-### TC-NEG-005: Migration removes only verified-empty legacy judging data
+### TC-NEG-005: Migration removes only approved legacy judging data
 
 Setup:
 
-- Migration preflight examines legacy team, challenge, submission, judge,
-  judged-submission, and judge-session tables.
+- Legacy team, challenge, submission, judge, judged-submission, and
+  judge-session tables may contain disposable data approved for removal.
 
 Action:
 
@@ -303,11 +305,10 @@ Action:
 
 Expected observations:
 
-- Empty legacy tables are removed and new project/member/challenge/join
+- The approved legacy tables are removed and new project/member/challenge/join
   constraints and indexes exist.
 - No runtime code references removed exports.
-- Unexpected legacy rows stop deployment validation rather than being silently
-  discarded.
+- Non-judging tables and rows are unchanged.
 
 ## Open questions
 

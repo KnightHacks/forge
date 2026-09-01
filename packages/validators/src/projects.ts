@@ -59,7 +59,11 @@ export const judgeProjectListInputSchema = projectListFields
   .refine(hasValidParticipantRange, participantRangeRefinement);
 
 export const projectMemberInputSchema = z.object({
-  email: z.string().trim().email().max(320),
+  email: z
+    .string()
+    .trim()
+    .pipe(z.union([z.literal(""), z.string().email().max(320)]))
+    .transform((value) => value || null),
   name: z.string().trim().min(1).max(255),
 });
 

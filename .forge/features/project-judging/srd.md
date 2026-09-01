@@ -319,8 +319,9 @@ Would this require a developer change next year?
   filters, destructive confirmations, restore, and Markdown detail rendering.
 - Playwright covers officer import through judge discovery on desktop and mobile
   using sanitized fixture data.
-- Migration validation proves expected legacy tables are empty before drop,
-  applies the generated migration, and exercises new constraints.
+- Migration validation applies the approved destructive removal of legacy
+  judging tables and exercises new constraints, including same-hackathon
+  project-to-challenge links.
 
 Expected commands include targeted package tests/typechecks, Blade tests/e2e,
 `pnpm db:generate`, `pnpm db:migrate`, `pnpm analyze:react:changed`, and the

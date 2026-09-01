@@ -124,7 +124,7 @@ export async function importDevpostProjects(input: {
           if (!challengeId) {
             throw new Error(`Imported challenge ${label} was not returned.`);
           }
-          return { challengeId, projectId };
+          return { challengeId, hackathonId: hackathon.id, projectId };
         },
       );
     });
