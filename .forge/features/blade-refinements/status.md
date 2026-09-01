@@ -71,6 +71,16 @@ Current phase: Bundle approved / ready for technical discovery
   R-13/R-15/R-16, leaving R-18 as the only unclaimed Ready row. R-18 touches
   `packages/ui/src/markdown-content.tsx` and the three issue call sites, which
   no one else's claim overlaps.
+- 2026-09-01 (R-18): The cause is CommonMark, not the issue code. A lone `\n`
+  is a soft break and renders as a space; only two trailing spaces or a
+  backslash produce `<br>`. Issue descriptions are authored in a plain
+  `Textarea`, so authors type chat-style newlines and lose them on save. The fix
+  is `remark-breaks` behind a new opt-in `breaks` prop on
+  `packages/ui/src/markdown-content.tsx`, switched on at the three issue call
+  sites only. It is opt-in because the same component renders club and member
+  event descriptions, where the standard soft-break behavior is correct, and
+  R-18 forbids changing unrelated consumers. Preview and detail match by
+  construction: both render the same component with the same prop.
 - 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
   satisfied as the bottom of the member panel, not literally the last element
   on the page. Moving it below the Guild card would put a private Blade action
@@ -226,7 +236,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
 | R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                     | TC-012, TC-NEG-001             |
 | R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                     | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Claimed azizu06 (9/1/2026)    | TC-014                         |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)            | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed                     | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
@@ -527,6 +537,28 @@ window.innerWidth` at all four widths in all three states, Member details
   entry from the earlier rebase; both are removed here and the R-07 through
   R-10 validation entry, which the 8/31 merge had dropped, is restored to the
   top level of the list.
+- 2026-09-01 (R-18) verification: `pnpm --filter=@forge/blade test` 126 files /
+  723 tests passed, including the pre-existing `markdown-content.test.tsx`,
+  which still asserts event-description rendering and is unaffected;
+  `pnpm verify:precommit` 33/33 successful; `pnpm analyze:react:changed`
+  18 files, zero not-ok; `git diff --check` clean.
+  New file `apps/blade/src/tests/issues/issue-description-line-breaks.test.tsx`
+  covers TC-014: adjacent plain lines render `<br/>`, a blank line still yields
+  exactly two paragraphs rather than another break, links/inline code/lists
+  survive, long unbroken content stays inside the `break-words` container, and
+  a consumer that omits the prop still collapses the newline. The guard was
+  proven non-vacuous by forcing `remarkPlugins` to `undefined` and watching it
+  fail with "expected '<div class=\"min-w-0 break-words...' to contain
+  '<br/>'".
+  `remark-breaks@^4.0.0` was added to `packages/ui`, so `pnpm-lock.yaml`
+  changed and teammates need one `pnpm install` after pulling.
+  An early version of the test used a fixture starting `1. Open the admin
+issues page`; that line begins an ordered list under CommonMark, so there was
+  no soft break to render and the test failed against a working fix. The
+  fixture now uses two adjacent prose lines.
+  NOT COVERED: no Playwright case was added. TC-014 asks to compare edit preview
+  against saved detail, and both paths render the same component with the same
+  prop, so a browser case would exercise seeding rather than the behavior.
 
 ## Links
 
