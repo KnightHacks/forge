@@ -369,20 +369,51 @@ for forge` is the branch tip again. The merged content was verified
     `member-dues-payment.spec.ts` now asserts the paid badge by role/name
     instead of the removed "Paid for the" tile copy.
     `member-onboarding.spec.ts` follows the `View QR code` trigger rename.
-    NOT RUN: the Playwright suite. `pnpm --filter=@forge/blade e2e
-src/tests/e2e/mobile-member-experience.spec.ts --reporter=list` fails before
-    any test executes with `error: Postgres.app failed to verify "trust"
-    authentication / DETAIL: You did not confirm the permission dialog.` The
-    local Postgres.app holds port 5432 and needs an OS permission dialog
-    confirmed; the Docker daemon the repo's compose setup expects is not
-    running on this machine either. The e2e edits above are therefore written
-    to the new contract but unverified, and need a Playwright run before merge.
-    Browser QA was done instead against a static harness: Tailwind compiled
+    Playwright RUN and green for the two specs this change owns:
+    `pnpm --filter=@forge/blade e2e src/tests/e2e/mobile-member-experience.spec.ts
+--reporter=list` reports `8 passed (12.6s)`, and the same command for
+    `src/tests/e2e/member-dues-payment.spec.ts` reports `6 passed (7.3s)`.
+    Getting there needed a local Postgres: Postgres.app holds port 5432 and
+    fails with `error: Postgres.app failed to verify "trust" authentication /
+DETAIL: You did not confirm the permission dialog.`, and the Docker daemon
+    the repo compose setup expects is not running on this machine. A scratch
+    cluster was created with `initdb` on port 55432 and `.env`'s `DATABASE_URL`
+    pointed at it for the run only; `.env` was restored afterwards and is
+    gitignored either way.
+    The run found three real defects in the e2e edits, all fixed here.
+    (1) The R-09 `View QR code` rename made the pre-existing bare
+    `getByRole("button", { name: "View" })` resume matcher ambiguous, because
+    substring matching now also hit the QR trigger; both call sites take
+    `exact: true`. (2) `mobile-member-experience.spec.ts` never seeded a
+    `DuesConfiguration` row, so the dashboard rendered "Payments paused"
+    instead of a Pay dues action; `seedE2EData()` now seeds it the way
+    `member-dues-payment.spec.ts` already did. (3) The desktop order test
+    measured `boundingBox()` while the loading skeleton was still up, so it
+    compared against a null box; it now awaits both cards' visibility first.
+    The skeleton test was also reordered to assert the loaded heading's
+    absence before waiting on loaded content, since waiting first let the
+    3000ms `debugLatency` expire.
+    PRE-EXISTING, NOT FIXED HERE:
+    `member-onboarding.spec.ts:280` fails on its own with
+    `strict mode violation: getByText('Your details') resolved to 2 elements`.
+    Reproduced with `apps/blade/src/app/_components/member/` and
+    `src/tests/e2e/` checked out at `HEAD~1`, so it predates this change; the
+    only edit this commit makes to that file is the `View QR code` rename on a
+    different test. `name` is UNIQUE on `knight_hacks_form_sections`, so it is
+    not duplicate seed rows, and both candidate components
+    (`member-signup-form.tsx:74` and `member-profile-settings-form.tsx:107`)
+    render an identical `CardTitle`, so the two nodes could not be told apart
+    from the failure output. Left for the R-01/R-02 owner rather than papered
+    over with a scoped locator.
+    Running `member-dues-payment.spec.ts` and `mobile-member-experience.spec.ts`
+    in one command also fails, at a different test each way, and fails the same
+    way at `HEAD~1`. That cross-file order dependence is pre-existing too.
+    Browser QA was also done against a static harness: Tailwind compiled
     from `apps/blade/src/app/globals.css`, the dashboard rendered to HTML in
     three states (unpaid, paid, sparse profile with a very long name/company),
     served locally and inspected at 320, 390, 768, and 1440. Confirmed one
     shared section order at every width, `documentElement.scrollWidth ===
-    window.innerWidth` at all four widths in all three states, Member details
+window.innerWidth` at all four widths in all three states, Member details
     left of Guild at 1440, and no clipping of the long name or company. This
     is a static render, so it does not exercise the tooltip or QR dialog
     popovers, tRPC data, or navigation; it is not a substitute for the

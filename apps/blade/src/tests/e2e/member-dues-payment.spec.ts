@@ -408,7 +408,9 @@ test.describe("member dues payment", () => {
     // viewport, above Check in and Events, and are never duplicated.
     const memberDetails = page.getByRole("region", { name: "Member details" });
     await expect(memberDetails).toBeVisible();
-    await expect(page.getByText("Welcome, Una")).toBeVisible();
+    await expect(
+      memberDetails.getByRole("heading", { name: "Welcome, Una" }),
+    ).toBeVisible();
     const duesStatus = memberDetails.getByRole("group", {
       name: "Dues status",
     });

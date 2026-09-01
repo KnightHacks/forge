@@ -5,6 +5,7 @@ import { inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
+  DuesConfiguration,
   FormSections,
   FormsSchemas,
   Member,
@@ -20,6 +21,7 @@ import {
 
 import { GUILD_URL } from "~/lib/guild-urls";
 
+const DUES_CONFIGURATION_ID = "global";
 const MOBILE_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000301";
 const MOBILE_NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000302";
 
@@ -98,9 +100,23 @@ async function ensureSignupForm() {
     });
 }
 
+// The dashboard renders "Payments paused" instead of a Pay dues action when no
+// DuesConfiguration row enables payments, so this spec seeds the same row
+// member-dues-payment.spec.ts does rather than depending on ambient DB state.
+async function enableDuesPayments() {
+  await db
+    .insert(DuesConfiguration)
+    .values({ id: DUES_CONFIGURATION_ID, paymentsEnabled: true })
+    .onConflictDoUpdate({
+      set: { paymentsEnabled: true, updatedAt: new Date() },
+      target: DuesConfiguration.id,
+    });
+}
+
 async function seedE2EData() {
   await cleanupE2EData();
   await ensureSignupForm();
+  await enableDuesPayments();
 
   await db.insert(User).values(
     testUsers.map((user) => ({
@@ -224,7 +240,9 @@ test.describe("mobile member experience", () => {
       checkIn.getByRole("button", { name: "View QR code" }),
     ).toBeVisible();
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "View" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "View", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
     // R-10/TC-006: the seeded member is unpaid, so the dues banner stays.
     await expect(
@@ -325,6 +343,11 @@ test.describe("mobile member experience", () => {
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
     const memberDetails = page.getByRole("region", { name: "Member details" });
+    // boundingBox() resolves to null while the dashboard is still showing its
+    // loading skeleton, which makes the column comparison below read 0 for an
+    // unrendered card. Wait for both cards before measuring them.
+    await expect(memberDetails).toBeVisible();
+    await expect(guildProfile).toBeVisible();
     const guildBox = await guildProfile.boundingBox();
     const detailsBox = await memberDetails.boundingBox();
 
@@ -408,7 +431,7 @@ test.describe("mobile member experience", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
-    await page.getByRole("button", { name: "View" }).click();
+    await page.getByRole("button", { name: "View", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
     await expectWithinViewport(page, "Resume");
     await page.getByRole("button", { name: "Close" }).click();
@@ -438,9 +461,13 @@ test.describe("mobile member experience", () => {
     await expect(
       page.getByRole("region", { name: "Member details loading" }),
     ).toBeVisible();
-    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // The loaded heading must be checked while the skeleton is still up.
+    // Waiting for the loaded tagline first lets the debug latency expire, so
+    // the dashboard has already swapped in real content by the time the
+    // absence is asserted.
     await expect(
       page.getByRole("heading", { name: "Welcome, Maya" }),
     ).toHaveCount(0);
+    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
   });
 });
