@@ -65,6 +65,12 @@ Current phase: Bundle approved / ready for technical discovery
   `<input className="sr-only">` removes it. The same pattern also exists in
   `admin/members/member-detail-dialog.tsx` (twice) and
   `admin/companies/company-admin-detail.tsx`. Left for the R-23 owner.
+- 2026-09-01 (R-18): Claimed after reading the team Discord, which is the
+  authoritative claim list for this task. As of 9/1 3:01 PM Spyderma9 holds
+  R-01 through R-06, TacoLover holds R-20/R-22/R-23/R-24, and Eric12 holds
+  R-13/R-15/R-16, leaving R-18 as the only unclaimed Ready row. R-18 touches
+  `packages/ui/src/markdown-content.tsx` and the three issue call sites, which
+  no one else's claim overlaps.
 - 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
   satisfied as the bottom of the member panel, not literally the last element
   on the page. Moving it below the Guild card would put a private Blade action
@@ -220,7 +226,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
 | R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                     | TC-012, TC-NEG-001             |
 | R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                     | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed                     | TC-014                         |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Claimed azizu06 (9/1/2026)    | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed                     | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
