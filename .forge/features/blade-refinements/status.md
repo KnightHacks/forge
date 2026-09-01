@@ -81,6 +81,37 @@ Current phase: Bundle approved / ready for technical discovery
   event descriptions, where the standard soft-break behavior is correct, and
   R-18 forbids changing unrelated consumers. Preview and detail match by
   construction: both render the same component with the same prop.
+- 2026-09-01 (R-17): Reproduced against the production-base code before
+  changing it, as the SRD requires. The assignee filter was the only condition
+  in `issues.list` built as a correlated `exists()` subquery comparing
+  `IssuesToUsersAssignment.issueId` to `Issue.id`. Drizzle's relational query
+  builder selects `from "knight_hacks_issue" "Issue"`, so that inner comparison
+  compiled to the physical table name, which has no FROM-clause entry under the
+  alias. Against a migrated Postgres seeded with three teams, three users, and
+  eight issues, the exact failure was `error: invalid reference to FROM-clause
+entry for table "knight_hacks_issue"`. The whole list query throws, so the
+  admin issues page falls to its error boundary and shows the generic "Issues
+  could not be loaded" instead of results, which is exactly the reported
+  symptom. The repair mirrors `roleVisibilityPredicate`, which already solved
+  this for issue visibility: a new exported `assigneeFilterPredicate` uses an
+  uncorrelated `inArray(Issue.id, subquery)` so the outer column stays in the
+  top-level predicate where the alias applies. Set semantics are unchanged.
+  Verified on the seeded database that a user assigned across two teams returns
+  all six of their issues, a single-assignment user returns one, an unassigned
+  user returns a truthful empty result rather than an error, the filter still
+  composes with the owning-team filter, and `pageSize: 2` pages 2 and 3 return
+  the correct slices with `totalCount` 6. Access policy is untouched;
+  `roleVisibilityPredicate` still runs as its own condition.
+- 2026-09-01 (R-17, incidental repair): `pnpm-lock.yaml` was reformatted in
+  commit 69d19dc7 because lefthook's pre-commit format job globs `*.yaml`, so
+  staging the lockfile let prettier rewrite all 19,950 lines and requote every
+  key. That broke `packages/api/src/tests/root/version-pins.test.ts`, whose
+  parser only strips single quotes, and it was failing on the shared branch. The
+  lockfile has been regenerated from the pre-commit state with
+  `pnpm install --lockfile-only`; the diff is now only `remark-breaks@4.0.0` and
+  its three transitive dependencies, with no importer or package removed.
+  Anyone else who stages `pnpm-lock.yaml` on this repo will hit the same trap;
+  committing it with `--no-verify` avoids it until the glob is narrowed.
 - 2026-09-01 (inventory sync): This table lagged the team Discord by days, which
   is what caused the R-23 collision. Claims stated in the group DM are now
   recorded here: Eric12 took R-13, R-15, and R-16 on 9/1 at 3:01 PM, and
@@ -244,7 +275,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Claimed Eric12 (9/1/2026)     | TC-011                         |
 | R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026)     | TC-012, TC-NEG-001             |
-| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Ready     | Claimed azizu06 (9/1/2026)    | TC-013                         |
+| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete  | azizu06 (9/1/2026)            | TC-013                         |
 | R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)            | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Claimed TacoLover (8/30/2026) | TC-016, TC-NEG-003             |

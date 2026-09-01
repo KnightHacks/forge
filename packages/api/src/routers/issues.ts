@@ -8,7 +8,6 @@ import {
   asc,
   desc,
   eq,
-  exists,
   gte,
   ilike,
   inArray,
@@ -109,6 +108,25 @@ export function roleVisibilityPredicate(roles: readonly AssignedIssueRole[]) {
         .from(IssuesToTeamsVisibility)
         .where(inArray(IssuesToTeamsVisibility.teamId, qualifyingRoleIds)),
     ),
+  );
+}
+
+/**
+ * Match issues that have at least one assignment to `assigneeIds`.
+ *
+ * The relational query builder selects from `knight_hacks_issue` under the
+ * alias `Issue`, so a correlated subquery comparing against `Issue.id` compiles
+ * to the physical table name and Postgres rejects it with "invalid reference to
+ * FROM-clause entry". Keep the outer column in the top-level predicate, where
+ * the alias applies, exactly as `roleVisibilityPredicate` does.
+ */
+export function assigneeFilterPredicate(assigneeIds: readonly string[]) {
+  return inArray(
+    Issue.id,
+    db
+      .select({ issueId: IssuesToUsersAssignment.issueId })
+      .from(IssuesToUsersAssignment)
+      .where(inArray(IssuesToUsersAssignment.userId, [...assigneeIds])),
   );
 }
 
@@ -513,19 +531,7 @@ export const issuesRouter = {
         if (search) conditions.push(search);
       }
       if (input.assigneeIds.length > 0) {
-        conditions.push(
-          exists(
-            db
-              .select({ issueId: IssuesToUsersAssignment.issueId })
-              .from(IssuesToUsersAssignment)
-              .where(
-                and(
-                  eq(IssuesToUsersAssignment.issueId, Issue.id),
-                  inArray(IssuesToUsersAssignment.userId, input.assigneeIds),
-                ),
-              ),
-          ),
-        );
+        conditions.push(assigneeFilterPredicate(input.assigneeIds));
       }
       if (input.view === "calendar") {
         const { calendarEnd, calendarStart } = input;
