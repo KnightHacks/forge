@@ -90,6 +90,18 @@ Current phase: Bundle approved / ready for technical discovery
   plus manual browser QA. No Playwright run was performed; stale
   ordinary-member expectations in `mobile-member-experience.spec.ts`
   were updated to the R-02/TC-002 contract for the next run.
+- 2026-09-01 (R-03): Resolved the R-02 Settings handoff. Settings leaves the
+  rail and drawer and renders in the header for every signed-in user, since
+  the spec treats it as an account utility and the R-04 group map has no
+  Settings entry. Ordinary members are behaviourally unchanged.
+- 2026-09-01 (R-03): Rail expansion is `useState` inside
+  `DesktopAdminNavigation`, which absorbed the `<aside>` so the opener and
+  labels share one state. The shell stays a server component. Because it
+  lives in a layout and survives navigation, the rail collapses on selection
+  and on pathname change; nothing is persisted.
+- 2026-09-01 (R-04): Group headings use the literal map names — Club, Team,
+  Hackathon, External. Rail width is unchanged at `w-16` to `w-56`, and the
+  opener reuses the existing PanelLeft icon in the rail header.
 
 ## Open questions
 
@@ -107,6 +119,11 @@ Current phase: Bundle approved / ready for technical discovery
    enumerated only in `.env.example`.
 6. Cleanup: should the dead `ISSUES_FEATURE_ENABLED` entry be dropped
    from `.env.example`? No env schema declares it.
+7. Local setup: should local dev use `db:push` or `migrate`? `push`
+   skips the data backfills embedded in migration files, so seeds like
+   `knight_hacks_discord_config` are missing and admin analytics throws;
+   `migrate` then fails at `0001` because `push` already created
+   `event_tag`.
 
 ## Contributor coordination
 
@@ -144,8 +161,8 @@ Current phase: Bundle approved / ready for technical discovery
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------- | ------------------------------ |
 | R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)         | TC-001                         |
 | R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)         | TC-002                         |
-| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Claimed Spyderma9 (8/31/2026) | TC-003, TC-NEG-001             |
-| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026) | TC-004                         |
+| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Complete  | Spyderma9 (8/31/2026)         | TC-003, TC-NEG-001             |
+| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Complete  | Spyderma9 (8/31/2026)         | TC-004                         |
 | R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
 | R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
 | R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                     | TC-007, TC-020                 |
@@ -299,27 +316,52 @@ for forge` is the branch tip again. The merged content was verified
   resolved both. Checks after the fix: `pnpm format` (pass, 24/24),
   `pnpm lint` (0 errors; pre-existing file-length and import-style warnings
   only), `pnpm typecheck` (pass). No code changes were made.
-  - 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
-    709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
-    `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
-    8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
-    113 pre-existing repo warnings, typecheck 33/33). An earlier
-    verify:precommit run failed on format for three newly written files;
-    resolved with prettier --write and re-run. One Vitest flake observed
-    under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
-    unrelated to this diff); passed 3/3 in isolation.
-    Browser verification on localhost: signed-in landing page stays at `/`
-    with the "Go to your dashboard" CTA; signed-out landing page unchanged;
-    product mark returns to `/`. TC-002 confirmed against a throwaway
-    no-role member session via the e2e signin route on a side-port server —
-    no desktop rail, no mobile drawer trigger, Settings and Sign out in the
-    header at both widths. Admin account confirmed to still render the rail
-    correctly. Scratch rows cleaned up afterward.
-    No Playwright run performed. Stale ordinary-member assertions in
-    mobile-member-experience.spec.ts (lines ~218-280) were updated to the
-    R-02/TC-002 contract for the next run.
-    Unauthenticated landing output is functionally identical and
-    DOM-equivalent, but not verified at byte level.
+- 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
+  709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
+  `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
+  8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
+  113 pre-existing repo warnings, typecheck 33/33). An earlier
+  verify:precommit run failed on format for three newly written files;
+  resolved with prettier --write and re-run. One Vitest flake observed
+  under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
+  unrelated to this diff); passed 3/3 in isolation.
+  Browser verification on localhost: signed-in landing page stays at `/`
+  with the "Go to your dashboard" CTA; signed-out landing page unchanged;
+  product mark returns to `/`. TC-002 confirmed against a throwaway
+  no-role member session via the e2e signin route on a side-port server —
+  no desktop rail, no mobile drawer trigger, Settings and Sign out in the
+  header at both widths. Admin account confirmed to still render the rail
+  correctly. Scratch rows cleaned up afterward.
+  No Playwright run performed. Stale ordinary-member assertions in
+  mobile-member-experience.spec.ts (lines ~218-280) were updated to the
+  R-02/TC-002 contract for the next run.
+  Unauthenticated landing output is functionally identical and
+  DOM-equivalent, but not verified at byte level.
+- 2026-09-01 (R-03, R-04): `pnpm --filter=@forge/blade test` (125 files,
+  714 tests, all passed, no flake this run), `pnpm --filter=@forge/blade
+typecheck` (clean), `pnpm verify:precommit` (exit 0 —
+  analyze:react:changed 11 files / 11 components / 0 failures, format
+  24/24, lint 31/31 with 0 errors and 113 pre-existing Blade warnings,
+  typecheck 33/33). Five new tests added: two grouping tests for TC-004
+  and three rail-interaction tests for TC-003/TC-NEG-001 in
+  `desktop-admin-rail.test.tsx`, using the already-present
+  `@testing-library/react` and `user-event` (no dependency added).
+  Browser verification on localhost as an admin: rail starts collapsed on
+  load; hover does not expand it; the top-left PanelLeft opener toggles
+  it; tabbing into a collapsed rail does not expand it; selecting a
+  destination navigates and collapses the rail; back/forward leaves it
+  collapsed; groups render as Dashboard, Club, Team, Hackathon, External
+  with no empty headings; Guild opens in a new tab; Settings now appears
+  in the header rather than the rail; the mobile drawer shows the same
+  grouping and still closes on select.No Playwright run.
+  `admin-member-dashboard.spec.ts` rail assertions (lines 580-585) were
+  read and use an admin actor, so they remain valid and were not edited
+  this pass. Hover-expansion classes (`hover:w-56`, `focus-within:w-56`,
+  `group-hover:opacity-100`) confirmed absent from source by grep across
+  `apps/blade/**`. Stale references in `DESIGN_SYSTEM.md` (line 465) and
+  `visual-harness.ts` (line 86) were corrected. The `group-focus-within`
+  usage in `form-choice-question-editor.tsx` is an unrelated form-builder
+  feature and was left untouched.
 
 ## Links
 

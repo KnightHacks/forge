@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Session } from "~/server/auth";
-import { getVisibleAdminNavigation } from "~/app/_components/shared/admin-navigation";
+import { getAdminNavigationGroups } from "~/app/_components/shared/admin-navigation";
 import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
 import { GUILD_URL } from "~/lib/guild-urls";
 
@@ -33,9 +33,9 @@ const session = {
 } as Session;
 
 describe("AuthenticatedShell", () => {
-  it("orders permission-gated admin destinations alphabetically", () => {
+  it("TC-004 groups permission-gated admin destinations by domain", () => {
     expect(
-      getVisibleAdminNavigation({
+      getAdminNavigationGroups({
         alumni: true,
         analytics: true,
         companies: true,
@@ -52,24 +52,42 @@ describe("AuthenticatedShell", () => {
         logs: true,
         members: true,
         roles: true,
-      }).map((item) => item.label),
+      }).map((group) => [group.label, group.items.map((item) => item.label)]),
     ).toEqual([
-      "Admin logs",
-      "Alumni",
-      "Analytics",
-      "Companies",
-      "Discord archive",
-      "Email",
-      "Event Check-in",
-      "Events",
-      "Forms",
-      "Hackathon Check-in",
-      "Hackathon Events",
-      "Hackathons",
-      "Hackers",
-      "Issues",
-      "Members",
-      "Roles",
+      [
+        "Club",
+        [
+          "Analytics",
+          "Members",
+          "Alumni",
+          "Companies",
+          "Events",
+          "Event Check-in",
+        ],
+      ],
+      [
+        "Team",
+        ["Issues", "Forms", "Email", "Roles", "Discord archive", "Admin logs"],
+      ],
+      [
+        "Hackathon",
+        ["Hackathons", "Hackers", "Hackathon Events", "Hackathon Check-in"],
+      ],
+      ["External", ["Guild"]],
+    ]);
+  });
+
+  it("TC-004 omits groups with no authorized destinations", () => {
+    expect(
+      getAdminNavigationGroups({ members: true }).map((group) => group.label),
+    ).toEqual(["Club", "External"]);
+
+    expect(
+      getAdminNavigationGroups({ hackathon: true }).map((group) => group.label),
+    ).toEqual(["Hackathon", "External"]);
+
+    expect(getAdminNavigationGroups({}).map((group) => group.label)).toEqual([
+      "External",
     ]);
   });
 
@@ -98,9 +116,9 @@ describe("AuthenticatedShell", () => {
     expect(html.indexOf('href="/member/dashboard"')).toBeLessThan(
       html.indexOf('href="/admin/members"'),
     );
-    expect(html.indexOf('href="/admin/roles"')).toBeLessThan(
-      html.indexOf('href="/member/settings"'),
-    );
+    // TC-003: the rail starts collapsed; desktop-admin-rail.test.tsx proves it
+    // never expands on hover or focus.
+    expect(html).toContain('data-expanded="false"');
   });
 
   it("shows only permission-available admin destinations", () => {

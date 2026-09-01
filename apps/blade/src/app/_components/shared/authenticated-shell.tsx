@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { PanelLeft } from "lucide-react";
 
 import { cn } from "@forge/ui";
 
@@ -78,24 +77,7 @@ export function AuthenticatedShell({
       <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(to_right,#4f4f4f22_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f22_1px,transparent_1px)] bg-[size:14px_24px]" />
 
       {hasAdminDestinations ? (
-        <aside
-          data-testid="member-navigation-rail"
-          className="group fixed inset-y-0 left-0 z-40 hidden w-16 overflow-hidden border-r border-border/70 bg-card/95 shadow-xl shadow-black/20 transition-[width] duration-200 focus-within:w-56 hover:w-56 motion-reduce:transition-none md:flex md:flex-col"
-        >
-          <div
-            data-testid="member-navigation-rail-header"
-            className="flex h-16 min-h-16 items-center border-b border-border/70 px-3"
-          >
-            <div className="flex h-10 min-w-10 items-center justify-center rounded-md border border-primary/25 bg-primary/15 text-primary">
-              <PanelLeft className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <span className="ml-3 whitespace-nowrap text-sm font-semibold opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 motion-reduce:transition-none">
-              Member navigation
-            </span>
-          </div>
-
-          <DesktopAdminNavigation access={adminNavigation ?? {}} />
-        </aside>
+        <DesktopAdminNavigation access={adminNavigation ?? {}} />
       ) : null}
 
       <div
@@ -136,9 +118,8 @@ export function AuthenticatedShell({
             <div className="flex items-center gap-2 [&>button]:h-11">
               {hasAdminDestinations ? (
                 <MobileAdminNavigation access={adminNavigation ?? {}} />
-              ) : (
-                <AccountSettingsLink />
-              )}
+              ) : null}
+              <AccountSettingsLink />
               <SignOutButton />
             </div>
           </div>

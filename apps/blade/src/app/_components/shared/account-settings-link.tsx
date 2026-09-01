@@ -4,10 +4,7 @@ import { Button } from "@forge/ui/button";
 
 import { settingsNavigationItem } from "./admin-navigation";
 
-/**
- * Header account control for members without admin destinations (R-02).
- * R-03 should revisit rendering this for admins once Settings leaves the rail.
- */
+/** Settings is an account utility, not an admin destination, so it lives in the header for every signed-in user. */
 export function AccountSettingsLink() {
   const Icon = settingsNavigationItem.icon;
 

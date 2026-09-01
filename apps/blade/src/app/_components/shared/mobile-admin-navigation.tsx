@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { ExternalLink, Menu } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import {
@@ -15,18 +15,15 @@ import {
   SheetTrigger,
 } from "@forge/ui/sheet";
 
-import type { AdminNavigationAccess } from "./admin-navigation";
+import type {
+  AdminNavigationAccess,
+  NavigationDestination,
+} from "./admin-navigation";
 import {
-  getVisibleAdminNavigation,
+  getAdminNavigationGroups,
   isAdminNavigationActive,
   memberNavigationItems,
-  settingsNavigationItem,
 } from "./admin-navigation";
-
-type NavigationItem =
-  | (typeof memberNavigationItems)[number]
-  | ReturnType<typeof getVisibleAdminNavigation>[number]
-  | typeof settingsNavigationItem;
 
 export function MobileAdminNavigation({
   access,
@@ -36,7 +33,7 @@ export function MobileAdminNavigation({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const renderItem = (item: NavigationItem) => {
+  const renderItem = (item: NavigationDestination) => {
     const Icon = item.icon;
     const active = isAdminNavigationActive(item.id, pathname);
     const contents = (
@@ -50,6 +47,9 @@ export function MobileAdminNavigation({
           <Icon className="size-4" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
+        {item.external ? (
+          <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+        ) : null}
       </>
     );
     const className = cn(
@@ -58,13 +58,14 @@ export function MobileAdminNavigation({
       active && "border-primary/25 bg-primary/10 text-foreground",
     );
 
-    if ("external" in item) {
+    if (item.external) {
       return (
         <a
           key={item.id}
           href={item.href}
           target="_blank"
           rel="noreferrer"
+          aria-label={`${item.label} (opens in a new tab)`}
           className={className}
           onClick={() => setOpen(false)}
         >
@@ -119,10 +120,19 @@ export function MobileAdminNavigation({
         >
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
             {memberNavigationItems.map(renderItem)}
-            {getVisibleAdminNavigation(access).map(renderItem)}
-          </div>
-          <div className="border-t border-border/70 bg-card/95 p-3">
-            {renderItem(settingsNavigationItem)}
+            {getAdminNavigationGroups(access).map((group) => (
+              <div
+                key={group.label}
+                role="group"
+                aria-label={group.label}
+                className="space-y-1 border-t border-border/70 pt-2"
+              >
+                <p className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group.label}
+                </p>
+                {group.items.map(renderItem)}
+              </div>
+            ))}
           </div>
         </nav>
       </SheetContent>

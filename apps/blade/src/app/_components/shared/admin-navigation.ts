@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   Building2,
   CalendarClock,
@@ -20,6 +21,19 @@ import {
 } from "lucide-react";
 
 import { GUILD_URL } from "~/lib/guild-urls";
+
+export interface NavigationDestination {
+  external?: boolean;
+  href: string;
+  icon: LucideIcon;
+  id: string;
+  label: string;
+}
+
+export interface NavigationGroup {
+  items: NavigationDestination[];
+  label: string;
+}
 
 export interface AdminNavigationAccess {
   alumni?: boolean;
@@ -47,6 +61,9 @@ export const memberNavigationItems = [
     id: "dashboard",
     label: "Dashboard",
   },
+] as const;
+
+export const externalNavigationItems = [
   {
     external: true,
     href: GUILD_URL,
@@ -56,86 +73,107 @@ export const memberNavigationItems = [
   },
 ] as const;
 
+// Declaration order is the approved grouping map; the rail renders it as-is.
 export const adminNavigationItems = [
   {
-    access: "logs",
-    href: "/admin/logs",
-    icon: ScrollText,
-    id: "logs",
-    label: "Admin logs",
-  },
-  {
-    access: "alumni",
-    href: "/admin/alumni",
-    icon: GraduationCap,
-    id: "alumni",
-    label: "Alumni",
-  },
-  {
     access: "analytics",
+    group: "Club",
     href: "/admin/analytics",
     icon: ChartNoAxesCombined,
     id: "analytics",
     label: "Analytics",
   },
   {
+    access: "members",
+    group: "Club",
+    href: "/admin/members",
+    icon: UsersRound,
+    id: "members",
+    label: "Members",
+  },
+  {
+    access: "alumni",
+    group: "Club",
+    href: "/admin/alumni",
+    icon: GraduationCap,
+    id: "alumni",
+    label: "Alumni",
+  },
+  {
     access: "companies",
+    group: "Club",
     href: "/admin/companies",
     icon: Building2,
     id: "companies",
     label: "Companies",
   },
   {
-    access: "discordArchive",
-    href: "/admin/discord-archive",
-    icon: DatabaseZap,
-    id: "discordArchive",
-    label: "Discord archive",
-  },
-  {
-    access: "email",
-    href: "/admin/email",
-    icon: Mail,
-    id: "email",
-    label: "Email",
-  },
-  {
-    access: "eventCheckIn",
-    href: "/admin/check-in",
-    icon: QrCode,
-    id: "eventCheckIn",
-    label: "Event Check-in",
-  },
-  {
     access: "events",
+    group: "Club",
     href: "/admin/events",
     icon: CalendarDays,
     id: "events",
     label: "Events",
   },
   {
+    access: "eventCheckIn",
+    group: "Club",
+    href: "/admin/check-in",
+    icon: QrCode,
+    id: "eventCheckIn",
+    label: "Event Check-in",
+  },
+  {
+    access: "issues",
+    group: "Team",
+    href: "/admin/issues/calendar",
+    icon: ListTodo,
+    id: "issues",
+    label: "Issues",
+  },
+  {
     access: "forms",
+    group: "Team",
     href: "/admin/forms",
     icon: ClipboardList,
     id: "forms",
     label: "Forms",
   },
   {
-    access: "hackathonCheckIn",
-    href: "/admin/hackathon-check-in",
-    icon: ScanLine,
-    id: "hackathonCheckIn",
-    label: "Hackathon Check-in",
+    access: "email",
+    group: "Team",
+    href: "/admin/email",
+    icon: Mail,
+    id: "email",
+    label: "Email",
   },
   {
-    access: "hackathonEvents",
-    href: "/admin/hackathon-events",
-    icon: CalendarClock,
-    id: "hackathonEvents",
-    label: "Hackathon Events",
+    access: "roles",
+    group: "Team",
+    href: "/admin/roles",
+    icon: ShieldCheck,
+    id: "roles",
+    label: "Roles",
+  },
+  {
+    access: "discordArchive",
+    group: "Team",
+    href: "/admin/discord-archive",
+    icon: DatabaseZap,
+    id: "discordArchive",
+    label: "Discord archive",
+  },
+  {
+    access: "logs",
+    group: "Team",
+    href: "/admin/logs",
+    icon: ScrollText,
+    id: "logs",
+    label: "Admin logs",
   },
   {
     access: "hackathon",
+    group: "Hackathon",
     href: "/admin/hackathon",
     icon: Swords,
     id: "hackathon",
@@ -143,33 +181,31 @@ export const adminNavigationItems = [
   },
   {
     access: "hackers",
+    group: "Hackathon",
     href: "/admin/hackers",
     icon: UserSearch,
     id: "hackers",
     label: "Hackers",
   },
   {
-    access: "issues",
-    href: "/admin/issues/calendar",
-    icon: ListTodo,
-    id: "issues",
-    label: "Issues",
+    access: "hackathonEvents",
+    group: "Hackathon",
+    href: "/admin/hackathon-events",
+    icon: CalendarClock,
+    id: "hackathonEvents",
+    label: "Hackathon Events",
   },
   {
-    access: "members",
-    href: "/admin/members",
-    icon: UsersRound,
-    id: "members",
-    label: "Members",
-  },
-  {
-    access: "roles",
-    href: "/admin/roles",
-    icon: ShieldCheck,
-    id: "roles",
-    label: "Roles",
+    access: "hackathonCheckIn",
+    group: "Hackathon",
+    href: "/admin/hackathon-check-in",
+    icon: ScanLine,
+    id: "hackathonCheckIn",
+    label: "Hackathon Check-in",
   },
 ] as const;
+
+export const ADMIN_NAVIGATION_GROUPS = ["Club", "Team", "Hackathon"] as const;
 
 export const settingsNavigationItem = {
   href: "/member/settings",
@@ -180,6 +216,28 @@ export const settingsNavigationItem = {
 
 export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
   return adminNavigationItems.filter((item) => access[item.access]);
+}
+
+/** Authorized destinations by domain, with empty groups omitted. */
+export function getAdminNavigationGroups(
+  access: AdminNavigationAccess,
+): NavigationGroup[] {
+  const visible = getVisibleAdminNavigation(access);
+
+  const domainGroups = ADMIN_NAVIGATION_GROUPS.map((label) => ({
+    items: visible
+      .filter((item) => item.group === label)
+      .map((item) => ({ ...item })),
+    label: label as string,
+  })).filter((group) => group.items.length > 0);
+
+  return [
+    ...domainGroups,
+    {
+      items: externalNavigationItems.map((item) => ({ ...item })),
+      label: "External",
+    },
+  ];
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
