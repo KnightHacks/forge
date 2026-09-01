@@ -42,6 +42,25 @@ Current phase: Bundle approved / ready for technical discovery
   R-12 covers Guild/profile parity between sparse and populated data; R-23
   covers the member and shell overflow outside the dashboard. Per srd.md,
   neither may be closed by adding `overflow-x-hidden` to conceal a layout bug.
+- 2026-09-01 (R-12, R-23): Both defects were found by measuring computed style
+  in a real browser, not by reading the markup. R-23 is the `Input` primitive
+  used as a visually hidden file picker in `member-profile-picture-upload.tsx`
+  and `member-resume-upload.tsx`: its own `w-full h-9` outrank `sr-only`'s 1 px
+  box, so each input computed to `position: absolute; width: 1440px;
+height: 36px`, pushing `documentElement.scrollWidth` 363 px past a 320 px
+  viewport. The fix drops the primitive for a bare `<input className="sr-only">`.
+  R-12 is the member name heading, which computed `width: 500.203px` inside a
+  320 px viewport with `overflow-wrap: normal` and was clipped by an ancestor.
+  `min-w-0` alone was not enough: it removes the flex `min-width: auto` floor
+  but the element still sizes from an unshrinkable max-content. Only
+  `overflow-wrap: anywhere` feeds back into intrinsic sizing, and because
+  `break-words` sets the same property it had to be removed rather than
+  stacked, matching `admin/members/member-detail-dialog.tsx:159`.
+  The same `Input`-as-`sr-only` pattern also exists in
+  `admin/members/member-detail-dialog.tsx` (twice) and
+  `admin/companies/company-admin-detail.tsx`. Those are admin surfaces outside
+  R-12/R-23 and were not probed, so they are recorded here for their owner
+  rather than changed without evidence.
 - 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
   satisfied as the bottom of the member panel, not literally the last element
   on the page. Moving it below the Guild card would put a private Blade action
@@ -191,7 +210,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)            | TC-007                         |
 | R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Claimed azizu06 (9/1/2026)    | TC-008, TC-020                 |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)            | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
@@ -202,7 +221,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed                     | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
 | R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed                     | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Claimed azizu06 (9/1/2026)    | TC-020                         |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Complete  | azizu06 (9/1/2026)            | TC-020                         |
 | R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed                     | TC-018, TC-NEG-003             |
 | R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                     | TC-019, TC-NEG-002, TC-NEG-003 |
 | R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                     | Out of scope                   |
@@ -383,6 +402,129 @@ typecheck` (clean), `pnpm verify:precommit` (exit 0 —
   `visual-harness.ts` (line 86) were corrected. The `group-focus-within`
   usage in `form-choice-question-editor.tsx` is an unrelated form-builder
   feature and was left untouched.
+  ||||||| parent of 7f62f920 (fix member overflow at narrow widths for R-12 and R-23)
+  - 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
+    709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
+    `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
+    8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
+    113 pre-existing repo warnings, typecheck 33/33). An earlier
+    verify:precommit run failed on format for three newly written files;
+    resolved with prettier --write and re-run. One Vitest flake observed
+    under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
+    unrelated to this diff); passed 3/3 in isolation.
+    Browser verification on localhost: signed-in landing page stays at `/`
+    with the "Go to your dashboard" CTA; signed-out landing page unchanged;
+    product mark returns to `/`. TC-002 confirmed against a throwaway
+    no-role member session via the e2e signin route on a side-port server —
+    no desktop rail, no mobile drawer trigger, Settings and Sign out in the
+    header at both widths. Admin account confirmed to still render the rail
+    correctly. Scratch rows cleaned up afterward.
+    No Playwright run performed. Stale ordinary-member assertions in
+    mobile-member-experience.spec.ts (lines ~218-280) were updated to the
+    R-02/TC-002 contract for the next run.
+    Unauthenticated landing output is functionally identical and
+    DOM-equivalent, but not verified at byte level.
+  - 2026-09-01 (R-07, R-08, R-09, R-10): Implemented in
+    `apps/blade/src/app/_components/member/member-dashboard.tsx`,
+    `dashboard-client.tsx` (skeleton kept in lockstep), and
+    `member-qr-code-dialog.tsx`. R-07 removes all five `lg:hidden` mobile
+    duplicate blocks and the `order-*`/`hidden` utilities so one DOM order
+    serves every viewport; `DuesStatusTile`'s `compact` prop,
+    `MemberQRCodeDialog`'s `variant` prop, `EventsOverview`'s `className`
+    prop, and `GuildProfileCard`'s `attendance`/`duesStatus`/`events`/
+    `eventsUnavailable`/`feedback` props were deleted once their only callers
+    went away. R-09 adds a `CheckInTile` with a `View QR code` action; the
+    dialog gained an optional `label` prop defaulting to `"QR code"` so the
+    shared alumni dashboard is untouched. R-10 adds `PaidDuesBadge`, which
+    wraps the existing `DuesStatusBadge` in the house tooltip pattern from
+    `event-feedback-cta.tsx` and renders beside the Welcome name only when
+    dues are paid; the unpaid tile keeps its prominent top position and its
+    paid copy branch was removed as unreachable. R-08 adds a Guild explainer
+    paragraph, marks `View Guild profile` external with an `sr-only`
+    "(opens in a new tab)" suffix, and unhides the public/private visibility
+    badge below 640px. The explainer deliberately does not claim the resume
+    is public, because `guild-preferences-dialog.tsx` gates that behind a
+    separate `guildResumeVisible` opt-in.
+    Checks run: `pnpm format:fix` (24/24), `pnpm verify:precommit` (exit 0 —
+    33/33 tasks: analyze:react:changed, format, lint with 0 errors, typecheck),
+    `pnpm --filter=@forge/blade test src/tests/member` (13 files, 82/82
+    passing), and `git diff --check` (clean).
+    Tests updated: `member-dashboard.test.tsx` gained four cases covering the
+    paid badge (TC-006), single shared order with no per-viewport duplicates
+    and a single Check in action (TC-007), and the Guild explainer plus
+    external marking (TC-008). Stale divergence assertions in
+    `mobile-member-experience.spec.ts` were inverted to the new contract and
+    two Playwright cases added (same sections on mobile and desktop; no
+    horizontal overflow at 320/390/768/1024/1440).
+    `member-dues-payment.spec.ts` now asserts the paid badge by role/name
+    instead of the removed "Paid for the" tile copy.
+    `member-onboarding.spec.ts` follows the `View QR code` trigger rename.
+    Playwright RUN and green for the two specs this change owns:
+    `pnpm --filter=@forge/blade e2e src/tests/e2e/mobile-member-experience.spec.ts
+--reporter=list` reports `8 passed (12.6s)`, and the same command for
+    `src/tests/e2e/member-dues-payment.spec.ts` reports `6 passed (7.3s)`.
+    Getting there needed a local Postgres: Postgres.app holds port 5432 and
+    fails with `error: Postgres.app failed to verify "trust" authentication /
+DETAIL: You did not confirm the permission dialog.`, and the Docker daemon
+    the repo compose setup expects is not running on this machine. A scratch
+    cluster was created with `initdb` on port 55432 and `.env`'s `DATABASE_URL`
+    pointed at it for the run only; `.env` was restored afterwards and is
+    gitignored either way.
+    The run found three real defects in the e2e edits, all fixed here.
+    (1) The R-09 `View QR code` rename made the pre-existing bare
+    `getByRole("button", { name: "View" })` resume matcher ambiguous, because
+    substring matching now also hit the QR trigger; both call sites take
+    `exact: true`. (2) `mobile-member-experience.spec.ts` never seeded a
+    `DuesConfiguration` row, so the dashboard rendered "Payments paused"
+    instead of a Pay dues action; `seedE2EData()` now seeds it the way
+    `member-dues-payment.spec.ts` already did. (3) The desktop order test
+    measured `boundingBox()` while the loading skeleton was still up, so it
+    compared against a null box; it now awaits both cards' visibility first.
+    The skeleton test was also reordered to assert the loaded heading's
+    absence before waiting on loaded content, since waiting first let the
+    3000ms `debugLatency` expire.
+    PRE-EXISTING, NOT FIXED HERE:
+    `member-onboarding.spec.ts:280` fails on its own with
+    `strict mode violation: getByText('Your details') resolved to 2 elements`.
+    Reproduced with `apps/blade/src/app/_components/member/` and
+    `src/tests/e2e/` checked out at `HEAD~1`, so it predates this change; the
+    only edit this commit makes to that file is the `View QR code` rename on a
+    different test. `name` is UNIQUE on `knight_hacks_form_sections`, so it is
+    not duplicate seed rows, and both candidate components
+    (`member-signup-form.tsx:74` and `member-profile-settings-form.tsx:107`)
+    render an identical `CardTitle`, so the two nodes could not be told apart
+    from the failure output. Left for the R-01/R-02 owner rather than papered
+    over with a scoped locator.
+    Running `member-dues-payment.spec.ts` and `mobile-member-experience.spec.ts`
+    in one command also fails, at a different test each way, and fails the same
+    way at `HEAD~1`. That cross-file order dependence is pre-existing too.
+    Browser QA was also done against a static harness: Tailwind compiled
+    from `apps/blade/src/app/globals.css`, the dashboard rendered to HTML in
+    three states (unpaid, paid, sparse profile with a very long name/company),
+    served locally and inspected at 320, 390, 768, and 1440. Confirmed one
+    shared section order at every width, `documentElement.scrollWidth ===
+window.innerWidth` at all four widths in all three states, Member details
+    left of Guild at 1440, and no clipping of the long name or company. This
+    is a static render, so it does not exercise the tooltip or QR dialog
+    popovers, tRPC data, or navigation; it is not a substitute for the
+    Playwright run above. The harness file was deleted and is not committed.
+- 2026-09-01 (R-12, R-23) verification: a throwaway Playwright probe rendered
+  the member dashboard in long-value, sparse, and settings states at 320, 360,
+  390, 768, 1024, and 1440 px. Every `overflow-x-hidden` / `overflow-hidden`
+  ancestor was neutralized with an injected stylesheet first, because
+  `authenticated-shell.tsx:77` otherwise hides exactly the bug srd.md forbids
+  concealing. All 18 cases now report `scrollWidth === clientWidth`; before the
+  fixes the file inputs overflowed by 363 px and the name heading measured
+  500.203 px. The probe spec was deleted and is not committed.
+  Both regression guards were proven non-vacuous by reverting each fix and
+  watching its guard fail: the unit test failed with "expected 'text-xl
+  font-semibold tracking-normal...' to contain '[overflow-wrap:anywhere]'", and
+  the strengthened TC-020 overflow test failed with "Received: false".
+  Checks run: `pnpm verify:precommit` 33/33 successful;
+  `pnpm analyze:react:changed` 13 files, zero not-ok;
+  `pnpm --filter=@forge/blade test` 124 files / 714 tests passed;
+  `pnpm --filter=@forge/blade e2e mobile-member-experience.spec.ts
+member-dues-payment.spec.ts` 14 passed; `git diff --check` clean.
 
 ## Links
 

@@ -409,7 +409,12 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
           />
           <div className="mt-2 space-y-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <h2 className="text-xl font-semibold tracking-normal md:text-2xl">
+              {/* R-12: a flex item defaults to min-width:auto, and
+                  overflow-wrap:break-word does not shrink intrinsic width, so
+                  an unbroken name stays at max-content and clips. anywhere
+                  does reduce min-content, matching the house pattern in
+                  member-detail-dialog.tsx. */}
+              <h2 className="min-w-0 text-xl font-semibold tracking-normal [overflow-wrap:anywhere] md:text-2xl">
                 {displayName}
               </h2>
               <Badge
@@ -424,7 +429,7 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
                 {isPublic ? "Public" : "Private"}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">
               {member.tagline || <EmptyValue>Add a Guild tagline</EmptyValue>}
             </p>
           </div>

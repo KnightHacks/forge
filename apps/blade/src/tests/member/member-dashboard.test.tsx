@@ -382,6 +382,32 @@ describe("MemberDashboard", () => {
     expect(html).toContain('target="_blank"');
   });
 
+  it("lets an unbroken name and tagline wrap instead of clipping (TC-008, TC-020)", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, {
+        ...dashboardProps,
+        member: {
+          ...member,
+          firstName: "Maximiliananastasios",
+          lastName: "Vandersteenhoevenbergerson",
+          tagline:
+            "Averyverylongunbrokentaglinethatmustnotpushthelayoutwiderthantheviewport",
+        },
+      }),
+    );
+
+    // overflow-wrap:break-word does not shrink an element's intrinsic width, so
+    // a flex item holding an unbroken name stays at max-content and clips.
+    // Only `anywhere` feeds back into intrinsic sizing, and the two utilities
+    // set the same property, so `break-words` must not be present to win it.
+    const heading = /<h2 class="([^"]*)"/.exec(html)?.[1] ?? "";
+
+    expect(heading).toContain("[overflow-wrap:anywhere]");
+    expect(heading).toContain("min-w-0");
+    expect(heading).not.toContain("break-words");
+    expect(html).toContain("Maximiliananastasios Vandersteenhoevenbergerson");
+  });
+
   it("renders the admin-paused dues state without a pay link", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {

@@ -319,6 +319,14 @@ test.describe("mobile member experience", () => {
       page.getByRole("heading", { name: "Welcome, Maya" }),
     ).toBeVisible();
 
+    // R-23/TC-020: the shell wraps everything in overflow-x-hidden, so this
+    // assertion passes even when an element is hundreds of pixels wider than
+    // the viewport. Neutralizing the concealment is what makes the check
+    // meaningful; srd.md forbids closing overflow bugs by hiding them.
+    await page.addStyleTag({
+      content: `[class*="overflow-x-hidden"], [class*="overflow-hidden"] { overflow-x: visible !important; }`,
+    });
+
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ height: 900, width });
       await expect
