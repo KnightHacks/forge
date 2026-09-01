@@ -18,12 +18,12 @@ import { api } from "~/trpc/react";
 
 export function MemberQRCodeDialog({
   className,
+  label = "QR code",
   triggerClassName,
-  variant = "desktop",
 }: {
   className?: string;
+  label?: string;
   triggerClassName?: string;
-  variant?: "desktop" | "mobile";
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const {
@@ -35,23 +35,17 @@ export function MemberQRCodeDialog({
     retry: false,
   });
 
-  const isMobileVariant = variant === "mobile";
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
           type="button"
-          size={isMobileVariant ? "lg" : "md"}
+          size="md"
           variant="primary"
-          className={cn(
-            "gap-2",
-            isMobileVariant ? "h-11 w-full text-sm" : "w-auto",
-            triggerClassName,
-          )}
+          className={cn("w-auto gap-2", triggerClassName)}
         >
           <QrCode className="h-4 w-4" aria-hidden="true" />
-          QR code
+          {label}
         </Button>
       </DialogTrigger>
       <DialogContent

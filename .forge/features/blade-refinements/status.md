@@ -28,6 +28,20 @@ Current phase: Bundle approved / ready for technical discovery
   profile/photo/resume/preferences controls are not moved into Settings as part
   of this slice. The dashboard must instead explain what Guild is and which data
   is public/external.
+- 2026-09-01 (R-07): The member dashboard now renders one DOM order on every
+  viewport instead of a desktop tree plus `lg:hidden` mobile duplicates. The
+  shared order is the Member details card first (Welcome, dues, Check in,
+  Events, Previous forms) and the Guild profile card second. The `order-*`
+  and `hidden` utilities were removed rather than reshuffled, so desktop keeps
+  Member details on the left and Guild on the right, which is what TC-020's
+  existing bounding-box assertion already required.
+- 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
+  satisfied as the bottom of the member panel, not literally the last element
+  on the page. Moving it below the Guild card would put a private Blade action
+  underneath the public Guild surface, which contradicts R-08's requirement to
+  keep private Blade data visually separated from public Guild data. R-11's
+  low-emphasis treatment (small outline button on a nested surface) is
+  unchanged.
 - 2026-08-12: Resume upload success must not auto-open preview and applies to
   signup plus existing-member flows. Success retains an explicit View action.
 - 2026-08-12: Previous forms remains at the bottom as a small, low-emphasis
@@ -165,10 +179,10 @@ Current phase: Bundle approved / ready for technical discovery
 | R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Complete  | Spyderma9 (8/31/2026)         | TC-004                         |
 | R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
 | R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                     | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed                     | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed                     | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed                     | TC-006                         |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Complete  | azizu06 (9/1/2026)            | TC-007, TC-020                 |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Complete  | azizu06 (9/1/2026)            | TC-007, TC-008                 |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)            | TC-007                         |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                     | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
