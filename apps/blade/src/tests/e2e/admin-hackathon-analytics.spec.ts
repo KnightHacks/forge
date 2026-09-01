@@ -22,6 +22,7 @@ const PATH = "/admin/analytics?scope=hackathon";
 const USER_ID = "60000000-0000-4000-8000-000000000001";
 const ROLE_ID = "60000000-0000-4000-8000-000000000002";
 const HACK_ID = "60000000-0000-4000-8000-000000000003";
+const COMPARISON_HACK_ID = "60000000-0000-4000-8000-000000000043";
 const HACKER_USER_IDS = Array.from(
   { length: 6 },
   (_, index) =>
@@ -54,7 +55,9 @@ function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
 }
 
 async function cleanup() {
-  await db.delete(Hackathon).where(inArray(Hackathon.id, [HACK_ID]));
+  await db
+    .delete(Hackathon)
+    .where(inArray(Hackathon.id, [HACK_ID, COMPARISON_HACK_ID]));
   await db.delete(Permissions).where(inArray(Permissions.userId, [USER_ID]));
   await db.delete(User).where(inArray(User.id, [USER_ID, ...HACKER_USER_IDS]));
   await db.delete(Roles).where(inArray(Roles.id, [ROLE_ID]));
@@ -104,6 +107,27 @@ async function seed() {
     id: HACK_ID,
     name: "hack-analytics-e2e",
     startDate: start,
+    theme: "E2E",
+  });
+  // R-22 fixture: a prior hackathon whose deadline offsets (days from its own
+  // application open) land within a day of the current hackathon's — 53/58
+  // above vs 54/59 here — so the comparison markers plot right next to the
+  // current ones and would visually stack without the label-collision fix.
+  const priorStart = new Date(start.getTime() - 365 * 24 * 60 * 60 * 1000);
+  const priorOpen = new Date(priorStart.getTime() - 60 * 24 * 60 * 60 * 1000);
+  await db.insert(Hackathon).values({
+    applicationDeadline: new Date(
+      priorOpen.getTime() + 54 * 24 * 60 * 60 * 1000,
+    ),
+    applicationOpen: priorOpen,
+    confirmationDeadline: new Date(
+      priorOpen.getTime() + 59 * 24 * 60 * 60 * 1000,
+    ),
+    displayName: "R-22 Prior Deadlines Fixture",
+    endDate: new Date(priorStart.getTime() + 24 * 60 * 60 * 1000),
+    id: COMPARISON_HACK_ID,
+    name: "hack-analytics-e2e-prior",
+    startDate: priorStart,
     theme: "E2E",
   });
   await db.insert(Hacker).values(
@@ -369,5 +393,41 @@ test.describe("admin Hackathon Analytics", () => {
         document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test("keeps overlapping current/prior deadline labels on the application pace chart distinguishable (R-22)", async ({
+    page,
+  }) => {
+    await signIn(page);
+    await page.getByRole("combobox", { name: "Comparison hackathon" }).click();
+    await page
+      .getByRole("option", { name: "vs. R-22 Prior Deadlines Fixture" })
+      .click();
+    await page
+      .getByLabel("Analytics sections")
+      .getByRole("link", { name: "Applications", exact: true })
+      .click();
+
+    const currentLabel = page.getByText("App deadline", { exact: true });
+    const priorLabel = page.getByText("Prior app", { exact: true });
+    await expect(currentLabel).toBeVisible();
+    await expect(priorLabel).toBeVisible();
+
+    const currentBox = await currentLabel.boundingBox();
+    const priorBox = await priorLabel.boundingBox();
+    expect(currentBox).not.toBeNull();
+    expect(priorBox).not.toBeNull();
+    if (currentBox && priorBox) {
+      const verticallySeparated =
+        currentBox.y + currentBox.height <= priorBox.y ||
+        priorBox.y + priorBox.height <= currentBox.y;
+      expect(verticallySeparated).toBe(true);
+    }
+
+    // The accessible table alternative next to the chart still identifies
+    // the comparison series.
+    await expect(
+      page.getByRole("columnheader", { name: "Comparison cumulative" }),
+    ).toBeVisible();
   });
 });

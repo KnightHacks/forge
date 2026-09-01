@@ -53,6 +53,7 @@ import {
   issueHistoryChanges,
   legacyEasternWallClock,
 } from "../utils/issues/lifecycle";
+import { resolveMemberDisplayNamesByUserId } from "../utils/member/display-name";
 
 type CreateNode = z.infer<typeof issueCreateSchema>["children"][number];
 
@@ -1213,9 +1214,17 @@ export const issuesRouter = {
       });
       const hasMore = rows.length > input.limit;
       const page = rows.slice(0, input.limit);
+      const currentNames = await resolveMemberDisplayNamesByUserId(
+        page.map((row) => row.actorId),
+      );
       return {
         nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
-        rows: page,
+        rows: page.map((row) => ({
+          ...row,
+          actorDisplayName:
+            (row.actorId && currentNames.get(row.actorId)) ??
+            row.actorDisplayName,
+        })),
       };
     }),
 

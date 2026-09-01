@@ -393,9 +393,9 @@ function GuildProfileCard({
             displayName={displayName}
             initialProfilePictureUrl={member.profilePictureUrl}
           />
-          <div className="mt-2 space-y-2">
+          <div className="mt-2 w-full min-w-0 space-y-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <h2 className="text-xl font-semibold tracking-normal md:text-2xl">
+              <h2 className="break-words text-xl font-semibold tracking-normal md:text-2xl">
                 {displayName}
               </h2>
               <Badge
@@ -410,7 +410,7 @@ function GuildProfileCard({
                 {isPublic ? "Public" : "Private"}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="break-words text-sm text-muted-foreground">
               {member.tagline || <EmptyValue>Add a Guild tagline</EmptyValue>}
             </p>
           </div>

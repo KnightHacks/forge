@@ -90,6 +90,41 @@ Current phase: Bundle approved / ready for technical discovery
   plus manual browser QA. No Playwright run was performed; stale
   ordinary-member expectations in `mobile-member-experience.spec.ts`
   were updated to the R-02/TC-002 contract for the next run.
+- 2026-09-01 (R-20): Implemented as read-time enrichment only. New
+  `packages/api/src/utils/member/display-name.ts` batch-resolves current
+  Member names by Member id (Admin logs' `actorMemberId`) and by User id
+  (Issue history's `actorId`), called from `listAdminAuditEvents` and
+  `listHistory`. The stored `actorLabel`/`actorDisplayName` snapshot columns
+  are untouched and remain the fallback for deleted/unlinked/system actors.
+  No schema change, no permission change, no client changes (both UIs already
+  render the field the server returns).
+- 2026-09-01 (R-22): Fixed via deterministic label placement, not a
+  collision-detection library: current-hackathon deadline markers render on
+  `insideTopLeft`, prior/comparison markers on `insideBottomLeft` with the
+  existing `--chart-4` token color, and "Prior app deadline"/"Prior confirm
+  deadline" were shortened to "Prior app"/"Prior confirm" so the two rows fit
+  at narrow widths. The table alternative below the chart is unchanged.
+- 2026-09-01 (R-23): Root cause was `member.tagline` (an unbreakable single
+  token can reach the schema's 80-char max) missing `break-words`, plus the
+  containing `div.mt-2.space-y-2` lacking `min-w-0`/`w-full`, so a flex
+  item's default `min-width: auto` floor kept it from shrinking. The
+  authenticated shell's `overflow-x-hidden` was silently clipping the
+  overflow instead of scrolling it, which is why a plain
+  `document.documentElement.scrollWidth` check could not see the bug — the
+  reproduction test added an element-level concealed-overflow check
+  (`scrollWidth > clientWidth` on an `overflow-x: hidden` ancestor) to catch
+  it. Fixed by adding `break-words` to the tagline and name, and
+  `min-w-0 w-full` to their container. No other surface flagged by the new
+  320px/768px checks (resume dialog, QR dialog, settings) needed changes;
+  scope was kept to what the failing test named, per plan.
+- 2026-09-01 (R-24): Verification-only, as scoped — the schema, builder, and
+  respondent-render code already worked. Added the missing regression
+  coverage (round-trip of the draft-instruction helpers, and loading/error/
+  success rendering of `InstructionMedia`) rather than a full upload E2E
+  flow through real object storage, which was judged disproportionate to a
+  verification slice; flagging this scope call here rather than silently
+  deciding it. No import of the legacy `FormSchemaValidator`/
+  `InstructionValidator` was introduced (grep-guarded).
 
 ## Open questions
 
@@ -140,35 +175,35 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Refinement inventory
 
-| ID   | Refinement                                                                                                                                                  | State     | Claim                         | Proof                          |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------- | ------------------------------ |
-| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)         | TC-001                         |
-| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)         | TC-002                         |
-| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Claimed Spyderma9 (8/31/2026) | TC-003, TC-NEG-001             |
-| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026) | TC-004                         |
-| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
-| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                     | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed                     | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed                     | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed                     | TC-006                         |
-| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                     | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
-| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                     | TC-012, TC-NEG-001             |
-| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                     | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed                     | TC-014                         |
-| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
-| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | In progress | jesusthecreator017 (2026-09-01) | TC-016, TC-NEG-003             |
-| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
-| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | In progress | jesusthecreator017 (2026-09-01) | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | In progress | jesusthecreator017 (2026-09-01) | TC-020                         |
-| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | In progress | jesusthecreator017 (2026-09-01) | TC-018, TC-NEG-003             |
-| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                     | TC-019, TC-NEG-002, TC-NEG-003 |
-| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                     | Out of scope                   |
-| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                     | Out of scope                   |
+| ID   | Refinement                                                                                                                                                  | State     | Claim                           | Proof                          |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------- | ------------------------------ |
+| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)           | TC-001                         |
+| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)           | TC-002                         |
+| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Claimed Spyderma9 (8/31/2026)   | TC-003, TC-NEG-001             |
+| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026)   | TC-004                         |
+| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026)   | TC-005                         |
+| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026)   | TC-005                         |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                       | TC-007, TC-020                 |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed                       | TC-007, TC-008                 |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed                       | TC-007                         |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed                       | TC-006                         |
+| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)         | TC-007                         |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                       | TC-008, TC-020                 |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                       | TC-009                         |
+| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)         | TC-010                         |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                       | TC-011                         |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                       | TC-012, TC-NEG-001             |
+| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                       | TC-013                         |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed                       | TC-014                         |
+| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                       | TC-015, TC-NEG-002, TC-NEG-003 |
+| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Complete  | jesusthecreator017 (2026-09-01) | TC-016, TC-NEG-003             |
+| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)         | TC-017                         |
+| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Complete  | jesusthecreator017 (2026-09-01) | TC-021                         |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Complete  | jesusthecreator017 (2026-09-01) | TC-020                         |
+| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Complete  | jesusthecreator017 (2026-09-01) | TC-018, TC-NEG-003             |
+| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                       | TC-019, TC-NEG-002, TC-NEG-003 |
+| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                       | Out of scope                   |
+| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                       | Out of scope                   |
 
 ## Task list
 
@@ -320,6 +355,55 @@ for forge` is the branch tip again. The merged content was verified
     R-02/TC-002 contract for the next run.
     Unauthenticated landing output is functionally identical and
     DOM-equivalent, but not verified at byte level.
+  - 2026-09-01 (R-20, R-22, R-23, R-24): claimed by jesusthecreator017.
+    `pnpm format` (pass, all packages), `pnpm lint` (0 errors across all
+    files touched; pre-existing max-lines/import-type warnings only, same
+    as before this diff), `pnpm typecheck` (pass, 33/33 tasks),
+    `pnpm analyze:react:changed` (`ok: true` for both changed React files).
+    - R-20: `pnpm --filter=@forge/api test -- actor-display-enrichment`
+      (new integration test against a disposable Postgres database, 4/4
+      passed) proves the resolver returns the linked Member's _current_
+      name, leaves unresolved ids out of the map so callers keep their
+      stored snapshot, and batches in one query.
+    - R-22: new Playwright case in `admin-hackathon-analytics.spec.ts`
+      (a fixture hackathon whose deadline offsets land a day apart from the
+      current one). Confirmed it fails without the fix (`Prior app` label
+      not found) and passes with it; bounding-box assertion proves the
+      current/prior labels no longer share a row, and the table alternative
+      still shows a `Comparison cumulative` column.
+    - R-23: new 320px/768px Playwright cases in
+      `mobile-member-experience.spec.ts`. Reproduced the reported
+      Chrome/Zen clipping with an 80-char unbreakable tagline: a plain
+      `scrollWidth` check passed even though content was being clipped,
+      because the shell's `overflow-x-hidden` absorbs the overflow instead
+      of scrolling it — so the test also checks for any `overflow-x:hidden`
+      element whose own content exceeds its box. Confirmed failing before
+      the fix (screenshot showed the tagline visually clipped), passing
+      after `break-words`/`min-w-0` were added. Re-ran the full spec 3x to
+      confirm the one other failure seen (`keeps desktop dashboard order...`)
+      is a pre-existing flake, not a regression: it fails intermittently on
+      unmodified `main` too (1/3 baseline runs), and passes in isolation
+      every time.
+    - R-24: `pnpm --filter=@forge/blade test -- admin-form-builder
+  generic-form-response-form` (11/11 passed) — added round-trip
+      coverage for the draft-instruction helpers (text/image/video survive
+      save, blank textarea drops only the text block, removing one media
+      item drops only that block) and loading/error/success rendering for
+      `InstructionMedia`. No new E2E upload flow was added (see decision
+      log); `grep -rn "FormSchemaValidator\|InstructionValidator"
+  apps/blade/src` returns nothing from this diff.
+      Diff scope: `packages/api/src/utils/member/display-name.ts` (new),
+      `packages/api/src/routers/issues.ts`,
+      `packages/api/src/utils/audit/queries.ts`,
+      `packages/api/src/tests/integration/actor-display-enrichment.test.ts`
+      (new), `apps/blade/src/app/_components/admin/analytics/
+hackathon-analytics-dashboard.tsx`,
+      `apps/blade/src/app/_components/member/member-dashboard.tsx`,
+      `apps/blade/src/tests/e2e/admin-hackathon-analytics.spec.ts`,
+      `apps/blade/src/tests/e2e/mobile-member-experience.spec.ts`,
+      `apps/blade/src/tests/forms/admin-form-builder.test.ts`,
+      `apps/blade/src/tests/forms/generic-form-response-form.test.tsx`.
+      Not yet pushed to `forge/refinements` — awaiting go-ahead.
 
 ## Links
 

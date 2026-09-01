@@ -1,7 +1,7 @@
 import type { Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
-import { inArray, or } from "@forge/db";
+import { eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
@@ -19,6 +19,11 @@ import {
 } from "@forge/validators";
 
 import { GUILD_URL } from "~/lib/guild-urls";
+
+// A single 80-char (schema max) unbreakable token — no spaces for the
+// browser to wrap on — the shape that actually clips without break-words.
+const LONG_UNBREAKABLE_TAGLINE =
+  "KnightHacksMobileTaglineWithNoSpacesAnywhereToStressTestWrappingAtNarrowWidths";
 
 const MOBILE_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000301";
 const MOBILE_NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000302";
@@ -152,6 +157,58 @@ async function signInAs(
       userId,
     )}&callbackURL=${encodeURIComponent(callbackURL)}`,
   );
+}
+
+/**
+ * R-23/TC-020: no document-level horizontal overflow at this viewport. A
+ * standards-compliant scrollWidth check, not a browser-specific workaround.
+ */
+async function expectNoHorizontalOverflow(page: Page) {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+}
+
+/**
+ * The document-level check above passes even when content is clipped,
+ * because `overflow-x-hidden` on an ancestor (the shell, per the SRD's
+ * explicit warning) silently crops overflowing text instead of producing a
+ * scrollbar — exactly the failure mode TC-020 targets. This walks every
+ * element and flags one whose own content is wider than its box while its
+ * computed overflow-x is hidden/clip: that combination means real content is
+ * being cut off, not just kept off-screen.
+ */
+async function expectNoConcealedOverflow(page: Page) {
+  const clipped = await page.evaluate(() => {
+    const offenders: string[] = [];
+    for (const element of document.querySelectorAll<HTMLElement>("body *")) {
+      // A few px of slack absorbs decorative background bleed (dot-grid
+      // patterns, etc.) that intentionally extends past its container; real
+      // clipped text overflows by far more than that.
+      if (element.scrollWidth - element.clientWidth <= 20) continue;
+      // Skip elements intentionally hidden off-screen (Tailwind's `sr-only`,
+      // used for accessible-only labels and native file inputs) — a real
+      // clipping bug hides content that was meant to stay visible, not a box
+      // collapsed on purpose. Native `<input type="file">` widgets can keep a
+      // wider intrinsic layout box than plain CSS sizing suggests, so match
+      // the class rather than trust clientWidth here.
+      if (
+        typeof element.className === "string" &&
+        element.className.includes("sr-only")
+      )
+        continue;
+      if (element.clientWidth <= 4) continue;
+      const overflowX = getComputedStyle(element).overflowX;
+      if (overflowX === "hidden" || overflowX === "clip") {
+        offenders.push(
+          `${element.tagName.toLowerCase()} (+${element.scrollWidth - element.clientWidth}px): ${element.textContent.trim().slice(0, 60)}`,
+        );
+      }
+    }
+    return offenders;
+  });
+  expect(clipped).toEqual([]);
 }
 
 async function expectWithinViewport(page: Page, selectorName: string) {
@@ -358,4 +415,51 @@ test.describe("mobile member experience", () => {
       page.getByRole("heading", { name: "Welcome, Maya" }),
     ).toHaveCount(0);
   });
+
+  // R-23/TC-020: dashboard, settings, resume, and QR surfaces stay clipping-free
+  // at 320px and at an intermediate desktop width, with the long name/tagline/
+  // company/URL fixture above already present to catch text overflow.
+  for (const width of [320, 768]) {
+    test(`keeps dashboard, settings, resume, and QR surfaces overflow-free at ${width}px (R-23)`, async ({
+      page,
+    }) => {
+      await db
+        .update(Member)
+        .set({ tagline: LONG_UNBREAKABLE_TAGLINE })
+        .where(eq(Member.userId, MOBILE_MEMBER_USER_ID));
+
+      await page.setViewportSize({ width, height: 900 });
+      await signInAs(page);
+      await expect(
+        page.getByRole("region", { name: "Guild profile" }),
+      ).toBeVisible();
+      await expect(page.getByText(LONG_UNBREAKABLE_TAGLINE)).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+      await expectNoConcealedOverflow(page);
+
+      await page.getByRole("button", { name: "View" }).click();
+      await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
+      await expectWithinViewport(page, "Resume");
+      await page.getByRole("button", { name: "Close" }).click();
+
+      await page.getByRole("button", { name: "QR code" }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      const qrDialogBox = await page.getByRole("dialog").boundingBox();
+      const viewport = page.viewportSize();
+      expect(qrDialogBox).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      if (qrDialogBox && viewport) {
+        expect(qrDialogBox.x + qrDialogBox.width).toBeLessThanOrEqual(
+          viewport.width,
+        );
+      }
+      await page.keyboard.press("Escape");
+
+      await signInAs(page, MOBILE_MEMBER_USER_ID, MEMBER_SETTINGS_PATH);
+      await expect(
+        page.getByRole("button", { name: "Save changes" }),
+      ).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    });
+  }
 });
