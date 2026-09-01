@@ -91,13 +91,6 @@ async function repairLocalAuthTables(
   CONSTRAINT "auth_account_provider_provider_account_id_pk" PRIMARY KEY("provider","provider_account_id")
 );
 
-CREATE TABLE IF NOT EXISTS "auth_judge_session" (
-  "session_token" varchar(255) PRIMARY KEY NOT NULL,
-  "room_name" text NOT NULL,
-  "expires" timestamp with time zone NOT NULL,
-  "created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS "auth_permissions" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "role_id" uuid NOT NULL,

@@ -288,6 +288,13 @@
       "when": 1786501513660,
       "tag": "0040_gigantic_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788221261577,
+      "tag": "0041_salty_bastion",
+      "breakpoints": true
     }
   ]
 }

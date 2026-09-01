@@ -102,16 +102,6 @@ export const Session = createTable("session", (t) => ({
     .notNull(),
 }));
 
-export const JudgeSession = createTable("judge_session", (t) => ({
-  sessionToken: t.varchar({ length: 255 }).notNull().primaryKey(),
-  roomName: t.text().notNull(),
-  expires: t.timestamp({ mode: "date", withTimezone: true }).notNull(),
-  createdAt: t
-    .timestamp({ mode: "date", withTimezone: true })
-    .defaultNow()
-    .notNull(),
-}));
-
 export const Verifications = createTable("verification", (t) => ({
   id: t.text().primaryKey().notNull(),
   identifier: t.text().notNull(),

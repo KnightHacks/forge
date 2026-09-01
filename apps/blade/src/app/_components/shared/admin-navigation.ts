@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ListTodo,
   Mail,
+  PanelsTopLeft,
   QrCode,
   ScanLine,
   ScrollText,
@@ -37,6 +38,8 @@ export interface AdminNavigationAccess {
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
+  projectAdmin?: boolean;
+  judgeProjects?: boolean;
   roles?: boolean;
 }
 
@@ -57,6 +60,20 @@ export const memberNavigationItems = [
 ] as const;
 
 export const adminNavigationItems = [
+  {
+    access: "judgeProjects",
+    href: "/judge/projects",
+    icon: PanelsTopLeft,
+    id: "judgeProjects",
+    label: "Projects",
+  },
+  {
+    access: "projectAdmin",
+    href: "/admin/projects",
+    icon: ClipboardList,
+    id: "projectAdmin",
+    label: "Project import",
+  },
   {
     access: "logs",
     href: "/admin/logs",
@@ -183,6 +200,8 @@ export function getVisibleAdminNavigation(access: AdminNavigationAccess) {
 }
 
 export function isAdminNavigationActive(id: string, pathname: string) {
+  if (id === "judgeProjects") return pathname.startsWith("/judge/projects");
+  if (id === "projectAdmin") return pathname.startsWith("/admin/projects");
   if (id === "alumni") return pathname.startsWith("/admin/alumni");
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "discordArchive")

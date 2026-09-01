@@ -116,6 +116,14 @@ export function canAccessAdminLogs(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true;
 }
 
+export function canAccessProjectAdmin(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true;
+}
+
+export function canAccessJudgeProjects(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.IS_JUDGE === true;
+}
+
 export function canAccessAlumniAdmin(permissions: EffectivePermissions) {
   return (
     permissions.IS_OFFICER === true ||
@@ -154,6 +162,8 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),
+    projectAdmin: canAccessProjectAdmin(permissions),
+    judgeProjects: canAccessJudgeProjects(permissions),
     roles: canAccessRoleAdmin(permissions),
   };
 }
