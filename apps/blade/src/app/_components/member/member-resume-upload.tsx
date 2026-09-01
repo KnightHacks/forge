@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@forge/ui/dialog";
+import { Input } from "@forge/ui/input";
 import {
   checkUploadMetadata,
   RESUME_UPLOAD_POLICY,
@@ -177,9 +178,7 @@ export function MemberResumeUpload({
           <UploadCloud className="h-4 w-4" aria-hidden="true" />
         )}
         {resumeUrl ? "Replace" : "Upload"}
-        {/* R-23: see member-profile-picture-upload; the Input primitive's
-            w-full/h-9 defeat sr-only and create hidden layout overflow. */}
-        <input
+        <Input
           type="file"
           accept={uploadAccept(RESUME_UPLOAD_POLICY)}
           className="sr-only"

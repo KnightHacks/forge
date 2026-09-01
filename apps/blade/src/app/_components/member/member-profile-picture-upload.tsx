@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
+import { Input } from "@forge/ui/input";
 import {
   checkUploadMetadata,
   PROFILE_PICTURE_UPLOAD_POLICY,
@@ -197,10 +198,7 @@ export function MemberProfilePictureUpload({
             <Camera className="h-4 w-4" aria-hidden="true" />
           )}
           <span className="sr-only">Upload profile picture</span>
-          {/* R-23: the Input primitive's own w-full/h-9 beat sr-only's
-              1px box, leaving a viewport-wide absolutely positioned element
-              that pushed document scrollWidth past the viewport. */}
-          <input
+          <Input
             ref={fileInputRef}
             type="file"
             accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
