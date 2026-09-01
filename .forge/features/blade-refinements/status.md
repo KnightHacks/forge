@@ -81,6 +81,15 @@ Current phase: Bundle approved / ready for technical discovery
   event descriptions, where the standard soft-break behavior is correct, and
   R-18 forbids changing unrelated consumers. Preview and detail match by
   construction: both render the same component with the same prop.
+- 2026-09-01 (inventory sync): This table lagged the team Discord by days, which
+  is what caused the R-23 collision. Claims stated in the group DM are now
+  recorded here: Eric12 took R-13, R-15, and R-16 on 9/1 at 3:01 PM, and
+  TacoLover took R-20, R-22, R-23, and R-24 on 8/30 at 3:30 PM. Those are their
+  own public statements written down, not assignments made for them. After this
+  sync no Ready row is unclaimed; R-17, R-19, and R-25 are still Discovery and
+  R-26 and R-27 are Deferred. Dylan's 8/28 ask about form-respondent text
+  alignment still has no row; Spyderma9 said on 9/1 at 3:11 PM that he would try
+  it after R-05 and R-06, so it is left to him rather than claimed here.
 - 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
   satisfied as the bottom of the member panel, not literally the last element
   on the page. Moving it below the Guild card would put a private Blade action
@@ -231,18 +240,18 @@ Current phase: Bundle approved / ready for technical discovery
 | R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)            | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Claimed Eric12 (9/1/2026)     | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                     | TC-012, TC-NEG-001             |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Claimed Eric12 (9/1/2026)     | TC-011                         |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026)     | TC-012, TC-NEG-001             |
 | R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                     | TC-013                         |
 | R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)            | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
-| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed                     | TC-016, TC-NEG-003             |
+| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Claimed TacoLover (8/30/2026) | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
-| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed                     | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Unclaimed                     | TC-020                         |
-| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed                     | TC-018, TC-NEG-003             |
+| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Claimed TacoLover (8/30/2026) | TC-021                         |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Claimed TacoLover (8/30/2026) | TC-020                         |
+| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Claimed TacoLover (8/30/2026) | TC-018, TC-NEG-003             |
 | R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                     | TC-019, TC-NEG-002, TC-NEG-003 |
 | R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                     | Out of scope                   |
 | R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                     | Out of scope                   |
