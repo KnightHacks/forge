@@ -486,7 +486,7 @@ test.describe("initial member onboarding", () => {
     await expect(page.getByText("Member profile active")).toHaveCount(0);
     await expect(page.getByText("MEMBER PROFILE")).toHaveCount(0);
 
-    await page.getByRole("button", { name: "QR code" }).click();
+    await page.getByRole("button", { name: "View QR code" }).click();
     await expect(
       page.getByRole("dialog", { name: "Your QR code" }),
     ).toBeVisible();

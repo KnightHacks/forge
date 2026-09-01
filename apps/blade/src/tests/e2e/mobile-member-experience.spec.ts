@@ -183,37 +183,59 @@ test.describe("mobile member experience", () => {
     await cleanupE2EData();
   });
 
-  test("shows a lightweight Guild profile on mobile", async ({ page }) => {
+  test("shows the shared member hierarchy on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
+    const memberDetails = page.getByRole("region", { name: "Member details" });
 
     await expect(guildProfile).toBeVisible();
     await expect(
       guildProfile.getByRole("link", { name: "View Guild profile" }),
     ).toHaveAttribute("href", new RegExp(`${GUILD_URL}/members/`));
+    // R-07/TC-007: mobile is no longer a separate product; the member panel
+    // and its welcome heading render on every viewport.
+    await expect(memberDetails).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Member details" }),
-    ).toHaveCount(0);
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
-    await expect(
-      page.getByRole("heading", { name: "Welcome, Maya" }),
-    ).toHaveCount(0);
     await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // R-08/TC-008: Guild is explained and separated from private Blade data.
+    await expect(guildProfile).toContainText(
+      "Guild is the public Knight Hacks member directory.",
+    );
+    await expect(guildProfile).toContainText("stay private to Blade");
     await expect(
       guildProfile.getByRole("group", { name: "Company" }),
     ).toContainText("Knight Hacks");
+    await expect(page.getByRole("group", { name: "Company" })).toHaveCount(1);
     await expect(page.getByText("GitHub")).toBeVisible();
     await expect(page.getByText("LinkedIn")).toBeVisible();
     await expect(page.getByText("Portfolio")).toBeVisible();
-    await expect(page.getByRole("button", { name: "QR code" })).toBeVisible();
+    // R-09/TC-007: one Check in surface with a View QR code action.
+    const checkIn = page.getByRole("group", { name: "Check in" });
+    await expect(checkIn).toHaveCount(1);
+    await expect(
+      checkIn.getByRole("button", { name: "View QR code" }),
+    ).toBeVisible();
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "View" })).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
+    // R-10/TC-006: the seeded member is unpaid, so the dues banner stays.
+    await expect(
+      memberDetails.getByRole("group", { name: "Dues status" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    // R-11/TC-007: Previous forms stays a small low-emphasis history action.
+    await expect(page.getByText("Previous forms")).toHaveCount(1);
+    await expect(
+      page.getByRole("link", { name: "Review history" }),
+    ).toBeVisible();
 
     // R-02/TC-002: an ordinary member has no mobile drawer; Settings and
     // Sign out sit together at the top right of the header.
@@ -234,6 +256,65 @@ test.describe("mobile member experience", () => {
       page.getByRole("button", { name: "Open navigation menu" }),
     ).toHaveCount(0);
     await expect(page.getByTestId("account-settings-link")).toBeVisible();
+  });
+
+  test("exposes the same dashboard sections on mobile and desktop", async ({
+    page,
+  }) => {
+    const sectionNames = [
+      "Welcome, Maya",
+      "Dues",
+      "Check in",
+      "Events",
+      "Previous forms",
+      "Guild is the public Knight Hacks member directory.",
+      "About",
+      "Company",
+      "Visibility",
+      "Guild preferences",
+      "Links",
+      "Resume",
+    ];
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+  });
+
+  test("keeps the member dashboard free of horizontal overflow", async ({
+    page,
+  }) => {
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ height: 900, width });
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        )
+        .toBe(true);
+      await expect(
+        page.getByRole("button", { name: "View QR code" }),
+      ).toBeVisible();
+      await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    }
   });
 
   test("keeps desktop dashboard order and profile-attached settings", async ({
@@ -353,6 +434,10 @@ test.describe("mobile member experience", () => {
     });
 
     await expect(skeletonProfile).toBeVisible();
+    // R-07/TC-007: the member panel skeleton is no longer desktop-only.
+    await expect(
+      page.getByRole("region", { name: "Member details loading" }),
+    ).toBeVisible();
     await expect(page.getByText("Mobile-first member profile")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Welcome, Maya" }),

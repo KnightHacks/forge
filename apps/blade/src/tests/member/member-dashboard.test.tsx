@@ -23,8 +23,8 @@ vi.mock("~/app/_components/member/member-profile-picture-upload", () => ({
 }));
 
 vi.mock("~/app/_components/member/member-qr-code-dialog", () => ({
-  MemberQRCodeDialog: ({ variant = "desktop" }: { variant?: string }) =>
-    `QR widget (${variant})`,
+  MemberQRCodeDialog: ({ label = "QR code" }: { label?: string }) =>
+    `QR widget (${label})`,
 }));
 
 vi.mock("~/app/_components/member/member-resume-upload", () => ({
@@ -174,6 +174,10 @@ const dashboardProps = {
   member,
 };
 
+function occurrences(html: string, needle: string) {
+  return html.split(needle).length - 1;
+}
+
 describe("MemberDashboard", () => {
   it("surfaces immediately available feedback on the upcoming dashboard card", () => {
     const firstEvent = events[0];
@@ -217,13 +221,9 @@ describe("MemberDashboard", () => {
     expect(html).toContain("LinkedIn");
     expect(html).toContain("Portfolio");
     expect(html).toContain("Profile picture widget for Dylan Vidal");
-    expect(html).toContain("QR widget (desktop)");
-    expect(html).toContain("QR widget (mobile)");
+    expect(html).toContain("QR widget (View QR code)");
     expect(html).toContain("Resume widget for user-id/Resume.pdf (compact)");
-    expect(html).toContain("Dues");
-    expect(html).toContain("Paid for the 2026-2027 academic school year.");
     expect(html).toContain("Paid");
-    expect(html).toContain('aria-label="Dues status"');
     expect(html).toContain('href="/member/settings"');
     expect(html).toContain('aria-label="Edit profile"');
     expect(html).not.toContain('href="/member/dues"');
@@ -259,6 +259,9 @@ describe("MemberDashboard", () => {
 
     expect(html).toContain("Private");
     expect(html).toContain("Hidden from Guild");
+    expect(html).toContain(
+      "it stays hidden from Guild until you turn visibility on.",
+    );
     expect(html).toContain("Explore Guild");
     expect(html).toContain(`href="${GUILD_URL}"`);
     expect(html).not.toContain("Sponsors only");
@@ -275,12 +278,12 @@ describe("MemberDashboard", () => {
     );
 
     expect(html).toContain("Dylan Vidal");
-    expect(html).toContain("Paid for the 2026-2027 academic school year.");
+    expect(html).toContain("Dues paid for the 2026-2027 academic school year.");
     expect(html).toContain("Event information is temporarily unavailable");
     expect(html).not.toContain("No upcoming events right now.");
   });
 
-  it("renders unpaid dues as a neutral dashboard action", () => {
+  it("keeps the unpaid dues banner and its payment action prominent (TC-006)", () => {
     const html = renderToStaticMarkup(
       createElement(MemberDashboard, {
         duesStatus: unpaidDuesStatus,
@@ -296,6 +299,87 @@ describe("MemberDashboard", () => {
     expect(html).toContain("Unpaid");
     expect(html).toContain("Pay dues");
     expect(html).toContain('href="/member/dues"');
+    expect(occurrences(html, 'aria-label="Dues status"')).toBe(1);
+    expect(html).not.toContain("Dues paid for the");
+
+    const welcomeIndex = html.indexOf("Welcome, Dylan");
+    const duesIndex = html.indexOf('aria-label="Dues status"');
+    const eventsIndex = html.indexOf('aria-label="Events overview"');
+    expect(welcomeIndex).toBeLessThan(duesIndex);
+    expect(duesIndex).toBeLessThan(eventsIndex);
+  });
+
+  it("replaces the paid dues tile with a badge beside the welcome name (TC-006)", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, dashboardProps),
+    );
+
+    expect(html).not.toContain('aria-label="Dues status"');
+    expect(html).not.toContain("Paid for the 2026-2027 academic school year.");
+    expect(html).toContain(
+      'aria-label="Dues paid for the 2026-2027 academic school year."',
+    );
+    expect(html).toContain("Paid");
+
+    const welcomeIndex = html.indexOf("Welcome, Dylan");
+    const badgeIndex = html.indexOf('aria-label="Dues paid for the');
+    expect(welcomeIndex).toBeLessThan(badgeIndex);
+    expect(badgeIndex).toBeLessThan(html.indexOf('aria-label="Check in"'));
+  });
+
+  it("renders one shared section order with no per-viewport duplicates (TC-007)", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, dashboardProps),
+    );
+
+    for (const marker of [
+      "Welcome, Dylan",
+      'aria-label="Check in"',
+      'aria-label="Events overview"',
+      "Previous forms",
+      'aria-label="Company"',
+      'aria-label="Guild profile"',
+      "Guild preferences",
+    ]) {
+      expect(occurrences(html, marker)).toBe(1);
+    }
+
+    const order = [
+      "Welcome, Dylan",
+      'aria-label="Check in"',
+      'aria-label="Events overview"',
+      "Previous forms",
+      'aria-label="Guild profile"',
+    ].map((marker) => html.indexOf(marker));
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it("offers check in and a View QR code action once (TC-007)", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, dashboardProps),
+    );
+
+    expect(html).toContain('aria-label="Check in"');
+    expect(html).toContain(
+      "Show this code at the door to check in to a Knight Hacks event.",
+    );
+    expect(occurrences(html, "QR widget (View QR code)")).toBe(1);
+  });
+
+  it("explains Guild and marks its public action as external (TC-008)", () => {
+    const html = renderToStaticMarkup(
+      createElement(MemberDashboard, dashboardProps),
+    );
+
+    expect(html).toContain(
+      "Guild is the public Knight Hacks member directory.",
+    );
+    expect(html).toContain("anyone on Guild can see it.");
+    expect(html).toContain(
+      "Your dues, check in, events, and forms stay private to Blade.",
+    );
+    expect(html).toContain("(opens in a new tab)");
+    expect(html).toContain('target="_blank"');
   });
 
   it("renders the admin-paused dues state without a pay link", () => {

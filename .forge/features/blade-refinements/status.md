@@ -28,6 +28,20 @@ Current phase: Bundle approved / ready for technical discovery
   profile/photo/resume/preferences controls are not moved into Settings as part
   of this slice. The dashboard must instead explain what Guild is and which data
   is public/external.
+- 2026-09-01 (R-07): The member dashboard now renders one DOM order on every
+  viewport instead of a desktop tree plus `lg:hidden` mobile duplicates. The
+  shared order is the Member details card first (Welcome, dues, Check in,
+  Events, Previous forms) and the Guild profile card second. The `order-*`
+  and `hidden` utilities were removed rather than reshuffled, so desktop keeps
+  Member details on the left and Guild on the right, which is what TC-020's
+  existing bounding-box assertion already required.
+- 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
+  satisfied as the bottom of the member panel, not literally the last element
+  on the page. Moving it below the Guild card would put a private Blade action
+  underneath the public Guild surface, which contradicts R-08's requirement to
+  keep private Blade data visually separated from public Guild data. R-11's
+  low-emphasis treatment (small outline button on a nested surface) is
+  unchanged.
 - 2026-08-12: Resume upload success must not auto-open preview and applies to
   signup plus existing-member flows. Success retains an explicit View action.
 - 2026-08-12: Previous forms remains at the bottom as a small, low-emphasis
@@ -148,10 +162,10 @@ Current phase: Bundle approved / ready for technical discovery
 | R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026) | TC-004                         |
 | R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
 | R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                     | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed                     | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed                     | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed                     | TC-006                         |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Complete  | azizu06 (9/1/2026)            | TC-007, TC-020                 |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Complete  | azizu06 (9/1/2026)            | TC-007, TC-008                 |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)            | TC-007                         |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                     | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
@@ -320,6 +334,59 @@ for forge` is the branch tip again. The merged content was verified
     R-02/TC-002 contract for the next run.
     Unauthenticated landing output is functionally identical and
     DOM-equivalent, but not verified at byte level.
+  - 2026-09-01 (R-07, R-08, R-09, R-10): Implemented in
+    `apps/blade/src/app/_components/member/member-dashboard.tsx`,
+    `dashboard-client.tsx` (skeleton kept in lockstep), and
+    `member-qr-code-dialog.tsx`. R-07 removes all five `lg:hidden` mobile
+    duplicate blocks and the `order-*`/`hidden` utilities so one DOM order
+    serves every viewport; `DuesStatusTile`'s `compact` prop,
+    `MemberQRCodeDialog`'s `variant` prop, `EventsOverview`'s `className`
+    prop, and `GuildProfileCard`'s `attendance`/`duesStatus`/`events`/
+    `eventsUnavailable`/`feedback` props were deleted once their only callers
+    went away. R-09 adds a `CheckInTile` with a `View QR code` action; the
+    dialog gained an optional `label` prop defaulting to `"QR code"` so the
+    shared alumni dashboard is untouched. R-10 adds `PaidDuesBadge`, which
+    wraps the existing `DuesStatusBadge` in the house tooltip pattern from
+    `event-feedback-cta.tsx` and renders beside the Welcome name only when
+    dues are paid; the unpaid tile keeps its prominent top position and its
+    paid copy branch was removed as unreachable. R-08 adds a Guild explainer
+    paragraph, marks `View Guild profile` external with an `sr-only`
+    "(opens in a new tab)" suffix, and unhides the public/private visibility
+    badge below 640px. The explainer deliberately does not claim the resume
+    is public, because `guild-preferences-dialog.tsx` gates that behind a
+    separate `guildResumeVisible` opt-in.
+    Checks run: `pnpm format:fix` (24/24), `pnpm verify:precommit` (exit 0 —
+    33/33 tasks: analyze:react:changed, format, lint with 0 errors, typecheck),
+    `pnpm --filter=@forge/blade test src/tests/member` (13 files, 82/82
+    passing), and `git diff --check` (clean).
+    Tests updated: `member-dashboard.test.tsx` gained four cases covering the
+    paid badge (TC-006), single shared order with no per-viewport duplicates
+    and a single Check in action (TC-007), and the Guild explainer plus
+    external marking (TC-008). Stale divergence assertions in
+    `mobile-member-experience.spec.ts` were inverted to the new contract and
+    two Playwright cases added (same sections on mobile and desktop; no
+    horizontal overflow at 320/390/768/1024/1440).
+    `member-dues-payment.spec.ts` now asserts the paid badge by role/name
+    instead of the removed "Paid for the" tile copy.
+    `member-onboarding.spec.ts` follows the `View QR code` trigger rename.
+    NOT RUN: the Playwright suite. `pnpm --filter=@forge/blade e2e
+src/tests/e2e/mobile-member-experience.spec.ts --reporter=list` fails before
+    any test executes with `error: Postgres.app failed to verify "trust"
+    authentication / DETAIL: You did not confirm the permission dialog.` The
+    local Postgres.app holds port 5432 and needs an OS permission dialog
+    confirmed; the Docker daemon the repo's compose setup expects is not
+    running on this machine either. The e2e edits above are therefore written
+    to the new contract but unverified, and need a Playwright run before merge.
+    Browser QA was done instead against a static harness: Tailwind compiled
+    from `apps/blade/src/app/globals.css`, the dashboard rendered to HTML in
+    three states (unpaid, paid, sparse profile with a very long name/company),
+    served locally and inspected at 320, 390, 768, and 1440. Confirmed one
+    shared section order at every width, `documentElement.scrollWidth ===
+    window.innerWidth` at all four widths in all three states, Member details
+    left of Guild at 1440, and no clipping of the long name or company. This
+    is a static render, so it does not exercise the tooltip or QR dialog
+    popovers, tRPC data, or navigation; it is not a substitute for the
+    Playwright run above. The harness file was deleted and is not committed.
 
 ## Links
 

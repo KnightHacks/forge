@@ -301,7 +301,14 @@ test.describe("member dues payment", () => {
     ).toBeVisible({ timeout: 2_000 });
     await page.getByRole("button", { name: "Return to dashboard now" }).click();
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
-    await expect(page.getByText("Paid for the").first()).toBeVisible();
+    // R-10/TC-006: paid members get the badge beside their welcome name
+    // instead of a dues banner.
+    await expect(
+      page.getByRole("img", { name: /Dues paid for the/ }),
+    ).toBeVisible();
+    await expect(page.getByRole("group", { name: "Dues status" })).toHaveCount(
+      0,
+    );
 
     const duesRows = await db.query.DuesPayment.findMany({
       where: and(
@@ -320,7 +327,9 @@ test.describe("member dues payment", () => {
     await signInAs(page, PAID_USER_ID, "/member/dues");
 
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
-    await expect(page.getByText("Paid for the").first()).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /Dues paid for the/ }),
+    ).toBeVisible();
     await expect(page.getByText("Complete test payment")).toHaveCount(0);
   });
 
@@ -388,24 +397,35 @@ test.describe("member dues payment", () => {
     await expect(page).toHaveURL(routeURL("/member/dues"));
   });
 
-  test("keeps mobile dues status reachable inside the Guild profile", async ({
+  test("keeps the mobile dues banner prominent in the member panel", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page, UNPAID_USER_ID);
 
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
-    const guildProfile = page.getByRole("region", { name: "Guild profile" });
-    await expect(guildProfile).toBeVisible();
-    const duesStatus = guildProfile.getByRole("group", {
+    // R-07/R-10 (TC-006/TC-007): dues live in the member panel on every
+    // viewport, above Check in and Events, and are never duplicated.
+    const memberDetails = page.getByRole("region", { name: "Member details" });
+    await expect(memberDetails).toBeVisible();
+    await expect(page.getByText("Welcome, Una")).toBeVisible();
+    const duesStatus = memberDetails.getByRole("group", {
       name: "Dues status",
     });
+    await expect(page.getByRole("group", { name: "Dues status" })).toHaveCount(
+      1,
+    );
     await expect(duesStatus).toBeVisible();
     await expect(duesStatus.getByText(/Dues unpaid for the/)).toBeVisible();
     await expect(
       duesStatus.getByRole("link", { name: "Pay dues" }),
     ).toBeVisible();
     await expect(duesStatus.getByText("Unpaid", { exact: true })).toBeVisible();
-    await expect(page.getByText("Welcome, Una")).toBeHidden();
+
+    const duesBox = await duesStatus.boundingBox();
+    const checkInBox = await page
+      .getByRole("group", { name: "Check in" })
+      .boundingBox();
+    expect(duesBox?.y ?? 0).toBeLessThan(checkInBox?.y ?? 0);
   });
 });
