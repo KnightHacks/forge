@@ -35,6 +35,13 @@ Current phase: Bundle approved / ready for technical discovery
   and `hidden` utilities were removed rather than reshuffled, so desktop keeps
   Member details on the left and Guild on the right, which is what TC-020's
   existing bounding-box assertion already required.
+- 2026-09-01 (R-12, R-23): Claimed both after finishing R-07 through R-10.
+  Both cite TC-020, and the R-07 pass already added a Playwright overflow
+  journey at 320/390/768/1024/1440 plus long-name and sparse-profile browser
+  QA, so these extend verified ground rather than opening a cold surface.
+  R-12 covers Guild/profile parity between sparse and populated data; R-23
+  covers the member and shell overflow outside the dashboard. Per srd.md,
+  neither may be closed by adding `overflow-x-hidden` to conceal a layout bug.
 - 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
   satisfied as the bottom of the member panel, not literally the last element
   on the page. Moving it below the Guild card would put a private Blade action
@@ -184,7 +191,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)            | TC-007                         |
 | R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                     | TC-008, TC-020                 |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Claimed azizu06 (9/1/2026)    | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
@@ -195,7 +202,7 @@ Current phase: Bundle approved / ready for technical discovery
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Ready     | Unclaimed                     | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
 | R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Ready     | Unclaimed                     | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Unclaimed                     | TC-020                         |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Ready     | Claimed azizu06 (9/1/2026)    | TC-020                         |
 | R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Ready     | Unclaimed                     | TC-018, TC-NEG-003             |
 | R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                     | TC-019, TC-NEG-002, TC-NEG-003 |
 | R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                     | Out of scope                   |
