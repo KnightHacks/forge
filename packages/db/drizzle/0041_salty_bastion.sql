@@ -1,16 +1,3 @@
-DO $$
-BEGIN
-	IF EXISTS (SELECT 1 FROM "auth_judge_session" LIMIT 1)
-		OR EXISTS (SELECT 1 FROM "knight_hacks_challenges" LIMIT 1)
-		OR EXISTS (SELECT 1 FROM "knight_hacks_judged_submission" LIMIT 1)
-		OR EXISTS (SELECT 1 FROM "knight_hacks_judges" LIMIT 1)
-		OR EXISTS (SELECT 1 FROM "knight_hacks_submissions" LIMIT 1)
-		OR EXISTS (SELECT 1 FROM "knight_hacks_teams" LIMIT 1)
-	THEN
-		RAISE EXCEPTION 'Project judging migration stopped: legacy judging tables contain data.';
-	END IF;
-END $$;
---> statement-breakpoint
 CREATE TABLE "knight_hacks_project" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"hackathon_id" uuid NOT NULL,
