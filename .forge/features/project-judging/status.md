@@ -187,6 +187,6 @@ apps/blade/src/app/admin/projects apps/blade/src/app/judge`: passed; 12 files,
 
 ## Links
 
-- PRs:
+- PRs: [#527](https://github.com/KnightHacks/forge/pull/527)
 - Issues: [#526](https://github.com/KnightHacks/forge/issues/526)
 - Discord/thread context:
