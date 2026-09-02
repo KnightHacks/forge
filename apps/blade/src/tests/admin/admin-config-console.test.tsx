@@ -653,9 +653,7 @@ describe("TC-028: the route shell matches the admin page contract", () => {
     // Four direct children: back link, header, and the two sections. A wrapper
     // around the sections would delete a `space-y-*` gap with no other signal.
     expect(present(main).children).toHaveLength(4);
-    expect(
-      screen.getByText(ADMIN_PAGE_EYEBROWS.rolesConfig),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(ADMIN_PAGE_EYEBROWS.rolesConfig)).toBeNull();
     expect(
       screen.getByRole("heading", { level: 1, name: "Platform configuration" }),
     ).toBeInTheDocument();

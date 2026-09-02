@@ -29,9 +29,16 @@ export function AuthenticatedShellSkeleton({
         <div className="flex h-16 min-h-16 items-center justify-center border-b border-border/70">
           <Skeleton className="size-10" />
         </div>
-        <div className="grid gap-2 px-2 py-4">
-          {Array.from({ length: 8 }, (_, index) => (
-            <Skeleton className="h-11 w-full" key={index} />
+        <div className="grid gap-2 p-2">
+          {[2, 3, 3].map((count, groupIndex) => (
+            <div
+              className="grid gap-2 border-t border-border/70 pt-2 first:border-t-0 first:pt-0"
+              key={groupIndex}
+            >
+              {Array.from({ length: count }, (_, index) => (
+                <Skeleton className="h-11 w-full" key={index} />
+              ))}
+            </div>
           ))}
         </div>
       </aside>

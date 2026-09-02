@@ -384,7 +384,7 @@ function render(
 describe("HackathonAnalyticsDashboard", () => {
   it("renders the Club-consistent six-section shell without judging or projects", () => {
     const html = render("overview");
-    expect(html).toContain("Hackathon intelligence");
+    expect(html).not.toContain("Hackathon intelligence");
     for (const section of [
       "Overview",
       "Applications",
