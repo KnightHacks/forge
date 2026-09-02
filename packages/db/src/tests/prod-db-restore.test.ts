@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isRetiredJudgingDumpStatement,
   psqlFileArgs,
   truncateRestorePostlude,
   truncateRestorePrelude,
@@ -53,5 +54,28 @@ describe("production database restore safety", () => {
     expect(truncateRestorePostlude()).toMatch(
       /knight_hacks_hackathon" AS hackathon/,
     );
+  });
+
+  it("omits data and trigger statements for retired judging tables", () => {
+    expect(
+      isRetiredJudgingDumpStatement(
+        "INSERT INTO public.knight_hacks_teams (id) VALUES ('legacy');",
+      ),
+    ).toBe(true);
+    expect(
+      isRetiredJudgingDumpStatement(
+        "ALTER TABLE public.auth_judge_session DISABLE TRIGGER ALL;",
+      ),
+    ).toBe(true);
+    expect(
+      isRetiredJudgingDumpStatement(
+        "INSERT INTO public.knight_hacks_project (id) VALUES ('current');",
+      ),
+    ).toBe(false);
+    expect(
+      isRetiredJudgingDumpStatement(
+        "INSERT INTO public.auth_user (name) VALUES ('knight_hacks_teams');",
+      ),
+    ).toBe(false);
   });
 });

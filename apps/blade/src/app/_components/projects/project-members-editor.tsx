@@ -51,7 +51,7 @@ export function ProjectMembersEditor({
             className="grid gap-3 rounded-md border border-border/60 bg-background/30 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_auto] sm:items-end"
             key={member.key}
           >
-            <label className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor={`project-member-name-${member.key}`}>
                 Member {index + 1} name
               </Label>
@@ -65,8 +65,8 @@ export function ProjectMembersEditor({
                 required
                 value={member.name}
               />
-            </label>
-            <label className="space-y-2">
+            </div>
+            <div className="space-y-2">
               <Label htmlFor={`project-member-email-${member.key}`}>
                 Email (optional)
               </Label>
@@ -81,7 +81,7 @@ export function ProjectMembersEditor({
                 type="email"
                 value={member.email}
               />
-            </label>
+            </div>
             <Button
               aria-label={`Remove member ${index + 1}`}
               disabled={rows.length === 1}

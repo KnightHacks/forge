@@ -17,6 +17,10 @@ export const projectHackathonIdSchema = z.object({
   hackathonId: z.string().uuid(),
 });
 
+export const projectDropAllInputSchema = projectHackathonIdSchema.extend({
+  confirmation: z.string().min(1).max(255),
+});
+
 const projectListFields = z.object({
   challengeIds: z.array(z.string().uuid()).max(25).default([]),
   deleted: z.enum(["active", "deleted", "all"]).default("active"),
@@ -83,4 +87,5 @@ export const projectUpdateInputSchema = z.object({
 
 export type ProjectListInput = z.infer<typeof projectListInputSchema>;
 export type JudgeProjectListInput = z.infer<typeof judgeProjectListInputSchema>;
+export type ProjectDropAllInput = z.infer<typeof projectDropAllInputSchema>;
 export type ProjectUpdateInput = z.infer<typeof projectUpdateInputSchema>;

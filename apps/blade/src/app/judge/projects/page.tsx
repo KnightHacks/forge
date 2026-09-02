@@ -5,7 +5,10 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { SearchParams } from "~/lib/search-params";
 import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
-import { parseProjectDirectoryParams } from "~/app/_components/projects/params";
+import {
+  parseProjectDirectoryParams,
+  parseUuidParam,
+} from "~/app/_components/projects/params";
 import { canAccessJudgeProjects } from "~/lib/admin-access";
 import { first } from "~/lib/search-params";
 import { auth } from "~/server/auth";
@@ -28,7 +31,7 @@ export default async function JudgeProjectsPage({
   const params = await searchParams;
   const parsed = parseProjectDirectoryParams(params);
   const isOfficer = permissions.IS_OFFICER === true;
-  const requestedHackathon = first(params.hackathon);
+  const requestedHackathon = parseUuidParam(first(params.hackathon));
   const input = {
     challengeIds: parsed.challengeIds,
     direction: parsed.direction,

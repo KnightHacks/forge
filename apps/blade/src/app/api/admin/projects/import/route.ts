@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { TRPCError } from "@trpc/server";
 
 import {
   importDevpostProjects,
@@ -9,10 +10,16 @@ import { logger } from "@forge/utils";
 import { projectHackathonIdSchema } from "@forge/validators";
 
 import { canAccessProjectAdmin } from "~/lib/admin-access";
+import {
+  RequestBodyTooLargeError,
+  requestWithLimitedBody,
+} from "~/lib/limited-request-body";
 import { auth } from "~/server/auth";
 import { api } from "~/trpc/server";
 
 export const runtime = "nodejs";
+
+const MAX_MULTIPART_BYTES = PROJECT_IMPORT_MAX_BYTES + 1_000_000;
 
 function response(body: object, status: number) {
   return NextResponse.json(body, {
@@ -34,14 +41,21 @@ export async function POST(request: Request) {
   }
 
   const declaredLength = Number(request.headers.get("content-length") ?? 0);
-  if (declaredLength > PROJECT_IMPORT_MAX_BYTES + 1_000_000) {
+  if (declaredLength > MAX_MULTIPART_BYTES) {
     return response({ error: "The CSV must be 25 MiB or smaller." }, 413);
   }
 
   let form: FormData;
   try {
-    form = await request.formData();
-  } catch {
+    const limitedRequest = await requestWithLimitedBody(
+      request,
+      MAX_MULTIPART_BYTES,
+    );
+    form = await limitedRequest.formData();
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return response({ error: "The CSV must be 25 MiB or smaller." }, 413);
+    }
     return response({ error: "The multipart upload could not be read." }, 400);
   }
   const file = form.get("file");
@@ -69,6 +83,9 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof ProjectImportError) {
       return response({ error: error.message }, 400);
+    }
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
+      return response({ error: "Hackathon not found." }, 404);
     }
     logger.error("Devpost project import failed.");
     return response(

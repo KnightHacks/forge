@@ -25,6 +25,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import {
   judgeProjectListInputSchema,
+  projectDropAllInputSchema,
   projectIdSchema,
   projectListInputSchema,
   projectUpdateInputSchema,
@@ -39,6 +40,7 @@ import {
   assertCanManageProjects,
   assertCanViewProjects,
 } from "../utils/projects/access";
+import { projectForJudge } from "../utils/projects/view";
 
 function projectSort(
   sort: "participantCount" | "submittedAt" | "title",
@@ -173,14 +175,7 @@ async function listProjects(input: {
   sort: "participantCount" | "submittedAt" | "title";
 }) {
   const where = projectWhere(input);
-  const [rows, [total], challenges] = await Promise.all([
-    db
-      .select()
-      .from(Project)
-      .where(where)
-      .orderBy(projectSort(input.sort, input.direction), asc(Project.id))
-      .limit(input.pageSize)
-      .offset((input.page - 1) * input.pageSize),
+  const [[total], challenges] = await Promise.all([
     db.select({ value: count() }).from(Project).where(where),
     db
       .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
@@ -188,17 +183,27 @@ async function listProjects(input: {
       .where(eq(ProjectChallenge.hackathonId, input.hackathonId))
       .orderBy(...challengeOrder),
   ]);
+  const totalCount = total?.value ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / input.pageSize));
+  const page = Math.min(input.page, pageCount);
+  const rows = await db
+    .select()
+    .from(Project)
+    .where(where)
+    .orderBy(projectSort(input.sort, input.direction), asc(Project.id))
+    .limit(input.pageSize)
+    .offset((page - 1) * input.pageSize);
   const related = await relatedProjects(rows.map((row) => row.id));
   return {
     challenges,
-    page: input.page,
+    page,
     pageSize: input.pageSize,
     projects: rows.map((row) => ({
       ...row,
       challenges: related.challengesByProject.get(row.id) ?? [],
       members: related.membersByProject.get(row.id) ?? [],
     })),
-    totalCount: total?.value ?? 0,
+    totalCount,
   };
 }
 
@@ -297,13 +302,15 @@ export const projectsRouter = createTRPCRouter({
           totalCount: 0,
           challenges: [],
         };
+      const listed = await listProjects({
+        ...input,
+        deleted: "active",
+        hackathonId: selected.id,
+      });
       return {
         hackathon: selected,
-        ...(await listProjects({
-          ...input,
-          deleted: "active",
-          hackathonId: selected.id,
-        })),
+        ...listed,
+        projects: listed.projects.map(projectForJudge),
       };
     }),
 
@@ -337,10 +344,67 @@ export const projectsRouter = createTRPCRouter({
           });
         }
       }
-      return {
+      return projectForJudge({
         ...project,
         challenges: project.challenges.map(({ challenge }) => challenge),
-      };
+      });
+    }),
+
+  dropAll: permProcedure
+    .input(projectDropAllInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        }
+        if (input.confirmation !== hackathon.displayName) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The confirmation does not match the hackathon name.",
+          });
+        }
+
+        const [inventory] = await tx
+          .select({ projectCount: count() })
+          .from(Project)
+          .where(eq(Project.hackathonId, hackathon.id));
+        const projectCount = inventory?.projectCount ?? 0;
+
+        await tx.delete(Project).where(eq(Project.hackathonId, hackathon.id));
+        await tx
+          .delete(ProjectChallenge)
+          .where(eq(ProjectChallenge.hackathonId, hackathon.id));
+
+        await createAdminAuditEvent(
+          {
+            actionKey: "project.inventory_dropped",
+            actor: auditActor,
+            metadata: { projectCount },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+
+        return { hackathonId: hackathon.id, projectCount };
+      });
     }),
 
   update: permProcedure
@@ -356,6 +420,12 @@ export const projectsRouter = createTRPCRouter({
           .for("update")
           .limit(1);
         if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+        if (existing.deletedAt) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Restore the project before editing it.",
+          });
+        }
         const challengeRows = await tx
           .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
           .from(ProjectChallenge)

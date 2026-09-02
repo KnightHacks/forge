@@ -30,8 +30,9 @@ judge-submission work will build on the new project and challenge identifiers.
 - Every protected operation enforces access server-side; hiding navigation is
   only a UX layer.
 - Multi-table replacement uses a transaction.
-- PII is returned only through authorized procedures and is not copied into
-  audit metadata.
+- Participant emails and schools are returned only through officer procedures.
+  Judge procedures return names without that PII, and audit metadata contains
+  no participant PII.
 
 ## Access policy
 
@@ -41,8 +42,10 @@ judge-submission work will build on the new project and challenge identifiers.
   renders the established forbidden experience, navigation is hidden, and
   server boundaries return `FORBIDDEN`/403.
 - **Judge:** effective `IS_JUDGE` may read the automatically selected active
-  hackathon, list/filter projects, and open project details. It grants no
-  import, edit, delete, restore, or inactive-hackathon override.
+  hackathon, list/filter projects, and open project details. Judge responses
+  include team names but omit participant emails and schools. Judge access
+  grants no import, edit, delete, restore, hard deletion, or inactive-hackathon
+  override.
 - **Officer:** existing `IS_OFFICER` bypass semantics grant judge reads and all
   `/admin/projects` management operations. Officers may explicitly preview any
   selected hackathon from the admin workflow; otherwise judge preview resolves
@@ -143,6 +146,8 @@ tested against an up-to-date local database.
 5. The parser validates required Devpost headers and groups all rows by
    normalized submission URL. Repeated rows contribute the union of opt-in
    challenges and do not create duplicate projects.
+   Description, prize opt-ins, demo/video links, technologies, and school fields
+   are optional; missing technology or school columns produce empty arrays.
 6. Project status must start with Devpost's submitted status. Draft/incomplete
    records are counted and excluded.
 7. Team cells after `Additional Team Member Count` are consumed as repeated
@@ -187,6 +192,11 @@ context.
 - `projects.update`: officer-only allowlisted field update.
 - `projects.delete`: officer-only idempotent soft deletion.
 - `projects.restore`: officer-only restoration.
+- `projects.dropAll`: officer-only permanent removal of every project, member,
+  project challenge, and challenge link for one selected hackathon. The input
+  includes the selected hackathon ID and its exact display name as a typed
+  confirmation. The transaction locks the hackathon, checks the confirmation,
+  deletes projects before challenges, and writes one aggregate audit event.
 
 The multipart endpoint is an upload transport, not a parallel business API. It
 calls the same API-owned import service and maps known errors to safe HTTP
@@ -251,9 +261,18 @@ inventory because the hackathon owns it. Project-member and join rows cascade
 from project deletion. Challenge deletion cascades only its join rows. User
 deletion sets `deletedByUserId` null rather than preventing auth-user cleanup.
 
+The officer-only drop-all action is the explicit exception to soft deletion. It
+permanently deletes the selected hackathon's complete project inventory while
+leaving the hackathon itself and every other hackathon unchanged.
+
 Replacement import permanently replaces prior imported project rows, including
 soft-deleted rows, and replaces the selected hackathon's challenge set. This is
 the accepted bulk-reset behavior.
+
+The production-to-development backup sanitizer classifies every project and
+judging table as dropped. The seed workflow must not query retired legacy
+judging tables after the migration, and the schema-classification test must
+fail when a future table has no explicit keep-or-drop decision.
 
 Rollout is additive at the application surface but intentionally destructive to
 the six retired judging-only tables. Deploy migration and compatible application
@@ -296,6 +315,9 @@ Would this require a developer change next year?
 - Import replacement requires an explicit destructive confirmation naming the
   selected hackathon and explaining that previous projects, manual edits, and
   challenges will be replaced.
+- Drop-all uses one dialog and one typed confirmation. The officer types the
+  selected hackathon's display name. The dialog states that active and deleted
+  projects, team contacts, and imported challenges are permanently removed.
 - Disable duplicate submissions while upload/import is pending. Do not clear the
   selected file or current project inventory until success.
 - Use the established responsive table/card strategy. Mobile must retain search,
@@ -303,8 +325,10 @@ Would this require a developer change next year?
   interaction traps.
 - The modal has an accessible title/description, focus management, close action,
   scroll containment, and safe Markdown/link rendering.
-- PII must not appear in table rows by default; contact details appear in the
-  authorized project-detail modal.
+- A familiar Lucide eye button with an accessible name and tooltip appears to
+  the left of each judge project title and opens the detail modal.
+- Judge list and detail API responses omit participant email and school data.
+  The admin list keeps both for officer review and editing.
 
 ## Testing / verification strategy
 
@@ -314,11 +338,12 @@ Would this require a developer change next year?
   malformed team triples.
 - API integration tests cover atomic replacement/rollback, challenge derivation,
   `General`, URL uniqueness, active/upcoming resolution, soft delete/restore,
-  filters/pagination, and PII-safe diagnostics/audit events.
+  hard deletion, filters/pagination, judge response redaction, and PII-safe
+  diagnostics/audit events.
 - Access tests cover unauthenticated, ordinary authenticated, judge, and officer
   actors at every read/write boundary, including the multipart route.
 - Blade component tests cover import confirmation/results, project table states,
-  filters, destructive confirmations, restore, and Markdown detail rendering.
+  filters, the typed hard-delete guard, restore, and Markdown detail rendering.
 - Playwright covers officer import through judge discovery on desktop and mobile
   using sanitized fixture data.
 - Migration validation applies the approved destructive removal of legacy

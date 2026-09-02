@@ -55,6 +55,7 @@ export function JudgeProjectWorkspace({
                 onChange={(event) => selectHackathon(event.target.value)}
                 value={input.hackathonId ?? data.hackathon?.id ?? ""}
               >
+                <option value="">Select a hackathon</option>
                 {hackathons.map((hackathon) => (
                   <option key={hackathon.id} value={hackathon.id}>
                     {hackathon.displayName}
@@ -64,7 +65,7 @@ export function JudgeProjectWorkspace({
             </label>
           ) : null
         }
-        description="Browse every submitted project, filter the field, and open a project to review its story and team contacts."
+        description="Browse every submitted project, filter the field, and open a project to review its story and team."
         eyebrow="Judge workspace"
         icon={FolderKanban}
         title={data.hackathon?.displayName ?? "Hackathon projects"}
@@ -85,6 +86,7 @@ export function JudgeProjectWorkspace({
             data={data}
             emptyDescription="No imported projects match this view yet."
             input={input}
+            showViewAction
           />
         </>
       ) : (

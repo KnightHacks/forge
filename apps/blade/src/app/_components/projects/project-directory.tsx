@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ExternalLink,
+  Eye,
   Search,
   UsersRound,
 } from "lucide-react";
@@ -14,6 +15,12 @@ import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@forge/ui/tooltip";
 
 import { ProjectDetailDialog } from "./project-detail-dialog";
 
@@ -30,11 +37,11 @@ export interface ProjectDirectoryInput {
   sort: "participantCount" | "submittedAt" | "title";
 }
 
-export interface ProjectDirectoryData {
+export interface ProjectDirectoryData<TProject extends Project = Project> {
   challenges: { id: string; label: string }[];
   page: number;
   pageSize: number;
-  projects: Project[];
+  projects: TProject[];
   totalCount: number;
 }
 
@@ -68,13 +75,32 @@ function ProjectFilters({
   query: string;
   setQuery: (query: string) => void;
 }) {
+  const [minParticipants, setMinParticipants] = useState(
+    input.minParticipants?.toString() ?? "",
+  );
+  const [maxParticipants, setMaxParticipants] = useState(
+    input.maxParticipants?.toString() ?? "",
+  );
+
   return (
     <section className="rounded-lg border border-white/10 bg-card/90 p-3 shadow-xl shadow-black/15 sm:p-4">
       <form
         className="grid gap-3 lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]"
         onSubmit={(event) => {
           event.preventDefault();
-          navigate({ page: 1, query });
+          const normalizedMaxParticipants =
+            minParticipants &&
+            maxParticipants &&
+            Number(minParticipants) > Number(maxParticipants)
+              ? ""
+              : maxParticipants;
+          setMaxParticipants(normalizedMaxParticipants);
+          navigate({
+            maxParticipants: normalizedMaxParticipants || undefined,
+            minParticipants: minParticipants || undefined,
+            page: 1,
+            query,
+          });
         }}
       >
         <label className="relative min-w-0">
@@ -115,20 +141,17 @@ function ProjectFilters({
             </span>
             <Input
               className="h-11"
-              defaultValue={
-                bound === "min" ? input.minParticipants : input.maxParticipants
-              }
+              max={100}
               inputMode="numeric"
               min={1}
-              onBlur={(event) =>
-                navigate({
-                  [bound === "min" ? "minParticipants" : "maxParticipants"]:
-                    event.target.value || undefined,
-                  page: 1,
-                })
+              onChange={(event) =>
+                bound === "min"
+                  ? setMinParticipants(event.target.value)
+                  : setMaxParticipants(event.target.value)
               }
-              placeholder={bound === "min" ? "Min team" : "Max team"}
+              placeholder={bound === "min" ? "Min team size" : "Max team size"}
               type="number"
+              value={bound === "min" ? minParticipants : maxParticipants}
             />
           </label>
         ))}
@@ -189,16 +212,44 @@ function ProjectFilters({
   );
 }
 
-function ProjectList({
+function ViewProjectButton<TProject extends Project>({
+  onSelect,
+  project,
+}: {
+  onSelect: (project: TProject) => void;
+  project: TProject;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          aria-label={`View ${project.title}`}
+          className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+          onClick={() => onSelect(project)}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Eye className="size-4" aria-hidden="true" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top">View project details</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ProjectList<TProject extends Project>({
   actions,
   data,
   emptyDescription,
   onSelect,
+  showViewAction,
 }: {
-  actions?: (project: Project) => React.ReactNode;
-  data: ProjectDirectoryData;
+  actions?: (project: TProject) => React.ReactNode;
+  data: ProjectDirectoryData<TProject>;
   emptyDescription: string;
-  onSelect: (project: Project) => void;
+  onSelect: (project: TProject) => void;
+  showViewAction: boolean;
 }) {
   if (data.projects.length === 0) {
     return (
@@ -209,92 +260,109 @@ function ProjectList({
     );
   }
   return (
-    <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
-      <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[52rem] text-left text-sm">
-          <thead className="border-b border-border/70 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Project</th>
-              <th className="px-4 py-3 font-medium">Challenges</th>
-              <th className="px-4 py-3 text-right font-medium">Team</th>
-              {actions ? (
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {data.projects.map((project) => (
-              <tr className="hover:bg-background/40" key={project.id}>
-                <td className="max-w-sm px-4 py-4 align-top">
+    <TooltipProvider delayDuration={200}>
+      <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full min-w-[52rem] text-left text-sm">
+            <thead className="border-b border-border/70 text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Project</th>
+                <th className="px-4 py-3 font-medium">Challenges</th>
+                <th className="px-4 py-3 text-right font-medium">Team</th>
+                {actions ? (
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                ) : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {data.projects.map((project) => (
+                <tr className="hover:bg-background/40" key={project.id}>
+                  <td className="max-w-sm px-4 py-4 align-top">
+                    <div className="flex items-start gap-2">
+                      {showViewAction ? (
+                        <ViewProjectButton
+                          onSelect={onSelect}
+                          project={project}
+                        />
+                      ) : null}
+                      <div className="min-w-0">
+                        <button
+                          className="block max-w-full text-left font-semibold hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          onClick={() => onSelect(project)}
+                          type="button"
+                        >
+                          {project.title}
+                        </button>
+                        <a
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                          href={project.submissionUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          Devpost <ExternalLink className="size-3" />
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="max-w-sm px-4 py-4 align-top">
+                    <ProjectBadges project={project} />
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-right align-top">
+                    {project.participantCount}
+                  </td>
+                  {actions ? (
+                    <td className="px-4 py-4 text-right align-top">
+                      <div className="flex justify-end gap-2">
+                        {actions(project)}
+                      </div>
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="divide-y divide-border/60 md:hidden">
+          {data.projects.map((project) => (
+            <article className="space-y-3 p-4" key={project.id}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-2">
+                  {showViewAction ? (
+                    <ViewProjectButton onSelect={onSelect} project={project} />
+                  ) : null}
                   <button
-                    className="block max-w-full text-left font-semibold hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="min-w-0 pt-2 text-left text-lg font-semibold hover:text-primary sm:pt-1"
                     onClick={() => onSelect(project)}
                     type="button"
                   >
                     {project.title}
                   </button>
+                </div>
+                <Badge variant="outline" className="shrink-0 gap-1">
+                  <UsersRound className="size-3" /> {project.participantCount}
+                </Badge>
+              </div>
+              <ProjectBadges project={project} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild size="sm" variant="outline">
                   <a
-                    className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                     href={project.submissionUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Devpost <ExternalLink className="size-3" />
+                    Devpost <ExternalLink className="ml-1 size-3" />
                   </a>
-                </td>
-                <td className="max-w-sm px-4 py-4 align-top">
-                  <ProjectBadges project={project} />
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-right align-top">
-                  {project.participantCount}
-                </td>
-                {actions ? (
-                  <td className="px-4 py-4 text-right align-top">
-                    <div className="flex justify-end gap-2">
-                      {actions(project)}
-                    </div>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="divide-y divide-border/60 md:hidden">
-        {data.projects.map((project) => (
-          <article className="space-y-3 p-4" key={project.id}>
-            <div className="flex items-start justify-between gap-3">
-              <button
-                className="min-w-0 text-left text-lg font-semibold hover:text-primary"
-                onClick={() => onSelect(project)}
-                type="button"
-              >
-                {project.title}
-              </button>
-              <Badge variant="outline" className="shrink-0 gap-1">
-                <UsersRound className="size-3" /> {project.participantCount}
-              </Badge>
-            </div>
-            <ProjectBadges project={project} />
-            <div className="flex flex-wrap items-center gap-2">
-              <Button asChild size="sm" variant="outline">
-                <a
-                  href={project.submissionUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Devpost <ExternalLink className="ml-1 size-3" />
-                </a>
-              </Button>
-              <Button size="sm" onClick={() => onSelect(project)}>
-                View details
-              </Button>
-              {actions?.(project)}
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
+                </Button>
+                <Button size="sm" onClick={() => onSelect(project)}>
+                  View details
+                </Button>
+                {actions?.(project)}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </TooltipProvider>
   );
 }
 
@@ -337,22 +405,26 @@ function ProjectPagination({
   );
 }
 
-export function ProjectDirectory({
+export function ProjectDirectory<TProject extends Project>({
   actions,
   data,
   emptyDescription = "Try changing the search or filters.",
   input,
+  showPrivateDetails = false,
+  showViewAction = false,
 }: {
-  actions?: (project: Project) => React.ReactNode;
-  data: ProjectDirectoryData;
+  actions?: (project: TProject) => React.ReactNode;
+  data: ProjectDirectoryData<TProject>;
   emptyDescription?: string;
   input: ProjectDirectoryInput;
+  showPrivateDetails?: boolean;
+  showViewAction?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(input.query);
-  const [selected, setSelected] = useState<Project | null>(null);
+  const [selected, setSelected] = useState<TProject | null>(null);
   const [pending, startTransition] = useTransition();
 
   function navigate(patch: Record<string, string | number | undefined>) {
@@ -378,12 +450,14 @@ export function ProjectDirectory({
         data={data}
         emptyDescription={emptyDescription}
         onSelect={setSelected}
+        showViewAction={showViewAction}
       />
       <ProjectPagination data={data} navigate={navigate} pending={pending} />
 
       <ProjectDetailDialog
         onOpenChange={(open) => !open && setSelected(null)}
         project={selected}
+        showPrivateDetails={showPrivateDetails}
       />
     </div>
   );

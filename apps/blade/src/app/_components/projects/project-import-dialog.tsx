@@ -68,10 +68,17 @@ export function ProjectImportDialog({
         body,
         method: "POST",
       });
-      const payload = (await response.json()) as ImportResult & {
-        error?: string;
-      };
-      if (!response.ok) throw new Error(payload.error ?? "Import failed.");
+      const payload = (await response.json().catch(() => null)) as
+        | (ImportResult & { error?: string })
+        | null;
+      if (!response.ok || !payload) {
+        throw new Error(
+          payload?.error ??
+            (response.status === 413
+              ? "The CSV must be 25 MiB or smaller."
+              : "Import failed."),
+        );
+      }
       setResult(payload);
       toast.success(`${payload.importedProjects} projects imported.`);
       onImported();
@@ -86,6 +93,7 @@ export function ProjectImportDialog({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
+        if (submitting && !nextOpen) return;
         setOpen(nextOpen);
         if (!nextOpen) reset();
       }}
@@ -177,7 +185,11 @@ export function ProjectImportDialog({
             <Button onClick={() => setOpen(false)}>Done</Button>
           ) : (
             <>
-              <Button onClick={() => setOpen(false)} variant="outline">
+              <Button
+                disabled={submitting}
+                onClick={() => setOpen(false)}
+                variant="outline"
+              >
                 Cancel
               </Button>
               <Button disabled={!file || submitting} onClick={submit}>

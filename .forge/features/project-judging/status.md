@@ -1,6 +1,6 @@
 # Project Judging Status
 
-Current phase: Implementation complete / PR preparation
+Current phase: Ready to push
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -20,9 +20,10 @@ Current phase: Implementation complete / PR preparation
   categories, and opted-in challenges. Selecting a project opens a responsive
   modal that renders the project's Markdown description and remaining approved
   project details.
-- 2026-08-31: Judges may view team member names, email addresses, and Discord
-  handles for operational outreach. Event-specific questionnaire answers are
-  excluded.
+- 2026-08-31: The original contract allowed judges to view team member names,
+  email addresses, and Discord handles for operational outreach. The owner
+  removed Discord handles later that day and removed judge access to emails on
+  2026-09-02.
 - 2026-08-31: Officers can edit approved imported fields or delete individual
   projects from the separate project-management/import surface.
 - 2026-08-31: Existing permission semantics remain: `IS_JUDGE` grants judge
@@ -47,8 +48,9 @@ Current phase: Implementation complete / PR preparation
   re-import authoritatively drops the selected hackathon's imported project
   inventory and reinserts submitted projects from the new CSV, overwriting
   manual edits without conflict resolution or preview.
-- 2026-08-31: Individual projects are soft-deleted after confirmation. There is
-  no batch-delete action; replacing the import is the bulk reset mechanism.
+- 2026-08-31: Individual projects are soft-deleted after confirmation. The
+  original contract used replacement import as the only bulk reset mechanism;
+  the owner added a typed-confirmation hard-delete action on 2026-09-02.
 - 2026-08-31: Project details include the approved description, links,
   technologies, challenge/category, team-contact, school, and submission data.
   Judge responses remain out of scope.
@@ -111,11 +113,10 @@ Current phase: Implementation complete / PR preparation
   Markdown is rendered safely; replacement uses a confirmation dialog without
   typed text; fixtures contain no supplied PII; and oversized bodies are rejected
   before parsing.
-- 2026-08-31: The owner capped this slice at 15 high-value cases because future
-  judge/scoring passes will add their own behavioral coverage. Consolidated
-  `test-cases.md` to 10 primary and 5 negative/regression cases, weighted toward
-  import parsing, replacement, diagnostics, atomicity, authorization, migration,
-  and PII safety.
+- 2026-08-31: The owner initially capped this slice at 15 high-value cases
+  because future judge/scoring passes will add their own behavioral coverage.
+  The 2026-09-02 follow-up expanded the contract to 18 cases for hard deletion,
+  judge privacy, the eye-button affordance, and backup safety.
 - 2026-08-31: The owner approved `test-cases.md` and the complete artifact
   bundle, then authorized implementation through completion with explicit use
   of the frontend-design and Playwright verification skills.
@@ -130,6 +131,21 @@ Current phase: Implementation complete / PR preparation
   editing. Missing descriptions render a neutral empty state.
 - 2026-09-01: Officer team editing uses repeatable, separately validated name
   and email inputs instead of parsing `name | email` text lines.
+- 2026-09-02: Officers may permanently drop one selected hackathon's complete
+  imported inventory after typing that hackathon's display name in one dialog.
+- 2026-09-02: Judge list and detail responses expose team names but omit
+  participant emails and schools. Officers retain both on `/admin/projects`.
+- 2026-09-02: The judge directory uses a Lucide eye button to the left of each
+  project title as an explicit detail affordance.
+- 2026-09-02: Every project and judging table is excluded from shared
+  development backups. The seed sanitizer must not reference legacy judging
+  tables removed by migration `0041`.
+- 2026-09-02: Technologies and schools are optional import fields. Blank or
+  missing columns produce empty lists and do not reject a project.
+- 2026-09-02: The standard Forge review tightened multipart size enforcement,
+  duplicate-row identity, draft diagnostics, URL filter normalization,
+  pagination, pending-import behavior, deleted-project edits, and stale backup
+  compatibility.
 
 ## Open questions
 
@@ -151,6 +167,10 @@ Current phase: Implementation complete / PR preparation
       filtering, Markdown detail, and 1440px/320px layouts.
 - [x] Complete Forge review, deslop, React analyzer, production build, and
       repository-wide quality gates.
+- [x] Add and verify the officer-only hard-delete action.
+- [x] Remove judging PII from judge responses while retaining admin data.
+- [x] Add the judge eye-button affordance on desktop and mobile.
+- [x] Verify the production backup sanitizer against the post-migration schema.
 
 ## Validation / commands
 
@@ -188,6 +208,56 @@ apps/blade/src/app/admin/projects apps/blade/src/app/judge`: passed; 12 files,
 - `pnpm typecheck`: passed across 33 tasks.
 - `pnpm build`: passed across 21 build tasks; `/admin/projects`, the multipart
   import route, and `/judge/projects` are present in the production route map.
+- `pnpm db:pull -- --truncate`: restored the shared development snapshot into
+  the local database through the migration-compatible restore path; the PR
+  migrations were then applied. The local database contains 78 users, 4
+  hackathons, and 0 imported projects.
+- Local connection check: `.env` resolves to `localhost:5433/local`.
+- Post-migration sanitizer SQL check: executed inside a local database
+  transaction and intentionally rolled back; no removed judging table was
+  referenced.
+- `pnpm --filter=@forge/db exec vitest run
+src/tests/dev-db-backup-sanitizer.test.ts`: passed; 17 tests.
+- `pnpm --filter=@forge/api exec vitest run src/tests/projects
+src/tests/audit/coverage.test.ts src/tests/root/api-surface.test.ts`: passed;
+  6 files and 22 tests. The API snapshot includes `projects.dropAll`.
+- `pnpm --filter=@forge/blade exec vitest run src/tests/projects`: passed; 2
+  files and 6 tests covering typed deletion, judge privacy, retained admin
+  details, and the eye-button interaction.
+- `pnpm --filter=@forge/validators exec vitest run src/tests/audit.test.ts`:
+  passed; 6 tests.
+- Live local SSR verification with a fake project: admin output retains the
+  project email and school and exposes the hard-delete action; judge output
+  exposes the project, member name, and eye button while omitting both private
+  fields.
+- `pnpm --filter=@forge/api exec vitest run src/tests/projects
+src/tests/audit/coverage.test.ts src/tests/root/api-surface.test.ts`: passed; 6
+  files and 26 tests after the standard Forge review fixes.
+- `pnpm --filter=@forge/blade exec vitest run src/tests/projects`: passed; 4
+  files and 11 tests after the standard Forge review fixes.
+- `pnpm --filter=@forge/db exec vitest run src/tests/prod-db-restore.test.ts
+src/tests/dev-db-backup-sanitizer.test.ts`: passed; 2 files and 20 tests.
+- `pnpm --filter=@forge/api with-env vitest run
+src/tests/integration/projects-drop-all.test.ts`: passed against a disposable
+  migrated PostgreSQL database; the selected inventory cascaded while the
+  second hackathon survived.
+- `pnpm db:pull -- --truncate`: passed against `localhost:5433/local` using the
+  migration-compatible streaming backup filter; restored 78 users, 4
+  hackathons, and 0 project rows while keeping current project tables and no
+  retired judging tables.
+- `pnpm --filter=@forge/blade exec vitest run src/tests/projects`: passed; 4
+  files and 13 tests after the final URL, filter-state, and accessibility fixes.
+- `pnpm --filter=@forge/api exec vitest run
+src/tests/projects/devpost-import.test.ts`: passed; 10 parser tests, including
+  duplicate rows with conflicting team data.
+- `pnpm verify:precommit`: passed after all Forge review fixes; React analysis,
+  formatting, lint, and typechecks are green.
+- `pnpm build`: passed across 21 build tasks after the final review fixes.
+- Final Forge review: API/security, React/UI/accessibility, and
+  database/backup/destructive-operation passes reported no remaining findings.
+- Visual verification: refreshed and inspected six screenshots covering the
+  import warning, typed hard-delete dialog, judge directory eye affordance,
+  judge detail privacy, and desktop/mobile layouts.
 
 ## Links
 

@@ -5,6 +5,22 @@ export interface PsqlConnection {
   user: string;
 }
 
+const RETIRED_JUDGING_TABLES = new Set([
+  "auth_judge_session",
+  "knight_hacks_challenges",
+  "knight_hacks_judged_submission",
+  "knight_hacks_judges",
+  "knight_hacks_submissions",
+  "knight_hacks_teams",
+]);
+
+export function isRetiredJudgingDumpStatement(line: string) {
+  const statementPattern =
+    /^(?:INSERT INTO|ALTER TABLE(?: ONLY)?)\s+(?:"?public"?\.)?"?([a-z0-9_]+)"?\b/u;
+  const table = statementPattern.exec(line)?.[1];
+  return table ? RETIRED_JUDGING_TABLES.has(table) : false;
+}
+
 export function psqlFileArgs(
   connection: PsqlConnection,
   files: readonly string[],

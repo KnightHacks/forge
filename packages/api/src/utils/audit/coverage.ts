@@ -107,6 +107,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "member-admin.uploadAdminProfilePicture",
   "member-admin.uploadAdminResume",
   "projects.delete",
+  "projects.dropAll",
   "projects.restore",
   "projects.update",
   "roles.batchAssign",

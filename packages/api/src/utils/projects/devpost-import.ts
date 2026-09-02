@@ -1,7 +1,6 @@
 import { parse } from "csv-parse/sync";
 
 const REQUIRED_HEADERS = [
-  "Opt-In Prize",
   "Project Title",
   "Submission Url",
   "Project Status",
@@ -118,6 +117,12 @@ function splitList(value: string | undefined) {
     .filter(Boolean);
 }
 
+function normalizedTeamColumns(row: string[], additionalCountIndex: number) {
+  const values = row.slice(additionalCountIndex).map(clean);
+  while (values.at(-1) === "") values.pop();
+  return values;
+}
+
 function projectLabel(title: string, rowNumber: number) {
   return title || `row ${rowNumber}`;
 }
@@ -173,13 +178,23 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
     const title = clean(at(row, "Project Title"));
     const urlValue = clean(at(row, "Submission Url"));
     const status = clean(at(row, "Project Status"));
-    if (!urlValue) {
-      if (status.toLocaleLowerCase("en-US").startsWith("submitted")) {
-        rejections.push({
-          project: projectLabel(title, rowNumber),
-          reason: "Submitted project is missing its submission URL.",
-        });
+    if (!status.toLocaleLowerCase("en-US").startsWith("submitted")) {
+      if (!urlValue) {
+        draftOnlyUrls.add(`row:${rowNumber}`);
+        return;
       }
+      try {
+        draftOnlyUrls.add(normalizedHttpUrl(urlValue, "Submission URL"));
+      } catch {
+        draftOnlyUrls.add(`row:${rowNumber}`);
+      }
+      return;
+    }
+    if (!urlValue) {
+      rejections.push({
+        project: projectLabel(title, rowNumber),
+        reason: "Submitted project is missing its submission URL.",
+      });
       return;
     }
 
@@ -191,11 +206,6 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
         project: projectLabel(title, rowNumber),
         reason: safeReason(error),
       });
-      return;
-    }
-
-    if (!status.toLocaleLowerCase("en-US").startsWith("submitted")) {
-      draftOnlyUrls.add(url);
       return;
     }
 
@@ -230,6 +240,9 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
       const identity = JSON.stringify({
         description,
         submitterEmail,
+        submitterFirstName: clean(at(first.row, "Submitter First Name")),
+        submitterLastName: clean(at(first.row, "Submitter Last Name")),
+        teamColumns: normalizedTeamColumns(first.row, additionalCountIndex),
         title,
       });
       const conflicting = rows.some(
@@ -238,6 +251,9 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
           JSON.stringify({
             description: clean(at(row, "About The Project")),
             submitterEmail: clean(at(row, "Submitter Email")),
+            submitterFirstName: clean(at(row, "Submitter First Name")),
+            submitterLastName: clean(at(row, "Submitter Last Name")),
+            teamColumns: normalizedTeamColumns(row, additionalCountIndex),
             title: clean(at(row, "Project Title")),
           }),
       );

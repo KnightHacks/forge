@@ -28,6 +28,7 @@ import {
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 import { api } from "~/trpc/react";
+import { DropAllProjectsDialog } from "./drop-all-projects-dialog";
 import { ProjectDirectory } from "./project-directory";
 import { ProjectImportDialog } from "./project-import-dialog";
 import { ProjectMembersEditor } from "./project-members-editor";
@@ -110,7 +111,7 @@ function ProjectEditDialog({
             </DialogHeader>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 sm:col-span-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="project-title">Title</Label>
                 <Input
                   defaultValue={project.title}
@@ -118,8 +119,8 @@ function ProjectEditDialog({
                   name="title"
                   required
                 />
-              </label>
-              <label className="space-y-2 sm:col-span-2">
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="project-url">Devpost URL</Label>
                 <Input
                   defaultValue={project.submissionUrl}
@@ -128,8 +129,8 @@ function ProjectEditDialog({
                   required
                   type="url"
                 />
-              </label>
-              <label className="space-y-2 sm:col-span-2">
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="project-description">
                   About the project (optional)
                 </Label>
@@ -139,8 +140,8 @@ function ProjectEditDialog({
                   id="project-description"
                   name="description"
                 />
-              </label>
-              <label className="space-y-2">
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="project-participants">Participant count</Label>
                 <Input
                   defaultValue={project.participantCount}
@@ -151,8 +152,8 @@ function ProjectEditDialog({
                   required
                   type="number"
                 />
-              </label>
-              <label className="space-y-2">
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="project-video">Video URL</Label>
                 <Input
                   defaultValue={project.videoUrl ?? ""}
@@ -160,8 +161,8 @@ function ProjectEditDialog({
                   name="videoUrl"
                   type="url"
                 />
-              </label>
-              <label className="space-y-2 sm:col-span-2">
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="project-demo-links">Demo links</Label>
                 <Textarea
                   defaultValue={project.demoLinks.join("\n")}
@@ -169,23 +170,23 @@ function ProjectEditDialog({
                   name="demoLinks"
                   placeholder="One URL per line"
                 />
-              </label>
-              <label className="space-y-2">
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="project-technologies">Technologies</Label>
                 <Textarea
                   defaultValue={project.technologies.join(", ")}
                   id="project-technologies"
                   name="technologies"
                 />
-              </label>
-              <label className="space-y-2">
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="project-universities">Schools</Label>
                 <Textarea
                   defaultValue={project.universities.join(", ")}
                   id="project-universities"
                   name="universities"
                 />
-              </label>
+              </div>
               <ProjectMembersEditor
                 key={project.id}
                 members={project.members}
@@ -329,6 +330,10 @@ export function AdminProjectWorkspace({
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState<Project | null>(null);
   const [changingState, setChangingState] = useState<Project | null>(null);
+  const projectCount = input
+    ? (hackathons.find((hackathon) => hackathon.id === input.hackathonId)
+        ?.projectCount ?? 0)
+    : 0;
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -349,16 +354,20 @@ export function AdminProjectWorkspace({
       <AdminPageHeader
         actions={
           data && input ? (
-            <ProjectImportDialog
-              hackathonId={input.hackathonId}
-              hackathonName={data.hackathon.displayName}
-              onImported={refresh}
-              projectCount={
-                hackathons.find(
-                  (hackathon) => hackathon.id === input.hackathonId,
-                )?.projectCount ?? 0
-              }
-            />
+            <div className="flex flex-wrap gap-2">
+              <ProjectImportDialog
+                hackathonId={input.hackathonId}
+                hackathonName={data.hackathon.displayName}
+                onImported={refresh}
+                projectCount={projectCount}
+              />
+              <DropAllProjectsDialog
+                hackathonId={input.hackathonId}
+                hackathonName={data.hackathon.displayName}
+                onDropped={refresh}
+                projectCount={projectCount}
+              />
+            </div>
           ) : null
         }
         description="Replace a hackathon’s Devpost inventory, review import results, and make targeted corrections without exposing project management to judges."
@@ -443,6 +452,7 @@ export function AdminProjectWorkspace({
             )}
             data={data}
             input={input}
+            showPrivateDetails
           />
 
           <ProjectEditDialog

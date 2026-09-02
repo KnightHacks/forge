@@ -11,7 +11,13 @@ import {
 } from "@forge/ui/dialog";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
-type Project = RouterOutputs["projects"]["listJudge"]["projects"][number];
+type JudgeProject = RouterOutputs["projects"]["listJudge"]["projects"][number];
+type AdminProject = RouterOutputs["projects"]["listAdmin"]["projects"][number];
+type Project = JudgeProject | AdminProject;
+
+function isAdminProject(project: Project): project is AdminProject {
+  return "universities" in project;
+}
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -35,13 +41,38 @@ function ChallengeBadges({ project }: { project: Project }) {
   );
 }
 
+function MemberEmail({
+  memberIndex,
+  project,
+}: {
+  memberIndex: number;
+  project: AdminProject;
+}) {
+  const email = project.members[memberIndex]?.email;
+  return email ? (
+    <a
+      className="block break-all text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+      href={`mailto:${email}`}
+    >
+      {email}
+    </a>
+  ) : (
+    <span className="text-muted-foreground">No email provided</span>
+  );
+}
+
 export function ProjectDetailDialog({
   onOpenChange,
   project,
+  showPrivateDetails = false,
 }: {
   onOpenChange: (open: boolean) => void;
   project: Project | null;
+  showPrivateDetails?: boolean;
 }) {
+  const adminProject =
+    project && showPrivateDetails && isAdminProject(project) ? project : null;
+
   return (
     <Dialog open={project !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-4xl">
@@ -61,7 +92,7 @@ export function ProjectDetailDialog({
                 {project.title}
               </DialogTitle>
               <DialogDescription>
-                Imported project details and team contacts.
+                Imported project details and team members.
               </DialogDescription>
             </DialogHeader>
 
@@ -127,32 +158,28 @@ export function ProjectDetailDialog({
                     </p>
                   </div>
                 ) : null}
-                {project.universities.length ? (
+                {adminProject?.universities.length ? (
                   <div className="space-y-1">
                     <h3 className="text-sm font-semibold">Schools</h3>
                     <p className="text-sm leading-6 text-muted-foreground">
-                      {project.universities.join(", ")}
+                      {adminProject.universities.join(", ")}
                     </p>
                   </div>
                 ) : null}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold">Team contacts</h3>
+                  <h3 className="text-sm font-semibold">
+                    {adminProject ? "Team contacts" : "Team"}
+                  </h3>
                   <ul className="space-y-3">
-                    {project.members.map((member) => (
-                      <li className="text-sm" key={member.id}>
+                    {project.members.map((member, index) => (
+                      <li className="text-sm" key={`${member.name}-${index}`}>
                         <span className="block font-medium">{member.name}</span>
-                        {member.email ? (
-                          <a
-                            className="block break-all text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                            href={`mailto:${member.email}`}
-                          >
-                            {member.email}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            No email provided
-                          </span>
-                        )}
+                        {adminProject ? (
+                          <MemberEmail
+                            memberIndex={index}
+                            project={adminProject}
+                          />
+                        ) : null}
                       </li>
                     ))}
                   </ul>

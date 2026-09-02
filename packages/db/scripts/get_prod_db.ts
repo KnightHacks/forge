@@ -24,22 +24,44 @@
  */
 
 import { execFile } from "child_process";
-import { createWriteStream } from "fs";
+import { once } from "events";
+import { createReadStream, createWriteStream } from "fs";
 import { mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { createInterface } from "readline";
 import { pipeline } from "stream/promises";
 import { promisify } from "util";
 
 import { minioClient } from "../../api/src/minio/minio-client";
 import { env } from "../src/env";
 import {
+  isRetiredJudgingDumpStatement,
   psqlFileArgs,
   truncateRestorePostlude,
   truncateRestorePrelude,
 } from "./prod-db-restore";
 
 const execFileAsync = promisify(execFile);
+
+async function writeCompatibleBackup(source: string, destination: string) {
+  const lines = createInterface({
+    crlfDelay: Infinity,
+    input: createReadStream(source),
+  });
+  const output = createWriteStream(destination);
+  try {
+    for await (const line of lines) {
+      if (isRetiredJudgingDumpStatement(line)) continue;
+      if (!output.write(`${line}\n`)) await once(output, "drain");
+    }
+    output.end();
+    await once(output, "finish");
+  } catch (error) {
+    output.destroy();
+    throw error;
+  }
+}
 
 interface LocalDbCommand {
   database: string;
@@ -170,6 +192,10 @@ async function main() {
   const objectName = "backup.sql";
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "forge-db-pull-"));
   const backupFile = join(temporaryDirectory, objectName);
+  const compatibleBackupFile = join(
+    temporaryDirectory,
+    "compatible-backup.sql",
+  );
 
   try {
     const fileUrl = await minioClient.presignedGetObject(
@@ -186,6 +212,7 @@ async function main() {
     }
 
     await pipeline(res.body, createWriteStream(backupFile));
+    await writeCompatibleBackup(backupFile, compatibleBackupFile);
 
     const { originalDb: database, user, password, host, port } = parsePg();
     /* eslint-disable no-restricted-properties */
@@ -201,11 +228,13 @@ async function main() {
         writeFile(preludeFile, truncateRestorePrelude()),
         writeFile(postludeFile, truncateRestorePostlude()),
       ]);
-      await runLocalSqlFiles([preludeFile, backupFile, postludeFile], command, {
-        singleTransaction: true,
-      });
+      await runLocalSqlFiles(
+        [preludeFile, compatibleBackupFile, postludeFile],
+        command,
+        { singleTransaction: true },
+      );
     } else {
-      await runLocalSqlFiles([backupFile], command, {
+      await runLocalSqlFiles([compatibleBackupFile], command, {
         singleTransaction: true,
       });
     }

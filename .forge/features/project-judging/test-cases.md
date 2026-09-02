@@ -6,7 +6,7 @@ Status: Approved on 2026-08-31
 
 ## Scope
 
-These fifteen cases cover only the highest-value contracts for this slice:
+These eighteen cases cover only the highest-value contracts for this slice:
 Devpost parsing, authoritative replacement, access, migration, project
 maintenance, and basic judge discovery. Future scoring, feedback, assignment,
 room, session, ranking, and winner-selection passes will define their own cases.
@@ -45,6 +45,7 @@ Expected observations:
 - Exactly one project exists per normalized submission URL.
 - Project fields and ordered member names/emails remain aligned.
 - Repeated rows contribute the union of exact opt-in challenges.
+- Missing or blank technology and school fields import as empty lists.
 - Questionnaire fields and Discord handles are never imported.
 
 ### TC-002: Submitted selection and challenge rules are deterministic
@@ -163,7 +164,8 @@ Expected observations:
 
 - Edits persist; deletion removes it from normal admin/judge reads.
 - Restore returns fields, members, and challenge associations unchanged.
-- Each mutation has a PII-safe audit event and no batch-delete control exists.
+- Each mutation has a PII-safe audit event. The individual action remains a
+  reversible soft delete; permanent inventory deletion is covered separately.
 
 ### TC-008: Hackathon selection follows actor and date rules
 
@@ -213,9 +215,49 @@ Action:
 
 Expected observations:
 
-- Approved Markdown/details render legibly and authorized names/emails appear.
+- Approved Markdown/details render legibly and team names appear.
+- Judge list and detail responses contain no participant emails or schools.
+- The officer project-management response retains participant emails and
+  schools.
 - Unsafe content does not execute; external links use safe behavior.
 - Focus, scrolling, closing, and mobile layout remain accessible.
+
+### TC-011: Officer can permanently drop one hackathon's inventory
+
+Setup:
+
+- Two hackathons have active and soft-deleted projects, members, challenges,
+  and joins.
+
+Action:
+
+- An officer opens the drop-all dialog for one hackathon, enters a near-match,
+  then types the selected hackathon's display name exactly and confirms.
+
+Expected observations:
+
+- The destructive button stays disabled for the near-match.
+- The exact confirmation permanently removes every project-owned row and
+  imported challenge for the selected hackathon.
+- The selected hackathon and the other hackathon's inventory remain unchanged.
+- One aggregate audit event records the hackathon and deleted project count
+  without participant PII.
+
+### TC-012: Judge project rows have an explicit detail affordance
+
+Setup:
+
+- A judge directory contains projects on desktop and mobile.
+
+Action:
+
+- The judge activates the eye button to the left of a project title.
+
+Expected observations:
+
+- The button has an accessible project-specific name and tooltip.
+- Activating it opens the same responsive project detail dialog as the project
+  title.
 
 ## Negative / regression cases
 
@@ -309,6 +351,25 @@ Expected observations:
   constraints and indexes exist.
 - No runtime code references removed exports.
 - Non-judging tables and rows are unchanged.
+
+### TC-NEG-006: Development backups exclude judging data after migration
+
+Setup:
+
+- Production contains imported projects, members, project challenges, and
+  challenge links after the legacy judging tables have been removed.
+
+Action:
+
+- The filtered development database backup job runs.
+
+Expected observations:
+
+- The job does not query any removed legacy judging table.
+- Every current project and judging table is classified for truncation.
+- The exported backup contains none of those rows.
+- Adding a future schema table without an explicit backup policy fails the
+  sanitizer test.
 
 ## Open questions
 

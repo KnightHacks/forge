@@ -7,19 +7,21 @@ Status: Approved on 2026-08-31; Discord contact fields removed by owner revision
 ## User-facing purpose
 
 Officers need to import the submitted projects from a Devpost export into a
-specific hackathon, correct the imported project inventory, and decide when it
-is ready for judges to inspect.
+specific hackathon, correct the imported project inventory, remove a test
+inventory permanently when needed, and decide when it is ready for judges to
+inspect.
 
 Judges need a fast, mobile-friendly directory of every imported project in the
 active hackathon so they can find projects, understand what each team built,
-and contact team members when necessary. Scoring and judging responses are not
-part of this slice.
+and identify team members. Participant contact and school data stays in the
+officer surface. Scoring and judging responses are not part of this slice.
 
 ## Users / actors
 
 - **Officer:** imports and replaces a hackathon's Devpost project inventory,
-  edits imported projects, deletes individual projects, and can preview the
-  judge experience outside an active hackathon.
+  edits imported projects, deletes individual projects, can permanently drop a
+  selected hackathon's complete inventory after typed confirmation, and can
+  preview the judge experience outside an active hackathon.
 - **Judge:** an authenticated member whose effective role permissions include
   `IS_JUDGE`. A judge can view projects while the selected hackathon is active.
 - **Authenticated member without judge or officer access:** cannot view or
@@ -41,7 +43,9 @@ officer:
 - see a useful import result, including skipped or rejected records;
 - view and edit individual imported projects;
 - soft-delete one project at a time; and
-- restore a soft-deleted project; and
+- restore a soft-deleted project;
+- permanently drop every project and imported challenge for the selected
+  hackathon after typing that hackathon's display name; and
 - open the judge-facing project experience for setup and testing even when the
   hackathon is not currently active.
 
@@ -62,14 +66,14 @@ It includes:
 The directory supports title search, sorting, pagination consistent with other
 Forge tables, and filters including challenge and participant count.
 
-Selecting a project opens a responsive modal containing:
+An eye button to the left of each project title opens a responsive modal
+containing:
 
 - the project's Markdown-rendered description when supplied;
 - Devpost, demo, and video links when present;
-- technologies used;
+- technologies used, when supplied;
 - challenges;
-- team member names and email addresses;
-- universities or schools; and
+- team member names; and
 - submission time.
 
 ## Scope
@@ -85,8 +89,12 @@ Selecting a project opens a responsive modal containing:
 - A `General` challenge applied to every imported project.
 - Officer editing of approved project and team-contact fields.
 - One-at-a-time soft deletion and restoration of imported projects.
+- Permanent removal of one selected hackathon's complete imported inventory
+  after one typed confirmation.
 - Judge/officer project discovery, filtering, and responsive project details.
-- Judge access to team names and email addresses.
+- Judge access to team names without participant emails or schools.
+- Exclusion of all project and judging data from shared development database
+  backups.
 - Safe handling of duplicate submission URLs and variable-width team data in
   Devpost exports.
 
@@ -98,7 +106,6 @@ Selecting a project opens a responsive modal containing:
 - Hacker-to-project matching.
 - A public project gallery.
 - Devpost API synchronization.
-- Batch deletion outside the authoritative replacement import.
 - Import conflict resolution or preservation of manual edits across re-import.
 - Event-specific questionnaire answers.
 
@@ -117,6 +124,9 @@ Selecting a project opens a responsive modal containing:
   the uploaded Devpost export.
 - **Soft-delete:** remove a project from the active project inventory without
   immediately destroying its stored record.
+- **Drop all projects:** permanently remove every active and soft-deleted
+  project, member, project challenge, and challenge link for one selected
+  hackathon.
 
 ## Acceptance criteria
 
@@ -152,6 +162,10 @@ Selecting a project opens a responsive modal containing:
 - An officer can soft-delete one project at a time after an explicit
   confirmation.
 - An officer can restore an individually soft-deleted project.
+- An officer can permanently drop the selected hackathon's complete project
+  inventory only after typing the hackathon display name exactly once.
+- Dropping one hackathon's inventory does not change another hackathon or the
+  hackathon configuration itself.
 - A judge visiting `/judge/projects` sees the currently active hackathon.
 - A judge cannot select an inactive hackathon or view its projects.
 - An officer can open the judge experience for the hackathon whose start date
@@ -161,11 +175,14 @@ Selecting a project opens a responsive modal containing:
   `General` is always displayed first.
 - A judge can search by project title, sort and paginate the directory, and
   filter by challenge and participant count.
-- Selecting a project opens a desktop- and mobile-friendly detail modal with
-  its Markdown-rendered description and the approved project, link, technology,
-  team-contact, school, and submission details.
-- Judges can see team member names and email addresses, but cannot see Discord
-  handles or event-specific questionnaire answers.
+- The eye button beside a project title opens a desktop- and mobile-friendly
+  detail modal with its Markdown-rendered description and approved project,
+  link, technology, team-name, and submission details.
+- Judges can see team member names, but cannot receive participant emails,
+  schools, Discord handles, or event-specific questionnaire answers.
+- Officers retain participant emails and schools on `/admin/projects`.
+- Shared development database backups contain no project inventory or judging
+  data.
 - `IS_JUDGE` grants judge access, and existing `IS_OFFICER` bypass behavior
   grants officers access to the judge experience.
 - An unauthenticated visitor is redirected to authenticate.

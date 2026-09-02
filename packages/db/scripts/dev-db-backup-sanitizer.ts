@@ -227,11 +227,6 @@ UPDATE knight_hacks_alumni_bulletin_post
 SET image_object_name = NULL,
     image_alt = NULL;
 
-UPDATE knight_hacks_teams
-SET emails = NULL,
-    notes = NULL,
-    match_key = NULL;
-
 DELETE FROM auth_user AS app_user
 WHERE NOT EXISTS (
   SELECT 1 FROM forge_team_user AS team

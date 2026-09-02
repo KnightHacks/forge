@@ -120,6 +120,63 @@ describe("Devpost project import parsing", () => {
     expect(JSON.stringify(result.rejections)).not.toContain("captain@example");
   });
 
+  it("rejects duplicate URLs with conflicting submitter names", () => {
+    const result = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow({
+          "Project Title": "Valid project",
+          "Submission Url": "https://valid.devpost.com/",
+        }),
+        projectRow({ "Submission Url": "https://conflict.devpost.com/" }),
+        projectRow({
+          "Submission Url": "https://conflict.devpost.com/",
+          "Submitter First Name": "Different",
+        }),
+      ]),
+    );
+
+    expect(result.counts.rejectedProjects).toBe(1);
+    expect(result.rejections[0]?.reason).toContain("conflicting");
+  });
+
+  it("rejects duplicate URLs with conflicting team data", () => {
+    const result = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow({
+          "Project Title": "Valid project",
+          "Submission Url": "https://valid.devpost.com/",
+        }),
+        projectRow({ "Submission Url": "https://conflict.devpost.com/" }),
+        projectRow({
+          "Submission Url": "https://conflict.devpost.com/",
+          "Team Member 1 Email": "different@example.test",
+        }),
+      ]),
+    );
+
+    expect(result.counts.rejectedProjects).toBe(1);
+    expect(result.rejections[0]?.reason).toContain("conflicting");
+  });
+
+  it("counts malformed draft URLs as excluded instead of rejected", () => {
+    const result = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow(),
+        projectRow({
+          "Project Status": "Draft",
+          "Project Title": "Malformed draft",
+          "Submission Url": "not a URL",
+        }),
+      ]),
+    );
+
+    expect(result.counts.excludedDraftProjects).toBe(1);
+    expect(result.counts.rejectedProjects).toBe(0);
+  });
+
   it("reads variable-width member triples and keeps declared count independent", () => {
     const input = csv([
       headers,
@@ -170,5 +227,56 @@ describe("Devpost project import parsing", () => {
       csv([headersWithoutDescription, rowWithoutDescription]),
     );
     expect(omitted.projects[0]?.description).toBe("");
+  });
+
+  it("imports projects when technologies and schools are blank or omitted", () => {
+    const blank = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow({
+          "Built With": "",
+          "Team Colleges/Universities": "",
+        }),
+      ]),
+    );
+    expect(blank.projects[0]).toMatchObject({
+      technologies: [],
+      universities: [],
+    });
+
+    const optionalHeaders = new Set([
+      "Built With",
+      "Team Colleges/Universities",
+    ]);
+    const headersWithoutOptionalFields = headers.filter(
+      (header) => !optionalHeaders.has(header),
+    );
+    const rowWithoutOptionalFields = projectRow().filter(
+      (_, index) => !optionalHeaders.has(headers[index] ?? ""),
+    );
+    const omitted = parseDevpostProjects(
+      csv([headersWithoutOptionalFields, rowWithoutOptionalFields]),
+    );
+    expect(omitted.projects[0]).toMatchObject({
+      technologies: [],
+      universities: [],
+    });
+  });
+
+  it("imports projects when the opt-in prize column is omitted", () => {
+    const prizeIndex = headers.indexOf("Opt-In Prize");
+    const headersWithoutPrize = headers.filter(
+      (_, index) => index !== prizeIndex,
+    );
+    const rowWithoutPrize = projectRow().filter(
+      (_, index) => index !== prizeIndex,
+    );
+
+    const result = parseDevpostProjects(
+      csv([headersWithoutPrize, rowWithoutPrize]),
+    );
+
+    expect(result.projects[0]?.prizeCategories).toEqual([]);
+    expect(result.challengeLabels).toEqual(["General"]);
   });
 });

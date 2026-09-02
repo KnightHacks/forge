@@ -234,6 +234,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "profilePicture.saveMemberProfilePicture",
   "profilePicture.uploadProfilePicture",
   "projects.delete",
+  "projects.dropAll",
   "projects.getDetail",
   "projects.listAdmin",
   "projects.listAdminHackathons",

@@ -464,6 +464,11 @@ export const AUDIT_ACTION_CATALOG = {
       "rejectedProjects",
     ],
   ),
+  "project.inventory_dropped": policy(
+    "hackathons",
+    "Permanently deleted project inventory",
+    ["projectCount"],
+  ),
   "project.updated": policy("hackathons", "Updated project", ["changedFields"]),
   "project.deleted": policy("hackathons", "Deleted project"),
   "project.restored": policy("hackathons", "Restored project"),

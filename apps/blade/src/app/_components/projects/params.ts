@@ -9,6 +9,22 @@ function positiveInteger(value: string | undefined, fallback: number) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function participantBound(value: string | undefined) {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 100
+    ? parsed
+    : undefined;
+}
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function parseUuidParam(value: SearchParams[string]) {
+  const parsed = first(value);
+  return parsed && uuidPattern.test(parsed) ? parsed : undefined;
+}
+
 export function parseProjectDirectoryParams(params: SearchParams) {
   const direction =
     first(params.direction) === "desc" ? ("desc" as const) : ("asc" as const);
@@ -26,17 +42,24 @@ export function parseProjectDirectoryParams(params: SearchParams) {
     deletedParam === "deleted" || deletedParam === "all"
       ? deletedParam
       : "active";
+  const minParticipants = participantBound(first(params.minParticipants));
+  const requestedMax = participantBound(first(params.maxParticipants));
+  const maxParticipants =
+    minParticipants !== undefined &&
+    requestedMax !== undefined &&
+    minParticipants > requestedMax
+      ? undefined
+      : requestedMax;
 
   return {
-    challengeIds: (first(params.challenge) ?? "").split(",").filter(Boolean),
+    challengeIds: (first(params.challenge) ?? "")
+      .split(",")
+      .filter((challengeId) => uuidPattern.test(challengeId))
+      .slice(0, 25),
     deleted,
     direction,
-    maxParticipants: first(params.maxParticipants)
-      ? positiveInteger(first(params.maxParticipants), 100)
-      : undefined,
-    minParticipants: first(params.minParticipants)
-      ? positiveInteger(first(params.minParticipants), 1)
-      : undefined,
+    maxParticipants,
+    minParticipants,
     page: positiveInteger(first(params.page), 1),
     pageSize,
     query: (first(params.query) ?? "").trim().slice(0, 120),
