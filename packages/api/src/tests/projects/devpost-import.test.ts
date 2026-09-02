@@ -160,6 +160,20 @@ describe("Devpost project import parsing", () => {
     expect(result.rejections[0]?.reason).toContain("conflicting");
   });
 
+  it("ignores questionnaire cells after the declared member triples", () => {
+    const result = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow({}, ["first questionnaire response"]),
+        projectRow({}, ["different questionnaire response"]),
+      ]),
+    );
+
+    expect(result.projects).toHaveLength(1);
+    expect(result.counts.collapsedDuplicateRows).toBe(1);
+    expect(result.counts.rejectedProjects).toBe(0);
+  });
+
   it("counts malformed draft URLs as excluded instead of rejected", () => {
     const result = parseDevpostProjects(
       csv([

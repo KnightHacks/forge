@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   RequestBodyTooLargeError,
@@ -18,13 +18,23 @@ describe("limited request bodies", () => {
   });
 
   it("stops reading once the byte limit is exceeded", async () => {
-    const request = new Request("https://blade.test/import", {
-      body: "project data",
-      method: "POST",
+    const cancel = vi.fn();
+    const body = new ReadableStream<Uint8Array>({
+      cancel,
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("project "));
+        controller.enqueue(new TextEncoder().encode("data"));
+      },
     });
+    const request = new Request("https://blade.test/import", {
+      body,
+      duplex: "half",
+      method: "POST",
+    } as RequestInit & { duplex: "half" });
 
     await expect(requestWithLimitedBody(request, 11)).rejects.toBeInstanceOf(
       RequestBodyTooLargeError,
     );
+    expect(cancel).toHaveBeenCalledOnce();
   });
 });

@@ -8,7 +8,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 
 interface ProjectMember {
-  email: string | null;
+  email: string;
   id: string;
   name: string;
 }
@@ -27,7 +27,7 @@ export function ProjectMembersEditor({
   const [rows, setRows] = useState<EditableMember[]>(() =>
     members.length
       ? members.map((member) => ({
-          email: member.email ?? "",
+          email: member.email,
           key: member.id,
           name: member.name,
         }))
@@ -68,7 +68,7 @@ export function ProjectMembersEditor({
             </div>
             <div className="space-y-2">
               <Label htmlFor={`project-member-email-${member.key}`}>
-                Email (optional)
+                Email
               </Label>
               <Input
                 autoComplete="email"
@@ -78,6 +78,7 @@ export function ProjectMembersEditor({
                 onChange={(event) =>
                   updateMember(member.key, "email", event.target.value)
                 }
+                required
                 type="email"
                 value={member.email}
               />

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -193,5 +193,55 @@ describe("judge project privacy", () => {
     expect(navigation.replace).toHaveBeenCalledWith(
       "/judge/projects?minParticipants=5&page=1",
     );
+  });
+
+  it("updates team-size fields when navigation changes the applied filters", async () => {
+    const data = {
+      challenges: judgeProject.challenges,
+      page: 1,
+      pageSize: 10,
+      projects: [judgeProject],
+      totalCount: 1,
+    };
+    const { rerender } = render(
+      <ProjectDirectory
+        data={data}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          maxParticipants: 4,
+          minParticipants: 2,
+          page: 1,
+          pageSize: 10,
+          query: "",
+          sort: "title",
+        }}
+      />,
+    );
+
+    rerender(
+      <ProjectDirectory
+        data={data}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          maxParticipants: 8,
+          minParticipants: 6,
+          page: 1,
+          pageSize: 10,
+          query: "",
+          sort: "title",
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("spinbutton", { name: "Minimum team size" }),
+      ).toHaveValue(6);
+      expect(
+        screen.getByRole("spinbutton", { name: "Maximum team size" }),
+      ).toHaveValue(8);
+    });
   });
 });

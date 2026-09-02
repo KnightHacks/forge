@@ -25,7 +25,7 @@ const OTHER_CHALLENGE = "70000000-0000-4000-8000-000000000528";
 
 describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
   let disposable: DisposableDatabase | undefined;
-  let client: DatabaseClient;
+  let client: DatabaseClient | undefined;
   let auth: AuthSchemas;
   let schemas: KnightHacksSchemas;
   let caller: Awaited<ReturnType<typeof officerCaller>>;
@@ -50,21 +50,23 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
     // eslint-disable-next-line no-restricted-properties
     process.env.DATABASE_URL = disposable.url;
 
-    ({ db: client } = await import("@forge/db/client"));
+    const databaseModule = await import("@forge/db/client");
+    client = databaseModule.db;
+    const database = client;
     auth = await import("@forge/db/schemas/auth");
     schemas = await import("@forge/db/schemas/knight-hacks");
 
-    await client.insert(auth.User).values({
+    await database.insert(auth.User).values({
       discordUserId: "discord-project-officer",
       id: OFFICER_USER,
     });
-    await client.insert(auth.Roles).values({
+    await database.insert(auth.Roles).values({
       discordRoleId: "990000000000000527",
       id: OFFICER_ROLE,
       name: "Officers",
       permissions: permissionBitstring("IS_OFFICER"),
     });
-    await client
+    await database
       .insert(auth.Permissions)
       .values({ roleId: OFFICER_ROLE, userId: OFFICER_USER });
 
@@ -73,7 +75,7 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
       startDate: new Date("2026-10-01T00:00:00Z"),
       theme: "Projects",
     };
-    await client.insert(schemas.Hackathon).values([
+    await database.insert(schemas.Hackathon).values([
       {
         ...window,
         displayName: "Target Hackathon",
@@ -93,7 +95,7 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
       projectCreatedAt: new Date("2026-09-01T00:00:00Z"),
       submittedAt: new Date("2026-09-02T00:00:00Z"),
     };
-    await client.insert(schemas.Project).values([
+    await database.insert(schemas.Project).values([
       {
         ...projectDefaults,
         hackathonId: TARGET_HACKATHON,
@@ -109,11 +111,21 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
         title: "Other project",
       },
     ]);
-    await client.insert(schemas.ProjectMember).values([
-      { displayOrder: 0, name: "Target member", projectId: TARGET_PROJECT },
-      { displayOrder: 0, name: "Other member", projectId: OTHER_PROJECT },
+    await database.insert(schemas.ProjectMember).values([
+      {
+        displayOrder: 0,
+        email: "target@example.test",
+        name: "Target member",
+        projectId: TARGET_PROJECT,
+      },
+      {
+        displayOrder: 0,
+        email: "other@example.test",
+        name: "Other member",
+        projectId: OTHER_PROJECT,
+      },
     ]);
-    await client.insert(schemas.ProjectChallenge).values([
+    await database.insert(schemas.ProjectChallenge).values([
       {
         hackathonId: TARGET_HACKATHON,
         id: TARGET_CHALLENGE,
@@ -125,7 +137,7 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
         label: "General",
       },
     ]);
-    await client.insert(schemas.ProjectToChallenge).values([
+    await database.insert(schemas.ProjectToChallenge).values([
       {
         challengeId: TARGET_CHALLENGE,
         hackathonId: TARGET_HACKATHON,
@@ -142,11 +154,13 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
   }, 120_000);
 
   afterAll(async () => {
-    await client.$client.end().catch(() => undefined);
+    await client?.$client.end().catch(() => undefined);
     await disposable?.drop();
   }, 30_000);
 
   it("deletes only the selected hackathon and cascades its dependent rows", async () => {
+    if (!client)
+      throw new Error("The disposable database was not provisioned.");
     await expect(
       caller.projects.dropAll({
         confirmation: "Target Hackathon",

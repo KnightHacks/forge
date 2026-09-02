@@ -36,8 +36,8 @@ import { promisify } from "util";
 import { minioClient } from "../../api/src/minio/minio-client";
 import { env } from "../src/env";
 import {
-  isRetiredJudgingDumpStatement,
   psqlFileArgs,
+  RetiredJudgingDumpFilter,
   truncateRestorePostlude,
   truncateRestorePrelude,
 } from "./prod-db-restore";
@@ -50,9 +50,10 @@ async function writeCompatibleBackup(source: string, destination: string) {
     input: createReadStream(source),
   });
   const output = createWriteStream(destination);
+  const filter = new RetiredJudgingDumpFilter();
   try {
     for await (const line of lines) {
-      if (isRetiredJudgingDumpStatement(line)) continue;
+      if (!filter.shouldInclude(line)) continue;
       if (!output.write(`${line}\n`)) await once(output, "drain");
     }
     output.end();

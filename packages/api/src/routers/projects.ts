@@ -106,7 +106,7 @@ async function relatedProjects(projectIds: string[]) {
       challengesByProject: new Map<string, { id: string; label: string }[]>(),
       membersByProject: new Map<
         string,
-        { email: string | null; id: string; name: string; order: number }[]
+        { email: string; id: string; name: string; order: number }[]
       >(),
     };
   }
@@ -138,7 +138,7 @@ async function relatedProjects(projectIds: string[]) {
   ]);
   const membersByProject = new Map<
     string,
-    { email: string | null; id: string; name: string; order: number }[]
+    { email: string; id: string; name: string; order: number }[]
   >();
   for (const member of members) {
     const list = membersByProject.get(member.projectId) ?? [];

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isRetiredJudgingDumpStatement,
   psqlFileArgs,
+  RetiredJudgingDumpFilter,
   truncateRestorePostlude,
   truncateRestorePrelude,
 } from "../../scripts/prod-db-restore";
@@ -77,5 +78,30 @@ describe("production database restore safety", () => {
         "INSERT INTO public.auth_user (name) VALUES ('knight_hacks_teams');",
       ),
     ).toBe(false);
+  });
+
+  it("omits every line of a retired-table statement", () => {
+    const filter = new RetiredJudgingDumpFilter();
+    const lines = [
+      "INSERT INTO public.knight_hacks_teams (notes) VALUES ('first line",
+      "INSERT INTO public.auth_user (name) VALUES (''text inside the value'');",
+      "last line');",
+      "INSERT INTO public.auth_user (name) VALUES ('kept');",
+    ];
+
+    expect(lines.filter((line) => filter.shouldInclude(line))).toEqual([
+      "INSERT INTO public.auth_user (name) VALUES ('kept');",
+    ]);
+  });
+
+  it("keeps retired-table text inside a current-table value", () => {
+    const filter = new RetiredJudgingDumpFilter();
+    const lines = [
+      "INSERT INTO public.auth_user (name) VALUES ('first line",
+      "INSERT INTO public.knight_hacks_teams (id) VALUES (''not SQL'');",
+      "last line');",
+    ];
+
+    expect(lines.filter((line) => filter.shouldInclude(line))).toEqual(lines);
   });
 });

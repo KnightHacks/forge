@@ -1,6 +1,6 @@
 # Project Judging Status
 
-Current phase: Ready to push
+Current phase: CodeRabbit follow-up complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -146,6 +146,15 @@ Current phase: Ready to push
   duplicate-row identity, draft diagnostics, URL filter normalization,
   pagination, pending-import behavior, deleted-project edits, and stale backup
   compatibility.
+- 2026-09-02: Duplicate Devpost rows compare only the declared additional-team
+  count and its corresponding member triples. Questionnaire cells do not affect
+  duplicate identity.
+- 2026-09-02: Team member email is required by the approved import and editing
+  contract. Validation, UI types, importer output, and the database constraint
+  now enforce the same rule through migration `0043`.
+- 2026-09-02: Development restore filtering consumes complete SQL statements
+  for retired judging tables, including multiline inserts, without matching
+  retired-table text inside values for retained tables.
 
 ## Open questions
 
@@ -171,6 +180,7 @@ Current phase: Ready to push
 - [x] Remove judging PII from judge responses while retaining admin data.
 - [x] Add the judge eye-button affordance on desktop and mobile.
 - [x] Verify the production backup sanitizer against the post-migration schema.
+- [x] Address and resolve the CodeRabbit follow-up review findings.
 
 ## Validation / commands
 
@@ -218,6 +228,19 @@ apps/blade/src/app/admin/projects apps/blade/src/app/judge`: passed; 12 files,
   referenced.
 - `pnpm --filter=@forge/db exec vitest run
 src/tests/dev-db-backup-sanitizer.test.ts`: passed; 17 tests.
+- CodeRabbit-focused Blade tests: passed; 2 files and 8 tests.
+- CodeRabbit-focused database tests: passed; 3 files and 9 tests.
+- Devpost importer tests: passed; 11 tests, including questionnaire-insensitive
+  duplicate comparison.
+- Drop-all database integration test: passed; 1 test.
+- Project validator tests: passed; required email rejects blank and invalid
+  values and trims valid input.
+- `pnpm db:migrate`: passed against the local database with migration `0043`.
+- `pnpm db:pull -- --truncate`: passed against `localhost:5433/local` after the
+  multiline restore-filter fix.
+- `pnpm verify:precommit`: passed; React analysis, formatting, lint, and all 33
+  typecheck tasks completed successfully.
+- `pnpm build`: passed; all 21 build tasks completed successfully.
 - `pnpm --filter=@forge/api exec vitest run src/tests/projects
 src/tests/audit/coverage.test.ts src/tests/root/api-surface.test.ts`: passed;
   6 files and 22 tests. The API snapshot includes `projects.dropAll`.

@@ -441,6 +441,7 @@ export function ProjectDirectory<TProject extends Project>({
       <ProjectFilters
         challenges={data.challenges}
         input={input}
+        key={`${input.minParticipants ?? ""}:${input.maxParticipants ?? ""}`}
         navigate={navigate}
         query={query}
         setQuery={setQuery}

@@ -56,9 +56,7 @@ function MemberEmail({
     >
       {email}
     </a>
-  ) : (
-    <span className="text-muted-foreground">No email provided</span>
-  );
+  ) : null;
 }
 
 export function ProjectDetailDialog({

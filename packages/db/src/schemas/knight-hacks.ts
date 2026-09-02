@@ -2156,7 +2156,7 @@ export const ProjectMember = createTable(
       .notNull()
       .references(() => Project.id, { onDelete: "cascade" }),
     name: t.varchar({ length: 255 }).notNull(),
-    email: t.varchar({ length: 320 }),
+    email: t.varchar({ length: 320 }).notNull(),
     displayOrder: t.integer().notNull(),
   }),
   (table) => ({

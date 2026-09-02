@@ -1,7 +1,7 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { ProjectToChallenge } from "../schemas/knight-hacks";
+import { ProjectMember, ProjectToChallenge } from "../schemas/knight-hacks";
 
 describe("project inventory storage", () => {
   it("scopes every project challenge link to one hackathon", () => {
@@ -16,6 +16,7 @@ describe("project inventory storage", () => {
       },
     );
 
+    expect(foreignKeys).toHaveLength(2);
     expect(foreignKeys).toEqual(
       expect.arrayContaining([
         {
@@ -30,5 +31,9 @@ describe("project inventory storage", () => {
         },
       ]),
     );
+  });
+
+  it("requires an email for stored project members", () => {
+    expect(ProjectMember.email.notNull).toBe(true);
   });
 });

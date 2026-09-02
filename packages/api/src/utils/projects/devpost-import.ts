@@ -20,7 +20,7 @@ export class ProjectImportError extends Error {
 }
 
 export interface ParsedProjectMember {
-  email: string | null;
+  email: string;
   name: string;
   order: number;
 }
@@ -118,9 +118,18 @@ function splitList(value: string | undefined) {
 }
 
 function normalizedTeamColumns(row: string[], additionalCountIndex: number) {
-  const values = row.slice(additionalCountIndex).map(clean);
-  while (values.at(-1) === "") values.pop();
-  return values;
+  const count = clean(row[additionalCountIndex]);
+  const parsedCount = Number(count);
+  const memberColumnCount =
+    Number.isInteger(parsedCount) && parsedCount >= 0 && parsedCount <= 99
+      ? parsedCount * 3
+      : 0;
+  return [
+    count,
+    ...Array.from({ length: memberColumnCount }, (_, index) =>
+      clean(row[additionalCountIndex + index + 1]),
+    ),
+  ];
 }
 
 function projectLabel(title: string, rowNumber: number) {
