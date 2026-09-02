@@ -369,8 +369,8 @@ export function AdminFormBuilder({
         </p>
       )}
 
-      <div className="grid gap-5">
-        <section className="grid gap-4">
+      <div className="grid min-w-0 gap-5">
+        <section className="grid min-w-0 gap-4">
           <FormBuilderDetailsCard
             description={description}
             initial={initial}

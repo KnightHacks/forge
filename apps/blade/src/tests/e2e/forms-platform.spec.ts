@@ -227,6 +227,20 @@ test.describe("forms platform cross-surface journey", () => {
     await expect(page.getByText("published")).toBeVisible();
 
     await page.setViewportSize({ width: 320, height: 740 });
+    // The builder's top-level `grid gap-N` wrappers had no `min-w-0`, so a
+    // CSS Grid item's default min-content sizing forced the whole "Form
+    // details"/"Questions" column to its content's min-content width (which
+    // this trivial fixture already exceeds at 320px) instead of shrinking to
+    // the viewport. The shell's `overflow-x-hidden` silently cropped the
+    // difference rather than producing a scrollbar, so this needs an actual
+    // overflow measurement rather than a visual check.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        ),
+      )
+      .toBeLessThanOrEqual(1);
     await page.goto("/admin/forms");
     const sectionSelect = page.locator(
       'select[aria-label="Form section"]:visible',
