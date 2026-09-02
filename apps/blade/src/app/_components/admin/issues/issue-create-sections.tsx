@@ -105,7 +105,7 @@ export function IssueBasicsSection({
         </div>
         {preview ? (
           <div className="min-h-40 rounded-md border border-white/10 bg-card/50 p-4">
-            <MarkdownContent>
+            <MarkdownContent breaks>
               {draft.description || "Nothing to preview yet."}
             </MarkdownContent>
           </div>

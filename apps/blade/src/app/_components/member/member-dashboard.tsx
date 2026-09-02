@@ -14,6 +14,7 @@ import {
   History,
   Linkedin,
   MapPin,
+  QrCode,
   Settings,
   Sparkles,
   Trophy,
@@ -24,6 +25,12 @@ import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@forge/ui/tooltip";
 import { MEMBER_DUES_PATH, MEMBER_SETTINGS_PATH } from "@forge/validators";
 
 import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
@@ -99,24 +106,34 @@ function DuesStatusBadge({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
   );
 }
 
-function DuesStatusTile({
-  className,
-  compact = false,
-  duesStatus,
-}: {
-  className?: string;
-  compact?: boolean;
-  duesStatus: CurrentDuesStatus;
-}) {
+function PaidDuesBadge({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
+  const confirmation = `Dues paid for the ${duesStatus.paymentAcademicYear.label}.`;
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            aria-label={confirmation}
+            className="inline-flex cursor-help rounded-full"
+            role="img"
+            tabIndex={0}
+          >
+            <DuesStatusBadge duesStatus={duesStatus} />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{confirmation}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function DuesStatusTile({ duesStatus }: { duesStatus: CurrentDuesStatus }) {
   return (
     <DashboardContent
       role="group"
       aria-label="Dues status"
-      className={cn(
-        dashboardNestedSurfaceClass,
-        "space-y-3 p-3 md:p-4",
-        className,
-      )}
+      className={cn(dashboardNestedSurfaceClass, "space-y-3 p-3 md:p-4")}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -124,30 +141,21 @@ function DuesStatusTile({
             <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
             Dues
           </div>
-          <p
-            className={cn(
-              "text-sm leading-5 text-muted-foreground",
-              compact && "line-clamp-2",
-            )}
-          >
-            {duesStatus.paid
-              ? `Paid for the ${duesStatus.paymentAcademicYear.label}.`
-              : duesStatus.paymentsLocked
-                ? "Dues payments are paused until further notice."
-                : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
+          <p className="text-sm leading-5 text-muted-foreground">
+            {duesStatus.paymentsLocked
+              ? "Dues payments are paused until further notice."
+              : `Dues unpaid for the ${duesStatus.payableAcademicYear.label}.`}
           </p>
         </div>
         <DuesStatusBadge duesStatus={duesStatus} />
       </div>
 
-      {!duesStatus.paid && duesStatus.paymentsLocked && (
-        <Button disabled size={compact ? "sm" : "md"} className="w-full">
+      {duesStatus.paymentsLocked ? (
+        <Button disabled size="md" className="w-full">
           Payments paused
         </Button>
-      )}
-
-      {!duesStatus.paid && !duesStatus.paymentsLocked && (
-        <Button asChild size={compact ? "sm" : "md"} className="w-full gap-2">
+      ) : (
+        <Button asChild size="md" className="w-full gap-2">
           <RouteTransitionLink href={MEMBER_DUES_PATH}>
             Pay dues
           </RouteTransitionLink>
@@ -157,15 +165,39 @@ function DuesStatusTile({
   );
 }
 
+function CheckInTile() {
+  return (
+    <DashboardContent
+      role="group"
+      aria-label="Check in"
+      className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <QrCode className="h-4 w-4 text-primary" aria-hidden="true" />
+            Check in
+          </div>
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">
+            Show this code at the door to check in to a Knight Hacks event.
+          </p>
+        </div>
+        <MemberQRCodeDialog
+          label="View QR code"
+          triggerClassName="min-h-11 w-full sm:w-auto"
+        />
+      </div>
+    </DashboardContent>
+  );
+}
+
 function EventsOverview({
   attendance,
-  className,
   events,
   feedback,
   unavailable = false,
 }: {
   attendance: MemberAttendanceItem[];
-  className?: string;
   events: MemberEventItem[];
   feedback: MemberFeedbackOpportunity[];
   unavailable?: boolean;
@@ -178,11 +210,7 @@ function EventsOverview({
       role="region"
       aria-label="Events overview"
       data-dashboard-events-layout="stacked"
-      className={cn(
-        dashboardNestedSurfaceClass,
-        "flex flex-col p-3 md:p-4",
-        className,
-      )}
+      className={cn(dashboardNestedSurfaceClass, "flex flex-col p-3 md:p-4")}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 font-medium">
@@ -329,21 +357,7 @@ function EventsOverview({
   );
 }
 
-function GuildProfileCard({
-  attendance,
-  duesStatus,
-  events,
-  eventsUnavailable,
-  feedback,
-  member,
-}: {
-  attendance: MemberAttendanceItem[];
-  duesStatus: CurrentDuesStatus;
-  events: MemberEventItem[];
-  eventsUnavailable: boolean;
-  feedback: MemberFeedbackOpportunity[];
-  member: CurrentMember;
-}) {
+function GuildProfileCard({ member }: { member: CurrentMember }) {
   const displayName = `${member.firstName} ${member.lastName}`.trim();
   const isPublic = member.guildProfileVisible;
   const links = [
@@ -368,9 +382,9 @@ function GuildProfileCard({
     <Card
       role="region"
       aria-label="Guild profile"
-      className={cn(dashboardPanelClass, "order-1 flex flex-col lg:order-2")}
+      className={cn(dashboardPanelClass, "flex flex-col")}
     >
-      <CardContent className="flex min-h-[calc(100svh-6rem)] flex-1 flex-col gap-4 p-4 pt-5 md:gap-6 md:p-6 md:pt-8 lg:min-h-0 lg:overflow-y-auto">
+      <CardContent className="flex flex-1 flex-col gap-4 p-4 pt-5 md:gap-6 md:p-6 md:pt-8 lg:overflow-y-auto">
         <DashboardContent className="relative flex flex-col items-center text-center">
           <Button
             asChild
@@ -395,12 +409,17 @@ function GuildProfileCard({
           />
           <div className="mt-2 w-full min-w-0 space-y-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <h2 className="break-words text-xl font-semibold tracking-normal md:text-2xl">
+              {/* R-12: a flex item defaults to min-width:auto, and
+                  overflow-wrap:break-word does not shrink intrinsic width, so
+                  an unbroken name stays at max-content and clips. anywhere
+                  does reduce min-content, matching the house pattern in
+                  member-detail-dialog.tsx. */}
+              <h2 className="min-w-0 text-xl font-semibold tracking-normal [overflow-wrap:anywhere] md:text-2xl">
                 {displayName}
               </h2>
               <Badge
                 variant="outline"
-                className="hidden gap-2 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary sm:inline-flex"
+                className="inline-flex gap-2 rounded-full border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.7rem] text-primary"
               >
                 {isPublic ? (
                   <Eye className="h-3 w-3" aria-hidden="true" />
@@ -410,10 +429,18 @@ function GuildProfileCard({
                 {isPublic ? "Public" : "Private"}
               </Badge>
             </div>
-            <p className="break-words text-sm text-muted-foreground">
+            <p className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">
               {member.tagline || <EmptyValue>Add a Guild tagline</EmptyValue>}
             </p>
           </div>
+          <p className="mt-3 text-sm leading-5 text-muted-foreground">
+            Guild is the public Knight Hacks member directory. This card is your
+            Guild profile,{" "}
+            {isPublic
+              ? "and anyone on Guild can see it."
+              : "and it stays hidden from Guild until you turn visibility on."}{" "}
+            Your dues, check in, events, and forms stay private to Blade.
+          </p>
           <Button
             asChild
             variant="outline"
@@ -426,59 +453,16 @@ function GuildProfileCard({
               rel="noreferrer"
             >
               {isPublic ? "View Guild profile" : "Explore Guild"}
+              <span className="sr-only"> (opens in a new tab)</span>
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
             </a>
           </Button>
         </DashboardContent>
 
-        <DashboardContent className="lg:hidden">
-          <MemberQRCodeDialog variant="mobile" />
-        </DashboardContent>
-
-        <DuesStatusTile compact duesStatus={duesStatus} className="lg:hidden" />
-
-        <EventsOverview
-          attendance={attendance}
-          events={events}
-          feedback={feedback}
-          unavailable={eventsUnavailable}
-          className="lg:hidden"
-        />
-
-        <DashboardContent
-          className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2 text-sm font-medium">
-              <FileText className="h-4 w-4 text-primary" aria-hidden="true" />
-              Previous forms
-            </span>
-            <Button asChild size="sm" variant="outline" className="min-h-11">
-              <RouteTransitionLink href="/member/forms">
-                Review
-              </RouteTransitionLink>
-            </Button>
-          </div>
-        </DashboardContent>
-
-        <DashboardContent
-          role="group"
-          aria-label="Company"
-          className={cn(dashboardNestedSurfaceClass, "p-3 lg:hidden")}
-        >
-          <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
-            <Building2 className="h-4 w-4 text-primary" aria-hidden="true" />
-            Company
-          </div>
-          <p className="break-words text-sm font-medium">
-            {member.company || <EmptyValue>Not listed</EmptyValue>}
-          </p>
-        </DashboardContent>
-
         <DashboardContent
           className={cn(
             dashboardNestedSurfaceClass,
-            "hidden min-h-36 resize-y overflow-y-auto p-3 md:p-4 lg:block lg:flex-1",
+            "min-h-36 resize-y overflow-y-auto p-3 md:p-4 lg:flex-1",
           )}
         >
           <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -490,8 +474,12 @@ function GuildProfileCard({
           </p>
         </DashboardContent>
 
-        <DashboardContent className="hidden gap-3 sm:grid-cols-2 lg:grid lg:grid-cols-1 xl:grid-cols-2">
-          <div className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}>
+        <DashboardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div
+            role="group"
+            aria-label="Company"
+            className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}
+          >
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
               <Building2 className="h-4 w-4 text-primary" aria-hidden="true" />
               Company
@@ -500,7 +488,11 @@ function GuildProfileCard({
               {member.company || <EmptyValue>Not listed</EmptyValue>}
             </p>
           </div>
-          <div className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}>
+          <div
+            role="group"
+            aria-label="Visibility"
+            className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}
+          >
             <div className="mb-2 flex items-center gap-2 text-xs uppercase text-muted-foreground">
               {isPublic ? (
                 <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -602,20 +594,19 @@ export function MemberDashboard({
         <Card
           role="region"
           aria-label="Member details"
-          className={cn(
-            dashboardPanelClass,
-            "order-2 hidden lg:order-1 lg:flex",
-          )}
+          className={dashboardPanelClass}
         >
           <CardContent className="flex h-full flex-col justify-start gap-4 p-4 md:gap-6 md:p-6 lg:overflow-y-auto lg:p-8">
-            <DashboardContent className="flex flex-wrap items-start justify-between gap-3">
+            <DashboardContent className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-semibold tracking-normal md:text-5xl">
                 Welcome, {member.firstName}
               </h1>
-              <MemberQRCodeDialog />
+              {duesStatus.paid && <PaidDuesBadge duesStatus={duesStatus} />}
             </DashboardContent>
 
-            <DuesStatusTile duesStatus={duesStatus} />
+            {!duesStatus.paid && <DuesStatusTile duesStatus={duesStatus} />}
+
+            <CheckInTile />
 
             <EventsOverview
               attendance={attendance}
@@ -625,7 +616,7 @@ export function MemberDashboard({
             />
 
             <DashboardContent
-              className={cn(dashboardNestedSurfaceClass, "p-4")}
+              className={cn(dashboardNestedSurfaceClass, "p-3 md:p-4")}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="flex items-center gap-2 text-sm font-medium">
@@ -635,7 +626,12 @@ export function MemberDashboard({
                   />
                   Previous forms
                 </span>
-                <Button asChild size="sm" variant="outline">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="min-h-11"
+                >
                   <RouteTransitionLink href="/member/forms">
                     Review history
                   </RouteTransitionLink>
@@ -645,14 +641,7 @@ export function MemberDashboard({
           </CardContent>
         </Card>
 
-        <GuildProfileCard
-          attendance={attendance}
-          duesStatus={duesStatus}
-          events={events}
-          eventsUnavailable={eventsUnavailable}
-          feedback={feedback}
-          member={member}
-        />
+        <GuildProfileCard member={member} />
       </section>
     </main>
   );

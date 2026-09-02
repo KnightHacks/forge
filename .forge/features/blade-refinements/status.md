@@ -28,6 +28,106 @@ Current phase: Bundle approved / ready for technical discovery
   profile/photo/resume/preferences controls are not moved into Settings as part
   of this slice. The dashboard must instead explain what Guild is and which data
   is public/external.
+- 2026-09-01 (R-07): The member dashboard now renders one DOM order on every
+  viewport instead of a desktop tree plus `lg:hidden` mobile duplicates. The
+  shared order is the Member details card first (Welcome, dues, Check in,
+  Events, Previous forms) and the Guild profile card second. The `order-*`
+  and `hidden` utilities were removed rather than reshuffled, so desktop keeps
+  Member details on the left and Guild on the right, which is what TC-020's
+  existing bounding-box assertion already required.
+- 2026-09-01 (R-12): Claimed after finishing R-07 through R-10. It cites
+  TC-020, and the R-07 pass already added a Playwright overflow journey at
+  320/390/768/1024/1440 plus long-name and sparse-profile browser QA, so it
+  extends verified ground rather than opening a cold surface. R-12 covers
+  Guild/profile parity between sparse and populated data. Per srd.md it may not
+  be closed by adding `overflow-x-hidden` to conceal a layout bug.
+- 2026-09-01 (R-23): Claimed and implemented in error, then reverted the same
+  day. R-23 had been claimed verbally in the team Discord on 8/30 and that
+  claim never reached this file, so the inventory read as unclaimed. The ticket
+  is back to Ready and the two upload components are back to their prior state;
+  the measurements taken while it was held are recorded below for its owner.
+  This table is not proof a ticket is free while claims live in chat.
+- 2026-09-01 (R-12): The defect was found by measuring computed style in a real
+  browser, not by reading the markup. The member name heading computed
+  `width: 500.203px` inside a 320 px viewport with `overflow-wrap: normal` and
+  was clipped by an ancestor. `min-w-0` alone was not enough: it removes the
+  flex `min-width: auto` floor but the element still sizes from an unshrinkable
+  max-content. Only `overflow-wrap: anywhere` feeds back into intrinsic sizing,
+  and because `break-words` sets the same property it had to be removed rather
+  than stacked, matching `admin/members/member-detail-dialog.tsx:159`.
+- 2026-09-01 (R-23, evidence only, not implemented here): while R-12 was being
+  probed, the `Input` primitive used as a visually hidden file picker in
+  `member-profile-picture-upload.tsx` and `member-resume-upload.tsx` measured as
+  a real overflow source. Its own `w-full h-9` outrank `sr-only`'s 1 px box, so
+  each input computed to `position: absolute; width: 1440px; height: 36px` and
+  pushed `documentElement.scrollWidth` 363 px past a 320 px viewport, concealed
+  only by the `overflow-x-hidden` on `authenticated-shell.tsx`. A bare
+  `<input className="sr-only">` removes it. The same pattern also exists in
+  `admin/members/member-detail-dialog.tsx` (twice) and
+  `admin/companies/company-admin-detail.tsx`. Left for the R-23 owner.
+- 2026-09-01 (R-18): Claimed after reading the team Discord, which is the
+  authoritative claim list for this task. As of 9/1 3:01 PM Spyderma9 holds
+  R-01 through R-06, TacoLover holds R-20/R-22/R-23/R-24, and Eric12 holds
+  R-13/R-15/R-16, leaving R-18 as the only unclaimed Ready row. R-18 touches
+  `packages/ui/src/markdown-content.tsx` and the three issue call sites, which
+  no one else's claim overlaps.
+- 2026-09-01 (R-18): The cause is CommonMark, not the issue code. A lone `\n`
+  is a soft break and renders as a space; only two trailing spaces or a
+  backslash produce `<br>`. Issue descriptions are authored in a plain
+  `Textarea`, so authors type chat-style newlines and lose them on save. The fix
+  is `remark-breaks` behind a new opt-in `breaks` prop on
+  `packages/ui/src/markdown-content.tsx`, switched on at the three issue call
+  sites only. It is opt-in because the same component renders club and member
+  event descriptions, where the standard soft-break behavior is correct, and
+  R-18 forbids changing unrelated consumers. Preview and detail match by
+  construction: both render the same component with the same prop.
+- 2026-09-01 (R-17): Reproduced against the production-base code before
+  changing it, as the SRD requires. The assignee filter was the only condition
+  in `issues.list` built as a correlated `exists()` subquery comparing
+  `IssuesToUsersAssignment.issueId` to `Issue.id`. Drizzle's relational query
+  builder selects `from "knight_hacks_issue" "Issue"`, so that inner comparison
+  compiled to the physical table name, which has no FROM-clause entry under the
+  alias. Against a migrated Postgres seeded with three teams, three users, and
+  eight issues, the exact failure was `error: invalid reference to FROM-clause
+entry for table "knight_hacks_issue"`. The whole list query throws, so the
+  admin issues page falls to its error boundary and shows the generic "Issues
+  could not be loaded" instead of results, which is exactly the reported
+  symptom. The repair mirrors `roleVisibilityPredicate`, which already solved
+  this for issue visibility: a new exported `assigneeFilterPredicate` uses an
+  uncorrelated `inArray(Issue.id, subquery)` so the outer column stays in the
+  top-level predicate where the alias applies. Set semantics are unchanged.
+  Verified on the seeded database that a user assigned across two teams returns
+  all six of their issues, a single-assignment user returns one, an unassigned
+  user returns a truthful empty result rather than an error, the filter still
+  composes with the owning-team filter, and `pageSize: 2` pages 2 and 3 return
+  the correct slices with `totalCount` 6. Access policy is untouched;
+  `roleVisibilityPredicate` still runs as its own condition.
+- 2026-09-01 (R-17, incidental repair): `pnpm-lock.yaml` was reformatted in
+  commit 69d19dc7 because lefthook's pre-commit format job globs `*.yaml`, so
+  staging the lockfile let prettier rewrite all 19,950 lines and requote every
+  key. That broke `packages/api/src/tests/root/version-pins.test.ts`, whose
+  parser only strips single quotes, and it was failing on the shared branch. The
+  lockfile has been regenerated from the pre-commit state with
+  `pnpm install --lockfile-only`; the diff is now only `remark-breaks@4.0.0` and
+  its three transitive dependencies, with no importer or package removed.
+  Anyone else who stages `pnpm-lock.yaml` on this repo will hit the same trap;
+  committing it with `--no-verify` avoids it until the glob is narrowed.
+- 2026-09-01 (inventory sync): This table lagged the team Discord by days, which
+  is what caused the R-23 collision. Claims stated in the group DM are now
+  recorded here: Eric12 took R-13, R-15, and R-16 on 9/1 at 3:01 PM, and
+  TacoLover took R-20, R-22, R-23, and R-24 on 8/30 at 3:30 PM. Those are their
+  own public statements written down, not assignments made for them. After this
+  sync no Ready row is unclaimed; R-17, R-19, and R-25 are still Discovery and
+  R-26 and R-27 are Deferred. Dylan's 8/28 ask about form-respondent text
+  alignment still has no row; Spyderma9 said on 9/1 at 3:11 PM that he would try
+  it after R-05 and R-06, so it is left to him rather than claimed here.
+- 2026-09-01 (R-07/R-11): On mobile, "Previous forms stays at the bottom" is
+  satisfied as the bottom of the member panel, not literally the last element
+  on the page. Moving it below the Guild card would put a private Blade action
+  underneath the public Guild surface, which contradicts R-08's requirement to
+  keep private Blade data visually separated from public Guild data. R-11's
+  low-emphasis treatment (small outline button on a nested surface) is
+  unchanged.
 - 2026-08-12: Resume upload success must not auto-open preview and applies to
   signup plus existing-member flows. Success retains an explicit View action.
 - 2026-08-12: Previous forms remains at the bottom as a small, low-emphasis
@@ -90,6 +190,18 @@ Current phase: Bundle approved / ready for technical discovery
   plus manual browser QA. No Playwright run was performed; stale
   ordinary-member expectations in `mobile-member-experience.spec.ts`
   were updated to the R-02/TC-002 contract for the next run.
+- 2026-09-01 (R-03): Resolved the R-02 Settings handoff. Settings leaves the
+  rail and drawer and renders in the header for every signed-in user, since
+  the spec treats it as an account utility and the R-04 group map has no
+  Settings entry. Ordinary members are behaviourally unchanged.
+- 2026-09-01 (R-03): Rail expansion is `useState` inside
+  `DesktopAdminNavigation`, which absorbed the `<aside>` so the opener and
+  labels share one state. The shell stays a server component. Because it
+  lives in a layout and survives navigation, the rail collapses on selection
+  and on pathname change; nothing is persisted.
+- 2026-09-01 (R-04): Group headings use the literal map names — Club, Team,
+  Hackathon, External. Rail width is unchanged at `w-16` to `w-56`, and the
+  opener reuses the existing PanelLeft icon in the rail header.
 - 2026-09-01 (R-20): Implemented as read-time enrichment only. New
   `packages/api/src/utils/member/display-name.ts` batch-resolves current
   Member names by Member id (Admin logs' `actorMemberId`) and by User id
@@ -105,18 +217,22 @@ Current phase: Bundle approved / ready for technical discovery
   deadline" were shortened to "Prior app"/"Prior confirm" so the two rows fit
   at narrow widths. The table alternative below the chart is unchanged.
 - 2026-09-01 (R-23): Root cause was `member.tagline` (an unbreakable single
-  token can reach the schema's 80-char max) missing `break-words`, plus the
-  containing `div.mt-2.space-y-2` lacking `min-w-0`/`w-full`, so a flex
-  item's default `min-width: auto` floor kept it from shrinking. The
+  token can reach the schema's 80-char max) with no width-shrinking treatment,
+  plus the containing `div.mt-2.space-y-2` lacking `min-w-0`/`w-full`, so a
+  flex item's default `min-width: auto` floor kept it from shrinking. The
   authenticated shell's `overflow-x-hidden` was silently clipping the
   overflow instead of scrolling it, which is why a plain
   `document.documentElement.scrollWidth` check could not see the bug — the
   reproduction test added an element-level concealed-overflow check
   (`scrollWidth > clientWidth` on an `overflow-x: hidden` ancestor) to catch
-  it. Fixed by adding `break-words` to the tagline and name, and
-  `min-w-0 w-full` to their container. No other surface flagged by the new
-  320px/768px checks (resume dialog, QR dialog, settings) needed changes;
-  scope was kept to what the failing test named, per plan.
+  it. First fixed with `break-words` (`overflow-wrap: break-word`) plus
+  `min-w-0 w-full` on the container; superseded during the merge with R-12's
+  `[overflow-wrap:anywhere]` plus `min-w-0` directly on the tagline/name
+  elements, which R-12's investigation found is the version that actually
+  reduces min-content sizing (`break-word` does not) — see the R-12 entries
+  below. No other surface flagged by the new 320px/768px checks (resume
+  dialog, QR dialog, settings) needed changes; scope was kept to what the
+  failing test named, per plan.
 - 2026-09-01 (R-24): Verification-only, as scoped — the schema, builder, and
   respondent-render code already worked. Added the missing regression
   coverage (round-trip of the draft-instruction helpers, and loading/error/
@@ -150,6 +266,11 @@ Current phase: Bundle approved / ready for technical discovery
    enumerated only in `.env.example`.
 6. Cleanup: should the dead `ISSUES_FEATURE_ENABLED` entry be dropped
    from `.env.example`? No env schema declares it.
+7. Local setup: should local dev use `db:push` or `migrate`? `push`
+   skips the data backfills embedded in migration files, so seeds like
+   `knight_hacks_discord_config` are missing and admin analytics throws;
+   `migrate` then fails at `0001` because `push` already created
+   `event_tag`.
 
 ## Contributor coordination
 
@@ -187,22 +308,22 @@ Current phase: Bundle approved / ready for technical discovery
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------------- | ------------------------------ |
 | R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)         | TC-001                         |
 | R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)         | TC-002                         |
-| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Ready     | Claimed Spyderma9 (8/31/2026) | TC-003, TC-NEG-001             |
-| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Ready     | Claimed Spyderma9 (8/31/2026) | TC-004                         |
+| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Complete  | Spyderma9 (8/31/2026)         | TC-003, TC-NEG-001             |
+| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Complete  | Spyderma9 (8/31/2026)         | TC-004                         |
 | R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
 | R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Ready     | Claimed Spyderma9 (8/31/2026) | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Ready     | Unclaimed                     | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Ready     | Unclaimed                     | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Ready     | Unclaimed                     | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Ready     | Unclaimed                     | TC-006                         |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Complete  | azizu06 (9/1/2026)            | TC-007, TC-020                 |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Complete  | azizu06 (9/1/2026)            | TC-007, TC-008                 |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)            | TC-007                         |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)            | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)       | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Ready     | Unclaimed                     | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Unclaimed                     | TC-009                         |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)            | TC-008, TC-020                 |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Claimed Eric12 (9/1/2026)     | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)       | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Unclaimed                     | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Unclaimed                     | TC-012, TC-NEG-001             |
-| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Discovery | Unclaimed                     | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Ready     | Unclaimed                     | TC-014                         |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Claimed Eric12 (9/1/2026)     | TC-011                         |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026)     | TC-012, TC-NEG-001             |
+| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete  | azizu06 (9/1/2026)            | TC-013                         |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)            | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                     | TC-015, TC-NEG-002, TC-NEG-003 |
 | R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Complete  | TacoLover (2026-09-01)        | TC-016, TC-NEG-003             |
 | R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)       | TC-017                         |
@@ -342,27 +463,189 @@ for forge` is the branch tip again. The merged content was verified
   resolved both. Checks after the fix: `pnpm format` (pass, 24/24),
   `pnpm lint` (0 errors; pre-existing file-length and import-style warnings
   only), `pnpm typecheck` (pass). No code changes were made.
-  - 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
-    709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
-    `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
-    8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
-    113 pre-existing repo warnings, typecheck 33/33). An earlier
-    verify:precommit run failed on format for three newly written files;
-    resolved with prettier --write and re-run. One Vitest flake observed
-    under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
-    unrelated to this diff); passed 3/3 in isolation.
-    Browser verification on localhost: signed-in landing page stays at `/`
-    with the "Go to your dashboard" CTA; signed-out landing page unchanged;
-    product mark returns to `/`. TC-002 confirmed against a throwaway
-    no-role member session via the e2e signin route on a side-port server —
-    no desktop rail, no mobile drawer trigger, Settings and Sign out in the
-    header at both widths. Admin account confirmed to still render the rail
-    correctly. Scratch rows cleaned up afterward.
-    No Playwright run performed. Stale ordinary-member assertions in
-    mobile-member-experience.spec.ts (lines ~218-280) were updated to the
-    R-02/TC-002 contract for the next run.
-    Unauthenticated landing output is functionally identical and
-    DOM-equivalent, but not verified at byte level.
+- 2026-09-01 (R-01, R-02): `pnpm --filter=@forge/blade test` (124 files,
+  709 tests, all passed), `pnpm --filter=@forge/blade typecheck` (clean),
+  `pnpm verify:precommit` (exit 0 — analyze:react:changed 7 files /
+  8 components / 0 failures, format 24/24, lint 31/31 with 0 errors and
+  113 pre-existing repo warnings, typecheck 33/33). An earlier
+  verify:precommit run failed on format for three newly written files;
+  resolved with prettier --write and re-run. One Vitest flake observed
+  under full-suite load in member-dues-webhook.test.ts (Stripe webhook,
+  unrelated to this diff); passed 3/3 in isolation.
+  Browser verification on localhost: signed-in landing page stays at `/`
+  with the "Go to your dashboard" CTA; signed-out landing page unchanged;
+  product mark returns to `/`. TC-002 confirmed against a throwaway
+  no-role member session via the e2e signin route on a side-port server —
+  no desktop rail, no mobile drawer trigger, Settings and Sign out in the
+  header at both widths. Admin account confirmed to still render the rail
+  correctly. Scratch rows cleaned up afterward.
+  No Playwright run performed. Stale ordinary-member assertions in
+  mobile-member-experience.spec.ts (lines ~218-280) were updated to the
+  R-02/TC-002 contract for the next run.
+  Unauthenticated landing output is functionally identical and
+  DOM-equivalent, but not verified at byte level.
+- 2026-09-01 (R-03, R-04): `pnpm --filter=@forge/blade test` (125 files,
+  714 tests, all passed, no flake this run), `pnpm --filter=@forge/blade
+typecheck` (clean), `pnpm verify:precommit` (exit 0 —
+  analyze:react:changed 11 files / 11 components / 0 failures, format
+  24/24, lint 31/31 with 0 errors and 113 pre-existing Blade warnings,
+  typecheck 33/33). Five new tests added: two grouping tests for TC-004
+  and three rail-interaction tests for TC-003/TC-NEG-001 in
+  `desktop-admin-rail.test.tsx`, using the already-present
+  `@testing-library/react` and `user-event` (no dependency added).
+  Browser verification on localhost as an admin: rail starts collapsed on
+  load; hover does not expand it; the top-left PanelLeft opener toggles
+  it; tabbing into a collapsed rail does not expand it; selecting a
+  destination navigates and collapses the rail; back/forward leaves it
+  collapsed; groups render as Dashboard, Club, Team, Hackathon, External
+  with no empty headings; Guild opens in a new tab; Settings now appears
+  in the header rather than the rail; the mobile drawer shows the same
+  grouping and still closes on select.No Playwright run.
+  `admin-member-dashboard.spec.ts` rail assertions (lines 580-585) were
+  read and use an admin actor, so they remain valid and were not edited
+  this pass. Hover-expansion classes (`hover:w-56`, `focus-within:w-56`,
+  `group-hover:opacity-100`) confirmed absent from source by grep across
+  `apps/blade/**`. Stale references in `DESIGN_SYSTEM.md` (line 465) and
+  `visual-harness.ts` (line 86) were corrected. The `group-focus-within`
+  usage in `form-choice-question-editor.tsx` is an unrelated form-builder
+  feature and was left untouched.
+- 2026-09-01 (R-07, R-08, R-09, R-10): Implemented in
+  `apps/blade/src/app/_components/member/member-dashboard.tsx`,
+  `dashboard-client.tsx` (skeleton kept in lockstep), and
+  `member-qr-code-dialog.tsx`. R-07 removes all five `lg:hidden` mobile
+  duplicate blocks and the `order-*`/`hidden` utilities so one DOM order
+  serves every viewport; `DuesStatusTile`'s `compact` prop,
+  `MemberQRCodeDialog`'s `variant` prop, `EventsOverview`'s `className`
+  prop, and `GuildProfileCard`'s `attendance`/`duesStatus`/`events`/
+  `eventsUnavailable`/`feedback` props were deleted once their only callers
+  went away. R-09 adds a `CheckInTile` with a `View QR code` action; the
+  dialog gained an optional `label` prop defaulting to `"QR code"` so the
+  shared alumni dashboard is untouched. R-10 adds `PaidDuesBadge`, which
+  wraps the existing `DuesStatusBadge` in the house tooltip pattern from
+  `event-feedback-cta.tsx` and renders beside the Welcome name only when
+  dues are paid; the unpaid tile keeps its prominent top position and its
+  paid copy branch was removed as unreachable. R-08 adds a Guild explainer
+  paragraph, marks `View Guild profile` external with an `sr-only`
+  "(opens in a new tab)" suffix, and unhides the public/private visibility
+  badge below 640px. The explainer deliberately does not claim the resume
+  is public, because `guild-preferences-dialog.tsx` gates that behind a
+  separate `guildResumeVisible` opt-in.
+  Checks run: `pnpm format:fix` (24/24), `pnpm verify:precommit` (exit 0 —
+  33/33 tasks: analyze:react:changed, format, lint with 0 errors, typecheck),
+  `pnpm --filter=@forge/blade test src/tests/member` (13 files, 82/82
+  passing), and `git diff --check` (clean).
+  Tests updated: `member-dashboard.test.tsx` gained four cases covering the
+  paid badge (TC-006), single shared order with no per-viewport duplicates
+  and a single Check in action (TC-007), and the Guild explainer plus
+  external marking (TC-008). Stale divergence assertions in
+  `mobile-member-experience.spec.ts` were inverted to the new contract and
+  two Playwright cases added (same sections on mobile and desktop; no
+  horizontal overflow at 320/390/768/1024/1440).
+  `member-dues-payment.spec.ts` now asserts the paid badge by role/name
+  instead of the removed "Paid for the" tile copy.
+  `member-onboarding.spec.ts` follows the `View QR code` trigger rename.
+  Playwright RUN and green for the two specs this change owns:
+  `pnpm --filter=@forge/blade e2e src/tests/e2e/mobile-member-experience.spec.ts
+--reporter=list` reports `8 passed (12.6s)`, and the same command for
+  `src/tests/e2e/member-dues-payment.spec.ts` reports `6 passed (7.3s)`.
+  Getting there needed a local Postgres: Postgres.app holds port 5432 and
+  fails with `error: Postgres.app failed to verify "trust" authentication /
+DETAIL: You did not confirm the permission dialog.`, and the Docker daemon
+  the repo compose setup expects is not running on this machine. A scratch
+  cluster was created with `initdb` on port 55432 and `.env`'s `DATABASE_URL`
+  pointed at it for the run only; `.env` was restored afterwards and is
+  gitignored either way.
+  The run found three real defects in the e2e edits, all fixed here.
+  (1) The R-09 `View QR code` rename made the pre-existing bare
+  `getByRole("button", { name: "View" })` resume matcher ambiguous, because
+  substring matching now also hit the QR trigger; both call sites take
+  `exact: true`. (2) `mobile-member-experience.spec.ts` never seeded a
+  `DuesConfiguration` row, so the dashboard rendered "Payments paused"
+  instead of a Pay dues action; `seedE2EData()` now seeds it the way
+  `member-dues-payment.spec.ts` already did. (3) The desktop order test
+  measured `boundingBox()` while the loading skeleton was still up, so it
+  compared against a null box; it now awaits both cards' visibility first.
+  The skeleton test was also reordered to assert the loaded heading's
+  absence before waiting on loaded content, since waiting first let the
+  3000ms `debugLatency` expire.
+  PRE-EXISTING, NOT FIXED HERE:
+  `member-onboarding.spec.ts:280` fails on its own with
+  `strict mode violation: getByText('Your details') resolved to 2 elements`.
+  Reproduced with `apps/blade/src/app/_components/member/` and
+  `src/tests/e2e/` checked out at `HEAD~1`, so it predates this change; the
+  only edit this commit makes to that file is the `View QR code` rename on a
+  different test. `name` is UNIQUE on `knight_hacks_form_sections`, so it is
+  not duplicate seed rows, and both candidate components
+  (`member-signup-form.tsx:74` and `member-profile-settings-form.tsx:107`)
+  render an identical `CardTitle`, so the two nodes could not be told apart
+  from the failure output. Left for the R-01/R-02 owner rather than papered
+  over with a scoped locator.
+  Running `member-dues-payment.spec.ts` and `mobile-member-experience.spec.ts`
+  in one command also fails, at a different test each way, and fails the same
+  way at `HEAD~1`. That cross-file order dependence is pre-existing too.
+  Browser QA was also done against a static harness: Tailwind compiled
+  from `apps/blade/src/app/globals.css`, the dashboard rendered to HTML in
+  three states (unpaid, paid, sparse profile with a very long name/company),
+  served locally and inspected at 320, 390, 768, and 1440. Confirmed one
+  shared section order at every width, `documentElement.scrollWidth ===
+window.innerWidth` at all four widths in all three states, Member details
+  left of Guild at 1440, and no clipping of the long name or company. This
+  is a static render, so it does not exercise the tooltip or QR dialog
+  popovers, tRPC data, or navigation; it is not a substitute for the
+  Playwright run above. The harness file was deleted and is not committed.
+- 2026-09-01 (R-12) verification: a throwaway Playwright probe rendered the
+  member dashboard in long-value, sparse, and settings states at 320, 360, 390,
+  768, 1024, and 1440 px. Every `overflow-x-hidden` / `overflow-hidden` ancestor
+  was neutralized with an injected stylesheet first, because
+  `authenticated-shell.tsx:76` otherwise hides exactly the bug srd.md forbids
+  concealing. With both the R-12 heading fix and the (now reverted) R-23 input
+  fix in place, all 18 cases reported `scrollWidth === clientWidth`; before them
+  the file inputs overflowed by 363 px and the name heading measured 500.203 px.
+  The probe spec was deleted and is not committed. Only the R-12 heading fix
+  ships, so the file-input overflow described above is still present on the
+  branch and belongs to R-23.
+  The R-12 regression guard was proven non-vacuous by reverting the fix and
+  watching it fail with "expected 'text-xl font-semibold tracking-normal...' to
+  contain '[overflow-wrap:anywhere]'".
+  Checks run after the R-23 revert: `pnpm verify:precommit` 33/33 successful;
+  `pnpm --filter=@forge/blade test` 125 files / 719 tests passed;
+  `pnpm --filter=@forge/blade e2e src/tests/e2e/mobile-member-experience.spec.ts`
+  8 passed, `src/tests/e2e/member-dues-payment.spec.ts` 6 passed, and both in
+  one command 14 passed. The first combined run on a freshly migrated scratch
+  database failed once at `mobile-member-experience.spec.ts:219` and passed on
+  every rerun, so it is recorded as a cold-start flake rather than a clean pass.
+  `git diff --check` clean.
+- 2026-09-01 (R-23 revert): R-23 was claimed here and implemented in
+  `1cba6df8` before the team Discord was read. It had already been claimed
+  there on 8/30. The two upload components and the TC-020 overflow-neutralizing
+  stylesheet were reverted, the row is back to Ready/Unclaimed, and the
+  measurements are kept above as evidence for its owner. `status.md` also
+  carried a stray `|||||||` diff3 marker and a duplicated R-01/R-02 validation
+  entry from the earlier rebase; both are removed here and the R-07 through
+  R-10 validation entry, which the 8/31 merge had dropped, is restored to the
+  top level of the list.
+- 2026-09-01 (R-18) verification: `pnpm --filter=@forge/blade test` 126 files /
+  723 tests passed, including the pre-existing `markdown-content.test.tsx`,
+  which still asserts event-description rendering and is unaffected;
+  `pnpm verify:precommit` 33/33 successful; `pnpm analyze:react:changed`
+  18 files, zero not-ok; `git diff --check` clean.
+  New file `apps/blade/src/tests/issues/issue-description-line-breaks.test.tsx`
+  covers TC-014: adjacent plain lines render `<br/>`, a blank line still yields
+  exactly two paragraphs rather than another break, links/inline code/lists
+  survive, long unbroken content stays inside the `break-words` container, and
+  a consumer that omits the prop still collapses the newline. The guard was
+  proven non-vacuous by forcing `remarkPlugins` to `undefined` and watching it
+  fail with "expected '<div class=\"min-w-0 break-words...' to contain
+  '<br/>'".
+  `remark-breaks@^4.0.0` was added to `packages/ui`, so `pnpm-lock.yaml`
+  changed and teammates need one `pnpm install` after pulling.
+  An early version of the test used a fixture starting `1. Open the admin
+issues page`; that line begins an ordered list under CommonMark, so there was
+  no soft break to render and the test failed against a working fix. The
+  fixture now uses two adjacent prose lines.
+  NOT COVERED: no Playwright case was added. TC-014 asks to compare edit preview
+  against saved detail, and both paths render the same component with the same
+  prop, so a browser case would exercise seeding rather than the behavior.
   - 2026-09-01 (R-20, R-22, R-23, R-24): claimed by TacoLover.
     `pnpm format` (pass, all packages), `pnpm lint` (0 errors across all
     files touched; pre-existing max-lines/import-type warnings only, same

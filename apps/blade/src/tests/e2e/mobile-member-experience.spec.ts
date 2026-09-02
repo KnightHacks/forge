@@ -5,6 +5,7 @@ import { eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
+  DuesConfiguration,
   FormSections,
   FormsSchemas,
   Member,
@@ -21,10 +22,12 @@ import {
 import { GUILD_URL } from "~/lib/guild-urls";
 
 // A single 80-char (schema max) unbreakable token — no spaces for the
-// browser to wrap on — the shape that actually clips without break-words.
+// browser to wrap on — the shape that actually clips without
+// overflow-wrap: anywhere.
 const LONG_UNBREAKABLE_TAGLINE =
   "KnightHacksMobileTaglineWithNoSpacesAnywhereToStressTestWrappingAtNarrowWidths";
 
+const DUES_CONFIGURATION_ID = "global";
 const MOBILE_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000301";
 const MOBILE_NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000302";
 
@@ -103,9 +106,23 @@ async function ensureSignupForm() {
     });
 }
 
+// The dashboard renders "Payments paused" instead of a Pay dues action when no
+// DuesConfiguration row enables payments, so this spec seeds the same row
+// member-dues-payment.spec.ts does rather than depending on ambient DB state.
+async function enableDuesPayments() {
+  await db
+    .insert(DuesConfiguration)
+    .values({ id: DUES_CONFIGURATION_ID, paymentsEnabled: true })
+    .onConflictDoUpdate({
+      set: { paymentsEnabled: true, updatedAt: new Date() },
+      target: DuesConfiguration.id,
+    });
+}
+
 async function seedE2EData() {
   await cleanupE2EData();
   await ensureSignupForm();
+  await enableDuesPayments();
 
   await db.insert(User).values(
     testUsers.map((user) => ({
@@ -240,37 +257,61 @@ test.describe("mobile member experience", () => {
     await cleanupE2EData();
   });
 
-  test("shows a lightweight Guild profile on mobile", async ({ page }) => {
+  test("shows the shared member hierarchy on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
+    const memberDetails = page.getByRole("region", { name: "Member details" });
 
     await expect(guildProfile).toBeVisible();
     await expect(
       guildProfile.getByRole("link", { name: "View Guild profile" }),
     ).toHaveAttribute("href", new RegExp(`${GUILD_URL}/members/`));
+    // R-07/TC-007: mobile is no longer a separate product; the member panel
+    // and its welcome heading render on every viewport.
+    await expect(memberDetails).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Member details" }),
-    ).toHaveCount(0);
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
-    await expect(
-      page.getByRole("heading", { name: "Welcome, Maya" }),
-    ).toHaveCount(0);
     await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // R-08/TC-008: Guild is explained and separated from private Blade data.
+    await expect(guildProfile).toContainText(
+      "Guild is the public Knight Hacks member directory.",
+    );
+    await expect(guildProfile).toContainText("stay private to Blade");
     await expect(
       guildProfile.getByRole("group", { name: "Company" }),
     ).toContainText("Knight Hacks");
+    await expect(page.getByRole("group", { name: "Company" })).toHaveCount(1);
     await expect(page.getByText("GitHub")).toBeVisible();
     await expect(page.getByText("LinkedIn")).toBeVisible();
     await expect(page.getByText("Portfolio")).toBeVisible();
-    await expect(page.getByRole("button", { name: "QR code" })).toBeVisible();
+    // R-09/TC-007: one Check in surface with a View QR code action.
+    const checkIn = page.getByRole("group", { name: "Check in" });
+    await expect(checkIn).toHaveCount(1);
+    await expect(
+      checkIn.getByRole("button", { name: "View QR code" }),
+    ).toBeVisible();
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "View" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "View", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
+    // R-10/TC-006: the seeded member is unpaid, so the dues banner stays.
+    await expect(
+      memberDetails.getByRole("group", { name: "Dues status" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    // R-11/TC-007: Previous forms stays a small low-emphasis history action.
+    await expect(page.getByText("Previous forms")).toHaveCount(1);
+    await expect(
+      page.getByRole("link", { name: "Review history" }),
+    ).toBeVisible();
 
     // R-02/TC-002: an ordinary member has no mobile drawer; Settings and
     // Sign out sit together at the top right of the header.
@@ -293,6 +334,65 @@ test.describe("mobile member experience", () => {
     await expect(page.getByTestId("account-settings-link")).toBeVisible();
   });
 
+  test("exposes the same dashboard sections on mobile and desktop", async ({
+    page,
+  }) => {
+    const sectionNames = [
+      "Welcome, Maya",
+      "Dues",
+      "Check in",
+      "Events",
+      "Previous forms",
+      "Guild is the public Knight Hacks member directory.",
+      "About",
+      "Company",
+      "Visibility",
+      "Guild preferences",
+      "Links",
+      "Resume",
+    ];
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+  });
+
+  test("keeps the member dashboard free of horizontal overflow", async ({
+    page,
+  }) => {
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ height: 900, width });
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        )
+        .toBe(true);
+      await expect(
+        page.getByRole("button", { name: "View QR code" }),
+      ).toBeVisible();
+      await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    }
+  });
+
   test("keeps desktop dashboard order and profile-attached settings", async ({
     page,
   }) => {
@@ -301,6 +401,11 @@ test.describe("mobile member experience", () => {
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
     const memberDetails = page.getByRole("region", { name: "Member details" });
+    // boundingBox() resolves to null while the dashboard is still showing its
+    // loading skeleton, which makes the column comparison below read 0 for an
+    // unrendered card. Wait for both cards before measuring them.
+    await expect(memberDetails).toBeVisible();
+    await expect(guildProfile).toBeVisible();
     const guildBox = await guildProfile.boundingBox();
     const detailsBox = await memberDetails.boundingBox();
 
@@ -384,7 +489,7 @@ test.describe("mobile member experience", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
-    await page.getByRole("button", { name: "View" }).click();
+    await page.getByRole("button", { name: "View", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
     await expectWithinViewport(page, "Resume");
     await page.getByRole("button", { name: "Close" }).click();
@@ -410,10 +515,18 @@ test.describe("mobile member experience", () => {
     });
 
     await expect(skeletonProfile).toBeVisible();
-    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // R-07/TC-007: the member panel skeleton is no longer desktop-only.
+    await expect(
+      page.getByRole("region", { name: "Member details loading" }),
+    ).toBeVisible();
+    // The loaded heading must be checked while the skeleton is still up.
+    // Waiting for the loaded tagline first lets the debug latency expire, so
+    // the dashboard has already swapped in real content by the time the
+    // absence is asserted.
     await expect(
       page.getByRole("heading", { name: "Welcome, Maya" }),
     ).toHaveCount(0);
+    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
   });
 
   // R-23/TC-020: dashboard, settings, resume, and QR surfaces stay clipping-free

@@ -192,7 +192,7 @@ function EditIssueDialog({
               </div>
               {preview ? (
                 <div className="min-h-48 rounded-md border border-white/10 bg-background/60 p-4">
-                  <MarkdownContent>
+                  <MarkdownContent breaks>
                     {description || "Nothing to preview yet."}
                   </MarkdownContent>
                 </div>
@@ -566,7 +566,10 @@ export function IssueDetail({
           <div className="min-w-0 space-y-4">
             <section className="rounded-lg border border-white/10 bg-card/95 p-4 sm:p-6">
               <h2 className="text-lg font-semibold">Description</h2>
-              <MarkdownContent className="mt-4 text-sm leading-7 text-muted-foreground">
+              <MarkdownContent
+                breaks
+                className="mt-4 text-sm leading-7 text-muted-foreground"
+              >
                 {detail.description}
               </MarkdownContent>
             </section>
