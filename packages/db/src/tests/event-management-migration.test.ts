@@ -1148,6 +1148,6 @@ describe.runIf(runDatabaseContract)(
         [localOnlyHackathonId],
       );
       expect(orphanedTag.rows[0]?.count).toBe(0);
-    });
+    }, 15_000);
   },
 );

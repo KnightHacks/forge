@@ -142,6 +142,32 @@ describe("development database backup sanitizer", () => {
     );
   });
 
+  it("drops every current project table from development backups", () => {
+    expect(TABLES_TO_DROP).toEqual(
+      expect.arrayContaining([
+        "knight_hacks_project",
+        "knight_hacks_project_challenge",
+        "knight_hacks_project_member",
+        "knight_hacks_project_to_challenge",
+      ]),
+    );
+  });
+
+  it("does not query judging tables removed by the project migration", () => {
+    const sanitizer = teamDataSanitizerSql();
+
+    for (const removedTable of [
+      "auth_judge_session",
+      "knight_hacks_challenges",
+      "knight_hacks_judged_submission",
+      "knight_hacks_judges",
+      "knight_hacks_submissions",
+      "knight_hacks_teams",
+    ]) {
+      expect(sanitizer).not.toContain(removedTable);
+    }
+  });
+
   it("defines members of the team by club roster classification, not by role name", () => {
     const sanitizer = teamDataSanitizerSql();
 

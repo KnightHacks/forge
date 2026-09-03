@@ -450,6 +450,28 @@ export const AUDIT_ACTION_CATALOG = {
     ],
   ),
   "hackathon.deleted": policy("hackathons", "Deleted hackathon"),
+  "project.inventory_imported": policy(
+    "hackathons",
+    "Imported project inventory",
+    [
+      "byteLength",
+      "challengeCount",
+      "collapsedDuplicateRows",
+      "excludedDraftProjects",
+      "fileHash",
+      "memberCount",
+      "projectCount",
+      "rejectedProjects",
+    ],
+  ),
+  "project.inventory_dropped": policy(
+    "hackathons",
+    "Permanently deleted project inventory",
+    ["projectCount"],
+  ),
+  "project.updated": policy("hackathons", "Updated project", ["changedFields"]),
+  "project.deleted": policy("hackathons", "Deleted project"),
+  "project.restored": policy("hackathons", "Restored project"),
   // `status` names which applicant status the mail belongs to, and
   // `templateName` records what it pointed at *then* — the template can be
   // renamed later, and the log should not silently follow it.
@@ -935,6 +957,7 @@ export const AUDIT_TARGET_TYPES = [
   "member",
   "member_directory",
   "provider",
+  "project",
   "role",
   "role_assignment_batch",
   "user",

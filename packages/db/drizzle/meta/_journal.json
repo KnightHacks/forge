@@ -288,6 +288,27 @@
       "when": 1786501513660,
       "tag": "0040_gigantic_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788221261577,
+      "tag": "0041_salty_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1788289956255,
+      "tag": "0042_aberrant_zarda",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1788356585936,
+      "tag": "0043_complex_serpent_society",
+      "breakpoints": true
     }
   ]
 }

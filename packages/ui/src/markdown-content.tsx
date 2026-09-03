@@ -15,6 +15,7 @@ export interface MarkdownContentProps {
   children: string;
   className?: string;
   compact?: boolean;
+  hideImages?: boolean;
 }
 
 const breaksPlugins = [remarkBreaks];
@@ -24,6 +25,7 @@ export function MarkdownContent({
   children,
   className,
   compact = false,
+  hideImages = false,
 }: MarkdownContentProps) {
   const components: Components = {
     a: ({ node: _node, ...props }) => (
@@ -34,6 +36,7 @@ export function MarkdownContent({
         target="_blank"
       />
     ),
+    ...(hideImages ? { img: () => null } : {}),
     ...(compact
       ? {
           p: ({ children: paragraphChildren }) => <>{paragraphChildren} </>,
@@ -44,7 +47,7 @@ export function MarkdownContent({
   return (
     <div
       className={cn(
-        "min-w-0 break-words [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_em]:italic [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5",
+        "min-w-0 break-words [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_em]:italic [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_strong]:font-semibold [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_ul]:list-disc [&_ul]:pl-5",
         !compact &&
           "space-y-3 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:font-semibold [&_li]:mt-1",
         className,

@@ -9,15 +9,14 @@ Schemas live in:
 
 ## Auth, roles, and sessions
 
-| Table export    | SQL table            | Usage                                                                                                                                                                            |
-| --------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `User`          | `auth_user`          | Better Auth creates Discord OAuth users here, and app code uses the row for Discord guild joins, role/permission management, issue assignees, user lists, and bot point lookups. |
-| `Account`       | `auth_account`       | Better Auth stores provider credentials here, and Discord utilities read the latest Discord account token/scope when joining users to the Knight Hacks server.                   |
-| `Session`       | `auth_session`       | Better Auth owns normal Blade login sessions here, with explicit deletion when member/hacker delete flows need to log the user out.                                              |
-| `JudgeSession`  | `auth_judge_session` | Hackathon judge magic links create room-scoped judge sessions that are validated from a judge cookie and counted/deleted by room in the judge router.                            |
-| `Verifications` | `auth_verification`  | Better Auth's adapter uses this verification table; no direct app reads/writes were found outside auth configuration and migrations.                                             |
-| `Roles`         | `auth_roles`         | Stores Discord-linked Blade roles, permission bitstrings, issue reminder metadata, and team display colors for permissions, role sync, forms, issues, and reminders.             |
-| `Permissions`   | `auth_permissions`   | User-to-role join table used for Blade authorization, Discord role sync, manual/batch role grants, issue assignee validation, and permission checks.                             |
+| Table export    | SQL table           | Usage                                                                                                                                                                            |
+| --------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `User`          | `auth_user`         | Better Auth creates Discord OAuth users here, and app code uses the row for Discord guild joins, role/permission management, issue assignees, user lists, and bot point lookups. |
+| `Account`       | `auth_account`      | Better Auth stores provider credentials here, and Discord utilities read the latest Discord account token/scope when joining users to the Knight Hacks server.                   |
+| `Session`       | `auth_session`      | Better Auth owns normal Blade login sessions here, with explicit deletion when member/hacker delete flows need to log the user out.                                              |
+| `Verifications` | `auth_verification` | Better Auth's adapter uses this verification table; no direct app reads/writes were found outside auth configuration and migrations.                                             |
+| `Roles`         | `auth_roles`        | Stores Discord-linked Blade roles, permission bitstrings, issue reminder metadata, and team display colors for permissions, role sync, forms, issues, and reminders.             |
+| `Permissions`   | `auth_permissions`  | User-to-role join table used for Blade authorization, Discord role sync, manual/batch role grants, issue assignee validation, and permission checks.                             |
 
 Notes:
 
@@ -26,7 +25,6 @@ Notes:
 - `Account` has a compound primary key of `(provider, providerAccountId)`; `id` is not the primary key.
 - `Roles.permissions` is a raw varchar bitstring interpreted against `PERMISSIONS.PERMISSIONS`.
 - `Permissions` has no schema-level unique constraint on `(userId, roleId)`; code tries to avoid duplicates.
-- `JudgeSession.sessionToken` is separate from Better Auth sessions even though the naming overlaps.
 
 ## Club membership, dues, and events
 
@@ -61,11 +59,10 @@ Notes:
 | `HackerEventAttendee` | `knight_hacks_hacker_event_attendee` | Records hackathon event check-ins and powers duplicate check-in prevention, attendance counts, attendee lists, and point awards.                                        |
 | `Sponsor`             | `knight_hacks_sponsor`               | Reserved for sponsor metadata; current sponsor displays elsewhere are static or unrelated.                                                                              |
 | `HackathonSponsor`    | `knight_hacks_hackathon_sponsor`     | Reserved hackathon-to-sponsor tier join table.                                                                                                                          |
-| `Challenges`          | `knight_hacks_challenges`            | Stores Devpost opt-in prize challenges plus general challenges, then feeds room assignment, judge assignment, judging filters, submissions, and results.                |
-| `Teams`               | `knight_hacks_teams`                 | Stores Devpost CSV project/team metadata used for judging project names, Devpost links, descriptions, universities, emails, and results.                                |
-| `Submissions`         | `knight_hacks_submissions`           | Join table for a team's submission to a challenge within a hackathon, used by judge project lists and result aggregation.                                               |
-| `Judges`              | `knight_hacks_judges`                | Stores judge name, room, and challenge assignment for judge session flows, project filtering, QR/session management, and rubric attribution.                            |
-| `JudgedSubmission`    | `knight_hacks_judged_submission`     | Stores one judge's rubric ratings and feedback for a submission, used for duplicate prevention, metrics, result tables, and detailed judging views.                     |
+| `Project`             | `knight_hacks_project`               | Stores a hackathon's imported Devpost projects, source metadata, and soft-deletion state for officer management and the judge directory.                                |
+| `ProjectMember`       | `knight_hacks_project_member`        | Stores ordered project team contacts with separately validated names and emails.                                                                                        |
+| `ProjectChallenge`    | `knight_hacks_project_challenge`     | Stores hackathon-scoped challenge labels derived from Devpost opt-in prize fields, including the required `General` challenge.                                          |
+| `ProjectToChallenge`  | `knight_hacks_project_to_challenge`  | Associates projects with their challenges for directory display and filtering.                                                                                          |
 
 Notes:
 
@@ -76,12 +73,10 @@ Notes:
 - `HackerAttendee.status` is the application/attendance state; keep values aligned with `FORMS.HACKATHON_APPLICATION_STATES`.
 - `HackerAttendee.class` is a nullable game/team class assigned during check-in, not original application profile data.
 - `HackerEventAttendee.hackathonId` duplicates context derivable through `eventId` and `hackerAttId`; no DB-level consistency check was found.
-- `Challenges.sponsor` is plain text and is not linked to `Sponsor`.
-- `Teams.matchKey` is globally unique and derived from Devpost submitter name, created timestamp, and project title, not scoped by hackathon.
-- `Teams.submissionUrl` and `Teams.devpostUrl` are both Devpost CSV URL fields in current import flows.
-- `Submissions.hackathonId` duplicates hackathon context from `teamId` and `challengeId`; app code filters by it, but schema consistency is not enforced.
-- `Judges` has no direct `hackathonId`; hackathon scope is inferred through `challengeId`.
-- `JudgedSubmission` has no schema-level unique constraint on `(submissionId, judgeId)` and no rating range constraints; code handles duplicate prevention and validation.
+- `Project.submissionUrl` is unique within a hackathon and is the stable Devpost identity used by the import inventory.
+- A Devpost re-import authoritatively replaces a hackathon's complete project, member, and challenge inventory rather than merging individual rows.
+- Every imported project is associated with the hackathon's `General` challenge. Devpost opt-in prize columns produce the remaining challenge labels.
+- `Project.deletedAt` provides officer-restorable soft deletion between imports; an authoritative re-import removes the prior inventory, including deleted rows.
 
 ## Dynamic forms
 
