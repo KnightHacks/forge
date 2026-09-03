@@ -21,6 +21,10 @@
       "types": "./src/resume-bundle.server.ts",
       "default": "./src/resume-bundle.server.ts"
     },
+    "./projects-import.server": {
+      "types": "./src/projects-import.server.ts",
+      "default": "./src/projects-import.server.ts"
+    },
     "./hacker-portal": {
       "types": "./src/hacker-portal/index.ts",
       "default": "./src/hacker-portal/index.ts"
@@ -53,6 +57,7 @@
     "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "archiver": "^6.0.2",
+    "csv-parse": "^6.1.0",
     "discord-api-types": "^0.38.40",
     "minio": "^8.0.6",
     "qrcode": "^1.5.4",

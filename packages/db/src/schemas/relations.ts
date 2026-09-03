@@ -29,6 +29,10 @@ import {
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
   Member,
+  Project,
+  ProjectChallenge,
+  ProjectMember,
+  ProjectToChallenge,
 } from "./knight-hacks";
 
 export const UserRelations = relations(User, ({ many, one }) => ({
@@ -48,6 +52,7 @@ export const UserRelations = relations(User, ({ many, one }) => ({
   updatedAlumniBulletinPosts: many(AlumniBulletinPost, {
     relationName: "alumniBulletinUpdatedBy",
   }),
+  deletedProjects: many(Project),
 }));
 
 export const RoleRelations = relations(Roles, ({ many }) => ({
@@ -196,7 +201,54 @@ export const HackathonRelations = relations(Hackathon, ({ many }) => ({
   participantCommands: many(HackerParticipantCommand),
   portalClients: many(HackathonPortalClient),
   publications: many(HackathonEventPublication),
+  projects: many(Project),
+  projectChallenges: many(ProjectChallenge),
 }));
+
+export const ProjectRelations = relations(Project, ({ many, one }) => ({
+  challenges: many(ProjectToChallenge),
+  deletedBy: one(User, {
+    fields: [Project.deletedByUserId],
+    references: [User.id],
+  }),
+  hackathon: one(Hackathon, {
+    fields: [Project.hackathonId],
+    references: [Hackathon.id],
+  }),
+  members: many(ProjectMember),
+}));
+
+export const ProjectMemberRelations = relations(ProjectMember, ({ one }) => ({
+  project: one(Project, {
+    fields: [ProjectMember.projectId],
+    references: [Project.id],
+  }),
+}));
+
+export const ProjectChallengeRelations = relations(
+  ProjectChallenge,
+  ({ many, one }) => ({
+    hackathon: one(Hackathon, {
+      fields: [ProjectChallenge.hackathonId],
+      references: [Hackathon.id],
+    }),
+    projects: many(ProjectToChallenge),
+  }),
+);
+
+export const ProjectToChallengeRelations = relations(
+  ProjectToChallenge,
+  ({ one }) => ({
+    challenge: one(ProjectChallenge, {
+      fields: [ProjectToChallenge.challengeId, ProjectToChallenge.hackathonId],
+      references: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+    }),
+    project: one(Project, {
+      fields: [ProjectToChallenge.projectId, ProjectToChallenge.hackathonId],
+      references: [Project.id, Project.hackathonId],
+    }),
+  }),
+);
 
 export const HackerProfileRelations = relations(
   HackerProfile,
