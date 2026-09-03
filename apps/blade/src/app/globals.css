@@ -90,8 +90,8 @@
      heavy on a Mac and normal on a trackpad-only machine. Style the bar
      ourselves so it reads as part of the product instead of the OS chrome. */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track,

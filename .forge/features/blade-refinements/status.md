@@ -318,6 +318,11 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
   here. Headed Chromium on the same machine reports an 8px gutter and
   renders the violet thumb, on both an isolated page and Blade's own
   landing page at `http://127.0.0.1:3100/`.
+- 2026-09-03 (R-29): Narrowed the thumb from 8px to 6px. Dylan reviewed the
+  first screenshot and asked for it "a smiiiiiiiidge thinner", so the width
+  and height on `::-webkit-scrollbar` both drop to 6px. Nothing else about
+  the rule changes: the Firefox `@supports` guard, the transparent track,
+  and the `hsl(var(--primary))` thumb are untouched.
 
 ## Open questions
 
@@ -879,7 +884,7 @@ gap-5">` had no `grid-template-columns`, so its implicit column
 ENOMEM` result was local memory pressure, not an analyzer finding.
 - 2026-09-03 (R-29): Implemented in `apps/blade/src/app/globals.css` only,
   inside `@layer base`. `pnpm --filter=@forge/blade build` exits 0 and the
-  emitted stylesheet contains `::-webkit-scrollbar{width:8px;height:8px}`,
+  emitted stylesheet contains `::-webkit-scrollbar{width:6px;height:6px}`,
   the transparent track/corner, the `hsl(var(--primary))` thumb, and the
   `@supports not selector(::-webkit-scrollbar)` block wrapping
   `scrollbar-width: thin` / `scrollbar-color`, so the Firefox fallback
@@ -892,15 +897,27 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   Rendered appearance was verified in headed Chromium on Blade's landing
   page served by `next dev` on port 3100: with `HEAD~1`'s `globals.css`
   restored the document scrollbar measures 0px and paints the grey macOS
-  overlay bar, and with this commit's `globals.css` it measures 8px and
-  paints the violet thumb. Screenshots were captured at 1280x620 from the
+  overlay bar, and with this commit's `globals.css` it paints the violet
+  thumb. Screenshots were captured at 1280x620 from the
   same page, browser, and scroll position with only that one file changed.
   This Mac is in overlay-scrollbar mode
   (`defaults read -g AppleShowScrollBars` unset, no mouse attached), so the
   15px classic bar Dylan reported is not what the "before" side shows; the
-  fix replaces the OS bar with a fixed 8px custom bar in either mode.
+  fix replaces the OS bar with a fixed custom bar, now 6px, in either mode.
   `apps/blade/src/tests/e2e/visual/visual-harness.ts` already forces
   scrollbars hidden with `!important`, so visual snapshots are unaffected.
+- 2026-09-03 (R-29): Captured the two surfaces Dylan asked to see, the member
+  dashboard and the admin sidebar, at 6px. A temporary Playwright spec under
+  `apps/blade/src/tests/e2e/visual/` seeded `seedVisualFixture`, signed in as
+  `VISUAL_USER_ID`, and screenshotted `/member/dashboard` at 1440x900 and
+  `/admin/members` at 1440x700 in headed Chromium; the spec was deleted after
+  the run and is not part of the diff. The violet thumb renders on the admin
+  rail, the profile card, the dashboard column, and the document, which
+  confirms the unprefixed `::-webkit-scrollbar` selector reaches nested
+  scroll containers and not only the document. Blade has no Radix
+  `ScrollArea` and no `scrollbar-width`/`scrollbar-color` utility anywhere in
+  `apps/blade/src` or `packages/ui/src`, so every scroller on those screens is
+  a native one this rule owns.
 
 ## Links
 
