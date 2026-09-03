@@ -26,6 +26,7 @@ export class RetiredJudgingDumpFilter {
   private dollarQuote: string | null = null;
   private doubleQuoted = false;
   private dropping = false;
+  private escapeString = false;
   private singleQuoted = false;
 
   shouldInclude(line: string) {
@@ -55,9 +56,12 @@ export class RetiredJudgingDumpFilter {
         continue;
       }
       if (this.singleQuoted) {
-        if (line[index] === "'" && line[index + 1] === "'") {
+        if (this.escapeString && line[index] === "\\") {
+          index += 1;
+        } else if (line[index] === "'" && line[index + 1] === "'") {
           index += 1;
         } else if (line[index] === "'") {
+          this.escapeString = false;
           this.singleQuoted = false;
         }
         continue;
@@ -85,6 +89,11 @@ export class RetiredJudgingDumpFilter {
         continue;
       }
       if (line[index] === "'") {
+        const prefix = line[index - 1];
+        const beforePrefix = line[index - 2];
+        this.escapeString =
+          (prefix === "E" || prefix === "e") &&
+          (beforePrefix === undefined || !/[A-Za-z0-9_$]/u.test(beforePrefix));
         this.singleQuoted = true;
         continue;
       }

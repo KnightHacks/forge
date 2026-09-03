@@ -278,6 +278,10 @@ src/tests/projects/devpost-import.test.ts`: passed; 10 parser tests, including
 - `pnpm build`: passed across 21 build tasks after the final review fixes.
 - Final Forge review: API/security, React/UI/accessibility, and
   database/backup/destructive-operation passes reported no remaining findings.
+- CodeRabbit escape-string follow-up: the restore filter now keeps `E'...'`
+  backslash escapes inside the quoted value. The six restore-filter tests,
+  `pnpm db:pull -- --truncate` against `localhost:5433/local`, and
+  `pnpm verify:precommit` passed.
 - Visual verification: refreshed and inspected six screenshots covering the
   import warning, typed hard-delete dialog, judge directory eye affordance,
   judge detail privacy, and desktop/mobile layouts.

@@ -94,6 +94,20 @@ describe("production database restore safety", () => {
     ]);
   });
 
+  it("omits multiline retired-table escape strings through their terminator", () => {
+    const filter = new RetiredJudgingDumpFilter();
+    const lines = [
+      "INSERT INTO public.knight_hacks_teams (notes) VALUES (E'first line",
+      "escaped quote \\' stays inside the value;",
+      "last line');",
+      "INSERT INTO public.auth_user (name) VALUES ('kept');",
+    ];
+
+    expect(lines.filter((line) => filter.shouldInclude(line))).toEqual([
+      "INSERT INTO public.auth_user (name) VALUES ('kept');",
+    ]);
+  });
+
   it("keeps retired-table text inside a current-table value", () => {
     const filter = new RetiredJudgingDumpFilter();
     const lines = [
