@@ -14,8 +14,10 @@ Current phase: Reviewer follow-up complete
   submission URL when the selected hackathon already has projects.
 - 2026-08-31: Draft and incomplete Devpost projects are excluded.
 - 2026-08-31: Judges and officers can view every imported project for the
-  selected hackathon. The directory supports title search, sorting,
-  pagination, prize/category filters, challenge filters, and team-size filters.
+  selected hackathon. Both directories support title search, sorting,
+  pagination, prize/category filters, and challenge filters. The admin
+  importer also supports team-size filters; the 2026-09-03 judge revision does
+  not.
 - 2026-08-31: The judge table shows project title, Devpost link, prize
   categories, and opted-in challenges. Selecting a project opens a responsive
   modal that renders the project's Markdown description and remaining approved
