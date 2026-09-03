@@ -414,6 +414,29 @@ Expected observations:
 - Keyboard/screen-reader and textual table alternatives still identify every
   deadline and series.
 
+### TC-022: Respondent question prompts stay inside their cards
+
+Setup:
+
+- Publish a form containing otherwise equivalent short and multi-line question
+  prompts, including a required prompt, and prepare an eligible respondent.
+
+Action:
+
+- Open the respondent form at 320 px, a common mobile width, and desktop width
+  in Chromium; repeat the visual check in Mac Chrome.
+
+Expected observations:
+
+- Every question remains exposed as an accessible named group.
+- Short and multi-line prompts appear inside their question cards without
+  extending above or being crossed by the top border.
+- A long prompt wraps within the question card's width rather than widening the
+  card or being clipped.
+- Question numbering, required indication, controls, and submission remain
+  readable and operable.
+- The page introduces no horizontal overflow.
+
 ## Negative / regression cases
 
 ### TC-NEG-001: Focus and rail state do not regress through navigation

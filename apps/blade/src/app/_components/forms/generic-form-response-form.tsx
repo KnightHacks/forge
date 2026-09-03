@@ -692,7 +692,7 @@ export function GenericFormResponseForm({
           data-question-id={question.id}
           key={question.id}
         >
-          <legend className="max-w-full break-words px-1 text-sm font-medium leading-5">
+          <legend className="float-left w-full max-w-full text-sm font-medium leading-5 [overflow-wrap:anywhere]">
             {question.prompt}
             {question.required && <span className="text-destructive"> *</span>}
           </legend>

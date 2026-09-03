@@ -274,6 +274,24 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
   behaviour, or a non-obvious data-model fact — and were kept. Scope was
   limited to configuration panels; the ~144 `DialogDescription` instances
   are a different surface and were not touched.
+- 2026-09-02 (R-28): The misalignment comes from how browsers lay out
+  `<legend>`. The whole legend box gets centered on the fieldset's top
+  border, so a one-line prompt straddles it neatly while a three-line
+  prompt puts most of itself above the card. The fix moves every prompt
+  into the card's normal flow, which also drops the border-notch look
+  for short prompts. Dylan had said those looked fine, but the text
+  sitting on the card edge was the thing he flagged, so removing it is
+  the point rather than a side effect.
+- 2026-09-02 (R-28): Editing `forms/generic-form-response-form.tsx` is
+  approved even though R-24 touched it. Different hunks — R-28 owns the
+  question fieldset and legend, and leaves R-24's `InstructionMedia`
+  extraction, inventory row, and `forms-platform.spec.ts` assertions
+  alone. Mac Chrome stays a manual QA target here; if the border still
+  crosses text after this, that's a separate finding.
+- 2026-09-03 (R-28): Dropping `px-1` from the legend is intentional. The
+  card's own padding now supplies the inset, and keeping another 4px
+  would push the prompt out of line with the `Question N of M` text
+  underneath it.
 
 ## Open questions
 
@@ -309,6 +327,11 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
 11. Ownership: the `AuthenticatedShellSkeleton` permission gap has no
     remaining row to inherit it, since R-06 is the last claimed
     refinement. Who picks it up?
+12. Coverage: R-28 has no automated browser regression. TC-022 is proven
+    by manual QA only, because a Playwright test asserting legend and
+    card geometry could not be executed locally — the browsers are not
+    installed and the case is database-backed. Who adds it, and should it
+    live in `forms-platform.spec.ts` alongside the R-23/R-24 assertions?
 
 ## Contributor coordination
 
@@ -371,6 +394,7 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
 | R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                 | TC-019, TC-NEG-002, TC-NEG-003 |
 | R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                 | Out of scope                   |
 | R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                 | Out of scope                   |
+| R-28 | Keep short and wrapped respondent question prompts inside their bordered question cards without colliding with the card border.                             | Complete  | Spyderma9 (9/2/2026)      | TC-022                         |
 
 ## Task list
 
@@ -809,6 +833,23 @@ gap-5">` had no `grid-template-columns`, so its implicit column
   The `AuthenticatedShellSkeleton` cluster reshape is covered by the
   component test but was not observed in the browser — it renders only
   during a full page load before `getPermissions()` resolves.
+- 2026-09-02 (R-28): Implemented in the question `legend` hunk of
+  `generic-form-response-form.tsx` only. `float-left` opts the legend out of
+  native border positioning while retaining fieldset/legend semantics, and
+  `[overflow-wrap:anywhere]` lets long unbroken prompts shrink within the card.
+  The two focused form test files pass (13/13), Blade TypeScript is clean,
+  focused lint reports 0 errors and the file's pre-existing max-lines warning,
+  Prettier and `git diff --check` pass, and isolated 320 px Chrome/Edge geometry
+  probes confirm short and four-line prompts stay inside the card, clear the
+  following content, and create no document overflow. Human browser QA also
+  passed at desktop and 320 px: short, three-line, required multi-line, and long
+  unbroken URL prompts render inside their cards with correct required-marker
+  placement, click-to-focus behavior, wrapping, and no horizontal overflow.
+  This was not a routed Forms E2E run. The human ran
+  `pnpm analyze:react:changed` successfully with every file reporting
+  `ok: true`; `GenericFormResponseForm` props are unchanged and
+  `InstructionMedia` remains intact. The earlier `uv_os_get_passwd returned
+ENOMEM` result was local memory pressure, not an analyzer finding.
 
 ## Links
 

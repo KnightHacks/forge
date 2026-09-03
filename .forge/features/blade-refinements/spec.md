@@ -140,6 +140,9 @@ descriptions, and completes the Forms presentation model with a top banner image
 
 ### Forms presentation
 
+- Every respondent question prompt appears inside its bordered question card.
+  Short and multi-line prompts use the same in-card treatment, wrap naturally,
+  and remain clear of the card border at supported widths.
 - Existing form instruction blocks continue to support text, uploaded images,
   and browser-playable uploaded video. Editors can see that capability, upload
   media, remove it, and verify its respondent presentation without needing
@@ -177,6 +180,7 @@ descriptions, and completes the Forms presentation model with a top banner image
 - Managed images in issue descriptions.
 - Existing form image/video instruction support verification and discoverability.
 - One managed top-of-form banner image.
+- Respondent question-prompt alignment for short and multi-line labels.
 - Issue reminder `Title | Chat` presentation.
 - Member-full-name resolution in issue history and Admin logs with Discord
   fallback.
@@ -239,6 +243,9 @@ descriptions, and completes the Forms presentation model with a top banner image
 - Existing form image/video instructions remain operational and understandable;
   a banner image can be managed and appears correctly in preview and response
   views.
+- Respondent question prompts render inside their question cards without
+  extending above or being crossed by the card border, including when they wrap
+  across multiple lines.
 
 ## Open questions
 

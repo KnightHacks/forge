@@ -154,6 +154,23 @@ This bundle starts from `origin/main` commit `78857b85` on branch
   changing `@forge/db`. Any required migration must be additive and separately
   documented in the implementation plan/status before execution.
 
+### Form respondent question labels
+
+- Keep `app/form/[slug]/page.tsx` server-first and localize the presentation
+  repair to `GenericFormResponseForm`; do not change Forms data, access,
+  validation, upload, or response contracts.
+- Retain semantic `fieldset`/`legend` grouping while opting the legend out of
+  the browser's rendered-legend border positioning so every prompt participates
+  in the question card's normal content flow.
+- Apply the same in-card treatment to short and multi-line prompts. Do not infer
+  wrapping from prompt length, viewport checks, or client-side measurement.
+- Preserve question numbering, required indicators, control labels, focus
+  behavior, answer submission, and the R-24 `InstructionMedia` presentation.
+- Verify 320 px, common mobile, and desktop widths in Chromium. Keep Mac Chrome
+  as a manual QA target; if the border still crosses text after this repair,
+  record that as a separate browser-specific finding rather than expanding this
+  refinement silently.
+
 ### Actor display enrichment
 
 - Issue history and Admin log queries should batch-resolve non-null linked Member
@@ -263,6 +280,9 @@ Would this require a developer change next year?
   layout bugs.
 - Reserve media geometry to avoid layout shift and provide loading, broken-media,
   upload progress, success, and failure states.
+- Keep respondent question prompts in normal card flow rather than relying on a
+  native legend centered over the card border. This deliberately changes the
+  previous single-line border-notch presentation as well as wrapped prompts.
 
 ## Testing / verification strategy
 
@@ -277,6 +297,11 @@ Would this require a developer change next year?
 - Playwright desktop, intermediate-width, and 320 px journeys with long-content
   fixtures, ordinary member/admin actors, paid/unpaid states, and authorized/
   unauthorized media access.
+- TC-022 is proven this pass by manual browser QA at desktop and 320 px in
+  Chrome and Edge, covering short, multi-line, required multi-line, and
+  long unbroken prompts. An automated respondent-form browser regression
+  asserting accessible fieldset names and prompt/card geometry is not
+  included; see Open questions.
 - Run focused package tests while implementing; then React analyzer for changed
   frontend surfaces, `pnpm verify:precommit`, relevant reviewers selected from
   the diff, and final `git diff --check`.
