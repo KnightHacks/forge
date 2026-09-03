@@ -4,6 +4,11 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Decision log
 
+- 2026-09-03 (R-15): Implemented in the Blade member-settings career flow.
+  Validation remains submit-triggered initially, revalidates live after the
+  first failed save, shows all inline field errors with only the first issue in
+  the form summary, and reserves legacy guidance for entries with an unknown
+  imported status.
 - 2026-09-03 (R-13): Implemented on the shared
   `MemberResumeUpload` path used by signup, member dashboard, and member
   settings. Successful upload/replace shows an inline status for five
@@ -436,7 +441,7 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)        | TC-008, TC-020                 |
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Complete  | Claimed Eric12 (9/1/2026) | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)   | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Claimed Eric12 (9/1/2026) | TC-011                         |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Complete  | Claimed Eric12 (9/1/2026) | TC-011                         |
 | R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001             |
 | R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete  | azizu06 (9/1/2026)        | TC-013                         |
 | R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)        | TC-014                         |
@@ -957,6 +962,26 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   clipping or horizontal overflow. `git diff --check` passed. No API, database,
   dependency, or admin-upload behavior changed. Implementation and tests were
   committed as `9c19bc4d`.
+- 2026-09-03 (R-15): Employment history now uses the shared employment schema
+  to retain entry and field paths, marks Company, Position title, Experience
+  type, and Employment status as required, and associates every inline issue
+  with its exact input or compound control. The first failed Save scrolls to and
+  focuses the first invalid control; subsequent edits revalidate every inline
+  issue and advance the one-line form summary without stealing focus. Only rows
+  whose persisted status is `unknown` receive imported-entry guidance, so a
+  current row missing only its experience type is no longer mislabeled as
+  legacy. Server persistence errors remain separate from client field errors.
+  Validation passed: five focused Vitest files (38/38 tests), the full
+  `member-field-editing.spec.ts` Playwright suite (10/10 tests), a focused R-15
+  Playwright rerun after the final focus-state change (1/1),
+  `pnpm analyze:react:changed` (42 files, 0 failures), `pnpm format` (24/24
+  tasks), `pnpm lint` (31/31 tasks, 0 errors; existing warnings remain),
+  `pnpm typecheck` (33/33 tasks), and `git diff --check`. Desktop and 320 px
+  validation screenshots were inspected: required markers, inline errors,
+  error-card emphasis, and the sticky save surface remain readable with no
+  horizontal clipping. No API, database, schema, dependency, authentication,
+  or upload behavior changed. Implementation is complete in the working tree
+  and has not yet been committed.
 
 ## Links
 
