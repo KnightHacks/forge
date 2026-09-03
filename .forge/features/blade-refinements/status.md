@@ -8,7 +8,7 @@ Current phase: Bundle approved / ready for technical discovery
   `MemberResumeUpload` path used by signup, member dashboard, and member
   settings. Successful upload/replace shows an inline status for five
   seconds and waits for an explicit View action; admin resume upload is outside
-  this refinement.
+  this refinement. Committed as `9c19bc4d`.
 - 2026-08-12: Start from production `origin/main` in the isolated
   `/Users/dvidal/Documents/forge-refinements` worktree at `78857b85`.
 - 2026-08-12: Forge is the current product/project name. Reforge is retired and
@@ -955,7 +955,8 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   0 errors; existing warnings remain), and `pnpm typecheck` (33/33 tasks).
   Desktop signup and 320 px member-dashboard captures were inspected with no
   clipping or horizontal overflow. `git diff --check` passed. No API, database,
-  dependency, or admin-upload behavior changed.
+  dependency, or admin-upload behavior changed. Implementation and tests were
+  committed as `9c19bc4d`.
 
 ## Links
 
