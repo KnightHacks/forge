@@ -292,6 +292,34 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
   card's own padding now supplies the inset, and keeping another 4px
   would push the prompt out of line with the `Question N of M` text
   underneath it.
+- 2026-09-03 (R-29): New row. Dylan reported Blade's scrollbar as "hella
+  thick" on macOS Chrome and asked for a thin custom bar in the primary
+  violet. macOS renders the classic 15px scrollbar whenever a mouse is
+  attached or Appearance > Show scroll bars is set to Always, which is
+  why the bar looks heavy on some machines and invisible on others. The
+  styling lives in `apps/blade/src/app/globals.css` under `@layer base`
+  so it applies to every scroll container in the app rather than one
+  panel, and it uses `hsl(var(--primary))` rather than a hex value, per
+  `DESIGN_SYSTEM.md`.
+- 2026-09-03 (R-29): The Firefox fallback is wrapped in
+  `@supports not selector(::-webkit-scrollbar)` on purpose. From Chrome
+  121 on, setting `scrollbar-width` or `scrollbar-color` on an element
+  makes Chrome discard every `::-webkit-scrollbar` rule for it and fall
+  back to its own bar, so declaring both unguarded, the way
+  `apps/2025/src/styles/globals.css` does, would throw away the sizing
+  this row asks for on the exact browser Dylan reported. Verified in
+  headless Chromium that `CSS.supports("selector(::-webkit-scrollbar)")`
+  is `true` and that computed `scrollbar-width`/`scrollbar-color` stay
+  `auto`, so Chrome keeps the webkit rules.
+- 2026-09-03 (R-29): Pixel verification of the thick-bar case was not
+  possible on this machine. `defaults read -g AppleShowScrollBars` is
+  unset (Automatic) with no mouse attached, so macOS is in overlay mode,
+  and headless Chromium never paints an overlay thumb — before/after
+  screenshots came back identical and the measured scrollbar gutter was
+  0px in both. Changing the OS setting to force the classic bar was out
+  of bounds, so the emitted CSS was verified from the production build
+  instead. Dylan or another reviewer on mouse-attached hardware should
+  confirm the rendered appearance.
 
 ## Open questions
 
@@ -395,6 +423,7 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
 | R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                 | Out of scope                   |
 | R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                 | Out of scope                   |
 | R-28 | Keep short and wrapped respondent question prompts inside their bordered question cards without colliding with the card border.                             | Complete  | Spyderma9 (9/2/2026)      | TC-022                         |
+| R-29 | Replace the OS scrollbar across Blade with a thin custom scrollbar in the primary violet, without stealing layout width on overlay-scrollbar machines.      | Complete  | azizu06 (9/3/2026)        | Manual QA                      |
 
 ## Task list
 
@@ -850,6 +879,23 @@ gap-5">` had no `grid-template-columns`, so its implicit column
   `ok: true`; `GenericFormResponseForm` props are unchanged and
   `InstructionMedia` remains intact. The earlier `uv_os_get_passwd returned
 ENOMEM` result was local memory pressure, not an analyzer finding.
+- 2026-09-03 (R-29): Implemented in `apps/blade/src/app/globals.css` only,
+  inside `@layer base`. `pnpm --filter=@forge/blade build` exits 0 and the
+  emitted stylesheet contains `::-webkit-scrollbar{width:8px;height:8px}`,
+  the transparent track/corner, the `hsl(var(--primary))` thumb, and the
+  `@supports not selector(::-webkit-scrollbar)` block wrapping
+  `scrollbar-width: thin` / `scrollbar-color`, so the Firefox fallback
+  survives minification with its guard intact. `pnpm verify:precommit`
+  exits 0 (33/33 tasks, 0 lint errors), `pnpm --filter=@forge/blade test`
+  passes 729/729 across 127 files, and `git diff --check` is clean.
+  Headless Chromium reports `CSS.supports("selector(::-webkit-scrollbar)")`
+  as `true` with computed `scrollbar-width`/`scrollbar-color` still `auto`,
+  confirming Chrome keeps the webkit rules instead of the standard ones.
+  Rendered appearance was NOT verified: this Mac is in overlay-scrollbar
+  mode, headless Chromium never paints an overlay thumb, and the measured
+  scrollbar gutter was 0px both before and after.
+  `apps/blade/src/tests/e2e/visual/visual-harness.ts` already forces
+  scrollbars hidden with `!important`, so visual snapshots are unaffected.
 
 ## Links
 

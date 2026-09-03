@@ -84,6 +84,42 @@
   body {
     margin: 0;
   }
+
+  /* macOS renders classic 15 px scrollbars whenever a mouse is attached or
+     Appearance > Show scroll bars is set to Always, which is why Blade looked
+     heavy on a Mac and normal on a trackpad-only machine. Style the bar
+     ourselves so it reads as part of the product instead of the OS chrome. */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary));
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--primary-lighter));
+  }
+
+  /* Firefox has no ::-webkit-scrollbar, so it needs the standard properties.
+     Scope them to engines that lack the pseudo-element: from Chrome 121 on,
+     setting scrollbar-width or scrollbar-color makes Chrome ignore every
+     -webkit- scrollbar rule above and fall back to its own thin bar, which
+     would discard the sizing this ticket asks for. Both properties inherit,
+     so declaring them on html covers nested scroll containers. */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--primary)) transparent;
+    }
+  }
 }
 
 a {
