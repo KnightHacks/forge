@@ -1,7 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
+import { Button } from "@forge/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +63,51 @@ function MemberEmail({
   ) : null;
 }
 
+function ProjectDescription({
+  collapseLongDescription,
+  description,
+}: {
+  collapseLongDescription: boolean;
+  description: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const canCollapse =
+    collapseLongDescription &&
+    (description.length > 700 || description.split("\n").length > 12);
+  const collapsed = canCollapse && !expanded;
+
+  return (
+    <>
+      <div className="relative">
+        <MarkdownContent
+          className={`rounded-lg border border-border/70 bg-background/40 p-4 leading-7 ${collapsed ? "max-h-[32rem] overflow-hidden" : ""}`}
+          hideImages
+        >
+          {description}
+        </MarkdownContent>
+        {collapsed ? (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-px bottom-px h-20 rounded-b-lg bg-gradient-to-t from-background via-background/90 to-transparent"
+          />
+        ) : null}
+      </div>
+      {canCollapse ? (
+        <Button
+          aria-expanded={expanded}
+          className="w-full"
+          onClick={() => setExpanded((value) => !value)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {expanded ? "Show less" : "Show full description"}
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
 export function ProjectDetailDialog({
   onOpenChange,
   project,
@@ -90,7 +139,7 @@ export function ProjectDetailDialog({
                 {project.title}
               </DialogTitle>
               <DialogDescription>
-                Imported project details and team members.
+                Project details and team members.
               </DialogDescription>
             </DialogHeader>
 
@@ -100,9 +149,11 @@ export function ProjectDetailDialog({
                   About the project
                 </h3>
                 {project.description ? (
-                  <MarkdownContent className="rounded-lg border border-border/70 bg-background/40 p-4 leading-7">
-                    {project.description}
-                  </MarkdownContent>
+                  <ProjectDescription
+                    collapseLongDescription={!showPrivateDetails}
+                    description={project.description}
+                    key={project.id}
+                  />
                 ) : (
                   <p className="rounded-lg border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
                     No description provided.

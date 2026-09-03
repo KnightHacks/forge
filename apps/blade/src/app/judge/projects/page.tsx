@@ -36,8 +36,6 @@ export default async function JudgeProjectsPage({
     challengeIds: parsed.challengeIds,
     direction: parsed.direction,
     hackathonId: isOfficer ? requestedHackathon : undefined,
-    maxParticipants: parsed.maxParticipants,
-    minParticipants: parsed.minParticipants,
     page: parsed.page,
     pageSize: parsed.pageSize,
     query: parsed.query,

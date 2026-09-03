@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
+import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
 import { ProjectDetailDialog } from "~/app/_components/projects/project-detail-dialog";
 import { ProjectDirectory } from "~/app/_components/projects/project-directory";
 
@@ -86,6 +87,78 @@ describe("judge project privacy", () => {
     ).toBeInTheDocument();
   });
 
+  it("contains wide descriptions, hides images, and lets judges expand long copy", async () => {
+    const user = userEvent.setup();
+    const description = [
+      "Long project description. ".repeat(40),
+      "![Broken diagram](https://example.test/missing.png)",
+      `\`\`\`\n${"wide-table-cell ".repeat(30)}\n\`\`\``,
+    ].join("\n\n");
+    render(
+      <ProjectDetailDialog
+        onOpenChange={vi.fn()}
+        project={{ ...judgeProject, description }}
+      />,
+    );
+
+    expect(screen.queryByRole("img", { name: "Broken diagram" })).toBeNull();
+    const codeBlock = document.querySelector("pre");
+    expect(codeBlock?.parentElement).toHaveClass("[&_pre]:overflow-x-auto");
+
+    const expand = screen.getByRole("button", {
+      name: "Show full description",
+    });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+    await user.click(expand);
+    expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+});
+
+describe("judge project directory", () => {
+  it("uses judge-specific filters and project count copy", () => {
+    render(
+      <JudgeProjectWorkspace
+        data={{
+          challenges: judgeProject.challenges,
+          hackathon: {
+            displayName: "Knight Hacks IX",
+            endDate: new Date("2026-10-01T00:00:00.000Z"),
+            id: judgeProject.hackathonId,
+            startDate: new Date("2026-09-01T00:00:00.000Z"),
+          },
+          page: 1,
+          pageSize: 25,
+          projects: [judgeProject],
+          totalCount: 1,
+        }}
+        hackathons={[]}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }}
+        isOfficer={false}
+      />,
+    );
+
+    expect(screen.getByText("1 project")).toBeInTheDocument();
+    expect(screen.queryByText(/imported project/i)).toBeNull();
+    expect(
+      screen.queryByRole("spinbutton", { name: "Minimum team size" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("spinbutton", { name: "Maximum team size" }),
+    ).toBeNull();
+    expect(screen.getAllByText("Casey Captain").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("option", { name: "General" })).toBeNull();
+  });
+
   it("opens project details from the eye button", async () => {
     const user = userEvent.setup();
     render(
@@ -121,7 +194,9 @@ describe("judge project privacy", () => {
       screen.getByRole("dialog", { name: "Signal Forge" }),
     ).toBeInTheDocument();
   });
+});
 
+describe("project team-size filters", () => {
   it("submits team-size bounds with the search query", async () => {
     navigation.replace.mockClear();
     const user = userEvent.setup();

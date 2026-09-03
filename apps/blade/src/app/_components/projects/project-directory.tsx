@@ -68,12 +68,14 @@ function ProjectFilters({
   navigate,
   query,
   setQuery,
+  showTeamSizeFilters,
 }: {
   challenges: ProjectDirectoryData["challenges"];
   input: ProjectDirectoryInput;
   navigate: Navigate;
   query: string;
   setQuery: (query: string) => void;
+  showTeamSizeFilters: boolean;
 }) {
   const [minParticipants, setMinParticipants] = useState(
     input.minParticipants?.toString() ?? "",
@@ -81,23 +83,38 @@ function ProjectFilters({
   const [maxParticipants, setMaxParticipants] = useState(
     input.maxParticipants?.toString() ?? "",
   );
+  const filterableChallenges = challenges.filter(
+    (challenge) => challenge.label !== "General",
+  );
+  const selectedChallenge = filterableChallenges.some(
+    (challenge) => challenge.id === input.challengeIds[0],
+  )
+    ? input.challengeIds[0]
+    : "";
 
   return (
     <section className="rounded-lg border border-white/10 bg-card/90 p-3 shadow-xl shadow-black/15 sm:p-4">
       <form
-        className="grid gap-3 lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]"
+        className={`grid gap-3 ${showTeamSizeFilters ? "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]" : "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_auto]"}`}
         onSubmit={(event) => {
           event.preventDefault();
           const normalizedMaxParticipants =
+            showTeamSizeFilters &&
             minParticipants &&
             maxParticipants &&
             Number(minParticipants) > Number(maxParticipants)
               ? ""
               : maxParticipants;
-          setMaxParticipants(normalizedMaxParticipants);
+          if (showTeamSizeFilters) {
+            setMaxParticipants(normalizedMaxParticipants);
+          }
           navigate({
-            maxParticipants: normalizedMaxParticipants || undefined,
-            minParticipants: minParticipants || undefined,
+            maxParticipants: showTeamSizeFilters
+              ? normalizedMaxParticipants || undefined
+              : undefined,
+            minParticipants: showTeamSizeFilters
+              ? minParticipants || undefined
+              : undefined,
             page: 1,
             query,
           });
@@ -124,37 +141,41 @@ function ProjectFilters({
             onChange={(event) =>
               navigate({ challenge: event.target.value, page: 1 })
             }
-            value={input.challengeIds[0] ?? ""}
+            value={selectedChallenge}
           >
             <option value="">All challenges</option>
-            {challenges.map((challenge) => (
+            {filterableChallenges.map((challenge) => (
               <option key={challenge.id} value={challenge.id}>
                 {challenge.label}
               </option>
             ))}
           </select>
         </label>
-        {(["min", "max"] as const).map((bound) => (
-          <label key={bound}>
-            <span className="sr-only">
-              {bound === "min" ? "Minimum" : "Maximum"} team size
-            </span>
-            <Input
-              className="h-11"
-              max={100}
-              inputMode="numeric"
-              min={1}
-              onChange={(event) =>
-                bound === "min"
-                  ? setMinParticipants(event.target.value)
-                  : setMaxParticipants(event.target.value)
-              }
-              placeholder={bound === "min" ? "Min team size" : "Max team size"}
-              type="number"
-              value={bound === "min" ? minParticipants : maxParticipants}
-            />
-          </label>
-        ))}
+        {showTeamSizeFilters
+          ? (["min", "max"] as const).map((bound) => (
+              <label key={bound}>
+                <span className="sr-only">
+                  {bound === "min" ? "Minimum" : "Maximum"} team size
+                </span>
+                <Input
+                  className="h-11"
+                  max={100}
+                  inputMode="numeric"
+                  min={1}
+                  onChange={(event) =>
+                    bound === "min"
+                      ? setMinParticipants(event.target.value)
+                      : setMaxParticipants(event.target.value)
+                  }
+                  placeholder={
+                    bound === "min" ? "Min team size" : "Max team size"
+                  }
+                  type="number"
+                  value={bound === "min" ? minParticipants : maxParticipants}
+                />
+              </label>
+            ))
+          : null}
         <Button className="h-11" type="submit">
           Search
         </Button>
@@ -263,12 +284,13 @@ function ProjectList<TProject extends Project>({
     <TooltipProvider delayDuration={200}>
       <section className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/20">
         <div className="hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[52rem] text-left text-sm">
+          <table className="w-full min-w-[64rem] text-left text-sm">
             <thead className="border-b border-border/70 text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Project</th>
+                <th className="px-4 py-3 font-medium">Participants</th>
                 <th className="px-4 py-3 font-medium">Challenges</th>
-                <th className="px-4 py-3 text-right font-medium">Team</th>
+                <th className="px-4 py-3 text-right font-medium">Team size</th>
                 {actions ? (
                   <th className="px-4 py-3 text-right font-medium">Actions</th>
                 ) : null}
@@ -303,6 +325,13 @@ function ProjectList<TProject extends Project>({
                         </a>
                       </div>
                     </div>
+                  </td>
+                  <td className="max-w-xs px-4 py-4 align-top text-muted-foreground">
+                    <ul className="space-y-1">
+                      {project.members.map((member, index) => (
+                        <li key={`${member.name}-${index}`}>{member.name}</li>
+                      ))}
+                    </ul>
                   </td>
                   <td className="max-w-sm px-4 py-4 align-top">
                     <ProjectBadges project={project} />
@@ -342,6 +371,12 @@ function ProjectList<TProject extends Project>({
                   <UsersRound className="size-3" /> {project.participantCount}
                 </Badge>
               </div>
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  Participants:
+                </span>{" "}
+                {project.members.map((member) => member.name).join(", ")}
+              </p>
               <ProjectBadges project={project} />
               <div className="flex flex-wrap items-center gap-2">
                 <Button asChild size="sm" variant="outline">
@@ -411,6 +446,7 @@ export function ProjectDirectory<TProject extends Project>({
   emptyDescription = "Try changing the search or filters.",
   input,
   showPrivateDetails = false,
+  showTeamSizeFilters = true,
   showViewAction = false,
 }: {
   actions?: (project: TProject) => React.ReactNode;
@@ -418,6 +454,7 @@ export function ProjectDirectory<TProject extends Project>({
   emptyDescription?: string;
   input: ProjectDirectoryInput;
   showPrivateDetails?: boolean;
+  showTeamSizeFilters?: boolean;
   showViewAction?: boolean;
 }) {
   const pathname = usePathname();
@@ -433,6 +470,10 @@ export function ProjectDirectory<TProject extends Project>({
       if (value === undefined || value === "") next.delete(key);
       else next.set(key, String(value));
     }
+    if (!showTeamSizeFilters) {
+      next.delete("maxParticipants");
+      next.delete("minParticipants");
+    }
     startTransition(() => router.replace(`${pathname}?${next.toString()}`));
   }
 
@@ -445,6 +486,7 @@ export function ProjectDirectory<TProject extends Project>({
         navigate={navigate}
         query={query}
         setQuery={setQuery}
+        showTeamSizeFilters={showTeamSizeFilters}
       />
       <ProjectList
         actions={actions}

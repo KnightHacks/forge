@@ -1,6 +1,6 @@
 # Project Judging Status
 
-Current phase: CodeRabbit follow-up complete
+Current phase: Reviewer follow-up complete
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -155,6 +155,13 @@ Current phase: CodeRabbit follow-up complete
 - 2026-09-02: Development restore filtering consumes complete SQL statements
   for retired judging tables, including multiline inserts, without matching
   retired-table text inside values for retained tables.
+- 2026-09-03: The judge directory shows participant names in the list so
+  duplicate project titles are distinguishable. It hides the team-size bounds
+  and the universal `General` challenge from judge filters while the admin
+  importer retains team-size filtering.
+- 2026-09-03: Judge project descriptions contain wide tables and code inside
+  the dialog, omit remote Markdown images, and collapse long copy behind one
+  expand button. The judge count now reads `N projects`.
 
 ## Open questions
 
@@ -181,6 +188,7 @@ Current phase: CodeRabbit follow-up complete
 - [x] Add the judge eye-button affordance on desktop and mobile.
 - [x] Verify the production backup sanitizer against the post-migration schema.
 - [x] Address and resolve the CodeRabbit follow-up review findings.
+- [x] Address Faris's judge-directory layout and participant feedback.
 
 ## Validation / commands
 
@@ -218,6 +226,14 @@ apps/blade/src/app/admin/projects apps/blade/src/app/judge`: passed; 12 files,
 - `pnpm typecheck`: passed across 33 tasks.
 - `pnpm build`: passed across 21 build tasks; `/admin/projects`, the multipart
   import route, and `/judge/projects` are present in the production route map.
+- 2026-09-03 focused project UI suite: 5 files and 19 tests passed.
+- 2026-09-03 browser verification: passed at 1440px and 390px with duplicate
+  titles, participant-name disambiguation, judge-only filter reductions, no
+  participant email or school leakage, contained wide descriptions, working
+  collapse/expand controls, and no page-level horizontal overflow.
+- 2026-09-03 `pnpm verify:precommit`: passed React analysis, formatting, lint,
+  and all 33 typecheck tasks. Repository lint reported only existing warnings.
+- 2026-09-03 `pnpm build`: passed all 21 build tasks.
 - `pnpm db:pull -- --truncate`: restored the shared development snapshot into
   the local database through the migration-compatible restore path; the PR
   migrations were then applied. The local database contains 78 users, 4

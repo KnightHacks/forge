@@ -39,6 +39,8 @@ export function JudgeProjectWorkspace({
     else next.delete("hackathon");
     next.delete("page");
     next.delete("challenge");
+    next.delete("maxParticipants");
+    next.delete("minParticipants");
     startTransition(() => router.replace(`${pathname}?${next.toString()}`));
   }
 
@@ -75,8 +77,7 @@ export function JudgeProjectWorkspace({
         <>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">
-              {data.totalCount} imported project
-              {data.totalCount === 1 ? "" : "s"}
+              {data.totalCount} project{data.totalCount === 1 ? "" : "s"}
             </Badge>
             {isOfficer ? (
               <Badge variant="outline">Officer preview</Badge>
@@ -84,8 +85,9 @@ export function JudgeProjectWorkspace({
           </div>
           <ProjectDirectory
             data={data}
-            emptyDescription="No imported projects match this view yet."
+            emptyDescription="No projects match this view yet."
             input={input}
+            showTeamSizeFilters={false}
             showViewAction
           />
         </>
