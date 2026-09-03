@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { FileCheck2, Loader2, UploadCloud, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  CheckCircle2,
+  FileCheck2,
+  Loader2,
+  UploadCloud,
+  X,
+} from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Button } from "@forge/ui/button";
@@ -22,6 +28,8 @@ import {
 import { ResumePreview } from "~/app/_components/member/resume-preview";
 import { useObjectPreviewUrl } from "~/hooks/use-object-preview-url";
 import { api } from "~/trpc/react";
+
+const UPLOAD_SUCCESS_VISIBLE_MS = 5_000;
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -56,6 +64,7 @@ export function MemberResumeUpload({
   const [fileName, setFileName] = useState<string | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [previewUrl, setPreviewFile] = useObjectPreviewUrl();
 
   const savedResume = api.resume.getResume.useQuery(undefined, {
@@ -67,20 +76,26 @@ export function MemberResumeUpload({
     staleTime: 60 * 1000,
   });
   const uploadResume = api.resume.uploadResume.useMutation();
-  const updateResume = api.resume.saveMemberResume.useMutation({
-    onSuccess(member) {
-      setResumeUrl(member.resumeUrl ?? "");
-    },
-    onError(error) {
-      setUploadError(error.message || "Resume could not be saved.");
-    },
-  });
+  const updateResume = api.resume.saveMemberResume.useMutation();
 
   const isPending =
     uploadResume.isPending || (saveMode === "member" && updateResume.isPending);
 
+  useEffect(() => {
+    if (!uploadSuccess) return;
+
+    const timeout = window.setTimeout(() => {
+      setUploadSuccess(null);
+    }, UPLOAD_SUCCESS_VISIBLE_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [uploadSuccess]);
+
   const handleFile = async (file: File | undefined) => {
     setUploadError(null);
+    setUploadSuccess(null);
 
     if (!file) return;
 
@@ -94,8 +109,7 @@ export function MemberResumeUpload({
       return;
     }
 
-    setFileName(file.name);
-    setPreviewFile(file);
+    const isReplacing = Boolean(resumeUrl);
 
     try {
       const fileContent = await fileToDataUrl(file);
@@ -107,12 +121,18 @@ export function MemberResumeUpload({
       if (saveMode === "deferred") {
         setResumeUrl(objectName);
         onChange?.(objectName);
-        setIsViewerOpen(true);
-        return;
+      } else {
+        await updateResume.mutateAsync({ resumeUrl: objectName });
+        setResumeUrl(objectName);
       }
 
-      await updateResume.mutateAsync({ resumeUrl: objectName });
-      setIsViewerOpen(true);
+      setFileName(file.name);
+      setPreviewFile(file);
+      setUploadSuccess(
+        isReplacing
+          ? "Resume replaced successfully."
+          : "Resume uploaded successfully.",
+      );
     } catch (error) {
       if (error instanceof Error) {
         setUploadError(error.message);
@@ -126,6 +146,26 @@ export function MemberResumeUpload({
   const previewSource = previewUrl ?? savedResume.data?.url ?? null;
   const previewFileName = fileName ?? "Resume";
   const canViewResume = Boolean(resumeUrl || previewUrl);
+  const feedback = (
+    <>
+      {uploadSuccess && (
+        <div
+          role="status"
+          aria-label={uploadSuccess}
+          className="flex items-center gap-2 rounded-md border border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.08)] px-3 py-2 text-sm font-medium text-[hsl(var(--chart-2))]"
+        >
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{uploadSuccess}</span>
+        </div>
+      )}
+
+      {uploadError && (
+        <p role="alert" className="text-sm font-medium text-destructive">
+          {uploadError}
+        </p>
+      )}
+    </>
+  );
   const controls = (
     <div className="flex flex-wrap items-center gap-2">
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
@@ -196,6 +236,7 @@ export function MemberResumeUpload({
           className="gap-2 text-muted-foreground"
           onClick={async () => {
             setUploadError(null);
+            setUploadSuccess(null);
             try {
               if (saveMode === "deferred") {
                 setFileName(null);
@@ -227,9 +268,7 @@ export function MemberResumeUpload({
     return (
       <div className={cn("space-y-3", className)}>
         {controls}
-        {uploadError && (
-          <p className="text-sm font-medium text-destructive">{uploadError}</p>
-        )}
+        {feedback}
       </div>
     );
   }
@@ -252,9 +291,7 @@ export function MemberResumeUpload({
         {controls}
       </div>
 
-      {uploadError && (
-        <p className="text-sm font-medium text-destructive">{uploadError}</p>
-      )}
+      {feedback}
     </div>
   );
 }

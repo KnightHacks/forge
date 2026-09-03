@@ -550,11 +550,17 @@ test.describe("member field editing", () => {
       .locator('input[accept="application/pdf,.pdf"]')
       .setInputFiles(pdfPayload);
     await expect(
+      page.getByRole("status", { name: "Resume uploaded successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await expect(
       page.getByTitle("blade-settings-resume.pdf preview"),
     ).toBeVisible();
     await expect
       .poll(async () => (await getMember(EDIT_USER_ID))?.resumeUrl)
       .toContain(EDIT_USER_ID);
+    await page.getByRole("button", { name: "Close" }).click();
 
     // Addressed by its label rather than its `accept` list: the attribute is
     // derived from the upload policy, so pinning its exact value made this fail

@@ -4,6 +4,11 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Decision log
 
+- 2026-09-03 (R-13): Implemented on the shared
+  `MemberResumeUpload` path used by signup, member dashboard, and member
+  settings. Successful upload/replace shows an inline status for five
+  seconds and waits for an explicit View action; admin resume upload is outside
+  this refinement.
 - 2026-08-12: Start from production `origin/main` in the isolated
   `/Users/dvidal/Documents/forge-refinements` worktree at `78857b85`.
 - 2026-08-12: Forge is the current product/project name. Reforge is retired and
@@ -429,7 +434,7 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 | R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)        | TC-006                         |
 | R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)   | TC-007                         |
 | R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)        | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Ready     | Claimed Eric12 (9/1/2026) | TC-009                         |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Complete  | Claimed Eric12 (9/1/2026) | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)   | TC-010                         |
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Ready     | Claimed Eric12 (9/1/2026) | TC-011                         |
 | R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001             |
@@ -938,6 +943,19 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   `ScrollArea` and no `scrollbar-width`/`scrollbar-color` utility anywhere in
   `apps/blade/src` or `packages/ui/src`, so every scroller on those screens is
   a native one this rule owns.
+- 2026-09-03 (R-13): The shared member resume uploader now commits its local
+  filename and preview only after upload and, for existing members, persistence
+  succeed. Upload and replacement show distinct accessible success statuses for
+  five seconds without opening the preview; View remains explicit and a failed
+  replacement retains the prior saved resume. Added four jsdom regressions and
+  extended signup, dashboard, and settings browser coverage. Validation passed:
+  `pnpm --filter=@forge/blade test src/tests/member` (14 files, 87 tests), the
+  three focused Playwright scenarios (3 passed), `pnpm analyze:react:changed`
+  (38 files, 0 failures), `pnpm format` (24/24 tasks), `pnpm lint` (31/31 tasks,
+  0 errors; existing warnings remain), and `pnpm typecheck` (33/33 tasks).
+  Desktop signup and 320 px member-dashboard captures were inspected with no
+  clipping or horizontal overflow. `git diff --check` passed. No API, database,
+  dependency, or admin-upload behavior changed.
 
 ## Links
 

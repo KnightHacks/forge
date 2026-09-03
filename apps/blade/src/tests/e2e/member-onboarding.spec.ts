@@ -63,6 +63,11 @@ const pdfPayload = {
   name: "blade-e2e-resume.pdf",
 };
 
+const replacementPdfPayload = {
+  ...pdfPayload,
+  name: "blade-e2e-replacement-resume.pdf",
+};
+
 const pngPayload = {
   buffer: Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
@@ -508,7 +513,7 @@ test.describe("initial member onboarding", () => {
     ).toBeVisible();
   });
 
-  test("previews and rejects selected uploads on the signup form", async ({
+  test("confirms, previews, replaces, and rejects signup uploads", async ({
     page,
   }) => {
     await signInAs(page, DEFAULT_USER_ID, `/form/${MEMBER_SIGNUP_FORM_SLUG}`);
@@ -516,7 +521,26 @@ test.describe("initial member onboarding", () => {
     await page
       .locator('input[accept="application/pdf,.pdf"]')
       .setInputFiles(pdfPayload);
+    await expect(
+      page.getByRole("status", { name: "Resume uploaded successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
     await expect(page.getByTitle("blade-e2e-resume.pdf preview")).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
+
+    await page
+      .locator('input[accept="application/pdf,.pdf"]')
+      .setInputFiles(replacementPdfPayload);
+    await expect(
+      page.getByRole("status", { name: "Resume replaced successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await expect(
+      page.getByTitle("blade-e2e-replacement-resume.pdf preview"),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
 
     await page.locator('input[accept="application/pdf,.pdf"]').setInputFiles({
       buffer: Buffer.from("not a pdf"),
@@ -553,8 +577,25 @@ test.describe("initial member onboarding", () => {
     await page
       .locator('input[accept="application/pdf,.pdf"]')
       .setInputFiles(pdfPayload);
-    await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
+    await expect(
+      page.getByRole("status", { name: "Resume uploaded successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
     await expect(page.getByTitle("blade-e2e-resume.pdf preview")).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
+
+    await page
+      .locator('input[accept="application/pdf,.pdf"]')
+      .setInputFiles(replacementPdfPayload);
+    await expect(
+      page.getByRole("status", { name: "Resume replaced successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await expect(
+      page.getByTitle("blade-e2e-replacement-resume.pdf preview"),
+    ).toBeVisible();
     await expect
       .poll(async () => (await getMember(EXISTING_MEMBER_USER_ID))?.resumeUrl)
       .toContain(EXISTING_MEMBER_USER_ID);
@@ -565,7 +606,9 @@ test.describe("initial member onboarding", () => {
     await expect
       .poll(async () => (await getMember(EXISTING_MEMBER_USER_ID))?.resumeUrl)
       .toBeNull();
-    await expect(page.getByRole("button", { name: "View" })).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: "View", exact: true }),
+    ).toBeDisabled();
 
     await page
       .getByLabel("Upload profile picture", { exact: true })
@@ -581,6 +624,10 @@ test.describe("initial member onboarding", () => {
       .toContain(EXISTING_MEMBER_USER_ID);
 
     await page.getByRole("button", { name: "Remove profile picture" }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Remove profile picture?" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Remove picture" }).click();
     await expect
       .poll(
         async () =>
