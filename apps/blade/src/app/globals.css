@@ -90,8 +90,8 @@
      heavy on a Mac and normal on a trackpad-only machine. Style the bar
      ourselves so it reads as part of the product instead of the OS chrome. */
   ::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track,
@@ -99,8 +99,14 @@
     background: transparent;
   }
 
+  /* The bar is 10 px so a mouse can still grab it, but the thumb only paints
+     inside its padding box, so what you see is a 2 px hairline. Hit testing
+     uses the thumb's full layout box, border included, which keeps the drag
+     target usable on the machines that reported this bug in the first place. */
   ::-webkit-scrollbar-thumb {
     background-color: hsl(var(--primary));
+    background-clip: padding-box;
+    border: 4px solid transparent;
     border-radius: 9999px;
   }
 
