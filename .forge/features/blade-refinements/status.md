@@ -318,11 +318,16 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
   here. Headed Chromium on the same machine reports an 8px gutter and
   renders the violet thumb, on both an isolated page and Blade's own
   landing page at `http://127.0.0.1:3100/`.
-- 2026-09-03 (R-29): Narrowed the thumb from 8px to 6px. Dylan reviewed the
-  first screenshot and asked for it "a smiiiiiiiidge thinner", so the width
-  and height on `::-webkit-scrollbar` both drop to 6px. Nothing else about
-  the rule changes: the Firefox `@supports` guard, the transparent track,
-  and the `hsl(var(--primary))` thumb are untouched.
+- 2026-09-03 (R-29): Narrowed the thumb from 8px to 6px, then to 2px. Dylan
+  reviewed the first screenshot and asked for it "a smiiiiiiiidge thinner",
+  which gave 6px; he reviewed the dashboard and sidebar captures at that
+  width and asked "can we make it thinner?", and TacoLover suggested a 1px
+  bar, so the width and height on `::-webkit-scrollbar` both drop to 2px.
+  Nothing else about the rule changes: the Firefox `@supports` guard, the
+  transparent track, and the `hsl(var(--primary))` thumb are untouched. 2px
+  rather than 1px because the thumb is still a drag target for a mouse user,
+  which is the exact hardware that made Dylan see the 15px OS bar, and a
+  single physical pixel is not reliably grabbable.
 
 ## Open questions
 
@@ -884,7 +889,7 @@ gap-5">` had no `grid-template-columns`, so its implicit column
 ENOMEM` result was local memory pressure, not an analyzer finding.
 - 2026-09-03 (R-29): Implemented in `apps/blade/src/app/globals.css` only,
   inside `@layer base`. `pnpm --filter=@forge/blade build` exits 0 and the
-  emitted stylesheet contains `::-webkit-scrollbar{width:6px;height:6px}`,
+  emitted stylesheet contains `::-webkit-scrollbar{width:2px;height:2px}`,
   the transparent track/corner, the `hsl(var(--primary))` thumb, and the
   `@supports not selector(::-webkit-scrollbar)` block wrapping
   `scrollbar-width: thin` / `scrollbar-color`, so the Firefox fallback
@@ -903,11 +908,12 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   This Mac is in overlay-scrollbar mode
   (`defaults read -g AppleShowScrollBars` unset, no mouse attached), so the
   15px classic bar Dylan reported is not what the "before" side shows; the
-  fix replaces the OS bar with a fixed custom bar, now 6px, in either mode.
+  fix replaces the OS bar with a fixed custom bar, now 2px, in either mode.
   `apps/blade/src/tests/e2e/visual/visual-harness.ts` already forces
   scrollbars hidden with `!important`, so visual snapshots are unaffected.
 - 2026-09-03 (R-29): Captured the two surfaces Dylan asked to see, the member
-  dashboard and the admin sidebar, at 6px. A temporary Playwright spec under
+  dashboard and the admin sidebar, recaptured at 2px. A temporary Playwright
+  spec under
   `apps/blade/src/tests/e2e/visual/` seeded `seedVisualFixture`, signed in as
   `VISUAL_USER_ID`, and screenshotted `/member/dashboard` at 1440x900 and
   `/admin/members` at 1440x700 in headed Chromium; the spec was deleted after
