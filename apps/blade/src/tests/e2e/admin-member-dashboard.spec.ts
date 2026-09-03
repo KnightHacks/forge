@@ -736,6 +736,33 @@ test.describe("admin member dashboard", () => {
     });
   });
 
+  test("[blade-refinements TC-012] keeps search focused through debounced result updates", async ({
+    page,
+  }) => {
+    await signInAs(page, READER_USER_ID);
+
+    const search = page.getByRole("textbox", { name: "Search members" });
+    await search.focus();
+    await page.keyboard.type("Ali");
+    await expect(page).toHaveURL(/q=Ali/);
+    await expect(page.getByText("Bob Builder")).toHaveCount(0);
+
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue("Ali");
+    await page.keyboard.type("ce Archive");
+
+    await expect(search).toHaveValue("Alice Archive");
+    await expect(page).toHaveURL(/q=Alice(?:\+|%20)Archive/);
+    await expect(page.getByText("Alice Archive").first()).toBeVisible();
+    await expect(search).toBeFocused();
+    expect(
+      await search.evaluate((element) => {
+        if (!(element instanceof HTMLInputElement)) return null;
+        return [element.selectionStart, element.selectionEnd];
+      }),
+    ).toEqual([13, 13]);
+  });
+
   test("edits the selected profile, manages files and dues, and deletes only membership data", async ({
     page,
   }) => {

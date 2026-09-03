@@ -4,6 +4,23 @@ Current phase: Bundle approved / ready for technical discovery
 
 ## Decision log
 
+- 2026-09-03 (R-16): Confirmed in Chromium that the admin members page's
+  `key={input.query}` replaced the search input after each debounced server
+  result, dropping focus and discarding subsequent keyboard input. Removed only
+  that query-derived remount boundary; the existing 300 ms debounce,
+  `router.replace` URL state, server filtering, and pagination reset remain
+  unchanged. A Playwright regression now types a partial member name, waits for
+  filtered results, continues typing through the page keyboard without
+  refocusing, and verifies the final value, URL, result, focus, and caret. The
+  test failed on the original code and passed after the fix; the complete admin
+  member dashboard suite passed 6/6. Validation also passed `pnpm format`
+  (24/24 tasks), `pnpm lint` (31/31 tasks, 0 errors; existing warnings remain),
+  `pnpm typecheck` (33/33 tasks), the R-16-scoped React analyzer (1 file, 0
+  failures), and `git diff --check`. The default `pnpm analyze:react:changed`
+  scan remains blocked by an analyzer exception in the already-committed R-15
+  `employment-history-editor-focus.test.tsx`; the R-16 page itself analyzes
+  successfully. No API, database, schema, dependency, permission, or visual
+  styling changed.
 - 2026-09-03 (R-15): Implemented in the Blade member-settings career flow.
   Validation remains submit-triggered initially, revalidates live after the
   first failed save, shows all inline field errors with only the first issue in
@@ -442,7 +459,7 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 | R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Complete  | Claimed Eric12 (9/1/2026) | TC-009                         |
 | R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)   | TC-010                         |
 | R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Complete  | Claimed Eric12 (9/1/2026) | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Ready     | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001             |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Complete  | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001             |
 | R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete  | azizu06 (9/1/2026)        | TC-013                         |
 | R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)        | TC-014                         |
 | R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                 | TC-015, TC-NEG-002, TC-NEG-003 |

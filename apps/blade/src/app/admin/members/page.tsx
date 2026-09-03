@@ -43,7 +43,6 @@ export default async function AdminMembersPage({
 
   return (
     <MemberAdminDashboard
-      key={input.query}
       canEdit={
         effectivePermissions.IS_OFFICER === true ||
         effectivePermissions.EDIT_MEMBERS === true
