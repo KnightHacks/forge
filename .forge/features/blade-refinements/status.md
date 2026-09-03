@@ -311,15 +311,13 @@ entry for table "knight_hacks_issue"`. The whole list query throws, so the
   headless Chromium that `CSS.supports("selector(::-webkit-scrollbar)")`
   is `true` and that computed `scrollbar-width`/`scrollbar-color` stay
   `auto`, so Chrome keeps the webkit rules.
-- 2026-09-03 (R-29): Pixel verification of the thick-bar case was not
-  possible on this machine. `defaults read -g AppleShowScrollBars` is
-  unset (Automatic) with no mouse attached, so macOS is in overlay mode,
-  and headless Chromium never paints an overlay thumb — before/after
-  screenshots came back identical and the measured scrollbar gutter was
-  0px in both. Changing the OS setting to force the classic bar was out
-  of bounds, so the emitted CSS was verified from the production build
-  instead. Dylan or another reviewer on mouse-attached hardware should
-  confirm the rendered appearance.
+- 2026-09-03 (R-29): Verified visually against the running app. The first
+  attempt used headless Chromium and measured a 0px scrollbar gutter with
+  identical before/after screenshots, which was a harness artifact rather
+  than a property of the fix: headless Chromium never paints a scrollbar
+  here. Headed Chromium on the same machine reports an 8px gutter and
+  renders the violet thumb, on both an isolated page and Blade's own
+  landing page at `http://127.0.0.1:3100/`.
 
 ## Open questions
 
@@ -891,9 +889,16 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
   Headless Chromium reports `CSS.supports("selector(::-webkit-scrollbar)")`
   as `true` with computed `scrollbar-width`/`scrollbar-color` still `auto`,
   confirming Chrome keeps the webkit rules instead of the standard ones.
-  Rendered appearance was NOT verified: this Mac is in overlay-scrollbar
-  mode, headless Chromium never paints an overlay thumb, and the measured
-  scrollbar gutter was 0px both before and after.
+  Rendered appearance was verified in headed Chromium on Blade's landing
+  page served by `next dev` on port 3100: with `HEAD~1`'s `globals.css`
+  restored the document scrollbar measures 0px and paints the grey macOS
+  overlay bar, and with this commit's `globals.css` it measures 8px and
+  paints the violet thumb. Screenshots were captured at 1280x620 from the
+  same page, browser, and scroll position with only that one file changed.
+  This Mac is in overlay-scrollbar mode
+  (`defaults read -g AppleShowScrollBars` unset, no mouse attached), so the
+  15px classic bar Dylan reported is not what the "before" side shows; the
+  fix replaces the OS bar with a fixed 8px custom bar in either mode.
   `apps/blade/src/tests/e2e/visual/visual-harness.ts` already forces
   scrollbars hidden with `!important`, so visual snapshots are unaffected.
 
