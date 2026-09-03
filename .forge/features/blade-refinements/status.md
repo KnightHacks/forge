@@ -335,6 +335,14 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
   so the bar earns its width as a position indicator rather than as a drag
   handle, and the narrowest bar is the one that distorts the least layout.
 
+- Merged `origin/main` into `forge/refinements` on 9/3/2026 at Dylan's request,
+  after the Devpost project-import and judge-directory PR (#527) landed on main.
+  The only conflict was `admin-navigation.ts`: main added `judgeProjects` and
+  `projectAdmin` entries to the ungrouped list this branch had already replaced
+  with the R-01 grouping map. Both new destinations were kept and given
+  `group: "Hackathon"`, since project judging belongs to a hackathon and an item
+  without a group is filtered out by `getAdminNavigationGroups`.
+
 ## Open questions
 
 1. Technical discovery: confirm whether the existing attachment schema can gain
