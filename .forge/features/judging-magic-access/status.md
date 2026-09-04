@@ -102,9 +102,9 @@ Current phase: Implementation complete; PR open
   findings.
 - `pnpm typecheck`: passed across 33 workspace tasks.
 - `pnpm test`: passed across 29 workspace tasks. The final totals include 748
-  API tests, 724 Blade tests, 140 database tests, 260 validator tests, and 22
+  API tests, 724 Blade tests, 140 database tests, 261 validator tests, and 22
   auth tests; five environment-dependent auth integration tests were skipped.
-- `JUDGING_ACCESS_SECRET=<32-byte-test-value> pnpm --filter=@forge/blade build`:
+- `JUDGING_ACCESS_SECRET="$(openssl rand -hex 32)" pnpm --filter=@forge/blade build`:
   passed. A production build without the new secret failed closed as intended.
 - Browser verification used a local fixture built from the supplied KH8
   Devpost export: 188 projects and 18 challenge labels. Desktop and mobile

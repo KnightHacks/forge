@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { randomBytes } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
@@ -78,8 +79,8 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
 
   beforeAll(async () => {
     disposable = await provisionDisposableDatabase("forge_api");
-    // eslint-disable-next-line no-restricted-properties
-    process.env.DATABASE_URL = disposable.url;
+    vi.stubEnv("DATABASE_URL", disposable.url);
+    vi.stubEnv("JUDGING_ACCESS_SECRET", randomBytes(32).toString("hex"));
     client = (await import("@forge/db/client")).db;
     authSchemas = await import("@forge/db/schemas/auth");
     schemas = await import("@forge/db/schemas/knight-hacks");
@@ -159,6 +160,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   afterAll(async () => {
     await client.$client.end().catch(() => undefined);
     await disposable?.drop();
+    vi.unstubAllEnvs();
   }, 30_000);
 
   async function caller(session: Session | null, headers = new Headers()) {
@@ -185,10 +187,30 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       hackathonId: HACKATHON,
       name: "Acme room B",
     });
+    await expect(
+      officerCaller.judging.createRoom({
+        challengeId: SPONSOR,
+        hackathonId: HACKATHON,
+        name: "Acme room A",
+      }),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: 'An active judging room already uses the name "Acme room A".',
+    });
     const generalRoom = await officerCaller.judging.createRoom({
       challengeId: GENERAL,
       hackathonId: HACKATHON,
       name: "General room",
+    });
+    await expect(
+      officerCaller.judging.updateRoom({
+        challengeId: GENERAL,
+        name: "Acme room B",
+        roomId: generalRoom.id,
+      }),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: 'An active judging room already uses the name "Acme room B".',
     });
     await expect(
       officerCaller.judging.moveRoom({

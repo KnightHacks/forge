@@ -32,6 +32,7 @@ import type { WriteDb } from "../utils/db";
 import {
   completeGuestJudge,
   judgingRoomActivationUrl,
+  upsertMemberJudge,
 } from "../judging-access.server";
 import {
   createTRPCRouter,
@@ -51,6 +52,31 @@ const contextInputSchema = z.object({
 });
 
 const RECENT_PRESENCE_WINDOW_MS = 15 * 60 * 1000;
+const ACTIVE_ROOM_NAME_CONSTRAINT =
+  "knight_hacks_judging_room_active_name_unique";
+
+function throwRoomNameConflict(error: unknown, roomName: string): never {
+  let current = error;
+  const visited = new Set<unknown>();
+  for (let depth = 0; depth < 6; depth += 1) {
+    if (typeof current !== "object" || current === null) break;
+    if (visited.has(current)) break;
+    visited.add(current);
+    const databaseError = current as { code?: unknown; constraint?: unknown };
+    if (
+      databaseError.code === "23505" &&
+      databaseError.constraint === ACTIVE_ROOM_NAME_CONSTRAINT
+    ) {
+      throw new TRPCError({
+        cause: error,
+        code: "CONFLICT",
+        message: `An active judging room already uses the name "${roomName}".`,
+      });
+    }
+    current = "cause" in current ? current.cause : undefined;
+  }
+  throw error;
+}
 
 async function writeJudgingAudit(
   tx: WriteDb,
@@ -239,33 +265,11 @@ async function joinMemberRoom(input: {
       .limit(1);
     if (!room) throw new TRPCError({ code: "NOT_FOUND" });
 
-    let [judge] = await tx
-      .select({ id: Judge.id })
-      .from(Judge)
-      .where(
-        and(
-          eq(Judge.hackathonId, room.hackathonId),
-          eq(Judge.userId, input.userId),
-        ),
-      )
-      .limit(1);
-    if (!judge) {
-      [judge] = await tx
-        .insert(Judge)
-        .values({
-          displayName: input.displayName,
-          hackathonId: room.hackathonId,
-          kind: "member",
-          userId: input.userId,
-        })
-        .returning({ id: Judge.id });
-    } else {
-      await tx
-        .update(Judge)
-        .set({ displayName: input.displayName })
-        .where(eq(Judge.id, judge.id));
-    }
-    if (!judge) throw new Error("Member judge was not created.");
+    const judge = await upsertMemberJudge(tx, {
+      displayName: input.displayName,
+      hackathonId: room.hackathonId,
+      userId: input.userId,
+    });
     const now = new Date();
     await tx
       .update(JudgingRoomPresence)
@@ -587,48 +591,52 @@ export const judgingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      return db.transaction(async (tx) => {
-        const [hackathon] = await tx
-          .select({ id: Hackathon.id })
-          .from(Hackathon)
-          .where(eq(Hackathon.id, input.hackathonId))
-          .for("update")
-          .limit(1);
-        if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
-        const [challenge] = await tx
-          .select({ id: ProjectChallenge.id })
-          .from(ProjectChallenge)
-          .where(
-            and(
-              eq(ProjectChallenge.id, input.challengeId),
-              eq(ProjectChallenge.hackathonId, input.hackathonId),
-            ),
-          )
-          .limit(1);
-        if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
-        const [order] = await tx
-          .select({ value: max(JudgingRoom.displayOrder) })
-          .from(JudgingRoom)
-          .where(eq(JudgingRoom.hackathonId, input.hackathonId));
-        const [room] = await tx
-          .insert(JudgingRoom)
-          .values({
-            challengeId: input.challengeId,
-            displayOrder: (order?.value ?? -1) + 1,
-            hackathonId: input.hackathonId,
-            name: input.name,
-          })
-          .returning();
-        if (!room) throw new Error("Judging room was not created.");
-        await writeJudgingAudit(tx, {
-          actionKey: "judging.room.created",
-          actor,
-          metadata: { challengeId: input.challengeId },
-          roomId: room.id,
-          roomName: room.name,
+      try {
+        return await db.transaction(async (tx) => {
+          const [hackathon] = await tx
+            .select({ id: Hackathon.id })
+            .from(Hackathon)
+            .where(eq(Hackathon.id, input.hackathonId))
+            .for("update")
+            .limit(1);
+          if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+          const [challenge] = await tx
+            .select({ id: ProjectChallenge.id })
+            .from(ProjectChallenge)
+            .where(
+              and(
+                eq(ProjectChallenge.id, input.challengeId),
+                eq(ProjectChallenge.hackathonId, input.hackathonId),
+              ),
+            )
+            .limit(1);
+          if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
+          const [order] = await tx
+            .select({ value: max(JudgingRoom.displayOrder) })
+            .from(JudgingRoom)
+            .where(eq(JudgingRoom.hackathonId, input.hackathonId));
+          const [room] = await tx
+            .insert(JudgingRoom)
+            .values({
+              challengeId: input.challengeId,
+              displayOrder: (order?.value ?? -1) + 1,
+              hackathonId: input.hackathonId,
+              name: input.name,
+            })
+            .returning();
+          if (!room) throw new Error("Judging room was not created.");
+          await writeJudgingAudit(tx, {
+            actionKey: "judging.room.created",
+            actor,
+            metadata: { challengeId: input.challengeId },
+            roomId: room.id,
+            roomName: room.name,
+          });
+          return room;
         });
-        return room;
-      });
+      } catch (error) {
+        throwRoomNameConflict(error, input.name);
+      }
     }),
 
   updateRoom: permProcedure
@@ -636,63 +644,67 @@ export const judgingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      return db.transaction(async (tx) => {
-        const current = await lockRoomAggregate(tx, input.roomId, {
-          active: true,
-        });
-        const [challenge] = await tx
-          .select({ id: ProjectChallenge.id })
-          .from(ProjectChallenge)
-          .where(
-            and(
-              eq(ProjectChallenge.id, input.challengeId),
-              eq(ProjectChallenge.hackathonId, current.hackathonId),
-            ),
-          )
-          .limit(1);
-        if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
-        let guestAccessRevoked = false;
-        if (current.challengeId !== input.challengeId) {
-          const activeLink = await tx.query.JudgingRoomAccessLink.findFirst({
-            columns: { id: true },
-            where: and(
-              eq(JudgingRoomAccessLink.roomId, input.roomId),
-              isNull(JudgingRoomAccessLink.revokedAt),
-            ),
+      try {
+        return await db.transaction(async (tx) => {
+          const current = await lockRoomAggregate(tx, input.roomId, {
+            active: true,
           });
-          if (activeLink && input.confirmation !== current.name) {
-            throw new TRPCError({
-              code: "PRECONDITION_FAILED",
-              message: `Type ${current.name} to revoke active guest access.`,
+          const [challenge] = await tx
+            .select({ id: ProjectChallenge.id })
+            .from(ProjectChallenge)
+            .where(
+              and(
+                eq(ProjectChallenge.id, input.challengeId),
+                eq(ProjectChallenge.hackathonId, current.hackathonId),
+              ),
+            )
+            .limit(1);
+          if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
+          let guestAccessRevoked = false;
+          if (current.challengeId !== input.challengeId) {
+            const activeLink = await tx.query.JudgingRoomAccessLink.findFirst({
+              columns: { id: true },
+              where: and(
+                eq(JudgingRoomAccessLink.roomId, input.roomId),
+                isNull(JudgingRoomAccessLink.revokedAt),
+              ),
             });
+            if (activeLink && input.confirmation !== current.name) {
+              throw new TRPCError({
+                code: "PRECONDITION_FAILED",
+                message: `Type ${current.name} to revoke active guest access.`,
+              });
+            }
+            if (activeLink) {
+              await revokeRoomAccessWithDb(tx, {
+                reason: "room-challenge-changed",
+                roomId: input.roomId,
+                userId: ctx.session.user.id,
+              });
+              guestAccessRevoked = true;
+            }
           }
-          if (activeLink) {
-            await revokeRoomAccessWithDb(tx, {
-              reason: "room-challenge-changed",
-              roomId: input.roomId,
-              userId: ctx.session.user.id,
-            });
-            guestAccessRevoked = true;
-          }
-        }
-        const [room] = await tx
-          .update(JudgingRoom)
-          .set({ challengeId: input.challengeId, name: input.name })
-          .where(eq(JudgingRoom.id, input.roomId))
-          .returning();
-        if (!room) throw new Error("Judging room was not updated.");
-        await writeJudgingAudit(tx, {
-          actionKey: "judging.room.updated",
-          actor,
-          metadata: {
-            challengeId: input.challengeId,
-            guestAccessRevoked,
-          },
-          roomId: room.id,
-          roomName: room.name,
+          const [room] = await tx
+            .update(JudgingRoom)
+            .set({ challengeId: input.challengeId, name: input.name })
+            .where(eq(JudgingRoom.id, input.roomId))
+            .returning();
+          if (!room) throw new Error("Judging room was not updated.");
+          await writeJudgingAudit(tx, {
+            actionKey: "judging.room.updated",
+            actor,
+            metadata: {
+              challengeId: input.challengeId,
+              guestAccessRevoked,
+            },
+            roomId: room.id,
+            roomName: room.name,
+          });
+          return room;
         });
-        return room;
-      });
+      } catch (error) {
+        throwRoomNameConflict(error, input.name);
+      }
     }),
 
   moveRoom: permProcedure
@@ -931,8 +943,13 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const [target] = await tx
-          .select({ id: JudgingRoom.id, name: JudgingRoom.name })
+          .select({
+            id: JudgingRoom.id,
+            judgeDisplayName: Judge.displayName,
+            name: JudgingRoom.name,
+          })
           .from(GuestJudgeSession)
+          .innerJoin(Judge, eq(Judge.id, GuestJudgeSession.judgeId))
           .innerJoin(
             JudgingRoomAccessLink,
             eq(JudgingRoomAccessLink.id, GuestJudgeSession.accessLinkId),
@@ -973,6 +990,10 @@ export const judgingRouter = createTRPCRouter({
         await writeJudgingAudit(tx, {
           actionKey: "judging.guest.revoked",
           actor,
+          metadata: {
+            guestSessionId: input.guestSessionId,
+            judgeDisplayName: target.judgeDisplayName,
+          },
           roomId: target.id,
           roomName: target.name,
         });
@@ -988,11 +1009,13 @@ export const judgingRouter = createTRPCRouter({
       return db.transaction(async (tx) => {
         const [target] = await tx
           .select({
+            judgeDisplayName: Judge.displayName,
             presenceId: JudgingRoomPresence.id,
             roomId: JudgingRoom.id,
             roomName: JudgingRoom.name,
           })
           .from(JudgingRoomPresence)
+          .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
           .innerJoin(
             JudgingRoom,
             eq(JudgingRoom.id, JudgingRoomPresence.roomId),
@@ -1013,6 +1036,10 @@ export const judgingRouter = createTRPCRouter({
         await writeJudgingAudit(tx, {
           actionKey: "judging.presence.removed",
           actor,
+          metadata: {
+            judgeDisplayName: target.judgeDisplayName,
+            judgeId: input.judgeId,
+          },
           roomId: target.roomId,
           roomName: target.roomName,
         });

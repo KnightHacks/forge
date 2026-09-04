@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,7 +11,7 @@ import {
 
 describe("judging access credentials", () => {
   it("signs a room link deterministically and rejects tampering", () => {
-    const secret = "a-test-secret-with-enough-entropy";
+    const secret = randomBytes(32).toString("hex");
     const signature = signJudgingRoomLink("link-1", secret);
 
     expect(signJudgingRoomLink("link-1", secret)).toBe(signature);

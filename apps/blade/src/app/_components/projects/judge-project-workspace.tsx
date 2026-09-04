@@ -101,7 +101,12 @@ function MemberRoomSelector({
         if (context.activeRoomId) {
           await leaveRoom.mutateAsync({ roomId: context.activeRoomId });
         }
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("challenge");
+        next.delete("page");
         toast.success("Left judging room.");
+        const query = next.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname);
         router.refresh();
         return;
       }

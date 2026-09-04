@@ -1,4 +1,5 @@
-import { getTableConfig } from "drizzle-orm/pg-core";
+import type { PgTable } from "drizzle-orm/pg-core";
+import { getTableConfig, PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,6 +9,16 @@ import {
   JudgingRoomAccessLink,
   JudgingRoomPresence,
 } from "../schemas/knight-hacks";
+
+function indexPredicate(table: PgTable, indexName: string) {
+  const index = getTableConfig(table).indexes.find(
+    (candidate) => candidate.config.name === indexName,
+  );
+  expect(index?.config.unique).toBe(true);
+  expect(index?.config.where).toBeDefined();
+  if (!index?.config.where) throw new Error(`Missing predicate: ${indexName}`);
+  return new PgDialect().sqlToQuery(index.config.where).sql;
+}
 
 describe("judging room storage", () => {
   it("keeps room, judge, link, session, and presence as separate records", () => {
@@ -49,20 +60,16 @@ describe("judging room storage", () => {
 
   it("enforces one active room presence and one active link", () => {
     expect(
-      getTableConfig(JudgingRoomAccessLink).indexes.some(
-        (index) =>
-          index.config.name ===
-            "knight_hacks_judging_room_access_link_active_room_unique" &&
-          index.config.unique,
+      indexPredicate(
+        JudgingRoomAccessLink,
+        "knight_hacks_judging_room_access_link_active_room_unique",
       ),
-    ).toBe(true);
+    ).toBe('"knight_hacks_judging_room_access_link"."revokedAt" IS NULL');
     expect(
-      getTableConfig(JudgingRoomPresence).indexes.some(
-        (index) =>
-          index.config.name ===
-            "knight_hacks_judging_room_presence_active_judge_unique" &&
-          index.config.unique,
+      indexPredicate(
+        JudgingRoomPresence,
+        "knight_hacks_judging_room_presence_active_judge_unique",
       ),
-    ).toBe(true);
+    ).toBe('"knight_hacks_judging_room_presence"."leftAt" IS NULL');
   });
 });

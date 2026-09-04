@@ -519,7 +519,7 @@ export function JudgingControlPanel({
                           <Pencil className="mr-1 size-4" /> Edit
                         </Button>
                         <Button
-                          disabled={generate.isPending}
+                          disabled={generate.isPending || rotate.isPending}
                           onClick={() => void showQr(room)}
                           size="sm"
                           variant="outline"
@@ -532,11 +532,19 @@ export function JudgingControlPanel({
                             <Button
                               disabled={revoke.isPending}
                               onClick={async () => {
-                                await revoke.mutateAsync({ roomId: room.id });
-                                toast.success(
-                                  "Room QR and guest sessions revoked.",
-                                );
-                                refresh();
+                                try {
+                                  await revoke.mutateAsync({ roomId: room.id });
+                                  toast.success(
+                                    "Room QR and guest sessions revoked.",
+                                  );
+                                  refresh();
+                                } catch (error) {
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "Room QR revocation failed.",
+                                  );
+                                }
                               }}
                               size="sm"
                               variant="destructive"
@@ -544,7 +552,7 @@ export function JudgingControlPanel({
                               <KeyRound className="mr-1 size-4" /> Revoke
                             </Button>
                             <Button
-                              disabled={rotate.isPending}
+                              disabled={generate.isPending || rotate.isPending}
                               onClick={() => void showQr(room, "rotate")}
                               size="sm"
                               variant="outline"
@@ -634,25 +642,33 @@ export function JudgingControlPanel({
                                     <Button
                                       aria-label={`${judge.kind === "guest" ? "Revoke" : "Remove"} ${judge.displayName}`}
                                       onClick={async () => {
-                                        if (
-                                          judge.kind === "guest" &&
-                                          judge.guestSessionId
-                                        ) {
-                                          await revokeGuest.mutateAsync({
-                                            guestSessionId:
-                                              judge.guestSessionId,
-                                          });
-                                        } else {
-                                          await removeJudge.mutateAsync({
-                                            judgeId: judge.judgeId,
-                                          });
+                                        try {
+                                          if (
+                                            judge.kind === "guest" &&
+                                            judge.guestSessionId
+                                          ) {
+                                            await revokeGuest.mutateAsync({
+                                              guestSessionId:
+                                                judge.guestSessionId,
+                                            });
+                                          } else {
+                                            await removeJudge.mutateAsync({
+                                              judgeId: judge.judgeId,
+                                            });
+                                          }
+                                          toast.success(
+                                            judge.kind === "guest"
+                                              ? "Guest access revoked."
+                                              : "Judge removed from room.",
+                                          );
+                                          refresh();
+                                        } catch (error) {
+                                          toast.error(
+                                            error instanceof Error
+                                              ? error.message
+                                              : "Judge removal failed.",
+                                          );
                                         }
-                                        toast.success(
-                                          judge.kind === "guest"
-                                            ? "Guest access revoked."
-                                            : "Judge removed from room.",
-                                        );
-                                        refresh();
                                       }}
                                       size="icon"
                                       variant="ghost"
@@ -720,10 +736,18 @@ export function JudgingControlPanel({
               disabled={archive.isPending}
               onClick={async () => {
                 if (!archiving) return;
-                await archive.mutateAsync({ roomId: archiving.id });
-                toast.success("Room archived.");
-                setArchiving(null);
-                refresh();
+                try {
+                  await archive.mutateAsync({ roomId: archiving.id });
+                  toast.success("Room archived.");
+                  setArchiving(null);
+                  refresh();
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Room archive failed.",
+                  );
+                }
               }}
               variant="destructive"
             >

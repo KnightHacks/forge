@@ -11,7 +11,7 @@ import {
   signJudgingRoomLink,
   verifyJudgingRoomLink,
 } from "@forge/auth/server";
-import { and, eq, isNull } from "@forge/db";
+import { and, eq, isNull, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   GuestJudgeSession,
@@ -21,15 +21,40 @@ import {
   JudgingRoomPresence,
 } from "@forge/db/schemas/knight-hacks";
 
+import type { WriteDb } from "./utils/db";
 import { env } from "./env";
 import { resolveJudgeAccess } from "./utils/judging/principal";
 
 function judgingSecret() {
-  return (
-    authEnv.JUDGING_ACCESS_SECRET ??
-    authEnv.BETTER_AUTH_SECRET ??
-    "forge-local-judging-access"
-  );
+  const secret = authEnv.JUDGING_ACCESS_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JUDGING_ACCESS_SECRET is required for judging room access.",
+    );
+  }
+  return secret;
+}
+
+export async function upsertMemberJudge(
+  tx: WriteDb,
+  input: { displayName: string; hackathonId: string; userId: string },
+) {
+  const [judge] = await tx
+    .insert(Judge)
+    .values({
+      displayName: input.displayName,
+      hackathonId: input.hackathonId,
+      kind: "member",
+      userId: input.userId,
+    })
+    .onConflictDoUpdate({
+      set: { displayName: input.displayName },
+      target: [Judge.hackathonId, Judge.userId],
+      targetWhere: sql`${Judge.userId} IS NOT NULL`,
+    })
+    .returning({ id: Judge.id });
+  if (!judge) throw new Error("Member judge was not created.");
+  return judge;
 }
 
 export function judgingRoomActivationUrl(linkId: string) {
@@ -83,33 +108,11 @@ export async function activateJudgingRoom(input: {
     }
 
     if (memberAccess.kind === "member") {
-      let [judge] = await tx
-        .select({ id: Judge.id })
-        .from(Judge)
-        .where(
-          and(
-            eq(Judge.hackathonId, access.hackathonId),
-            eq(Judge.userId, memberAccess.userId),
-          ),
-        )
-        .limit(1);
-      if (!judge) {
-        [judge] = await tx
-          .insert(Judge)
-          .values({
-            displayName: memberAccess.displayName,
-            hackathonId: access.hackathonId,
-            kind: "member",
-            userId: memberAccess.userId,
-          })
-          .returning({ id: Judge.id });
-      } else {
-        await tx
-          .update(Judge)
-          .set({ displayName: memberAccess.displayName })
-          .where(eq(Judge.id, judge.id));
-      }
-      if (!judge) throw new Error("Member judge was not created.");
+      const judge = await upsertMemberJudge(tx, {
+        displayName: memberAccess.displayName,
+        hackathonId: access.hackathonId,
+        userId: memberAccess.userId,
+      });
       const now = new Date();
       await tx
         .update(JudgingRoomPresence)

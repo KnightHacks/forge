@@ -490,8 +490,14 @@ export const AUDIT_ACTION_CATALOG = {
   "judging.room_link.viewed": policy("hackathons", "Viewed judging room QR"),
   "judging.room_link.revoked": policy("hackathons", "Revoked judging room QR"),
   "judging.room_link.rotated": policy("hackathons", "Rotated judging room QR"),
-  "judging.guest.revoked": policy("hackathons", "Revoked guest judge"),
-  "judging.presence.removed": policy("hackathons", "Removed judge from room"),
+  "judging.guest.revoked": policy("hackathons", "Revoked guest judge", [
+    "guestSessionId",
+    "judgeDisplayName",
+  ]),
+  "judging.presence.removed": policy("hackathons", "Removed judge from room", [
+    "judgeId",
+    "judgeDisplayName",
+  ]),
   // `status` names which applicant status the mail belongs to, and
   // `templateName` records what it pointed at *then* — the template can be
   // renamed later, and the log should not silently follow it.
