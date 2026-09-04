@@ -20,7 +20,8 @@ Current phase: R-19, R-25, and R-30 complete; draft PR open
   add, replace, remove, alt-text editing, respondent rendering, authorized
   reads, and cleanup. The additive database migration was regenerated as
   `0045_soft_makkari` after merging PR #529's `0044_open_mikhail_rasputin`.
-  The migration was generated and tested but was not applied to a database.
+  The migration was generated, tested, and applied to the local development
+  database on 2026-09-04.
 - 2026-09-04 (integration and review): Merged PR #529 from `origin/main` into
   the local branch as merge commit `71b755bb`. The only merge conflict was the
   admin navigation, resolved by retaining the established domain grouping and
@@ -540,6 +541,10 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 
 ## Validation / commands
 
+- 2026-09-04 (R-19, R-24, R-25 local upload recovery): `pnpm db:migrate`
+  applied `0045_soft_makkari` successfully. Direct schema verification confirmed
+  both issue-attachment tables exist and the form-attachment purpose constraint
+  accepts `banner`, `instruction`, and `response`.
 - 2026-09-04 (R-03 through R-06 compatibility): Audited `/judge/projects`,
   `/admin/projects`, and `/admin/judging` after merging PRs #527 and #529.
   Focused header, loading, and navigation coverage passed 15/15 tests. Strict
