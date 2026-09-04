@@ -919,11 +919,14 @@ export function HackathonAnalyticsDashboard({
               {report.applications.deadlineMarkers.map((marker) => (
                 <ReferenceLine
                   key={marker.kind}
-                  label={
-                    marker.kind === "application"
-                      ? "App deadline"
-                      : "Confirm deadline"
-                  }
+                  label={{
+                    fill: "hsl(var(--muted-foreground))",
+                    position: "insideTopLeft",
+                    value:
+                      marker.kind === "application"
+                        ? "App deadline"
+                        : "Confirm deadline",
+                  }}
                   stroke="hsl(var(--muted-foreground))"
                   strokeDasharray="4 4"
                   x={marker.elapsedDay}
@@ -944,7 +947,11 @@ export function HackathonAnalyticsDashboard({
               {report.comparison ? (
                 <>
                   <ReferenceLine
-                    label="Prior app deadline"
+                    label={{
+                      fill: "hsl(var(--chart-4))",
+                      position: "insideBottomLeft",
+                      value: "Prior app",
+                    }}
                     stroke="var(--color-comparisonCumulative)"
                     strokeDasharray="2 4"
                     x={Math.max(
@@ -959,7 +966,11 @@ export function HackathonAnalyticsDashboard({
                     )}
                   />
                   <ReferenceLine
-                    label="Prior confirm deadline"
+                    label={{
+                      fill: "hsl(var(--chart-4))",
+                      position: "insideBottomLeft",
+                      value: "Prior confirm",
+                    }}
                     stroke="var(--color-comparisonCumulative)"
                     strokeDasharray="2 4"
                     x={Math.max(

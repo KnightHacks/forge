@@ -2,8 +2,11 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
+import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
+import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { DiscordSignInLink } from "~/app/_components/auth/discord-sign-in-link";
 import { GUILD_URL } from "~/lib/guild-urls";
@@ -47,24 +50,72 @@ export function EditorialCopy({
   );
 }
 
-export function ClosingCallToAction() {
+// The bundle leaves authenticated CTA copy to the human; "Go to your dashboard" was approved 2026-08-31.
+export function LandingPrimaryCta({
+  className,
+  isAuthenticated,
+}: {
+  className?: string;
+  isAuthenticated: boolean;
+}) {
+  if (!isAuthenticated) {
+    return (
+      <DiscordSignInLink className={className}>
+        Sign in with Discord
+      </DiscordSignInLink>
+    );
+  }
+
+  return (
+    <Button asChild size="lg" className={className}>
+      <Link href={MEMBER_DASHBOARD_PATH}>
+        Go to your dashboard
+        <ArrowRight aria-hidden="true" className="size-5" />
+      </Link>
+    </Button>
+  );
+}
+
+export function ClosingCallToAction({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}) {
   return (
     <section className="container px-4 pb-10 pt-6 sm:px-8 sm:pb-14 sm:pt-8">
       <Card className={landingPanelClassName}>
         <CardContent className="flex flex-col gap-5 p-5 sm:p-6 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium text-primary">Discord sign-in</p>
+            <p className="text-sm font-medium text-primary">
+              {isAuthenticated ? "You're signed in" : "Discord sign-in"}
+            </p>
             <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">
-              Sign in to Blade
+              {isAuthenticated
+                ? "Pick up in your dashboard"
+                : "Sign in to Blade"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
-              Blade uses Discord for authentication. Returning members go to
-              their dashboard. New members continue to the signup form.
+              {isAuthenticated
+                ? "Events, dues, your check-in QR, and your Guild profile are in the member dashboard."
+                : "Blade uses Discord for authentication. Returning members go to their dashboard. New members continue to the signup form."}
             </p>
           </div>
-          <DiscordSignInLink className="h-12 w-full shrink-0 px-6 text-base md:w-auto">
-            Continue with Discord
-          </DiscordSignInLink>
+          {isAuthenticated ? (
+            <Button
+              asChild
+              size="lg"
+              className="h-12 w-full shrink-0 px-6 text-base md:w-auto"
+            >
+              <Link href={MEMBER_DASHBOARD_PATH}>
+                Go to your dashboard
+                <ArrowRight aria-hidden="true" className="size-5" />
+              </Link>
+            </Button>
+          ) : (
+            <DiscordSignInLink className="h-12 w-full shrink-0 px-6 text-base md:w-auto">
+              Continue with Discord
+            </DiscordSignInLink>
+          )}
         </CardContent>
       </Card>
     </section>

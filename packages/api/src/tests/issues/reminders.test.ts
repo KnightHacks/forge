@@ -149,7 +149,7 @@ describe("Club Operations Issues reminders", () => {
     expect(displays[1]).toContain("\n-# Alex");
     expect(displays[1]).toContain("\n-# Development Team");
     expect(displays[1]).toContain(
-      "[Discuss](<https://discord.com/channels/999999999999999999/888888888888888888>)",
+      "| [Chat](<https://discord.com/channels/999999999999999999/888888888888888888>)",
     );
     expect(displays[1]).not.toContain("Open in Blade");
     const [productionMessage] = splitIssueReminderMessages(
@@ -169,12 +169,60 @@ describe("Club Operations Issues reminders", () => {
     expect(bladeOnlyText).toContain(
       `https://blade.knighthacks.org/admin/issues/${assigned.id}`,
     );
-    expect(bladeOnlyText).not.toContain("[Discuss]");
+    expect(bladeOnlyText).not.toContain("[Chat]");
     expect(issueReminderAllowedMentions(message.targets)).toEqual({
       parse: [],
       roles: ["333333333333333333"],
       users: ["111111111111111111"],
     });
+  });
+
+  it("TC-017 renders the linked title followed by `| Chat` only when a Discord thread exists", () => {
+    const now = new Date("2026-07-21T13:00:00.000Z");
+    const [threaded] = buildIssueReminderPlan(
+      [{ ...baseIssue, name: "Ship <@123> update\nnow" }],
+      now,
+    );
+    const [threadless] = buildIssueReminderPlan(
+      [
+        {
+          ...baseIssue,
+          discordThreadUrl: null,
+          id: "00000000-0000-4000-8000-000000000003",
+          name: "Ship <@123> update\nnow",
+        },
+      ],
+      now,
+    );
+    if (!threaded || !threadless) throw new Error("Expected reminder targets.");
+
+    const [threadedMessage] = splitIssueReminderMessages(
+      [threaded],
+      "https://blade.test",
+    );
+    const [threadlessMessage] = splitIssueReminderMessages(
+      [threadless],
+      "https://blade.test",
+    );
+    if (!threadedMessage || !threadlessMessage) {
+      throw new Error("Expected reminder messages.");
+    }
+
+    const threadedText = containerTextDisplays(threadedMessage).join("\n");
+    const threadlessText = containerTextDisplays(threadlessMessage).join("\n");
+
+    const escapedTitle = sanitizeIssueReminderTitle(
+      "Ship <@123> update\nnow",
+    ).replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
+
+    expect(threadedText).toContain(
+      `${escapedTitle} (8/4)](<https://blade.test/admin/issues/${threaded.id}>)** | [Chat](<${threaded.discordThreadUrl}>)`,
+    );
+    expect(threadlessText).toContain(
+      `${escapedTitle} (8/4)](<https://blade.test/admin/issues/${threadless.id}>)**\n`,
+    );
+    expect(threadlessText).not.toContain("| [Chat]");
+    expect(threadlessText).not.toContain("[Chat]");
   });
 
   it("TC-REMINDER-005 splits deterministic messages at Discord component limits", () => {

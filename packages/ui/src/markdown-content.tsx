@@ -1,19 +1,32 @@
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 import { cn } from "@forge/ui";
 
 export interface MarkdownContentProps {
+  /**
+   * Render a lone newline as a line break. CommonMark treats it as a soft
+   * break and collapses it to a space, which is right for prose authored in a
+   * rich editor but wrong for text typed into a plain textarea. Opt in per
+   * consumer so event descriptions keep the standard behavior.
+   */
+  breaks?: boolean;
   children: string;
   className?: string;
   compact?: boolean;
+  components?: Components;
   hideImages?: boolean;
 }
 
+const breaksPlugins = [remarkBreaks];
+
 export function MarkdownContent({
+  breaks = false,
   children,
   className,
   compact = false,
+  components: componentOverrides,
   hideImages = false,
 }: MarkdownContentProps) {
   const components: Components = {
@@ -31,6 +44,7 @@ export function MarkdownContent({
           p: ({ children: paragraphChildren }) => <>{paragraphChildren} </>,
         }
       : {}),
+    ...componentOverrides,
   };
 
   return (
@@ -42,7 +56,11 @@ export function MarkdownContent({
         className,
       )}
     >
-      <ReactMarkdown components={components} skipHtml>
+      <ReactMarkdown
+        components={components}
+        remarkPlugins={breaks ? breaksPlugins : undefined}
+        skipHtml
+      >
         {children}
       </ReactMarkdown>
     </div>

@@ -15,9 +15,11 @@ import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Skeleton } from "@forge/ui/skeleton";
 
 import { formatClubLongDate } from "~/lib/dates";
+import { FormBanner } from "./form-banner";
 import { FormResponseValue } from "./form-response-value";
 
 interface GenericFormDefinition {
+  banner?: { alt: string; attachmentId: string };
   description: string;
   id: string;
   name: string;
@@ -200,6 +202,7 @@ export function GenericFormRespondent({
       className="container min-w-0 overflow-x-clip px-3 pb-28 pt-4 sm:px-4 sm:pb-16 sm:pt-10"
     >
       <Card className="mx-auto min-w-0 max-w-3xl gap-0 overflow-hidden border-white/10 bg-card/95 py-0 shadow-2xl shadow-black/25">
+        {definition.banner && <FormBanner {...definition.banner} />}
         <CardHeader className="border-b border-border/70 p-4 sm:p-6">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <Badge variant="outline" className="w-fit">

@@ -13,6 +13,21 @@ vi.mock("~/trpc/react", () => ({
       createResponse: {
         useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
       },
+      // Branches on attachmentId so one render can cover the loading, error,
+      // and success states InstructionMedia renders for TC-018.
+      getAttachmentDownload: {
+        useQuery: ({ attachmentId }: { attachmentId: string }) => {
+          if (attachmentId === "att-pending")
+            return { data: undefined, isError: false, isPending: true };
+          if (attachmentId === "att-broken")
+            return { data: undefined, isError: true, isPending: false };
+          return {
+            data: { url: `https://cdn.test/${attachmentId}` },
+            isError: false,
+            isPending: false,
+          };
+        },
+      },
       updateResponse: {
         useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
       },
@@ -150,5 +165,46 @@ describe("GenericFormResponseForm", () => {
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain("4 / 3 non-whitespace characters");
     expect(html).toContain("text-destructive");
+  });
+
+  it("[TC-018] renders image and video instruction media in their loading, failure, and success states", () => {
+    const mediaDefinition = {
+      ...definition,
+      instructions: [
+        ...definition.instructions,
+        {
+          alt: "Event flyer",
+          attachmentId: "att-image",
+          id: "00000000-0000-4000-8000-000000001018",
+          type: "image" as const,
+        },
+        {
+          alt: "Loading walkthrough",
+          attachmentId: "att-pending",
+          id: "00000000-0000-4000-8000-000000001019",
+          type: "video" as const,
+        },
+        {
+          alt: "Broken walkthrough",
+          attachmentId: "att-broken",
+          id: "00000000-0000-4000-8000-000000001020",
+          type: "video" as const,
+        },
+      ],
+    };
+
+    const html = renderToStaticMarkup(
+      createElement(GenericFormResponseForm, {
+        definition: mediaDefinition,
+        formId: "00000000-0000-4000-8000-000000001001",
+      }),
+    );
+
+    expect(html).toContain('src="https://cdn.test/att-image"');
+    expect(html).toContain('alt="Event flyer"');
+    expect(html).toContain(
+      'aria-label="Instruction media loading" aria-busy="true"',
+    );
+    expect(html).toContain("Instruction media could not be loaded.");
   });
 });

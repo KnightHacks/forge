@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { PERMISSIONS } from "@forge/consts";
 
 import {
+  classifyIssueAttachmentAccess,
+  issueAcceptsEdits,
   issueAccessForRoles,
   roleHasIssueCapability,
 } from "../../utils/issues/access";
@@ -24,6 +26,42 @@ function bits(...keys: PERMISSIONS.PermissionKey[]) {
 }
 
 describe("Club Operations Issues assigned-role access", () => {
+  it("does not expose detached managed images while they await cleanup", () => {
+    expect(
+      classifyIssueAttachmentAccess({
+        draftKey: null,
+        issueId: null,
+        referenceCount: 0,
+      }),
+    ).toBe("detached");
+    expect(
+      classifyIssueAttachmentAccess({
+        draftKey: "draft-key",
+        issueId: null,
+        referenceCount: 0,
+      }),
+    ).toBe("draft_upload");
+    expect(
+      classifyIssueAttachmentAccess({
+        draftKey: null,
+        issueId: "issue-id",
+        referenceCount: 0,
+      }),
+    ).toBe("issue_upload");
+    expect(
+      classifyIssueAttachmentAccess({
+        draftKey: null,
+        issueId: null,
+        referenceCount: 1,
+      }),
+    ).toBe("referenced");
+  });
+
+  it("rejects edit-only media work once an issue is archived", () => {
+    expect(issueAcceptsEdits({ archivedAt: null })).toBe(true);
+    expect(issueAcceptsEdits({ archivedAt: new Date() })).toBe(false);
+  });
+
   it("TC-AUTH-002 gives owner readers read and owner editors mutation access", () => {
     const reader = issueAccessForRoles({
       issue: { owningTeamId: TEAM_A, visibleTeamIds: [] },

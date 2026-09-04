@@ -10,6 +10,8 @@ import {
   FormsSchemas,
 } from "@forge/db/schemas/knight-hacks";
 import {
+  checkUploadMetadata,
+  FORM_BANNER_UPLOAD_POLICY,
   formDefinitionSchema,
   hasExecutableSignature,
   matchesUploadSignature,
@@ -58,16 +60,28 @@ export function uploadSignatureMatches(contentType: string, prefix: Buffer) {
 }
 
 export function classifyFormAttachmentAccess(input: {
-  isPublishedInstruction: boolean;
+  isRespondentAsset: boolean;
   ownerUserId: string;
-  purpose: "instruction" | "response";
+  purpose: "banner" | "instruction" | "response";
   requesterUserId: string;
 }) {
-  if (input.ownerUserId === input.requesterUserId) return "owner" as const;
+  if (input.purpose !== "banner" && input.ownerUserId === input.requesterUserId)
+    return "owner" as const;
   if (input.purpose === "response") return "admin_response" as const;
-  return input.isPublishedInstruction
-    ? ("published_instruction" as const)
-    : ("admin_instruction" as const);
+  return input.isRespondentAsset
+    ? ("published_asset" as const)
+    : ("admin_asset" as const);
+}
+
+export function isRespondentFormAsset(input: {
+  formState: "archived" | "draft" | "published";
+  isReferenced: boolean;
+  purpose: "banner" | "instruction" | "response";
+}) {
+  if (!input.isReferenced || input.purpose === "response") return false;
+  return input.purpose === "banner"
+    ? input.formState !== "draft"
+    : input.formState === "published";
 }
 
 async function readObjectPrefix(objectName: string, size: number) {
@@ -92,12 +106,27 @@ export async function createFormAttachmentUpload(input: {
   fileName: string;
   formId: string;
   ownerUserId: string;
-  purpose: "instruction" | "response";
+  purpose: "banner" | "instruction" | "response";
   size: number;
 }) {
-  const validation = validateFormUpload(input);
-  if (!validation.allowed) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: validation.message });
+  let contentType = input.contentType;
+  if (input.purpose === "banner") {
+    const validation = checkUploadMetadata(FORM_BANNER_UPLOAD_POLICY, input);
+    if (!validation.ok) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: validation.message,
+      });
+    }
+    contentType = validation.type.mimeType;
+  } else {
+    const validation = validateFormUpload(input);
+    if (!validation.allowed) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: validation.message,
+      });
+    }
   }
   const id = randomUUID();
   const fileName = safeFileName(input.fileName);
@@ -107,7 +136,7 @@ export async function createFormAttachmentUpload(input: {
   const [attachment] = await db
     .insert(FormAttachment)
     .values({
-      contentType: input.contentType,
+      contentType,
       fileName,
       formId: input.formId,
       id,
@@ -120,6 +149,7 @@ export async function createFormAttachmentUpload(input: {
   if (!attachment) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
   return {
     attachmentId: attachment.id,
+    contentType: attachment.contentType,
     expiresInSeconds: UPLOAD_EXPIRY_SECONDS,
     uploadUrl: await minioClient.presignedPutObject(
       MINIO.FORM_ASSETS_BUCKET_NAME,
@@ -141,7 +171,7 @@ export async function finalizeFormAttachment(input: {
   if (attachment?.ownerUserId !== input.ownerUserId) {
     throw new TRPCError({ code: "NOT_FOUND" });
   }
-  if (attachment.purpose === "instruction" && !input.auditActor) {
+  if (attachment.purpose !== "response" && !input.auditActor) {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   if (attachment.finalizedAt) return attachment;
@@ -157,11 +187,18 @@ export async function finalizeFormAttachment(input: {
       message: "The upload has not completed.",
     });
   }
-  const validation = validateFormUpload({
-    contentType: attachment.contentType,
-    fileName: attachment.fileName,
-    size: stat.size,
-  });
+  const validation =
+    attachment.purpose === "banner"
+      ? checkUploadMetadata(FORM_BANNER_UPLOAD_POLICY, {
+          contentType: attachment.contentType,
+          fileName: attachment.fileName,
+          size: stat.size,
+        })
+      : validateFormUpload({
+          contentType: attachment.contentType,
+          fileName: attachment.fileName,
+          size: stat.size,
+        });
   const metadata: unknown = stat.metaData;
   const storedContentType =
     typeof metadata === "object" && metadata !== null
@@ -171,7 +208,7 @@ export async function finalizeFormAttachment(input: {
       : undefined;
   const prefix = await readObjectPrefix(attachment.objectName, stat.size);
   if (
-    !validation.allowed ||
+    !("allowed" in validation ? validation.allowed : validation.ok) ||
     stat.size !== attachment.size ||
     (typeof storedContentType === "string" &&
       storedContentType.split(";", 1)[0]?.trim().toLowerCase() !==
@@ -195,16 +232,20 @@ export async function finalizeFormAttachment(input: {
       .where(eq(FormAttachment.id, attachment.id))
       .returning();
     if (!saved) throw new TRPCError({ code: "NOT_FOUND" });
-    if (saved.purpose === "instruction" && input.auditActor) {
+    if (saved.purpose !== "response" && input.auditActor) {
       await createAdminAuditEvent(
         {
-          actionKey: "form.instruction_attachment.uploaded",
+          actionKey:
+            saved.purpose === "banner"
+              ? "form.banner_attachment.uploaded"
+              : "form.instruction_attachment.uploaded",
           actor: input.auditActor,
           metadata: {
             attachmentId: saved.id,
             byteSize: saved.size,
             filename: saved.fileName,
             mimeType: saved.contentType,
+            ...(saved.purpose === "banner" && { purpose: saved.purpose }),
           },
           subjects: [
             {
@@ -386,9 +427,13 @@ export async function cleanupAbandonedFormAttachments({
     forms.flatMap(({ formData }) => {
       const definition = formDefinitionSchema.safeParse(formData);
       if (!definition.success) return [];
-      return definition.data.instructions.flatMap((instruction) =>
-        instruction.type === "text" ? [] : [instruction.attachmentId],
-      );
+      return definition.data.instructions
+        .flatMap((instruction) =>
+          instruction.type === "text" ? [] : [instruction.attachmentId],
+        )
+        .concat(
+          definition.data.banner ? [definition.data.banner.attachmentId] : [],
+        );
     }),
   );
   const responseIds = candidates.flatMap(({ responseId }) =>

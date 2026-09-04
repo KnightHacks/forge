@@ -25,11 +25,15 @@ import {
 } from "@forge/ui/select";
 import { Switch } from "@forge/ui/switch";
 
+import type { CareerHistoryValidationIssue } from "./member-career-settings";
 import { api } from "~/trpc/react";
 import { employmentMonthParts, employmentMonthValue } from "./employment-month";
 
 type CompanyResult = RouterOutputs["career"]["searchCompanies"][number];
 type CityResult = RouterOutputs["career"]["searchUsCities"][number];
+type CareerHistoryValidationField = NonNullable<
+  CareerHistoryValidationIssue["field"]
+>;
 
 export interface CareerHistoryDraft extends Omit<
   EmploymentInput,
@@ -46,11 +50,45 @@ export interface CareerHistoryDraft extends Omit<
 interface EmploymentHistoryEditorProps {
   currentCityKey: string | null;
   currentCityLabel: string | null;
+  focusRequestRevision?: number;
+  focusTarget?: CareerHistoryValidationIssue | null;
   guildLocationVisible: boolean;
   history: CareerHistoryDraft[];
   onCurrentCityChange: (city: CityResult | null) => void;
   onGuildLocationVisibleChange: (visible: boolean) => void;
   onHistoryChange: (history: CareerHistoryDraft[]) => void;
+  validationIssues?: CareerHistoryValidationIssue[];
+}
+
+function careerFieldId(draftId: string, field: string) {
+  return `employment-${draftId}-${field}`;
+}
+
+function RequiredIndicator() {
+  return (
+    <span className="text-destructive" aria-hidden="true">
+      {" "}
+      *
+    </span>
+  );
+}
+
+function InlineCareerError({
+  fieldId,
+  issue,
+}: {
+  fieldId: string;
+  issue?: CareerHistoryValidationIssue;
+}) {
+  if (!issue) return null;
+  return (
+    <p
+      id={`${fieldId}-error`}
+      className="mt-2 text-sm font-medium text-destructive"
+    >
+      {issue.message}
+    </p>
+  );
 }
 
 const blankExperience = (): CareerHistoryDraft => ({
@@ -108,15 +146,23 @@ function employmentYearOptions(selectedYear: string) {
  * month/year, so the form can never hold or submit an incomplete pair.
  */
 export function EmploymentMonthPicker({
+  draftId,
+  field,
+  issue,
   label,
   onChange,
   value,
 }: {
+  draftId?: string;
+  field?: "endMonth" | "startMonth";
+  issue?: CareerHistoryValidationIssue;
   label: string;
   onChange: (value: string | null) => void;
   value: string | null;
 }) {
   const { month, year } = employmentMonthParts(value);
+  const fieldId = draftId && field ? careerFieldId(draftId, field) : undefined;
+  const errorId = fieldId ? `${fieldId}-error` : undefined;
 
   const chooseMonth = (nextMonth: string) => {
     onChange(
@@ -152,7 +198,13 @@ export function EmploymentMonthPicker({
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(7rem,0.72fr)] gap-2">
         <Select value={month} onValueChange={chooseMonth}>
           <SelectTrigger
+            id={fieldId}
+            data-career-field={
+              draftId && field ? `${draftId}:${field}` : undefined
+            }
             aria-label={`${label}: month`}
+            aria-describedby={issue ? errorId : undefined}
+            aria-invalid={issue ? true : undefined}
             className="h-11 min-w-0 bg-background/70"
           >
             <SelectValue placeholder="Month" />
@@ -168,6 +220,8 @@ export function EmploymentMonthPicker({
         <Select value={year} onValueChange={chooseYear}>
           <SelectTrigger
             aria-label={`${label}: year`}
+            aria-describedby={issue ? errorId : undefined}
+            aria-invalid={issue ? true : undefined}
             className="h-11 min-w-0 bg-background/70"
           >
             <SelectValue placeholder="Year" />
@@ -181,6 +235,11 @@ export function EmploymentMonthPicker({
           </SelectContent>
         </Select>
       </div>
+      {issue && errorId && (
+        <p id={errorId} className="mt-2 text-sm font-medium text-destructive">
+          {issue.message}
+        </p>
+      )}
     </fieldset>
   );
 }
@@ -205,9 +264,13 @@ function SearchResults({
 
 function CompanyPicker({
   entry,
+  fieldId,
+  issue,
   onChange,
 }: {
   entry: CareerHistoryDraft;
+  fieldId: string;
+  issue?: CareerHistoryValidationIssue;
   onChange: (entry: CareerHistoryDraft) => void;
 }) {
   const utils = api.useUtils();
@@ -217,7 +280,7 @@ function CompanyPicker({
     query: string;
   }>({ matches: [], query: "" });
   const [open, setOpen] = useState(false);
-  const inputId = useId();
+  const errorId = `${fieldId}-error`;
   const trimmedQuery = query.trim();
   const results =
     !entry.companyId && resultState.query === trimmedQuery
@@ -247,12 +310,17 @@ function CompanyPicker({
 
   return (
     <div className="relative">
-      <label htmlFor={inputId} className="mb-2 block text-sm font-medium">
+      <label htmlFor={fieldId} className="mb-2 block text-sm font-medium">
         Company
+        <RequiredIndicator />
       </label>
       <Input
-        id={inputId}
+        id={fieldId}
+        data-career-field={`${entry.draftId}:company`}
         value={query}
+        aria-describedby={issue ? errorId : undefined}
+        aria-invalid={issue ? true : undefined}
+        aria-required="true"
         placeholder="Search companies"
         autoComplete="off"
         className="h-11 bg-background/70"
@@ -302,15 +370,26 @@ function CompanyPicker({
           New company · visible publicly after officer review
         </p>
       )}
+      {issue && (
+        <p id={errorId} className="mt-2 text-sm font-medium text-destructive">
+          {issue.message}
+        </p>
+      )}
     </div>
   );
 }
 
 function CityPicker({
+  dataCareerField,
+  fieldId,
+  issue,
   label,
   onChange,
   selectionKey,
 }: {
+  dataCareerField?: string;
+  fieldId?: string;
+  issue?: CareerHistoryValidationIssue;
   label: string | null;
   onChange: (city: CityResult | null) => void;
   selectionKey: string | null;
@@ -322,7 +401,9 @@ function CityPicker({
     query: string;
   }>({ matches: [], query: "" });
   const [open, setOpen] = useState(false);
-  const inputId = useId();
+  const generatedInputId = useId();
+  const inputId = fieldId ?? generatedInputId;
+  const errorId = `${inputId}-error`;
   const trimmedQuery = query.trim();
   const results =
     trimmedQuery !== label && resultState.query === trimmedQuery
@@ -363,7 +444,10 @@ function CityPicker({
       </label>
       <Input
         id={inputId}
+        data-career-field={dataCareerField}
         value={query}
+        aria-describedby={issue ? errorId : undefined}
+        aria-invalid={issue ? true : undefined}
         placeholder="Search U.S. cities"
         autoComplete="off"
         className="h-11 bg-background/70"
@@ -394,6 +478,11 @@ function CityPicker({
           </button>
         ))}
       </SearchResults>
+      {issue && (
+        <p id={errorId} className="mt-2 text-sm font-medium text-destructive">
+          {issue.message}
+        </p>
+      )}
     </div>
   );
 }
@@ -401,12 +490,34 @@ function CityPicker({
 export function EmploymentHistoryEditor({
   currentCityKey,
   currentCityLabel,
+  focusRequestRevision = 0,
+  focusTarget = null,
   guildLocationVisible,
   history,
   onCurrentCityChange,
   onGuildLocationVisibleChange,
   onHistoryChange,
+  validationIssues = [],
 }: EmploymentHistoryEditorProps) {
+  useEffect(() => {
+    if (focusRequestRevision === 0) return;
+    if (!focusTarget?.draftId || !focusTarget.field) return;
+    const targetKey = `${focusTarget.draftId}:${focusTarget.field}`;
+    const animationFrame = window.requestAnimationFrame(() => {
+      const target = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-career-field]"),
+      ).find((element) => element.dataset.careerField === targetKey);
+      if (!target) return;
+      target.closest("[data-career-draft-id]")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      target.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [focusRequestRevision, focusTarget?.draftId, focusTarget?.field]);
+
   const updateEntry = (index: number, next: CareerHistoryDraft) => {
     onHistoryChange(
       history.map((entry, entryIndex) => (entryIndex === index ? next : entry)),
@@ -422,6 +533,23 @@ export function EmploymentHistoryEditor({
     next.splice(destination, 0, entry);
     onHistoryChange(next);
   };
+
+  const validationIssuesByDraft = new Map<
+    string,
+    Map<CareerHistoryValidationField, CareerHistoryValidationIssue>
+  >();
+  for (const issue of validationIssues) {
+    if (!issue.draftId || !issue.field) continue;
+    const entryIssues =
+      validationIssuesByDraft.get(issue.draftId) ??
+      new Map<CareerHistoryValidationField, CareerHistoryValidationIssue>();
+    entryIssues.set(issue.field, issue);
+    validationIssuesByDraft.set(issue.draftId, entryIssues);
+  }
+  const validationIssue = (
+    draftId: string,
+    field: CareerHistoryValidationField,
+  ) => validationIssuesByDraft.get(draftId)?.get(field);
 
   return (
     <div className="space-y-5">
@@ -454,7 +582,12 @@ export function EmploymentHistoryEditor({
             <section
               key={entry.draftId}
               data-career-draft-id={entry.draftId}
-              className="rounded-md border border-white/10 bg-background/60 p-4"
+              className={cn(
+                "rounded-md border bg-background/60 p-4",
+                validationIssuesByDraft.has(entry.draftId)
+                  ? "border-destructive/40"
+                  : "border-white/10",
+              )}
               aria-label={`Employment experience ${index + 1}`}
             >
               <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
@@ -469,7 +602,8 @@ export function EmploymentHistoryEditor({
                     </p>
                     {entry.state === "unknown" && (
                       <p className="text-xs text-[#DBC049]">
-                        Unconfirmed legacy entry
+                        Imported entry: choose an experience type and confirm
+                        whether this role is current or former.
                       </p>
                     )}
                   </div>
@@ -514,14 +648,31 @@ export function EmploymentHistoryEditor({
               <div className="grid gap-4 md:grid-cols-2">
                 <CompanyPicker
                   entry={entry}
+                  fieldId={careerFieldId(entry.draftId, "company")}
+                  issue={validationIssue(entry.draftId, "company")}
                   onChange={(next) => updateEntry(index, next)}
                 />
                 <div>
-                  <label className="mb-2 block text-sm font-medium">
+                  <label
+                    htmlFor={careerFieldId(entry.draftId, "title")}
+                    className="mb-2 block text-sm font-medium"
+                  >
                     Position title
+                    <RequiredIndicator />
                   </label>
                   <Input
+                    id={careerFieldId(entry.draftId, "title")}
+                    data-career-field={`${entry.draftId}:title`}
                     value={entry.title ?? ""}
+                    aria-describedby={
+                      validationIssue(entry.draftId, "title")
+                        ? `${careerFieldId(entry.draftId, "title")}-error`
+                        : undefined
+                    }
+                    aria-invalid={
+                      validationIssue(entry.draftId, "title") ? true : undefined
+                    }
+                    aria-required="true"
                     maxLength={120}
                     placeholder="Software Engineer"
                     className="h-11 bg-background/70"
@@ -532,10 +683,18 @@ export function EmploymentHistoryEditor({
                       })
                     }
                   />
+                  <InlineCareerError
+                    fieldId={careerFieldId(entry.draftId, "title")}
+                    issue={validationIssue(entry.draftId, "title")}
+                  />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium">
+                  <label
+                    htmlFor={careerFieldId(entry.draftId, "experience-type")}
+                    className="mb-2 block text-sm font-medium"
+                  >
                     Experience type
+                    <RequiredIndicator />
                   </label>
                   <Select
                     value={entry.experienceType ?? undefined}
@@ -547,7 +706,22 @@ export function EmploymentHistoryEditor({
                       })
                     }
                   >
-                    <SelectTrigger className="h-11 bg-background/70">
+                    <SelectTrigger
+                      id={careerFieldId(entry.draftId, "experience-type")}
+                      data-career-field={`${entry.draftId}:experienceType`}
+                      aria-describedby={
+                        validationIssue(entry.draftId, "experienceType")
+                          ? `${careerFieldId(entry.draftId, "experience-type")}-error`
+                          : undefined
+                      }
+                      aria-invalid={
+                        validationIssue(entry.draftId, "experienceType")
+                          ? true
+                          : undefined
+                      }
+                      aria-required="true"
+                      className="h-11 bg-background/70"
+                    >
                       <SelectValue placeholder="Choose a type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -562,10 +736,18 @@ export function EmploymentHistoryEditor({
                       )}
                     </SelectContent>
                   </Select>
+                  <InlineCareerError
+                    fieldId={careerFieldId(entry.draftId, "experience-type")}
+                    issue={validationIssue(entry.draftId, "experienceType")}
+                  />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium">
+                  <label
+                    htmlFor={careerFieldId(entry.draftId, "state")}
+                    className="mb-2 block text-sm font-medium"
+                  >
                     Employment status
+                    <RequiredIndicator />
                   </label>
                   <Select
                     value={entry.state}
@@ -577,7 +759,22 @@ export function EmploymentHistoryEditor({
                       })
                     }
                   >
-                    <SelectTrigger className="h-11 bg-background/70">
+                    <SelectTrigger
+                      id={careerFieldId(entry.draftId, "state")}
+                      data-career-field={`${entry.draftId}:state`}
+                      aria-describedby={
+                        validationIssue(entry.draftId, "state")
+                          ? `${careerFieldId(entry.draftId, "state")}-error`
+                          : undefined
+                      }
+                      aria-invalid={
+                        validationIssue(entry.draftId, "state")
+                          ? true
+                          : undefined
+                      }
+                      aria-required="true"
+                      className="h-11 bg-background/70"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -590,8 +787,15 @@ export function EmploymentHistoryEditor({
                       )}
                     </SelectContent>
                   </Select>
+                  <InlineCareerError
+                    fieldId={careerFieldId(entry.draftId, "state")}
+                    issue={validationIssue(entry.draftId, "state")}
+                  />
                 </div>
                 <EmploymentMonthPicker
+                  draftId={entry.draftId}
+                  field="startMonth"
+                  issue={validationIssue(entry.draftId, "startMonth")}
                   label="Start month"
                   value={entry.startMonth ?? null}
                   onChange={(startMonth) =>
@@ -600,6 +804,9 @@ export function EmploymentHistoryEditor({
                 />
                 {entry.state !== "current" && (
                   <EmploymentMonthPicker
+                    draftId={entry.draftId}
+                    field="endMonth"
+                    issue={validationIssue(entry.draftId, "endMonth")}
                     label="End month"
                     value={entry.endMonth ?? null}
                     onChange={(endMonth) =>
@@ -609,6 +816,9 @@ export function EmploymentHistoryEditor({
                 )}
                 <div className="md:col-span-2">
                   <CityPicker
+                    dataCareerField={`${entry.draftId}:cityKey`}
+                    fieldId={careerFieldId(entry.draftId, "city")}
+                    issue={validationIssue(entry.draftId, "cityKey")}
                     label={entry.cityLabel}
                     selectionKey={entry.cityKey}
                     onChange={(city) =>

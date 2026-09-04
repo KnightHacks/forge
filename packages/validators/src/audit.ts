@@ -837,6 +837,13 @@ export const AUDIT_ACTION_CATALOG = {
     "Uploaded form instruction media",
     ["filename", "mimeType", "byteSize", "attachmentId"],
   ),
+  "form.banner_attachment.uploaded": policy("forms", "Uploaded form banner", [
+    "filename",
+    "mimeType",
+    "byteSize",
+    "attachmentId",
+    "purpose",
+  ]),
   "form.callback.configured": policy("forms", "Configured form callback", [
     "callbackSlug",
     "active",
@@ -885,6 +892,13 @@ export const AUDIT_ACTION_CATALOG = {
     "eventId",
     "parentId",
     "originTemplateId",
+  ]),
+  "issue.image.uploaded": policy("issues", "Uploaded managed issue image", [
+    "filename",
+    "mimeType",
+    "byteSize",
+    "attachmentId",
+    "draft",
   ]),
   "issue.status.changed": policy(
     "issues",

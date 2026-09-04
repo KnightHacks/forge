@@ -196,6 +196,20 @@ describe("Template child materialization", () => {
       }),
     ).toEqual([]);
   });
+
+  it("removes managed image references copied into child descriptions", () => {
+    const attachmentId = "f1490a89-24c2-4d1e-bad7-a90182b61bfd";
+    const children = materialize(
+      [
+        node({
+          description: `Before\n\n![Board](/_managed/issue-images/${attachmentId})\n\nAfter`,
+        }),
+      ],
+      { input: "Kickoff", parentName: "Kickoff", team: "owning-team" },
+    );
+
+    expect(children[0]).toMatchObject({ description: "Before\n\nAfter" });
+  });
 });
 
 describe("Applying a template to a draft", () => {
@@ -309,5 +323,19 @@ describe("Applying a template to a draft", () => {
       parentId: "issue-1",
       templateId: "template-a",
     });
+  });
+
+  it("removes managed image references copied into the root description", () => {
+    const attachmentId = "f1490a89-24c2-4d1e-bad7-a90182b61bfd";
+    const next = applyTemplateToDraft(emptyDraft("owning-team"), {
+      body: node({
+        description: `Goal\n\n![Board](/_managed/issue-images/${attachmentId})`,
+      }),
+      input: "Fall kickoff",
+      rootDueAt: undefined,
+      team: "owning-team",
+    });
+
+    expect(next.description).toBe("Goal");
   });
 });

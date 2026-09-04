@@ -87,6 +87,7 @@ export default async function FormPage({
       >
         <GenericFormRespondent
           definition={{
+            ...(definition.banner && { banner: definition.banner }),
             description: definition.description,
             id: result.form.id,
             name: result.form.name,

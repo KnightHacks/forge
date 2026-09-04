@@ -15,7 +15,11 @@ import { ArrowLeft, FilePenLine } from "lucide-react";
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
-import { formDefinitionSchema } from "@forge/validators";
+import {
+  checkUploadMetadata,
+  FORM_BANNER_UPLOAD_POLICY,
+  formDefinitionSchema,
+} from "@forge/validators";
 
 import type {
   BuilderDialog,
@@ -83,6 +87,7 @@ export function AdminFormBuilder({
   const [description, setDescription] = useState(
     initial?.definition.description ?? "",
   );
+  const [banner, setBanner] = useState(initial?.definition.banner);
   const [instructions, setInstructions] = useState(
     draftInstructionsBody(savedInstructions),
   );
@@ -141,6 +146,7 @@ export function AdminFormBuilder({
   }
 
   const definition = buildFormDefinition({
+    banner,
     description,
     instructions,
     media: mediaInstructions,
@@ -289,7 +295,7 @@ export function AdminFormBuilder({
       });
       const result = await fetch(upload.uploadUrl, {
         body: file,
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": upload.contentType },
         method: "PUT",
       });
       if (!result.ok) throw new Error("Instruction upload failed.");
@@ -304,6 +310,40 @@ export function AdminFormBuilder({
         },
       ]);
       setMessage("Instruction media uploaded. Save the form to publish it.");
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : "Upload failed.");
+    }
+  }
+
+  async function uploadBanner(file: File) {
+    if (!initial) return;
+    const check = checkUploadMetadata(FORM_BANNER_UPLOAD_POLICY, {
+      contentType: file.type,
+      fileName: file.name,
+      size: file.size,
+    });
+    if (!check.ok) {
+      setMessage(check.message);
+      return;
+    }
+    try {
+      setMessage(`Uploading ${file.name}…`);
+      const upload = await createUpload.mutateAsync({
+        contentType: file.type,
+        fileName: file.name,
+        formId: initial.id,
+        purpose: "banner",
+        size: file.size,
+      });
+      const result = await fetch(upload.uploadUrl, {
+        body: file,
+        headers: { "Content-Type": upload.contentType },
+        method: "PUT",
+      });
+      if (!result.ok) throw new Error("Banner upload failed.");
+      await finalizeUpload.mutateAsync({ attachmentId: upload.attachmentId });
+      setBanner({ alt: file.name, attachmentId: upload.attachmentId });
+      setMessage("Banner uploaded. Save the form to publish it.");
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : "Upload failed.");
     }
@@ -369,16 +409,19 @@ export function AdminFormBuilder({
         </p>
       )}
 
-      <div className="grid gap-5">
-        <section className="grid gap-4">
+      <div className="grid min-w-0 gap-5">
+        <section className="grid min-w-0 gap-4">
           <FormBuilderDetailsCard
+            banner={banner}
             description={description}
             initial={initial}
             instructions={instructions}
             mediaInstructions={mediaInstructions}
             name={name}
+            onUploadBanner={uploadBanner}
             onUploadInstruction={uploadInstruction}
             readOnly={readOnly}
+            setBanner={setBanner}
             setDescription={setDescription}
             setInstructions={setInstructions}
             setMediaInstructions={setMediaInstructions}

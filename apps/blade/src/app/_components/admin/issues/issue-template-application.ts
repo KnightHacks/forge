@@ -2,6 +2,7 @@ import { defaultIssueDueAt } from "@forge/validators";
 
 import type { IssueDraft } from "./issue-draft";
 import { clubDateKey, clubWallClock } from "~/lib/dates";
+import { stripManagedImageReferences } from "./issue-managed-images";
 
 /**
  * The stored shape of an issue template body. Structurally the same node the
@@ -44,6 +45,16 @@ export function replaceTemplateTokens(
   return value.replaceAll("{INPUT}", input).replaceAll("{PARENT}", parent);
 }
 
+function materializeTemplateDescription(
+  value: string,
+  input: string,
+  parent: string,
+) {
+  return stripManagedImageReferences(
+    replaceTemplateTokens(value, input, parent),
+  ).trim();
+}
+
 /**
  * `{PARENT}` resolves to the immediate parent's already-substituted name, so a
  * grandchild sees its own parent rather than the template root.
@@ -64,7 +75,7 @@ export function materializeTemplateChildren(
         ...options,
         parentName: name,
       }),
-      description: replaceTemplateTokens(
+      description: materializeTemplateDescription(
         node.description,
         options.input,
         options.parentName,
@@ -111,7 +122,7 @@ export function applyTemplateToDraft(
       parentName: rootName,
       team,
     }),
-    description: replaceTemplateTokens(body.description, input, ""),
+    description: materializeTemplateDescription(body.description, input, ""),
     dueDate: rootDue?.date ?? current.dueDate,
     dueTime: rootDue?.time ?? current.dueTime,
     name: rootName,

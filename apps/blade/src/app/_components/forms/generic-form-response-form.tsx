@@ -20,6 +20,7 @@ import {
 } from "@forge/validators";
 
 import { api } from "~/trpc/react";
+import { InstructionMedia } from "./instruction-media";
 
 type CatalogId = RouterInputs["forms"]["searchCatalog"]["catalogId"];
 type AnswerMap = Record<string, unknown>;
@@ -37,47 +38,6 @@ export function linearScaleValues(min: number, max: number) {
     return [];
   }
   return Array.from({ length: span + 1 }, (_, index) => min + index);
-}
-
-function InstructionMedia({
-  attachmentId,
-  alt,
-  type,
-}: {
-  attachmentId: string;
-  alt: string;
-  type: "image" | "video";
-}) {
-  const download = api.forms.getAttachmentDownload.useQuery({ attachmentId });
-  if (download.isPending) {
-    return (
-      <div aria-label="Instruction media loading" aria-busy="true">
-        <Skeleton className="h-56 w-full rounded-md sm:h-80" />
-      </div>
-    );
-  }
-  if (download.isError || !download.data.url) {
-    return (
-      <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-        Instruction media could not be loaded.
-      </p>
-    );
-  }
-  return type === "image" ? (
-    // eslint-disable-next-line @next/next/no-img-element -- private presigned form media
-    <img
-      alt={alt}
-      className="max-h-[60svh] w-full rounded-md border border-white/10 object-contain sm:max-h-[32rem]"
-      src={download.data.url}
-    />
-  ) : (
-    <video
-      aria-label={alt}
-      className="max-h-[60svh] w-full rounded-md border border-white/10 sm:max-h-[32rem]"
-      controls
-      src={download.data.url}
-    />
-  );
 }
 
 function PresetChoice({
@@ -732,7 +692,7 @@ export function GenericFormResponseForm({
           data-question-id={question.id}
           key={question.id}
         >
-          <legend className="max-w-full break-words px-1 text-sm font-medium leading-5">
+          <legend className="float-left w-full max-w-full text-sm font-medium leading-5 [overflow-wrap:anywhere]">
             {question.prompt}
             {question.required && <span className="text-destructive"> *</span>}
           </legend>

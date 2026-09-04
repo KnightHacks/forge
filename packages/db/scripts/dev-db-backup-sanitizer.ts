@@ -110,6 +110,8 @@ export const TABLES_TO_DROP = [
   "knight_hacks_event_publication_work",
   // Work queues. Real assignments and reminders aimed at real officers.
   "knight_hacks_issue",
+  "knight_hacks_issue_attachment_reference",
+  "knight_hacks_issue_attachment",
   "knight_hacks_issue_history",
   "knight_hacks_issue_reminder_delivery",
   "knight_hacks_issues_to_teams_visibility",

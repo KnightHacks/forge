@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Camera, Loader2, X } from "lucide-react";
 
 import { cn } from "@forge/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
-import { Input } from "@forge/ui/input";
+import { Button } from "@forge/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@forge/ui/dialog";
 import {
   checkUploadMetadata,
   PROFILE_PICTURE_UPLOAD_POLICY,
@@ -52,6 +60,8 @@ export function MemberProfilePictureUpload({
   );
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewUrl, setPreviewFile] = useObjectPreviewUrl();
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const savedProfilePicture = api.profilePicture.getProfilePicture.useQuery(
     undefined,
@@ -130,6 +140,34 @@ export function MemberProfilePictureUpload({
     }
   };
 
+  const removeSavedPicture = async () => {
+    setUploadError(null);
+
+    try {
+      await updateProfilePicture.mutateAsync({ profilePictureUrl: "" });
+      setProfilePictureUrl("");
+      setPreviewFile(null);
+    } catch {
+      setUploadError("Profile picture could not be removed.");
+    } finally {
+      setConfirmRemoveOpen(false);
+      fileInputRef.current?.focus();
+    }
+  };
+
+  const handleRemoveClick = () => {
+    setUploadError(null);
+
+    if (saveMode === "deferred") {
+      setProfilePictureUrl("");
+      setPreviewFile(null);
+      onChange?.("");
+      return;
+    }
+
+    setConfirmRemoveOpen(true);
+  };
+
   return (
     <div className={cn("flex flex-col items-center gap-2", className)}>
       <div className="relative">
@@ -159,7 +197,8 @@ export function MemberProfilePictureUpload({
             <Camera className="h-4 w-4" aria-hidden="true" />
           )}
           <span className="sr-only">Upload profile picture</span>
-          <Input
+          <input
+            ref={fileInputRef}
             type="file"
             accept={uploadAccept(PROFILE_PICTURE_UPLOAD_POLICY)}
             className="sr-only"
@@ -175,25 +214,7 @@ export function MemberProfilePictureUpload({
             type="button"
             className="absolute bottom-1 left-1 flex h-9 w-9 items-center justify-center rounded-full border border-background bg-destructive text-destructive-foreground shadow-lg shadow-black/30 transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isPending}
-            onClick={async () => {
-              setUploadError(null);
-              try {
-                if (saveMode === "deferred") {
-                  setProfilePictureUrl("");
-                  setPreviewFile(null);
-                  onChange?.("");
-                  return;
-                }
-
-                await updateProfilePicture.mutateAsync({
-                  profilePictureUrl: "",
-                });
-                setProfilePictureUrl("");
-                setPreviewFile(null);
-              } catch {
-                setUploadError("Profile picture could not be removed.");
-              }
-            }}
+            onClick={handleRemoveClick}
           >
             <X className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Remove profile picture</span>
@@ -211,6 +232,48 @@ export function MemberProfilePictureUpload({
           <p className="text-xs font-medium text-destructive">{uploadError}</p>
         )}
       </div>
+
+      {saveMode === "member" && (
+        <Dialog
+          open={confirmRemoveOpen}
+          onOpenChange={(open) => {
+            if (!updateProfilePicture.isPending) setConfirmRemoveOpen(open);
+          }}
+        >
+          <DialogContent className="max-w-md border-destructive/30">
+            <DialogHeader>
+              <DialogTitle>Remove profile picture?</DialogTitle>
+              <DialogDescription>
+                This removes your saved profile picture. You can upload a new
+                one anytime.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                disabled={updateProfilePicture.isPending}
+                onClick={() => setConfirmRemoveOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="gap-2"
+                variant="destructive"
+                disabled={updateProfilePicture.isPending}
+                onClick={() => void removeSavedPicture()}
+              >
+                {updateProfilePicture.isPending && (
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
+                Remove picture
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

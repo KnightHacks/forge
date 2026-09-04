@@ -10,9 +10,12 @@ describe("Club Operations Issues router contract", () => {
       [
         "archive",
         "create",
+        "createImageUpload",
         "createTemplate",
         "disableTemplate",
+        "finalizeImageUpload",
         "get",
+        "getImageDownload",
         "list",
         "listAssignees",
         "listEvents",

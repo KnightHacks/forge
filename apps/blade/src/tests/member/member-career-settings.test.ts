@@ -5,11 +5,12 @@ import type { RouterOutputs } from "@forge/api";
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
 import type { CareerSettingsState } from "~/app/_components/member/member-career-settings";
 import {
+  careerHistoryFirstIssueSummary,
   careerHistoryMutationInput,
-  careerHistoryValidationError,
   careerSaveErrorMessage,
   careerSettingsStateFromCareerData,
   hasCareerSettingsChanged,
+  validateCareerHistory,
 } from "~/app/_components/member/member-career-settings";
 
 type CareerData = RouterOutputs["career"]["listMyEmployment"];
@@ -207,53 +208,100 @@ describe("hasCareerSettingsChanged", () => {
   });
 });
 
-describe("careerHistoryValidationError", () => {
-  it("accepts an empty history", () => {
-    expect(careerHistoryValidationError([])).toBeNull();
-  });
-
-  it("accepts fully confirmed entries", () => {
+describe("validateCareerHistory", () => {
+  it("identifies the exact entry and field for a missing position title", () => {
     expect(
-      careerHistoryValidationError([draft(), draft({ state: "past" })]),
-    ).toBeNull();
-  });
-
-  it("accepts month text produced by browsers without a native month picker", () => {
-    expect(
-      careerHistoryValidationError([
-        draft({
-          endMonth: "August 2026",
-          startMonth: "05/2026",
-          state: "past",
-        }),
+      validateCareerHistory([
+        draft(),
+        draft({ draftId: "draft-2", title: null }),
       ]),
-    ).toBeNull();
+    ).toEqual({
+      issues: [
+        {
+          draftId: "draft-2",
+          entryIndex: 1,
+          field: "title",
+          fieldLabel: "Position title",
+          message: "Enter a position title.",
+        },
+      ],
+      legacyDraftIds: [],
+    });
   });
 
-  it("turns schema failures into a concise entry-specific message", () => {
-    expect(
-      careerHistoryValidationError([draft({ startMonth: "not a month" })]),
-    ).toBe("Employment entry 1: Use a valid month and year.");
+  it("maps missing current-entry fields without calling them legacy", () => {
+    const result = validateCareerHistory([
+      draft({
+        companyId: null,
+        companyLabel: "",
+        draftId: "missing-company",
+        proposedCompanyName: null,
+      }),
+      draft({ draftId: "missing-title", title: null }),
+      draft({ draftId: "missing-type", experienceType: null }),
+    ]);
+
+    expect(result.issues).toEqual([
+      {
+        draftId: "missing-company",
+        entryIndex: 0,
+        field: "company",
+        fieldLabel: "Company",
+        message: "Choose an existing company or enter a new one.",
+      },
+      {
+        draftId: "missing-title",
+        entryIndex: 1,
+        field: "title",
+        fieldLabel: "Position title",
+        message: "Enter a position title.",
+      },
+      {
+        draftId: "missing-type",
+        entryIndex: 2,
+        field: "experienceType",
+        fieldLabel: "Experience type",
+        message: "Choose an experience type.",
+      },
+    ]);
+    expect(result.legacyDraftIds).toEqual([]);
   });
 
-  it("rejects a legacy entry that has not been confirmed current or former", () => {
-    expect(careerHistoryValidationError([draft({ state: "unknown" })])).toBe(
-      "Confirm whether each legacy entry is current or former before saving career history.",
+  it("marks only an actually unconfirmed state as a legacy entry", () => {
+    const result = validateCareerHistory([
+      draft({
+        draftId: "legacy-entry",
+        experienceType: null,
+        state: "unknown",
+      }),
+      draft({ draftId: "current-entry", experienceType: null }),
+    ]);
+
+    expect(result.legacyDraftIds).toEqual(["legacy-entry"]);
+    expect(result.issues).toContainEqual({
+      draftId: "legacy-entry",
+      entryIndex: 0,
+      field: "state",
+      fieldLabel: "Employment status",
+      message: "Choose whether this employment is current or former.",
+    });
+    expect(result.issues).toContainEqual({
+      draftId: "current-entry",
+      entryIndex: 1,
+      field: "experienceType",
+      fieldLabel: "Experience type",
+      message: "Choose an experience type.",
+    });
+  });
+
+  it("summarizes only the first issue with its entry and field", () => {
+    const result = validateCareerHistory([
+      draft({ companyId: null, proposedCompanyName: null, title: null }),
+    ]);
+
+    expect(careerHistoryFirstIssueSummary(result)).toBe(
+      "Employment entry 1, Company: Choose an existing company or enter a new one.",
     );
-  });
-
-  it("rejects an entry with no experience type", () => {
-    expect(
-      careerHistoryValidationError([draft({ experienceType: null })]),
-    ).toBe(
-      "Confirm whether each legacy entry is current or former before saving career history.",
-    );
-  });
-
-  it("rejects when only a later entry is unconfirmed", () => {
-    expect(
-      careerHistoryValidationError([draft(), draft({ state: "unknown" })]),
-    ).not.toBeNull();
   });
 });
 
@@ -309,8 +357,8 @@ describe("careerHistoryMutationInput", () => {
     ).toThrow("Choose an experience type.");
   });
 
-  // `careerHistoryValidationError` is the guard for this; the narrowing cast
-  // here would otherwise send "unknown" to a mutation that rejects it.
+  // `validateCareerHistory` is the guard for this; the narrowing cast here
+  // would otherwise send "unknown" to a mutation that rejects it.
   it("does not itself reject an unconfirmed state", () => {
     expect(() =>
       careerHistoryMutationInput([draft({ state: "unknown" })]),

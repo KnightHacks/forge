@@ -13,3 +13,4 @@ export { cleanupExpiredHackerParticipantCommands } from "./hacker-portal/command
 export { dispatchPendingFormCallbacks } from "./forms/database-callbacks";
 export { cleanupAbandonedFormAttachments } from "./forms/attachments";
 export { deliverIssueReminders } from "./issues/reminders";
+export { cleanupAbandonedIssueImages } from "./issues/attachments";

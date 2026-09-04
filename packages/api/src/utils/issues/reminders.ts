@@ -194,7 +194,7 @@ function targetBlock(target: IssueReminderTarget, bladeUrl: string) {
   const url = targetUrl(target, bladeUrl);
   const title = escapeMarkdown(truncate(target.name, TARGET_TITLE_LIMIT));
   const discussion = target.discordThreadUrl
-    ? ` · [Discuss](<${target.discordThreadUrl}>)`
+    ? ` | [Chat](<${target.discordThreadUrl}>)`
     : "";
   const heading = `**(${priorityMarks(target.priority)}) [${title} (${shortDate(target.dueAt)})](<${url}>)**${discussion}`;
   const audience = truncate(

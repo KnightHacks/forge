@@ -1,10 +1,11 @@
 import type { Page } from "playwright/test";
 import { expect, test } from "playwright/test";
 
-import { inArray, or } from "@forge/db";
+import { eq, inArray, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
+  DuesConfiguration,
   FormSections,
   FormsSchemas,
   Member,
@@ -20,6 +21,13 @@ import {
 
 import { GUILD_URL } from "~/lib/guild-urls";
 
+// A single 80-char (schema max) unbreakable token — no spaces for the
+// browser to wrap on — the shape that actually clips without
+// overflow-wrap: anywhere.
+const LONG_UNBREAKABLE_TAGLINE =
+  "KnightHacksMobileTaglineWithNoSpacesAnywhereToStressTestWrappingAtNarrowWidths";
+
+const DUES_CONFIGURATION_ID = "global";
 const MOBILE_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000301";
 const MOBILE_NO_MEMBER_USER_ID = "00000000-0000-4000-8000-000000000302";
 
@@ -98,9 +106,23 @@ async function ensureSignupForm() {
     });
 }
 
+// The dashboard renders "Payments paused" instead of a Pay dues action when no
+// DuesConfiguration row enables payments, so this spec seeds the same row
+// member-dues-payment.spec.ts does rather than depending on ambient DB state.
+async function enableDuesPayments() {
+  await db
+    .insert(DuesConfiguration)
+    .values({ id: DUES_CONFIGURATION_ID, paymentsEnabled: true })
+    .onConflictDoUpdate({
+      set: { paymentsEnabled: true, updatedAt: new Date() },
+      target: DuesConfiguration.id,
+    });
+}
+
 async function seedE2EData() {
   await cleanupE2EData();
   await ensureSignupForm();
+  await enableDuesPayments();
 
   await db.insert(User).values(
     testUsers.map((user) => ({
@@ -154,6 +176,58 @@ async function signInAs(
   );
 }
 
+/**
+ * R-23/TC-020: no document-level horizontal overflow at this viewport. A
+ * standards-compliant scrollWidth check, not a browser-specific workaround.
+ */
+async function expectNoHorizontalOverflow(page: Page) {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+}
+
+/**
+ * The document-level check above passes even when content is clipped,
+ * because `overflow-x-hidden` on an ancestor (the shell, per the SRD's
+ * explicit warning) silently crops overflowing text instead of producing a
+ * scrollbar — exactly the failure mode TC-020 targets. This walks every
+ * element and flags one whose own content is wider than its box while its
+ * computed overflow-x is hidden/clip: that combination means real content is
+ * being cut off, not just kept off-screen.
+ */
+async function expectNoConcealedOverflow(page: Page) {
+  const clipped = await page.evaluate(() => {
+    const offenders: string[] = [];
+    for (const element of document.querySelectorAll<HTMLElement>("body *")) {
+      // A few px of slack absorbs decorative background bleed (dot-grid
+      // patterns, etc.) that intentionally extends past its container; real
+      // clipped text overflows by far more than that.
+      if (element.scrollWidth - element.clientWidth <= 20) continue;
+      // Skip elements intentionally hidden off-screen (Tailwind's `sr-only`,
+      // used for accessible-only labels and native file inputs) — a real
+      // clipping bug hides content that was meant to stay visible, not a box
+      // collapsed on purpose. Native `<input type="file">` widgets can keep a
+      // wider intrinsic layout box than plain CSS sizing suggests, so match
+      // the class rather than trust clientWidth here.
+      if (
+        typeof element.className === "string" &&
+        element.className.includes("sr-only")
+      )
+        continue;
+      if (element.clientWidth <= 4) continue;
+      const overflowX = getComputedStyle(element).overflowX;
+      if (overflowX === "hidden" || overflowX === "clip") {
+        offenders.push(
+          `${element.tagName.toLowerCase()} (+${element.scrollWidth - element.clientWidth}px): ${element.textContent.trim().slice(0, 60)}`,
+        );
+      }
+    }
+    return offenders;
+  });
+  expect(clipped).toEqual([]);
+}
+
 async function expectWithinViewport(page: Page, selectorName: string) {
   const box = await page
     .getByRole("dialog", { name: selectorName })
@@ -183,81 +257,140 @@ test.describe("mobile member experience", () => {
     await cleanupE2EData();
   });
 
-  test("shows a lightweight Guild profile on mobile", async ({ page }) => {
+  test("shows the shared member hierarchy on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
+    const memberDetails = page.getByRole("region", { name: "Member details" });
 
     await expect(guildProfile).toBeVisible();
     await expect(
       guildProfile.getByRole("link", { name: "View Guild profile" }),
     ).toHaveAttribute("href", new RegExp(`${GUILD_URL}/members/`));
+    // R-07/TC-007: mobile is no longer a separate product; the member panel
+    // and its welcome heading render on every viewport.
+    await expect(memberDetails).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Member details" }),
-    ).toHaveCount(0);
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
-    await expect(
-      page.getByRole("heading", { name: "Welcome, Maya" }),
-    ).toHaveCount(0);
     await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // R-08/TC-008: Guild is explained and separated from private Blade data.
+    await expect(guildProfile).toContainText(
+      "Guild is the public Knight Hacks member directory.",
+    );
+    await expect(guildProfile).toContainText("stay private to Blade");
     await expect(
       guildProfile.getByRole("group", { name: "Company" }),
     ).toContainText("Knight Hacks");
+    await expect(page.getByRole("group", { name: "Company" })).toHaveCount(1);
     await expect(page.getByText("GitHub")).toBeVisible();
     await expect(page.getByText("LinkedIn")).toBeVisible();
     await expect(page.getByText("Portfolio")).toBeVisible();
-    await expect(page.getByRole("button", { name: "QR code" })).toBeVisible();
+    // R-09/TC-007: one Check in surface with a View QR code action.
+    const checkIn = page.getByRole("group", { name: "Check in" });
+    await expect(checkIn).toHaveCount(1);
+    await expect(
+      checkIn.getByRole("button", { name: "View QR code" }),
+    ).toBeVisible();
     await expect(page.getByText("Resume", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "View" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "View", exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("PDF resume")).toHaveCount(0);
+    // R-10/TC-006: the seeded member is unpaid, so the dues banner stays.
+    await expect(
+      memberDetails.getByRole("group", { name: "Dues status" }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    // R-11/TC-007: Previous forms stays a small low-emphasis history action.
+    await expect(page.getByText("Previous forms")).toHaveCount(1);
+    await expect(
+      page.getByRole("link", { name: "Review history" }),
+    ).toBeVisible();
 
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
-    const drawer = page.getByTestId("mobile-navigation-drawer");
-    const navigation = page.getByRole("navigation", {
-      name: "Mobile primary navigation",
-    });
-    // `toBeVisible` alone would pass on a drawer still translated off-screen,
-    // so the open outcome needs a viewport check. This replaces exact transform
-    // and bounding-box pins, which asserted the animation rather than the
-    // behavior.
-    await expect(drawer).toBeInViewport();
+    // R-02/TC-002: an ordinary member has no mobile drawer; Settings and
+    // Sign out sit together at the top right of the header.
     await expect(
-      navigation.getByRole("link", { name: "Dashboard" }),
-    ).toBeVisible();
-    await expect(
-      navigation.getByRole("link", { name: "Guild" }),
-    ).toHaveAttribute("href", GUILD_URL);
-    await expect(
-      navigation.getByRole("link", { name: "Settings" }),
-    ).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Members" })).toHaveCount(
-      0,
-    );
-    await expect(
-      navigation.getByRole("link", { name: "Dashboard" }),
-    ).toHaveAttribute("aria-current", "page");
-    await expect
-      .poll(() =>
-        navigation.evaluate((element) => getComputedStyle(element).opacity),
-      )
-      .toBe("1");
+      page.getByRole("button", { name: "Open navigation menu" }),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("mobile-navigation-drawer")).toHaveCount(0);
+    const settingsLink = page.getByTestId("account-settings-link");
+    await expect(settingsLink).toBeVisible();
+    await expect(settingsLink).toHaveAttribute("href", MEMBER_SETTINGS_PATH);
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
     await page.screenshot({
       path: ".playwright-results/member-dashboard-mobile-navigation.png",
     });
-    await navigation.getByRole("link", { name: "Settings" }).click();
+    await settingsLink.click();
     await expect(page).toHaveURL(routeURL(MEMBER_SETTINGS_PATH));
-    await expect(drawer).toBeHidden();
-    await page.getByRole("button", { name: "Open navigation menu" }).click();
     await expect(
-      page
-        .getByRole("navigation", { name: "Mobile primary navigation" })
-        .getByRole("link", { name: "Settings" }),
-    ).toHaveAttribute("aria-current", "page");
-    await page.keyboard.press("Escape");
+      page.getByRole("button", { name: "Open navigation menu" }),
+    ).toHaveCount(0);
+    await expect(page.getByTestId("account-settings-link")).toBeVisible();
+  });
+
+  test("exposes the same dashboard sections on mobile and desktop", async ({
+    page,
+  }) => {
+    const sectionNames = [
+      "Welcome, Maya",
+      "Dues",
+      "Check in",
+      "Events",
+      "Previous forms",
+      "Guild is the public Knight Hacks member directory.",
+      "About",
+      "Company",
+      "Visibility",
+      "Guild preferences",
+      "Links",
+      "Resume",
+    ];
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    for (const name of sectionNames) {
+      await expect(page.getByText(name).first()).toBeVisible();
+    }
+  });
+
+  test("keeps the member dashboard free of horizontal overflow", async ({
+    page,
+  }) => {
+    await signInAs(page);
+    await expect(
+      page.getByRole("heading", { name: "Welcome, Maya" }),
+    ).toBeVisible();
+
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ height: 900, width });
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        )
+        .toBe(true);
+      await expect(
+        page.getByRole("button", { name: "View QR code" }),
+      ).toBeVisible();
+      await expect(page.getByRole("link", { name: "Pay dues" })).toBeVisible();
+    }
   });
 
   test("keeps desktop dashboard order and profile-attached settings", async ({
@@ -268,17 +401,24 @@ test.describe("mobile member experience", () => {
 
     const guildProfile = page.getByRole("region", { name: "Guild profile" });
     const memberDetails = page.getByRole("region", { name: "Member details" });
+    // boundingBox() resolves to null while the dashboard is still showing its
+    // loading skeleton, which makes the column comparison below read 0 for an
+    // unrendered card. Wait for both cards before measuring them.
+    await expect(memberDetails).toBeVisible();
+    await expect(guildProfile).toBeVisible();
     const guildBox = await guildProfile.boundingBox();
     const detailsBox = await memberDetails.boundingBox();
 
     expect(detailsBox?.x ?? 0).toBeLessThan(guildBox?.x ?? 0);
-    await expect(page.getByTestId("member-navigation-rail")).toBeVisible();
+    // R-02/TC-002: no desktop rail for an ordinary member; the header carries
+    // the Settings and Sign out account controls instead.
+    await expect(page.getByTestId("member-navigation-rail")).toHaveCount(0);
     await expect(page.getByLabel("Edit profile")).toHaveAttribute(
       "href",
       MEMBER_SETTINGS_PATH,
     );
-    await page.getByTestId("member-navigation-rail").hover();
-    await expect(page.getByRole("link", { name: "Settings" })).toBeVisible();
+    await expect(page.getByTestId("account-settings-link")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
     await page.screenshot({
       path: ".playwright-results/member-dashboard-desktop-navigation.png",
     });
@@ -349,7 +489,7 @@ test.describe("mobile member experience", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInAs(page);
 
-    await page.getByRole("button", { name: "View" }).click();
+    await page.getByRole("button", { name: "View", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
     await expectWithinViewport(page, "Resume");
     await page.getByRole("button", { name: "Close" }).click();
@@ -375,9 +515,64 @@ test.describe("mobile member experience", () => {
     });
 
     await expect(skeletonProfile).toBeVisible();
-    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
+    // R-07/TC-007: the member panel skeleton is no longer desktop-only.
+    await expect(
+      page.getByRole("region", { name: "Member details loading" }),
+    ).toBeVisible();
+    // The loaded heading must be checked while the skeleton is still up.
+    // Waiting for the loaded tagline first lets the debug latency expire, so
+    // the dashboard has already swapped in real content by the time the
+    // absence is asserted.
     await expect(
       page.getByRole("heading", { name: "Welcome, Maya" }),
     ).toHaveCount(0);
+    await expect(page.getByText("Mobile-first member profile")).toBeVisible();
   });
+
+  // R-23/TC-020: dashboard, settings, resume, and QR surfaces stay clipping-free
+  // at 320px and at an intermediate desktop width, with the long name/tagline/
+  // company/URL fixture above already present to catch text overflow.
+  for (const width of [320, 768]) {
+    test(`keeps dashboard, settings, resume, and QR surfaces overflow-free at ${width}px (R-23)`, async ({
+      page,
+    }) => {
+      await db
+        .update(Member)
+        .set({ tagline: LONG_UNBREAKABLE_TAGLINE })
+        .where(eq(Member.userId, MOBILE_MEMBER_USER_ID));
+
+      await page.setViewportSize({ width, height: 900 });
+      await signInAs(page);
+      await expect(
+        page.getByRole("region", { name: "Guild profile" }),
+      ).toBeVisible();
+      await expect(page.getByText(LONG_UNBREAKABLE_TAGLINE)).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+      await expectNoConcealedOverflow(page);
+
+      await page.getByRole("button", { name: "View" }).click();
+      await expect(page.getByRole("dialog", { name: "Resume" })).toBeVisible();
+      await expectWithinViewport(page, "Resume");
+      await page.getByRole("button", { name: "Close" }).click();
+
+      await page.getByRole("button", { name: "QR code" }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      const qrDialogBox = await page.getByRole("dialog").boundingBox();
+      const viewport = page.viewportSize();
+      expect(qrDialogBox).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      if (qrDialogBox && viewport) {
+        expect(qrDialogBox.x + qrDialogBox.width).toBeLessThanOrEqual(
+          viewport.width,
+        );
+      }
+      await page.keyboard.press("Escape");
+
+      await signInAs(page, MOBILE_MEMBER_USER_ID, MEMBER_SETTINGS_PATH);
+      await expect(
+        page.getByRole("button", { name: "Save changes" }),
+      ).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    });
+  }
 });
