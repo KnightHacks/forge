@@ -53,6 +53,7 @@ export interface AdminNavigationAccess {
   logs?: boolean;
   members?: boolean;
   projectAdmin?: boolean;
+  judging?: boolean;
   judgeProjects?: boolean;
   roles?: boolean;
 }
@@ -222,6 +223,14 @@ export const adminNavigationItems = [
     id: "projectAdmin",
     label: "Project import",
   },
+  {
+    access: "judging",
+    group: "Hackathon",
+    href: "/admin/judging",
+    icon: Swords,
+    id: "judging",
+    label: "Judging rooms",
+  },
 ] as const;
 
 export const ADMIN_NAVIGATION_GROUPS = ["Club", "Team", "Hackathon"] as const;
@@ -262,6 +271,7 @@ export function getAdminNavigationGroups(
 export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "judgeProjects") return pathname.startsWith("/judge/projects");
   if (id === "projectAdmin") return pathname.startsWith("/admin/projects");
+  if (id === "judging") return pathname.startsWith("/admin/judging");
   if (id === "alumni") return pathname.startsWith("/admin/alumni");
   if (id === "analytics") return pathname.startsWith("/admin/analytics");
   if (id === "discordArchive")

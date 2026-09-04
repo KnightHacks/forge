@@ -358,6 +358,11 @@ export function AdminProjectWorkspace({
               <ProjectImportDialog
                 hackathonId={input.hackathonId}
                 hackathonName={data.hackathon.displayName}
+                inventoryLocked={
+                  hackathons.find(
+                    (hackathon) => hackathon.id === input.hackathonId,
+                  )?.inventoryLockedAt != null
+                }
                 onImported={refresh}
                 projectCount={projectCount}
               />

@@ -73,11 +73,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    const confirmation = form.get("confirmation");
     const result = await importDevpostProjects({
       actor: session.user,
+      confirmation: typeof confirmation === "string" ? confirmation : undefined,
       csvContent: await file.text(),
       fileSize: file.size,
       hackathonId: parsedHackathon.data.hackathonId,
+      mode: form.get("mode") === "replace" ? "replace" : "automatic",
     });
     return response(result, 200);
   } catch (error) {

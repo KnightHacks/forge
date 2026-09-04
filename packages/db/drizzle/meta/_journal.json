@@ -309,6 +309,13 @@
       "when": 1788356585936,
       "tag": "0043_complex_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788471179982,
+      "tag": "0044_open_mikhail_rasputin",
+      "breakpoints": true
     }
   ]
 }

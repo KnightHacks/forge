@@ -164,6 +164,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     members: canAccessMemberAdmin(permissions),
     projectAdmin: canAccessProjectAdmin(permissions),
     judgeProjects: canAccessJudgeProjects(permissions),
+    judging: canAccessProjectAdmin(permissions),
     roles: canAccessRoleAdmin(permissions),
   };
 }

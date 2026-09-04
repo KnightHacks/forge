@@ -22,3 +22,4 @@ export * from "./hackers";
 export * from "./hacker-portal";
 export * from "./hackathon-portal-admin";
 export * from "./projects";
+export * from "./judging";

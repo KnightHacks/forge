@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 
 import type { Session } from "@forge/auth/server";
 
+import { resolveJudgeAccess } from "./utils/judging/principal";
 import { loadPermissionsForUser } from "./utils/permissions-db";
 
 export const createTRPCContext = (opts: {
@@ -59,4 +60,13 @@ export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
       },
     },
   });
+});
+
+export const judgeProcedure = t.procedure.use(async ({ ctx, next }) => {
+  const judgePrincipal = await resolveJudgeAccess(ctx);
+  if (judgePrincipal.kind !== "member" && judgePrincipal.kind !== "guest") {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
+  return next({ ctx: { ...ctx, judgePrincipal } });
 });

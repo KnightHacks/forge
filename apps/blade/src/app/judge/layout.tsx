@@ -16,7 +16,15 @@ export default async function JudgeLayout({
 }: {
   children: ReactNode;
 }) {
-  const session = await auth();
+  const [session, judgingContext] = await Promise.all([
+    auth(),
+    api.judging.getContext({}),
+  ]);
+  if (judgingContext.kind !== "member") {
+    const { GuestJudgeShell } =
+      await import("~/app/_components/judging/guest-judge-shell");
+    return <GuestJudgeShell>{children}</GuestJudgeShell>;
+  }
   if (!session) redirect("/");
   const permissions = await api.roles.getPermissions();
   if (!canAccessJudgeProjects(permissions)) redirect(MEMBER_DASHBOARD_PATH);
