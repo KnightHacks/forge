@@ -51,18 +51,24 @@ Notes:
 
 ## Hackathons, hackers, and judging
 
-| Table export          | SQL table                            | Usage                                                                                                                                                                   |
-| --------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Hackathon`           | `knight_hacks_hackathon`             | Central hackathon config used for application routing, current/upcoming/past selection, admin editing, event association, email/background assets, and judging context. |
-| `Hacker`              | `knight_hacks_hacker`                | Stores reusable person-level hacker profile/application data used by dashboards, admin hacker lists, filtering, check-in lookup, updates, and emails.                   |
-| `HackerAttendee`      | `knight_hacks_hacker_attendee`       | Per-hackathon join table for a hacker's application status, confirmation time, points, and assigned class.                                                              |
-| `HackerEventAttendee` | `knight_hacks_hacker_event_attendee` | Records hackathon event check-ins and powers duplicate check-in prevention, attendance counts, attendee lists, and point awards.                                        |
-| `Sponsor`             | `knight_hacks_sponsor`               | Reserved for sponsor metadata; current sponsor displays elsewhere are static or unrelated.                                                                              |
-| `HackathonSponsor`    | `knight_hacks_hackathon_sponsor`     | Reserved hackathon-to-sponsor tier join table.                                                                                                                          |
-| `Project`             | `knight_hacks_project`               | Stores a hackathon's imported Devpost projects, source metadata, and soft-deletion state for officer management and the judge directory.                                |
-| `ProjectMember`       | `knight_hacks_project_member`        | Stores ordered project team contacts with separately validated names and emails.                                                                                        |
-| `ProjectChallenge`    | `knight_hacks_project_challenge`     | Stores hackathon-scoped challenge labels derived from Devpost opt-in prize fields, including the required `General` challenge.                                          |
-| `ProjectToChallenge`  | `knight_hacks_project_to_challenge`  | Associates projects with their challenges for directory display and filtering.                                                                                          |
+| Table export                    | SQL table                                      | Usage                                                                                                                                                                   |
+| ------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Hackathon`                     | `knight_hacks_hackathon`                       | Central hackathon config used for application routing, current/upcoming/past selection, admin editing, event association, email/background assets, and judging context. |
+| `Hacker`                        | `knight_hacks_hacker`                          | Stores reusable person-level hacker profile/application data used by dashboards, admin hacker lists, filtering, check-in lookup, updates, and emails.                   |
+| `HackerAttendee`                | `knight_hacks_hacker_attendee`                 | Per-hackathon join table for a hacker's application status, confirmation time, points, and assigned class.                                                              |
+| `HackerEventAttendee`           | `knight_hacks_hacker_event_attendee`           | Records hackathon event check-ins and powers duplicate check-in prevention, attendance counts, attendee lists, and point awards.                                        |
+| `Sponsor`                       | `knight_hacks_sponsor`                         | Reserved for sponsor metadata; current sponsor displays elsewhere are static or unrelated.                                                                              |
+| `HackathonSponsor`              | `knight_hacks_hackathon_sponsor`               | Reserved hackathon-to-sponsor tier join table.                                                                                                                          |
+| `Project`                       | `knight_hacks_project`                         | Stores a hackathon's imported Devpost projects, source metadata, and soft-deletion state for officer management and the judge directory.                                |
+| `ProjectMember`                 | `knight_hacks_project_member`                  | Stores ordered project team contacts with separately validated names and emails.                                                                                        |
+| `ProjectChallenge`              | `knight_hacks_project_challenge`               | Stores hackathon-scoped challenge labels derived from Devpost opt-in prize fields, including the required `General` challenge.                                          |
+| `ProjectToChallenge`            | `knight_hacks_project_to_challenge`            | Associates projects with their challenges for directory display and filtering.                                                                                          |
+| `HackathonJudgingConfiguration` | `knight_hacks_hackathon_judging_configuration` | Stores the durable project-inventory lock created by the first room QR.                                                                                                 |
+| `JudgingRoom`                   | `knight_hacks_judging_room`                    | Stores physical judging rooms as durable hackathon entities, each assigned to one imported challenge.                                                                   |
+| `Judge`                         | `knight_hacks_judge`                           | Stores hackathon-scoped member and guest judge identities for room presence and later judging records.                                                                  |
+| `JudgingRoomAccessLink`         | `knight_hacks_judging_room_access_link`        | Stores revocable room QR records. The signed URL credential is derived and never stored.                                                                                |
+| `GuestJudgeSession`             | `knight_hacks_guest_judge_session`             | Stores hashed, expiring guest browser credentials and their optional completed judge identity.                                                                          |
+| `JudgingRoomPresence`           | `knight_hacks_judging_room_presence`           | Stores current and historical judge-to-room presence with joined, last-seen, and left timestamps.                                                                       |
 
 Notes:
 
@@ -74,9 +80,11 @@ Notes:
 - `HackerAttendee.class` is a nullable game/team class assigned during check-in, not original application profile data.
 - `HackerEventAttendee.hackathonId` duplicates context derivable through `eventId` and `hackerAttId`; no DB-level consistency check was found.
 - `Project.submissionUrl` is unique within a hackathon and is the stable Devpost identity used by the import inventory.
-- A Devpost re-import authoritatively replaces a hackathon's complete project, member, and challenge inventory rather than merging individual rows.
+- Before judging locks the inventory, a Devpost import replaces projects while preserving exact matching challenge records.
+- After the first room QR is generated, ordinary imports add projects with unseen normalized Devpost URLs and leave existing records untouched. A separately confirmed replacement revokes active guest access and cannot remove a challenge assigned to an active room.
 - Every imported project is associated with the hackathon's `General` challenge. Devpost opt-in prize columns produce the remaining challenge labels.
 - `Project.deletedAt` provides officer-restorable soft deletion between imports; an authoritative re-import removes the prior inventory, including deleted rows.
+- A guest session stores only the SHA-256 hash of its random browser credential. Shared development backups drop judging rooms, judge identities, links, guest sessions, and presence rows.
 
 ## Dynamic forms
 

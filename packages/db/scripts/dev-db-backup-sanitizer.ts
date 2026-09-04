@@ -121,6 +121,12 @@ export const TABLES_TO_DROP = [
   "knight_hacks_project_challenge",
   "knight_hacks_project_member",
   "knight_hacks_project_to_challenge",
+  "knight_hacks_hackathon_judging_configuration",
+  "knight_hacks_guest_judge_session",
+  "knight_hacks_judge",
+  "knight_hacks_judging_room_access_link",
+  "knight_hacks_judging_room_presence",
+  "knight_hacks_judging_room",
 ] as const;
 
 /** Actual database tables that have no explicit development-backup policy. */

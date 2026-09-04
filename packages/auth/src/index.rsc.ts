@@ -18,6 +18,7 @@ export * from "./portal-auth";
 export * from "./portal-session";
 export * from "./portal-session-store";
 export * from "./request-body";
+export * from "./judging-access";
 
 export type Session = Omit<typeof betterAuthInstance.$Infer.Session, "user"> & {
   user: (typeof betterAuthInstance.$Infer.Session)["user"] & {

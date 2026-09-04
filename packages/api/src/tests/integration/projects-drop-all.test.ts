@@ -149,6 +149,13 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
         projectId: OTHER_PROJECT,
       },
     ]);
+    await database.insert(schemas.JudgingRoom).values({
+      archivedAt: new Date("2026-09-03T00:00:00Z"),
+      challengeId: TARGET_CHALLENGE,
+      displayOrder: 0,
+      hackathonId: TARGET_HACKATHON,
+      name: "Archived sponsor room",
+    });
 
     caller = await officerCaller();
   }, 120_000);
@@ -188,6 +195,12 @@ describe.runIf(canRunDatabaseTests())("project inventory hard deletion", () => {
         .select()
         .from(schemas.ProjectChallenge)
         .where(eq(schemas.ProjectChallenge.hackathonId, TARGET_HACKATHON)),
+    ).resolves.toHaveLength(0);
+    await expect(
+      client
+        .select()
+        .from(schemas.JudgingRoom)
+        .where(eq(schemas.JudgingRoom.hackathonId, TARGET_HACKATHON)),
     ).resolves.toHaveLength(0);
     await expect(
       client.select().from(schemas.ProjectToChallenge),

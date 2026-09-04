@@ -21,23 +21,28 @@ import { toast } from "@forge/ui/toast";
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
 interface ImportResult {
+  addOnly: boolean;
   challengeCount: number;
   collapsedDuplicateRows: number;
   excludedDraftProjects: number;
   importedProjects: number;
   memberCount: number;
+  newChallengeCount: number;
   rejectedProjects: number;
   rejections: { project: string; reason: string }[];
+  skippedProjects: number;
 }
 
 export function ProjectImportDialog({
   hackathonId,
   hackathonName,
+  inventoryLocked,
   onImported,
   projectCount,
 }: {
   hackathonId: string;
   hackathonName: string;
+  inventoryLocked: boolean;
   onImported: () => void;
   projectCount: number;
 }) {
@@ -46,10 +51,13 @@ export function ProjectImportDialog({
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [mode, setMode] = useState<"automatic" | "replace">("automatic");
+  const [confirmation, setConfirmation] = useState("");
 
   function reset() {
     setFile(null);
     setResult(null);
+    setConfirmation("");
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -64,6 +72,8 @@ export function ProjectImportDialog({
       const body = new FormData();
       body.set("file", file);
       body.set("hackathonId", hackathonId);
+      body.set("mode", mode);
+      if (mode === "replace") body.set("confirmation", confirmation);
       const response = await fetch("/api/admin/projects/import", {
         body,
         method: "POST",
@@ -80,7 +90,11 @@ export function ProjectImportDialog({
         );
       }
       setResult(payload);
-      toast.success(`${payload.importedProjects} projects imported.`);
+      toast.success(
+        payload.addOnly
+          ? `${payload.importedProjects} new projects added.`
+          : `${payload.importedProjects} projects imported.`,
+      );
       onImported();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed.");
@@ -98,18 +112,40 @@ export function ProjectImportDialog({
         if (!nextOpen) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button className="h-11 gap-2">
-          <Upload className="size-4" aria-hidden="true" />
-          Import Devpost CSV
-        </Button>
-      </DialogTrigger>
+      <div className="flex flex-wrap gap-2">
+        <DialogTrigger asChild>
+          <Button className="h-11 gap-2" onClick={() => setMode("automatic")}>
+            <Upload className="size-4" aria-hidden="true" />
+            {inventoryLocked ? "Add new projects" : "Import Devpost CSV"}
+          </Button>
+        </DialogTrigger>
+        {inventoryLocked ? (
+          <DialogTrigger asChild>
+            <Button
+              className="h-11"
+              onClick={() => setMode("replace")}
+              variant="destructive"
+            >
+              Replace inventory
+            </Button>
+          </DialogTrigger>
+        ) : null}
+      </div>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="text-left">
-          <DialogTitle>Replace {hackathonName} projects</DialogTitle>
+          <DialogTitle>
+            {mode === "replace"
+              ? `Destructive replacement for ${hackathonName}`
+              : inventoryLocked
+                ? `Add new ${hackathonName} projects`
+                : `Import ${hackathonName} projects`}
+          </DialogTitle>
           <DialogDescription>
-            Import submitted Devpost projects and derive this hackathon&apos;s
-            challenge list. Drafts and incomplete projects are ignored.
+            {mode === "replace"
+              ? "Replace the project inventory and revoke every active guest judging session."
+              : inventoryLocked
+                ? "Only projects with unseen Devpost URLs are added. Existing records and room access stay unchanged."
+                : "Import submitted Devpost projects and derive this hackathon's challenge list. Drafts and incomplete projects are ignored."}
           </DialogDescription>
         </DialogHeader>
 
@@ -119,8 +155,9 @@ export function ProjectImportDialog({
               <FileSpreadsheet className="size-4" />
               <AlertTitle>Import complete</AlertTitle>
               <AlertDescription>
-                {result.importedProjects} projects, {result.memberCount} team
-                members, and {result.challengeCount} challenges were imported.
+                {result.importedProjects} projects and {result.memberCount} team
+                members were imported. {result.skippedProjects} known projects
+                were left unchanged.
               </AlertDescription>
             </Alert>
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -128,6 +165,7 @@ export function ProjectImportDialog({
                 ["Drafts excluded", result.excludedDraftProjects],
                 ["Duplicates collapsed", result.collapsedDuplicateRows],
                 ["Projects rejected", result.rejectedProjects],
+                ["New challenges", result.newChallengeCount],
               ].map(([label, value]) => (
                 <div
                   className="rounded-md border border-border/70 p-3"
@@ -153,15 +191,28 @@ export function ProjectImportDialog({
           </div>
         ) : (
           <div className="space-y-4">
-            {projectCount > 0 ? (
+            {mode === "replace" && projectCount > 0 ? (
               <Alert variant="destructive">
                 <AlertTitle>This replaces the current inventory</AlertTitle>
                 <AlertDescription>
-                  All {projectCount} current projects—including soft-deleted
-                  projects—and the current challenge list will be removed before
-                  the new file is inserted. Manual edits will be overwritten.
+                  All {projectCount} current projects, including soft-deleted
+                  projects, will be replaced. Active room QRs and guest sessions
+                  will be revoked. A replacement that removes an active
+                  room&apos;s challenge is blocked.
                 </AlertDescription>
               </Alert>
+            ) : null}
+            {mode === "replace" && inventoryLocked ? (
+              <div className="space-y-2">
+                <Label htmlFor="project-import-confirmation">
+                  Type {hackathonName} to confirm
+                </Label>
+                <Input
+                  id="project-import-confirmation"
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  value={confirmation}
+                />
+              </div>
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="devpost-project-file">Devpost CSV</Label>
@@ -192,8 +243,24 @@ export function ProjectImportDialog({
               >
                 Cancel
               </Button>
-              <Button disabled={!file || submitting} onClick={submit}>
-                {submitting ? "Importing…" : "Replace and import"}
+              <Button
+                disabled={
+                  !file ||
+                  submitting ||
+                  (mode === "replace" &&
+                    inventoryLocked &&
+                    confirmation !== hackathonName)
+                }
+                onClick={submit}
+                variant={mode === "replace" ? "destructive" : "primary"}
+              >
+                {submitting
+                  ? "Importing…"
+                  : mode === "replace"
+                    ? "Revoke access and replace"
+                    : inventoryLocked
+                      ? "Add unseen projects"
+                      : "Import projects"}
               </Button>
             </>
           )}

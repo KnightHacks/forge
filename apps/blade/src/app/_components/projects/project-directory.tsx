@@ -65,6 +65,7 @@ type Navigate = (patch: Record<string, string | number | undefined>) => void;
 function ProjectFilters({
   challenges,
   input,
+  lockedChallenge,
   navigate,
   query,
   setQuery,
@@ -72,6 +73,7 @@ function ProjectFilters({
 }: {
   challenges: ProjectDirectoryData["challenges"];
   input: ProjectDirectoryInput;
+  lockedChallenge?: { id: string; label: string };
   navigate: Navigate;
   query: string;
   setQuery: (query: string) => void;
@@ -133,24 +135,35 @@ function ProjectFilters({
             value={query}
           />
         </label>
-        <label>
-          <span className="sr-only">Challenge</span>
-          <select
-            aria-label="Challenge"
-            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-            onChange={(event) =>
-              navigate({ challenge: event.target.value, page: 1 })
-            }
-            value={selectedChallenge}
-          >
-            <option value="">All challenges</option>
-            {filterableChallenges.map((challenge) => (
-              <option key={challenge.id} value={challenge.id}>
-                {challenge.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {lockedChallenge ? (
+          <div className="flex h-11 items-center rounded-md border border-primary/25 bg-primary/10 px-3 text-sm">
+            <span className="truncate font-medium">
+              {lockedChallenge.label}
+            </span>
+            <span className="ml-auto pl-3 text-xs text-muted-foreground">
+              Room scope
+            </span>
+          </div>
+        ) : (
+          <label>
+            <span className="sr-only">Challenge</span>
+            <select
+              aria-label="Challenge"
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+              onChange={(event) =>
+                navigate({ challenge: event.target.value, page: 1 })
+              }
+              value={selectedChallenge}
+            >
+              <option value="">All challenges</option>
+              {filterableChallenges.map((challenge) => (
+                <option key={challenge.id} value={challenge.id}>
+                  {challenge.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {showTeamSizeFilters
           ? (["min", "max"] as const).map((bound) => (
               <label key={bound}>
@@ -445,6 +458,7 @@ export function ProjectDirectory<TProject extends Project>({
   data,
   emptyDescription = "Try changing the search or filters.",
   input,
+  lockedChallenge,
   showPrivateDetails = false,
   showTeamSizeFilters = true,
   showViewAction = false,
@@ -453,6 +467,7 @@ export function ProjectDirectory<TProject extends Project>({
   data: ProjectDirectoryData<TProject>;
   emptyDescription?: string;
   input: ProjectDirectoryInput;
+  lockedChallenge?: { id: string; label: string };
   showPrivateDetails?: boolean;
   showTeamSizeFilters?: boolean;
   showViewAction?: boolean;
@@ -482,6 +497,7 @@ export function ProjectDirectory<TProject extends Project>({
       <ProjectFilters
         challenges={data.challenges}
         input={input}
+        lockedChallenge={lockedChallenge}
         key={`${input.minParticipants ?? ""}:${input.maxParticipants ?? ""}`}
         navigate={navigate}
         query={query}

@@ -18,6 +18,8 @@ import {
 import { db } from "@forge/db/client";
 import {
   Hackathon,
+  HackathonJudgingConfiguration,
+  JudgingRoom,
   Project,
   ProjectChallenge,
   ProjectMember,
@@ -31,15 +33,12 @@ import {
   projectUpdateInputSchema,
 } from "@forge/validators";
 
-import { createTRPCRouter, permProcedure } from "../trpc";
+import { createTRPCRouter, judgeProcedure, permProcedure } from "../trpc";
 import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
-import {
-  assertCanManageProjects,
-  assertCanViewProjects,
-} from "../utils/projects/access";
+import { assertCanManageProjects } from "../utils/projects/access";
 import { projectForJudge } from "../utils/projects/view";
 
 function projectSort(
@@ -245,12 +244,21 @@ export const projectsRouter = createTRPCRouter({
         displayName: Hackathon.displayName,
         endDate: Hackathon.endDate,
         id: Hackathon.id,
+        inventoryLockedAt:
+          HackathonJudgingConfiguration.projectInventoryLockedAt,
         projectCount: count(Project.id),
         startDate: Hackathon.startDate,
       })
       .from(Hackathon)
       .leftJoin(Project, eq(Project.hackathonId, Hackathon.id))
-      .groupBy(Hackathon.id)
+      .leftJoin(
+        HackathonJudgingConfiguration,
+        eq(HackathonJudgingConfiguration.hackathonId, Hackathon.id),
+      )
+      .groupBy(
+        Hackathon.id,
+        HackathonJudgingConfiguration.projectInventoryLockedAt,
+      )
       .orderBy(desc(Hackathon.startDate));
   }),
 
@@ -272,16 +280,20 @@ export const projectsRouter = createTRPCRouter({
       return { hackathon, ...(await listProjects(input)) };
     }),
 
-  listJudge: permProcedure
+  listJudge: judgeProcedure
     .input(judgeProjectListInputSchema)
     .query(async ({ ctx, input }) => {
-      assertCanViewProjects(ctx);
-      const isOfficer = ctx.session.permissions.IS_OFFICER === true;
+      const guestPrincipal =
+        ctx.judgePrincipal.kind === "guest" ? ctx.judgePrincipal : null;
+      const isGuest = guestPrincipal !== null;
+      const isOfficer =
+        ctx.judgePrincipal.kind === "member" &&
+        ctx.judgePrincipal.isOfficer === true;
       if (input.hackathonId && !isOfficer) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const now = new Date();
-      const selected = input.hackathonId
+      const selected = isGuest
         ? await db.query.Hackathon.findFirst({
             columns: {
               displayName: true,
@@ -289,10 +301,24 @@ export const projectsRouter = createTRPCRouter({
               id: true,
               startDate: true,
             },
-            where: eq(Hackathon.id, input.hackathonId),
+            where: and(
+              eq(Hackathon.id, guestPrincipal.hackathonId),
+              lte(Hackathon.startDate, now),
+              gte(Hackathon.endDate, now),
+            ),
           })
-        : ((await activeHackathon(now)) ??
-          (isOfficer ? await upcomingHackathon(now) : null));
+        : input.hackathonId
+          ? await db.query.Hackathon.findFirst({
+              columns: {
+                displayName: true,
+                endDate: true,
+                id: true,
+                startDate: true,
+              },
+              where: eq(Hackathon.id, input.hackathonId),
+            })
+          : ((await activeHackathon(now)) ??
+            (isOfficer ? await upcomingHackathon(now) : null));
       if (!selected)
         return {
           hackathon: null,
@@ -304,50 +330,22 @@ export const projectsRouter = createTRPCRouter({
         };
       const listed = await listProjects({
         ...input,
+        challengeIds: guestPrincipal
+          ? [guestPrincipal.challengeId]
+          : input.challengeIds,
         deleted: "active",
         hackathonId: selected.id,
       });
       return {
         hackathon: selected,
         ...listed,
+        challenges: guestPrincipal
+          ? listed.challenges.filter(
+              (challenge) => challenge.id === guestPrincipal.challengeId,
+            )
+          : listed.challenges,
         projects: listed.projects.map(projectForJudge),
       };
-    }),
-
-  getDetail: permProcedure
-    .input(projectIdSchema)
-    .query(async ({ ctx, input }) => {
-      assertCanViewProjects(ctx);
-      const project = await db.query.Project.findFirst({
-        where: eq(Project.id, input.projectId),
-        with: {
-          challenges: { with: { challenge: true } },
-          hackathon: true,
-          members: { orderBy: asc(ProjectMember.displayOrder) },
-        },
-      });
-      if (!project || project.deletedAt) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found.",
-        });
-      }
-      if (!ctx.session.permissions.IS_OFFICER) {
-        const now = new Date();
-        if (
-          project.hackathon.startDate > now ||
-          project.hackathon.endDate < now
-        ) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Project not found.",
-          });
-        }
-      }
-      return projectForJudge({
-        ...project,
-        challenges: project.challenges.map(({ challenge }) => challenge),
-      });
     }),
 
   dropAll: permProcedure
@@ -366,6 +364,32 @@ export const projectsRouter = createTRPCRouter({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Hackathon not found.",
+          });
+        }
+        const [lock, activeRoom] = await Promise.all([
+          tx.query.HackathonJudgingConfiguration.findFirst({
+            columns: { projectInventoryLockedAt: true },
+            where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
+          }),
+          tx.query.JudgingRoom.findFirst({
+            columns: { name: true },
+            where: and(
+              eq(JudgingRoom.hackathonId, hackathon.id),
+              isNull(JudgingRoom.archivedAt),
+            ),
+          }),
+        ]);
+        if (lock?.projectInventoryLockedAt) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "The judging inventory is locked. Use the confirmed full replacement import instead.",
+          });
+        }
+        if (activeRoom) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `Archive ${activeRoom.name} and every other judging room before dropping the project inventory.`,
           });
         }
         if (input.confirmation !== hackathon.displayName) {

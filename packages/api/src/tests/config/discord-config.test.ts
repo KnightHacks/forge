@@ -215,6 +215,7 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
     // load, so the router is re-imported against a stubbed value rather than
     // mutated in place.
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("JUDGING_ACCESS_SECRET", "0123456789abcdef0123456789abcdef");
     vi.resetModules();
     try {
       const production = await import("../../routers/discord-config");
