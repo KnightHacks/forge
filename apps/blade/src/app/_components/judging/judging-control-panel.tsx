@@ -290,9 +290,13 @@ function RoomQrDialog({
               </Button>
               <Button
                 className="gap-2"
-                onClick={() => {
-                  void navigator.clipboard.writeText(qr.url);
-                  toast.success("Room link copied.");
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(qr.url);
+                    toast.success("Room link copied.");
+                  } catch {
+                    toast.error("Room link could not be copied.");
+                  }
                 }}
                 variant="outline"
               >
