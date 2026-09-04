@@ -1,6 +1,6 @@
 # Judging Magic Access Status
 
-Current phase: Implementation complete; PR pending
+Current phase: Implementation complete; PR open
 
 > This file tracks accepted decisions, open questions, task progress, validation, and links for this feature.
 
@@ -78,7 +78,7 @@ Current phase: Implementation complete; PR pending
 - [x] Confirm new tests fail for the intended missing behavior where practical.
 - [x] Implement database, auth, API, and Blade changes.
 - [x] Run targeted checks, browser verification, repository gates, and build.
-- [ ] Open a PR with the required issue, labels, assignee, test evidence, and
+- [x] Open a PR with the required issue, labels, assignee, test evidence, and
       screenshots.
 
 ## Validation and commands
@@ -125,4 +125,4 @@ Current phase: Implementation complete; PR pending
 - Prior project inventory PR: [#527](https://github.com/KnightHacks/forge/pull/527)
 - Prior project inventory issue: [#526](https://github.com/KnightHacks/forge/issues/526)
 - Implementation issue: [#528](https://github.com/KnightHacks/forge/issues/528)
-- Implementation PR: pending
+- Implementation PR: [#529](https://github.com/KnightHacks/forge/pull/529)
