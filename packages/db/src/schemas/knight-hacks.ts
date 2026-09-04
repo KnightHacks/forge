@@ -2710,7 +2710,7 @@ export const FormAttachment = createTable(
     contentType: t.varchar({ length: 255 }).notNull(),
     size: t.integer().notNull(),
     purpose: t
-      .text({ enum: ["instruction", "response"] })
+      .text({ enum: ["banner", "instruction", "response"] })
       .notNull()
       .default("response"),
     finalizedAt: t.timestamp({ mode: "date", withTimezone: true }),
@@ -2723,7 +2723,7 @@ export const FormAttachment = createTable(
     formIdx: index("knight_hacks_form_attachment_form_idx").on(t.formId),
     purposeCheck: check(
       "knight_hacks_form_attachment_purpose_check",
-      sql`${t.purpose} IN ('instruction', 'response')`,
+      sql`${t.purpose} IN ('banner', 'instruction', 'response')`,
     ),
     responseIdx: index("knight_hacks_form_attachment_response_idx").on(
       t.responseId,
@@ -2940,6 +2940,60 @@ export const Issue = createTable(
 );
 
 export const IssueSchema = createInsertSchema(Issue);
+
+export const IssueAttachment = createTable(
+  "issue_attachment",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    issueId: t.uuid().references(() => Issue.id, { onDelete: "cascade" }),
+    draftKey: t.uuid(),
+    teamId: t
+      .uuid()
+      .notNull()
+      .references(() => Roles.id, { onDelete: "restrict" }),
+    ownerUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "cascade" }),
+    objectName: t.varchar({ length: 512 }).notNull().unique(),
+    fileName: t.varchar({ length: 255 }).notNull(),
+    contentType: t.varchar({ length: 255 }).notNull(),
+    size: t.integer().notNull(),
+    finalizedAt: t.timestamp({ mode: "date", withTimezone: true }),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    ownerCheck: check(
+      "knight_hacks_issue_attachment_owner_check",
+      sql`NOT (${t.issueId} IS NOT NULL AND ${t.draftKey} IS NOT NULL)`,
+    ),
+    issueIdx: index("knight_hacks_issue_attachment_issue_idx").on(t.issueId),
+    draftIdx: index("knight_hacks_issue_attachment_draft_idx").on(t.draftKey),
+  }),
+);
+
+export const IssueAttachmentSchema = createInsertSchema(IssueAttachment);
+
+export const IssueAttachmentReference = createTable(
+  "issue_attachment_reference",
+  (t) => ({
+    attachmentId: t
+      .uuid()
+      .notNull()
+      .references(() => IssueAttachment.id, { onDelete: "cascade" }),
+    issueId: t
+      .uuid()
+      .notNull()
+      .references(() => Issue.id, { onDelete: "cascade" }),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.attachmentId, t.issueId] }),
+    issueIdx: index("issue_attachment_reference_issue_idx").on(t.issueId),
+  }),
+);
 
 export const IssuesToTeamsVisibility = createTable(
   "issues_to_teams_visibility",

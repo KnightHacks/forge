@@ -1,9 +1,41 @@
 # Blade Refinements Status
 
-Current phase: Bundle approved / ready for technical discovery
+Current phase: R-19, R-25, and R-30 complete; draft PR open
 
 ## Decision log
 
+- 2026-09-04 (R-19, R-25): Implemented managed issue images and managed form
+  banners. Issue images support picker, paste, and drop insertion, durable
+  references, accessible alt text, authorized reads, strict raster validation,
+  retention limits, and cleanup. Forms support one responsive 4:1 banner with
+  add, replace, remove, alt-text editing, respondent rendering, authorized
+  reads, and cleanup. The additive database migration was regenerated as
+  `0045_soft_makkari` after merging PR #529's `0044_open_mikhail_rasputin`.
+  The migration was generated and tested but was not applied to a database.
+- 2026-09-04 (integration and review): Merged PR #529 from `origin/main` into
+  the local branch as merge commit `71b755bb`. The only merge conflict was the
+  admin navigation, resolved by retaining the established domain grouping and
+  adding Judging rooms to the Hackathon group. Nine review passes ran before
+  the human stopped the loop. Every reported finding was fixed; the ninth-pass
+  direct-upload authorization fix was not submitted to a tenth review. Future
+  review-agent fix-and-review loops are capped at five passes unless the human
+  sets another limit. Tracking is in [issue #530](https://github.com/KnightHacks/forge/issues/530)
+  and [draft PR #512](https://github.com/KnightHacks/forge/pull/512).
+- 2026-09-04 (R-30): Added a root `.worktreeinclude` with the ignored `.env`
+  rule. Codex and Claude Code both document the same root convention for
+  copying matching ignored files into new supported managed worktrees. It does
+  not retroactively populate existing worktrees, and plain `git worktree`
+  commands do not process it; support in other tools depends on the tool. This
+  existing task worktree was populated separately from the local checkout;
+  verification checks only that the destination exists and is byte-identical.
+  `.env` remains ignored and untracked. References: [Codex worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees)
+  and [Claude Code worktrees](https://code.claude.com/docs/en/worktrees).
+- 2026-09-04 (R-19, R-25): Dylan confirmed that both managed-media
+  refinements must ship before the refinements branch is ready. R-26 and R-27
+  remain deferred. DVidal1205 claimed R-19 and R-25, including the additive
+  schema and migration work required to give issue images durable ownership and
+  form banners a distinct attachment purpose. Implementation will reuse the
+  Forms direct-upload, finalization, authorized-download, and cleanup flow.
 - 2026-09-03 (R-16): Confirmed in Chromium that the admin members page's
   `key={input.query}` replaced the search input after each debounced server
   result, dropping focus and discarding subsequent keyboard input. Removed only
@@ -372,39 +404,37 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 
 ## Open questions
 
-1. Technical discovery: confirm whether the existing attachment schema can gain
-   Issue/Form-banner owners without a database migration.
-2. Technical reproduction: capture the exact production-base issue-assignee
+1. Technical reproduction: capture the exact production-base issue-assignee
    filter failure before selecting a repair.
-3. Tooling: should `lefthook.yml` quote `{staged_files}` so commits touching
+2. Tooling: should `lefthook.yml` quote `{staged_files}` so commits touching
    Next.js route-group paths work without `--no-verify`?
-4. Tooling: should the repository add a `.gitattributes` with
+3. Tooling: should the repository add a `.gitattributes` with
    `* text=auto eol=lf` so Windows contributors are not blocked by
    `pnpm format`?
-5. Onboarding: should the shared Notion env document be updated for the
+4. Onboarding: should the shared Notion env document be updated for the
    nine environment variables this merge introduced? They are
    enumerated only in `.env.example`.
-6. Cleanup: should the dead `ISSUES_FEATURE_ENABLED` entry be dropped
+5. Cleanup: should the dead `ISSUES_FEATURE_ENABLED` entry be dropped
    from `.env.example`? No env schema declares it.
-7. Local setup: should local dev use `db:push` or `migrate`? `push`
+6. Local setup: should local dev use `db:push` or `migrate`? `push`
    skips the data backfills embedded in migration files, so seeds like
    `knight_hacks_discord_config` are missing and admin analytics throws;
    `migrate` then fails at `0001` because `push` already created
    `event_tag`.
-8. Tooling: `pnpm --filter=<pkg> typecheck` skips the `^build` step the
+7. Tooling: `pnpm --filter=<pkg> typecheck` skips the `^build` step the
    root turbo task declares, so it can report false type errors against
    stale generated `.d.ts` files. Should the per-package script depend on
    the build?
-9. Tooling: `apps/blade`'s `test` script uses the POSIX prefix
+8. Tooling: `apps/blade`'s `test` script uses the POSIX prefix
    `NODE_ENV=test ...`, which fails in PowerShell. Should scripts be
    normalized with `cross-env`?
-10. Cleanup: `admin-page-eyebrows.ts` (28 entries) is dead data after
-    R-05 — still imported by 25 consumers and passed as props
-    `AdminPageHeader` no longer renders. Remove in a follow-up?
-11. Ownership: the `AuthenticatedShellSkeleton` permission gap has no
+9. Cleanup: `admin-page-eyebrows.ts` (28 entries) is dead data after
+   R-05 — still imported by 25 consumers and passed as props
+   `AdminPageHeader` no longer renders. Remove in a follow-up?
+10. Ownership: the `AuthenticatedShellSkeleton` permission gap has no
     remaining row to inherit it, since R-06 is the last claimed
     refinement. Who picks it up?
-12. Coverage: R-28 has no automated browser regression. TC-022 is proven
+11. Coverage: R-28 has no automated browser regression. TC-022 is proven
     by manual QA only, because a Playwright test asserting legend and
     card geometry could not be executed locally — the browsers are not
     installed and the case is database-backed. Who adds it, and should it
@@ -442,37 +472,38 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 
 ## Refinement inventory
 
-| ID   | Refinement                                                                                                                                                  | State     | Claim                     | Proof                          |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------------- | ------------------------------ |
-| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete  | Spyderma9 (8/31/2026)     | TC-001                         |
-| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete  | Spyderma9 (8/31/2026)     | TC-002                         |
-| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Complete  | Spyderma9 (8/31/2026)     | TC-003, TC-NEG-001             |
-| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Complete  | Spyderma9 (8/31/2026)     | TC-004                         |
-| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Complete  | Spyderma9 (8/31/2026)     | TC-005                         |
-| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Complete  | Spyderma9 (8/31/2026)     | TC-005                         |
-| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Complete  | azizu06 (9/1/2026)        | TC-007, TC-020                 |
-| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Complete  | azizu06 (9/1/2026)        | TC-007, TC-008                 |
-| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete  | azizu06 (9/1/2026)        | TC-007                         |
-| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete  | azizu06 (9/1/2026)        | TC-006                         |
-| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete  | hector1128 (2026-08-14)   | TC-007                         |
-| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete  | azizu06 (9/1/2026)        | TC-008, TC-020                 |
-| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Complete  | Claimed Eric12 (9/1/2026) | TC-009                         |
-| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete  | hector1128 (2026-08-14)   | TC-010                         |
-| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Complete  | Claimed Eric12 (9/1/2026) | TC-011                         |
-| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Complete  | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001             |
-| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete  | azizu06 (9/1/2026)        | TC-013                         |
-| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete  | azizu06 (9/1/2026)        | TC-014                         |
-| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Discovery | Unclaimed                 | TC-015, TC-NEG-002, TC-NEG-003 |
-| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Complete  | TacoLover (2026-09-01)    | TC-016, TC-NEG-003             |
-| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete  | hector1128 (2026-08-14)   | TC-017                         |
-| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Complete  | TacoLover (2026-09-01)    | TC-021                         |
-| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Complete  | TacoLover (2026-09-01)    | TC-020                         |
-| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Complete  | TacoLover (2026-09-01)    | TC-018, TC-NEG-003             |
-| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Discovery | Unclaimed                 | TC-019, TC-NEG-002, TC-NEG-003 |
-| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred  | Unclaimed                 | Out of scope                   |
-| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred  | Unclaimed                 | Out of scope                   |
-| R-28 | Keep short and wrapped respondent question prompts inside their bordered question cards without colliding with the card border.                             | Complete  | Spyderma9 (9/2/2026)      | TC-022                         |
-| R-29 | Replace the OS scrollbar across Blade with a thin custom scrollbar in the primary violet, without stealing layout width on overlay-scrollbar machines.      | Complete  | azizu06 (9/3/2026)        | Manual QA                      |
+| ID   | Refinement                                                                                                                                                  | State    | Claim                     | Proof                                       |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------- | ------------------------------------------- |
+| R-01 | Keep `/` public for signed-in users, adapt its CTA, and make the product mark return there.                                                                 | Complete | Spyderma9 (8/31/2026)     | TC-001                                      |
+| R-02 | Remove the sidebar for ordinary members; place Settings and Sign out together at the top right.                                                             | Complete | Spyderma9 (8/31/2026)     | TC-002                                      |
+| R-03 | Replace hover expansion with a top-left admin rail opener; keep collapsed icons clickable, close after selection, and preserve mobile close-on-select.      | Complete | Spyderma9 (8/31/2026)     | TC-003, TC-NEG-001                          |
+| R-04 | Group admin destinations into the approved Club, Team, Hackathon, and External map; omit empty groups and mark Guild/outbound destinations as external.     | Complete | Spyderma9 (8/31/2026)     | TC-004                                      |
+| R-05 | Remove visible admin eyebrows/descriptions, expose description-only title help, and shrink matching skeletons.                                              | Complete | Spyderma9 (8/31/2026)     | TC-005                                      |
+| R-06 | Remove repetitive configuration subtitles while preserving consequential guidance.                                                                          | Complete | Spyderma9 (8/31/2026)     | TC-005                                      |
+| R-07 | Use one member-dashboard hierarchy and action set across mobile and desktop.                                                                                | Complete | azizu06 (9/1/2026)        | TC-007, TC-020                              |
+| R-08 | Keep Guild prominent and editable; define Guild, separate public Guild data from private Blade data, and mark its public actions as external.               | Complete | azizu06 (9/1/2026)        | TC-007, TC-008                              |
+| R-09 | Replace the isolated QR action with a compact Check in surface and View QR code action on every viewport.                                                   | Complete | azizu06 (9/1/2026)        | TC-007                                      |
+| R-10 | Keep unpaid dues prominent; replace the paid tile with a green paid badge and accessible tooltip beside the Welcome name.                                   | Complete | azizu06 (9/1/2026)        | TC-006                                      |
+| R-11 | Keep Previous forms as a small, low-emphasis action at the bottom of the dashboard.                                                                         | Complete | hector1128 (2026-08-14)   | TC-007                                      |
+| R-12 | Align sparse and populated Guild/profile content and handle long names, links, companies, filenames, events, and empty states without clipping.             | Complete | azizu06 (9/1/2026)        | TC-008, TC-020                              |
+| R-13 | Change resume upload/replace in signup and existing-member flows to success plus explicit View, without automatic preview.                                  | Complete | Claimed Eric12 (9/1/2026) | TC-009                                      |
+| R-14 | Require confirmation before removing a saved profile picture.                                                                                               | Complete | hector1128 (2026-08-14)   | TC-010                                      |
+| R-15 | Mark employment fields required and report/focus the precise invalid entry and field without mislabeling legacy validation.                                 | Complete | Claimed Eric12 (9/1/2026) | TC-011                                      |
+| R-16 | Preserve admin member-search focus and keystrokes while debounced results and URL state update.                                                             | Complete | Claimed Eric12 (9/1/2026) | TC-012, TC-NEG-001                          |
+| R-17 | Reproduce and fix the Issue assignee filter failure without breaking other filters, pagination, or access policy.                                           | Complete | azizu06 (9/1/2026)        | TC-013                                      |
+| R-18 | Preserve author-entered issue-description line breaks in preview/detail without changing unrelated Markdown consumers.                                      | Complete | azizu06 (9/1/2026)        | TC-014                                      |
+| R-19 | Add authorized managed issue images through picker, paste, and drag/drop with cursor insertion, alt text, approved limits, rendering, removal, and cleanup. | Complete | DVidal1205 (9/4/2026)     | TC-015, TC-NEG-002, TC-NEG-003              |
+| R-20 | Prefer linked current Member full names in Issue history and Admin logs; fall back to stored Discord labels and preserve system actors.                     | Complete | TacoLover (2026-09-01)    | TC-016, TC-NEG-003                          |
+| R-21 | Render issue reminders as linked `Title \| Chat` when a Discord thread exists and linked title alone otherwise.                                             | Complete | hector1128 (2026-08-14)   | TC-017                                      |
+| R-22 | Prevent overlapping current/prior hackathon comparison labels while preserving the accessible text/table alternative.                                       | Complete | TacoLover (2026-09-01)    | TC-021                                      |
+| R-23 | Fix reported Chrome/Zen member and shell overflow at 320 px, intermediate widths, and desktop without hiding content behind overflow rules.                 | Complete | TacoLover (2026-09-01)    | TC-020                                      |
+| R-24 | Verify and polish existing Forms text/image/video instruction-card authoring, upload feedback, ordering, cleanup, and respondent rendering.                 | Complete | TacoLover (2026-09-01)    | TC-018, TC-NEG-003                          |
+| R-25 | Add one managed form banner with upload/replace/remove, editable alt text, preview guidance, and responsive 4:1 `cover` presentation.                       | Complete | DVidal1205 (9/4/2026)     | TC-019, TC-NEG-002, TC-NEG-003              |
+| R-26 | Knight Hacks member-benefits content/page.                                                                                                                  | Deferred | Unclaimed                 | Out of scope                                |
+| R-27 | Grafana analytics replacement or observability infrastructure.                                                                                              | Deferred | Unclaimed                 | Out of scope                                |
+| R-28 | Keep short and wrapped respondent question prompts inside their bordered question cards without colliding with the card border.                             | Complete | Spyderma9 (9/2/2026)      | TC-022                                      |
+| R-29 | Replace the OS scrollbar across Blade with a thin custom scrollbar in the primary violet, without stealing layout width on overlay-scrollbar machines.      | Complete | azizu06 (9/3/2026)        | Manual QA                                   |
+| R-30 | Copy the ignored local `.env` into new supported managed worktrees through a tracked root `.worktreeinclude`.                                               | Complete | DVidal1205 (9/4/2026)     | File existence, byte identity, ignore check |
 
 ## Task list
 
@@ -488,16 +519,31 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 - [x] Resolve the five focused product questions and amend all artifacts.
 - [x] Human approves the artifact bundle before implementation/test generation.
 - [ ] Reproduce issue-assignee filter failure and document evidence.
-- [ ] Inspect attachment schema compatibility and document migration/no-migration
+- [x] Inspect attachment schema compatibility and document migration/no-migration
       decision before any schema change.
-- [ ] Contributors announce and record refinement-ID claims before editing
+- [x] Contributors announce and record refinement-ID claims before editing
       implementation code.
-- [ ] Implement claimed slices in checkpoints and keep the inventory current.
-- [ ] Run focused verification, React analysis, `pnpm verify:precommit`, derived
+- [x] Add and verify Codex managed-worktree environment-file inclusion without
+      tracking or exposing `.env`.
+- [x] Implement claimed slices in checkpoints and keep the inventory current.
+- [x] Run focused verification, React analysis, `pnpm verify:precommit`, derived
       reviewers, browser QA, and `git diff --check`.
 
 ## Validation / commands
 
+- 2026-09-04 (R-19, R-25, PR #529 integration): `pnpm format`, `pnpm lint`
+  (31/31 tasks, 0 errors; existing warnings remain), and `pnpm typecheck`
+  (33/33 tasks) passed. Full tests passed for validators (23 files, 263 tests),
+  database (29 files, 141 tests), API (109 files, 761 tests), and Blade (135
+  files, 762 tests). The Blade production build passed with a temporary
+  32-character `JUDGING_ACCESS_SECRET` test value required by PR #529; the
+  copied local `.env` was not changed. The form-builder visual baseline passed
+  1/1 after the merge. The targeted strict React analysis passed for 10 relevant
+  files and 13 components. `pnpm verify:precommit` remains blocked only by the
+  existing analyzer exception in
+  `employment-history-editor-focus.test.tsx`; 46 of its 47 analyzed files
+  passed. The generated migration lineage test ends at index 45 with
+  `0045_soft_makkari`.
 - `git fetch origin main`: fetched production base successfully.
 - Isolated worktree creation from `origin/main`: created
   `/Users/dvidal/Documents/forge-refinements` at `78857b85`.
@@ -1008,6 +1054,9 @@ ENOMEM` result was local memory pressure, not an analyzer finding.
 - Branch: `forge/refinements`
 - Remote branch: `https://github.com/KnightHacks/forge/tree/forge/refinements`
 - Feature bundle: `.forge/features/blade-refinements/`
-- PRs: none
-- Issues: GitHub #503, GitHub #504, and the supplied Blade issue/thread context
+- PR: [GitHub #512](https://github.com/KnightHacks/forge/pull/512), `[#530]
+Refine Blade navigation, member, issue, and form workflows` (draft)
+- Issues: [GitHub #530](https://github.com/KnightHacks/forge/issues/530) for
+  R-19/R-25, GitHub #503, GitHub #504, and the supplied
+  Blade issue/thread context
 - Discord/thread context: supplied in the Codex task on 2026-08-12

@@ -114,6 +114,12 @@ const instructionSchema = z.discriminatedUnion("type", [
 
 export const formDefinitionSchema = z
   .object({
+    banner: z
+      .object({
+        alt: z.string().trim().min(1).max(500),
+        attachmentId: z.string().uuid(),
+      })
+      .optional(),
     description: z.string().max(5_000),
     instructions: z.array(instructionSchema).max(100),
     questions: z.array(formQuestionSchema).max(500),

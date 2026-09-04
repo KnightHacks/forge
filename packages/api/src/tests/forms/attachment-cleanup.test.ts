@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { selectAbandonedFormAttachments } from "../../utils/forms/attachment-cleanup";
 import {
   classifyFormAttachmentAccess,
+  isRespondentFormAsset,
   uploadSignatureMatches,
 } from "../../utils/forms/attachments";
 
@@ -86,7 +87,7 @@ describe("form attachment signatures", () => {
 describe("form attachment audit boundary", () => {
   it("[TC-003, TC-010] audits only role-gated response attachment access", () => {
     const base = {
-      isPublishedInstruction: false,
+      isRespondentAsset: false,
       ownerUserId: "owner",
       requesterUserId: "admin",
     };
@@ -104,12 +105,55 @@ describe("form attachment audit boundary", () => {
     expect(
       classifyFormAttachmentAccess({
         ...base,
-        isPublishedInstruction: true,
+        isRespondentAsset: true,
         purpose: "instruction",
       }),
-    ).toBe("published_instruction");
+    ).toBe("published_asset");
     expect(
       classifyFormAttachmentAccess({ ...base, purpose: "instruction" }),
-    ).toBe("admin_instruction");
+    ).toBe("admin_asset");
+    expect(classifyFormAttachmentAccess({ ...base, purpose: "banner" })).toBe(
+      "admin_asset",
+    );
+    expect(
+      classifyFormAttachmentAccess({
+        ...base,
+        requesterUserId: "owner",
+        purpose: "banner",
+      }),
+    ).toBe("admin_asset");
+  });
+});
+
+describe("form respondent assets", () => {
+  it("keeps the current banner readable for published and archived form shells", () => {
+    const base = {
+      isReferenced: true,
+      purpose: "banner" as const,
+    };
+    expect(isRespondentFormAsset({ ...base, formState: "published" })).toBe(
+      true,
+    );
+    expect(isRespondentFormAsset({ ...base, formState: "archived" })).toBe(
+      true,
+    );
+    expect(isRespondentFormAsset({ ...base, formState: "draft" })).toBe(false);
+  });
+
+  it("keeps instruction files limited to published forms", () => {
+    expect(
+      isRespondentFormAsset({
+        formState: "archived",
+        isReferenced: true,
+        purpose: "instruction",
+      }),
+    ).toBe(false);
+    expect(
+      isRespondentFormAsset({
+        formState: "published",
+        isReferenced: false,
+        purpose: "banner",
+      }),
+    ).toBe(false);
   });
 });

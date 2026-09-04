@@ -8,7 +8,11 @@ vi.mock("~/trpc/react", () => ({
   api: {
     forms: {
       getAttachmentDownload: {
-        useQuery: () => ({ refetch: vi.fn() }),
+        useQuery: ({ attachmentId }: { attachmentId: string }) => ({
+          data: { url: `https://cdn.test/${attachmentId}` },
+          isError: false,
+          isPending: false,
+        }),
       },
     },
   },
@@ -50,6 +54,27 @@ const answeredDefinition = {
 };
 
 describe("GenericFormRespondent", () => {
+  it("TC-019 renders the managed 4:1 banner before the form title", () => {
+    const html = renderToStaticMarkup(
+      createElement(GenericFormRespondent, {
+        definition: {
+          ...definition,
+          banner: {
+            alt: "Workshop audience",
+            attachmentId: "00000000-0000-4000-8000-000000001099",
+          },
+        },
+        respondentState: { status: "open" as const },
+      }),
+    );
+
+    expect(html).toContain('alt="Workshop audience"');
+    expect(html).toContain("aspect-[4/1]");
+    expect(html.indexOf('alt="Workshop audience"')).toBeLessThan(
+      html.indexOf('id="form-title"'),
+    );
+  });
+
   it("TC-015 clearly renders the scheduled/not-yet-open state", () => {
     const html = renderToStaticMarkup(
       createElement(GenericFormRespondent, {

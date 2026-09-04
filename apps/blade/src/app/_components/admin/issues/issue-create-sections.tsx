@@ -8,8 +8,8 @@ import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { MarkdownContent } from "@forge/ui/markdown-content";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 
 import type { IssueDraft, IssueDraftUpdate } from "./issue-draft";
 import type {
@@ -19,6 +19,11 @@ import type {
   IssueWorkspaceItem,
 } from "./types";
 import { clubWallClock, formatClubDate } from "~/lib/dates";
+import { IssueDescriptionEditor } from "./issue-description-editor";
+import {
+  managedImageReferences,
+  stripManagedImageReferences,
+} from "./issue-managed-images";
 
 /**
  * The four numbered steps of the create-issue form.
@@ -81,45 +86,18 @@ export function IssueBasicsSection({
           onChange={(event) => update("name", event.target.value)}
         />
       </div>
-      <div className="grid gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="issue-description">Description</Label>
-          <div className="flex rounded-md border border-white/10 bg-card/60 p-0.5">
-            <Button
-              type="button"
-              size="sm"
-              variant={!preview ? "secondary" : "ghost"}
-              onClick={() => setPreview(false)}
-            >
-              Write
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={preview ? "secondary" : "ghost"}
-              onClick={() => setPreview(true)}
-            >
-              Preview
-            </Button>
-          </div>
-        </div>
-        {preview ? (
-          <div className="min-h-40 rounded-md border border-white/10 bg-card/50 p-4">
-            <MarkdownContent breaks>
-              {draft.description || "Nothing to preview yet."}
-            </MarkdownContent>
-          </div>
-        ) : (
-          <Textarea
-            id="issue-description"
-            value={draft.description}
-            required
-            maxLength={20_000}
-            rows={7}
-            onChange={(event) => update("description", event.target.value)}
-          />
-        )}
-      </div>
+      <IssueDescriptionEditor
+        id="issue-description"
+        onChange={(value) => update("description", value)}
+        preview={preview}
+        setPreview={setPreview}
+        uploadTarget={{
+          draftKey: draft.creationKey,
+          mode: "draft",
+          teamId: draft.team,
+        }}
+        value={draft.description}
+      />
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="issue-status">Status</Label>
@@ -185,6 +163,15 @@ export function IssueOwnershipSection({
           required
           className="h-11 rounded-md border border-input bg-background px-3 text-sm"
           onChange={(event) => {
+            if (managedImageReferences(draft.description).length > 0) {
+              update(
+                "description",
+                stripManagedImageReferences(draft.description),
+              );
+              toast.info(
+                "Managed images were removed. Add them again for the new team.",
+              );
+            }
             update("team", event.target.value);
             update("assigneeIds", []);
             update("children", []);

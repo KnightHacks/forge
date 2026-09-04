@@ -8,6 +8,7 @@ import { formAttachmentCleanup } from "./crons/form-attachment-cleanup";
 import { formCallbacks } from "./crons/form-callbacks";
 import { hackCheckInCleanup } from "./crons/hack-check-in-cleanup";
 import { hackerPortalAuthCleanup } from "./crons/hacker-portal-auth-cleanup";
+import { issueAttachmentCleanup } from "./crons/issue-attachment-cleanup";
 import { issueReminders } from "./crons/issue-reminders";
 import { leetcode } from "./crons/leetcode";
 import { hackReminders, preReminders, reminders } from "./crons/reminder";
@@ -34,6 +35,7 @@ hackerPortalAuthCleanup.schedule();
 roleSync.schedule();
 
 issueReminders.schedule();
+issueAttachmentCleanup.schedule();
 formCallbacks.schedule();
 formAttachmentCleanup.schedule();
 emailDelivery.schedule();

@@ -15,6 +15,7 @@ export interface MarkdownContentProps {
   children: string;
   className?: string;
   compact?: boolean;
+  components?: Components;
   hideImages?: boolean;
 }
 
@@ -25,6 +26,7 @@ export function MarkdownContent({
   children,
   className,
   compact = false,
+  components: componentOverrides,
   hideImages = false,
 }: MarkdownContentProps) {
   const components: Components = {
@@ -42,6 +44,7 @@ export function MarkdownContent({
           p: ({ children: paragraphChildren }) => <>{paragraphChildren} </>,
         }
       : {}),
+    ...componentOverrides,
   };
 
   return (

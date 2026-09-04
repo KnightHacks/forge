@@ -134,6 +134,12 @@ describe("buildFormDefinition", () => {
     expect(definition.questions).toBe(draft.questions);
   });
 
+  it("TC-019 preserves the managed banner in the saved definition", () => {
+    const banner = { alt: "Workshop audience", attachmentId: id(40) };
+    expect(buildFormDefinition({ ...draft, banner }).banner).toEqual(banner);
+    expect(buildFormDefinition(draft).banner).toBeUndefined();
+  });
+
   it("produces a definition the save mutation's schema accepts", () => {
     expect(
       formDefinitionSchema.safeParse(buildFormDefinition(draft)).success,

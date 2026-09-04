@@ -322,18 +322,34 @@ export async function updatePlatformForm(input: {
     },
   });
   return db.transaction(async (tx) => {
+    const previousDefinition = normalizeStoredFormDefinition(
+      current.id,
+      current.formData,
+    );
+    const nextDefinition = formDefinitionSchema.parse(next.definition);
+    const expectedPurposes = new Map<string, "banner" | "instruction">();
     const previousInstructionIds = new Set(
-      normalizeStoredFormDefinition(current.id, current.formData)
-        .instructions.filter((instruction) => instruction.type !== "text")
+      previousDefinition.instructions
+        .filter((instruction) => instruction.type !== "text")
         .map((instruction) => instruction.attachmentId),
     );
-    const addedInstructionIds = formDefinitionSchema
-      .parse(next.definition)
-      .instructions.filter((instruction) => instruction.type !== "text")
+    nextDefinition.instructions
+      .filter((instruction) => instruction.type !== "text")
       .map((instruction) => instruction.attachmentId)
-      .filter((attachmentId) => !previousInstructionIds.has(attachmentId));
-    if (addedInstructionIds.length > 0) {
-      const instructionAttachments = await tx
+      .filter((attachmentId) => !previousInstructionIds.has(attachmentId))
+      .forEach((attachmentId) =>
+        expectedPurposes.set(attachmentId, "instruction"),
+      );
+    if (
+      nextDefinition.banner &&
+      nextDefinition.banner.attachmentId !==
+        previousDefinition.banner?.attachmentId
+    ) {
+      expectedPurposes.set(nextDefinition.banner.attachmentId, "banner");
+    }
+    const addedAttachmentIds = [...expectedPurposes.keys()];
+    if (addedAttachmentIds.length > 0) {
+      const attachments = await tx
         .select({
           finalizedAt: FormAttachment.finalizedAt,
           formId: FormAttachment.formId,
@@ -341,19 +357,19 @@ export async function updatePlatformForm(input: {
           purpose: FormAttachment.purpose,
         })
         .from(FormAttachment)
-        .where(inArray(FormAttachment.id, addedInstructionIds));
+        .where(inArray(FormAttachment.id, addedAttachmentIds));
       if (
-        instructionAttachments.length !== new Set(addedInstructionIds).size ||
-        instructionAttachments.some(
+        attachments.length !== addedAttachmentIds.length ||
+        attachments.some(
           (attachment) =>
             attachment.formId !== current.id ||
-            attachment.purpose !== "instruction" ||
+            attachment.purpose !== expectedPurposes.get(attachment.id) ||
             !attachment.finalizedAt,
         )
       ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "One or more instruction uploads are invalid.",
+          message: "One or more form media uploads are invalid.",
         });
       }
     }

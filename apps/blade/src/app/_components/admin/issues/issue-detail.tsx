@@ -33,7 +33,6 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
-import { MarkdownContent } from "@forge/ui/markdown-content";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 import { defaultIssueDueAt } from "@forge/validators";
@@ -50,6 +49,8 @@ import {
   formatClubFullDateTime,
 } from "~/lib/dates";
 import { api } from "~/trpc/react";
+import { IssueDescriptionEditor } from "./issue-description-editor";
+import { IssueMarkdown } from "./issue-markdown";
 
 type Detail = RouterOutputs["issues"]["get"];
 type HistoryPage = RouterOutputs["issues"]["listHistory"];
@@ -166,47 +167,14 @@ function EditIssueDialog({
                 onChange={(event) => setName(event.target.value)}
               />
             </div>
-            <div className="grid gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="edit-issue-description">
-                  Description · Markdown
-                </Label>
-                <div className="flex rounded-md border border-white/10 bg-background/60 p-0.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={!preview ? "secondary" : "ghost"}
-                    onClick={() => setPreview(false)}
-                  >
-                    Write
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={preview ? "secondary" : "ghost"}
-                    onClick={() => setPreview(true)}
-                  >
-                    Preview
-                  </Button>
-                </div>
-              </div>
-              {preview ? (
-                <div className="min-h-48 rounded-md border border-white/10 bg-background/60 p-4">
-                  <MarkdownContent breaks>
-                    {description || "Nothing to preview yet."}
-                  </MarkdownContent>
-                </div>
-              ) : (
-                <Textarea
-                  id="edit-issue-description"
-                  value={description}
-                  required
-                  rows={8}
-                  maxLength={20_000}
-                  onChange={(event) => setDescription(event.target.value)}
-                />
-              )}
-            </div>
+            <IssueDescriptionEditor
+              id="edit-issue-description"
+              onChange={setDescription}
+              preview={preview}
+              setPreview={setPreview}
+              uploadTarget={{ issueId: detail.id, mode: "issue" }}
+              value={description}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="edit-issue-status">Status</Label>
@@ -566,12 +534,9 @@ export function IssueDetail({
           <div className="min-w-0 space-y-4">
             <section className="rounded-lg border border-white/10 bg-card/95 p-4 sm:p-6">
               <h2 className="text-lg font-semibold">Description</h2>
-              <MarkdownContent
-                breaks
-                className="mt-4 text-sm leading-7 text-muted-foreground"
-              >
+              <IssueMarkdown className="mt-4 text-sm leading-7 text-muted-foreground">
                 {detail.description}
-              </MarkdownContent>
+              </IssueMarkdown>
             </section>
             {detail.children.length > 0 && (
               <section className="rounded-lg border border-white/10 bg-card/95">

@@ -22,6 +22,8 @@ import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
   Event,
   Issue,
+  IssueAttachment,
+  IssueAttachmentReference,
   IssueHistory,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
@@ -43,10 +45,21 @@ import { env } from "../env";
 import { permProcedure } from "../trpc";
 import { createAdminAuditEvent } from "../utils/audit/service";
 import {
+  classifyIssueAttachmentAccess,
+  issueAcceptsEdits,
   issueAccessForRoles,
   roleHasIssueCapability,
 } from "../utils/issues/access";
+import {
+  assertIssueImages,
+  attachDraftIssueImages,
+  createIssueImageUpload,
+  finalizeIssueImageUpload,
+  getIssueImageDownloadUrl,
+  syncIssueImageReferences,
+} from "../utils/issues/attachments";
 import { deliverLiveIssueCreationThread } from "../utils/issues/creation-thread";
+import { issueImageIds } from "../utils/issues/images";
 import {
   canonicalIssueCreationHash,
   issueHistoryChanges,
@@ -385,6 +398,8 @@ async function insertIssueNode(
     creationHash?: string;
     creationKey?: string;
     creatorId: string;
+    imageDraft?: { draftKey: string; ownerUserId: string };
+    imageReferences?: { attachmentIds: string[]; issueId: string }[];
     parentId?: string | null;
   },
 ) {
@@ -412,6 +427,16 @@ async function insertIssueNode(
       code: "INTERNAL_SERVER_ERROR",
       message: "Issue creation failed.",
     });
+  }
+  if (options.imageDraft) {
+    const attachmentIds = await assertIssueImages({
+      database: tx,
+      description: node.description,
+      draftKey: options.imageDraft.draftKey,
+      ownerUserId: options.imageDraft.ownerUserId,
+      teamId: node.team,
+    });
+    options.imageReferences?.push({ attachmentIds, issueId: created.id });
   }
 
   const visibleTeamIds = [...new Set([node.team, ...node.teamVisibilityIds])];
@@ -456,6 +481,8 @@ async function insertIssueNode(
     await insertIssueNode(tx, child, {
       actorDisplayName: options.actorDisplayName,
       creatorId: options.creatorId,
+      imageDraft: options.imageDraft,
+      imageReferences: options.imageReferences,
       parentId: created.id,
     });
   }
@@ -501,6 +528,162 @@ const templateUpdateInput = z.object({
 });
 
 export const issuesRouter = {
+  createImageUpload: permProcedure
+    .input(
+      z.discriminatedUnion("mode", [
+        z.object({
+          contentType: z.string().trim().max(255),
+          draftKey: z.string().uuid(),
+          fileName: z.string().trim().min(1).max(255),
+          mode: z.literal("draft"),
+          size: z.number().int().positive(),
+          teamId: z.string().uuid(),
+        }),
+        z.object({
+          contentType: z.string().trim().max(255),
+          fileName: z.string().trim().min(1).max(255),
+          issueId: z.string().uuid(),
+          mode: z.literal("issue"),
+          size: z.number().int().positive(),
+        }),
+      ]),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const roles = await assignedRoles(ctx.session.user.id);
+      if (input.mode === "draft") {
+        requireTeamEdit(roles, input.teamId);
+        return createIssueImageUpload({
+          ...input,
+          ownerUserId: ctx.session.user.id,
+        });
+      }
+      const record = await issueRecord(input.issueId);
+      if (!record) throw new TRPCError({ code: "NOT_FOUND" });
+      requireRecordAccess(record, roles, "edit");
+      if (!issueAcceptsEdits(record)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Restore the issue before editing it.",
+        });
+      }
+      return createIssueImageUpload({
+        ...input,
+        ownerUserId: ctx.session.user.id,
+        teamId: record.team.id,
+      });
+    }),
+
+  finalizeImageUpload: permProcedure
+    .input(z.object({ attachmentId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const attachment = await db.query.IssueAttachment.findFirst({
+        where: eq(IssueAttachment.id, input.attachmentId),
+      });
+      if (attachment?.ownerUserId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const roles = await assignedRoles(ctx.session.user.id);
+      if (attachment.issueId) {
+        const record = await issueRecord(attachment.issueId);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND" });
+        requireRecordAccess(record, roles, "edit");
+        if (!issueAcceptsEdits(record)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Restore the issue before editing it.",
+          });
+        }
+      } else {
+        requireTeamEdit(roles, attachment.teamId);
+      }
+      const { attachment: saved, finalizedNow } =
+        await finalizeIssueImageUpload({
+          attachmentId: input.attachmentId,
+          ownerUserId: ctx.session.user.id,
+        });
+      if (finalizedNow) {
+        await createAdminAuditEvent({
+          actionKey: "issue.image.uploaded",
+          actor: ctx.session.user,
+          metadata: {
+            attachmentId: saved.id,
+            byteSize: saved.size,
+            draft: saved.issueId === null,
+            filename: saved.fileName,
+            mimeType: saved.contentType,
+          },
+          subjects: [
+            {
+              relation: "primary",
+              targetId: saved.id,
+              targetLabel: saved.fileName,
+              targetType: "attachment",
+            },
+            {
+              relation: "secondary",
+              targetId: saved.issueId ?? saved.teamId,
+              targetLabel: saved.issueId ? "Issue" : "Issue draft team",
+              targetType: saved.issueId ? "issue" : "role",
+            },
+          ],
+        });
+      }
+      return saved;
+    }),
+
+  getImageDownload: permProcedure
+    .input(z.object({ attachmentId: z.string().uuid() }))
+    .query(async ({ ctx, input }) => {
+      const attachment = await db.query.IssueAttachment.findFirst({
+        where: eq(IssueAttachment.id, input.attachmentId),
+      });
+      if (!attachment?.finalizedAt) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      const references = await db
+        .select({ issueId: IssueAttachmentReference.issueId })
+        .from(IssueAttachmentReference)
+        .where(eq(IssueAttachmentReference.attachmentId, attachment.id));
+      const accessKind = classifyIssueAttachmentAccess({
+        draftKey: attachment.draftKey,
+        issueId: attachment.issueId,
+        referenceCount: references.length,
+      });
+      if (accessKind === "referenced") {
+        const roles = await assignedRoles(ctx.session.user.id);
+        let allowed = false;
+        for (const reference of references) {
+          const record = await issueRecord(reference.issueId);
+          if (
+            !record ||
+            !issueImageIds(record.description).includes(attachment.id)
+          ) {
+            continue;
+          }
+          try {
+            requireRecordAccess(record, roles, "read");
+            allowed = true;
+            break;
+          } catch (error) {
+            if (!(error instanceof TRPCError)) throw error;
+          }
+        }
+        if (!allowed) throw new TRPCError({ code: "NOT_FOUND" });
+      } else if (accessKind === "issue_upload" && attachment.issueId) {
+        const roles = await assignedRoles(ctx.session.user.id);
+        const record = await issueRecord(attachment.issueId);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND" });
+        requireRecordAccess(record, roles, "edit");
+      } else if (accessKind === "draft_upload") {
+        if (attachment.ownerUserId !== ctx.session.user.id) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+      } else {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+      return getIssueImageDownloadUrl(input.attachmentId);
+    }),
+
   list: permProcedure
     .input(issueListQuerySchema)
     .query(async ({ ctx, input }) => {
@@ -659,12 +842,27 @@ export const issuesRouter = {
       let created: typeof Issue.$inferSelect;
       try {
         created = await db.transaction(async (tx) => {
+          const imageReferences: {
+            attachmentIds: string[];
+            issueId: string;
+          }[] = [];
           const root = await insertIssueNode(tx, rootNode, {
             actorDisplayName,
             creationHash,
             creationKey: input.creationKey,
             creatorId: ctx.session.user.id,
+            imageDraft: {
+              draftKey: input.creationKey,
+              ownerUserId: ctx.session.user.id,
+            },
+            imageReferences,
             parentId: input.parentId,
+          });
+          await attachDraftIssueImages({
+            database: tx,
+            draftKey: input.creationKey,
+            ownerUserId: ctx.session.user.id,
+            references: imageReferences,
           });
           const createdIds = await collectSubtreeIds(tx, root.id);
           const createdRows = await tx
@@ -737,7 +935,7 @@ export const issuesRouter = {
       if (!current)
         throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
       requireRecordAccess(current, roles, "edit");
-      if (current.archivedAt)
+      if (!issueAcceptsEdits(current))
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Restore the issue before editing it.",
@@ -806,6 +1004,16 @@ export const issuesRouter = {
       const changes = issueHistoryChanges(before, after);
       if (changes.changedFields.length === 0) return issueDto(current, roles);
       await db.transaction(async (tx) => {
+        let attachmentIds: string[] | undefined;
+        if (input.description !== undefined) {
+          attachmentIds = await assertIssueImages({
+            database: tx,
+            description: input.description,
+            issueId: input.id,
+            ownerUserId: ctx.session.user.id,
+            teamId: current.team.id,
+          });
+        }
         const [updated] = await tx
           .update(Issue)
           .set({
@@ -836,6 +1044,14 @@ export const issuesRouter = {
           conflict(
             "This issue changed since you opened it. Reload the latest version.",
           );
+        if (attachmentIds) {
+          await syncIssueImageReferences({
+            attachmentIds,
+            database: tx,
+            issueId: input.id,
+            ownerUserId: ctx.session.user.id,
+          });
+        }
         if (input.assigneeIds) {
           await tx
             .delete(IssuesToUsersAssignment)

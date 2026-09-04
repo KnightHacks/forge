@@ -25,6 +25,21 @@ export function roleHasIssueCapability(
   );
 }
 
+export function issueAcceptsEdits(issue: { archivedAt: Date | null }) {
+  return issue.archivedAt === null;
+}
+
+export function classifyIssueAttachmentAccess(input: {
+  draftKey: string | null;
+  issueId: string | null;
+  referenceCount: number;
+}) {
+  if (input.referenceCount > 0) return "referenced" as const;
+  if (input.issueId) return "issue_upload" as const;
+  if (input.draftKey) return "draft_upload" as const;
+  return "detached" as const;
+}
+
 export function issueAccessForRoles({
   issue,
   roles,
