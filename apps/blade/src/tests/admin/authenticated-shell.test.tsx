@@ -49,8 +49,11 @@ describe("AuthenticatedShell", () => {
         hackathonEvents: true,
         hackers: true,
         issues: true,
+        judgeProjects: true,
+        judging: true,
         logs: true,
         members: true,
+        projectAdmin: true,
         roles: true,
       }).map((group) => [group.label, group.items.map((item) => item.label)]),
     ).toEqual([
@@ -71,7 +74,15 @@ describe("AuthenticatedShell", () => {
       ],
       [
         "Hackathon",
-        ["Hackathons", "Hackers", "Hackathon Events", "Hackathon Check-in"],
+        [
+          "Hackathons",
+          "Hackers",
+          "Hackathon Events",
+          "Hackathon Check-in",
+          "Projects",
+          "Project import",
+          "Judging rooms",
+        ],
       ],
       ["External", ["Guild"]],
     ]);

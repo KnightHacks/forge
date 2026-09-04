@@ -1,21 +1,14 @@
-import { DoorOpen } from "lucide-react";
-
 import { Skeleton } from "@forge/ui/skeleton";
 
 import {
-  AdminPageHeader,
+  AdminPageHeaderSkeleton,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 
 export default function JudgingAdminLoading() {
   return (
     <main className={adminPageLayoutClassName} aria-busy="true">
-      <AdminPageHeader
-        description="Provision physical rooms, distribute guest access, and watch the live judge roster."
-        eyebrow="Officer command center"
-        icon={DoorOpen}
-        title="Judging rooms"
-      />
+      <AdminPageHeaderSkeleton actions={1} titleWidth="w-60" />
       <Skeleton className="h-24 w-full rounded-lg" />
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         {[0, 1, 2].map((row) => (

@@ -4,6 +4,15 @@ Current phase: R-19, R-25, and R-30 complete; draft PR open
 
 ## Decision log
 
+- 2026-09-04 (R-03 through R-06 compatibility): Audited the three pages added
+  by PRs #527 and #529. Projects, Project import, and Judging rooms remain
+  independently permission-gated entries in the Hackathon navigation group,
+  with correct active-route matching. All three use the shared compact admin
+  header, so their eyebrow props do not render and their descriptions appear
+  only through the accessible page-info control. Their main panels contain no
+  repetitive configuration subtitles. Updated the Judging rooms loading page
+  to use the same compact header skeleton as the two project pages, and added
+  regression coverage for the three navigation entries and loading state.
 - 2026-09-04 (R-19, R-25): Implemented managed issue images and managed form
   banners. Issue images support picker, paste, and drop insertion, durable
   references, accessible alt text, authorized reads, strict raster validation,
@@ -531,6 +540,12 @@ padding-box` on a 10px bar, so it painted as a 2px hairline while hit
 
 ## Validation / commands
 
+- 2026-09-04 (R-03 through R-06 compatibility): Audited `/judge/projects`,
+  `/admin/projects`, and `/admin/judging` after merging PRs #527 and #529.
+  Focused header, loading, and navigation coverage passed 15/15 tests. Strict
+  React analysis passed for the changed loading page. `pnpm format` passed
+  24/24 tasks, `pnpm lint` passed 31/31 tasks with no errors and existing
+  warnings only, and `pnpm typecheck` passed 33/33 tasks.
 - 2026-09-04 (R-19, R-25, PR #529 integration): `pnpm format`, `pnpm lint`
   (31/31 tasks, 0 errors; existing warnings remain), and `pnpm typecheck`
   (33/33 tasks) passed. Full tests passed for validators (23 files, 263 tests),
