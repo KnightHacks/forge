@@ -467,8 +467,9 @@ Would this require a developer change next year?
 - The authenticated room selector applies immediately and persists through
   server state. The room's challenge becomes the initial URL filter, but later
   filter changes do not alter room presence.
-- Poll the control panel only while visible. Pause guest and member heartbeat
-  work when the document is hidden.
+- Poll the control panel only while visible. Keep guest and member access
+  heartbeats running while the judging page remains open, even when the
+  document is hidden, so revocation is detected without WebSockets.
 - Provide explicit loading, empty-room, no-QR, revoked, expired-session,
   reconnect, import-locked, add-only result, and destructive-error states.
 - Verify the guest flow, command center, QR dialog, room selector, and project
