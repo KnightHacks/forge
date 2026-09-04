@@ -1064,7 +1064,7 @@
           "tableTo": "knight_hacks_club_team",
           "columnsFrom": ["team_id"],
           "columnsTo": ["id"],
-          "onDelete": "cascade",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
