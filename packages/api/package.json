@@ -25,6 +25,10 @@
       "types": "./src/projects-import.server.ts",
       "default": "./src/projects-import.server.ts"
     },
+    "./judging-access.server": {
+      "types": "./src/judging-access.server.ts",
+      "default": "./src/judging-access.server.ts"
+    },
     "./hacker-portal": {
       "types": "./src/hacker-portal/index.ts",
       "default": "./src/hacker-portal/index.ts"

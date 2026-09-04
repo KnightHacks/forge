@@ -454,6 +454,7 @@ export const AUDIT_ACTION_CATALOG = {
     "hackathons",
     "Imported project inventory",
     [
+      "addOnly",
       "byteLength",
       "challengeCount",
       "collapsedDuplicateRows",
@@ -462,6 +463,7 @@ export const AUDIT_ACTION_CATALOG = {
       "memberCount",
       "projectCount",
       "rejectedProjects",
+      "skippedProjectCount",
     ],
   ),
   "project.inventory_dropped": policy(
@@ -472,6 +474,30 @@ export const AUDIT_ACTION_CATALOG = {
   "project.updated": policy("hackathons", "Updated project", ["changedFields"]),
   "project.deleted": policy("hackathons", "Deleted project"),
   "project.restored": policy("hackathons", "Restored project"),
+  "judging.room.created": policy("hackathons", "Created judging room", [
+    "challengeId",
+  ]),
+  "judging.room.updated": policy("hackathons", "Updated judging room", [
+    "challengeId",
+    "displayOrder",
+    "guestAccessRevoked",
+  ]),
+  "judging.room.archived": policy("hackathons", "Archived judging room"),
+  "judging.room_link.generated": policy(
+    "hackathons",
+    "Generated judging room QR",
+  ),
+  "judging.room_link.viewed": policy("hackathons", "Viewed judging room QR"),
+  "judging.room_link.revoked": policy("hackathons", "Revoked judging room QR"),
+  "judging.room_link.rotated": policy("hackathons", "Rotated judging room QR"),
+  "judging.guest.revoked": policy("hackathons", "Revoked guest judge", [
+    "guestSessionId",
+    "judgeDisplayName",
+  ]),
+  "judging.presence.removed": policy("hackathons", "Removed judge from room", [
+    "judgeId",
+    "judgeDisplayName",
+  ]),
   // `status` names which applicant status the mail belongs to, and
   // `templateName` records what it pointed at *then* — the template can be
   // renamed later, and the log should not silently follow it.
@@ -954,6 +980,7 @@ export const AUDIT_TARGET_TYPES = [
   "issue",
   "issue_template",
   "issue_tree",
+  "judging_room",
   "member",
   "member_directory",
   "provider",

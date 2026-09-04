@@ -44,6 +44,16 @@ describe("admin audit contracts", () => {
     );
   });
 
+  it("declares the judge identity metadata used by room removal audits", () => {
+    expect(AUDIT_ACTION_CATALOG["judging.guest.revoked"].metadataKeys).toEqual([
+      "guestSessionId",
+      "judgeDisplayName",
+    ]);
+    expect(
+      AUDIT_ACTION_CATALOG["judging.presence.removed"].metadataKeys,
+    ).toEqual(["judgeId", "judgeDisplayName"]);
+  });
+
   it("files hackathon event operations separately from Club events", () => {
     expect(AUDIT_ACTION_CATALOG["hackathon_event.created"].domain).toBe(
       "hackathons",

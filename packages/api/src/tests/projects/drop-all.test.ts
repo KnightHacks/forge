@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   createAdminAuditEvent: vi.fn().mockResolvedValue({ id: "audit-event" }),
   deleteTable: vi.fn(),
   deleteWhere: vi.fn().mockResolvedValue(undefined),
+  findJudgingConfiguration: vi.fn().mockResolvedValue(undefined),
+  findJudgingRoom: vi.fn().mockResolvedValue(undefined),
   permissions: { IS_OFFICER: true },
   select: vi.fn(),
   transaction: vi.fn(),
@@ -80,6 +82,8 @@ describe("project inventory hard deletion", () => {
     mocks.select.mockReset();
     mocks.permissions.IS_OFFICER = true;
     mocks.captureAdminAuditActor.mockResolvedValue(session.user);
+    mocks.findJudgingConfiguration.mockResolvedValue(undefined);
+    mocks.findJudgingRoom.mockResolvedValue(undefined);
     mocks.select
       .mockImplementationOnce(selectHackathon)
       .mockImplementationOnce(selectProjectCount);
@@ -88,6 +92,12 @@ describe("project inventory hard deletion", () => {
       delete: mocks.deleteTable.mockImplementation(() => ({
         where: mocks.deleteWhere,
       })),
+      query: {
+        HackathonJudgingConfiguration: {
+          findFirst: mocks.findJudgingConfiguration,
+        },
+        JudgingRoom: { findFirst: mocks.findJudgingRoom },
+      },
       select: mocks.select,
     };
     mocks.transaction.mockImplementation(
@@ -144,5 +154,17 @@ describe("project inventory hard deletion", () => {
       }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("requires active rooms to be archived before dropping inventory", async () => {
+    mocks.findJudgingRoom.mockResolvedValue({ name: "Sponsor suite" });
+
+    await expect(
+      createCaller().projects.dropAll({
+        confirmation: "Knight Hacks IX",
+        hackathonId: HACKATHON_ID,
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    expect(mocks.deleteTable).not.toHaveBeenCalled();
   });
 });

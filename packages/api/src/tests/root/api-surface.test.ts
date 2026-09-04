@@ -89,6 +89,7 @@ describe("client-facing API surface", () => {
       "hackathon",
       "hacker",
       "issues",
+      "judging",
       "member",
       "memberAdmin",
       "profilePicture",

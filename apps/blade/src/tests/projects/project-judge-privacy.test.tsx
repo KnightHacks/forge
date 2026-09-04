@@ -159,6 +159,37 @@ describe("judge project directory", () => {
     expect(screen.queryByRole("option", { name: "General" })).toBeNull();
   });
 
+  it("shows a fixed room challenge instead of a guest challenge selector", () => {
+    render(
+      <ProjectDirectory
+        data={{
+          challenges: [{ id: "challenge-acme", label: "Acme Challenge" }],
+          page: 1,
+          pageSize: 10,
+          projects: [
+            {
+              ...judgeProject,
+              challenges: [{ id: "challenge-acme", label: "Acme Challenge" }],
+            },
+          ],
+          totalCount: 1,
+        }}
+        input={{
+          challengeIds: ["challenge-acme"],
+          direction: "asc",
+          page: 1,
+          pageSize: 10,
+          query: "",
+          sort: "title",
+        }}
+        lockedChallenge={{ id: "challenge-acme", label: "Acme Challenge" }}
+      />,
+    );
+
+    expect(screen.getByText("Room scope")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Challenge" })).toBeNull();
+  });
+
   it("opens project details from the eye button", async () => {
     const user = userEvent.setup();
     render(

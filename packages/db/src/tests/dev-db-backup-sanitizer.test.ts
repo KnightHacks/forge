@@ -142,9 +142,15 @@ describe("development database backup sanitizer", () => {
     );
   });
 
-  it("drops every current project table from development backups", () => {
+  it("drops project inventory and judging access data from development backups", () => {
     expect(TABLES_TO_DROP).toEqual(
       expect.arrayContaining([
+        "knight_hacks_guest_judge_session",
+        "knight_hacks_hackathon_judging_configuration",
+        "knight_hacks_judge",
+        "knight_hacks_judging_room",
+        "knight_hacks_judging_room_access_link",
+        "knight_hacks_judging_room_presence",
         "knight_hacks_project",
         "knight_hacks_project_challenge",
         "knight_hacks_project_member",

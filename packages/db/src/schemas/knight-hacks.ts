@@ -134,6 +134,7 @@ export const alumniBulletinStateEnum = pgEnum("alumni_bulletin_state", [
   "published",
   "archived",
 ]);
+export const judgeKindEnum = pgEnum("judge_kind", ["member", "guest"]);
 
 export const Hackathon = createTable(
   "hackathon",
@@ -2224,6 +2225,213 @@ export const ProjectToChallenge = createTable(
     ),
     hackathonIdx: index("knight_hacks_project_to_challenge_hackathon_idx").on(
       table.hackathonId,
+    ),
+  }),
+);
+
+export const HackathonJudgingConfiguration = createTable(
+  "hackathon_judging_configuration",
+  (t) => ({
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .primaryKey()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    projectInventoryLockedAt: t.timestamp({ withTimezone: true }),
+    projectInventoryLockedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+);
+
+export const JudgingRoom = createTable(
+  "judging_room",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    challengeId: t.uuid().notNull(),
+    name: t.varchar({ length: 120 }).notNull(),
+    displayOrder: t.integer().notNull().default(0),
+    archivedAt: t.timestamp({ withTimezone: true }),
+    archivedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    challengeScopeFk: foreignKey({
+      columns: [table.challengeId, table.hackathonId],
+      foreignColumns: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+      name: "knight_hacks_judging_room_challenge_scope_fk",
+    }).onDelete("cascade"),
+    hackathonScopeUnique: unique(
+      "knight_hacks_judging_room_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    activeNameUnique: uniqueIndex(
+      "knight_hacks_judging_room_active_name_unique",
+    )
+      .on(table.hackathonId, table.name)
+      .where(sql`${table.archivedAt} IS NULL`),
+    hackathonIdx: index("knight_hacks_judging_room_hackathon_idx").on(
+      table.hackathonId,
+      table.displayOrder,
+    ),
+  }),
+);
+
+export const Judge = createTable(
+  "judge",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    kind: judgeKindEnum().notNull(),
+    userId: t.uuid().references(() => User.id, { onDelete: "cascade" }),
+    displayName: t.varchar({ length: 120 }).notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    kindIdentityCheck: check(
+      "knight_hacks_judge_kind_identity_check",
+      sql`(${table.kind} = 'member' AND ${table.userId} IS NOT NULL) OR (${table.kind} = 'guest' AND ${table.userId} IS NULL)`,
+    ),
+    memberUnique: uniqueIndex("knight_hacks_judge_member_unique")
+      .on(table.hackathonId, table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
+    hackathonScopeUnique: unique("knight_hacks_judge_id_hackathon_unique").on(
+      table.id,
+      table.hackathonId,
+    ),
+  }),
+);
+
+export const JudgingRoomAccessLink = createTable(
+  "judging_room_access_link",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    roomId: t.uuid().notNull(),
+    createdByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    revokedAt: t.timestamp({ withTimezone: true }),
+    revokedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    revocationReason: t.varchar({ length: 80 }),
+  }),
+  (table) => ({
+    roomScopeFk: foreignKey({
+      columns: [table.roomId, table.hackathonId],
+      foreignColumns: [JudgingRoom.id, JudgingRoom.hackathonId],
+      name: "knight_hacks_judging_room_access_link_room_scope_fk",
+    }).onDelete("cascade"),
+    activeRoomUnique: uniqueIndex(
+      "knight_hacks_judging_room_access_link_active_room_unique",
+    )
+      .on(table.roomId)
+      .where(sql`${table.revokedAt} IS NULL`),
+    hackathonScopeUnique: unique(
+      "knight_hacks_judging_room_access_link_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+  }),
+);
+
+export const GuestJudgeSession = createTable(
+  "guest_judge_session",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    accessLinkId: t.uuid().notNull(),
+    judgeId: t.uuid(),
+    tokenHash: t.char({ length: 64 }).notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    expiresAt: t.timestamp({ withTimezone: true }).notNull(),
+    completedAt: t.timestamp({ withTimezone: true }),
+    revokedAt: t.timestamp({ withTimezone: true }),
+    revokedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    revocationReason: t.varchar({ length: 80 }),
+  }),
+  (table) => ({
+    accessLinkScopeFk: foreignKey({
+      columns: [table.accessLinkId, table.hackathonId],
+      foreignColumns: [
+        JudgingRoomAccessLink.id,
+        JudgingRoomAccessLink.hackathonId,
+      ],
+      name: "knight_hacks_guest_judge_session_access_link_scope_fk",
+    }).onDelete("cascade"),
+    judgeScopeFk: foreignKey({
+      columns: [table.judgeId, table.hackathonId],
+      foreignColumns: [Judge.id, Judge.hackathonId],
+      name: "knight_hacks_guest_judge_session_judge_scope_fk",
+    }).onDelete("cascade"),
+    tokenHashUnique: unique(
+      "knight_hacks_guest_judge_session_token_hash_unique",
+    ).on(table.tokenHash),
+    accessLinkIdx: index("knight_hacks_guest_judge_session_access_link_idx").on(
+      table.accessLinkId,
+    ),
+  }),
+);
+
+export const JudgingRoomPresence = createTable(
+  "judging_room_presence",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    roomId: t.uuid().notNull(),
+    judgeId: t.uuid().notNull(),
+    joinedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    leftAt: t.timestamp({ withTimezone: true }),
+    leaveReason: t.varchar({ length: 80 }),
+  }),
+  (table) => ({
+    roomScopeFk: foreignKey({
+      columns: [table.roomId, table.hackathonId],
+      foreignColumns: [JudgingRoom.id, JudgingRoom.hackathonId],
+      name: "knight_hacks_judging_room_presence_room_scope_fk",
+    }).onDelete("cascade"),
+    judgeScopeFk: foreignKey({
+      columns: [table.judgeId, table.hackathonId],
+      foreignColumns: [Judge.id, Judge.hackathonId],
+      name: "knight_hacks_judging_room_presence_judge_scope_fk",
+    }).onDelete("cascade"),
+    activeJudgeUnique: uniqueIndex(
+      "knight_hacks_judging_room_presence_active_judge_unique",
+    )
+      .on(table.judgeId)
+      .where(sql`${table.leftAt} IS NULL`),
+    roomIdx: index("knight_hacks_judging_room_presence_room_idx").on(
+      table.roomId,
+      table.leftAt,
     ),
   }),
 );
