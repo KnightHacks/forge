@@ -135,6 +135,19 @@ export const alumniBulletinStateEnum = pgEnum("alumni_bulletin_state", [
   "archived",
 ]);
 export const judgeKindEnum = pgEnum("judge_kind", ["member", "guest"]);
+export const judgingStateEnum = pgEnum("judging_state", [
+  "draft",
+  "open",
+  "closed",
+]);
+export const judgingRubricItemKindEnum = pgEnum("judging_rubric_item_kind", [
+  "rating",
+  "short_response",
+]);
+export const judgingResponseVisibilityEnum = pgEnum(
+  "judging_response_visibility",
+  ["public", "public_optional", "private"],
+);
 
 export const Hackathon = createTable(
   "hackathon",
@@ -2241,6 +2254,10 @@ export const HackathonJudgingConfiguration = createTable(
     projectInventoryLockedByUserId: t
       .uuid()
       .references(() => User.id, { onDelete: "set null" }),
+    state: judgingStateEnum().notNull().default("draft"),
+    displayAllResultsToMembers: t.boolean().notNull().default(false),
+    openedAt: t.timestamp({ withTimezone: true }),
+    closedAt: t.timestamp({ withTimezone: true }),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: t
       .timestamp({ withTimezone: true })
@@ -2432,6 +2449,249 @@ export const JudgingRoomPresence = createTable(
     roomIdx: index("knight_hacks_judging_room_presence_room_idx").on(
       table.roomId,
       table.leftAt,
+    ),
+  }),
+);
+
+export const JudgingRubricItem = createTable(
+  "judging_rubric_item",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    kind: judgingRubricItemKindEnum().notNull(),
+    label: t.varchar({ length: 120 }).notNull(),
+    description: t.varchar({ length: 500 }).notNull().default(""),
+    displayOrder: t.integer().notNull(),
+    required: t.boolean().notNull().default(true),
+    memberVisibilityPolicy: judgingResponseVisibilityEnum(),
+    guestVisibilityPolicy: judgingResponseVisibilityEnum(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    displayOrderCheck: check(
+      "knight_hacks_judging_rubric_item_display_order_check",
+      sql`${table.displayOrder} >= 0`,
+    ),
+    visibilityCheck: check(
+      "knight_hacks_judging_rubric_item_visibility_check",
+      sql`(${table.kind} = 'rating' AND ${table.memberVisibilityPolicy} IS NULL AND ${table.guestVisibilityPolicy} IS NULL) OR (${table.kind} = 'short_response' AND ${table.memberVisibilityPolicy} IS NOT NULL AND ${table.guestVisibilityPolicy} IS NOT NULL)`,
+    ),
+    orderUnique: unique(
+      "knight_hacks_judging_rubric_item_hackathon_order_unique",
+    ).on(table.hackathonId, table.displayOrder),
+    hackathonScopeUnique: unique(
+      "knight_hacks_judging_rubric_item_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+  }),
+);
+
+export const ProjectEvaluation = createTable(
+  "project_evaluation",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    projectId: t.uuid().notNull(),
+    challengeId: t.uuid().notNull(),
+    judgeId: t.uuid().notNull(),
+    revision: t.integer().notNull().default(1),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    projectScopeFk: foreignKey({
+      columns: [table.projectId, table.hackathonId],
+      foreignColumns: [Project.id, Project.hackathonId],
+      name: "knight_hacks_project_evaluation_project_scope_fk",
+    }).onDelete("restrict"),
+    challengeScopeFk: foreignKey({
+      columns: [table.challengeId, table.hackathonId],
+      foreignColumns: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+      name: "knight_hacks_project_evaluation_challenge_scope_fk",
+    }).onDelete("restrict"),
+    judgeScopeFk: foreignKey({
+      columns: [table.judgeId, table.hackathonId],
+      foreignColumns: [Judge.id, Judge.hackathonId],
+      name: "knight_hacks_project_evaluation_judge_scope_fk",
+    }).onDelete("restrict"),
+    judgeProjectChallengeUnique: unique(
+      "knight_hacks_project_evaluation_judge_project_challenge_unique",
+    ).on(table.judgeId, table.projectId, table.challengeId),
+    hackathonScopeUnique: unique(
+      "knight_hacks_project_evaluation_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    projectChallengeIdx: index(
+      "knight_hacks_project_evaluation_project_challenge_idx",
+    ).on(table.projectId, table.challengeId),
+    judgeIdx: index("knight_hacks_project_evaluation_judge_idx").on(
+      table.judgeId,
+      table.updatedAt,
+    ),
+  }),
+);
+
+export const ProjectEvaluationRating = createTable(
+  "project_evaluation_rating",
+  (t) => ({
+    evaluationId: t.uuid().notNull(),
+    rubricItemId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    value: t.integer().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.evaluationId, table.rubricItemId] }),
+    evaluationScopeFk: foreignKey({
+      columns: [table.evaluationId, table.hackathonId],
+      foreignColumns: [ProjectEvaluation.id, ProjectEvaluation.hackathonId],
+      name: "knight_hacks_project_evaluation_rating_evaluation_scope_fk",
+    }).onDelete("cascade"),
+    rubricScopeFk: foreignKey({
+      columns: [table.rubricItemId, table.hackathonId],
+      foreignColumns: [JudgingRubricItem.id, JudgingRubricItem.hackathonId],
+      name: "knight_hacks_project_evaluation_rating_rubric_scope_fk",
+    }).onDelete("restrict"),
+    valueCheck: check(
+      "knight_hacks_project_evaluation_rating_value_check",
+      sql`${table.value} BETWEEN 1 AND 5`,
+    ),
+  }),
+);
+
+export const ProjectEvaluationResponse = createTable(
+  "project_evaluation_response",
+  (t) => ({
+    evaluationId: t.uuid().notNull(),
+    rubricItemId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    value: t.text().notNull(),
+    isPublic: t.boolean().notNull(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.evaluationId, table.rubricItemId] }),
+    evaluationScopeFk: foreignKey({
+      columns: [table.evaluationId, table.hackathonId],
+      foreignColumns: [ProjectEvaluation.id, ProjectEvaluation.hackathonId],
+      name: "knight_hacks_project_evaluation_response_evaluation_scope_fk",
+    }).onDelete("cascade"),
+    rubricScopeFk: foreignKey({
+      columns: [table.rubricItemId, table.hackathonId],
+      foreignColumns: [JudgingRubricItem.id, JudgingRubricItem.hackathonId],
+      name: "knight_hacks_project_evaluation_response_rubric_scope_fk",
+    }).onDelete("restrict"),
+  }),
+);
+
+export const ProjectEvaluationRevision = createTable(
+  "project_evaluation_revision",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    evaluationId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    revision: t.integer().notNull(),
+    actorKind: judgeKindEnum().notNull(),
+    ratingAnswers: t.jsonb().notNull().default([]),
+    responseAnswers: t.jsonb().notNull().default([]),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    evaluationScopeFk: foreignKey({
+      columns: [table.evaluationId, table.hackathonId],
+      foreignColumns: [ProjectEvaluation.id, ProjectEvaluation.hackathonId],
+      name: "knight_hacks_project_evaluation_revision_evaluation_scope_fk",
+    }).onDelete("cascade"),
+    evaluationRevisionUnique: unique(
+      "knight_hacks_project_evaluation_revision_unique",
+    ).on(table.evaluationId, table.revision),
+    revisionCheck: check(
+      "knight_hacks_project_evaluation_revision_revision_check",
+      sql`${table.revision} >= 1`,
+    ),
+  }),
+);
+
+export const JudgeDeliberationSection = createTable(
+  "judge_deliberation_section",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    judgeId: t.uuid().notNull(),
+    name: t.varchar({ length: 80 }).notNull(),
+    displayOrder: t.integer().notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    judgeScopeFk: foreignKey({
+      columns: [table.judgeId, table.hackathonId],
+      foreignColumns: [Judge.id, Judge.hackathonId],
+      name: "knight_hacks_judge_deliberation_section_judge_scope_fk",
+    }).onDelete("cascade"),
+    judgeOrderUnique: unique(
+      "knight_hacks_judge_deliberation_section_judge_order_unique",
+    ).on(table.judgeId, table.displayOrder),
+    hackathonScopeUnique: unique(
+      "knight_hacks_judge_deliberation_section_id_hackathon_unique",
+    ).on(table.id, table.hackathonId),
+    displayOrderCheck: check(
+      "knight_hacks_judge_deliberation_section_order_check",
+      sql`${table.displayOrder} >= 0`,
+    ),
+  }),
+);
+
+export const JudgeDeliberationEntry = createTable(
+  "judge_deliberation_entry",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    sectionId: t.uuid().notNull(),
+    projectId: t.uuid().notNull(),
+    displayOrder: t.integer().notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t
+      .timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => ({
+    sectionScopeFk: foreignKey({
+      columns: [table.sectionId, table.hackathonId],
+      foreignColumns: [
+        JudgeDeliberationSection.id,
+        JudgeDeliberationSection.hackathonId,
+      ],
+      name: "knight_hacks_judge_deliberation_entry_section_scope_fk",
+    }).onDelete("cascade"),
+    projectScopeFk: foreignKey({
+      columns: [table.projectId, table.hackathonId],
+      foreignColumns: [Project.id, Project.hackathonId],
+      name: "knight_hacks_judge_deliberation_entry_project_scope_fk",
+    }).onDelete("restrict"),
+    sectionProjectUnique: unique(
+      "knight_hacks_judge_deliberation_entry_section_project_unique",
+    ).on(table.sectionId, table.projectId),
+    sectionOrderUnique: unique(
+      "knight_hacks_judge_deliberation_entry_section_order_unique",
+    ).on(table.sectionId, table.displayOrder),
+    displayOrderCheck: check(
+      "knight_hacks_judge_deliberation_entry_order_check",
+      sql`${table.displayOrder} >= 0`,
     ),
   }),
 );
