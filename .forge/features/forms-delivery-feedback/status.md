@@ -115,4 +115,4 @@ Current phase: Implementation and automated local validation complete; manual zo
 - [Acceptance tests](./test-cases.md)
 - Existing baseline: [Forms and Event Feedback](../forms-and-event-feedback/spec.md)
 - Tracking issue: [ChrisH0125/forge#1](https://github.com/ChrisH0125/forge/issues/1)
-- Pull request: pending publication.
+- Draft pull request: [KnightHacks/forge#533](https://github.com/KnightHacks/forge/pull/533)
