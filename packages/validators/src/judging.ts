@@ -27,6 +27,12 @@ export const judgingRubricItemSchema = z
   })
   .superRefine((item, ctx) => {
     const policies = [item.guestVisibilityPolicy, item.memberVisibilityPolicy];
+    if (item.kind === "rating" && !item.required) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Rating items are always required.",
+      });
+    }
     if (item.kind === "rating" && policies.some((policy) => policy !== null)) {
       ctx.addIssue({
         code: "custom",
@@ -78,9 +84,22 @@ export const judgingResponseAnswerSchema = z.object({
 
 export const judgingEvaluationSaveSchema = z.object({
   challengeId: uuidSchema.optional(),
+  hackathonId: uuidSchema.optional(),
   projectId: uuidSchema,
   ratings: z.array(judgingRatingAnswerSchema),
   responses: z.array(judgingResponseAnswerSchema),
+});
+
+export const judgingProjectDetailsSchema = judgingEvaluationSaveSchema
+  .pick({
+    challengeId: true,
+    hackathonId: true,
+    projectId: true,
+  })
+  .extend({ feedbackPage: z.number().int().min(1).max(10_000).default(1) });
+
+export const judgingEvaluationIdSchema = z.object({
+  evaluationId: uuidSchema,
 });
 
 export const judgingDeliberationSectionCreateSchema = z.object({
@@ -89,11 +108,13 @@ export const judgingDeliberationSectionCreateSchema = z.object({
 });
 
 export const judgingDeliberationSectionUpdateSchema = z.object({
+  hackathonId: uuidSchema.optional(),
   name: z.string().trim().min(1).max(80),
   sectionId: uuidSchema,
 });
 
 export const judgingDeliberationSectionIdSchema = z.object({
+  hackathonId: uuidSchema.optional(),
   sectionId: uuidSchema,
 });
 
@@ -115,6 +136,7 @@ export const judgingSectionReorderSchema = judgingReorderSchema.extend({
 });
 
 export const judgingEntryReorderSchema = judgingReorderSchema.extend({
+  hackathonId: uuidSchema.optional(),
   sectionId: uuidSchema,
 });
 

@@ -13,15 +13,19 @@ import {
   isNotNull,
   isNull,
   lte,
+  not,
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
   HackathonJudgingConfiguration,
+  Judge,
   JudgingRoom,
   Project,
   ProjectChallenge,
+  ProjectEvaluation,
+  ProjectEvaluationRating,
   ProjectMember,
   ProjectToChallenge,
 } from "@forge/db/schemas/knight-hacks";
@@ -42,16 +46,44 @@ import { assertCanManageProjects } from "../utils/projects/access";
 import { projectForJudge } from "../utils/projects/view";
 
 function projectSort(
-  sort: "participantCount" | "submittedAt" | "title",
+  sort:
+    | "challengeRating"
+    | "participantCount"
+    | "rating"
+    | "submittedAt"
+    | "title",
   direction: "asc" | "desc",
+  challengeId?: string,
 ) {
+  if (sort === "challengeRating" || sort === "rating") {
+    const challengeFilter =
+      sort === "challengeRating" && challengeId
+        ? sql`AND ${ProjectEvaluation.challengeId} = ${challengeId}`
+        : sql``;
+    const rating = sql<number | null>`(
+      SELECT AVG(evaluation_mean)
+      FROM (
+        SELECT AVG(${ProjectEvaluationRating.value}::double precision) AS evaluation_mean
+        FROM ${ProjectEvaluation}
+        INNER JOIN ${ProjectEvaluationRating}
+          ON ${ProjectEvaluationRating.evaluationId} = ${ProjectEvaluation.id}
+        WHERE ${ProjectEvaluation.projectId} = ${Project.id}
+          ${challengeFilter}
+        GROUP BY ${ProjectEvaluation.id}
+      ) project_evaluation_means
+    )`;
+    return [
+      sql`${rating} IS NULL`,
+      direction === "desc" ? desc(rating) : asc(rating),
+    ] as const;
+  }
   const column =
     sort === "submittedAt"
       ? Project.submittedAt
       : sort === "participantCount"
         ? Project.participantCount
         : Project.title;
-  return direction === "desc" ? desc(column) : asc(column);
+  return [direction === "desc" ? desc(column) : asc(column)] as const;
 }
 
 const challengeOrder = [
@@ -63,6 +95,7 @@ function projectWhere(input: {
   challengeIds: string[];
   deleted: "active" | "all" | "deleted";
   hackathonId: string;
+  hideJudgedBy?: { challengeId: string; judgeId: string };
   maxParticipants?: number;
   minParticipants?: number;
   query: string;
@@ -81,6 +114,25 @@ function projectWhere(input: {
           ),
       )
     : undefined;
+  const notPreviouslyJudged = input.hideJudgedBy
+    ? not(
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(ProjectEvaluation)
+            .where(
+              and(
+                eq(ProjectEvaluation.projectId, Project.id),
+                eq(
+                  ProjectEvaluation.challengeId,
+                  input.hideJudgedBy.challengeId,
+                ),
+                eq(ProjectEvaluation.judgeId, input.hideJudgedBy.judgeId),
+              ),
+            ),
+        ),
+      )
+    : undefined;
   return and(
     eq(Project.hackathonId, input.hackathonId),
     input.deleted === "active"
@@ -96,20 +148,24 @@ function projectWhere(input: {
       ? lte(Project.participantCount, input.maxParticipants)
       : undefined,
     challengeMatch,
+    notPreviouslyJudged,
   );
 }
 
 async function relatedProjects(projectIds: string[]) {
   if (projectIds.length === 0) {
     return {
-      challengesByProject: new Map<string, { id: string; label: string }[]>(),
+      challengesByProject: new Map<
+        string,
+        { evaluationCount: number; id: string; label: string }[]
+      >(),
       membersByProject: new Map<
         string,
         { email: string; id: string; name: string; order: number }[]
       >(),
     };
   }
-  const [members, challengeRows] = await Promise.all([
+  const [members, challengeRows, evaluationCounts] = await Promise.all([
     db
       .select({
         email: ProjectMember.email,
@@ -134,6 +190,15 @@ async function relatedProjects(projectIds: string[]) {
       )
       .where(inArray(ProjectToChallenge.projectId, projectIds))
       .orderBy(...challengeOrder),
+    db
+      .select({
+        challengeId: ProjectEvaluation.challengeId,
+        projectId: ProjectEvaluation.projectId,
+        value: count(),
+      })
+      .from(ProjectEvaluation)
+      .where(inArray(ProjectEvaluation.projectId, projectIds))
+      .groupBy(ProjectEvaluation.projectId, ProjectEvaluation.challengeId),
   ]);
   const membersByProject = new Map<
     string,
@@ -151,11 +216,22 @@ async function relatedProjects(projectIds: string[]) {
   }
   const challengesByProject = new Map<
     string,
-    { id: string; label: string }[]
+    { evaluationCount: number; id: string; label: string }[]
   >();
+  const evaluationCountByScope = new Map(
+    evaluationCounts.map((row) => [
+      `${row.projectId}:${row.challengeId}`,
+      row.value,
+    ]),
+  );
   for (const row of challengeRows) {
     const list = challengesByProject.get(row.projectId) ?? [];
-    list.push({ id: row.id, label: row.label });
+    list.push({
+      evaluationCount:
+        evaluationCountByScope.get(`${row.projectId}:${row.id}`) ?? 0,
+      id: row.id,
+      label: row.label,
+    });
     challengesByProject.set(row.projectId, list);
   }
   return { challengesByProject, membersByProject };
@@ -166,12 +242,18 @@ async function listProjects(input: {
   deleted: "active" | "all" | "deleted";
   direction: "asc" | "desc";
   hackathonId: string;
+  hideJudgedBy?: { challengeId: string; judgeId: string };
   maxParticipants?: number;
   minParticipants?: number;
   page: number;
   pageSize: number;
   query: string;
-  sort: "participantCount" | "submittedAt" | "title";
+  sort:
+    | "challengeRating"
+    | "participantCount"
+    | "rating"
+    | "submittedAt"
+    | "title";
 }) {
   const where = projectWhere(input);
   const [[total], challenges] = await Promise.all([
@@ -189,7 +271,10 @@ async function listProjects(input: {
     .select()
     .from(Project)
     .where(where)
-    .orderBy(projectSort(input.sort, input.direction), asc(Project.id))
+    .orderBy(
+      ...projectSort(input.sort, input.direction, input.challengeIds[0]),
+      asc(Project.id),
+    )
     .limit(input.pageSize)
     .offset((page - 1) * input.pageSize);
   const related = await relatedProjects(rows.map((row) => row.id));
@@ -292,6 +377,12 @@ export const projectsRouter = createTRPCRouter({
       if (input.hackathonId && !isOfficer) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
+      if (
+        isGuest &&
+        (input.sort === "challengeRating" || input.sort === "rating")
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
       const now = new Date();
       const selected = isGuest
         ? await db.query.Hackathon.findFirst({
@@ -328,6 +419,27 @@ export const projectsRouter = createTRPCRouter({
           totalCount: 0,
           challenges: [],
         };
+      if (input.sort === "challengeRating") {
+        const config = await db.query.HackathonJudgingConfiguration.findFirst({
+          columns: { displayAllResultsToMembers: true },
+          where: eq(HackathonJudgingConfiguration.hackathonId, selected.id),
+        });
+        if (!config?.displayAllResultsToMembers) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+      }
+      const judgeId =
+        ctx.judgePrincipal.kind === "guest"
+          ? ctx.judgePrincipal.judgeId
+          : (
+              await db.query.Judge.findFirst({
+                columns: { id: true },
+                where: and(
+                  eq(Judge.hackathonId, selected.id),
+                  eq(Judge.userId, ctx.judgePrincipal.userId),
+                ),
+              })
+            )?.id;
       const listed = await listProjects({
         ...input,
         challengeIds: guestPrincipal
@@ -335,6 +447,25 @@ export const projectsRouter = createTRPCRouter({
           : input.challengeIds,
         deleted: "active",
         hackathonId: selected.id,
+        hideJudgedBy:
+          !input.includeJudged && judgeId
+            ? {
+                challengeId:
+                  guestPrincipal?.challengeId ??
+                  input.challengeIds[0] ??
+                  (
+                    await db.query.ProjectChallenge.findFirst({
+                      columns: { id: true },
+                      where: and(
+                        eq(ProjectChallenge.hackathonId, selected.id),
+                        eq(ProjectChallenge.label, "General"),
+                      ),
+                    })
+                  )?.id ??
+                  "00000000-0000-0000-0000-000000000000",
+                judgeId,
+              }
+            : undefined,
       });
       return {
         hackathon: selected,
@@ -344,7 +475,12 @@ export const projectsRouter = createTRPCRouter({
               (challenge) => challenge.id === guestPrincipal.challengeId,
             )
           : listed.challenges,
-        projects: listed.projects.map(projectForJudge),
+        projects: listed.projects.map((project) => {
+          const judgeProject = projectForJudge(project);
+          return guestPrincipal
+            ? { ...judgeProject, challenges: [] }
+            : judgeProject;
+        }),
       };
     }),
 

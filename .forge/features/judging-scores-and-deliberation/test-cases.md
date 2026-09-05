@@ -4,7 +4,7 @@ Status: Approved
 
 ## Scope
 
-These 20 cases cover rubric configuration, judging lifecycle, member and guest evaluation access, score calculation and disclosure, editable submissions, response privacy, personal deliberation, import safety, and the combined officer command center. Scheduling, winner selection, hacker-facing publication, and collaborative deliberation are excluded.
+These 20 cases cover rubric configuration, judging lifecycle, member and guest evaluation access, score calculation and disclosure, editable submissions, response hacker visibility, personal deliberation, import safety, and the combined officer command center. Scheduling, winner selection, hacker-facing feedback delivery, and collaborative deliberation are excluded.
 
 ## Test placement plan
 
@@ -24,7 +24,7 @@ Setup:
 
 Action:
 
-- Add three rating items and two short-response items, edit labels and descriptions, set required flags and response policies, reorder them, and save.
+- Add three required rating items and two short-response items, edit labels and descriptions, set the short-response required flags and response policies, reorder them, and save.
 
 Expected observations:
 
@@ -176,6 +176,7 @@ Expected observations:
 
 - Both see `(?)` before saving and the scoped aggregate after saving.
 - The API omits or nulls the hidden value rather than sending it for client-only concealment.
+- The submitted project leaves that judge's default Projects view. `See previously judged` restores it without changing `Submissions`.
 
 ### TC-011: Officer reveal applies only to authenticated member judges
 
@@ -192,6 +193,7 @@ Expected observations:
 - The member sees the scoped aggregate immediately.
 - The guest still sees `(?)` and receives no widened result data.
 - Disabling the setting restores the member's own-submission gate.
+- Members can sort by the always-visible cross-challenge `Rating`. `Challenge rating` sorting is available only while the scoped results are revealed.
 
 ### TC-012: Empty scores display as unknown
 
@@ -253,10 +255,10 @@ Action:
 Expected observations:
 
 - The form states the audience before submission.
-- Member responses resolve public.
+- Member responses resolve as shared with hackers.
 - Guest public and private items ignore tampered visibility inputs.
-- Guest public-optional responses use the explicit choice and default to private.
-- Unauthorized judges never receive private text.
+- Guest public-optional responses use the explicit hacker-sharing choice and default to not shared.
+- Authenticated judges and officers can review every response. Guests cannot read other judges' responses.
 
 ### TC-016: Judge manages private deliberation sections
 
@@ -339,6 +341,7 @@ Expected observations:
 - `/admin/projects` reaches the projects section without losing bookmarked access.
 - Judge tabs are named `Projects`, `Submissions`, and `Deliberation`; the last includes a short purpose explanation.
 - Guests retain the minimal shell and fixed challenge. Members retain Blade navigation and optional room selection.
+- Guest rows omit the Challenges column and challenge badges. Member rows retain them, and each badge turns green after the first evaluation in that scope.
 - Server HTML contains initial data, and skeletons match loaded geometry without flashing an empty client shell.
 - Screenshots show intentional hierarchy, readable score columns, viewport-safe evaluation forms, and no sensitive team or private-feedback data.
 

@@ -72,13 +72,13 @@ Each completed evaluation has equal weight. Do not average criterion columns glo
 
 ### Short-response visibility
 
-Each short-response rubric item stores separate policies for member and guest judges with enum values `public`, `public_optional`, and `private`.
+Each short-response rubric item stores separate hacker-visibility policies for member and guest judges with enum values `public`, `public_optional`, and `private`. These values do not restrict authenticated judge or officer review.
 
-- `public`: the judging team may read the response.
-- `public_optional`: the author chooses at submission time. Default the choice to private.
-- `private`: only the author and officers handling a judging dispute may read it.
+- `public`: share the response with the project hackers.
+- `public_optional`: the guest chooses at submission time whether to share the response with the project hackers. Default the choice to not shared.
+- `private`: do not share the response with the project hackers.
 
-The default rubric policy is `public` for member judges and `public_optional` for guests. This matches the current product rule that authenticated judge feedback is public while retaining an explicit schema for future hackathons. The command center presents both policies. For KH IX, the member policy control is fixed to `public`; changing that policy requires an explicit future product decision.
+The default rubric policy is `public` for member judges and `public_optional` for guests. The command center describes these values in terms of hacker delivery. For KH IX, the member policy is fixed to `public`; changing that policy requires an explicit future product decision.
 
 Project teams do not receive short responses in this slice.
 
@@ -140,7 +140,7 @@ Keep the existing inventory-lock fields. A missing configuration row behaves as 
 
 ### Rubric
 
-Add `JudgingRubricItem` with `id`, `hackathonId`, `kind`, `label`, `description`, `displayOrder`, `required`, `memberVisibilityPolicy`, `guestVisibilityPolicy`, and timestamps. Visibility policy columns are null for rating items and required for short-response items. Add unique `(hackathonId, displayOrder)` and same-hackathon relation checks where supported.
+Add `JudgingRubricItem` with `id`, `hackathonId`, `kind`, `label`, `description`, `displayOrder`, `required`, `memberVisibilityPolicy`, `guestVisibilityPolicy`, and timestamps. Rating items are always required. Officers can configure required state for short-response items. Visibility policy columns are null for rating items and required for short-response items. Add unique `(hackathonId, displayOrder)` and same-hackathon relation checks where supported.
 
 ### Evaluations
 
@@ -200,7 +200,9 @@ Would this require a developer change next year?
 - Keep route pages thin and server-first. Do not put `use client` on a page.
 - Pass server-read data into client feature components. Do not immediately re-fetch it with client tRPC.
 - Use `Tabs` with URL-backed state. Keep guest restrictions visible and disabled rather than hiding the current challenge.
-- Use the existing responsive project table and mobile cards. Add `Rating` and member-only `Overall rating` columns without creating document-level horizontal overflow.
+- Use the existing responsive project table and mobile cards. Add `Challenge rating` and member-only `Rating` columns without creating document-level horizontal overflow.
+- Hide challenge badges and the Challenges column from guest judges. Authenticated judges keep them and see green completion states backed by per-challenge evaluation counts.
+- Hide projects already evaluated by the current judge in the active challenge by default. `See previously judged` restores them without changing `Submissions`.
 - Use a dialog on desktop and a viewport-safe drawer or dialog on mobile for evaluation and bounded rubric editing.
 - Use radio groups or segmented 1 through 5 controls with visible numeric labels, 44px targets, keyboard input, and focus rings.
 - Show feedback visibility beside each text field and again near Submit. Do not rely on color alone.

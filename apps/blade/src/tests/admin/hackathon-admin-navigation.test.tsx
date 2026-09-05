@@ -83,18 +83,13 @@ describe("hackathon admin navigation", () => {
     ).toBe(false);
   });
 
-  it("keeps the project and judging routes independently highlighted", () => {
+  it("highlights the judge workspace and merged project command center", () => {
     expect(isAdminNavigationActive("judgeProjects", "/judge/projects")).toBe(
       true,
     );
-    expect(isAdminNavigationActive("projectAdmin", "/admin/projects")).toBe(
-      true,
-    );
     expect(isAdminNavigationActive("judging", "/admin/judging")).toBe(true);
+    expect(isAdminNavigationActive("judging", "/admin/projects")).toBe(true);
     expect(isAdminNavigationActive("judgeProjects", "/admin/projects")).toBe(
-      false,
-    );
-    expect(isAdminNavigationActive("projectAdmin", "/admin/judging")).toBe(
       false,
     );
   });

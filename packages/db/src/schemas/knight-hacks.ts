@@ -2319,7 +2319,7 @@ export const Judge = createTable(
       .notNull()
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     kind: judgeKindEnum().notNull(),
-    userId: t.uuid().references(() => User.id, { onDelete: "cascade" }),
+    userId: t.uuid().references(() => User.id, { onDelete: "set null" }),
     displayName: t.varchar({ length: 120 }).notNull(),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: t
@@ -2331,7 +2331,7 @@ export const Judge = createTable(
   (table) => ({
     kindIdentityCheck: check(
       "knight_hacks_judge_kind_identity_check",
-      sql`(${table.kind} = 'member' AND ${table.userId} IS NOT NULL) OR (${table.kind} = 'guest' AND ${table.userId} IS NULL)`,
+      sql`${table.kind} = 'member' OR (${table.kind} = 'guest' AND ${table.userId} IS NULL)`,
     ),
     memberUnique: uniqueIndex("knight_hacks_judge_member_unique")
       .on(table.hackathonId, table.userId)
@@ -2482,7 +2482,7 @@ export const JudgingRubricItem = createTable(
     ),
     visibilityCheck: check(
       "knight_hacks_judging_rubric_item_visibility_check",
-      sql`(${table.kind} = 'rating' AND ${table.memberVisibilityPolicy} IS NULL AND ${table.guestVisibilityPolicy} IS NULL) OR (${table.kind} = 'short_response' AND ${table.memberVisibilityPolicy} IS NOT NULL AND ${table.guestVisibilityPolicy} IS NOT NULL)`,
+      sql`(${table.kind} = 'rating' AND ${table.required} = true AND ${table.memberVisibilityPolicy} IS NULL AND ${table.guestVisibilityPolicy} IS NULL) OR (${table.kind} = 'short_response' AND ${table.memberVisibilityPolicy} IS NOT NULL AND ${table.guestVisibilityPolicy} IS NOT NULL)`,
     ),
     orderUnique: unique(
       "knight_hacks_judging_rubric_item_hackathon_order_unique",
@@ -2600,8 +2600,16 @@ export const ProjectEvaluationRevision = createTable(
     hackathonId: t.uuid().notNull(),
     revision: t.integer().notNull(),
     actorKind: judgeKindEnum().notNull(),
-    ratingAnswers: t.jsonb().notNull().default([]),
-    responseAnswers: t.jsonb().notNull().default([]),
+    ratingAnswers: t
+      .jsonb()
+      .$type<{ itemId: string; value: number }[]>()
+      .notNull()
+      .default([]),
+    responseAnswers: t
+      .jsonb()
+      .$type<{ isPublic: boolean; itemId: string; value: string }[]>()
+      .notNull()
+      .default([]),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (table) => ({

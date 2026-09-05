@@ -20,7 +20,7 @@ This feature turns the existing project directory into the judging workspace whi
 
 `/judge/projects` has three tabs.
 
-- `Projects` keeps the searchable project table as the primary judging view. It adds the selected challenge's rating and a judging action to each project.
+- `Projects` keeps the searchable project table as the primary judging view. It adds the selected challenge's rating and a judging action to each project. Projects leave the default view after that judge submits an evaluation. A `See previously judged` toggle restores them.
 - `Submissions` lists the current judge's evaluations, feedback, score, challenge, and last edit time. A judge can open and edit an evaluation while judging is open.
 - `Deliberation` explains that private sections help a judge compare projects before award discussions. Judges can create, rename, reorder, and delete sections, add projects they have judged, and drag projects into their preferred order.
 
@@ -34,8 +34,9 @@ The project evaluation opens in a viewport-safe dialog or mobile drawer. It show
 - The rubric may contain any number of quantitative items.
 - The rubric may contain short-response items.
 - The form explains who can read each short response before the judge submits it.
-- If a guest response is optional-public, the guest chooses whether officers and authenticated judges may read it. It remains private to that guest otherwise.
-- Authenticated member-judge responses are public to the judging team.
+- If a guest response is optional-public, the guest chooses whether the project hackers receive it. The form updates the audience label as the guest changes this choice.
+- Authenticated member-judge responses are always shared with the project hackers. The form states this before submission.
+- Authenticated judges and officers can read submitted feedback regardless of its hacker visibility setting.
 
 A saved evaluation closes the form, updates the row, and appears in `Submissions`. Editing replaces the current response while retaining its revision history for officers.
 
@@ -47,7 +48,10 @@ For a project in a selected challenge:
 - After they submit, they see the average score from all evaluations for that project and challenge.
 - An officer can enable `Display all results` so authenticated member judges see available scoped results before submitting. The switch never expands guest access.
 - Guest judges only receive scores for their room's challenge.
-- Authenticated member judges may also see an `Overall rating` column. It averages every evaluation for the project across all challenge scopes.
+- Guest judges do not receive the project's other challenge entries.
+- Authenticated member judges see `Challenge rating` for the selected scope and `Rating` for the project across all challenge scopes.
+- Authenticated member judges can sort by `Rating`. They can sort by `Challenge rating` when the officer has enabled `Display all results`.
+- Authenticated member judges see a green challenge badge after a project receives its first evaluation in that challenge. General uses a darker green treatment.
 
 Empty aggregates display `(?)`, not zero.
 
@@ -90,12 +94,11 @@ The rubric requires at least one quantitative item before judging opens. Once th
 
 ### Out of scope
 
-- Choosing award winners or publishing results to hackers.
+- Choosing award winners or delivering saved feedback to hackers.
 - Assigning projects to presentation time slots.
 - Scheduling routes through judging rooms.
 - Judge calibration or score normalization.
 - Shared deliberation boards or live collaborative sorting.
-- Viewing another judge's private responses.
 - Deleting an evaluation.
 
 ## Vocabulary
@@ -104,7 +107,7 @@ The rubric requires at least one quantitative item before judging opens. Once th
 - `Quantitative item`: a rubric question answered with an integer from 1 through 5.
 - `Short-response item`: a rubric question answered with text and an explicit visibility rule.
 - `Scoped rating`: the mean evaluation score for one project and one challenge.
-- `Overall rating`: the mean evaluation score for one project across every challenge and judge.
+- `Overall rating`: the value displayed as `Rating`, computed across every challenge and judge for the project.
 - `Submission`: the judge-facing record of an evaluation.
 - `Deliberation section`: a private named and ordered list of projects created by one judge.
 - `Project command center`: the officer workspace for project inventory, rubric, judging state, result visibility, and rooms.
@@ -119,8 +122,10 @@ The rubric requires at least one quantitative item before judging opens. Once th
 - The overall rating is the arithmetic mean of all evaluation scores for the project. Every evaluation has equal weight.
 - A judge can submit one evaluation for the same project in each eligible challenge and can edit each evaluation while judging is open.
 - A judge sees `(?)` for a scoped aggregate until they submit in that scope, unless they are an authenticated member judge and an officer enabled `Display all results`.
+- The default Projects view excludes projects already evaluated by the current judge in the active challenge. `See previously judged` restores them.
 - Guests never receive results or projects outside their configured challenge.
-- The evaluation form states the audience for each short response and applies that rule on every read.
+- Guest project data omits all challenge badges. Authenticated project data includes per-challenge evaluation counts for the badge completion treatment.
+- The evaluation form states whether hackers receive each short response. Authenticated judges and officers can review every response.
 - `Submissions` shows only the current judge's evaluations and supports editing while Open.
 - `Deliberation` accepts only projects the current judge has evaluated.
 - Pointer drag, keyboard movement, and explicit move controls provide equivalent ordering behavior.

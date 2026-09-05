@@ -50,6 +50,16 @@ describe("admin audit contracts", () => {
       "judgeDisplayName",
     ]);
     expect(
+      AUDIT_ACTION_CATALOG["judging.evaluation.saved"].metadataKeys,
+    ).toEqual(
+      expect.arrayContaining([
+        "evaluationId",
+        "judgeId",
+        "projectId",
+        "revision",
+      ]),
+    );
+    expect(
       AUDIT_ACTION_CATALOG["judging.presence.removed"].metadataKeys,
     ).toEqual(["judgeId", "judgeDisplayName"]);
   });

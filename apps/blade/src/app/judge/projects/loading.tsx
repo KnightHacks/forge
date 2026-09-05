@@ -1,5 +1,5 @@
-import { ProjectWorkspaceSkeleton } from "~/app/_components/projects/project-workspace-skeleton";
+import { JudgeProjectsLoading as JudgeProjectsLoadingView } from "~/app/_components/projects/judge-projects-loading";
 
 export default function JudgeProjectsLoading() {
-  return <ProjectWorkspaceSkeleton />;
+  return <JudgeProjectsLoadingView />;
 }

@@ -101,6 +101,20 @@ describe("judging inputs", () => {
         hackathonId,
         items: [
           {
+            guestVisibilityPolicy: null,
+            kind: "rating",
+            label: "Optional score",
+            memberVisibilityPolicy: null,
+            required: false,
+          },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      judgingRubricSaveSchema.safeParse({
+        hackathonId,
+        items: [
+          {
             guestVisibilityPolicy: "private",
             id: itemId,
             kind: "rating",

@@ -29,8 +29,16 @@ export function parseProjectDirectoryParams(params: SearchParams) {
   const direction =
     first(params.direction) === "desc" ? ("desc" as const) : ("asc" as const);
   const requestedSort = first(params.sort);
-  const sort: "participantCount" | "submittedAt" | "title" =
-    requestedSort === "submittedAt" || requestedSort === "participantCount"
+  const sort:
+    | "challengeRating"
+    | "participantCount"
+    | "rating"
+    | "submittedAt"
+    | "title" =
+    requestedSort === "submittedAt" ||
+    requestedSort === "participantCount" ||
+    requestedSort === "challengeRating" ||
+    requestedSort === "rating"
       ? requestedSort
       : ("title" as const);
   const requestedPageSize = positiveInteger(first(params.pageSize), 25);
@@ -58,6 +66,7 @@ export function parseProjectDirectoryParams(params: SearchParams) {
       .slice(0, 25),
     deleted,
     direction,
+    includeJudged: first(params.includeJudged) === "1",
     maxParticipants,
     minParticipants,
     page: positiveInteger(first(params.page), 1),

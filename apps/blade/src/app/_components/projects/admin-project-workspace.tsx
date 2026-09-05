@@ -312,10 +312,12 @@ function ProjectStateDialog({
 
 export function AdminProjectWorkspace({
   data,
+  embedded = false,
   hackathons,
   input,
 }: {
   data: AdminData | null;
+  embedded?: boolean;
   hackathons: Hackathons;
   input:
     | (ProjectDirectoryInput & {
@@ -349,61 +351,96 @@ export function AdminProjectWorkspace({
     startTransition(() => router.replace(`${pathname}?${next.toString()}`));
   }
 
+  const Root = embedded ? "div" : "main";
+
   return (
-    <main className={adminPageLayoutClassName} aria-busy={pending}>
-      <AdminPageHeader
-        actions={
-          data && input ? (
-            <div className="flex flex-wrap gap-2">
-              <ProjectImportDialog
-                hackathonId={input.hackathonId}
-                hackathonName={data.hackathon.displayName}
-                inventoryLocked={
-                  hackathons.find(
-                    (hackathon) => hackathon.id === input.hackathonId,
-                  )?.inventoryLockedAt != null
-                }
-                onImported={refresh}
-                projectCount={projectCount}
-              />
-              <DropAllProjectsDialog
-                hackathonId={input.hackathonId}
-                hackathonName={data.hackathon.displayName}
-                onDropped={refresh}
-                projectCount={projectCount}
-              />
-            </div>
-          ) : null
-        }
-        description="Replace a hackathon’s Devpost inventory, review import results, and make targeted corrections without exposing project management to judges."
-        eyebrow="Officer tools"
-        icon={Database}
-        title="Project import"
-      />
+    <Root
+      className={embedded ? "space-y-4" : adminPageLayoutClassName}
+      aria-busy={pending}
+    >
+      {!embedded ? (
+        <AdminPageHeader
+          actions={
+            data && input ? (
+              <div className="flex flex-wrap gap-2">
+                <ProjectImportDialog
+                  hackathonId={input.hackathonId}
+                  hackathonName={data.hackathon.displayName}
+                  inventoryLocked={
+                    hackathons.find(
+                      (hackathon) => hackathon.id === input.hackathonId,
+                    )?.inventoryLockedAt != null
+                  }
+                  onImported={refresh}
+                  projectCount={projectCount}
+                />
+                <DropAllProjectsDialog
+                  hackathonId={input.hackathonId}
+                  hackathonName={data.hackathon.displayName}
+                  onDropped={refresh}
+                  projectCount={projectCount}
+                />
+              </div>
+            ) : null
+          }
+          description="Replace a hackathon’s Devpost inventory, review import results, and make targeted corrections without exposing project management to judges."
+          eyebrow="Officer tools"
+          icon={Database}
+          title="Project import"
+        />
+      ) : data && input ? (
+        <div className="flex flex-wrap justify-end gap-2">
+          <ProjectImportDialog
+            hackathonId={input.hackathonId}
+            hackathonName={data.hackathon.displayName}
+            inventoryLocked={
+              hackathons.find((hackathon) => hackathon.id === input.hackathonId)
+                ?.inventoryLockedAt != null
+            }
+            onImported={refresh}
+            projectCount={projectCount}
+          />
+          <DropAllProjectsDialog
+            hackathonId={input.hackathonId}
+            hackathonName={data.hackathon.displayName}
+            onDropped={refresh}
+            projectCount={projectCount}
+          />
+        </div>
+      ) : null}
 
       {data && input ? (
         <>
           <section className="flex flex-col gap-3 rounded-lg border border-white/10 bg-card/80 p-4 shadow-xl shadow-black/10 sm:flex-row sm:items-end sm:justify-between">
-            <label className="min-w-0 space-y-2">
-              <span className="block text-sm font-medium">Hackathon</span>
-              <select
-                aria-label="Manage hackathon projects"
-                className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
-                onChange={(event) =>
-                  navigate({
-                    challenge: undefined,
-                    hackathon: event.target.value,
-                  })
-                }
-                value={input.hackathonId}
-              >
-                {hackathons.map((hackathon) => (
-                  <option key={hackathon.id} value={hackathon.id}>
-                    {hackathon.displayName} ({hackathon.projectCount})
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!embedded ? (
+              <label className="min-w-0 space-y-2">
+                <span className="block text-sm font-medium">Hackathon</span>
+                <select
+                  aria-label="Manage hackathon projects"
+                  className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
+                  onChange={(event) =>
+                    navigate({
+                      challenge: undefined,
+                      hackathon: event.target.value,
+                    })
+                  }
+                  value={input.hackathonId}
+                >
+                  {hackathons.map((hackathon) => (
+                    <option key={hackathon.id} value={hackathon.id}>
+                      {hackathon.displayName} ({hackathon.projectCount})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <div>
+                <p className="text-sm font-medium">Project inventory</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {data.hackathon.displayName} · {projectCount} imported
+                </p>
+              </div>
+            )}
             <label className="space-y-2">
               <span className="block text-sm font-medium">Inventory state</span>
               <select
@@ -481,6 +518,6 @@ export function AdminProjectWorkspace({
           </AlertDescription>
         </Alert>
       )}
-    </main>
+    </Root>
   );
 }

@@ -313,9 +313,11 @@ function RoomQrDialog({
 export function JudgingControlPanel({
   initialData,
   hackathons,
+  embedded = false,
 }: {
   initialData: ControlData;
   hackathons: Hackathons;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -378,13 +380,31 @@ export function JudgingControlPanel({
     .filter((room) => room.archivedAt === null)
     .map((room) => room.id);
 
+  const Root = embedded ? "div" : "main";
+
   return (
-    <main
-      className={adminPageLayoutClassName}
+    <Root
+      className={embedded ? "space-y-4" : adminPageLayoutClassName}
       aria-busy={pending || query.isFetching}
     >
-      <AdminPageHeader
-        actions={
+      {!embedded ? (
+        <AdminPageHeader
+          actions={
+            <Button
+              className="h-11 gap-2"
+              disabled={!data.challenges.length}
+              onClick={() => setEditing("new")}
+            >
+              <Plus className="size-4" aria-hidden="true" /> Create room
+            </Button>
+          }
+          description="Provision physical rooms, distribute guest access, and watch the live judge roster."
+          eyebrow="Officer command center"
+          icon={DoorOpen}
+          title="Judging rooms"
+        />
+      ) : (
+        <div className="flex justify-end">
           <Button
             className="h-11 gap-2"
             disabled={!data.challenges.length}
@@ -392,29 +412,34 @@ export function JudgingControlPanel({
           >
             <Plus className="size-4" aria-hidden="true" /> Create room
           </Button>
-        }
-        description="Provision physical rooms, distribute guest access, and watch the live judge roster."
-        eyebrow="Officer command center"
-        icon={DoorOpen}
-        title="Judging rooms"
-      />
+        </div>
+      )}
 
       <section className="flex flex-col gap-3 rounded-lg border border-white/10 bg-card/90 p-4 shadow-xl shadow-black/10 sm:flex-row sm:items-end sm:justify-between">
-        <label className="space-y-2">
-          <span className="block text-sm font-medium">Hackathon</span>
-          <select
-            aria-label="Manage hackathon judging rooms"
-            className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
-            onChange={(event) => selectHackathon(event.target.value)}
-            value={data.hackathon.id}
-          >
-            {hackathons.map((hackathon) => (
-              <option key={hackathon.id} value={hackathon.id}>
-                {hackathon.displayName}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!embedded ? (
+          <label className="space-y-2">
+            <span className="block text-sm font-medium">Hackathon</span>
+            <select
+              aria-label="Manage hackathon judging rooms"
+              className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
+              onChange={(event) => selectHackathon(event.target.value)}
+              value={data.hackathon.id}
+            >
+              {hackathons.map((hackathon) => (
+                <option key={hackathon.id} value={hackathon.id}>
+                  {hackathon.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <div>
+            <p className="text-sm font-medium">Judging rooms</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Provisioned for {data.hackathon.displayName}
+            </p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">
             {data.rooms.filter((room) => !room.archivedAt).length} rooms
@@ -760,6 +785,6 @@ export function JudgingControlPanel({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </Root>
   );
 }

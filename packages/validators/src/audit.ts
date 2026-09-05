@@ -474,6 +474,15 @@ export const AUDIT_ACTION_CATALOG = {
   "project.updated": policy("hackathons", "Updated project", ["changedFields"]),
   "project.deleted": policy("hackathons", "Deleted project"),
   "project.restored": policy("hackathons", "Restored project"),
+  "judging.evaluation.saved": policy("hackathons", "Saved judging evaluation", [
+    "actorKind",
+    "challengeId",
+    "evaluationId",
+    "hackathonId",
+    "judgeId",
+    "projectId",
+    "revision",
+  ]),
   "judging.room.created": policy("hackathons", "Created judging room", [
     "challengeId",
   ]),
@@ -498,6 +507,18 @@ export const AUDIT_ACTION_CATALOG = {
     "judgeId",
     "judgeDisplayName",
   ]),
+  "judging.rubric.updated": policy("hackathons", "Updated judging rubric", [
+    "itemCount",
+  ]),
+  "judging.state.updated": policy("hackathons", "Updated judging state", [
+    "fromState",
+    "toState",
+  ]),
+  "judging.results_visibility.updated": policy(
+    "hackathons",
+    "Updated judging result visibility",
+    ["displayAllResults"],
+  ),
   // `status` names which applicant status the mail belongs to, and
   // `templateName` records what it pointed at *then* — the template can be
   // renamed later, and the log should not silently follow it.

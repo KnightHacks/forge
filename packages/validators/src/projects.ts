@@ -31,7 +31,15 @@ const projectListFields = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(10).max(100).default(25),
   query: z.string().trim().max(120).default(""),
-  sort: z.enum(["title", "submittedAt", "participantCount"]).default("title"),
+  sort: z
+    .enum([
+      "title",
+      "submittedAt",
+      "participantCount",
+      "challengeRating",
+      "rating",
+    ])
+    .default("title"),
 });
 
 const participantRangeRefinement = {
@@ -59,6 +67,7 @@ export const judgeProjectListInputSchema = projectListFields
   .omit({ deleted: true, hackathonId: true })
   .extend({
     hackathonId: z.string().uuid().optional(),
+    includeJudged: z.boolean().default(false),
   })
   .refine(hasValidParticipantRange, participantRangeRefinement);
 

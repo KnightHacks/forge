@@ -5,9 +5,16 @@ import { describe, expect, it } from "vitest";
 import {
   GuestJudgeSession,
   Judge,
+  JudgeDeliberationEntry,
+  JudgeDeliberationSection,
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
+  JudgingRubricItem,
+  ProjectEvaluation,
+  ProjectEvaluationRating,
+  ProjectEvaluationResponse,
+  ProjectEvaluationRevision,
 } from "../schemas/knight-hacks";
 
 function indexPredicate(table: PgTable, indexName: string) {
@@ -71,5 +78,58 @@ describe("judging room storage", () => {
         "knight_hacks_judging_room_presence_active_judge_unique",
       ),
     ).toBe('"knight_hacks_judging_room_presence"."leftAt" IS NULL');
+  });
+
+  it("stores rubric, evaluations, revisions, and deliberation separately", () => {
+    expect(JudgingRubricItem.id).toBeDefined();
+    expect(ProjectEvaluation.id).toBeDefined();
+    expect(ProjectEvaluationRating.value).toBeDefined();
+    expect(ProjectEvaluationResponse.value).toBeDefined();
+    expect(ProjectEvaluationRevision.revision).toBeDefined();
+    expect(JudgeDeliberationSection.id).toBeDefined();
+    expect(JudgeDeliberationEntry.id).toBeDefined();
+  });
+
+  it("retains a historical member judge when the auth account is deleted", () => {
+    const userForeignKey = getTableConfig(Judge).foreignKeys.find((key) =>
+      key.reference().columns.some((column) => column.name === "userId"),
+    );
+
+    expect(userForeignKey?.onDelete).toBe("set null");
+    const identityCheck = getTableConfig(Judge).checks.find(
+      (constraint) =>
+        constraint.name === "knight_hacks_judge_kind_identity_check",
+    );
+    expect(identityCheck).toBeDefined();
+  });
+
+  it("enforces one evaluation per judge, project, and challenge", () => {
+    const unique = getTableConfig(ProjectEvaluation).uniqueConstraints.map(
+      (constraint) => constraint.name,
+    );
+    expect(unique).toContain(
+      "knight_hacks_project_evaluation_judge_project_challenge_unique",
+    );
+  });
+
+  it("checks rating values in the database", () => {
+    const checks = getTableConfig(ProjectEvaluationRating).checks.map(
+      (constraint) => constraint.name,
+    );
+    expect(checks).toContain(
+      "knight_hacks_project_evaluation_rating_value_check",
+    );
+  });
+
+  it("keeps every quantitative rubric item required", () => {
+    const visibilityCheck = getTableConfig(JudgingRubricItem).checks.find(
+      (constraint) =>
+        constraint.name === "knight_hacks_judging_rubric_item_visibility_check",
+    );
+    expect(visibilityCheck).toBeDefined();
+    if (!visibilityCheck) throw new Error("Missing rubric visibility check.");
+    expect(new PgDialect().sqlToQuery(visibilityCheck.value).sql).toContain(
+      '"knight_hacks_judging_rubric_item"."required" = true',
+    );
   });
 });
