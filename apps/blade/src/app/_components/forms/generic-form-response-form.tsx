@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 import type { RouterInputs } from "@forge/api";
 import type { FormDefinition, FormQuestion } from "@forge/validators";
@@ -10,6 +12,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 import {
   countNonWhitespaceCharacters,
   FORM_LINEAR_SCALE_ENDPOINT_MAX,
@@ -583,6 +586,11 @@ export function GenericFormResponseForm({
   onSubmitted?: () => void;
 }) {
   const [answers, setAnswers] = useState<AnswerMap>(initialAnswers);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isRefreshing, refresh] = useTransition();
+  const [receiptHref, setReceiptHref] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingUploadQuestionIds, setPendingUploadQuestionIds] = useState(
     () => new Set<string>(),
@@ -595,10 +603,16 @@ export function GenericFormResponseForm({
     onError(mutationError) {
       setError(mutationError.message);
     },
-    onSuccess() {
+    onSuccess(result) {
       setError(null);
       if (onSubmitted) onSubmitted();
-      else window.location.reload();
+      else {
+        const query = new URLSearchParams(searchParams.toString());
+        query.set("responseId", result.formResponseId);
+        const href = `${pathname}?${query.toString()}`;
+        setReceiptHref(href);
+        refresh(() => router.replace(href));
+      }
     },
   });
   const update = api.forms.updateResponse.useMutation({
@@ -607,12 +621,15 @@ export function GenericFormResponseForm({
     },
     onSuccess() {
       setError(null);
+      toast.success("Response updated.");
       if (onSubmitted) onSubmitted();
-      else window.location.reload();
+      else refresh(() => router.refresh());
     },
   });
 
   async function handleSubmit() {
+    if (submit.isPending || update.isPending || isRefreshing || receiptHref)
+      return;
     setError(null);
     const missingQuestion = questions.find((question) => {
       if (!question.required) return false;
@@ -659,6 +676,36 @@ export function GenericFormResponseForm({
       setError(cause instanceof Error ? cause.message : "Check your answers.");
     }
   }
+
+  if (receiptHref)
+    return (
+      <section
+        role="status"
+        className="grid min-w-0 gap-3 rounded-md border border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.08)] p-4"
+        ref={(node) => {
+          node?.focus();
+        }}
+        tabIndex={-1}
+      >
+        <div className="flex items-center gap-2">
+          <CheckCircle2
+            aria-hidden="true"
+            className="size-5 shrink-0 text-[hsl(var(--chart-2))]"
+          />
+          <h2 className="font-semibold">Response submitted</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Your answers have been saved.
+        </p>
+        <Button
+          asChild
+          variant="outline"
+          className="h-auto min-h-11 whitespace-normal"
+        >
+          <Link href={receiptHref}>Review submitted response</Link>
+        </Button>
+      </section>
+    );
 
   return (
     <form
@@ -734,7 +781,8 @@ export function GenericFormResponseForm({
           disabled={
             pendingUploadQuestionIds.size > 0 ||
             submit.isPending ||
-            update.isPending
+            update.isPending ||
+            isRefreshing
           }
           type="submit"
         >

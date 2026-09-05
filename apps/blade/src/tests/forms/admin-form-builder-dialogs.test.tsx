@@ -1,15 +1,25 @@
 /** @vitest-environment jsdom */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FormDefinition } from "@forge/validators";
 
 import { AdminFormBuilder } from "~/app/_components/admin/forms/admin-form-builder";
 
+const callbackMocks = vi.hoisted(() => ({
+  configure: vi.fn(),
+  disable: vi.fn(),
+  refresh: vi.fn(),
+  success: vi.fn(),
+}));
+vi.mock("@forge/ui/toast", () => ({
+  toast: { success: callbackMocks.success },
+}));
+
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/forms/form-1",
-  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
+  useRouter: () => ({ refresh: callbackMocks.refresh, replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -19,11 +29,21 @@ vi.mock("~/trpc/react", () => ({
   api: {
     forms: {
       changeState: { useMutation: () => mutation() },
-      configureCallback: { useMutation: () => mutation() },
+      configureCallback: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: callbackMocks.configure,
+        }),
+      },
       createForm: { useMutation: () => mutation() },
       createUpload: { useMutation: () => mutation() },
       deleteForm: { useMutation: () => mutation() },
-      disableCallback: { useMutation: () => mutation() },
+      disableCallback: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: callbackMocks.disable,
+        }),
+      },
       finalizeUpload: { useMutation: () => mutation() },
       updateForm: { useMutation: () => mutation() },
       updateSettings: { useMutation: () => mutation() },
@@ -47,18 +67,50 @@ const definition: FormDefinition = {
   title: "Fixture form",
 };
 
-function renderBuilder() {
+function renderBuilder(recruiting = false, available = true) {
   return render(
     <AdminFormBuilder
       callbacks={[
         {
-          available: true,
+          available: !recruiting && available,
           description: "Assign a Discord role",
           label: "Discord: assign role",
           requiredPermission: "discord.manage",
           slug: "discord.assign-role",
         },
+        ...(recruiting
+          ? [
+              {
+                available: true,
+                description: "Notify recruiting",
+                label: "Notify recruiting",
+                requiredPermission: "EDIT_FORMS",
+                slug: "recruiting.notify",
+              },
+            ]
+          : []),
       ]}
+      configuredCallbacks={
+        recruiting
+          ? [
+              {
+                active: true,
+                callbackSlug: "recruiting.notify",
+                id: "callback-1",
+                mappings: [
+                  {
+                    inputKey: "memberId",
+                    source: { kind: "system", value: "member_id" },
+                  },
+                  {
+                    inputKey: "note",
+                    source: { kind: "fixed", value: "Saved recruiting note" },
+                  },
+                ],
+              },
+            ]
+          : []
+      }
       initial={{
         closesAt: null,
         definition,
@@ -92,6 +144,89 @@ function renderBuilder() {
 // stay true is that a header button opens its own dialog and closes whichever
 // was open. Nothing here asserts markup or layout.
 describe("admin form builder dialogs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    callbackMocks.configure.mockResolvedValue({});
+    callbackMocks.disable.mockResolvedValue({});
+  });
+
+  it("[TC-007] prevents configuration when no callback is permitted", async () => {
+    const user = userEvent.setup();
+    renderBuilder(false, false);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+    expect(
+      screen.getByRole("button", { name: "Save for future responses" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "You do not have permission to configure these actions.",
+      ),
+    ).toBeInTheDocument();
+    expect(callbackMocks.configure).not.toHaveBeenCalled();
+  });
+
+  it("[TC-007, TC-008, TC-009] defaults to an allowed action, edits saved settings and confirms saving", async () => {
+    const user = userEvent.setup();
+    renderBuilder(true);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+    expect(screen.getByRole("combobox", { name: "Action" })).toHaveTextContent(
+      "Notify recruiting",
+    );
+    expect(
+      screen.getByText("Fixed note: Saved recruiting note"),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Edit settings" }));
+    expect(
+      screen.getByRole("textbox", { name: "Recruiting note" }),
+    ).toHaveValue("Saved recruiting note");
+    await user.click(
+      screen.getByRole("button", { name: "Save for future responses" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(callbackMocks.configure).toHaveBeenCalledWith({
+      callbackSlug: "recruiting.notify",
+      formId: "form-1",
+      mappings: [
+        {
+          inputKey: "memberId",
+          source: { kind: "system", value: "member_id" },
+        },
+        {
+          inputKey: "note",
+          source: { kind: "fixed", value: "Saved recruiting note" },
+        },
+      ],
+    });
+    expect(callbackMocks.success).toHaveBeenCalledWith(
+      "Callback saved for future responses.",
+    );
+    expect(callbackMocks.refresh).toHaveBeenCalled();
+    expect(screen.getByDisplayValue("Your name")).toBeInTheDocument();
+  });
+
+  it("[TC-009] keeps callback failures in the dialog", async () => {
+    callbackMocks.configure.mockRejectedValueOnce(
+      new Error("Configuration rejected"),
+    );
+    callbackMocks.disable.mockRejectedValueOnce(new Error("Disable rejected"));
+    const user = userEvent.setup();
+    renderBuilder(true);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+    await user.click(screen.getByRole("button", { name: "Edit settings" }));
+    await user.click(
+      screen.getByRole("button", { name: "Save for future responses" }),
+    );
+    expect(
+      await within(screen.getByRole("dialog")).findByRole("alert"),
+    ).toHaveTextContent("Configuration rejected");
+    await user.click(screen.getByRole("button", { name: "Disable" }));
+    expect(
+      await within(screen.getByRole("dialog")).findByRole("alert"),
+    ).toHaveTextContent("Disable rejected");
+    expect(callbackMocks.refresh).not.toHaveBeenCalled();
+  });
   it("opens the availability dialog seeded from the saved form", async () => {
     const user = userEvent.setup();
     renderBuilder();

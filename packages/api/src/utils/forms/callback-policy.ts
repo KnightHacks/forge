@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { FORMS } from "@forge/consts";
 
 export const RETRYABLE_FORM_CALLBACK_STATUSES = ["failed", "pending"] as const;
@@ -15,7 +17,9 @@ export function assertAllowedFormCallbackDiscordRole(discordRoleId: string) {
 }
 
 export function formCallbackDeliveryNonce(executionId: string) {
-  return executionId;
+  const uuid = z.string().uuid().parse(executionId);
+  // Preserve all 128 identity bits within Discord's 25-character nonce limit.
+  return Buffer.from(uuid.replaceAll("-", ""), "hex").toString("base64url");
 }
 
 export function isFormCallbackExecutionClaimable(

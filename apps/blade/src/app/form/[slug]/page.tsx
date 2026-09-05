@@ -97,6 +97,11 @@ export default async function FormPage({
           }}
           openForm={
             <GenericFormResponseForm
+              key={
+                result.respondentState.status === "submitted"
+                  ? result.respondentState.responseId
+                  : result.form.id
+              }
               definition={definition}
               formId={result.form.id}
               initialAnswers={

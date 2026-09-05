@@ -202,7 +202,7 @@ describe("GenericFormRespondent", () => {
     );
 
     expect(html).toContain('aria-live="polite"');
-    expect(html).toContain("Your submitted response");
+    expect(html).toContain("Response submitted");
     expect(html).toContain("This response is locked and cannot be edited");
     expect(html).toContain('aria-label="Submitted answers"');
     expect(html).toContain("Director/Officer");

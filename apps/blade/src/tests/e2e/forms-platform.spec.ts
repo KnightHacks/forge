@@ -294,7 +294,14 @@ test.describe("forms platform cross-surface journey", () => {
     await answer.fill("More club tools");
     await page.getByRole("button", { name: "Submit response" }).click();
     await expect(
-      page.getByRole("heading", { name: "Your submitted response" }),
+      page.getByRole("heading", { name: "Response submitted" }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`/form/${FORM_SLUG}\\?responseId=[0-9a-f-]+$`),
+    );
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Response submitted" }),
     ).toBeVisible();
     const submittedAnswers = page.getByRole("region", {
       name: "Submitted answers",
@@ -388,6 +395,19 @@ test.describe("forms platform cross-surface journey", () => {
       .click();
     await expect(
       page.getByRole("dialog").getByText("More club tools"),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Delete response", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Delete permanently", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByText("Response deleted.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("59 identified submissions", { exact: true }),
     ).toBeVisible();
   });
 });

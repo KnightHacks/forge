@@ -277,10 +277,23 @@ describe("durable callback execution", () => {
 
   it("[TC-NEG-008] reuses the execution identity as the provider nonce", () => {
     const executionId = "30000000-0000-4000-8000-000000000201";
-    expect(formCallbackDeliveryNonce(executionId)).toBe(executionId);
+    const nonce = formCallbackDeliveryNonce(executionId);
+    expect(nonce.length).toBeLessThanOrEqual(25);
+    expect(Buffer.from(nonce, "base64url").toString("hex")).toBe(
+      executionId.replaceAll("-", ""),
+    );
+    expect(nonce).not.toBe(
+      formCallbackDeliveryNonce("30000000-0000-4000-8000-000000000202"),
+    );
     expect(formCallbackDeliveryNonce(executionId)).toBe(
       formCallbackDeliveryNonce(executionId),
     );
+  });
+
+  it("[TC-001] rejects malformed execution identities", () => {
+    for (const id of ["", "not-a-uuid", "30000000000040008000000000000201"]) {
+      expect(() => formCallbackDeliveryNonce(id)).toThrow();
+    }
   });
 
   it("[TC-032, TC-033] records independent successes and failures and permits retry", async () => {

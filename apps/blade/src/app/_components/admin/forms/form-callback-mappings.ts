@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { callbackConfigurationSchema } from "@forge/validators";
+import { callbackConfigurationSchema } from "@forge/validators";
 
 /**
  * How the callback dialog's three inputs become the input mappings
@@ -18,6 +18,36 @@ export interface FormCallbackDraft {
   questionId: string;
   slug: string;
   value: string;
+}
+
+export interface ConfiguredFormCallback {
+  active: boolean;
+  callbackSlug: string;
+  id: string;
+  mappings: unknown;
+}
+
+export function savedCallbackDraft(
+  callback: ConfiguredFormCallback,
+): FormCallbackDraft {
+  const parsed = callbackConfigurationSchema.shape.mappings.safeParse(
+    callback.mappings,
+  );
+  const source = parsed.success
+    ? parsed.data.find(
+        ({ inputKey }) =>
+          inputKey ===
+          (callback.callbackSlug === "discord.assign-role" ? "roleId" : "note"),
+      )?.source
+    : undefined;
+  return {
+    slug: callback.callbackSlug,
+    questionId: source?.kind === "question" ? source.questionId : "",
+    value:
+      source?.kind === "fixed" && typeof source.value === "string"
+        ? source.value
+        : "",
+  };
 }
 
 /**
