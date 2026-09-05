@@ -82,12 +82,27 @@ export const judgingResponseAnswerSchema = z.object({
   value: z.string().trim().max(2000),
 });
 
+function requireUniqueItemIds(
+  answers: { itemId: string }[],
+  ctx: z.RefinementCtx,
+) {
+  const itemIds = answers.map((answer) => answer.itemId);
+  if (new Set(itemIds).size !== itemIds.length) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Answer item IDs must be unique.",
+    });
+  }
+}
+
 export const judgingEvaluationSaveSchema = z.object({
   challengeId: uuidSchema.optional(),
   hackathonId: uuidSchema.optional(),
   projectId: uuidSchema,
-  ratings: z.array(judgingRatingAnswerSchema),
-  responses: z.array(judgingResponseAnswerSchema),
+  ratings: z.array(judgingRatingAnswerSchema).superRefine(requireUniqueItemIds),
+  responses: z
+    .array(judgingResponseAnswerSchema)
+    .superRefine(requireUniqueItemIds),
 });
 
 export const judgingProjectDetailsSchema = judgingEvaluationSaveSchema

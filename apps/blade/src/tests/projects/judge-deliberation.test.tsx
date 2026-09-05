@@ -292,4 +292,31 @@ describe("judge deliberation", () => {
       screen.getByRole("button", { name: "Delete Finalists section" }),
     ).toBeDisabled();
   });
+
+  it("shows fresh server sections after a route refresh", () => {
+    const { rerender } = render(
+      <JudgeDeliberation
+        initialSections={sections}
+        submissions={submissions}
+        workspace={workspace("open")}
+      />,
+    );
+
+    rerender(
+      <JudgeDeliberation
+        initialSections={[
+          ...sections,
+          {
+            entries: [],
+            id: "00000000-0000-4000-8000-000000000013",
+            name: "New server section",
+          },
+        ]}
+        submissions={submissions}
+        workspace={workspace("open")}
+      />,
+    );
+
+    expect(screen.getByDisplayValue("New server section")).toBeInTheDocument();
+  });
 });

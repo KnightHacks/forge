@@ -330,6 +330,13 @@
       "when": 1788641685783,
       "tag": "0046_hot_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788650755175,
+      "tag": "0047_fluffy_alex_power",
+      "breakpoints": true
     }
   ]
 }

@@ -2239,6 +2239,9 @@ export const ProjectToChallenge = createTable(
     hackathonIdx: index("knight_hacks_project_to_challenge_hackathon_idx").on(
       table.hackathonId,
     ),
+    projectChallengeHackathonUnique: unique(
+      "knight_hacks_project_to_challenge_project_challenge_hackathon_unique",
+    ).on(table.projectId, table.challengeId, table.hackathonId),
   }),
 );
 
@@ -2510,15 +2513,14 @@ export const ProjectEvaluation = createTable(
       .$onUpdate(() => new Date()),
   }),
   (table) => ({
-    projectScopeFk: foreignKey({
-      columns: [table.projectId, table.hackathonId],
-      foreignColumns: [Project.id, Project.hackathonId],
-      name: "knight_hacks_project_evaluation_project_scope_fk",
-    }).onDelete("restrict"),
-    challengeScopeFk: foreignKey({
-      columns: [table.challengeId, table.hackathonId],
-      foreignColumns: [ProjectChallenge.id, ProjectChallenge.hackathonId],
-      name: "knight_hacks_project_evaluation_challenge_scope_fk",
+    projectChallengeScopeFk: foreignKey({
+      columns: [table.projectId, table.challengeId, table.hackathonId],
+      foreignColumns: [
+        ProjectToChallenge.projectId,
+        ProjectToChallenge.challengeId,
+        ProjectToChallenge.hackathonId,
+      ],
+      name: "knight_hacks_project_evaluation_project_challenge_scope_fk",
     }).onDelete("restrict"),
     judgeScopeFk: foreignKey({
       columns: [table.judgeId, table.hackathonId],

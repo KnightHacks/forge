@@ -755,6 +755,15 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
         "Updated member feedback",
       ].sort(),
     );
+    expect(
+      memberDetails.feedback
+        .filter((item) =>
+          ["Always private response", "Private optional response"].includes(
+            item.value,
+          ),
+        )
+        .every((item) => item.isPublic === false),
+    ).toBe(true);
 
     const audit = await import("@forge/db/schemas/audit");
     const [guestSession] = await client
@@ -866,32 +875,19 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       .set({ deletedAt: null, deletedByUserId: null })
       .where(eq(schemas.Project.id, SPONSOR_PROJECT));
 
-    await client
-      .delete(schemas.ProjectToChallenge)
-      .where(
-        and(
-          eq(schemas.ProjectToChallenge.projectId, SPONSOR_PROJECT),
-          eq(schemas.ProjectToChallenge.challengeId, SPONSOR),
+    await expect(
+      client
+        .delete(schemas.ProjectToChallenge)
+        .where(
+          and(
+            eq(schemas.ProjectToChallenge.projectId, SPONSOR_PROJECT),
+            eq(schemas.ProjectToChallenge.challengeId, SPONSOR),
+          ),
         ),
-      );
-    expect(
-      (
-        await guestCaller.judging.getProjectScores({
-          projectIds: [SPONSOR_PROJECT],
-        })
-      )[0],
-    ).toMatchObject({
-      hasOwnEvaluation: false,
-      scoped: { count: 0, value: null },
-    });
+    ).rejects.toThrow(/Failed query: delete from/);
     expect(
       (await guestCaller.judging.listMySubmissions({}))[0]?.projectAvailable,
-    ).toBe(false);
-    await client.insert(schemas.ProjectToChallenge).values({
-      challengeId: SPONSOR,
-      hackathonId: HACKATHON,
-      projectId: SPONSOR_PROJECT,
-    });
+    ).toBe(true);
 
     const section = await guestCaller.judging.createDeliberationSection({
       hackathonId: "30000000-0000-4000-8000-000000000999",

@@ -80,7 +80,7 @@ Each short-response rubric item stores separate hacker-visibility policies for m
 
 The default rubric policy is `public` for member judges and `public_optional` for guests. The command center describes these values in terms of hacker delivery. For KH IX, the member policy is fixed to `public`; changing that policy requires an explicit future product decision.
 
-Project teams do not receive short responses in this slice.
+This slice persists the canonical hacker-sharing eligibility for each response. A later hacker-facing view and delivery process will consume that setting. This slice does not push or display responses to project teams directly.
 
 ## tRPC and API behavior
 

@@ -1,5 +1,14 @@
-import { JudgeProjectsLoading as JudgeProjectsLoadingView } from "~/app/_components/projects/judge-projects-loading";
+import { Suspense } from "react";
+
+import {
+  JudgeProjectsLoading as JudgeProjectsLoadingView,
+  JudgeProjectsStaticLoading,
+} from "~/app/_components/projects/judge-projects-loading";
 
 export default function JudgeProjectsLoading() {
-  return <JudgeProjectsLoadingView />;
+  return (
+    <Suspense fallback={<JudgeProjectsStaticLoading />}>
+      <JudgeProjectsLoadingView />
+    </Suspense>
+  );
 }

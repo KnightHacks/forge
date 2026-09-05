@@ -4,7 +4,7 @@ Status: Approved
 
 ## Scope
 
-These 20 cases cover rubric configuration, judging lifecycle, member and guest evaluation access, score calculation and disclosure, editable submissions, response hacker visibility, personal deliberation, import safety, and the combined officer command center. Scheduling, winner selection, hacker-facing feedback delivery, and collaborative deliberation are excluded.
+These 20 cases cover rubric configuration, judging lifecycle, member and guest evaluation access, score calculation and disclosure, editable submissions, response hacker visibility, personal deliberation, import safety, and the combined officer command center. Scheduling, winner selection, the hacker-facing feedback view and delivery process, and collaborative deliberation are excluded.
 
 ## Test placement plan
 
@@ -255,7 +255,7 @@ Action:
 Expected observations:
 
 - The form states the audience before submission.
-- Member responses resolve as shared with hackers.
+- Member responses persist as eligible for hacker sharing.
 - Guest public and private items ignore tampered visibility inputs.
 - Guest public-optional responses use the explicit hacker-sharing choice and default to not shared.
 - Authenticated judges and officers can review every response. Guests cannot read other judges' responses.

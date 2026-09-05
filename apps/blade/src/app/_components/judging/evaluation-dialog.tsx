@@ -38,7 +38,7 @@ function policyCopy(
   if (policy === "public") {
     return {
       description:
-        "The hackers who submitted this project will receive this response.",
+        "This response is marked for sharing with the hackers who submitted this project.",
       label: "Shared with hackers",
     };
   }
@@ -46,18 +46,17 @@ function policyCopy(
     return shared
       ? {
           description:
-            "The hackers who submitted this project will receive this response.",
+            "This response is marked for sharing with the hackers who submitted this project.",
           label: "Shared with hackers",
         }
       : {
           description:
-            "The hackers who submitted this project will not receive this response.",
+            "This response is excluded from hacker feedback delivery.",
           label: "Not shared with hackers",
         };
   }
   return {
-    description:
-      "The hackers who submitted this project will not receive this response.",
+    description: "This response is excluded from hacker feedback delivery.",
     label: "Not shared with hackers",
   };
 }
@@ -192,13 +191,13 @@ export function EvaluationDialog({
               <Eye className="size-4 text-primary" />
               <AlertTitle className="text-primary">
                 {workspace.principalKind === "guest"
-                  ? "Choose what hackers receive"
+                  ? "Choose what will be shared with hackers"
                   : "Your feedback is shared with hackers"}
               </AlertTitle>
               <AlertDescription>
                 {workspace.principalKind === "guest"
-                  ? "Each written response below shows whether the hackers who submitted this project will receive it. Authenticated judges and officers can review every response."
-                  : "Every written response you submit will be shared with the hackers who submitted this project. Other authenticated judges and officers can also review it."}
+                  ? "Each written response below shows whether it is marked for sharing with this project's hackers. Authenticated judges and officers can review every response."
+                  : "Every written response you submit is marked for sharing with this project's hackers. Other authenticated judges and officers can also review it."}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -323,8 +322,8 @@ export function EvaluationDialog({
             <div className="text-xs leading-5 text-muted-foreground">
               <p>
                 {workspace.principalKind === "guest"
-                  ? "Judges and officers can review every response. Hacker visibility follows the setting shown under each field."
-                  : "Your written responses will be shared with this project's hackers."}
+                  ? "Judges and officers can review every response. Hacker sharing follows the setting shown under each field."
+                  : "Your written responses are marked for sharing with this project's hackers."}
               </p>
               {saveError ? (
                 <p className="text-destructive" role="alert">

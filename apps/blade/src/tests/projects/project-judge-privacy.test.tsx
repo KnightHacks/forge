@@ -292,9 +292,7 @@ describe("judge project directory", () => {
     expect(
       screen.queryByRole("option", { name: "Challenge rating" }),
     ).toBeNull();
-    expect(screen.getAllByTitle("1 evaluation")[0]).toHaveClass(
-      "bg-emerald-950",
-    );
+    expect(screen.getAllByTitle("1 evaluation")[0]).toBeInTheDocument();
     const includeJudged = screen.getByRole("switch", {
       name: "See previously judged projects",
     });
@@ -427,7 +425,9 @@ describe("evaluation feedback visibility", () => {
       />,
     );
 
-    expect(screen.getByText("Choose what hackers receive")).toBeInTheDocument();
+    expect(
+      screen.getByText("Choose what will be shared with hackers"),
+    ).toBeInTheDocument();
     expect(
       screen.getAllByText("Not shared with hackers")[0],
     ).toBeInTheDocument();

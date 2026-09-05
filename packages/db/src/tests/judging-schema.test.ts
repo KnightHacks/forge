@@ -15,6 +15,7 @@ import {
   ProjectEvaluationRating,
   ProjectEvaluationResponse,
   ProjectEvaluationRevision,
+  ProjectToChallenge,
 } from "../schemas/knight-hacks";
 
 function indexPredicate(table: PgTable, indexName: string) {
@@ -110,6 +111,37 @@ describe("judging room storage", () => {
     expect(unique).toContain(
       "knight_hacks_project_evaluation_judge_project_challenge_unique",
     );
+  });
+
+  it("requires the evaluated project to enter the selected challenge", () => {
+    const membershipUnique = getTableConfig(
+      ProjectToChallenge,
+    ).uniqueConstraints.find(
+      (constraint) =>
+        constraint.name ===
+        "knight_hacks_project_to_challenge_project_challenge_hackathon_unique",
+    );
+    expect(membershipUnique).toBeDefined();
+
+    const membershipForeignKey = getTableConfig(
+      ProjectEvaluation,
+    ).foreignKeys.find(
+      (key) =>
+        key.getName() ===
+        "knight_hacks_project_evaluation_project_challenge_scope_fk",
+    );
+    expect(membershipForeignKey).toBeDefined();
+    const reference = membershipForeignKey?.reference();
+    expect(reference?.columns.map((column) => column.name)).toEqual([
+      "projectId",
+      "challengeId",
+      "hackathonId",
+    ]);
+    expect(reference?.foreignColumns.map((column) => column.name)).toEqual([
+      "projectId",
+      "challengeId",
+      "hackathonId",
+    ]);
   });
 
   it("checks rating values in the database", () => {

@@ -372,7 +372,10 @@ export function JudgeProjectWorkspace({
                       cell: (project) => {
                         const score = scoreByProject.get(project.id)?.scoped;
                         return score?.value === null || score === undefined ? (
-                          "(?)"
+                          <>
+                            <span aria-hidden="true">(?)</span>
+                            <span className="sr-only">Not rated</span>
+                          </>
                         ) : (
                           <Button
                             className="h-auto p-0 font-mono"
@@ -398,9 +401,14 @@ export function JudgeProjectWorkspace({
                                 project.id,
                               )?.overall;
                               return score?.value === null ||
-                                score === undefined
-                                ? "(?)"
-                                : `${score.value.toFixed(2)} (${score.count})`;
+                                score === undefined ? (
+                                <>
+                                  <span aria-hidden="true">(?)</span>
+                                  <span className="sr-only">Not rated</span>
+                                </>
+                              ) : (
+                                `${score.value.toFixed(2)} (${score.count})`
+                              );
                             },
                             header: "Rating",
                           },

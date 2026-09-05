@@ -90,11 +90,12 @@ The rubric requires at least one quantitative item before judging opens. Once th
 - Result visibility control for authenticated member judges.
 - A combined project command center for projects, rubric, judging controls, and room operations.
 - Import and deletion safety once judging data exists.
+- Persisted hacker-sharing eligibility for every short response.
 - Server-rendered initial data, matching loading skeletons, responsive layouts, and accessible controls.
 
 ### Out of scope
 
-- Choosing award winners or delivering saved feedback to hackers.
+- Choosing award winners or building the hacker-facing feedback view and delivery process.
 - Assigning projects to presentation time slots.
 - Scheduling routes through judging rooms.
 - Judge calibration or score normalization.

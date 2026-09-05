@@ -1,7 +1,7 @@
 "use client";
 
 import type { DragEndEvent } from "@dnd-kit/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   closestCenter,
@@ -344,6 +344,10 @@ export function JudgeDeliberation({
   const removeProject = api.judging.removeDeliberationProject.useMutation();
   const reorderProjects = api.judging.reorderDeliberationProjects.useMutation();
   const disabled = workspace.state !== "open";
+
+  useEffect(() => {
+    setSections(initialSections);
+  }, [initialSections]);
 
   async function refreshMutation(
     action: () => Promise<unknown>,

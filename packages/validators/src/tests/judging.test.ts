@@ -165,6 +165,27 @@ describe("judging inputs", () => {
     }
   });
 
+  it("rejects duplicate answer item IDs", () => {
+    const base = {
+      projectId,
+      ratings: [{ itemId, value: 3 }],
+      responses: [{ itemId: responseId, value: "Useful feedback" }],
+    };
+
+    expect(
+      judgingEvaluationSaveSchema.safeParse({
+        ...base,
+        ratings: [...base.ratings, ...base.ratings],
+      }).success,
+    ).toBe(false);
+    expect(
+      judgingEvaluationSaveSchema.safeParse({
+        ...base,
+        responses: [...base.responses, ...base.responses],
+      }).success,
+    ).toBe(false);
+  });
+
   it("rejects duplicate reorder IDs", () => {
     expect(
       judgingReorderSchema.safeParse({ ids: [itemId, itemId] }).success,
