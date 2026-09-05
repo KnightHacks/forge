@@ -42,7 +42,7 @@ None.
 - [x] Create and assign the GitHub issue with required labels.
 - [x] Push the branch and open a fully documented PR.
 - [x] Upload many screenshots to GitHub discussion only.
-- [ ] Address, reply to, resolve, and re-request CodeRabbit review until approved.
+- [x] Address, reply to, resolve, and re-request CodeRabbit review until approved.
 
 ## Validation and commands
 
@@ -51,11 +51,12 @@ None.
 - Published KH8 Devpost review: confirmed Originality, Technical Understanding, Functionality, Design, and Wow Factor as useful seed content, not code constants.
 - GitHub browser review: PR #529 establishes the expected issue linking, detailed flow narrative, labels, test evidence, and externally hosted screenshots.
 - GitHub CLI and Git network access: authenticated as `DVidal1205`. The feature branch is based on `origin/main` at `f4436df1`.
-- Full package tests: `@forge/db` 146 passed, `@forge/api` 768 passed, `@forge/blade` 774 passed, and `@forge/validators` 267 passed. Total: 1,955 passing tests.
+- Full package tests: `@forge/db` 147 passed, `@forge/api` 768 passed, `@forge/blade` 775 passed, and `@forge/validators` 268 passed. Total: 1,958 passing tests.
 - Repository verification: `pnpm verify:precommit`, `pnpm --filter @forge/db with-env drizzle-kit check`, `pnpm --filter @forge/blade build`, and `git diff --check` passed.
 - Depth-5 Forge review: completed security and access control, persistence and migration, API contracts, UI and accessibility, and test and product-behavior passes. All identified blockers were fixed and reverified.
 - Browser verification: completed guest naming, challenge-scoped project access, hacker feedback visibility, submission history, and deliberation flows. Also checked the authenticated member workspace, score sorting, completion badges, aggregate columns, project command center, room QR controls, evaluation audit history, and 390px and 320px layouts against the KH VIII import.
 - PR evidence: 15 screenshots were generated in `/tmp/forge-judging-pr`. These files stay outside the repository and will be attached through GitHub-hosted review media only.
+- CodeRabbit review: all four major threads and four grouped accessibility and test-quality findings were fixed. Every inline thread has a reply and resolution. CodeRabbit approved the PR after the final checks passed.
 
 ## Links
 
