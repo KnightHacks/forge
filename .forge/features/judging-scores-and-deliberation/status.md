@@ -40,8 +40,8 @@ None.
 - [x] Run Forge review at depth 5 and clear all blockers.
 - [x] Sync and rebase onto current GitHub `main` once host Git access is available.
 - [x] Create and assign the GitHub issue with required labels.
-- [ ] Push the branch and open a fully documented PR.
-- [ ] Upload many screenshots to GitHub discussion only.
+- [x] Push the branch and open a fully documented PR.
+- [x] Upload many screenshots to GitHub discussion only.
 - [ ] Address, reply to, resolve, and re-request CodeRabbit review until approved.
 
 ## Validation and commands
@@ -59,6 +59,6 @@ None.
 
 ## Links
 
-- PRs:
+- PRs: https://github.com/KnightHacks/forge/pull/532
 - Issues: https://github.com/KnightHacks/forge/issues/531
 - Reference PR: https://github.com/KnightHacks/forge/pull/529
