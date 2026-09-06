@@ -10,8 +10,14 @@ use native Discord embed typography, the existing purple accent, and dated rows.
 
 ## Payload contract
 
-One embed per section, continuing after eight events or before 4096 description
-characters. Send each embed separately to stay below the 6000 aggregate character
+Count events after grouping and filtering. At most two eligible events retain
+the original per-event embeds and separate section headings. Three or more
+eligible events use compact cards throughout the reminder, even when spread
+across different days. This preserves detail for small schedules without letting
+a busy week produce many large cards.
+
+Compact mode uses one or more embeds per section, continuing after eight events
+or before 4096 description characters. Send each embed separately to stay below the 6000 aggregate character
 limit. See [Discord embed limits](https://docs.discord.com/developers/resources/message#embed-limits).
 Normalize whitespace, bound label lengths, escape Markdown, and retain complete
 links. Split only between rows; repeat date context in continuation titles.
@@ -30,7 +36,8 @@ tests use an injected sender.
 
 ## Verification
 
-Extend cron tests for compact rows, continuation, 60-event volume, long labels,
+Extend cron tests for the two-to-three-event transition, ignored candidates,
+counts across days, compact rows, continuation, 60-event volume, long labels,
 links, and unchanged notifications. Run cron tests, format, lint, and typecheck.
 Inspect desktop and 320px local previews, then verify the authorized development
 preview in the actual Discord desktop client. PR evidence uses actual Discord

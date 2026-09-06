@@ -8,6 +8,9 @@ Current phase: PR open; CI and review pending; not deployed
   destinations, and production pings stay unchanged.
 - 2026-09-06: Restored the original daily introduction, Sunday introduction,
   and footer after user feedback. Scope is layout refinement, not copy editing.
+- 2026-09-06: User requested retaining big cards for small schedules. Use the
+  original layout for one or two eligible events across the whole reminder,
+  and compact cards for three or more.
 - Keep presentation in cron: dated sections, up to eight rows per card, linked
   details, and the existing purple accent. No shared-package changes.
 - Branch: `cron/compact-event-reminders`, based on main at `566b4ee5`.
@@ -25,9 +28,10 @@ Current phase: PR open; CI and review pending; not deployed
 
 ## Validation
 
-- `pnpm --filter=@forge/cron test`: 33 tests passed across 6 files.
-- New formatting tests failed against the original formatter, then passed after
-  implementation (4 new cases; 7 existing reminder cases retained).
+- `pnpm --filter=@forge/cron test`: 36 tests passed across 6 files.
+- Presentation regressions failed before their respective fixes. All 14 reminder
+  cases now pass, including full cards for one or two events, compact cards from
+  three events, ignored candidates, and counting across days.
 - `pnpm format`: passed, 24 tasks.
 - `pnpm lint`: passed, 31 tasks; existing warnings in other packages.
 - `pnpm typecheck`: passed, 33 tasks.
@@ -37,7 +41,7 @@ Current phase: PR open; CI and review pending; not deployed
 - Cron has no compilation step. No React changes; React analysis is not applicable.
 - `git diff --check`: passed.
 - Added exact-copy regression assertions for both introductions and the footer;
-  they failed against the rewritten copy before restoration. All 33 cron tests
+  they failed against the rewritten copy before restoration. All 36 cron tests
   pass after the correction.
 - 60-event fixture: 63 messages / 60 embeds before; 10 messages / 8 embeds after.
 
@@ -65,3 +69,33 @@ notification checks without credentials.
 The development preview introduction and footer were edited in place to restore
 the original wording. Readback matched both updates with zero notifications.
 PR screenshots show the unchanged event cards without the superseded copy.
+
+## Before and after comparison
+
+Sent the same eight synthetic Monday events through the main formatter and the
+PR formatter. The original introductions and footer match in both versions.
+The development-only comparison label identifies each version; notifications
+were disabled and readback confirmed no user, role, or everyone mentions.
+
+- Before: 11 messages, including eight individual event cards and a weekday heading.
+- After: three messages, including one card containing all eight event rows.
+- Card counts exclude Discord's automatic footer-link preview.
+
+The user supplied three actual Discord screenshots. They are saved unchanged as
+[before](evidence/discord-before.png),
+[more of the original cards](evidence/discord-before-more.png), and
+[after](evidence/discord-after.png). The PR pairs the first and third screenshots
+and includes the second as additional evidence of the repeated cards. These are
+different crops, so they demonstrate the layout without claiming an exact
+reduction in rendered height. [Comparison delivery](evidence/discord-comparison.json)
+records formatter commits, message counts, and links.
+
+## Review notes
+
+CodeRabbit requested clearer embed cardinality; the SRD now states one or more
+embeds per compact section. Its delivery-failure suggestion changes the existing
+stop-on-send-failure policy inherited from main. That behavior remains outside
+this presentation change; no delivery errors are swallowed.
+
+The previous PR revision passed CI, including the repository build. Local build
+verification remains blocked by the missing `apps/2026` environment values above.

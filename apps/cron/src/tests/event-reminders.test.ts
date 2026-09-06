@@ -83,9 +83,11 @@ describe("club event reminders", () => {
       typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
     );
     expect(embeds.map((embed) => embed.title)).toEqual([
-      "Monday, June 29, 2026",
-      "Wednesday, July 1, 2026",
+      "Current Workshop",
+      "Wednesday GBM",
     ]);
+    expect(send).toHaveBeenCalledWith("## Monday");
+    expect(send).toHaveBeenCalledWith("## Wednesday");
   });
 
   it("TC-028 emits nothing when the selector returns no eligible events", async () => {
@@ -211,6 +213,96 @@ describe("club event reminders", () => {
   });
 });
 
+describe("club reminder density", () => {
+  it.each([1, 2])(
+    "TC-005 preserves full cards for %i eligible events",
+    async (count) => {
+      const events = Array.from({ length: count }, (_, index) => ({
+        ...currentWorkshop,
+        name: `Workshop ${index + 1}`,
+        discordId: String(111111111111111111n + BigInt(index)),
+      }));
+      const send =
+        vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+      await createClubReminderExecutor({
+        getCandidates: () =>
+          Promise.resolve([
+            ...events,
+            {
+              ...currentWorkshop,
+              startDateTime: "2026-07-03T18:00:00-04:00",
+              endDateTime: "2026-07-03T20:00:00-04:00",
+            },
+            {
+              ...currentWorkshop,
+              startDateTime: "2026-07-13T18:00:00-04:00",
+              endDateTime: "2026-07-13T20:00:00-04:00",
+            },
+          ]),
+        now: () => new Date("2026-06-29T09:00:00-04:00"),
+        send,
+      })();
+
+      const embeds = send.mock.calls.flatMap(([payload]) =>
+        typeof payload === "object" && "embeds" in payload
+          ? payload.embeds
+          : [],
+      );
+      expect(embeds).toEqual(
+        events.map((event) => ({
+          author: { name: "[WORKSHOP]" },
+          color: 0xcca4f4,
+          description: event.description,
+          fields: [
+            { inline: true, name: "Date", value: "Monday, June 29, 2026" },
+            { inline: true, name: "Location", value: "ENG2 102" },
+            { name: "\t", value: "\t" },
+            { inline: true, name: "Start", value: "6:00 PM" },
+            { inline: true, name: "End", value: "8:00 PM" },
+          ],
+          thumbnail: { url: "https://i.imgur.com/Jr1cyxT.png" },
+          title: event.name,
+          url: `https://discord.com/events/486628710443778071/${event.discordId}`,
+        })),
+      );
+      expect(send).toHaveBeenNthCalledWith(2, "## Today");
+      expect(send).toHaveBeenCalledTimes(count + 3);
+    },
+  );
+
+  it("TC-006 uses compact cards when three events span different days", async () => {
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    await createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve(
+          ["2026-06-29", "2026-06-30", "2026-07-06"].map((date, index) => ({
+            ...currentWorkshop,
+            discordId: String(111111111111111111n + BigInt(index)),
+            startDateTime: `${date}T18:00:00-04:00`,
+            endDateTime: `${date}T20:00:00-04:00`,
+          })),
+        ),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    })();
+
+    const embeds = send.mock.calls.flatMap(([payload]) =>
+      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
+    );
+    expect(embeds.map((embed) => embed.title)).toEqual([
+      "Today · Monday, June 29, 2026",
+      "Tomorrow · Tuesday, June 30, 2026",
+      "Next Week · Monday, July 6, 2026",
+    ]);
+    for (const embed of embeds) {
+      expect(embed.fields).toBeUndefined();
+      expect(embed.description).toContain("**[Current Workshop]");
+    }
+    expect(send).toHaveBeenCalledTimes(5);
+  });
+});
+
 describe("club reminder presentation", () => {
   it("TC-001 groups compact linked rows and preserves the original footer", async () => {
     const send =
@@ -223,6 +315,11 @@ describe("club reminder presentation", () => {
             ...currentWorkshop,
             name: "Evening GBM",
             discordId: "222222222222222222",
+          },
+          {
+            ...currentWorkshop,
+            name: "Open Source Night",
+            discordId: "333333333333333333",
           },
         ]),
       now: () => new Date("2026-06-29T09:00:00-04:00"),
@@ -240,7 +337,8 @@ describe("club reminder presentation", () => {
       title: "Today · Monday, June 29, 2026",
       description:
         "**[Current Workshop](https://discord.com/events/486628710443778071/111111111111111111)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop\n\n" +
-        "**[Evening GBM](https://discord.com/events/486628710443778071/222222222222222222)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop",
+        "**[Evening GBM](https://discord.com/events/486628710443778071/222222222222222222)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop\n\n" +
+        "**[Open Source Night](https://discord.com/events/486628710443778071/333333333333333333)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop",
     });
     expect(send).toHaveBeenCalledTimes(3);
     const sent = JSON.stringify(send.mock.calls);
@@ -317,6 +415,8 @@ describe("club reminder presentation", () => {
             location: "ENG2\n102",
             tag: "Project_Launch",
           },
+          currentWorkshop,
+          { ...currentWorkshop, discordId: "222222222222222222" },
         ]),
       now: () => new Date("2026-06-29T09:00:00-04:00"),
       send,
@@ -330,6 +430,6 @@ describe("club reminder presentation", () => {
       "\\[Build\\]\\(https://example.com\\) \\*\\*together\\*\\*",
     );
     expect(description).toContain("ENG2 102 · Project\\_Launch");
-    expect(description.split("\n")).toHaveLength(2);
+    expect(description.split("\n")).toHaveLength(8);
   });
 });

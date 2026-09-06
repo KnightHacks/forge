@@ -4,6 +4,7 @@ import { EVENTS } from "@forge/consts";
 
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
+const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
 
 export interface ClubReminderCandidate {
   description: string;
@@ -107,6 +108,28 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   return [...groups.entries()].map(([prefix, events]) => ({ prefix, events }));
 }
 
+function eventEmbed(event: ClubReminderCandidate): APIEmbed {
+  const start = new Date(event.startDateTime);
+  const end = new Date(event.endDateTime);
+  return {
+    author: {
+      name: `[${event.tag.toUpperCase().replaceAll(" ", "-")}]`,
+    },
+    color: 0xcca4f4,
+    description: event.description,
+    fields: [
+      { inline: true, name: "Date", value: formatDate(start) },
+      { inline: true, name: "Location", value: event.location },
+      { name: "\t", value: "\t" },
+      { inline: true, name: "Start", value: formatTime(start) },
+      { inline: true, name: "End", value: formatTime(end) },
+    ],
+    thumbnail: { url: EVENT_BANNER_IMAGE },
+    title: event.name,
+    url: `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`,
+  };
+}
+
 function compactLabel(value: string, limit: number) {
   const characters = Array.from(value.replace(/\s+/g, " ").trim());
   const label =
@@ -197,8 +220,17 @@ export function createClubReminderExecutor({
       });
     }
 
+    const eventCount = groups.reduce(
+      (total, group) => total + group.events.length,
+      0,
+    );
+    const compact = eventCount > 2;
     for (const group of groups) {
-      for (const embed of groupEmbeds(group.prefix, group.events)) {
+      if (!compact) await send(`## ${group.prefix}`);
+      const embeds = compact
+        ? groupEmbeds(group.prefix, group.events)
+        : group.events.map(eventEmbed);
+      for (const embed of embeds) {
         await send({ embeds: [embed] });
       }
     }

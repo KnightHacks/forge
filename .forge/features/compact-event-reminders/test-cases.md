@@ -5,7 +5,7 @@ sender. Existing window, eligibility, empty-result, and DST cases remain.
 
 ## TC-001: Compact daily schedule
 
-Given two same-day events, execute the reminder. Expect one dated embed with
+Given three same-day events, execute the reminder. Expect one dated embed with
 linked names, time ranges, locations, and tags in order. Omit descriptions,
 thumbnails, and field grids. Keep one role ping and the exact original daily introduction and footer.
 
@@ -18,15 +18,27 @@ and footer once.
 
 ## TC-003: Long and formatted labels
 
-Given long names, locations, tags, emoji, and Markdown, expect escaped,
+Given at least three events with long names, locations, tags, emoji, and Markdown, expect escaped,
 single-line labels with ellipses and intact Unicode and event links. Split
 between rows when the character limit is reached before eight events.
 
 ## TC-004: Sunday regression
 
-Given Sunday candidates on different weekdays, expect separate dated weekday
-cards, the exact original Sunday introduction/week range, and one everyone ping. Preserve existing
+Given two Sunday candidates on different weekdays, expect the original full
+cards and weekday headings, the exact original Sunday introduction/week range,
+and one everyone ping. Preserve existing
 daily windows, excluded tags, empty results, and spring/fall DST behavior.
+
+## TC-005: Small schedules retain details
+
+Given one or two eligible events plus candidates outside the reminder windows,
+expect the exact original card fields, description, thumbnail, event title/link,
+and standalone section heading. Ineligible candidates do not trigger compact mode.
+
+## TC-006: Count across the entire reminder
+
+Given three eligible events spread across Today, Tomorrow, and Next Week, expect
+three compact dated cards. Do not choose the style separately for each section.
 
 ## Visual review
 

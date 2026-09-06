@@ -1,0 +1,84 @@
+{
+  "eventCount": 8,
+  "eventDate": "2026-09-07",
+  "data": "Identical synthetic event names, descriptions, times, locations, tags, and links in both versions.",
+  "screenshots": "Unmodified Discord screenshots supplied by the user.",
+  "allowedMentions": {
+    "parse": []
+  },
+  "notificationReadback": "No user, role, or everyone mentions in either preview.",
+  "versions": [
+    {
+      "version": "before",
+      "formatterCommit": "566b4ee5",
+      "messageCount": 11,
+      "eventCardCount": 8,
+      "messages": [
+        {
+          "id": "1546261372382347294",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261372382347294"
+        },
+        {
+          "id": "1546261374349353014",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261374349353014"
+        },
+        {
+          "id": "1546261376304029809",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261376304029809"
+        },
+        {
+          "id": "1546261379110146172",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261379110146172"
+        },
+        {
+          "id": "1546261381681119243",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261381681119243"
+        },
+        {
+          "id": "1546261383958630493",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261383958630493"
+        },
+        {
+          "id": "1546261401385832580",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261401385832580"
+        },
+        {
+          "id": "1546261403420069889",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261403420069889"
+        },
+        {
+          "id": "1546261413675405456",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261413675405456"
+        },
+        {
+          "id": "1546261415403200695",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261415403200695"
+        },
+        {
+          "id": "1546261417273987102",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261417273987102"
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "formatterCommit": "7960e9662067d9c7d06708c2e0e85230d359bb9c",
+      "messageCount": 3,
+      "eventCardCount": 1,
+      "messages": [
+        {
+          "id": "1546261427604689026",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261427604689026"
+        },
+        {
+          "id": "1546261429777207309",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261429777207309"
+        },
+        {
+          "id": "1546261432755163332",
+          "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546261432755163332"
+        }
+      ]
+    }
+  ]
+}
