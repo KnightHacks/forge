@@ -13,6 +13,7 @@ import {
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
+  JudgingRubricItem,
   ProjectChallenge,
 } from "@forge/db/schemas/knight-hacks";
 import {
@@ -46,6 +47,7 @@ import {
 } from "../utils/audit/service";
 import { resolveJudgeAccess } from "../utils/judging/principal";
 import { assertCanManageProjects } from "../utils/projects/access";
+import { judgingScoresRouter } from "./judging-scores";
 
 const contextInputSchema = z.object({
   hackathonId: z.string().uuid().optional(),
@@ -290,6 +292,7 @@ async function joinMemberRoom(input: {
 }
 
 export const judgingRouter = createTRPCRouter({
+  ...judgingScoresRouter,
   getContext: publicProcedure
     .input(contextInputSchema)
     .query(async ({ ctx, input }) => {
@@ -569,14 +572,45 @@ export const judgingRouter = createTRPCRouter({
           ),
         )
         .orderBy(asc(Judge.displayName));
-      const lock = await db.query.HackathonJudgingConfiguration.findFirst({
-        columns: { projectInventoryLockedAt: true },
-        where: eq(HackathonJudgingConfiguration.hackathonId, input.hackathonId),
-      });
+      const [configuration, rubric] = await Promise.all([
+        db.query.HackathonJudgingConfiguration.findFirst({
+          columns: {
+            closedAt: true,
+            displayAllResultsToMembers: true,
+            openedAt: true,
+            projectInventoryLockedAt: true,
+            state: true,
+          },
+          where: eq(
+            HackathonJudgingConfiguration.hackathonId,
+            input.hackathonId,
+          ),
+        }),
+        db
+          .select({
+            description: JudgingRubricItem.description,
+            guestVisibilityPolicy: JudgingRubricItem.guestVisibilityPolicy,
+            id: JudgingRubricItem.id,
+            kind: JudgingRubricItem.kind,
+            label: JudgingRubricItem.label,
+            memberVisibilityPolicy: JudgingRubricItem.memberVisibilityPolicy,
+            required: JudgingRubricItem.required,
+          })
+          .from(JudgingRubricItem)
+          .where(eq(JudgingRubricItem.hackathonId, input.hackathonId))
+          .orderBy(asc(JudgingRubricItem.displayOrder)),
+      ]);
       return {
         hackathon,
         challenges,
-        inventoryLockedAt: lock?.projectInventoryLockedAt ?? null,
+        configuration: {
+          closedAt: configuration?.closedAt ?? null,
+          displayAllResults: configuration?.displayAllResultsToMembers ?? false,
+          openedAt: configuration?.openedAt ?? null,
+          state: configuration?.state ?? ("draft" as const),
+        },
+        inventoryLockedAt: configuration?.projectInventoryLockedAt ?? null,
+        rubric,
         rooms: rooms.map((room) => ({
           ...room,
           activeLinkId:

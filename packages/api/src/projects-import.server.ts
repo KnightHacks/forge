@@ -12,6 +12,7 @@ import {
   JudgingRoomPresence,
   Project,
   ProjectChallenge,
+  ProjectEvaluation,
   ProjectMember,
   ProjectToChallenge,
 } from "@forge/db/schemas/knight-hacks";
@@ -63,13 +64,24 @@ export async function importDevpostProjects(input: {
       });
     }
 
-    const lock = await tx.query.HackathonJudgingConfiguration.findFirst({
-      columns: { projectInventoryLockedAt: true },
-      where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
-    });
+    const [lock, evaluation] = await Promise.all([
+      tx.query.HackathonJudgingConfiguration.findFirst({
+        columns: { projectInventoryLockedAt: true },
+        where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
+      }),
+      tx.query.ProjectEvaluation.findFirst({
+        columns: { id: true },
+        where: eq(ProjectEvaluation.hackathonId, hackathon.id),
+      }),
+    ]);
     const locked =
       lock?.projectInventoryLockedAt !== null && lock !== undefined;
-    const addOnly = locked && input.mode !== "replace";
+    const addOnly = (locked || Boolean(evaluation)) && input.mode !== "replace";
+    if (evaluation && input.mode === "replace") {
+      throw new ProjectImportError(
+        "The project inventory cannot be replaced after judging submissions exist. Import normally to add new projects.",
+      );
+    }
     if (
       locked &&
       input.mode === "replace" &&

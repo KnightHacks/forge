@@ -5,23 +5,47 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
+import { EvaluationDialog } from "~/app/_components/judging/evaluation-dialog";
 import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
 import { ProjectDetailDialog } from "~/app/_components/projects/project-detail-dialog";
 import { ProjectDirectory } from "~/app/_components/projects/project-directory";
 
-const navigation = vi.hoisted(() => ({ replace: vi.fn() }));
+const navigation = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  replace: vi.fn(),
+  saveEvaluation: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/judge/projects",
-  useRouter: () => ({ replace: navigation.replace }),
+  useRouter: () => ({
+    refresh: navigation.refresh,
+    replace: navigation.replace,
+  }),
   useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("~/trpc/react", () => ({
+  api: {
+    judging: {
+      getProjectJudgingDetails: {
+        useQuery: () => ({ data: undefined, error: null, isLoading: false }),
+      },
+      saveEvaluation: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: navigation.saveEvaluation,
+        }),
+      },
+    },
+  },
 }));
 
 type JudgeProject = RouterOutputs["projects"]["listJudge"]["projects"][number];
 type AdminProject = RouterOutputs["projects"]["listAdmin"]["projects"][number];
 
 const sharedProject = {
-  challenges: [{ id: "challenge-1", label: "General" }],
+  challenges: [{ evaluationCount: 1, id: "challenge-1", label: "General" }],
   createdAt: new Date("2026-08-01T12:00:00.000Z"),
   deletedAt: null,
   deletedByUserId: null,
@@ -144,6 +168,14 @@ describe("judge project directory", () => {
           sort: "title",
         }}
         isOfficer={false}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "member",
+          rubric: [],
+          state: "draft",
+        }}
       />,
     );
 
@@ -156,7 +188,7 @@ describe("judge project directory", () => {
       screen.queryByRole("spinbutton", { name: "Maximum team size" }),
     ).toBeNull();
     expect(screen.getAllByText("Casey Captain").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("option", { name: "General" })).toBeNull();
+    expect(screen.getByRole("option", { name: "General" })).toBeInTheDocument();
   });
 
   it("shows a fixed room challenge instead of a guest challenge selector", () => {
@@ -169,7 +201,13 @@ describe("judge project directory", () => {
           projects: [
             {
               ...judgeProject,
-              challenges: [{ id: "challenge-acme", label: "Acme Challenge" }],
+              challenges: [
+                {
+                  evaluationCount: 0,
+                  id: "challenge-acme",
+                  label: "Acme Challenge",
+                },
+              ],
             },
           ],
           totalCount: 1,
@@ -183,11 +221,92 @@ describe("judge project directory", () => {
           sort: "title",
         }}
         lockedChallenge={{ id: "challenge-acme", label: "Acme Challenge" }}
+        showChallenges={false}
       />,
     );
 
     expect(screen.getByText("Room scope")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Challenge" })).toBeNull();
+    expect(
+      screen.queryByRole("columnheader", { name: "Challenges" }),
+    ).toBeNull();
+  });
+
+  it("renders member score controls and challenge completion", async () => {
+    navigation.replace.mockClear();
+    const user = userEvent.setup();
+    render(
+      <JudgeProjectWorkspace
+        data={{
+          challenges: judgeProject.challenges,
+          hackathon: {
+            displayName: "Knight Hacks IX",
+            endDate: new Date("2026-10-01T00:00:00.000Z"),
+            id: judgeProject.hackathonId,
+            startDate: new Date("2026-09-01T00:00:00.000Z"),
+          },
+          page: 1,
+          pageSize: 25,
+          projects: [judgeProject],
+          totalCount: 1,
+        }}
+        hackathons={[]}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }}
+        isOfficer={false}
+        scores={[
+          {
+            hasOwnEvaluation: true,
+            overall: { count: 3, value: 4 },
+            projectId: judgeProject.id,
+            scoped: { count: 2, value: 4.5 },
+          },
+        ]}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "member",
+          rubric: [],
+          state: "open",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "Projects" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: "Submissions" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: "Deliberation" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Challenge rating").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Rating").length).toBeGreaterThan(0);
+    expect(screen.getByRole("option", { name: "Rating" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Challenge rating" }),
+    ).toBeNull();
+    expect(screen.getAllByTitle("1 evaluation")[0]).toBeInTheDocument();
+    const includeJudged = screen.getByRole("switch", {
+      name: "See previously judged projects",
+    });
+    expect(includeJudged).not.toBeChecked();
+    await user.click(includeJudged);
+    expect(navigation.replace).toHaveBeenCalledWith(
+      "/judge/projects?includeJudged=1&page=1",
+    );
+    expect(
+      screen.getAllByRole("button", {
+        name: /view judge feedback for Signal Forge/i,
+      }).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Judge" }).length).toBe(2);
   });
 
   it("opens project details from the eye button", async () => {
@@ -224,6 +343,234 @@ describe("judge project directory", () => {
     expect(
       screen.getByRole("dialog", { name: "Signal Forge" }),
     ).toBeInTheDocument();
+  });
+});
+
+describe("evaluation feedback visibility", () => {
+  it("makes authenticated feedback sharing explicit and fixed", () => {
+    render(
+      <EvaluationDialog
+        challengeLabel="General"
+        onOpenChange={vi.fn()}
+        open
+        project={{ id: judgeProject.id, title: judgeProject.title }}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "member",
+          rubric: [
+            {
+              description: "Give the team useful feedback.",
+              guestVisibilityPolicy: "public_optional",
+              id: "00000000-0000-4000-8000-000000000012",
+              kind: "short_response",
+              label: "Feedback",
+              memberVisibilityPolicy: "public",
+              required: false,
+            },
+          ],
+          state: "open",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("Your feedback is shared with hackers"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Shared with hackers").length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Share this response with this project's hackers",
+      }),
+    ).toBeNull();
+  });
+
+  it("explains optional guest sharing before submission", () => {
+    render(
+      <EvaluationDialog
+        challengeLabel="Acme Challenge"
+        onOpenChange={vi.fn()}
+        open
+        project={{ id: judgeProject.id, title: judgeProject.title }}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "guest",
+          rubric: [
+            {
+              description: "Assess the project.",
+              guestVisibilityPolicy: null,
+              id: "00000000-0000-4000-8000-000000000011",
+              kind: "rating",
+              label: "Technical understanding",
+              memberVisibilityPolicy: null,
+              required: true,
+            },
+            {
+              description: "Leave a note.",
+              guestVisibilityPolicy: "public_optional",
+              id: "00000000-0000-4000-8000-000000000012",
+              kind: "short_response",
+              label: "Feedback",
+              memberVisibilityPolicy: "public",
+              required: false,
+            },
+          ],
+          state: "open",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText("Choose what will be shared with hackers"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Not shared with hackers")[0],
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Share this response with this project's hackers",
+      }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("radiogroup", { name: "Technical understanding" }),
+    ).toBeInTheDocument();
+  });
+
+  it("prefills and edits a saved guest evaluation", async () => {
+    navigation.refresh.mockClear();
+    navigation.saveEvaluation.mockReset().mockResolvedValue({
+      evaluationId: "00000000-0000-4000-8000-000000000021",
+      revision: 3,
+      score: 5,
+    });
+    const onOpenChange = vi.fn();
+    const user = userEvent.setup();
+    const ratingId = "00000000-0000-4000-8000-000000000011";
+    const responseId = "00000000-0000-4000-8000-000000000012";
+    const workspace = {
+      challengeId: "00000000-0000-4000-8000-000000000031",
+      displayAllResults: false,
+      hackathonId: judgeProject.hackathonId,
+      principalKind: "guest" as const,
+      rubric: [
+        {
+          description: "Assess the project.",
+          guestVisibilityPolicy: null,
+          id: ratingId,
+          kind: "rating" as const,
+          label: "Technical understanding",
+          memberVisibilityPolicy: null,
+          required: true,
+        },
+        {
+          description: "Leave a note.",
+          guestVisibilityPolicy: "public_optional" as const,
+          id: responseId,
+          kind: "short_response" as const,
+          label: "Feedback",
+          memberVisibilityPolicy: "public" as const,
+          required: false,
+        },
+      ],
+      state: "open" as const,
+    };
+    const submission = {
+      challengeId: workspace.challengeId,
+      challengeLabel: "Acme Challenge",
+      createdAt: new Date("2026-09-05T12:00:00.000Z"),
+      id: "00000000-0000-4000-8000-000000000021",
+      projectAvailable: true,
+      projectId: judgeProject.id,
+      projectTitle: judgeProject.title,
+      ratings: [
+        {
+          evaluationId: "00000000-0000-4000-8000-000000000021",
+          itemId: ratingId,
+          label: "Technical understanding",
+          value: 4,
+        },
+      ],
+      responses: [
+        {
+          evaluationId: "00000000-0000-4000-8000-000000000021",
+          isPublic: true,
+          itemId: responseId,
+          label: "Feedback",
+          value: "Promising first pass",
+        },
+      ],
+      revision: 2,
+      score: 4,
+      updatedAt: new Date("2026-09-05T13:00:00.000Z"),
+    } satisfies RouterOutputs["judging"]["listMySubmissions"][number];
+
+    render(
+      <EvaluationDialog
+        challengeLabel="Acme Challenge"
+        onOpenChange={onOpenChange}
+        open
+        project={{ id: judgeProject.id, title: judgeProject.title }}
+        submission={submission}
+        workspace={workspace}
+      />,
+    );
+
+    expect(screen.getByRole("radio", { name: "4" })).toBeChecked();
+    expect(screen.getByRole("textbox", { name: "Feedback" })).toHaveValue(
+      "Promising first pass",
+    );
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Share this response with this project's hackers",
+      }),
+    ).toBeChecked();
+
+    await user.click(screen.getByRole("radio", { name: "5" }));
+    const response = screen.getByRole("textbox", { name: "Feedback" });
+    await user.clear(response);
+    await user.type(response, "Ready for finals");
+    await user.click(screen.getByRole("button", { name: "Update submission" }));
+
+    await waitFor(() =>
+      expect(navigation.saveEvaluation).toHaveBeenCalledWith({
+        challengeId: workspace.challengeId,
+        hackathonId: workspace.hackathonId,
+        projectId: judgeProject.id,
+        ratings: [{ itemId: ratingId, value: 5 }],
+        responses: [
+          { isPublic: true, itemId: responseId, value: "Ready for finals" },
+        ],
+      }),
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(navigation.refresh).toHaveBeenCalled();
+  });
+
+  it("keeps a closed evaluation read-only", () => {
+    render(
+      <EvaluationDialog
+        challengeLabel="General"
+        onOpenChange={vi.fn()}
+        open
+        project={{ id: judgeProject.id, title: judgeProject.title }}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "member",
+          rubric: [],
+          state: "closed",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Judging is closed")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Submit score" })).toBeDisabled();
   });
 });
 

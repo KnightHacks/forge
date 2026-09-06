@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   DoorOpen,
   FolderKanban,
   LogOut,
   MapPin,
+  Pencil,
   ShieldCheck,
+  Star,
 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 import { toast } from "@forge/ui/toast";
 
 import type { ProjectDirectoryInput } from "./project-directory";
@@ -21,11 +24,20 @@ import {
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 import { api } from "~/trpc/react";
+import { EvaluationDialog } from "../judging/evaluation-dialog";
+import { JudgeDeliberation } from "../judging/judge-deliberation";
+import { JudgeSubmissions } from "../judging/judge-submissions";
+import { ProjectScoreDialog } from "../judging/project-score-dialog";
 import { ProjectDirectory } from "./project-directory";
 
 type JudgeData = RouterOutputs["projects"]["listJudge"];
 type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
 type JudgingContext = RouterOutputs["judging"]["getContext"];
+type Workspace = RouterOutputs["judging"]["getWorkspace"];
+type Scores = RouterOutputs["judging"]["getProjectScores"];
+type Submissions = RouterOutputs["judging"]["listMySubmissions"];
+type Deliberation = RouterOutputs["judging"]["listMyDeliberation"];
+type JudgeProject = JudgeData["projects"][number];
 
 function JudgingHeartbeat({ roomId }: { roomId: string }) {
   const router = useRouter();
@@ -125,13 +137,13 @@ function MemberRoomSelector({
   }
 
   return (
-    <label className="space-y-1">
+    <label className="w-full min-w-0 space-y-1 sm:w-72">
       <span className="block text-xs font-medium text-muted-foreground">
         Judging room
       </span>
       <select
         aria-label="Judging room"
-        className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm"
+        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
         disabled={joinRoom.isPending || leaveRoom.isPending}
         onChange={(event) => void selectRoom(event.target.value)}
         value={context.activeRoomId ?? ""}
@@ -149,12 +161,18 @@ function MemberRoomSelector({
 
 export function JudgeProjectWorkspace({
   data,
+  deliberation = [],
   hackathons,
   input,
   isOfficer,
   judgingContext,
+  scores = [],
+  selectedTab = "projects",
+  submissions = [],
+  workspace = null,
 }: {
   data: JudgeData;
+  deliberation?: Deliberation;
   hackathons: Hackathons;
   input: ProjectDirectoryInput & { hackathonId?: string };
   isOfficer: boolean;
@@ -162,11 +180,18 @@ export function JudgeProjectWorkspace({
     JudgingContext,
     { kind: "none" | "incomplete-guest" }
   >;
+  scores?: Scores;
+  selectedTab?: "deliberation" | "projects" | "submissions";
+  submissions?: Submissions;
+  workspace?: Workspace | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const [evaluationProject, setEvaluationProject] =
+    useState<JudgeProject | null>(null);
+  const [scoreProject, setScoreProject] = useState<JudgeProject | null>(null);
   const context = judgingContext ?? {
     activeRoomId: null,
     displayName: "",
@@ -196,20 +221,41 @@ export function JudgeProjectWorkspace({
     startTransition(() => router.replace(`${pathname}?${next.toString()}`));
   }
 
+  function selectTab(tab: string) {
+    const next = new URLSearchParams(searchParams.toString());
+    if (tab === "projects") next.delete("tab");
+    else next.set("tab", tab);
+    startTransition(() => router.replace(`${pathname}?${next.toString()}`));
+  }
+
+  const scoreByProject = new Map(
+    scores.map((score) => [score.projectId, score]),
+  );
+  const challengeLabel =
+    data.challenges.find((challenge) => challenge.id === workspace?.challengeId)
+      ?.label ??
+    (context.kind === "guest" ? context.challengeLabel : "General") ??
+    "Room challenge";
+  const selectedSubmission = submissions.find(
+    (submission) =>
+      submission.projectId === evaluationProject?.id &&
+      submission.challengeId === workspace?.challengeId,
+  );
+
   return (
     <main className={adminPageLayoutClassName} aria-busy={pending}>
       <AdminPageHeader
         actions={
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto">
             {memberContext?.rooms.length ? (
               <MemberRoomSelector context={memberContext} />
             ) : null}
             {isOfficer && hackathons.length ? (
-              <label>
+              <label className="w-full min-w-0 sm:w-72">
                 <span className="sr-only">Preview hackathon</span>
                 <select
                   aria-label="Preview hackathon"
-                  className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm"
+                  className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
                   onChange={(event) => selectHackathon(event.target.value)}
                   value={input.hackathonId ?? data.hackathon?.id ?? ""}
                 >
@@ -273,21 +319,158 @@ export function JudgeProjectWorkspace({
           {heartbeatRoomId ? (
             <JudgingHeartbeat roomId={heartbeatRoomId} />
           ) : null}
-          <ProjectDirectory
-            data={data}
-            emptyDescription="No projects match this view yet."
-            input={input}
-            lockedChallenge={
-              context.kind === "guest"
-                ? {
-                    id: context.challengeId,
-                    label: context.challengeLabel ?? "Room challenge",
+          {!workspace ? (
+            <section className="rounded-lg border border-dashed border-white/15 bg-card/75 px-5 py-16 text-center shadow-xl shadow-black/10">
+              <h2 className="text-xl font-semibold">No projects imported</h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                An officer must import the Devpost project inventory before
+                judging can begin.
+              </p>
+            </section>
+          ) : null}
+          {workspace ? (
+            <Tabs onValueChange={selectTab} value={selectedTab}>
+              <TabsList className="grid h-11 w-full grid-cols-3 sm:w-fit sm:min-w-[28rem]">
+                <TabsTrigger value="projects">Projects</TabsTrigger>
+                <TabsTrigger value="submissions">Submissions</TabsTrigger>
+                <TabsTrigger value="deliberation">Deliberation</TabsTrigger>
+              </TabsList>
+              <TabsContent className="mt-4" value="projects">
+                <ProjectDirectory
+                  actions={(project) => {
+                    const submitted = submissions.some(
+                      (submission) =>
+                        submission.projectId === project.id &&
+                        submission.challengeId === workspace.challengeId,
+                    );
+                    return (
+                      <Button
+                        className="min-h-11 sm:min-h-9"
+                        disabled={workspace.state !== "open"}
+                        onClick={() => setEvaluationProject(project)}
+                        size="sm"
+                        type="button"
+                      >
+                        {submitted ? (
+                          <Pencil className="mr-2 size-4" aria-hidden="true" />
+                        ) : (
+                          <Star className="mr-2 size-4" aria-hidden="true" />
+                        )}
+                        {submitted ? "Edit" : "Judge"}
+                      </Button>
+                    );
+                  }}
+                  data={data}
+                  defaultChallengeLabel="General"
+                  emptyDescription={
+                    input.includeJudged
+                      ? "No projects match this view yet."
+                      : "You have judged every project in this challenge. Turn on See previously judged to review them."
                   }
-                : undefined
-            }
-            showTeamSizeFilters={false}
-            showViewAction
-          />
+                  extraColumns={[
+                    {
+                      cell: (project) => {
+                        const score = scoreByProject.get(project.id)?.scoped;
+                        return score?.value === null || score === undefined ? (
+                          <>
+                            <span aria-hidden="true">(?)</span>
+                            <span className="sr-only">Not rated</span>
+                          </>
+                        ) : (
+                          <Button
+                            className="h-auto p-0 font-mono"
+                            onClick={() => setScoreProject(project)}
+                            type="button"
+                            variant="link"
+                          >
+                            {score.value.toFixed(2)} ({score.count})
+                            <span className="sr-only">
+                              , view judge feedback for {project.title}
+                            </span>
+                          </Button>
+                        );
+                      },
+                      header: "Challenge rating",
+                      mobileLabel: `${challengeLabel} challenge rating`,
+                    },
+                    ...(context.kind === "member"
+                      ? [
+                          {
+                            cell: (project: JudgeProject) => {
+                              const score = scoreByProject.get(
+                                project.id,
+                              )?.overall;
+                              return score?.value === null ||
+                                score === undefined ? (
+                                <>
+                                  <span aria-hidden="true">(?)</span>
+                                  <span className="sr-only">Not rated</span>
+                                </>
+                              ) : (
+                                `${score.value.toFixed(2)} (${score.count})`
+                              );
+                            },
+                            header: "Rating",
+                          },
+                        ]
+                      : []),
+                  ]}
+                  input={input}
+                  lockedChallenge={
+                    context.kind === "guest"
+                      ? {
+                          id: context.challengeId,
+                          label: context.challengeLabel ?? "Room challenge",
+                        }
+                      : undefined
+                  }
+                  showTeamSizeFilters={false}
+                  showChallengeRatingSort={
+                    context.kind === "member" && workspace.displayAllResults
+                  }
+                  showRatingSort={context.kind === "member"}
+                  showChallenges={context.kind === "member"}
+                  showPreviouslyJudgedFilter
+                  showViewAction
+                />
+              </TabsContent>
+              <TabsContent className="mt-4" value="submissions">
+                <JudgeSubmissions
+                  submissions={submissions}
+                  workspace={workspace}
+                />
+              </TabsContent>
+              <TabsContent className="mt-4" value="deliberation">
+                <JudgeDeliberation
+                  initialSections={deliberation}
+                  key={JSON.stringify(deliberation)}
+                  submissions={submissions}
+                  workspace={workspace}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : null}
+          {workspace && evaluationProject ? (
+            <EvaluationDialog
+              challengeLabel={challengeLabel}
+              key={`${evaluationProject.id}:${selectedSubmission?.revision ?? 0}`}
+              onOpenChange={(open) => !open && setEvaluationProject(null)}
+              open
+              project={evaluationProject}
+              submission={selectedSubmission}
+              workspace={workspace}
+            />
+          ) : null}
+          {workspace ? (
+            <ProjectScoreDialog
+              challengeLabel={challengeLabel}
+              key={scoreProject?.id ?? "closed-score"}
+              onOpenChange={(open) => !open && setScoreProject(null)}
+              open={!!scoreProject}
+              project={scoreProject}
+              workspace={workspace}
+            />
+          ) : null}
         </>
       ) : (
         <section className="rounded-lg border border-dashed border-white/15 bg-card/75 px-5 py-16 text-center shadow-xl shadow-black/10">

@@ -17,11 +17,18 @@ type KnightHacksSchemas = typeof import("@forge/db/schemas/knight-hacks");
 
 const OFFICER_USER = "10000000-0000-4000-8000-000000000901";
 const OFFICER_ROLE = "20000000-0000-4000-8000-000000000901";
+const MEMBER_USER = "10000000-0000-4000-8000-000000000902";
+const MEMBER_ROLE = "20000000-0000-4000-8000-000000000902";
 const HACKATHON = "30000000-0000-4000-8000-000000000901";
 const GENERAL = "40000000-0000-4000-8000-000000000901";
 const SPONSOR = "40000000-0000-4000-8000-000000000902";
 const GENERAL_PROJECT = "50000000-0000-4000-8000-000000000901";
 const SPONSOR_PROJECT = "50000000-0000-4000-8000-000000000902";
+const RATING_ONE = "60000000-0000-4000-8000-000000000901";
+const RATING_TWO = "60000000-0000-4000-8000-000000000902";
+const PUBLIC_RESPONSE = "60000000-0000-4000-8000-000000000903";
+const OPTIONAL_RESPONSE = "60000000-0000-4000-8000-000000000904";
+const PRIVATE_RESPONSE = "60000000-0000-4000-8000-000000000905";
 
 function importCsv() {
   const headers = [
@@ -76,6 +83,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   let authSchemas: AuthSchemas;
   let schemas: KnightHacksSchemas;
   let officer: Session;
+  let member: Session;
 
   beforeAll(async () => {
     disposable = await provisionDisposableDatabase("forge_api");
@@ -103,6 +111,25 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     officer = {
       session: { id: "judging-officer-session", userAgent: "vitest" },
       user: { id: OFFICER_USER, name: "Jordan Officer" },
+    } as unknown as Session;
+    await client.insert(authSchemas.User).values({
+      discordUserId: "judging-member",
+      id: MEMBER_USER,
+      name: "Morgan Judge",
+    });
+    await client.insert(authSchemas.Roles).values({
+      discordRoleId: "900000000000000902",
+      id: MEMBER_ROLE,
+      name: "Judges",
+      permissions: permissionBitstring("IS_JUDGE"),
+    });
+    await client.insert(authSchemas.Permissions).values({
+      roleId: MEMBER_ROLE,
+      userId: MEMBER_USER,
+    });
+    member = {
+      session: { id: "judging-member-session", userAgent: "vitest" },
+      user: { id: MEMBER_USER, name: "Morgan Judge" },
     } as unknown as Session;
 
     await client.insert(schemas.Hackathon).values({
@@ -416,5 +443,541 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       activeRoomId: generalRoom.id,
       kind: "member",
     });
+  }, 60_000);
+
+  it("scores, edits, gates feedback, and keeps deliberation private", async () => {
+    const officerCaller = await caller(officer);
+    const memberCaller = await caller(member);
+    const sponsorRoom = await officerCaller.judging.createRoom({
+      challengeId: SPONSOR,
+      hackathonId: HACKATHON,
+      name: "Scoring sponsor room",
+    });
+    await officerCaller.judging.saveRubric({
+      hackathonId: HACKATHON,
+      items: [
+        {
+          description: "Assess the technical choices.",
+          guestVisibilityPolicy: null,
+          id: RATING_ONE,
+          kind: "rating",
+          label: "Technical understanding",
+          memberVisibilityPolicy: null,
+          required: true,
+        },
+        {
+          description: "Assess how ready the product feels.",
+          guestVisibilityPolicy: null,
+          id: RATING_TWO,
+          kind: "rating",
+          label: "Product readiness",
+          memberVisibilityPolicy: null,
+          required: true,
+        },
+        {
+          description: "Visible deliberation note.",
+          guestVisibilityPolicy: "public",
+          id: PUBLIC_RESPONSE,
+          kind: "short_response",
+          label: "Shared feedback",
+          memberVisibilityPolicy: "public",
+          required: true,
+        },
+        {
+          description: "The guest decides whether to share this.",
+          guestVisibilityPolicy: "public_optional",
+          id: OPTIONAL_RESPONSE,
+          kind: "short_response",
+          label: "Optional feedback",
+          memberVisibilityPolicy: "public",
+          required: false,
+        },
+        {
+          description: "Private judge note.",
+          guestVisibilityPolicy: "private",
+          id: PRIVATE_RESPONSE,
+          kind: "short_response",
+          label: "Private feedback",
+          memberVisibilityPolicy: "public",
+          required: false,
+        },
+      ],
+    });
+    await expect(
+      officerCaller.judging.setJudgingState({
+        hackathonId: HACKATHON,
+        state: "open",
+      }),
+    ).resolves.toEqual({ state: "open" });
+
+    const first = await officerCaller.judging.saveEvaluation({
+      challengeId: SPONSOR,
+      hackathonId: HACKATHON,
+      projectId: SPONSOR_PROJECT,
+      ratings: [
+        { itemId: RATING_ONE, value: 5 },
+        { itemId: RATING_TWO, value: 5 },
+      ],
+      responses: [
+        {
+          isPublic: false,
+          itemId: PUBLIC_RESPONSE,
+          value: "Strong member feedback",
+        },
+      ],
+    });
+    expect(first).toMatchObject({ revision: 1, score: 5 });
+    const edited = await officerCaller.judging.saveEvaluation({
+      challengeId: SPONSOR,
+      hackathonId: HACKATHON,
+      projectId: SPONSOR_PROJECT,
+      ratings: [
+        { itemId: RATING_ONE, value: 4 },
+        { itemId: RATING_TWO, value: 2 },
+      ],
+      responses: [
+        {
+          isPublic: false,
+          itemId: PUBLIC_RESPONSE,
+          value: "Updated member feedback",
+        },
+      ],
+    });
+    expect(edited).toMatchObject({
+      evaluationId: first.evaluationId,
+      revision: 2,
+      score: 3,
+    });
+    const revisions = await officerCaller.judging.getEvaluationRevisions({
+      evaluationId: first.evaluationId,
+    });
+    expect(revisions.revisions).toHaveLength(2);
+    expect(revisions.revisions[0]).toMatchObject({
+      responseAnswers: [
+        expect.objectContaining({
+          isPublic: true,
+          value: "Updated member feedback",
+        }),
+      ],
+      revision: 2,
+    });
+
+    const link = await officerCaller.judging.generateRoomLink({
+      roomId: sponsorRoom.id,
+    });
+    const activationUrl = new URL(link.url);
+    const { activateJudgingRoom } = await import("../../judging-access.server");
+    const activation = await activateJudgingRoom({
+      linkId: link.id,
+      session: null,
+      signature: activationUrl.searchParams.get("signature") ?? "",
+    });
+    if (activation.kind !== "guest") throw new Error("Expected guest access.");
+    const guestCaller = await caller(
+      null,
+      new Headers({
+        cookie: `blade_judging_guest=${activation.credential}`,
+      }),
+    );
+    const guestIdentity = await guestCaller.judging.completeGuest({
+      displayName: "Taylor Sponsor",
+    });
+
+    const beforeGuestSubmission =
+      await guestCaller.judging.getProjectJudgingDetails({
+        challengeId: GENERAL,
+        hackathonId: "30000000-0000-4000-8000-000000000999",
+        projectId: SPONSOR_PROJECT,
+      });
+    expect(beforeGuestSubmission).toEqual({
+      count: 0,
+      feedback: [],
+      feedbackPage: 1,
+      feedbackPageSize: 25,
+      feedbackTotal: 0,
+      hasOwnEvaluation: false,
+      value: null,
+    });
+    await expect(
+      guestCaller.judging.saveEvaluation({
+        challengeId: GENERAL,
+        hackathonId: "30000000-0000-4000-8000-000000000999",
+        projectId: GENERAL_PROJECT,
+        ratings: [
+          { itemId: RATING_ONE, value: 2 },
+          { itemId: RATING_TWO, value: 2 },
+        ],
+        responses: [
+          { itemId: PUBLIC_RESPONSE, value: "Should stay out of scope" },
+        ],
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const guestEvaluation = await guestCaller.judging.saveEvaluation({
+      challengeId: GENERAL,
+      hackathonId: "30000000-0000-4000-8000-000000000999",
+      projectId: SPONSOR_PROJECT,
+      ratings: [
+        { itemId: RATING_ONE, value: 2 },
+        { itemId: RATING_TWO, value: 2 },
+      ],
+      responses: [
+        {
+          isPublic: false,
+          itemId: PUBLIC_RESPONSE,
+          value: "Public guest response",
+        },
+        {
+          isPublic: false,
+          itemId: OPTIONAL_RESPONSE,
+          value: "Private optional response",
+        },
+        {
+          isPublic: true,
+          itemId: PRIVATE_RESPONSE,
+          value: "Always private response",
+        },
+      ],
+    });
+    expect(guestEvaluation.score).toBe(2);
+    const hiddenJudgedProject = await guestCaller.projects.listJudge({
+      challengeIds: [],
+      direction: "asc",
+      page: 1,
+      pageSize: 25,
+      query: "Sponsor project",
+      sort: "title",
+    });
+    expect(hiddenJudgedProject.projects).toEqual([]);
+    const restoredJudgedProject = await guestCaller.projects.listJudge({
+      challengeIds: [],
+      direction: "asc",
+      includeJudged: true,
+      page: 1,
+      pageSize: 25,
+      query: "Sponsor project",
+      sort: "title",
+    });
+    expect(restoredJudgedProject.projects).toEqual([
+      expect.objectContaining({ challenges: [], id: SPONSOR_PROJECT }),
+    ]);
+    await expect(
+      guestCaller.projects.listJudge({
+        challengeIds: [],
+        direction: "desc",
+        includeJudged: true,
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "rating",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    const guestScores = await guestCaller.judging.getProjectScores({
+      challengeId: GENERAL,
+      hackathonId: "30000000-0000-4000-8000-000000000999",
+      projectIds: [SPONSOR_PROJECT],
+    });
+    expect(guestScores[0]).toMatchObject({
+      hasOwnEvaluation: true,
+      scoped: { count: 2, value: 2.5 },
+    });
+    expect(guestScores[0]?.overall).toBeUndefined();
+    const guestDetails = await guestCaller.judging.getProjectJudgingDetails({
+      challengeId: GENERAL,
+      hackathonId: "30000000-0000-4000-8000-000000000999",
+      projectId: SPONSOR_PROJECT,
+    });
+    expect(guestDetails).toMatchObject({ count: 2, feedback: [], value: 2.5 });
+
+    const memberBeforeReveal = await memberCaller.judging.getProjectScores({
+      challengeId: SPONSOR,
+      projectIds: [SPONSOR_PROJECT],
+    });
+    expect(memberBeforeReveal[0]?.scoped).toEqual({ count: 0, value: null });
+    await expect(
+      memberCaller.projects.listJudge({
+        challengeIds: [SPONSOR],
+        direction: "desc",
+        includeJudged: true,
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "challengeRating",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await officerCaller.judging.setDisplayAllResults({
+      displayAllResults: true,
+      hackathonId: HACKATHON,
+    });
+    const memberAfterReveal = await memberCaller.judging.getProjectScores({
+      challengeId: SPONSOR,
+      projectIds: [SPONSOR_PROJECT],
+    });
+    expect(memberAfterReveal[0]).toMatchObject({
+      hasOwnEvaluation: false,
+      overall: { count: 2, value: 2.5 },
+      scoped: { count: 2, value: 2.5 },
+    });
+    const sortedByChallengeRating = await memberCaller.projects.listJudge({
+      challengeIds: [SPONSOR],
+      direction: "desc",
+      includeJudged: true,
+      page: 1,
+      pageSize: 25,
+      query: "",
+      sort: "challengeRating",
+    });
+    expect(sortedByChallengeRating.projects[0]?.id).toBe(SPONSOR_PROJECT);
+    expect(
+      sortedByChallengeRating.projects[0]?.challenges.find(
+        (challenge) => challenge.id === SPONSOR,
+      ),
+    ).toMatchObject({ evaluationCount: 2, id: SPONSOR });
+    const sortedByRating = await memberCaller.projects.listJudge({
+      challengeIds: [SPONSOR],
+      direction: "desc",
+      includeJudged: true,
+      page: 1,
+      pageSize: 25,
+      query: "",
+      sort: "rating",
+    });
+    expect(sortedByRating.projects[0]?.id).toBe(SPONSOR_PROJECT);
+    const memberDetails = await memberCaller.judging.getProjectJudgingDetails({
+      challengeId: SPONSOR,
+      projectId: SPONSOR_PROJECT,
+    });
+    expect(memberDetails.feedback.map((item) => item.value).sort()).toEqual(
+      [
+        "Always private response",
+        "Private optional response",
+        "Public guest response",
+        "Updated member feedback",
+      ].sort(),
+    );
+    expect(
+      memberDetails.feedback
+        .filter((item) =>
+          ["Always private response", "Private optional response"].includes(
+            item.value,
+          ),
+        )
+        .every((item) => item.isPublic === false),
+    ).toBe(true);
+
+    const audit = await import("@forge/db/schemas/audit");
+    const [guestSession] = await client
+      .select({ id: schemas.GuestJudgeSession.id })
+      .from(schemas.GuestJudgeSession)
+      .where(eq(schemas.GuestJudgeSession.judgeId, guestIdentity.judgeId))
+      .limit(1);
+    if (!guestSession) throw new Error("Expected completed guest session.");
+    const evaluationAudit = await client
+      .select({
+        actorUserId: audit.AdminAuditEvent.actorUserId,
+        metadata: audit.AdminAuditEvent.metadata,
+        targetId: audit.AdminAuditSubject.targetId,
+        targetType: audit.AdminAuditSubject.targetType,
+      })
+      .from(audit.AdminAuditEvent)
+      .innerJoin(
+        audit.AdminAuditSubject,
+        eq(audit.AdminAuditSubject.eventId, audit.AdminAuditEvent.id),
+      )
+      .where(eq(audit.AdminAuditEvent.actionKey, "judging.evaluation.saved"));
+    expect(evaluationAudit).toHaveLength(3);
+    expect(evaluationAudit.map((event) => event.actorUserId)).toEqual(
+      expect.arrayContaining([OFFICER_USER, guestSession.id]),
+    );
+    expect(
+      evaluationAudit.map((event) => ({
+        evaluationId: event.metadata.evaluationId,
+        projectId: event.metadata.projectId,
+        revision: event.metadata.revision,
+        targetId: event.targetId,
+        targetType: event.targetType,
+      })),
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          evaluationId: first.evaluationId,
+          projectId: SPONSOR_PROJECT,
+          revision: 1,
+          targetId: SPONSOR_PROJECT,
+          targetType: "project",
+        },
+        {
+          evaluationId: first.evaluationId,
+          projectId: SPONSOR_PROJECT,
+          revision: 2,
+          targetId: SPONSOR_PROJECT,
+          targetType: "project",
+        },
+        expect.objectContaining({
+          evaluationId: guestEvaluation.evaluationId,
+          revision: 1,
+        }),
+      ]),
+    );
+    expect(JSON.stringify(evaluationAudit)).not.toContain(
+      "Updated member feedback",
+    );
+    expect(JSON.stringify(evaluationAudit)).not.toContain(
+      "Public guest response",
+    );
+
+    const evaluationList = await officerCaller.judging.listEvaluationAudit({
+      hackathonId: HACKATHON,
+    });
+    expect(evaluationList).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: first.evaluationId, revision: 2 }),
+        expect.objectContaining({
+          id: guestEvaluation.evaluationId,
+          revision: 1,
+        }),
+      ]),
+    );
+    await expect(
+      memberCaller.judging.listEvaluationAudit({ hackathonId: HACKATHON }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    await client
+      .update(schemas.Project)
+      .set({ deletedAt: new Date(), deletedByUserId: OFFICER_USER })
+      .where(eq(schemas.Project.id, SPONSOR_PROJECT));
+    expect(
+      (
+        await guestCaller.judging.getProjectScores({
+          projectIds: [SPONSOR_PROJECT],
+        })
+      )[0],
+    ).toMatchObject({
+      hasOwnEvaluation: false,
+      scoped: { count: 0, value: null },
+    });
+    expect(
+      (
+        await memberCaller.judging.getProjectScores({
+          challengeId: SPONSOR,
+          projectIds: [SPONSOR_PROJECT],
+        })
+      )[0],
+    ).toMatchObject({
+      overall: { count: 0, value: null },
+      scoped: { count: 0, value: null },
+    });
+    expect(
+      (await guestCaller.judging.listMySubmissions({}))[0]?.projectAvailable,
+    ).toBe(false);
+    await client
+      .update(schemas.Project)
+      .set({ deletedAt: null, deletedByUserId: null })
+      .where(eq(schemas.Project.id, SPONSOR_PROJECT));
+
+    await expect(
+      client
+        .delete(schemas.ProjectToChallenge)
+        .where(
+          and(
+            eq(schemas.ProjectToChallenge.projectId, SPONSOR_PROJECT),
+            eq(schemas.ProjectToChallenge.challengeId, SPONSOR),
+          ),
+        ),
+    ).rejects.toThrow(/Failed query: delete from/);
+    expect(
+      (await guestCaller.judging.listMySubmissions({}))[0]?.projectAvailable,
+    ).toBe(true);
+
+    const section = await guestCaller.judging.createDeliberationSection({
+      hackathonId: "30000000-0000-4000-8000-000000000999",
+      name: "Finalists",
+    });
+    if (!section) throw new Error("Expected deliberation section.");
+    await guestCaller.judging.addDeliberationProject({
+      hackathonId: "30000000-0000-4000-8000-000000000999",
+      projectId: SPONSOR_PROJECT,
+      sectionId: section.id,
+    });
+    await expect(
+      guestCaller.judging.addDeliberationProject({
+        projectId: SPONSOR_PROJECT,
+        sectionId: section.id,
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await guestCaller.judging.listMyDeliberation({})).toHaveLength(1);
+    expect(await memberCaller.judging.listMyDeliberation({})).toEqual([]);
+
+    await officerCaller.judging.setJudgingState({
+      hackathonId: HACKATHON,
+      state: "closed",
+    });
+    await expect(
+      guestCaller.judging.renameDeliberationSection({
+        name: "Locked",
+        sectionId: section.id,
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    await expect(
+      guestCaller.judging.saveEvaluation({
+        projectId: SPONSOR_PROJECT,
+        ratings: [
+          { itemId: RATING_ONE, value: 1 },
+          { itemId: RATING_TWO, value: 1 },
+        ],
+        responses: [{ itemId: PUBLIC_RESPONSE, value: "Closed" }],
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    await officerCaller.judging.setJudgingState({
+      hackathonId: HACKATHON,
+      state: "open",
+    });
+    await expect(
+      officerCaller.judging.saveRubric({
+        hackathonId: HACKATHON,
+        items: [],
+      }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+
+    const retainedEvaluation = await memberCaller.judging.saveEvaluation({
+      challengeId: GENERAL,
+      projectId: GENERAL_PROJECT,
+      ratings: [
+        { itemId: RATING_ONE, value: 4 },
+        { itemId: RATING_TWO, value: 3 },
+      ],
+      responses: [
+        { itemId: PUBLIC_RESPONSE, value: "Historical member feedback" },
+      ],
+    });
+    await client
+      .delete(authSchemas.Permissions)
+      .where(eq(authSchemas.Permissions.userId, MEMBER_USER));
+    await client
+      .delete(authSchemas.User)
+      .where(eq(authSchemas.User.id, MEMBER_USER));
+    const [retainedJudge] = await client
+      .select({
+        kind: schemas.Judge.kind,
+        userId: schemas.Judge.userId,
+      })
+      .from(schemas.Judge)
+      .innerJoin(
+        schemas.ProjectEvaluation,
+        eq(schemas.ProjectEvaluation.judgeId, schemas.Judge.id),
+      )
+      .where(eq(schemas.ProjectEvaluation.id, retainedEvaluation.evaluationId));
+    expect(retainedJudge).toEqual({ kind: "member", userId: null });
+    await expect(
+      client
+        .select({ revision: schemas.ProjectEvaluationRevision.revision })
+        .from(schemas.ProjectEvaluationRevision)
+        .where(
+          eq(
+            schemas.ProjectEvaluationRevision.evaluationId,
+            retainedEvaluation.evaluationId,
+          ),
+        ),
+    ).resolves.toEqual([{ revision: 1 }]);
   }, 60_000);
 });

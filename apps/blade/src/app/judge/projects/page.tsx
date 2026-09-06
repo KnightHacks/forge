@@ -38,6 +38,7 @@ export default async function JudgeProjectsPage({
     challengeIds: isGuest ? [judgingContext.challengeId] : parsed.challengeIds,
     direction: parsed.direction,
     hackathonId: isOfficer ? requestedHackathon : undefined,
+    includeJudged: parsed.includeJudged,
     page: parsed.page,
     pageSize: parsed.pageSize,
     query: parsed.query,
@@ -47,14 +48,45 @@ export default async function JudgeProjectsPage({
     api.projects.listJudge(input),
     isOfficer ? api.projects.listAdminHackathons() : Promise.resolve([]),
   ]);
+  const challengeId =
+    (isGuest ? judgingContext.challengeId : parsed.challengeIds[0]) ??
+    data.challenges[0]?.id;
+  const tabParam = first(params.tab);
+  const tab =
+    tabParam === "submissions" || tabParam === "deliberation"
+      ? tabParam
+      : "projects";
+  const workspaceInput = {
+    challengeId,
+    hackathonId: isOfficer ? requestedHackathon : undefined,
+  };
+  const workspace =
+    data.hackathon && challengeId
+      ? await api.judging.getWorkspace(workspaceInput)
+      : null;
+  const [scores, submissions, deliberation] = workspace
+    ? await Promise.all([
+        api.judging.getProjectScores({
+          ...workspaceInput,
+          projectIds: data.projects.map((project) => project.id),
+        }),
+        api.judging.listMySubmissions(workspaceInput),
+        api.judging.listMyDeliberation(workspaceInput),
+      ])
+    : [[], [], []];
 
   return (
     <JudgeProjectWorkspace
       data={data}
+      deliberation={deliberation}
       hackathons={hackathons}
       input={input}
       isOfficer={isOfficer}
       judgingContext={judgingContext}
+      scores={scores}
+      selectedTab={tab}
+      submissions={submissions}
+      workspace={workspace}
     />
   );
 }

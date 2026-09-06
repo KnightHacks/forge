@@ -12,9 +12,11 @@ import {
 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { cn } from "@forge/ui";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
+import { Switch } from "@forge/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -29,12 +31,18 @@ type Project = RouterOutputs["projects"]["listJudge"]["projects"][number];
 export interface ProjectDirectoryInput {
   challengeIds: string[];
   direction: "asc" | "desc";
+  includeJudged?: boolean;
   maxParticipants?: number;
   minParticipants?: number;
   page: number;
   pageSize: number;
   query: string;
-  sort: "participantCount" | "submittedAt" | "title";
+  sort:
+    | "challengeRating"
+    | "participantCount"
+    | "rating"
+    | "submittedAt"
+    | "title";
 }
 
 export interface ProjectDirectoryData<TProject extends Project = Project> {
@@ -50,8 +58,25 @@ function ProjectBadges({ project }: { project: Project }) {
     <div className="flex flex-wrap gap-1.5">
       {project.challenges.map((challenge) => (
         <Badge
+          className={cn(
+            challenge.evaluationCount > 0 &&
+              (challenge.label === "General"
+                ? "border-emerald-950 bg-emerald-950 text-emerald-100"
+                : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
+          )}
           key={challenge.id}
-          variant={challenge.label === "General" ? "outline" : "secondary"}
+          title={
+            challenge.evaluationCount > 0
+              ? `${challenge.evaluationCount} evaluation${challenge.evaluationCount === 1 ? "" : "s"}`
+              : "Not yet evaluated"
+          }
+          variant={
+            challenge.evaluationCount > 0
+              ? "outline"
+              : challenge.label === "General"
+                ? "outline"
+                : "secondary"
+          }
         >
           {challenge.label}
         </Badge>
@@ -64,19 +89,27 @@ type Navigate = (patch: Record<string, string | number | undefined>) => void;
 
 function ProjectFilters({
   challenges,
+  defaultChallengeLabel,
   input,
   lockedChallenge,
   navigate,
   query,
   setQuery,
+  showChallengeRatingSort,
+  showPreviouslyJudgedFilter,
+  showRatingSort,
   showTeamSizeFilters,
 }: {
   challenges: ProjectDirectoryData["challenges"];
+  defaultChallengeLabel: string;
   input: ProjectDirectoryInput;
   lockedChallenge?: { id: string; label: string };
   navigate: Navigate;
   query: string;
   setQuery: (query: string) => void;
+  showChallengeRatingSort: boolean;
+  showPreviouslyJudgedFilter: boolean;
+  showRatingSort: boolean;
   showTeamSizeFilters: boolean;
 }) {
   const [minParticipants, setMinParticipants] = useState(
@@ -155,7 +188,7 @@ function ProjectFilters({
               }
               value={selectedChallenge}
             >
-              <option value="">All challenges</option>
+              <option value="">{defaultChallengeLabel}</option>
               {filterableChallenges.map((challenge) => (
                 <option key={challenge.id} value={challenge.id}>
                   {challenge.label}
@@ -195,6 +228,18 @@ function ProjectFilters({
       </form>
 
       <div className="mt-3 flex flex-wrap gap-3 border-t border-border/60 pt-3">
+        {showPreviouslyJudgedFilter ? (
+          <label className="flex min-h-10 items-center gap-2 rounded-md border border-border/70 px-3 text-sm text-foreground">
+            <Switch
+              aria-label="See previously judged projects"
+              checked={input.includeJudged === true}
+              onCheckedChange={(checked) =>
+                navigate({ includeJudged: checked ? 1 : undefined, page: 1 })
+              }
+            />
+            See previously judged
+          </label>
+        ) : null}
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Sort
           <select
@@ -208,6 +253,10 @@ function ProjectFilters({
             <option value="title">Title</option>
             <option value="submittedAt">Submitted</option>
             <option value="participantCount">Team size</option>
+            {showChallengeRatingSort ? (
+              <option value="challengeRating">Challenge rating</option>
+            ) : null}
+            {showRatingSort ? <option value="rating">Rating</option> : null}
           </select>
         </label>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -276,13 +325,21 @@ function ProjectList<TProject extends Project>({
   actions,
   data,
   emptyDescription,
+  extraColumns,
   onSelect,
+  showChallenges,
   showViewAction,
 }: {
   actions?: (project: TProject) => React.ReactNode;
   data: ProjectDirectoryData<TProject>;
   emptyDescription: string;
+  extraColumns?: {
+    cell: (project: TProject) => React.ReactNode;
+    header: string;
+    mobileLabel?: string;
+  }[];
   onSelect: (project: TProject) => void;
+  showChallenges: boolean;
   showViewAction: boolean;
 }) {
   if (data.projects.length === 0) {
@@ -302,8 +359,18 @@ function ProjectList<TProject extends Project>({
               <tr>
                 <th className="px-4 py-3 font-medium">Project</th>
                 <th className="px-4 py-3 font-medium">Participants</th>
-                <th className="px-4 py-3 font-medium">Challenges</th>
+                {showChallenges ? (
+                  <th className="px-4 py-3 font-medium">Challenges</th>
+                ) : null}
                 <th className="px-4 py-3 text-right font-medium">Team size</th>
+                {extraColumns?.map((column) => (
+                  <th
+                    className="px-4 py-3 text-right font-medium"
+                    key={column.header}
+                  >
+                    {column.header}
+                  </th>
+                ))}
                 {actions ? (
                   <th className="px-4 py-3 text-right font-medium">Actions</th>
                 ) : null}
@@ -346,12 +413,22 @@ function ProjectList<TProject extends Project>({
                       ))}
                     </ul>
                   </td>
-                  <td className="max-w-sm px-4 py-4 align-top">
-                    <ProjectBadges project={project} />
-                  </td>
+                  {showChallenges ? (
+                    <td className="max-w-sm px-4 py-4 align-top">
+                      <ProjectBadges project={project} />
+                    </td>
+                  ) : null}
                   <td className="whitespace-nowrap px-4 py-4 text-right align-top">
                     {project.participantCount}
                   </td>
+                  {extraColumns?.map((column) => (
+                    <td
+                      className="whitespace-nowrap px-4 py-4 text-right align-top font-mono"
+                      key={column.header}
+                    >
+                      {column.cell(project)}
+                    </td>
+                  ))}
                   {actions ? (
                     <td className="px-4 py-4 text-right align-top">
                       <div className="flex justify-end gap-2">
@@ -390,7 +467,24 @@ function ProjectList<TProject extends Project>({
                 </span>{" "}
                 {project.members.map((member) => member.name).join(", ")}
               </p>
-              <ProjectBadges project={project} />
+              {showChallenges ? <ProjectBadges project={project} /> : null}
+              {extraColumns?.length ? (
+                <dl className="grid grid-cols-2 gap-2">
+                  {extraColumns.map((column) => (
+                    <div
+                      className="rounded-md border border-white/10 bg-background/60 p-3"
+                      key={column.header}
+                    >
+                      <dt className="text-xs text-muted-foreground">
+                        {column.mobileLabel ?? column.header}
+                      </dt>
+                      <dd className="mt-1 font-mono text-sm font-semibold">
+                        {column.cell(project)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
               <div className="flex flex-wrap items-center gap-2">
                 <Button asChild size="sm" variant="outline">
                   <a
@@ -456,19 +550,35 @@ function ProjectPagination({
 export function ProjectDirectory<TProject extends Project>({
   actions,
   data,
+  defaultChallengeLabel = "All challenges",
   emptyDescription = "Try changing the search or filters.",
+  extraColumns,
   input,
   lockedChallenge,
   showPrivateDetails = false,
+  showChallengeRatingSort = false,
+  showChallenges = true,
+  showPreviouslyJudgedFilter = false,
+  showRatingSort = false,
   showTeamSizeFilters = true,
   showViewAction = false,
 }: {
   actions?: (project: TProject) => React.ReactNode;
   data: ProjectDirectoryData<TProject>;
+  defaultChallengeLabel?: string;
   emptyDescription?: string;
+  extraColumns?: {
+    cell: (project: TProject) => React.ReactNode;
+    header: string;
+    mobileLabel?: string;
+  }[];
   input: ProjectDirectoryInput;
   lockedChallenge?: { id: string; label: string };
   showPrivateDetails?: boolean;
+  showChallengeRatingSort?: boolean;
+  showChallenges?: boolean;
+  showPreviouslyJudgedFilter?: boolean;
+  showRatingSort?: boolean;
   showTeamSizeFilters?: boolean;
   showViewAction?: boolean;
 }) {
@@ -496,19 +606,25 @@ export function ProjectDirectory<TProject extends Project>({
     <div className="space-y-4" aria-busy={pending}>
       <ProjectFilters
         challenges={data.challenges}
+        defaultChallengeLabel={defaultChallengeLabel}
         input={input}
         lockedChallenge={lockedChallenge}
         key={`${input.minParticipants ?? ""}:${input.maxParticipants ?? ""}`}
         navigate={navigate}
         query={query}
         setQuery={setQuery}
+        showChallengeRatingSort={showChallengeRatingSort}
+        showPreviouslyJudgedFilter={showPreviouslyJudgedFilter}
+        showRatingSort={showRatingSort}
         showTeamSizeFilters={showTeamSizeFilters}
       />
       <ProjectList
         actions={actions}
         data={data}
         emptyDescription={emptyDescription}
+        extraColumns={extraColumns}
         onSelect={setSelected}
+        showChallenges={showChallenges}
         showViewAction={showViewAction}
       />
       <ProjectPagination data={data} navigate={navigate} pending={pending} />
