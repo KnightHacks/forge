@@ -78,6 +78,7 @@ None blocking.
   repository policy checks across 33 tasks.
 - `pnpm --filter=@forge/validators test -- judging audit`: passed, 17 tests.
 - `pnpm --filter=@forge/api test -- judging`: passed, 22 tests.
+- `pnpm --filter=@forge/api test`: passed, 112 files and 794 tests.
 - `pnpm --filter=@forge/db test -- migration`: passed, 65 tests.
 - `pnpm --filter=@forge/db test -- judging-schema`: passed, 10 tests.
 - `pnpm --filter=@forge/db test`: passed, 147 tests, including development

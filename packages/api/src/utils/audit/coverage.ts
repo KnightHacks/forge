@@ -226,7 +226,6 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "issues.listTeams",
   "issues.listTemplates",
   "judging.listAdmin",
-  "judging.listAnnouncements",
   "judging.listDiscordChannels",
   "judging-scores.getEvaluationRevisions",
   "judging-scores.listEvaluationAudit",
