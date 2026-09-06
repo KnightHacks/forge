@@ -21,6 +21,7 @@ export type FormCallbackDraftSource =
   | { kind: "respondent"; value: RespondentValue };
 
 export interface FormCallbackDraft {
+  invalidSavedMappings?: boolean;
   mappings: Record<string, FormCallbackDraftSource>;
   slug: string;
 }
@@ -89,7 +90,13 @@ export function savedCallbackDraft(
   const parsed = callbackConfigurationSchema.shape.mappings.safeParse(
     callback.mappings,
   );
-  if (!parsed.success) return { ...draft, slug: callback.callbackSlug };
+  if (!parsed.success) {
+    return {
+      ...draft,
+      invalidSavedMappings: true,
+      slug: callback.callbackSlug,
+    };
+  }
   return {
     mappings: {
       ...draft.mappings,
@@ -116,6 +123,7 @@ export function callbackInputMappings(
 }
 
 export function isCallbackDraftComplete(draft: FormCallbackDraft) {
+  if (draft.invalidSavedMappings) return false;
   return Object.values(draft.mappings).every((source) => {
     if (source.kind === "question") return source.questionId.length > 0;
     if (source.kind === "fixed") return source.value.trim().length > 0;

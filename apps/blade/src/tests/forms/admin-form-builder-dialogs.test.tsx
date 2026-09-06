@@ -74,7 +74,11 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
-function renderBuilder(recruiting = false, available = true) {
+function renderBuilder(
+  recruiting = false,
+  available = true,
+  invalidMappings = false,
+) {
   return render(
     <AdminFormBuilder
       callbacks={[
@@ -138,19 +142,26 @@ function renderBuilder(recruiting = false, available = true) {
                 active: true,
                 callbackSlug: "recruiting.notify",
                 id: "callback-1",
-                mappings: [
-                  {
-                    inputKey: "name",
-                    source: {
-                      kind: "respondent",
-                      value: "respondent_name",
-                    },
-                  },
-                  {
-                    inputKey: "team",
-                    source: { kind: "fixed", value: "Outreach" },
-                  },
-                ],
+                mappings: invalidMappings
+                  ? [
+                      {
+                        inputKey: "name",
+                        source: { kind: "note", value: "legacy" },
+                      },
+                    ]
+                  : [
+                      {
+                        inputKey: "name",
+                        source: {
+                          kind: "respondent",
+                          value: "respondent_name",
+                        },
+                      },
+                      {
+                        inputKey: "team",
+                        source: { kind: "fixed", value: "Outreach" },
+                      },
+                    ],
               },
             ]
           : []
@@ -263,6 +274,28 @@ describe("admin form builder dialogs", () => {
     expect(
       screen.getByRole("option", { name: "Question: Your name" }),
     ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("requires legacy callback mappings to be reviewed before saving", async () => {
+    const user = userEvent.setup();
+    renderBuilder(true, true, true);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+
+    expect(
+      screen.getByText(
+        "These saved mappings use an older format. Edit and resave them before this callback can run.",
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Edit mappings" }));
+    expect(
+      screen.getByText(
+        "Choose a current source for the saved inputs before saving.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save for future responses" }),
+    ).toBeDisabled();
   });
 
   it("[TC-009] keeps callback failures in the dialog", async () => {

@@ -17,8 +17,7 @@ Current phase: Callback parity refinement verified and published for review
 - Core nonce repair, callback editor, submission receipt, deletion feedback and
   retry outcome feedback are implemented. Automated tests used only synthetic
   local/disposable PostgreSQL data and cleaned up their fixtures. No production
-  access, real callback invocation, Discord send, branch push, or PR creation
-  occurred. The tracking issue was created in Chris's fork.
+  access, real callback invocation, or Discord send occurred.
 - Dylan confirmed the legacy generic mapper is the intended model: registered
   tRPC procedures expose inputs, and admins map each input from one question,
   one respondent field, or a fixed value. Question sources cannot be reused.
@@ -43,8 +42,8 @@ Current phase: Callback parity refinement verified and published for review
 - [x] Restore local dependencies and PostgreSQL; pass the full automated gate
       and targeted authenticated forms E2E.
 - [x] Complete final diff and responsive browser review.
-- [x] Prepare local PR text with before/after evidence and deployment checklist.
-      External publication requires a subsequent request.
+- [x] Prepare and publish PR text with before/after evidence and a deployment
+      checklist after Dylan authorized the update.
 - [x] Replace hard-coded callbacks with metadata-discovered tRPC procedures.
 - [x] Restore the per-input mapping UI and structured recruiting/role actions.
 - [x] Add regression coverage, rerun all gates, and capture new screenshots.
@@ -131,4 +130,4 @@ Current phase: Callback parity refinement verified and published for review
 - [Acceptance tests](./test-cases.md)
 - Existing baseline: [Forms and Event Feedback](../forms-and-event-feedback/spec.md)
 - Tracking issue: [ChrisH0125/forge#1](https://github.com/ChrisH0125/forge/issues/1)
-- Draft pull request: [KnightHacks/forge#533](https://github.com/KnightHacks/forge/pull/533)
+- Pull request: [KnightHacks/forge#533](https://github.com/KnightHacks/forge/pull/533)

@@ -91,6 +91,26 @@ describe("form callback mappings", () => {
     });
   });
 
+  it("marks legacy mappings invalid until an admin replaces them", () => {
+    const draft = savedCallbackDraft(
+      {
+        active: true,
+        callbackSlug: "recruiting.notify",
+        id: "callback-1",
+        mappings: [
+          {
+            inputKey: "name",
+            source: { kind: "note", value: "legacy" },
+          },
+        ],
+      },
+      recruiting,
+    );
+
+    expect(draft.invalidSavedMappings).toBe(true);
+    expect(isCallbackDraftComplete(draft)).toBe(false);
+  });
+
   it("requires a selected question or non-empty manual value", () => {
     expect(isCallbackDraftComplete(emptyCallbackDraft(recruiting))).toBe(false);
     expect(

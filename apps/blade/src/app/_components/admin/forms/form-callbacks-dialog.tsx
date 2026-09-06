@@ -125,6 +125,7 @@ export function FormCallbacksDialog({
       }
       return {
         ...current,
+        invalidSavedMappings: false,
         mappings: { ...current.mappings, [inputKey]: source },
       };
     });
@@ -133,6 +134,7 @@ export function FormCallbacksDialog({
   function updateFixedValue(inputKey: string, value: string) {
     setCallbackDraft((current) => ({
       ...current,
+      invalidSavedMappings: false,
       mappings: {
         ...current.mappings,
         [inputKey]: { kind: "fixed", value },
@@ -174,7 +176,13 @@ export function FormCallbacksDialog({
                     {callback.active ? "Enabled" : "Disabled"}
                   </Badge>
                 </div>
-                {catalog && (
+                {catalog && saved.invalidSavedMappings && (
+                  <p role="alert" className="text-sm text-destructive">
+                    These saved mappings use an older format. Edit and resave
+                    them before this callback can run.
+                  </p>
+                )}
+                {catalog && !saved.invalidSavedMappings && (
                   <dl className="grid min-w-0 gap-1 text-muted-foreground">
                     {catalog.inputs.map((input) => {
                       const source = saved.mappings[input.key];
@@ -262,6 +270,11 @@ export function FormCallbacksDialog({
               <p className="text-sm text-muted-foreground">
                 {selected.description}
               </p>
+              {callbackDraft.invalidSavedMappings && (
+                <p role="alert" className="text-sm text-destructive">
+                  Choose a current source for the saved inputs before saving.
+                </p>
+              )}
               {selected.inputs.map((input) => {
                 const source = callbackDraft.mappings[input.key];
                 const compatibleQuestions = questions.filter(
