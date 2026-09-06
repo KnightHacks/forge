@@ -1,7 +1,15 @@
 "use client";
 
 import type { SetStateAction } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import {
@@ -307,6 +315,11 @@ export function HackathonCheckInWorkspace() {
   const requestedEventId = searchParams.get("event");
   const selectedEvent =
     eventData.data?.events.find(({ id }) => id === requestedEventId) ?? null;
+  const [selection, setSelection] = useOptimistic({
+    hackathonId: selectedHackathon?.id ?? "",
+    eventId: selectedEvent?.id ?? "",
+  });
+  const [selectionPending, startSelectionTransition] = useTransition();
   const history = api.hackathonEvent.listCheckInHistory.useInfiniteQuery(
     { hackathonId: selectedHackathon?.id ?? "", limit: 25 },
     {
@@ -358,6 +371,7 @@ export function HackathonCheckInWorkspace() {
 
   const primary = selectedEvent?.purpose === "primary_check_in";
   const stationReady =
+    !selectionPending &&
     selectedEvent !== null &&
     selectedEvent.ready &&
     (!primary || eventData.data?.configReady === true) &&
@@ -397,7 +411,10 @@ export function HackathonCheckInWorkspace() {
     params.set("hackathon", hackathonId);
     if (eventId) params.set("event", eventId);
     else params.delete("event");
-    router.replace(`/admin/hackathon-check-in?${params.toString()}`);
+    startSelectionTransition(() => {
+      setSelection({ hackathonId, eventId: eventId ?? "" });
+      router.replace(`/admin/hackathon-check-in?${params.toString()}`);
+    });
   }
 
   function present(value: unknown) {
@@ -504,11 +521,12 @@ export function HackathonCheckInWorkspace() {
               <div className="grid gap-2">
                 <Label htmlFor="hackathon-check-in-scope">Hackathon</Label>
                 <select
+                  aria-busy={selectionPending}
                   className="h-11 min-w-0 rounded-md border border-input bg-background/70 px-3 pr-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   disabled={checkIn.isPending || resultOpen}
                   id="hackathon-check-in-scope"
                   onChange={(event) => replaceSelection(event.target.value)}
-                  value={selectedHackathon?.id ?? ""}
+                  value={selection.hackathonId}
                 >
                   {hackathons.data?.map((hackathon) => (
                     <option key={hackathon.id} value={hackathon.id}>
@@ -520,19 +538,23 @@ export function HackathonCheckInWorkspace() {
               <div className="grid gap-2">
                 <Label htmlFor="hackathon-check-in-event">Event</Label>
                 <select
+                  aria-busy={selectionPending}
                   className="h-11 min-w-0 rounded-md border border-input bg-background/70 px-3 pr-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   disabled={
-                    checkIn.isPending || resultOpen || eventData.isPending
+                    checkIn.isPending ||
+                    resultOpen ||
+                    eventData.isPending ||
+                    selection.hackathonId !== selectedHackathon?.id
                   }
                   id="hackathon-check-in-event"
                   onChange={(event) => {
-                    if (selectedHackathon)
+                    if (selection.hackathonId)
                       replaceSelection(
-                        selectedHackathon.id,
+                        selection.hackathonId,
                         event.target.value,
                       );
                   }}
-                  value={selectedEvent?.id ?? ""}
+                  value={selection.eventId}
                 >
                   <option value="">Select an event</option>
                   {eventData.data?.events.map((event) => (
@@ -684,7 +706,8 @@ export function HackathonCheckInWorkspace() {
                         )
                       }
                       onScan={(codes) => {
-                        if (resultOpen || checkIn.isPending) return;
+                        if (!stationReady || resultOpen || checkIn.isPending)
+                          return;
                         const payload = claimCheckInQrPayload(
                           scanning,
                           handledQrPayloads.current,

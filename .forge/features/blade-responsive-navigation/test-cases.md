@@ -16,6 +16,8 @@
 9. Open a route while its layout waits: Blade-branded skeleton fits desktop and 320px without horizontal overflow.
 10. Submit a form search or issue filter: retain the application shell, show progress before the server responds, preserve search parameters and close the filter dialog immediately.
 11. Reduced-motion mode keeps a visible static progress indicator and skeletons without pulsing. Status is accessible without relying on motion.
+12. On hackathon check-in, changing either selector shows the chosen value before the URL commits. Changing hackathon clears and disables the old event selection while pending; scans cannot submit against the previous station. Cancellation and history restore URL-selected values.
+13. The profile settings Dashboard link moves its back arrow immediately while the route response is held, then clears loading after arrival.
 
 ## Placement
 

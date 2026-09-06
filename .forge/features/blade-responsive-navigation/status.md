@@ -10,6 +10,7 @@ Current phase: Complete
 - Removed the 80 ms link delay and the never-reset exit flag. React transitions now own navigation feedback and optimistic destination rollback.
 - Reused page skeletons and added a root fallback for layout waits and uncovered routes. Tabs and form section choices update immediately.
 - Search/filter forms navigate without a full document reload; applying or clearing issue filters closes their dialog immediately.
+- Addressed CodeRabbit's two navigation findings: the settings back arrow uses `data-pending`, and both hackathon check-in selectors show optimistic values. Check-in actions wait for the selected destination to commit; changing hackathons clears the event and disables the previous hackathon's event options while pending.
 
 ## Validation
 
@@ -24,6 +25,13 @@ Current phase: Complete
 - `pnpm --filter=@forge/blade build`: passed with temporary local-only values for `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`. The default invocation compiled but stopped at environment validation because those values are missing locally. No `.env` or deployment settings changed.
 - Refreshed generated validator declarations and Next route types after stale generated files initially blocked checks. No shared source fixes were needed.
 - `git diff --check`: passed. Test database fixtures were cleaned up and the temporary E2E server stopped.
+
+### CodeRabbit navigation follow-up
+
+- Reproduced the delayed hackathon/event values with three failing regression tests before the fix. Verified immediate values, cancellation/history restoration, and that scans wait for the committed station.
+- Reproduced the settings arrow remaining at its hover position while navigation was held. The browser regression now verifies its pending translation and loading completion.
+- 26 focused tests passed across four files; all eight headed navigation browser tests passed. Inspected the settings pending screenshot, kept outside the repository.
+- Root format, lint, typecheck, React analysis, and the Blade production build passed. Lint reports existing repository warnings. Browser checks used an isolated local database containing synthetic fixtures.
 
 ## Remaining scope and links
 

@@ -6,6 +6,7 @@ import { eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { FormSections, Member } from "@forge/db/schemas/knight-hacks";
+import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 const userId = "b1ade000-0000-4000-8000-000000000001";
 const roleId = "b1ade000-0000-4000-8000-000000000002";
@@ -260,6 +261,33 @@ test("unsaved settings cancel navigation without starting progress", async ({
   await expect(page.getByRole("progressbar")).toHaveCount(0);
   await page.getByRole("button", { name: "Discard", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/forms$/);
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
+});
+
+test("the settings back arrow shows pending feedback before the response", async ({
+  page,
+}, testInfo) => {
+  await signIn(page);
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Edit member profile" }),
+  ).toBeVisible();
+  const link = page
+    .getByRole("main")
+    .getByRole("link", { name: "Dashboard", exact: true });
+  const held = await holdNavigation(page, MEMBER_DASHBOARD_PATH);
+  try {
+    await link.click();
+    await held.request;
+    await expect(page.getByRole("progressbar")).toBeVisible();
+    await expect(link.locator("svg")).toHaveCSS("translate", "-8px");
+    await page.screenshot({
+      path: testInfo.outputPath("settings-pending-arrow.png"),
+    });
+  } finally {
+    held.release();
+  }
+  await expect(page).toHaveURL(new RegExp(`${MEMBER_DASHBOARD_PATH}$`));
   await expect(page.getByRole("progressbar")).toHaveCount(0);
 });
 
