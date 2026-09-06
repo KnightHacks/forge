@@ -7,7 +7,8 @@ Status: Approved from the 2026-09-05 implementation request
 Connect judging rooms and QR access to optional, hackathon-scoped Discord
 communications. Forge stores the selected root channel and each room's current
 thread. Discord writes happen after judging state commits and return a separate
-delivery result.
+delivery result. Forge also stores current judging announcements and serves
+them to Blade independently of Discord delivery.
 
 ## Relevant principles
 
@@ -27,6 +28,9 @@ delivery result.
   configured room.
 - Existing officer project-management permission gates protect every
   configuration, provisioning, resend, rotation, and revocation procedure.
+- The same officer permission protects announcement publication and clearing.
+- `judgeProcedure` resolves announcement visibility from the principal. Clients
+  cannot select another room or opt themselves into guest-hidden notices.
 
 ## Architecture and data flow
 
@@ -42,6 +46,12 @@ delivery result.
 `HackathonJudgingConfiguration` gains nullable
 `judgingCommsChannelId varchar(20)`. Null disables Discord communications.
 `JudgingRoom` gains nullable `discordThreadId varchar(20)`.
+
+`JudgingAnnouncement` stores a hackathon, optional room, message, urgency,
+guest audience flag, publishing officer, and clear metadata. A null room means
+the announcement is hackathon-wide. Partial unique indexes permit at most one
+uncleared global announcement per hackathon and one uncleared announcement per
+room.
 
 Changing or clearing the channel nulls active-room thread IDs. Saving a new
 channel provisions replacement threads but does not delete old Discord
@@ -72,6 +82,13 @@ and presence, then sends one arrival notice with the guest's inert display
 name. It mentions authenticated judges with current presence in the room.
 Guest reloads and heartbeats send nothing.
 
+Judge-facing API reads batch-resolve authenticated judge names through the
+linked Member record before returning room rosters, score feedback, or
+evaluation history. They retain the stored Judge label as the Discord fallback.
+Guest labels never pass through Member-name resolution. The guest introduction
+field says `Full name`, but the signed guest session remains the authorization
+identity.
+
 ### QR and revocation delivery
 
 First QR generation posts the new PNG and signed link. Reading an existing QR
@@ -92,6 +109,35 @@ Delivery status is `not_configured`, `delivered`, or `failed`. A Discord
 failure never rolls back room entry, guest completion, QR creation, rotation,
 or revocation.
 
+### Announcement reads and lifecycle
+
+Publishing runs in a transaction. It locks the scope, clears its current
+announcement, inserts the replacement, and records both actor and scope in the
+audit log. Clearing timestamps the current row instead of deleting it. The
+history remains available for incident review.
+
+Member visibility uses the member judge's current room presence for the chosen
+hackathon. Members receive the active global announcement and, when assigned,
+their room announcement. Guest visibility derives the hackathon and room from
+the signed guest principal and adds `includeGuests = true`. The API never trusts
+a client-provided room ID for announcement reads.
+
+`getContext` includes the initial visible announcements for server rendering.
+`listAnnouncements` uses the same resolver for client polling every 30 seconds.
+Polling continues while the document is hidden so a clear or urgent replacement
+arrives without waiting for focus.
+
+A normal announcement renders as a persistent banner. The judge can dismiss it
+with an X, and Blade remembers that announcement ID in the browser. A newly
+published replacement has a new ID and appears again. An urgent announcement
+renders as a blocking dialog and requires an acknowledgement for that ID.
+
+After the transaction commits, global publication posts to the configured root
+channel and allowlists linked Discord IDs for all member judges in the
+hackathon. Room publication posts to the room thread and allowlists linked IDs
+for member judges with current room presence. The mutation returns delivery
+status. Discord failure never rolls back the stored Blade announcement.
+
 ## tRPC and API behavior
 
 Extend `judgingRouter` with:
@@ -100,6 +146,9 @@ Extend `judgingRouter` with:
 - `setCommsChannel` to save a nullable channel and provision active rooms.
 - `provisionRoomThreads` to retry missing threads.
 - `sendRoomQr` to repost the current active QR.
+- `publishAnnouncement` to replace the current global or room announcement.
+- `clearAnnouncement` to clear one current announcement.
+- `listAnnouncements` for principal-scoped polling.
 
 `listAdmin` returns the channel ID, resolved guild ID, room thread IDs, and
 missing-thread state. Current join, guest completion, QR, and revocation
@@ -115,10 +164,12 @@ room or active QR. Do not return raw Discord errors.
 - Live validation checks guild and channel type.
 - Message and filename builders enforce Discord limits and neutralize hostile
   display names.
+- Announcement messages trim surrounding whitespace, reject control
+  characters, and allow 1 through 1,000 characters.
 
 ## Data, migration, and compatibility
 
-- Generate an additive migration for the nullable columns.
+- Generate additive migrations for the Discord columns and announcement table.
 - Existing hackathons remain disconnected. No migration backfill calls Discord.
 - Existing QR URLs, guest cookies, scoring, imports, and presence stay
   compatible.
@@ -144,10 +195,23 @@ hackathon and the existing Discord config chooses the environment's guild.
   disconnected action.
 - Show disconnected, connected, loading, and partial-failure states with text.
 - Add `Open thread` and `Send QR` beside current room actions.
+- Put a global announcement action beside the room controls and an announcement
+  action on every active room.
+- Use one composed dialog for global and room publication. Show the scope,
+  current message, authenticated default, guest switch, urgency switch, replace
+  action, and clear action.
+- Render standard notices above the judge workspace. Render urgent notices in a
+  blocking dialog above the feedback flow. Stack the global notice before the
+  room notice and label both scopes.
+- Server-render initial notices. Poll with React Query every 30 seconds and keep
+  background polling enabled.
 - Keep 44px targets, mobile wrapping, skeleton parity, and no horizontal
   document overflow.
 - Warn about Discord delivery failure without claiming the judging action
   failed.
+- Label the guest identity field `Full name`.
+- Render authenticated judge identities with the current Member full name and
+  use the stored Discord label only when no Member profile is linked.
 - Put screenshots only in PR discussion, never in the repository.
 
 ## Testing and verification strategy

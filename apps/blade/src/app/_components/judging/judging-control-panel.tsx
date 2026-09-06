@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Hash,
   KeyRound,
+  Megaphone,
   MessageCircle,
   Pencil,
   Plus,
@@ -40,6 +41,8 @@ import {
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
+import { Switch } from "@forge/ui/switch";
+import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import {
@@ -52,6 +55,7 @@ import { api } from "~/trpc/react";
 type ControlData = RouterOutputs["judging"]["listAdmin"];
 type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
 type Room = ControlData["rooms"][number];
+type Announcement = NonNullable<ControlData["globalAnnouncement"]>;
 type QrResult = Pick<
   RouterOutputs["judging"]["generateRoomLink"],
   "id" | "qrCodeUrl" | "url"
@@ -319,6 +323,186 @@ function RoomQrDialog({
   );
 }
 
+function AnnouncementDialog({
+  current,
+  data,
+  onClose,
+  onSaved,
+  room,
+}: {
+  current: Announcement | null;
+  data: ControlData;
+  onClose: () => void;
+  onSaved: () => void;
+  room: Room | null;
+}) {
+  const publish = api.judging.publishAnnouncement.useMutation();
+  const clear = api.judging.clearAnnouncement.useMutation();
+  const [includeGuests, setIncludeGuests] = useState(
+    current?.includeGuests ?? false,
+  );
+  const [isUrgent, setIsUrgent] = useState(current?.isUrgent ?? false);
+  const scope = room?.name ?? "All judging rooms";
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    try {
+      const result = await publish.mutateAsync({
+        hackathonId: data.hackathon.id,
+        includeGuests,
+        isUrgent,
+        message: formString(form.get("message")),
+        roomId: room?.id ?? null,
+      });
+      if (result.discordDelivery === "failed") {
+        toast.error(
+          "Announcement published in Blade, but Discord delivery failed.",
+        );
+      } else if (result.discordDelivery === "not_configured") {
+        toast.success(
+          "Announcement published in Blade. Discord is not connected.",
+        );
+      } else if (result.discordDelivery === "superseded") {
+        toast.success(
+          "Announcement published in Blade, then replaced before Discord delivery.",
+        );
+      } else {
+        toast.success("Announcement published in Blade and Discord.");
+      }
+      onClose();
+      onSaved();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Announcement could not be published.",
+      );
+    }
+  }
+
+  async function clearCurrent() {
+    if (!current) return;
+    try {
+      await clear.mutateAsync({ announcementId: current.id });
+      toast.success("Announcement cleared.");
+      onClose();
+      onSaved();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Announcement could not be cleared.",
+      );
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] overflow-y-auto sm:max-w-xl [&>button]:size-11">
+        <form className="space-y-5" onSubmit={submit}>
+          <DialogHeader className="text-left">
+            <div className="mb-1 flex size-11 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+              <Megaphone className="size-5" aria-hidden="true" />
+            </div>
+            <DialogTitle>
+              {current ? "Replace announcement" : "Publish announcement"}
+            </DialogTitle>
+            <DialogDescription>
+              This goes to {scope} in Blade and Discord. Blade publication
+              succeeds even if Discord is unavailable.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="judging-announcement-message">Message</Label>
+            <Textarea
+              defaultValue={current?.message ?? ""}
+              id="judging-announcement-message"
+              maxLength={1000}
+              name="message"
+              placeholder="Judging pauses at 4:30 PM for deliberation."
+              required
+              rows={5}
+            />
+            <p className="text-xs leading-5 text-muted-foreground">
+              Authenticated judges receive a Discord mention. Guest judges are
+              never mentioned on Discord.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/25 p-4">
+            <Label
+              className="flex min-h-11 cursor-pointer items-start justify-between gap-4"
+              htmlFor="judging-announcement-guests"
+            >
+              <span>
+                <span className="block font-medium">Include guest judges</span>
+                <span className="mt-1 block text-sm font-normal leading-5 text-muted-foreground">
+                  Show this in the QR guest workspace too.
+                </span>
+              </span>
+              <Switch
+                checked={includeGuests}
+                id="judging-announcement-guests"
+                onCheckedChange={setIncludeGuests}
+              />
+            </Label>
+            <Label
+              className="flex min-h-11 cursor-pointer items-start justify-between gap-4 border-t border-border/60 pt-3"
+              htmlFor="judging-announcement-urgent"
+            >
+              <span>
+                <span className="block font-medium">Urgent announcement</span>
+                <span className="mt-1 block text-sm font-normal leading-5 text-muted-foreground">
+                  Block judging until each recipient acknowledges the message.
+                </span>
+              </span>
+              <Switch
+                checked={isUrgent}
+                id="judging-announcement-urgent"
+                onCheckedChange={setIsUrgent}
+              />
+            </Label>
+          </div>
+
+          {current ? (
+            <div className="bg-[#DBC049]/8 rounded-md border border-[#DBC049]/30 px-4 py-3 text-sm">
+              A current {current.isUrgent ? "urgent dialog" : "banner"} is live
+              for {scope}. Publishing replaces it immediately.
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            {current ? (
+              <Button
+                className="min-h-11"
+                disabled={clear.isPending || publish.isPending}
+                onClick={() => void clearCurrent()}
+                type="button"
+                variant="outline"
+              >
+                {clear.isPending ? "Clearing…" : "Clear current"}
+              </Button>
+            ) : null}
+            <Button
+              className="min-h-11"
+              disabled={clear.isPending || publish.isPending}
+              type="submit"
+            >
+              {publish.isPending
+                ? "Publishing…"
+                : current
+                  ? "Replace announcement"
+                  : "Publish announcement"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function JudgingControlPanel({
   initialData,
   hackathons,
@@ -337,6 +521,9 @@ export function JudgingControlPanel({
     null,
   );
   const [archiving, setArchiving] = useState<Room | null>(null);
+  const [announcementRoom, setAnnouncementRoom] = useState<
+    Room | null | "global"
+  >(null);
   const [commsDraft, setCommsDraft] = useState({
     channelId: initialData.configuration.judgingCommsChannelId,
     hackathonId: initialData.hackathon.id,
@@ -456,13 +643,23 @@ export function JudgingControlPanel({
       {!embedded ? (
         <AdminPageHeader
           actions={
-            <Button
-              className="h-11 gap-2"
-              disabled={!data.challenges.length}
-              onClick={() => setEditing("new")}
-            >
-              <Plus className="size-4" aria-hidden="true" /> Create room
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                className="h-11 gap-2"
+                onClick={() => setAnnouncementRoom("global")}
+                variant="outline"
+              >
+                <Megaphone className="size-4" aria-hidden="true" /> Announce to
+                all rooms
+              </Button>
+              <Button
+                className="h-11 gap-2"
+                disabled={!data.challenges.length}
+                onClick={() => setEditing("new")}
+              >
+                <Plus className="size-4" aria-hidden="true" /> Create room
+              </Button>
+            </div>
           }
           description="Provision physical rooms, distribute guest access, and watch the live judge roster."
           eyebrow="Officer command center"
@@ -470,7 +667,15 @@ export function JudgingControlPanel({
           title="Judging rooms"
         />
       ) : (
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            className="h-11 gap-2"
+            onClick={() => setAnnouncementRoom("global")}
+            variant="outline"
+          >
+            <Megaphone className="size-4" aria-hidden="true" /> Announce to all
+            rooms
+          </Button>
           <Button
             className="h-11 gap-2"
             disabled={!data.challenges.length}
@@ -654,6 +859,41 @@ export function JudgingControlPanel({
         </div>
       </section>
 
+      {data.globalAnnouncement ? (
+        <section className="bg-[#DBC049]/8 rounded-lg border border-[#DBC049]/35 p-4 shadow-lg shadow-black/10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-semibold">Announcement to all rooms</p>
+                <Badge
+                  variant={
+                    data.globalAnnouncement.isUrgent ? "destructive" : "outline"
+                  }
+                >
+                  {data.globalAnnouncement.isUrgent ? "Urgent" : "Banner"}
+                </Badge>
+                <Badge variant="secondary">
+                  {data.globalAnnouncement.includeGuests
+                    ? "Members and guests"
+                    : "Authenticated judges"}
+                </Badge>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
+                {data.globalAnnouncement.message}
+              </p>
+            </div>
+            <Button
+              className="min-h-11 shrink-0"
+              onClick={() => setAnnouncementRoom("global")}
+              size="sm"
+              variant="outline"
+            >
+              Manage
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       {!data.challenges.length ? (
         <Alert>
           <QrCode className="size-4" />
@@ -697,6 +937,26 @@ export function JudgingControlPanel({
                             QR live
                           </Badge>
                         ) : null}
+                        {room.announcement ? (
+                          <>
+                            <Badge
+                              variant={
+                                room.announcement.isUrgent
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                            >
+                              {room.announcement.isUrgent
+                                ? "Urgent notice"
+                                : "Notice live"}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {room.announcement.includeGuests
+                                ? "Members and guests"
+                                : "Authenticated judges"}
+                            </Badge>
+                          </>
+                        ) : null}
                         {archived ? (
                           <Badge variant="destructive">Archived</Badge>
                         ) : null}
@@ -735,6 +995,14 @@ export function JudgingControlPanel({
                           variant="outline"
                         >
                           <Pencil className="mr-1 size-4" /> Edit
+                        </Button>
+                        <Button
+                          className="min-h-11"
+                          onClick={() => setAnnouncementRoom(room)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <Megaphone className="mr-1 size-4" /> Announce
                         </Button>
                         <Button
                           disabled={generate.isPending || rotate.isPending}
@@ -993,6 +1261,19 @@ export function JudgingControlPanel({
         )}
       </section>
 
+      {announcementRoom ? (
+        <AnnouncementDialog
+          current={
+            announcementRoom === "global"
+              ? data.globalAnnouncement
+              : announcementRoom.announcement
+          }
+          data={data}
+          onClose={() => setAnnouncementRoom(null)}
+          onSaved={refresh}
+          room={announcementRoom === "global" ? null : announcementRoom}
+        />
+      ) : null}
       <RoomEditor
         data={data}
         key={editing === "new" ? "new" : (editing?.id ?? "closed")}

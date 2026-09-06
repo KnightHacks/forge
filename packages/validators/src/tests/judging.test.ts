@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   guestJudgeNameSchema,
+  judgingAnnouncementPublishSchema,
   judgingCommsChannelSchema,
   judgingEvaluationSaveSchema,
   judgingReorderSchema,
@@ -36,6 +37,30 @@ describe("judging inputs", () => {
         hackathonId,
       }).success,
     ).toBe(false);
+  });
+
+  it("validates judging announcements and defaults their audience", () => {
+    expect(
+      judgingAnnouncementPublishSchema.parse({
+        hackathonId,
+        message: "  Pitches pause at 4:30 PM.  ",
+        roomId: null,
+      }),
+    ).toMatchObject({
+      includeGuests: false,
+      isUrgent: false,
+      message: "Pitches pause at 4:30 PM.",
+      roomId: null,
+    });
+    for (const message of ["   ", "x".repeat(1001), "Unsafe\u0007copy"]) {
+      expect(
+        judgingAnnouncementPublishSchema.safeParse({
+          hackathonId,
+          message,
+          roomId: null,
+        }).success,
+      ).toBe(false);
+    }
   });
 
   it("trims room and guest judge names", () => {

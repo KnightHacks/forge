@@ -91,6 +91,67 @@ An active room thread links to
 Channel name and ID search works with long and numerous channels at desktop and
 390px widths. Controls retain 44px targets and no document overflow appears.
 
+### TC-017: publish a global announcement
+
+An officer publishes a message with the default audience. Every authenticated
+judge for the hackathon sees an `All judging rooms` notice. QR guests do not.
+The root Discord channel receives the message and linked member mentions.
+
+### TC-018: include guests in a global announcement
+
+Enabling `Include guest judges` exposes the global Blade notice to authenticated
+judges and active QR guests for that hackathon. Guests are not Discord
+recipients.
+
+### TC-019: publish a room announcement
+
+An authenticated judge assigned to the room sees its notice. A member in
+another room and a member without a room do not. A QR guest in the room sees it
+only when guest delivery is enabled. The room thread receives the message and
+mentions assigned authenticated judges.
+
+### TC-020: replace and clear an announcement
+
+Publishing again in the same scope clears the old row and makes only the new
+message current. Clearing removes the notice from the next read while retaining
+the stored history.
+
+### TC-021: render notices before hydration
+
+The first server response includes every announcement visible to the principal.
+There is no empty announcement flash while the client hydrates.
+
+### TC-022: poll every 30 seconds
+
+An open judging page picks up publications, replacements, and clears within 30
+seconds. Polling continues while the document is hidden.
+
+### TC-023: dismiss standard notices explicitly
+
+A standard notice never expires on a timer. Selecting its X hides that exact
+announcement in the browser. A replacement in the same scope appears because
+it has a new ID.
+
+### TC-024: acknowledge urgent notices
+
+An urgent global or room announcement opens above the judging workspace and an
+open feedback form. Judging interaction remains blocked until the judge
+acknowledges that announcement ID.
+
+### TC-025: expose current state in Command Center
+
+The Rooms tab shows the current global notice and each room's current notice,
+including guest visibility and urgency. Officers can replace or clear either
+one.
+
+### TC-026: show human names for every judge
+
+Room rosters, score feedback, and officer evaluation history show an
+authenticated judge's current Member full name even when the stored Judge label
+contains a Discord username. An authenticated judge without a linked Member
+profile keeps the stored Discord label. Guest judges keep the full name entered
+through the field labeled `Full name`.
+
 ## Negative and regression cases
 
 ### TC-NEG-001: reject a foreign or unsupported channel
@@ -128,6 +189,31 @@ A deleted or unusable stored thread is replaced and saved before delivery.
 ### TC-NEG-008: preserve archived-room history
 
 Archived rooms receive no replacement thread and show no active send controls.
+
+### TC-NEG-009: prevent announcement scope spoofing
+
+Guests and members cannot request announcements for an arbitrary room. The API
+derives room visibility from the signed guest session or current member
+presence.
+
+### TC-NEG-010: enforce announcement permissions
+
+Guests and non-officer judges cannot publish, replace, or clear announcements.
+
+### TC-NEG-011: reject invalid announcement content
+
+Blank text, text over 1,000 characters, and control characters fail validation
+without replacing the current message.
+
+### TC-NEG-012: serialize same-scope publication
+
+Concurrent publications leave exactly one current row in a scope. Global and
+room scopes do not clear one another.
+
+### TC-NEG-013: isolate announcement Discord failure
+
+Blade publication stays current and the officer sees `failed` when Discord
+cannot accept the global or room announcement.
 
 ## Open questions
 

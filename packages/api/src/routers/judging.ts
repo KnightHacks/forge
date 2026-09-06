@@ -22,6 +22,7 @@ import {
   Hackathon,
   HackathonJudgingConfiguration,
   Judge,
+  JudgingAnnouncement,
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
@@ -30,6 +31,8 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import {
   guestJudgeNameSchema,
+  judgingAnnouncementClearSchema,
+  judgingAnnouncementPublishSchema,
   judgingCommsChannelSchema,
   judgingGuestSessionIdSchema,
   judgingHackathonIdSchema,
@@ -43,6 +46,10 @@ import {
 
 import type { AuditActor } from "../utils/audit/service";
 import type { WriteDb } from "../utils/db";
+import type {
+  GuestJudgePrincipal,
+  MemberJudgePrincipal,
+} from "../utils/judging/principal";
 import {
   completeGuestJudge,
   judgingRoomActivationUrl,
@@ -59,6 +66,7 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import {
+  deliverCurrentJudgingAnnouncement,
   deliverJudgingRoomNotice,
   ensureJudgingRoomThread,
   judgingDiscordGuildId,
@@ -67,7 +75,10 @@ import {
   validateJudgingDiscordChannel,
 } from "../utils/judging/discord-comms";
 import { resolveJudgeAccess } from "../utils/judging/principal";
-import { resolveMemberDisplayNamesByUserId } from "../utils/member/display-name";
+import {
+  resolveCurrentJudgeDisplayNames,
+  resolveMemberDisplayNamesByUserId,
+} from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
 import { judgingScoresRouter } from "./judging-scores";
 
@@ -191,6 +202,78 @@ async function listActiveRooms(hackathonId: string) {
       ),
     )
     .orderBy(asc(JudgingRoom.displayOrder), asc(JudgingRoom.name));
+}
+
+async function listVisibleAnnouncements(input: {
+  hackathonId: string;
+  isGuest: boolean;
+  roomId: string | null;
+}) {
+  const rows = await db
+    .select({
+      id: JudgingAnnouncement.id,
+      includeGuests: JudgingAnnouncement.includeGuests,
+      isUrgent: JudgingAnnouncement.isUrgent,
+      message: JudgingAnnouncement.message,
+      publishedAt: JudgingAnnouncement.publishedAt,
+      roomId: JudgingAnnouncement.roomId,
+      roomName: JudgingRoom.name,
+    })
+    .from(JudgingAnnouncement)
+    .leftJoin(JudgingRoom, eq(JudgingRoom.id, JudgingAnnouncement.roomId))
+    .where(
+      and(
+        eq(JudgingAnnouncement.hackathonId, input.hackathonId),
+        isNull(JudgingAnnouncement.clearedAt),
+        input.isGuest ? eq(JudgingAnnouncement.includeGuests, true) : undefined,
+        input.roomId
+          ? or(
+              isNull(JudgingAnnouncement.roomId),
+              eq(JudgingAnnouncement.roomId, input.roomId),
+            )
+          : isNull(JudgingAnnouncement.roomId),
+      ),
+    );
+  return rows.sort((left, right) => {
+    if (left.roomId === null && right.roomId !== null) return -1;
+    if (left.roomId !== null && right.roomId === null) return 1;
+    return left.publishedAt.getTime() - right.publishedAt.getTime();
+  });
+}
+
+async function announcementsForPrincipal(
+  principal: GuestJudgePrincipal | MemberJudgePrincipal,
+  requestedHackathonId?: string,
+) {
+  if (principal.kind === "guest") {
+    return listVisibleAnnouncements({
+      hackathonId: principal.hackathonId,
+      isGuest: true,
+      roomId: principal.roomId,
+    });
+  }
+  const hackathon = await selectedHackathon(
+    requestedHackathonId,
+    principal.isOfficer,
+  );
+  if (!hackathon) return [];
+  const [presence] = await db
+    .select({ roomId: JudgingRoomPresence.roomId })
+    .from(Judge)
+    .innerJoin(JudgingRoomPresence, eq(JudgingRoomPresence.judgeId, Judge.id))
+    .where(
+      and(
+        eq(Judge.hackathonId, hackathon.id),
+        eq(Judge.userId, principal.userId),
+        isNull(JudgingRoomPresence.leftAt),
+      ),
+    )
+    .limit(1);
+  return listVisibleAnnouncements({
+    hackathonId: hackathon.id,
+    isGuest: false,
+    roomId: presence?.roomId ?? null,
+  });
 }
 
 async function lockRoomAggregate(
@@ -383,21 +466,24 @@ export const judgingRouter = createTRPCRouter({
         return { ...access, ...room };
       }
       if (access.kind === "guest") {
-        const [room] = await db
-          .select({
-            challengeLabel: ProjectChallenge.label,
-            hackathonName: Hackathon.displayName,
-            roomName: JudgingRoom.name,
-          })
-          .from(JudgingRoom)
-          .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
-          .innerJoin(
-            ProjectChallenge,
-            eq(ProjectChallenge.id, JudgingRoom.challengeId),
-          )
-          .where(eq(JudgingRoom.id, access.roomId))
-          .limit(1);
-        return { ...access, ...room };
+        const [[room], announcements] = await Promise.all([
+          db
+            .select({
+              challengeLabel: ProjectChallenge.label,
+              hackathonName: Hackathon.displayName,
+              roomName: JudgingRoom.name,
+            })
+            .from(JudgingRoom)
+            .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
+            .innerJoin(
+              ProjectChallenge,
+              eq(ProjectChallenge.id, JudgingRoom.challengeId),
+            )
+            .where(eq(JudgingRoom.id, access.roomId))
+            .limit(1),
+          announcementsForPrincipal(access),
+        ]);
+        return { ...access, ...room, announcements };
       }
 
       const hackathon = await selectedHackathon(
@@ -408,6 +494,7 @@ export const judgingRouter = createTRPCRouter({
         return {
           ...access,
           activeRoomId: null,
+          announcements: [],
           hackathon: null,
           rooms: [],
         };
@@ -431,10 +518,21 @@ export const judgingRouter = createTRPCRouter({
       return {
         ...access,
         activeRoomId: presence?.roomId ?? null,
+        announcements: await listVisibleAnnouncements({
+          hackathonId: hackathon.id,
+          isGuest: false,
+          roomId: presence?.roomId ?? null,
+        }),
         hackathon,
         rooms,
       };
     }),
+
+  listAnnouncements: judgeProcedure
+    .input(contextInputSchema)
+    .query(({ ctx, input }) =>
+      announcementsForPrincipal(ctx.judgePrincipal, input.hackathonId),
+    ),
 
   completeGuest: publicProcedure
     .input(guestJudgeNameSchema)
@@ -694,6 +792,163 @@ export const judgingRouter = createTRPCRouter({
       return result;
     }),
 
+  publishAnnouncement: permProcedure
+    .input(judgingAnnouncementPublishSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const announcement = await db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+
+        let roomName: string | null = null;
+        if (input.roomId) {
+          const [room] = await tx
+            .select({ name: JudgingRoom.name })
+            .from(JudgingRoom)
+            .where(
+              and(
+                eq(JudgingRoom.id, input.roomId),
+                eq(JudgingRoom.hackathonId, input.hackathonId),
+                isNull(JudgingRoom.archivedAt),
+              ),
+            )
+            .limit(1);
+          if (!room) throw new TRPCError({ code: "NOT_FOUND" });
+          roomName = room.name;
+        }
+
+        const now = new Date();
+        await tx
+          .update(JudgingAnnouncement)
+          .set({
+            clearedAt: now,
+            clearedByUserId: ctx.session.user.id,
+          })
+          .where(
+            and(
+              eq(JudgingAnnouncement.hackathonId, input.hackathonId),
+              input.roomId
+                ? eq(JudgingAnnouncement.roomId, input.roomId)
+                : isNull(JudgingAnnouncement.roomId),
+              isNull(JudgingAnnouncement.clearedAt),
+            ),
+          );
+        const [created] = await tx
+          .insert(JudgingAnnouncement)
+          .values({
+            hackathonId: input.hackathonId,
+            includeGuests: input.includeGuests,
+            isUrgent: input.isUrgent,
+            message: input.message,
+            publishedByUserId: ctx.session.user.id,
+            roomId: input.roomId,
+          })
+          .returning();
+        if (!created) throw new Error("Announcement was not published.");
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.announcement.published",
+            actor,
+            metadata: {
+              includeGuests: input.includeGuests,
+              isUrgent: input.isUrgent,
+              scope: input.roomId ? "room" : "global",
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.roomId ?? hackathon.id,
+                targetLabel: roomName ?? hackathon.displayName,
+                targetType: input.roomId ? "judging_room" : "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return created;
+      });
+      const discordDelivery = await deliverCurrentJudgingAnnouncement({
+        announcementId: announcement.id,
+        hackathonId: announcement.hackathonId,
+        isUrgent: announcement.isUrgent,
+        message: announcement.message,
+        roomId: announcement.roomId,
+      });
+      return { ...announcement, discordDelivery };
+    }),
+
+  clearAnnouncement: permProcedure
+    .input(judgingAnnouncementClearSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [current] = await tx
+          .select({
+            hackathonId: JudgingAnnouncement.hackathonId,
+            hackathonName: Hackathon.displayName,
+            roomId: JudgingAnnouncement.roomId,
+            roomName: JudgingRoom.name,
+          })
+          .from(JudgingAnnouncement)
+          .innerJoin(
+            Hackathon,
+            eq(Hackathon.id, JudgingAnnouncement.hackathonId),
+          )
+          .leftJoin(JudgingRoom, eq(JudgingRoom.id, JudgingAnnouncement.roomId))
+          .where(
+            and(
+              eq(JudgingAnnouncement.id, input.announcementId),
+              isNull(JudgingAnnouncement.clearedAt),
+            ),
+          )
+          .limit(1);
+        if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+        await tx
+          .select({ id: Hackathon.id })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, current.hackathonId))
+          .for("update");
+        const [cleared] = await tx
+          .update(JudgingAnnouncement)
+          .set({
+            clearedAt: new Date(),
+            clearedByUserId: ctx.session.user.id,
+          })
+          .where(
+            and(
+              eq(JudgingAnnouncement.id, input.announcementId),
+              isNull(JudgingAnnouncement.clearedAt),
+            ),
+          )
+          .returning({ id: JudgingAnnouncement.id });
+        if (!cleared) throw new TRPCError({ code: "NOT_FOUND" });
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.announcement.cleared",
+            actor,
+            metadata: { scope: current.roomId ? "room" : "global" },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: current.roomId ?? current.hackathonId,
+                targetLabel: current.roomName ?? current.hackathonName,
+                targetType: current.roomId ? "judging_room" : "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return { cleared: true };
+      });
+    }),
+
   listAdmin: permProcedure
     .input(judgingHackathonIdSchema)
     .query(async ({ ctx, input }) => {
@@ -757,6 +1012,7 @@ export const judgingRouter = createTRPCRouter({
           kind: Judge.kind,
           lastSeenAt: JudgingRoomPresence.lastSeenAt,
           roomId: JudgingRoomPresence.roomId,
+          userId: Judge.userId,
         })
         .from(JudgingRoomPresence)
         .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
@@ -776,7 +1032,28 @@ export const judgingRouter = createTRPCRouter({
           ),
         )
         .orderBy(asc(Judge.displayName));
-      const [configuration, rubric] = await Promise.all([
+      const currentRoster = (await resolveCurrentJudgeDisplayNames(roster))
+        .map(({ userId: _userId, ...judge }) => judge)
+        .sort((left, right) =>
+          left.displayName.localeCompare(right.displayName),
+        );
+      const [announcements, configuration, rubric] = await Promise.all([
+        db
+          .select({
+            id: JudgingAnnouncement.id,
+            includeGuests: JudgingAnnouncement.includeGuests,
+            isUrgent: JudgingAnnouncement.isUrgent,
+            message: JudgingAnnouncement.message,
+            publishedAt: JudgingAnnouncement.publishedAt,
+            roomId: JudgingAnnouncement.roomId,
+          })
+          .from(JudgingAnnouncement)
+          .where(
+            and(
+              eq(JudgingAnnouncement.hackathonId, input.hackathonId),
+              isNull(JudgingAnnouncement.clearedAt),
+            ),
+          ),
         db.query.HackathonJudgingConfiguration.findFirst({
           columns: {
             closedAt: true,
@@ -818,12 +1095,19 @@ export const judgingRouter = createTRPCRouter({
         },
         inventoryLockedAt: configuration?.projectInventoryLockedAt ?? null,
         discordGuildId,
+        globalAnnouncement:
+          announcements.find((announcement) => announcement.roomId === null) ??
+          null,
         rubric,
         rooms: rooms.map((room) => ({
           ...room,
+          announcement:
+            announcements.find(
+              (announcement) => announcement.roomId === room.id,
+            ) ?? null,
           activeLinkId:
             links.find((link) => link.roomId === room.id)?.id ?? null,
-          judges: roster.filter((judge) => judge.roomId === room.id),
+          judges: currentRoster.filter((judge) => judge.roomId === room.id),
         })),
       };
     }),
@@ -1326,6 +1610,8 @@ export const judgingRouter = createTRPCRouter({
         const [target] = await tx
           .select({
             judgeDisplayName: Judge.displayName,
+            judgeKind: Judge.kind,
+            judgeUserId: Judge.userId,
             presenceId: JudgingRoomPresence.id,
             roomId: JudgingRoom.id,
             roomName: JudgingRoom.name,
@@ -1345,6 +1631,15 @@ export const judgingRouter = createTRPCRouter({
           .for("update")
           .limit(1);
         if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+        const [currentTarget] = await resolveCurrentJudgeDisplayNames([
+          {
+            displayName: target.judgeDisplayName,
+            kind: target.judgeKind,
+            userId: target.judgeUserId,
+          },
+        ]);
+        const judgeDisplayName =
+          currentTarget?.displayName ?? target.judgeDisplayName;
         await tx
           .update(JudgingRoomPresence)
           .set({ leftAt: new Date(), leaveReason: "officer-removed" })
@@ -1353,7 +1648,7 @@ export const judgingRouter = createTRPCRouter({
           actionKey: "judging.presence.removed",
           actor,
           metadata: {
-            judgeDisplayName: target.judgeDisplayName,
+            judgeDisplayName,
             judgeId: input.judgeId,
           },
           roomId: target.roomId,

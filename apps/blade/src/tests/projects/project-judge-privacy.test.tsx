@@ -13,6 +13,9 @@ import { ProjectDirectory } from "~/app/_components/projects/project-directory";
 const navigation = vi.hoisted(() => ({
   refresh: vi.fn(),
   replace: vi.fn(),
+  invalidateAnnouncements: vi.fn(() => Promise.resolve()),
+  joinRoom: vi.fn(),
+  leaveRoom: vi.fn(),
   saveEvaluation: vi.fn(),
 }));
 
@@ -27,7 +30,32 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("~/trpc/react", () => ({
   api: {
+    useUtils: () => ({
+      judging: {
+        listAnnouncements: {
+          invalidate: navigation.invalidateAnnouncements,
+        },
+      },
+    }),
     judging: {
+      heartbeat: {
+        useMutation: () => ({ mutate: vi.fn() }),
+      },
+      joinRoom: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: navigation.joinRoom,
+        }),
+      },
+      leaveRoom: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: navigation.leaveRoom,
+        }),
+      },
+      listAnnouncements: {
+        useQuery: () => ({ data: [] }),
+      },
       getProjectJudgingDetails: {
         useQuery: () => ({ data: undefined, error: null, isLoading: false }),
       },
@@ -230,6 +258,94 @@ describe("judge project directory", () => {
     expect(
       screen.queryByRole("columnheader", { name: "Challenges" }),
     ).toBeNull();
+  });
+
+  it("refreshes announcement scope after joining and leaving a room", async () => {
+    const user = userEvent.setup();
+    navigation.invalidateAnnouncements.mockClear();
+    navigation.joinRoom.mockResolvedValue({
+      challengeId: "challenge-acme",
+      discordDelivery: "not_configured",
+    });
+    navigation.leaveRoom.mockResolvedValue({ left: true });
+    const data = {
+      challenges: judgeProject.challenges,
+      hackathon: {
+        displayName: "Knight Hacks IX",
+        endDate: new Date("2026-10-01T00:00:00.000Z"),
+        id: judgeProject.hackathonId,
+        startDate: new Date("2026-09-01T00:00:00.000Z"),
+      },
+      page: 1,
+      pageSize: 25,
+      projects: [judgeProject],
+      totalCount: 1,
+    };
+    const room = {
+      challengeId: "challenge-acme",
+      challengeLabel: "Acme Challenge",
+      id: "00000000-0000-4000-8000-000000000006",
+      name: "Sponsor suite A",
+    };
+    const context = {
+      activeRoomId: null,
+      announcements: [],
+      discordUserId: "123456789012345678",
+      displayName: "Morgan Judge",
+      hackathon: data.hackathon,
+      isOfficer: false,
+      kind: "member" as const,
+      rooms: [room],
+      userId: "00000000-0000-4000-8000-000000000007",
+    };
+    const view = render(
+      <JudgeProjectWorkspace
+        data={data}
+        hackathons={[]}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }}
+        isOfficer={false}
+        judgingContext={context}
+      />,
+    );
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Judging room" }),
+      room.id,
+    );
+    await waitFor(() =>
+      expect(navigation.invalidateAnnouncements).toHaveBeenCalledTimes(1),
+    );
+
+    view.rerender(
+      <JudgeProjectWorkspace
+        data={data}
+        hackathons={[]}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }}
+        isOfficer={false}
+        judgingContext={{ ...context, activeRoomId: room.id }}
+      />,
+    );
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Judging room" }),
+      "",
+    );
+    await waitFor(() =>
+      expect(navigation.invalidateAnnouncements).toHaveBeenCalledTimes(2),
+    );
   });
 
   it("renders member score controls and challenge completion", async () => {

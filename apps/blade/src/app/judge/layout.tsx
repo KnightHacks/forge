@@ -32,6 +32,7 @@ export default async function JudgeLayout({
   return (
     <AuthenticatedShell
       adminNavigation={getAdminNavigationAccess(permissions)}
+      displayName={judgingContext.displayName}
       sectionLabel="Project directory"
       session={session}
     >

@@ -2315,6 +2315,57 @@ export const JudgingRoom = createTable(
   }),
 );
 
+export const JudgingAnnouncement = createTable(
+  "judging_announcement",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    roomId: t.uuid(),
+    message: t.varchar({ length: 1000 }).notNull(),
+    includeGuests: t.boolean().notNull().default(false),
+    isUrgent: t.boolean().notNull().default(false),
+    publishedByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    publishedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    clearedAt: t.timestamp({ withTimezone: true }),
+    clearedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+  }),
+  (table) => ({
+    roomScopeFk: foreignKey({
+      columns: [table.roomId, table.hackathonId],
+      foreignColumns: [JudgingRoom.id, JudgingRoom.hackathonId],
+      name: "knight_hacks_judging_announcement_room_scope_fk",
+    }).onDelete("cascade"),
+    oneCurrentGlobal: uniqueIndex(
+      "knight_hacks_judging_announcement_current_global_unique",
+    )
+      .on(table.hackathonId)
+      .where(sql`${table.roomId} IS NULL AND ${table.clearedAt} IS NULL`),
+    oneCurrentPerRoom: uniqueIndex(
+      "knight_hacks_judging_announcement_current_room_unique",
+    )
+      .on(table.roomId)
+      .where(sql`${table.roomId} IS NOT NULL AND ${table.clearedAt} IS NULL`),
+    currentLookup: index(
+      "knight_hacks_judging_announcement_current_lookup_idx",
+    ).on(table.hackathonId, table.roomId, table.clearedAt),
+    messageNotBlank: check(
+      "knight_hacks_judging_announcement_message_not_blank_check",
+      sql`length(btrim(${table.message})) > 0`,
+    ),
+  }),
+);
+
+export type InsertJudgingAnnouncement = typeof JudgingAnnouncement.$inferInsert;
+export type SelectJudgingAnnouncement = typeof JudgingAnnouncement.$inferSelect;
+
 export const Judge = createTable(
   "judge",
   (t) => ({

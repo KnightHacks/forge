@@ -59,14 +59,14 @@ export function GuestNameGate() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
-              <Label htmlFor="guest-judge-name">Name</Label>
+              <Label htmlFor="guest-judge-name">Full name</Label>
               <Input
                 autoComplete="name"
                 autoFocus
                 id="guest-judge-name"
                 maxLength={100}
                 onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="Your name"
+                placeholder="Your full name"
                 required
                 value={displayName}
               />

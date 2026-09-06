@@ -22,6 +22,20 @@ Current phase: Review and delivery
 - 2026-09-05: Screenshots belong in PR discussion only.
 - 2026-09-05: Discord copy uses the linked member profile's full name. The
   Discord account label remains a fallback for members without a profile.
+- 2026-09-05: The same full-name rule applies to every judging view that names
+  an authenticated judge. Guest access now labels its identity field `Full
+name`.
+- 2026-09-05: The slice now includes one current global announcement and one
+  current announcement per room. Authenticated judges are the default audience;
+  officers may include QR guests.
+- 2026-09-05: Judging pages server-render visible notices and poll every 30
+  seconds, including in hidden tabs.
+- 2026-09-05: Every announcement also posts to Discord. Global notices mention
+  all authenticated hackathon judges in the root channel. Room notices mention
+  assigned authenticated judges in the room thread. Discord failure does not
+  roll back Blade publication.
+- 2026-09-05: Standard notices require an explicit X dismissal. Urgent notices
+  block the workspace until the judge acknowledges them. Neither uses a timer.
 
 ## Open questions
 
@@ -40,6 +54,11 @@ None blocking.
 - [x] Test delivery in the development guild bot-testing channel.
 - [x] Create and assign the GitHub issue.
 - [x] Commit, push, open the PR, and attach screenshots outside the repo.
+- [x] Add announcement persistence, validation, principal-scoped reads, and
+      audit events.
+- [x] Add global and room announcement controls to Command Center.
+- [x] Add server-rendered announcement banners and urgent dialogs.
+- [x] Extend automated tests and visual evidence for announcements.
 - [ ] Address and resolve CodeRabbit review threads until approved.
 
 ## Validation and commands
@@ -48,15 +67,22 @@ None blocking.
   based on `bd97fccb` after PR #533 merged.
 - `pnpm forge:feature judging-discord-comms "Judging Discord Comms"`: passed
   after linking the existing dependency directory.
-- `pnpm db:generate`: passed; created additive migration `0048_little_tarot`.
+- `pnpm db:generate`: passed; created additive migrations
+  `0048_little_tarot` and `0049_real_redwing`.
 - `pnpm db:migrate`: passed against the pulled local database.
 - `pnpm format`: passed.
 - `pnpm lint`: passed after resolving two feature errors; repository warning
   baseline remains.
 - `pnpm typecheck`: passed, 33 tasks.
-- `pnpm --filter=@forge/validators test -- judging audit`: passed, 16 tests.
-- `pnpm --filter=@forge/api test -- judging`: passed, 13 tests.
+- `pnpm verify:precommit`: passed, including formatting, lint, type checks, and
+  repository policy checks across 33 tasks.
+- `pnpm --filter=@forge/validators test -- judging audit`: passed, 17 tests.
+- `pnpm --filter=@forge/api test -- judging`: passed, 22 tests.
 - `pnpm --filter=@forge/db test -- migration`: passed, 65 tests.
+- `pnpm --filter=@forge/db test -- judging-schema`: passed, 10 tests.
+- `pnpm --filter=@forge/blade test -- authenticated-shell
+  project-judge-privacy guest-name-gate judging-announcements`: passed, 27
+  tests.
 - `pnpm analyze:react:changed`: passed, two components and zero failures.
 - `pnpm --filter=@forge/blade build`: passed; 58 static pages generated.
 - Desktop Command Center, QR dialog, authenticated room assignment, live
@@ -69,6 +95,10 @@ None blocking.
 - Live copy check: passed. Member arrivals and organizer actions show the
   linked member profile name, such as `Dylan Vidal`, instead of a Discord
   username.
+- Announcement delivery review: passed for replacement ordering, current-role
+  recipients, Discord mention batching, room-thread provisioning races,
+  complete long-message delivery, server-rendered urgent notices, background
+  polling, and mobile overflow.
 
 ## Links
 

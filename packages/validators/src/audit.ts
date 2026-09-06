@@ -502,6 +502,16 @@ export const AUDIT_ACTION_CATALOG = {
     "Provisioned judging room threads",
     ["failedRoomCount", "provisionedCount"],
   ),
+  "judging.announcement.published": policy(
+    "hackathons",
+    "Published judging announcement",
+    ["includeGuests", "isUrgent", "scope"],
+  ),
+  "judging.announcement.cleared": policy(
+    "hackathons",
+    "Cleared judging announcement",
+    ["scope"],
+  ),
   "judging.room_qr.sent": policy("hackathons", "Sent judging room QR", [
     "discordDelivery",
   ]),

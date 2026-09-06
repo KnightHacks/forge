@@ -28,6 +28,7 @@ import { api } from "~/trpc/react";
 import { EvaluationDialog } from "../judging/evaluation-dialog";
 import { JudgeDeliberation } from "../judging/judge-deliberation";
 import { JudgeSubmissions } from "../judging/judge-submissions";
+import { JudgingAnnouncements } from "../judging/judging-announcements";
 import { ProjectScoreDialog } from "../judging/project-score-dialog";
 import { ProjectDirectory } from "./project-directory";
 
@@ -105,6 +106,7 @@ function MemberRoomSelector({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const utils = api.useUtils();
   const joinRoom = api.judging.joinRoom.useMutation();
   const leaveRoom = api.judging.leaveRoom.useMutation();
 
@@ -114,6 +116,7 @@ function MemberRoomSelector({
         if (context.activeRoomId) {
           await leaveRoom.mutateAsync({ roomId: context.activeRoomId });
         }
+        await utils.judging.listAnnouncements.invalidate();
         const next = new URLSearchParams(searchParams.toString());
         next.delete("challenge");
         next.delete("page");
@@ -124,6 +127,7 @@ function MemberRoomSelector({
         return;
       }
       const room = await joinRoom.mutateAsync({ roomId });
+      await utils.judging.listAnnouncements.invalidate();
       const next = new URLSearchParams(searchParams.toString());
       next.set("challenge", room.challengeId);
       next.delete("page");
@@ -201,6 +205,7 @@ export function JudgeProjectWorkspace({
   const [scoreProject, setScoreProject] = useState<JudgeProject | null>(null);
   const context = judgingContext ?? {
     activeRoomId: null,
+    announcements: [],
     displayName: "",
     hackathon: null,
     isOfficer,
@@ -251,6 +256,10 @@ export function JudgeProjectWorkspace({
 
   return (
     <main className={adminPageLayoutClassName} aria-busy={pending}>
+      <JudgingAnnouncements
+        hackathonId={context.kind === "member" ? input.hackathonId : undefined}
+        initialAnnouncements={context.announcements}
+      />
       <AdminPageHeader
         actions={
           <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto">

@@ -53,3 +53,28 @@ export async function resolveMemberDisplayNamesByUserId(
 
   return new Map(rows.map((row) => [row.userId, fullName(row)]));
 }
+
+/**
+ * Replace stored labels for authenticated judges with their current Member
+ * profile name. Guest-entered names and member labels without a linked Member
+ * record remain unchanged.
+ */
+export async function resolveCurrentJudgeDisplayNames<
+  T extends {
+    displayName: string;
+    kind: string;
+    userId: string | null;
+  },
+>(rows: readonly T[]): Promise<T[]> {
+  const memberNames = await resolveMemberDisplayNamesByUserId(
+    rows.map((row) => (row.kind === "member" ? row.userId : null)),
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    displayName:
+      row.kind === "member" && row.userId
+        ? (memberNames.get(row.userId) ?? row.displayName)
+        : row.displayName,
+  }));
+}

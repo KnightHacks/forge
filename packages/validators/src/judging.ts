@@ -165,6 +165,28 @@ export const judgingCommsChannelSchema = judgingHackathonIdSchema.extend({
   channelId: discordSnowflakeSchema.nullable(),
 });
 
+const judgingAnnouncementMessageSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(1000)
+  .refine((value) => !/\p{Cc}/u.test(value), {
+    message: "Announcement cannot contain control characters.",
+  });
+
+export const judgingAnnouncementPublishSchema = judgingHackathonIdSchema.extend(
+  {
+    includeGuests: z.boolean().default(false),
+    isUrgent: z.boolean().default(false),
+    message: judgingAnnouncementMessageSchema,
+    roomId: uuidSchema.nullable(),
+  },
+);
+
+export const judgingAnnouncementClearSchema = z.object({
+  announcementId: uuidSchema,
+});
+
 export const judgingRoomCreateSchema = judgingHackathonIdSchema.extend({
   challengeId: z.string().uuid(),
   name: roomNameSchema,
@@ -187,7 +209,7 @@ export const guestJudgeNameSchema = z.object({
     .min(2)
     .max(100)
     .refine((value) => !/\p{Cc}/u.test(value), {
-      message: "Name cannot contain control characters.",
+      message: "Full name cannot contain control characters.",
     }),
 });
 

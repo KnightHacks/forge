@@ -344,6 +344,13 @@
       "when": 1788662145431,
       "tag": "0048_little_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1788665684207,
+      "tag": "0049_real_redwing",
+      "breakpoints": true
     }
   ]
 }

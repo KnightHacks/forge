@@ -89,6 +89,10 @@ Notes:
 - `JudgingRoom.discordThreadId` is the room's current thread under that root
   channel. Changing or clearing the channel removes active Blade references but
   leaves old Discord history intact.
+- `JudgingAnnouncement` stores the current and cleared history of operational
+  notices for one hackathon or judging room. A null `roomId` means every room.
+  `includeGuests` controls QR-guest visibility, while `isUrgent` selects the
+  blocking acknowledgement dialog instead of the persistent banner.
 - `Project.deletedAt` provides officer-restorable soft deletion between imports; an authoritative re-import removes the prior inventory, including deleted rows.
 - A guest session stores only the SHA-256 hash of its random browser credential. Shared development backups drop judging rooms, judge identities, links, guest sessions, and presence rows.
 

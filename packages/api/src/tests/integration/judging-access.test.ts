@@ -14,11 +14,14 @@ import { permissionBitstring } from "../support/permissions";
 type DatabaseClient = typeof import("@forge/db/client").db;
 type AuthSchemas = typeof import("@forge/db/schemas/auth");
 type KnightHacksSchemas = typeof import("@forge/db/schemas/knight-hacks");
+type JudgingDiscordGateway =
+  import("../../utils/judging/discord-comms").JudgingDiscordGateway;
 
 const OFFICER_USER = "10000000-0000-4000-8000-000000000901";
 const OFFICER_ROLE = "20000000-0000-4000-8000-000000000901";
 const MEMBER_USER = "10000000-0000-4000-8000-000000000902";
 const MEMBER_ROLE = "20000000-0000-4000-8000-000000000902";
+const FALLBACK_USER = "10000000-0000-4000-8000-000000000903";
 const HACKATHON = "30000000-0000-4000-8000-000000000901";
 const GENERAL = "40000000-0000-4000-8000-000000000901";
 const SPONSOR = "40000000-0000-4000-8000-000000000902";
@@ -29,6 +32,8 @@ const RATING_TWO = "60000000-0000-4000-8000-000000000902";
 const PUBLIC_RESPONSE = "60000000-0000-4000-8000-000000000903";
 const OPTIONAL_RESPONSE = "60000000-0000-4000-8000-000000000904";
 const PRIVATE_RESPONSE = "60000000-0000-4000-8000-000000000905";
+const FAILED_ANNOUNCEMENT = "70000000-0000-4000-8000-000000000901";
+const CONCURRENT_ROOM = "80000000-0000-4000-8000-000000000901";
 
 function importCsv() {
   const headers = [
@@ -84,6 +89,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   let schemas: KnightHacksSchemas;
   let officer: Session;
   let member: Session;
+  let fallbackMember: Session;
 
   beforeAll(async () => {
     disposable = await provisionDisposableDatabase("forge_api");
@@ -131,6 +137,47 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       session: { id: "judging-member-session", userAgent: "vitest" },
       user: { id: MEMBER_USER, name: "Morgan Judge" },
     } as unknown as Session;
+    await client.insert(authSchemas.User).values({
+      discordUserId: "fallback-discord-label",
+      id: FALLBACK_USER,
+      name: "Fallback Discord Label",
+    });
+    await client.insert(authSchemas.Permissions).values({
+      roleId: MEMBER_ROLE,
+      userId: FALLBACK_USER,
+    });
+    fallbackMember = {
+      session: { id: "judging-fallback-session", userAgent: "vitest" },
+      user: { id: FALLBACK_USER, name: "Fallback Discord Label" },
+    } as unknown as Session;
+    await client.insert(schemas.Member).values([
+      {
+        age: 22,
+        discordUser: "jofficer",
+        dob: "2004-01-01",
+        email: "jordan-officer@example.test",
+        firstName: "Jordan",
+        gradDate: "2027-05-01",
+        lastName: "Officer",
+        levelOfStudy: "Undergraduate University (3+ year)",
+        school: "University of Central Florida",
+        shirtSize: "M",
+        userId: OFFICER_USER,
+      },
+      {
+        age: 21,
+        discordUser: "mjudge",
+        dob: "2005-01-01",
+        email: "morgan-judge@example.test",
+        firstName: "Morgan",
+        gradDate: "2028-05-01",
+        lastName: "Judge",
+        levelOfStudy: "Undergraduate University (3+ year)",
+        school: "University of Central Florida",
+        shirtSize: "M",
+        userId: MEMBER_USER,
+      },
+    ]);
 
     await client.insert(schemas.Hackathon).values({
       displayName: "Knight Hacks IX",
@@ -335,6 +382,56 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     await guestCaller.judging.completeGuest({ displayName: "Casey Sponsor" });
+    const membersOnly = await officerCaller.judging.publishAnnouncement({
+      hackathonId: HACKATHON,
+      message: "Authenticated judges only",
+      roomId: null,
+    });
+    expect(membersOnly.discordDelivery).toBe("not_configured");
+    const privateRoomNotice = await officerCaller.judging.publishAnnouncement({
+      hackathonId: HACKATHON,
+      message: "Room members only",
+      roomId: room.id,
+    });
+    await expect(guestCaller.judging.listAnnouncements({})).resolves.toEqual(
+      [],
+    );
+    const globalNotice = await officerCaller.judging.publishAnnouncement({
+      hackathonId: HACKATHON,
+      includeGuests: true,
+      isUrgent: true,
+      message: "All rooms pause judging",
+      roomId: null,
+    });
+    const roomNotice = await officerCaller.judging.publishAnnouncement({
+      hackathonId: HACKATHON,
+      includeGuests: true,
+      message: "Acme room stays put",
+      roomId: room.id,
+    });
+    expect(globalNotice.id).not.toBe(membersOnly.id);
+    expect(roomNotice.id).not.toBe(privateRoomNotice.id);
+    await expect(guestCaller.judging.listAnnouncements({})).resolves.toEqual([
+      expect.objectContaining({
+        id: globalNotice.id,
+        isUrgent: true,
+        roomId: null,
+      }),
+      expect.objectContaining({
+        id: roomNotice.id,
+        roomId: room.id,
+        roomName: "Acme room A",
+      }),
+    ]);
+    const memberCaller = await caller(member);
+    const fallbackCaller = await caller(fallbackMember);
+    await expect(
+      memberCaller.judging.publishAnnouncement({
+        hackathonId: HACKATHON,
+        message: "Unauthorized",
+        roomId: null,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     const scoped = await guestCaller.projects.listJudge({
       challengeIds: [GENERAL],
       direction: "asc",
@@ -359,6 +456,44 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     );
     expect(activeRoom?.judges).toEqual([
       expect.objectContaining({ displayName: "Casey Sponsor", kind: "guest" }),
+    ]);
+    await memberCaller.judging.joinRoom({ roomId: room.id });
+    await fallbackCaller.judging.joinRoom({ roomId: secondRoom.id });
+    await client
+      .update(schemas.Judge)
+      .set({ displayName: "mjudge" })
+      .where(eq(schemas.Judge.userId, MEMBER_USER));
+    const controlWithMember = await officerCaller.judging.listAdmin({
+      hackathonId: HACKATHON,
+    });
+    expect(
+      controlWithMember.rooms.find((candidate) => candidate.id === room.id)
+        ?.judges,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          displayName: "Morgan Judge",
+          kind: "member",
+        }),
+      ]),
+    );
+    expect(
+      controlWithMember.rooms.find(
+        (candidate) => candidate.id === secondRoom.id,
+      )?.judges,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          displayName: "Fallback Discord Label",
+          kind: "member",
+        }),
+      ]),
+    );
+    await expect(
+      memberCaller.judging.listAnnouncements({ hackathonId: HACKATHON }),
+    ).resolves.toEqual([
+      expect.objectContaining({ id: globalNotice.id, roomId: null }),
+      expect.objectContaining({ id: roomNotice.id, roomId: room.id }),
     ]);
     await client
       .update(schemas.JudgingRoomPresence)
@@ -443,7 +578,134 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       activeRoomId: generalRoom.id,
       kind: "member",
     });
+    if (memberContext.kind !== "member") {
+      throw new Error("Expected member judging context.");
+    }
+    expect(memberContext.announcements).toEqual([
+      expect.objectContaining({ id: globalNotice.id, roomId: null }),
+    ]);
+    await expect(
+      officerCaller.judging.clearAnnouncement({
+        announcementId: globalNotice.id,
+      }),
+    ).resolves.toEqual({ cleared: true });
+    await officerCaller.judging.clearAnnouncement({
+      announcementId: roomNotice.id,
+    });
+    await expect(
+      officerCaller.judging.clearAnnouncement({
+        announcementId: roomNotice.id,
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   }, 60_000);
+
+  it("keeps a Blade announcement current when Discord delivery fails", async () => {
+    await client
+      .insert(schemas.HackathonJudgingConfiguration)
+      .values({
+        hackathonId: HACKATHON,
+        judgingCommsChannelId: "123456789012345678",
+      })
+      .onConflictDoUpdate({
+        set: { judgingCommsChannelId: "123456789012345678" },
+        target: schemas.HackathonJudgingConfiguration.hackathonId,
+      });
+    await client.insert(schemas.JudgingAnnouncement).values({
+      hackathonId: HACKATHON,
+      id: FAILED_ANNOUNCEMENT,
+      message: "This survives a Discord outage.",
+      publishedByUserId: OFFICER_USER,
+    });
+    const gateway: JudgingDiscordGateway = {
+      createRoomThread: vi.fn(() => Promise.reject(new Error("unavailable"))),
+      getChannel: vi.fn(() => Promise.reject(new Error("unavailable"))),
+      listTextChannels: vi.fn(() => Promise.resolve([])),
+      prepareRoomThread: vi.fn(() => Promise.reject(new Error("unavailable"))),
+      sendMessage: vi.fn(() => Promise.reject(new Error("unavailable"))),
+    };
+    const { deliverCurrentJudgingAnnouncement } =
+      await import("../../utils/judging/discord-comms");
+
+    await expect(
+      deliverCurrentJudgingAnnouncement(
+        {
+          announcementId: FAILED_ANNOUNCEMENT,
+          hackathonId: HACKATHON,
+          isUrgent: false,
+          message: "This survives a Discord outage.",
+          roomId: null,
+        },
+        gateway,
+      ),
+    ).resolves.toBe("failed");
+    const [current] = await client
+      .select({
+        clearedAt: schemas.JudgingAnnouncement.clearedAt,
+        id: schemas.JudgingAnnouncement.id,
+      })
+      .from(schemas.JudgingAnnouncement)
+      .where(eq(schemas.JudgingAnnouncement.id, FAILED_ANNOUNCEMENT));
+    expect(current).toEqual({ clearedAt: null, id: FAILED_ANNOUNCEMENT });
+  });
+
+  it("serializes concurrent room-thread provisioning", async () => {
+    await client
+      .insert(schemas.HackathonJudgingConfiguration)
+      .values({
+        hackathonId: HACKATHON,
+        judgingCommsChannelId: "123456789012345678",
+      })
+      .onConflictDoUpdate({
+        set: { judgingCommsChannelId: "123456789012345678" },
+        target: schemas.HackathonJudgingConfiguration.hackathonId,
+      });
+    await client.insert(schemas.JudgingRoom).values({
+      challengeId: SPONSOR,
+      displayOrder: 99,
+      hackathonId: HACKATHON,
+      id: CONCURRENT_ROOM,
+      name: "Concurrent room",
+    });
+    let releaseCreation: () => void = () => undefined;
+    const creationReleased = new Promise<void>((resolve) => {
+      releaseCreation = resolve;
+    });
+    let creationStarted: () => void = () => undefined;
+    const creationDidStart = new Promise<void>((resolve) => {
+      creationStarted = resolve;
+    });
+    const createRoomThread = vi.fn(async () => {
+      creationStarted();
+      await creationReleased;
+      return "223456789012345678";
+    });
+    const prepareRoomThread = vi.fn(() => Promise.resolve());
+    const gateway: JudgingDiscordGateway = {
+      createRoomThread,
+      getChannel: vi.fn(() => Promise.reject(new Error("unused"))),
+      listTextChannels: vi.fn(() => Promise.resolve([])),
+      prepareRoomThread,
+      sendMessage: vi.fn(() => Promise.resolve()),
+    };
+    const { ensureJudgingRoomThread } =
+      await import("../../utils/judging/discord-comms");
+
+    const first = ensureJudgingRoomThread(CONCURRENT_ROOM, gateway);
+    await creationDidStart;
+    const second = ensureJudgingRoomThread(CONCURRENT_ROOM, gateway);
+    releaseCreation();
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      "223456789012345678",
+      "223456789012345678",
+    ]);
+    expect(createRoomThread).toHaveBeenCalledTimes(1);
+    expect(prepareRoomThread).toHaveBeenCalledWith({
+      channelId: "123456789012345678",
+      roomName: "Concurrent room",
+      threadId: "223456789012345678",
+    });
+  });
 
   it("scores, edits, gates feedback, and keeps deliberation private", async () => {
     const officerCaller = await caller(officer);
@@ -548,9 +810,14 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       revision: 2,
       score: 3,
     });
+    await client
+      .update(schemas.Judge)
+      .set({ displayName: "jofficer" })
+      .where(eq(schemas.Judge.userId, OFFICER_USER));
     const revisions = await officerCaller.judging.getEvaluationRevisions({
       evaluationId: first.evaluationId,
     });
+    expect(revisions.evaluation.judgeDisplayName).toBe("Jordan Officer");
     expect(revisions.revisions).toHaveLength(2);
     expect(revisions.revisions[0]).toMatchObject({
       responseAnswers: [
@@ -764,6 +1031,11 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
         )
         .every((item) => item.isPublic === false),
     ).toBe(true);
+    expect(
+      memberDetails.feedback.find(
+        (item) => item.value === "Updated member feedback",
+      )?.judgeDisplayName,
+    ).toBe("Jordan Officer");
 
     const audit = await import("@forge/db/schemas/audit");
     const [guestSession] = await client
@@ -831,13 +1103,24 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     });
     expect(evaluationList).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: first.evaluationId, revision: 2 }),
+        expect.objectContaining({
+          id: first.evaluationId,
+          judgeDisplayName: "Jordan Officer",
+          revision: 2,
+        }),
         expect.objectContaining({
           id: guestEvaluation.evaluationId,
           revision: 1,
         }),
       ]),
     );
+    await expect(
+      officerCaller.judging.getEvaluationRevisions({
+        evaluationId: first.evaluationId,
+      }),
+    ).resolves.toMatchObject({
+      evaluation: { judgeDisplayName: "Jordan Officer" },
+    });
     await expect(
       memberCaller.judging.listEvaluationAudit({ hackathonId: HACKATHON }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
