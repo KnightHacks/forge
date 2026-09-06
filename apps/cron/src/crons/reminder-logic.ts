@@ -4,7 +4,6 @@ import { EVENTS } from "@forge/consts";
 
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
-const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
 
 export interface ClubReminderCandidate {
   description: string;
@@ -108,26 +107,58 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   return [...groups.entries()].map(([prefix, events]) => ({ prefix, events }));
 }
 
-function eventEmbed(event: ClubReminderCandidate): APIEmbed {
-  const start = new Date(event.startDateTime);
-  const end = new Date(event.endDateTime);
-  return {
-    author: {
-      name: `[${event.tag.toUpperCase().replaceAll(" ", "-")}]`,
-    },
-    color: 0xcca4f4,
-    description: event.description,
-    fields: [
-      { inline: true, name: "Date", value: formatDate(start) },
-      { inline: true, name: "Location", value: event.location },
-      { name: "\t", value: "\t" },
-      { inline: true, name: "Start", value: formatTime(start) },
-      { inline: true, name: "End", value: formatTime(end) },
-    ],
-    thumbnail: { url: EVENT_BANNER_IMAGE },
-    title: event.name,
-    url: `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`,
-  };
+function compactLabel(value: string, limit: number) {
+  const characters = Array.from(value.replace(/\s+/g, " ").trim());
+  const label =
+    characters.length > limit
+      ? `${characters.slice(0, limit - 1).join("")}…`
+      : characters.join("");
+
+  // Labels now live inside Markdown rows, including masked-link text.
+  return label.replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
+}
+
+function groupEmbeds(
+  prefix: string,
+  events: ClubReminderCandidate[],
+): APIEmbed[] {
+  const embeds: APIEmbed[] = [];
+  let rowCount = 0;
+
+  for (const event of events) {
+    const start = new Date(event.startDateTime);
+    const end = new Date(event.endDateTime);
+    const name = compactLabel(event.name, 100);
+    const location = compactLabel(event.location, 80);
+    const tag = compactLabel(event.tag, 32);
+    const url = `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`;
+    const details = [`${formatTime(start)}–${formatTime(end)}`, location, tag]
+      .filter(Boolean)
+      .join(" · ");
+    const row = `**[${name}](${url})**\n${details}`;
+    const previous = embeds.at(-1);
+    const description = previous?.description
+      ? `${previous.description}\n\n${row}`
+      : row;
+
+    // Bound visual height as well as Discord's 4096-character description limit.
+    // One embed per send also keeps the message below the 6000-character total.
+    if (!previous || rowCount === 8 || description.length > 4096) {
+      const date = formatDate(start);
+      const heading = prefix === weekday(start) ? date : `${prefix} · ${date}`;
+      embeds.push({
+        color: 0xcca4f4,
+        title: `${heading}${previous ? " (continued)" : ""}`,
+        description: row,
+      });
+      rowCount = 1;
+    } else {
+      previous.description = description;
+      rowCount += 1;
+    }
+  }
+
+  return embeds;
 }
 
 export function createClubReminderExecutor({
@@ -158,23 +189,22 @@ export function createClubReminderExecutor({
         timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(end)}`;
       await send({
-        content: `# Events this Week (${range})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
+        content: `# Events this Week (${range})\nHey @everyone, here's what's happening this week!`,
       });
     } else {
       await send({
-        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formatDate(currentTime)}, and here are some reminders about upcoming events!`,
+        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>! Here's what's coming up.`,
       });
     }
 
     for (const group of groups) {
-      await send(`## ${group.prefix}`);
-      for (const event of group.events) {
-        await send({ embeds: [eventEmbed(event)] });
+      for (const embed of groupEmbeds(group.prefix, group.events)) {
+        await send({ embeds: [embed] });
       }
     }
 
     await send({
-      content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!`,
+      content: `Open an event for details and mark **Interested**.\nDaily pings: choose **Event Reminders** in <id:customize>.\nMembership and check-in: [Blade](https://blade.knighthacks.org).`,
     });
   };
 }

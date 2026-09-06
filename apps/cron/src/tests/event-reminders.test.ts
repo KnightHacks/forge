@@ -42,7 +42,8 @@ describe("club event reminders", () => {
 
   it("TC-028 preserves Sunday weekday grouping", async () => {
     const now = new Date("2026-06-28T09:00:00-04:00");
-    const send = vi.fn().mockResolvedValue(undefined);
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
     const execute = createClubReminderExecutor({
       getCandidates: vi.fn().mockResolvedValue([
         currentWorkshop,
@@ -67,6 +68,16 @@ describe("club event reminders", () => {
     expect(sent).toContain("Wednesday");
     expect(sent).toContain("Current Workshop");
     expect(sent).toContain("Wednesday GBM");
+    expect(sent).toContain("6/28 - 7/4");
+    expect(sent.match(/@everyone/g)).toHaveLength(1);
+    expect(sent).not.toContain("<@&1264770451578552401>");
+    const embeds = send.mock.calls.flatMap(([payload]) =>
+      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
+    );
+    expect(embeds.map((embed) => embed.title)).toEqual([
+      "Monday, June 29, 2026",
+      "Wednesday, July 1, 2026",
+    ]);
   });
 
   it("TC-028 emits nothing when the selector returns no eligible events", async () => {
@@ -189,5 +200,127 @@ describe("club event reminders", () => {
     const sent = JSON.stringify(send.mock.calls);
     expect(sent).toContain("Spring Saturday Workshop");
     expect(sent).not.toContain("Outside Spring Window");
+  });
+});
+
+describe("club reminder presentation", () => {
+  it("TC-001 groups compact linked rows into one dated card", async () => {
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    const execute = createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve([
+          currentWorkshop,
+          {
+            ...currentWorkshop,
+            name: "Evening GBM",
+            discordId: "222222222222222222",
+          },
+        ]),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    });
+
+    await execute();
+
+    const embeds = send.mock.calls.flatMap(([payload]) =>
+      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
+    );
+    expect(embeds).toHaveLength(1);
+    expect(embeds[0]).toEqual({
+      color: 0xcca4f4,
+      title: "Today · Monday, June 29, 2026",
+      description:
+        "**[Current Workshop](https://discord.com/events/486628710443778071/111111111111111111)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop\n\n" +
+        "**[Evening GBM](https://discord.com/events/486628710443778071/222222222222222222)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop",
+    });
+    expect(send).toHaveBeenCalledTimes(3);
+    const sent = JSON.stringify(send.mock.calls);
+    expect(sent.match(/<@&1264770451578552401>/g)).toHaveLength(1);
+    expect(sent).not.toContain("@everyone");
+    expect(sent).not.toContain(currentWorkshop.description);
+    expect(sent).toContain("Interested");
+    expect(sent).toContain("<id:customize>");
+    expect(sent).toContain("https://blade.knighthacks.org");
+  });
+
+  it.each([false, true])(
+    "TC-002/003 keeps 60 events within row and character limits (long labels: %s)",
+    async (longLabels) => {
+      const candidates = Array.from({ length: 60 }, (_, index) => ({
+        ...currentWorkshop,
+        discordId: String(111111111111111111n + BigInt(index)),
+        name: longLabels ? "🛠".repeat(150) : `Workshop ${index}`,
+        location: longLabels ? "*".repeat(200) : "ENG2 102",
+        tag: longLabels ? "_".repeat(100) : "Workshop",
+      }));
+      const send =
+        vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+      await createClubReminderExecutor({
+        getCandidates: () => Promise.resolve(candidates),
+        now: () => new Date("2026-06-29T09:00:00-04:00"),
+        send,
+      })();
+
+      const embeds = send.mock.calls.flatMap(([payload]) =>
+        typeof payload === "object" && "embeds" in payload
+          ? payload.embeds
+          : [],
+      );
+      expect(embeds.length).toBeGreaterThan(1);
+      const links: string[] = [];
+      for (const [index, embed] of embeds.entries()) {
+        const description = embed.description ?? "";
+        const eventIds = [
+          ...description.matchAll(
+            /https:\/\/discord.com\/events\/486628710443778071\/(\d+)/g,
+          ),
+        ].map((match) => match[1]);
+        expect(eventIds.length).toBeGreaterThan(0);
+        expect(eventIds.length).toBeLessThanOrEqual(8);
+        expect(description.length).toBeLessThanOrEqual(4096);
+        expect(
+          description.length + (embed.title?.length ?? 0),
+        ).toBeLessThanOrEqual(6000);
+        expect(embed.title).toContain("Today · Monday, June 29, 2026");
+        if (index > 0) expect(embed.title).toContain("continued");
+        links.push(...eventIds.filter((id) => id !== undefined));
+      }
+      expect(links).toEqual(candidates.map((event) => event.discordId));
+      expect(send).toHaveBeenCalledTimes(embeds.length + 2);
+      if (longLabels) {
+        expect(embeds.length).toBeGreaterThan(Math.ceil(60 / 8));
+        expect(embeds[0]?.description).toContain("🛠…");
+        expect(embeds[0]?.description).toContain("\\*");
+      }
+    },
+  );
+
+  it("TC-003 keeps Markdown and line breaks inside event labels", async () => {
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    await createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve([
+          {
+            ...currentWorkshop,
+            name: "  [Build](https://example.com)\n **together**  ",
+            location: "ENG2\n102",
+            tag: "Project_Launch",
+          },
+        ]),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    })();
+
+    const embeds = send.mock.calls.flatMap(([payload]) =>
+      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
+    );
+    const description = embeds[0]?.description ?? "";
+    expect(description).toContain(
+      "\\[Build\\]\\(https://example.com\\) \\*\\*together\\*\\*",
+    );
+    expect(description).toContain("ENG2 102 · Project\\_Launch");
+    expect(description.split("\n")).toHaveLength(2);
   });
 });
