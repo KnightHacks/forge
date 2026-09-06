@@ -1,5 +1,6 @@
 import type {
   APIContainerComponent,
+  APIEmbed,
   APIMessageTopLevelComponent,
   APITextDisplayComponent,
 } from "discord-api-types/v10";
@@ -13,7 +14,7 @@ import {
 import { EVENTS } from "@forge/consts";
 import { logger } from "@forge/utils";
 
-import { reminderEventRow } from "./reminder-row";
+import { reminderEventEmbed, reminderEventRow } from "./reminder-row";
 
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 const REMINDER_FOOTER =
@@ -35,9 +36,11 @@ export interface ClubReminderCandidate {
 }
 
 interface ReminderPayload {
-  components: APIMessageTopLevelComponent[];
-  flags: MessageFlags.IsComponentsV2;
-  withComponents: true;
+  components?: APIMessageTopLevelComponent[];
+  flags?: MessageFlags.IsComponentsV2;
+  withComponents?: true;
+  embeds?: APIEmbed[];
+  content?: string;
   allowedMentions: { parse: AllowedMentionsTypes[]; roles: string[] };
 }
 
@@ -225,28 +228,52 @@ export function createClubReminderExecutor({
     const audience = `Want reminders like these, add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
     for (const [channelId, events] of destinations) {
       const groups = groupCandidates(events, currentTime);
-      const cards = reminderCards(groups, title, audience);
-      for (const [index, card] of cards.entries()) {
-        const components: APIMessageTopLevelComponent[] = [card];
-        if (index === 0)
-          components.push({
-            type: ComponentType.TextDisplay,
-            content: audience,
-          });
-        try {
-          await send(
-            {
-              components,
-              flags: MessageFlags.IsComponentsV2,
-              withComponents: true,
-              allowedMentions: {
-                parse:
-                  sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
-                roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
+      const singleDate = !sunday && groups.length === 1 ? groups[0] : undefined;
+      const cards = singleDate
+        ? singleDate.events.map((event) =>
+            reminderEventEmbed(
+              {
+                ...event,
+                url: `https://blade.knighthacks.org/member/events?selected=${encodeURIComponent(event.id)}`,
               },
-            },
-            channelId,
-          );
+              REMINDER_FOOTER.replace(/^-# /, ""),
+            ),
+          )
+        : reminderCards(groups, title, audience);
+      for (const [index, card] of cards.entries()) {
+        const allowedMentions = {
+          parse: sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
+          roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
+        };
+        const payload: ReminderPayload =
+          card.type === ComponentType.Container
+            ? {
+                components: [
+                  card,
+                  ...(index === 0
+                    ? [
+                        {
+                          type: ComponentType.TextDisplay as const,
+                          content: audience,
+                        },
+                      ]
+                    : []),
+                ],
+                flags: MessageFlags.IsComponentsV2,
+                withComponents: true,
+                allowedMentions,
+              }
+            : {
+                embeds: [card],
+                ...(index === 0
+                  ? {
+                      content: `## ${title}\n### ${singleDate?.prefix}\n${audience}`,
+                    }
+                  : {}),
+                allowedMentions,
+              };
+        try {
+          await send(payload, channelId);
         } catch (error) {
           logger.error(
             `Failed to send Club reminder card "${title}" (part ${index + 1}, channel ${channelId ?? "default"}):`,

@@ -50,7 +50,10 @@ export function canSendToChannel(
     permissions =
       (permissions & ~BigInt(personal.deny)) | BigInt(personal.allow);
   }
+  // Announcement cards include rich embeds.
   const required =
-    PermissionFlagsBits.ViewChannel | PermissionFlagsBits.SendMessages;
+    PermissionFlagsBits.ViewChannel |
+    PermissionFlagsBits.SendMessages |
+    PermissionFlagsBits.EmbedLinks;
   return (permissions & required) === required;
 }

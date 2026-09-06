@@ -119,5 +119,5 @@
       "copyUpdatedAt": "2026-09-06T21:37:15.991Z"
     }
   ],
-  "screenshotNote": "Screenshots capture the combined layout before the final copy revision. Live preview messages now have the Blade QR footer and the opt-in prompt/Channels & Roles shortcut outside the card. No updated native screenshot or shortcut click verification was available."
+  "screenshotNote": "Before and after were recaptured in Discord web on 2026-09-06 with the same browser scale and 386x686 crops. Current after/daily captures include emoji, Blade links, dues where applicable, the revised footer, and an outside Channels & Roles shortcut. See discord-config-delivery.json for current payload records."
 }

@@ -8,7 +8,11 @@ sender. Preserve the seven existing selector/window/DST cases.
 - A 14-event Sunday schedule spanning all seven days produces one container in
   one message, with every date and event link included.
 - Today, Tomorrow, and Next Week appear inside one daily card.
-- One or two events use the same grouped card with one section heading.
+- Sunday stays compact even with one event on one date.
+- Non-Sunday single-date schedules use one full embed per event at 1, 2, 8, and
+  60 events; Today-only, Tomorrow-only, and Next-Week-only schedules are covered.
+- Choose layouts independently per destination, including a multi-date generic
+  digest and a same-date override containing many full cards in one execution.
 - The opt-in prompt, `<id:customize>`, and cc appear outside the card. The Blade
   QR note and signup link appear in the footer. There is no RSVP instruction.
   V2 flags and webhook opt-in are present.
@@ -30,8 +34,10 @@ sender. Preserve the seven existing selector/window/DST cases.
 
 Use the same synthetic multi-day week with main and the PR formatter. Capture
 actual Discord views showing the old repeated cards and the combined week.
-Also inspect a daily card containing Today, Tomorrow, and Next Week. Record
-message counts and notification readback without credentials.
+Also inspect a daily card containing Today, Tomorrow, and Next Week, single-date
+full cards, and a hack full card. Current captures must show configured emojis,
+dues, and the revised footer/opt-in copy. Record message counts and notification
+readback without credentials.
 
 ## Added coverage
 
@@ -41,8 +47,9 @@ message counts and notification readback without credentials.
   Invalid emoji/channel inputs and unauthorized edits are rejected.
 - Both editors retain the original tag ID after it is renamed and another tag
   reuses the old name; an unrelated event edit must not change its routing.
-- Channel choices and saves reject effective bot View Channel/Send Messages
-  denies. Cover everyone, role, and member overwrites and administrator bypass.
+- Channel choices and saves reject effective bot View Channel/Send Messages/
+  Embed Links denies. Cover missing permissions, everyone, role, and member
+  overwrites, and administrator bypass.
 - Channel overrides apply to Sunday and daily groups, omit routed events from
   generic posts, and isolate failed destinations. Same-channel tags combine.
 - The 08:00 preview remains in its webhook even for tags with live overrides;
@@ -53,5 +60,5 @@ message counts and notification readback without credentials.
 - Migration maps tags within their scope, preserves event snapshots, seeds only
   Club OPS/Project Launch, and enforces channel syntax and the tag foreign key.
 - Hackathon tag overrides and emoji affect 15-minute announcements without
-  changing ledger/retry behavior or Discord event links. Unpublished Discord
-  events retain their description in the announcement.
+  changing ledger/retry behavior or Discord event links. Published and unpublished
+  Discord events both retain their description in a full card.

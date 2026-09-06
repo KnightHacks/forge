@@ -8,12 +8,16 @@ existing eligibility rules, calendar windows, injected clock, and sender.
 
 Follow `packages/api/src/utils/issues/reminders.ts`: Components V2 containers,
 Markdown headings, bold linked titles, and `-#` secondary text. These are native
-Discord cards, replacing the old rich embeds.
+Discord cards used for Sunday and multi-date digests.
 
 Build dated text sections across the entire announcement, then pack them into
 one purple container whenever possible. A normal seven-day, 14-event week fits
-in one card. Today/Tomorrow/Next Week share the same daily card. There is no
-fixed event-count split or separate style for small schedules.
+in one card. Today/Tomorrow/Next Week share the same daily card when more than
+one eligible date remains for that destination. On non-Sundays, exactly one
+eligible date uses one full native embed per event, without a count cutoff.
+Keep its description, logo, Date/Location/Start/End fields, emoji-prefixed linked
+title, dues marker, and linked Blade note. Hack 15-minute notices use the same
+full-card builder with their Discord event URL and description.
 
 Match the issue reminder's conservative bounds: 2000 characters per text display,
 6000 characters across the message, and 10 children per container. Reserve room
@@ -24,6 +28,8 @@ well below the 40-component message maximum.
 
 Use `MessageFlags.IsComponentsV2` and `withComponents: true` for the webhook.
 Do not combine V2 components with legacy `content` or `embeds` fields.
+Full cards send `embeds` and optional ordinary `content`, without the V2 flag.
+Both the webhook and override-channel sender accept the two payload shapes.
 [Discord component reference](https://docs.discord.com/developers/components/reference)
 and [webhook execution](https://docs.discord.com/developers/resources/webhook#execute-webhook)
 document the supported payloads.
@@ -40,6 +46,8 @@ Catch and log a terminal card-send failure, including its announcement title and
 part number, then continue. Do not introduce another retry loop. The Blade QR
 note and signup link live inside each card. The first message also includes a
 top-level Text Display with the role opt-in prompt, `<id:customize>`, and cc.
+For full cards, the first message carries the heading and opt-in/audience in
+ordinary content; subsequent full cards do not repeat those mentions.
 There is no separate footer delivery and no RSVP copy.
 
 ## Compatibility and validation
@@ -67,8 +75,9 @@ Retain label/color/points snapshots. Creation and retagging persist the ID.
 Unmatched historical snapshots retain null configuration until explicitly edited.
 
 Validate channel IDs with the existing Discord gateway against the configured
-guild, supported text/announcement types, and the bot's effective View Channel
-and Send Messages permissions. Apply Discord's
+guild, supported text/announcement types, and the bot's effective View Channel,
+Send Messages, and Embed Links permissions. Full cards require embed permission
+even when text messages are allowed. Apply Discord's
 [permission overwrite precedence](https://docs.discord.com/developers/topics/permissions#permission-overwrites)
 when listing choices and validating a saved override. Reuse current event-edit permission
 gates for channel choices and tag mutations. Do not broaden event visibility.
@@ -95,9 +104,9 @@ member is locked. A paid member still sees the requirement, including when a
 dues-to-public change has not synchronized. The modal preserves the rest of the
 query string on dismissal, focuses its title on open, and restores its opener.
 
-Hackathon announcements retain Discord event URLs. When there is no published
-Discord event, include the existing description in a bounded text display so
-details remain available. Hack tag imports retain their existing catalog-copy
+Hackathon announcements retain Discord event URLs and include the existing
+description in a full native embed, bounded by Discord's embed description
+limit. Hack tag imports retain their existing catalog-copy
 behavior; newly imported tags start without routing overrides.
 
 Migration rollout: apply additive columns/backfill before new readers deploy.

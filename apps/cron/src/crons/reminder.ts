@@ -63,6 +63,8 @@ function genCronLogic(
         ? api.post(Routes.channelMessages(channelId), {
             body: {
               components: payload.components,
+              embeds: payload.embeds,
+              content: payload.content,
               flags: payload.flags,
               allowed_mentions: payload.allowedMentions,
             },

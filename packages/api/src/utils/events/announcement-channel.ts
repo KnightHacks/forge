@@ -18,7 +18,7 @@ export async function validateEventAnnouncementChannel(
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "Choose a text or announcement channel in this Discord server where the bot can view and send messages.",
+        "Choose a text or announcement channel in this Discord server where the bot has View Channel, Send Messages, and Embed Links permissions.",
     });
   }
 }

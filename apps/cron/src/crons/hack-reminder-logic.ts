@@ -1,7 +1,6 @@
 import type { RESTPostAPIChannelMessageJSONBody } from "discord-api-types/v10";
-import { ComponentType, MessageFlags } from "discord-api-types/v10";
 
-import { reminderEventRow } from "./reminder-row";
+import { reminderEventEmbed } from "./reminder-row";
 
 export interface HackReminderDelivery {
   emoji?: string | null;
@@ -30,40 +29,14 @@ export function buildHackReminderMessage(
 ): RESTPostAPIChannelMessageJSONBody {
   return {
     allowed_mentions: { parse: [], roles: [delivery.roleId] },
-    flags: MessageFlags.IsComponentsV2,
-    components: [
-      {
-        type: ComponentType.Container,
-        accent_color: 0xcca4f4,
-        components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: "## Starting in about 15 minutes",
-          },
-          {
-            type: ComponentType.TextDisplay,
-            content: reminderEventRow({
-              ...delivery,
-              url: delivery.discordEventId
-                ? `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`
-                : null,
-            }),
-          },
-          // Without a published Discord event there is nowhere to open details.
-          ...(!delivery.discordEventId && delivery.description.trim()
-            ? [
-                {
-                  type: ComponentType.TextDisplay as const,
-                  content: delivery.description.slice(0, 2000),
-                },
-              ]
-            : []),
-        ],
-      },
-      {
-        type: ComponentType.TextDisplay,
-        content: `cc: <@&${delivery.roleId}>`,
-      },
+    content: `## Starting in about 15 minutes\ncc: <@&${delivery.roleId}>`,
+    embeds: [
+      reminderEventEmbed({
+        ...delivery,
+        url: delivery.discordEventId
+          ? `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`
+          : null,
+      }),
     ],
   };
 }

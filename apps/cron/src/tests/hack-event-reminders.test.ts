@@ -30,14 +30,14 @@ describe("hackathon event reminders", () => {
       parse: [],
       roles: [DELIVERY.roleId],
     });
-    expect(JSON.stringify(body.components)).toContain(`<@&${DELIVERY.roleId}>`);
+    expect(JSON.stringify(body)).toContain(`<@&${DELIVERY.roleId}>`);
     expect(JSON.stringify(body)).not.toContain("@everyone");
-    expect(JSON.stringify(body.components)).toContain(
+    expect(JSON.stringify(body)).toContain(
       `https://discord.com/events/${DELIVERY.guildId}/${DELIVERY.discordEventId}`,
     );
-    expect(body.embeds).toBeUndefined();
-    expect(body.content).toBeUndefined();
-    expect(JSON.stringify(body.components)).not.toContain(DELIVERY.description);
+    expect(body.embeds?.[0]?.description).toBe(DELIVERY.description);
+    expect(body.components).toBeUndefined();
+    expect(body.flags).toBeUndefined();
   });
 
   it("[TC-PUB-012] omits the Scheduled Event link when publication is off", () => {
@@ -46,17 +46,15 @@ describe("hackathon event reminders", () => {
       discordEventId: null,
     });
 
-    expect(JSON.stringify(body.components)).toContain(`<@&${DELIVERY.roleId}>`);
-    expect(JSON.stringify(body.components)).not.toContain(
-      "https://discord.com/events",
-    );
-    expect(JSON.stringify(body.components)).toContain(DELIVERY.description);
+    expect(JSON.stringify(body)).toContain(`<@&${DELIVERY.roleId}>`);
+    expect(JSON.stringify(body)).not.toContain("https://discord.com/events");
+    expect(JSON.stringify(body)).toContain(DELIVERY.description);
   });
 
   it("uses the tag emoji before the linked title without repeating the tag", () => {
     const body = buildHackReminderMessage({ ...DELIVERY, emoji: "🍕" });
-    expect(JSON.stringify(body.components)).toContain("🍕 **[Lunch]");
-    expect(JSON.stringify(body.components)).not.toContain(" · Food");
+    expect(JSON.stringify(body)).toContain("🍕 Lunch");
+    expect(JSON.stringify(body)).not.toContain(" · Food");
   });
 
   it("records success only after the Discord message returns", async () => {
@@ -147,7 +145,7 @@ describe("hackathon event reminders", () => {
       getDeliveries,
       now: () => new Date("2026-08-05T15:45:00.000Z"),
       send: (_channelId, body) => {
-        expect(JSON.stringify(body.components)).toContain("Lunch");
+        expect(JSON.stringify(body)).toContain("Lunch");
         order.push("send-Lunch");
         return Promise.resolve();
       },

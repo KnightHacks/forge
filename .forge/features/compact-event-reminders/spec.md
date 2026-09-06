@@ -10,8 +10,10 @@ secondary text.
 ## Interface and acceptance
 
 - Combine the Sunday weekdays into one weekly card whenever Discord's limits allow.
-- Combine Today, Tomorrow, and Next Week into one daily card.
-- Use the same grouped layout for small schedules; no event-count style switch.
+- Combine Today, Tomorrow, and Next Week into one daily card when the destination
+  has events on multiple dates.
+- For a non-Sunday destination covering just one date, retain a full event card
+  with description for every event, regardless of count. Sunday stays compact.
 - Keep event links, time ranges, and locations in chronological order. Show the
   configured tag emoji before the title instead of a tag name in the metadata.
 - Use the in-card footer for the Blade QR reminder and signup link. Put the
@@ -30,16 +32,17 @@ delivery tracking. The 08:00 Club preview stays in its preview webhook; only the
 11:00 announcement sends to tag destinations. Issue reminder code, the hacker
 portal UI, and unrelated apps remain outside this change.
 
-The user explicitly requested revised copy and a combined announcement on
-2026-09-06; this supersedes the earlier copy-preservation and one/two-event
-full-card decisions. Subsequent requests authorized persisted tag settings and
-Blade description links.
+The user requested revised copy, combined weekly announcements, persisted tag
+settings, and Blade description links. The final layout decision is based on
+dates per destination: non-Sunday single-date reminders always use full cards;
+Sunday and multi-date reminders use the compact digest.
 
 ## Event details and tag configuration
 
 - Club event titles link to `/member/events?selected=<event UUID>`. Opening the
   link opens an accessible description modal; closing it clears selection.
-- Full descriptions stay in Blade. Retain Discord/calendar actions there.
+- Full descriptions stay in Blade and in single-date full cards. Retain
+  Discord/calendar actions in Blade.
 - Club and hackathon tags have an optional Unicode emoji and announcement
   channel override. Emoji appear before event titles instead of the tag label
   in reminder metadata. A blank emoji adds no substitute icon.
@@ -49,8 +52,8 @@ Blade description links.
   instead of the generic channel. Group tags sharing a destination together.
 - Hackathon tag channels override the hackathon's announcement channel. Keep
   hackathon Discord event links, 15-minute timing, and hacker-role mentions.
-  Skip Next Week is not applicable to that flow. An unpublished Discord event
-  keeps its description in the announcement because it has no detail link.
+  Skip Next Week is not applicable to that flow. These single-event notices keep
+  full cards and descriptions, including when there is no Discord detail link.
 - Show **DUES REQUIRED** for dues-only Club events, including an effective
   synchronized dues restriction. Keep role/internal visibility restrictions.
 - Tag configuration follows tag identity across renames and applies to existing

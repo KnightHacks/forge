@@ -14,7 +14,9 @@ const channelId = "990000000000000502";
 const botId = "990000000000000503";
 const roleId = "990000000000000504";
 const required =
-  PermissionFlagsBits.ViewChannel | PermissionFlagsBits.SendMessages;
+  PermissionFlagsBits.ViewChannel |
+  PermissionFlagsBits.SendMessages |
+  PermissionFlagsBits.EmbedLinks;
 const { get } = vi.hoisted(() => ({ get: vi.fn() }));
 vi.mock("@forge/utils/discord", () => ({
   api: { get },
@@ -78,6 +80,30 @@ describe("announcement channel bot permissions", () => {
     [
       "missing base Send Messages",
       { permissions: PermissionFlagsBits.ViewChannel },
+    ],
+    [
+      "missing base Embed Links",
+      {
+        permissions:
+          PermissionFlagsBits.ViewChannel | PermissionFlagsBits.SendMessages,
+      },
+    ],
+    [
+      "bot role denies Embed Links",
+      { overwrites: [overwrite(roleId, PermissionFlagsBits.EmbedLinks)] },
+    ],
+    [
+      "member denies Embed Links",
+      {
+        overwrites: [
+          overwrite(
+            botId,
+            PermissionFlagsBits.EmbedLinks,
+            0n,
+            OverwriteType.Member,
+          ),
+        ],
+      },
     ],
     [
       "everyone denies View Channel",
@@ -174,6 +200,9 @@ describe("announcement channel bot permissions", () => {
     await expect(
       liveRoleDiscordGateway.validateTextChannel?.(channelId),
     ).resolves.toBe(true);
+    await expect(
+      liveRoleDiscordGateway.getGuildTextChannels?.(),
+    ).resolves.toEqual([{ id: channelId, name: "announcements" }]);
     expect(get).not.toHaveBeenCalledWith(Routes.user());
   });
 

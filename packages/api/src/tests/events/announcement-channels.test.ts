@@ -191,7 +191,7 @@ describe.each(catalogs)(
         await expect(catalog[operation]()).rejects.toMatchObject({
           code: "BAD_REQUEST",
           message:
-            "Choose a text or announcement channel in this Discord server where the bot can view and send messages.",
+            "Choose a text or announcement channel in this Discord server where the bot has View Channel, Send Messages, and Embed Links permissions.",
         });
         expect(mocks.validateChannel).toHaveBeenCalledWith(CHANNEL_ID, {
           requireSendPermission: true,
