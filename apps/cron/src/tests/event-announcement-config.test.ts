@@ -41,7 +41,7 @@ describe("tag announcement configuration", () => {
           ]),
         send,
       })();
-      expect(send).toHaveBeenCalledTimes(date === "2026-06-28" ? 2 : 3);
+      expect(send).toHaveBeenCalledTimes(2);
       const generic = send.mock.calls.find(
         ([, channel]) => channel === null,
       )?.[0];
@@ -52,9 +52,11 @@ describe("tag announcement configuration", () => {
       if (!generic || !override) throw new Error("Expected both destinations.");
       expect(JSON.stringify(generic)).not.toContain("Project Lab");
       expect(JSON.stringify(override)).not.toContain("Current Workshop");
-      expect(JSON.stringify(override)).toContain(
-        date === "2026-06-28" ? "🚀 **[Project Lab]" : "🚀 Project Lab",
+      expect(JSON.stringify(override)).toContain("🚀 **[Project Lab]");
+      expect(generic.allowedMentions.parse).toEqual(
+        date === "2026-06-28" ? ["everyone"] : [],
       );
+      expect(override.allowedMentions.parse).toEqual([]);
       expect(JSON.stringify(overrides)).toContain("Other routed event");
       expect(JSON.stringify(override)).toContain("**DUES REQUIRED**");
       expect(JSON.stringify(override)).not.toContain("Another tag");
@@ -97,7 +99,7 @@ describe("tag announcement configuration", () => {
     expect(text).toContain("Project Launch Lab opted in");
   });
 
-  it("chooses the layout from each destination's eligible dates", async () => {
+  it("chooses the layout from each destination's eligible event count", async () => {
     const send =
       vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
     const channel = "990000000000000950";
@@ -112,11 +114,11 @@ describe("tag announcement configuration", () => {
             startDateTime: "2026-06-30T18:00:00-04:00",
             endDateTime: "2026-06-30T20:00:00-04:00",
           },
-          ...Array.from({ length: 8 }, (_, index) => ({
+          {
             ...currentWorkshop,
-            name: `Routed ${index}`,
+            name: "One routed event",
             announcementChannelId: channel,
-          })),
+          },
           {
             ...currentWorkshop,
             name: "Skipped next week",
@@ -137,7 +139,7 @@ describe("tag announcement configuration", () => {
     expect(generic).toHaveLength(1);
     expect(generic[0]?.[0].components).toBeDefined();
     expect(generic[0]?.[0].embeds).toBeUndefined();
-    expect(routed).toHaveLength(8);
+    expect(routed).toHaveLength(1);
     expect(
       routed.every(
         ([payload]) =>
@@ -173,57 +175,78 @@ describe("tag announcement configuration", () => {
   });
 });
 
-describe("single-date Club announcements", () => {
-  it.each([1, 2, 8, 60])(
-    "keeps full descriptions for all %i events on one date",
-    async (count) => {
-      const send =
-        vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
-      await createClubReminderExecutor({
-        getCandidates: () =>
-          Promise.resolve(
-            Array.from({ length: count }, (_, index) => ({
-              ...currentWorkshop,
-              name: `Workshop ${index}`,
-              emoji: "🛠️",
-              requiresDues: true,
-            })),
-          ),
-        now: () => new Date("2026-06-29T09:00:00-04:00"),
-        send,
-      })();
-      expect(send).toHaveBeenCalledTimes(count);
-      for (const [index, [payload]] of send.mock.calls.entries()) {
-        expect(payload.embeds).toHaveLength(1);
-        expect(payload.embeds?.[0]).toMatchObject({
-          title: `🛠️ Workshop ${index}`,
-          description: currentWorkshop.description,
-          url: `https://blade.knighthacks.org/member/events?selected=${currentWorkshop.id}`,
-        });
-        expect(payload.embeds?.[0]?.fields).toEqual(
-          expect.arrayContaining([
-            { name: "Date", value: "Monday, June 29, 2026", inline: true },
-            { name: "Location", value: "ENG2 102", inline: true },
-            { name: "Start", value: "6:00 PM", inline: true },
-            { name: "End", value: "8:00 PM", inline: true },
-          ]),
-        );
-        expect(JSON.stringify(payload.embeds)).toContain("**DUES REQUIRED**");
-        expect(JSON.stringify(payload.embeds)).toContain(
-          "show up with your Blade QR",
-        );
-        expect(JSON.stringify(payload.embeds)).not.toContain("<id:customize>");
-        expect(payload.content?.includes("<id:customize>") ?? false).toBe(
-          index === 0,
-        );
-        expect(payload.allowedMentions.roles).toEqual(
-          index === 0 ? ["1264770451578552401"] : [],
-        );
-        expect(payload).not.toHaveProperty("components");
-        expect(payload).not.toHaveProperty("flags");
-      }
-    },
-  );
+describe("Club announcement event counts", () => {
+  it("keeps the full description when only one event is eligible", async () => {
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    await createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve([
+          { ...currentWorkshop, emoji: "🛠️", requiresDues: true },
+        ]),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    })();
+    expect(send).toHaveBeenCalledOnce();
+    const payload = send.mock.calls[0]?.[0];
+    expect(payload?.embeds).toHaveLength(1);
+    expect(payload?.embeds?.[0]).toMatchObject({
+      title: "🛠️ Current Workshop",
+      description: currentWorkshop.description,
+      url: `https://blade.knighthacks.org/member/events?selected=${currentWorkshop.id}`,
+    });
+    expect(payload?.embeds?.[0]?.fields).toEqual(
+      expect.arrayContaining([
+        { name: "Date", value: "Monday, June 29, 2026", inline: true },
+        { name: "Location", value: "ENG2 102", inline: true },
+        { name: "Start", value: "6:00 PM", inline: true },
+        { name: "End", value: "8:00 PM", inline: true },
+      ]),
+    );
+    expect(JSON.stringify(payload?.embeds)).toContain("**DUES REQUIRED**");
+    expect(JSON.stringify(payload?.embeds)).toContain(
+      "show up with your Blade QR",
+    );
+    expect(JSON.stringify(payload?.embeds)).not.toContain("<id:customize>");
+    expect(payload?.content).toContain("<id:customize>");
+    expect(payload?.allowedMentions.roles).toEqual(["1264770451578552401"]);
+    expect(payload).not.toHaveProperty("components");
+    expect(payload).not.toHaveProperty("flags");
+  });
+
+  it.each([2, 8, 60])("compacts %i events even on one date", async (count) => {
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    await createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve(
+          Array.from({ length: count }, (_, index) => ({
+            ...currentWorkshop,
+            id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+            name: `Workshop ${index}`,
+            emoji: "🛠️",
+            requiresDues: true,
+          })),
+        ),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    })();
+    if (count === 2) expect(send).toHaveBeenCalledOnce();
+    const text = JSON.stringify(send.mock.calls);
+    for (let index = 0; index < count; index++) {
+      expect(text).toContain(`🛠️ **[Workshop ${index}]`);
+    }
+    for (const [index, [payload]] of send.mock.calls.entries()) {
+      expect(payload.flags).toBe(MessageFlags.IsComponentsV2);
+      expect(payload.embeds).toBeUndefined();
+      expect(payload.allowedMentions).toEqual({
+        parse: [],
+        roles: index === 0 ? ["1264770451578552401"] : [],
+      });
+    }
+    expect(text).toContain("**DUES REQUIRED**");
+    expect(text).not.toContain(currentWorkshop.description);
+  });
 
   it.each(["2026-06-30", "2026-07-06"])(
     "uses full cards when only %s is eligible",

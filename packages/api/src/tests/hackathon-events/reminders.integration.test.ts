@@ -254,6 +254,85 @@ describe.skipIf(!canRunDatabaseTests())(
       });
     });
 
+    it.each([
+      { setting: "changed", channelId: "990000000000000951", emoji: "🥗" },
+      { setting: "cleared", channelId: null, emoji: null },
+    ])(
+      "waits for an in-flight tag edit when its destination is $setting",
+      async ({ channelId, emoji }) => {
+        if (!disposable) throw new Error("Missing disposable database.");
+        const tagId = "30000000-0000-4000-8000-000000000503";
+        await client
+          .update(knightHacks.Hackathon)
+          .set({ eventAnnouncementChannelId: null })
+          .where(eq(knightHacks.Hackathon.id, HACKATHON_ID));
+        await client.insert(knightHacks.EventTag).values({
+          id: tagId,
+          hackathonId: HACKATHON_ID,
+          name: "Food",
+          normalizedName: "food",
+          color: "#abcdef",
+          emoji: "🍕",
+          announcementChannelId: "990000000000000950",
+        });
+        await client
+          .insert(knightHacks.Event)
+          .values(event(ELIGIBLE_ID, { tagId }));
+
+        const editor = disposable.client;
+        await editor.query("BEGIN");
+        let deliveries: Awaited<ReturnType<ClaimReminders>> | undefined;
+        let planning: Promise<void> | undefined;
+        let claimError: unknown;
+        try {
+          await editor.query(
+            "UPDATE knight_hacks_event_tag SET emoji = $1, announcement_channel_id = $2 WHERE id = $3",
+            [emoji, channelId, tagId],
+          );
+          let completed = false;
+          planning = claim({ guildId: GUILD_ID, now: NOW }).then(
+            (result) => {
+              deliveries = result;
+              completed = true;
+            },
+            (error: unknown) => {
+              claimError = error;
+              completed = true;
+            },
+          );
+          // Wait for an actual lock wait (or the buggy early completion), rather
+          // than assuming a scheduler delay puts the claim inside its transaction.
+          await expect
+            .poll(async () => {
+              const result = await editor.query<{ blocked: boolean }>(
+                "SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname = current_database() AND pg_backend_pid() = ANY(pg_blocking_pids(pid))) AS blocked",
+              );
+              return completed || result.rows[0]?.blocked;
+            })
+            .toBe(true);
+        } finally {
+          await editor.query("COMMIT");
+          await planning;
+        }
+        if (claimError) {
+          throw claimError instanceof Error
+            ? claimError
+            : new Error("Reminder claim failed.", { cause: claimError });
+        }
+        expect(deliveries).toEqual(
+          channelId
+            ? [
+                expect.objectContaining({
+                  eventId: ELIGIBLE_ID,
+                  channelId,
+                  emoji,
+                }),
+              ]
+            : [],
+        );
+      },
+    );
+
     it("[TC-REM-003] deduplicates concurrent planning and definite retries", async () => {
       await client.insert(knightHacks.Event).values(event(ELIGIBLE_ID));
       const replicas = await Promise.all([

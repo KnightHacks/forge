@@ -21,6 +21,7 @@ import {
 } from "@forge/db/testing";
 
 import type * as AuditServiceModule from "../../utils/audit/service";
+import { eventRecord } from "../support/events/fixtures";
 import { permissionBitstring } from "../support/permissions";
 
 const auditControl = vi.hoisted(() => ({ fail: false }));
@@ -46,16 +47,32 @@ type KnightHacksSchemas = typeof KnightHacksSchemaModule;
 const ACTOR_ID = "10000000-0000-4000-8000-000000000711";
 const ROLE_ID = "20000000-0000-4000-8000-000000000711";
 const HACKATHON_ID = "30000000-0000-4000-8000-000000000711";
+const OTHER_HACKATHON_ID = "30000000-0000-4000-8000-000000000712";
 const TAG_ID = "40000000-0000-4000-8000-000000000711";
+const CLUB_TAG_ID = "40000000-0000-4000-8000-000000000712";
+const OTHER_TAG_ID = "40000000-0000-4000-8000-000000000713";
 const EVENT_ID = "50000000-0000-4000-8000-000000000711";
 const CREATION_KEY = "60000000-0000-4000-8000-000000000711";
 const HACKER_ID = "70000000-0000-4000-8000-000000000711";
 const ATTENDEE_ID = "80000000-0000-4000-8000-000000000711";
 const ATTENDANCE_ID = "90000000-0000-4000-8000-000000000711";
 const ATTEMPT_ID = "a0000000-0000-4000-8000-000000000711";
+const mismatchedTags = [
+  { name: "Club with a hackathon tag", hackathonId: null, tagId: TAG_ID },
+  {
+    name: "hackathon with a Club tag",
+    hackathonId: HACKATHON_ID,
+    tagId: CLUB_TAG_ID,
+  },
+  {
+    name: "hackathon with another hackathon's tag",
+    hackathonId: HACKATHON_ID,
+    tagId: OTHER_TAG_ID,
+  },
+];
 
 describe.skipIf(!canRunDatabaseTests())(
-  "hackathon event write audit atomicity",
+  "event write audit atomicity and tag scope",
   () => {
     let auth: AuthSchemas;
     let audit: AuditSchemas;
@@ -68,8 +85,12 @@ describe.skipIf(!canRunDatabaseTests())(
       const trpc = await import("../../trpc");
       const { hackathonEventRouter } =
         await import("../../routers/hackathon-event");
+      const { eventRouter } = await import("../../routers/event");
       return trpc.createCallerFactory(
-        trpc.createTRPCRouter({ hackathonEvent: hackathonEventRouter }),
+        trpc.createTRPCRouter({
+          clubEvent: eventRouter,
+          hackathonEvent: hackathonEventRouter,
+        }),
       )({
         headers: new Headers(),
         session: {
@@ -97,7 +118,7 @@ describe.skipIf(!canRunDatabaseTests())(
         name: "Original event",
         points: 10,
         start_datetime: new Date("2026-08-08T17:00:00.000Z"),
-        tag: "Workshop",
+        tag: "Scope Workshop",
         tagColor: "#123456",
         ...overrides,
       };
@@ -123,30 +144,37 @@ describe.skipIf(!canRunDatabaseTests())(
         discordRoleId: "980000000000000711",
         id: ROLE_ID,
         name: "Event Editors",
-        permissions: permissionBitstring("EDIT_HACK_EVENT"),
+        permissions: permissionBitstring("EDIT_HACK_EVENT", "EDIT_CLUB_EVENT"),
       });
       await client
         .insert(auth.Permissions)
         .values({ roleId: ROLE_ID, userId: ACTOR_ID });
-      await client.insert(knightHacks.Hackathon).values({
-        applicationDeadline: new Date("2026-07-01T00:00:00.000Z"),
-        applicationOpen: new Date("2026-06-01T00:00:00.000Z"),
-        confirmationDeadline: new Date("2026-07-15T00:00:00.000Z"),
-        displayName: "Audit Atomicity Hackathon",
-        endDate: new Date("2026-08-10T00:00:00.000Z"),
-        id: HACKATHON_ID,
-        name: "audit-atomicity-hackathon",
-        startDate: new Date("2026-08-08T00:00:00.000Z"),
-        theme: "Audit",
-      });
-      await client.insert(knightHacks.EventTag).values({
-        color: "#123456",
-        defaultPoints: 10,
-        hackathonId: HACKATHON_ID,
-        id: TAG_ID,
-        name: "Workshop",
-        normalizedName: "workshop",
-      });
+      await client.insert(knightHacks.Hackathon).values(
+        [HACKATHON_ID, OTHER_HACKATHON_ID].map((id) => ({
+          applicationDeadline: new Date("2026-07-01T00:00:00.000Z"),
+          applicationOpen: new Date("2026-06-01T00:00:00.000Z"),
+          confirmationDeadline: new Date("2026-07-15T00:00:00.000Z"),
+          displayName: "Audit Atomicity Hackathon",
+          endDate: new Date("2026-08-10T00:00:00.000Z"),
+          id,
+          name: `audit-atomicity-hackathon-${id}`,
+          startDate: new Date("2026-08-08T00:00:00.000Z"),
+          theme: "Audit",
+        })),
+      );
+      await client.insert(knightHacks.EventTag).values(
+        [
+          { id: TAG_ID, hackathonId: HACKATHON_ID },
+          { id: CLUB_TAG_ID, hackathonId: null },
+          { id: OTHER_TAG_ID, hackathonId: OTHER_HACKATHON_ID },
+        ].map((scope) => ({
+          color: "#123456",
+          defaultPoints: 10,
+          ...scope,
+          name: "Scope Workshop",
+          normalizedName: "scope workshop",
+        })),
+      );
       await client.insert(knightHacks.Hacker).values({
         age: 21,
         discordUser: "event-audit-hacker",
@@ -181,6 +209,101 @@ describe.skipIf(!canRunDatabaseTests())(
       await client.delete(knightHacks.HackathonEventPublication);
       await client.delete(knightHacks.Event);
     });
+
+    it.each(mismatchedTags)(
+      "rejects $name on create and edit",
+      async ({ hackathonId, tagId }) => {
+        const year = new Date().getUTCFullYear() + 1;
+        const fields = {
+          description: "Cross-scope attempt",
+          start: `${year}-08-08T13:00:00-04:00`,
+          end: `${year}-08-08T14:00:00-04:00`,
+          internalTarget: { internal: false as const },
+          location: "Changed room",
+          name: "Changed event",
+          tagId,
+        };
+        const creation = { ...fields, creationKey: CREATION_KEY };
+        const failure = {
+          code: "NOT_FOUND",
+          message:
+            hackathonId === null ? "Tag not found." : "Active tag not found.",
+        };
+        await expect(
+          hackathonId === null
+            ? caller.clubEvent.createEvent({
+                ...creation,
+                audience: { type: "public" },
+              })
+            : caller.hackathonEvent.createEvent({
+                ...creation,
+                hackathonId,
+                purpose: "event",
+              }),
+        ).rejects.toMatchObject(failure);
+        expect(await client.query.Event.findMany()).toEqual([]);
+
+        const originalTagId = hackathonId === null ? CLUB_TAG_ID : TAG_ID;
+        await client
+          .insert(knightHacks.Event)
+          .values(eventValues({ hackathonId, tagId: originalTagId }));
+        const update = { ...fields, eventId: EVENT_ID, expectedRevision: 1 };
+        await expect(
+          hackathonId === null
+            ? caller.clubEvent.updateEvent({
+                ...update,
+                audience: { type: "public" },
+              })
+            : caller.hackathonEvent.updateEvent({
+                ...update,
+                hackathonId,
+                purpose: "event",
+              }),
+        ).rejects.toMatchObject(failure);
+        expect(
+          await client.query.Event.findFirst({
+            where: eq(knightHacks.Event.id, EVENT_ID),
+          }),
+        ).toMatchObject({
+          hackathonId,
+          tagId: originalTagId,
+          name: "Original event",
+          location: "Original room",
+          syncRevision: 1,
+        });
+      },
+    );
+
+    it.each(mismatchedTags)(
+      "rechecks $name at the workflow insert boundary",
+      async ({ hackathonId, tagId }) => {
+        const { createDbEventWorkflowState } =
+          await import("../../utils/events/database-state");
+        const state = createDbEventWorkflowState({
+          googleCalendars: { internal: "test-internal", public: "test-public" },
+          creationReferences: { tagId, pointsOverride: null, roleIds: [] },
+          hackathonId,
+        });
+        await expect(
+          state.createOrReuseEvent(
+            eventRecord({
+              id: EVENT_ID,
+              creationKey: CREATION_KEY,
+              hackathonId,
+              tagId,
+              tag: "Scope Workshop",
+              tagColor: "#123456",
+              points: 10,
+            }),
+            "a".repeat(64),
+          ),
+        ).rejects.toMatchObject({
+          code: "NOT_FOUND",
+          message: "Tag not found.",
+        });
+        expect(await client.query.Event.findMany()).toEqual([]);
+      },
+    );
 
     it("rolls creation back when its required audit fails", async () => {
       auditControl.fail = true;

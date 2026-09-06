@@ -10,10 +10,10 @@ secondary text.
 ## Interface and acceptance
 
 - Combine the Sunday weekdays into one weekly card whenever Discord's limits allow.
-- Combine Today, Tomorrow, and Next Week into one daily card when the destination
-  has events on multiple dates.
-- For a non-Sunday destination covering just one date, retain a full event card
-  with description for every event, regardless of count. Sunday stays compact.
+- Combine two or more eligible events into one daily card, including events on
+  the same date. Group them under Today, Tomorrow, and Next Week as appropriate.
+- A non-Sunday destination with exactly one eligible event keeps a full card and
+  description. Sunday stays compact even with one event.
 - Keep event links, time ranges, and locations in chronological order. Show the
   configured tag emoji before the title instead of a tag name in the metadata.
 - Use the in-card footer for the Blade QR reminder and signup link. Put the
@@ -34,14 +34,14 @@ portal UI, and unrelated apps remain outside this change.
 
 The user requested revised copy, combined weekly announcements, persisted tag
 settings, and Blade description links. The final layout decision is based on
-dates per destination: non-Sunday single-date reminders always use full cards;
-Sunday and multi-date reminders use the compact digest.
+eligible event count per destination: daily reminders with one event use a full
+card; two or more events and all Sunday reminders use the compact digest.
 
 ## Event details and tag configuration
 
 - Club event titles link to `/member/events?selected=<event UUID>`. Opening the
   link opens an accessible description modal; closing it clears selection.
-- Full descriptions stay in Blade and in single-date full cards. Retain
+- Full descriptions stay in Blade and in single-event full cards. Retain
   Discord/calendar actions in Blade.
 - Club and hackathon tags have an optional Unicode emoji and announcement
   channel override. Emoji appear before event titles instead of the tag label

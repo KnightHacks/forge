@@ -166,9 +166,7 @@ export async function claimHackathonEventReminderDeliveries({
     const claimed = await db.transaction(async (tx) => {
       const [current] = await tx
         .select({
-          channelId: sql<
-            string | null
-          >`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId})`,
+          channelId: Hackathon.eventAnnouncementChannelId,
           description: Event.description,
           discordEventId: Event.discordId,
           endDateTime: Event.end_datetime,
@@ -181,18 +179,11 @@ export async function claimHackathonEventReminderDeliveries({
           name: Event.name,
           roleId: Hackathon.generalHackerDiscordRoleId,
           tag: Event.tag,
-          emoji: EventTag.emoji,
+          tagId: Event.tagId,
         })
         .from(HackathonEventReminderDelivery)
         .innerJoin(Event, eq(Event.id, HackathonEventReminderDelivery.eventId))
         .innerJoin(Hackathon, eq(Hackathon.id, Event.hackathonId))
-        .leftJoin(
-          EventTag,
-          and(
-            eq(Event.tagId, EventTag.id),
-            eq(EventTag.hackathonId, Hackathon.id),
-          ),
-        )
         .where(
           and(
             eq(HackathonEventReminderDelivery.id, candidate.id),
@@ -206,7 +197,6 @@ export async function claimHackathonEventReminderDeliveries({
             eq(Event.purpose, "event"),
             eq(Event.legacy, false),
             isNull(Event.deletionIntentAt),
-            sql`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId}) is not null`,
             sql`${Hackathon.generalHackerDiscordRoleId} is not null`,
             gt(Event.start_datetime, now),
             lte(Event.start_datetime, horizon),
@@ -216,12 +206,32 @@ export async function claimHackathonEventReminderDeliveries({
           of: [HackathonEventReminderDelivery, Event, Hackathon],
         })
         .limit(1);
-      if (!current?.channelId || !current.roleId) {
+      if (!current?.roleId) {
         return null;
       }
+      // Lock the event before its tag, matching event edits. A separate tag
+      // read can lock the optional row and see edits committed while we waited.
+      const [tag] = current.tagId
+        ? await tx
+            .select({
+              channelId: EventTag.announcementChannelId,
+              emoji: EventTag.emoji,
+            })
+            .from(EventTag)
+            .where(
+              and(
+                eq(EventTag.id, current.tagId),
+                eq(EventTag.hackathonId, current.hackathonId),
+              ),
+            )
+            .for("share")
+            .limit(1)
+        : [];
+      const channelId = tag?.channelId ?? current.channelId;
+      if (!channelId) return null;
       const contentSnapshot = JSON.stringify({
         description: current.description,
-        emoji: current.emoji,
+        emoji: tag?.emoji ?? null,
         endDateTime: current.endDateTime.toISOString(),
         location: current.location,
         name: current.name,
@@ -235,7 +245,7 @@ export async function claimHackathonEventReminderDeliveries({
           ...(current.attemptCount === 0
             ? {
                 contentSnapshot,
-                destinationChannelIdSnapshot: current.channelId,
+                destinationChannelIdSnapshot: channelId,
                 discordEventIdSnapshot: current.discordEventId,
                 eventStartAt: current.eventStartAt,
                 roleIdSnapshot: current.roleId,

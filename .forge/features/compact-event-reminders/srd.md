@@ -8,13 +8,13 @@ existing eligibility rules, calendar windows, injected clock, and sender.
 
 Follow `packages/api/src/utils/issues/reminders.ts`: Components V2 containers,
 Markdown headings, bold linked titles, and `-#` secondary text. These are native
-Discord cards used for Sunday and multi-date digests.
+Discord cards used for Sunday and multi-event digests.
 
 Build dated text sections across the entire announcement, then pack them into
 one purple container whenever possible. A normal seven-day, 14-event week fits
 in one card. Today/Tomorrow/Next Week share the same daily card when more than
-one eligible date remains for that destination. On non-Sundays, exactly one
-eligible date uses one full native embed per event, without a count cutoff.
+one eligible event remains for that destination, even on the same date. On
+non-Sundays, exactly one eligible event uses a full native embed.
 Keep its description, logo, Date/Location/Start/End fields, emoji-prefixed linked
 title, dues marker, and linked Blade note. Hack 15-minute notices use the same
 full-card builder with their Discord event URL and description.
@@ -36,9 +36,10 @@ document the supported payloads.
 
 Escape Markdown, normalize whitespace, bound event labels, and neutralize `@`
 mentions in event-provided text because Text Display components can notify users.
-Allow only the intended everyone or reminder-role mention on the first message;
-continuations contain no opt-in/audience text and allow no mentions. Development
-previews override allowed mentions to suppress notifications.
+Allow Sunday's everyone mention only on the first generic-destination message.
+Override channels suppress everyone mentions. Daily first messages allow the
+reminder role; continuations contain no opt-in/audience text and allow no
+mentions. Development previews override allowed mentions to suppress notifications.
 
 ## Delivery failures
 
@@ -46,8 +47,8 @@ Catch and log a terminal card-send failure, including its announcement title and
 part number, then continue. Do not introduce another retry loop. The Blade QR
 note and signup link live inside each card. The first message also includes a
 top-level Text Display with the role opt-in prompt, `<id:customize>`, and cc.
-For full cards, the first message carries the heading and opt-in/audience in
-ordinary content; subsequent full cards do not repeat those mentions.
+For a full card, its message carries the heading and opt-in/audience in ordinary
+content.
 There is no separate footer delivery and no RSVP copy.
 
 ## Compatibility and validation
@@ -87,7 +88,18 @@ its ledger, lease, and ambiguous-outcome handling. Its content snapshot adds an
 optional emoji; older snapshots remain readable. An already attempted delivery
 retains its original destination and content across tag edits. The 08:00 Club
 preview sends every destination group to its preview webhook, avoiding an early
-live announcement.
+live announcement. The hackathon default announcement channel uses the same
+View/Send/Embed validation as tag overrides.
+
+When claiming a hack reminder, lock the delivery, event, and hackathon first,
+then read its optional scoped tag under a shared row lock. This preserves the
+event-before-tag lock order and prevents freezing channel/emoji settings while
+a concurrent tag edit is still committing.
+
+Every production event-tag write validates the Club/hackathon scope, including
+the Club workflow transaction's recheck. The additive FK only checks identity;
+scope validation remains at the write boundary and has database-backed regression
+coverage. Tag imports create tags and do not retag existing events.
 
 Admin read DTOs and edit forms retain the stable tag ID. A name lookup is only
 used for historical events with no linked tag, so renaming a tag and reusing its

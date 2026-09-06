@@ -230,3 +230,52 @@ describe("optional announcement destination validation", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
+
+describe("hackathon default announcement channel", () => {
+  const config = {
+    hackathonId: HACKATHON_ID,
+    eventAnnouncementChannelId: CHANNEL_ID,
+    generalHackerDiscordRoleId: null,
+  };
+
+  it("requires officer permission before validating the destination", async () => {
+    grant("EDIT_HACK_EVENT");
+    await expect(
+      caller().hackathon.updateDiscordConfig(config),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(mocks.resolveRoleGateway).not.toHaveBeenCalled();
+    expectNoTagMutation();
+  });
+
+  it("rejects a default channel without announcement posting permissions before writes", async () => {
+    grant("IS_OFFICER");
+    mocks.validateChannel.mockImplementation(
+      (_id: string, options?: { requireSendPermission?: boolean }) =>
+        Promise.resolve(!options?.requireSendPermission),
+    );
+    await expect(
+      caller().hackathon.updateDiscordConfig(config),
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message:
+        "Choose a text or announcement channel in this Discord server where the bot has View Channel, Send Messages, and Embed Links permissions.",
+    });
+    expect(mocks.validateChannel).toHaveBeenCalledWith(CHANNEL_ID, {
+      requireSendPermission: true,
+    });
+    expectNoTagMutation();
+  });
+
+  it("allows clearing the default without consulting Discord", async () => {
+    grant("IS_OFFICER");
+    await caller().hackathon.updateDiscordConfig({
+      ...config,
+      eventAnnouncementChannelId: null,
+    });
+    expect(mocks.validateChannel).not.toHaveBeenCalled();
+    expect(mocks.resolveRoleGateway).not.toHaveBeenCalled();
+    expect(mocks.db.transaction).toHaveBeenCalledOnce();
+  });
+});

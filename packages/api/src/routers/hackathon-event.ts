@@ -1796,21 +1796,12 @@ export const hackathonEventRouter = {
     .input(hackathonEventDiscordConfigSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
-      const discord = await resolveRoleDiscordGateway(ctx.session);
-      if (
-        input.eventAnnouncementChannelId &&
-        (!discord.validateTextChannel ||
-          !(await discord.validateTextChannel(
-            input.eventAnnouncementChannelId,
-          )))
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Choose a text or announcement channel in this Discord server.",
-        });
-      }
+      await validateEventAnnouncementChannel(
+        input.eventAnnouncementChannelId,
+        ctx.session,
+      );
       if (input.generalHackerDiscordRoleId) {
+        const discord = await resolveRoleDiscordGateway(ctx.session);
         const roles = await discord.getGuildRoles();
         if (!roles.available) {
           throw new TRPCError({

@@ -228,9 +228,12 @@ export function createClubReminderExecutor({
     const audience = `Want reminders like these, add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
     for (const [channelId, events] of destinations) {
       const groups = groupCandidates(events, currentTime);
-      const singleDate = !sunday && groups.length === 1 ? groups[0] : undefined;
-      const cards = singleDate
-        ? singleDate.events.map((event) =>
+      const singleEventGroup =
+        !sunday && groups.length === 1 && groups[0]?.events.length === 1
+          ? groups[0]
+          : undefined;
+      const cards = singleEventGroup
+        ? singleEventGroup.events.map((event) =>
             reminderEventEmbed(
               {
                 ...event,
@@ -242,7 +245,10 @@ export function createClubReminderExecutor({
         : reminderCards(groups, title, audience);
       for (const [index, card] of cards.entries()) {
         const allowedMentions = {
-          parse: sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
+          parse:
+            sunday && index === 0 && channelId === null
+              ? [AllowedMentionsTypes.Everyone]
+              : [],
           roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
         };
         const payload: ReminderPayload =
@@ -267,7 +273,7 @@ export function createClubReminderExecutor({
                 embeds: [card],
                 ...(index === 0
                   ? {
-                      content: `## ${title}\n### ${singleDate?.prefix}\n${audience}`,
+                      content: `## ${title}\n### ${singleEventGroup?.prefix}\n${audience}`,
                     }
                   : {}),
                 allowedMentions,

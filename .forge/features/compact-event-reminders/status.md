@@ -9,11 +9,10 @@ Current phase: implementation and validation complete; PR open; not deployed
 ## Decisions
 
 The full weekly announcement is the problem, including events on different days.
-Sunday weekdays share one Components V2 card; Today, Tomorrow, and Next Week
-share one daily card when multiple dates remain for a destination. A non-Sunday
-destination with just one eligible date keeps one full card per event, regardless
-of count. Sunday stays compact even with one event. The issue reminder supplied
-the digest's visual reference.
+Sunday weekdays share one Components V2 card. Daily destinations with two or more
+eligible events use the compact digest, even on the same date. A daily destination
+with just one eligible event keeps a full card. Sunday stays compact even with one
+event. The issue reminder supplied the digest's visual reference.
 
 The user approved concise copy, the Blade QR/signup footer, and an outside role
 opt-in/Channels & Roles prompt. Obsolete RSVP instructions are removed. Club
@@ -51,10 +50,11 @@ field in an existing dashboard test. Both were corrected. Subsequent
 `pnpm verify:precommit` passed React analysis, formatting, lint, and repository-wide
 typechecking. The final rerun after review corrections also passed.
 
-Completed validation:
+Completed validation (full API, Blade, validator, and DB runs preceded this
+CodeRabbit follow-up; current focused checks are recorded below):
 
-- Cron: 53 tests across eight files, including weekly/daily grouping, full cards
-  at 1/2/8/60 same-date events, per-destination layout selection, bounded compact
+- Cron: 53 tests across eight files, including weekly/daily grouping, a full card
+  at one event and compaction at 2/8/60 same-date events, per-destination layout selection, bounded compact
   continuations, routing, preview isolation, failure continuation, and hack delivery.
 - Full API suite: 900 tests across 115 files against disposable local PostgreSQL
   where applicable. This includes event/hack/audit/role consumers.
@@ -97,6 +97,26 @@ three failed before the fix and the 33 targeted tests passed after it.
 An independent closure review verified the permission correction and unchanged
 plain channel callers. The final `pnpm verify:precommit` passed all checks.
 
+The latest CodeRabbit follow-up scopes Sunday everyone parsing to the first
+generic-destination message and validates hackathon default channels with the
+same View/Send/Embed requirement as overrides. Hack reminder claims lock and
+reread tag settings before freezing the first snapshot. Two real PostgreSQL
+regressions cover concurrent channel/emoji edits and clearing the only destination.
+The scope concern was already enforced in every production event-tag write;
+six additional real-database cases now verify create/update rejection and the
+workflow's transactional recheck. No extra migration was needed.
+
+The final user decision changes the daily threshold to two eligible events,
+even on the same date. One event stays full; Sunday stays compact. Current
+validation passed all 53 cron tests and 59 focused API tests (47 channel/delivery
+cases plus 12 write-audit/scope cases). `pnpm verify:precommit` passed React
+analysis, formatting, lint, and all 33 repository typecheck/build tasks.
+The refreshed Discord captures show this exact one-event/two-event boundary.
+A final standard Forge review independently checked cron routing/mentions, API
+permissions/snapshot concurrency, and scope-test quality; no findings remained.
+That follow-up review covered the current delta, not another full UI/migration
+review of the already-validated feature.
+
 The broader local test run exposed two setup/resource limits. API's existing
 production-mode Discord config test requires `NEXT_PUBLIC_BLADE_URL`; the full
 900-test suite passes with a command-local `http://localhost:3100` value. Blade's
@@ -115,12 +135,13 @@ before/after captures have the same browser scale, width, and crop height:
 [before](evidence/discord-week-before.png),
 [combined week](evidence/discord-week-after.png),
 [combined daily](evidence/discord-daily.png),
-[single-date full card](evidence/discord-single-day.png),
+[single-event full card](evidence/discord-single-day.png),
+[two same-day events](evidence/discord-two-events.png),
 [hack full card](evidence/discord-hack.png).
 
 The current captures show configured emojis, Blade links, dues, the revised
-footer, and the outside opt-in prompt. The single-date fixture has three events,
-each rendered as a full card. Hack previews retain their Discord links. New and
+footer, and the outside opt-in prompt. The latest count comparison shows one
+event as a full card and two same-day events in a compact card. Hack previews retain their Discord links. New and
 updated messages were read back with zero user, role, or everyone notifications.
 [Current delivery evidence](evidence/discord-config-delivery.json) records links
 and verification without credentials. IDs are synthetic, so preview Blade links
