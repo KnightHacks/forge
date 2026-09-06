@@ -100,8 +100,10 @@ function GuestSessionControl() {
 
 function MemberRoomSelector({
   context,
+  hackathonId,
 }: {
   context: Extract<JudgingContext, { kind: "member" }>;
+  hackathonId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -109,6 +111,7 @@ function MemberRoomSelector({
   const utils = api.useUtils();
   const joinRoom = api.judging.joinRoom.useMutation();
   const leaveRoom = api.judging.leaveRoom.useMutation();
+  const announcementInput = { hackathonId };
 
   async function selectRoom(roomId: string) {
     try {
@@ -116,7 +119,10 @@ function MemberRoomSelector({
         if (context.activeRoomId) {
           await leaveRoom.mutateAsync({ roomId: context.activeRoomId });
         }
-        await utils.judging.listAnnouncements.invalidate();
+        utils.judging.listAnnouncements.setData(announcementInput, []);
+        await utils.judging.listAnnouncements
+          .invalidate(announcementInput)
+          .catch(() => undefined);
         const next = new URLSearchParams(searchParams.toString());
         next.delete("challenge");
         next.delete("page");
@@ -127,7 +133,10 @@ function MemberRoomSelector({
         return;
       }
       const room = await joinRoom.mutateAsync({ roomId });
-      await utils.judging.listAnnouncements.invalidate();
+      utils.judging.listAnnouncements.setData(announcementInput, []);
+      await utils.judging.listAnnouncements
+        .invalidate(announcementInput)
+        .catch(() => undefined);
       const next = new URLSearchParams(searchParams.toString());
       next.set("challenge", room.challengeId);
       next.delete("page");
@@ -221,6 +230,8 @@ export function JudgeProjectWorkspace({
   );
   const heartbeatRoomId =
     context.kind === "guest" ? context.roomId : activeRoom?.id;
+  const announcementHackathonId =
+    context.kind === "member" ? context.hackathon?.id : undefined;
 
   function selectHackathon(hackathonId: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -257,14 +268,17 @@ export function JudgeProjectWorkspace({
   return (
     <main className={adminPageLayoutClassName} aria-busy={pending}>
       <JudgingAnnouncements
-        hackathonId={context.kind === "member" ? input.hackathonId : undefined}
+        hackathonId={announcementHackathonId}
         initialAnnouncements={context.announcements}
       />
       <AdminPageHeader
         actions={
           <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto">
             {memberContext?.rooms.length ? (
-              <MemberRoomSelector context={memberContext} />
+              <MemberRoomSelector
+                context={memberContext}
+                hackathonId={announcementHackathonId}
+              />
             ) : null}
             {isOfficer && hackathons.length ? (
               <label className="w-full min-w-0 sm:w-72">

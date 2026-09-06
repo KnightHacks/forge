@@ -323,36 +323,47 @@ function RoomQrDialog({
   );
 }
 
-function AnnouncementDialog({
-  current,
-  data,
-  onClose,
-  onSaved,
-  room,
-}: {
+interface AnnouncementDialogProps {
   current: Announcement | null;
   data: ControlData;
   onClose: () => void;
   onSaved: () => void;
   room: Room | null;
-}) {
+}
+
+export function AnnouncementDialog(props: AnnouncementDialogProps) {
+  return (
+    <AnnouncementDialogContent
+      key={props.current?.id ?? "new-announcement"}
+      {...props}
+    />
+  );
+}
+
+function AnnouncementDialogContent({
+  current,
+  data,
+  onClose,
+  onSaved,
+  room,
+}: AnnouncementDialogProps) {
   const publish = api.judging.publishAnnouncement.useMutation();
   const clear = api.judging.clearAnnouncement.useMutation();
   const [includeGuests, setIncludeGuests] = useState(
     current?.includeGuests ?? false,
   );
   const [isUrgent, setIsUrgent] = useState(current?.isUrgent ?? false);
+  const [message, setMessage] = useState(current?.message ?? "");
   const scope = room?.name ?? "All judging rooms";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
     try {
       const result = await publish.mutateAsync({
         hackathonId: data.hackathon.id,
         includeGuests,
         isUrgent,
-        message: formString(form.get("message")),
+        message,
         roomId: room?.id ?? null,
       });
       if (result.discordDelivery === "failed") {
@@ -417,13 +428,14 @@ function AnnouncementDialog({
           <div className="space-y-2">
             <Label htmlFor="judging-announcement-message">Message</Label>
             <Textarea
-              defaultValue={current?.message ?? ""}
               id="judging-announcement-message"
               maxLength={1000}
               name="message"
+              onChange={(event) => setMessage(event.target.value)}
               placeholder="Judging pauses at 4:30 PM for deliberation."
               required
               rows={5}
+              value={message}
             />
             <p className="text-xs leading-5 text-muted-foreground">
               Authenticated judges receive a Discord mention. Guest judges are
