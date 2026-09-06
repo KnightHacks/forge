@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { logger } from "@forge/utils";
+
 import { createClubReminderExecutor } from "../crons/reminder-logic";
 
 const currentWorkshop = {
@@ -432,4 +434,61 @@ describe("club reminder presentation", () => {
     expect(description).toContain("ENG2 102 · Project\\_Launch");
     expect(description.split("\n")).toHaveLength(8);
   });
+});
+
+describe("club reminder delivery", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([2, 10])(
+    "TC-007 logs a failed card and continues through the footer (%i events)",
+    async (count) => {
+      const error = new Error("Discord rejected the card");
+      const log = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+      let rejected = false;
+      const send = vi.fn<
+        Parameters<typeof createClubReminderExecutor>[0]["send"]
+      >((payload) => {
+        if (!rejected && typeof payload === "object" && "embeds" in payload) {
+          rejected = true;
+          return Promise.reject(error);
+        }
+        return Promise.resolve();
+      });
+      const events = Array.from({ length: count }, (_, index) => {
+        const date = index === count - 1 ? "2026-06-30" : "2026-06-29";
+        return {
+          ...currentWorkshop,
+          name: `Workshop ${index}`,
+          discordId: String(111111111111111111n + BigInt(index)),
+          startDateTime: `${date}T18:00:00-04:00`,
+          endDateTime: `${date}T20:00:00-04:00`,
+        };
+      });
+
+      await createClubReminderExecutor({
+        getCandidates: () => Promise.resolve(events),
+        now: () => new Date("2026-06-29T09:00:00-04:00"),
+        send,
+      })();
+
+      const embeds = send.mock.calls.flatMap(([payload]) =>
+        typeof payload === "object" && "embeds" in payload
+          ? payload.embeds
+          : [],
+      );
+      expect(embeds).toHaveLength(count === 2 ? 2 : 3);
+      expect(JSON.stringify(embeds.at(-1))).toContain(`Workshop ${count - 1}`);
+      expect(send).toHaveBeenCalledTimes(count === 2 ? 6 : 5);
+      expect(send.mock.lastCall?.[0]).toHaveProperty(
+        "content",
+        expect.stringContaining("We hope to see you all there!"),
+      );
+      expect(log).toHaveBeenCalledExactlyOnceWith(
+        `Failed to send Club reminder card "${embeds[0]?.title}":`,
+        error,
+      );
+    },
+  );
 });

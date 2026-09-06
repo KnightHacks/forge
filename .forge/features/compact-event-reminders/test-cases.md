@@ -40,6 +40,13 @@ and standalone section heading. Ineligible candidates do not trigger compact mod
 Given three eligible events spread across Today, Tomorrow, and Next Week, expect
 three compact dated cards. Do not choose the style separately for each section.
 
+## TC-007: Card delivery failure
+
+Given full and compact schedules, reject the first card send. Expect one error
+log identifying that card and the original error. Continue with subsequent
+cards, including compact continuations and later date sections, then attempt
+the footer. Do not retry or resend earlier messages.
+
 ## Visual review
 
 Inspect desktop and 320px local previews with typical, long-label, and 60-event

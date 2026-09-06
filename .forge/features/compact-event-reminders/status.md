@@ -25,11 +25,12 @@ Current phase: PR open; CI and review pending; not deployed
 - [x] Send a development preview and inspect the actual Discord client.
 - [x] Prepare actual Discord screenshots for the PR; remove superseded mock images.
 - [x] Commit, push, and open the PR with actual Discord screenshots.
+- [x] Reproduce and fix CodeRabbit's per-card delivery-failure concern.
 
 ## Validation
 
-- `pnpm --filter=@forge/cron test`: 36 tests passed across 6 files.
-- Presentation regressions failed before their respective fixes. All 14 reminder
+- `pnpm --filter=@forge/cron test`: 38 tests passed across 6 files.
+- Presentation regressions failed before their respective fixes. All 16 reminder
   cases now pass, including full cards for one or two events, compact cards from
   three events, ignored candidates, and counting across days.
 - `pnpm format`: passed, 24 tasks.
@@ -41,7 +42,7 @@ Current phase: PR open; CI and review pending; not deployed
 - Cron has no compilation step. No React changes; React analysis is not applicable.
 - `git diff --check`: passed.
 - Added exact-copy regression assertions for both introductions and the footer;
-  they failed against the rewritten copy before restoration. All 36 cron tests
+  they failed against the rewritten copy before restoration. All 38 cron tests
   pass after the correction.
 - 60-event fixture: 63 messages / 60 embeds before; 10 messages / 8 embeds after.
 
@@ -92,10 +93,15 @@ records formatter commits, message counts, and links.
 
 ## Review notes
 
-CodeRabbit requested clearer embed cardinality; the SRD now states one or more
-embeds per compact section. Its delivery-failure suggestion changes the existing
-stop-on-send-failure policy inherited from main. That behavior remains outside
-this presentation change; no delivery errors are swallowed.
+Both CodeRabbit concerns are addressed. The SRD states one or more embeds per
+compact section. After the user requested the delivery fix, each event-card send
+now catches and logs a terminal failure, then continues with subsequent cards
+and the footer. Introduction, standalone heading, and footer failures still
+propagate. No additional retry loop was introduced.
+
+Two regression cases rejected the first card of full and compact schedules and
+failed before the fix. Both now pass, verifying error logs, later cards,
+continuations, later date sections, and the footer. All 38 cron tests pass.
 
 The previous PR revision passed CI, including the repository build. Local build
 verification remains blocked by the missing `apps/2026` environment values above.

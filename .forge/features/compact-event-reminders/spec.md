@@ -21,10 +21,12 @@ compact reminders with clearer grouping on 2026-09-06.
   in the selector's chronological order.
 - Preserve the original daily introduction, Sunday introduction, and footer
   wording exactly, including opt-in and Blade links.
+- If an individual card fails to send, log the failure and attempt the remaining
+  cards and footer.
 
 ## Scope and decisions
 
-Only Club reminder presentation changes. Preserve eligibility, schedules, time
+Club reminder presentation and per-card failure handling change. Preserve eligibility, schedules, time
 zone, destinations, and audience pings. Hackathon/issue reminders and Blade UI
 are outside this change. Linked details instead of excerpts is an implementation
 choice under the approved refinement. No blocking product questions remain.

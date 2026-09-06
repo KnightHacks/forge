@@ -25,6 +25,15 @@ The selector still owns candidate validity and ordering. Preserve all existing
 introduction and footer strings verbatim; compacting the layout does not
 authorize rewriting the copy.
 
+## Delivery failures
+
+Catch terminal send failures around each event card, log the card title and
+error using the existing logger, and continue with later cards and the footer.
+Apply the same handling to full and compact cards, including continuations and
+later date sections. Do not add application-level retries. Failures sending the
+introduction, standalone section headings, or footer still propagate to
+`CronBuilder`.
+
 ## Access and compatibility
 
 No new API or permission surface. Existing visibility and webhook credentials

@@ -1,6 +1,7 @@
 import type { APIEmbed } from "discord-api-types/v10";
 
 import { EVENTS } from "@forge/consts";
+import { logger } from "@forge/utils";
 
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
@@ -231,7 +232,14 @@ export function createClubReminderExecutor({
         ? groupEmbeds(group.prefix, group.events)
         : group.events.map(eventEmbed);
       for (const embed of embeds) {
-        await send({ embeds: [embed] });
+        try {
+          await send({ embeds: [embed] });
+        } catch (error) {
+          logger.error(
+            `Failed to send Club reminder card "${embed.title}":`,
+            error,
+          );
+        }
       }
     }
 
