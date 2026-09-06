@@ -412,13 +412,13 @@ const callbackSourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("fixed"), value: z.unknown() }),
   z.object({ kind: z.literal("question"), questionId: z.string().uuid() }),
   z.object({
-    kind: z.literal("system"),
+    kind: z.literal("respondent"),
     value: z.enum([
-      "user_id",
+      "auth_user_id",
+      "discord_user_id",
       "member_id",
-      "response_id",
-      "submitted_at",
-      "event_id",
+      "respondent_email",
+      "respondent_name",
     ]),
   }),
 ]);

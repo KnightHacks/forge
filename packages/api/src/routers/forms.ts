@@ -45,7 +45,10 @@ import {
   getLegacyFormFileDownloadUrl,
   isRespondentFormAsset,
 } from "../utils/forms/attachments";
-import { listFormCallbackCatalog } from "../utils/forms/callbacks";
+import {
+  getFormCallbackRegistry,
+  listFormCallbackCatalog,
+} from "../utils/forms/callbacks";
 import {
   codeOwnedFormConfigs,
   formResponseCallbacks,
@@ -68,7 +71,7 @@ import {
   updateResponse,
   updateResponseInputSchema,
 } from "../utils/forms/manager";
-import { formCallbackRegistry } from "../utils/forms/registry";
+import { formCallbackProcedures } from "../utils/forms/procedures";
 import {
   provisionFormSection,
   requirePlatformFormCapability,
@@ -94,10 +97,11 @@ function containsExactValue(value: unknown, expected: string): boolean {
   );
 }
 
-function requireCallbackPermission(
+async function requireCallbackPermission(
   permissions: Awaited<ReturnType<typeof loadPlatformFormActor>>["permissions"],
   callbackSlug: string,
 ) {
+  const formCallbackRegistry = await getFormCallbackRegistry();
   const definition = formCallbackRegistry.get(callbackSlug);
   if (!definition) {
     throw new TRPCError({
@@ -143,6 +147,7 @@ function catalogValue(label: string) {
 }
 
 export const formsRouter = {
+  ...formCallbackProcedures,
   createUpload: permProcedure
     .input(
       z
@@ -521,8 +526,11 @@ export const formsRouter = {
     };
   }),
 
-  listCallbacks: permProcedure.query(({ ctx }) =>
-    listFormCallbackCatalog(formCallbackRegistry, ctx.session.permissions),
+  listCallbacks: permProcedure.query(async ({ ctx }) =>
+    listFormCallbackCatalog(
+      await getFormCallbackRegistry(),
+      ctx.session.permissions,
+    ),
   ),
 
   listRespondentRoles: permProcedure.query(async ({ ctx }) => {
@@ -603,7 +611,8 @@ export const formsRouter = {
         const destinationIds = mappings.flatMap(({ source }) =>
           source.kind === "fixed" &&
           typeof source.value === "string" &&
-          z.string().uuid().safeParse(source.value).success
+          (z.string().uuid().safeParse(source.value).success ||
+            /^\d{17,20}$/.test(source.value))
             ? [source.value]
             : [],
         );
@@ -690,7 +699,7 @@ export const formsRouter = {
       }
       const actor = await loadPlatformFormActor(ctx.session);
       await requirePlatformFormCapability(actor, row.formId, "edit_definition");
-      requireCallbackPermission(actor.permissions, row.callbackSlug);
+      await requireCallbackPermission(actor.permissions, row.callbackSlug);
       const result = await dispatchFormCallbackExecution(input.executionId);
       if (!result) return result;
       const execution = await db.query.FormCallbackExecution.findFirst({
@@ -761,7 +770,7 @@ export const formsRouter = {
         input.formId,
         "edit_definition",
       );
-      requireCallbackPermission(actor.permissions, input.callbackSlug);
+      await requireCallbackPermission(actor.permissions, input.callbackSlug);
       return db.transaction(async (tx) => {
         const existing = await tx.query.FormCallbackConfiguration.findFirst({
           where: and(

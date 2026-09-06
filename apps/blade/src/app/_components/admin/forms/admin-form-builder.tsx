@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import { ArrowLeft, FilePenLine } from "lucide-react";
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
+import { toast } from "@forge/ui/toast";
 import {
   checkUploadMetadata,
   FORM_BANNER_UPLOAD_POLICY,
@@ -26,7 +27,10 @@ import type {
   BuilderInitial,
   CallbackCatalogItem,
 } from "./form-builder-types";
-import type { FormCallbackDraft } from "./form-callback-mappings";
+import type {
+  ConfiguredFormCallback,
+  FormCallbackDraft,
+} from "./form-callback-mappings";
 import type { MediaInstruction } from "./form-definition-draft";
 import {
   AdminPageHeader,
@@ -46,7 +50,10 @@ import {
 } from "./form-builder-formatting";
 import { FormBuilderHeaderActions } from "./form-builder-header-actions";
 import { FormBuilderQuestionsSection } from "./form-builder-questions-section";
-import { callbackInputMappings } from "./form-callback-mappings";
+import {
+  callbackInputMappings,
+  emptyCallbackDraft,
+} from "./form-callback-mappings";
 import { FormCallbacksDialog } from "./form-callbacks-dialog";
 import {
   buildFormDefinition,
@@ -68,7 +75,7 @@ export function AdminFormBuilder({
   shareAssets,
 }: {
   callbacks: CallbackCatalogItem[];
-  configuredCallbacks?: { active: boolean; callbackSlug: string; id: string }[];
+  configuredCallbacks?: ConfiguredFormCallback[];
   initial?: BuilderInitial;
   readOnly?: boolean;
   respondentRoles: { id: string; name: string }[];
@@ -103,11 +110,11 @@ export function AdminFormBuilder({
     draftAvailability(initial, sections),
   );
   const [message, setMessage] = useState<string | null>(null);
-  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>({
-    questionId: "",
-    slug: "discord.assign-role",
-    value: "",
-  });
+  const [callbackError, setCallbackError] = useState<string | null>(null);
+  const [callbacksRefreshing, refreshCallbacks] = useTransition();
+  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>(() =>
+    emptyCallbackDraft(callbacks.find((callback) => callback.available)),
+  );
   const [openDialog, setOpenDialog] = useState<BuilderDialog>("none");
   const [respondentRoleSearch, setRespondentRoleSearch] = useState("");
   const questionSensors = useSensors(
@@ -142,6 +149,7 @@ export function AdminFormBuilder({
     dialog: Exclude<BuilderDialog, "none">,
     open: boolean,
   ) {
+    if (dialog === "callbacks") setCallbackError(null);
     setOpenDialog(open ? dialog : "none");
   }
 
@@ -242,15 +250,18 @@ export function AdminFormBuilder({
 
   async function addCallback() {
     if (!initial) return;
+    setCallbackError(null);
     try {
       await configureCallback.mutateAsync({
         callbackSlug: callbackDraft.slug,
         formId: initial.id,
         mappings: callbackInputMappings(callbackDraft),
       });
-      setMessage("Callback configured for future responses.");
+      setOpenDialog("none");
+      toast.success("Callback saved for future responses.");
+      refreshCallbacks(() => router.refresh());
     } catch (cause) {
-      setMessage(
+      setCallbackError(
         cause instanceof Error
           ? cause.message
           : "Callback configuration failed.",
@@ -258,14 +269,21 @@ export function AdminFormBuilder({
     }
   }
 
-  function disableFormCallback(callbackSlug: string) {
+  async function disableFormCallback(callbackSlug: string) {
     if (!initial) return;
-    void disableCallback
-      .mutateAsync({ callbackSlug, formId: initial.id })
-      .then(() => {
-        setMessage("Callback disabled for future responses.");
-        router.refresh();
-      });
+    setCallbackError(null);
+    try {
+      await disableCallback.mutateAsync({ callbackSlug, formId: initial.id });
+      setOpenDialog("none");
+      toast.success("Callback disabled for future responses.");
+      refreshCallbacks(() => router.refresh());
+    } catch (cause) {
+      setCallbackError(
+        cause instanceof Error
+          ? cause.message
+          : "Callback could not be disabled.",
+      );
+    }
   }
 
   function deleteFormPermanently() {
@@ -455,9 +473,14 @@ export function AdminFormBuilder({
         <FormCallbacksDialog
           callbackDraft={callbackDraft}
           callbacks={callbacks}
-          configureCallbackPending={configureCallback.isPending}
+          configureCallbackPending={
+            configureCallback.isPending || callbacksRefreshing
+          }
           configuredCallbacks={configuredCallbacks}
-          disableCallbackPending={disableCallback.isPending}
+          disableCallbackPending={
+            disableCallback.isPending || callbacksRefreshing
+          }
+          error={callbackError}
           onAddCallback={addCallback}
           onClose={() => setOpenDialog("none")}
           onDisableCallback={disableFormCallback}

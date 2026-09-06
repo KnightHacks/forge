@@ -245,7 +245,7 @@ export function GenericFormRespondent({
                   aria-hidden="true"
                 />
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold">Your submitted response</h2>
+                  <h2 className="font-semibold">Response submitted</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {respondentState.editable
                       ? "You can update it while this form remains open."
@@ -253,6 +253,17 @@ export function GenericFormRespondent({
                   </p>
                 </div>
               </div>
+              {definition.responseMode === "multiple_locked" && (
+                <Button
+                  asChild
+                  className="mt-4 h-auto min-h-11 w-full whitespace-normal sm:w-auto"
+                  variant="outline"
+                >
+                  <Link href={`/form/${definition.slugName}`}>
+                    Submit another response
+                  </Link>
+                </Button>
+              )}
             </section>
           )}
           {respondentState.status === "submitted" && (

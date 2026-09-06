@@ -375,7 +375,7 @@ describe("forms platform state, availability, callbacks, and uploads", () => {
         },
         {
           inputKey: "memberId",
-          source: { kind: "system", value: "member_id" },
+          source: { kind: "respondent", value: "member_id" },
         },
       ],
       responseMode: "single_locked",

@@ -78,12 +78,20 @@ export const CONFIG_KEY_CONSUMERS = {
   admin_role: [],
   volunteer_role: [],
   vip_role: [],
-  outreach_director_role: [],
-  design_director_role: [],
-  development_director_role: [],
-  sponsorship_director_role: [],
-  workshops_director_role: [],
-  projects_mentorship_director_role: [],
+  outreach_director_role: ["Recruiting notifications posted by form callbacks"],
+  design_director_role: ["Recruiting notifications posted by form callbacks"],
+  development_director_role: [
+    "Recruiting notifications posted by form callbacks",
+  ],
+  sponsorship_director_role: [
+    "Recruiting notifications posted by form callbacks",
+  ],
+  workshops_director_role: [
+    "Recruiting notifications posted by form callbacks",
+  ],
+  projects_mentorship_director_role: [
+    "Recruiting notifications posted by form callbacks",
+  ],
 } as const satisfies Record<ConfigKey, readonly string[]>;
 
 /** Keys some code resolves. Ordered by {@link CONFIG_KEYS}, not alphabetically. */

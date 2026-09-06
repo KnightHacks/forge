@@ -1,44 +1,37 @@
 import { randomUUID } from "node:crypto";
-import { TRPCError } from "@trpc/server";
-import { Routes } from "discord-api-types/v10";
+import { callTRPCProcedure, TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq, inArray, lte, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
-import { Permissions, Roles, User } from "@forge/db/schemas/auth";
+import { User } from "@forge/db/schemas/auth";
 import {
   FormCallbackConfiguration,
   FormCallbackExecution,
   Member,
 } from "@forge/db/schemas/knight-hacks";
-import * as discord from "@forge/utils/discord";
-import { getDiscordConfigId } from "@forge/utils/discord-config";
 import { callbackConfigurationSchema } from "@forge/validators";
 
 import type { WriteDb } from "../db";
 import type { PermissionMap } from "../permissions";
-import { liveRoleDiscordGateway } from "../roles/discord-gateway";
 import {
   assertAllowedFormCallbackDiscordRole,
-  formCallbackDeliveryNonce,
   RETRYABLE_FORM_CALLBACK_STATUSES,
 } from "./callback-policy";
 import {
   assertCallbackMappingsMatchSchema,
+  getFormCallbackRegistry,
   mapFormCallbackInput,
 } from "./callbacks";
-import { formCallbackRegistry } from "./registry";
 
 const LEASE_MS = 5 * 60 * 1000;
 
-async function requireAllowedAssignableRole(database: WriteDb, roleId: string) {
-  const parsedRoleId = z.string().uuid().parse(roleId);
-  const role = await database.query.Roles.findFirst({
-    where: eq(Roles.id, parsedRoleId),
-  });
-  if (!role) throw new Error("The selected assignable role no longer exists.");
-  assertAllowedFormCallbackDiscordRole(role.discordRoleId);
-  return role;
+function requireAllowedAssignableRole(roleId: string) {
+  const parsedRoleId = z
+    .string()
+    .regex(/^\d{17,20}$/)
+    .parse(roleId);
+  assertAllowedFormCallbackDiscordRole(parsedRoleId);
 }
 
 export async function saveFormCallbackConfiguration(input: {
@@ -56,7 +49,7 @@ export async function saveFormCallbackConfiguration(input: {
     mappings: input.mappings,
     responseMode: input.responseMode,
   });
-  const definition = formCallbackRegistry.get(parsed.callbackSlug);
+  const definition = (await getFormCallbackRegistry()).get(parsed.callbackSlug);
   if (!definition) throw new Error("Callback is not registered.");
 
   if (
@@ -70,7 +63,7 @@ export async function saveFormCallbackConfiguration(input: {
   }
 
   assertCallbackMappingsMatchSchema({
-    callbackSchema: definition.inputSchema,
+    definition,
     formDefinition: input.formDefinition,
     mappings: parsed.mappings,
   });
@@ -85,7 +78,7 @@ export async function saveFormCallbackConfiguration(input: {
     );
     if (fixedRoleIds.length > 0) {
       for (const roleId of new Set(fixedRoleIds)) {
-        await requireAllowedAssignableRole(database, roleId);
+        requireAllowedAssignableRole(roleId);
       }
     }
   }
@@ -127,11 +120,21 @@ export async function enqueueConfiguredFormCallbacks(input: {
     );
   if (configurations.length === 0) return [];
 
-  const member = await input.database.query.Member.findFirst({
-    columns: { id: true },
-    where: eq(Member.userId, input.userId),
-  });
+  const respondent = await input.database
+    .select({
+      authUserId: User.id,
+      discordUserId: User.discordUserId,
+      email: Member.email,
+      firstName: Member.firstName,
+      lastName: Member.lastName,
+      memberId: Member.id,
+    })
+    .from(Member)
+    .innerJoin(User, eq(Member.userId, User.id))
+    .where(eq(Member.userId, input.userId))
+    .then((rows) => rows[0]);
   const executions: (typeof FormCallbackExecution.$inferSelect)[] = [];
+  const registry = await getFormCallbackRegistry();
 
   for (const configuration of configurations) {
     let mappedInput: Record<string, unknown> = {};
@@ -143,25 +146,24 @@ export async function enqueueConfiguredFormCallbacks(input: {
       );
       mappedInput = mapFormCallbackInput(parsed, {
         answers: input.answers,
-        system: {
-          event_id: null,
-          member_id: member?.id ?? null,
-          response_id: input.responseId,
-          submitted_at: input.submittedAt.toISOString(),
-          user_id: input.userId,
+        respondent: {
+          auth_user_id: respondent?.authUserId ?? null,
+          discord_user_id: respondent?.discordUserId ?? null,
+          member_id: respondent?.memberId ?? null,
+          respondent_email: respondent?.email ?? null,
+          respondent_name: respondent
+            ? `${respondent.firstName} ${respondent.lastName}`.trim()
+            : null,
         },
       });
-      const definition = formCallbackRegistry.get(configuration.callbackSlug);
+      const definition = registry.get(configuration.callbackSlug);
       if (!definition) throw new Error("Callback is no longer registered.");
       mappedInput = definition.inputSchema.parse(mappedInput) as Record<
         string,
         unknown
       >;
       if (configuration.callbackSlug === "discord.assign-role") {
-        await requireAllowedAssignableRole(
-          input.database,
-          z.string().uuid().parse(mappedInput.roleId),
-        );
+        requireAllowedAssignableRole(z.string().parse(mappedInput.roleId));
       }
     } catch (cause) {
       status = "failed";
@@ -185,52 +187,6 @@ export async function enqueueConfiguredFormCallbacks(input: {
     if (execution) executions.push(execution);
   }
   return executions;
-}
-
-async function runAssignRole(input: { memberId: string; roleId: string }) {
-  const [member, role] = await Promise.all([
-    db
-      .select({ discordUserId: User.discordUserId, userId: Member.userId })
-      .from(Member)
-      .innerJoin(User, eq(Member.userId, User.id))
-      .where(eq(Member.id, input.memberId))
-      .then((rows) => rows[0]),
-    requireAllowedAssignableRole(db, input.roleId),
-  ]);
-  if (!member) throw new Error("Callback member was not found.");
-  const gateway = liveRoleDiscordGateway;
-  await gateway.grantRole(member.discordUserId, role.discordRoleId);
-  try {
-    await db
-      .insert(Permissions)
-      .values({ roleId: role.id, userId: member.userId })
-      .onConflictDoNothing();
-  } catch (cause) {
-    await gateway.revokeRole(member.discordUserId, role.discordRoleId);
-    throw cause;
-  }
-}
-
-async function runRecruitingNotification(
-  input: {
-    memberId: string;
-    note: string;
-  },
-  executionId: string,
-) {
-  const member = await db.query.Member.findFirst({
-    where: eq(Member.id, input.memberId),
-  });
-  if (!member) throw new Error("Callback member was not found.");
-  const recruitingChannelId = await getDiscordConfigId("recruiting_channel");
-  await discord.api.post(Routes.channelMessages(recruitingChannelId), {
-    body: {
-      content: `**Form recruiting notification**\n${member.firstName} ${member.lastName} (${member.email})\n${input.note}`,
-      allowed_mentions: { parse: [] },
-      enforce_nonce: true,
-      nonce: formCallbackDeliveryNonce(executionId),
-    },
-  });
 }
 
 export async function dispatchFormCallbackExecution(executionId: string) {
@@ -265,24 +221,28 @@ export async function dispatchFormCallbackExecution(executionId: string) {
   if (!execution) return null;
 
   try {
-    const definition = formCallbackRegistry.get(execution.callbackSlug);
+    const definition = (await getFormCallbackRegistry()).get(
+      execution.callbackSlug,
+    );
     if (!definition) {
       throw new Error(`No callback handler for ${execution.callbackSlug}.`);
     }
     const parsedInput = definition.inputSchema.parse(execution.input);
-    if (execution.callbackSlug === "discord.assign-role") {
-      await runAssignRole(parsedInput as { memberId: string; roleId: string });
-    } else if (execution.callbackSlug === "recruiting.notify") {
-      await runRecruitingNotification(
-        parsedInput as {
-          memberId: string;
-          note: string;
-        },
-        execution.id,
-      );
-    } else {
-      throw new Error(`No callback handler for ${execution.callbackSlug}.`);
-    }
+    const { formCallbackRouter } = await import("./procedures");
+    await callTRPCProcedure({
+      batchIndex: 0,
+      ctx: {
+        formCallback: { executionId: execution.id },
+        headers: new Headers(),
+        session: null,
+        source: "form-callback",
+      },
+      getRawInput: () => Promise.resolve(parsedInput),
+      path: definition.procedurePath,
+      router: formCallbackRouter,
+      signal: undefined,
+      type: "mutation",
+    });
     const [completed] = await db
       .update(FormCallbackExecution)
       .set({

@@ -7,6 +7,12 @@ import {
   linearScaleValues,
 } from "~/app/_components/forms/generic-form-response-form";
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/form/fixture",
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("~/trpc/react", () => ({
   api: {
     forms: {

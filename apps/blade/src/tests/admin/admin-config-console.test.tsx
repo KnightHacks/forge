@@ -242,7 +242,7 @@ beforeEach(() => {
 });
 
 describe("TC-004: inert keys are structurally distinct from live keys", () => {
-  it("marks the ten inert keys with a rendered badge rather than the description", () => {
+  it("marks inert keys with a rendered badge rather than the description", () => {
     const { container } = renderDiscordSection();
     const { cards, tables } = renderings(container);
 
@@ -260,12 +260,23 @@ describe("TC-004: inert keys are structurally distinct from live keys", () => {
       );
     }
 
-    expect(DISCORD.INERT_CONFIG_KEYS).toHaveLength(10);
+    expect(DISCORD.INERT_CONFIG_KEYS).toEqual([
+      "officer_role",
+      "admin_role",
+      "volunteer_role",
+      "vip_role",
+    ]);
     expect([...DISCORD.LIVE_CONFIG_KEYS]).toEqual([
       "guild",
       "log_channel",
       "recruiting_channel",
       "alumni_role",
+      "outreach_director_role",
+      "design_director_role",
+      "development_director_role",
+      "sponsorship_director_role",
+      "workshops_director_role",
+      "projects_mentorship_director_role",
     ]);
   });
 
