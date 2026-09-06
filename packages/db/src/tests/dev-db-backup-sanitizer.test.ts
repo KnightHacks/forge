@@ -148,6 +148,7 @@ describe("development database backup sanitizer", () => {
         "knight_hacks_guest_judge_session",
         "knight_hacks_hackathon_judging_configuration",
         "knight_hacks_judge",
+        "knight_hacks_judging_announcement",
         "knight_hacks_judging_room",
         "knight_hacks_judging_room_access_link",
         "knight_hacks_judging_room_presence",

@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_hackathon_judging_configuration" ADD COLUMN "judging_comms_channel_id" varchar(20);--> statement-breakpoint
+ALTER TABLE "knight_hacks_judging_room" ADD COLUMN "discord_thread_id" varchar(20);

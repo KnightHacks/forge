@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   guestJudgeNameSchema,
+  judgingAnnouncementPublishSchema,
+  judgingCommsChannelSchema,
   judgingEvaluationSaveSchema,
   judgingReorderSchema,
   judgingRoomCreateSchema,
@@ -16,6 +18,57 @@ const responseId = "00000000-0000-4000-8000-000000000004";
 const projectId = "00000000-0000-4000-8000-000000000005";
 
 describe("judging inputs", () => {
+  it("accepts an optional judging communications channel", () => {
+    expect(
+      judgingCommsChannelSchema.safeParse({
+        channelId: null,
+        hackathonId,
+      }).success,
+    ).toBe(true);
+    expect(
+      judgingCommsChannelSchema.safeParse({
+        channelId: "1306042070686896230",
+        hackathonId,
+      }).success,
+    ).toBe(true);
+    expect(
+      judgingCommsChannelSchema.safeParse({
+        channelId: "not-a-channel",
+        hackathonId,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("validates judging announcements and defaults their audience", () => {
+    expect(
+      judgingAnnouncementPublishSchema.parse({
+        hackathonId,
+        message: "  Pitches pause at 4:30 PM.  ",
+        roomId: null,
+      }),
+    ).toMatchObject({
+      includeGuests: false,
+      isUrgent: false,
+      message: "Pitches pause at 4:30 PM.",
+      roomId: null,
+    });
+    for (const message of [
+      "   ",
+      "\t",
+      "\n",
+      "x".repeat(1001),
+      "Unsafe\u0007copy",
+    ]) {
+      expect(
+        judgingAnnouncementPublishSchema.safeParse({
+          hackathonId,
+          message,
+          roomId: null,
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it("trims room and guest judge names", () => {
     expect(
       judgingRoomCreateSchema.parse({

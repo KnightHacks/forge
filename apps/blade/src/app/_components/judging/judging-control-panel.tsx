@@ -10,12 +10,17 @@ import {
   ArrowUp,
   Copy,
   DoorOpen,
+  ExternalLink,
+  Hash,
   KeyRound,
+  Megaphone,
+  MessageCircle,
   Pencil,
   Plus,
   Printer,
   QrCode,
   RefreshCw,
+  Send,
   ShieldAlert,
   UserRoundX,
   UsersRound,
@@ -35,6 +40,9 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
+import { Switch } from "@forge/ui/switch";
+import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import {
@@ -47,7 +55,11 @@ import { api } from "~/trpc/react";
 type ControlData = RouterOutputs["judging"]["listAdmin"];
 type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
 type Room = ControlData["rooms"][number];
-type QrResult = RouterOutputs["judging"]["generateRoomLink"];
+type Announcement = NonNullable<ControlData["globalAnnouncement"]>;
+type QrResult = Pick<
+  RouterOutputs["judging"]["generateRoomLink"],
+  "id" | "qrCodeUrl" | "url"
+>;
 
 const ACTIVE_PRESENCE_WINDOW_MS = 2 * 60 * 1000;
 
@@ -311,6 +323,198 @@ function RoomQrDialog({
   );
 }
 
+interface AnnouncementDialogProps {
+  current: Announcement | null;
+  data: ControlData;
+  onClose: () => void;
+  onSaved: () => void;
+  room: Room | null;
+}
+
+export function AnnouncementDialog(props: AnnouncementDialogProps) {
+  return (
+    <AnnouncementDialogContent
+      key={props.current?.id ?? "new-announcement"}
+      {...props}
+    />
+  );
+}
+
+function AnnouncementDialogContent({
+  current,
+  data,
+  onClose,
+  onSaved,
+  room,
+}: AnnouncementDialogProps) {
+  const publish = api.judging.publishAnnouncement.useMutation();
+  const clear = api.judging.clearAnnouncement.useMutation();
+  const [includeGuests, setIncludeGuests] = useState(
+    current?.includeGuests ?? false,
+  );
+  const [isUrgent, setIsUrgent] = useState(current?.isUrgent ?? false);
+  const [message, setMessage] = useState(current?.message ?? "");
+  const scope = room?.name ?? "All judging rooms";
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      const result = await publish.mutateAsync({
+        hackathonId: data.hackathon.id,
+        includeGuests,
+        isUrgent,
+        message,
+        roomId: room?.id ?? null,
+      });
+      if (result.discordDelivery === "failed") {
+        toast.error(
+          "Announcement published in Blade, but Discord delivery failed.",
+        );
+      } else if (result.discordDelivery === "not_configured") {
+        toast.success(
+          "Announcement published in Blade. Discord is not connected.",
+        );
+      } else if (result.discordDelivery === "superseded") {
+        toast.success(
+          "Announcement published in Blade, then replaced before Discord delivery.",
+        );
+      } else {
+        toast.success("Announcement published in Blade and Discord.");
+      }
+      onClose();
+      onSaved();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Announcement could not be published.",
+      );
+    }
+  }
+
+  async function clearCurrent() {
+    if (!current) return;
+    try {
+      await clear.mutateAsync({ announcementId: current.id });
+      toast.success("Announcement cleared.");
+      onClose();
+      onSaved();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Announcement could not be cleared.",
+      );
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] overflow-y-auto sm:max-w-xl [&>button]:size-11">
+        <form className="space-y-5" onSubmit={submit}>
+          <DialogHeader className="text-left">
+            <div className="mb-1 flex size-11 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+              <Megaphone className="size-5" aria-hidden="true" />
+            </div>
+            <DialogTitle>
+              {current ? "Replace announcement" : "Publish announcement"}
+            </DialogTitle>
+            <DialogDescription>
+              This goes to {scope} in Blade and Discord. Blade publication
+              succeeds even if Discord is unavailable.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="judging-announcement-message">Message</Label>
+            <Textarea
+              id="judging-announcement-message"
+              maxLength={1000}
+              name="message"
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Judging pauses at 4:30 PM for deliberation."
+              required
+              rows={5}
+              value={message}
+            />
+            <p className="text-xs leading-5 text-muted-foreground">
+              Authenticated judges receive a Discord mention. Guest judges are
+              never mentioned on Discord.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/25 p-4">
+            <Label
+              className="flex min-h-11 cursor-pointer items-start justify-between gap-4"
+              htmlFor="judging-announcement-guests"
+            >
+              <span>
+                <span className="block font-medium">Include guest judges</span>
+                <span className="mt-1 block text-sm font-normal leading-5 text-muted-foreground">
+                  Show this in the QR guest workspace too.
+                </span>
+              </span>
+              <Switch
+                checked={includeGuests}
+                id="judging-announcement-guests"
+                onCheckedChange={setIncludeGuests}
+              />
+            </Label>
+            <Label
+              className="flex min-h-11 cursor-pointer items-start justify-between gap-4 border-t border-border/60 pt-3"
+              htmlFor="judging-announcement-urgent"
+            >
+              <span>
+                <span className="block font-medium">Urgent announcement</span>
+                <span className="mt-1 block text-sm font-normal leading-5 text-muted-foreground">
+                  Block judging until each recipient acknowledges the message.
+                </span>
+              </span>
+              <Switch
+                checked={isUrgent}
+                id="judging-announcement-urgent"
+                onCheckedChange={setIsUrgent}
+              />
+            </Label>
+          </div>
+
+          {current ? (
+            <div className="bg-[#DBC049]/8 rounded-md border border-[#DBC049]/30 px-4 py-3 text-sm">
+              A current {current.isUrgent ? "urgent dialog" : "banner"} is live
+              for {scope}. Publishing replaces it immediately.
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            {current ? (
+              <Button
+                className="min-h-11"
+                disabled={clear.isPending || publish.isPending}
+                onClick={() => void clearCurrent()}
+                type="button"
+                variant="outline"
+              >
+                {clear.isPending ? "Clearing…" : "Clear current"}
+              </Button>
+            ) : null}
+            <Button
+              className="min-h-11"
+              disabled={clear.isPending || publish.isPending}
+              type="submit"
+            >
+              {publish.isPending
+                ? "Publishing…"
+                : current
+                  ? "Replace announcement"
+                  : "Publish announcement"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function JudgingControlPanel({
   initialData,
   hackathons,
@@ -329,11 +533,22 @@ export function JudgingControlPanel({
     null,
   );
   const [archiving, setArchiving] = useState<Room | null>(null);
+  const [announcementTarget, setAnnouncementTarget] = useState<string | null>(
+    null,
+  );
+  const [commsDraft, setCommsDraft] = useState({
+    channelId: initialData.configuration.judgingCommsChannelId,
+    hackathonId: initialData.hackathon.id,
+  });
   const query = api.judging.listAdmin.useQuery(
     { hackathonId: initialData.hackathon.id },
     { initialData, refetchInterval: 10_000 },
   );
   const generate = api.judging.generateRoomLink.useMutation();
+  const channels = api.judging.listDiscordChannels.useQuery();
+  const saveComms = api.judging.setCommsChannel.useMutation();
+  const retryThreads = api.judging.provisionRoomThreads.useMutation();
+  const sendQr = api.judging.sendRoomQr.useMutation();
   const revoke = api.judging.revokeRoomLink.useMutation();
   const rotate = api.judging.rotateRoomLink.useMutation();
   const move = api.judging.moveRoom.useMutation();
@@ -341,6 +556,18 @@ export function JudgingControlPanel({
   const revokeGuest = api.judging.revokeGuest.useMutation();
   const removeJudge = api.judging.removeJudgeFromRoom.useMutation();
   const data = query.data;
+  const announcementRoom =
+    announcementTarget && announcementTarget !== "global"
+      ? (data.rooms.find((room) => room.id === announcementTarget) ?? null)
+      : null;
+  const commsChannelId =
+    commsDraft.hackathonId === data.hackathon.id
+      ? commsDraft.channelId
+      : data.configuration.judgingCommsChannelId;
+
+  function setCommsChannelId(channelId: string | null) {
+    setCommsDraft({ channelId, hackathonId: data.hackathon.id });
+  }
 
   function refresh() {
     void query.refetch();
@@ -360,9 +587,44 @@ export function JudgingControlPanel({
           ? await rotate.mutateAsync({ roomId: room.id })
           : await generate.mutateAsync({ roomId: room.id });
       setQr({ roomName: room.name, value });
+      if (value.discordDelivery === "failed") {
+        toast.error(
+          mode === "rotate"
+            ? "QR rotated, but the Discord message failed."
+            : "QR generated, but the Discord message failed.",
+        );
+      }
       refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "QR update failed.");
+    }
+  }
+
+  async function updateCommsChannel(channelId: string | null) {
+    try {
+      const result = await saveComms.mutateAsync({
+        channelId,
+        hackathonId: data.hackathon.id,
+      });
+      setCommsChannelId(channelId);
+      if (result.failedRooms.length) {
+        toast.error(
+          `Channel saved, but ${result.failedRooms.length} room thread${result.failedRooms.length === 1 ? "" : "s"} need a retry.`,
+        );
+      } else {
+        toast.success(
+          channelId
+            ? "Judging communications connected."
+            : "Judging communications disconnected.",
+        );
+      }
+      refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Discord communications could not be saved.",
+      );
     }
   }
 
@@ -380,6 +642,12 @@ export function JudgingControlPanel({
   const activeRoomIds = data.rooms
     .filter((room) => room.archivedAt === null)
     .map((room) => room.id);
+  const missingThreadCount = data.rooms.filter(
+    (room) =>
+      room.archivedAt === null &&
+      data.configuration.judgingCommsChannelId &&
+      !room.discordThreadId,
+  ).length;
 
   const Root = embedded ? "div" : "main";
 
@@ -391,13 +659,23 @@ export function JudgingControlPanel({
       {!embedded ? (
         <AdminPageHeader
           actions={
-            <Button
-              className="h-11 gap-2"
-              disabled={!data.challenges.length}
-              onClick={() => setEditing("new")}
-            >
-              <Plus className="size-4" aria-hidden="true" /> Create room
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                className="h-11 gap-2"
+                onClick={() => setAnnouncementTarget("global")}
+                variant="outline"
+              >
+                <Megaphone className="size-4" aria-hidden="true" /> Announce to
+                all rooms
+              </Button>
+              <Button
+                className="h-11 gap-2"
+                disabled={!data.challenges.length}
+                onClick={() => setEditing("new")}
+              >
+                <Plus className="size-4" aria-hidden="true" /> Create room
+              </Button>
+            </div>
           }
           description="Provision physical rooms, distribute guest access, and watch the live judge roster."
           eyebrow="Officer command center"
@@ -405,7 +683,15 @@ export function JudgingControlPanel({
           title="Judging rooms"
         />
       ) : (
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            className="h-11 gap-2"
+            onClick={() => setAnnouncementTarget("global")}
+            variant="outline"
+          >
+            <Megaphone className="size-4" aria-hidden="true" /> Announce to all
+            rooms
+          </Button>
           <Button
             className="h-11 gap-2"
             disabled={!data.challenges.length}
@@ -466,6 +752,174 @@ export function JudgingControlPanel({
         </div>
       </section>
 
+      <section className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+              <MessageCircle className="size-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-semibold">Judging communications</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Give every room a quiet Discord thread for judge arrivals, guest
+                check-ins, QR delivery, and access changes.
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant={
+              data.configuration.judgingCommsChannelId ? "outline" : "secondary"
+            }
+          >
+            {data.configuration.judgingCommsChannelId
+              ? missingThreadCount
+                ? `${missingThreadCount} thread${missingThreadCount === 1 ? "" : "s"} pending`
+                : "Connected"
+              : "Optional · disconnected"}
+          </Badge>
+        </div>
+
+        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="grid gap-2">
+            <Label htmlFor="judging-comms-channel">Root Discord channel</Label>
+            <ResponsiveComboBox
+              ariaLabel="Root judging communications channel"
+              buttonPlaceholder="Choose a text channel"
+              emptyMessage="No matching text channels found."
+              getItemLabel={(channel) => `#${channel.name}`}
+              getItemSearchValue={(channel) => `${channel.name} ${channel.id}`}
+              getItemValue={(channel) => channel.id}
+              inputPlaceholder="Search channels"
+              isDisabled={saveComms.isPending}
+              isLoading={channels.isLoading}
+              items={
+                channels.data ??
+                (commsChannelId
+                  ? [{ id: commsChannelId, name: commsChannelId }]
+                  : [])
+              }
+              onValueChange={setCommsChannelId}
+              renderItem={(channel) => (
+                <span className="flex min-w-0 items-center gap-2">
+                  <Hash
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{channel.name}</span>
+                </span>
+              )}
+              triggerClassName="h-11 bg-background/70"
+              triggerId="judging-comms-channel"
+              value={commsChannelId}
+            />
+            <p className="text-sm text-muted-foreground">
+              Blade uses the configured{" "}
+              {data.discordGuildId ? "Knight Hacks server" : "Discord server"}{" "}
+              for this environment.
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Use an organizer-only channel. Room threads inherit the channel's
+              readers, and mentions do not restrict who can view QR links or
+              guest notices.
+            </p>
+            {channels.isError ? (
+              <p className="text-sm text-destructive">
+                Discord channels could not be loaded. Check the bot's access to
+                this server, then retry.
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {data.configuration.judgingCommsChannelId ? (
+              <Button
+                className="h-11"
+                disabled={saveComms.isPending}
+                onClick={() => void updateCommsChannel(null)}
+                variant="outline"
+              >
+                Disconnect
+              </Button>
+            ) : null}
+            {missingThreadCount ? (
+              <Button
+                className="h-11"
+                disabled={retryThreads.isPending}
+                onClick={async () => {
+                  try {
+                    const result = await retryThreads.mutateAsync({
+                      hackathonId: data.hackathon.id,
+                    });
+                    if (result.failedRooms.length) {
+                      toast.error(
+                        `${result.failedRooms.length} room thread${result.failedRooms.length === 1 ? "" : "s"} still need a retry.`,
+                      );
+                    } else {
+                      toast.success("Room threads are ready.");
+                    }
+                    refresh();
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Room threads could not be provisioned.",
+                    );
+                  }
+                }}
+                variant="secondary"
+              >
+                Retry {missingThreadCount}{" "}
+                {missingThreadCount === 1 ? "thread" : "threads"}
+              </Button>
+            ) : null}
+            <Button
+              className="h-11"
+              disabled={
+                saveComms.isPending ||
+                commsChannelId === data.configuration.judgingCommsChannelId
+              }
+              onClick={() => void updateCommsChannel(commsChannelId)}
+            >
+              {saveComms.isPending ? "Saving…" : "Save channel"}
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {data.globalAnnouncement ? (
+        <section className="bg-[#DBC049]/8 rounded-lg border border-[#DBC049]/35 p-4 shadow-lg shadow-black/10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-semibold">Announcement to all rooms</p>
+                <Badge
+                  variant={
+                    data.globalAnnouncement.isUrgent ? "destructive" : "outline"
+                  }
+                >
+                  {data.globalAnnouncement.isUrgent ? "Urgent" : "Banner"}
+                </Badge>
+                <Badge variant="secondary">
+                  {data.globalAnnouncement.includeGuests
+                    ? "Members and guests"
+                    : "Authenticated judges"}
+                </Badge>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
+                {data.globalAnnouncement.message}
+              </p>
+            </div>
+            <Button
+              className="min-h-11 shrink-0"
+              onClick={() => setAnnouncementTarget("global")}
+              size="sm"
+              variant="outline"
+            >
+              Manage
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       {!data.challenges.length ? (
         <Alert>
           <QrCode className="size-4" />
@@ -509,6 +963,26 @@ export function JudgingControlPanel({
                             QR live
                           </Badge>
                         ) : null}
+                        {room.announcement ? (
+                          <>
+                            <Badge
+                              variant={
+                                room.announcement.isUrgent
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                            >
+                              {room.announcement.isUrgent
+                                ? "Urgent notice"
+                                : "Notice live"}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {room.announcement.includeGuests
+                                ? "Members and guests"
+                                : "Authenticated judges"}
+                            </Badge>
+                          </>
+                        ) : null}
                         {archived ? (
                           <Badge variant="destructive">Archived</Badge>
                         ) : null}
@@ -549,6 +1023,14 @@ export function JudgingControlPanel({
                           <Pencil className="mr-1 size-4" /> Edit
                         </Button>
                         <Button
+                          className="min-h-11"
+                          onClick={() => setAnnouncementTarget(room.id)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <Megaphone className="mr-1 size-4" /> Announce
+                        </Button>
+                        <Button
                           disabled={generate.isPending || rotate.isPending}
                           onClick={() => void showQr(room)}
                           size="sm"
@@ -557,16 +1039,80 @@ export function JudgingControlPanel({
                           <QrCode className="mr-1 size-4" />
                           {room.activeLinkId ? "View QR" : "Generate QR"}
                         </Button>
+                        {room.discordThreadId && data.discordGuildId ? (
+                          <Button asChild size="sm" variant="outline">
+                            <a
+                              href={`https://discord.com/channels/${data.discordGuildId}/${room.discordThreadId}`}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <ExternalLink className="mr-1 size-4" />
+                              Open thread
+                            </a>
+                          </Button>
+                        ) : null}
                         {room.activeLinkId ? (
                           <>
+                            <Button
+                              disabled={
+                                sendQr.isPending ||
+                                !data.configuration.judgingCommsChannelId
+                              }
+                              onClick={async () => {
+                                try {
+                                  const result = await sendQr.mutateAsync({
+                                    roomId: room.id,
+                                  });
+                                  if (result.discordDelivery === "delivered") {
+                                    toast.success(
+                                      "QR sent to current room judges.",
+                                    );
+                                  } else if (
+                                    result.discordDelivery === "failed"
+                                  ) {
+                                    toast.error(
+                                      "The QR is still active, but Discord delivery failed.",
+                                    );
+                                  } else {
+                                    toast.error(
+                                      "Connect a Discord channel to send this QR.",
+                                    );
+                                  }
+                                  refresh();
+                                } catch (error) {
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "QR delivery failed.",
+                                  );
+                                }
+                              }}
+                              size="sm"
+                              title={
+                                data.configuration.judgingCommsChannelId
+                                  ? "Send the current QR and mention assigned authenticated judges"
+                                  : "Connect a Discord channel to send this QR"
+                              }
+                              variant="secondary"
+                            >
+                              <Send className="mr-1 size-4" /> Send QR
+                            </Button>
                             <Button
                               disabled={revoke.isPending}
                               onClick={async () => {
                                 try {
-                                  await revoke.mutateAsync({ roomId: room.id });
-                                  toast.success(
-                                    "Room QR and guest sessions revoked.",
-                                  );
+                                  const result = await revoke.mutateAsync({
+                                    roomId: room.id,
+                                  });
+                                  if (result.discordDelivery === "failed") {
+                                    toast.error(
+                                      "Room access was revoked, but the Discord notice failed.",
+                                    );
+                                  } else {
+                                    toast.success(
+                                      "Room QR and guest sessions revoked.",
+                                    );
+                                  }
                                   refresh();
                                 } catch (error) {
                                   toast.error(
@@ -673,24 +1219,35 @@ export function JudgingControlPanel({
                                       aria-label={`${judge.kind === "guest" ? "Revoke" : "Remove"} ${judge.displayName}`}
                                       onClick={async () => {
                                         try {
+                                          let discordNoticeFailed = false;
                                           if (
                                             judge.kind === "guest" &&
                                             judge.guestSessionId
                                           ) {
-                                            await revokeGuest.mutateAsync({
-                                              guestSessionId:
-                                                judge.guestSessionId,
-                                            });
+                                            const result =
+                                              await revokeGuest.mutateAsync({
+                                                guestSessionId:
+                                                  judge.guestSessionId,
+                                              });
+                                            discordNoticeFailed =
+                                              result.discordDelivery ===
+                                              "failed";
                                           } else {
                                             await removeJudge.mutateAsync({
                                               judgeId: judge.judgeId,
                                             });
                                           }
-                                          toast.success(
-                                            judge.kind === "guest"
-                                              ? "Guest access revoked."
-                                              : "Judge removed from room.",
-                                          );
+                                          if (discordNoticeFailed) {
+                                            toast.error(
+                                              "Guest access was revoked, but the Discord notice failed.",
+                                            );
+                                          } else {
+                                            toast.success(
+                                              judge.kind === "guest"
+                                                ? "Guest access revoked."
+                                                : "Judge removed from room.",
+                                            );
+                                          }
                                           refresh();
                                         } catch (error) {
                                           toast.error(
@@ -734,6 +1291,19 @@ export function JudgingControlPanel({
         )}
       </section>
 
+      {announcementTarget === "global" || announcementRoom ? (
+        <AnnouncementDialog
+          current={
+            announcementTarget === "global"
+              ? data.globalAnnouncement
+              : (announcementRoom?.announcement ?? null)
+          }
+          data={data}
+          onClose={() => setAnnouncementTarget(null)}
+          onSaved={refresh}
+          room={announcementRoom}
+        />
+      ) : null}
       <RoomEditor
         data={data}
         key={editing === "new" ? "new" : (editing?.id ?? "closed")}

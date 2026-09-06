@@ -492,6 +492,29 @@ export const AUDIT_ACTION_CATALOG = {
     "guestAccessRevoked",
   ]),
   "judging.room.archived": policy("hackathons", "Archived judging room"),
+  "judging.comms.updated": policy(
+    "hackathons",
+    "Updated judging communications",
+    ["channelId"],
+  ),
+  "judging.comms.threads_provisioned": policy(
+    "hackathons",
+    "Provisioned judging room threads",
+    ["failedRoomCount", "provisionedCount"],
+  ),
+  "judging.announcement.published": policy(
+    "hackathons",
+    "Published judging announcement",
+    ["includeGuests", "isUrgent", "scope"],
+  ),
+  "judging.announcement.cleared": policy(
+    "hackathons",
+    "Cleared judging announcement",
+    ["scope"],
+  ),
+  "judging.room_qr.sent": policy("hackathons", "Sent judging room QR", [
+    "discordDelivery",
+  ]),
   "judging.room_link.generated": policy(
     "hackathons",
     "Generated judging room QR",

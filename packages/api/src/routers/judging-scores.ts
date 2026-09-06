@@ -64,6 +64,7 @@ import {
   evaluationMean,
   resolveResponseVisibility,
 } from "../utils/judging/scoring";
+import { resolveCurrentJudgeDisplayNames } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
 
 const workspaceInputSchema = judgingEvaluationSaveSchema.pick({
@@ -524,9 +525,11 @@ export const judgingScoresRouter = {
         }),
         db
           .select({
+            displayName: Judge.displayName,
             id: ProjectEvaluation.id,
-            judgeDisplayName: Judge.displayName,
             judgeId: ProjectEvaluation.judgeId,
+            kind: Judge.kind,
+            userId: Judge.userId,
           })
           .from(ProjectEvaluation)
           .innerJoin(Judge, eq(Judge.id, ProjectEvaluation.judgeId))
@@ -538,9 +541,13 @@ export const judgingScoresRouter = {
             ),
           ),
       ]);
+      const currentEvaluations =
+        await resolveCurrentJudgeDisplayNames(evaluations);
       const hasOwnEvaluation =
         scope.judgeId !== null &&
-        evaluations.some((evaluation) => evaluation.judgeId === scope.judgeId);
+        currentEvaluations.some(
+          (evaluation) => evaluation.judgeId === scope.judgeId,
+        );
       const canRead = canReadScopedResult({
         displayAllResultsToMembers: config?.displayAllResultsToMembers ?? false,
         hasOwnEvaluation,
@@ -558,7 +565,9 @@ export const judgingScoresRouter = {
         };
       }
 
-      const evaluationIds = evaluations.map((evaluation) => evaluation.id);
+      const evaluationIds = currentEvaluations.map(
+        (evaluation) => evaluation.id,
+      );
       const [ratings, feedback, feedbackCount] = await Promise.all([
         db
           .select({
@@ -609,13 +618,15 @@ export const judgingScoresRouter = {
         ratingValues.set(rating.evaluationId, values);
       }
       const judgeByEvaluation = new Map(
-        evaluations.map((evaluation) => [
+        currentEvaluations.map((evaluation) => [
           evaluation.id,
-          evaluation.judgeDisplayName,
+          evaluation.displayName,
         ]),
       );
       const aggregate = aggregateEvaluationMeans(
-        evaluations.map((evaluation) => ratingValues.get(evaluation.id) ?? []),
+        currentEvaluations.map(
+          (evaluation) => ratingValues.get(evaluation.id) ?? [],
+        ),
       );
       return {
         ...aggregate,
@@ -1394,14 +1405,16 @@ export const judgingScoresRouter = {
     .input(judgingHackathonIdSchema)
     .query(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
-      return db
+      const evaluations = await db
         .select({
           challengeLabel: ProjectChallenge.label,
+          displayName: Judge.displayName,
           id: ProjectEvaluation.id,
-          judgeDisplayName: Judge.displayName,
+          kind: Judge.kind,
           projectTitle: Project.title,
           revision: ProjectEvaluation.revision,
           updatedAt: ProjectEvaluation.updatedAt,
+          userId: Judge.userId,
         })
         .from(ProjectEvaluation)
         .innerJoin(Project, eq(Project.id, ProjectEvaluation.projectId))
@@ -1413,6 +1426,12 @@ export const judgingScoresRouter = {
         .where(eq(ProjectEvaluation.hackathonId, input.hackathonId))
         .orderBy(desc(ProjectEvaluation.updatedAt))
         .limit(500);
+      return (await resolveCurrentJudgeDisplayNames(evaluations)).map(
+        ({ displayName, kind: _kind, userId: _userId, ...evaluation }) => ({
+          ...evaluation,
+          judgeDisplayName: displayName,
+        }),
+      );
     }),
 
   getEvaluationRevisions: permProcedure
@@ -1422,10 +1441,12 @@ export const judgingScoresRouter = {
       const [evaluation] = await db
         .select({
           challengeLabel: ProjectChallenge.label,
+          displayName: Judge.displayName,
           hackathonId: ProjectEvaluation.hackathonId,
           id: ProjectEvaluation.id,
-          judgeDisplayName: Judge.displayName,
+          kind: Judge.kind,
           projectTitle: Project.title,
+          userId: Judge.userId,
         })
         .from(ProjectEvaluation)
         .innerJoin(Project, eq(Project.id, ProjectEvaluation.projectId))
@@ -1437,6 +1458,10 @@ export const judgingScoresRouter = {
         .where(eq(ProjectEvaluation.id, input.evaluationId))
         .limit(1);
       if (!evaluation) throw new TRPCError({ code: "NOT_FOUND" });
+      const [currentEvaluation] = await resolveCurrentJudgeDisplayNames([
+        evaluation,
+      ]);
+      if (!currentEvaluation) throw new TRPCError({ code: "NOT_FOUND" });
       const [revisions, rubric] = await Promise.all([
         db
           .select({
@@ -1454,6 +1479,19 @@ export const judgingScoresRouter = {
           .from(JudgingRubricItem)
           .where(eq(JudgingRubricItem.hackathonId, evaluation.hackathonId)),
       ]);
-      return { evaluation, revisions, rubric };
+      const {
+        displayName,
+        kind: _kind,
+        userId: _userId,
+        ...evaluationDetails
+      } = currentEvaluation;
+      return {
+        evaluation: {
+          ...evaluationDetails,
+          judgeDisplayName: displayName,
+        },
+        revisions,
+        rubric,
+      };
     }),
 } satisfies TRPCRouterRecord;

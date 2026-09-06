@@ -182,4 +182,20 @@ describe("AuthenticatedShell", () => {
     expect(html).toContain('aria-label="Blade home"');
     expect(html).toContain('href="/"');
   });
+
+  it("uses a resolved member name when a judging shell provides one", () => {
+    const html = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        children: createElement("main", null, "Judging workspace"),
+        displayName: "Dylan Vidal",
+        session: {
+          ...session,
+          user: { ...session.user, name: "dvidal1205" },
+        },
+      }),
+    );
+
+    expect(html).toContain("Dylan Vidal");
+    expect(html).not.toContain("dvidal1205");
+  });
 });
