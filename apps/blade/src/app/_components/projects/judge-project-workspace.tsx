@@ -28,6 +28,7 @@ import { api } from "~/trpc/react";
 import { EvaluationDialog } from "../judging/evaluation-dialog";
 import { JudgeDeliberation } from "../judging/judge-deliberation";
 import { JudgeSubmissions } from "../judging/judge-submissions";
+import { JudgingAnnouncements } from "../judging/judging-announcements";
 import { ProjectScoreDialog } from "../judging/project-score-dialog";
 import { ProjectDirectory } from "./project-directory";
 
@@ -99,14 +100,18 @@ function GuestSessionControl() {
 
 function MemberRoomSelector({
   context,
+  hackathonId,
 }: {
   context: Extract<JudgingContext, { kind: "member" }>;
+  hackathonId?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const utils = api.useUtils();
   const joinRoom = api.judging.joinRoom.useMutation();
   const leaveRoom = api.judging.leaveRoom.useMutation();
+  const announcementInput = { hackathonId };
 
   async function selectRoom(roomId: string) {
     try {
@@ -114,6 +119,10 @@ function MemberRoomSelector({
         if (context.activeRoomId) {
           await leaveRoom.mutateAsync({ roomId: context.activeRoomId });
         }
+        utils.judging.listAnnouncements.setData(announcementInput, []);
+        await utils.judging.listAnnouncements
+          .invalidate(announcementInput)
+          .catch(() => undefined);
         const next = new URLSearchParams(searchParams.toString());
         next.delete("challenge");
         next.delete("page");
@@ -124,10 +133,20 @@ function MemberRoomSelector({
         return;
       }
       const room = await joinRoom.mutateAsync({ roomId });
+      utils.judging.listAnnouncements.setData(announcementInput, []);
+      await utils.judging.listAnnouncements
+        .invalidate(announcementInput)
+        .catch(() => undefined);
       const next = new URLSearchParams(searchParams.toString());
       next.set("challenge", room.challengeId);
       next.delete("page");
-      toast.success("Judging room selected.");
+      if (room.discordDelivery === "failed") {
+        toast.error(
+          "Room selected, but Discord could not open the room thread for you.",
+        );
+      } else {
+        toast.success("Judging room selected.");
+      }
       router.replace(`${pathname}?${next.toString()}`);
       router.refresh();
     } catch (error) {
@@ -195,6 +214,7 @@ export function JudgeProjectWorkspace({
   const [scoreProject, setScoreProject] = useState<JudgeProject | null>(null);
   const context = judgingContext ?? {
     activeRoomId: null,
+    announcements: [],
     displayName: "",
     hackathon: null,
     isOfficer,
@@ -210,6 +230,8 @@ export function JudgeProjectWorkspace({
   );
   const heartbeatRoomId =
     context.kind === "guest" ? context.roomId : activeRoom?.id;
+  const announcementHackathonId =
+    context.kind === "member" ? context.hackathon?.id : undefined;
 
   function selectHackathon(hackathonId: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -245,11 +267,18 @@ export function JudgeProjectWorkspace({
 
   return (
     <main className={adminPageLayoutClassName} aria-busy={pending}>
+      <JudgingAnnouncements
+        hackathonId={announcementHackathonId}
+        initialAnnouncements={context.announcements}
+      />
       <AdminPageHeader
         actions={
           <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto">
             {memberContext?.rooms.length ? (
-              <MemberRoomSelector context={memberContext} />
+              <MemberRoomSelector
+                context={memberContext}
+                hackathonId={announcementHackathonId}
+              />
             ) : null}
             {isOfficer && hackathons.length ? (
               <label className="w-full min-w-0 sm:w-72">

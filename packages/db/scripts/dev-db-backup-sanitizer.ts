@@ -126,6 +126,7 @@ export const TABLES_TO_DROP = [
   "knight_hacks_hackathon_judging_configuration",
   "knight_hacks_guest_judge_session",
   "knight_hacks_judge",
+  "knight_hacks_judging_announcement",
   "knight_hacks_judging_room_access_link",
   "knight_hacks_judging_room_presence",
   "knight_hacks_judging_room",

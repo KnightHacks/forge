@@ -35,10 +35,10 @@ describe("guest judge name gate", () => {
       "Please introduce yourself. Your name will be used for judging deliberation and identity verification. Your responses will NOT be shared.",
     );
 
-    await user.type(screen.getByLabelText("Name"), "A");
+    await user.type(screen.getByLabelText("Full Name"), "A");
     expect(submit).toBeDisabled();
-    await user.clear(screen.getByLabelText("Name"));
-    await user.type(screen.getByLabelText("Name"), "Casey Sponsor");
+    await user.clear(screen.getByLabelText("Full Name"));
+    await user.type(screen.getByLabelText("Full Name"), "Casey Sponsor");
     expect(submit).toBeEnabled();
     await user.click(submit);
     expect(completeGuest).toHaveBeenCalledWith({

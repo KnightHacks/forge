@@ -35,12 +35,14 @@ export function AuthenticatedShell({
   activeNavigation = "dashboard",
   adminNavigation,
   children,
+  displayName,
   session,
   sectionLabel,
 }: {
   activeNavigation?: NavigationItem;
   adminNavigation?: AdminNavigationAccess;
   children: ReactNode;
+  displayName?: string;
   session: Session;
   sectionLabel?: string;
 }) {
@@ -112,7 +114,7 @@ export function AuthenticatedShell({
               <div className="hidden min-w-0 sm:block">
                 <p className="truncate text-sm font-medium">{currentSection}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {session.user.name}
+                  {displayName ?? session.user.name}
                 </p>
               </div>
             </div>
