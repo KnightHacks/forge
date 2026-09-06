@@ -54,6 +54,13 @@ Status: Callback parity regression tests implemented and passing
 - **TC-020:** Discord role assignment accepts a fixed Discord role ID, rejects
   disallowed roles at save and delivery, and grants the allowed role to the
   mapped respondent Discord ID.
+- **TC-021:** A disabled callback with complete current mappings exposes Enable
+  and reuses those mappings through the configure path. Legacy mappings cannot
+  be enabled until an admin edits and resaves them.
+- **TC-022:** A question type explicitly declared compatible by callback
+  metadata can map to a constrained schema such as graduation year. Types not
+  declared compatible are rejected, and submitted values still undergo schema
+  validation before execution.
 
 ## Member submission and response administration
 

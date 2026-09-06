@@ -78,6 +78,7 @@ function renderBuilder(
   recruiting = false,
   available = true,
   invalidMappings = false,
+  active = true,
 ) {
   return render(
     <AdminFormBuilder
@@ -139,7 +140,7 @@ function renderBuilder(
         recruiting
           ? [
               {
-                active: true,
+                active,
                 callbackSlug: "recruiting.notify",
                 id: "callback-1",
                 mappings: invalidMappings
@@ -274,6 +275,37 @@ describe("admin form builder dialogs", () => {
     expect(
       screen.getByRole("option", { name: "Question: Your name" }),
     ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("re-enables a disabled callback with its saved mappings", async () => {
+    const user = userEvent.setup();
+    renderBuilder(true, true, false, false);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Enable" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(callbackMocks.configure).toHaveBeenCalledWith({
+      callbackSlug: "recruiting.notify",
+      formId: "form-1",
+      mappings: [
+        {
+          inputKey: "name",
+          source: { kind: "respondent", value: "respondent_name" },
+        },
+        {
+          inputKey: "team",
+          source: { kind: "fixed", value: "Outreach" },
+        },
+      ],
+    });
+    expect(callbackMocks.success).toHaveBeenCalledWith(
+      "Callback enabled for future responses.",
+    );
+    expect(callbackMocks.disable).not.toHaveBeenCalled();
   });
 
   it("requires legacy callback mappings to be reviewed before saving", async () => {

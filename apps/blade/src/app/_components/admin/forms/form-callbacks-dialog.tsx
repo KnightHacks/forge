@@ -59,6 +59,7 @@ export function FormCallbacksDialog({
   onAddCallback,
   onClose,
   onDisableCallback,
+  onEnableCallback,
   onOpenChange,
   open,
   questions,
@@ -74,6 +75,7 @@ export function FormCallbacksDialog({
   onAddCallback: () => Promise<void>;
   onClose: () => void;
   onDisableCallback: (callbackSlug: string) => Promise<void>;
+  onEnableCallback: (callbackDraft: FormCallbackDraft) => Promise<void>;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   questions: FormQuestion[];
@@ -227,6 +229,21 @@ export function FormCallbacksDialog({
                       }
                     >
                       Disable
+                    </Button>
+                  )}
+                  {!callback.active && !saved.invalidSavedMappings && (
+                    <Button
+                      className="min-h-11"
+                      size="sm"
+                      disabled={
+                        pending ||
+                        !catalog?.available ||
+                        !editable ||
+                        !isCallbackDraftComplete(saved)
+                      }
+                      onClick={() => void onEnableCallback(saved)}
+                    >
+                      Enable
                     </Button>
                   )}
                 </div>
