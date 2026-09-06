@@ -59,7 +59,7 @@ None blocking.
 - [x] Add global and room announcement controls to Command Center.
 - [x] Add server-rendered announcement banners and urgent dialogs.
 - [x] Extend automated tests and visual evidence for announcements.
-- [ ] Address and resolve CodeRabbit review threads until approved.
+- [x] Address and resolve CodeRabbit review threads until approved.
 
 ## Validation and commands
 
