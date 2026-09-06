@@ -90,6 +90,7 @@ import {
   deliverHackathonRoleGrants,
   loadHackathonRoleGrantHealth,
 } from "../utils/hackathon-events/roles";
+import { requireHackerRead } from "../utils/hacker/access";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
@@ -2265,11 +2266,11 @@ export const hackathonEventRouter = {
       };
     }),
 
-  /** Existing hacker-management detail panel; still officer-only. */
+  /** Attendance read embedded in the permission-gated hacker detail panel. */
   listHackerEventAttendance: permProcedure
     .input(hackerAttendanceInput)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx);
       const attendee = await db.query.HackerAttendee.findFirst({
         columns: { id: true },
         where: and(

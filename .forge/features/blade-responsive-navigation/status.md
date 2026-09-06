@@ -5,7 +5,7 @@ Current phase: Complete
 ## Decisions
 
 - Scope: Blade navigation/loading and feature notes only. Other websites and shared source are unchanged.
-- Branch: `blade/responsive-navigation`, following the repository's app/slug convention. Pulled `origin/main` initially at `ec5e26ec`, then updated to `bd97fccb` when PR #533 landed. Final fetch confirmed the branch is current.
+- Branch: `blade/responsive-navigation`, following the repository's app/slug convention. Pulled `origin/main` initially at `ec5e26ec`, then updated to `bd97fccb` when PR #533 landed. Incorporated `20878e0c` (PR #539) during the navigation review follow-up.
 - Resolved import conflicts in form builder and responses dashboard while preserving upstream callback delivery and action feedback.
 - Removed the 80 ms link delay and the never-reset exit flag. React transitions now own navigation feedback and optimistic destination rollback.
 - Reused page skeletons and added a root fallback for layout waits and uncovered routes. Tabs and form section choices update immediately.
@@ -30,7 +30,7 @@ Current phase: Complete
 
 - Reproduced the delayed hackathon/event values with three failing regression tests before the fix. Verified immediate values, cancellation/history restoration, and that scans wait for the committed station.
 - Reproduced the settings arrow remaining at its hover position while navigation was held. The browser regression now verifies its pending translation and loading completion.
-- 26 focused tests passed across four files; all eight headed navigation browser tests passed. Inspected the settings pending screenshot, kept outside the repository.
+- After incorporating PR #539, 32 focused tests passed across five files, including admin access; all eight headed navigation browser tests passed again. Inspected the settings pending screenshot, kept outside the repository.
 - Root format, lint, typecheck, React analysis, and the Blade production build passed. Lint reports existing repository warnings. Browser checks used an isolated local database containing synthetic fixtures.
 
 ## Remaining scope and links

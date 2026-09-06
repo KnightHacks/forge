@@ -18,14 +18,26 @@ the readiness signal that slice computed finally means something.
 
 ## Users / actors
 
-- **Officers** — the only actors here. They read the roster, change statuses,
-  blacklist, and un-blacklist.
+- **Hacker readers** — users granted Read Hackers can browse, search, filter,
+  and open applications, including their event attendance. They cannot edit.
+- **Hacker editors** — users granted Edit Hackers can also correct applications,
+  adjust points, change statuses singly or in bulk, and delete applications.
+- **Officers** — retain full access, including blacklist information and controls.
 - **Applicants** — never see this screen. They experience it only as the mail a
   transition sends. They are the reason the guards exist.
 
 Not actors in this slice: applicants applying (the hack sites own that, and the
 SDK carrying it is two slices out), and anyone checking in (moved to the event
 slice).
+
+### Delegated access (approved 2026-09-06)
+
+Read Hackers and Edit Hackers must work without officer access. Editors also
+have read access. The Hackers navigation and direct links use the same policy.
+Readers see application details and filters without selection or write controls.
+Blacklist information, filtering, and changes remain officer-only. Editors cannot
+delete a blacklisted application to clear that restriction; they must ask an
+officer. Configuration and event check-in permissions remain separate.
 
 ## User-visible interface
 
