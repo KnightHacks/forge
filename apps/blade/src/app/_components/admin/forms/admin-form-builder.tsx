@@ -251,17 +251,21 @@ export function AdminFormBuilder({
     }
   }
 
-  async function addCallback() {
+  async function saveFormCallback(draft = callbackDraft, enabling = false) {
     if (!initial) return;
     setCallbackError(null);
     try {
       await configureCallback.mutateAsync({
-        callbackSlug: callbackDraft.slug,
+        callbackSlug: draft.slug,
         formId: initial.id,
-        mappings: callbackInputMappings(callbackDraft),
+        mappings: callbackInputMappings(draft),
       });
       setOpenDialog("none");
-      toast.success("Callback saved for future responses.");
+      toast.success(
+        enabling
+          ? "Callback enabled for future responses."
+          : "Callback saved for future responses.",
+      );
       refreshCallbacks(() => router.refresh());
     } catch (cause) {
       setCallbackError(
@@ -484,9 +488,10 @@ export function AdminFormBuilder({
             disableCallback.isPending || callbacksRefreshing
           }
           error={callbackError}
-          onAddCallback={addCallback}
+          onAddCallback={saveFormCallback}
           onClose={() => setOpenDialog("none")}
           onDisableCallback={disableFormCallback}
+          onEnableCallback={(draft) => saveFormCallback(draft, true)}
           onOpenChange={(open) => setDialogOpen("callbacks", open)}
           open={openDialog === "callbacks"}
           questions={questions}

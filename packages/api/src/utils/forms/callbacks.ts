@@ -355,6 +355,9 @@ export function assertCallbackMappingsMatchSchema(input: {
           message: `${defaultInputLabel(mapping.inputKey)} does not allow ${question.type} questions.`,
         });
       }
+      // Explicit question metadata is the registration's compatibility
+      // contract. The submitted answer is still parsed by the callback schema.
+      if (metadata?.questionTypes) continue;
       representative = representativeQuestionValue(question);
     }
 

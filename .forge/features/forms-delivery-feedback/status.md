@@ -26,6 +26,11 @@ Current phase: Callback parity refinement verified and published for review
   role, and team color. Discord role assignment uses a fixed Discord role ID.
 - Auth user ID and Discord user ID are separate sources. The latter is the
   Discord snowflake used for Discord actions.
+- A disabled callback with current, complete mappings can be enabled directly.
+  Legacy mappings must still be edited and resaved before activation.
+- Declared callback `questionTypes` are the procedure owner's compatibility
+  contract. The callback schema still validates the submitted answer before
+  execution, instead of rejecting a mapping with an arbitrary sample value.
 
 ## Ordered work
 
@@ -49,6 +54,8 @@ Current phase: Callback parity refinement verified and published for review
 - [x] Add regression coverage, rerun all gates, and capture new screenshots.
 - [x] Push the rebased branch and update the pull request with the behavior
       summary and attached screenshots.
+- [x] Restore explicit callback re-enabling and accept graduation-year question
+      mappings declared compatible by the recruiting procedure.
 - [ ] Authorized maintainer validates one delivery after deploying matching
       Blade/Cron revisions. Do not replay historical responses automatically.
 
@@ -109,6 +116,14 @@ Current phase: Callback parity refinement verified and published for review
 - After rebasing, the API forms suite passed 73 tests in 11 files, the Blade
   forms suite passed 132 tests in 20 files, the Discord configuration suite
   passed 10 tests, and root typecheck passed all 33 tasks.
+- The follow-up callback regressions pass: API forms 75 tests in 12 files and
+  Blade forms 135 tests in 20 files. Focused tests cover enabling with saved
+  mappings, constrained graduation-year inputs, and rejected undeclared
+  question types. Root typecheck passes all 33 tasks after refreshing unchanged
+  local package declarations; targeted lint has zero errors, and changed React
+  analysis reports zero failures. Root format passes all 24 tasks. Root lint
+  still reproduces unrelated unresolved-type errors in the archived 2020/2021
+  apps and the 2026 app when Turbo invokes the local Node 24 runtime.
 - The authenticated admin mapping page was captured in headed Chrome at desktop
   and mobile widths with zero console errors and zero horizontal overflow. Its
   synthetic database fixture was removed after capture.
