@@ -67,6 +67,7 @@ import {
   validateJudgingDiscordChannel,
 } from "../utils/judging/discord-comms";
 import { resolveJudgeAccess } from "../utils/judging/principal";
+import { resolveMemberDisplayNamesByUserId } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
 import { judgingScoresRouter } from "./judging-scores";
 
@@ -78,7 +79,10 @@ const RECENT_PRESENCE_WINDOW_MS = 15 * 60 * 1000;
 const ACTIVE_ROOM_NAME_CONSTRAINT =
   "knight_hacks_judging_room_active_name_unique";
 
-function actorDisplayName(user: { name?: string | null }) {
+async function actorDisplayName(user: { id: string; name?: string | null }) {
+  const memberNames = await resolveMemberDisplayNamesByUserId([user.id]);
+  const memberName = memberNames.get(user.id)?.trim();
+  if (memberName?.length) return memberName;
   const name = user.name?.trim();
   return name?.length ? name : "An officer";
 }
@@ -1154,7 +1158,7 @@ export const judgingRouter = createTRPCRouter({
       });
       const discordDelivery = result.revoked
         ? await deliverJudgingRoomNotice(input.roomId, {
-            actorName: actorDisplayName(ctx.session.user),
+            actorName: await actorDisplayName(ctx.session.user),
             guestNames: result.guestNames,
             kind: "room_link_revoked",
           })
@@ -1274,7 +1278,7 @@ export const judgingRouter = createTRPCRouter({
         };
       });
       const discordDelivery = await deliverJudgingRoomNotice(result.roomId, {
-        actorName: actorDisplayName(ctx.session.user),
+        actorName: await actorDisplayName(ctx.session.user),
         guestName: result.guestName,
         kind: "guest_revoked",
       });

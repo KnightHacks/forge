@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildJudgingRoomMessage,
+  judgingDiscordNonce,
   judgingRoomThreadName,
 } from "../../utils/judging/discord-comms";
 
@@ -9,6 +10,12 @@ const memberOne = "111111111111111111";
 const memberTwo = "222222222222222222";
 
 describe("judging Discord messages", () => {
+  it("uses a Discord-safe nonce", () => {
+    const nonce = judgingDiscordNonce();
+    expect(nonce).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(nonce.length).toBeLessThanOrEqual(25);
+  });
+
   it("mentions only the member who newly selected the room", () => {
     const message = buildJudgingRoomMessage({
       notice: {

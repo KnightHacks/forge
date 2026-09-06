@@ -13,6 +13,7 @@ import {
   JudgingRoomAccessLink,
 } from "@forge/db/schemas/knight-hacks";
 
+import { resolveMemberDisplayNamesByUserId } from "../member/display-name";
 import { loadPermissionsForUser } from "../permissions-db";
 
 export interface MemberJudgePrincipal {
@@ -53,8 +54,12 @@ export async function resolveJudgeAccess(input: {
   if (input.session?.user) {
     const permissions = await loadPermissionsForUser(input.session.user.id);
     if (permissions.IS_JUDGE === true || permissions.IS_OFFICER === true) {
+      const memberNames = await resolveMemberDisplayNamesByUserId([
+        input.session.user.id,
+      ]);
       return {
-        displayName: input.session.user.name,
+        displayName:
+          memberNames.get(input.session.user.id) ?? input.session.user.name,
         discordUserId: input.session.user.discordUserId,
         isOfficer: permissions.IS_OFFICER === true,
         kind: "member",

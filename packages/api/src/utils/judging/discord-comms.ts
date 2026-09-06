@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type { APIChannel, APIMessage } from "discord-api-types/v10";
 import { ChannelType, Routes } from "discord-api-types/v10";
 
@@ -17,6 +17,10 @@ import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 const THREAD_NAME_LIMIT = 100;
 const MESSAGE_LIMIT = 2_000;
 const DISCORD_SNOWFLAKE = /^\d{17,20}$/;
+
+export function judgingDiscordNonce() {
+  return randomBytes(16).toString("base64url");
+}
 
 export type JudgingDiscordDeliveryStatus =
   | "delivered"
@@ -179,7 +183,7 @@ export const liveJudgingDiscordGateway: JudgingDiscordGateway = {
         allowed_mentions: starter.allowedMentions,
         content: starter.content,
         enforce_nonce: true,
-        nonce: randomUUID(),
+        nonce: judgingDiscordNonce(),
       },
     })) as APIMessage;
     const thread = (await discord.api.post(
@@ -229,7 +233,7 @@ export const liveJudgingDiscordGateway: JudgingDiscordGateway = {
         allowed_mentions: message.allowedMentions,
         content: message.content,
         enforce_nonce: true,
-        nonce: randomUUID(),
+        nonce: judgingDiscordNonce(),
       },
       ...(message.file && {
         files: [{ data: message.file.data, name: message.file.name }],
