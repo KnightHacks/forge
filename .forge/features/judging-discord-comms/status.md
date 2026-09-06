@@ -20,6 +20,8 @@ Current phase: Review and delivery
 - 2026-09-05: Database security and presence actions commit independently of
   Discord delivery.
 - 2026-09-05: Screenshots belong in PR discussion only.
+- 2026-09-05: Discord copy uses the linked member profile's full name. The
+  Discord account label remains a fallback for members without a profile.
 
 ## Open questions
 
@@ -35,14 +37,15 @@ None blocking.
 - [x] Add Command Center channel and room-thread controls.
 - [x] Add automated tests and run required checks.
 - [x] Run desktop and mobile visual QA against KH VIII data.
-- [ ] Test delivery in the development guild bot-testing channel.
+- [x] Test delivery in the development guild bot-testing channel.
 - [x] Create and assign the GitHub issue.
-- [ ] Commit, push, open the PR, and attach screenshots outside the repo.
+- [x] Commit, push, open the PR, and attach screenshots outside the repo.
 - [ ] Address and resolve CodeRabbit review threads until approved.
 
 ## Validation and commands
 
-- `git fetch origin main`: passed. Worktree starts at `ec5e26ec`.
+- `git fetch origin main` and `git rebase origin/main`: passed. The branch is
+  based on `bd97fccb` after PR #533 merged.
 - `pnpm forge:feature judging-discord-comms "Judging Discord Comms"`: passed
   after linking the existing dependency directory.
 - `pnpm db:generate`: passed; created additive migration `0048_little_tarot`.
@@ -58,12 +61,17 @@ None blocking.
 - `pnpm --filter=@forge/blade build`: passed; 58 static pages generated.
 - Desktop Command Center, QR dialog, authenticated room assignment, live
   roster, and 390px guest-dialog visual checks: passed.
-- Live Discord delivery: blocked locally because the configured Kairox token
-  is not a member of the development guild. Human browser access to
-  `#bot-testing` is confirmed; no guild membership or token was changed.
+- Live Discord delivery through T.K in Dev@KnightHacks `#bot-testing`: passed.
+  The check covered thread provisioning, member arrival, guest arrival,
+  current-QR delivery, rotation, member mentions, and guest revocation.
+- Live testing caught Discord's 25-character nonce limit. QR and thread
+  messages now use a 22-character base64url nonce, backed by a regression test.
+- Live copy check: passed. Member arrivals and organizer actions show the
+  linked member profile name, such as `Dylan Vidal`, instead of a Discord
+  username.
 
 ## Links
 
-- PRs: pending
+- PRs: https://github.com/KnightHacks/forge/pull/535
 - Issues: https://github.com/KnightHacks/forge/issues/534
-- Discord/thread context: pending live development-guild check
+- Discord/thread context: Dev@KnightHacks `#bot-testing`, Sponsor Suite A
