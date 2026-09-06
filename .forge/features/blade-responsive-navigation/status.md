@@ -31,4 +31,4 @@ No open implementation tasks. No deployment or real-service mutations were teste
 
 - Issue: [#536 — Make Blade navigation respond immediately](https://github.com/KnightHacks/forge/issues/536).
 - Review media: [screenshots and recordings](evidence/README.md).
-- PR: publishing from `blade/responsive-navigation` under `DGoel1602`.
+- PR: [#537 — Add immediate loading feedback across Blade navigation](https://github.com/KnightHacks/forge/pull/537), authored by and assigned to `DGoel1602`.
