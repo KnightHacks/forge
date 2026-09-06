@@ -30,5 +30,5 @@ Current phase: Complete
 No open implementation tasks. No deployment or real-service mutations were tested.
 
 - Issue: [#536 — Make Blade navigation respond immediately](https://github.com/KnightHacks/forge/issues/536).
-- Review media: [screenshots and recordings](evidence/README.md).
+- Review media: [screenshots and recordings](evidence/README.md), hosted as GitHub PR attachments. Removed the six media binaries from the branch; the PR retains embedded screenshots and video players.
 - PR: [#537 — Add immediate loading feedback across Blade navigation](https://github.com/KnightHacks/forge/pull/537), authored by and assigned to `DGoel1602`.
