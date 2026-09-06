@@ -667,7 +667,31 @@ export const judgingRouter = createTRPCRouter({
     .input(judgingHackathonIdSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
-      return provisionJudgingRoomThreads(input.hackathonId);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const [hackathon] = await db
+        .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+        .from(Hackathon)
+        .where(eq(Hackathon.id, input.hackathonId))
+        .limit(1);
+      if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+      const result = await provisionJudgingRoomThreads(input.hackathonId);
+      await createAdminAuditEvent({
+        actionKey: "judging.comms.threads_provisioned",
+        actor,
+        metadata: {
+          failedRoomCount: result.failedRooms.length,
+          provisionedCount: result.provisionedCount,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: hackathon.id,
+            targetLabel: hackathon.displayName,
+            targetType: "hackathon",
+          },
+        ],
+      });
+      return result;
     }),
 
   listAdmin: permProcedure
@@ -1110,6 +1134,7 @@ export const judgingRouter = createTRPCRouter({
     .input(judgingRoomIdSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
       const room = await lockRoomAggregate(db, input.roomId, { active: true });
       const link = await db.query.JudgingRoomAccessLink.findFirst({
         columns: { id: true },
@@ -1130,6 +1155,13 @@ export const judgingRouter = createTRPCRouter({
         qrCodeUrl: qr.qrCodeUrl,
         reason: "sent",
         url: qr.url,
+      });
+      await writeJudgingAudit(db, {
+        actionKey: "judging.room_qr.sent",
+        actor,
+        metadata: { discordDelivery },
+        roomId: room.id,
+        roomName: room.name,
       });
       return { ...qr, discordDelivery };
     }),
