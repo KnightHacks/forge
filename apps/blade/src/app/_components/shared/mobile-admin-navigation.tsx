@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink, Menu } from "lucide-react";
 
@@ -20,6 +19,10 @@ import type {
   NavigationDestination,
 } from "./admin-navigation";
 import {
+  RouteTransitionLink as Link,
+  useNavigationPathname,
+} from "~/app/_components/shared/route-transition-link";
+import {
   getAdminNavigationGroups,
   isAdminNavigationActive,
   memberNavigationItems,
@@ -31,11 +34,12 @@ export function MobileAdminNavigation({
   access: AdminNavigationAccess;
 }) {
   const pathname = usePathname();
+  const navigationPathname = useNavigationPathname();
   const [open, setOpen] = useState(false);
 
   const renderItem = (item: NavigationDestination) => {
     const Icon = item.icon;
-    const active = isAdminNavigationActive(item.id, pathname);
+    const active = isAdminNavigationActive(item.id, navigationPathname);
     const contents = (
       <>
         <span
@@ -78,7 +82,9 @@ export function MobileAdminNavigation({
       <Link
         key={item.id}
         href={item.href}
-        aria-current={active ? "page" : undefined}
+        aria-current={
+          isAdminNavigationActive(item.id, pathname) ? "page" : undefined
+        }
         className={className}
         onClick={() => setOpen(false)}
       >

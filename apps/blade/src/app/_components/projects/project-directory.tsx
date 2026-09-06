@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@forge/ui/tooltip";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { ProjectDetailDialog } from "./project-detail-dialog";
 
 type Project = RouterOutputs["projects"]["listJudge"]["projects"][number];

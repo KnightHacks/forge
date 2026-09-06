@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -21,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 type Workspace = RouterOutputs["judging"]["getWorkspace"];

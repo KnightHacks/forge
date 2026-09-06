@@ -2,7 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Database, Pencil, RotateCcw, Trash2 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -27,6 +27,7 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { DropAllProjectsDialog } from "./drop-all-projects-dialog";
 import { ProjectDirectory } from "./project-directory";

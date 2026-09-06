@@ -397,7 +397,7 @@ function GuildProfileCard({ member }: { member: CurrentMember }) {
               aria-label="Edit profile"
             >
               <Settings
-                className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[exiting=true]:-rotate-90 motion-reduce:transition-none"
+                className="h-5 w-5 transition-transform duration-200 group-hover:rotate-45 group-data-[pending=true]:-rotate-90 motion-reduce:transition-none"
                 aria-hidden="true"
               />
             </RouteTransitionLink>

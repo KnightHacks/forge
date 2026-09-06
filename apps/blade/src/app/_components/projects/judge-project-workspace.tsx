@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   DoorOpen,
   FolderKanban,
@@ -23,6 +23,7 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { EvaluationDialog } from "../judging/evaluation-dialog";
 import { JudgeDeliberation } from "../judging/judge-deliberation";

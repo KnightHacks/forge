@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import { Button } from "@forge/ui/button";
 
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { settingsNavigationItem } from "./admin-navigation";
 
 /** Settings is an account utility, not an admin destination, so it lives in the header for every signed-in user. */

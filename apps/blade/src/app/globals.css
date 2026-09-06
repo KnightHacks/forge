@@ -141,8 +141,23 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   /* Loading copy remains visible, so the status does not rely on rotation. */
+  .animate-pulse,
+  .blade-navigation-progress,
   .animate-spin,
   .moving-border {
     animation: none !important;
+  }
+}
+
+.blade-navigation-progress {
+  animation: blade-navigation-progress 1.2s ease-in-out infinite;
+}
+
+@keyframes blade-navigation-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
   }
 }

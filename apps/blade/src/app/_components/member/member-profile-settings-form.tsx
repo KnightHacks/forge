@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -96,7 +95,10 @@ import {
   memberSettingsFieldsBySection,
   memberSettingsSectionOrder,
 } from "~/app/_components/member/member-settings-sections";
-import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import {
+  RouteTransitionLink,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 import { memberProfileFormDefaults } from "~/lib/member-profile-form-values";
@@ -638,7 +640,7 @@ function MemberProfileSettingsEditor({
                 beforeNavigate={handleDashboardNavigation}
               >
                 <ArrowLeft
-                  className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5 group-data-[exiting=true]:-translate-x-2 motion-reduce:transition-none"
+                  className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5 group-data-[pending=true]:-translate-x-2 motion-reduce:transition-none"
                   aria-hidden="true"
                 />
                 Dashboard

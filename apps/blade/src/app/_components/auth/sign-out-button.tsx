@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { signOutFromBlade } from "./sign-out-flow";
 
 export function SignOutButton() {

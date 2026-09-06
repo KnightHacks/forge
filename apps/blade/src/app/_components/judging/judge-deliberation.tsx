@@ -2,7 +2,6 @@
 
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   closestCenter,
   DndContext,
@@ -42,6 +41,7 @@ import { Input } from "@forge/ui/input";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import { toast } from "@forge/ui/toast";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 type Workspace = RouterOutputs["judging"]["getWorkspace"];

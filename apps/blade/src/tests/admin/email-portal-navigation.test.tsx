@@ -19,11 +19,6 @@ vi.mock("~/app/_components/auth/sign-out-button", () => ({
   SignOutButton: () => createElement("button", null, "Sign out"),
 }));
 
-vi.mock("~/app/_components/shared/route-transition-link", () => ({
-  RouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
-    createElement("div", null, children),
-}));
-
 const session = {
   user: {
     id: "00000000-0000-4000-8000-000000000001",

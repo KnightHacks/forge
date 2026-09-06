@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
@@ -20,6 +19,7 @@ import {
   dashboardPanelClass,
   MemberDashboard,
 } from "~/app/_components/member/member-dashboard";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { api } from "~/trpc/react";
 

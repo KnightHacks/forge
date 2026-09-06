@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 
 import { cn } from "@forge/ui";
 
@@ -11,7 +10,10 @@ import { AccountSettingsLink } from "~/app/_components/shared/account-settings-l
 import { getVisibleAdminNavigation } from "~/app/_components/shared/admin-navigation";
 import { DesktopAdminNavigation } from "~/app/_components/shared/desktop-admin-navigation";
 import { MobileAdminNavigation } from "~/app/_components/shared/mobile-admin-navigation";
-import { RouteTransitionSurface } from "~/app/_components/shared/route-transition-link";
+import {
+  RouteTransitionLink as Link,
+  RouteTransitionSurface,
+} from "~/app/_components/shared/route-transition-link";
 
 type NavigationItem =
   | "alumni"

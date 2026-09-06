@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Archive,
   ArrowLeft,
@@ -42,6 +40,10 @@ import {
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import {
   clubWallClock,

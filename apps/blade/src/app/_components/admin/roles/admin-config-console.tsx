@@ -1,8 +1,6 @@
 "use client";
 
 import { startTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -12,6 +10,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { ClubClassificationSection } from "./club-classification-section";
 import { DiscordConfigSection } from "./discord-config-section";

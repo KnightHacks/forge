@@ -3,7 +3,7 @@
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Archive,
   ArrowDown,
@@ -41,6 +41,7 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 type ControlData = RouterOutputs["judging"]["listAdmin"];

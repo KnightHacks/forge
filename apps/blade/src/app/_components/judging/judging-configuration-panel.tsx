@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -14,6 +13,7 @@ import { Switch } from "@forge/ui/switch";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 type ControlData = RouterOutputs["judging"]["listAdmin"];

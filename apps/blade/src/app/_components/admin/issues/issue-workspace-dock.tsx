@@ -1,7 +1,6 @@
 "use client";
 
 import type { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Archive,
   ArrowLeft,
@@ -25,6 +24,7 @@ import type {
   IssueWorkspaceView,
 } from "./issue-workspace";
 import type { IssueSearchInput } from "./params";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { issueSearchHref, issueViewHref } from "./issue-view-href";
 import { parseIssueSearchParams } from "./params";
 

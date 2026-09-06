@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import {
   Archive,
   ArrowLeft,
@@ -14,6 +13,7 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Skeleton } from "@forge/ui/skeleton";
 
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { formatClubLongDate } from "~/lib/dates";
 import { FormBanner } from "./form-banner";
 import { FormResponseValue } from "./form-response-value";

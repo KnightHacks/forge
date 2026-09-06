@@ -2,8 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -80,6 +78,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import {

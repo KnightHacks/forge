@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -9,6 +8,7 @@ import { Card, CardContent } from "@forge/ui/card";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import { DiscordSignInLink } from "~/app/_components/auth/discord-sign-in-link";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { GUILD_URL } from "~/lib/guild-urls";
 
 const CLUB_URL = "https://club.knighthacks.org";

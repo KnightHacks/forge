@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useState, useTransition } from "react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   KeyboardSensor,
   PointerSensor,
@@ -36,6 +35,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { FormAvailabilityDialog } from "./form-availability-dialog";

@@ -1,0 +1,42 @@
+# Blade responsive navigation status
+
+Current phase: Complete
+
+## Decisions
+
+- Scope: Blade navigation/loading and feature notes only. Other websites and shared source are unchanged.
+- Branch: `blade/responsive-navigation`, following the repository's app/slug convention. Pulled `origin/main` initially at `ec5e26ec`, then updated to `bd97fccb` when PR #533 landed. Incorporated `20878e0c` (PR #539) during the navigation review follow-up.
+- Resolved import conflicts in form builder and responses dashboard while preserving upstream callback delivery and action feedback.
+- Removed the 80 ms link delay and the never-reset exit flag. React transitions now own navigation feedback and optimistic destination rollback.
+- Reused page skeletons and added a root fallback for layout waits and uncovered routes. Tabs and form section choices update immediately.
+- Search/filter forms navigate without a full document reload; applying or clearing issue filters closes their dialog immediately.
+- Addressed CodeRabbit's two navigation findings: the settings back arrow uses `data-pending`, and both hackathon check-in selectors show optimistic values. Check-in actions wait for the selected destination to commit; changing hackathons clears the event and disables the previous hackathon's event options while pending.
+
+## Validation
+
+- Blade suite: 799 tests passed across 142 files.
+- After the final search/filter adjustment: 220 targeted tests passed across 34 files.
+- Seven headed Playwright tests passed together in a clean run: delayed navigation/repeat/back, 320px drawer/reduced motion, immediate section selection, interrupted navigation, search without reload, unsaved-settings cancellation/discard, and issue-filter dialog completion.
+- Inspected desktop and 320px navigation screenshots and root skeleton screenshots. No document overflow. The temporary skeleton preview route was removed after inspection.
+- `pnpm format`: passed.
+- `pnpm lint`: passed with existing repository warnings.
+- `pnpm typecheck`: passed.
+- `pnpm analyze:react:changed`: passed.
+- `pnpm --filter=@forge/blade build`: passed with temporary local-only values for `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`. The default invocation compiled but stopped at environment validation because those values are missing locally. No `.env` or deployment settings changed.
+- Refreshed generated validator declarations and Next route types after stale generated files initially blocked checks. No shared source fixes were needed.
+- `git diff --check`: passed. Test database fixtures were cleaned up and the temporary E2E server stopped.
+
+### CodeRabbit navigation follow-up
+
+- Reproduced the delayed hackathon/event values with three failing regression tests before the fix. Verified immediate values, cancellation/history restoration, and that scans wait for the committed station.
+- Reproduced the settings arrow remaining at its hover position while navigation was held. The browser regression now verifies its pending translation and loading completion.
+- After incorporating PR #539, 32 focused tests passed across five files, including admin access; all eight headed navigation browser tests passed again. Inspected the settings pending screenshot, kept outside the repository.
+- Root format, lint, typecheck, React analysis, and the Blade production build passed. Lint reports existing repository warnings. Browser checks used an isolated local database containing synthetic fixtures.
+
+## Remaining scope and links
+
+No open implementation tasks. No deployment or real-service mutations were tested.
+
+- Issue: [#536 — Make Blade navigation respond immediately](https://github.com/KnightHacks/forge/issues/536).
+- Review media: [screenshots and recordings](evidence/README.md), hosted as GitHub PR attachments. Removed the six media binaries from the branch; the PR retains embedded screenshots and video players.
+- PR: [#537 — Add immediate loading feedback across Blade navigation](https://github.com/KnightHacks/forge/pull/537), authored by and assigned to `DGoel1602`.

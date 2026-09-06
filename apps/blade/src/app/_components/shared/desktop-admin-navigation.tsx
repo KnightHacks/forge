@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ExternalLink, PanelLeft } from "lucide-react";
 
@@ -18,6 +17,10 @@ import type {
   NavigationDestination,
 } from "./admin-navigation";
 import {
+  RouteTransitionLink as Link,
+  useNavigationPathname,
+} from "~/app/_components/shared/route-transition-link";
+import {
   getAdminNavigationGroups,
   isAdminNavigationActive,
   memberNavigationItems,
@@ -29,6 +32,7 @@ export function DesktopAdminNavigation({
   access: AdminNavigationAccess;
 }) {
   const pathname = usePathname();
+  const navigationPathname = useNavigationPathname();
   const [expanded, setExpanded] = useState(false);
   const [lastPathname, setLastPathname] = useState(pathname);
 
@@ -40,7 +44,7 @@ export function DesktopAdminNavigation({
 
   const renderItem = (item: NavigationDestination) => {
     const Icon = item.icon;
-    const active = isAdminNavigationActive(item.id, pathname);
+    const active = isAdminNavigationActive(item.id, navigationPathname);
     const className = cn(
       "flex h-11 items-center gap-3 rounded-md border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       active
@@ -79,7 +83,9 @@ export function DesktopAdminNavigation({
     ) : (
       <Link
         href={item.href}
-        aria-current={active ? "page" : undefined}
+        aria-current={
+          isAdminNavigationActive(item.id, pathname) ? "page" : undefined
+        }
         className={className}
         onClick={() => setExpanded(false)}
       >
