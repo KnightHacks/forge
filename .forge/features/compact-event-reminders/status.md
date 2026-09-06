@@ -1,6 +1,6 @@
 # Compact Event Reminders Status
 
-Current phase: Ready for PR; not deployed
+Current phase: PR open; CI and review pending; not deployed
 
 ## Decisions
 
@@ -10,6 +10,7 @@ Current phase: Ready for PR; not deployed
   details, and the existing purple accent. No shared-package changes.
 - Branch: `cron/compact-event-reminders`, based on main at `566b4ee5`.
 - [Issue #542](https://github.com/KnightHacks/forge/issues/542).
+- [PR #543](https://github.com/KnightHacks/forge/pull/543).
 
 ## Progress
 
@@ -18,7 +19,7 @@ Current phase: Ready for PR; not deployed
 - [x] Verify payload limits, links, long labels, and existing date windows.
 - [x] Send a development preview and inspect the actual Discord client.
 - [x] Prepare actual Discord screenshots for the PR; remove superseded mock images.
-- [ ] Commit, push, and open the PR.
+- [x] Commit, push, and open the PR with actual Discord screenshots.
 
 ## Validation
 
