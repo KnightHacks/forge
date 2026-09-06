@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { LayoutTemplate, Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -27,6 +26,7 @@ import type {
   IssueWorkspaceData,
   IssueWorkspaceItem,
 } from "./types";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { localNewYorkDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
 import { EventFormDialog } from "../events/event-form-dialog";

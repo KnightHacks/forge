@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Archive,
   FileText,
@@ -17,6 +16,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  RouteSearchForm,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { AdminFormsSectionSelect } from "./admin-forms-section-select";
 
@@ -191,9 +194,8 @@ export function AdminFormsDashboard({
         className="overflow-hidden rounded-lg border border-white/10 bg-card/95 shadow-2xl shadow-black/25"
       >
         <div className="border-b border-border/70 p-3 sm:p-4">
-          <form
+          <RouteSearchForm
             className="flex min-w-0 flex-col gap-2 sm:flex-row"
-            method="get"
             role="search"
           >
             {input.view === "archive" && (
@@ -221,7 +223,7 @@ export function AdminFormsDashboard({
             >
               Search
             </Button>
-          </form>
+          </RouteSearchForm>
         </div>
 
         {!access.canRead && !access.isOfficer ? (

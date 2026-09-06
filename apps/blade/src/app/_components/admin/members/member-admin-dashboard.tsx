@@ -7,7 +7,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -50,6 +49,7 @@ import {
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatUtcDate } from "~/lib/dates";
 import { api } from "~/trpc/react";

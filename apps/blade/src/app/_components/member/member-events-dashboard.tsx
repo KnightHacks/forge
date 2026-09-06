@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   ArrowLeft,
   CalendarDays,
@@ -17,6 +16,7 @@ import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-event-feedback";
 import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { formatEventDateTime } from "~/lib/dates";
 
 export type MemberEventItem =

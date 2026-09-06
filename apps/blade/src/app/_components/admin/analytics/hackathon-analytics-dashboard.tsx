@@ -2,8 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -73,6 +71,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import {
   AnalyticsMetricCard as MetricCard,

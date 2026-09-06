@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
@@ -10,6 +9,7 @@ import type {
   AlumniBulletinWorkspacePost,
   BulletinSaveHandler,
 } from "./alumni-bulletin-workspace";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { AlumniBulletinWorkspace } from "./alumni-bulletin-workspace";
 

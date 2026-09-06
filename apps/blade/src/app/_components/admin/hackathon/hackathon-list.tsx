@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CalendarRange, Plus, Swords, TriangleAlert } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -20,6 +18,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { HackathonFormDialog } from "./hackathon-form-dialog";
 import { formatHackathonDate } from "./hackathon-formatting";

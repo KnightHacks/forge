@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ExternalLink,
   GraduationCap,
@@ -59,6 +58,7 @@ import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-das
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
 import { MemberResumeUpload } from "~/app/_components/member/member-resume-upload";
 import { RevealOnView } from "~/app/_components/shared/motion";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { GUILD_URL } from "~/lib/guild-urls";
 import { api } from "~/trpc/react";
 

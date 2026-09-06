@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Archive,
@@ -32,6 +31,7 @@ import { toast } from "@forge/ui/toast";
 import { issueTemplateCreateSchema } from "@forge/validators";
 
 import type { IssueTeamChoice, IssueTemplateChoice } from "./types";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 interface TemplateNode {

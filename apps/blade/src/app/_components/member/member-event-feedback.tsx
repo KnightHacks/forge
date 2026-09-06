@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { toast } from "@forge/ui/toast";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { EventFeedbackCta } from "./event-feedback-cta";
 import { EventFeedbackDialog } from "./event-feedback-dialog";

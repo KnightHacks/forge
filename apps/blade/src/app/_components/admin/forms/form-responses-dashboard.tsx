@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  startTransition,
+  useMemo,
+  useOptimistic,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   BarChart3,
@@ -60,6 +66,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
@@ -916,10 +926,11 @@ export function FormResponsesDashboard({
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const requestedView = searchParams.get("view");
-  const activeView =
+  const resolvedView =
     requestedView === "responses" || requestedView === "delivery"
       ? requestedView
       : "analytics";
+  const [activeView, setActiveView] = useOptimistic<string>(resolvedView);
   const exportQuery = api.forms.exportResponses.useQuery(
     { formId },
     { enabled: false },
@@ -996,11 +1007,14 @@ export function FormResponsesDashboard({
         </p>
       ) : (
         <Tabs
-          onValueChange={(view) =>
-            router.replace(workspaceHref(pathname, searchParams, view), {
-              scroll: false,
-            })
-          }
+          onValueChange={(view) => {
+            startTransition(() => {
+              setActiveView(view);
+              router.replace(workspaceHref(pathname, searchParams, view), {
+                scroll: false,
+              });
+            });
+          }}
           value={activeView}
         >
           <TabsList className="grid h-auto min-h-11 w-full grid-cols-3 p-1 sm:w-auto">

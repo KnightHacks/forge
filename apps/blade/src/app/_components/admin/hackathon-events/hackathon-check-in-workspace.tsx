@@ -2,7 +2,7 @@
 
 import type { SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import {
   AlertTriangle,
@@ -39,6 +39,7 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";

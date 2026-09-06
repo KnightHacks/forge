@@ -2,7 +2,6 @@
 
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { BadgeCheck } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
@@ -18,6 +17,7 @@ import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
 import { guestJudgeNameSchema } from "@forge/validators";
 
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 export function GuestNameGate() {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ClipboardList } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
 
 import type { ProjectDirectoryInput } from "../projects/project-directory";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { AdminProjectWorkspace } from "../projects/admin-project-workspace";
 import {
   AdminPageHeader,
@@ -45,11 +46,16 @@ export function ProjectCommandCenter({
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
+  const [activeTab, setActiveTab] = useOptimistic<string>(selectedTab);
+
   function selectTab(tab: string) {
     const next = new URLSearchParams(searchParams.toString());
     if (tab === "setup") next.delete("tab");
     else next.set("tab", tab);
-    startTransition(() => router.replace(`${pathname}?${next.toString()}`));
+    startTransition(() => {
+      setActiveTab(tab);
+      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    });
   }
 
   function selectHackathon(hackathonId: string) {
@@ -87,7 +93,7 @@ export function ProjectCommandCenter({
         icon={ClipboardList}
         title="Project command center"
       />
-      <Tabs onValueChange={selectTab} value={selectedTab}>
+      <Tabs onValueChange={selectTab} value={activeTab}>
         <TabsList className="grid h-11 w-full grid-cols-4 sm:w-fit sm:min-w-[34rem]">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>

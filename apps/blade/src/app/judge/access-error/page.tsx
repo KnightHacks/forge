@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { QrCode } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
+
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 
 export default function JudgingAccessErrorPage() {
   return (
