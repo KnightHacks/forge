@@ -5,9 +5,10 @@ Phase: **implemented** — whole bundle approved 2026-08-03 and built. Awaiting
 
 ## Delegated hacker permissions — 2026-09-06
 
-Phase: validated; publishing the PR from `codex/blade-hacker-permissions`.
+Phase: PR open; awaiting CI and review. Branch: `codex/blade-hacker-permissions`.
 
 - Issue: [#538](https://github.com/KnightHacks/forge/issues/538).
+- PR: [#539](https://github.com/KnightHacks/forge/pull/539).
 - Rebased onto `main` before publishing to exclude the unrelated navigation
   changes in PR #537. The permission fix applied without conflicts; validation
   passed again on this standalone branch (194 API tests, 34 Blade tests, and
