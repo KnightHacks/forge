@@ -80,8 +80,10 @@ None blocking.
 - `pnpm --filter=@forge/api test -- judging`: passed, 22 tests.
 - `pnpm --filter=@forge/db test -- migration`: passed, 65 tests.
 - `pnpm --filter=@forge/db test -- judging-schema`: passed, 10 tests.
+- `pnpm --filter=@forge/db test`: passed, 147 tests, including development
+  backup policy classification for announcements.
 - `pnpm --filter=@forge/blade test -- authenticated-shell
-  project-judge-privacy guest-name-gate judging-announcements`: passed, 27
+project-judge-privacy guest-name-gate judging-announcements`: passed, 27
   tests.
 - `pnpm analyze:react:changed`: passed, two components and zero failures.
 - `pnpm --filter=@forge/blade build`: passed; 58 static pages generated.
