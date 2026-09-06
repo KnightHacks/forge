@@ -77,6 +77,7 @@ describe("callback delivery feedback", () => {
               available: true,
               requiredPermission: "EDIT_FORMS",
               description: "Notify recruiting",
+              inputs: [],
             },
           ]}
           formId="form-1"

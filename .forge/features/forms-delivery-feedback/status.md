@@ -1,6 +1,6 @@
 # Forms Delivery and Action Feedback Status
 
-Current phase: Implementation and automated local validation complete; manual zoom review and production delivery verification remain
+Current phase: Callback parity refinement verified and published for review
 
 ## Decisions
 
@@ -10,24 +10,30 @@ Current phase: Implementation and automated local validation complete; manual zo
 - New screenshot evidence confirms Discord rejects the nonce; it replaces
   missing configuration as the explanation for these attempted executions.
 - Proposed core PR owns Blade forms UX and the shared API nonce repair. Cron
-  is a verification/deployment consumer. Historical team routing remains an
-  explicit scope decision, not an assumed completed requirement.
-- Work branch: `codex/forms-delivery-feedback`, rebased on 2026-09-05 from
-  `1c1457e0` onto current `origin/main` at `f4436df1` before publication.
+  is a verification/deployment consumer.
+- Work branch: `codex/forms-delivery-feedback`, rebased on 2026-09-05 onto
+  current `origin/main` at `ec5e26ec` before publication.
 - Chris approved starting the proposed implementation order with mobile support.
 - Core nonce repair, callback editor, submission receipt, deletion feedback and
   retry outcome feedback are implemented. Automated tests used only synthetic
   local/disposable PostgreSQL data and cleaned up their fixtures. No production
   access, real callback invocation, Discord send, branch push, or PR creation
   occurred. The tracking issue was created in Chris's fork.
+- Dylan confirmed the legacy generic mapper is the intended model: registered
+  tRPC procedures expose inputs, and admins map each input from one question,
+  one respondent field, or a fixed value. Question sources cannot be reused.
+- Dylan confirmed structured recruiting parity and Discord role assignment are
+  part of this PR. Recruiting uses the six legacy fields, configured director
+  role, and team color. Discord role assignment uses a fixed Discord role ID.
+- Auth user ID and Discord user ID are separate sources. The latter is the
+  Discord snowflake used for Discord actions.
 
 ## Ordered work
 
 - [x] Inspect current code and user evidence; correct earlier hypotheses.
 - [x] Preserve screenshots and create investigation/spec/SRD/test-case bundle.
 - [x] Measure the real helper's nonce length and run focused existing tests.
-- [x] Approve core PR; historical director mentions and summary expansion remain
-      a separate open follow-up.
+- [x] Approve core PR and callback parity refinement.
 - [x] Reproduce provider-contract failure and overflow/interaction bugs with
       tests that exercise the actual implementation boundary.
 - [x] Repair nonce, callback editor, receipt transition, and deletion feedback.
@@ -36,9 +42,14 @@ Current phase: Implementation and automated local validation complete; manual zo
 - [x] Run root checks and changed React analysis; preserve exact blockers below.
 - [x] Restore local dependencies and PostgreSQL; pass the full automated gate
       and targeted authenticated forms E2E.
-- [ ] Check literal 200% browser zoom and complete formal review.
+- [x] Complete final diff and responsive browser review.
 - [x] Prepare local PR text with before/after evidence and deployment checklist.
       External publication requires a subsequent request.
+- [x] Replace hard-coded callbacks with metadata-discovered tRPC procedures.
+- [x] Restore the per-input mapping UI and structured recruiting/role actions.
+- [x] Add regression coverage, rerun all gates, and capture new screenshots.
+- [x] Push the rebased branch and update the pull request with the behavior
+      summary and attached screenshots.
 - [ ] Authorized maintainer validates one delivery after deploying matching
       Blade/Cron revisions. Do not replay historical responses automatically.
 
@@ -58,9 +69,9 @@ Current phase: Implementation and automated local validation complete; manual zo
 ## Implementation verification
 
 - Nonce regression failed at 36 > 25 before the fix. The full API forms suite
-  now passes 67 tests in 11 files, including 7 actual enqueue/dispatcher tests
+  now passes 73 tests in 11 files, including actual enqueue/dispatcher tests
   using mocked database and Discord boundaries.
-- Blade forms suite: 131 tests passed in 20 files after rebasing onto current
+- Blade forms suite: 132 tests passed in 20 files after rebasing onto current
   `origin/main`. Covers pending submit,
   failure retention, each response mode, callback save/edit/permission states,
   deletion confirmation/failure, and accurate retry outcomes.
@@ -81,12 +92,14 @@ Current phase: Implementation and automated local validation complete; manual zo
 - Restored dependencies from the unchanged lockfile and refreshed stale
   generated validator/UI declarations. No dependency declarations or lockfile
   were changed.
-- React analyzer: 10 tracked changed TSX files, 8 components, zero failures.
+- React analyzer: 12 tracked changed TSX files, 8 components, zero failures.
 - `pnpm format`: passed, 24 tasks. `git diff --check`: passed.
 - Repository lint without stale ESLint caches: 31 tasks passed with warnings and
   zero errors. The normal cached run had replayed unresolved-type errors created
   before dependencies were restored.
-- `pnpm typecheck`: 33 tasks passed. `pnpm build`: 21 tasks passed.
+- `pnpm typecheck`: 33 tasks passed. The Blade production build and its 13
+  dependencies passed. A repository-wide build still reproduces unrelated
+  `_global-error` prerender failures in the archived 2023 and 2024 apps.
 - `pnpm test`: 29 tasks passed on the second full run. The first run completed
   all 136 database assertions but timed out dropping one disposable database;
   that file passed 10/10 in isolation before the successful full rerun.
@@ -94,18 +107,21 @@ Current phase: Implementation and automated local validation complete; manual zo
   toast/count. The targeted authenticated journey passed 1/1 in 26.5 seconds
   against localhost PostgreSQL. Earlier timeouts came from Playwright reusing a
   stale unresponsive Node 24 server on port 3100; a fresh Node 25 server passed.
-- After rebasing, the API forms suite passed 69 tests in 11 files, Cron passed
-  29 tests in 6 files, and root typecheck passed all 33 tasks.
-- The automated gate is green. Formal human/CodeRabbit review and literal 200%
-  browser zoom remain before merge readiness.
+- After rebasing, the API forms suite passed 73 tests in 11 files, the Blade
+  forms suite passed 132 tests in 20 files, the Discord configuration suite
+  passed 10 tests, and root typecheck passed all 33 tasks.
+- The authenticated admin mapping page was captured in headed Chrome at desktop
+  and mobile widths with zero console errors and zero horizontal overflow. Its
+  synthetic database fixture was removed after capture.
+- The feature-specific automated gate is green. Maintainer review and deployed
+  delivery verification remain before merge.
 
 ## Next owner actions
 
-1. Check literal 200% browser zoom (720x450 reflow was tested, but is not an
-   actual browser zoom setting) and review the final diff for scope.
-2. Complete review and request publication separately. After approved deployment,
-   an authorized maintainer verifies matching Blade/Cron revisions and retries
-   one retained NONCE_TYPE_TOO_LONG failure, without replaying all old responses.
+1. Review the final PR diff and attached desktop/mobile callback screenshots.
+2. After approved deployment, an authorized maintainer verifies matching
+   Blade/Cron revisions and retries one retained NONCE_TYPE_TOO_LONG failure,
+   without replaying all old responses.
 
 ## Links
 

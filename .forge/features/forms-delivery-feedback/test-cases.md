@@ -1,6 +1,6 @@
 # Forms Delivery and Action Feedback Test Cases
 
-Status: Core regression tests implemented; validation in progress
+Status: Callback parity regression tests implemented and passing
 
 ## API and provider boundary
 
@@ -30,14 +30,30 @@ Status: Core regression tests implemented; validation in progress
 - **TC-007:** Role assignment unavailable, recruiting available: no unavailable
   action is selected for configuration. If none are available, saving is
   disabled with an explanation. Keyboard selection remains usable.
-- **TC-008:** Configure recruiting from fixed note and from a compatible text
-  question. Visible labels explain both choices. Saved action label and source
-  summary match persisted mappings on reopen. No raw UUID is required for the
-  recruiting workflow. Long or optional answers exercise the existing note
-  length/non-empty contract; do not silently truncate or invent values.
+- **TC-008:** Configure every recruiting input independently from compatible
+  questions, respondent fields, or fixed values. Team can be fixed. Saved
+  labels and source summaries match persisted mappings on reopen.
 - **TC-009:** Successful configure/disable updates the visible state and
   announces completion. Failed operations display errors where the user is
   working. Callback saves must not erase unsaved question edits.
+- **TC-015:** Catalog discovery includes only tRPC procedures with valid form
+  callback metadata and returns their declared input labels, descriptions,
+  source restrictions, and placeholders. Duplicate paths cannot occur.
+- **TC-016:** Configuration rejects missing or unknown inputs, incompatible
+  sources, and reusing one question for two inputs. Fixed-only inputs reject
+  respondent and question sources on the server as well as in the UI.
+- **TC-017:** Enqueue resolves Member ID, respondent name, respondent email,
+  auth user ID, and Discord user ID from the response owner. Similar IDs remain
+  distinct and missing nullable profile data fails required inputs visibly.
+- **TC-018:** Dispatch resolves the saved registered tRPC path, validates its
+  input schema again, and invokes it once. Removed metadata, changed schemas,
+  and unknown paths record Failed without reporting success.
+- **TC-019:** Recruiting produces the structured applicant embed, configured
+  director mention, role-derived team color, restricted allowed mentions, and
+  stable execution nonce. An unknown team fails without sending.
+- **TC-020:** Discord role assignment accepts a fixed Discord role ID, rejects
+  disallowed roles at save and delivery, and grants the allowed role to the
+  mapped respondent Discord ID.
 
 ## Member submission and response administration
 

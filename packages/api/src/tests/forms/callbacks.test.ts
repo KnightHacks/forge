@@ -4,6 +4,7 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import type { PermissionMap } from "../../utils/permissions";
+import { createTRPCRouter, publicProcedure } from "../../trpc";
 import {
   assertAllowedFormCallbackDiscordRole,
   formCallbackDeliveryNonce,
@@ -14,6 +15,7 @@ import {
   assertCallbackMappingsMatchSchema,
   createFormCallbackDispatcher,
   createFormCallbackRegistry,
+  createFormCallbackRegistryFromRouter,
   defineFormCallback,
   listFormCallbackCatalog,
   mapFormCallbackInput,
@@ -101,7 +103,7 @@ describe("form callback catalog and mapping", () => {
     ]);
   });
 
-  it("[TC-030, TC-NEG-014] maps question IDs, fixed, and system values without ambiguous label matching", () => {
+  it("[TC-030, TC-NEG-014] maps question IDs, fixed, and respondent values without ambiguous label matching", () => {
     expect(
       mapFormCallbackInput(
         [
@@ -115,17 +117,17 @@ describe("form callback catalog and mapping", () => {
           },
           {
             inputKey: "memberId",
-            source: { kind: "system", value: "member_id" },
+            source: { kind: "respondent", value: "member_id" },
           },
         ],
         {
           answers: { [QUESTION_ID]: "Workshop application" },
-          system: {
-            event_id: null,
+          respondent: {
+            auth_user_id: "40000000-0000-4000-8000-000000000201",
+            discord_user_id: "123456789012345678",
             member_id: "20000000-0000-4000-8000-000000000201",
-            response_id: "30000000-0000-4000-8000-000000000201",
-            submitted_at: new Date("2026-07-15T18:00:00.000Z"),
-            user_id: "40000000-0000-4000-8000-000000000201",
+            respondent_email: "synthetic@example.invalid",
+            respondent_name: "Test Member",
           },
         },
       ),
@@ -134,6 +136,28 @@ describe("form callback catalog and mapping", () => {
       reason: "Workshop application",
       roleId: SAFE_ROLE,
     });
+  });
+
+  it("[TC-017] keeps every respondent identity source distinct", () => {
+    const respondent = {
+      auth_user_id: "40000000-0000-4000-8000-000000000201",
+      discord_user_id: "123456789012345678",
+      member_id: "20000000-0000-4000-8000-000000000201",
+      respondent_email: "synthetic@example.invalid",
+      respondent_name: "Test Member",
+    };
+    expect(
+      mapFormCallbackInput(
+        Object.keys(respondent).map((value) => ({
+          inputKey: value,
+          source: {
+            kind: "respondent" as const,
+            value: value as keyof typeof respondent,
+          },
+        })),
+        { answers: {}, respondent },
+      ),
+    ).toEqual(respondent);
   });
 
   it("[TC-034] requires callback metadata permission and always enforces the safe role allowlist", () => {
@@ -177,15 +201,84 @@ describe("form callback catalog and mapping", () => {
     );
   });
 
+  it("[TC-015] discovers only metadata-registered tRPC mutations and exposes input copy", () => {
+    const inputSchema = z.object({ message: z.string() });
+    const router = createTRPCRouter({
+      ignored: publicProcedure.query(() => "ignored"),
+      notify: publicProcedure
+        .meta({
+          formCallback: {
+            description: "Send a test notification.",
+            inputSchema,
+            inputs: {
+              message: {
+                description: "Text included in the notification.",
+                label: "Message",
+                placeholder: "Hello",
+              },
+            },
+            label: "Notify",
+            requiredPermission: "EDIT_FORMS",
+            slug: "test.notify",
+          },
+        })
+        .input(inputSchema)
+        .mutation(({ input }) => input.message),
+    });
+
+    const registry = createFormCallbackRegistryFromRouter(router);
+    expect([...registry.keys()]).toEqual(["test.notify"]);
+    expect(
+      listFormCallbackCatalog(registry, permissionMap("EDIT_FORMS"))[0],
+    ).toMatchObject({
+      available: true,
+      inputs: [
+        {
+          description: "Text included in the notification.",
+          key: "message",
+          label: "Message",
+          placeholder: "Hello",
+        },
+      ],
+    });
+  });
+
+  it("[TC-016] rejects using one question for two procedure inputs", () => {
+    const twoFields = defineFormCallback({
+      description: "Two text fields",
+      inputSchema: z.object({ first: z.string(), second: z.string() }),
+      label: "Two fields",
+      requiredPermission: "EDIT_FORMS",
+      slug: "test.two-fields",
+    });
+
+    expect(() =>
+      assertCallbackMappingsMatchSchema({
+        definition: twoFields,
+        formDefinition: callbackFormDefinition,
+        mappings: [
+          {
+            inputKey: "first",
+            source: { kind: "question", questionId: QUESTION_ID },
+          },
+          {
+            inputKey: "second",
+            source: { kind: "question", questionId: QUESTION_ID },
+          },
+        ],
+      }),
+    ).toThrow(/each form question may supply only one/i);
+  });
+
   it("[TC-030] validates callback keys, required mappings, sources, and field types at configuration time", () => {
     expect(() =>
       assertCallbackMappingsMatchSchema({
-        callbackSchema: notifyRecruiting.inputSchema,
+        definition: notifyRecruiting,
         formDefinition: callbackFormDefinition,
         mappings: [
           {
             inputKey: "memberId",
-            source: { kind: "system", value: "member_id" },
+            source: { kind: "respondent", value: "member_id" },
           },
           {
             inputKey: "note",
@@ -197,12 +290,12 @@ describe("form callback catalog and mapping", () => {
 
     expect(() =>
       assertCallbackMappingsMatchSchema({
-        callbackSchema: notifyRecruiting.inputSchema,
+        definition: notifyRecruiting,
         formDefinition: callbackFormDefinition,
         mappings: [
           {
             inputKey: "memberId",
-            source: { kind: "system", value: "member_id" },
+            source: { kind: "respondent", value: "member_id" },
           },
         ],
       }),
@@ -210,7 +303,7 @@ describe("form callback catalog and mapping", () => {
 
     expect(() =>
       assertCallbackMappingsMatchSchema({
-        callbackSchema: notifyRecruiting.inputSchema,
+        definition: notifyRecruiting,
         formDefinition: callbackFormDefinition,
         mappings: [
           {
@@ -223,12 +316,12 @@ describe("form callback catalog and mapping", () => {
 
     expect(() =>
       assertCallbackMappingsMatchSchema({
-        callbackSchema: notifyRecruiting.inputSchema,
+        definition: notifyRecruiting,
         formDefinition: callbackFormDefinition,
         mappings: [
           {
             inputKey: "memberId",
-            source: { kind: "system", value: "event_id" },
+            source: { kind: "respondent", value: "discord_user_id" },
           },
           {
             inputKey: "note",
@@ -236,7 +329,7 @@ describe("form callback catalog and mapping", () => {
           },
         ],
       }),
-    ).toThrow(/do not provide an event ID/i);
+    ).toThrow(/incompatible.*memberId/i);
   });
 });
 

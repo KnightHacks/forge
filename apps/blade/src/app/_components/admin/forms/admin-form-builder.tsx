@@ -50,7 +50,10 @@ import {
 } from "./form-builder-formatting";
 import { FormBuilderHeaderActions } from "./form-builder-header-actions";
 import { FormBuilderQuestionsSection } from "./form-builder-questions-section";
-import { callbackInputMappings } from "./form-callback-mappings";
+import {
+  callbackInputMappings,
+  emptyCallbackDraft,
+} from "./form-callback-mappings";
 import { FormCallbacksDialog } from "./form-callbacks-dialog";
 import {
   buildFormDefinition,
@@ -109,11 +112,9 @@ export function AdminFormBuilder({
   const [message, setMessage] = useState<string | null>(null);
   const [callbackError, setCallbackError] = useState<string | null>(null);
   const [callbacksRefreshing, refreshCallbacks] = useTransition();
-  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>({
-    questionId: "",
-    slug: callbacks.find((callback) => callback.available)?.slug ?? "",
-    value: "",
-  });
+  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>(() =>
+    emptyCallbackDraft(callbacks.find((callback) => callback.available)),
+  );
   const [openDialog, setOpenDialog] = useState<BuilderDialog>("none");
   const [respondentRoleSearch, setRespondentRoleSearch] = useState("");
   const questionSensors = useSensors(

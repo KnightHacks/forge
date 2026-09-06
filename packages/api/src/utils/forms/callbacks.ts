@@ -1,3 +1,4 @@
+import type { AnyProcedure, AnyRouter } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -10,18 +11,55 @@ import { formDefinitionSchema } from "@forge/validators";
 
 import type { PermissionMap } from "../permissions";
 
-export interface FormCallbackDefinition<TSchema extends z.ZodType = z.ZodType> {
+export const callbackRespondentValues = [
+  "member_id",
+  "respondent_name",
+  "respondent_email",
+  "auth_user_id",
+  "discord_user_id",
+] as const;
+
+export type CallbackRespondentValue = (typeof callbackRespondentValues)[number];
+export type CallbackSourceKind = "fixed" | "question" | "respondent";
+
+export interface FormCallbackInputMetadata {
+  allowedSources?: readonly CallbackSourceKind[];
+  description?: string;
+  fixedInputType?: "email" | "number" | "text";
+  label?: string;
+  placeholder?: string;
+  questionTypes?: readonly FormQuestion["type"][];
+  respondentValues?: readonly CallbackRespondentValue[];
+}
+
+export interface FormCallbackRegistration<
+  TSchema extends z.ZodType = z.ZodType,
+> {
   description: string;
   inputSchema: TSchema;
+  inputs?: Readonly<Record<string, FormCallbackInputMetadata>>;
   label: string;
   requiredPermission: PERMISSIONS.PermissionKey;
   slug: string;
 }
 
+export interface ForgeTRPCMeta {
+  formCallback?: FormCallbackRegistration;
+}
+
+export interface FormCallbackDefinition<
+  TSchema extends z.ZodType = z.ZodType,
+> extends FormCallbackRegistration<TSchema> {
+  procedurePath: string;
+}
+
 export function defineFormCallback<TSchema extends z.ZodType>(
-  definition: FormCallbackDefinition<TSchema>,
-) {
-  return definition;
+  definition: FormCallbackRegistration<TSchema> & { procedurePath?: string },
+): FormCallbackDefinition<TSchema> {
+  return {
+    ...definition,
+    procedurePath: definition.procedurePath ?? definition.slug,
+  };
 }
 
 export type FormCallbackRegistry = ReadonlyMap<string, FormCallbackDefinition>;
@@ -34,47 +72,127 @@ export function createFormCallbackRegistry(
     if (registry.has(definition.slug)) {
       throw new Error(`Duplicate form callback metadata: ${definition.slug}`);
     }
+    if (!(definition.inputSchema instanceof z.ZodObject)) {
+      throw new Error(
+        `Form callback ${definition.slug} must accept an object.`,
+      );
+    }
+    const shape = definition.inputSchema.shape as Record<string, z.ZodType>;
+    for (const key of Object.keys(definition.inputs ?? {})) {
+      if (!(key in shape)) {
+        throw new Error(
+          `Form callback ${definition.slug} describes unknown input ${key}.`,
+        );
+      }
+    }
     registry.set(definition.slug, definition);
   }
   return registry;
+}
+
+export function createFormCallbackRegistryFromRouter(
+  router: AnyRouter,
+): FormCallbackRegistry {
+  const procedures = router._def.procedures as Record<string, AnyProcedure>;
+  const definitions = Object.entries(procedures).flatMap(
+    ([procedurePath, procedure]) => {
+      const registration = (procedure._def.meta as ForgeTRPCMeta | undefined)
+        ?.formCallback;
+      if (!registration) return [];
+      if (procedure._def.type !== "mutation") {
+        throw new Error(
+          `Form callback ${registration.slug} must be a mutation procedure.`,
+        );
+      }
+      return [{ ...registration, procedurePath }];
+    },
+  );
+  return createFormCallbackRegistry(definitions);
+}
+
+export async function getFormCallbackRegistry(): Promise<FormCallbackRegistry> {
+  const { formCallbackRouter } = await import("./procedures");
+  return createFormCallbackRegistryFromRouter(formCallbackRouter);
+}
+
+function defaultInputLabel(inputKey: string) {
+  return inputKey
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replaceAll("_", " ")
+    .replace(/^./, (first) => first.toUpperCase());
 }
 
 export function listFormCallbackCatalog(
   registry: FormCallbackRegistry,
   permissions: PermissionMap,
 ) {
-  return [...registry.values()].map((definition) => ({
-    available:
-      permissions.IS_OFFICER === true
-        ? true
-        : permissions[definition.requiredPermission] === true,
-    description: definition.description,
-    label: definition.label,
-    requiredPermission: definition.requiredPermission,
-    slug: definition.slug,
-  }));
+  return [...registry.values()].map((definition) => {
+    const shape = (definition.inputSchema as z.ZodObject).shape as Record<
+      string,
+      z.ZodType
+    >;
+    return {
+      available:
+        permissions.IS_OFFICER === true
+          ? true
+          : permissions[definition.requiredPermission] === true,
+      description: definition.description,
+      inputs: Object.keys(shape).map((key) => ({
+        allowedSources: definition.inputs?.[key]?.allowedSources ?? [
+          "question",
+          "respondent",
+          "fixed",
+        ],
+        description: definition.inputs?.[key]?.description,
+        fixedInputType: definition.inputs?.[key]?.fixedInputType ?? "text",
+        key,
+        label: definition.inputs?.[key]?.label ?? defaultInputLabel(key),
+        placeholder: definition.inputs?.[key]?.placeholder,
+        questionTypes: definition.inputs?.[key]?.questionTypes,
+        respondentValues: definition.inputs?.[key]?.respondentValues,
+      })),
+      label: definition.label,
+      requiredPermission: definition.requiredPermission,
+      slug: definition.slug,
+    };
+  });
 }
-
-type CallbackSystemValue =
-  | "event_id"
-  | "member_id"
-  | "response_id"
-  | "submitted_at"
-  | "user_id";
 
 export interface CallbackMapping {
   inputKey: string;
   source:
     | { kind: "fixed"; value: unknown }
     | { kind: "question"; questionId: string }
-    | { kind: "system"; value: CallbackSystemValue };
+    | { kind: "respondent"; value: CallbackRespondentValue };
+}
+
+function callbackQuestionValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(callbackQuestionValue);
+  if (typeof value !== "object" || value === null) return value;
+  if (
+    "kind" in value &&
+    value.kind === "option" &&
+    "label" in value &&
+    typeof value.label === "string"
+  ) {
+    return value.label;
+  }
+  if (
+    "kind" in value &&
+    value.kind === "other" &&
+    "text" in value &&
+    typeof value.text === "string"
+  ) {
+    return value.text;
+  }
+  return value;
 }
 
 export function mapFormCallbackInput(
   mappings: readonly CallbackMapping[],
   source: {
     answers: Record<string, unknown>;
-    system: Record<CallbackSystemValue, unknown>;
+    respondent: Record<CallbackRespondentValue, unknown>;
   },
 ) {
   const result: Record<string, unknown> = {};
@@ -94,9 +212,11 @@ export function mapFormCallbackInput(
           message: `Missing callback question: ${mapping.source.questionId}`,
         });
       }
-      result[mapping.inputKey] = source.answers[mapping.source.questionId];
+      result[mapping.inputKey] = callbackQuestionValue(
+        source.answers[mapping.source.questionId],
+      );
     } else {
-      result[mapping.inputKey] = source.system[mapping.source.value];
+      result[mapping.inputKey] = source.respondent[mapping.source.value];
     }
   }
   return result;
@@ -106,15 +226,18 @@ function representativeQuestionValue(question: FormQuestion): unknown {
   switch (question.type) {
     case "short_text":
     case "paragraph":
+      return "Example";
     case "email":
+      return "member@example.com";
     case "phone":
+      return "+14075550123";
     case "link":
-      return "00000000-0000-4000-8000-000000000000";
+      return "https://example.com";
     case "multiple_choice":
     case "dropdown":
-      return { kind: "option", label: "Example", value: "example" };
+      return "Example";
     case "checkboxes":
-      return [{ kind: "option", label: "Example", value: "example" }];
+      return ["Example"];
     case "file":
       return {
         attachmentId: "00000000-0000-4000-8000-000000000000",
@@ -132,20 +255,26 @@ function representativeQuestionValue(question: FormQuestion): unknown {
   }
 }
 
-function representativeSystemValue(
-  value: "event_id" | "member_id" | "response_id" | "submitted_at" | "user_id",
-) {
-  return value === "submitted_at"
-    ? "2026-01-01T00:00:00.000Z"
-    : "00000000-0000-4000-8000-000000000000";
+function representativeRespondentValue(value: CallbackRespondentValue) {
+  switch (value) {
+    case "member_id":
+    case "auth_user_id":
+      return "00000000-0000-4000-8000-000000000000";
+    case "discord_user_id":
+      return "123456789012345678";
+    case "respondent_email":
+      return "member@example.com";
+    case "respondent_name":
+      return "Example Member";
+  }
 }
 
 export function assertCallbackMappingsMatchSchema(input: {
-  callbackSchema: z.ZodType;
+  definition: FormCallbackDefinition;
   formDefinition: unknown;
   mappings: z.infer<typeof callbackConfigurationSchema>["mappings"];
 }) {
-  if (!(input.callbackSchema instanceof z.ZodObject)) {
+  if (!(input.definition.inputSchema instanceof z.ZodObject)) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Callback inputs must use an object schema.",
@@ -155,17 +284,18 @@ export function assertCallbackMappingsMatchSchema(input: {
   const questions = new Map(
     formDefinition.questions.map((question) => [question.id, question]),
   );
-  const shape: Record<string, z.ZodType> = input.callbackSchema.shape;
-  const seen = new Set<string>();
+  const shape: Record<string, z.ZodType> = input.definition.inputSchema.shape;
+  const seenInputs = new Set<string>();
+  const seenQuestions = new Set<string>();
 
   for (const mapping of input.mappings) {
-    if (seen.has(mapping.inputKey)) {
+    if (seenInputs.has(mapping.inputKey)) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: `Duplicate callback input mapping: ${mapping.inputKey}`,
       });
     }
-    seen.add(mapping.inputKey);
+    seenInputs.add(mapping.inputKey);
     const target = shape[mapping.inputKey];
     if (!target) {
       throw new TRPCError({
@@ -174,23 +304,55 @@ export function assertCallbackMappingsMatchSchema(input: {
       });
     }
 
+    const metadata = input.definition.inputs?.[mapping.inputKey];
+    const allowedSources = metadata?.allowedSources ?? [
+      "question",
+      "respondent",
+      "fixed",
+    ];
+    if (!allowedSources.includes(mapping.source.kind)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `${defaultInputLabel(mapping.inputKey)} does not allow ${mapping.source.kind} values.`,
+      });
+    }
+
     let representative: unknown;
     if (mapping.source.kind === "fixed") {
       representative = mapping.source.value;
-    } else if (mapping.source.kind === "system") {
-      if (mapping.source.value === "event_id") {
+    } else if (mapping.source.kind === "respondent") {
+      if (
+        metadata?.respondentValues &&
+        !metadata.respondentValues.includes(mapping.source.value)
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "General forms do not provide an event ID callback value.",
+          message: `${defaultInputLabel(mapping.inputKey)} does not allow that respondent value.`,
         });
       }
-      representative = representativeSystemValue(mapping.source.value);
+      representative = representativeRespondentValue(mapping.source.value);
     } else {
+      if (seenQuestions.has(mapping.source.questionId)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Each form question may supply only one callback input.",
+        });
+      }
+      seenQuestions.add(mapping.source.questionId);
       const question = questions.get(mapping.source.questionId);
       if (!question || question.retired) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Callback question is missing or retired: ${mapping.source.questionId}`,
+        });
+      }
+      if (
+        metadata?.questionTypes &&
+        !metadata.questionTypes.includes(question.type)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `${defaultInputLabel(mapping.inputKey)} does not allow ${question.type} questions.`,
         });
       }
       representative = representativeQuestionValue(question);
@@ -206,7 +368,8 @@ export function assertCallbackMappingsMatchSchema(input: {
 
   const missing = Object.entries(shape)
     .filter(
-      ([key, schema]) => !seen.has(key) && !schema.safeParse(undefined).success,
+      ([key, schema]) =>
+        !seenInputs.has(key) && !schema.safeParse(undefined).success,
     )
     .map(([key]) => key);
   if (missing.length > 0) {

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { FormDefinition } from "@forge/validators";
 
@@ -67,6 +67,13 @@ const definition: FormDefinition = {
   title: "Fixture form",
 };
 
+beforeAll(() => {
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
+  HTMLElement.prototype.setPointerCapture = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
 function renderBuilder(recruiting = false, available = true) {
   return render(
     <AdminFormBuilder
@@ -74,6 +81,21 @@ function renderBuilder(recruiting = false, available = true) {
         {
           available: !recruiting && available,
           description: "Assign a Discord role",
+          inputs: [
+            {
+              allowedSources: ["respondent"],
+              fixedInputType: "text",
+              key: "discordUserId",
+              label: "Discord User ID",
+              respondentValues: ["discord_user_id"],
+            },
+            {
+              allowedSources: ["fixed"],
+              fixedInputType: "text",
+              key: "roleId",
+              label: "Discord Role ID",
+            },
+          ],
           label: "Discord: assign role",
           requiredPermission: "discord.manage",
           slug: "discord.assign-role",
@@ -83,6 +105,25 @@ function renderBuilder(recruiting = false, available = true) {
               {
                 available: true,
                 description: "Notify recruiting",
+                inputs: [
+                  {
+                    allowedSources: [
+                      "question",
+                      "respondent",
+                      "fixed",
+                    ] as const,
+                    fixedInputType: "text" as const,
+                    key: "name",
+                    label: "Name",
+                    respondentValues: ["respondent_name"] as const,
+                  },
+                  {
+                    allowedSources: ["question", "fixed"] as const,
+                    fixedInputType: "text" as const,
+                    key: "team",
+                    label: "Team",
+                  },
+                ],
                 label: "Notify recruiting",
                 requiredPermission: "EDIT_FORMS",
                 slug: "recruiting.notify",
@@ -99,12 +140,15 @@ function renderBuilder(recruiting = false, available = true) {
                 id: "callback-1",
                 mappings: [
                   {
-                    inputKey: "memberId",
-                    source: { kind: "system", value: "member_id" },
+                    inputKey: "name",
+                    source: {
+                      kind: "respondent",
+                      value: "respondent_name",
+                    },
                   },
                   {
-                    inputKey: "note",
-                    source: { kind: "fixed", value: "Saved recruiting note" },
+                    inputKey: "team",
+                    source: { kind: "fixed", value: "Outreach" },
                   },
                 ],
               },
@@ -159,7 +203,7 @@ describe("admin form builder dialogs", () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        "You do not have permission to configure these actions.",
+        "You do not have permission to configure these procedures.",
       ),
     ).toBeInTheDocument();
     expect(callbackMocks.configure).not.toHaveBeenCalled();
@@ -169,16 +213,14 @@ describe("admin form builder dialogs", () => {
     const user = userEvent.setup();
     renderBuilder(true);
     await user.click(screen.getByRole("button", { name: /callbacks/i }));
-    expect(screen.getByRole("combobox", { name: "Action" })).toHaveTextContent(
-      "Notify recruiting",
+    expect(
+      screen.getByRole("combobox", { name: "Procedure" }),
+    ).toHaveTextContent("Notify recruiting");
+    expect(screen.getByText("Manual: Outreach")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Edit mappings" }));
+    expect(screen.getByRole("textbox", { name: "Team value" })).toHaveValue(
+      "Outreach",
     );
-    expect(
-      screen.getByText("Fixed note: Saved recruiting note"),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Edit settings" }));
-    expect(
-      screen.getByRole("textbox", { name: "Recruiting note" }),
-    ).toHaveValue("Saved recruiting note");
     await user.click(
       screen.getByRole("button", { name: "Save for future responses" }),
     );
@@ -190,12 +232,12 @@ describe("admin form builder dialogs", () => {
       formId: "form-1",
       mappings: [
         {
-          inputKey: "memberId",
-          source: { kind: "system", value: "member_id" },
+          inputKey: "name",
+          source: { kind: "respondent", value: "respondent_name" },
         },
         {
-          inputKey: "note",
-          source: { kind: "fixed", value: "Saved recruiting note" },
+          inputKey: "team",
+          source: { kind: "fixed", value: "Outreach" },
         },
       ],
     });
@@ -206,6 +248,23 @@ describe("admin form builder dialogs", () => {
     expect(screen.getByDisplayValue("Your name")).toBeInTheDocument();
   });
 
+  it("[TC-016] prevents one question from filling two procedure inputs", async () => {
+    const user = userEvent.setup();
+    renderBuilder(true);
+    await user.click(screen.getByRole("button", { name: /callbacks/i }));
+    await user.click(screen.getByRole("button", { name: "Edit mappings" }));
+
+    await user.click(screen.getByRole("combobox", { name: "Name source" }));
+    await user.click(
+      screen.getByRole("option", { name: "Question: Your name" }),
+    );
+    await user.click(screen.getByRole("combobox", { name: "Team source" }));
+
+    expect(
+      screen.getByRole("option", { name: "Question: Your name" }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("[TC-009] keeps callback failures in the dialog", async () => {
     callbackMocks.configure.mockRejectedValueOnce(
       new Error("Configuration rejected"),
@@ -214,7 +273,7 @@ describe("admin form builder dialogs", () => {
     const user = userEvent.setup();
     renderBuilder(true);
     await user.click(screen.getByRole("button", { name: /callbacks/i }));
-    await user.click(screen.getByRole("button", { name: "Edit settings" }));
+    await user.click(screen.getByRole("button", { name: "Edit mappings" }));
     await user.click(
       screen.getByRole("button", { name: "Save for future responses" }),
     );

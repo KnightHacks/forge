@@ -167,7 +167,7 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
     expect(kinds.indexOf("role")).toBe(4);
   });
 
-  it("marks exactly the ten inert keys with an empty consumer list", async () => {
+  it("marks exactly the four inert keys with an empty consumer list", async () => {
     mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
 
     const result = await createCaller().list();
@@ -175,13 +175,24 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
       .filter((row) => row.readBy.length === 0)
       .map((row) => row.key);
 
-    expect(inert).toHaveLength(10);
+    expect(inert).toHaveLength(4);
     expect(
       result.rows
         .filter((row) => row.readBy.length > 0)
         .map((row) => row.key)
         .sort(),
-    ).toEqual(["alumni_role", "guild", "log_channel", "recruiting_channel"]);
+    ).toEqual([
+      "alumni_role",
+      "design_director_role",
+      "development_director_role",
+      "guild",
+      "log_channel",
+      "outreach_director_role",
+      "projects_mentorship_director_role",
+      "recruiting_channel",
+      "sponsorship_director_role",
+      "workshops_director_role",
+    ]);
     // The description text is identical across every fixture row, so nothing
     // here could be distinguishing them by prose.
     expect(new Set(result.rows.map((row) => row.description)).size).toBe(1);

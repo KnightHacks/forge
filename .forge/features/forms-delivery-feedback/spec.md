@@ -1,6 +1,6 @@
 # Forms Delivery and Action Feedback Spec
 
-Status: Core scope approved; implementation and validation in progress
+Status: Callback parity refinement approved; implementation and validation in progress
 
 ## Purpose and users
 
@@ -18,10 +18,13 @@ to the repository.
 - Fix recruiting notification delivery rejected by Discord's nonce limit.
 - Keep the callback dialog and its actions within the viewport, including long
   question labels, mobile widths, and browser zoom.
-- Make recruiting configuration understandable: human-readable action names,
-  visible labels, explanation of the note source, and confirmation of saved
-  configuration. Unavailable actions remain discoverable but cannot be selected
-  for configuration.
+- Restore the generic tRPC callback mapper. Each explicitly registered
+  procedure exposes named inputs, and an administrator maps each input to one
+  form question, one respondent value, or a fixed value.
+- Restore the structured recruiting announcement with applicant fields, team
+  color, and the configured director mention.
+- Make Discord role assignment use the same mapper, with its role ID entered as
+  a fixed value.
 - Show a persistent submission receipt, including when multiple responses are
   allowed. Starting another response must be an explicit choice.
 - Confirm successful response deletion and show failures without losing context.
@@ -34,19 +37,30 @@ to the repository.
 2. Neither the document nor callback dialog requires horizontal scrolling at
    320px, 375px, 768px, and desktop widths. Long labels do not push actions away.
    Vertical scrolling remains available for short viewports.
-3. Existing configurations display a readable name, enabled state, and useful
-   summary. Editors can tell what message will be sent and where its note comes
-   from. Internal identifiers are secondary diagnostic information.
-4. A successful submission shows "Response submitted" and a way to review the
+3. Existing configurations display a readable procedure name, enabled state,
+   and an input-by-input summary. Procedure metadata may give each input a
+   label, description, fixed-value placeholder, and allowed source kinds.
+4. Each required procedure input is mapped exactly once. A form question may
+   supply at most one input in a configuration. Available respondent values are
+   Member ID, respondent name, respondent email, auth user ID, and Discord user
+   ID. The UI labels each identity precisely.
+5. The recruiting action accepts name, email, major, graduation term,
+   graduation year, and team. It sends the legacy-style structured Discord
+   announcement, colors it from the configured team role, and mentions the
+   configured director role. Team may be a fixed value per form.
+6. The Discord role action accepts a Discord role ID as a fixed value and acts
+   on the respondent's Discord user ID. Server-side role policy remains in
+   force.
+7. A successful submission shows "Response submitted" and a way to review the
    saved response. Refresh retains the receipt. A form accepting multiple
    responses offers an explicit "Submit another response" action.
-5. Failed submissions retain answers and visibly explain the failure. Pending
+8. Failed submissions retain answers and visibly explain the failure. Pending
    requests prevent repeated clicks. Editable responses acknowledge updates.
-6. Deletion retains the existing destructive warning. Only confirmed successful
+9. Deletion retains the existing destructive warning. Only confirmed successful
    deletion closes the detail view, updates the list/count, and announces
    "Response deleted". Failure keeps the response available with an error.
-7. Saved callback changes become visible immediately. Errors appear inside the
-   open dialog; retry reports the returned delivery outcome accurately.
+10. Saved callback changes become visible immediately. Errors appear inside the
+    open dialog; retry reports the returned delivery outcome accurately.
 
 ## Boundaries and open decisions
 
@@ -55,13 +69,14 @@ to the repository.
 - Missing instruction video is out of scope.
 - No schema, dependency, permission, or deployment change is currently needed
   for the core fixes.
-- Historical team-director mentions and structured applicant summaries remain
-  a separate unresolved parity requirement. Proposed follow-up: a guided team
-  selector using existing organizational configuration, a bounded summary, and
-  an explicit allowlist of mentions. Confirm desired summary fields and whether
-  this belongs in the same PR before extending the callback payload.
-- Do not imply that selecting a question maps every applicant field: the
-  existing recruiting callback accepts one note. UI copy must describe that
-  contract honestly while parity remains unresolved.
-- A full role-picker redesign and automatic legacy configuration migration are
-  outside the proposed core PR. Record them separately if required.
+- Callback procedures are discovered only when their tRPC metadata explicitly
+  registers them. The configuration surface remains admin-only, and each
+  procedure retains its own authorization and input validation.
+- Existing durable execution snapshots, leases, retries, and Delivery tab stay
+  in scope. No historical response is replayed automatically.
+- Existing one-note recruiting configurations cannot be translated into the
+  new structured contract without knowing the intended question mappings.
+  They must fail visibly as stale configuration until an administrator remaps
+  them.
+- A rich Discord role picker and automatic legacy configuration migration are
+  outside this refinement.

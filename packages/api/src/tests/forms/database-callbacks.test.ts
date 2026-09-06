@@ -6,21 +6,24 @@ import {
   dispatchFormCallbackExecution,
   enqueueConfiguredFormCallbacks,
 } from "../../utils/forms/database-callbacks";
+import { formCallbackRouter } from "../../utils/forms/procedures";
 
 const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   select: vi.fn(),
   insert: vi.fn(),
   member: vi.fn(),
+  role: vi.fn(),
   post: vi.fn<
     (
       route: string,
       request: {
         body: {
+          allowed_mentions: { parse: string[]; roles: string[] };
           content: string;
+          embeds: unknown[];
           nonce: string;
           enforce_nonce: boolean;
-          allowed_mentions: { parse: string[] };
         };
       },
     ) => Promise<unknown>
@@ -33,7 +36,10 @@ vi.mock("@forge/db/client", () => ({
     update: mocks.update,
     select: mocks.select,
     insert: mocks.insert,
-    query: { Member: { findFirst: mocks.member } },
+    query: {
+      Member: { findFirst: mocks.member },
+      Roles: { findFirst: mocks.role },
+    },
   },
 }));
 vi.mock("@forge/utils/discord", () => ({ api: { post: mocks.post } }));
@@ -49,8 +55,12 @@ const execution = {
   id: executionId,
   callbackSlug: "recruiting.notify",
   input: {
-    memberId: "20000000-0000-4000-8000-000000000201",
-    note: "Synthetic test note",
+    email: "synthetic@example.invalid",
+    gradTerm: "Spring",
+    gradYear: 2028,
+    major: "Computer Science",
+    name: "Test Member",
+    team: "Outreach",
   },
 };
 
@@ -66,16 +76,36 @@ describe("recruiting Discord delivery boundary", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.member.mockResolvedValue({
-      id: execution.input.memberId,
+      id: "20000000-0000-4000-8000-000000000201",
       firstName: "Test",
       lastName: "Member",
       email: "synthetic@example.invalid",
     });
-    mocks.channel.mockResolvedValue("100000000000000001");
+    mocks.role.mockResolvedValue({ teamHexcodeColor: "#88fea1" });
+    mocks.channel.mockImplementation((key: string) =>
+      Promise.resolve(
+        key === "recruiting_channel"
+          ? "100000000000000001"
+          : "100000000000000002",
+      ),
+    );
+  });
+
+  it("[TC-015] rejects direct callers without an internal execution context", async () => {
+    const caller = formCallbackRouter.createCaller({
+      headers: new Headers(),
+      session: null,
+      source: "test",
+    });
+
+    await expect(
+      caller.notifyRecruiting(execution.input),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(mocks.post).not.toHaveBeenCalled();
   });
 
   it("[TC-002, TC-004] enqueues mapped input for a new response before dispatching", async () => {
-    mocks.select.mockReturnValue({
+    mocks.select.mockReturnValueOnce({
       from: () => ({
         where: () =>
           Promise.resolve([
@@ -84,19 +114,55 @@ describe("recruiting Discord delivery boundary", () => {
               callbackSlug: "recruiting.notify",
               mappings: [
                 {
-                  inputKey: "memberId",
-                  source: { kind: "system", value: "member_id" },
+                  inputKey: "name",
+                  source: { kind: "respondent", value: "respondent_name" },
                 },
                 {
-                  inputKey: "note",
+                  inputKey: "email",
+                  source: {
+                    kind: "respondent",
+                    value: "respondent_email",
+                  },
+                },
+                {
+                  inputKey: "major",
                   source: {
                     kind: "question",
                     questionId: "10000000-0000-4000-8000-000000000201",
                   },
                 },
+                {
+                  inputKey: "gradTerm",
+                  source: { kind: "fixed", value: "Spring" },
+                },
+                {
+                  inputKey: "gradYear",
+                  source: { kind: "fixed", value: "2028" },
+                },
+                {
+                  inputKey: "team",
+                  source: { kind: "fixed", value: "Outreach" },
+                },
               ],
             },
           ]),
+      }),
+    });
+    mocks.select.mockReturnValueOnce({
+      from: () => ({
+        innerJoin: () => ({
+          where: () =>
+            Promise.resolve([
+              {
+                authUserId: "40000000-0000-4000-8000-000000000201",
+                discordUserId: "123456789012345678",
+                email: "synthetic@example.invalid",
+                firstName: "Test",
+                lastName: "Member",
+                memberId: "20000000-0000-4000-8000-000000000201",
+              },
+            ]),
+        }),
       }),
     });
     const values = vi.fn((value: Record<string, unknown>) => ({
@@ -110,7 +176,7 @@ describe("recruiting Discord delivery boundary", () => {
       userId: "user-1",
       submittedAt: new Date("2026-08-01T12:00:00Z"),
       answers: {
-        "10000000-0000-4000-8000-000000000201": "Synthetic test note",
+        "10000000-0000-4000-8000-000000000201": "Computer Science",
       },
     });
     expect(values).toHaveBeenCalledWith({
@@ -163,14 +229,45 @@ describe("recruiting Discord delivery boundary", () => {
       status: "succeeded",
     });
     expect(mocks.channel).toHaveBeenCalledWith("recruiting_channel");
+    expect(mocks.channel).toHaveBeenCalledWith("outreach_director_role");
     const call = mocks.post.mock.calls[0];
     if (!call) throw new Error("Expected one provider request");
     const [route, request] = call;
     expect(route).toBe("/channels/100000000000000001/messages");
-    expect(request.body.allowed_mentions).toEqual({ parse: [] });
+    expect(request.body.allowed_mentions).toEqual({
+      parse: [],
+      roles: ["100000000000000002"],
+    });
     expect(request.body.enforce_nonce).toBe(true);
     expect(request.body.nonce).toMatch(/^[A-Za-z0-9_-]{22}$/);
-    expect(request.body.content).toContain("Synthetic test note");
+    expect(request.body.content).toContain("New Applicant for Outreach");
+    expect(request.body.embeds).toHaveLength(1);
+    const embed = request.body.embeds[0] as {
+      color: number;
+      description: string;
+      fields: { inline: boolean; name: string; value: string }[];
+      footer: { text: string };
+      title: string;
+    };
+    expect(embed).toMatchObject({
+      color: 0x88fea1,
+      description:
+        "A new applicant is interested in joining the **Outreach** team.\n\nPlease see details below:",
+      fields: [
+        { inline: true, name: "Name", value: "Test Member" },
+        {
+          inline: true,
+          name: "Email",
+          value: "synthetic@example.invalid",
+        },
+        { inline: true, name: "Major", value: "Computer Science" },
+        { inline: true, name: "Grad Term", value: "Spring" },
+        { inline: true, name: "Grad Year", value: "2028" },
+        { inline: true, name: "Team", value: "Outreach" },
+      ],
+      title: "Test Member's Application",
+    });
+    expect(embed.footer.text).toMatch(/^Submitted at: /);
     expect(complete).toHaveBeenCalledWith(
       expect.objectContaining({ status: "succeeded", leaseToken: null }),
     );
@@ -197,8 +294,8 @@ describe("recruiting Discord delivery boundary", () => {
     await expect(dispatchFormCallbackExecution(executionId)).resolves.toEqual({
       status: "succeeded",
     });
-    expect(mocks.post.mock.calls[0]?.[1]).toEqual(
-      mocks.post.mock.calls[1]?.[1],
+    expect(mocks.post.mock.calls[0]?.[1].body.nonce).toBe(
+      mocks.post.mock.calls[1]?.[1].body.nonce,
     );
   });
 
