@@ -29,23 +29,32 @@ From `docs/agentic-development/forge-engineering-principles.md`:
 
 ## Access policy
 
-Every procedure is `permProcedure` asserting officer, matching the
-configuration router it sits beside.
+Delegated hacker access was approved on 2026-09-06 and supersedes the original
+officer-only policy. Existing permission bits are reused; no migration is needed.
 
-- **Unauthenticated / non-officer:** no access; the route redirects.
-- **Officer:** full read and write.
+- `READ_HACKERS` or `EDIT_HACKERS`: roster options, filters, counts, selection
+  survival, application details, and the existing hacker event-attendance read.
+- `EDIT_HACKERS`: profile corrections, point adjustments, single/bulk status
+  changes (including preview), and application deletion.
+- `IS_OFFICER`: overrides the above and is still required for blacklist access
+  and hackathon configuration. Do not broaden the platform configuration guard.
+- No hacker capability: no navigation, page access, or API access.
 
-Two notes that are not obvious:
+The API redacts blacklist fields to null for non-officers, rejects blacklist
+filters (including false), and replaces blacklist skip reasons/errors with a
+request for officer review. Existing transition safeguards still apply. Deleting
+a blacklisted application requires an officer, checked under the attendee lock.
+Officer responses retain their existing shape and values.
 
-- **`READ_HACKERS` exists and is deliberately not accepted.** A read-only tier
-  would be defensible for the roster, but the roster carries applicant PII
-  (email, school, phone via the hacker record) and every write on this screen is
-  officer-only anyway. Splitting the tier is a decision for whoever needs it,
-  not a guess to make now.
-- **The blacklist flag must never leave the officer tier.** It is a judgement
-  about a person recorded where they cannot see it. No procedure reachable by a
-  member or by an applicant may return it, and the SDK slice must not expose it
-  when it starts serving hacker data to external sites.
+Blade must gate its admin layout, navigation, and page consistently. It passes
+read/edit/officer capabilities to the roster and detail controls. Read-only
+users cannot select rows or see mutations. The event-attendance read uses hacker
+read access; general event administration and check-in keep their existing gates.
+
+Validation covers the actual routers, role unions/revocation, read-only UI, and
+blacklist redaction/filtering. Rollout is a normal application deployment;
+rollback is reverting the code. No persisted data, permission indices, email
+delivery mechanics, or dependencies change.
 
 ## Architecture / data flow
 

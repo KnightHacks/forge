@@ -140,6 +140,18 @@ export function canAccessHackathonAdmin(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true;
 }
 
+export function canAccessHackerAdmin(permissions: EffectivePermissions) {
+  return (
+    permissions.IS_OFFICER === true ||
+    permissions.READ_HACKERS === true ||
+    permissions.EDIT_HACKERS === true
+  );
+}
+
+export function canEditHackerAdmin(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.EDIT_HACKERS === true;
+}
+
 export function canAccessEmailPortal(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true || permissions.EMAIL_PORTAL === true;
 }
@@ -157,8 +169,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     hackathon: canAccessHackathonAdmin(permissions),
     hackathonCheckIn: canAccessHackathonCheckIn(permissions),
     hackathonEvents: canAccessHackathonEvents(permissions),
-    // Same tier: both screens are officer-only and one links to the other.
-    hackers: canAccessHackathonAdmin(permissions),
+    hackers: canAccessHackerAdmin(permissions),
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),

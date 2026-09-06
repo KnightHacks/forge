@@ -223,6 +223,7 @@ function MultiSelectFilter({
  * chips once applied.
  */
 export function HackerFilters({
+  canViewBlacklist,
   busy,
   filter,
   hackathonId,
@@ -233,6 +234,7 @@ export function HackerFilters({
   optionsError,
   optionsLoading,
 }: {
+  canViewBlacklist: boolean;
   filter: RosterFilter;
   hackathonId: string;
   hackathons: Options;
@@ -545,25 +547,27 @@ export function HackerFilters({
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Only show</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    aria-pressed={draft.blacklisted === true}
-                    className="min-h-11 text-sm"
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        blacklisted: draft.blacklisted ? undefined : true,
-                      })
-                    }
-                    size="sm"
-                    variant={draft.blacklisted ? "secondary" : "outline"}
-                  >
-                    Blacklisted
-                  </Button>
+              {canViewBlacklist ? (
+                <div className="grid gap-2">
+                  <Label>Only show</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      aria-pressed={draft.blacklisted === true}
+                      className="min-h-11 text-sm"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          blacklisted: draft.blacklisted ? undefined : true,
+                        })
+                      }
+                      size="sm"
+                      variant={draft.blacklisted ? "secondary" : "outline"}
+                    >
+                      Blacklisted
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           )}
 

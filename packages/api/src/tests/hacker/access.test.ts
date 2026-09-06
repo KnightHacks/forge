@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
+import type { PERMISSIONS } from "@forge/consts";
 
 import { permissionBitstring } from "../support/permissions";
 
@@ -177,57 +178,89 @@ describe("hacker management access policy", () => {
     );
   });
 
-  describe("TC-NEG-001: signed in without IS_OFFICER", () => {
-    it.each(PROCEDURES)(
-      "%s rejects a READ_HACKERS holder",
-      async (_name, call) => {
-        // Deliberately the permission a reader would assume grants the roster.
-        // The SRD says it does not — the roster carries applicant PII and every
-        // write here is officer-only — so this pins a decision, not an accident.
-        mocks.permissionRows = [
-          {
-            permissions: permissionBitstring("READ_HACKERS", "READ_HACK_DATA"),
-          },
-        ];
+  const reads = new Set([
+    "listHackathonOptions",
+    "get",
+    "filterOptions",
+    "listForHackathon",
+    "statusCounts",
+    "selectionSurvival",
+  ]);
+  const actors: { label: string; keys: PERMISSIONS.PermissionKey[] }[] = [
+    { label: "no permissions", keys: [] },
+    { label: "analytics only", keys: ["READ_HACK_DATA"] },
+    { label: "reader", keys: ["READ_HACKERS"] },
+    { label: "editor", keys: ["EDIT_HACKERS"] },
+    { label: "reader and editor", keys: ["READ_HACKERS", "EDIT_HACKERS"] },
+    { label: "officer", keys: ["IS_OFFICER"] },
+  ];
 
+  describe.each(actors)("$label", ({ keys }) => {
+    it.each(PROCEDURES)("%s uses its hacker capability", async (name, call) => {
+      // Separate granting roles must union exactly as a single role would.
+      mocks.permissionRows = keys.map((key) => ({
+        permissions: permissionBitstring(key),
+      }));
+      const allowed =
+        keys.includes("IS_OFFICER") ||
+        (name !== "setBlacklist" &&
+          (keys.includes("EDIT_HACKERS") ||
+            (reads.has(name) && keys.includes("READ_HACKERS"))));
+      if (!allowed) {
         await expect(call(createCaller())).rejects.toMatchObject({
           code: "FORBIDDEN",
         });
-        // One select: the permission lookup. Nothing read the roster.
         expect(mocks.db.select).toHaveBeenCalledTimes(1);
-      },
-    );
+        return;
+      }
+      // The DB harness deliberately stops authorized calls after the guard.
+      let refused = false;
+      try {
+        await call(createCaller());
+      } catch (error) {
+        refused =
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "FORBIDDEN";
+      }
+      expect(refused).toBe(false);
+    });
   });
 
-  describe("positive control", () => {
-    it.each(PROCEDURES)(
-      "%s admits an officer past the permission guard",
-      async (_name, call) => {
-        mocks.permissionRows = [
-          { permissions: permissionBitstring("IS_OFFICER") },
-        ];
+  it.each([true, false])(
+    "rejects blacklist=%s before any roster, count, or selection read",
+    async (blacklisted) => {
+      mocks.permissionRows = [
+        { permissions: permissionBitstring("READ_HACKERS", "EDIT_HACKERS") },
+      ];
+      const caller = createCaller();
+      const input = { hackathonId: HACKATHON_ID, filter: { blacklisted } };
+      await expect(caller.listForHackathon(input)).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      await expect(caller.statusCounts(input)).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+      await expect(
+        caller.selectionSurvival({ ...input, attendeeIds: [ATTENDEE_ID] }),
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      expect(mocks.db.select).toHaveBeenCalledTimes(3);
+    },
+  );
 
-        // Admitted means "not refused for permission" — which is either a
-        // resolution, or a failure from the throwing mocks further in. Written
-        // as an explicit catch rather than `rejects.not.toMatchObject`, because
-        // that form fails outright on a procedure whose mocked reads happen to
-        // succeed, and it would then be reporting a harness detail as an access
-        // failure.
-        //
-        // Without this control a guard that refused everyone would pass every
-        // negative case above.
-        let refused = false;
-        try {
-          await call(createCaller());
-        } catch (error) {
-          refused =
-            typeof error === "object" &&
-            error !== null &&
-            "code" in error &&
-            (error as { code?: unknown }).code === "FORBIDDEN";
-        }
-        expect(refused).toBe(false);
-      },
-    );
+  it("reloads permissions when a role grant is revoked", async () => {
+    const caller = createCaller();
+    mocks.permissionRows = [
+      { permissions: permissionBitstring("READ_HACKERS") },
+    ];
+    // A second select proves the permission guard reached the roster query.
+    await caller.listHackathonOptions().catch(() => undefined);
+    expect(mocks.db.select).toHaveBeenCalledTimes(2);
+    mocks.permissionRows = [];
+    await expect(caller.listHackathonOptions()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(mocks.db.select).toHaveBeenCalledTimes(3);
   });
 });
