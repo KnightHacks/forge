@@ -19,6 +19,9 @@ function tagRecord(
 ): TestEventTagRecord {
   return {
     active: true,
+    emoji: null,
+    announcementChannelId: null,
+    skipNextWeek: false,
     color: "#7c3aed",
     createdAt: NOW,
     defaultPoints: 25,
@@ -88,6 +91,42 @@ describe("configurable event tags", () => {
     await expect(
       service.archive({ actorId: USER_IDS.operator, tagId: created.id }),
     ).resolves.toMatchObject({ active: false });
+  });
+
+  it("preserves announcement settings across rename and supports clearing overrides", async () => {
+    const { service } = setup([]);
+    const tag = await service.create({
+      actorId: USER_IDS.operator,
+      name: "Project Launch",
+      color: "#abcdef",
+      defaultPoints: 0,
+      emoji: "🚀",
+      announcementChannelId: "990000000000000950",
+      skipNextWeek: true,
+    });
+    const renamed = await service.update({
+      actorId: USER_IDS.operator,
+      tagId: tag.id,
+      name: "Projects",
+    });
+    expect(renamed).toMatchObject({
+      id: tag.id,
+      emoji: "🚀",
+      announcementChannelId: "990000000000000950",
+      skipNextWeek: true,
+    });
+    const cleared = await service.update({
+      actorId: USER_IDS.operator,
+      tagId: tag.id,
+      emoji: null,
+      announcementChannelId: null,
+      skipNextWeek: false,
+    });
+    expect(cleared).toMatchObject({
+      emoji: null,
+      announcementChannelId: null,
+      skipNextWeek: false,
+    });
   });
 
   it("[TC-017] resolves immutable tag/color/point snapshots with zero override support", async () => {

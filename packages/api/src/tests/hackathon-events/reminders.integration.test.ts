@@ -63,6 +63,7 @@ describe.skipIf(!canRunDatabaseTests())(
 
     beforeEach(async () => {
       await client.delete(knightHacks.Event);
+      await client.delete(knightHacks.EventTag);
       await client.delete(knightHacks.Hackathon);
       await client.insert(knightHacks.Hackathon).values({
         applicationDeadline: new Date("2026-07-01T00:00:00.000Z"),
@@ -141,6 +142,96 @@ describe.skipIf(!canRunDatabaseTests())(
 
       expect(hack.map(({ eventId }) => eventId)).toEqual([ELIGIBLE_ID]);
       expect(club.map(({ id }) => id)).toEqual([CLUB_ID]);
+    });
+
+    it("loads Club settings by stable tag identity while retaining event snapshots", async () => {
+      const tagId = "30000000-0000-4000-8000-000000000502";
+      await client.insert(knightHacks.EventTag).values({
+        id: tagId,
+        name: "Project Launch",
+        normalizedName: "project launch",
+        color: "#123456",
+        emoji: "🚀",
+        announcementChannelId: "990000000000000950",
+        skipNextWeek: true,
+      });
+      await client
+        .insert(knightHacks.Event)
+        .values([
+          event(CLUB_ID, { hackathonId: null, tagId, tag: "Original label" }),
+          event(LEGACY_ID, { hackathonId: null, tag: "Project Launch" }),
+        ]);
+      await client
+        .update(knightHacks.EventTag)
+        .set({
+          name: "Renamed tag",
+          normalizedName: "renamed tag",
+        })
+        .where(eq(knightHacks.EventTag.id, tagId));
+
+      const rows = await selectClub({ now: NOW });
+      expect(rows.find(({ id }) => id === CLUB_ID)).toMatchObject({
+        tag: "Original label",
+        emoji: "🚀",
+        announcementChannelId: "990000000000000950",
+        skipNextWeek: true,
+      });
+      expect(rows.find(({ id }) => id === LEGACY_ID)).toMatchObject({
+        emoji: null,
+        announcementChannelId: null,
+        skipNextWeek: false,
+      });
+    });
+
+    it("routes through the tag channel even without a hackathon default and freezes its emoji", async () => {
+      const tagId = "30000000-0000-4000-8000-000000000501";
+      await client.insert(knightHacks.EventTag).values({
+        id: tagId,
+        hackathonId: HACKATHON_ID,
+        name: "Food",
+        normalizedName: "food",
+        color: "#abcdef",
+        emoji: "🍕",
+        announcementChannelId: "990000000000000950",
+      });
+      await client
+        .update(knightHacks.Hackathon)
+        .set({ eventAnnouncementChannelId: null })
+        .where(eq(knightHacks.Hackathon.id, HACKATHON_ID));
+      await client
+        .insert(knightHacks.Event)
+        .values(event(ELIGIBLE_ID, { tagId }));
+      const [delivery] = await claim({ guildId: GUILD_ID, now: NOW });
+      if (!delivery) throw new Error("Expected tag-routed delivery.");
+      expect(delivery).toMatchObject({
+        eventId: ELIGIBLE_ID,
+        channelId: "990000000000000950",
+        emoji: "🍕",
+      });
+      await client
+        .update(knightHacks.EventTag)
+        .set({
+          name: "Meals",
+          emoji: "🥗",
+          announcementChannelId: "990000000000000951",
+        })
+        .where(eq(knightHacks.EventTag.id, tagId));
+      await client
+        .update(knightHacks.HackathonEventReminderDelivery)
+        .set({ state: "failed", lockedAt: null, nextAttemptAt: NOW })
+        .where(
+          eq(
+            knightHacks.HackathonEventReminderDelivery.id,
+            delivery.deliveryId,
+          ),
+        );
+      expect(await claim({ guildId: GUILD_ID, now: NOW })).toEqual([
+        expect.objectContaining({
+          deliveryId: delivery.deliveryId,
+          channelId: "990000000000000950",
+          emoji: "🍕",
+        }),
+      ]);
     });
 
     it("[TC-PUB-012] plans reminders without a Discord Scheduled Event", async () => {
@@ -272,6 +363,7 @@ describe.skipIf(!canRunDatabaseTests())(
         state: "delivering",
       });
       expect(JSON.parse(ledger[0]?.contentSnapshot ?? "{}")).toEqual({
+        emoji: null,
         description: "Reminder fixture",
         endDateTime: "2026-08-05T17:00:00.000Z",
         location: "Venue",

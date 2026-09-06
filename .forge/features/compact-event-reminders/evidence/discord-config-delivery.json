@@ -1,0 +1,29 @@
+{
+  "updatedAt": "2026-09-06T22:23:22.098Z",
+  "fixture": "Synthetic development events and IDs; Blade links demonstrate UUID routing and do not resolve to real production events.",
+  "destination": "Dev@KnightHacks / #bot",
+  "screenshotNote": "Existing Discord screenshots predate the current emoji, Blade links, dues, and final copy. These message readbacks verify the current formatter without notifications; no new native Discord capture was available.",
+  "records": [
+    {
+      "mode": "weekly",
+      "id": "1546269355489103976",
+      "eventCount": 8,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269355489103976"
+    },
+    {
+      "mode": "daily",
+      "id": "1546269956935524436",
+      "eventCount": 6,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269956935524436"
+    },
+    {
+      "mode": "hack",
+      "id": "1546284703386959954",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546284703386959954"
+    }
+  ]
+}

@@ -24,7 +24,7 @@ const REMINDERS_PRE_WEBHOOK = new WebhookClient({
 export const preReminders = new CronBuilder({
   name: "reminders/pre",
   color: 6,
-}).addCron("0 8 * * *", genCronLogic(REMINDERS_PRE_WEBHOOK));
+}).addCron("0 8 * * *", genCronLogic(REMINDERS_PRE_WEBHOOK, { preview: true }));
 
 export const reminders = new CronBuilder({
   name: "reminders",
@@ -51,10 +51,22 @@ export const hackReminders = new CronBuilder({
   { timezone: EVENTS.CALENDAR_TIME_ZONE },
 );
 
-function genCronLogic(webhook: WebhookClient): () => Promise<void> {
+function genCronLogic(
+  webhook: WebhookClient,
+  { preview = false }: { preview?: boolean } = {},
+): () => Promise<void> {
   return createClubReminderExecutor({
     getCandidates: selectClubReminderCandidates,
     now: () => new Date(),
-    send: (payload) => webhook.send(payload),
+    send: (payload, channelId) =>
+      channelId && !preview
+        ? api.post(Routes.channelMessages(channelId), {
+            body: {
+              components: payload.components,
+              flags: payload.flags,
+              allowed_mentions: payload.allowedMentions,
+            },
+          })
+        : webhook.send(payload),
   });
 }

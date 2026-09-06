@@ -30,9 +30,14 @@ describe("hackathon event reminders", () => {
       parse: [],
       roles: [DELIVERY.roleId],
     });
-    expect(body.content).toContain(`<@&${DELIVERY.roleId}>`);
+    expect(JSON.stringify(body.components)).toContain(`<@&${DELIVERY.roleId}>`);
     expect(JSON.stringify(body)).not.toContain("@everyone");
-    expect(body.embeds?.[0]?.url).toContain(DELIVERY.discordEventId);
+    expect(JSON.stringify(body.components)).toContain(
+      `https://discord.com/events/${DELIVERY.guildId}/${DELIVERY.discordEventId}`,
+    );
+    expect(body.embeds).toBeUndefined();
+    expect(body.content).toBeUndefined();
+    expect(JSON.stringify(body.components)).not.toContain(DELIVERY.description);
   });
 
   it("[TC-PUB-012] omits the Scheduled Event link when publication is off", () => {
@@ -41,8 +46,17 @@ describe("hackathon event reminders", () => {
       discordEventId: null,
     });
 
-    expect(body.content).toContain(`<@&${DELIVERY.roleId}>`);
-    expect(body.embeds?.[0]?.url).toBeUndefined();
+    expect(JSON.stringify(body.components)).toContain(`<@&${DELIVERY.roleId}>`);
+    expect(JSON.stringify(body.components)).not.toContain(
+      "https://discord.com/events",
+    );
+    expect(JSON.stringify(body.components)).toContain(DELIVERY.description);
+  });
+
+  it("uses the tag emoji before the linked title without repeating the tag", () => {
+    const body = buildHackReminderMessage({ ...DELIVERY, emoji: "🍕" });
+    expect(JSON.stringify(body.components)).toContain("🍕 **[Lunch]");
+    expect(JSON.stringify(body.components)).not.toContain(" · Food");
   });
 
   it("records success only after the Discord message returns", async () => {
@@ -133,7 +147,8 @@ describe("hackathon event reminders", () => {
       getDeliveries,
       now: () => new Date("2026-08-05T15:45:00.000Z"),
       send: (_channelId, body) => {
-        order.push(`send-${body.embeds?.[0]?.title}`);
+        expect(JSON.stringify(body.components)).toContain("Lunch");
+        order.push("send-Lunch");
         return Promise.resolve();
       },
     });

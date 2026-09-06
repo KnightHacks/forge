@@ -52,6 +52,7 @@ export interface EventWorkflowRecord {
     roleIds: string[];
   } | null;
   tag: string;
+  tagId: string | null;
   tagColor: string;
 }
 

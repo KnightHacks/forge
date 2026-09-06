@@ -149,10 +149,16 @@ describe("club event reminders", () => {
     };
     const execute = createClubReminderExecutor({
       getCandidates: vi.fn().mockResolvedValue([
-        { ...nextWeek, name: "Operations Meeting", tag: "OPS" },
+        {
+          ...nextWeek,
+          name: "Operations Meeting",
+          tag: "OPS",
+          skipNextWeek: true,
+        },
         {
           ...nextWeek,
           name: "Project Launch Lab Hours",
+          skipNextWeek: true,
           tag: "Project Launch",
         },
         { ...nextWeek, name: "Next Workshop", tag: "Workshop" },
@@ -289,9 +295,9 @@ describe("club reminder announcements", () => {
       expect(text).toContain(`### ${day}`);
     for (const event of events)
       expect(text).toContain(
-        `**[${event.name}](<https://discord.com/events/486628710443778071/${event.discordId}>)**`,
+        `**[${event.name}](<https://blade.knighthacks.org/member/events?selected=${event.id}>)**`,
       );
-    expect(text).toContain("\n-# 6:00 PM–8:00 PM · ENG2 102 · Workshop");
+    expect(text).toContain("\n-# 6:00 PM–8:00 PM · ENG2 102");
     const card = payload.components[0];
     if (card?.type !== ComponentType.Container)
       throw new Error("Expected a reminder card.");
@@ -316,6 +322,7 @@ describe("club reminder announcements", () => {
           ["2026-06-29", "2026-06-30", "2026-07-06"].map((date, index) => ({
             ...currentWorkshop,
             discordId: String(111111111111111111n + BigInt(index)),
+            id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
             startDateTime: `${date}T18:00:00-04:00`,
             endDateTime: `${date}T20:00:00-04:00`,
           })),
@@ -381,6 +388,7 @@ describe("club reminder limits and delivery", () => {
       const events = Array.from({ length: 60 }, (_, index) => ({
         ...currentWorkshop,
         discordId: String(111111111111111111n + BigInt(index)),
+        id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
         name: longLabels ? "🛠".repeat(150) : `Workshop ${index}`,
         location: longLabels ? "*".repeat(200) : "ENG2 102",
         tag: longLabels ? "_".repeat(100) : "Workshop",
@@ -418,12 +426,12 @@ describe("club reminder limits and delivery", () => {
             ...text
               .join("\n")
               .matchAll(
-                /https:\/\/discord.com\/events\/486628710443778071\/(\d+)/g,
+                /https:\/\/blade.knighthacks.org\/member\/events\?selected=([\da-f-]+)/g,
               ),
           ].map((match) => match[1] ?? ""),
         );
       }
-      expect(links).toEqual(events.map((event) => event.discordId));
+      expect(links).toEqual(events.map((event) => event.id));
       if (longLabels) expect(JSON.stringify(send.mock.calls)).toContain("🛠…");
     },
   );
@@ -450,7 +458,8 @@ describe("club reminder limits and delivery", () => {
     expect(text).toContain(
       "\\[Build\\]\\(https://example.com\\) \\*\\*together\\*\\*",
     );
-    expect(text).toContain("ENG2 102 · Project\\_Launch");
+    expect(text).toContain("ENG2 102");
+    expect(text).not.toContain("Project\\_Launch");
     expect(text).not.toContain("@everyone");
     expect(text).not.toContain("<@123>");
   });
@@ -482,7 +491,7 @@ describe("club reminder limits and delivery", () => {
     );
     expect(last.allowedMentions).toEqual({ parse: [], roles: [] });
     expect(log).toHaveBeenCalledExactlyOnceWith(
-      'Failed to send Club reminder card "Event Reminders\n-# Monday, June 29, 2026" (part 1):',
+      'Failed to send Club reminder card "Event Reminders\n-# Monday, June 29, 2026" (part 1, channel default):',
       error,
     );
   });

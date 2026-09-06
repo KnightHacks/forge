@@ -2,6 +2,7 @@ import { and, eq, gt, isNull, lt, lte, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Event,
+  EventTag,
   Hackathon,
   HackathonEventReminderDelivery,
 } from "@forge/db/schemas/knight-hacks";
@@ -43,7 +44,9 @@ export async function claimHackathonEventReminderDeliveries({
     );
   const candidates = await db
     .select({
-      channelId: Hackathon.eventAnnouncementChannelId,
+      channelId: sql<
+        string | null
+      >`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId})`,
       description: Event.description,
       discordEventId: Event.discordId,
       endDateTime: Event.end_datetime,
@@ -54,15 +57,20 @@ export async function claimHackathonEventReminderDeliveries({
       name: Event.name,
       roleId: Hackathon.generalHackerDiscordRoleId,
       tag: Event.tag,
+      emoji: EventTag.emoji,
     })
     .from(Event)
     .innerJoin(Hackathon, eq(Hackathon.id, Event.hackathonId))
+    .leftJoin(
+      EventTag,
+      and(eq(Event.tagId, EventTag.id), eq(EventTag.hackathonId, Hackathon.id)),
+    )
     .where(
       and(
         eq(Event.purpose, "event"),
         eq(Event.legacy, false),
         isNull(Event.deletionIntentAt),
-        sql`${Hackathon.eventAnnouncementChannelId} is not null`,
+        sql`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId}) is not null`,
         sql`${Hackathon.generalHackerDiscordRoleId} is not null`,
         gt(Event.start_datetime, now),
         lte(Event.start_datetime, horizon),
@@ -73,6 +81,7 @@ export async function claimHackathonEventReminderDeliveries({
     if (!event.channelId || !event.roleId) continue;
     const contentSnapshot = JSON.stringify({
       description: event.description,
+      emoji: event.emoji,
       endDateTime: event.endDateTime.toISOString(),
       location: event.location,
       name: event.name,
@@ -157,7 +166,9 @@ export async function claimHackathonEventReminderDeliveries({
     const claimed = await db.transaction(async (tx) => {
       const [current] = await tx
         .select({
-          channelId: Hackathon.eventAnnouncementChannelId,
+          channelId: sql<
+            string | null
+          >`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId})`,
           description: Event.description,
           discordEventId: Event.discordId,
           endDateTime: Event.end_datetime,
@@ -170,10 +181,18 @@ export async function claimHackathonEventReminderDeliveries({
           name: Event.name,
           roleId: Hackathon.generalHackerDiscordRoleId,
           tag: Event.tag,
+          emoji: EventTag.emoji,
         })
         .from(HackathonEventReminderDelivery)
         .innerJoin(Event, eq(Event.id, HackathonEventReminderDelivery.eventId))
         .innerJoin(Hackathon, eq(Hackathon.id, Event.hackathonId))
+        .leftJoin(
+          EventTag,
+          and(
+            eq(Event.tagId, EventTag.id),
+            eq(EventTag.hackathonId, Hackathon.id),
+          ),
+        )
         .where(
           and(
             eq(HackathonEventReminderDelivery.id, candidate.id),
@@ -187,19 +206,22 @@ export async function claimHackathonEventReminderDeliveries({
             eq(Event.purpose, "event"),
             eq(Event.legacy, false),
             isNull(Event.deletionIntentAt),
-            sql`${Hackathon.eventAnnouncementChannelId} is not null`,
+            sql`coalesce(${EventTag.announcementChannelId}, ${Hackathon.eventAnnouncementChannelId}) is not null`,
             sql`${Hackathon.generalHackerDiscordRoleId} is not null`,
             gt(Event.start_datetime, now),
             lte(Event.start_datetime, horizon),
           ),
         )
-        .for("update")
+        .for("update", {
+          of: [HackathonEventReminderDelivery, Event, Hackathon],
+        })
         .limit(1);
       if (!current?.channelId || !current.roleId) {
         return null;
       }
       const contentSnapshot = JSON.stringify({
         description: current.description,
+        emoji: current.emoji,
         endDateTime: current.endDateTime.toISOString(),
         location: current.location,
         name: current.name,
@@ -231,6 +253,7 @@ export async function claimHackathonEventReminderDeliveries({
     if (!claimed) continue;
     const snapshot = JSON.parse(claimed.contentSnapshot) as {
       description: string;
+      emoji?: string | null;
       endDateTime: string;
       location: string;
       name: string;

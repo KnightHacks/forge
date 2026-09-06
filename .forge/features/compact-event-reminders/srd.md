@@ -1,8 +1,8 @@
 # Compact Event Reminders SRD
 
-Keep the implementation in `apps/cron/src/crons/reminder-logic.ts`, used by both
-Club reminder webhooks. Preserve the existing candidate selector, calendar
-windows, injected clock, and sender.
+Keep Club grouping in `apps/cron/src/crons/reminder-logic.ts` and share event-row
+formatting with hackathon announcements through `reminder-row.ts`. Preserve the
+existing eligibility rules, calendar windows, injected clock, and sender.
 
 ## Presentation and payload
 
@@ -44,9 +44,62 @@ There is no separate footer delivery and no RSVP copy.
 
 ## Compatibility and validation
 
-No schema, dependency, environment, or permission-surface changes. Existing
-webhook destinations and cron schedules remain. Verify weekly and daily grouping,
-small schedules, all links, 60-event overflow, Markdown/mentions, failed sends,
-and the existing selection/DST cases. Run cron tests, format, lint, and typecheck.
-Inspect actual Discord desktop screenshots for weekly and daily cards. Native
-mobile rendering must be reported separately if unverified.
+No dependency, environment, or new permission capability changes. Existing
+preview destinations and cron schedules remain. New channel-choice procedures
+reuse the respective event-edit gate and are declared in audit coverage. Verify
+grouping, routing, small schedules, links, overflow, Markdown/mentions, failed
+sends, and selection/DST cases. Run the Forge precommit gate and affected
+consumer tests. Inspect actual Discord and Blade screenshots; report native
+Discord mobile rendering separately if unverified.
+
+## Tag configuration and details
+
+The user requested Blade event drill-in and tag-owned announcement settings,
+then extended applicable behavior to hackathon announcements. Scope now includes
+Blade, cron, API, validators, and the DB schema/migration. Hacker portal UI and
+hackathon announcement links are unchanged by explicit user choice.
+
+Persist nullable `Event.tagId` with a set-null FK and backfill exact normalized
+names within the matching Club/hackathon tag catalog. Add tag `emoji`,
+`announcementChannelId`, and `skipNextWeek` columns with safe defaults. Seed Club
+OPS/Project Launch exclusions once in migration, never from runtime names.
+Retain label/color/points snapshots. Creation and retagging persist the ID.
+Unmatched historical snapshots retain null configuration until explicitly edited.
+
+Validate channel IDs with the existing Discord gateway against the configured
+guild, supported text/announcement types, and the bot's effective View Channel
+and Send Messages permissions. Apply Discord's
+[permission overwrite precedence](https://docs.discord.com/developers/topics/permissions#permission-overwrites)
+when listing choices and validating a saved override. Reuse current event-edit permission
+gates for channel choices and tag mutations. Do not broaden event visibility.
+At delivery, tag routes replace the generic destination; a failed override send
+is logged without falling back to the generic board. Hackathon delivery retains
+its ledger, lease, and ambiguous-outcome handling. Its content snapshot adds an
+optional emoji; older snapshots remain readable. An already attempted delivery
+retains its original destination and content across tag edits. The 08:00 Club
+preview sends every destination group to its preview webhook, avoiding an early
+live announcement.
+
+Admin read DTOs and edit forms retain the stable tag ID. A name lookup is only
+used for historical events with no linked tag, so renaming a tag and reusing its
+old name cannot silently reroute an event when its location is edited.
+
+Use the existing Blade dialog and Markdown primitives. Keep the member page and
+its reads server-side; use a small client dialog for URL-based dismissal.
+Only already-authorized member event data may populate the dialog. Unknown,
+expired, or inaccessible IDs must not expose event details. Keep sign-in return
+URLs within Blade and preserve the selected ID.
+
+Member DTOs expose the effective dues requirement separately from whether this
+member is locked. A paid member still sees the requirement, including when a
+dues-to-public change has not synchronized. The modal preserves the rest of the
+query string on dismissal, focuses its title on open, and restores its opener.
+
+Hackathon announcements retain Discord event URLs. When there is no published
+Discord event, include the existing description in a bounded text display so
+details remain available. Hack tag imports retain their existing catalog-copy
+behavior; newly imported tags start without routing overrides.
+
+Migration rollout: apply additive columns/backfill before new readers deploy.
+Rollback code first; retain columns and tag configuration. No data deletion or
+production migration is part of this task. Validate with a disposable local DB.

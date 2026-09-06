@@ -32,3 +32,26 @@ Use the same synthetic multi-day week with main and the PR formatter. Capture
 actual Discord views showing the old repeated cards and the combined week.
 Also inspect a daily card containing Today, Tomorrow, and Next Week. Record
 message counts and notification readback without credentials.
+
+## Added coverage
+
+- A Club title links to its UUID and opens the correct full description; direct
+  load, close, back/forward, missing ID, and mobile long text remain usable.
+- Emoji, channel, and skip-next-week settings save, clear, and survive tag rename.
+  Invalid emoji/channel inputs and unauthorized edits are rejected.
+- Both editors retain the original tag ID after it is renamed and another tag
+  reuses the old name; an unrelated event edit must not change its routing.
+- Channel choices and saves reject effective bot View Channel/Send Messages
+  denies. Cover everyone, role, and member overwrites and administrator bypass.
+- Channel overrides apply to Sunday and daily groups, omit routed events from
+  generic posts, and isolate failed destinations. Same-channel tags combine.
+- The 08:00 preview remains in its webhook even for tags with live overrides;
+  the 11:00 job uses those destinations.
+- Tag exclusions apply only to Next Week; Today/Tomorrow/Sunday remain eligible.
+- Dues-only metadata appears for desired or synchronized dues restrictions;
+  private/internal events never leak through override routes.
+- Migration maps tags within their scope, preserves event snapshots, seeds only
+  Club OPS/Project Launch, and enforces channel syntax and the tag foreign key.
+- Hackathon tag overrides and emoji affect 15-minute announcements without
+  changing ledger/retry behavior or Discord event links. Unpublished Discord
+  events retain their description in the announcement.

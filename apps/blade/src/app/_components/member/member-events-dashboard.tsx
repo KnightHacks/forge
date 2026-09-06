@@ -18,6 +18,7 @@ import type { MemberFeedbackOpportunity } from "~/app/_components/member/member-
 import { MemberEventFeedback } from "~/app/_components/member/member-event-feedback";
 import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { formatEventDateTime } from "~/lib/dates";
+import { MemberEventDialog } from "./member-event-dialog";
 
 export type MemberEventItem =
   RouterOutputs["event"]["listMemberEvents"][number];
@@ -81,11 +82,15 @@ export function MemberEventsDashboard({
   attendance,
   events,
   feedback = [],
+  selectedEventId = null,
 }: {
   attendance: MemberAttendanceItem[];
   events: MemberEventItem[];
   feedback?: MemberFeedbackOpportunity[];
+  selectedEventId?: string | null;
 }) {
+  const selectedEvent =
+    events.find((event) => event.id === selectedEventId) ?? null;
   return (
     <main className="container min-w-0 space-y-5 pb-16 pt-5 sm:space-y-6 sm:pt-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -140,7 +145,7 @@ export function MemberEventsDashboard({
                     {event.internal && (
                       <Badge variant="outline">Internal</Badge>
                     )}
-                    {event.locked && (
+                    {event.requiresDues && (
                       <Badge variant="outline" className="gap-2">
                         <LockKeyhole
                           className="h-3.5 w-3.5"
@@ -152,7 +157,13 @@ export function MemberEventsDashboard({
                   </div>
 
                   <h3 className="mt-4 break-words text-xl font-semibold leading-tight">
-                    {event.name}
+                    <Link
+                      href={`/member/events?selected=${encodeURIComponent(event.id)}`}
+                      scroll={false}
+                      className="text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {event.name}
+                    </Link>
                   </h3>
                   <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
                     <span className="flex items-start gap-2">
@@ -179,7 +190,14 @@ export function MemberEventsDashboard({
                   </div>
 
                   <div className="mt-4">
-                    <DescriptionDetails description={event.description} />
+                    <Button asChild variant="outline" className="min-h-11">
+                      <Link
+                        href={`/member/events?selected=${encodeURIComponent(event.id)}`}
+                        scroll={false}
+                      >
+                        View description
+                      </Link>
+                    </Button>
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-4">
@@ -328,6 +346,14 @@ export function MemberEventsDashboard({
           )}
         </div>
       </section>
+      {selectedEventId && (
+        <MemberEventDialog
+          event={selectedEvent}
+          calendarUrl={
+            selectedEvent ? googleCalendarUrl(selectedEvent) : undefined
+          }
+        />
+      )}
     </main>
   );
 }

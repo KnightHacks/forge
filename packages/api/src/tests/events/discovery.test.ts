@@ -206,6 +206,32 @@ describe("event discovery policy", () => {
     ).toMatchObject({ locked: true, lockReason: "dues_required" });
   });
 
+  it("keeps the dues requirement visible until a relaxed policy has synchronized", () => {
+    const [event] = listMemberEvents(
+      [
+        eventRecord({
+          audience: "public",
+          synchronizedVisibility: {
+            audience: "dues",
+            internal: false,
+            roleIds: [],
+          },
+        }),
+      ],
+      {
+        guildId: GUILD_ID,
+        member: memberRecord({ duesActive: true }),
+        now: NOW,
+      },
+    );
+
+    expect(event).toMatchObject({
+      audience: "public",
+      locked: false,
+      requiresDues: true,
+    });
+  });
+
   it("[TC-004, TC-029] preserves member-owned attendance history after eligibility changes", () => {
     const event = eventRecord({
       audience: "roles",

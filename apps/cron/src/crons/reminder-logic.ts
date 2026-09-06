@@ -13,12 +13,17 @@ import {
 import { EVENTS } from "@forge/consts";
 import { logger } from "@forge/utils";
 
-const DISCORD_PROD_GUILD_ID = "486628710443778071";
+import { reminderEventRow } from "./reminder-row";
+
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
 const REMINDER_FOOTER =
   "-# Note: show up with your Blade QR. Don’t have an account? [Sign up](<https://blade.knighthacks.org>)";
 
 export interface ClubReminderCandidate {
+  announcementChannelId?: string | null;
+  emoji?: string | null;
+  requiresDues?: boolean;
+  skipNextWeek?: boolean;
   description: string;
   discordId: string;
   endDateTime: string | Date;
@@ -77,15 +82,6 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-function formatTime(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    hour12: true,
-    minute: "2-digit",
-    timeZone: EVENTS.CALENDAR_TIME_ZONE,
-  }).format(value);
-}
-
 function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   const isSunday = weekday(now) === "Sunday";
   const today = dateKey(now);
@@ -108,14 +104,7 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
     } else if (eventDate === tomorrow) {
       key = "Tomorrow";
     } else if (eventDate === weekFromToday) {
-      const tag = event.tag.toLowerCase();
-      const name = event.name.toLowerCase();
-      const isOperations = tag === "ops";
-      const isProjectLaunchLab =
-        tag === "project launch" &&
-        (name.includes("lab") || name.includes("hours"));
-
-      if (!isOperations && !isProjectLaunchLab) key = "Next Week";
+      if (!event.skipNextWeek) key = "Next Week";
     }
 
     if (!key) continue;
@@ -123,19 +112,6 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   }
 
   return [...groups.entries()].map(([prefix, events]) => ({ prefix, events }));
-}
-
-function compactLabel(value: string, limit: number) {
-  const characters = Array.from(value.replace(/\s+/g, " ").trim());
-  const label =
-    characters.length > limit
-      ? `${characters.slice(0, limit - 1).join("")}…`
-      : characters.join("");
-
-  // Labels now live inside Markdown rows, including masked-link text.
-  return label
-    .replaceAll("@", "@\u200b")
-    .replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
 }
 
 function reminderCards(
@@ -154,18 +130,10 @@ function reminderCards(
         timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(start);
       const heading = `### ${group.prefix.toUpperCase()} · ${date}`;
-      const name = compactLabel(event.name, 100);
-      const location = compactLabel(event.location, 80);
-      const tag = compactLabel(event.tag, 32);
-      const url = `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`;
-      const details = [
-        `${formatTime(start)}–${formatTime(new Date(event.endDateTime))}`,
-        location,
-        tag,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      const row = `**[${name}](<${url}>)**\n-# ${details}`;
+      const row = reminderEventRow({
+        ...event,
+        url: `https://blade.knighthacks.org/member/events?selected=${encodeURIComponent(event.id)}`,
+      });
       if (content && content.length + row.length + 2 > 2000) {
         sections.push({ type: ComponentType.TextDisplay, content });
         content = `${heading} · CONTINUED`;
@@ -222,13 +190,21 @@ export function createClubReminderExecutor({
 }: {
   getCandidates: (input: { now: Date }) => Promise<ClubReminderCandidate[]>;
   now: () => Date;
-  send: (payload: ReminderPayload) => Promise<unknown>;
+  send: (
+    payload: ReminderPayload,
+    channelId?: string | null,
+  ) => Promise<unknown>;
 }) {
   return async () => {
     const currentTime = now();
     const candidates = await getCandidates({ now: currentTime });
-    const groups = groupCandidates(candidates, currentTime);
-    if (groups.length === 0) return;
+    const destinations = new Map<string | null, ClubReminderCandidate[]>();
+    for (const event of candidates) {
+      const channelId = event.announcementChannelId ?? null;
+      const events = destinations.get(channelId) ?? [];
+      events.push(event);
+      destinations.set(channelId, events);
+    }
 
     const sunday = weekday(currentTime) === "Sunday";
     let title = `Event Reminders\n-# ${formatDate(currentTime)}`;
@@ -247,26 +223,36 @@ export function createClubReminderExecutor({
     }
 
     const audience = `Want reminders like these, add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
-    const cards = reminderCards(groups, title, audience);
-    for (const [index, card] of cards.entries()) {
-      const components: APIMessageTopLevelComponent[] = [card];
-      if (index === 0)
-        components.push({ type: ComponentType.TextDisplay, content: audience });
-      try {
-        await send({
-          components,
-          flags: MessageFlags.IsComponentsV2,
-          withComponents: true,
-          allowedMentions: {
-            parse: sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
-            roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
-          },
-        });
-      } catch (error) {
-        logger.error(
-          `Failed to send Club reminder card "${title}" (part ${index + 1}):`,
-          error,
-        );
+    for (const [channelId, events] of destinations) {
+      const groups = groupCandidates(events, currentTime);
+      const cards = reminderCards(groups, title, audience);
+      for (const [index, card] of cards.entries()) {
+        const components: APIMessageTopLevelComponent[] = [card];
+        if (index === 0)
+          components.push({
+            type: ComponentType.TextDisplay,
+            content: audience,
+          });
+        try {
+          await send(
+            {
+              components,
+              flags: MessageFlags.IsComponentsV2,
+              withComponents: true,
+              allowedMentions: {
+                parse:
+                  sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
+                roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
+              },
+            },
+            channelId,
+          );
+        } catch (error) {
+          logger.error(
+            `Failed to send Club reminder card "${title}" (part ${index + 1}, channel ${channelId ?? "default"}):`,
+            error,
+          );
+        }
       }
     }
   };

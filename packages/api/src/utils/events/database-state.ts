@@ -104,6 +104,7 @@ export function eventRowToWorkflowRecord(
             roleIds: [...event.visibilityRoles],
           },
     tag: event.tag,
+    tagId: event.tagId,
     tagColor: event.tagColor,
   };
 }
@@ -311,6 +312,7 @@ export function createDbEventWorkflowState({
             start_datetime: event.startAt,
             syncRevision: event.revision,
             tag: event.tag,
+            tagId: creationReferences?.tagId ?? null,
             tagColor: event.tagColor,
           })
           .onConflictDoNothing({ target: Event.creationKey })

@@ -17,6 +17,11 @@ interface Visibility {
 }
 
 export interface EventDiscoveryRecord {
+  announcement?: {
+    emoji: string | null;
+    announcementChannelId: string | null;
+    skipNextWeek: boolean;
+  } | null;
   attendanceCount: number;
   audience: Audience;
   deletionIntentAt: Date | null;
@@ -174,6 +179,9 @@ export function listMemberEvents(
           ...safeEvent(event),
           attendanceCount: event.attendanceCount,
           audience: event.audience,
+          requiresDues: effectivePolicies(event).some(
+            (visibility) => visibility.audience === "dues",
+          ),
           discordUrl: event.discord.id
             ? `https://discord.com/events/${guildId}/${event.discord.id}`
             : null,

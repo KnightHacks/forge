@@ -4,6 +4,7 @@ import { discordSnowflakeSchema } from "./discord-archive";
 import {
   EVENT_DISCORD_NO_PROJECTION_CONFIRMATION,
   eventExplicitOffsetInstantSchema,
+  eventTagAnnouncementFields,
 } from "./event-management";
 
 const uuidSchema = z.string().uuid();
@@ -205,6 +206,8 @@ export const hackathonAttendanceCorrectionSchema = hackathonEventScopeSchema
   .strict();
 
 const tagFields = {
+  emoji: eventTagAnnouncementFields.emoji,
+  announcementChannelId: eventTagAnnouncementFields.announcementChannelId,
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Enter a six-digit hex color."),
   defaultPoints: z.number().int().nonnegative().max(POSTGRES_INTEGER_MAX),
   name: z.string().trim().min(1).max(64),
@@ -216,6 +219,8 @@ export const hackathonEventTagCreateSchema = hackathonEventScopeSchema
 
 export const hackathonEventTagUpdateSchema = hackathonEventScopeSchema
   .extend({
+    emoji: tagFields.emoji,
+    announcementChannelId: tagFields.announcementChannelId,
     color: tagFields.color.optional(),
     defaultPoints: tagFields.defaultPoints.optional(),
     name: tagFields.name.optional(),
@@ -226,7 +231,9 @@ export const hackathonEventTagUpdateSchema = hackathonEventScopeSchema
     if (
       input.color === undefined &&
       input.defaultPoints === undefined &&
-      input.name === undefined
+      input.name === undefined &&
+      input.emoji === undefined &&
+      input.announcementChannelId === undefined
     ) {
       ctx.addIssue({ code: "custom", message: "Choose at least one change." });
     }

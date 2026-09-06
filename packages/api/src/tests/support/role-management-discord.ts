@@ -81,6 +81,14 @@ async function getAssignmentRows() {
 }
 
 const roleManagementE2EDiscordGateway: RoleDiscordGateway = {
+  getGuildTextChannels() {
+    return Promise.resolve([
+      { id: "990000000000000950", name: "event-announcements-e2e" },
+    ]);
+  },
+  validateTextChannel(channelId) {
+    return Promise.resolve(channelId === "990000000000000950");
+  },
   getGuildMember(discordUserId, context) {
     if (
       discordUserId === "role-create-member-e2e" &&

@@ -216,8 +216,19 @@ const tagColorSchema = z
   .string()
   .regex(/^#[0-9A-Fa-f]{6}$/, "Enter a six-digit hex color.");
 
+export const eventTagAnnouncementFields = {
+  emoji: z.emoji("Enter an emoji.").max(32).nullable().optional(),
+  announcementChannelId: z
+    .string()
+    .regex(/^\d{17,20}$/, "Choose a Discord text channel.")
+    .nullable()
+    .optional(),
+  skipNextWeek: z.boolean().optional(),
+};
+
 export const eventTagCreateSchema = z
   .object({
+    ...eventTagAnnouncementFields,
     color: tagColorSchema,
     defaultPoints: z.number().int().nonnegative().max(POSTGRES_INTEGER_MAX),
     name: tagNameSchema,
@@ -226,6 +237,7 @@ export const eventTagCreateSchema = z
 
 export const eventTagUpdateSchema = z
   .object({
+    ...eventTagAnnouncementFields,
     color: tagColorSchema.optional(),
     defaultPoints: z
       .number()
@@ -241,7 +253,10 @@ export const eventTagUpdateSchema = z
     if (
       input.color === undefined &&
       input.defaultPoints === undefined &&
-      input.name === undefined
+      input.name === undefined &&
+      input.emoji === undefined &&
+      input.announcementChannelId === undefined &&
+      input.skipNextWeek === undefined
     ) {
       ctx.addIssue({ code: "custom", message: "Choose at least one change." });
     }

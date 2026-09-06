@@ -1,11 +1,10 @@
-import type {
-  APIEmbed,
-  RESTPostAPIChannelMessageJSONBody,
-} from "discord-api-types/v10";
+import type { RESTPostAPIChannelMessageJSONBody } from "discord-api-types/v10";
+import { ComponentType, MessageFlags } from "discord-api-types/v10";
 
-import { EVENTS } from "@forge/consts";
+import { reminderEventRow } from "./reminder-row";
 
 export interface HackReminderDelivery {
+  emoji?: string | null;
   channelId: string;
   deliveryId: string;
   description: string;
@@ -26,47 +25,46 @@ export interface HackReminderFailure {
   state: "error" | "unknown";
 }
 
-function formatTime(value: Date | string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    hour12: true,
-    minute: "2-digit",
-    timeZone: EVENTS.CALENDAR_TIME_ZONE,
-  }).format(new Date(value));
-}
-
 export function buildHackReminderMessage(
   delivery: HackReminderDelivery,
 ): RESTPostAPIChannelMessageJSONBody {
-  const embed: APIEmbed = {
-    author: {
-      name: `[${delivery.tag.toUpperCase().replaceAll(" ", "-")}]`,
-    },
-    color: 0xcca4f4,
-    description: delivery.description,
-    fields: [
-      { inline: true, name: "Location", value: delivery.location },
+  return {
+    allowed_mentions: { parse: [], roles: [delivery.roleId] },
+    flags: MessageFlags.IsComponentsV2,
+    components: [
       {
-        inline: true,
-        name: "Time",
-        value: `${formatTime(delivery.startDateTime)} – ${formatTime(delivery.endDateTime)}`,
+        type: ComponentType.Container,
+        accent_color: 0xcca4f4,
+        components: [
+          {
+            type: ComponentType.TextDisplay,
+            content: "## Starting in about 15 minutes",
+          },
+          {
+            type: ComponentType.TextDisplay,
+            content: reminderEventRow({
+              ...delivery,
+              url: delivery.discordEventId
+                ? `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`
+                : null,
+            }),
+          },
+          // Without a published Discord event there is nowhere to open details.
+          ...(!delivery.discordEventId && delivery.description.trim()
+            ? [
+                {
+                  type: ComponentType.TextDisplay as const,
+                  content: delivery.description.slice(0, 2000),
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        type: ComponentType.TextDisplay,
+        content: `cc: <@&${delivery.roleId}>`,
       },
     ],
-    title: delivery.name,
-    ...(delivery.discordEventId
-      ? {
-          url: `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`,
-        }
-      : {}),
-  };
-
-  return {
-    allowed_mentions: {
-      parse: [],
-      roles: [delivery.roleId],
-    },
-    content: `Starting in about 15 minutes, <@&${delivery.roleId}>.`,
-    embeds: [embed],
   };
 }
 
