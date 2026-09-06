@@ -66,9 +66,14 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   async function officerCaller() {
     const trpc = await import("../../trpc");
     const { hackerRouter } = await import("../../routers/hacker");
+    const { hackathonEventRouter } =
+      await import("../../routers/hackathon-event");
 
     return trpc.createCallerFactory(
-      trpc.createTRPCRouter({ hacker: hackerRouter }),
+      trpc.createTRPCRouter({
+        hacker: hackerRouter,
+        hackathonEvent: hackathonEventRouter,
+      }),
     )({
       headers: new Headers(),
       session: {
@@ -255,6 +260,10 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   // PRECONDITION_FAILED code.
   afterEach(async () => {
     await client
+      .update(auth.Roles)
+      .set({ permissions: permissionBitstring("IS_OFFICER") })
+      .where(eq(auth.Roles.id, OFFICER_ROLE));
+    await client
       .update(knightHacks.Hacker)
       .set({ isFirstTime: false })
       .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
@@ -319,6 +328,139 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
     await client.delete(knightHacks.EmailSendRecipient);
     await client.delete(knightHacks.EmailSend);
+  });
+
+  describe("delegated hacker permissions", () => {
+    it.each(["READ_HACKERS", "EDIT_HACKERS"] as const)(
+      "%s reads real applicants and attendance without the blacklist",
+      async (permission) => {
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring(permission) })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        const options = await caller.hacker.listHackathonOptions();
+        expect(options.hackathons.map((row) => row.id)).toContain(
+          READY_HACKATHON,
+        );
+        const roster = await caller.hacker.listForHackathon({
+          hackathonId: READY_HACKATHON,
+        });
+        expect(roster.hackers).toHaveLength(3);
+        for (const row of roster.hackers) {
+          expect(row).toMatchObject({
+            blacklisted: null,
+            blacklistedAt: null,
+            blacklistReason: null,
+          });
+        }
+        const detail = await caller.hacker.get({
+          attendeeId: BLACKLISTED_ATTENDEE,
+        });
+        expect(detail).toMatchObject({
+          firstName: "Test",
+          email: "hacker-blocked@example.test",
+          blacklisted: null,
+          blacklistedAt: null,
+          blacklistReason: null,
+        });
+        await expect(
+          caller.hacker.statusCounts({ hackathonId: READY_HACKATHON }),
+        ).resolves.toMatchObject({ total: 3 });
+        const filters = await caller.hacker.filterOptions({
+          hackathonId: READY_HACKATHON,
+        });
+        expect(filters.schools).toContain("University of Central Florida");
+        await expect(
+          caller.hackathonEvent.listHackerEventAttendance({
+            attendeeId: PLAIN_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+          }),
+        ).resolves.toMatchObject({ rows: [] });
+      },
+    );
+
+    it("keeps blacklist details available to officers", async () => {
+      await expect(
+        caller.hacker.get({ attendeeId: BLACKLISTED_ATTENDEE }),
+      ).resolves.toMatchObject({
+        blacklisted: true,
+        blacklistReason: "Repeated code of conduct violations.",
+      });
+    });
+
+    it("lets an editor update an application and queue its status mail", async () => {
+      await client
+        .update(auth.Roles)
+        .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+        .where(eq(auth.Roles.id, OFFICER_ROLE));
+      await expect(
+        caller.hacker.updateProfile({
+          attendeeId: PLAIN_ATTENDEE,
+          email: "updated-hacker@example.test",
+        }),
+      ).resolves.toMatchObject({ updated: true });
+      await expect(
+        caller.hacker.setStatus({
+          attendeeId: PLAIN_ATTENDEE,
+          status: "accepted",
+        }),
+      ).resolves.toMatchObject({ status: "accepted" });
+      const row = await client.query.HackerAttendee.findFirst({
+        where: eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE),
+      });
+      expect(row?.status).toBe("accepted");
+      expect(row?.lastStatusSendId).not.toBeNull();
+    });
+
+    it("preserves blacklist safeguards without disclosing them to editors", async () => {
+      await client
+        .update(auth.Roles)
+        .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+        .where(eq(auth.Roles.id, OFFICER_ROLE));
+      await expect(
+        caller.hacker.setStatus({
+          attendeeId: BLACKLISTED_ATTENDEE,
+          status: "accepted",
+        }),
+      ).rejects.toMatchObject({
+        code: "PRECONDITION_FAILED",
+        message: "This status change requires officer review.",
+      });
+      await expect(
+        caller.hacker.deleteApplication({
+          attendeeId: BLACKLISTED_ATTENDEE,
+          confirmed: true,
+        }),
+      ).rejects.toMatchObject({
+        code: "FORBIDDEN",
+        message: "Deleting this application requires officer review.",
+      });
+      for (const operation of ["previewBulk", "confirmBulk"] as const) {
+        // Both the all-skipped and mixed-result response paths must redact.
+        for (const attendeeIds of [
+          [BLACKLISTED_ATTENDEE],
+          [BLACKLISTED_ATTENDEE, PLAIN_ATTENDEE],
+        ]) {
+          const result = await caller.hacker[operation]({
+            attendeeIds,
+            hackathonId: READY_HACKATHON,
+            status: "accepted",
+          });
+          expect(result.skipped).toEqual([
+            {
+              attendeeId: BLACKLISTED_ATTENDEE,
+              name: "Test blocked",
+              reason: null,
+            },
+          ]);
+        }
+      }
+      const blocked = await client.query.HackerAttendee.findFirst({
+        where: eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE),
+      });
+      expect(blocked?.blacklistedAt).not.toBeNull();
+      expect(blocked?.status).toBe("pending");
+    });
   });
 
   afterAll(async () => {

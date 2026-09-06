@@ -30,7 +30,8 @@ type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
  * `undefined`, which React renders as nothing. A blank explanation on the one
  * list whose job is saying who was *not* mailed is worse than an ugly one.
  */
-export function skipLabel(reason: string) {
+export function skipLabel(reason: string | null) {
+  if (reason === null) return "Requires officer review";
   // `hasOwn`, not `in`: `in` walks the prototype, so `"toString"` would pass the
   // guard and return a function, which React refuses to render — an error
   // boundary in place of the fallback this helper exists to provide.

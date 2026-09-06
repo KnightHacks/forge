@@ -95,9 +95,13 @@ function PaneTab({
 }
 
 export function HackerRoster({
+  canEdit,
+  isOfficer,
   hackathons,
   selected,
 }: {
+  canEdit: boolean;
+  isOfficer: boolean;
   hackathons: Options;
   selected: Options[number] | null;
 }) {
@@ -220,13 +224,17 @@ export function HackerRoster({
           title="Hackers"
         />
         <p className="rounded-md border border-dashed p-6 text-center text-muted-foreground">
-          Create a hackathon before managing applicants.{" "}
-          <Link
-            className="underline underline-offset-4"
-            href="/admin/hackathon"
-          >
-            Hackathons
-          </Link>
+          {isOfficer
+            ? "Create a hackathon before managing applicants."
+            : "Ask an officer to create a hackathon before managing applicants."}{" "}
+          {isOfficer ? (
+            <Link
+              className="underline underline-offset-4"
+              href="/admin/hackathon"
+            >
+              Hackathons
+            </Link>
+          ) : null}
         </p>
       </main>
     );
@@ -267,7 +275,11 @@ export function HackerRoster({
   return (
     <main className={adminPageLayoutClassName}>
       <AdminPageHeader
-        description="Everyone who applied. Filter to the group you mean, click across the rows, and act on them together."
+        description={
+          canEdit
+            ? "Everyone who applied. Filter to the group you mean, click across the rows, and act on them together."
+            : "Everyone who applied. Search, filter, and open an application to read its details."
+        }
         eyebrow={ADMIN_PAGE_EYEBROWS.hackers}
         icon={Users}
         title="Hackers"
@@ -307,6 +319,7 @@ export function HackerRoster({
               />
             </div>
             <HackerFilters
+              canViewBlacklist={isOfficer}
               busy={filterBusy}
               options={filterOptions.data ?? EMPTY_FILTER_OPTIONS}
               optionsError={filterOptions.isError}
@@ -395,7 +408,7 @@ export function HackerRoster({
           ) : null}
         </CardHeader>
 
-        {selectedCount > 0 ? (
+        {canEdit && selectedCount > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-b border-border/70 bg-primary/5 px-3 py-3 sm:px-4 md:px-6">
             <Badge className="text-sm" variant="secondary">
               {selectedCount} selected
@@ -461,6 +474,7 @@ export function HackerRoster({
               )}
             >
               <HackerTable
+                canSelect={canEdit}
                 busy={resultsUpdating}
                 hackers={hackers}
                 onOpen={(hacker) => url.setHackerId(hacker.attendeeId)}
@@ -492,26 +506,31 @@ export function HackerRoster({
             ? ` · capped at ${SHOW_ALL_SIZE}; narrow the filter to reach the rest`
             : url.showAll
               ? ""
-              : ` · first ${PAGE_SIZE}, use Show all to select across the list`}
-          {" · "}click a row to open it, shift-click to select a range
+              : ` · first ${PAGE_SIZE}, use Show all to see the rest`}
+          {" · "}click a row to open it
+          {canEdit ? ", shift-click to select a range" : " · read-only"}
         </div>
       </Card>
 
-      <BulkConfirmDialog
-        attendeeIds={selectedIds}
-        hackathonId={selected.id}
-        onDone={() => {
-          setBulkStatus(null);
-          selection.clear();
-          void refresh();
-        }}
-        onOpenChange={(open) => {
-          if (!open) setBulkStatus(null);
-        }}
-        status={bulkStatus}
-      />
+      {canEdit ? (
+        <BulkConfirmDialog
+          attendeeIds={selectedIds}
+          hackathonId={selected.id}
+          onDone={() => {
+            setBulkStatus(null);
+            selection.clear();
+            void refresh();
+          }}
+          onOpenChange={(open) => {
+            if (!open) setBulkStatus(null);
+          }}
+          status={bulkStatus}
+        />
+      ) : null}
 
       <HackerDetailDialog
+        canEdit={canEdit}
+        isOfficer={isOfficer}
         attendeeId={url.hackerId}
         blocked={blocked}
         blockedReason={blockedReason}

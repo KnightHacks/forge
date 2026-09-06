@@ -3,7 +3,42 @@
 Phase: **implemented** — whole bundle approved 2026-08-03 and built. Awaiting
 `forge-review` and the owner's UI pass.
 
-## Context
+## Delegated hacker permissions — 2026-09-06
+
+Phase: validated; publishing the PR from `codex/blade-hacker-permissions`.
+
+- Issue: [#538](https://github.com/KnightHacks/forge/issues/538).
+- Rebased onto `main` before publishing to exclude the unrelated navigation
+  changes in PR #537. The permission fix applied without conflicts; validation
+  passed again on this standalone branch (194 API tests, 34 Blade tests, and
+  seven browser tests).
+
+- Owner approved making Read Hackers functional without officer status, with
+  Edit Hackers controlling writes and blacklist/configuration remaining officer-only.
+- Scope: Blade hacker navigation/page/controls, hacker API guards and responses,
+  and the hacker detail's event-attendance read. No schema or dependency changes.
+- Regression proof: the new API matrix failed 31 cases before implementation.
+  The completed API checks pass 194 tests across hacker access, real database
+  guards, hackathon configuration access, event access, and role permissions.
+- Blade: 34 targeted tests pass. All seven hacker-management browser tests pass,
+  including readers at 1440px and 320px, the legacy link, filtering/search,
+  details and attendance, editor controls, unauthorized redirects, and existing
+  officer flows. Roster/detail screenshots were inspected at both widths.
+- Database and browser checks used disposable local databases, dropped afterward.
+  Status-mail tests enqueue only in the disposable database; no delivery worker runs.
+- `pnpm format`, `pnpm lint`, `pnpm typecheck`, and
+  `pnpm analyze:react:changed` pass. Lint retains the repository's existing
+  warnings. The root typecheck covers shared API consumers.
+- No schema, permission-bit layout, dependency, or persistent environment changes.
+  `pnpm build` was attempted before publishing and failed while collecting page
+  data: Guild lacks `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`; the 2026
+  app lacks `KHIX_HACKER_PORTAL_CLIENT_ID` and `KHIX_HACKER_PORTAL_ORIGIN`.
+  `pnpm --filter=@forge/blade build` also failed collecting `/judge/end` due to
+  missing `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`.
+  No environment values were changed to bypass this. Deployment is not performed.
+- Screenshot evidence: [reader views](./evidence/README.md).
+
+## Original context
 
 The slice after hackathon configuration. That slice made per-status mail
 officer-editable; nothing sends it, and `isConfigured` is computed and read by

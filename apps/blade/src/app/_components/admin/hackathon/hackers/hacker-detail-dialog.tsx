@@ -144,6 +144,8 @@ function HackerDetailSkeleton() {
  * explain themselves.
  */
 export function HackerDetailDialog({
+  canEdit,
+  isOfficer,
   attendeeId,
   blocked,
   blockedReason,
@@ -151,6 +153,8 @@ export function HackerDetailDialog({
   onOpenChange,
   onSaved,
 }: {
+  canEdit: boolean;
+  isOfficer: boolean;
   attendeeId: string | null;
   blocked: boolean;
   blockedReason: string | null;
@@ -301,16 +305,17 @@ export function HackerDetailDialog({
                     </span>
                   </DialogDescription>
                 </div>
-                {/* A real control, not a ghost link buried in the subtitle. */}
-                <Button
-                  className="min-h-11 shrink-0 gap-2"
-                  disabled={busy || blocked}
-                  onClick={() => setEditing((current) => !current)}
-                  variant={editing ? "secondary" : "outline"}
-                >
-                  <Pencil className="size-4" aria-hidden="true" />
-                  {editing ? "Stop editing" : "Edit"}
-                </Button>
+                {canEdit ? (
+                  <Button
+                    className="min-h-11 shrink-0 gap-2"
+                    disabled={busy || blocked}
+                    onClick={() => setEditing((current) => !current)}
+                    variant={editing ? "secondary" : "outline"}
+                  >
+                    <Pencil className="size-4" aria-hidden="true" />
+                    {editing ? "Stop editing" : "Edit"}
+                  </Button>
+                ) : null}
               </div>
 
               {/* The summary row the member panel leads with: the numbers an
@@ -405,7 +410,7 @@ export function HackerDetailDialog({
               school, major and the MLH consent answers are the applicant's own
               answers, not an officer's to rewrite.
             */}
-            {editing ? (
+            {canEdit && editing ? (
               <div className="px-4 py-4 sm:px-6">
                 <HackerEditForm
                   busy={busy}
@@ -426,19 +431,21 @@ export function HackerDetailDialog({
                 on the screen and the reason an officer opened it — reading the
                 application is what they do to decide, not the task itself.
               */}
-                <DetailSection
-                  className="lg:col-span-2"
-                  description={
-                    blocked
-                      ? (blockedReason ?? "Actions are unavailable.")
-                      : "Each status sends its configured email immediately. It cannot be recalled."
-                  }
-                  icon={Send}
-                  title="Status and actions"
-                >
-                  <div className="flex flex-wrap gap-2 px-3 py-3 sm:px-4">
-                    {(Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]).map(
-                      (status) => (
+                {canEdit ? (
+                  <DetailSection
+                    className="lg:col-span-2"
+                    description={
+                      blocked
+                        ? (blockedReason ?? "Actions are unavailable.")
+                        : "Each status sends its configured email immediately. It cannot be recalled."
+                    }
+                    icon={Send}
+                    title="Status and actions"
+                  >
+                    <div className="flex flex-wrap gap-2 px-3 py-3 sm:px-4">
+                      {(
+                        Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]
+                      ).map((status) => (
                         <Button
                           className="min-h-11 text-sm"
                           disabled={
@@ -446,7 +453,7 @@ export function HackerDetailDialog({
                             blocked ||
                             hacker.status === status ||
                             // Blacklisted: capacity reject only.
-                            (hacker.blacklisted && status !== "denied")
+                            (hacker.blacklisted === true && status !== "denied")
                           }
                           key={status}
                           onClick={() =>
@@ -462,84 +469,90 @@ export function HackerDetailDialog({
                         >
                           {HACKER_STATUS_LABELS[status]}
                         </Button>
-                      ),
-                    )}
-                  </div>
-                  <div className="border-t border-border/70 px-3 py-3 sm:px-4">
-                    {hacker.blacklisted ? (
-                      <Button
-                        className="min-h-11 gap-2"
-                        disabled={busy || blocked}
-                        onClick={() =>
-                          setBlacklist.mutate({
-                            attendeeId: hacker.attendeeId,
-                            blacklisted: false,
-                          })
-                        }
-                        variant="secondary"
-                      >
-                        {setBlacklist.isPending ? (
-                          <Loader2
-                            className="size-4 animate-spin"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        Remove blacklist
-                      </Button>
-                    ) : blacklisting ? (
-                      <div className="grid gap-2">
-                        <Label htmlFor="detail-blacklist-reason">
-                          Why should this applicant not be accepted?
-                        </Label>
-                        <Textarea
-                          id="detail-blacklist-reason"
-                          maxLength={500}
-                          onChange={(event) => setReason(event.target.value)}
-                          value={reason}
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          Does not change their status and sends nothing.
-                          Visible only here — a year from now it is the only
-                          thing that explains the flag.
-                        </p>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Button
-                            className="min-h-11"
-                            disabled={busy}
-                            onClick={() => setBlacklisting(false)}
-                            variant="ghost"
-                          >
-                            Cancel
-                          </Button>
+                      ))}
+                    </div>
+                    {isOfficer ? (
+                      <div className="border-t border-border/70 px-3 py-3 sm:px-4">
+                        {hacker.blacklisted ? (
                           <Button
                             className="min-h-11 gap-2"
-                            disabled={busy || blocked || reason.trim() === ""}
+                            disabled={busy || blocked}
                             onClick={() =>
                               setBlacklist.mutate({
                                 attendeeId: hacker.attendeeId,
-                                blacklisted: true,
-                                reason,
+                                blacklisted: false,
                               })
                             }
-                            variant="destructive"
+                            variant="secondary"
                           >
+                            {setBlacklist.isPending ? (
+                              <Loader2
+                                className="size-4 animate-spin"
+                                aria-hidden="true"
+                              />
+                            ) : null}
+                            Remove blacklist
+                          </Button>
+                        ) : blacklisting ? (
+                          <div className="grid gap-2">
+                            <Label htmlFor="detail-blacklist-reason">
+                              Why should this applicant not be accepted?
+                            </Label>
+                            <Textarea
+                              id="detail-blacklist-reason"
+                              maxLength={500}
+                              onChange={(event) =>
+                                setReason(event.target.value)
+                              }
+                              value={reason}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                              Does not change their status and sends nothing.
+                              Visible only here — a year from now it is the only
+                              thing that explains the flag.
+                            </p>
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button
+                                className="min-h-11"
+                                disabled={busy}
+                                onClick={() => setBlacklisting(false)}
+                                variant="ghost"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                className="min-h-11 gap-2"
+                                disabled={
+                                  busy || blocked || reason.trim() === ""
+                                }
+                                onClick={() =>
+                                  setBlacklist.mutate({
+                                    attendeeId: hacker.attendeeId,
+                                    blacklisted: true,
+                                    reason,
+                                  })
+                                }
+                                variant="destructive"
+                              >
+                                Blacklist applicant
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            className="min-h-11 gap-2"
+                            disabled={busy || blocked}
+                            onClick={() => setBlacklisting(true)}
+                            variant="outline"
+                          >
+                            <Ban className="size-4" aria-hidden="true" />
                             Blacklist applicant
                           </Button>
-                        </div>
+                        )}
                       </div>
-                    ) : (
-                      <Button
-                        className="min-h-11 gap-2"
-                        disabled={busy || blocked}
-                        onClick={() => setBlacklisting(true)}
-                        variant="outline"
-                      >
-                        <Ban className="size-4" aria-hidden="true" />
-                        Blacklist applicant
-                      </Button>
-                    )}
-                  </div>
-                </DetailSection>
+                    ) : null}
+                  </DetailSection>
+                ) : null}
 
                 <DetailSection
                   description="Who they are, and how to reach them."
@@ -596,90 +609,92 @@ export function HackerDetailDialog({
                 </DetailSection>
 
                 <DetailSection
-                  description="Awarded by hand. Every change is logged under the officer who made it."
+                  description="Every adjustment is logged under the person who made it."
                   icon={Sparkles}
                   title="Points"
                 >
                   <DetailRow label="Total" value={hacker.points} />
-                  <div className="px-3 py-3 sm:px-4">
-                    {/*
+                  {canEdit ? (
+                    <div className="px-3 py-3 sm:px-4">
+                      {/*
                     Behind a control rather than always on screen: this panel is
                     read far more often than it is used to award, and a live
                     number box in a permanent row invites a mis-click on a value
                     an officer never meant to change.
                   */}
-                    {awarding ? (
-                      <div className="grid gap-2">
-                        <div className="grid gap-2 sm:grid-cols-[7rem_1fr]">
-                          <Input
-                            aria-label="Points to add or subtract"
-                            className="h-11"
-                            disabled={busy || blocked}
-                            inputMode="numeric"
-                            onChange={(event) =>
-                              setPointDelta(event.target.value)
-                            }
-                            placeholder="+10"
-                            type="number"
-                            value={pointDelta}
-                          />
-                          <Input
-                            aria-label="Reason for the adjustment"
-                            className="h-11"
-                            disabled={busy || blocked}
-                            maxLength={300}
-                            onChange={(event) =>
-                              setPointReason(event.target.value)
-                            }
-                            placeholder="Why? e.g. won the hardware challenge"
-                            value={pointReason}
-                          />
+                      {awarding ? (
+                        <div className="grid gap-2">
+                          <div className="grid gap-2 sm:grid-cols-[7rem_1fr]">
+                            <Input
+                              aria-label="Points to add or subtract"
+                              className="h-11"
+                              disabled={busy || blocked}
+                              inputMode="numeric"
+                              onChange={(event) =>
+                                setPointDelta(event.target.value)
+                              }
+                              placeholder="+10"
+                              type="number"
+                              value={pointDelta}
+                            />
+                            <Input
+                              aria-label="Reason for the adjustment"
+                              className="h-11"
+                              disabled={busy || blocked}
+                              maxLength={300}
+                              onChange={(event) =>
+                                setPointReason(event.target.value)
+                              }
+                              placeholder="Why? e.g. won the hardware challenge"
+                              value={pointReason}
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            A change, not a new total, so two officers awarding
+                            at once add up.
+                          </p>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <Button
+                              className="min-h-11"
+                              disabled={busy}
+                              onClick={() => setAwarding(false)}
+                              variant="ghost"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              className="min-h-11"
+                              disabled={
+                                busy ||
+                                blocked ||
+                                pointDelta.trim() === "" ||
+                                Number(pointDelta) === 0 ||
+                                pointReason.trim() === ""
+                              }
+                              onClick={() =>
+                                awardPoints.mutate({
+                                  attendeeId: hacker.attendeeId,
+                                  delta: Number(pointDelta),
+                                  reason: pointReason,
+                                })
+                              }
+                            >
+                              Apply
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          A change, not a new total, so two officers awarding at
-                          once add up.
-                        </p>
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <Button
-                            className="min-h-11"
-                            disabled={busy}
-                            onClick={() => setAwarding(false)}
-                            variant="ghost"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            className="min-h-11"
-                            disabled={
-                              busy ||
-                              blocked ||
-                              pointDelta.trim() === "" ||
-                              Number(pointDelta) === 0 ||
-                              pointReason.trim() === ""
-                            }
-                            onClick={() =>
-                              awardPoints.mutate({
-                                attendeeId: hacker.attendeeId,
-                                delta: Number(pointDelta),
-                                reason: pointReason,
-                              })
-                            }
-                          >
-                            Apply
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <Button
-                        className="min-h-11"
-                        disabled={busy || blocked}
-                        onClick={() => setAwarding(true)}
-                        variant="secondary"
-                      >
-                        Adjust points
-                      </Button>
-                    )}
-                  </div>
+                      ) : (
+                        <Button
+                          className="min-h-11"
+                          disabled={busy || blocked}
+                          onClick={() => setAwarding(true)}
+                          variant="secondary"
+                        >
+                          Adjust points
+                        </Button>
+                      )}
+                    </div>
+                  ) : null}
                 </DetailSection>
 
                 <DetailSection
@@ -763,29 +778,31 @@ export function HackerDetailDialog({
                   </DetailSection>
                 ) : null}
 
-                <DetailSection
-                  className="border-destructive/30 lg:col-span-2"
-                  description="Remove this hackathon application so the participant can submit it again."
-                  icon={Trash2}
-                  title="Delete application"
-                >
-                  <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-                    <p className="text-sm leading-5 text-muted-foreground">
-                      Their Blade account and reusable profile remain. Status,
-                      points, agreements, and check-ins for this hackathon are
-                      removed permanently.
-                    </p>
-                    <DeleteApplicationDialog
-                      attendeeId={hacker.attendeeId}
-                      blocked={blocked}
-                      name={hacker.name}
-                      onDeleted={() => {
-                        onOpenChange(false);
-                        onSaved();
-                      }}
-                    />
-                  </div>
-                </DetailSection>
+                {canEdit ? (
+                  <DetailSection
+                    className="border-destructive/30 lg:col-span-2"
+                    description="Remove this hackathon application so the participant can submit it again."
+                    icon={Trash2}
+                    title="Delete application"
+                  >
+                    <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                      <p className="text-sm leading-5 text-muted-foreground">
+                        Their Blade account and reusable profile remain. Status,
+                        points, agreements, and check-ins for this hackathon are
+                        removed permanently.
+                      </p>
+                      <DeleteApplicationDialog
+                        attendeeId={hacker.attendeeId}
+                        blocked={blocked}
+                        name={hacker.name}
+                        onDeleted={() => {
+                          onOpenChange(false);
+                          onSaved();
+                        }}
+                      />
+                    </div>
+                  </DetailSection>
+                ) : null}
               </div>
             )}
           </>
