@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { CareerHistoryDraft } from "~/app/_components/member/employment-history-editor";
@@ -41,7 +41,7 @@ const companyIssue = {
   fieldLabel: "Company",
   message: "Choose an existing company or enter a new one.",
 };
-const scrollIntoView = vi.fn();
+const scrollIntoView = vi.fn(() => undefined);
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = scrollIntoView;
@@ -52,18 +52,19 @@ beforeAll(() => {
   window.cancelAnimationFrame = vi.fn();
 });
 
-describe("EmploymentHistoryEditor first invalid focus", () => {
+describe("EmploymentHistoryEditor focus", () => {
+  const props = {
+    currentCityKey: null,
+    currentCityLabel: null,
+    guildLocationVisible: true,
+    history,
+    onCurrentCityChange: vi.fn(),
+    onGuildLocationVisibleChange: vi.fn(),
+    onHistoryChange: vi.fn(),
+    validationIssues: [companyIssue],
+  };
+
   it("focuses and scrolls only when a failed-save request changes", async () => {
-    const props = {
-      currentCityKey: null,
-      currentCityLabel: null,
-      guildLocationVisible: true,
-      history,
-      onCurrentCityChange: vi.fn(),
-      onGuildLocationVisibleChange: vi.fn(),
-      onHistoryChange: vi.fn(),
-      validationIssues: [companyIssue],
-    };
     const { rerender } = render(
       <EmploymentHistoryEditor
         {...props}
@@ -98,4 +99,24 @@ describe("EmploymentHistoryEditor first invalid focus", () => {
     expect(company).not.toHaveFocus();
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
   });
+
+  it.each(["Company", "City"])(
+    "cleans up pending %s blur callbacks on unmount",
+    (name) => {
+      vi.useFakeTimers();
+      const { unmount } = render(<EmploymentHistoryEditor {...props} />);
+      try {
+        for (const input of screen.getAllByRole("textbox", { name })) {
+          fireEvent.blur(input);
+          fireEvent.focus(input);
+          fireEvent.blur(input);
+        }
+        unmount();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        unmount();
+        vi.useRealTimers();
+      }
+    },
+  );
 });

@@ -61,7 +61,7 @@ CodeRabbit follow-up; current focused checks are recorded below):
 - Validators: 311 tests across 24 files.
 - DB: 156 tests across 30 files, including all 51 migrations on fresh PostgreSQL
   and migration 0050 backfill/default/snapshot/FK regressions.
-- Full Blade suite: 825 tests across 146 files with `--maxWorkers=4`.
+- Full Blade suite: 827 tests across 146 files with `--maxWorkers=4`.
 - Real browser scenarios: member deep-link/navigation/privacy/mobile details
   and Club/hack tag create/reload/clear, plus unrelated edits after renaming a tag
   and reusing its old name. Mobile invalid-input recovery preserves fields.
@@ -125,6 +125,11 @@ concurrency, also when workspaces were serialized. It passed in isolation, and
 all 825 Blade tests passed with four workers. No environment file, test timeout,
 payment code, or runner configuration changed. The default `pnpm test` run is
 therefore not reported as passing.
+
+CI later passed all 825 Blade assertions but failed on an unhandled employment
+picker blur callback after jsdom teardown. Both company/city pickers now cancel
+pending blur timers on unmount. Two timer-leak regressions failed before the fix;
+all 827 Blade tests pass afterward with no unhandled errors.
 
 ## Evidence and limits
 
