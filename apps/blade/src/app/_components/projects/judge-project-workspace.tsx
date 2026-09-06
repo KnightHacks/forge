@@ -127,7 +127,13 @@ function MemberRoomSelector({
       const next = new URLSearchParams(searchParams.toString());
       next.set("challenge", room.challengeId);
       next.delete("page");
-      toast.success("Judging room selected.");
+      if (room.discordDelivery === "failed") {
+        toast.error(
+          "Room selected, but Discord could not open the room thread for you.",
+        );
+      } else {
+        toast.success("Judging room selected.");
+      }
       router.replace(`${pathname}?${next.toString()}`);
       router.refresh();
     } catch (error) {

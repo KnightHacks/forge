@@ -159,6 +159,12 @@ export const judgingRoomIdSchema = z.object({
   roomId: z.string().uuid(),
 });
 
+const discordSnowflakeSchema = z.string().regex(/^\d{17,20}$/);
+
+export const judgingCommsChannelSchema = judgingHackathonIdSchema.extend({
+  channelId: discordSnowflakeSchema.nullable(),
+});
+
 export const judgingRoomCreateSchema = judgingHackathonIdSchema.extend({
   challengeId: z.string().uuid(),
   name: roomNameSchema,

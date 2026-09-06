@@ -492,6 +492,11 @@ export const AUDIT_ACTION_CATALOG = {
     "guestAccessRevoked",
   ]),
   "judging.room.archived": policy("hackathons", "Archived judging room"),
+  "judging.comms.updated": policy(
+    "hackathons",
+    "Updated judging communications",
+    ["channelId"],
+  ),
   "judging.room_link.generated": policy(
     "hackathons",
     "Generated judging room QR",

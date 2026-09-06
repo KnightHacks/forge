@@ -17,6 +17,7 @@ import { loadPermissionsForUser } from "../permissions-db";
 
 export interface MemberJudgePrincipal {
   kind: "member";
+  discordUserId: string;
   displayName: string;
   isOfficer: boolean;
   userId: string;
@@ -54,6 +55,7 @@ export async function resolveJudgeAccess(input: {
     if (permissions.IS_JUDGE === true || permissions.IS_OFFICER === true) {
       return {
         displayName: input.session.user.name,
+        discordUserId: input.session.user.discordUserId,
         isOfficer: permissions.IS_OFFICER === true,
         kind: "member",
         userId: input.session.user.id,

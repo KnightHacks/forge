@@ -10,12 +10,16 @@ import {
   ArrowUp,
   Copy,
   DoorOpen,
+  ExternalLink,
+  Hash,
   KeyRound,
+  MessageCircle,
   Pencil,
   Plus,
   Printer,
   QrCode,
   RefreshCw,
+  Send,
   ShieldAlert,
   UserRoundX,
   UsersRound,
@@ -35,6 +39,7 @@ import {
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import { toast } from "@forge/ui/toast";
 
 import {
@@ -47,7 +52,10 @@ import { api } from "~/trpc/react";
 type ControlData = RouterOutputs["judging"]["listAdmin"];
 type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
 type Room = ControlData["rooms"][number];
-type QrResult = RouterOutputs["judging"]["generateRoomLink"];
+type QrResult = Pick<
+  RouterOutputs["judging"]["generateRoomLink"],
+  "id" | "qrCodeUrl" | "url"
+>;
 
 const ACTIVE_PRESENCE_WINDOW_MS = 2 * 60 * 1000;
 
@@ -329,11 +337,19 @@ export function JudgingControlPanel({
     null,
   );
   const [archiving, setArchiving] = useState<Room | null>(null);
+  const [commsDraft, setCommsDraft] = useState({
+    channelId: initialData.configuration.judgingCommsChannelId,
+    hackathonId: initialData.hackathon.id,
+  });
   const query = api.judging.listAdmin.useQuery(
     { hackathonId: initialData.hackathon.id },
     { initialData, refetchInterval: 10_000 },
   );
   const generate = api.judging.generateRoomLink.useMutation();
+  const channels = api.judging.listDiscordChannels.useQuery();
+  const saveComms = api.judging.setCommsChannel.useMutation();
+  const retryThreads = api.judging.provisionRoomThreads.useMutation();
+  const sendQr = api.judging.sendRoomQr.useMutation();
   const revoke = api.judging.revokeRoomLink.useMutation();
   const rotate = api.judging.rotateRoomLink.useMutation();
   const move = api.judging.moveRoom.useMutation();
@@ -341,6 +357,14 @@ export function JudgingControlPanel({
   const revokeGuest = api.judging.revokeGuest.useMutation();
   const removeJudge = api.judging.removeJudgeFromRoom.useMutation();
   const data = query.data;
+  const commsChannelId =
+    commsDraft.hackathonId === data.hackathon.id
+      ? commsDraft.channelId
+      : data.configuration.judgingCommsChannelId;
+
+  function setCommsChannelId(channelId: string | null) {
+    setCommsDraft({ channelId, hackathonId: data.hackathon.id });
+  }
 
   function refresh() {
     void query.refetch();
@@ -360,9 +384,44 @@ export function JudgingControlPanel({
           ? await rotate.mutateAsync({ roomId: room.id })
           : await generate.mutateAsync({ roomId: room.id });
       setQr({ roomName: room.name, value });
+      if (value.discordDelivery === "failed") {
+        toast.error(
+          mode === "rotate"
+            ? "QR rotated, but the Discord message failed."
+            : "QR generated, but the Discord message failed.",
+        );
+      }
       refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "QR update failed.");
+    }
+  }
+
+  async function updateCommsChannel(channelId: string | null) {
+    try {
+      const result = await saveComms.mutateAsync({
+        channelId,
+        hackathonId: data.hackathon.id,
+      });
+      setCommsChannelId(channelId);
+      if (result.failedRooms.length) {
+        toast.error(
+          `Channel saved, but ${result.failedRooms.length} room thread${result.failedRooms.length === 1 ? "" : "s"} need a retry.`,
+        );
+      } else {
+        toast.success(
+          channelId
+            ? "Judging communications connected."
+            : "Judging communications disconnected.",
+        );
+      }
+      refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Discord communications could not be saved.",
+      );
     }
   }
 
@@ -380,6 +439,12 @@ export function JudgingControlPanel({
   const activeRoomIds = data.rooms
     .filter((room) => room.archivedAt === null)
     .map((room) => room.id);
+  const missingThreadCount = data.rooms.filter(
+    (room) =>
+      room.archivedAt === null &&
+      data.configuration.judgingCommsChannelId &&
+      !room.discordThreadId,
+  ).length;
 
   const Root = embedded ? "div" : "main";
 
@@ -463,6 +528,129 @@ export function JudgingControlPanel({
             )}{" "}
             in rooms
           </Badge>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary/10 text-primary">
+              <MessageCircle className="size-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-semibold">Judging communications</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Give every room a quiet Discord thread for judge arrivals, guest
+                check-ins, QR delivery, and access changes.
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant={
+              data.configuration.judgingCommsChannelId ? "outline" : "secondary"
+            }
+          >
+            {data.configuration.judgingCommsChannelId
+              ? missingThreadCount
+                ? `${missingThreadCount} thread${missingThreadCount === 1 ? "" : "s"} pending`
+                : "Connected"
+              : "Optional · disconnected"}
+          </Badge>
+        </div>
+
+        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <div className="grid gap-2">
+            <Label htmlFor="judging-comms-channel">Root Discord channel</Label>
+            <ResponsiveComboBox
+              ariaLabel="Root judging communications channel"
+              buttonPlaceholder="Choose a text channel"
+              emptyMessage="No matching text channels found."
+              getItemLabel={(channel) => `#${channel.name}`}
+              getItemSearchValue={(channel) => `${channel.name} ${channel.id}`}
+              getItemValue={(channel) => channel.id}
+              inputPlaceholder="Search channels"
+              isDisabled={saveComms.isPending}
+              isLoading={channels.isLoading}
+              items={channels.data ?? []}
+              onValueChange={setCommsChannelId}
+              renderItem={(channel) => (
+                <span className="flex min-w-0 items-center gap-2">
+                  <Hash
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{channel.name}</span>
+                </span>
+              )}
+              triggerClassName="h-11 bg-background/70"
+              triggerId="judging-comms-channel"
+              value={commsChannelId}
+            />
+            <p className="text-sm text-muted-foreground">
+              Blade uses the configured{" "}
+              {data.discordGuildId ? "Knight Hacks server" : "Discord server"}{" "}
+              for this environment.
+            </p>
+            {channels.isError ? (
+              <p className="text-sm text-destructive">
+                Discord channels could not be loaded. Check the bot's access to
+                this server, then retry.
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {data.configuration.judgingCommsChannelId ? (
+              <Button
+                className="h-11"
+                disabled={saveComms.isPending}
+                onClick={() => void updateCommsChannel(null)}
+                variant="outline"
+              >
+                Disconnect
+              </Button>
+            ) : null}
+            {missingThreadCount ? (
+              <Button
+                className="h-11"
+                disabled={retryThreads.isPending}
+                onClick={async () => {
+                  try {
+                    const result = await retryThreads.mutateAsync({
+                      hackathonId: data.hackathon.id,
+                    });
+                    if (result.failedRooms.length) {
+                      toast.error(
+                        `${result.failedRooms.length} room thread${result.failedRooms.length === 1 ? "" : "s"} still need a retry.`,
+                      );
+                    } else {
+                      toast.success("Room threads are ready.");
+                    }
+                    refresh();
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Room threads could not be provisioned.",
+                    );
+                  }
+                }}
+                variant="secondary"
+              >
+                Retry {missingThreadCount}{" "}
+                {missingThreadCount === 1 ? "thread" : "threads"}
+              </Button>
+            ) : null}
+            <Button
+              className="h-11"
+              disabled={
+                saveComms.isPending ||
+                commsChannelId === data.configuration.judgingCommsChannelId
+              }
+              onClick={() => void updateCommsChannel(commsChannelId)}
+            >
+              {saveComms.isPending ? "Saving…" : "Save channel"}
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -557,16 +745,76 @@ export function JudgingControlPanel({
                           <QrCode className="mr-1 size-4" />
                           {room.activeLinkId ? "View QR" : "Generate QR"}
                         </Button>
+                        {room.discordThreadId && data.discordGuildId ? (
+                          <Button asChild size="sm" variant="outline">
+                            <a
+                              href={`https://discord.com/channels/${data.discordGuildId}/${room.discordThreadId}`}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <ExternalLink className="mr-1 size-4" />
+                              Open thread
+                            </a>
+                          </Button>
+                        ) : null}
                         {room.activeLinkId ? (
                           <>
+                            <Button
+                              disabled={
+                                sendQr.isPending ||
+                                !data.configuration.judgingCommsChannelId
+                              }
+                              onClick={async () => {
+                                try {
+                                  const result = await sendQr.mutateAsync({
+                                    roomId: room.id,
+                                  });
+                                  if (result.discordDelivery === "delivered") {
+                                    toast.success(
+                                      "QR sent to current room judges.",
+                                    );
+                                  } else if (
+                                    result.discordDelivery === "failed"
+                                  ) {
+                                    toast.error(
+                                      "The QR is still active, but Discord delivery failed.",
+                                    );
+                                  }
+                                  refresh();
+                                } catch (error) {
+                                  toast.error(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "QR delivery failed.",
+                                  );
+                                }
+                              }}
+                              size="sm"
+                              title={
+                                data.configuration.judgingCommsChannelId
+                                  ? "Send the current QR and mention assigned authenticated judges"
+                                  : "Connect a Discord channel to send this QR"
+                              }
+                              variant="secondary"
+                            >
+                              <Send className="mr-1 size-4" /> Send QR
+                            </Button>
                             <Button
                               disabled={revoke.isPending}
                               onClick={async () => {
                                 try {
-                                  await revoke.mutateAsync({ roomId: room.id });
-                                  toast.success(
-                                    "Room QR and guest sessions revoked.",
-                                  );
+                                  const result = await revoke.mutateAsync({
+                                    roomId: room.id,
+                                  });
+                                  if (result.discordDelivery === "failed") {
+                                    toast.error(
+                                      "Room access was revoked, but the Discord notice failed.",
+                                    );
+                                  } else {
+                                    toast.success(
+                                      "Room QR and guest sessions revoked.",
+                                    );
+                                  }
                                   refresh();
                                 } catch (error) {
                                   toast.error(
@@ -673,24 +921,35 @@ export function JudgingControlPanel({
                                       aria-label={`${judge.kind === "guest" ? "Revoke" : "Remove"} ${judge.displayName}`}
                                       onClick={async () => {
                                         try {
+                                          let discordNoticeFailed = false;
                                           if (
                                             judge.kind === "guest" &&
                                             judge.guestSessionId
                                           ) {
-                                            await revokeGuest.mutateAsync({
-                                              guestSessionId:
-                                                judge.guestSessionId,
-                                            });
+                                            const result =
+                                              await revokeGuest.mutateAsync({
+                                                guestSessionId:
+                                                  judge.guestSessionId,
+                                              });
+                                            discordNoticeFailed =
+                                              result.discordDelivery ===
+                                              "failed";
                                           } else {
                                             await removeJudge.mutateAsync({
                                               judgeId: judge.judgeId,
                                             });
                                           }
-                                          toast.success(
-                                            judge.kind === "guest"
-                                              ? "Guest access revoked."
-                                              : "Judge removed from room.",
-                                          );
+                                          if (discordNoticeFailed) {
+                                            toast.error(
+                                              "Guest access was revoked, but the Discord notice failed.",
+                                            );
+                                          } else {
+                                            toast.success(
+                                              judge.kind === "guest"
+                                                ? "Guest access revoked."
+                                                : "Judge removed from room.",
+                                            );
+                                          }
                                           refresh();
                                         } catch (error) {
                                           toast.error(

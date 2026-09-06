@@ -2259,6 +2259,7 @@ export const HackathonJudgingConfiguration = createTable(
       .references(() => User.id, { onDelete: "set null" }),
     state: judgingStateEnum().notNull().default("draft"),
     displayAllResultsToMembers: t.boolean().notNull().default(false),
+    judgingCommsChannelId: t.varchar({ length: 20 }),
     openedAt: t.timestamp({ withTimezone: true }),
     closedAt: t.timestamp({ withTimezone: true }),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -2281,6 +2282,7 @@ export const JudgingRoom = createTable(
     challengeId: t.uuid().notNull(),
     name: t.varchar({ length: 120 }).notNull(),
     displayOrder: t.integer().notNull().default(0),
+    discordThreadId: t.varchar({ length: 20 }),
     archivedAt: t.timestamp({ withTimezone: true }),
     archivedByUserId: t
       .uuid()

@@ -3,7 +3,19 @@ import QRCode from "qrcode";
 import { z } from "zod";
 
 import type { AuditActionKey } from "@forge/validators";
-import { and, asc, desc, eq, gte, isNull, lte, max, or, sql } from "@forge/db";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  max,
+  or,
+  sql,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   GuestJudgeSession,
@@ -18,6 +30,7 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import {
   guestJudgeNameSchema,
+  judgingCommsChannelSchema,
   judgingGuestSessionIdSchema,
   judgingHackathonIdSchema,
   judgingJudgeIdSchema,
@@ -45,6 +58,14 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import {
+  deliverJudgingRoomNotice,
+  ensureJudgingRoomThread,
+  judgingDiscordGuildId,
+  listJudgingDiscordChannels,
+  provisionJudgingRoomThreads,
+  validateJudgingDiscordChannel,
+} from "../utils/judging/discord-comms";
 import { resolveJudgeAccess } from "../utils/judging/principal";
 import { assertCanManageProjects } from "../utils/projects/access";
 import { judgingScoresRouter } from "./judging-scores";
@@ -56,6 +77,25 @@ const contextInputSchema = z.object({
 const RECENT_PRESENCE_WINDOW_MS = 15 * 60 * 1000;
 const ACTIVE_ROOM_NAME_CONSTRAINT =
   "knight_hacks_judging_room_active_name_unique";
+
+function actorDisplayName(user: { name?: string | null }) {
+  const name = user.name?.trim();
+  return name?.length ? name : "An officer";
+}
+
+async function renderRoomQr(linkId: string) {
+  const url = judgingRoomActivationUrl(linkId);
+  return {
+    id: linkId,
+    qrCodeUrl: await QRCode.toDataURL(url, {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      type: "image/png",
+      width: 512,
+    }),
+    url,
+  };
+}
 
 function throwRoomNameConflict(error: unknown, roomName: string): never {
   let current = error;
@@ -212,9 +252,9 @@ async function revokeRoomAccessWithDb(
       ),
     )
     .returning({ id: JudgingRoomAccessLink.id });
-  if (!links.length) return { revoked: false };
+  if (!links.length) return { guestNames: [], revoked: false };
   const activeLink = links[0];
-  if (!activeLink) return { revoked: false };
+  if (!activeLink) return { guestNames: [], revoked: false };
 
   const sessions = await tx
     .update(GuestJudgeSession)
@@ -233,6 +273,14 @@ async function revokeRoomAccessWithDb(
   const judgeIds = sessions
     .map((session) => session.judgeId)
     .filter((id): id is string => id !== null);
+  const guestNames = judgeIds.length
+    ? (
+        await tx
+          .select({ displayName: Judge.displayName })
+          .from(Judge)
+          .where(inArray(Judge.id, judgeIds))
+      ).map((judge) => judge.displayName)
+    : [];
   for (const judgeId of judgeIds) {
     await tx
       .update(JudgingRoomPresence)
@@ -244,7 +292,7 @@ async function revokeRoomAccessWithDb(
         ),
       );
   }
-  return { revoked: true };
+  return { guestNames, revoked: true };
 }
 
 async function joinMemberRoom(input: {
@@ -273,6 +321,26 @@ async function joinMemberRoom(input: {
       userId: input.userId,
     });
     const now = new Date();
+    const [currentPresence] = await tx
+      .select({
+        id: JudgingRoomPresence.id,
+        roomId: JudgingRoomPresence.roomId,
+      })
+      .from(JudgingRoomPresence)
+      .where(
+        and(
+          eq(JudgingRoomPresence.judgeId, judge.id),
+          isNull(JudgingRoomPresence.leftAt),
+        ),
+      )
+      .limit(1);
+    if (currentPresence?.roomId === room.roomId) {
+      await tx
+        .update(JudgingRoomPresence)
+        .set({ lastSeenAt: now })
+        .where(eq(JudgingRoomPresence.id, currentPresence.id));
+      return { ...room, newlyJoined: false };
+    }
     await tx
       .update(JudgingRoomPresence)
       .set({ leftAt: now, leaveReason: "switched-room" })
@@ -287,7 +355,7 @@ async function joinMemberRoom(input: {
       judgeId: judge.id,
       roomId: room.roomId,
     });
-    return room;
+    return { ...room, newlyJoined: true };
   });
 }
 
@@ -415,11 +483,19 @@ export const judgingRouter = createTRPCRouter({
       if (ctx.judgePrincipal.kind !== "member") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      return joinMemberRoom({
+      const room = await joinMemberRoom({
         displayName: ctx.judgePrincipal.displayName,
         roomId: input.roomId,
         userId: ctx.judgePrincipal.userId,
       });
+      const discordDelivery = room.newlyJoined
+        ? await deliverJudgingRoomNotice(room.roomId, {
+            discordUserId: ctx.judgePrincipal.discordUserId,
+            kind: "member_joined",
+            memberName: ctx.judgePrincipal.displayName,
+          })
+        : ("not_configured" as const);
+      return { ...room, discordDelivery };
     }),
 
   leaveRoom: judgeProcedure
@@ -491,6 +567,105 @@ export const judgingRouter = createTRPCRouter({
       return { updated: updated.length > 0 };
     }),
 
+  listDiscordChannels: permProcedure.query(async ({ ctx }) => {
+    assertCanManageProjects(ctx);
+    return listJudgingDiscordChannels();
+  }),
+
+  setCommsChannel: permProcedure
+    .input(judgingCommsChannelSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      if (
+        input.channelId &&
+        !(await validateJudgingDiscordChannel(input.channelId))
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Choose a text channel from the configured Knight Hacks server.",
+        });
+      }
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const changed = await db.transaction(async (tx) => {
+        const [hackathon] = await tx
+          .select({
+            displayName: Hackathon.displayName,
+            id: Hackathon.id,
+          })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+        const current = await tx.query.HackathonJudgingConfiguration.findFirst({
+          columns: { judgingCommsChannelId: true },
+          where: eq(
+            HackathonJudgingConfiguration.hackathonId,
+            input.hackathonId,
+          ),
+        });
+        const channelChanged =
+          (current?.judgingCommsChannelId ?? null) !== input.channelId;
+        await tx
+          .insert(HackathonJudgingConfiguration)
+          .values({
+            hackathonId: input.hackathonId,
+            judgingCommsChannelId: input.channelId,
+          })
+          .onConflictDoUpdate({
+            set: { judgingCommsChannelId: input.channelId },
+            target: HackathonJudgingConfiguration.hackathonId,
+          });
+        if (channelChanged) {
+          await tx
+            .update(JudgingRoom)
+            .set({ discordThreadId: null })
+            .where(
+              and(
+                eq(JudgingRoom.hackathonId, input.hackathonId),
+                isNull(JudgingRoom.archivedAt),
+              ),
+            );
+        }
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.comms.updated",
+            actor,
+            metadata: { channelId: input.channelId ?? "disconnected" },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return channelChanged;
+      });
+      if (!input.channelId) {
+        return {
+          channelChanged: changed,
+          failedRooms: [],
+          provisionedCount: 0,
+        };
+      }
+      return {
+        channelChanged: changed,
+        ...(await provisionJudgingRoomThreads(input.hackathonId)),
+      };
+    }),
+
+  provisionRoomThreads: permProcedure
+    .input(judgingHackathonIdSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      return provisionJudgingRoomThreads(input.hackathonId);
+    }),
+
   listAdmin: permProcedure
     .input(judgingHackathonIdSchema)
     .query(async ({ ctx, input }) => {
@@ -514,6 +689,7 @@ export const judgingRouter = createTRPCRouter({
           archivedAt: JudgingRoom.archivedAt,
           challengeId: JudgingRoom.challengeId,
           challengeLabel: ProjectChallenge.label,
+          discordThreadId: JudgingRoom.discordThreadId,
           id: JudgingRoom.id,
           name: JudgingRoom.name,
         })
@@ -577,6 +753,7 @@ export const judgingRouter = createTRPCRouter({
           columns: {
             closedAt: true,
             displayAllResultsToMembers: true,
+            judgingCommsChannelId: true,
             openedAt: true,
             projectInventoryLockedAt: true,
             state: true,
@@ -600,16 +777,19 @@ export const judgingRouter = createTRPCRouter({
           .where(eq(JudgingRubricItem.hackathonId, input.hackathonId))
           .orderBy(asc(JudgingRubricItem.displayOrder)),
       ]);
+      const discordGuildId = await judgingDiscordGuildId();
       return {
         hackathon,
         challenges,
         configuration: {
           closedAt: configuration?.closedAt ?? null,
           displayAllResults: configuration?.displayAllResultsToMembers ?? false,
+          judgingCommsChannelId: configuration?.judgingCommsChannelId ?? null,
           openedAt: configuration?.openedAt ?? null,
           state: configuration?.state ?? ("draft" as const),
         },
         inventoryLockedAt: configuration?.projectInventoryLockedAt ?? null,
+        discordGuildId,
         rubric,
         rooms: rooms.map((room) => ({
           ...room,
@@ -626,7 +806,7 @@ export const judgingRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
       try {
-        return await db.transaction(async (tx) => {
+        const room = await db.transaction(async (tx) => {
           const [hackathon] = await tx
             .select({ id: Hackathon.id })
             .from(Hackathon)
@@ -668,6 +848,12 @@ export const judgingRouter = createTRPCRouter({
           });
           return room;
         });
+        try {
+          await ensureJudgingRoomThread(room.id);
+        } catch {
+          // The room is durable. The officer can retry Discord provisioning.
+        }
+        return room;
       } catch (error) {
         throwRoomNameConflict(error, input.name);
       }
@@ -679,7 +865,7 @@ export const judgingRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
       try {
-        return await db.transaction(async (tx) => {
+        const room = await db.transaction(async (tx) => {
           const current = await lockRoomAggregate(tx, input.roomId, {
             active: true,
           });
@@ -736,6 +922,12 @@ export const judgingRouter = createTRPCRouter({
           });
           return room;
         });
+        try {
+          await ensureJudgingRoomThread(room.id);
+        } catch {
+          // The room edit is durable. The officer can retry Discord provisioning.
+        }
+        return room;
       } catch (error) {
         throwRoomNameConflict(error, input.name);
       }
@@ -852,7 +1044,7 @@ export const judgingRouter = createTRPCRouter({
             roomId: input.roomId,
             roomName: room.name,
           });
-          return existing;
+          return { ...existing, created: false };
         }
         const [created] = await tx
           .insert(JudgingRoomAccessLink)
@@ -892,19 +1084,50 @@ export const judgingRouter = createTRPCRouter({
           roomId: input.roomId,
           roomName: room.name,
         });
-        return created;
+        return { ...created, created: true };
       });
-      const url = judgingRoomActivationUrl(link.id);
+      const qr = await renderRoomQr(link.id);
+      const discordDelivery = link.created
+        ? await deliverJudgingRoomNotice(input.roomId, {
+            kind: "qr",
+            qrCodeUrl: qr.qrCodeUrl,
+            reason: "generated",
+            url: qr.url,
+          })
+        : ("not_configured" as const);
       return {
-        id: link.id,
-        qrCodeUrl: await QRCode.toDataURL(url, {
-          errorCorrectionLevel: "M",
-          margin: 1,
-          type: "image/png",
-          width: 512,
-        }),
-        url,
+        ...qr,
+        created: link.created,
+        discordDelivery,
       };
+    }),
+
+  sendRoomQr: permProcedure
+    .input(judgingRoomIdSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const room = await lockRoomAggregate(db, input.roomId, { active: true });
+      const link = await db.query.JudgingRoomAccessLink.findFirst({
+        columns: { id: true },
+        where: and(
+          eq(JudgingRoomAccessLink.roomId, room.id),
+          isNull(JudgingRoomAccessLink.revokedAt),
+        ),
+      });
+      if (!link) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Generate this room's QR before sending it.",
+        });
+      }
+      const qr = await renderRoomQr(link.id);
+      const discordDelivery = await deliverJudgingRoomNotice(room.id, {
+        kind: "qr",
+        qrCodeUrl: qr.qrCodeUrl,
+        reason: "sent",
+        url: qr.url,
+      });
+      return { ...qr, discordDelivery };
     }),
 
   revokeRoomLink: permProcedure
@@ -912,7 +1135,7 @@ export const judgingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      return db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         const room = await lockRoomAggregate(tx, input.roomId);
         const result = await revokeRoomAccessWithDb(tx, {
           reason: "officer-revoked",
@@ -929,6 +1152,14 @@ export const judgingRouter = createTRPCRouter({
         }
         return result;
       });
+      const discordDelivery = result.revoked
+        ? await deliverJudgingRoomNotice(input.roomId, {
+            actorName: actorDisplayName(ctx.session.user),
+            guestNames: result.guestNames,
+            kind: "room_link_revoked",
+          })
+        : ("not_configured" as const);
+      return { ...result, discordDelivery };
     }),
 
   rotateRoomLink: permProcedure
@@ -962,11 +1193,16 @@ export const judgingRouter = createTRPCRouter({
         });
         return created;
       });
-      const url = judgingRoomActivationUrl(link.id);
+      const qr = await renderRoomQr(link.id);
+      const discordDelivery = await deliverJudgingRoomNotice(input.roomId, {
+        kind: "qr",
+        qrCodeUrl: qr.qrCodeUrl,
+        reason: "rotated",
+        url: qr.url,
+      });
       return {
-        id: link.id,
-        qrCodeUrl: await QRCode.toDataURL(url, { margin: 1, width: 512 }),
-        url,
+        ...qr,
+        discordDelivery,
       };
     }),
 
@@ -975,7 +1211,7 @@ export const judgingRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       const actor = await captureAdminAuditActor(ctx.session.user);
-      return db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         const [target] = await tx
           .select({
             id: JudgingRoom.id,
@@ -1031,8 +1267,18 @@ export const judgingRouter = createTRPCRouter({
           roomId: target.id,
           roomName: target.name,
         });
-        return { revoked: true };
+        return {
+          guestName: target.judgeDisplayName,
+          revoked: true,
+          roomId: target.id,
+        };
       });
+      const discordDelivery = await deliverJudgingRoomNotice(result.roomId, {
+        actorName: actorDisplayName(ctx.session.user),
+        guestName: result.guestName,
+        kind: "guest_revoked",
+      });
+      return { revoked: result.revoked, discordDelivery };
     }),
 
   removeJudgeFromRoom: permProcedure

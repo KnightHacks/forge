@@ -337,6 +337,13 @@
       "when": 1788650755175,
       "tag": "0047_fluffy_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788662145431,
+      "tag": "0048_little_tarot",
+      "breakpoints": true
     }
   ]
 }

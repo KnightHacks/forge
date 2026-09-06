@@ -23,6 +23,7 @@ import {
 
 import type { WriteDb } from "./utils/db";
 import { env } from "./env";
+import { deliverJudgingRoomNotice } from "./utils/judging/discord-comms";
 import { resolveJudgeAccess } from "./utils/judging/principal";
 
 function judgingSecret() {
@@ -63,7 +64,12 @@ export function judgingRoomActivationUrl(linkId: string) {
 }
 
 export type RoomActivationResult =
-  | { challengeId: string; kind: "member"; roomId: string }
+  | {
+      challengeId: string;
+      discordDelivery: "delivered" | "failed" | "not_configured";
+      kind: "member";
+      roomId: string;
+    }
   | {
       challengeId: string;
       credential: string;
@@ -85,7 +91,7 @@ export async function activateJudgingRoom(input: {
     session: input.session,
   });
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [access] = await tx
       .select({
         challengeId: JudgingRoom.challengeId,
@@ -114,6 +120,33 @@ export async function activateJudgingRoom(input: {
         userId: memberAccess.userId,
       });
       const now = new Date();
+      const [currentPresence] = await tx
+        .select({
+          id: JudgingRoomPresence.id,
+          roomId: JudgingRoomPresence.roomId,
+        })
+        .from(JudgingRoomPresence)
+        .where(
+          and(
+            eq(JudgingRoomPresence.judgeId, judge.id),
+            isNull(JudgingRoomPresence.leftAt),
+          ),
+        )
+        .limit(1);
+      if (currentPresence?.roomId === access.roomId) {
+        await tx
+          .update(JudgingRoomPresence)
+          .set({ lastSeenAt: now })
+          .where(eq(JudgingRoomPresence.id, currentPresence.id));
+        return {
+          challengeId: access.challengeId,
+          discordUserId: memberAccess.discordUserId,
+          displayName: memberAccess.displayName,
+          kind: "member" as const,
+          newlyJoined: false,
+          roomId: access.roomId,
+        };
+      }
       await tx
         .update(JudgingRoomPresence)
         .set({ leftAt: now, leaveReason: "switched-room" })
@@ -130,7 +163,10 @@ export async function activateJudgingRoom(input: {
       });
       return {
         challengeId: access.challengeId,
-        kind: "member",
+        discordUserId: memberAccess.discordUserId,
+        displayName: memberAccess.displayName,
+        kind: "member" as const,
+        newlyJoined: true,
         roomId: access.roomId,
       };
     }
@@ -145,10 +181,24 @@ export async function activateJudgingRoom(input: {
     return {
       challengeId: access.challengeId,
       credential,
-      kind: "guest",
+      kind: "guest" as const,
       roomId: access.roomId,
     };
   });
+  if (result.kind === "guest") return result;
+  const discordDelivery = result.newlyJoined
+    ? await deliverJudgingRoomNotice(result.roomId, {
+        discordUserId: result.discordUserId,
+        kind: "member_joined",
+        memberName: result.displayName,
+      })
+    : ("not_configured" as const);
+  return {
+    challengeId: result.challengeId,
+    discordDelivery,
+    kind: result.kind,
+    roomId: result.roomId,
+  };
 }
 
 export async function completeGuestJudge(input: {
@@ -162,7 +212,7 @@ export async function completeGuestJudge(input: {
   if (!credential) throw new TRPCError({ code: "UNAUTHORIZED" });
   const tokenHash = hashGuestJudgeCredential(credential);
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [record] = await tx
       .select({
         completedAt: GuestJudgeSession.completedAt,
@@ -192,7 +242,11 @@ export async function completeGuestJudge(input: {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     if (record.completedAt && record.judgeId) {
-      return { judgeId: record.judgeId, roomId: record.roomId };
+      return {
+        judgeId: record.judgeId,
+        newlyCompleted: false,
+        roomId: record.roomId,
+      };
     }
 
     const [judge] = await tx
@@ -214,6 +268,21 @@ export async function completeGuestJudge(input: {
       judgeId: judge.id,
       roomId: record.roomId,
     });
-    return { judgeId: judge.id, roomId: record.roomId };
+    return {
+      judgeId: judge.id,
+      newlyCompleted: true,
+      roomId: record.roomId,
+    };
   });
+  const discordDelivery = result.newlyCompleted
+    ? await deliverJudgingRoomNotice(result.roomId, {
+        guestName: input.displayName,
+        kind: "guest_joined",
+      })
+    : ("not_configured" as const);
+  return {
+    discordDelivery,
+    judgeId: result.judgeId,
+    roomId: result.roomId,
+  };
 }

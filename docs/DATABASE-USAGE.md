@@ -83,6 +83,12 @@ Notes:
 - Before judging locks the inventory, a Devpost import replaces projects while preserving exact matching challenge records.
 - After the first room QR is generated, ordinary imports add projects with unseen normalized Devpost URLs and leave existing records untouched. A separately confirmed replacement revokes active guest access and cannot remove a challenge assigned to an active room.
 - Every imported project is associated with the hackathon's `General` challenge. Devpost opt-in prize columns produce the remaining challenge labels.
+- `HackathonJudgingConfiguration.judgingCommsChannelId` is the optional root
+  Discord text channel for room communications. Null keeps Discord delivery
+  off without changing judging behavior.
+- `JudgingRoom.discordThreadId` is the room's current thread under that root
+  channel. Changing or clearing the channel removes active Blade references but
+  leaves old Discord history intact.
 - `Project.deletedAt` provides officer-restorable soft deletion between imports; an authoritative re-import removes the prior inventory, including deleted rows.
 - A guest session stores only the SHA-256 hash of its random browser credential. Shared development backups drop judging rooms, judge identities, links, guest sessions, and presence rows.
 
