@@ -533,9 +533,9 @@ export function JudgingControlPanel({
     null,
   );
   const [archiving, setArchiving] = useState<Room | null>(null);
-  const [announcementRoom, setAnnouncementRoom] = useState<
-    Room | null | "global"
-  >(null);
+  const [announcementTarget, setAnnouncementTarget] = useState<string | null>(
+    null,
+  );
   const [commsDraft, setCommsDraft] = useState({
     channelId: initialData.configuration.judgingCommsChannelId,
     hackathonId: initialData.hackathon.id,
@@ -556,6 +556,10 @@ export function JudgingControlPanel({
   const revokeGuest = api.judging.revokeGuest.useMutation();
   const removeJudge = api.judging.removeJudgeFromRoom.useMutation();
   const data = query.data;
+  const announcementRoom =
+    announcementTarget && announcementTarget !== "global"
+      ? (data.rooms.find((room) => room.id === announcementTarget) ?? null)
+      : null;
   const commsChannelId =
     commsDraft.hackathonId === data.hackathon.id
       ? commsDraft.channelId
@@ -658,7 +662,7 @@ export function JudgingControlPanel({
             <div className="flex flex-wrap gap-2">
               <Button
                 className="h-11 gap-2"
-                onClick={() => setAnnouncementRoom("global")}
+                onClick={() => setAnnouncementTarget("global")}
                 variant="outline"
               >
                 <Megaphone className="size-4" aria-hidden="true" /> Announce to
@@ -682,7 +686,7 @@ export function JudgingControlPanel({
         <div className="flex flex-wrap justify-end gap-2">
           <Button
             className="h-11 gap-2"
-            onClick={() => setAnnouncementRoom("global")}
+            onClick={() => setAnnouncementTarget("global")}
             variant="outline"
           >
             <Megaphone className="size-4" aria-hidden="true" /> Announce to all
@@ -906,7 +910,7 @@ export function JudgingControlPanel({
             </div>
             <Button
               className="min-h-11 shrink-0"
-              onClick={() => setAnnouncementRoom("global")}
+              onClick={() => setAnnouncementTarget("global")}
               size="sm"
               variant="outline"
             >
@@ -1020,7 +1024,7 @@ export function JudgingControlPanel({
                         </Button>
                         <Button
                           className="min-h-11"
-                          onClick={() => setAnnouncementRoom(room)}
+                          onClick={() => setAnnouncementTarget(room.id)}
                           size="sm"
                           variant="outline"
                         >
@@ -1287,17 +1291,17 @@ export function JudgingControlPanel({
         )}
       </section>
 
-      {announcementRoom ? (
+      {announcementTarget === "global" || announcementRoom ? (
         <AnnouncementDialog
           current={
-            announcementRoom === "global"
+            announcementTarget === "global"
               ? data.globalAnnouncement
-              : announcementRoom.announcement
+              : (announcementRoom?.announcement ?? null)
           }
           data={data}
-          onClose={() => setAnnouncementRoom(null)}
+          onClose={() => setAnnouncementTarget(null)}
           onSaved={refresh}
-          room={announcementRoom === "global" ? null : announcementRoom}
+          room={announcementRoom}
         />
       ) : null}
       <RoomEditor
