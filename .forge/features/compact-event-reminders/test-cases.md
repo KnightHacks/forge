@@ -7,7 +7,7 @@ sender. Existing window, eligibility, empty-result, and DST cases remain.
 
 Given two same-day events, execute the reminder. Expect one dated embed with
 linked names, time ranges, locations, and tags in order. Omit descriptions,
-thumbnails, and field grids. Keep one role ping and the footer actions.
+thumbnails, and field grids. Keep one role ping and the exact original daily introduction and footer.
 
 ## TC-002: Busy day
 
@@ -25,7 +25,7 @@ between rows when the character limit is reached before eight events.
 ## TC-004: Sunday regression
 
 Given Sunday candidates on different weekdays, expect separate dated weekday
-cards, the existing week range, and exactly one everyone ping. Preserve existing
+cards, the exact original Sunday introduction/week range, and one everyone ping. Preserve existing
 daily windows, excluded tags, empty results, and spring/fall DST behavior.
 
 ## Visual review

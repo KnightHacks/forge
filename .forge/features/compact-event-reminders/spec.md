@@ -15,7 +15,8 @@ compact reminders with clearer grouping on 2026-09-06.
 - Keep the purple accent; remove repeated thumbnails and field grids.
 - Continue busy sections in bounded cards, retaining every eligible event once
   in the selector's chronological order.
-- Keep a short introduction and footer with opt-in and Blade links.
+- Preserve the original daily introduction, Sunday introduction, and footer
+  wording exactly, including opt-in and Blade links.
 
 ## Scope and decisions
 

@@ -15,7 +15,9 @@ characters. Send each embed separately to stay below the 6000 aggregate characte
 limit. See [Discord embed limits](https://docs.discord.com/developers/resources/message#embed-limits).
 Normalize whitespace, bound label lengths, escape Markdown, and retain complete
 links. Split only between rows; repeat date context in continuation titles.
-The selector still owns candidate validity and ordering.
+The selector still owns candidate validity and ordering. Preserve all existing
+introduction and footer strings verbatim; compacting the layout does not
+authorize rewriting the copy.
 
 ## Access and compatibility
 

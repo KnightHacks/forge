@@ -32,6 +32,10 @@ describe("club event reminders", () => {
 
     expect(getCandidates).toHaveBeenCalledOnce();
     expect(getCandidates).toHaveBeenCalledWith({ now });
+    expect(send).toHaveBeenNthCalledWith(1, {
+      content:
+        "# Event Reminders\nGood morning, <@&1264770451578552401>!\nToday is Monday, June 29, 2026, and here are some reminders about upcoming events!",
+    });
     const sent = JSON.stringify(send.mock.calls);
     expect(sent).toContain("Event Reminders");
     expect(sent).toContain("Current Workshop");
@@ -69,6 +73,10 @@ describe("club event reminders", () => {
     expect(sent).toContain("Current Workshop");
     expect(sent).toContain("Wednesday GBM");
     expect(sent).toContain("6/28 - 7/4");
+    expect(send).toHaveBeenNthCalledWith(1, {
+      content:
+        "# Events this Week (6/28 - 7/4)\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!",
+    });
     expect(sent.match(/@everyone/g)).toHaveLength(1);
     expect(sent).not.toContain("<@&1264770451578552401>");
     const embeds = send.mock.calls.flatMap(([payload]) =>
@@ -204,7 +212,7 @@ describe("club event reminders", () => {
 });
 
 describe("club reminder presentation", () => {
-  it("TC-001 groups compact linked rows into one dated card", async () => {
+  it("TC-001 groups compact linked rows and preserves the original footer", async () => {
     const send =
       vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
     const execute = createClubReminderExecutor({
@@ -239,9 +247,10 @@ describe("club reminder presentation", () => {
     expect(sent.match(/<@&1264770451578552401>/g)).toHaveLength(1);
     expect(sent).not.toContain("@everyone");
     expect(sent).not.toContain(currentWorkshop.description);
-    expect(sent).toContain("Interested");
-    expect(sent).toContain("<id:customize>");
-    expect(sent).toContain("https://blade.knighthacks.org");
+    expect(send).toHaveBeenLastCalledWith({
+      content:
+        'We hope to see you all there! Let us know you\'re attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!',
+    });
   });
 
   it.each([false, true])(

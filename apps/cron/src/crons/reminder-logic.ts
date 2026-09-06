@@ -189,11 +189,11 @@ export function createClubReminderExecutor({
         timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(end)}`;
       await send({
-        content: `# Events this Week (${range})\nHey @everyone, here's what's happening this week!`,
+        content: `# Events this Week (${range})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
       });
     } else {
       await send({
-        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>! Here's what's coming up.`,
+        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formatDate(currentTime)}, and here are some reminders about upcoming events!`,
       });
     }
 
@@ -204,7 +204,7 @@ export function createClubReminderExecutor({
     }
 
     await send({
-      content: `Open an event for details and mark **Interested**.\nDaily pings: choose **Event Reminders** in <id:customize>.\nMembership and check-in: [Blade](https://blade.knighthacks.org).`,
+      content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!`,
     });
   };
 }
