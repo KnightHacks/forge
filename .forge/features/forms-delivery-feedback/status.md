@@ -146,3 +146,4 @@ Current phase: Callback parity refinement verified and published for review
 - Existing baseline: [Forms and Event Feedback](../forms-and-event-feedback/spec.md)
 - Tracking issue: [ChrisH0125/forge#1](https://github.com/ChrisH0125/forge/issues/1)
 - Pull request: [KnightHacks/forge#533](https://github.com/KnightHacks/forge/pull/533)
+- Follow-up fixes: [KnightHacks/forge#540](https://github.com/KnightHacks/forge/pull/540)
