@@ -37,7 +37,7 @@ Phase: PR open; awaiting CI and review. Branch: `codex/blade-hacker-permissions`
   `pnpm --filter=@forge/blade build` also failed collecting `/judge/end` due to
   missing `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`.
   No environment values were changed to bypass this. Deployment is not performed.
-- Screenshot evidence: [reader views](./evidence/README.md).
+- Screenshot files are excluded from the repository at the owner's request.
 
 ## Original context
 
