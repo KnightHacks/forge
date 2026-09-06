@@ -1,53 +1,52 @@
 # Compact Event Reminders SRD
 
-Keep presentation in `apps/cron/src/crons/reminder-logic.ts`, already used by
-both Club reminder webhooks. Preserve the shared selector, scheduler, injected
-clock, sender, and candidate interface.
+Keep the implementation in `apps/cron/src/crons/reminder-logic.ts`, used by both
+Club reminder webhooks. Preserve the existing candidate selector, calendar
+windows, injected clock, and sender.
 
-Follow [Forge principles](../../../docs/agentic-development/forge-engineering-principles.md)
-and [design guidance](../../../docs/agentic-development/frontend-design-skill.md):
-use native Discord embed typography, the existing purple accent, and dated rows.
+## Presentation and payload
 
-## Payload contract
+Follow `packages/api/src/utils/issues/reminders.ts`: Components V2 containers,
+Markdown headings, bold linked titles, and `-#` secondary text. These are native
+Discord cards, replacing the old rich embeds.
 
-Count events after grouping and filtering. At most two eligible events retain
-the original per-event embeds and separate section headings. Three or more
-eligible events use compact cards throughout the reminder, even when spread
-across different days. This preserves detail for small schedules without letting
-a busy week produce many large cards.
+Build dated text sections across the entire announcement, then pack them into
+one purple container whenever possible. A normal seven-day, 14-event week fits
+in one card. Today/Tomorrow/Next Week share the same daily card. There is no
+fixed event-count split or separate style for small schedules.
 
-Compact mode uses one or more embeds per section, continuing after eight events
-or before 4096 description characters. Send each embed separately to stay below the 6000 aggregate character
-limit. See [Discord embed limits](https://docs.discord.com/developers/resources/message#embed-limits).
-Normalize whitespace, bound label lengths, escape Markdown, and retain complete
-links. Split only between rows; repeat date context in continuation titles.
-The selector still owns candidate validity and ordering. Preserve all existing
-introduction and footer strings verbatim; compacting the layout does not
-authorize rewriting the copy.
+Match the issue reminder's conservative bounds: 2000 characters per text display,
+6000 characters across the message, and 10 children per container. Reserve room
+for the title, Blade footer, and outside opt-in/audience text. Split text only between whole event
+rows and retain the section heading on continuation. Reserve two container
+children for the footer separator and footer. Send one container per message,
+well below the 40-component message maximum.
+
+Use `MessageFlags.IsComponentsV2` and `withComponents: true` for the webhook.
+Do not combine V2 components with legacy `content` or `embeds` fields.
+[Discord component reference](https://docs.discord.com/developers/components/reference)
+and [webhook execution](https://docs.discord.com/developers/resources/webhook#execute-webhook)
+document the supported payloads.
+
+Escape Markdown, normalize whitespace, bound event labels, and neutralize `@`
+mentions in event-provided text because Text Display components can notify users.
+Allow only the intended everyone or reminder-role mention on the first message;
+continuations contain no opt-in/audience text and allow no mentions. Development
+previews override allowed mentions to suppress notifications.
 
 ## Delivery failures
 
-Catch terminal send failures around each event card, log the card title and
-error using the existing logger, and continue with later cards and the footer.
-Apply the same handling to full and compact cards, including continuations and
-later date sections. Do not add application-level retries. Failures sending the
-introduction, standalone section headings, or footer still propagate to
-`CronBuilder`.
+Catch and log a terminal card-send failure, including its announcement title and
+part number, then continue. Do not introduce another retry loop. The Blade QR
+note and signup link live inside each card. The first message also includes a
+top-level Text Display with the role opt-in prompt, `<id:customize>`, and cc.
+There is no separate footer delivery and no RSVP copy.
 
-## Access and compatibility
+## Compatibility and validation
 
-No new API or permission surface. Existing visibility and webhook credentials
-control access. Preserve Sunday everyone and daily reminder-role pings. No
-schema, dependency, environment, or yearly configuration changes. Normal cron
-release/revert controls rollout and rollback. The user authorized a development-webhook preview on 2026-09-06. That preview
-suppresses notifications; production mention behavior stays unchanged. Local
-tests use an injected sender.
-
-## Verification
-
-Extend cron tests for the two-to-three-event transition, ignored candidates,
-counts across days, compact rows, continuation, 60-event volume, long labels,
-links, and unchanged notifications. Run cron tests, format, lint, and typecheck.
-Inspect desktop and 320px local previews, then verify the authorized development
-preview in the actual Discord desktop client. PR evidence uses actual Discord
-screenshots; native mobile rendering remains unverified.
+No schema, dependency, environment, or permission-surface changes. Existing
+webhook destinations and cron schedules remain. Verify weekly and daily grouping,
+small schedules, all links, 60-event overflow, Markdown/mentions, failed sends,
+and the existing selection/DST cases. Run cron tests, format, lint, and typecheck.
+Inspect actual Discord desktop screenshots for weekly and daily cards. Native
+mobile rendering must be reported separately if unverified.

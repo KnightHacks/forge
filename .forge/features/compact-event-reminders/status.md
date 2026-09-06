@@ -1,107 +1,79 @@
 # Compact Event Reminders Status
 
-Current phase: PR open; CI and review pending; not deployed
+Current phase: PR open; local validation passed; not deployed
 
-## Decisions
+## Direction
 
-- 2026-09-06: User approved compact Club reminders. Selection, scheduling,
-  destinations, and production pings stay unchanged.
-- 2026-09-06: Restored the original daily introduction, Sunday introduction,
-  and footer after user feedback. Scope is layout refinement, not copy editing.
-- 2026-09-06: User requested retaining big cards for small schedules. Use the
-  original layout for one or two eligible events across the whole reminder,
-  and compact cards for three or more.
-- Keep presentation in cron: dated sections, up to eight rows per card, linked
-  details, and the existing purple accent. No shared-package changes.
+- The user clarified that the problem is the complete weekly announcement,
+  including many events across different days, and requested the issue reminder
+  as the visual reference.
+- Sunday weekdays now share one card. Daily Today/Tomorrow/Next Week sections
+  also share one card. Small schedules use the same format.
+- The user explicitly authorized tightening the copy. This replaces the earlier
+  verbatim-copy and one/two-event full-card decisions.
+- Use native Components V2, bold event links, small metadata, and a compact footer.
+  The role opt-in prompt, Channels & Roles shortcut, and cc appear outside the
+  card. Its footer now contains only the Blade QR note and signup link; RSVP
+  instructions were removed at the user's request.
+- Selection, schedules, destinations, and intended audiences stay the same.
+- CodeRabbit's delivery fix remains: log a failed card and attempt continuations.
 - Branch: `cron/compact-event-reminders`, based on main at `566b4ee5`.
 - [Issue #542](https://github.com/KnightHacks/forge/issues/542).
 - [PR #543](https://github.com/KnightHacks/forge/pull/543).
 
 ## Progress
 
-- [x] Trace both webhook callers and the shared selector.
-- [x] Implement compact cards and regression tests.
-- [x] Verify payload limits, links, long labels, and existing date windows.
-- [x] Send a development preview and inspect the actual Discord client.
-- [x] Prepare actual Discord screenshots for the PR; remove superseded mock images.
-- [x] Commit, push, and open the PR with actual Discord screenshots.
-- [x] Reproduce and fix CodeRabbit's per-card delivery-failure concern.
+- [x] Trace the actual issue reminder's container and text formatting.
+- [x] Combine weekly and daily sections in a single announcement.
+- [x] Retain bounded continuations, event links, selection, and delivery logging.
+- [x] Replace tests for the superseded per-day/full-card behavior.
+- [x] Send and inspect real Discord weekly and daily previews.
+- [x] Capture a comparison using the same eight events across four weekdays.
 
 ## Validation
 
-- `pnpm --filter=@forge/cron test`: 38 tests passed across 6 files.
-- Presentation regressions failed before their respective fixes. All 16 reminder
-  cases now pass, including full cards for one or two events, compact cards from
-  three events, ignored candidates, and counting across days.
-- `pnpm format`: passed, 24 tasks.
-- `pnpm lint`: passed, 31 tasks; existing warnings in other packages.
-- `pnpm typecheck`: passed, 33 tasks.
-- `pnpm build`: blocked in unchanged `apps/2026` during page-data collection for
-  `/api/hacker-sdk/[...hackerSdk]`. Local environment lacks
-  `KHIX_HACKER_PORTAL_CLIENT_ID` and `KHIX_HACKER_PORTAL_ORIGIN`.
-- Cron has no compilation step. No React changes; React analysis is not applicable.
+- `pnpm --filter=@forge/cron test`: 37 tests passed across six files.
+- `pnpm format`, `pnpm lint`, and `pnpm typecheck`: passed. Lint reports
+  existing warnings in other packages; no new cron warnings.
 - `git diff --check`: passed.
-- Added exact-copy regression assertions for both introductions and the footer;
-  they failed against the rewritten copy before restoration. All 38 cron tests
-  pass after the correction.
-- 60-event fixture: 63 messages / 60 embeds before; 10 messages / 8 embeds after.
+- The two combined-announcement tests failed against the previous PR formatter:
+  it sent nine messages for the full-week fixture and five for the daily fixture.
+  Each now sends one message.
+- Tests cover all seven weekdays, daily groups, small schedules, 60 events,
+  component/text limits, escaped mentions, ordering, links, and failed delivery.
+- Existing calendar-window, selection, and DST tests remain.
+- Earlier `pnpm build` was blocked in unchanged `apps/2026` during page-data
+  collection for `/api/hacker-sdk/[...hackerSdk]`: local configuration lacks
+  `KHIX_HACKER_PORTAL_CLIENT_ID` and `KHIX_HACKER_PORTAL_ORIGIN`. The previous
+  PR revision passed the build in CI.
+- No React changes; React analysis is not applicable.
 
-## Discord verification
+## Discord evidence
 
-The user authorized development-webhook previews. Both configured Club reminder
-webhooks were verified to target Dev@KnightHacks, channel `#bot`.
-Sent 14 synthetic events in four embeds plus introduction/footer. Readback
-confirmed six messages and zero user, role, or everyone notifications; preview
-sends used empty allowed mentions. Production mention behavior is unchanged.
+The user authorized development-webhook sends. Both configured Club reminder
+webhooks target Dev@KnightHacks, channel `#bot`. The before/after comparison uses
+the same eight synthetic events spread over Monday through Thursday:
 
-Inspected the actual Discord desktop client for the eight-row card, its
-continuation, links, and long-title ellipsis. Native mobile rendering is not
-verified; the earlier local approximation passed overflow checks at 320px.
+- Main: 14 messages, including eight event embeds and four day headings.
+- Revised weekly formatter: one message containing one card.
+- Revised daily formatter: six events across three sections in one message/card.
 
-[Day card](evidence/discord-day.png) and
-[continuation](evidence/discord-continuation.png) are cropped from the actual
-Discord screenshot. The surrounding server sidebar is excluded. These are
-synthetic event names and links, labeled as a development layout preview.
-[Delivery readback](evidence/discord-delivery.json) records message IDs and
-notification checks without credentials.
+API readback verified the expected containers and zero user, role, or everyone
+mentions. Production audience IDs are preserved; the daily role does not exist
+in the development guild. Its card screenshot excludes that unresolved mention.
 
-[Open the first event card](https://discord.com/channels/1151877367434850364/1284582557689843785/1546257107324637216).
+Actual native Discord captures:
+[before](evidence/discord-week-before.png),
+[more of the original week](evidence/discord-week-before-more.png),
+[combined week](evidence/discord-week-after.png), and
+[combined daily view](evidence/discord-daily.png).
+The weekly crops use the same scale and width. Sidebars and other conversations
+are excluded. [Delivery records](evidence/discord-week-delivery.json) contain
+message links and counts without credentials. Superseded per-day screenshots
+were removed. Native mobile rendering remains unverified.
 
-The development preview introduction and footer were edited in place to restore
-the original wording. Readback matched both updates with zero notifications.
-PR screenshots show the unchanged event cards without the superseded copy.
-
-## Before and after comparison
-
-Sent the same eight synthetic Monday events through the main formatter and the
-PR formatter. The original introductions and footer match in both versions.
-The development-only comparison label identifies each version; notifications
-were disabled and readback confirmed no user, role, or everyone mentions.
-
-- Before: 11 messages, including eight individual event cards and a weekday heading.
-- After: three messages, including one card containing all eight event rows.
-- Card counts exclude Discord's automatic footer-link preview.
-
-The user supplied three actual Discord screenshots. They are saved unchanged as
-[before](evidence/discord-before.png),
-[more of the original cards](evidence/discord-before-more.png), and
-[after](evidence/discord-after.png). The PR pairs the first and third screenshots
-and includes the second as additional evidence of the repeated cards. These are
-different crops, so they demonstrate the layout without claiming an exact
-reduction in rendered height. [Comparison delivery](evidence/discord-comparison.json)
-records formatter commits, message counts, and links.
-
-## Review notes
-
-Both CodeRabbit concerns are addressed. The SRD states one or more embeds per
-compact section. After the user requested the delivery fix, each event-card send
-now catches and logs a terminal failure, then continues with subsequent cards
-and the footer. Introduction, standalone heading, and footer failures still
-propagate. No additional retry loop was introduced.
-
-Two regression cases rejected the first card of full and compact schedules and
-failed before the fix. Both now pass, verifying error logs, later cards,
-continuations, later date sections, and the footer. All 38 cron tests pass.
-
-The previous PR revision passed CI, including the repository build. Local build
-verification remains blocked by the missing `apps/2026` environment values above.
+These screenshots precede the final copy revision: the live weekly and daily
+messages now contain the Blade QR footer and outside opt-in/Channels & Roles
+prompt. API readback matches the current formatter and confirms no notifications.
+The final copy has not been recaptured in the native client; the separate browser
+was not signed in. Clicking the relocated shortcut remains unverified.

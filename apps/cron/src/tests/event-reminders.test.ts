@@ -1,3 +1,4 @@
+import { ComponentType, MessageFlags } from "discord-api-types/v10";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { logger } from "@forge/utils";
@@ -14,6 +15,23 @@ const currentWorkshop = {
   startDateTime: "2026-06-29T18:00:00-04:00",
   tag: "Workshop",
 };
+
+type ReminderPayload = Parameters<
+  Parameters<typeof createClubReminderExecutor>[0]["send"]
+>[0];
+
+function messageText(payload: ReminderPayload): string[] {
+  return payload.components.flatMap((component) => {
+    if (component.type === ComponentType.TextDisplay)
+      return [component.content];
+    if (component.type === ComponentType.Container) {
+      return component.components.flatMap((child) =>
+        child.type === ComponentType.TextDisplay ? [child.content] : [],
+      );
+    }
+    return [];
+  });
+}
 
 describe("club event reminders", () => {
   afterEach(() => {
@@ -34,10 +52,7 @@ describe("club event reminders", () => {
 
     expect(getCandidates).toHaveBeenCalledOnce();
     expect(getCandidates).toHaveBeenCalledWith({ now });
-    expect(send).toHaveBeenNthCalledWith(1, {
-      content:
-        "# Event Reminders\nGood morning, <@&1264770451578552401>!\nToday is Monday, June 29, 2026, and here are some reminders about upcoming events!",
-    });
+    expect(send).toHaveBeenCalledOnce();
     const sent = JSON.stringify(send.mock.calls);
     expect(sent).toContain("Event Reminders");
     expect(sent).toContain("Current Workshop");
@@ -70,26 +85,18 @@ describe("club event reminders", () => {
 
     const sent = JSON.stringify(send.mock.calls);
     expect(sent).toContain("Events this Week");
-    expect(sent).toContain("Monday");
-    expect(sent).toContain("Wednesday");
+    expect(sent).toContain("MONDAY");
+    expect(sent).toContain("WEDNESDAY");
     expect(sent).toContain("Current Workshop");
     expect(sent).toContain("Wednesday GBM");
     expect(sent).toContain("6/28 - 7/4");
-    expect(send).toHaveBeenNthCalledWith(1, {
-      content:
-        "# Events this Week (6/28 - 7/4)\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!",
-    });
+    expect(send).toHaveBeenCalledOnce();
     expect(sent.match(/@everyone/g)).toHaveLength(1);
     expect(sent).not.toContain("<@&1264770451578552401>");
-    const embeds = send.mock.calls.flatMap(([payload]) =>
-      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
-    );
-    expect(embeds.map((embed) => embed.title)).toEqual([
-      "Current Workshop",
-      "Wednesday GBM",
-    ]);
-    expect(send).toHaveBeenCalledWith("## Monday");
-    expect(send).toHaveBeenCalledWith("## Wednesday");
+    const payload = send.mock.calls[0]?.[0];
+    if (!payload) throw new Error("Expected a weekly announcement.");
+    expect(messageText(payload).join("\n")).toContain("### MONDAY · 6/29");
+    expect(messageText(payload).join("\n")).toContain("### WEDNESDAY · 7/1");
   });
 
   it("TC-028 emits nothing when the selector returns no eligible events", async () => {
@@ -215,64 +222,92 @@ describe("club event reminders", () => {
   });
 });
 
-describe("club reminder density", () => {
-  it.each([1, 2])(
-    "TC-005 preserves full cards for %i eligible events",
-    async (count) => {
-      const events = Array.from({ length: count }, (_, index) => ({
+describe("club reminder announcements", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("combines 14 events across the entire Sunday week in one card and message", async () => {
+    const dates = [
+      "2026-06-28",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-04",
+    ];
+    const events = dates.flatMap((date, day) =>
+      [0, 1].map((slot) => ({
         ...currentWorkshop,
-        name: `Workshop ${index + 1}`,
-        discordId: String(111111111111111111n + BigInt(index)),
-      }));
-      const send =
-        vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
-      await createClubReminderExecutor({
-        getCandidates: () =>
-          Promise.resolve([
-            ...events,
-            {
-              ...currentWorkshop,
-              startDateTime: "2026-07-03T18:00:00-04:00",
-              endDateTime: "2026-07-03T20:00:00-04:00",
-            },
-            {
-              ...currentWorkshop,
-              startDateTime: "2026-07-13T18:00:00-04:00",
-              endDateTime: "2026-07-13T20:00:00-04:00",
-            },
-          ]),
-        now: () => new Date("2026-06-29T09:00:00-04:00"),
-        send,
-      })();
-
-      const embeds = send.mock.calls.flatMap(([payload]) =>
-        typeof payload === "object" && "embeds" in payload
-          ? payload.embeds
-          : [],
+        name: `Workshop ${day * 2 + slot}`,
+        discordId: String(111111111111111111n + BigInt(day * 2 + slot)),
+        startDateTime: `${date}T18:00:00-04:00`,
+        endDateTime: `${date}T20:00:00-04:00`,
+      })),
+    );
+    const send =
+      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+    await createClubReminderExecutor({
+      getCandidates: () => Promise.resolve(events),
+      now: () => new Date("2026-06-28T09:00:00-04:00"),
+      send,
+    })();
+    expect(send).toHaveBeenCalledOnce();
+    const payload = send.mock.calls[0]?.[0];
+    if (!payload) throw new Error("Expected a weekly announcement.");
+    const text = messageText(payload).join("\n");
+    expect(payload.flags).toBe(MessageFlags.IsComponentsV2);
+    expect(payload.withComponents).toBe(true);
+    expect(
+      payload.components.filter(
+        (component) => component.type === ComponentType.Container,
+      ),
+    ).toHaveLength(1);
+    expect(
+      payload.components.filter(
+        (component) => component.type === ComponentType.TextDisplay,
+      ),
+    ).toEqual([
+      {
+        type: ComponentType.TextDisplay,
+        content:
+          "Want reminders like these, add the reminder role in <id:customize>\ncc: @everyone",
+      },
+    ]);
+    expect(payload.allowedMentions).toEqual({ parse: ["everyone"], roles: [] });
+    expect(text).toContain("## Events this Week (6/28 - 7/4)");
+    for (const day of [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ])
+      expect(text).toContain(`### ${day}`);
+    for (const event of events)
+      expect(text).toContain(
+        `**[${event.name}](<https://discord.com/events/486628710443778071/${event.discordId}>)**`,
       );
-      expect(embeds).toEqual(
-        events.map((event) => ({
-          author: { name: "[WORKSHOP]" },
-          color: 0xcca4f4,
-          description: event.description,
-          fields: [
-            { inline: true, name: "Date", value: "Monday, June 29, 2026" },
-            { inline: true, name: "Location", value: "ENG2 102" },
-            { name: "\t", value: "\t" },
-            { inline: true, name: "Start", value: "6:00 PM" },
-            { inline: true, name: "End", value: "8:00 PM" },
-          ],
-          thumbnail: { url: "https://i.imgur.com/Jr1cyxT.png" },
-          title: event.name,
-          url: `https://discord.com/events/486628710443778071/${event.discordId}`,
-        })),
-      );
-      expect(send).toHaveBeenNthCalledWith(2, "## Today");
-      expect(send).toHaveBeenCalledTimes(count + 3);
-    },
-  );
+    expect(text).toContain("\n-# 6:00 PM–8:00 PM · ENG2 102 · Workshop");
+    const card = payload.components[0];
+    if (card?.type !== ComponentType.Container)
+      throw new Error("Expected a reminder card.");
+    expect(JSON.stringify(card)).not.toContain("<id:customize>");
+    expect(JSON.stringify(card)).toContain(
+      "-# Note: show up with your Blade QR. Don’t have an account? [Sign up](<https://blade.knighthacks.org>)",
+    );
+    expect(text).not.toContain("RSVP");
+    expect(text).not.toContain("Interested");
+    expect(text).toContain("<id:customize>");
+    expect(text).not.toContain(currentWorkshop.description);
+    expect(payload).not.toHaveProperty("embeds");
+    expect(payload).not.toHaveProperty("content");
+  });
 
-  it("TC-006 uses compact cards when three events span different days", async () => {
+  it("combines Today, Tomorrow, and Next Week inside one daily card", async () => {
     const send =
       vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
     await createClubReminderExecutor({
@@ -288,75 +323,62 @@ describe("club reminder density", () => {
       now: () => new Date("2026-06-29T09:00:00-04:00"),
       send,
     })();
-
-    const embeds = send.mock.calls.flatMap(([payload]) =>
-      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
-    );
-    expect(embeds.map((embed) => embed.title)).toEqual([
-      "Today · Monday, June 29, 2026",
-      "Tomorrow · Tuesday, June 30, 2026",
-      "Next Week · Monday, July 6, 2026",
-    ]);
-    for (const embed of embeds) {
-      expect(embed.fields).toBeUndefined();
-      expect(embed.description).toContain("**[Current Workshop]");
-    }
-    expect(send).toHaveBeenCalledTimes(5);
+    expect(send).toHaveBeenCalledOnce();
+    const payload = send.mock.calls[0]?.[0];
+    if (!payload) throw new Error("Expected a daily announcement.");
+    const text = messageText(payload).join("\n");
+    expect(text).toContain("### TODAY · 6/29");
+    expect(text).toContain("### TOMORROW · 6/30");
+    expect(text).toContain("### NEXT WEEK · 7/6");
+    expect(payload.allowedMentions).toEqual({
+      parse: [],
+      roles: ["1264770451578552401"],
+    });
+    expect(text.match(/<@&1264770451578552401>/g)).toHaveLength(1);
+    expect(payload.components.at(-1)).toEqual({
+      type: ComponentType.TextDisplay,
+      content:
+        "Want reminders like these, add the reminder role in <id:customize>\ncc: <@&1264770451578552401>",
+    });
+    expect(text).not.toContain("@everyone");
   });
+
+  it.each([1, 2])(
+    "uses the same combined card for %i events",
+    async (count) => {
+      const send =
+        vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
+      await createClubReminderExecutor({
+        getCandidates: () =>
+          Promise.resolve(
+            Array.from({ length: count }, (_, index) => ({
+              ...currentWorkshop,
+              name: `Workshop ${index}`,
+            })),
+          ),
+        now: () => new Date("2026-06-29T09:00:00-04:00"),
+        send,
+      })();
+      expect(send).toHaveBeenCalledOnce();
+      const payload = send.mock.calls[0]?.[0];
+      if (!payload) throw new Error("Expected an announcement.");
+      const text = messageText(payload).join("\n");
+      expect(text.match(/### TODAY/g)).toHaveLength(1);
+      expect(text.match(/\*\*\[Workshop/g)).toHaveLength(count);
+      expect(payload).not.toHaveProperty("embeds");
+    },
+  );
 });
 
-describe("club reminder presentation", () => {
-  it("TC-001 groups compact linked rows and preserves the original footer", async () => {
-    const send =
-      vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
-    const execute = createClubReminderExecutor({
-      getCandidates: () =>
-        Promise.resolve([
-          currentWorkshop,
-          {
-            ...currentWorkshop,
-            name: "Evening GBM",
-            discordId: "222222222222222222",
-          },
-          {
-            ...currentWorkshop,
-            name: "Open Source Night",
-            discordId: "333333333333333333",
-          },
-        ]),
-      now: () => new Date("2026-06-29T09:00:00-04:00"),
-      send,
-    });
-
-    await execute();
-
-    const embeds = send.mock.calls.flatMap(([payload]) =>
-      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
-    );
-    expect(embeds).toHaveLength(1);
-    expect(embeds[0]).toEqual({
-      color: 0xcca4f4,
-      title: "Today · Monday, June 29, 2026",
-      description:
-        "**[Current Workshop](https://discord.com/events/486628710443778071/111111111111111111)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop\n\n" +
-        "**[Evening GBM](https://discord.com/events/486628710443778071/222222222222222222)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop\n\n" +
-        "**[Open Source Night](https://discord.com/events/486628710443778071/333333333333333333)**\n6:00 PM–8:00 PM · ENG2 102 · Workshop",
-    });
-    expect(send).toHaveBeenCalledTimes(3);
-    const sent = JSON.stringify(send.mock.calls);
-    expect(sent.match(/<@&1264770451578552401>/g)).toHaveLength(1);
-    expect(sent).not.toContain("@everyone");
-    expect(sent).not.toContain(currentWorkshop.description);
-    expect(send).toHaveBeenLastCalledWith({
-      content:
-        'We hope to see you all there! Let us know you\'re attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!',
-    });
+describe("club reminder limits and delivery", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it.each([false, true])(
-    "TC-002/003 keeps 60 events within row and character limits (long labels: %s)",
+    "preserves all 60 links within component limits (long labels: %s)",
     async (longLabels) => {
-      const candidates = Array.from({ length: 60 }, (_, index) => ({
+      const events = Array.from({ length: 60 }, (_, index) => ({
         ...currentWorkshop,
         discordId: String(111111111111111111n + BigInt(index)),
         name: longLabels ? "🛠".repeat(150) : `Workshop ${index}`,
@@ -366,46 +388,47 @@ describe("club reminder presentation", () => {
       const send =
         vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
       await createClubReminderExecutor({
-        getCandidates: () => Promise.resolve(candidates),
+        getCandidates: () => Promise.resolve(events),
         now: () => new Date("2026-06-29T09:00:00-04:00"),
         send,
       })();
-
-      const embeds = send.mock.calls.flatMap(([payload]) =>
-        typeof payload === "object" && "embeds" in payload
-          ? payload.embeds
-          : [],
-      );
-      expect(embeds.length).toBeGreaterThan(1);
+      expect(send.mock.calls.length).toBeGreaterThan(1);
       const links: string[] = [];
-      for (const [index, embed] of embeds.entries()) {
-        const description = embed.description ?? "";
-        const eventIds = [
-          ...description.matchAll(
-            /https:\/\/discord.com\/events\/486628710443778071\/(\d+)/g,
-          ),
-        ].map((match) => match[1]);
-        expect(eventIds.length).toBeGreaterThan(0);
-        expect(eventIds.length).toBeLessThanOrEqual(8);
-        expect(description.length).toBeLessThanOrEqual(4096);
+      for (const [index, [payload]] of send.mock.calls.entries()) {
+        const text = messageText(payload);
+        expect(text.every((part) => part.length <= 2000)).toBe(true);
         expect(
-          description.length + (embed.title?.length ?? 0),
+          text.reduce((length, part) => length + part.length, 0),
         ).toBeLessThanOrEqual(6000);
-        expect(embed.title).toContain("Today · Monday, June 29, 2026");
-        if (index > 0) expect(embed.title).toContain("continued");
-        links.push(...eventIds.filter((id) => id !== undefined));
+        const card = payload.components[0];
+        if (card?.type !== ComponentType.Container)
+          throw new Error("Expected one container.");
+        expect(card.components.length).toBeLessThanOrEqual(10);
+        expect(
+          card.components.length + payload.components.length,
+        ).toBeLessThanOrEqual(40);
+        if (index > 0) {
+          expect(text[0]).toContain("continued");
+          expect(payload.allowedMentions).toEqual({ parse: [], roles: [] });
+          expect(text.join("\n")).not.toContain("cc:");
+          expect(text.join("\n")).not.toContain("<id:customize>");
+        }
+        links.push(
+          ...[
+            ...text
+              .join("\n")
+              .matchAll(
+                /https:\/\/discord.com\/events\/486628710443778071\/(\d+)/g,
+              ),
+          ].map((match) => match[1] ?? ""),
+        );
       }
-      expect(links).toEqual(candidates.map((event) => event.discordId));
-      expect(send).toHaveBeenCalledTimes(embeds.length + 2);
-      if (longLabels) {
-        expect(embeds.length).toBeGreaterThan(Math.ceil(60 / 8));
-        expect(embeds[0]?.description).toContain("🛠…");
-        expect(embeds[0]?.description).toContain("\\*");
-      }
+      expect(links).toEqual(events.map((event) => event.discordId));
+      if (longLabels) expect(JSON.stringify(send.mock.calls)).toContain("🛠…");
     },
   );
 
-  it("TC-003 keeps Markdown and line breaks inside event labels", async () => {
+  it("escapes Markdown and neutralizes mentions in component event labels", async () => {
     const send =
       vi.fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>();
     await createClubReminderExecutor({
@@ -413,82 +436,54 @@ describe("club reminder presentation", () => {
         Promise.resolve([
           {
             ...currentWorkshop,
-            name: "  [Build](https://example.com)\n **together**  ",
+            name: "[Build](https://example.com)\n**together** @everyone <@123>",
             location: "ENG2\n102",
             tag: "Project_Launch",
           },
-          currentWorkshop,
-          { ...currentWorkshop, discordId: "222222222222222222" },
         ]),
       now: () => new Date("2026-06-29T09:00:00-04:00"),
       send,
     })();
-
-    const embeds = send.mock.calls.flatMap(([payload]) =>
-      typeof payload === "object" && "embeds" in payload ? payload.embeds : [],
-    );
-    const description = embeds[0]?.description ?? "";
-    expect(description).toContain(
+    const payload = send.mock.calls[0]?.[0];
+    if (!payload) throw new Error("Expected an announcement.");
+    const text = messageText(payload).join("\n");
+    expect(text).toContain(
       "\\[Build\\]\\(https://example.com\\) \\*\\*together\\*\\*",
     );
-    expect(description).toContain("ENG2 102 · Project\\_Launch");
-    expect(description.split("\n")).toHaveLength(8);
-  });
-});
-
-describe("club reminder delivery", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+    expect(text).toContain("ENG2 102 · Project\\_Launch");
+    expect(text).not.toContain("@everyone");
+    expect(text).not.toContain("<@123>");
   });
 
-  it.each([2, 10])(
-    "TC-007 logs a failed card and continues through the footer (%i events)",
-    async (count) => {
-      const error = new Error("Discord rejected the card");
-      const log = vi.spyOn(logger, "error").mockImplementation(() => undefined);
-      let rejected = false;
-      const send = vi.fn<
-        Parameters<typeof createClubReminderExecutor>[0]["send"]
-      >((payload) => {
-        if (!rejected && typeof payload === "object" && "embeds" in payload) {
-          rejected = true;
-          return Promise.reject(error);
-        }
-        return Promise.resolve();
-      });
-      const events = Array.from({ length: count }, (_, index) => {
-        const date = index === count - 1 ? "2026-06-30" : "2026-06-29";
-        return {
-          ...currentWorkshop,
-          name: `Workshop ${index}`,
-          discordId: String(111111111111111111n + BigInt(index)),
-          startDateTime: `${date}T18:00:00-04:00`,
-          endDateTime: `${date}T20:00:00-04:00`,
-        };
-      });
-
-      await createClubReminderExecutor({
-        getCandidates: () => Promise.resolve(events),
-        now: () => new Date("2026-06-29T09:00:00-04:00"),
-        send,
-      })();
-
-      const embeds = send.mock.calls.flatMap(([payload]) =>
-        typeof payload === "object" && "embeds" in payload
-          ? payload.embeds
-          : [],
-      );
-      expect(embeds).toHaveLength(count === 2 ? 2 : 3);
-      expect(JSON.stringify(embeds.at(-1))).toContain(`Workshop ${count - 1}`);
-      expect(send).toHaveBeenCalledTimes(count === 2 ? 6 : 5);
-      expect(send.mock.lastCall?.[0]).toHaveProperty(
-        "content",
-        expect.stringContaining("We hope to see you all there!"),
-      );
-      expect(log).toHaveBeenCalledExactlyOnceWith(
-        `Failed to send Club reminder card "${embeds[0]?.title}":`,
-        error,
-      );
-    },
-  );
+  it("logs a failed announcement and still attempts its continuation", async () => {
+    const error = new Error("Discord rejected the card");
+    const log = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    const send = vi
+      .fn<Parameters<typeof createClubReminderExecutor>[0]["send"]>()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue(undefined);
+    await createClubReminderExecutor({
+      getCandidates: () =>
+        Promise.resolve(
+          Array.from({ length: 60 }, (_, index) => ({
+            ...currentWorkshop,
+            name: `Workshop ${index}`,
+          })),
+        ),
+      now: () => new Date("2026-06-29T09:00:00-04:00"),
+      send,
+    })();
+    expect(send.mock.calls.length).toBeGreaterThan(1);
+    const last = send.mock.lastCall?.[0];
+    if (!last) throw new Error("Expected a continuation.");
+    expect(messageText(last).join("\n")).toContain("Workshop 59");
+    expect(messageText(last).join("\n")).toContain(
+      "show up with your Blade QR",
+    );
+    expect(last.allowedMentions).toEqual({ parse: [], roles: [] });
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Failed to send Club reminder card "Event Reminders\n-# Monday, June 29, 2026" (part 1):',
+      error,
+    );
+  });
 });

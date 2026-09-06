@@ -1,11 +1,22 @@
-import type { APIEmbed } from "discord-api-types/v10";
+import type {
+  APIContainerComponent,
+  APIMessageTopLevelComponent,
+  APITextDisplayComponent,
+} from "discord-api-types/v10";
+import {
+  AllowedMentionsTypes,
+  ComponentType,
+  MessageFlags,
+  SeparatorSpacingSize,
+} from "discord-api-types/v10";
 
 import { EVENTS } from "@forge/consts";
 import { logger } from "@forge/utils";
 
 const DISCORD_PROD_GUILD_ID = "486628710443778071";
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
-const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
+const REMINDER_FOOTER =
+  "-# Note: show up with your Blade QR. Don’t have an account? [Sign up](<https://blade.knighthacks.org>)";
 
 export interface ClubReminderCandidate {
   description: string;
@@ -18,7 +29,12 @@ export interface ClubReminderCandidate {
   tag: string;
 }
 
-type ReminderPayload = string | { content: string } | { embeds: APIEmbed[] };
+interface ReminderPayload {
+  components: APIMessageTopLevelComponent[];
+  flags: MessageFlags.IsComponentsV2;
+  withComponents: true;
+  allowedMentions: { parse: AllowedMentionsTypes[]; roles: string[] };
+}
 
 function dateKey(value: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -109,28 +125,6 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   return [...groups.entries()].map(([prefix, events]) => ({ prefix, events }));
 }
 
-function eventEmbed(event: ClubReminderCandidate): APIEmbed {
-  const start = new Date(event.startDateTime);
-  const end = new Date(event.endDateTime);
-  return {
-    author: {
-      name: `[${event.tag.toUpperCase().replaceAll(" ", "-")}]`,
-    },
-    color: 0xcca4f4,
-    description: event.description,
-    fields: [
-      { inline: true, name: "Date", value: formatDate(start) },
-      { inline: true, name: "Location", value: event.location },
-      { name: "\t", value: "\t" },
-      { inline: true, name: "Start", value: formatTime(start) },
-      { inline: true, name: "End", value: formatTime(end) },
-    ],
-    thumbnail: { url: EVENT_BANNER_IMAGE },
-    title: event.name,
-    url: `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`,
-  };
-}
-
 function compactLabel(value: string, limit: number) {
   const characters = Array.from(value.replace(/\s+/g, " ").trim());
   const label =
@@ -139,50 +133,86 @@ function compactLabel(value: string, limit: number) {
       : characters.join("");
 
   // Labels now live inside Markdown rows, including masked-link text.
-  return label.replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
+  return label
+    .replaceAll("@", "@\u200b")
+    .replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
 }
 
-function groupEmbeds(
-  prefix: string,
-  events: ClubReminderCandidate[],
-): APIEmbed[] {
-  const embeds: APIEmbed[] = [];
-  let rowCount = 0;
-
-  for (const event of events) {
-    const start = new Date(event.startDateTime);
-    const end = new Date(event.endDateTime);
-    const name = compactLabel(event.name, 100);
-    const location = compactLabel(event.location, 80);
-    const tag = compactLabel(event.tag, 32);
-    const url = `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`;
-    const details = [`${formatTime(start)}–${formatTime(end)}`, location, tag]
-      .filter(Boolean)
-      .join(" · ");
-    const row = `**[${name}](${url})**\n${details}`;
-    const previous = embeds.at(-1);
-    const description = previous?.description
-      ? `${previous.description}\n\n${row}`
-      : row;
-
-    // Bound visual height as well as Discord's 4096-character description limit.
-    // One embed per send also keeps the message below the 6000-character total.
-    if (!previous || rowCount === 8 || description.length > 4096) {
-      const date = formatDate(start);
-      const heading = prefix === weekday(start) ? date : `${prefix} · ${date}`;
-      embeds.push({
-        color: 0xcca4f4,
-        title: `${heading}${previous ? " (continued)" : ""}`,
-        description: row,
-      });
-      rowCount = 1;
-    } else {
-      previous.description = description;
-      rowCount += 1;
+function reminderCards(
+  groups: ReturnType<typeof groupCandidates>,
+  title: string,
+  audience: string,
+): APIContainerComponent[] {
+  const sections: APITextDisplayComponent[] = [];
+  for (const group of groups) {
+    let content = "";
+    for (const event of group.events) {
+      const start = new Date(event.startDateTime);
+      const date = new Intl.DateTimeFormat("en-US", {
+        month: "numeric",
+        day: "numeric",
+        timeZone: EVENTS.CALENDAR_TIME_ZONE,
+      }).format(start);
+      const heading = `### ${group.prefix.toUpperCase()} · ${date}`;
+      const name = compactLabel(event.name, 100);
+      const location = compactLabel(event.location, 80);
+      const tag = compactLabel(event.tag, 32);
+      const url = `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`;
+      const details = [
+        `${formatTime(start)}–${formatTime(new Date(event.endDateTime))}`,
+        location,
+        tag,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      const row = `**[${name}](<${url}>)**\n-# ${details}`;
+      if (content && content.length + row.length + 2 > 2000) {
+        sections.push({ type: ComponentType.TextDisplay, content });
+        content = `${heading} · CONTINUED`;
+      }
+      if (!content) content = heading;
+      content += `\n\n${row}`;
     }
+    sections.push({ type: ComponentType.TextDisplay, content });
   }
 
-  return embeds;
+  const cards: APIContainerComponent[] = [];
+  let textLength = 0;
+  for (const section of sections) {
+    let card = cards.at(-1);
+    // Reserve two children for the footer and its divider. Like issue reminders,
+    // keep each text display <=2000, each container <=10 children, and total text <=6000.
+    if (
+      !card ||
+      card.components.length === 8 ||
+      textLength + section.content.length > 6000
+    ) {
+      const heading = `## ${title}${cards.length ? " (continued)" : ""}`;
+      textLength =
+        heading.length +
+        REMINDER_FOOTER.length +
+        (cards.length ? 0 : audience.length);
+      card = {
+        type: ComponentType.Container,
+        accent_color: 0xcca4f4,
+        components: [{ type: ComponentType.TextDisplay, content: heading }],
+      };
+      cards.push(card);
+    }
+    card.components.push(section);
+    textLength += section.content.length;
+  }
+  for (const card of cards) {
+    card.components.push(
+      {
+        type: ComponentType.Separator,
+        divider: true,
+        spacing: SeparatorSpacingSize.Small,
+      },
+      { type: ComponentType.TextDisplay, content: REMINDER_FOOTER },
+    );
+  }
+  return cards;
 }
 
 export function createClubReminderExecutor({
@@ -201,6 +231,7 @@ export function createClubReminderExecutor({
     if (groups.length === 0) return;
 
     const sunday = weekday(currentTime) === "Sunday";
+    let title = `Event Reminders\n-# ${formatDate(currentTime)}`;
     if (sunday) {
       const end = dateFromKey(dateKeyAfter(currentTime, 6));
       const range = `${new Intl.DateTimeFormat("en-US", {
@@ -212,39 +243,31 @@ export function createClubReminderExecutor({
         month: "numeric",
         timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(end)}`;
-      await send({
-        content: `# Events this Week (${range})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
-      });
-    } else {
-      await send({
-        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formatDate(currentTime)}, and here are some reminders about upcoming events!`,
-      });
+      title = `Events this Week (${range})`;
     }
 
-    const eventCount = groups.reduce(
-      (total, group) => total + group.events.length,
-      0,
-    );
-    const compact = eventCount > 2;
-    for (const group of groups) {
-      if (!compact) await send(`## ${group.prefix}`);
-      const embeds = compact
-        ? groupEmbeds(group.prefix, group.events)
-        : group.events.map(eventEmbed);
-      for (const embed of embeds) {
-        try {
-          await send({ embeds: [embed] });
-        } catch (error) {
-          logger.error(
-            `Failed to send Club reminder card "${embed.title}":`,
-            error,
-          );
-        }
+    const audience = `Want reminders like these, add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
+    const cards = reminderCards(groups, title, audience);
+    for (const [index, card] of cards.entries()) {
+      const components: APIMessageTopLevelComponent[] = [card];
+      if (index === 0)
+        components.push({ type: ComponentType.TextDisplay, content: audience });
+      try {
+        await send({
+          components,
+          flags: MessageFlags.IsComponentsV2,
+          withComponents: true,
+          allowedMentions: {
+            parse: sunday && index === 0 ? [AllowedMentionsTypes.Everyone] : [],
+            roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
+          },
+        });
+      } catch (error) {
+        logger.error(
+          `Failed to send Club reminder card "${title}" (part ${index + 1}):`,
+          error,
+        );
       }
     }
-
-    await send({
-      content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!`,
-    });
   };
 }
