@@ -2358,7 +2358,7 @@ export const JudgingAnnouncement = createTable(
     ).on(table.hackathonId, table.roomId, table.clearedAt),
     messageNotBlank: check(
       "knight_hacks_judging_announcement_message_not_blank_check",
-      sql`length(btrim(${table.message})) > 0`,
+      sql`${table.message} ~ '[^[:space:]]'`,
     ),
   }),
 );

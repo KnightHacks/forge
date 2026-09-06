@@ -24,7 +24,7 @@ Current phase: Review and delivery
   Discord account label remains a fallback for members without a profile.
 - 2026-09-05: The same full-name rule applies to every judging view that names
   an authenticated judge. Guest access now labels its identity field `Full
-name`.
+Name`.
 - 2026-09-05: The slice now includes one current global announcement and one
   current announcement per room. Authenticated judges are the default audience;
   officers may include QR guests.
@@ -77,16 +77,16 @@ None blocking.
 - `pnpm verify:precommit`: passed, including formatting, lint, type checks, and
   repository policy checks across 33 tasks.
 - `pnpm --filter=@forge/validators test -- judging audit`: passed, 17 tests.
-- `pnpm --filter=@forge/api test -- judging`: passed, 22 tests.
-- `pnpm --filter=@forge/api test`: passed, 112 files and 794 tests.
+- `pnpm --filter=@forge/api test -- judging`: passed, 25 tests.
+- `pnpm --filter=@forge/api test`: passed, 112 files and 797 tests.
 - `pnpm --filter=@forge/db test -- migration`: passed, 65 tests.
-- `pnpm --filter=@forge/db test -- judging-schema`: passed, 10 tests.
-- `pnpm --filter=@forge/db test`: passed, 147 tests, including development
+- `pnpm --filter=@forge/db test -- judging-schema`: passed, 11 tests.
+- `pnpm --filter=@forge/db test`: passed, 148 tests, including development
   backup policy classification for announcements.
 - `pnpm --filter=@forge/blade test -- authenticated-shell
-project-judge-privacy guest-name-gate judging-announcements`: passed, 27
+project-judge-privacy guest-name-gate judging-announcements`: passed, 29
   tests.
-- `pnpm analyze:react:changed`: passed, two components and zero failures.
+- `pnpm analyze:react:changed`: passed, 11 components and zero failures.
 - `pnpm --filter=@forge/blade build`: passed; 58 static pages generated.
 - Desktop Command Center, QR dialog, authenticated room assignment, live
   roster, and 390px guest-dialog visual checks: passed.

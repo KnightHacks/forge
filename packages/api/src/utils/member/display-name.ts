@@ -2,6 +2,8 @@ import { inArray } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Member } from "@forge/db/schemas/knight-hacks";
 
+import type { WriteDb } from "../db";
+
 // Read-time actor-name resolution for Issue history and Admin logs (R-20).
 // Both surfaces store a permanent write-time name snapshot alongside a
 // nullable link to the acting Member. Resolving the current name here, at
@@ -38,11 +40,12 @@ export async function resolveMemberDisplayNames(
  */
 export async function resolveMemberDisplayNamesByUserId(
   userIds: readonly (string | null | undefined)[],
+  executor: WriteDb = db,
 ): Promise<Map<string, string>> {
   const ids = [...new Set(userIds.filter((id): id is string => !!id))];
   if (ids.length === 0) return new Map();
 
-  const rows = await db
+  const rows = await executor
     .select({
       firstName: Member.firstName,
       lastName: Member.lastName,
@@ -65,9 +68,10 @@ export async function resolveCurrentJudgeDisplayNames<
     kind: string;
     userId: string | null;
   },
->(rows: readonly T[]): Promise<T[]> {
+>(rows: readonly T[], executor: WriteDb = db): Promise<T[]> {
   const memberNames = await resolveMemberDisplayNamesByUserId(
     rows.map((row) => (row.kind === "member" ? row.userId : null)),
+    executor,
   );
 
   return rows.map((row) => ({

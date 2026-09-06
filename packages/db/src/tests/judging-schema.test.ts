@@ -7,6 +7,7 @@ import {
   Judge,
   JudgeDeliberationEntry,
   JudgeDeliberationSection,
+  JudgingAnnouncement,
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
@@ -162,6 +163,19 @@ describe("judging room storage", () => {
     if (!visibilityCheck) throw new Error("Missing rubric visibility check.");
     expect(new PgDialect().sqlToQuery(visibilityCheck.value).sql).toContain(
       '"knight_hacks_judging_rubric_item"."required" = true',
+    );
+  });
+
+  it("rejects announcements made only of whitespace", () => {
+    const messageCheck = getTableConfig(JudgingAnnouncement).checks.find(
+      (constraint) =>
+        constraint.name ===
+        "knight_hacks_judging_announcement_message_not_blank_check",
+    );
+    expect(messageCheck).toBeDefined();
+    if (!messageCheck) throw new Error("Missing announcement message check.");
+    expect(new PgDialect().sqlToQuery(messageCheck.value).sql).toContain(
+      "~ '[^[:space:]]'",
     );
   });
 });

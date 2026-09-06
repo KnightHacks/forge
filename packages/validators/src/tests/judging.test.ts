@@ -52,7 +52,13 @@ describe("judging inputs", () => {
       message: "Pitches pause at 4:30 PM.",
       roomId: null,
     });
-    for (const message of ["   ", "x".repeat(1001), "Unsafe\u0007copy"]) {
+    for (const message of [
+      "   ",
+      "\t",
+      "\n",
+      "x".repeat(1001),
+      "Unsafe\u0007copy",
+    ]) {
       expect(
         judgingAnnouncementPublishSchema.safeParse({
           hackathonId,

@@ -1,17 +1,38 @@
-import { describe, expect, it } from "vitest";
+import type { APIChannel } from "discord-api-types/v10";
+import { ChannelType } from "discord-api-types/v10";
+import { describe, expect, it, vi } from "vitest";
 
+import type { JudgingDiscordGateway } from "../../utils/judging/discord-comms";
 import {
   authorizedJudgingDiscordIds,
   buildJudgingRoomMessage,
   buildJudgingRoomMessages,
   judgingDiscordNonce,
   judgingRoomThreadName,
+  serializeJudgingAnnouncement,
+  validateJudgingDiscordChannel,
   withJudgingRecipientMentions,
 } from "../../utils/judging/discord-comms";
 import { permissionKeysToBitstring } from "../../utils/roles/management";
 
 const memberOne = "111111111111111111";
 const memberTwo = "222222222222222222";
+
+vi.mock("@forge/utils/discord-config", () => ({
+  getKnightHacksGuildId: () => Promise.resolve("999999999999999999"),
+}));
+
+function validationGateway(
+  getChannel: JudgingDiscordGateway["getChannel"],
+): JudgingDiscordGateway {
+  return {
+    createRoomThread: vi.fn(() => Promise.reject(new Error("unused"))),
+    getChannel,
+    listTextChannels: vi.fn(() => Promise.resolve([])),
+    prepareRoomThread: vi.fn(() => Promise.reject(new Error("unused"))),
+    sendMessage: vi.fn(() => Promise.reject(new Error("unused"))),
+  };
+}
 
 describe("judging Discord messages", () => {
   it("keeps only current judge and officer permission holders", () => {
@@ -59,6 +80,75 @@ describe("judging Discord messages", () => {
     const nonce = judgingDiscordNonce();
     expect(nonce).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(nonce.length).toBeLessThanOrEqual(25);
+    expect(new Set(Array.from({ length: 50 }, judgingDiscordNonce)).size).toBe(
+      50,
+    );
+  });
+
+  it("distinguishes invalid channels from Discord lookup failures", async () => {
+    const validChannel = {
+      guild_id: "999999999999999999",
+      id: "111111111111111111",
+      name: "judging-ops",
+      type: ChannelType.GuildText,
+    } as APIChannel;
+
+    await expect(
+      validateJudgingDiscordChannel(
+        validChannel.id,
+        validationGateway(() => Promise.resolve(validChannel)),
+      ),
+    ).resolves.toBe("valid");
+    await expect(
+      validateJudgingDiscordChannel(
+        validChannel.id,
+        validationGateway(() =>
+          Promise.resolve({
+            ...validChannel,
+            guild_id: "888888888888888888",
+          }),
+        ),
+      ),
+    ).resolves.toBe("invalid");
+    await expect(
+      validateJudgingDiscordChannel(
+        validChannel.id,
+        validationGateway(() => Promise.reject(new Error("Discord 503"))),
+      ),
+    ).resolves.toBe("unavailable");
+  });
+
+  it("serializes announcement work without overlapping operations", async () => {
+    const order: string[] = [];
+    let releaseFirst: () => void = () => undefined;
+    const firstReleased = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    let firstStarted: () => void = () => undefined;
+    const firstDidStart = new Promise<void>((resolve) => {
+      firstStarted = resolve;
+    });
+
+    const first = serializeJudgingAnnouncement(
+      "hackathon-queue-test",
+      async () => {
+        order.push("first-start");
+        firstStarted();
+        await firstReleased;
+        order.push("first-end");
+      },
+    );
+    await firstDidStart;
+    const second = serializeJudgingAnnouncement("hackathon-queue-test", () => {
+      order.push("second");
+      return Promise.resolve();
+    });
+    await Promise.resolve();
+    expect(order).toEqual(["first-start"]);
+
+    releaseFirst();
+    await Promise.all([first, second]);
+    expect(order).toEqual(["first-start", "first-end", "second"]);
   });
 
   it("mentions only the member who newly selected the room", () => {

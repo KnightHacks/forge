@@ -9,7 +9,7 @@ CREATE TABLE "knight_hacks_judging_announcement" (
 	"published_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"cleared_at" timestamp with time zone,
 	"cleared_by_user_id" uuid,
-	CONSTRAINT "knight_hacks_judging_announcement_message_not_blank_check" CHECK (length(btrim("knight_hacks_judging_announcement"."message")) > 0)
+	CONSTRAINT "knight_hacks_judging_announcement_message_not_blank_check" CHECK ("knight_hacks_judging_announcement"."message" ~ '[^[:space:]]')
 );
 --> statement-breakpoint
 ALTER TABLE "knight_hacks_judging_announcement" ADD CONSTRAINT "knight_hacks_judging_announcement_hackathon_id_knight_hacks_hackathon_id_fk" FOREIGN KEY ("hackathon_id") REFERENCES "public"."knight_hacks_hackathon"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

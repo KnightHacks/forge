@@ -65,10 +65,19 @@ starter message and public thread per active room, saving each returned thread
 ID. New rooms provision after their database insert. Room renames sync the
 current thread name after commit.
 
+The selected root channel is the Discord access boundary and must be restricted
+to Knight Hacks organizers. Public room threads intentionally inherit that
+channel's readers so officers can inspect every room without being assigned.
+Mentions are notifications, not an access-control list. Command Center states
+this requirement beside the channel selector because Blade cannot make an
+otherwise public Discord channel private.
+
 Provisioning is retryable and keeps successful room IDs when another room
-fails. A missing or unusable stored thread is replaced. Thread names are
-single-line, mention-neutralized, and limited to Discord's 100-character
-maximum.
+fails. A missing, forbidden, or invalid stored thread is replaced. Rate limits,
+server errors, and transport failures preserve the saved thread for retry.
+Thread names are single-line, mention-neutralized, and limited to Discord's
+100-character maximum. Discord network work runs outside database
+transactions; per-room serialization prevents duplicate local provisioning.
 
 ### Room arrivals
 
@@ -86,7 +95,7 @@ Judge-facing API reads batch-resolve authenticated judge names through the
 linked Member record before returning room rosters, score feedback, or
 evaluation history. They retain the stored Judge label as the Discord fallback.
 Guest labels never pass through Member-name resolution. The guest introduction
-field says `Full name`, but the signed guest session remains the authorization
+field says `Full Name`, but the signed guest session remains the authorization
 identity.
 
 ### QR and revocation delivery
@@ -209,7 +218,7 @@ hackathon and the existing Discord config chooses the environment's guild.
   document overflow.
 - Warn about Discord delivery failure without claiming the judging action
   failed.
-- Label the guest identity field `Full name`.
+- Label the guest identity field `Full Name`.
 - Render authenticated judge identities with the current Member full name and
   use the stored Discord label only when no Member profile is linked.
 - Put screenshots only in PR discussion, never in the repository.

@@ -150,7 +150,7 @@ Room rosters, score feedback, and officer evaluation history show an
 authenticated judge's current Member full name even when the stored Judge label
 contains a Discord username. An authenticated judge without a linked Member
 profile keeps the stored Discord label. Guest judges keep the full name entered
-through the field labeled `Full name`.
+through the field labeled `Full Name`.
 
 ## Negative and regression cases
 
@@ -214,6 +214,18 @@ room scopes do not clear one another.
 
 Blade publication stays current and the officer sees `failed` when Discord
 cannot accept the global or room announcement.
+
+### TC-NEG-014: preserve threads after transient Discord failures
+
+A rate limit, server error, or transport failure does not replace the saved
+room thread. A confirmed missing, forbidden, invalid, or wrong-parent thread is
+eligible for replacement.
+
+### TC-NEG-015: expose the Discord access boundary
+
+Command Center tells officers to select an organizer-only root channel and that
+thread readers inherit channel access. Mentions remain notification routing,
+not authorization.
 
 ## Open questions
 

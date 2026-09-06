@@ -10947,7 +10947,7 @@
       "checkConstraints": {
         "knight_hacks_judging_announcement_message_not_blank_check": {
           "name": "knight_hacks_judging_announcement_message_not_blank_check",
-          "value": "length(btrim(\"knight_hacks_judging_announcement\".\"message\")) > 0"
+          "value": "\"knight_hacks_judging_announcement\".\"message\" ~ '[^[:space:]]'"
         }
       },
       "isRLSEnabled": false

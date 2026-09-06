@@ -66,7 +66,7 @@ export function judgingRoomActivationUrl(linkId: string) {
 export type RoomActivationResult =
   | {
       challengeId: string;
-      discordDelivery: "delivered" | "failed" | "not_configured";
+      discordDelivery: "delivered" | "failed" | "not_configured" | "skipped";
       kind: "member";
       roomId: string;
     }
@@ -192,7 +192,7 @@ export async function activateJudgingRoom(input: {
         kind: "member_joined",
         memberName: result.displayName,
       })
-    : ("not_configured" as const);
+    : ("skipped" as const);
   return {
     challengeId: result.challengeId,
     discordDelivery,
@@ -279,7 +279,7 @@ export async function completeGuestJudge(input: {
         guestName: input.displayName,
         kind: "guest_joined",
       })
-    : ("not_configured" as const);
+    : ("skipped" as const);
   return {
     discordDelivery,
     judgeId: result.judgeId,

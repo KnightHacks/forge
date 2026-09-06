@@ -34,6 +34,7 @@ const OPTIONAL_RESPONSE = "60000000-0000-4000-8000-000000000904";
 const PRIVATE_RESPONSE = "60000000-0000-4000-8000-000000000905";
 const FAILED_ANNOUNCEMENT = "70000000-0000-4000-8000-000000000901";
 const CONCURRENT_ROOM = "80000000-0000-4000-8000-000000000901";
+const TRANSIENT_ROOM = "80000000-0000-4000-8000-000000000902";
 
 function importCsv() {
   const headers = [
@@ -382,6 +383,16 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     await guestCaller.judging.completeGuest({ displayName: "Casey Sponsor" });
+    await client
+      .insert(schemas.HackathonJudgingConfiguration)
+      .values({
+        hackathonId: HACKATHON,
+        judgingCommsChannelId: null,
+      })
+      .onConflictDoUpdate({
+        set: { judgingCommsChannelId: null },
+        target: schemas.HackathonJudgingConfiguration.hackathonId,
+      });
     const membersOnly = await officerCaller.judging.publishAnnouncement({
       hackathonId: HACKATHON,
       message: "Authenticated judges only",
@@ -705,6 +716,36 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       roomName: "Concurrent room",
       threadId: "223456789012345678",
     });
+  });
+
+  it("does not replace a room thread after a transient Discord failure", async () => {
+    await client.insert(schemas.JudgingRoom).values({
+      challengeId: SPONSOR,
+      discordThreadId: "223456789012345679",
+      displayOrder: 100,
+      hackathonId: HACKATHON,
+      id: TRANSIENT_ROOM,
+      name: "Transient room",
+    });
+    const createRoomThread = vi.fn(() => Promise.resolve("223456789012345680"));
+    const gateway: JudgingDiscordGateway = {
+      createRoomThread,
+      getChannel: vi.fn(() => Promise.reject(new Error("unused"))),
+      listTextChannels: vi.fn(() => Promise.resolve([])),
+      prepareRoomThread: vi.fn(() =>
+        Promise.reject(
+          Object.assign(new Error("rate limited"), { status: 429 }),
+        ),
+      ),
+      sendMessage: vi.fn(() => Promise.resolve()),
+    };
+    const { ensureJudgingRoomThread } =
+      await import("../../utils/judging/discord-comms");
+
+    await expect(
+      ensureJudgingRoomThread(TRANSIENT_ROOM, gateway),
+    ).rejects.toThrow("rate limited");
+    expect(createRoomThread).not.toHaveBeenCalled();
   });
 
   it("scores, edits, gates feedback, and keeps deliberation private", async () => {

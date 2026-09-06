@@ -22,6 +22,48 @@ const THREAD_NAME_LIMIT = 100;
 const MESSAGE_LIMIT = 2_000;
 const MENTION_BATCH_SIZE = 75;
 const DISCORD_SNOWFLAKE = /^\d{17,20}$/;
+const roomThreadQueues = new Map<string, Promise<void>>();
+const announcementQueues = new Map<string, Promise<void>>();
+
+class UnusableJudgingRoomThreadError extends Error {}
+
+async function runSerialized<T>(
+  queues: Map<string, Promise<void>>,
+  key: string,
+  operation: () => Promise<T>,
+) {
+  const previous = queues.get(key) ?? Promise.resolve();
+  let release: () => void = () => undefined;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = previous.catch(() => undefined).then(() => current);
+  queues.set(key, tail);
+  await previous.catch(() => undefined);
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (queues.get(key) === tail) queues.delete(key);
+  }
+}
+
+function discordStatus(error: unknown) {
+  if (typeof error !== "object" || error === null) return null;
+  if ("status" in error && typeof error.status === "number") {
+    return error.status;
+  }
+  if ("statusCode" in error && typeof error.statusCode === "number") {
+    return error.statusCode;
+  }
+  return null;
+}
+
+function shouldReplaceRoomThread(error: unknown) {
+  if (error instanceof UnusableJudgingRoomThreadError) return true;
+  const status = discordStatus(error);
+  return status === 403 || status === 404;
+}
 
 export function judgingDiscordNonce() {
   return randomBytes(16).toString("base64url");
@@ -30,11 +72,20 @@ export function judgingDiscordNonce() {
 export type JudgingDiscordDeliveryStatus =
   | "delivered"
   | "failed"
-  | "not_configured";
+  | "not_configured"
+  | "skipped";
 
 export type JudgingAnnouncementDeliveryStatus =
   | JudgingDiscordDeliveryStatus
   | "superseded";
+
+/** Serialize publication, clearing, and delivery without holding DB locks. */
+export function serializeJudgingAnnouncement<T>(
+  hackathonId: string,
+  operation: () => Promise<T>,
+) {
+  return runSerialized(announcementQueues, hackathonId, operation);
+}
 
 export interface JudgingDiscordMessage {
   allowedMentions: {
@@ -357,10 +408,14 @@ export const liveJudgingDiscordGateway: JudgingDiscordGateway = {
       channel.type !== ChannelType.PublicThread &&
       channel.type !== ChannelType.AnnouncementThread
     ) {
-      throw new Error("The saved judging room thread is not usable.");
+      throw new UnusableJudgingRoomThreadError(
+        "The saved judging room thread is not usable.",
+      );
     }
     if (!("parent_id" in channel) || channel.parent_id !== channelId) {
-      throw new Error("The saved judging room thread has the wrong parent.");
+      throw new UnusableJudgingRoomThreadError(
+        "The saved judging room thread has the wrong parent.",
+      );
     }
     await discord.api.patch(Routes.channel(threadId), {
       body: { archived: false, name: judgingRoomThreadName(roomName) },
@@ -474,49 +529,57 @@ export async function ensureJudgingRoomThread(
   roomId: string,
   gateway: JudgingDiscordGateway = liveJudgingDiscordGateway,
 ) {
-  return db.transaction(async (tx) => {
-    const [room] = await tx
-      .select({
-        hackathonId: JudgingRoom.hackathonId,
-        roomName: JudgingRoom.name,
-        threadId: JudgingRoom.discordThreadId,
-      })
-      .from(JudgingRoom)
-      .where(and(eq(JudgingRoom.id, roomId), isNull(JudgingRoom.archivedAt)))
-      .for("update")
-      .limit(1);
-    if (!room) return null;
-    const [configuration] = await tx
-      .select({
-        channelId: HackathonJudgingConfiguration.judgingCommsChannelId,
-      })
-      .from(HackathonJudgingConfiguration)
-      .where(eq(HackathonJudgingConfiguration.hackathonId, room.hackathonId))
-      .limit(1);
-    if (!configuration?.channelId) return null;
+  return runSerialized(roomThreadQueues, roomId, async () => {
+    const target = await roomDiscordTarget(roomId);
+    if (!target?.channelId) return null;
 
-    if (room.threadId) {
+    if (target.threadId) {
       try {
         await gateway.prepareRoomThread({
-          channelId: configuration.channelId,
-          roomName: room.roomName,
-          threadId: room.threadId,
+          channelId: target.channelId,
+          roomName: target.roomName,
+          threadId: target.threadId,
         });
-        return room.threadId;
-      } catch {
-        // Recreate a deleted, inaccessible, invalid, or stale saved thread.
+        return target.threadId;
+      } catch (error) {
+        if (!shouldReplaceRoomThread(error)) throw error;
       }
     }
     const threadId = await gateway.createRoomThread({
-      channelId: configuration.channelId,
-      roomName: room.roomName,
-      starter: starterMessage(room.roomName),
+      channelId: target.channelId,
+      roomName: target.roomName,
+      starter: starterMessage(target.roomName),
     });
-    await tx
-      .update(JudgingRoom)
-      .set({ discordThreadId: threadId })
-      .where(eq(JudgingRoom.id, roomId));
-    return threadId;
+    return db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({
+          hackathonId: JudgingRoom.hackathonId,
+          threadId: JudgingRoom.discordThreadId,
+        })
+        .from(JudgingRoom)
+        .where(and(eq(JudgingRoom.id, roomId), isNull(JudgingRoom.archivedAt)))
+        .for("update")
+        .limit(1);
+      if (!current) return null;
+      const [configuration] = await tx
+        .select({
+          channelId: HackathonJudgingConfiguration.judgingCommsChannelId,
+        })
+        .from(HackathonJudgingConfiguration)
+        .where(
+          eq(HackathonJudgingConfiguration.hackathonId, current.hackathonId),
+        )
+        .limit(1);
+      if (configuration?.channelId !== target.channelId) return null;
+      if (current.threadId && current.threadId !== target.threadId) {
+        return current.threadId;
+      }
+      await tx
+        .update(JudgingRoom)
+        .set({ discordThreadId: threadId })
+        .where(eq(JudgingRoom.id, roomId));
+      return threadId;
+    });
   });
 }
 
@@ -597,11 +660,7 @@ export async function deliverJudgingAnnouncement(
   }
 }
 
-/**
- * Serialize Discord delivery with publication and clearing for the same
- * hackathon. The second lock keeps an older publication from arriving after
- * the announcement that replaced it.
- */
+/** Verify that a queued announcement is still current before delivery. */
 export async function deliverCurrentJudgingAnnouncement(
   input: {
     announcementId: string;
@@ -612,30 +671,20 @@ export async function deliverCurrentJudgingAnnouncement(
   },
   gateway: JudgingDiscordGateway = liveJudgingDiscordGateway,
 ): Promise<JudgingAnnouncementDeliveryStatus> {
-  return db.transaction(async (tx) => {
-    const [hackathon] = await tx
-      .select({ id: Hackathon.id })
-      .from(Hackathon)
-      .where(eq(Hackathon.id, input.hackathonId))
-      .for("update")
-      .limit(1);
-    if (!hackathon) return "failed";
+  const [current] = await db
+    .select({ id: JudgingAnnouncement.id })
+    .from(JudgingAnnouncement)
+    .where(
+      and(
+        eq(JudgingAnnouncement.id, input.announcementId),
+        eq(JudgingAnnouncement.hackathonId, input.hackathonId),
+        isNull(JudgingAnnouncement.clearedAt),
+      ),
+    )
+    .limit(1);
+  if (!current) return "superseded";
 
-    const [current] = await tx
-      .select({ id: JudgingAnnouncement.id })
-      .from(JudgingAnnouncement)
-      .where(
-        and(
-          eq(JudgingAnnouncement.id, input.announcementId),
-          eq(JudgingAnnouncement.hackathonId, input.hackathonId),
-          isNull(JudgingAnnouncement.clearedAt),
-        ),
-      )
-      .limit(1);
-    if (!current) return "superseded";
-
-    return deliverJudgingAnnouncement(input, gateway);
-  });
+  return deliverJudgingAnnouncement(input, gateway);
 }
 
 export async function listJudgingDiscordChannels(
@@ -648,20 +697,20 @@ export async function listJudgingDiscordChannels(
 export async function validateJudgingDiscordChannel(
   channelId: string,
   gateway: JudgingDiscordGateway = liveJudgingDiscordGateway,
-) {
+): Promise<"invalid" | "unavailable" | "valid"> {
   try {
     const [channel, guildId] = await Promise.all([
       gateway.getChannel(channelId),
       getKnightHacksGuildId(),
     ]);
-    return (
-      "guild_id" in channel &&
+    return "guild_id" in channel &&
       channel.guild_id === guildId &&
       (channel.type === ChannelType.GuildText ||
         channel.type === ChannelType.GuildAnnouncement)
-    );
+      ? "valid"
+      : "invalid";
   } catch {
-    return false;
+    return "unavailable";
   }
 }
 
@@ -673,7 +722,10 @@ export async function judgingDiscordGuildId() {
   }
 }
 
-export async function provisionJudgingRoomThreads(hackathonId: string) {
+export async function provisionJudgingRoomThreads(
+  hackathonId: string,
+  gateway: JudgingDiscordGateway = liveJudgingDiscordGateway,
+) {
   const rooms = await db
     .select({ id: JudgingRoom.id, name: JudgingRoom.name })
     .from(JudgingRoom)
@@ -687,7 +739,7 @@ export async function provisionJudgingRoomThreads(hackathonId: string) {
   let provisionedCount = 0;
   for (const room of rooms) {
     try {
-      const threadId = await ensureJudgingRoomThread(room.id);
+      const threadId = await ensureJudgingRoomThread(room.id, gateway);
       if (threadId) provisionedCount += 1;
     } catch {
       failedRooms.push(room);

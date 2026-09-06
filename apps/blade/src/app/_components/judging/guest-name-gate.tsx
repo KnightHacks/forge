@@ -59,7 +59,7 @@ export function GuestNameGate() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
-              <Label htmlFor="guest-judge-name">Full name</Label>
+              <Label htmlFor="guest-judge-name">Full Name</Label>
               <Input
                 autoComplete="name"
                 autoFocus

@@ -71,6 +71,42 @@ describe("judging announcements", () => {
     expect(screen.queryByText(standard.message)).not.toBeInTheDocument();
   });
 
+  it("keeps a dismissed announcement hidden after a remount", async () => {
+    const user = userEvent.setup();
+    const first = render(
+      <JudgingAnnouncements initialAnnouncements={[standard]} />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Dismiss announcement for All judging rooms",
+      }),
+    );
+    first.unmount();
+    render(<JudgingAnnouncements initialAnnouncements={[standard]} />);
+
+    expect(screen.queryByText(standard.message)).not.toBeInTheDocument();
+  });
+
+  it("keeps dismissals in memory when browser storage is unavailable", async () => {
+    const user = userEvent.setup();
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Storage denied", "SecurityError");
+      });
+    render(<JudgingAnnouncements initialAnnouncements={[standard]} />);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Dismiss announcement for All judging rooms",
+      }),
+    );
+
+    expect(screen.queryByText(standard.message)).not.toBeInTheDocument();
+    setItem.mockRestore();
+  });
+
   it("polls in the background and renders replacements and clears", async () => {
     const user = userEvent.setup();
     const replacement = {

@@ -776,7 +776,12 @@ export function JudgingControlPanel({
               inputPlaceholder="Search channels"
               isDisabled={saveComms.isPending}
               isLoading={channels.isLoading}
-              items={channels.data ?? []}
+              items={
+                channels.data ??
+                (commsChannelId
+                  ? [{ id: commsChannelId, name: commsChannelId }]
+                  : [])
+              }
               onValueChange={setCommsChannelId}
               renderItem={(channel) => (
                 <span className="flex min-w-0 items-center gap-2">
@@ -795,6 +800,11 @@ export function JudgingControlPanel({
               Blade uses the configured{" "}
               {data.discordGuildId ? "Knight Hacks server" : "Discord server"}{" "}
               for this environment.
+            </p>
+            <p className="text-sm font-medium text-foreground">
+              Use an organizer-only channel. Room threads inherit the channel's
+              readers, and mentions do not restrict who can view QR links or
+              guest notices.
             </p>
             {channels.isError ? (
               <p className="text-sm text-destructive">
@@ -1046,6 +1056,10 @@ export function JudgingControlPanel({
                                   ) {
                                     toast.error(
                                       "The QR is still active, but Discord delivery failed.",
+                                    );
+                                  } else {
+                                    toast.error(
+                                      "Connect a Discord channel to send this QR.",
                                     );
                                   }
                                   refresh();

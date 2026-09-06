@@ -69,13 +69,15 @@ export function JudgingAnnouncements({
   }, [dismissedThisMount, mounted]);
 
   function dismiss(id: string) {
-    setDismissedThisMount((current) => {
-      const next = new Set([...readDismissed(), ...current]);
-      next.add(id);
-      const ids = [...next].slice(-100);
+    const next = new Set([...readDismissed(), ...dismissedThisMount]);
+    next.add(id);
+    const ids = [...next].slice(-100);
+    try {
       sessionStorage.setItem(DISMISSED_KEY, JSON.stringify(ids));
-      return new Set(ids);
-    });
+    } catch {
+      // Keep this dismissal in memory when browser storage is unavailable.
+    }
+    setDismissedThisMount(new Set(ids));
   }
 
   const visible = announcements.filter(
