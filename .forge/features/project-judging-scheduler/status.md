@@ -1,6 +1,6 @@
 # Project judging scheduler status
 
-Current phase: Local verification complete, preparing pull request
+Current phase: Pull request open, awaiting CI and CodeRabbit
 Last updated: 2026-09-07
 
 ## Discovery decision log
@@ -104,7 +104,7 @@ The active Codex goal contains the same exit condition. This status file is the 
 - [x] Verify guest/member/officer flows, desktop/mobile states, and screenshot evidence.
 - [ ] Pass all required local checks and CI.
 - [x] Complete Forge review, standard scope review in three rounds, maximum five.
-- [ ] Create issue and PR with template and extensive hosted screenshots.
+- [x] Create issue and PR with template and extensive hosted screenshots.
 - [ ] Address CodeRabbit findings, push, reply, resolve, and repeat until approval.
 
 ## Current verification
@@ -119,6 +119,9 @@ The active Codex goal contains the same exit condition. This status file is the 
 - CI and CodeRabbit approval remain outstanding until the PR is open. No merge or deployment is authorized by this task.
 
 ## Links
+
+- [Pull request #545](https://github.com/KnightHacks/forge/pull/545)
+- [Hosted screenshot walkthrough](https://github.com/KnightHacks/forge/pull/545#issuecomment-5575093270)
 
 - [Implementation issue #544](https://github.com/KnightHacks/forge/issues/544)
 
@@ -138,3 +141,5 @@ The active Codex goal contains the same exit condition. This status file is the 
 - Persisted drafts reconcile against fixed deadlines on relevant requests and heartbeats. No Cron, external worker, solver dependency, or other app change was introduced.
 - Guest opt-in and existing rubric visibility policies remain unchanged. Mandatory-sharing copy is authenticated-only. Sharing is a flag for the deferred feedback-distribution slice.
 - GitHub uploads use the signed-in in-Codex browser. Screenshots are discussion attachments, never repository files.
+
+- Implementation commit beafdfbe is pushed. All commit hooks passed with a larger process-local Node heap after the default staged-lint process ran out of memory. No hook was bypassed or repository setting changed.
