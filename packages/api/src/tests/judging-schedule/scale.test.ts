@@ -106,4 +106,5 @@ it.each([32, 200])(
       Math.max(90, Math.ceil(projectCount / 9) * 10),
     ]);
   },
+  15_000,
 );

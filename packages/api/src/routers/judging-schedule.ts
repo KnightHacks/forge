@@ -11,6 +11,7 @@ import {
   JudgingSchedule,
   JudgingScheduleJob,
 } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 import {
   judgingAppointmentAssignSchema,
   judgingAppointmentIdSchema,
@@ -528,18 +529,26 @@ export const judgingScheduleRouter = {
         input.hackathonId,
         input.appointmentId,
       );
-      await auditSchedule(
-        db,
-        await captureAdminAuditActor(ctx.session.user),
-        input.hackathonId,
-        "judging.appointment.contacts_viewed",
-        {
+      try {
+        await auditSchedule(
+          db,
+          await captureAdminAuditActor(ctx.session.user),
+          input.hackathonId,
+          "judging.appointment.contacts_viewed",
+          {
+            appointmentId: input.appointmentId,
+            projectId: result.appointment.projectId,
+            challengeId: result.appointment.challengeId,
+            memberCount: result.members.length,
+          },
+        );
+      } catch {
+        // Contact discovery stays available if the audit store is unavailable.
+        logger.warn("Judging contact read audit failed", {
+          hackathonId: input.hackathonId,
           appointmentId: input.appointmentId,
-          projectId: result.appointment.projectId,
-          challengeId: result.appointment.challengeId,
-          memberCount: result.members.length,
-        },
-      );
+        });
+      }
       return result;
     }),
 
@@ -555,23 +564,31 @@ export const judgingScheduleRouter = {
         new Date(),
         input,
       );
-      await createAdminAuditEvent({
-        actionKey: "judging.appointment.contacts_viewed",
-        actor: await captureAdminAuditActor(ctx.session.user),
-        metadata: {
+      try {
+        await createAdminAuditEvent({
+          actionKey: "judging.appointment.contacts_viewed",
+          actor: await captureAdminAuditActor(ctx.session.user),
+          metadata: {
+            projectId: input.projectId,
+            challengeId: input.challengeId,
+            memberCount: result.members.length,
+          },
+          subjects: [
+            {
+              relation: "primary",
+              targetId: input.projectId,
+              targetLabel: result.appointment.title,
+              targetType: "project",
+            },
+          ],
+        });
+      } catch {
+        logger.warn("Judging contact read audit failed", {
+          hackathonId: input.hackathonId,
           projectId: input.projectId,
           challengeId: input.challengeId,
-          memberCount: result.members.length,
-        },
-        subjects: [
-          {
-            relation: "primary",
-            targetId: input.projectId,
-            targetLabel: result.appointment.title,
-            targetType: "project",
-          },
-        ],
-      });
+        });
+      }
       return result;
     }),
 

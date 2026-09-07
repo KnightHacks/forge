@@ -603,9 +603,13 @@ export const projectsRouter = createTRPCRouter({
         hackathon: selected,
         ...listed,
         roomFilterUnavailableReason:
-          input.showInRoomOnly && schedule && !roomId && !guestPrincipal
-            ? "Choose a judging room to use this filter."
-            : null,
+          input.showInRoomOnly &&
+          schedule &&
+          isMlhChallenge(selectedChallenge?.label ?? "")
+            ? "MLH judging is untimed, so room filtering is unavailable."
+            : input.showInRoomOnly && schedule && !roomId && !guestPrincipal
+              ? "Choose a judging room to use this filter."
+              : null,
         challenges: guestPrincipal
           ? listed.challenges.filter(
               (challenge) => challenge.id === guestPrincipal.challengeId,

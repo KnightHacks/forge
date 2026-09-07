@@ -272,10 +272,16 @@ describe.runIf(canRunDatabaseTests())(
         (appointment) => appointment.challengeId === general,
       );
       if (!selected) throw new Error("General appointment missing.");
+      const auditService = await import("../../utils/audit/service");
+      const moveAuditFailure = vi
+        .spyOn(auditService, "createAdminAuditEvent")
+        .mockRejectedValueOnce(new Error("Audit store unavailable"));
       const moves = await admin.judging.getAppointmentMoveChoices({
         hackathonId,
         appointmentId: selected.id,
       });
+      expect(moveAuditFailure).toHaveBeenCalledOnce();
+      moveAuditFailure.mockRestore();
       expect(moves.members[0]?.email).toMatch(/captain-/);
       expect(
         moves.choices.every((choice) => choice.roomId === generalRoom.id),
@@ -321,11 +327,16 @@ describe.runIf(canRunDatabaseTests())(
         challengeId: general,
         hackathonId,
       });
+      const assignmentAuditFailure = vi
+        .spyOn(auditService, "createAdminAuditEvent")
+        .mockRejectedValueOnce(new Error("Audit store unavailable"));
       const openings = await admin.judging.getUnassignedPresentationChoices({
         hackathonId,
         projectId: lateProjectId,
         challengeId: general,
       });
+      expect(assignmentAuditFailure).toHaveBeenCalledOnce();
+      assignmentAuditFailure.mockRestore();
       if (!openings.smartChoice)
         throw new Error("Expected an opening for the late import.");
       await admin.judging.assignPresentation({
@@ -468,12 +479,13 @@ describe.runIf(canRunDatabaseTests())(
         throw new Error(
           "Expected two sponsor presentations for deadline recovery.",
         );
+      const invalidRatingId = randomUUID();
       await client.insert(schema.ProjectEvaluationDraft).values({
         ...draft,
         id: staleDraftId,
         projectId: otherAppointment.projectId,
         appointmentId: otherAppointment.id,
-        ratings: [{ itemId: randomUUID(), value: 3 }],
+        ratings: [{ itemId: invalidRatingId, value: 3 }],
       });
       const warning = vi
         .spyOn(console, "warn")
@@ -491,10 +503,20 @@ describe.runIf(canRunDatabaseTests())(
         await client.query.ProjectEvaluationDraft.findFirst({
           where: eq(schema.ProjectEvaluationDraft.id, staleDraftId),
         }),
-      ).toBeDefined();
-      await client
-        .delete(schema.ProjectEvaluationDraft)
-        .where(eq(schema.ProjectEvaluationDraft.id, staleDraftId));
+      ).toMatchObject({
+        ratings: [{ itemId: invalidRatingId, value: 3 }],
+        reconciliationFailedAt: current.deadlineAt,
+        reconciliationErrorCode: "BAD_REQUEST",
+      });
+      const secondWarning = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => undefined);
+      await admin.judging.listMySubmissions({ hackathonId });
+      expect(secondWarning).not.toHaveBeenCalledWith(
+        "Judging deadline draft retained for recovery",
+        expect.objectContaining({ draftId: staleDraftId }),
+      );
+      secondWarning.mockRestore();
       expect(submissions).toHaveLength(1);
       expect(submissions[0]).toMatchObject({
         projectId: current.projectId,
@@ -588,8 +610,11 @@ describe.runIf(canRunDatabaseTests())(
       const existingEvaluations = await client
         .select({ appointmentId: schema.ProjectEvaluation.appointmentId })
         .from(schema.ProjectEvaluation);
+      const existingDrafts = await client
+        .select({ appointmentId: schema.ProjectEvaluationDraft.appointmentId })
+        .from(schema.ProjectEvaluationDraft);
       const occupiedAppointmentIds = new Set(
-        existingEvaluations.flatMap((evaluation) =>
+        [...existingEvaluations, ...existingDrafts].flatMap((evaluation) =>
           evaluation.appointmentId ? [evaluation.appointmentId] : [],
         ),
       );

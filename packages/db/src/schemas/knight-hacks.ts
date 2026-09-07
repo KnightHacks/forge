@@ -2799,6 +2799,8 @@ export const ProjectEvaluationDraft = createTable(
       .notNull()
       .default([]),
     deadlineAt: t.timestamp({ withTimezone: true }),
+    reconciliationFailedAt: t.timestamp({ withTimezone: true }),
+    reconciliationErrorCode: t.text(),
     revision: t.integer().notNull().default(1),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),

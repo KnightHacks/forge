@@ -184,3 +184,11 @@ Forge review completed through round five, the requested maximum. Access/API, va
 The new room-filter integration fixture originally initialized a database client before selecting its disposable database. Its import order and module isolation are corrected. Only the synthetic records created by that test in the configured local database were removed. No migration ran there. The clean API and workspace reruns passed.
 
 [Final 17-screenshot walkthrough](https://github.com/KnightHacks/forge/pull/545#issuecomment-5575596405) supplements the original gallery. All screenshots remain GitHub discussion attachments. Final push, CodeRabbit replies/resolutions, fresh approval, and CI verification are the remaining exit steps. No merge or deployment.
+
+### CodeRabbit closure follow-up
+
+The review of 50dce23e returned three inline findings and one minor comment. Failed deadline drafts now retain a durable failure timestamp and code, and later heartbeat probes skip them. A valid user save clears that marker. Migration 0052 adds the nullable fields without changing existing evaluations. Contact discovery catches audit-store failures and logs identifiers without contact data. The scale test timeout exceeds its bounded search loop, and MLH explains why room filtering is unavailable. Regression coverage exercises both audit failures and repeated stale-draft reconciliation.
+
+The previous revision passed every GitHub CI check. The closure commit requires a fresh review and CI run before completion.
+
+Closure verification passed all 33 static tasks, 29 workspace test tasks, and 21 build tasks. API 927, Blade 842, DB 156, and validators 316 tests passed. Migration lineage now includes 0052. The appointment-results fixture selects an appointment with neither evaluations nor retained drafts, so its independent judge list is deterministic. Fresh CodeRabbit approval and CI remain the final external gates.

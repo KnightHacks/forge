@@ -136,6 +136,8 @@ export const judgingDraftsRouter = {
           ratings: answers.ratings,
           responses: answers.responses,
           deadlineAt: timing.evaluationId ? null : timing.deadlineAt,
+          reconciliationFailedAt: null,
+          reconciliationErrorCode: null,
           revision: (existing?.revision ?? 0) + 1,
           updatedAt: new Date(),
         };

@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_project_evaluation_draft" ADD COLUMN "reconciliation_failed_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "knight_hacks_project_evaluation_draft" ADD COLUMN "reconciliation_error_code" text;

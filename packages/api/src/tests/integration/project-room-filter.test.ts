@@ -255,6 +255,9 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       challengeIds: [mlhId],
     });
     expect(mlh.totalCount).toBe(2);
+    expect(mlh.roomFilterUnavailableReason).toBe(
+      "MLH judging is untimed, so room filtering is unavailable.",
+    );
     expect(mlh.projects.map((project) => project.id).sort()).toEqual(
       mlhProjectIds.sort(),
     );

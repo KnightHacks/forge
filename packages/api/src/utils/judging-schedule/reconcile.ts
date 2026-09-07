@@ -32,6 +32,7 @@ export async function reconcileExpiredDraftsWithDb(
       and(
         eq(ProjectEvaluationDraft.hackathonId, hackathonId),
         isNull(ProjectEvaluationDraft.evaluationId),
+        isNull(ProjectEvaluationDraft.reconciliationFailedAt),
         lte(ProjectEvaluationDraft.deadlineAt, now),
       ),
     )
@@ -121,6 +122,13 @@ export async function reconcileExpiredDraftsWithDb(
         draftId: draft.id,
         code: error.code,
       });
+      await tx
+        .update(ProjectEvaluationDraft)
+        .set({
+          reconciliationFailedAt: now,
+          reconciliationErrorCode: error.code,
+        })
+        .where(eq(ProjectEvaluationDraft.id, draft.id));
     }
   }
 }
@@ -132,6 +140,7 @@ export async function reconcileExpiredJudgingDrafts(hackathonId: string) {
     where: and(
       eq(ProjectEvaluationDraft.hackathonId, hackathonId),
       isNull(ProjectEvaluationDraft.evaluationId),
+      isNull(ProjectEvaluationDraft.reconciliationFailedAt),
       lte(ProjectEvaluationDraft.deadlineAt, new Date()),
     ),
   });
