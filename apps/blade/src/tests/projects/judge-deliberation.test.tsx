@@ -119,6 +119,8 @@ const submissions = [
     createdAt: new Date("2026-09-05T12:00:00.000Z"),
     id: "00000000-0000-4000-8000-000000000051",
     projectAvailable: true,
+    isComplete: true,
+    autoSubmittedAt: null,
     projectId: thirdProjectId,
     projectTitle: "Third project",
     ratings: [],

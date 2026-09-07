@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -21,6 +21,8 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { useEvaluationAutosave } from "~/lib/judging/use-evaluation-autosave";
+import { useJudgingClock } from "~/lib/judging/use-judging-clock";
 import { api } from "~/trpc/react";
 
 type Workspace = RouterOutputs["judging"]["getWorkspace"];
@@ -29,6 +31,7 @@ type Submission = RouterOutputs["judging"]["listMySubmissions"][number];
 export interface EvaluationProject {
   id: string;
   title: string;
+  prizeCategories?: string[];
 }
 
 function policyCopy(
@@ -61,13 +64,73 @@ function policyCopy(
   };
 }
 
-export function EvaluationDialog({
+interface EvaluationDialogProps {
+  challengeLabel: string;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  project: EvaluationProject;
+  submission?: Submission;
+  workspace: Workspace;
+}
+
+export function EvaluationDialog(props: EvaluationDialogProps) {
+  return props.open ? <EvaluationSession {...props} /> : null;
+}
+
+function EvaluationSession(props: EvaluationDialogProps) {
+  const [ready, setReady] = useState(false);
+  const editor = api.judging.getEvaluationEditor.useQuery(
+    {
+      challengeId: props.workspace.challengeId,
+      hackathonId: props.workspace.hackathonId,
+      projectId: props.project.id,
+    },
+    {
+      enabled: props.open,
+      refetchInterval: props.open ? 5000 : false,
+      refetchOnMount: "always",
+      staleTime: 0,
+    },
+  );
+  // Seed answers once from a fresh successful response; later heartbeats must
+  // not remount the editor or replace what the judge is currently typing.
+  if (!ready && editor.isFetchedAfterMount && editor.isSuccess) setReady(true);
+  if (
+    !ready ||
+    !editor.data ||
+    (!editor.data.canEdit && !editor.data.evaluationId)
+  )
+    return (
+      <Dialog open onOpenChange={props.onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{props.project.title}</DialogTitle>
+            <DialogDescription>
+              {editor.error?.message ??
+                editor.data?.reason ??
+                "Checking your room and appointment..."}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  return (
+    <EvaluationEditor
+      {...props}
+      editor={editor.data}
+      key={`${props.project.id}:${props.workspace.challengeId}`}
+    />
+  );
+}
+
+function EvaluationEditor({
   challengeLabel,
   onOpenChange,
   open,
   project,
   submission,
   workspace,
+  editor,
 }: {
   challengeLabel: string;
   onOpenChange: (open: boolean) => void;
@@ -75,10 +138,11 @@ export function EvaluationDialog({
   project: EvaluationProject;
   submission?: Submission;
   workspace: Workspace;
+  editor: RouterOutputs["judging"]["getEvaluationEditor"];
 }) {
   const [ratings, setRatings] = useState<Record<string, number>>(() =>
     Object.fromEntries(
-      (submission?.ratings ?? []).map((answer) => [
+      (editor.draft?.ratings ?? submission?.ratings ?? []).map((answer) => [
         answer.itemId,
         answer.value,
       ]),
@@ -86,7 +150,7 @@ export function EvaluationDialog({
   );
   const [responses, setResponses] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      (submission?.responses ?? []).map((answer) => [
+      (editor.draft?.responses ?? submission?.responses ?? []).map((answer) => [
         answer.itemId,
         answer.value,
       ]),
@@ -94,7 +158,7 @@ export function EvaluationDialog({
   );
   const [shared, setShared] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
-      (submission?.responses ?? []).map((answer) => [
+      (editor.draft?.responses ?? submission?.responses ?? []).map((answer) => [
         answer.itemId,
         answer.isPublic,
       ]),
@@ -111,11 +175,76 @@ export function EvaluationDialog({
     () => workspace.rubric.filter((item) => item.kind === "short_response"),
     [workspace.rubric],
   );
-  const challengeName = /challenge$/i.test(challengeLabel)
+  const challengeName = /challenges?$/i.test(challengeLabel)
     ? challengeLabel
     : `${challengeLabel} Challenge`;
 
   const activeProject = project;
+  const now = useJudgingClock(editor.serverNow);
+  const [deadline] = useState(editor.deadlineAt);
+  const expiryHandled = useRef(false);
+  const seconds = deadline
+    ? Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / 1000))
+    : null;
+  const expired = deadline !== null && seconds === 0;
+  const gapEnded = !deadline && editor.lockAt !== null && now >= editor.lockAt;
+  const editable =
+    editor.canEdit && workspace.state === "open" && !expired && !gapEnded;
+  const answers = useMemo(
+    () => ({
+      challengeId: workspace.challengeId,
+      hackathonId: workspace.hackathonId,
+      projectId: project.id,
+      expectedRevision: submission?.revision ?? editor.evaluationRevision,
+      ratings: Object.entries(ratings).map(([itemId, value]) => ({
+        itemId,
+        value,
+      })),
+      responses: responseItems.map((item) => ({
+        itemId: item.id,
+        value: responses[item.id] ?? "",
+        isPublic: shared[item.id] === true,
+      })),
+    }),
+    [
+      editor.evaluationRevision,
+      project.id,
+      ratings,
+      responseItems,
+      responses,
+      shared,
+      submission?.revision,
+      workspace.challengeId,
+      workspace.hackathonId,
+    ],
+  );
+  const autosave = useEvaluationAutosave(answers, editor, editable);
+  const utils = api.useUtils();
+  useEffect(() => {
+    if ((!expired && !gapEnded) || expiryHandled.current) return;
+    expiryHandled.current = true;
+    void utils.judging.getEvaluationEditor
+      .invalidate()
+      .then(() => utils.judging.listMySubmissions.invalidate())
+      .catch(() => undefined);
+    router.refresh();
+    if (gapEnded) {
+      toast.message(
+        "Your room's next booking has started. Finish this submission during downtime.",
+      );
+      onOpenChange(false);
+    }
+  }, [expired, gapEnded, onOpenChange, router, utils]);
+  async function close(nextOpen: boolean) {
+    if (!nextOpen && editable) {
+      try {
+        await autosave.flush();
+      } catch {
+        return;
+      }
+    }
+    onOpenChange(nextOpen);
+  }
 
   async function submit() {
     const missingRating = ratingItems.some((item) => !ratings[item.id]);
@@ -130,7 +259,9 @@ export function EvaluationDialog({
     }
     setSaveError(null);
     try {
+      await autosave.flush();
       await save.mutateAsync({
+        expectedRevision: submission?.revision ?? editor.evaluationRevision,
         challengeId: workspace.challengeId,
         hackathonId: workspace.hackathonId,
         projectId: activeProject.id,
@@ -163,7 +294,7 @@ export function EvaluationDialog({
   }
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog onOpenChange={(value) => void close(value)} open={open}>
       <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b border-border/70 p-5 pr-12 text-left sm:p-6">
           <DialogTitle>
@@ -172,8 +303,54 @@ export function EvaluationDialog({
           <DialogDescription className="mt-2 rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
             Judging for the {challengeName}
           </DialogDescription>
+          {seconds !== null ? (
+            <div
+              role="timer"
+              aria-label="Judging time remaining"
+              className={`mt-3 rounded-md border px-3 py-2 font-mono text-2xl font-semibold ${seconds < 90 ? "border-destructive/60 bg-destructive/15 text-destructive motion-safe:animate-pulse" : seconds < 180 ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/15 bg-background/60"}`}
+            >
+              {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+              <span className="ml-3 font-sans text-sm font-normal">
+                until teardown
+              </span>
+            </div>
+          ) : null}
+          {project.prizeCategories?.some((label) => /mlh/i.test(label)) &&
+          /mlh/i.test(challengeLabel) ? (
+            <div className="mt-3 text-sm">
+              <p className="font-semibold">MLH opt-ins</p>
+              <ul className="mt-1 list-inside list-disc">
+                {project.prizeCategories
+                  .filter((label) => /mlh/i.test(label))
+                  .map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+          {expired ? (
+            <Alert>
+              <AlertTitle>
+                {editor.evaluationId
+                  ? editor.isComplete
+                    ? "Automatically submitted"
+                    : "Saved incomplete"
+                  : "Judging time has ended"}
+              </AlertTitle>
+              <AlertDescription>
+                {editor.evaluationId
+                  ? "Return to the Submissions tab during room downtime to review or finish your answers."
+                  : "Checking the last saved answers. Keep this window open until the submission state is confirmed."}
+              </AlertDescription>
+            </Alert>
+          ) : !editable && editor.reason ? (
+            <Alert>
+              <AlertTitle>Wait until downtime</AlertTitle>
+              <AlertDescription>{editor.reason}</AlertDescription>
+            </Alert>
+          ) : null}
           {workspace.state !== "open" ? (
             <Alert>
               <LockKeyhole className="size-4" />
@@ -214,6 +391,7 @@ export function EvaluationDialog({
               ) : null}
               <RadioGroup
                 aria-label={item.label}
+                disabled={!editable}
                 className="grid grid-cols-5 gap-2"
                 onValueChange={(value) =>
                   setRatings((current) => ({
@@ -265,6 +443,7 @@ export function EvaluationDialog({
                   </p>
                 ) : null}
                 <Textarea
+                  disabled={!editable}
                   className="min-h-28 resize-y"
                   id={item.id}
                   maxLength={2000}
@@ -320,6 +499,22 @@ export function EvaluationDialog({
         <DialogFooter className="shrink-0 border-t border-border/70 bg-card/95 p-4 sm:p-5">
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-xs leading-5 text-muted-foreground">
+              <p
+                role="status"
+                className={
+                  autosave.status === "error" ? "text-destructive" : ""
+                }
+              >
+                {autosave.message}
+              </p>
+              {autosave.status === "error" && editable ? (
+                <Button
+                  variant="link"
+                  onClick={() => void autosave.flush().catch(() => undefined)}
+                >
+                  Retry saving progress
+                </Button>
+              ) : null}
               <p>
                 {workspace.principalKind === "guest"
                   ? "Judges and officers can review every response. Hacker sharing follows the setting shown under each field."
@@ -333,7 +528,7 @@ export function EvaluationDialog({
             </div>
             <Button
               className="shrink-0"
-              disabled={workspace.state !== "open" || save.isPending}
+              disabled={!editable || save.isPending}
               onClick={() => void submit()}
               type="button"
             >

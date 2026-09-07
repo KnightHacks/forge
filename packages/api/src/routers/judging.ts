@@ -23,6 +23,7 @@ import {
   HackathonJudgingConfiguration,
   Judge,
   JudgingAnnouncement,
+  JudgingBuilding,
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
@@ -65,6 +66,7 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { assertNoRoomReservations } from "../utils/judging-schedule/appointments";
 import {
   deliverCurrentJudgingAnnouncement,
   deliverJudgingRoomNotice,
@@ -81,6 +83,9 @@ import {
   resolveMemberDisplayNamesByUserId,
 } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
+import { judgingDraftsRouter } from "./judging-drafts";
+import { judgingScheduleRouter } from "./judging-schedule";
+import { judgingScheduleViewRouter } from "./judging-schedule-view";
 import { judgingScoresRouter } from "./judging-scores";
 
 const contextInputSchema = z.object({
@@ -123,7 +128,9 @@ function throwRoomNameConflict(error: unknown, roomName: string): never {
     const databaseError = current as { code?: unknown; constraint?: unknown };
     if (
       databaseError.code === "23505" &&
-      databaseError.constraint === ACTIVE_ROOM_NAME_CONSTRAINT
+      (databaseError.constraint === ACTIVE_ROOM_NAME_CONSTRAINT ||
+        databaseError.constraint ===
+          "knight_hacks_judging_room_active_location_unique")
     ) {
       throw new TRPCError({
         cause: error,
@@ -190,8 +197,11 @@ async function listActiveRooms(hackathonId: string) {
       challengeLabel: ProjectChallenge.label,
       id: JudgingRoom.id,
       name: JudgingRoom.name,
+      buildingId: JudgingRoom.buildingId,
+      buildingName: JudgingBuilding.name,
     })
     .from(JudgingRoom)
+    .leftJoin(JudgingBuilding, eq(JudgingBuilding.id, JudgingRoom.buildingId))
     .innerJoin(
       ProjectChallenge,
       eq(ProjectChallenge.id, JudgingRoom.challengeId),
@@ -300,6 +310,7 @@ async function lockRoomAggregate(
   const [room] = await tx
     .select({
       challengeId: JudgingRoom.challengeId,
+      buildingId: JudgingRoom.buildingId,
       hackathonId: JudgingRoom.hackathonId,
       id: JudgingRoom.id,
       name: JudgingRoom.name,
@@ -449,6 +460,9 @@ async function joinMemberRoom(input: {
 
 export const judgingRouter = createTRPCRouter({
   ...judgingScoresRouter,
+  ...judgingDraftsRouter,
+  ...judgingScheduleRouter,
+  ...judgingScheduleViewRouter,
   getContext: publicProcedure
     .input(contextInputSchema)
     .query(async ({ ctx, input }) => {
@@ -458,9 +472,13 @@ export const judgingRouter = createTRPCRouter({
         const [room] = await db
           .select({
             hackathonName: Hackathon.displayName,
-            roomName: JudgingRoom.name,
+            roomName: sql<string>`concat_ws(' ', ${JudgingBuilding.name}, ${JudgingRoom.name})`,
           })
           .from(JudgingRoom)
+          .leftJoin(
+            JudgingBuilding,
+            eq(JudgingBuilding.id, JudgingRoom.buildingId),
+          )
           .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
           .where(eq(JudgingRoom.id, access.roomId))
           .limit(1);
@@ -472,9 +490,13 @@ export const judgingRouter = createTRPCRouter({
             .select({
               challengeLabel: ProjectChallenge.label,
               hackathonName: Hackathon.displayName,
-              roomName: JudgingRoom.name,
+              roomName: sql<string>`concat_ws(' ', ${JudgingBuilding.name}, ${JudgingRoom.name})`,
             })
             .from(JudgingRoom)
+            .leftJoin(
+              JudgingBuilding,
+              eq(JudgingBuilding.id, JudgingRoom.buildingId),
+            )
             .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
             .innerJoin(
               ProjectChallenge,
@@ -994,10 +1016,16 @@ export const judgingRouter = createTRPCRouter({
           challengeId: JudgingRoom.challengeId,
           challengeLabel: ProjectChallenge.label,
           discordThreadId: JudgingRoom.discordThreadId,
+          buildingId: JudgingRoom.buildingId,
+          buildingName: JudgingBuilding.name,
           id: JudgingRoom.id,
           name: JudgingRoom.name,
         })
         .from(JudgingRoom)
+        .leftJoin(
+          JudgingBuilding,
+          eq(JudgingBuilding.id, JudgingRoom.buildingId),
+        )
         .innerJoin(
           ProjectChallenge,
           eq(ProjectChallenge.id, JudgingRoom.challengeId),
@@ -1169,6 +1197,7 @@ export const judgingRouter = createTRPCRouter({
               displayOrder: (order?.value ?? -1) + 1,
               hackathonId: input.hackathonId,
               name: input.name,
+              buildingId: input.buildingId ?? null,
             })
             .returning();
           if (!room) throw new Error("Judging room was not created.");
@@ -1202,6 +1231,14 @@ export const judgingRouter = createTRPCRouter({
           const current = await lockRoomAggregate(tx, input.roomId, {
             active: true,
           });
+          if (
+            current.challengeId !== input.challengeId ||
+            (input.buildingId !== undefined &&
+              current.buildingId !== input.buildingId) ||
+            current.name !== input.name
+          ) {
+            await assertNoRoomReservations(tx, current.id);
+          }
           const [challenge] = await tx
             .select({ id: ProjectChallenge.id })
             .from(ProjectChallenge)
@@ -1239,7 +1276,11 @@ export const judgingRouter = createTRPCRouter({
           }
           const [room] = await tx
             .update(JudgingRoom)
-            .set({ challengeId: input.challengeId, name: input.name })
+            .set({
+              challengeId: input.challengeId,
+              name: input.name,
+              buildingId: input.buildingId,
+            })
             .where(eq(JudgingRoom.id, input.roomId))
             .returning();
           if (!room) throw new Error("Judging room was not updated.");
@@ -1323,6 +1364,7 @@ export const judgingRouter = createTRPCRouter({
         const current = await lockRoomAggregate(tx, input.roomId, {
           active: true,
         });
+        await assertNoRoomReservations(tx, current.id);
         await revokeRoomAccessWithDb(tx, {
           reason: "room-archived",
           roomId: input.roomId,

@@ -7,29 +7,23 @@ import {
   count,
   desc,
   eq,
-  gt,
-  gte,
   inArray,
-  isNotNull,
   isNull,
-  lte,
   max,
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
-  GuestJudgeSession,
   Hackathon,
   HackathonJudgingConfiguration,
   Judge,
   JudgeDeliberationEntry,
   JudgeDeliberationSection,
-  JudgingRoom,
-  JudgingRoomAccessLink,
   JudgingRubricItem,
   Project,
   ProjectChallenge,
   ProjectEvaluation,
+  ProjectEvaluationDraft,
   ProjectEvaluationRating,
   ProjectEvaluationResponse,
   ProjectEvaluationRevision,
@@ -52,17 +46,29 @@ import {
 } from "@forge/validators";
 
 import type { WriteDb } from "../utils/db";
-import { upsertMemberJudge } from "../judging-access.server";
 import { judgeProcedure, permProcedure } from "../trpc";
 import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import {
+  evaluationTimingAccess,
+  requireEvaluationTiming,
+} from "../utils/judging-schedule/evaluation-access";
+import {
+  reconcileExpiredDraftsWithDb,
+  reconcileExpiredJudgingDrafts,
+} from "../utils/judging-schedule/reconcile";
+import { writeEvaluation } from "../utils/judging/evaluation-write";
+import {
+  requireWritableJudging,
+  resolveJudgeScope,
+  resolveWritableJudge,
+} from "../utils/judging/scope";
+import {
   aggregateEvaluationMeans,
   canReadScopedResult,
   evaluationMean,
-  resolveResponseVisibility,
 } from "../utils/judging/scoring";
 import { resolveCurrentJudgeDisplayNames } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
@@ -75,114 +81,6 @@ const workspaceInputSchema = judgingEvaluationSaveSchema.pick({
 const scoreInputSchema = workspaceInputSchema.extend({
   projectIds: judgingEvaluationSaveSchema.shape.projectId.array().max(100),
 });
-
-async function activeHackathon() {
-  const now = new Date();
-  const [hackathon] = await db
-    .select({ displayName: Hackathon.displayName, id: Hackathon.id })
-    .from(Hackathon)
-    .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
-    .orderBy(desc(Hackathon.startDate))
-    .limit(1);
-  return hackathon ?? null;
-}
-
-async function resolveJudgeScope(
-  principal:
-    | {
-        displayName: string;
-        isOfficer: boolean;
-        kind: "member";
-        userId: string;
-      }
-    | {
-        challengeId: string;
-        displayName: string;
-        guestSessionId: string;
-        hackathonId: string;
-        judgeId: string;
-        kind: "guest";
-      },
-  input: { challengeId?: string; hackathonId?: string },
-) {
-  if (principal.kind === "guest") {
-    return {
-      challengeId: principal.challengeId,
-      hackathonId: principal.hackathonId,
-      judgeId: principal.judgeId,
-      principalKind: principal.kind,
-    } as const;
-  }
-  if (input.hackathonId && !principal.isOfficer) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-  const hackathon = input.hackathonId
-    ? await db.query.Hackathon.findFirst({
-        columns: { displayName: true, id: true },
-        where: eq(Hackathon.id, input.hackathonId),
-      })
-    : await activeHackathon();
-  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
-  const challenges = await db
-    .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
-    .from(ProjectChallenge)
-    .where(eq(ProjectChallenge.hackathonId, hackathon.id))
-    .orderBy(
-      sql`CASE WHEN ${ProjectChallenge.label} = 'General' THEN 0 ELSE 1 END`,
-      asc(ProjectChallenge.label),
-    );
-  const selected =
-    challenges.find((challenge) => challenge.id === input.challengeId) ??
-    challenges[0];
-  if (!selected) {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message: "Import projects before opening the judging workspace.",
-    });
-  }
-  const [judge] = await db
-    .select({ id: Judge.id })
-    .from(Judge)
-    .where(
-      and(
-        eq(Judge.hackathonId, hackathon.id),
-        eq(Judge.userId, principal.userId),
-      ),
-    )
-    .limit(1);
-  return {
-    challengeId: selected.id,
-    challenges,
-    hackathon,
-    hackathonId: hackathon.id,
-    judgeId: judge?.id ?? null,
-    principalKind: principal.kind,
-  } as const;
-}
-
-async function requireWritableJudging(tx: WriteDb, hackathonId: string) {
-  const [hackathon] = await tx
-    .select({ id: Hackathon.id })
-    .from(Hackathon)
-    .where(eq(Hackathon.id, hackathonId))
-    .for("share")
-    .limit(1);
-  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
-
-  const config = await tx.query.HackathonJudgingConfiguration.findFirst({
-    columns: { state: true },
-    where: eq(HackathonJudgingConfiguration.hackathonId, hackathonId),
-  });
-  if (config?.state !== "open") {
-    throw new TRPCError({
-      code: "PRECONDITION_FAILED",
-      message:
-        config?.state === "closed"
-          ? "Judging is closed. Your saved work is read-only."
-          : "Judging has not opened yet.",
-    });
-  }
-}
 
 async function requireOwnedSection(
   tx: WriteDb,
@@ -201,107 +99,6 @@ async function requireOwnedSection(
     .limit(1);
   if (!section) throw new TRPCError({ code: "NOT_FOUND" });
   return section;
-}
-
-async function resolveWritableJudge(
-  tx: WriteDb,
-  principal:
-    | {
-        displayName: string;
-        isOfficer: boolean;
-        kind: "member";
-        userId: string;
-      }
-    | {
-        challengeId: string;
-        displayName: string;
-        guestSessionId: string;
-        hackathonId: string;
-        judgeId: string;
-        kind: "guest";
-      },
-  input: { challengeId?: string; hackathonId?: string },
-) {
-  if (principal.kind === "guest") {
-    const [access] = await tx
-      .select({
-        challengeId: JudgingRoom.challengeId,
-        hackathonId: JudgingRoom.hackathonId,
-        judgeId: GuestJudgeSession.judgeId,
-      })
-      .from(GuestJudgeSession)
-      .innerJoin(
-        JudgingRoomAccessLink,
-        eq(JudgingRoomAccessLink.id, GuestJudgeSession.accessLinkId),
-      )
-      .innerJoin(JudgingRoom, eq(JudgingRoom.id, JudgingRoomAccessLink.roomId))
-      .where(
-        and(
-          eq(GuestJudgeSession.id, principal.guestSessionId),
-          eq(GuestJudgeSession.judgeId, principal.judgeId),
-          gt(GuestJudgeSession.expiresAt, new Date()),
-          isNotNull(GuestJudgeSession.completedAt),
-          isNull(GuestJudgeSession.revokedAt),
-          isNull(JudgingRoomAccessLink.revokedAt),
-          isNull(JudgingRoom.archivedAt),
-        ),
-      )
-      .for("update", { of: GuestJudgeSession })
-      .limit(1);
-    if (!access?.judgeId) throw new TRPCError({ code: "UNAUTHORIZED" });
-    return {
-      challengeId: access.challengeId,
-      hackathonId: access.hackathonId,
-      judgeId: access.judgeId,
-      principalKind: principal.kind,
-    } as const;
-  }
-  if (input.hackathonId && !principal.isOfficer) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-  const hackathon = input.hackathonId
-    ? await tx.query.Hackathon.findFirst({
-        columns: { id: true },
-        where: eq(Hackathon.id, input.hackathonId),
-      })
-    : (
-        await tx
-          .select({ id: Hackathon.id })
-          .from(Hackathon)
-          .where(
-            and(
-              lte(Hackathon.startDate, new Date()),
-              gte(Hackathon.endDate, new Date()),
-            ),
-          )
-          .orderBy(desc(Hackathon.startDate))
-          .limit(1)
-      )[0];
-  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
-  const [challenge] = await tx
-    .select({ id: ProjectChallenge.id })
-    .from(ProjectChallenge)
-    .where(
-      and(
-        eq(ProjectChallenge.hackathonId, hackathon.id),
-        input.challengeId
-          ? eq(ProjectChallenge.id, input.challengeId)
-          : eq(ProjectChallenge.label, "General"),
-      ),
-    )
-    .limit(1);
-  if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
-  const judge = await upsertMemberJudge(tx, {
-    displayName: principal.displayName,
-    hackathonId: hackathon.id,
-    userId: principal.userId,
-  });
-  return {
-    challengeId: challenge.id,
-    hackathonId: hackathon.id,
-    judgeId: judge.id,
-    principalKind: principal.kind,
-  } as const;
 }
 
 async function writeHackathonAudit(
@@ -349,6 +146,7 @@ export const judgingScoresRouter = {
     .input(workspaceInputSchema)
     .query(async ({ ctx, input }) => {
       const scope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(scope.hackathonId);
       const [config, rubric] = await Promise.all([
         db.query.HackathonJudgingConfiguration.findFirst({
           columns: {
@@ -390,6 +188,7 @@ export const judgingScoresRouter = {
     .input(scoreInputSchema)
     .query(async ({ ctx, input }) => {
       const scope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(scope.hackathonId);
       if (input.projectIds.length === 0) return [];
       const [config, evaluations, ratings] = await Promise.all([
         db.query.HackathonJudgingConfiguration.findFirst({
@@ -419,6 +218,7 @@ export const judgingScoresRouter = {
           .where(
             and(
               eq(ProjectEvaluation.hackathonId, scope.hackathonId),
+              eq(ProjectEvaluation.isComplete, true),
               inArray(ProjectEvaluation.projectId, input.projectIds),
               isNull(Project.deletedAt),
             ),
@@ -494,6 +294,7 @@ export const judgingScoresRouter = {
     .input(judgingProjectDetailsSchema)
     .query(async ({ ctx, input }) => {
       const scope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(scope.hackathonId);
       const [project] = await db
         .select({ id: Project.id })
         .from(Project)
@@ -536,6 +337,7 @@ export const judgingScoresRouter = {
           .where(
             and(
               eq(ProjectEvaluation.hackathonId, scope.hackathonId),
+              eq(ProjectEvaluation.isComplete, true),
               eq(ProjectEvaluation.projectId, input.projectId),
               eq(ProjectEvaluation.challengeId, scope.challengeId),
             ),
@@ -647,6 +449,8 @@ export const judgingScoresRouter = {
   saveEvaluation: judgeProcedure
     .input(judgingEvaluationSaveSchema)
     .mutation(async ({ ctx, input }) => {
+      const readScope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(readScope.hackathonId);
       const auditActor =
         ctx.judgePrincipal.kind === "member"
           ? await captureAdminAuditActor({
@@ -668,195 +472,28 @@ export const judgingScoresRouter = {
           hackathonId: input.hackathonId,
         });
         await requireWritableJudging(tx, scope.hackathonId);
-        const [project] = await tx
-          .select({ id: Project.id, title: Project.title })
-          .from(Project)
-          .innerJoin(
-            ProjectToChallenge,
-            and(
-              eq(ProjectToChallenge.projectId, Project.id),
-              eq(ProjectToChallenge.challengeId, scope.challengeId),
-              eq(ProjectToChallenge.hackathonId, scope.hackathonId),
-            ),
-          )
-          .where(
-            and(
-              eq(Project.id, input.projectId),
-              eq(Project.hackathonId, scope.hackathonId),
-              isNull(Project.deletedAt),
-            ),
-          )
-          .limit(1);
-        if (!project) throw new TRPCError({ code: "NOT_FOUND" });
-        const rubric = await tx
-          .select()
-          .from(JudgingRubricItem)
-          .where(eq(JudgingRubricItem.hackathonId, scope.hackathonId))
-          .orderBy(asc(JudgingRubricItem.displayOrder));
-        const ratingItems = rubric.filter((item) => item.kind === "rating");
-        const responseItems = rubric.filter(
-          (item) => item.kind === "short_response",
+        const timing = requireEvaluationTiming(
+          await evaluationTimingAccess(tx, {
+            ...scope,
+            projectId: input.projectId,
+          }),
         );
-        if (ratingItems.length === 0) {
-          throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message: "This hackathon does not have a judging rubric.",
-          });
-        }
-        const ratingIds = new Set(input.ratings.map((answer) => answer.itemId));
-        const responseIds = new Set(
-          input.responses.map((answer) => answer.itemId),
-        );
-        if (
-          ratingIds.size !== input.ratings.length ||
-          ratingItems.some((item) => !ratingIds.has(item.id)) ||
-          input.ratings.some(
-            (answer) => !ratingItems.some((item) => item.id === answer.itemId),
-          ) ||
-          responseIds.size !== input.responses.length ||
-          responseItems.some(
-            (item) =>
-              item.required &&
-              !input.responses.some(
-                (answer) =>
-                  answer.itemId === item.id && answer.value.length > 0,
-              ),
-          ) ||
-          input.responses.some(
-            (answer) =>
-              !responseItems.some((item) => item.id === answer.itemId),
-          )
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Your answers do not match the active rubric.",
-          });
-        }
-        const [existing] = await tx
-          .select({
-            id: ProjectEvaluation.id,
-            revision: ProjectEvaluation.revision,
-          })
-          .from(ProjectEvaluation)
-          .where(
-            and(
-              eq(ProjectEvaluation.judgeId, scope.judgeId),
-              eq(ProjectEvaluation.projectId, input.projectId),
-              eq(ProjectEvaluation.challengeId, scope.challengeId),
-            ),
-          )
-          .for("update")
-          .limit(1);
-        const revision = (existing?.revision ?? 0) + 1;
-        const [evaluation] = existing
-          ? await tx
-              .update(ProjectEvaluation)
-              .set({ revision, updatedAt: new Date() })
-              .where(eq(ProjectEvaluation.id, existing.id))
-              .returning()
-          : await tx
-              .insert(ProjectEvaluation)
-              .values({
-                challengeId: scope.challengeId,
-                hackathonId: scope.hackathonId,
-                judgeId: scope.judgeId,
-                projectId: input.projectId,
-                revision,
-              })
-              .returning();
-        if (!evaluation) throw new Error("Evaluation was not saved.");
-        if (existing) {
-          await tx
-            .delete(ProjectEvaluationRating)
-            .where(eq(ProjectEvaluationRating.evaluationId, evaluation.id));
-          await tx
-            .delete(ProjectEvaluationResponse)
-            .where(eq(ProjectEvaluationResponse.evaluationId, evaluation.id));
-        }
-        await tx.insert(ProjectEvaluationRating).values(
-          input.ratings.map((answer) => ({
-            evaluationId: evaluation.id,
-            hackathonId: scope.hackathonId,
-            rubricItemId: answer.itemId,
-            value: answer.value,
-          })),
-        );
-        const resolvedResponses = input.responses.map((answer) => {
-          const item = responseItems.find(
-            (candidate) => candidate.id === answer.itemId,
-          );
-          if (!item) throw new TRPCError({ code: "BAD_REQUEST" });
-          const policy =
-            scope.principalKind === "guest"
-              ? item.guestVisibilityPolicy
-              : item.memberVisibilityPolicy;
-          if (!policy) throw new TRPCError({ code: "BAD_REQUEST" });
-          return {
-            isPublic: resolveResponseVisibility(policy, answer.isPublic),
-            itemId: answer.itemId,
-            value: answer.value,
-          };
+        const result = await writeEvaluation(tx, {
+          ...input,
+          ...scope,
+          actor: auditActor,
+          appointmentId: timing.appointmentId,
         });
-        if (resolvedResponses.length > 0) {
-          await tx.insert(ProjectEvaluationResponse).values(
-            resolvedResponses.map((answer) => ({
-              evaluationId: evaluation.id,
-              hackathonId: scope.hackathonId,
-              isPublic: answer.isPublic,
-              rubricItemId: answer.itemId,
-              value: answer.value,
-            })),
-          );
-        }
-        await tx.insert(ProjectEvaluationRevision).values({
-          actorKind: scope.principalKind,
-          evaluationId: evaluation.id,
-          hackathonId: scope.hackathonId,
-          ratingAnswers: input.ratings,
-          responseAnswers: resolvedResponses,
-          revision,
-        });
-        await createAdminAuditEvent(
-          {
-            actionKey: "judging.evaluation.saved",
-            actor: auditActor,
-            metadata: {
-              actorKind: scope.principalKind,
-              challengeId: scope.challengeId,
-              evaluationId: evaluation.id,
-              hackathonId: scope.hackathonId,
-              judgeId: scope.judgeId,
-              projectId: project.id,
-              revision,
-            },
-            subjects: [
-              {
-                relation: "primary",
-                targetId: project.id,
-                targetLabel: project.title,
-                targetType: "project",
-              },
-            ],
-          },
-          tx,
-        );
         await tx
-          .insert(HackathonJudgingConfiguration)
-          .values({
-            hackathonId: scope.hackathonId,
-            projectInventoryLockedAt: new Date(),
-          })
-          .onConflictDoUpdate({
-            set: {
-              projectInventoryLockedAt: sql`COALESCE(${HackathonJudgingConfiguration.projectInventoryLockedAt}, now())`,
-            },
-            target: HackathonJudgingConfiguration.hackathonId,
-          });
-        return {
-          evaluationId: evaluation.id,
-          revision,
-          score: evaluationMean(input.ratings.map((answer) => answer.value)),
-        };
+          .delete(ProjectEvaluationDraft)
+          .where(
+            and(
+              eq(ProjectEvaluationDraft.judgeId, scope.judgeId),
+              eq(ProjectEvaluationDraft.projectId, input.projectId),
+              eq(ProjectEvaluationDraft.challengeId, scope.challengeId),
+            ),
+          );
+        return result;
       });
     }),
 
@@ -864,6 +501,7 @@ export const judgingScoresRouter = {
     .input(workspaceInputSchema)
     .query(async ({ ctx, input }) => {
       const scope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(scope.hackathonId);
       if (!scope.judgeId) return [];
       const evaluations = await db
         .select({
@@ -878,6 +516,8 @@ export const judgingScoresRouter = {
           projectId: Project.id,
           projectTitle: Project.title,
           revision: ProjectEvaluation.revision,
+          isComplete: ProjectEvaluation.isComplete,
+          autoSubmittedAt: ProjectEvaluation.autoSubmittedAt,
           updatedAt: ProjectEvaluation.updatedAt,
         })
         .from(ProjectEvaluation)
@@ -944,7 +584,9 @@ export const judgingScoresRouter = {
           responses: responses.filter(
             (response) => response.evaluationId === evaluation.id,
           ),
-          score: evaluationMean(ownRatings.map((rating) => rating.value)),
+          score: evaluation.isComplete
+            ? evaluationMean(ownRatings.map((rating) => rating.value))
+            : null,
         };
       });
     }),
@@ -953,6 +595,7 @@ export const judgingScoresRouter = {
     .input(workspaceInputSchema)
     .query(async ({ ctx, input }) => {
       const scope = await resolveJudgeScope(ctx.judgePrincipal, input);
+      await reconcileExpiredJudgingDrafts(scope.hackathonId);
       if (!scope.judgeId) return [];
       const sections = await db
         .select({
@@ -1105,6 +748,7 @@ export const judgingScoresRouter = {
           .where(
             and(
               eq(ProjectEvaluation.judgeId, scope.judgeId),
+              eq(ProjectEvaluation.isComplete, true),
               eq(ProjectEvaluation.projectId, input.projectId),
               isNull(Project.deletedAt),
             ),
@@ -1296,6 +940,7 @@ export const judgingScoresRouter = {
             input.hackathonId,
           ),
         });
+        await reconcileExpiredDraftsWithDb(tx, input.hackathonId);
         const current = config?.state ?? "draft";
         const hasEvaluation = await tx.query.ProjectEvaluation.findFirst({
           columns: { id: true },
@@ -1405,6 +1050,7 @@ export const judgingScoresRouter = {
     .input(judgingHackathonIdSchema)
     .query(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
+      await reconcileExpiredJudgingDrafts(input.hackathonId);
       const evaluations = await db
         .select({
           challengeLabel: ProjectChallenge.label,

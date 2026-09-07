@@ -47,6 +47,8 @@ vi.mock("~/trpc/react", () => {
           }),
         },
         createRoom: { useMutation: idleMutation },
+        createBuilding: { useMutation: idleMutation },
+        listBuildings: { useQuery: () => ({ data: [] }) },
         generateRoomLink: { useMutation: idleMutation },
         listAdmin: {
           useQuery: () => ({
@@ -173,6 +175,8 @@ describe("judging announcement editor", () => {
     } satisfies Announcement;
     const room = {
       activeLinkId: null,
+      buildingId: null,
+      buildingName: null,
       announcement: roomAnnouncement,
       archivedAt: null,
       challengeId: "00000000-0000-4000-8000-000000000005",

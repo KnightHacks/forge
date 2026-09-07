@@ -24,6 +24,8 @@ import {
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { judgingTime } from "~/lib/judging/schedule-display";
+import { useJudgingClock } from "~/lib/judging/use-judging-clock";
 import { api } from "~/trpc/react";
 import { EvaluationDialog } from "../judging/evaluation-dialog";
 import { JudgeDeliberation } from "../judging/judge-deliberation";
@@ -171,7 +173,7 @@ function MemberRoomSelector({
         <option value="">No room selected</option>
         {context.rooms.map((room) => (
           <option key={room.id} value={room.id}>
-            {room.name} · {room.challengeLabel}
+            {room.buildingName} {room.name} · {room.challengeLabel}
           </option>
         ))}
       </select>
@@ -232,6 +234,22 @@ export function JudgeProjectWorkspace({
     context.kind === "guest" ? context.roomId : activeRoom?.id;
   const announcementHackathonId =
     context.kind === "member" ? context.hackathon?.id : undefined;
+  const scheduleQuery = api.judging.listJudgeSchedule.useQuery(
+    {
+      challengeId: workspace?.challengeId,
+      hackathonId: input.hackathonId,
+      challengeIds: input.challengeIds,
+    },
+    { enabled: !!workspace, refetchInterval: 15_000 },
+  );
+  const scheduleNow = useJudgingClock(
+    scheduleQuery.data?.serverNow ?? data.hackathon?.startDate ?? new Date(0),
+  );
+  useEffect(() => {
+    if (!workspace) return;
+    const timer = window.setInterval(() => router.refresh(), 15_000);
+    return () => window.clearInterval(timer);
+  }, [router, workspace]);
 
   function selectHackathon(hackathonId: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -312,6 +330,12 @@ export function JudgeProjectWorkspace({
         title={data.hackathon?.displayName ?? "Hackathon projects"}
       />
 
+      {scheduleQuery.error ? (
+        <p role="alert" className="text-sm text-amber-200">
+          Schedule refresh failed. Appointment times may be out of date; opening
+          an evaluation checks your room again.
+        </p>
+      ) : null}
       {data.hackathon ? (
         <>
           <div className="flex flex-wrap items-center gap-2">
@@ -342,7 +366,7 @@ export function JudgeProjectWorkspace({
                 variant="outline"
               >
                 <DoorOpen className="size-3" aria-hidden="true" />
-                {activeRoom.name}
+                {activeRoom.buildingName} {activeRoom.name}
               </Badge>
             ) : null}
           </div>
@@ -376,7 +400,33 @@ export function JudgeProjectWorkspace({
                     return (
                       <Button
                         className="min-h-11 sm:min-h-9"
-                        disabled={workspace.state !== "open"}
+                        disabled={
+                          workspace.state !== "open" ||
+                          !scheduleQuery.data ||
+                          (submitted
+                            ? scheduleQuery.data.editLockedEvaluationIds.some(
+                                (id) =>
+                                  submissions.some(
+                                    (submission) =>
+                                      submission.id === id &&
+                                      submission.projectId === project.id &&
+                                      submission.challengeId ===
+                                        workspace.challengeId,
+                                  ),
+                              )
+                            : !scheduleQuery.data.untimed &&
+                              !(
+                                scheduleQuery.data.currentAppointment
+                                  ?.projectId === project.id &&
+                                scheduleQuery.data.currentAppointment
+                                  .deadlineAt > scheduleNow
+                              ))
+                        }
+                        title={
+                          scheduleQuery.data?.scheduleExists
+                            ? "Scoring follows your room's appointment. Past submissions can be edited during downtime."
+                            : undefined
+                        }
                         onClick={() => setEvaluationProject(project)}
                         size="sm"
                         type="button"
@@ -398,6 +448,33 @@ export function JudgeProjectWorkspace({
                       : "You have judged every project in this challenge. Turn on See previously judged to review them."
                   }
                   extraColumns={[
+                    {
+                      header: "Judging time",
+                      cell: (project) => {
+                        const appointment =
+                          scheduleQuery.data?.appointments.find(
+                            (appointment) =>
+                              appointment.projectId === project.id,
+                          );
+                        return appointment ? (
+                          <div className="text-sm">
+                            <p className="font-mono">
+                              {judgingTime(
+                                appointment.startsAt,
+                                data.hackathon.timezone,
+                              )}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {appointment.buildingName} {appointment.roomName}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Unscheduled
+                          </span>
+                        );
+                      },
+                    },
                     {
                       cell: (project) => {
                         const score = scoreByProject.get(project.id)?.scoped;
@@ -467,6 +544,9 @@ export function JudgeProjectWorkspace({
               <TabsContent className="mt-4" value="submissions">
                 <JudgeSubmissions
                   submissions={submissions}
+                  lockedEvaluationIds={
+                    scheduleQuery.data?.editLockedEvaluationIds
+                  }
                   workspace={workspace}
                 />
               </TabsContent>
@@ -474,7 +554,9 @@ export function JudgeProjectWorkspace({
                 <JudgeDeliberation
                   initialSections={deliberation}
                   key={JSON.stringify(deliberation)}
-                  submissions={submissions}
+                  submissions={submissions.filter(
+                    (submission) => submission.isComplete,
+                  )}
                   workspace={workspace}
                 />
               </TabsContent>
@@ -483,7 +565,7 @@ export function JudgeProjectWorkspace({
           {workspace && evaluationProject ? (
             <EvaluationDialog
               challengeLabel={challengeLabel}
-              key={`${evaluationProject.id}:${selectedSubmission?.revision ?? 0}`}
+              key={`${evaluationProject.id}:${workspace.challengeId}`}
               onOpenChange={(open) => !open && setEvaluationProject(null)}
               open
               project={evaluationProject}

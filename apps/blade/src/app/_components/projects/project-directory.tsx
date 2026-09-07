@@ -42,6 +42,7 @@ export interface ProjectDirectoryInput {
     | "challengeRating"
     | "participantCount"
     | "rating"
+    | "scheduledAt"
     | "submittedAt"
     | "title";
 }
@@ -253,6 +254,7 @@ function ProjectFilters({
           >
             <option value="title">Title</option>
             <option value="submittedAt">Submitted</option>
+            <option value="scheduledAt">Judging time</option>
             <option value="participantCount">Team size</option>
             {showChallengeRatingSort ? (
               <option value="challengeRating">Challenge rating</option>

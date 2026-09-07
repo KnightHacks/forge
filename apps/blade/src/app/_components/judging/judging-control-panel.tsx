@@ -138,6 +138,13 @@ function RoomEditor({
 }) {
   const create = api.judging.createRoom.useMutation();
   const update = api.judging.updateRoom.useMutation();
+  const buildings = api.judging.listBuildings.useQuery(undefined, {
+    enabled: room !== null,
+  });
+  const createBuilding = api.judging.createBuilding.useMutation();
+  const [buildingId, setBuildingId] = useState(
+    room && room !== "new" ? (room.buildingId ?? "") : "",
+  );
   const [challengeId, setChallengeId] = useState(
     room && room !== "new" ? room.challengeId : (data.challenges[0]?.id ?? ""),
   );
@@ -152,8 +159,17 @@ function RoomEditor({
     const name = formString(form.get("name"));
     const confirmation = formString(form.get("confirmation"));
     try {
+      const selectedBuildingId =
+        buildingId === "other"
+          ? (
+              await createBuilding.mutateAsync({
+                name: formString(form.get("buildingName")),
+              })
+            ).id
+          : buildingId;
       if (room === "new") {
         await create.mutateAsync({
+          buildingId: selectedBuildingId || null,
           challengeId,
           hackathonId: data.hackathon.id,
           name,
@@ -161,6 +177,7 @@ function RoomEditor({
         toast.success("Judging room created.");
       } else if (room) {
         await update.mutateAsync({
+          buildingId: selectedBuildingId || null,
           challengeId,
           confirmation: confirmation || undefined,
           name,
@@ -193,13 +210,41 @@ function RoomEditor({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
+            <Label htmlFor="judging-building">Building</Label>
+            <select
+              id="judging-building"
+              value={buildingId}
+              onChange={(event) => setBuildingId(event.target.value)}
+              required
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Choose a building</option>
+              {buildings.data?.map((building) => (
+                <option key={building.id} value={building.id}>
+                  {building.name}
+                </option>
+              ))}
+              <option value="other">Other</option>
+            </select>
+            {buildingId === "other" ? (
+              <Input
+                name="buildingName"
+                aria-label="New building name"
+                placeholder="Building name"
+                maxLength={80}
+                required
+                className="min-h-11"
+              />
+            ) : null}
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="judging-room-name">Room name</Label>
             <Input
               defaultValue={room && room !== "new" ? room.name : ""}
               id="judging-room-name"
               maxLength={120}
               name="name"
-              placeholder="Sponsor suite A"
+              placeholder="101"
               required
             />
           </div>
@@ -250,7 +295,9 @@ function RoomEditor({
               Cancel
             </Button>
             <Button
-              disabled={create.isPending || update.isPending}
+              disabled={
+                create.isPending || update.isPending || createBuilding.isPending
+              }
               type="submit"
             >
               {create.isPending || update.isPending ? "Saving…" : "Save room"}
@@ -945,7 +992,9 @@ export function JudgingControlPanel({
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold">{room.name}</h2>
+                        <h2 className="text-lg font-semibold">
+                          {room.buildingName} {room.name}
+                        </h2>
                         <Badge
                           variant={
                             room.challengeLabel === "General"

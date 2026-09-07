@@ -19,6 +19,22 @@ const navigation = vi.hoisted(() => ({
   joinRoom: vi.fn(),
   leaveRoom: vi.fn(),
   saveEvaluation: vi.fn(),
+  editorQuery: vi.fn<
+    () =>
+      | {
+          data: RouterOutputs["judging"]["getEvaluationEditor"];
+          isFetchedAfterMount: boolean;
+          isSuccess: boolean;
+        }
+      | undefined
+  >(),
+  saveDraft: vi.fn(() =>
+    Promise.resolve({
+      revision: 1,
+      updatedAt: new Date("2026-09-07T16:00:00Z"),
+      deadlineAt: null,
+    }),
+  ),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -41,6 +57,45 @@ vi.mock("~/trpc/react", () => ({
       },
     }),
     judging: {
+      listJudgeSchedule: {
+        useQuery: () => ({
+          data: {
+            serverNow: new Date("2026-09-07T16:00:00Z"),
+            scheduleExists: false,
+            activeRoomId: null,
+            untimed: true,
+            currentAppointment: null,
+            appointments: [],
+            editLockedEvaluationIds: [],
+          },
+        }),
+      },
+      getEvaluationEditor: {
+        useQuery: () =>
+          navigation.editorQuery() ?? {
+            isFetchedAfterMount: true,
+            isSuccess: true,
+            data: {
+              serverNow: new Date("2026-09-07T16:00:00Z"),
+              canEdit: true,
+              reason: null,
+              timed: false,
+              appointmentId: null,
+              deadlineAt: null,
+              lockAt: null,
+              evaluationId: null,
+              evaluationRevision: 0,
+              isComplete: false,
+              draft: null,
+            },
+          },
+      },
+      saveEvaluationDraft: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: navigation.saveDraft,
+        }),
+      },
       heartbeat: {
         useMutation: () => ({ mutate: vi.fn() }),
       },
@@ -183,6 +238,7 @@ describe("judge project directory", () => {
             endDate: new Date("2026-10-01T00:00:00.000Z"),
             id: judgeProject.hackathonId,
             startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
           },
           page: 1,
           pageSize: 25,
@@ -279,6 +335,7 @@ describe("judge project directory", () => {
         endDate: new Date("2026-10-01T00:00:00.000Z"),
         id: judgeProject.hackathonId,
         startDate: new Date("2026-09-01T00:00:00.000Z"),
+        timezone: "America/New_York",
       },
       page: 1,
       pageSize: 25,
@@ -290,6 +347,8 @@ describe("judge project directory", () => {
       challengeLabel: "Acme Challenge",
       id: "00000000-0000-4000-8000-000000000006",
       name: "Sponsor suite A",
+      buildingId: null,
+      buildingName: null,
     };
     const context = {
       activeRoomId: null,
@@ -387,6 +446,7 @@ describe("judge project directory", () => {
         endDate: new Date("2026-10-01T00:00:00.000Z"),
         id: judgeProject.hackathonId,
         startDate: new Date("2026-09-01T00:00:00.000Z"),
+        timezone: "America/New_York",
       },
       page: 1,
       pageSize: 25,
@@ -398,6 +458,8 @@ describe("judge project directory", () => {
       challengeLabel: "Acme Challenge",
       id: "00000000-0000-4000-8000-000000000006",
       name: "Sponsor suite A",
+      buildingId: null,
+      buildingName: null,
     };
     const context = {
       activeRoomId: oldRoomAnnouncement.roomId,
@@ -475,6 +537,7 @@ describe("judge project directory", () => {
             endDate: new Date("2026-10-01T00:00:00.000Z"),
             id: judgeProject.hackathonId,
             startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
           },
           page: 1,
           pageSize: 25,
@@ -578,6 +641,97 @@ describe("judge project directory", () => {
 });
 
 describe("evaluation feedback visibility", () => {
+  it("waits for fresh saved progress on reopen and preserves typing across heartbeats", async () => {
+    const responseId = "00000000-0000-4000-8000-000000000012";
+    const workspace: RouterOutputs["judging"]["getWorkspace"] = {
+      challengeId: "challenge-1",
+      hackathonId: judgeProject.hackathonId,
+      displayAllResults: false,
+      principalKind: "member",
+      state: "open",
+      rubric: [
+        {
+          id: responseId,
+          kind: "short_response",
+          label: "Feedback",
+          description: "Leave a note.",
+          required: false,
+          memberVisibilityPolicy: "public",
+          guestVisibilityPolicy: "public_optional",
+        },
+      ],
+    };
+    const editor: RouterOutputs["judging"]["getEvaluationEditor"] = {
+      serverNow: new Date(),
+      canEdit: true,
+      reason: null,
+      timed: false,
+      appointmentId: null,
+      deadlineAt: null,
+      lockAt: null,
+      evaluationId: null,
+      evaluationRevision: 0,
+      isComplete: false,
+      draft: null,
+    };
+    const props = {
+      challengeLabel: "General",
+      onOpenChange: vi.fn(),
+      open: true,
+      project: { id: judgeProject.id, title: judgeProject.title },
+      workspace,
+    };
+    navigation.editorQuery.mockReturnValue({
+      data: editor,
+      isFetchedAfterMount: false,
+      isSuccess: true,
+    });
+    const { rerender, unmount } = render(<EvaluationDialog {...props} />);
+    try {
+      expect(screen.queryByRole("textbox", { name: "Feedback" })).toBeNull();
+      const fresh = {
+        ...editor,
+        draft: {
+          revision: 7,
+          updatedAt: new Date(),
+          ratings: [],
+          responses: [
+            { itemId: responseId, value: "Latest saved draft", isPublic: true },
+          ],
+        },
+      };
+      navigation.editorQuery.mockReturnValue({
+        data: fresh,
+        isFetchedAfterMount: true,
+        isSuccess: true,
+      });
+      rerender(<EvaluationDialog {...props} />);
+      const field = await screen.findByRole("textbox", { name: "Feedback" });
+      expect(field).toHaveValue("Latest saved draft");
+      const user = userEvent.setup();
+      await user.clear(field);
+      await user.type(field, "Still typing");
+      navigation.editorQuery.mockReturnValue({
+        data: { ...fresh, serverNow: new Date() },
+        isFetchedAfterMount: true,
+        isSuccess: true,
+      });
+      rerender(<EvaluationDialog {...props} />);
+      expect(field).toHaveValue("Still typing");
+      await waitFor(() =>
+        expect(navigation.saveDraft).toHaveBeenCalledWith(
+          expect.objectContaining({
+            expectedDraftRevision: 7,
+            responses: [expect.objectContaining({ value: "Still typing" })],
+          }),
+        ),
+      );
+    } finally {
+      unmount();
+      navigation.editorQuery.mockReset();
+    }
+  });
+
   it("makes authenticated feedback sharing explicit and fixed", () => {
     render(
       <EvaluationDialog
@@ -657,6 +811,9 @@ describe("evaluation feedback visibility", () => {
     );
 
     expect(
+      screen.queryByText("Your feedback is shared with hackers"),
+    ).toBeNull();
+    expect(
       screen.getByText("Choose what will be shared with hackers"),
     ).toBeInTheDocument();
     expect(
@@ -716,6 +873,8 @@ describe("evaluation feedback visibility", () => {
       createdAt: new Date("2026-09-05T12:00:00.000Z"),
       id: "00000000-0000-4000-8000-000000000021",
       projectAvailable: true,
+      isComplete: true,
+      autoSubmittedAt: null,
       projectId: judgeProject.id,
       projectTitle: judgeProject.title,
       ratings: [
@@ -769,6 +928,7 @@ describe("evaluation feedback visibility", () => {
 
     await waitFor(() =>
       expect(navigation.saveEvaluation).toHaveBeenCalledWith({
+        expectedRevision: 2,
         challengeId: workspace.challengeId,
         hackathonId: workspace.hackathonId,
         projectId: judgeProject.id,

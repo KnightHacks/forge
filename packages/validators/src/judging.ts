@@ -99,10 +99,21 @@ export const judgingEvaluationSaveSchema = z.object({
   challengeId: uuidSchema.optional(),
   hackathonId: uuidSchema.optional(),
   projectId: uuidSchema,
+  expectedRevision: z.number().int().min(0).optional(),
   ratings: z.array(judgingRatingAnswerSchema).superRefine(requireUniqueItemIds),
   responses: z
     .array(judgingResponseAnswerSchema)
     .superRefine(requireUniqueItemIds),
+});
+
+export const judgingEvaluationDraftSchema = judgingEvaluationSaveSchema.extend({
+  expectedDraftRevision: z.number().int().min(0),
+});
+
+export const judgingEvaluationEditorSchema = judgingEvaluationSaveSchema.pick({
+  challengeId: true,
+  hackathonId: true,
+  projectId: true,
 });
 
 export const judgingProjectDetailsSchema = judgingEvaluationSaveSchema
@@ -190,12 +201,14 @@ export const judgingAnnouncementClearSchema = z.object({
 export const judgingRoomCreateSchema = judgingHackathonIdSchema.extend({
   challengeId: z.string().uuid(),
   name: roomNameSchema,
+  buildingId: uuidSchema.nullable().optional(),
 });
 
 export const judgingRoomUpdateSchema = judgingRoomIdSchema.extend({
   challengeId: z.string().uuid(),
   confirmation: z.string().trim().max(120).optional(),
   name: roomNameSchema,
+  buildingId: uuidSchema.nullable().optional(),
 });
 
 export const judgingRoomMoveSchema = judgingRoomIdSchema.extend({

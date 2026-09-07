@@ -23,3 +23,4 @@ export * from "./hacker-portal";
 export * from "./hackathon-portal-admin";
 export * from "./projects";
 export * from "./judging";
+export * from "./judging-schedule";

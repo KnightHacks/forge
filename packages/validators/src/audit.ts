@@ -485,6 +485,40 @@ export const AUDIT_ACTION_CATALOG = {
     "projectId",
     "revision",
   ]),
+  "judging.schedule.generated": policy(
+    "hackathons",
+    "Generated judging schedule",
+    ["jobId", "status"],
+  ),
+  "judging.schedule.saved": policy("hackathons", "Saved judging schedule", [
+    "scheduleId",
+    "appointmentCount",
+    "reducedBreakCount",
+  ]),
+  "judging.schedule.dropped": policy("hackathons", "Dropped judging schedule", [
+    "scheduleId",
+  ]),
+  "judging.appointment.moved": policy(
+    "hackathons",
+    "Moved judging appointment",
+    [
+      "appointmentId",
+      "fromRoomId",
+      "toRoomId",
+      "fromStartsAt",
+      "toStartsAt",
+      "reducedBreakCount",
+    ],
+  ),
+  "judging.appointment.assigned": policy(
+    "hackathons",
+    "Assigned judging appointment",
+    ["appointmentId", "projectId", "challengeId"],
+  ),
+  "judging.building.created": policy("hackathons", "Created judging building", [
+    "buildingId",
+    "name",
+  ]),
   "judging.room.created": policy("hackathons", "Created judging room", [
     "challengeId",
   ]),

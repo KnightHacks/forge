@@ -35,6 +35,7 @@ const projectListFields = z.object({
     .enum([
       "title",
       "submittedAt",
+      "scheduledAt",
       "participantCount",
       "challengeRating",
       "rating",

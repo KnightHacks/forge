@@ -33,8 +33,10 @@ export function parseProjectDirectoryParams(params: SearchParams) {
     | "challengeRating"
     | "participantCount"
     | "rating"
+    | "scheduledAt"
     | "submittedAt"
     | "title" =
+    requestedSort === "scheduledAt" ||
     requestedSort === "submittedAt" ||
     requestedSort === "participantCount" ||
     requestedSort === "challengeRating" ||

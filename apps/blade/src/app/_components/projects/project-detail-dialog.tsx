@@ -198,6 +198,20 @@ export function ProjectDetailDialog({
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold">Challenges</h3>
                   <ChallengeBadges project={project} />
+                  {project.prizeCategories.some((label) =>
+                    /mlh/i.test(label),
+                  ) ? (
+                    <div className="mt-3 rounded-md border border-white/10 bg-background/60 p-3 text-sm">
+                      <h3 className="font-semibold">MLH opt-ins</h3>
+                      <ul className="mt-2 list-inside list-disc">
+                        {project.prizeCategories
+                          .filter((label) => /mlh/i.test(label))
+                          .map((label) => (
+                            <li key={label}>{label}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
                 {project.technologies.length ? (
                   <div className="space-y-1">
