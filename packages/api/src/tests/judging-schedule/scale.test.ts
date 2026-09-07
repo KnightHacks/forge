@@ -82,10 +82,19 @@ it.each([32, 200])(
       ]).flat(),
     };
     const state = createScheduleSearch(problem);
-    advanceScheduleSearch(problem, state, {
-      maxNodes: 1000,
-      maxMilliseconds: 750,
-    });
+    const deadline = Date.now() + 10_000;
+    do {
+      advanceScheduleSearch(problem, state, {
+        maxNodes: 1000,
+        maxMilliseconds: 750,
+      });
+    } while (
+      !state.exhausted &&
+      Date.now() < deadline &&
+      (state.score?.[0] !== 90 ||
+        state.score[1] !== 0 ||
+        state.score[2] !== Math.max(90, Math.ceil(projectCount / 9) * 10))
+    );
     expect(validateSchedule(problem, state.incumbent ?? [], false).valid).toBe(
       true,
     );

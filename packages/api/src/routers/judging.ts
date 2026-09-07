@@ -83,6 +83,7 @@ import {
   resolveMemberDisplayNamesByUserId,
 } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
+import { judgingAppointmentResultsRouter } from "./judging-appointment-results";
 import { judgingDraftsRouter } from "./judging-drafts";
 import { judgingScheduleRouter } from "./judging-schedule";
 import { judgingScheduleViewRouter } from "./judging-schedule-view";
@@ -135,7 +136,10 @@ function throwRoomNameConflict(error: unknown, roomName: string): never {
       throw new TRPCError({
         cause: error,
         code: "CONFLICT",
-        message: `An active judging room already uses the name "${roomName}".`,
+        message:
+          databaseError.constraint === ACTIVE_ROOM_NAME_CONSTRAINT
+            ? `An active judging room already uses the name "${roomName}".`
+            : `An active judging room already exists at that building and room "${roomName}".`,
       });
     }
     current = "cause" in current ? current.cause : undefined;
@@ -462,6 +466,7 @@ export const judgingRouter = createTRPCRouter({
   ...judgingScoresRouter,
   ...judgingDraftsRouter,
   ...judgingScheduleRouter,
+  ...judgingAppointmentResultsRouter,
   ...judgingScheduleViewRouter,
   getContext: publicProcedure
     .input(contextInputSchema)

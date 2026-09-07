@@ -211,3 +211,16 @@ TC-002 includes a deterministic quality fixture with 200 General projects, nine 
 Guest evaluation tests preserve the optional-sharing toggle, private default, and explicit opt-in flag. The authenticated mandatory-sharing notice must never appear for guests. No feedback distribution runs in this slice.
 
 Regression coverage also checks that reopening an editor waits for fresh saved answers, heartbeats preserve in-progress typing, and saving a preview rejects a candidate that changed after organizer review. New schema tables must have explicit sanitized-backup rules.
+
+### Mobile visual regression acceptance
+
+Use guest QR entry on 320- and 390-pixel phone viewports. Complete a score, inspect its saved feedback, create a Deliberation section, and pick/add a judged project immediately after a success notice. Verify the picker option remains visible and receives the tap. Expand MLH labels, scroll the evaluation, and shorten the viewport to exercise limited keyboard space. Titles, tabs, dialogs, and footer actions remain within the viewport. Inspect a desktop directory and confirm participant names remain while the redundant Team size column is absent. Repeat after visual fixes and capture the final states.
+
+### Organizer and directory follow-up verification
+
+- Select a project with different-building reservations supplied out of order. Show all reservations chronologically, correct locations, complete/partial/future states, end-to-start gaps, and a reduced-break warning where applicable. Room/status filters cannot hide itinerary entries. Inspect or reassign one entry without changing another.
+- At one millisecond before and exactly at the end of 7-, 10-, and 12-minute slots, hold the live window at the slot start, then advance to the next boundary. Browser cards retain their full width and dequeue after their slot. Manual navigation stays on the schedule's grid.
+- Appointment results include complete and partial judge identities, completed responses, and a complete-only average scoped to that appointment ID. Reject unrelated hackathon and unauthorized reads.
+- Room-only filtering defaults on for guests and authenticated judges. With several General rooms, results and pagination count only the selected room's assignments. Turning it off restores the permitted inventory. MLH remains untimed and challenge-scoped.
+- Wrong-room and wrong-slot actions remain disabled. Hover and keyboard focus expose a reason without opening an evaluation dialog. Check 320 px and 390 px guest views, a short viewport, and desktop.
+- Race two saves with the same expected draft revision. Exactly one succeeds. Put an invalid expired draft beside a valid one; retain the invalid answers and still materialize the valid result. Repeated autosave failures back off, stop automatic retries, and permit manual recovery without losing typed answers.

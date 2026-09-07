@@ -1,3 +1,5 @@
+import { TRPCError } from "@trpc/server";
+
 import { and, eq, gt, isNull, lte, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
@@ -7,6 +9,7 @@ import {
   JudgingRoomAccessLink,
   ProjectEvaluationDraft,
 } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 
 import type { WriteDb } from "../db";
 import { captureAdminAuditActor } from "../audit/service";
@@ -87,17 +90,38 @@ export async function reconcileExpiredDraftsWithDb(
               roleLabel: "Guest judge",
             },
           };
-    await writeEvaluation(tx, {
-      ...draft,
-      actor,
-      principalKind: judge.kind,
-      appointmentId: draft.appointmentId,
-      autoSubmittedAt: draft.deadlineAt,
-      expectedRevision: 0,
-    });
-    await tx
-      .delete(ProjectEvaluationDraft)
-      .where(eq(ProjectEvaluationDraft.id, draft.id));
+    try {
+      await tx.transaction(async (draftTx) => {
+        await writeEvaluation(draftTx, {
+          ...draft,
+          actor,
+          principalKind: judge.kind,
+          appointmentId: draft.appointmentId,
+          autoSubmittedAt: draft.deadlineAt ?? undefined,
+          expectedRevision: 0,
+        });
+        await draftTx
+          .delete(ProjectEvaluationDraft)
+          .where(eq(ProjectEvaluationDraft.id, draft.id));
+      });
+    } catch (error) {
+      // A stale/deleted presentation must not prevent other deadlines from
+      // completing. Keep its answers for recovery; never overwrite a result.
+      if (
+        !(error instanceof TRPCError) ||
+        ![
+          "NOT_FOUND",
+          "CONFLICT",
+          "BAD_REQUEST",
+          "PRECONDITION_FAILED",
+        ].includes(error.code)
+      )
+        throw error;
+      logger.warn("Judging deadline draft retained for recovery", {
+        draftId: draft.id,
+        code: error.code,
+      });
+    }
   }
 }
 

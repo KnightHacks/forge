@@ -69,6 +69,7 @@ export const judgeProjectListInputSchema = projectListFields
   .extend({
     hackathonId: z.string().uuid().optional(),
     includeJudged: z.boolean().default(false),
+    showInRoomOnly: z.boolean().default(true),
   })
   .refine(hasValidParticipantRange, participantRangeRefinement);
 

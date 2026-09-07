@@ -16,7 +16,10 @@ import {
 
 import type { WriteDb } from "../db";
 import type { ScheduleProblem } from "./model";
-import { isMlhChallenge } from "../projects/challenge-labels";
+import {
+  isMlhChallenge,
+  isSponsorChallenge,
+} from "../projects/challenge-labels";
 
 export async function lockScheduleHackathon(tx: WriteDb, hackathonId: string) {
   const [hackathon] = await tx
@@ -164,7 +167,7 @@ export function scheduleProblemFromSource(
     tasks: source.tasks.map(({ projectId, challengeId, challengeLabel }) => ({
       projectId,
       challengeId,
-      sponsor: challengeLabel !== "General",
+      sponsor: isSponsorChallenge(challengeLabel),
     })),
   };
 }

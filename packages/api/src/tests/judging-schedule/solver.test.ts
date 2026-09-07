@@ -154,14 +154,16 @@ describe("judging schedule search", () => {
   it("independently rejects collisions, omissions, wrong rooms, fractional slots and invalid breaks", () => {
     const valid = solve(problem).incumbent ?? [];
     expect(validateSchedule(problem, valid, false).valid).toBe(true);
-    expect(validateSchedule(problem, valid.slice(1), false).valid).toBe(false);
+    expect(validateSchedule(problem, valid.slice(1), false).errors).toContain(
+      "Every required presentation must have an appointment.",
+    );
     expect(
       validateSchedule(
         problem,
         valid.map((value) => ({ ...value, roomIndex: 0 })),
         false,
-      ).valid,
-    ).toBe(false);
+      ).errors,
+    ).toContain("The room judges a different challenge.");
     expect(
       validateSchedule(
         problem,
@@ -174,7 +176,7 @@ describe("judging schedule search", () => {
         problem,
         valid.map((value) => ({ ...value, slot: value.slot + 0.1 })),
         false,
-      ).valid,
-    ).toBe(false);
+      ).errors,
+    ).toContain("An appointment is outside the window or off the slot grid.");
   });
 });

@@ -191,13 +191,6 @@ export async function resolveWritableJudge(
       principalKind: principal.kind,
     } as const;
   }
-  if (
-    input.hackathonId &&
-    !principal.isOfficer &&
-    (await activeHackathon())?.id !== input.hackathonId
-  ) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
   const hackathon = input.hackathonId
     ? await tx.query.Hackathon.findFirst({
         columns: { id: true },
@@ -235,6 +228,18 @@ export async function resolveWritableJudge(
     hackathonId: hackathon.id,
     userId: principal.userId,
   });
+  if (!principal.isOfficer) {
+    // Recheck the active event under a lock held until this write commits.
+    const now = new Date();
+    const [active] = await tx
+      .select({ id: Hackathon.id })
+      .from(Hackathon)
+      .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
+      .orderBy(desc(Hackathon.startDate))
+      .for("share")
+      .limit(1);
+    if (active?.id !== hackathon.id) throw new TRPCError({ code: "FORBIDDEN" });
+  }
   return {
     challengeId: challenge.id,
     hackathonId: hackathon.id,

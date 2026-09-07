@@ -233,6 +233,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "judging.generateRoomLink",
   "judging.generateSchedule",
   "judging.getAppointmentMoveChoices",
+  "judging.getAppointmentResults",
   "judging.getContext",
   "judging.getEvaluationEditor",
   "judging.getEvaluationRevisions",

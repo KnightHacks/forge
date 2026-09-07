@@ -32,7 +32,7 @@ describe("guest judge name gate", () => {
     const submit = screen.getByRole("button", { name: "Enter judging room" });
     expect(submit).toBeDisabled();
     expect(screen.getByRole("dialog")).toHaveTextContent(
-      "Please introduce yourself. Your name will be used for judging deliberation and identity verification. Your responses will NOT be shared.",
+      "Use the name organizers should recognize in this judging room.",
     );
 
     await user.type(screen.getByLabelText("Full Name"), "A");

@@ -1,4 +1,6 @@
 export const AUDITED_ADMIN_PROCEDURES = [
+  "judging-schedule.getUnassignedPresentationChoices",
+  "judging-schedule.getAppointmentMoveChoices",
   "alumni.archiveBulletinPost",
   "alumni.createBulletinPost",
   "alumni.removeBulletinImage",
@@ -155,10 +157,9 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "judging-appointment-results.getAppointmentResults",
   "judging-schedule.listScheduleAdmin",
   "judging-schedule.listBuildings",
-  "judging-schedule.getAppointmentMoveChoices",
-  "judging-schedule.getUnassignedPresentationChoices",
   "alumni.listBulletinAdmin",
   "alumni.listLinkableForms",
   "analytics.getDiscordReport",

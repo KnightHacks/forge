@@ -2,14 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ExternalLink,
-  Eye,
-  Search,
-  UsersRound,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Eye, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { cn } from "@forge/ui";
@@ -33,6 +26,7 @@ export interface ProjectDirectoryInput {
   challengeIds: string[];
   direction: "asc" | "desc";
   includeJudged?: boolean;
+  showInRoomOnly?: boolean;
   maxParticipants?: number;
   minParticipants?: number;
   page: number;
@@ -95,10 +89,10 @@ function ProjectFilters({
   input,
   lockedChallenge,
   navigate,
-  query,
-  setQuery,
   showChallengeRatingSort,
   showPreviouslyJudgedFilter,
+  showRoomFilter,
+  roomFilterUnavailableReason,
   showRatingSort,
   showTeamSizeFilters,
 }: {
@@ -107,13 +101,14 @@ function ProjectFilters({
   input: ProjectDirectoryInput;
   lockedChallenge?: { id: string; label: string };
   navigate: Navigate;
-  query: string;
-  setQuery: (query: string) => void;
   showChallengeRatingSort: boolean;
   showPreviouslyJudgedFilter: boolean;
+  showRoomFilter: boolean;
+  roomFilterUnavailableReason?: string;
   showRatingSort: boolean;
   showTeamSizeFilters: boolean;
 }) {
+  const [query, setQuery] = useState(input.query);
   const [minParticipants, setMinParticipants] = useState(
     input.minParticipants?.toString() ?? "",
   );
@@ -132,7 +127,7 @@ function ProjectFilters({
   return (
     <section className="rounded-lg border border-white/10 bg-card/90 p-3 shadow-xl shadow-black/15 sm:p-4">
       <form
-        className={`grid gap-3 ${showTeamSizeFilters ? "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]" : "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_auto]"}`}
+        className={`grid gap-3 ${showTeamSizeFilters ? "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]" : "grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_auto]"}`}
         onSubmit={(event) => {
           event.preventDefault();
           const normalizedMaxParticipants =
@@ -157,7 +152,9 @@ function ProjectFilters({
           });
         }}
       >
-        <label className="relative min-w-0">
+        <label
+          className={`relative min-w-0 ${showTeamSizeFilters ? "" : "col-start-1 row-start-1 lg:col-auto lg:row-auto"}`}
+        >
           <span className="sr-only">Search project titles</span>
           <Search
             className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground"
@@ -171,7 +168,7 @@ function ProjectFilters({
           />
         </label>
         {lockedChallenge ? (
-          <div className="flex h-11 items-center rounded-md border border-primary/25 bg-primary/10 px-3 text-sm">
+          <div className="col-span-2 flex min-h-11 min-w-0 items-center rounded-md border border-primary/25 bg-primary/10 px-3 text-sm lg:col-span-1">
             <span className="truncate font-medium">
               {lockedChallenge.label}
             </span>
@@ -180,7 +177,11 @@ function ProjectFilters({
             </span>
           </div>
         ) : (
-          <label>
+          <label
+            className={
+              showTeamSizeFilters ? undefined : "col-span-2 lg:col-span-1"
+            }
+          >
             <span className="sr-only">Challenge</span>
             <select
               aria-label="Challenge"
@@ -224,14 +225,39 @@ function ProjectFilters({
               </label>
             ))
           : null}
-        <Button className="h-11" type="submit">
+        <Button
+          className={`h-11 ${showTeamSizeFilters ? "" : "col-start-2 row-start-1 lg:col-auto lg:row-auto"}`}
+          type="submit"
+        >
           Search
         </Button>
       </form>
 
-      <div className="mt-3 flex flex-wrap gap-3 border-t border-border/60 pt-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 border-t border-border/60 pt-3 sm:flex sm:flex-wrap">
+        {showRoomFilter ? (
+          <label className="col-span-2 flex min-h-11 items-center gap-2 rounded-md border border-border/70 px-3 text-sm text-foreground">
+            <Switch
+              aria-label="Show projects in my room only"
+              checked={
+                !roomFilterUnavailableReason && input.showInRoomOnly !== false
+              }
+              disabled={!!roomFilterUnavailableReason}
+              onCheckedChange={(checked) =>
+                navigate({ room: checked ? undefined : "all", page: 1 })
+              }
+            />
+            <span>
+              Show in room only
+              {roomFilterUnavailableReason ? (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {roomFilterUnavailableReason}
+                </span>
+              ) : null}
+            </span>
+          </label>
+        ) : null}
         {showPreviouslyJudgedFilter ? (
-          <label className="flex min-h-10 items-center gap-2 rounded-md border border-border/70 px-3 text-sm text-foreground">
+          <label className="col-span-2 flex min-h-11 items-center gap-2 rounded-md border border-border/70 px-3 text-sm text-foreground">
             <Switch
               aria-label="See previously judged projects"
               checked={input.includeJudged === true}
@@ -242,11 +268,11 @@ function ProjectFilters({
             See previously judged
           </label>
         ) : null}
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2 sm:text-sm">
           Sort
           <select
             aria-label="Sort projects"
-            className="h-10 rounded-md border border-input bg-background px-3 text-foreground"
+            className="h-11 min-w-0 rounded-md border border-input bg-background px-3 text-foreground"
             onChange={(event) =>
               navigate({ page: 1, sort: event.target.value })
             }
@@ -262,11 +288,11 @@ function ProjectFilters({
             {showRatingSort ? <option value="rating">Rating</option> : null}
           </select>
         </label>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2 sm:text-sm">
           Order
           <select
             aria-label="Sort direction"
-            className="h-10 rounded-md border border-input bg-background px-3 text-foreground"
+            className="h-11 min-w-0 rounded-md border border-input bg-background px-3 text-foreground"
             onChange={(event) =>
               navigate({ direction: event.target.value, page: 1 })
             }
@@ -276,11 +302,11 @@ function ProjectFilters({
             <option value="desc">Descending</option>
           </select>
         </label>
-        <label className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="ml-auto hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
           Rows
           <select
             aria-label="Projects per page"
-            className="h-10 rounded-md border border-input bg-background px-3 text-foreground"
+            className="h-11 min-w-0 rounded-md border border-input bg-background px-3 text-foreground"
             onChange={(event) =>
               navigate({ page: 1, pageSize: event.target.value })
             }
@@ -365,7 +391,6 @@ function ProjectList<TProject extends Project>({
                 {showChallenges ? (
                   <th className="px-4 py-3 font-medium">Challenges</th>
                 ) : null}
-                <th className="px-4 py-3 text-right font-medium">Team size</th>
                 {extraColumns?.map((column) => (
                   <th
                     className="px-4 py-3 text-right font-medium"
@@ -421,9 +446,6 @@ function ProjectList<TProject extends Project>({
                       <ProjectBadges project={project} />
                     </td>
                   ) : null}
-                  <td className="whitespace-nowrap px-4 py-4 text-right align-top">
-                    {project.participantCount}
-                  </td>
                   {extraColumns?.map((column) => (
                     <td
                       className="whitespace-nowrap px-4 py-4 text-right align-top font-mono"
@@ -449,20 +471,14 @@ function ProjectList<TProject extends Project>({
             <article className="space-y-3 p-4" key={project.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-2">
-                  {showViewAction ? (
-                    <ViewProjectButton onSelect={onSelect} project={project} />
-                  ) : null}
                   <button
-                    className="min-w-0 pt-2 text-left text-lg font-semibold hover:text-primary sm:pt-1"
+                    className="min-h-11 min-w-0 break-words text-left text-base font-semibold hover:text-primary"
                     onClick={() => onSelect(project)}
                     type="button"
                   >
                     {project.title}
                   </button>
                 </div>
-                <Badge variant="outline" className="shrink-0 gap-1">
-                  <UsersRound className="size-3" /> {project.participantCount}
-                </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">
@@ -472,12 +488,9 @@ function ProjectList<TProject extends Project>({
               </p>
               {showChallenges ? <ProjectBadges project={project} /> : null}
               {extraColumns?.length ? (
-                <dl className="grid grid-cols-2 gap-2">
+                <dl className="grid grid-cols-2 gap-3 border-t border-border/60 pt-3">
                   {extraColumns.map((column) => (
-                    <div
-                      className="rounded-md border border-white/10 bg-background/60 p-3"
-                      key={column.header}
-                    >
+                    <div className="min-w-0 break-words" key={column.header}>
                       <dt className="text-xs text-muted-foreground">
                         {column.mobileLabel ?? column.header}
                       </dt>
@@ -488,17 +501,27 @@ function ProjectList<TProject extends Project>({
                   ))}
                 </dl>
               ) : null}
-              <div className="flex flex-wrap items-center gap-2">
-                <Button asChild size="sm" variant="outline">
+              <div className="flex items-center gap-2 [&>button]:min-h-11 [&>button]:flex-1">
+                <Button
+                  asChild
+                  className="size-11 shrink-0"
+                  size="icon"
+                  variant="outline"
+                >
                   <a
                     href={project.submissionUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Devpost <ExternalLink className="ml-1 size-3" />
+                    <span className="sr-only">View on Devpost</span>
+                    <ExternalLink className="size-4" />
                   </a>
                 </Button>
-                <Button size="sm" onClick={() => onSelect(project)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onSelect(project)}
+                >
                   View details
                 </Button>
                 {actions?.(project)}
@@ -562,6 +585,8 @@ export function ProjectDirectory<TProject extends Project>({
   showChallengeRatingSort = false,
   showChallenges = true,
   showPreviouslyJudgedFilter = false,
+  showRoomFilter = false,
+  roomFilterUnavailableReason,
   showRatingSort = false,
   showTeamSizeFilters = true,
   showViewAction = false,
@@ -581,6 +606,8 @@ export function ProjectDirectory<TProject extends Project>({
   showChallengeRatingSort?: boolean;
   showChallenges?: boolean;
   showPreviouslyJudgedFilter?: boolean;
+  showRoomFilter?: boolean;
+  roomFilterUnavailableReason?: string;
   showRatingSort?: boolean;
   showTeamSizeFilters?: boolean;
   showViewAction?: boolean;
@@ -588,7 +615,6 @@ export function ProjectDirectory<TProject extends Project>({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(input.query);
   const [selected, setSelected] = useState<TProject | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -612,12 +638,12 @@ export function ProjectDirectory<TProject extends Project>({
         defaultChallengeLabel={defaultChallengeLabel}
         input={input}
         lockedChallenge={lockedChallenge}
-        key={`${input.minParticipants ?? ""}:${input.maxParticipants ?? ""}`}
+        key={JSON.stringify(input)}
         navigate={navigate}
-        query={query}
-        setQuery={setQuery}
         showChallengeRatingSort={showChallengeRatingSort}
         showPreviouslyJudgedFilter={showPreviouslyJudgedFilter}
+        showRoomFilter={showRoomFilter}
+        roomFilterUnavailableReason={roomFilterUnavailableReason}
         showRatingSort={showRatingSort}
         showTeamSizeFilters={showTeamSizeFilters}
       />

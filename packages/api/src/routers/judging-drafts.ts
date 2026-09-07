@@ -103,13 +103,18 @@ export const judgingDraftsRouter = {
           scope.principalKind,
           input,
         );
-        const existing = await tx.query.ProjectEvaluationDraft.findFirst({
-          where: and(
-            eq(ProjectEvaluationDraft.judgeId, scope.judgeId),
-            eq(ProjectEvaluationDraft.projectId, input.projectId),
-            eq(ProjectEvaluationDraft.challengeId, scope.challengeId),
-          ),
-        });
+        const [existing] = await tx
+          .select()
+          .from(ProjectEvaluationDraft)
+          .where(
+            and(
+              eq(ProjectEvaluationDraft.judgeId, scope.judgeId),
+              eq(ProjectEvaluationDraft.projectId, input.projectId),
+              eq(ProjectEvaluationDraft.challengeId, scope.challengeId),
+            ),
+          )
+          .for("update")
+          .limit(1);
         if (
           (existing?.revision ?? 0) !== input.expectedDraftRevision ||
           (input.expectedRevision !== undefined &&

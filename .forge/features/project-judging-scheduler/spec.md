@@ -62,6 +62,10 @@ If required answers are missing, the system still preserves the partial submissi
 
 A judge cannot reopen an auto-submitted project until there are no currently booked slots in their room. The owner confirmed that a current gap is enough; judges do not have to wait until the room's final presentation. Teardown counts as booked time. If a gap ends while an old submission is open, save its progress and close/lock the editor with a short downtime message. The restriction follows the room attached to that appointment, applies to complete and incomplete auto-submissions, and has no officer override. Switching rooms cannot bypass it.
 
+### Mobile judging
+
+Most guest judges use phones after scanning a room QR. Verify entry, project browsing, details, timed and MLH evaluations, Submissions, and Deliberation at 320- and 390-pixel widths. Keep tabs inside their available width, compact typography, and touch controls at least 44 pixels. Evaluation headers and footers must leave usable scrolling space, including short viewports. Put long MLH opt-in lists in an expandable part of the scrolling body. Save notices must not cover the mobile project picker. Remove the redundant Team size column and mobile count badge from the project directory; participant names remain visible.
+
 ### Project discovery
 
 Add sorting by presentation time so judges can inspect upcoming projects. Refresh the judge project view through a heartbeat slower than Command Center so reservation changes appear without a manual reload.
@@ -136,3 +140,13 @@ These criteria summarize the accepted behavior. The SRD defines technical enforc
 ## Open product questions
 
 None. Drop locking and MLH historical/scoring behavior were confirmed in the final reverse-prompt round. Remaining implementation details follow the constraints in srd.md.
+
+### Organizer and judge refinements accepted during implementation
+
+Organizers can select a project and audit all of its reservations in chronological order, with building, room, challenge, status, and end-to-start breaks. The itinerary shows every reservation regardless of room/status filters and flags reduced travel breaks. Appointment inspection links to the same itinerary.
+
+The moving room board advances at appointment boundaries. A current card keeps its full width until the appointment ends, then leaves and the remaining cards shift forward. For durations that do not divide an hour, include enough complete slots to cover at least 60 minutes. Respect reduced-motion preferences.
+
+Clicking an appointment shows judges who submitted complete or partial evaluations. Organizers can inspect completed responses and see the mean of complete judge scores attached to that appointment. Partial evaluations do not contribute to the mean; unrelated historical results are not part of this session average.
+
+Judge buttons remain disabled for the wrong room, wrong slot, teardown, and other timing restrictions. Explain the reason on a hoverable and keyboard-focusable wrapper; do not open a denial dialog from an intentionally blocked action. A "Show in room only" filter defaults on for authenticated and guest judges. Apply it before pagination using the selected room's reservations when a schedule exists. MLH rooms keep their unscheduled challenge inventory. Turning the filter off restores permitted project browsing.

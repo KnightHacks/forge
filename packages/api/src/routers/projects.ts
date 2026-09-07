@@ -23,6 +23,8 @@ import {
   Judge,
   JudgingAppointment,
   JudgingRoom,
+  JudgingRoomPresence,
+  JudgingSchedule,
   Project,
   ProjectChallenge,
   ProjectEvaluation,
@@ -120,6 +122,7 @@ function projectWhere(input: {
   maxParticipants?: number;
   minParticipants?: number;
   query: string;
+  roomAssignment?: { challengeId: string; roomId: string };
 }) {
   const challengeMatch = input.challengeIds.length
     ? exists(
@@ -169,6 +172,28 @@ function projectWhere(input: {
       ? lte(Project.participantCount, input.maxParticipants)
       : undefined,
     challengeMatch,
+    input.roomAssignment
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(JudgingAppointment)
+            .innerJoin(
+              JudgingSchedule,
+              eq(JudgingSchedule.id, JudgingAppointment.scheduleId),
+            )
+            .where(
+              and(
+                eq(JudgingAppointment.projectId, Project.id),
+                eq(
+                  JudgingAppointment.challengeId,
+                  input.roomAssignment.challengeId,
+                ),
+                eq(JudgingAppointment.roomId, input.roomAssignment.roomId),
+                eq(JudgingSchedule.hackathonId, input.hackathonId),
+              ),
+            ),
+        )
+      : undefined,
     notPreviouslyJudged,
   );
 }
@@ -275,6 +300,7 @@ async function listProjects(input: {
   page: number;
   pageSize: number;
   query: string;
+  roomAssignment?: { challengeId: string; roomId: string };
   sort:
     | "challengeRating"
     | "participantCount"
@@ -456,6 +482,7 @@ export const projectsRouter = createTRPCRouter({
           projects: [],
           totalCount: 0,
           challenges: [],
+          roomFilterUnavailableReason: null,
         };
       await reconcileExpiredJudgingDrafts(selected.id);
       if (input.sort === "challengeRating") {
@@ -479,6 +506,55 @@ export const projectsRouter = createTRPCRouter({
                 ),
               })
             )?.id;
+      const generalChallenge =
+        !guestPrincipal && !input.challengeIds[0]
+          ? await db.query.ProjectChallenge.findFirst({
+              columns: { id: true, label: true },
+              where: and(
+                eq(ProjectChallenge.hackathonId, selected.id),
+                eq(ProjectChallenge.label, "General"),
+              ),
+            })
+          : null;
+      const selectedChallengeId =
+        guestPrincipal?.challengeId ??
+        input.challengeIds[0] ??
+        generalChallenge?.id;
+      const selectedChallenge = selectedChallengeId
+        ? await db.query.ProjectChallenge.findFirst({
+            columns: { label: true },
+            where: and(
+              eq(ProjectChallenge.id, selectedChallengeId),
+              eq(ProjectChallenge.hackathonId, selected.id),
+            ),
+          })
+        : generalChallenge;
+      const schedule = input.showInRoomOnly
+        ? await db.query.JudgingSchedule.findFirst({
+            columns: { id: true },
+            where: eq(JudgingSchedule.hackathonId, selected.id),
+          })
+        : null;
+      const memberPresence =
+        !guestPrincipal && judgeId && input.showInRoomOnly
+          ? await db.query.JudgingRoomPresence.findFirst({
+              columns: { roomId: true },
+              where: and(
+                eq(JudgingRoomPresence.judgeId, judgeId),
+                eq(JudgingRoomPresence.hackathonId, selected.id),
+                isNull(JudgingRoomPresence.leftAt),
+              ),
+            })
+          : null;
+      const roomId = guestPrincipal?.roomId ?? memberPresence?.roomId;
+      const roomAssignment =
+        input.showInRoomOnly &&
+        schedule &&
+        roomId &&
+        selectedChallengeId &&
+        !isMlhChallenge(selectedChallenge?.label ?? "")
+          ? { challengeId: selectedChallengeId, roomId }
+          : undefined;
       const timeChallengeIds = guestPrincipal
         ? [guestPrincipal.challengeId]
         : input.challengeIds.length
@@ -521,10 +597,15 @@ export const projectsRouter = createTRPCRouter({
                 judgeId,
               }
             : undefined,
+        roomAssignment,
       });
       return {
         hackathon: selected,
         ...listed,
+        roomFilterUnavailableReason:
+          input.showInRoomOnly && schedule && !roomId && !guestPrincipal
+            ? "Choose a judging room to use this filter."
+            : null,
         challenges: guestPrincipal
           ? listed.challenges.filter(
               (challenge) => challenge.id === guestPrincipal.challengeId,

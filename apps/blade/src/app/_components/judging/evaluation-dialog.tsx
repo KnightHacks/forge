@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -295,19 +296,19 @@ function EvaluationEditor({
 
   return (
     <Dialog onOpenChange={(value) => void close(value)} open={open}>
-      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-border/70 p-5 pr-12 text-left sm:p-6">
-          <DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 [&>button]:right-2 [&>button]:top-2 [&>button]:z-10 [&>button]:size-11">
+        <DialogHeader className="shrink-0 border-b border-border/70 p-4 pr-14 text-left sm:p-6 sm:pr-14">
+          <DialogTitle className="break-words text-base leading-6 sm:text-lg">
             {submission ? "Edit" : "Judge"} {project.title}
           </DialogTitle>
-          <DialogDescription className="mt-2 rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
-            Judging for the {challengeName}
+          <DialogDescription className="mt-2 break-words rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
+            {challengeName}
           </DialogDescription>
           {seconds !== null ? (
             <div
               role="timer"
               aria-label="Judging time remaining"
-              className={`mt-3 rounded-md border px-3 py-2 font-mono text-2xl font-semibold ${seconds < 90 ? "border-destructive/60 bg-destructive/15 text-destructive motion-safe:animate-pulse" : seconds < 180 ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/15 bg-background/60"}`}
+              className={`mt-3 rounded-md border px-3 py-2 font-mono text-xl font-semibold sm:text-2xl ${seconds < 90 ? "border-red-400/50 bg-red-400/10 text-red-200 motion-safe:animate-pulse" : seconds < 180 ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/15 bg-background/60"}`}
             >
               {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
               <span className="ml-3 font-sans text-sm font-normal">
@@ -315,21 +316,24 @@ function EvaluationEditor({
               </span>
             </div>
           ) : null}
-          {project.prizeCategories?.some((label) => /mlh/i.test(label)) &&
-          /mlh/i.test(challengeLabel) ? (
-            <div className="mt-3 text-sm">
-              <p className="font-semibold">MLH opt-ins</p>
-              <ul className="mt-1 list-inside list-disc">
+        </DialogHeader>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:space-y-6 sm:p-6">
+          {project.prizeCategories?.some((label) => isMlhChallenge(label)) &&
+          isMlhChallenge(challengeLabel) ? (
+            <details className="rounded-md border border-white/10 bg-background/60 px-3 text-sm">
+              <summary className="min-h-11 cursor-pointer content-center font-semibold">
+                MLH opt-ins
+              </summary>
+              <ul className="list-disc space-y-1 break-words pb-3 pl-4">
                 {project.prizeCategories
-                  .filter((label) => /mlh/i.test(label))
+                  .filter((label) => isMlhChallenge(label))
                   .map((label) => (
                     <li key={label}>{label}</li>
                   ))}
               </ul>
-            </div>
+            </details>
           ) : null}
-        </DialogHeader>
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+
           {expired ? (
             <Alert>
               <AlertTitle>
@@ -373,7 +377,7 @@ function EvaluationEditor({
               </AlertTitle>
               <AlertDescription>
                 {workspace.principalKind === "guest"
-                  ? "Each written response below shows whether it is marked for sharing with this project's hackers. Authenticated judges and officers can review every response."
+                  ? "Choose which responses to mark for hacker sharing. Judges and officers can review every response."
                   : "Every written response you submit is marked for sharing with this project's hackers. Other authenticated judges and officers can also review it."}
               </AlertDescription>
             </Alert>
@@ -496,9 +500,9 @@ function EvaluationEditor({
             );
           })}
         </div>
-        <DialogFooter className="shrink-0 border-t border-border/70 bg-card/95 p-4 sm:p-5">
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-xs leading-5 text-muted-foreground">
+        <DialogFooter className="shrink-0 border-t border-border/70 bg-card p-3 sm:p-5">
+          <div className="flex w-full items-center justify-between gap-3">
+            <div className="min-w-0 text-xs leading-5 text-muted-foreground">
               <p
                 role="status"
                 className={
@@ -515,11 +519,6 @@ function EvaluationEditor({
                   Retry saving progress
                 </Button>
               ) : null}
-              <p>
-                {workspace.principalKind === "guest"
-                  ? "Judges and officers can review every response. Hacker sharing follows the setting shown under each field."
-                  : "Your written responses are marked for sharing with this project's hackers."}
-              </p>
               {saveError ? (
                 <p className="text-destructive" role="alert">
                   {saveError}
@@ -527,7 +526,7 @@ function EvaluationEditor({
               ) : null}
             </div>
             <Button
-              className="shrink-0"
+              className="min-h-11 shrink-0"
               disabled={!editable || save.isPending}
               onClick={() => void submit()}
               type="button"

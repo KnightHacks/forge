@@ -42,7 +42,7 @@ export function ProjectCommandCenter({
     hackathonId: string;
   };
   selectedTab: "evaluations" | "projects" | "rooms" | "setup" | "schedule";
-  scheduleData: RouterOutputs["judging"]["listScheduleAdmin"];
+  scheduleData: RouterOutputs["judging"]["listScheduleAdmin"] | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -132,12 +132,14 @@ export function ProjectCommandCenter({
           />
         </TabsContent>
         <TabsContent className="mt-4" value="schedule">
-          <JudgingSchedulePanel
-            key={controlData.hackathon.id}
-            initialData={scheduleData}
-            hackathonId={controlData.hackathon.id}
-            timeZone={controlData.hackathon.timezone}
-          />
+          {scheduleData ? (
+            <JudgingSchedulePanel
+              key={controlData.hackathon.id}
+              initialData={scheduleData}
+              hackathonId={controlData.hackathon.id}
+              timeZone={controlData.hackathon.timezone}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </main>

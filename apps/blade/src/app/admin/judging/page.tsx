@@ -61,13 +61,6 @@ export default async function JudgingAdminPage({
     ...parseProjectDirectoryParams(params),
     hackathonId: selected.id,
   };
-  const [controlData, projectData, evaluations, scheduleData] =
-    await Promise.all([
-      api.judging.listAdmin({ hackathonId: selected.id }),
-      api.projects.listAdmin(projectInput),
-      api.judging.listEvaluationAudit({ hackathonId: selected.id }),
-      api.judging.listScheduleAdmin({ hackathonId: selected.id }),
-    ]);
   const requestedTab = first(params.tab);
   const selectedTab =
     requestedTab === "evaluations" ||
@@ -76,6 +69,15 @@ export default async function JudgingAdminPage({
     requestedTab === "rooms"
       ? requestedTab
       : "setup";
+  const [controlData, projectData, evaluations, scheduleData] =
+    await Promise.all([
+      api.judging.listAdmin({ hackathonId: selected.id }),
+      api.projects.listAdmin(projectInput),
+      api.judging.listEvaluationAudit({ hackathonId: selected.id }),
+      selectedTab === "schedule"
+        ? api.judging.listScheduleAdmin({ hackathonId: selected.id })
+        : null,
+    ]);
   return (
     <ProjectCommandCenter
       controlData={controlData}

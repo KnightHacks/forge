@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { RouterOutputs } from "@forge/api";
 
 import { EvaluationDialog } from "~/app/_components/judging/evaluation-dialog";
+import { JudgeSubmissions } from "~/app/_components/judging/judge-submissions";
 import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
 import { ProjectDetailDialog } from "~/app/_components/projects/project-detail-dialog";
 import { ProjectDirectory } from "~/app/_components/projects/project-directory";
@@ -228,6 +229,81 @@ describe("judge project privacy", () => {
 });
 
 describe("judge project directory", () => {
+  it("shows the room filter enabled by default", () => {
+    render(
+      <ProjectDirectory
+        data={{
+          challenges: [],
+          page: 1,
+          pageSize: 10,
+          projects: [judgeProject],
+          totalCount: 1,
+        }}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 10,
+          query: "",
+          showInRoomOnly: true,
+          sort: "title",
+        }}
+        showRoomFilter
+      />,
+    );
+
+    expect(
+      screen.getByRole("switch", { name: "Show projects in my room only" }),
+    ).toBeChecked();
+  });
+
+  it("shows room filtering as inactive without a selected room and resets unsent search text after navigation", async () => {
+    const user = userEvent.setup();
+    const data = {
+      challenges: [],
+      page: 1,
+      pageSize: 10,
+      projects: [judgeProject],
+      totalCount: 1,
+    };
+    const input = {
+      challengeIds: [],
+      direction: "asc" as const,
+      page: 1,
+      pageSize: 10,
+      query: "",
+      showInRoomOnly: true,
+      sort: "title" as const,
+    };
+    const { rerender } = render(
+      <ProjectDirectory
+        data={data}
+        input={input}
+        showRoomFilter
+        roomFilterUnavailableReason="Choose a judging room to use this filter."
+      />,
+    );
+    const toggle = screen.getByRole("switch", {
+      name: "Show projects in my room only",
+    });
+    expect(toggle).not.toBeChecked();
+    expect(toggle).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "Search project titles" }),
+      "unsent search",
+    );
+    rerender(
+      <ProjectDirectory
+        data={data}
+        input={{ ...input, showInRoomOnly: false }}
+        showRoomFilter
+      />,
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Search project titles" }),
+    ).toHaveValue("");
+  });
+
   it("uses judge-specific filters and project count copy", () => {
     render(
       <JudgeProjectWorkspace
@@ -827,6 +903,57 @@ describe("evaluation feedback visibility", () => {
     expect(
       screen.getByRole("radiogroup", { name: "Technical understanding" }),
     ).toBeInTheDocument();
+  });
+
+  it("locks every submission edit control during a booking and restores it during downtime", () => {
+    const submission = {
+      id: "evaluation-1",
+      challengeId: "challenge-1",
+      challengeLabel: "General",
+      projectId: judgeProject.id,
+      projectTitle: judgeProject.title,
+      projectAvailable: true,
+      isComplete: false,
+      autoSubmittedAt: new Date("2026-09-07T16:08:00Z"),
+      createdAt: new Date("2026-09-07T16:08:00Z"),
+      updatedAt: new Date("2026-09-07T16:08:00Z"),
+      revision: 1,
+      score: null,
+      ratings: [],
+      responses: [],
+    } satisfies RouterOutputs["judging"]["listMySubmissions"][number];
+    const workspace = {
+      challengeId: submission.challengeId,
+      hackathonId: judgeProject.hackathonId,
+      principalKind: "member",
+      state: "open",
+      rubric: [],
+      displayAllResults: false,
+    } satisfies RouterOutputs["judging"]["getWorkspace"];
+    const { rerender } = render(
+      <JudgeSubmissions
+        submissions={[submission]}
+        workspace={workspace}
+        lockedEvaluationIds={[submission.id]}
+      />,
+    );
+    const editControls = screen.getAllByRole("button", {
+      name: "Edit",
+    });
+    expect(editControls).toHaveLength(2);
+    for (const button of editControls) expect(button).toBeDisabled();
+    expect(screen.getAllByText("Wait until downtime to edit")).toHaveLength(2);
+    rerender(
+      <JudgeSubmissions
+        submissions={[submission]}
+        workspace={workspace}
+        lockedEvaluationIds={[]}
+      />,
+    );
+    for (const button of screen.getAllByRole("button", {
+      name: "Edit",
+    }))
+      expect(button).toBeEnabled();
   });
 
   it("prefills and edits a saved guest evaluation", async () => {

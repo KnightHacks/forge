@@ -24,10 +24,14 @@ import type { BoardAppointment } from "./schedule-board";
 import {
   appointmentStatusLabels,
   judgingTime,
+  judgingWindowMinutes,
+  judgingWindowStart,
 } from "~/lib/judging/schedule-display";
 import { useJudgingClock } from "~/lib/judging/use-judging-clock";
 import { api } from "~/trpc/react";
+import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 import { AppointmentMoveDialog } from "./appointment-move-dialog";
+import { ProjectItinerary } from "./project-itinerary";
 import { ScheduleBoard } from "./schedule-board";
 import { ScheduleConfiguration } from "./schedule-configuration";
 
@@ -50,7 +54,8 @@ export function JudgingSchedulePanel({
   const data = query.data;
   const now = useJudgingClock(data.serverNow);
   const [view, setView] = useState({
-    mode: "hour" as "hour" | "agenda",
+    mode: "hour" as "hour" | "agenda" | "project",
+    projectId: "",
     roomId: "all",
     status: "all",
     search: "",
@@ -149,11 +154,14 @@ export function JudgingSchedulePanel({
   const liveStart = timing
     ? Math.max(
         timing.startsAt.getTime(),
-        Math.min(now.getTime(), timing.endsAt.getTime() - 60 * 60_000),
+        Math.min(now.getTime(), timing.endsAt.getTime()),
       )
     : now.getTime();
-  const windowStart = new Date(
-    view.offset ?? Math.floor(liveStart / 60_000) * 60_000,
+  const gridStart = timing?.startsAt.getTime() ?? now.getTime();
+  const windowStart = judgingWindowStart(
+    new Date(gridStart),
+    new Date(view.offset ?? liveStart),
+    duration,
   );
   const unassigned = data.schedule
     ? data.source.tasks.filter(
@@ -173,7 +181,7 @@ export function JudgingSchedulePanel({
         ...appointments.map((appointment) => appointment.endsAt.getTime()),
       )
     : null;
-  const overflow =
+  const unusedMinutes =
     timing && latestEnd
       ? Math.max(0, Math.floor((timing.endsAt.getTime() - latestEnd) / 60_000))
       : 0;
@@ -225,8 +233,8 @@ export function JudgingSchedulePanel({
             {timing ? (
               <p className="mt-1 text-sm text-muted-foreground">
                 {timing.setupMinutes} setup + {timing.judgingMinutes} judging +{" "}
-                {timing.teardownMinutes} teardown · {overflow} minutes of
-                trailing overflow
+                {timing.teardownMinutes} teardown · {unusedMinutes} minutes
+                reserved for overflow at the end
               </p>
             ) : null}
           </div>
@@ -375,113 +383,147 @@ export function JudgingSchedulePanel({
           </div>
         </div>
       ) : null}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-44 flex-1 space-y-1">
-          <Label htmlFor="schedule-search">Find a project or challenge</Label>
-          <Input
-            id="schedule-search"
-            value={view.search}
-            onChange={(event) =>
-              setView({ ...view, search: event.target.value })
-            }
+      <div className="flex flex-wrap gap-2" aria-label="Schedule views">
+        {(
+          [
+            ["hour", "60-minute timeline"],
+            ["agenda", "Full room agendas"],
+            ["project", "Project itinerary"],
+          ] as const
+        ).map(([mode, label]) => (
+          <Button
+            key={mode}
             className="min-h-11"
-            placeholder="Search schedule"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="schedule-room">Room</Label>
-          <select
-            id="schedule-room"
-            className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm"
-            value={view.roomId}
-            onChange={(event) =>
-              setView({ ...view, roomId: event.target.value })
-            }
+            variant={view.mode === mode ? "primary" : "outline"}
+            aria-pressed={view.mode === mode}
+            onClick={() => setView({ ...view, mode })}
           >
-            <option value="all">All scheduled rooms</option>
-            {data.source.rooms
-              .filter((room) => room.scheduled)
-              .map((room) => (
-                <option key={room.id} value={room.id}>
-                  {room.buildingName} {room.name}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="schedule-status">Status</Label>
-          <select
-            id="schedule-status"
-            className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-            value={view.status}
-            onChange={(event) =>
-              setView({ ...view, status: event.target.value })
-            }
-          >
-            <option value="all">All statuses</option>
-            {Object.entries(appointmentStatusLabels).map(([status, label]) => (
-              <option key={status} value={status}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <Button
-          className="min-h-11"
-          variant="outline"
-          onClick={() =>
-            setView({ ...view, mode: view.mode === "hour" ? "agenda" : "hour" })
-          }
-        >
-          {view.mode === "hour" ? "Full room agendas" : "60-minute timeline"}
-        </Button>
-        {view.mode === "hour" ? (
-          <div className="flex gap-1">
-            <Button
-              className="min-h-11"
-              variant="outline"
-              aria-label="Previous hour"
-              onClick={() =>
-                setView({
-                  ...view,
-                  offset: windowStart.getTime() - 60 * 60_000,
-                })
-              }
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              className="min-h-11"
-              variant="outline"
-              onClick={() => setView({ ...view, offset: null })}
-            >
-              Now
-            </Button>
-            <Button
-              className="min-h-11"
-              variant="outline"
-              aria-label="Next hour"
-              onClick={() =>
-                setView({
-                  ...view,
-                  offset: windowStart.getTime() + 60 * 60_000,
-                })
-              }
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        ) : null}
+            {label}
+          </Button>
+        ))}
       </div>
-      <ScheduleBoard
-        appointments={visibleAppointments}
-        rooms={rooms}
-        timeZone={timeZone}
-        windowStart={windowStart}
-        mode={view.mode}
-        now={now}
-        onSelect={setInspecting}
-      />
+      {view.mode !== "project" ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-44 flex-1 space-y-1">
+            <Label htmlFor="schedule-search">Find a project or challenge</Label>
+            <Input
+              id="schedule-search"
+              value={view.search}
+              onChange={(event) =>
+                setView({ ...view, search: event.target.value })
+              }
+              className="min-h-11"
+              placeholder="Search schedule"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="schedule-room">Room</Label>
+            <select
+              id="schedule-room"
+              className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm"
+              value={view.roomId}
+              onChange={(event) =>
+                setView({ ...view, roomId: event.target.value })
+              }
+            >
+              <option value="all">All scheduled rooms</option>
+              {data.source.rooms
+                .filter((room) => room.scheduled)
+                .map((room) => (
+                  <option key={room.id} value={room.id}>
+                    {room.buildingName} {room.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="schedule-status">Status</Label>
+            <select
+              id="schedule-status"
+              className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+              value={view.status}
+              onChange={(event) =>
+                setView({ ...view, status: event.target.value })
+              }
+            >
+              <option value="all">All statuses</option>
+              {Object.entries(appointmentStatusLabels).map(
+                ([status, label]) => (
+                  <option key={status} value={status}>
+                    {label}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
+          {view.mode === "hour" ? (
+            <div className="flex gap-1">
+              <Button
+                className="min-h-11"
+                variant="outline"
+                aria-label="Previous window"
+                onClick={() =>
+                  setView({
+                    ...view,
+                    offset:
+                      windowStart.getTime() -
+                      judgingWindowMinutes(duration) * 60_000,
+                  })
+                }
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                className="min-h-11"
+                variant="outline"
+                onClick={() => setView({ ...view, offset: null })}
+              >
+                Now
+              </Button>
+              <Button
+                className="min-h-11"
+                variant="outline"
+                aria-label="Next window"
+                onClick={() =>
+                  setView({
+                    ...view,
+                    offset:
+                      windowStart.getTime() +
+                      judgingWindowMinutes(duration) * 60_000,
+                  })
+                }
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {view.mode === "project" ? (
+        <ProjectItinerary
+          appointments={appointments}
+          rooms={data.source.rooms}
+          projectId={view.projectId}
+          onProjectChange={(projectId) => setView({ ...view, projectId })}
+          timeZone={timeZone}
+          sameBuildingBreakMinutes={timing?.sameBuildingBreakMinutes ?? 10}
+          differentBuildingBreakMinutes={
+            timing?.differentBuildingBreakMinutes ?? 20
+          }
+          onSelect={setInspecting}
+        />
+      ) : (
+        <ScheduleBoard
+          appointments={visibleAppointments}
+          rooms={rooms}
+          timeZone={timeZone}
+          windowStart={windowStart}
+          durationMinutes={duration}
+          mode={view.mode}
+          now={now}
+          onSelect={setInspecting}
+        />
+      )}
       <p className="text-sm text-muted-foreground">
         MLH rooms are unscheduled. Room warnings do not move or cancel bookings.
         Schedules are internal to judging; hacker distribution comes later.
@@ -499,51 +541,37 @@ export function JudgingSchedulePanel({
           onClose={() => setSelection(null)}
         />
       ) : null}
-      <Dialog
-        open={!!inspected}
+      <AppointmentDetailDialog
+        appointment={inspected ?? null}
+        hackathonId={hackathonId}
+        onMove={() => {
+          if (!inspected) return;
+          setSelection({ appointmentId: inspected.id });
+          setInspecting(null);
+        }}
         onOpenChange={(open) => {
           if (!open) setInspecting(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{inspected?.title}</DialogTitle>
-            <DialogDescription>{inspected?.challengeLabel}</DialogDescription>
-          </DialogHeader>
-          {inspected ? (
-            <div className="space-y-2 text-sm">
-              <p>
-                {judgingTime(inspected.startsAt, timeZone)} to{" "}
-                {judgingTime(inspected.endsAt, timeZone)}
-              </p>
-              <p>
-                {
-                  data.source.rooms.find((room) => room.id === inspected.roomId)
-                    ?.buildingName
-                }{" "}
-                {
-                  data.source.rooms.find((room) => room.id === inspected.roomId)
-                    ?.name
-                }
-              </p>
-              <Badge variant="outline">
-                {appointmentStatusLabels[inspected.status]}
-              </Badge>
-              {inspected.canMove ? (
-                <Button
-                  className="mt-4 w-full"
-                  onClick={() => {
-                    setSelection({ appointmentId: inspected.id });
-                    setInspecting(null);
-                  }}
-                >
-                  Reassign appointment
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        onViewItinerary={() => {
+          if (!inspected) return;
+          setView({ ...view, mode: "project", projectId: inspected.projectId });
+          setInspecting(null);
+        }}
+        open={!!inspected}
+        roomLabel={
+          inspected
+            ? [
+                data.source.rooms.find((room) => room.id === inspected.roomId)
+                  ?.buildingName,
+                data.source.rooms.find((room) => room.id === inspected.roomId)
+                  ?.name,
+              ]
+                .filter(Boolean)
+                .join(" ") || "Room unavailable"
+            : ""
+        }
+        timeZone={timeZone}
+      />
       <Dialog open={dropping} onOpenChange={setDropping}>
         <DialogContent>
           <DialogHeader>

@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
-import { and, asc, desc, eq, gt, isNull, or, sql } from "@forge/db";
+import type { AuditTargetType } from "@forge/validators";
+import { and, asc, desc, eq, gt, isNull, lte, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   JudgingAppointment,
@@ -65,6 +66,16 @@ async function auditSchedule(
   actionKey: CreateAdminAuditEventInput["actionKey"],
   metadata: CreateAdminAuditEventInput["metadata"],
 ) {
+  const subjectKeys = [
+    ["appointmentId", "judging_appointment"],
+    ["scheduleId", "judging_schedule"],
+    ["jobId", "judging_schedule_job"],
+  ] as const;
+  const subject = subjectKeys.find(
+    ([key]) => typeof metadata?.[key] === "string",
+  );
+  const targetId = subject ? String(metadata?.[subject[0]]) : hackathonId;
+  const targetType: AuditTargetType = subject?.[1] ?? "hackathon";
   await createAdminAuditEvent(
     {
       actionKey,
@@ -73,10 +84,20 @@ async function auditSchedule(
       subjects: [
         {
           relation: "primary",
-          targetId: hackathonId,
+          targetId,
           targetLabel: "Judging schedule",
-          targetType: "hackathon",
+          targetType,
         },
+        ...(targetType !== "hackathon"
+          ? [
+              {
+                relation: "secondary" as const,
+                targetId: hackathonId,
+                targetLabel: "Hackathon",
+                targetType: "hackathon" as const,
+              },
+            ]
+          : []),
       ],
     },
     tx,
@@ -179,7 +200,7 @@ export const judgingScheduleRouter = {
                   relation: "primary",
                   targetId: created.id,
                   targetLabel: created.name,
-                  targetType: "judging_room",
+                  targetType: "judging_building",
                 },
               ],
             },
@@ -217,6 +238,14 @@ export const judgingScheduleRouter = {
             and(
               eq(JudgingScheduleJob.hackathonId, input.hackathonId),
               eq(JudgingScheduleJob.status, "searching"),
+            ),
+          );
+        await tx
+          .delete(JudgingScheduleJob)
+          .where(
+            and(
+              eq(JudgingScheduleJob.hackathonId, input.hackathonId),
+              lte(JudgingScheduleJob.expiresAt, new Date()),
             ),
           );
         const [job] = await tx
@@ -494,7 +523,24 @@ export const judgingScheduleRouter = {
     .query(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       await reconcileExpiredJudgingDrafts(input.hackathonId);
-      return appointmentMoveChoices(db, input.hackathonId, input.appointmentId);
+      const result = await appointmentMoveChoices(
+        db,
+        input.hackathonId,
+        input.appointmentId,
+      );
+      await auditSchedule(
+        db,
+        await captureAdminAuditActor(ctx.session.user),
+        input.hackathonId,
+        "judging.appointment.contacts_viewed",
+        {
+          appointmentId: input.appointmentId,
+          projectId: result.appointment.projectId,
+          challengeId: result.appointment.challengeId,
+          memberCount: result.members.length,
+        },
+      );
+      return result;
     }),
 
   getUnassignedPresentationChoices: permProcedure
@@ -502,13 +548,31 @@ export const judgingScheduleRouter = {
     .query(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       await reconcileExpiredJudgingDrafts(input.hackathonId);
-      return appointmentMoveChoices(
+      const result = await appointmentMoveChoices(
         db,
         input.hackathonId,
         null,
         new Date(),
         input,
       );
+      await createAdminAuditEvent({
+        actionKey: "judging.appointment.contacts_viewed",
+        actor: await captureAdminAuditActor(ctx.session.user),
+        metadata: {
+          projectId: input.projectId,
+          challengeId: input.challengeId,
+          memberCount: result.members.length,
+        },
+        subjects: [
+          {
+            relation: "primary",
+            targetId: input.projectId,
+            targetLabel: result.appointment.title,
+            targetType: "project",
+          },
+        ],
+      });
+      return result;
     }),
 
   assignPresentation: permProcedure
@@ -575,6 +639,8 @@ export const judgingScheduleRouter = {
             appointmentId: appointment.id,
             projectId: input.projectId,
             challengeId: input.challengeId,
+            roomId: choice.roomId,
+            startsAt: choice.startsAt.toISOString(),
           },
         );
         return { appointmentId: appointment.id };

@@ -7,6 +7,7 @@ import {
   appointmentStatusLabels,
   appointmentStatusStyles,
   judgingTime,
+  judgingWindowMinutes,
 } from "~/lib/judging/schedule-display";
 
 type Data = RouterOutputs["judging"]["listScheduleAdmin"];
@@ -29,6 +30,7 @@ export function ScheduleBoard({
   rooms,
   timeZone,
   windowStart,
+  durationMinutes,
   mode,
   now,
   onSelect,
@@ -37,13 +39,16 @@ export function ScheduleBoard({
   rooms: Data["source"]["rooms"];
   timeZone: string;
   windowStart: Date;
+  durationMinutes: number;
   mode: "hour" | "agenda";
   now: Date;
   onSelect: (id: string) => void;
 }) {
-  const end = new Date(windowStart.getTime() + 60 * 60_000);
+  const windowMinutes = judgingWindowMinutes(durationMinutes);
+  const slotCount = windowMinutes / durationMinutes;
+  const end = new Date(windowStart.getTime() + windowMinutes * 60_000);
   const nowPercent =
-    ((now.getTime() - windowStart.getTime()) / (60 * 60_000)) * 100;
+    ((now.getTime() - windowStart.getTime()) / (windowMinutes * 60_000)) * 100;
   return (
     <div
       className="max-h-[72vh] overflow-auto rounded-lg border border-white/10 bg-card/95 shadow-xl"
@@ -53,15 +58,23 @@ export function ScheduleBoard({
       }
       tabIndex={0}
     >
-      <div className={mode === "hour" ? "min-w-[880px]" : ""}>
+      <div
+        style={
+          mode === "hour"
+            ? { minWidth: Math.max(880, 180 + slotCount * 140) }
+            : undefined
+        }
+      >
         {mode === "hour" ? (
           <div className="sticky top-0 z-20 grid grid-cols-[180px_1fr] border-b border-white/10 bg-card p-3 text-sm">
             <span className="font-semibold">Room</span>
             <div className="flex justify-between font-mono">
-              {Array.from({ length: 7 }, (_, index) => (
+              {Array.from({ length: slotCount + 1 }, (_, index) => (
                 <span key={index}>
                   {judgingTime(
-                    new Date(windowStart.getTime() + index * 10 * 60_000),
+                    new Date(
+                      windowStart.getTime() + index * durationMinutes * 60_000,
+                    ),
                     timeZone,
                   )}
                 </span>
@@ -124,20 +137,20 @@ export function ScheduleBoard({
                   const left = Math.max(
                     0,
                     ((appointment.startsAt.getTime() - windowStart.getTime()) /
-                      (60 * 60_000)) *
+                      (windowMinutes * 60_000)) *
                       100,
                   );
                   const right = Math.min(
                     100,
                     ((appointment.endsAt.getTime() - windowStart.getTime()) /
-                      (60 * 60_000)) *
+                      (windowMinutes * 60_000)) *
                       100,
                   );
                   return (
                     <Button
                       key={appointment.id}
                       variant="ghost"
-                      className={`h-auto min-h-28 flex-col items-start justify-start gap-1 overflow-hidden whitespace-normal rounded-md border p-2 text-left ${appointmentStatusStyles[appointment.status]} ${mode === "hour" ? "absolute bottom-2 top-2" : "w-full"}`}
+                      className={`h-auto min-h-28 flex-col items-start justify-start gap-1 overflow-hidden whitespace-normal rounded-md border p-2 text-left ${appointmentStatusStyles[appointment.status]} ${mode === "hour" ? "absolute bottom-2 top-2 transition-[left] duration-300 motion-reduce:transition-none" : "w-full"}`}
                       style={
                         mode === "hour"
                           ? {

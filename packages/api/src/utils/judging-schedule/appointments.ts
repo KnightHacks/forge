@@ -10,6 +10,7 @@ import {
 
 import type { WriteDb } from "../db";
 import type { SchedulePlacement, ScheduleProblem } from "./model";
+import { isSponsorChallenge } from "../projects/challenge-labels";
 import { compareScheduleScores } from "./model";
 import { readScheduleSource } from "./source";
 import { scoreSchedule, validateSchedule } from "./validate";
@@ -52,18 +53,25 @@ export async function readSavedSchedule(
     })
     .from(ProjectEvaluation)
     .where(eq(ProjectEvaluation.hackathonId, hackathonId));
+  const taskByKey = new Map(
+    source.tasks.map((task) => [`${task.projectId}:${task.challengeId}`, task]),
+  );
+  const roomById = new Map(source.rooms.map((room) => [room.id, room]));
+  const resultsByKey = new Map<string, typeof evaluations>();
+  const resultAppointmentIds = new Set<string>();
+  for (const evaluation of evaluations) {
+    const key = `${evaluation.projectId}:${evaluation.challengeId}`;
+    const results = resultsByKey.get(key) ?? [];
+    results.push(evaluation);
+    resultsByKey.set(key, results);
+    if (evaluation.appointmentId)
+      resultAppointmentIds.add(evaluation.appointmentId);
+  }
   const appointments = rows.map((row) => {
-    const task = source.tasks.find(
-      (task) =>
-        task.projectId === row.projectId &&
-        task.challengeId === row.challengeId,
-    );
-    const room = source.rooms.find((room) => room.id === row.roomId);
-    const results = evaluations.filter(
-      (evaluation) =>
-        evaluation.projectId === row.projectId &&
-        evaluation.challengeId === row.challengeId,
-    );
+    const key = `${row.projectId}:${row.challengeId}`;
+    const task = taskByKey.get(key);
+    const room = roomById.get(row.roomId);
+    const results = resultsByKey.get(key) ?? [];
     const status = appointmentStatus(row, results, now);
     return {
       ...row,
@@ -74,9 +82,7 @@ export async function readSavedSchedule(
       staffed: room?.staffed ?? false,
       status,
       canMove:
-        !evaluations.some(
-          (evaluation) => evaluation.appointmentId === row.id,
-        ) &&
+        !resultAppointmentIds.has(row.id) &&
         (row.startsAt >= now || status === "missed"),
     };
   });
@@ -163,7 +169,7 @@ export async function appointmentMoveChoices(
     tasks: saved.appointments.map((appointment) => ({
       projectId: appointment.projectId,
       challengeId: appointment.challengeId,
-      sponsor: appointment.challengeLabel !== "General",
+      sponsor: isSponsorChallenge(appointment.challengeLabel),
     })),
   };
   const selectedIndex = saved.appointments.findIndex(
@@ -178,6 +184,17 @@ export async function appointmentMoveChoices(
         (duration * 60_000),
     }),
   );
+  if (
+    placements.some(
+      (placement) =>
+        placement.taskIndex !== selectedIndex && placement.roomIndex < 0,
+    )
+  )
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message:
+        "An existing reservation has an unavailable room or building. Restore that location before reassigning.",
+    });
   const choices: {
     roomId: string;
     roomName: string;

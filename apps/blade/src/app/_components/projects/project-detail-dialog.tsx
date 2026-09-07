@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -122,7 +123,7 @@ export function ProjectDetailDialog({
 
   return (
     <Dialog open={project !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-4xl">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] overflow-y-auto overscroll-contain p-4 sm:max-w-4xl sm:p-6 [&>button]:right-2 [&>button]:top-2 [&>button]:size-11">
         {project ? (
           <>
             <DialogHeader className="pr-8 text-left">
@@ -135,7 +136,7 @@ export function ProjectDetailDialog({
                   Submitted {formatDate(project.submittedAt)}
                 </Badge>
               </div>
-              <DialogTitle className="text-2xl sm:text-3xl">
+              <DialogTitle className="break-words text-xl leading-7 sm:text-3xl">
                 {project.title}
               </DialogTitle>
               <DialogDescription>
@@ -199,13 +200,13 @@ export function ProjectDetailDialog({
                   <h3 className="text-sm font-semibold">Challenges</h3>
                   <ChallengeBadges project={project} />
                   {project.prizeCategories.some((label) =>
-                    /mlh/i.test(label),
+                    isMlhChallenge(label),
                   ) ? (
                     <div className="mt-3 rounded-md border border-white/10 bg-background/60 p-3 text-sm">
-                      <h3 className="font-semibold">MLH opt-ins</h3>
+                      <h4 className="font-semibold">MLH opt-ins</h4>
                       <ul className="mt-2 list-inside list-disc">
                         {project.prizeCategories
-                          .filter((label) => /mlh/i.test(label))
+                          .filter((label) => isMlhChallenge(label))
                           .map((label) => (
                             <li key={label}>{label}</li>
                           ))}

@@ -94,6 +94,11 @@ export function JudgeSubmissions({
                   </td>
                   <td className="px-4 py-4 text-muted-foreground">
                     {formatClubDateTime(submission.updatedAt)}
+                    {lockedEvaluationIds.includes(submission.id) ? (
+                      <span className="block text-xs text-amber-200">
+                        Wait until downtime to edit
+                      </span>
+                    ) : null}
                     {submission.revision > 1 ? (
                       <span className="block text-xs">
                         Revision {submission.revision}
@@ -112,6 +117,7 @@ export function JudgeSubmissions({
                       </Button>
                       <Button
                         disabled={
+                          lockedEvaluationIds.includes(submission.id) ||
                           workspace.state !== "open" ||
                           !submission.projectAvailable
                         }
@@ -157,6 +163,11 @@ export function JudgeSubmissions({
                 Updated {formatClubDateTime(submission.updatedAt)} · Revision{" "}
                 {submission.revision}
               </p>
+              {lockedEvaluationIds.includes(submission.id) ? (
+                <p className="text-xs text-amber-200">
+                  Wait until downtime to edit
+                </p>
+              ) : null}
               {!submission.projectAvailable ? (
                 <Badge variant="outline">Project unavailable</Badge>
               ) : null}
@@ -191,9 +202,11 @@ export function JudgeSubmissions({
         onOpenChange={(open) => !open && setFeedback(null)}
         open={!!feedback}
       >
-        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{feedback?.projectTitle}</DialogTitle>
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-xl overflow-y-auto overscroll-contain p-4 sm:p-6 [&>button]:right-2 [&>button]:top-2 [&>button]:size-11">
+          <DialogHeader className="pr-10 text-left">
+            <DialogTitle className="break-words text-base leading-6 sm:text-lg">
+              {feedback?.projectTitle}
+            </DialogTitle>
             <DialogDescription>
               Your saved rubric answers for {feedback?.challengeLabel}.
             </DialogDescription>
@@ -212,7 +225,7 @@ export function JudgeSubmissions({
             ))}
             {feedback?.responses.map((answer) => (
               <div className="space-y-2" key={answer.itemId}>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">{answer.label}</h3>
                   <Badge variant="outline">
                     {answer.isPublic

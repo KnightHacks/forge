@@ -8,7 +8,7 @@ Last updated: 2026-09-07
 This section records the conversation in order. Later decisions supersede earlier open questions; the current contract is in spec.md and srd.md.
 
 - 2026-09-07: The owner requested a rich feature bundle for scheduling project judging and deep reverse-prompting before implementation.
-- 2026-09-07: Work is scoped to /Users/dvidal1205-mini/.codex/worktrees/b509/forge. The starting checkout was clean and detached at 4b19ad05.
+- 2026-09-07: Work is scoped to the scheduler task branch. The starting checkout was clean and detached at 4b19ad05.
 - 2026-09-07: Created task branch codex/project-judging-scheduler and instantiated the four templates through pnpm forge:feature.
 - 2026-09-07: Captured explicit owner requirements in draft spec.md. Open questions and candidate technical/test work are not accepted decisions.
 - 2026-09-07: Sponsor priority, mandatory hacker gaps, building-aware rooms, monitoring, repair, timed evaluations, incomplete submission handling, and time sorting come from the owner's brief.
@@ -116,7 +116,7 @@ The active Codex goal contains the same exit condition. This status file is the 
 - Visible Playwright checks passed organizer configuration, preview, Save, timelines/agendas, isolated moves and team contacts, Drop confirmation/lock, fixed deadline warning/expiry, incomplete submissions, room-gap recovery, restored drafts, MLH judging, guest opt-in, and 320-pixel layout without document overflow.
 - Screenshots remain outside the repository under `/tmp/forge-judging-scheduler-pr`. Completed cards were visually corrected to the existing chart-2 green token, confirmed as rgb(46,184,138) in the browser. Missing cards use readable red.
 - Forge review ran with access/API, solver/DB/validation, and React/test reviewers. All findings closed within three rounds. Corrections include fresh editor initialization, exact-candidate acknowledgment, backup classifications, sponsor search quality at both 32 and 200 projects, and visible result colors.
-- CI and CodeRabbit approval remain outstanding until the PR is open. No merge or deployment is authorized by this task.
+- The original pushed revision passed CI. CodeRabbit requested changes; the follow-up below addresses them. No merge or deployment is authorized by this task.
 
 ## Links
 
@@ -143,3 +143,44 @@ The active Codex goal contains the same exit condition. This status file is the 
 - GitHub uploads use the signed-in in-Codex browser. Screenshots are discussion attachments, never repository files.
 
 - Implementation commit beafdfbe is pushed. All commit hooks passed with a larger process-local Node heap after the default staged-lint process ran out of memory. No hook was bypassed or repository setting changed.
+
+- Owner added phone-focused visual review across guest judging and requested removal of the redundant Team size column. Mobile passes found oversized fixed evaluation sections, dense tab/filter layouts, and save notices overlaying the Deliberation picker. The current follow-up compacts those views, keeps the picker above notices, and preserves the existing feedback opt-in flags.
+- Final deadline replay found the desktop Submissions Edit button omitted the existing room lock condition. Added the condition and a downtime message to both layouts, with a regression that locks and unlocks every edit control. The server timing guard was already enforced.
+
+### Organizer follow-up views and mobile review
+
+The owner requested a project itinerary with all reservations in chronological order, locations, and end-to-start gaps. Added a searchable project selector and a shortcut from appointment inspection. Room and status filters do not hide itinerary appointments. The 60-minute board now advances by whole slots and rounds its visible span up to include full appointments for arbitrary durations. Current cards keep their width until their end boundary, then leave the window.
+
+Three guest mobile browser passes covered 320 and 390 px widths, short keyboard-sized viewports, entry, discovery, details, scoring, MLH opt-ins, submissions, feedback, Deliberation and picker stacking. The third pass passed. Removed the redundant Team size column. All 830 Blade tests passed before the itinerary addition. The desktop/mobile itinerary and whole-slot browser checks passed; final static checks and follow-up Forge review remain pending.
+
+CodeRabbit requested changes on the initial implementation with 12 inline findings, nine additional comments, and seven nitpicks. Follow-up fixes are in progress. No approval claimed yet.
+
+### Review follow-up checkpoint
+
+CodeRabbit inline findings addressed in the working diff, pending final checks and replies:
+
+- Desktop Edit respects reservation locks, with regression coverage.
+- Draft writes lock the existing row before checking revisions. The disposable PostgreSQL test proves exactly one concurrent save succeeds.
+- Deadline processing isolates each draft in a savepoint, retains stale answers, and records an error code without answers. A malformed draft no longer blocks a valid incomplete auto-submission. The disposable PostgreSQL regression passed.
+- Organizer contact reads emit an audit event. Events identify schedule jobs, schedules, appointments, and buildings correctly; late assignment includes room and start time.
+- Saved schedule reads index tasks, rooms, and results rather than repeatedly scanning the whole inventory.
+- Sponsor classification uses one helper for generation and moves. General is a canonical import-created label and has no rename API.
+- Move choices reject unavailable existing locations before constructing candidates.
+- Member writes recheck the active hackathon under a transaction lock.
+- Replaced the arbitrary phase and break caps with PostgreSQL integer storage limits. A 1,440-slot-per-room grid bound prevents unbounded candidate enumeration while allowing longer windows with longer appointments. Whole-minute and window-fit checks remain.
+
+Other review changes include expired generation-job cleanup, retry backoff with manual recovery, one pure MLH matcher exported through a browser-safe API subpath, corrected nested headings, specific room-location conflict messages, clearer overflow wording, and schedule reads only on the Schedule tab. Solver tests name the rejecting rule and allow bounded continuation under loaded CI. Absolute local paths were removed from this public status file.
+
+Validation checkpoint: targeted API/audit/solver/root and disposable PostgreSQL integration passed 35 tests across nine files. Draft retry and whole-slot boundary unit tests passed five tests. The room-only default filter and appointment-result details requested by the owner are being implemented in parallel by GPT-5.6 Sol subagents. All changes remain uncommitted until the combined static gate, browser checks, and next Forge review pass.
+
+Round four found resource/storage limits missing after removing the original caps, manual navigation stepping by a fixed hour instead of a full rendered grid, an inactive room filter appearing checked, and stale unsent search text after filter navigation. Those fixes are implemented with targeted regressions. API access/privacy review had no findings. Final round five and a clean full-suite rerun remain pending. The full-suite run exposed an integration-test import ordering issue in the new room-filter fixture; fixing that fixture and cleaning its own synthetic records are in progress.
+
+### Final follow-up verification
+
+The owner additions are complete: appointment-scoped complete/partial judge details and complete-only averages, disabled Judge controls with reasons, room-only discovery enabled by default for both judge types, project itineraries, and whole-slot cards. Room filtering happens before count and pagination; MLH stays untimed.
+
+Forge review completed through round five, the requested maximum. Access/API, validation, and React reviewers report no remaining actionable findings. The final static gate passed all 33 tasks. The clean full test run passed all 29 tasks, including API 927, Blade 842, DB 156, and validators 316 tests. The full build passed all 21 tasks. Browser checks passed mobile judging, room filtering, disabled-control reasons, complete/partial appointment details, itineraries, and whole-card timelines.
+
+The new room-filter integration fixture originally initialized a database client before selecting its disposable database. Its import order and module isolation are corrected. Only the synthetic records created by that test in the configured local database were removed. No migration ran there. The clean API and workspace reruns passed.
+
+[Final 17-screenshot walkthrough](https://github.com/KnightHacks/forge/pull/545#issuecomment-5575596405) supplements the original gallery. All screenshots remain GitHub discussion attachments. Final push, CodeRabbit replies/resolutions, fresh approval, and CI verification are the remaining exit steps. No merge or deployment.

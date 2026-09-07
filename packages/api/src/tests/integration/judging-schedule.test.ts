@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
-import { and, asc, eq } from "@forge/db";
+import { and, asc, eq, ne } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -157,7 +157,7 @@ describe.runIf(canRunDatabaseTests())(
       )({ session, headers: new Headers(), source: "schedule-integration" });
     }
 
-    it("preserves reservations and enforces durable incomplete submissions through room downtime", async () => {
+    it("runs organizer setup, isolated reservations, deadline recovery and MLH scoring with permission guards", async () => {
       const admin = await caller(officer);
       const judge = await caller(member);
       await expect(
@@ -397,6 +397,7 @@ describe.runIf(canRunDatabaseTests())(
           hackathonId,
           jobId: job.id,
         });
+      expect(job.status).not.toBe("searching");
       await admin.judging.saveSchedule({
         hackathonId,
         jobId: job.id,
@@ -436,10 +437,64 @@ describe.runIf(canRunDatabaseTests())(
           responses: [],
         }),
       ).rejects.toMatchObject({ code: "CONFLICT" });
+      const concurrentSaves = await Promise.allSettled(
+        [1, 2].map(() =>
+          admin.judging.saveEvaluationDraft({
+            ...editorInput,
+            expectedDraftRevision: 1,
+            expectedRevision: 0,
+            ratings: [{ itemId: ratingId, value: 4 }],
+            responses: [],
+          }),
+        ),
+      );
+      expect(
+        concurrentSaves.filter((result) => result.status === "fulfilled"),
+      ).toHaveLength(1);
+      expect(
+        concurrentSaves.filter((result) => result.status === "rejected"),
+      ).toHaveLength(1);
+      const staleDraftId = randomUUID();
+      const draft = await client.query.ProjectEvaluationDraft.findFirst({
+        where: eq(schema.ProjectEvaluationDraft.projectId, current.projectId),
+      });
+      const otherAppointment = await client.query.JudgingAppointment.findFirst({
+        where: and(
+          eq(schema.JudgingAppointment.challengeId, sponsor),
+          ne(schema.JudgingAppointment.projectId, current.projectId),
+        ),
+      });
+      if (!draft || !otherAppointment)
+        throw new Error(
+          "Expected two sponsor presentations for deadline recovery.",
+        );
+      await client.insert(schema.ProjectEvaluationDraft).values({
+        ...draft,
+        id: staleDraftId,
+        projectId: otherAppointment.projectId,
+        appointmentId: otherAppointment.id,
+        ratings: [{ itemId: randomUUID(), value: 3 }],
+      });
+      const warning = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => undefined);
       vi.setSystemTime(current.deadlineAt);
       const submissions = await admin.judging.listMySubmissions({
         hackathonId,
       });
+      expect(warning).toHaveBeenCalledWith(
+        "Judging deadline draft retained for recovery",
+        { draftId: staleDraftId, code: "BAD_REQUEST" },
+      );
+      warning.mockRestore();
+      expect(
+        await client.query.ProjectEvaluationDraft.findFirst({
+          where: eq(schema.ProjectEvaluationDraft.id, staleDraftId),
+        }),
+      ).toBeDefined();
+      await client
+        .delete(schema.ProjectEvaluationDraft)
+        .where(eq(schema.ProjectEvaluationDraft.id, staleDraftId));
       expect(submissions).toHaveLength(1);
       expect(submissions[0]).toMatchObject({
         projectId: current.projectId,
@@ -521,6 +576,165 @@ describe.runIf(canRunDatabaseTests())(
             ),
           ),
       ).toHaveLength(1);
+    }, 30_000);
+
+    it("scopes appointment results and hides partial answers", async () => {
+      const admin = await caller(officer);
+      const judge = await caller(member);
+      const appointments = await client
+        .select()
+        .from(schema.JudgingAppointment)
+        .orderBy(asc(schema.JudgingAppointment.startsAt));
+      const existingEvaluations = await client
+        .select({ appointmentId: schema.ProjectEvaluation.appointmentId })
+        .from(schema.ProjectEvaluation);
+      const occupiedAppointmentIds = new Set(
+        existingEvaluations.flatMap((evaluation) =>
+          evaluation.appointmentId ? [evaluation.appointmentId] : [],
+        ),
+      );
+      const appointment = appointments.find(
+        (candidate) => !occupiedAppointmentIds.has(candidate.id),
+      );
+      const otherAppointment = appointments.find(
+        (candidate) =>
+          candidate.id !== appointment?.id &&
+          !occupiedAppointmentIds.has(candidate.id),
+      );
+      if (!appointment || !otherAppointment) {
+        throw new Error("Expected two appointments without evaluations.");
+      }
+
+      const judges = [
+        {
+          id: randomUUID(),
+          displayName: "Complete Guest One",
+          kind: "guest" as const,
+        },
+        {
+          id: randomUUID(),
+          displayName: "Complete Guest Two",
+          kind: "guest" as const,
+        },
+        {
+          id: randomUUID(),
+          displayName: "Partial Guest",
+          kind: "guest" as const,
+        },
+        {
+          id: randomUUID(),
+          displayName: "Other Appointment Guest",
+          kind: "guest" as const,
+        },
+      ] as const;
+      await client.insert(schema.Judge).values(
+        judges.map((entry) => ({
+          ...entry,
+          hackathonId,
+        })),
+      );
+      const evaluationSeeds = [
+        {
+          id: randomUUID(),
+          appointment,
+          isComplete: true,
+          judgeId: judges[0].id,
+          rating: 1,
+          response: "Complete response one",
+        },
+        {
+          id: randomUUID(),
+          appointment,
+          isComplete: true,
+          judgeId: judges[1].id,
+          rating: 5,
+          response: "Complete response two",
+        },
+        {
+          id: randomUUID(),
+          appointment,
+          isComplete: false,
+          judgeId: judges[2].id,
+          rating: 5,
+          response: "Partial response must remain hidden",
+        },
+        {
+          id: randomUUID(),
+          appointment: otherAppointment,
+          isComplete: true,
+          judgeId: judges[3].id,
+          rating: 5,
+          response: "Other appointment response",
+        },
+      ];
+      await client.insert(schema.ProjectEvaluation).values(
+        evaluationSeeds.map((evaluation) => ({
+          id: evaluation.id,
+          appointmentId: evaluation.appointment.id,
+          challengeId: evaluation.appointment.challengeId,
+          hackathonId,
+          isComplete: evaluation.isComplete,
+          judgeId: evaluation.judgeId,
+          projectId: evaluation.appointment.projectId,
+        })),
+      );
+      await client.insert(schema.ProjectEvaluationRating).values(
+        evaluationSeeds.map((evaluation) => ({
+          evaluationId: evaluation.id,
+          hackathonId,
+          rubricItemId: ratingId,
+          value: evaluation.rating,
+        })),
+      );
+      await client.insert(schema.ProjectEvaluationResponse).values(
+        evaluationSeeds.map((evaluation) => ({
+          evaluationId: evaluation.id,
+          hackathonId,
+          isPublic: false,
+          rubricItemId: responseId,
+          value: evaluation.response,
+        })),
+      );
+
+      await expect(
+        judge.judging.getAppointmentResults({
+          appointmentId: appointment.id,
+          hackathonId,
+        }),
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      await expect(
+        admin.judging.getAppointmentResults({
+          appointmentId: appointment.id,
+          hackathonId: randomUUID(),
+        }),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+      const results = await admin.judging.getAppointmentResults({
+        appointmentId: appointment.id,
+        hackathonId,
+      });
+      expect(results).toMatchObject({
+        average: 3,
+        completeJudgeCount: 2,
+      });
+      expect(results.judges.map((entry) => entry.displayName)).toEqual([
+        "Complete Guest One",
+        "Complete Guest Two",
+        "Partial Guest",
+      ]);
+      expect(
+        results.judges.find((entry) => entry.displayName === "Partial Guest"),
+      ).toMatchObject({ ratings: [], responses: [], status: "partial" });
+      expect(
+        results.judges.flatMap((entry) =>
+          entry.responses.map((response) => response.value),
+        ),
+      ).toEqual(["Complete response one", "Complete response two"]);
+      expect(
+        results.judges.some(
+          (entry) => entry.displayName === "Other Appointment Guest",
+        ),
+      ).toBe(false);
     }, 30_000);
   },
 );

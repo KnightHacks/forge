@@ -33,6 +33,7 @@
       "types": "./src/hacker-portal/index.ts",
       "default": "./src/hacker-portal/index.ts"
     },
+    "./projects/challenge-labels": "./src/utils/projects/challenge-labels.ts",
     "./utils": {
       "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"

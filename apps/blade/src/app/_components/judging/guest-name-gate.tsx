@@ -42,7 +42,7 @@ export function GuestNameGate() {
     <main className="mx-auto flex min-h-[calc(100svh-4rem)] max-w-3xl items-center px-4 py-10 sm:px-6">
       <Dialog open>
         <DialogContent
-          className="border-primary/25 bg-card sm:max-w-md [&>button]:hidden"
+          className="max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] border-primary/25 bg-card p-5 sm:max-w-md sm:p-6 [&>button]:hidden"
           onEscapeKeyDown={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}
         >
@@ -53,14 +53,13 @@ export function GuestNameGate() {
               </div>
               <DialogTitle>Introduce yourself</DialogTitle>
               <DialogDescription>
-                Please introduce yourself. Your name will be used for judging
-                deliberation and identity verification. Your responses will{" "}
-                <strong>NOT</strong> be shared.
+                Use the name organizers should recognize in this judging room.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
               <Label htmlFor="guest-judge-name">Full Name</Label>
               <Input
+                className="min-h-11 text-base"
                 autoComplete="name"
                 autoFocus
                 id="guest-judge-name"

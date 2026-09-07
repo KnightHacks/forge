@@ -196,3 +196,13 @@ After all gates pass, run Forge review capped at depth five, create the issue an
 ## Open questions
 
 No product questions remain. Implementation discoveries must be recorded in status.md and must not silently relax the accepted constraints.
+
+### Review follow-up implementation
+
+The organizer board has three view modes: whole-slot room timeline, room agendas, and project itinerary. The itinerary derives a complete project list from all appointments, sorts the selected project's reservations by start time and ID, and computes end-to-start gaps against the configured building rules. It shares appointment inspection and individual reassignment. Live window start is aligned to the saved schedule's grid, and the board displays enough full slots to cover at least an hour. Cards advance at slot boundaries with reduced-motion support.
+
+`judging.getAppointmentResults` is an officer read keyed by hackathon and appointment ID. It lists complete and partial judge identities, exposes ratings/responses only for complete submissions, and averages per-judge means for that appointment. Earlier/unlinked project results are identified separately and cannot affect that average. The inspection dialog polls every five seconds while open.
+
+Judge directory inputs include `showInRoomOnly`, default true, represented as `room=all` when disabled. The server applies an appointment EXISTS predicate for the judge's selected room before count and pagination. Guests retain their enforced room/challenge; authenticated judges use their current room presence. No schedule and MLH remain untimed. Without an authenticated room selection, the directory explains how to enable filtering and preserves permitted browsing. Disabled actions use a focusable tooltip wrapper and gray buttons, with server timing checks retained for stale or unavailable client data.
+
+Draft CAS reads lock the row before comparing revisions. Deadline processing uses one savepoint per draft so an invalid or stale submission cannot roll back other deadlines; retained drafts are reported through the existing logger without answer content. Automatic draft retries back off and stop after five failures; explicit retry still attempts to save the current answers. Contact reads are audited, and schedule/appointment/building events identify the concrete target plus hackathon context. Expired generation jobs are removed when generating another preview.

@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+// Match PostgreSQL integer storage without arbitrary phase-length caps.
+const storedMinutes = z.number().int().min(0).max(2_147_483_647);
+// Bounds candidate enumeration while allowing longer windows with longer slots.
+const MAX_GRID_SLOTS = 1440;
+
 const wholeMinuteDate = z
   .date()
   .refine(
@@ -11,23 +16,30 @@ export const judgingScheduleTimingSchema = z
   .object({
     startsAt: wholeMinuteDate,
     endsAt: wholeMinuteDate,
-    setupMinutes: z.number().int().min(0).max(60).default(2),
-    judgingMinutes: z.number().int().min(1).max(120).default(6),
-    teardownMinutes: z.number().int().min(0).max(60).default(2),
-    sameBuildingBreakMinutes: z.number().int().min(1).max(240).default(10),
-    differentBuildingBreakMinutes: z.number().int().min(1).max(240).default(20),
+    setupMinutes: storedMinutes.default(2),
+    judgingMinutes: storedMinutes.min(1).default(6),
+    teardownMinutes: storedMinutes.default(2),
+    sameBuildingBreakMinutes: storedMinutes.min(1).default(10),
+    differentBuildingBreakMinutes: storedMinutes.min(1).default(20),
   })
   .superRefine((timing, ctx) => {
     const duration =
       timing.setupMinutes + timing.judgingMinutes + timing.teardownMinutes;
     const windowMinutes =
       (timing.endsAt.getTime() - timing.startsAt.getTime()) / 60_000;
-    if (windowMinutes < duration || windowMinutes > 24 * 60) {
+    if (windowMinutes < duration || !Number.isSafeInteger(duration)) {
       ctx.addIssue({
         code: "custom",
         path: ["endsAt"],
         message:
-          "The window must fit a full appointment and be at most 24 hours.",
+          "The window must fit a full appointment with a safe whole-minute duration.",
+      });
+    }
+    if (Math.floor(windowMinutes / duration) > MAX_GRID_SLOTS) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endsAt"],
+        message: `Use at most ${MAX_GRID_SLOTS} complete slots per room. Shorten the window or increase the appointment duration.`,
       });
     }
     if (
