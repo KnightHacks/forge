@@ -289,7 +289,7 @@ describe("club reminder announcements", () => {
       {
         type: ComponentType.TextDisplay,
         content:
-          "Want reminders like these, add the reminder role in <id:customize>\ncc: @everyone",
+          "Want reminders like these? Add the reminder role in <id:customize>\ncc: @everyone",
       },
     ]);
     expect(payload.allowedMentions).toEqual({ parse: ["everyone"], roles: [] });
@@ -309,7 +309,9 @@ describe("club reminder announcements", () => {
         `**[${event.name}](<https://blade.knighthacks.org/member/events?selected=${event.id}>)**`,
       );
     expect(text).toContain("\n-# 6:00 PM–8:00 PM · ENG2 102");
-    const card = payload.components?.[0];
+    const card = payload.components?.find(
+      (component) => component.type === ComponentType.Container,
+    );
     if (card?.type !== ComponentType.Container)
       throw new Error("Expected a reminder card.");
     expect(JSON.stringify(card)).not.toContain("<id:customize>");
@@ -353,10 +355,10 @@ describe("club reminder announcements", () => {
       roles: ["1264770451578552401"],
     });
     expect(text.match(/<@&1264770451578552401>/g)).toHaveLength(1);
-    expect(payload.components?.at(-1)).toEqual({
+    expect(payload.components?.[0]).toEqual({
       type: ComponentType.TextDisplay,
       content:
-        "Want reminders like these, add the reminder role in <id:customize>\ncc: <@&1264770451578552401>",
+        "Want reminders like these? Add the reminder role in <id:customize>\ncc: <@&1264770451578552401>",
     });
     expect(text).not.toContain("@everyone");
   });
@@ -393,7 +395,9 @@ describe("club reminder limits and delivery", () => {
         expect(
           text.reduce((length, part) => length + part.length, 0),
         ).toBeLessThanOrEqual(6000);
-        const card = payload.components?.[0];
+        const card = payload.components?.find(
+          (component) => component.type === ComponentType.Container,
+        );
         if (card?.type !== ComponentType.Container)
           throw new Error("Expected one container.");
         expect(card.components.length).toBeLessThanOrEqual(10);

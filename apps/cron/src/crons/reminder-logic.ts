@@ -225,7 +225,7 @@ export function createClubReminderExecutor({
       title = `Events this Week (${range})`;
     }
 
-    const audience = `Want reminders like these, add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
+    const audience = `Want reminders like these? Add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
     for (const [channelId, events] of destinations) {
       const groups = groupCandidates(events, currentTime);
       const singleEventGroup =
@@ -255,7 +255,6 @@ export function createClubReminderExecutor({
           card.type === ComponentType.Container
             ? {
                 components: [
-                  card,
                   ...(index === 0
                     ? [
                         {
@@ -264,6 +263,7 @@ export function createClubReminderExecutor({
                         },
                       ]
                     : []),
+                  card,
                 ],
                 flags: MessageFlags.IsComponentsV2,
                 withComponents: true,
