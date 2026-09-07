@@ -446,6 +446,7 @@ export function HackathonEventsWorkspace({
 
   const tagItems = (tags.data ?? []) satisfies EventTagItem[];
   const activeTags = tagItems.filter(({ active }) => active);
+  const canCreateEvent = activeTags.length > 0;
 
   function latestParams() {
     const committed = searchParams.toString();
@@ -678,15 +679,19 @@ export function HackathonEventsWorkspace({
                 ) : null}
                 <Button
                   className="min-h-11 gap-2"
-                  disabled={!selectedHackathon || activeTags.length === 0}
-                  onClick={() => openForm("create")}
-                  title={
-                    activeTags.length === 0
-                      ? "Create or import an active event tag first."
-                      : undefined
+                  disabled={!selectedHackathon || tags.isPending}
+                  onClick={() =>
+                    canCreateEvent
+                      ? openForm("create")
+                      : navigate({ page: null, view: "tags" })
                   }
                 >
-                  <Plus className="size-4" aria-hidden="true" /> Create event
+                  {canCreateEvent ? (
+                    <Plus className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Tags className="size-4" aria-hidden="true" />
+                  )}
+                  {canCreateEvent ? "Create event" : "Set up event tags"}
                 </Button>
               </>
             ) : null}

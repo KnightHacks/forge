@@ -178,6 +178,30 @@ test.describe("Hackathon event and check-in critical flow", () => {
 
   test.afterAll(cleanupFixtures);
 
+  test("guides event editors through required tag setup", async ({ page }) => {
+    await db
+      .update(EventTag)
+      .set({ active: false })
+      .where(eq(EventTag.id, TAG_ID));
+    try {
+      await page.goto(
+        `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackathon-events?hackathon=${HACKATHON_ID}`)}`,
+      );
+      await page
+        .getByRole("button", { name: "Set up event tags", exact: true })
+        .click();
+      await expect(page).toHaveURL(/view=tags/);
+      await expect(
+        page.getByRole("heading", { name: "Event tags" }),
+      ).toBeVisible();
+    } finally {
+      await db
+        .update(EventTag)
+        .set({ active: true })
+        .where(eq(EventTag.id, TAG_ID));
+    }
+  });
+
   test("keeps linked hack tag identity after rename and an unrelated event edit", async ({
     page,
   }) => {
