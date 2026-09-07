@@ -27,6 +27,7 @@ const dto = {
   roleIds: [],
   startAt: "2026-07-01T22:00:00.000Z",
   tag: "Workshop",
+  tagId: "00000000-0000-4000-8000-000000000501",
   tagColor: "#7c3aed",
 };
 
@@ -37,6 +38,7 @@ describe("event admin server adapters", () => {
       discordHealth: "unknown",
       googleHealth: "pending",
       id: dto.id,
+      tagId: dto.tagId,
     });
   });
 
@@ -51,6 +53,7 @@ describe("event admin server adapters", () => {
       health: "unknown",
       url: "https://discord.com/events/486628710443778071/123456789012345678",
     });
+    expect(detail.event.tagId).toBe(dto.tagId);
     expect(detail.integrations.google).toEqual({
       health: "pending",
       url: null,

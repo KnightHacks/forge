@@ -105,8 +105,21 @@ export async function loadPublicClubEventRecords({
 
 export async function loadReminderClubEventRecords(now: Date) {
   const horizon = new Date(now.getTime() + 9 * 24 * 60 * 60 * 1_000);
-  const rows = await selectDiscoveryRows()
+  const rows = await db
+    .select({
+      attendanceCount,
+      event: getTableColumns(Event),
+      announcement: {
+        emoji: EventTag.emoji,
+        announcementChannelId: EventTag.announcementChannelId,
+        skipNextWeek: EventTag.skipNextWeek,
+      },
+    })
     .from(Event)
+    .leftJoin(
+      EventTag,
+      and(eq(Event.tagId, EventTag.id), isNull(EventTag.hackathonId)),
+    )
     .where(
       and(
         isNull(Event.hackathonId),
@@ -130,7 +143,10 @@ export async function loadReminderClubEventRecords(now: Date) {
       ),
     )
     .orderBy(asc(Event.start_datetime), asc(Event.id));
-  return rows.map(mapDiscoveryRow);
+  return rows.map((row) => ({
+    ...mapDiscoveryRow(row),
+    announcement: row.announcement,
+  }));
 }
 
 function memberAudienceVisible(

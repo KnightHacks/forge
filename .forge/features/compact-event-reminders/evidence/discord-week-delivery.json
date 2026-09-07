@@ -1,0 +1,123 @@
+{
+  "fixture": "Synthetic events and Discord event links; identical eight events across four days in both weekly versions. Daily fixture has six events across Today, Tomorrow, and Next Week.",
+  "destination": "Dev@KnightHacks / #bot",
+  "notifications": "All sends used empty allowed mentions; every message read back with no user, role, or everyone mentions.",
+  "beforeFormatter": "566b4ee505fac255fef8018cf1b1447b6841ce8c",
+  "messages": [
+    {
+      "mode": "before",
+      "sequence": 0,
+      "eventCount": 8,
+      "id": "1546268948289290240",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268948289290240"
+    },
+    {
+      "mode": "before",
+      "sequence": 1,
+      "eventCount": 8,
+      "id": "1546268950374121522",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268950374121522"
+    },
+    {
+      "mode": "before",
+      "sequence": 2,
+      "eventCount": 8,
+      "id": "1546268951984472186",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268951984472186"
+    },
+    {
+      "mode": "before",
+      "sequence": 3,
+      "eventCount": 8,
+      "id": "1546268955881115730",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268955881115730"
+    },
+    {
+      "mode": "before",
+      "sequence": 4,
+      "eventCount": 8,
+      "id": "1546268958108160140",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268958108160140"
+    },
+    {
+      "mode": "before",
+      "sequence": 5,
+      "eventCount": 8,
+      "id": "1546268959601463298",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268959601463298"
+    },
+    {
+      "mode": "before",
+      "sequence": 6,
+      "eventCount": 8,
+      "id": "1546268977154625608",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268977154625608"
+    },
+    {
+      "mode": "before",
+      "sequence": 7,
+      "eventCount": 8,
+      "id": "1546268979247583234",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268979247583234"
+    },
+    {
+      "mode": "before",
+      "sequence": 8,
+      "eventCount": 8,
+      "id": "1546268981097267201",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268981097267201"
+    },
+    {
+      "mode": "before",
+      "sequence": 9,
+      "eventCount": 8,
+      "id": "1546268982556885044",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268982556885044"
+    },
+    {
+      "mode": "before",
+      "sequence": 10,
+      "eventCount": 8,
+      "id": "1546268994405666867",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268994405666867"
+    },
+    {
+      "mode": "before",
+      "sequence": 11,
+      "eventCount": 8,
+      "id": "1546268996100431994",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546268996100431994"
+    },
+    {
+      "mode": "before",
+      "sequence": 12,
+      "eventCount": 8,
+      "id": "1546269008586612760",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269008586612760"
+    },
+    {
+      "mode": "before",
+      "sequence": 13,
+      "eventCount": 8,
+      "id": "1546269010973429811",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269010973429811"
+    },
+    {
+      "mode": "after",
+      "sequence": 0,
+      "eventCount": 8,
+      "id": "1546269355489103976",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269355489103976",
+      "copyUpdatedAt": "2026-09-06T21:37:15.723Z"
+    },
+    {
+      "mode": "daily",
+      "sequence": 0,
+      "eventCount": 6,
+      "id": "1546269956935524436",
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269956935524436",
+      "copyUpdatedAt": "2026-09-06T21:37:15.991Z"
+    }
+  ],
+  "screenshotNote": "Before and after were recaptured in Discord web on 2026-09-06 with the same browser scale and 386x686 crops. Current after/daily captures include emoji, Blade links, dues where applicable, the revised footer, and an outside Channels & Roles shortcut. See discord-config-delivery.json for current payload records."
+}

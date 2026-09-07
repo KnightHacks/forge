@@ -985,6 +985,9 @@ export const EventTag = createTable(
       onDelete: "cascade",
     }),
     defaultPoints: t.integer().notNull().default(0),
+    emoji: t.varchar({ length: 32 }),
+    announcementChannelId: t.varchar({ length: 20 }),
+    skipNextWeek: t.boolean().notNull().default(false),
     color: t.varchar({ length: 7 }).notNull(),
     active: t.boolean().notNull().default(true),
     createdAt: t
@@ -1001,6 +1004,10 @@ export const EventTag = createTable(
     nonNegativePoints: check(
       "knight_hacks_event_tag_default_points_check",
       sql`${table.defaultPoints} >= 0`,
+    ),
+    validAnnouncementChannel: check(
+      "knight_hacks_event_tag_announcement_channel_check",
+      sql`${table.announcementChannelId} IS NULL OR ${table.announcementChannelId} ~ '^[0-9]{17,20}$'`,
     ),
     validColor: check(
       "knight_hacks_event_tag_color_check",
@@ -1034,6 +1041,7 @@ export const Event = createTable(
     googleId: t.varchar({ length: 255 }),
     name: t.varchar({ length: 255 }).notNull(),
     tag: t.text().notNull(),
+    tagId: t.uuid().references(() => EventTag.id, { onDelete: "set null" }),
     tagColor: t
       .varchar({ length: 7 })
       .notNull()

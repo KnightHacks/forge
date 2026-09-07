@@ -29,6 +29,7 @@ import type {
   EventAdminDashboardProps,
   EventListItem,
   EventTagItem,
+  EventTagValues,
 } from "./types";
 import {
   AdminPageHeader,
@@ -62,19 +63,12 @@ import { buildAdminEventSearchParams } from "./params";
 interface EventAdminActions {
   onArchiveTag?: (tagId: string) => Promise<void> | void;
   onCreateEvent?: (value: EventFormValue) => Promise<void> | void;
-  onCreateTag?: (values: {
-    color: string;
-    defaultPoints: number;
-    name: string;
-  }) => Promise<void> | void;
+  onCreateTag?: (values: EventTagValues) => Promise<void> | void;
   onRepair?: (
     eventId: string,
     provider: "discord" | "google",
   ) => Promise<void> | void;
-  onUpdateTag?: (
-    tagId: string,
-    values: { color: string; defaultPoints: number; name: string },
-  ) => Promise<void> | void;
+  onUpdateTag?: (tagId: string, values: EventTagValues) => Promise<void> | void;
   onUpdateEvent?: (
     eventId: string,
     value: EventFormValue,
@@ -507,6 +501,10 @@ export function EventAdminDashboard({
     api.event.resolveDiscordProjection.useMutation();
   const deleteEvent = api.event.deleteEvent.useMutation();
   const removeAttendance = api.event.removeAttendance.useMutation();
+  const announcementChannels = api.event.listAnnouncementChannels.useQuery(
+    undefined,
+    { enabled: access.canEdit && input.view === "tags" },
+  );
   const createTag = api.event.createTag.useMutation();
   const updateTag = api.event.updateTag.useMutation();
   const archiveTag = api.event.archiveTag.useMutation();
@@ -671,7 +669,10 @@ export function EventAdminDashboard({
               roleIds: event.roleIds ?? [],
               start: clubDateTimeInput(event.startDateTime),
               startOffset: offsetForInstant(event.startDateTime),
-              tagId: tags.find((tag) => tag.name === event.tag)?.id ?? "",
+              tagId:
+                event.tagId ??
+                tags.find((tag) => tag.name === event.tag)?.id ??
+                "",
             },
           }
         : null,
@@ -1072,6 +1073,10 @@ export function EventAdminDashboard({
 
       {input.view === "tags" && canEdit && (
         <EventTagManagement
+          channels={announcementChannels.data ?? []}
+          channelsLoading={announcementChannels.isLoading}
+          channelsError={announcementChannels.error?.message}
+          onRetryChannels={() => void announcementChannels.refetch()}
           tags={tags}
           onArchive={
             onArchiveTag ??
@@ -1146,6 +1151,7 @@ export function EventAdminDashboard({
                 roleIds: detail.event.roles.map((role) => role.id),
                 startDateTime: detail.event.startDateTime,
                 tag: detail.event.tag,
+                tagId: detail.event.tagId,
                 tagColor: detail.event.tagColor,
               },
             );

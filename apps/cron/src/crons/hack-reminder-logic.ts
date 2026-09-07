@@ -1,11 +1,9 @@
-import type {
-  APIEmbed,
-  RESTPostAPIChannelMessageJSONBody,
-} from "discord-api-types/v10";
+import type { RESTPostAPIChannelMessageJSONBody } from "discord-api-types/v10";
 
-import { EVENTS } from "@forge/consts";
+import { reminderEventEmbed } from "./reminder-row";
 
 export interface HackReminderDelivery {
+  emoji?: string | null;
   channelId: string;
   deliveryId: string;
   description: string;
@@ -26,47 +24,20 @@ export interface HackReminderFailure {
   state: "error" | "unknown";
 }
 
-function formatTime(value: Date | string) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    hour12: true,
-    minute: "2-digit",
-    timeZone: EVENTS.CALENDAR_TIME_ZONE,
-  }).format(new Date(value));
-}
-
 export function buildHackReminderMessage(
   delivery: HackReminderDelivery,
 ): RESTPostAPIChannelMessageJSONBody {
-  const embed: APIEmbed = {
-    author: {
-      name: `[${delivery.tag.toUpperCase().replaceAll(" ", "-")}]`,
-    },
-    color: 0xcca4f4,
-    description: delivery.description,
-    fields: [
-      { inline: true, name: "Location", value: delivery.location },
-      {
-        inline: true,
-        name: "Time",
-        value: `${formatTime(delivery.startDateTime)} – ${formatTime(delivery.endDateTime)}`,
-      },
-    ],
-    title: delivery.name,
-    ...(delivery.discordEventId
-      ? {
-          url: `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`,
-        }
-      : {}),
-  };
-
   return {
-    allowed_mentions: {
-      parse: [],
-      roles: [delivery.roleId],
-    },
-    content: `Starting in about 15 minutes, <@&${delivery.roleId}>.`,
-    embeds: [embed],
+    allowed_mentions: { parse: [], roles: [delivery.roleId] },
+    content: `## Starting in about 15 minutes\ncc: <@&${delivery.roleId}>`,
+    embeds: [
+      reminderEventEmbed({
+        ...delivery,
+        url: delivery.discordEventId
+          ? `https://discord.com/events/${delivery.guildId}/${delivery.discordEventId}`
+          : null,
+      }),
+    ],
   };
 }
 

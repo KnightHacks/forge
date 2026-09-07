@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -280,6 +280,8 @@ function CompanyPicker({
     query: string;
   }>({ matches: [], query: "" });
   const [open, setOpen] = useState(false);
+  const blurTimeout = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(blurTimeout.current), []);
   const errorId = `${fieldId}-error`;
   const trimmedQuery = query.trim();
   const results =
@@ -324,7 +326,10 @@ function CompanyPicker({
         placeholder="Search companies"
         autoComplete="off"
         className="h-11 bg-background/70"
-        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        onBlur={() => {
+          window.clearTimeout(blurTimeout.current);
+          blurTimeout.current = window.setTimeout(() => setOpen(false), 120);
+        }}
         onChange={(event) => {
           const value = event.target.value;
           setOpen(true);
@@ -401,6 +406,8 @@ function CityPicker({
     query: string;
   }>({ matches: [], query: "" });
   const [open, setOpen] = useState(false);
+  const blurTimeout = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(blurTimeout.current), []);
   const generatedInputId = useId();
   const inputId = fieldId ?? generatedInputId;
   const errorId = `${inputId}-error`;
@@ -451,7 +458,10 @@ function CityPicker({
         placeholder="Search U.S. cities"
         autoComplete="off"
         className="h-11 bg-background/70"
-        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        onBlur={() => {
+          window.clearTimeout(blurTimeout.current);
+          blurTimeout.current = window.setTimeout(() => setOpen(false), 120);
+        }}
         onChange={(event) => {
           setQuery(event.target.value);
           setOpen(true);

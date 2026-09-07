@@ -27,6 +27,9 @@ vi.mock("~/trpc/react", () => ({
         createEvent: { useMutation: mutation },
         createTag: { useMutation: mutation },
         deleteEvent: { useMutation: mutation },
+        listAnnouncementChannels: {
+          useQuery: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
+        },
         removeAttendance: { useMutation: mutation },
         repairIntegration: { useMutation: mutation },
         resolveDiscordProjection: { useMutation: mutation },

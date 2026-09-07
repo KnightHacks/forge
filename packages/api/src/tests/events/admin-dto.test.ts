@@ -30,6 +30,7 @@ describe("admin event response contract", () => {
       discord: { health: "synced", id: event.discord.id },
       google: { health: "synced", id: event.google.id },
       id: event.id,
+      tagId: event.tagId,
       published: true,
       revision: event.revision,
     });
@@ -54,6 +55,7 @@ describe("admin event response contract", () => {
         "roleIds",
         "startAt",
         "tag",
+        "tagId",
         "tagColor",
       ].sort(),
     );

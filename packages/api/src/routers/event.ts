@@ -43,6 +43,7 @@ import {
   requireEventEdit,
   requireEventRead,
 } from "../utils/events/access";
+import { validateEventAnnouncementChannel } from "../utils/events/announcement-channel";
 import {
   createAttendanceService,
   serializeAttendanceCsv,
@@ -80,6 +81,7 @@ import {
   searchCheckInMemberCandidates,
 } from "../utils/events/queries";
 import { createEventTagService } from "../utils/events/tags";
+import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 import { isSelectableProductRole } from "../utils/roles/selectable";
 import { eventFeedbackProcedures } from "./event-feedback";
 
@@ -805,6 +807,7 @@ export const eventRouter = {
         startAt: new Date(input.start),
         synchronizedVisibility: null,
         tag: tagSnapshot.tag,
+        tagId: input.tagId,
         tagColor: tagSnapshot.color,
       };
       const channelTypes = new Map<string, "stage" | "voice">();
@@ -958,6 +961,7 @@ export const eventRouter = {
           existing.start_datetime.getTime() ===
             new Date(input.start).getTime() &&
           existing.tag === tag.name &&
+          existing.tagId === tag.id &&
           existing.tagColor === tag.color
         );
         if (!changed) {
@@ -990,6 +994,7 @@ export const eventRouter = {
             start_datetime: new Date(input.start),
             syncRevision: existing.syncRevision + 1,
             tag: tag.name,
+            tagId: tag.id,
             tagColor: tag.color,
           })
           .where(eq(Event.id, existing.id))
@@ -1320,11 +1325,23 @@ export const eventRouter = {
       return result;
     }),
 
+  listAnnouncementChannels: permProcedure.query(async ({ ctx }) => {
+    requireEventEdit(ctx);
+    const gateway = await resolveRoleDiscordGateway(ctx.session);
+    return (
+      gateway.getGuildTextChannels?.({ requireSendPermission: true }) ?? []
+    );
+  }),
+
   /** Creates a configurable Club event tag template. */
   createTag: permProcedure
     .input(eventTagCreateSchema)
     .mutation(async ({ ctx, input }) => {
       requireEventEdit(ctx);
+      await validateEventAnnouncementChannel(
+        input.announcementChannelId,
+        ctx.session,
+      );
       const gateways = await resolveEventGateways(ctx.session);
       const result = await dbTagService(gateways.audit.tag).create({
         ...input,
@@ -1336,6 +1353,9 @@ export const eventRouter = {
         metadata: {
           color: result.color,
           defaultPoints: result.defaultPoints,
+          emoji: result.emoji,
+          announcementChannelId: result.announcementChannelId,
+          skipNextWeek: result.skipNextWeek,
           name: result.name,
         },
         subjects: [
@@ -1355,6 +1375,10 @@ export const eventRouter = {
     .input(eventTagUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       requireEventEdit(ctx);
+      await validateEventAnnouncementChannel(
+        input.announcementChannelId,
+        ctx.session,
+      );
       const gateways = await resolveEventGateways(ctx.session);
       const before = await db.query.EventTag.findFirst({
         where: and(eq(EventTag.id, input.tagId), isNull(EventTag.hackathonId)),
@@ -1374,6 +1398,13 @@ export const eventRouter = {
             ["name", before.name, result.name],
             ["color", before.color, result.color],
             ["defaultPoints", before.defaultPoints, result.defaultPoints],
+            ["emoji", before.emoji, result.emoji],
+            [
+              "announcementChannelId",
+              before.announcementChannelId,
+              result.announcementChannelId,
+            ],
+            ["skipNextWeek", before.skipNextWeek, result.skipNextWeek],
           ] as const
         ).flatMap(([field, beforeValue, afterValue]) =>
           beforeValue === afterValue

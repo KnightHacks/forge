@@ -33,6 +33,7 @@ export interface AdminEventDto {
   roleIds: string[];
   startAt: Date;
   tag: string;
+  tagId: string | null;
   tagColor: string;
 }
 
@@ -85,6 +86,7 @@ export function toAdminEventDto(event: EventWorkflowRecord): AdminEventDto {
     roleIds: [...event.roleIds],
     startAt: event.startAt,
     tag: event.tag,
+    tagId: event.tagId,
     tagColor: event.tagColor,
   };
 }

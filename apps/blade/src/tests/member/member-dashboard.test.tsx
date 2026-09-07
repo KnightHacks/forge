@@ -136,6 +136,7 @@ const events = [
   {
     attendanceCount: 8,
     audience: "public" as const,
+    requiresDues: false,
     description: "Practice your technical interview skills.",
     discordUrl: null,
     endAt: "2026-08-12T20:00:00-04:00",

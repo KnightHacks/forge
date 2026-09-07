@@ -1,0 +1,81 @@
+{
+  "updatedAt": "2026-09-06T23:15:44.860Z",
+  "fixture": "Synthetic development events and IDs; Blade links demonstrate UUID routing and do not resolve to real production events.",
+  "destination": "Dev@KnightHacks / #bot",
+  "screenshotNote": "Current Discord web captures show a full card for one daily event and a compact card for two or more, including on the same date. Older single-day-* records show the superseded date-count rule.",
+  "records": [
+    {
+      "mode": "weekly",
+      "id": "1546269355489103976",
+      "eventCount": 8,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269355489103976"
+    },
+    {
+      "mode": "hack",
+      "id": "1546284703386959954",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546284703386959954"
+    },
+    {
+      "mode": "daily",
+      "id": "1546269956935524436",
+      "eventCount": 6,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546269956935524436"
+    },
+    {
+      "mode": "single-day-1",
+      "id": "1546290695097028700",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546290695097028700"
+    },
+    {
+      "mode": "single-day-2",
+      "id": "1546290699123691601",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546290699123691601"
+    },
+    {
+      "mode": "single-day-3",
+      "id": "1546290703452078103",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546290703452078103"
+    },
+    {
+      "mode": "hack-full",
+      "id": "1546290706958647317",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546290706958647317"
+    },
+    {
+      "mode": "single-event",
+      "id": "1546297880266932255",
+      "eventCount": 1,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546297880266932255"
+    },
+    {
+      "mode": "two-events",
+      "id": "1546297885103226933",
+      "eventCount": 2,
+      "notifications": 0,
+      "url": "https://discord.com/channels/1151877367434850364/1284582557689843785/1546297885103226933"
+    }
+  ],
+  "previewRole": "Reminders (Test), substituted only in preview payloads; all allowed mentions disabled.",
+  "screenshotFiles": [
+    "discord-week-before.png",
+    "discord-week-after.png",
+    "discord-daily.png",
+    "discord-single-day.png",
+    "discord-two-events.png",
+    "discord-hack.png"
+  ],
+  "shortcutVerification": "Channels & Roles renders outside the card. A dev-server click did not open a settings view; navigation remains unverified."
+}

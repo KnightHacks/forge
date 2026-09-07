@@ -19,6 +19,7 @@ const events = [
   {
     attendanceCount: 12,
     audience: "public" as const,
+    requiresDues: false,
     description: "Open to every signed-in member.",
     discordUrl:
       "https://discord.com/events/486628710443778071/123456789012345678",
@@ -37,6 +38,7 @@ const events = [
   {
     attendanceCount: 4,
     audience: "dues" as const,
+    requiresDues: true,
     description: "A dues-supported member social.",
     discordUrl: null,
     endAt: "2026-08-14T21:00:00-04:00",
@@ -131,7 +133,10 @@ describe("MemberEventsDashboard", () => {
     expect(html).toContain("ENG2 102");
     expect(html).toContain("12 check-ins");
     expect(html).toContain("View description");
-    expect(html).toContain("Open to every signed-in member.");
+    expect(html).toContain(
+      'href="/member/events?selected=00000000-0000-4000-8000-000000000701"',
+    );
+    expect(html).not.toContain("Open to every signed-in member.");
     expect(html).toContain("Open in Discord");
     expect(html).toContain("calendar.google.com/calendar/render");
     expect(html).toContain('href="/member/dashboard"');
@@ -139,6 +144,28 @@ describe("MemberEventsDashboard", () => {
     expect(html).toContain('href="/member/dues"');
     expect(html).not.toContain("Discord health");
     expect(html).not.toContain("Google health");
+  });
+
+  it("keeps synchronized dues requirements visible after a member has paid", () => {
+    const duesEvent = events[1];
+    if (!duesEvent) throw new Error("Missing dues fixture.");
+    const html = renderToStaticMarkup(
+      createElement(MemberEventsDashboard, {
+        attendance: [],
+        events: [
+          {
+            ...duesEvent,
+            audience: "public",
+            requiresDues: true,
+            locked: false,
+            lockReason: null,
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("Dues required");
+    expect(html).not.toContain('href="/member/dues"');
   });
 
   it("TC-004 keeps history informative without migration or empty-time copy", () => {
