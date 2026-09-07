@@ -569,7 +569,7 @@ importers:
         version: 2.5.1(@types/emscripten@1.41.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       lucide-react:
         specifier: ^0.575.0
         version: 0.575.0(react@19.2.4)
@@ -591,6 +591,9 @@ importers:
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
+      simple-icons:
+        specifier: ^16.30.0
+        version: 16.30.0
       superjson:
         specifier: 2.2.6
         version: 2.2.6
@@ -702,7 +705,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -972,7 +975,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -1087,7 +1090,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -2682,11 +2685,11 @@ packages:
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild-kit/esm-loader@2.6.5':
     resolution: {integrity: sha512-FxEMIkJKnodyA1OaCUoEvbYRkoZlLZ4d/eXFu9Fh8CbBBgP5EmZxrfTRyN0qpXZ4vOvqnE5YdRdcrmUUXuU+dA==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -9737,6 +9740,10 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
+  simple-icons@16.30.0:
+    resolution: {integrity: sha512-YX/HmgEqjpn5Zs3myzKp8ek5Ti+TdrkvNWn9skGLetg9tOg0cTjYizj9ESAYJn4xwc0GQYVGzQxBELDfbxq7WQ==}
+    engines: {node: '>=0.12.18'}
+
   simple-xml-to-json@1.2.3:
     resolution: {integrity: sha512-kWJDCr9EWtZ+/EYYM5MareWj2cRnZGF93YDNpH4jQiHB+hBIZnfPFSQiVMzZOdk+zXWqTZ/9fTeQNu2DqeiudA==}
     engines: {node: '>=20.12.2'}
@@ -16356,7 +16363,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  geist@1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
@@ -18917,6 +18924,8 @@ snapshots:
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
+
+  simple-icons@16.30.0: {}
 
   simple-xml-to-json@1.2.3: {}
 
