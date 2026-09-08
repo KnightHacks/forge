@@ -1,5 +1,3 @@
-"use server";
-
 import {
   Card,
   CardContent,
@@ -10,7 +8,7 @@ import {
 
 import { SELECTED_PROJECTS } from "./selected-data";
 
-export default async function SelectedProjects({ id }: { id: string }) {
+export default function SelectedProjects({ id }: { id: string }) {
   return (
     <section id={id} className="mt-32 scroll-mt-24">
       <div className="max-w-3xl">

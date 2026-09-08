@@ -9,7 +9,9 @@ import {
 } from "@forge/ui/card";
 
 import { useState, useRef } from "react";
-import { PROJECTS, VisualType, VideoProject, ImageProject, NoVisualProject } from "./hobby-data"
+import Image from "next/image";
+import type { VideoProject, ImageProject} from "./hobby-data";
+import { PROJECTS, VisualType } from "./hobby-data"
 
 function ProjectMedia({ project }: { project: VideoProject | ImageProject }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -52,7 +54,7 @@ function ProjectMedia({ project }: { project: VideoProject | ImageProject }) {
           onLoadedData={() => setIsLoaded(true)}
         />
       ) : (
-        <img
+        <Image
           src={project.visualUrl}
           alt={`${project.title} screenshot`}
           className={`h-full w-full object-contain transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}

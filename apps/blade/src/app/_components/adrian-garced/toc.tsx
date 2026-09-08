@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-type NavSubsection = {
+interface NavSubsection {
   id: string;
   label: string;
-};
+}
 
-type NavEntry = {
+interface NavEntry {
   id: string;
   label: string;
-  component: React.ComponentType<{ id: string }>;
   subsections?: NavSubsection[];
-};
+}
 
 export default function TableOfContents({ sections }: { sections: NavEntry[] }) {
   const [activeId, setActiveId] = useState<string>("projects");
@@ -36,7 +35,8 @@ export default function TableOfContents({ sections }: { sections: NavEntry[] }) 
         }
       }
 
-      setActiveId(currentSection!);
+      if(currentSection)
+        setActiveId(currentSection);
     };
 
     updateActiveSection();

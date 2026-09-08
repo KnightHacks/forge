@@ -49,11 +49,14 @@ export default function Playground() {
     let previous = performance.now();
 
     const loadIcon = () => {
-      const { path, hex } = ICONS[iconIndex]!;
+      const currentIcon = ICONS[iconIndex];
+
+      if(!currentIcon)
+        return;
 
       icon.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path fill="#${hex}" d="${path}"/>
+          <path fill="#${currentIcon.hex}" d="${currentIcon.path}"/>
         </svg>
       `)}`;
     };

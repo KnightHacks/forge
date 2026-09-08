@@ -1,33 +1,3 @@
-import {
-  FileText,
-  Github,
-  Mail,
-  ExternalLink
-} from "lucide-react";
-
-const LINKS = [
-  {
-    label: "GitHub",
-    href: "https://github.com/pinkytoefoo",
-    icon: Github,
-  },
-  {
-    label: "Codeberg",
-    href: "https://codeberg.org/pinkytoefoo",
-    icon: ExternalLink,
-  },
-  {
-    label: "Resume",
-    href: "/resume.pdf",
-    icon: FileText,
-  },
-  {
-    label: "Email",
-    href: "mailto:your-email@example.com",
-    icon: Mail,
-  },
-];
-
 export default function Footer() {
   return (
     <footer

@@ -4,13 +4,13 @@ export enum VisualType {
   Video
 }
 
-export type BaseProject = {
+export interface BaseProject {
   title: string;
   description: string;
   content: string;
   repoUrl: string;
   tags: string[];
-};
+}
 
 export type VideoProject = BaseProject & {
   visualType: VisualType.Video;

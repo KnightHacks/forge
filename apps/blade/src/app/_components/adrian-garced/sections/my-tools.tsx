@@ -1,5 +1,3 @@
-"use server"
-
 import Playground from "$/adrian-garced/playground";
 
 const CATEGORIES = [
@@ -17,15 +15,11 @@ const CATEGORIES = [
   },
   {
     title: "Currently Learning",
-    technologies: [
-      "Computer Architecture",
-      "Vulkan",
-      "Operating Systems",
-    ],
+    technologies: ["Computer Architecture", "Vulkan", "Operating Systems"],
   },
 ];
 
-export default async function MyTools({ id }: { id: string }) {
+export default function MyTools({ id }: { id: string }) {
   return (
     <section id={id} className="mt-32 scroll-mt-24">
       <div className="max-w-3xl">
@@ -60,16 +54,15 @@ export default async function MyTools({ id }: { id: string }) {
       </div>
       <div className="flex w-full justify-center">
         <div id="playground" className="mt-10 w-full max-w-2xl scroll-mt-24">
-
           <p className="text-sm font-medium tracking-wider text-emerald-600">
             PLAYGROUND
           </p>
 
-          <h3 className="mt-2 text-2xl text-neutral-300 *:font-bold tracking-tight sm:text-xl">
+          <h3 className="mt-2 text-2xl tracking-tight text-neutral-300 *:font-bold sm:text-xl">
             {/* Sandbox */}
           </h3>
 
-          <p className="mt-2 max-w-2xl text-neutral-200 *:font-bold tracking-tight sm:text-base">
+          <p className="mt-2 max-w-2xl tracking-tight text-neutral-200 *:font-bold sm:text-base">
             DVD Animation but for my Technologies
           </p>
           <Playground />

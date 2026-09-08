@@ -1,12 +1,10 @@
-"use server"
-
 import { Book } from "lucide-react";
 
-type CurrentlyReading = {
+interface CurrentlyReading {
   title: string;
   author: string;
   coverUrl: string | null;
-};
+}
 
 // UNUSED: openlibrary.org fetching is too slow
 // async function getCurrentlyReading(): Promise<CurrentlyReading | null> {
@@ -33,12 +31,13 @@ type CurrentlyReading = {
 //   }
 // }
 
-export default async function AboutMe({ id }: { id: string }) {
+export default function AboutMe({ id }: { id: string }) {
   // hardcoding values for to avoid fetching
   const book: CurrentlyReading = {
     title: "Inside the Machine",
     author: "Jon Stokes",
-    coverUrl: "https://ia801501.us.archive.org/view_archive.php?archive=/27/items/olcovers87/olcovers87-L.zip&file=870291-L.jpg"
+    coverUrl:
+      "https://ia801501.us.archive.org/view_archive.php?archive=/27/items/olcovers87/olcovers87-L.zip&file=870291-L.jpg",
   };
 
   return (
@@ -51,56 +50,54 @@ export default async function AboutMe({ id }: { id: string }) {
           adrian-g@~{":"} whoami
         </h2>
 
-        <p className="mt-6 text-base leading-7 text-neutral-200">
-          I'm interested in fullstack web development, game development,
-          systems programming, and graphics. Most of my learning comes
-          from building experimental projects. I am working on trying to
-          finish my projects and make them resume ready.
+        <p className="mt-6 text-base leading-7 text-neutral-200 sm:text-lg">
+          I'm interested in fullstack web development, game development, systems
+          programming, and graphics. Most of my learning comes from building
+          experimental projects. I am working on trying to finish my projects
+          and make them resume ready.
         </p>
 
-        <p className="mt-4 text-base leading-7 text-neutral-200">
-          I have been programming since middle-school, doing little things
-          like creating juiced character controllers in Unity and Godot,
-          making basic python scripts, and reverse engineering pirating website APIs.
-          But, I never really felt like I completed anything or had any sort of tangible impact.
+        <p className="mt-4 text-base leading-7 text-neutral-200 sm:text-lg">
+          I have been programming since middle-school, doing little things like
+          creating juiced character controllers in Unity and Godot, making basic
+          python scripts, and reverse engineering pirating website APIs. But, I
+          never really felt like I completed anything or had any sort of
+          tangible impact.
         </p>
 
-        <p className="mt-4 text-base leading-7 text-neutral-200">
-          My goal is to contribute as much as possible to the team and the club, that
-          way I can finally say that my programming knowledge has had a real-life impact!
+        <p className="mt-4 text-base leading-7 text-neutral-200 sm:text-lg">
+          My goal is to contribute as much as possible to the team and the club,
+          that way I can finally say that my programming knowledge has had a
+          real-life impact!
         </p>
       </div>
 
-      {book && (
-        // <div className="mt-10 flex w-full justify-center">
-          <div className="mt-3 flex w-fit items-center gap-6 rounded-lg border border-neutral-700 bg-neutral-900/40 p-6">
-            {book.coverUrl && (
-              <img
-                src={book.coverUrl}
-                alt={`Cover of ${book.title}`}
-                className="h-24 w-auto rounded-sm shadow-lg"
-              />
-            )}
+      {/* <div className="mt-10 flex w-full justify-center"> */}
+      <div className="mt-3 flex w-fit items-center gap-6 rounded-lg border border-neutral-700 bg-neutral-900/40 p-6">
+        {book.coverUrl && (
+          <img
+            src={book.coverUrl}
+            alt={`Cover of ${book.title}`}
+            className="h-24 w-auto rounded-sm shadow-lg"
+          />
+        )}
 
-            <div>
-              <span className="flex items-center gap-1.5">
-                <p className="text-sm font-medium tracking-wider text-neutral-500 uppercase">
-                  Currently reading
-                </p>
-                <Book className="size-4 stroke-neutral-500" />
-              </span>
+        <div>
+          <span className="flex items-center gap-1.5">
+            <p className="text-sm font-medium uppercase tracking-wider text-neutral-500">
+              Currently reading
+            </p>
+            <Book className="size-4 stroke-neutral-500" />
+          </span>
 
-              <p className="mt-1 text-base tracking-wider font-medium text-neutral-100">
-                {book.title}
-              </p>
+          <p className="mt-1 text-base font-medium tracking-wider text-neutral-100">
+            {book.title}
+          </p>
 
-              <p className="text-sm text-neutral-400">
-                {book.author}
-              </p>
-            </div>
-          </div>
-        // </div>
-      )}
+          <p className="text-sm text-neutral-400">{book.author}</p>
+        </div>
+      </div>
+      {/* </div> */}
     </section>
   );
 }

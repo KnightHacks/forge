@@ -1,11 +1,11 @@
-export type SelectedProject = {
+export interface SelectedProject {
   title: string;
   description: string;
   content: string;
   technologies: string[];
   liveUrl?: string;
   repoUrl?: string;
-};
+}
 
 export const SELECTED_PROJECTS: SelectedProject[] = [
   {

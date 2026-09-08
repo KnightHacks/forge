@@ -1,8 +1,6 @@
-"use server"
-
-export default async function Intro() {
+export default function Intro({ id }: { id: string }) {
   return (
-  <section id="intro" className="scroll-mt-24">
+  <section id={ id } className="scroll-mt-24">
     <div className="max-w-3xl">
       <p className="text-sm font-medium tracking-wider text-emerald-400">
         COMPUTER SCIENCE MAJOR
