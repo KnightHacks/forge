@@ -21,7 +21,7 @@ export default function Intro({ id }: { id: string }) {
         </a>
 
         <a
-          href="/public/resume.pdf"
+          href="/adrian-garced/resume.pdf"
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-md border border-neutral-700 px-4 py-2 text-sm font-medium text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white"
