@@ -201,7 +201,7 @@ No product questions remain. Implementation discoveries must be recorded in stat
 
 ### Review follow-up implementation
 
-The organizer board has three view modes: whole-slot room timeline, room agendas, and project itinerary. The itinerary derives a complete project list from all appointments, sorts the selected project's reservations by start time and ID, and computes end-to-start gaps against the configured building rules. It shares appointment inspection and individual reassignment. Live window start is aligned to the saved schedule's grid, and the board displays enough full slots to cover at least an hour. Cards advance at slot boundaries with reduced-motion support.
+The organizer board has three view modes: whole-slot room timeline, room agendas, and project itinerary. The default timeline shows rooms in columns with sticky room headings and appointments progressing downward through time. The itinerary derives a complete project list from all appointments, sorts the selected project's reservations by start time and ID, and computes end-to-start gaps against the configured building rules. It shares appointment inspection and individual reassignment. Live window start is aligned to the saved schedule's grid, and the board displays enough full slots to cover at least an hour. Cards advance at slot boundaries with reduced-motion support.
 
 `judging.getAppointmentResults` is an officer read keyed by hackathon and appointment ID. It lists complete and partial judge identities, exposes ratings/responses only for complete submissions, and averages per-judge means for that appointment. Earlier/unlinked project results are identified separately and cannot affect that average. The inspection dialog polls every five seconds while open.
 

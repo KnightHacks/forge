@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock3, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock3, RefreshCw } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
@@ -471,7 +471,7 @@ export function JudgingSchedulePanel({
                   })
                 }
               >
-                <ChevronLeft className="size-4" />
+                <ChevronUp className="size-4" />
               </Button>
               <Button
                 className="min-h-11"
@@ -493,7 +493,7 @@ export function JudgingSchedulePanel({
                   })
                 }
               >
-                <ChevronRight className="size-4" />
+                <ChevronDown className="size-4" />
               </Button>
             </div>
           ) : null}

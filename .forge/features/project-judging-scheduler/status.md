@@ -241,3 +241,11 @@ After the owner approved and pushed the CP-SAT commits, CI run 34183671357 faile
 Guild now uses the same external-package and standalone tracing settings as Blade. Comments in both configs identify the required pairing. No solver, UI, dependency, schema, or CI workflow changes are included. The owner explicitly authorized fixing CI and pushing this follow-up.
 
 Validation passed: Guild's production build with `.env.example`; an optimal eight-worker CP-SAT solve from Guild's standalone files in a read-only, network-disabled Node 24 container; and root `pnpm format` (24 tasks), `pnpm lint` (31 tasks, warnings only), and `pnpm typecheck` (33 tasks). The container could not access repository dependencies. CI verification will follow the push.
+
+### Faris timeline axis follow-up
+
+The organizer timeline remains the default view. Rooms now run across columns with shared header height and sticky headings; appointments run downward through time. The current-time marker runs horizontally, and the window navigation uses up/down arrows. Whole-slot advancement, appointment inspection, room agendas, and project itineraries retain their behavior. Dhruv's CP-SAT commits through `8daa1a59` are included unchanged.
+
+Validation passed: `pnpm verify:precommit`, including React analysis, format, lint, and all 33 typecheck tasks. Desktop and 390px mobile browser checks covered column alignment, chronological vertical placement, sticky room headings while scrolling, appointment inspection, switching to agendas, and containment of horizontal scrolling within the board. Reviewed desktop, scrolled, and mobile screenshots; the image files remain outside the repository.
+
+Quick Forge review found no actionable issues in this UI diff. Solver implementation and benchmarking were outside this review's scope.

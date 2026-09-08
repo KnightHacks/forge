@@ -59,9 +59,9 @@ export function ScheduleBoard({
       tabIndex={0}
     >
       <div
-        style={
-          mode === "hour"
-            ? { minWidth: Math.max(880, 180 + slotCount * 140) }
+        className={
+          mode === "hour" && rooms.length
+            ? "grid auto-cols-[minmax(220px,1fr)] grid-flow-col grid-rows-[auto_1fr]"
             : undefined
         }
       >
@@ -78,7 +78,7 @@ export function ScheduleBoard({
               key={room.id}
               className={
                 mode === "hour"
-                  ? "grid grid-cols-[180px_1fr] border-b border-white/10 last:border-0"
+                  ? "row-span-2 grid grid-rows-subgrid border-r border-white/10 last:border-0"
                   : "border-b border-white/10 p-4 last:border-0"
               }
               aria-label={`${room.buildingName ?? "No building"} ${room.name}`}
@@ -86,7 +86,7 @@ export function ScheduleBoard({
               <div
                 className={
                   mode === "hour"
-                    ? "sticky left-0 z-10 flex flex-col gap-1 border-r border-white/10 bg-card p-3"
+                    ? "sticky top-0 z-20 flex flex-col gap-1 border-b border-white/10 bg-card p-3"
                     : "mb-3 flex flex-wrap items-center gap-2"
                 }
               >
@@ -105,25 +105,28 @@ export function ScheduleBoard({
               <div
                 className={
                   mode === "hour"
-                    ? "relative min-h-32"
+                    ? "relative"
                     : "grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
+                }
+                style={
+                  mode === "hour" ? { height: slotCount * 128 } : undefined
                 }
               >
                 {mode === "hour" && nowPercent >= 0 && nowPercent <= 100 ? (
                   <div
-                    className="pointer-events-none absolute inset-y-0 z-10 w-px bg-primary"
-                    style={{ left: `${nowPercent}%` }}
+                    className="pointer-events-none absolute inset-x-0 z-10 h-px bg-primary"
+                    style={{ top: `${nowPercent}%` }}
                     aria-label="Current time"
                   />
                 ) : null}
                 {items.map((appointment) => {
-                  const left = Math.max(
+                  const top = Math.max(
                     0,
                     ((appointment.startsAt.getTime() - windowStart.getTime()) /
                       (windowMinutes * 60_000)) *
                       100,
                   );
-                  const right = Math.min(
+                  const bottom = Math.min(
                     100,
                     ((appointment.endsAt.getTime() - windowStart.getTime()) /
                       (windowMinutes * 60_000)) *
@@ -133,12 +136,12 @@ export function ScheduleBoard({
                     <Button
                       key={appointment.id}
                       variant="ghost"
-                      className={`h-auto min-h-28 flex-col items-start justify-start gap-1 overflow-hidden whitespace-normal rounded-md border p-2 text-left ${appointmentStatusStyles[appointment.status]} ${mode === "hour" ? "absolute bottom-2 top-2 transition-[left] duration-300 motion-reduce:transition-none" : "w-full"}`}
+                      className={`h-auto min-h-28 flex-col items-start justify-start gap-1 overflow-hidden whitespace-normal rounded-md border p-2 text-left ${appointmentStatusStyles[appointment.status]} ${mode === "hour" ? "absolute left-2 right-2 transition-[top] duration-300 motion-reduce:transition-none" : "w-full"}`}
                       style={
                         mode === "hour"
                           ? {
-                              left: `${left}%`,
-                              width: `calc(${right - left}% - 4px)`,
+                              top: `calc(${top}% + 4px)`,
+                              height: `calc(${bottom - top}% - 8px)`,
                             }
                           : undefined
                       }
