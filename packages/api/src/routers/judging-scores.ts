@@ -72,6 +72,7 @@ import {
 } from "../utils/judging/scoring";
 import { resolveCurrentJudgeDisplayNames } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
+import { assertJudgingSetupEditable } from "../utils/projects/challenge-configuration";
 
 const workspaceInputSchema = judgingEvaluationSaveSchema.pick({
   challengeId: true,
@@ -543,7 +544,7 @@ export const judgingScoresRouter = {
         .orderBy(desc(ProjectEvaluation.updatedAt));
       if (evaluations.length === 0) return [];
       const ids = evaluations.map((evaluation) => evaluation.id);
-      const [ratings, responses] = await Promise.all([
+      const [ratings, responses, tags] = await Promise.all([
         db
           .select({
             evaluationId: ProjectEvaluationRating.evaluationId,
@@ -573,6 +574,31 @@ export const judgingScoresRouter = {
           )
           .where(inArray(ProjectEvaluationResponse.evaluationId, ids))
           .orderBy(asc(JudgingRubricItem.displayOrder)),
+        db
+          .select({
+            projectId: ProjectToChallenge.projectId,
+            id: ProjectChallenge.id,
+            label: ProjectChallenge.label,
+            parentId: ProjectChallenge.parentId,
+          })
+          .from(ProjectToChallenge)
+          .innerJoin(
+            ProjectChallenge,
+            eq(ProjectChallenge.id, ProjectToChallenge.challengeId),
+          )
+          .where(
+            and(
+              eq(ProjectToChallenge.hackathonId, scope.hackathonId),
+              inArray(
+                ProjectToChallenge.projectId,
+                evaluations.map((evaluation) => evaluation.projectId),
+              ),
+              inArray(
+                ProjectChallenge.parentId,
+                evaluations.map((evaluation) => evaluation.challengeId),
+              ),
+            ),
+          ),
       ]);
       return evaluations.map((evaluation) => {
         const ownRatings = ratings.filter(
@@ -580,6 +606,13 @@ export const judgingScoresRouter = {
         );
         return {
           ...evaluation,
+          projectChallenges: tags
+            .filter(
+              (tag) =>
+                tag.projectId === evaluation.projectId &&
+                tag.parentId === evaluation.challengeId,
+            )
+            .map(({ id, label, parentId }) => ({ id, label, parentId })),
           ratings: ownRatings,
           responses: responses.filter(
             (response) => response.evaluationId === evaluation.id,
@@ -874,6 +907,7 @@ export const judgingScoresRouter = {
           .for("update")
           .limit(1);
         if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+        await assertJudgingSetupEditable(tx, input.hackathonId);
         const [evaluation, config] = await Promise.all([
           tx.query.ProjectEvaluation.findFirst({
             columns: { id: true },

@@ -73,9 +73,9 @@ describe.runIf(canRunDatabaseTests())(
         endDate: new Date("2026-10-01T00:00:00Z"),
       });
       await client.insert(schema.ProjectChallenge).values([
-        { id: general, hackathonId, label: "General" },
+        { id: general, hackathonId, isGeneral: true, label: "General" },
         { id: sponsor, hackathonId, label: "Sponsor" },
-        { id: mlh, hackathonId, label: "MLH Challenges" },
+        { id: mlh, hackathonId, isScheduled: false, label: "MLH Challenges" },
       ]);
       for (const [index, id] of projectIds.entries()) {
         await client.insert(schema.Project).values({
@@ -328,10 +328,10 @@ describe.runIf(canRunDatabaseTests())(
           challengeId: general,
           buildingId: eng.id,
         }),
-      ).rejects.toMatchObject({ code: "CONFLICT" });
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
       await expect(
         admin.judging.archiveRoom({ roomId: generalRoom.id }),
-      ).rejects.toMatchObject({ code: "CONFLICT" });
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
       const before = await client
         .select()
         .from(schema.JudgingAppointment)

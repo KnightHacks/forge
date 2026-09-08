@@ -18,6 +18,8 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
 
   const hackathonId = randomUUID();
   const generalId = randomUUID();
+  const firstTimeId = randomUUID();
+  const mlhOptInId = randomUUID();
   const mlhId = randomUUID();
   const memberUserId = randomUUID();
   const officerUserId = randomUUID();
@@ -39,8 +41,12 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
   async function caller(input: { headers?: Headers; session: Session | null }) {
     const trpc = await import("../../trpc");
     const { projectsRouter } = await import("../../routers/projects");
+    const { judgingRouter } = await import("../../routers/judging");
     return trpc.createCallerFactory(
-      trpc.createTRPCRouter({ projects: projectsRouter }),
+      trpc.createTRPCRouter({
+        projects: projectsRouter,
+        judging: judgingRouter,
+      }),
     )({
       headers: input.headers ?? new Headers(),
       session: input.session,
@@ -105,8 +111,22 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       endDate: new Date("2026-10-01T00:00:00Z"),
     });
     await database.insert(schema.ProjectChallenge).values([
-      { id: generalId, hackathonId, label: "General" },
-      { id: mlhId, hackathonId, label: "MLH Challenges" },
+      {
+        id: generalId,
+        hackathonId,
+        label: "Community awards",
+        isGeneral: true,
+        isGroup: true,
+      },
+      {
+        id: mlhId,
+        hackathonId,
+        label: "Science fair",
+        isScheduled: false,
+        isGroup: true,
+      },
+      { id: firstTimeId, hackathonId, label: "First-time hacker" },
+      { id: mlhOptInId, hackathonId, label: "MLH - Best Use of AI" },
     ]);
     await database.insert(schema.JudgingRoom).values([
       ...roomIds.map((id, index) => ({
@@ -172,6 +192,19 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         hackathonId,
       })),
     );
+    const firstGeneral = generalProjectIds[0];
+    const otherRoomGeneral = generalProjectIds[4];
+    const firstMlh = mlhProjectIds[0];
+    if (!firstGeneral || !otherRoomGeneral || !firstMlh)
+      throw new Error("Missing project fixtures.");
+    await database.insert(schema.ProjectToChallenge).values([
+      ...[firstGeneral, otherRoomGeneral].map((projectId) => ({
+        projectId,
+        challengeId: firstTimeId,
+        hackathonId,
+      })),
+      { projectId: firstMlh, challengeId: mlhOptInId, hackathonId },
+    ]);
   }, 120_000);
 
   afterAll(async () => {
@@ -184,8 +217,129 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
   it("filters before count and pagination while preserving each fallback", async () => {
     const member = await caller({ session });
 
+    await expect(
+      member.projects.updateChallenge({
+        hackathonId,
+        challengeId: generalId,
+        parentId: null,
+        isScheduled: false,
+      }),
+    ).rejects.toThrow(/Use group settings/);
+
+    await expect(
+      member.projects.updateChallenge({
+        hackathonId,
+        challengeId: generalId,
+        parentId: firstTimeId,
+        isScheduled: true,
+      }),
+    ).rejects.toThrow(/judging group/);
+    await expect(
+      member.projects.updateChallenge({
+        hackathonId,
+        challengeId: firstTimeId,
+        parentId: firstTimeId,
+        isScheduled: true,
+      }),
+    ).rejects.toThrow(/judging group/);
+    await member.projects.updateChallenge({
+      hackathonId,
+      challengeId: firstTimeId,
+      parentId: generalId,
+      isScheduled: true,
+    });
+    await member.projects.updateChallenge({
+      hackathonId,
+      challengeId: mlhOptInId,
+      parentId: mlhId,
+      isScheduled: true,
+    });
+    await expect(
+      member.projects.updateChallenge({
+        hackathonId,
+        challengeId: mlhId,
+        parentId: firstTimeId,
+        isScheduled: false,
+      }),
+    ).rejects.toThrow(/judging group/);
+    const customParent = { id: randomUUID() };
+    await database.insert(schema.ProjectChallenge).values({
+      id: customParent.id,
+      hackathonId,
+      label: "Imported awards",
+      isGroup: true,
+      isScheduled: false,
+    });
+    await member.projects.updateChallenge({
+      hackathonId,
+      challengeId: firstTimeId,
+      parentId: customParent.id,
+      isScheduled: true,
+    });
+    const underCustom = await member.projects.listJudge({
+      ...listInput,
+      challengeIds: [customParent.id],
+    });
+    expect(underCustom.totalCount).toBe(2);
+    await member.projects.updateChallenge({
+      hackathonId,
+      challengeId: firstTimeId,
+      parentId: null,
+      isScheduled: true,
+    });
+    const ungrouped = await member.projects.listJudge({
+      ...listInput,
+      challengeIds: [customParent.id],
+    });
+    expect(ungrouped.totalCount).toBe(0);
+    await member.projects.updateChallenge({
+      hackathonId,
+      challengeId: firstTimeId,
+      parentId: generalId,
+      isScheduled: true,
+    });
+    const ratingId = randomUUID();
+    await member.judging.saveRubric({
+      hackathonId,
+      items: [
+        {
+          id: ratingId,
+          kind: "rating",
+          label: "Originality",
+          required: true,
+          memberVisibilityPolicy: null,
+          guestVisibilityPolicy: null,
+        },
+      ],
+    });
+    const childWorkspace = await member.judging.getWorkspace({
+      hackathonId,
+      challengeId: firstTimeId,
+    });
+    expect(childWorkspace.challengeId).toBe(generalId);
+    const childBeforeSchedule = await member.projects.listJudge({
+      ...listInput,
+      challengeIds: [firstTimeId],
+    });
+    expect(childBeforeSchedule.totalCount).toBe(2);
+    expect(childBeforeSchedule.projects[0]?.challenges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: firstTimeId, parentId: generalId }),
+      ]),
+    );
+    const { readScheduleSource } =
+      await import("../../utils/judging-schedule/source");
+    const source = await readScheduleSource(database, hackathonId);
+    expect(source.tasks).toHaveLength(15);
+    expect(source.tasks.every((task) => task.challengeId === generalId)).toBe(
+      true,
+    );
+    expect(source.rooms.find((room) => room.id === mlhRoomId)?.scheduled).toBe(
+      false,
+    );
+
     const withoutSchedule = await member.projects.listJudge(listInput);
-    expect(withoutSchedule.totalCount).toBe(13);
+    expect(withoutSchedule.totalCount).toBe(15);
 
     const scheduleId = randomUUID();
     await database.insert(schema.JudgingSchedule).values({
@@ -220,8 +374,40 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       }),
     );
 
+    await expect(
+      member.projects.updateChallenge({
+        hackathonId,
+        challengeId: firstTimeId,
+        parentId: null,
+        isScheduled: true,
+      }),
+    ).rejects.toThrow(/saved schedule locks/);
+    await expect(
+      member.judging.createRoom({
+        hackathonId,
+        challengeId: generalId,
+        name: "Late room",
+      }),
+    ).rejects.toThrow(/saved schedule locks/);
+    await expect(
+      member.judging.updateRoom({
+        roomId: mlhRoomId,
+        challengeId: mlhId,
+        name: "Renamed untimed room",
+      }),
+    ).rejects.toThrow(/saved schedule locks/);
+    await expect(
+      member.judging.archiveRoom({ roomId: mlhRoomId }),
+    ).rejects.toThrow(/saved schedule locks/);
+    await expect(
+      member.judging.saveRubric({ hackathonId, items: [] }),
+    ).rejects.toThrow(/saved schedule locks/);
+    const setup = await member.judging.listAdmin({ hackathonId });
+    expect(setup.setupLocked).toBe(true);
+    expect(setup.challengeSetupLocked).toBe(true);
+
     const withoutRoom = await member.projects.listJudge(listInput);
-    expect(withoutRoom.totalCount).toBe(13);
+    expect(withoutRoom.totalCount).toBe(15);
     expect(withoutRoom.roomFilterUnavailableReason).toMatch(
       /Choose a judging room/,
     );
@@ -246,9 +432,9 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       page: 2,
       showInRoomOnly: false,
     });
-    expect(allRooms.totalCount).toBe(13);
+    expect(allRooms.totalCount).toBe(15);
     expect(allRooms.page).toBe(2);
-    expect(allRooms.projects).toHaveLength(3);
+    expect(allRooms.projects).toHaveLength(5);
 
     const mlh = await member.projects.listJudge({
       ...listInput,
@@ -256,7 +442,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     });
     expect(mlh.totalCount).toBe(2);
     expect(mlh.roomFilterUnavailableReason).toBe(
-      "MLH judging is untimed, so room filtering is unavailable.",
+      "This challenge is untimed, so room filtering is unavailable.",
     );
     expect(mlh.projects.map((project) => project.id).sort()).toEqual(
       mlhProjectIds.sort(),
@@ -294,6 +480,328 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       ...guestListInput,
       showInRoomOnly: false,
     });
-    expect(guestAllRooms.totalCount).toBe(13);
+    expect(guestAllRooms.totalCount).toBe(15);
+    const guestChild = await guest.projects.listJudge({
+      ...guestListInput,
+      challengeIds: [firstTimeId],
+    });
+    expect(guestChild.totalCount).toBe(1);
+    expect(guestChild.projects[0]?.id).toBe(generalProjectIds[4]);
+    expect(
+      guestChild.projects[0]?.challenges.map((challenge) => challenge.label),
+    ).toContain("First-time hacker");
+    expect(
+      guestChild.challenges.map((challenge) => challenge.id),
+    ).not.toContain(mlhOptInId);
+    await expect(
+      guest.projects.listJudge({
+        ...guestListInput,
+        challengeIds: [mlhOptInId],
+      }),
+    ).rejects.toThrow();
+    await expect(
+      guest.projects.listJudge({ ...guestListInput, challengeIds: [mlhId] }),
+    ).rejects.toThrow();
+    const scheduleView = await member.judging.listJudgeSchedule({
+      hackathonId,
+      challengeId: firstTimeId,
+      challengeIds: [firstTimeId],
+    });
+    expect(scheduleView.appointments).toHaveLength(12);
+    const scoredProjectId = generalProjectIds[0];
+    if (!scoredProjectId) throw new Error("Missing scoring project fixture.");
+    await member.judging.setJudgingState({ hackathonId, state: "open" });
+    vi.setSystemTime(new Date("2026-09-07T16:00:00Z"));
+    const savedEvaluation = await member.judging.saveEvaluation({
+      hackathonId,
+      challengeId: firstTimeId,
+      projectId: scoredProjectId,
+      ratings: [{ itemId: ratingId, value: 4 }],
+      responses: [],
+    });
+    const { eq, and } = await import("@forge/db");
+    const rows = await database
+      .select()
+      .from(schema.ProjectEvaluation)
+      .where(eq(schema.ProjectEvaluation.projectId, scoredProjectId));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.challengeId).toBe(generalId);
+    const remaining = await member.projects.listJudge({
+      ...listInput,
+      challengeIds: [firstTimeId],
+      showInRoomOnly: false,
+      includeJudged: false,
+    });
+    expect(remaining.totalCount).toBe(1);
+    expect(remaining.projects[0]?.id).toBe(generalProjectIds[4]);
+    vi.setSystemTime(new Date("2026-09-07T16:45:00Z"));
+    const editedEvaluation = await member.judging.saveEvaluation({
+      hackathonId,
+      challengeId: generalId,
+      projectId: scoredProjectId,
+      ratings: [{ itemId: ratingId, value: 5 }],
+      responses: [],
+      expectedRevision: 1,
+    });
+    expect(editedEvaluation.evaluationId).toBe(savedEvaluation.evaluationId);
+    expect(editedEvaluation.revision).toBe(2);
+    const submissions = await member.judging.listMySubmissions({
+      hackathonId,
+      challengeId: generalId,
+    });
+    expect(
+      submissions.find(
+        (submission) => submission.id === savedEvaluation.evaluationId,
+      )?.projectChallenges,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: firstTimeId, parentId: generalId }),
+      ]),
+    );
+    const parentRows = await database
+      .select()
+      .from(schema.ProjectEvaluation)
+      .where(
+        and(
+          eq(schema.ProjectEvaluation.projectId, scoredProjectId),
+          eq(schema.ProjectEvaluation.challengeId, generalId),
+        ),
+      );
+    expect(parentRows).toHaveLength(1);
+    await expect(member.judging.dropSchedule({ hackathonId })).rejects.toThrow(
+      /first scheduled result/,
+    );
   }, 120_000);
+  it("preserves editable group identities and MLH overrides across imports", async () => {
+    const { eq, and } = await import("@forge/db");
+    const { importDevpostProjects } =
+      await import("../../projects-import.server");
+    const member = await caller({ session });
+    const eventId = randomUUID();
+    await database.insert(schema.Hackathon).values({
+      id: eventId,
+      name: `group-import-${eventId}`,
+      displayName: "Group imports",
+      theme: "Testing",
+      startDate: new Date("2026-09-01"),
+      endDate: new Date("2026-10-01"),
+    });
+    const csvFor = (labels: string[]) =>
+      [
+        "Project Title,Submission Url,Project Status,Project Created At,Project Submitted At,Submitter First Name,Submitter Last Name,Submitter Email,Additional Team Member Count,Opt-In Prize",
+        ...labels.map(
+          (label) =>
+            `Group project,https://example.devpost.com/project,Submitted (Gallery/Visible),2026-09-01 12:00:00,2026-09-01 13:00:00,Test,Hacker,test@example.test,0,${label}`,
+        ),
+      ].join("\n");
+    const runImport = async (labels: string[]) => {
+      const csvContent = csvFor(labels);
+      return importDevpostProjects({
+        actor: { id: memberUserId, name: "Room Judge" },
+        csvContent,
+        fileSize: Buffer.byteLength(csvContent),
+        hackathonId: eventId,
+      });
+    };
+    const challenge = async (label: string, isGroup: boolean) => {
+      const row = await database.query.ProjectChallenge.findFirst({
+        where: and(
+          eq(schema.ProjectChallenge.hackathonId, eventId),
+          eq(schema.ProjectChallenge.label, label),
+          eq(schema.ProjectChallenge.isGroup, isGroup),
+        ),
+      });
+      if (!row) throw new Error(`Missing fixture: ${label}`);
+      return row;
+    };
+    await runImport(["MLH - Tool A", "First time"]);
+    const general = await challenge("General", true);
+    const mlh = await challenge("MLH Challenges", true);
+    const first = await challenge("First time", false);
+    const toolA = await challenge("MLH - Tool A", false);
+    expect(toolA.parentId).toBe(mlh.id);
+    await expect(
+      member.projects.updateGroup({
+        hackathonId: eventId,
+        groupId: first.id,
+        label: "Invented prize",
+        isGeneral: false,
+        isScheduled: true,
+      }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const extra = await member.projects.createGroup({
+      hackathonId: eventId,
+      label: "Community",
+      isGeneral: true,
+      isScheduled: true,
+    });
+    expect(
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(schema.ProjectToChallenge.challengeId, extra.id),
+      }),
+    ).toHaveLength(1);
+    const defaultDirectory = await member.projects.listJudge({
+      ...listInput,
+      hackathonId: eventId,
+      challengeIds: [],
+      showInRoomOnly: false,
+    });
+    const defaultWorkspace = await member.judging.getWorkspace({
+      hackathonId: eventId,
+    });
+    expect(defaultDirectory.selectedChallengeId).toBe(extra.id);
+    expect(defaultWorkspace.challengeId).toBe(
+      defaultDirectory.selectedChallengeId,
+    );
+
+    await member.projects.updateGroup({
+      hackathonId: eventId,
+      groupId: extra.id,
+      label: "Optional community",
+      isGeneral: false,
+      isScheduled: true,
+    });
+    expect(
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(schema.ProjectToChallenge.challengeId, extra.id),
+      }),
+    ).toHaveLength(0);
+    await member.projects.updateGroup({
+      hackathonId: eventId,
+      groupId: mlh.id,
+      label: "Partner fair",
+      isGeneral: false,
+      isScheduled: false,
+    });
+    await member.projects.updateChallenge({
+      hackathonId: eventId,
+      challengeId: toolA.id,
+      parentId: null,
+      isScheduled: true,
+    });
+    await runImport(["MLH - Tool A", "Best tool B (MLH)", "First time"]);
+    expect((await challenge("MLH - Tool A", false)).parentId).toBeNull();
+    expect((await challenge("Best tool B (MLH)", false)).parentId).toBe(mlh.id);
+    await member.projects.updateGroup({
+      hackathonId: eventId,
+      groupId: extra.id,
+      label: "Optional community",
+      isGeneral: false,
+      isScheduled: false,
+      isMlhImportDefault: true,
+    });
+    await runImport([
+      "MLH - Tool A",
+      "Best tool B (MLH)",
+      "MLH - Tool D",
+      "First time",
+    ]);
+    expect((await challenge("MLH - Tool D", false)).parentId).toBe(extra.id);
+    expect((await challenge("Best tool B (MLH)", false)).parentId).toBe(mlh.id);
+    expect((await challenge("Partner fair", true)).importLabelMatch).toBeNull();
+
+    await member.projects.updateChallenge({
+      hackathonId: eventId,
+      challengeId: first.id,
+      parentId: general.id,
+      isScheduled: true,
+    });
+    await member.projects.deleteGroup({
+      hackathonId: eventId,
+      groupId: general.id,
+    });
+    expect((await challenge("First time", false)).parentId).toBeNull();
+    await member.projects.deleteGroup({
+      hackathonId: eventId,
+      groupId: mlh.id,
+    });
+    await member.projects.deleteGroup({
+      hackathonId: eventId,
+      groupId: extra.id,
+    });
+    await runImport([
+      "MLH - Tool A",
+      "Best tool B (MLH)",
+      "MLH - Tool C",
+      "First time",
+    ]);
+    expect((await challenge("MLH - Tool C", false)).parentId).toBeNull();
+    const remaining = await database.query.ProjectChallenge.findMany({
+      where: eq(schema.ProjectChallenge.hackathonId, eventId),
+    });
+    expect(remaining.every((item) => !item.isGroup && !item.isGeneral)).toBe(
+      true,
+    );
+    const { readScheduleSource } =
+      await import("../../utils/judging-schedule/source");
+    expect((await readScheduleSource(database, eventId)).tasks).toHaveLength(4);
+    const optionalDirectory = await member.projects.listJudge({
+      ...listInput,
+      hackathonId: eventId,
+      challengeIds: [],
+      showInRoomOnly: false,
+    });
+    expect(optionalDirectory.selectedChallengeId).toBe(
+      (await member.judging.getWorkspace({ hackathonId: eventId })).challengeId,
+    );
+    const duplicateGroup = await member.projects.createGroup({
+      hackathonId: eventId,
+      label: "First time",
+      isGeneral: false,
+      isScheduled: true,
+    });
+    const assignedRoom = await member.judging.createRoom({
+      hackathonId: eventId,
+      challengeId: first.id,
+      name: "Source challenge room",
+    });
+    await expect(runImport(["MLH - Tool A"])).rejects.toThrow(
+      /replacement omits First time/,
+    );
+    await member.judging.archiveRoom({ roomId: assignedRoom.id });
+    await member.projects.deleteGroup({
+      hackathonId: eventId,
+      groupId: duplicateGroup.id,
+    });
+    await member.projects.dropAll({
+      hackathonId: eventId,
+      confirmation: "Group imports",
+    });
+    await runImport(["[MLH] New import"]);
+    expect((await challenge("[MLH] New import", false)).parentId).toBe(
+      (await challenge("MLH Challenges", true)).id,
+    );
+    const customMlh = await member.projects.createGroup({
+      hackathonId: eventId,
+      label: "Custom sponsor fair",
+      isGeneral: false,
+      isScheduled: false,
+      isMlhImportDefault: true,
+    });
+    await runImport(["[MLH] New import", "Another tool (MLH)"]);
+    expect((await challenge("Another tool (MLH)", false)).parentId).toBe(
+      customMlh.id,
+    );
+    expect(
+      (await challenge("MLH Challenges", true)).importLabelMatch,
+    ).toBeNull();
+    await member.projects.dropAll({
+      hackathonId: eventId,
+      confirmation: "Group imports",
+    });
+    const preImportDefault = await member.projects.createGroup({
+      hackathonId: eventId,
+      label: "Sponsor judging",
+      isGeneral: false,
+      isScheduled: false,
+      isMlhImportDefault: true,
+    });
+    await runImport(["Tool selected before import (MLH)"]);
+    expect(
+      (await challenge("Tool selected before import (MLH)", false)).parentId,
+    ).toBe(preImportDefault.id);
+    expect(
+      (await challenge("MLH Challenges", true)).importLabelMatch,
+    ).toBeNull();
+  });
 });

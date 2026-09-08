@@ -23,7 +23,15 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "./utils/audit/service";
-import { importedChallengeLabels } from "./utils/projects/challenge-labels";
+import {
+  assertJudgingSetupEditable,
+  challengeSelection,
+  rebuildParentMemberships,
+} from "./utils/projects/challenge-configuration";
+import {
+  defaultJudgingChallenges,
+  importedChallengeLabels,
+} from "./utils/projects/challenge-labels";
 import {
   parseDevpostProjects,
   ProjectImportError,
@@ -66,6 +74,7 @@ export async function importDevpostProjects(input: {
       });
     }
 
+    await assertJudgingSetupEditable(tx, hackathon.id);
     const [lock, evaluation] = await Promise.all([
       tx.query.HackathonJudgingConfiguration.findFirst({
         columns: { projectInventoryLockedAt: true },
@@ -104,15 +113,57 @@ export async function importDevpostProjects(input: {
       );
     }
 
+    const groupSetup = await tx.query.HackathonJudgingConfiguration.findFirst({
+      where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
+    });
+    if (!groupSetup?.challengeGroupsInitializedAt) {
+      const configuredMlhDefault = await tx.query.ProjectChallenge.findFirst({
+        columns: { id: true },
+        where: and(
+          eq(ProjectChallenge.hackathonId, hackathon.id),
+          eq(ProjectChallenge.isGroup, true),
+          eq(ProjectChallenge.importLabelMatch, "MLH"),
+        ),
+      });
+      await tx
+        .insert(ProjectChallenge)
+        .values(
+          defaultJudgingChallenges.map((group) => ({
+            ...group,
+            importLabelMatch: configuredMlhDefault
+              ? null
+              : group.importLabelMatch,
+            hackathonId: hackathon.id,
+            isGroup: true,
+          })),
+        )
+        .onConflictDoNothing();
+      await tx
+        .insert(HackathonJudgingConfiguration)
+        .values({
+          hackathonId: hackathon.id,
+          challengeGroupsInitializedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: HackathonJudgingConfiguration.hackathonId,
+          set: { challengeGroupsInitializedAt: new Date() },
+        });
+    }
     const currentChallenges = await tx
-      .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
+      .select({
+        ...challengeSelection,
+        importLabelMatch: ProjectChallenge.importLabelMatch,
+      })
       .from(ProjectChallenge)
       .where(eq(ProjectChallenge.hackathonId, hackathon.id));
-    const parsedChallengeLabels = new Set(parsed.challengeLabels);
-
     if (!addOnly) {
+      const importedLabels = new Set(parsed.challengeLabels);
       const assignedRooms = await tx
-        .select({ label: ProjectChallenge.label, roomName: JudgingRoom.name })
+        .select({
+          label: ProjectChallenge.label,
+          isGroup: ProjectChallenge.isGroup,
+          roomName: JudgingRoom.name,
+        })
         .from(JudgingRoom)
         .innerJoin(
           ProjectChallenge,
@@ -124,15 +175,13 @@ export async function importDevpostProjects(input: {
             isNull(JudgingRoom.archivedAt),
           ),
         );
-      const removedAssignment = assignedRooms.find(
-        (room) => !parsedChallengeLabels.has(room.label),
+      const omitted = assignedRooms.find(
+        (room) => !room.isGroup && !importedLabels.has(room.label),
       );
-      if (removedAssignment) {
+      if (omitted)
         throw new ProjectImportError(
-          `The replacement omits ${removedAssignment.label}, which is assigned to ${removedAssignment.roomName}. Reassign or archive that room first.`,
+          `The replacement omits ${omitted.label}, which is assigned to ${omitted.roomName}. Reassign or archive that room first.`,
         );
-      }
-
       if (locked) {
         const now = new Date();
         const links = await tx
@@ -185,26 +234,13 @@ export async function importDevpostProjects(input: {
       }
 
       await tx.delete(Project).where(eq(Project.hackathonId, hackathon.id));
-      const removableChallenges = currentChallenges.filter(
-        (challenge) => !parsedChallengeLabels.has(challenge.label),
-      );
-      if (removableChallenges.length) {
-        await tx.delete(ProjectChallenge).where(
-          inArray(
-            ProjectChallenge.id,
-            removableChallenges.map((challenge) => challenge.id),
-          ),
-        );
-      }
     }
 
-    const retainedChallenges = addOnly
-      ? currentChallenges
-      : currentChallenges.filter((challenge) =>
-          parsedChallengeLabels.has(challenge.label),
-        );
+    const importedChallenges = currentChallenges.filter(
+      (challenge) => !challenge.isGroup,
+    );
     const retainedLabels = new Set(
-      retainedChallenges.map((challenge) => challenge.label),
+      importedChallenges.map((challenge) => challenge.label),
     );
     const challengeLabelsToCreate = parsed.challengeLabels.filter(
       (label) => !retainedLabels.has(label),
@@ -216,16 +252,27 @@ export async function importDevpostProjects(input: {
             challengeLabelsToCreate.map((label) => ({
               hackathonId: hackathon.id,
               label,
+              parentId:
+                currentChallenges.find(
+                  (group) =>
+                    group.isGroup &&
+                    group.importLabelMatch &&
+                    label
+                      .toLocaleLowerCase("en-US")
+                      .includes(
+                        group.importLabelMatch.toLocaleLowerCase("en-US"),
+                      ),
+                )?.id ?? null,
             })),
           )
-          .returning({
-            id: ProjectChallenge.id,
-            label: ProjectChallenge.label,
-          })
+          .returning({ id: ProjectChallenge.id, label: ProjectChallenge.label })
       : [];
-    const challenges = [...retainedChallenges, ...createdChallenges];
+    const challenges = [...currentChallenges, ...createdChallenges];
     const challengeIds = new Map(
-      challenges.map((challenge) => [challenge.label, challenge.id]),
+      [...importedChallenges, ...createdChallenges].map((challenge) => [
+        challenge.label,
+        challenge.id,
+      ]),
     );
 
     const existingProjects = addOnly
@@ -282,10 +329,6 @@ export async function importDevpostProjects(input: {
       await tx.insert(ProjectMember).values(memberValues);
     }
 
-    const generalChallengeId = challengeIds.get("General");
-    if (!generalChallengeId) {
-      throw new Error("General challenge was not created.");
-    }
     const joinValues = projectsToInsert.flatMap((project) => {
       const projectId = projectIds.get(project.submissionUrl);
       if (!projectId) throw new Error("Imported project ID was not returned.");
@@ -300,6 +343,12 @@ export async function importDevpostProjects(input: {
     if (joinValues.length > 0) {
       await tx.insert(ProjectToChallenge).values(joinValues);
     }
+
+    await rebuildParentMemberships(
+      tx,
+      hackathon.id,
+      projects.map((project) => project.id),
+    );
 
     await createAdminAuditEvent(
       {

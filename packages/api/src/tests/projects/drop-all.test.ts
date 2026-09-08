@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
-import { Project, ProjectChallenge } from "@forge/db/schemas/knight-hacks";
+import {
+  HackathonJudgingConfiguration,
+  Project,
+  ProjectChallenge,
+} from "@forge/db/schemas/knight-hacks";
 
 const HACKATHON_ID = "00000000-0000-4000-8000-000000000527";
 
@@ -9,6 +13,9 @@ const mocks = vi.hoisted(() => ({
   captureAdminAuditActor: vi.fn(),
   createAdminAuditEvent: vi.fn().mockResolvedValue({ id: "audit-event" }),
   deleteTable: vi.fn(),
+  updateTable: vi.fn(),
+  updateSet: vi.fn(),
+  updateWhere: vi.fn().mockResolvedValue(undefined),
   deleteWhere: vi.fn().mockResolvedValue(undefined),
   findJudgingConfiguration: vi.fn().mockResolvedValue(undefined),
   findJudgingRoom: vi.fn().mockResolvedValue(undefined),
@@ -89,6 +96,11 @@ describe("project inventory hard deletion", () => {
       .mockImplementationOnce(selectProjectCount);
 
     const tx = {
+      update: mocks.updateTable.mockImplementation(() => ({
+        set: mocks.updateSet.mockImplementation(() => ({
+          where: mocks.updateWhere,
+        })),
+      })),
       delete: mocks.deleteTable.mockImplementation(() => ({
         where: mocks.deleteWhere,
       })),
@@ -128,6 +140,12 @@ describe("project inventory hard deletion", () => {
 
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(1, Project);
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(2, ProjectChallenge);
+    expect(mocks.updateTable).toHaveBeenCalledWith(
+      HackathonJudgingConfiguration,
+    );
+    expect(mocks.updateSet).toHaveBeenCalledWith({
+      challengeGroupsInitializedAt: null,
+    });
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledOnce();
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -25,6 +25,10 @@ import {
 
 import type { WriteDb } from "../db";
 import { upsertMemberJudge } from "../../judging-access.server";
+import {
+  challengeSelection,
+  defaultJudgingChallenge,
+} from "../projects/challenge-configuration";
 
 async function activeHackathon() {
   const now = new Date();
@@ -78,16 +82,16 @@ export async function resolveJudgeScope(
     : await activeHackathon();
   if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
   const challenges = await db
-    .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
+    .select(challengeSelection)
     .from(ProjectChallenge)
     .where(eq(ProjectChallenge.hackathonId, hackathon.id))
     .orderBy(
-      sql`CASE WHEN ${ProjectChallenge.label} = 'General' THEN 0 ELSE 1 END`,
+      sql`${ProjectChallenge.isGeneral} DESC`,
       asc(ProjectChallenge.label),
     );
   const selected =
     challenges.find((challenge) => challenge.id === input.challengeId) ??
-    challenges[0];
+    defaultJudgingChallenge(challenges);
   if (!selected) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
@@ -105,7 +109,7 @@ export async function resolveJudgeScope(
     )
     .limit(1);
   return {
-    challengeId: selected.id,
+    challengeId: selected.parentId ?? selected.id,
     challenges,
     hackathon,
     hackathonId: hackathon.id,
@@ -210,18 +214,25 @@ export async function resolveWritableJudge(
           .limit(1)
       )[0];
   if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
-  const [challenge] = await tx
-    .select({ id: ProjectChallenge.id })
+  await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(eq(Hackathon.id, hackathon.id))
+    .for("share");
+  const challenges = await tx
+    .select(challengeSelection)
     .from(ProjectChallenge)
     .where(
       and(
         eq(ProjectChallenge.hackathonId, hackathon.id),
         input.challengeId
           ? eq(ProjectChallenge.id, input.challengeId)
-          : eq(ProjectChallenge.label, "General"),
+          : undefined,
       ),
-    )
-    .limit(1);
+    );
+  const challenge = input.challengeId
+    ? challenges[0]
+    : defaultJudgingChallenge(challenges);
   if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
   const judge = await upsertMemberJudge(tx, {
     displayName: principal.displayName,
@@ -241,7 +252,7 @@ export async function resolveWritableJudge(
     if (active?.id !== hackathon.id) throw new TRPCError({ code: "FORBIDDEN" });
   }
   return {
-    challengeId: challenge.id,
+    challengeId: challenge.parentId ?? challenge.id,
     hackathonId: hackathon.id,
     judgeId: judge.id,
     principalKind: principal.kind,

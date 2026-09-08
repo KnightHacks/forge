@@ -49,8 +49,14 @@ import { assertNoProjectReservations } from "../utils/judging-schedule/appointme
 import { reconcileExpiredJudgingDrafts } from "../utils/judging-schedule/reconcile";
 import { lockScheduleHackathon } from "../utils/judging-schedule/source";
 import { assertCanManageProjects } from "../utils/projects/access";
-import { isMlhChallenge } from "../utils/projects/challenge-labels";
+import {
+  assertChallengeSetupEditable,
+  assertJudgingSetupEditable,
+  challengeSelection,
+  defaultJudgingChallenge,
+} from "../utils/projects/challenge-configuration";
 import { projectForJudge } from "../utils/projects/view";
+import { projectChallengesRouter } from "./project-challenges";
 
 function projectSort(
   sort:
@@ -110,12 +116,13 @@ function projectSort(
 }
 
 const challengeOrder = [
-  sql`CASE WHEN ${ProjectChallenge.label} = 'General' THEN 0 ELSE 1 END`,
+  sql`${ProjectChallenge.isGeneral} DESC`,
   asc(ProjectChallenge.label),
 ] as const;
 
 function projectWhere(input: {
   challengeIds: string[];
+  requiredChallengeId?: string;
   deleted: "active" | "all" | "deleted";
   hackathonId: string;
   hideJudgedBy?: { challengeId: string; judgeId: string };
@@ -172,6 +179,19 @@ function projectWhere(input: {
       ? lte(Project.participantCount, input.maxParticipants)
       : undefined,
     challengeMatch,
+    input.requiredChallengeId
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(ProjectToChallenge)
+            .where(
+              and(
+                eq(ProjectToChallenge.projectId, Project.id),
+                eq(ProjectToChallenge.challengeId, input.requiredChallengeId),
+              ),
+            ),
+        )
+      : undefined,
     input.roomAssignment
       ? exists(
           db
@@ -203,7 +223,14 @@ async function relatedProjects(projectIds: string[]) {
     return {
       challengesByProject: new Map<
         string,
-        { evaluationCount: number; id: string; label: string }[]
+        {
+          evaluationCount: number;
+          id: string;
+          label: string;
+          parentId: string | null;
+          isGeneral: boolean;
+          isOptIn: boolean;
+        }[]
       >(),
       membersByProject: new Map<
         string,
@@ -225,8 +252,8 @@ async function relatedProjects(projectIds: string[]) {
       .orderBy(asc(ProjectMember.displayOrder)),
     db
       .select({
-        id: ProjectChallenge.id,
-        label: ProjectChallenge.label,
+        ...challengeSelection,
+        isOptIn: ProjectToChallenge.isOptIn,
         projectId: ProjectToChallenge.projectId,
       })
       .from(ProjectToChallenge)
@@ -267,7 +294,14 @@ async function relatedProjects(projectIds: string[]) {
   }
   const challengesByProject = new Map<
     string,
-    { evaluationCount: number; id: string; label: string }[]
+    {
+      evaluationCount: number;
+      id: string;
+      label: string;
+      parentId: string | null;
+      isGeneral: boolean;
+      isOptIn: boolean;
+    }[]
   >();
   const evaluationCountByScope = new Map(
     evaluationCounts.map((row) => [
@@ -279,9 +313,14 @@ async function relatedProjects(projectIds: string[]) {
     const list = challengesByProject.get(row.projectId) ?? [];
     list.push({
       evaluationCount:
-        evaluationCountByScope.get(`${row.projectId}:${row.id}`) ?? 0,
+        evaluationCountByScope.get(
+          `${row.projectId}:${row.parentId ?? row.id}`,
+        ) ?? 0,
       id: row.id,
       label: row.label,
+      parentId: row.parentId,
+      isGeneral: row.isGeneral,
+      isOptIn: row.isOptIn,
     });
     challengesByProject.set(row.projectId, list);
   }
@@ -290,6 +329,7 @@ async function relatedProjects(projectIds: string[]) {
 
 async function listProjects(input: {
   challengeIds: string[];
+  requiredChallengeId?: string;
   timeChallengeIds?: string[];
   deleted: "active" | "all" | "deleted";
   direction: "asc" | "desc";
@@ -313,7 +353,7 @@ async function listProjects(input: {
   const [[total], challenges] = await Promise.all([
     db.select({ value: count() }).from(Project).where(where),
     db
-      .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
+      .select(challengeSelection)
       .from(ProjectChallenge)
       .where(eq(ProjectChallenge.hackathonId, input.hackathonId))
       .orderBy(...challengeOrder),
@@ -329,8 +369,12 @@ async function listProjects(input: {
       ...projectSort(
         input.sort,
         input.direction,
-        input.challengeIds[0],
-        input.timeChallengeIds ?? input.challengeIds,
+        challenges.find((challenge) => challenge.id === input.challengeIds[0])
+          ?.parentId ?? input.challengeIds[0],
+        (input.timeChallengeIds ?? input.challengeIds).map(
+          (id) =>
+            challenges.find((challenge) => challenge.id === id)?.parentId ?? id,
+        ),
       ),
       asc(Project.id),
     )
@@ -383,6 +427,7 @@ async function upcomingHackathon(now: Date) {
 }
 
 export const projectsRouter = createTRPCRouter({
+  ...projectChallengesRouter,
   listAdminHackathons: permProcedure.query(async ({ ctx }) => {
     assertCanManageProjects(ctx);
     return db
@@ -424,7 +469,15 @@ export const projectsRouter = createTRPCRouter({
           message: "Hackathon not found.",
         });
       }
-      return { hackathon, ...(await listProjects(input)) };
+      const savedSchedule = await db.query.JudgingSchedule.findFirst({
+        columns: { id: true },
+        where: eq(JudgingSchedule.hackathonId, hackathon.id),
+      });
+      return {
+        hackathon,
+        setupLocked: !!savedSchedule,
+        ...(await listProjects(input)),
+      };
     }),
 
   listJudge: judgeProcedure
@@ -477,6 +530,7 @@ export const projectsRouter = createTRPCRouter({
       if (!selected)
         return {
           hackathon: null,
+          selectedChallengeId: null,
           page: input.page,
           pageSize: input.pageSize,
           projects: [],
@@ -506,29 +560,35 @@ export const projectsRouter = createTRPCRouter({
                 ),
               })
             )?.id;
-      const generalChallenge =
-        !guestPrincipal && !input.challengeIds[0]
-          ? await db.query.ProjectChallenge.findFirst({
-              columns: { id: true, label: true },
-              where: and(
-                eq(ProjectChallenge.hackathonId, selected.id),
-                eq(ProjectChallenge.label, "General"),
-              ),
-            })
-          : null;
+      const allChallenges = await db
+        .select(challengeSelection)
+        .from(ProjectChallenge)
+        .where(eq(ProjectChallenge.hackathonId, selected.id));
+      const defaultChallenge = defaultJudgingChallenge(allChallenges);
+      const visibleChallenges = guestPrincipal
+        ? allChallenges.filter(
+            (challenge) =>
+              challenge.id === guestPrincipal.challengeId ||
+              challenge.parentId === guestPrincipal.challengeId,
+          )
+        : allChallenges;
+      if (
+        input.challengeIds.some(
+          (id) => !visibleChallenges.some((challenge) => challenge.id === id),
+        )
+      )
+        throw new TRPCError({ code: "FORBIDDEN" });
+      const filterChallenge = visibleChallenges.find(
+        (challenge) => challenge.id === input.challengeIds[0],
+      );
       const selectedChallengeId =
         guestPrincipal?.challengeId ??
-        input.challengeIds[0] ??
-        generalChallenge?.id;
-      const selectedChallenge = selectedChallengeId
-        ? await db.query.ProjectChallenge.findFirst({
-            columns: { label: true },
-            where: and(
-              eq(ProjectChallenge.id, selectedChallengeId),
-              eq(ProjectChallenge.hackathonId, selected.id),
-            ),
-          })
-        : generalChallenge;
+        filterChallenge?.parentId ??
+        filterChallenge?.id ??
+        defaultChallenge?.id;
+      const selectedChallenge = allChallenges.find(
+        (challenge) => challenge.id === selectedChallengeId,
+      );
       const schedule = input.showInRoomOnly
         ? await db.query.JudgingSchedule.findFirst({
             columns: { id: true },
@@ -552,82 +612,56 @@ export const projectsRouter = createTRPCRouter({
         schedule &&
         roomId &&
         selectedChallengeId &&
-        !isMlhChallenge(selectedChallenge?.label ?? "")
+        selectedChallenge?.isScheduled
           ? { challengeId: selectedChallengeId, roomId }
           : undefined;
-      const timeChallengeIds = guestPrincipal
-        ? [guestPrincipal.challengeId]
-        : input.challengeIds.length
-          ? input.challengeIds
-          : [
-              (
-                await db.query.ProjectChallenge.findFirst({
-                  columns: { id: true },
-                  where: and(
-                    eq(ProjectChallenge.hackathonId, selected.id),
-                    eq(ProjectChallenge.label, "General"),
-                  ),
-                })
-              )?.id ?? "00000000-0000-4000-8000-000000000000",
-            ];
       const listed = await listProjects({
-        timeChallengeIds,
         ...input,
-        challengeIds: guestPrincipal
-          ? [guestPrincipal.challengeId]
-          : input.challengeIds,
+        timeChallengeIds: selectedChallengeId ? [selectedChallengeId] : [],
+        requiredChallengeId: guestPrincipal?.challengeId,
         deleted: "active",
         hackathonId: selected.id,
         hideJudgedBy:
-          !input.includeJudged && judgeId
-            ? {
-                challengeId:
-                  guestPrincipal?.challengeId ??
-                  input.challengeIds[0] ??
-                  (
-                    await db.query.ProjectChallenge.findFirst({
-                      columns: { id: true },
-                      where: and(
-                        eq(ProjectChallenge.hackathonId, selected.id),
-                        eq(ProjectChallenge.label, "General"),
-                      ),
-                    })
-                  )?.id ??
-                  "00000000-0000-0000-0000-000000000000",
-                judgeId,
-              }
+          !input.includeJudged && judgeId && selectedChallengeId
+            ? { challengeId: selectedChallengeId, judgeId }
             : undefined,
         roomAssignment,
       });
       return {
         hackathon: selected,
+        selectedChallengeId: selectedChallengeId ?? null,
         ...listed,
         roomFilterUnavailableReason:
           input.showInRoomOnly &&
           schedule &&
-          isMlhChallenge(selectedChallenge?.label ?? "")
-            ? "MLH judging is untimed, so room filtering is unavailable."
+          selectedChallenge &&
+          !selectedChallenge.isScheduled
+            ? "This challenge is untimed, so room filtering is unavailable."
             : input.showInRoomOnly && schedule && !roomId && !guestPrincipal
               ? "Choose a judging room to use this filter."
               : null,
-        challenges: guestPrincipal
-          ? listed.challenges.filter(
-              (challenge) => challenge.id === guestPrincipal.challengeId,
-            )
-          : listed.challenges,
+        challenges: visibleChallenges.sort(
+          (a, b) =>
+            Number(b.isGeneral) - Number(a.isGeneral) ||
+            a.label.localeCompare(b.label),
+        ),
         projects: listed.projects.map((project) => {
           const judgeProject = projectForJudge(project);
           return guestPrincipal
             ? {
                 ...judgeProject,
-                challenges: [],
-                prizeCategories: listed.challenges.some(
+                challenges: judgeProject.challenges.filter(
                   (challenge) =>
-                    challenge.id === guestPrincipal.challengeId &&
-                    isMlhChallenge(challenge.label),
-                )
-                  ? judgeProject.prizeCategories.filter(isMlhChallenge)
-                  : [],
+                    challenge.id === guestPrincipal.challengeId ||
+                    challenge.parentId === guestPrincipal.challengeId,
+                ),
+                prizeCategories: judgeProject.challenges
+                  .filter(
+                    (challenge) =>
+                      challenge.parentId === guestPrincipal.challengeId &&
+                      challenge.isOptIn,
+                  )
+                  .map((challenge) => challenge.label),
               }
             : judgeProject;
         }),
@@ -695,6 +729,10 @@ export const projectsRouter = createTRPCRouter({
         await tx
           .delete(ProjectChallenge)
           .where(eq(ProjectChallenge.hackathonId, hackathon.id));
+        await tx
+          .update(HackathonJudgingConfiguration)
+          .set({ challengeGroupsInitializedAt: null })
+          .where(eq(HackathonJudgingConfiguration.hackathonId, hackathon.id));
 
         await createAdminAuditEvent(
           {
@@ -729,6 +767,7 @@ export const projectsRouter = createTRPCRouter({
         });
         if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
         await lockScheduleHackathon(tx, scopeProject.hackathonId);
+        await assertJudgingSetupEditable(tx, scopeProject.hackathonId);
         const [existing] = await tx
           .select()
           .from(Project)
@@ -743,7 +782,7 @@ export const projectsRouter = createTRPCRouter({
           });
         }
         const challengeRows = await tx
-          .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
+          .select(challengeSelection)
           .from(ProjectChallenge)
           .where(
             and(
@@ -757,21 +796,49 @@ export const projectsRouter = createTRPCRouter({
             message: "Invalid challenge selection.",
           });
         }
-        if (!challengeRows.some((challenge) => challenge.label === "General")) {
+        if (challengeRows.some((challenge) => challenge.isGroup)) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Every project must retain the General challenge.",
+            message:
+              "Select imported challenges; group membership is automatic.",
           });
         }
+        const everyProjectGroups = await tx
+          .select({ id: ProjectChallenge.id })
+          .from(ProjectChallenge)
+          .where(
+            and(
+              eq(ProjectChallenge.hackathonId, existing.hackathonId),
+              eq(ProjectChallenge.isGroup, true),
+              eq(ProjectChallenge.isGeneral, true),
+            ),
+          );
         const currentMemberships = await tx
-          .select({ challengeId: ProjectToChallenge.challengeId })
+          .select({
+            challengeId: ProjectToChallenge.challengeId,
+            isOptIn: ProjectToChallenge.isOptIn,
+          })
           .from(ProjectToChallenge)
           .where(eq(ProjectToChallenge.projectId, existing.id));
+        const explicitIds = currentMemberships
+          .filter((membership) => membership.isOptIn)
+          .map((membership) => membership.challengeId);
+        if (
+          explicitIds.length !== input.challengeIds.length ||
+          explicitIds.some((id) => !input.challengeIds.includes(id))
+        )
+          await assertChallengeSetupEditable(tx, existing.hackathonId);
+        const desiredIds = [
+          ...new Set([
+            ...input.challengeIds,
+            ...everyProjectGroups.map((group) => group.id),
+            ...challengeRows.flatMap((challenge) =>
+              challenge.parentId ? [challenge.parentId] : [],
+            ),
+          ]),
+        ];
         const removedChallengeIds = currentMemberships
-          .filter(
-            (membership) =>
-              !input.challengeIds.includes(membership.challengeId),
-          )
+          .filter((membership) => !desiredIds.includes(membership.challengeId))
           .map((membership) => membership.challengeId);
         if (removedChallengeIds.length)
           await assertNoProjectReservations(tx, [existing.id]);
@@ -781,18 +848,9 @@ export const projectsRouter = createTRPCRouter({
             demoLinks: input.demoLinks,
             description: input.description,
             participantCount: input.participantCount,
-            prizeCategories: Array.from(
-              new Set(
-                challengeRows
-                  .filter((challenge) => challenge.label !== "General")
-                  .flatMap((challenge) =>
-                    challenge.label === "MLH Challenges" &&
-                    existing.prizeCategories.some(isMlhChallenge)
-                      ? existing.prizeCategories.filter(isMlhChallenge)
-                      : [challenge.label],
-                  ),
-              ),
-            ),
+            prizeCategories: challengeRows
+              .filter((challenge) => !challenge.isGeneral)
+              .map((challenge) => challenge.label),
             submissionUrl: input.submissionUrl,
             technologies: input.technologies,
             title: input.title,
@@ -820,7 +878,7 @@ export const projectsRouter = createTRPCRouter({
                 inArray(ProjectToChallenge.challengeId, removedChallengeIds),
               ),
             );
-        const addedChallengeIds = [...new Set(input.challengeIds)].filter(
+        const addedChallengeIds = desiredIds.filter(
           (id) =>
             !currentMemberships.some(
               (membership) => membership.challengeId === id,
@@ -832,7 +890,21 @@ export const projectsRouter = createTRPCRouter({
               challengeId,
               hackathonId: existing.hackathonId,
               projectId: existing.id,
+              isOptIn: input.challengeIds.includes(challengeId),
             })),
+          );
+        await tx
+          .update(ProjectToChallenge)
+          .set({ isOptIn: false })
+          .where(eq(ProjectToChallenge.projectId, existing.id));
+        await tx
+          .update(ProjectToChallenge)
+          .set({ isOptIn: true })
+          .where(
+            and(
+              eq(ProjectToChallenge.projectId, existing.id),
+              inArray(ProjectToChallenge.challengeId, input.challengeIds),
+            ),
           );
         await createAdminAuditEvent(
           {
@@ -866,6 +938,7 @@ export const projectsRouter = createTRPCRouter({
         });
         if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
         await lockScheduleHackathon(tx, scopeProject.hackathonId);
+        await assertJudgingSetupEditable(tx, scopeProject.hackathonId);
         const [project] = await tx
           .select()
           .from(Project)
@@ -920,6 +993,7 @@ export const projectsRouter = createTRPCRouter({
         });
         if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
         await lockScheduleHackathon(tx, scopeProject.hackathonId);
+        await assertJudgingSetupEditable(tx, scopeProject.hackathonId);
         const [project] = await tx
           .select({ id: Project.id, title: Project.title })
           .from(Project)

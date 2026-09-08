@@ -230,7 +230,7 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
   });
 
   const projects: ParsedProject[] = [];
-  const allChallengeLabels = new Set<string>(["General"]);
+  const allChallengeLabels = new Set<string>();
   const additionalCountIndex = headerIndex.get("Additional Team Member Count");
   if (additionalCountIndex === undefined) {
     throw new ProjectImportError(
