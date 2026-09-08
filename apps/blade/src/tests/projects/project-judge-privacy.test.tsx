@@ -183,6 +183,33 @@ const adminProject = {
 } satisfies AdminProject;
 
 describe("judge project privacy", () => {
+  it.each([
+    ["#ffffff", "rgb(255, 255, 255)", "rgb(0, 0, 0)"],
+    ["#ffcc00", "rgb(255, 204, 0)", "rgb(0, 0, 0)"],
+    ["#777777", "rgb(119, 119, 119)", "rgb(0, 0, 0)"],
+    ["#7c3aed", "rgb(124, 58, 237)", "rgb(255, 255, 255)"],
+  ])(
+    "keeps %s challenge tags readable in project details",
+    (tagColor, backgroundColor, color) => {
+      render(
+        <ProjectDetailDialog
+          onOpenChange={vi.fn()}
+          project={{
+            ...judgeProject,
+            challenges: judgeProject.challenges.map((challenge) => ({
+              ...challenge,
+              tagColor,
+            })),
+          }}
+        />,
+      );
+      expect(screen.getByText("General")).toHaveStyle({
+        backgroundColor,
+        color,
+      });
+    },
+  );
+
   it("shows names without participant emails or schools", () => {
     render(
       <ProjectDetailDialog onOpenChange={vi.fn()} project={judgeProject} />,

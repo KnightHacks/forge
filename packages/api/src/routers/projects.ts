@@ -834,9 +834,10 @@ export const projectsRouter = createTRPCRouter({
         const explicitIds = currentMemberships
           .filter((membership) => membership.isOptIn)
           .map((membership) => membership.challengeId);
+        const selectedIds = new Set(input.challengeIds);
         if (
-          explicitIds.length !== input.challengeIds.length ||
-          explicitIds.some((id) => !input.challengeIds.includes(id))
+          explicitIds.length !== selectedIds.size ||
+          explicitIds.some((id) => !selectedIds.has(id))
         )
           await assertChallengeSetupEditable(tx, existing.hackathonId);
         const desiredIds = [

@@ -24,7 +24,6 @@ import {
   createAdminAuditEvent,
 } from "./utils/audit/service";
 import {
-  assertJudgingSetupEditable,
   challengeSelection,
   rebuildParentMemberships,
 } from "./utils/projects/challenge-configuration";
@@ -72,7 +71,6 @@ export async function importDevpostProjects(input: {
       });
     }
 
-    await assertJudgingSetupEditable(tx, hackathon.id);
     const [lock, evaluation] = await Promise.all([
       tx.query.HackathonJudgingConfiguration.findFirst({
         columns: { projectInventoryLockedAt: true },

@@ -756,6 +756,16 @@ export function JudgingControlPanel({
         </div>
       )}
 
+      {data.setupLocked ? (
+        <Alert>
+          <AlertTitle>Room setup locked</AlertTitle>
+          <AlertDescription>
+            A saved schedule locks room changes. Open the Schedule tab and drop
+            the eligible schedule before changing rooms.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <section className="flex flex-col gap-3 rounded-lg border border-white/10 bg-card/90 p-4 shadow-xl shadow-black/10 sm:flex-row sm:items-end sm:justify-between">
         {!embedded ? (
           <label className="space-y-2">

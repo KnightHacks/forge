@@ -110,6 +110,18 @@ export const projectChallengesRouter = {
           where: eq(Hackathon.id, input.hackathonId),
           columns: { displayName: true },
         });
+        const previous = await tx.query.ProjectChallenge.findFirst({
+          where: and(
+            eq(ProjectChallenge.id, input.groupId),
+            eq(ProjectChallenge.hackathonId, input.hackathonId),
+            eq(ProjectChallenge.isGroup, true),
+          ),
+        });
+        if (!previous)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Judging group not found in this hackathon.",
+          });
         const duplicate = await tx.query.ProjectChallenge.findFirst({
           where: and(
             eq(ProjectChallenge.hackathonId, input.hackathonId),
@@ -156,12 +168,35 @@ export const projectChallengesRouter = {
             ),
           )
           .returning();
-        if (!group) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!group)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Judging group not found in this hackathon.",
+          });
         await rebuildParentMemberships(tx, input.hackathonId);
         await createAdminAuditEvent(
           {
             actionKey: "judging.group.updated",
             actor,
+            changes: (
+              [
+                "label",
+                "isGeneral",
+                "isScheduled",
+                "isMlhImportDefault",
+                "tagColor",
+              ] as const
+            ).flatMap((field) => {
+              const before =
+                field === "isMlhImportDefault"
+                  ? previous.importLabelMatch === "MLH"
+                  : previous[field];
+              const after =
+                field === "isMlhImportDefault"
+                  ? group.importLabelMatch === "MLH"
+                  : group[field];
+              return before === after ? [] : [{ field, before, after }];
+            }),
             metadata: {
               groupId: group.id,
               isMlhImportDefault: group.importLabelMatch === "MLH",
@@ -203,7 +238,11 @@ export const projectChallengesRouter = {
             eq(ProjectChallenge.isGroup, true),
           ),
         });
-        if (!group) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!group)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Judging group not found in this hackathon.",
+          });
         const room = await tx.query.JudgingRoom.findFirst({
           where: and(
             eq(JudgingRoom.challengeId, group.id),
@@ -264,6 +303,9 @@ export const projectChallengesRouter = {
           .select()
           .from(ProjectChallenge)
           .where(eq(ProjectChallenge.hackathonId, input.hackathonId));
+        const previous = challenges.find(
+          (item) => item.id === input.challengeId,
+        );
         validateChallengeGrouping(
           challenges,
           input.challengeId,
@@ -293,12 +335,21 @@ export const projectChallengesRouter = {
           .set({ parentId: input.parentId, isScheduled: input.isScheduled })
           .where(eq(ProjectChallenge.id, input.challengeId))
           .returning();
-        if (!challenge) throw new TRPCError({ code: "NOT_FOUND" });
+        if (!challenge || !previous)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Imported challenge not found in this hackathon.",
+          });
         await rebuildParentMemberships(tx, input.hackathonId);
         await createAdminAuditEvent(
           {
             actionKey: "judging.challenge.updated",
             actor,
+            changes: (["parentId", "isScheduled"] as const).flatMap((field) =>
+              previous[field] === challenge[field]
+                ? []
+                : [{ field, before: previous[field], after: challenge[field] }],
+            ),
             metadata: {
               challengeId: challenge.id,
               label: challenge.label,

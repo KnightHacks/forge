@@ -404,6 +404,14 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     await expect(
       member.judging.saveRubric({ hackathonId, items: [] }),
     ).rejects.toThrow(/saved schedule locks/);
+    await expect(
+      member.projects.deleteGroup({ hackathonId, groupId: generalId }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      message:
+        "A saved schedule locks judging setup. Drop the eligible schedule before making changes.",
+    });
+
     const setup = await member.judging.listAdmin({ hackathonId });
     expect(setup.setupLocked).toBe(true);
     expect(setup.challengeSetupLocked).toBe(true);
@@ -620,6 +628,8 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     const general = await challenge("General", true);
     const mlh = await challenge("MLH Challenges", true);
     const first = await challenge("First time", false);
+    const { AdminAuditEvent } = await import("@forge/db/schemas/audit");
+
     const toolA = await challenge("MLH - Tool A", false);
     expect(toolA.parentId).toBe(mlh.id);
     expect(mlh.tagColor).toBe("#e93227");
@@ -683,6 +693,25 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       isScheduled: true,
     });
     await runImport(["MLH - Tool A", "Best tool B (MLH)", "First time"]);
+    const auditEvents = await database.select().from(AdminAuditEvent);
+    expect(
+      auditEvents.find(
+        (event) =>
+          event.actionKey === "judging.group.updated" &&
+          event.metadata.groupId === mlh.id,
+      )?.changes,
+    ).toContainEqual({
+      field: "label",
+      before: "MLH Challenges",
+      after: "Partner fair",
+    });
+    expect(
+      auditEvents.find(
+        (event) =>
+          event.actionKey === "judging.challenge.updated" &&
+          event.metadata.challengeId === toolA.id,
+      )?.changes,
+    ).toContainEqual({ field: "parentId", before: mlh.id, after: null });
     expect((await challenge("MLH - Tool A", false)).parentId).toBeNull();
     expect((await challenge("Best tool B (MLH)", false)).parentId).toBe(mlh.id);
     await member.projects.updateGroup({
@@ -753,6 +782,22 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       isGeneral: false,
       isScheduled: true,
     });
+    await runImport(["First time"]);
+    const importedWithGroupName = await challenge("First time", false);
+    expect(importedWithGroupName.id).not.toBe(duplicateGroup.id);
+    expect(
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(schema.ProjectToChallenge.challengeId, duplicateGroup.id),
+      }),
+    ).toHaveLength(0);
+    expect(
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(
+          schema.ProjectToChallenge.challengeId,
+          importedWithGroupName.id,
+        ),
+      }),
+    ).toHaveLength(1);
     const assignedRoom = await member.judging.createRoom({
       hackathonId: eventId,
       challengeId: first.id,
@@ -803,6 +848,117 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         where: eq(schema.ProjectToChallenge.challengeId, customMlh.id),
       }),
     ).toHaveLength(1);
+
+    const [existingProject] = await database
+      .select()
+      .from(schema.Project)
+      .where(eq(schema.Project.hackathonId, eventId));
+    if (!existingProject) throw new Error("Missing imported project");
+    const optIn = await challenge("Another tool (MLH)", false);
+    const [judge] = await database
+      .insert(schema.Judge)
+      .values({
+        hackathonId: eventId,
+        kind: "member",
+        userId: memberUserId,
+        displayName: "Review judge",
+      })
+      .returning();
+    if (!judge) throw new Error("Missing judge fixture");
+    const [feedback] = await database
+      .insert(schema.ProjectEvaluation)
+      .values({
+        hackathonId: eventId,
+        projectId: existingProject.id,
+        challengeId: customMlh.id,
+        judgeId: judge.id,
+      })
+      .returning();
+    if (!feedback) throw new Error("Missing feedback fixture");
+    await expect(
+      member.projects.deleteGroup({
+        hackathonId: eventId,
+        groupId: customMlh.id,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      message:
+        "Challenge setup is locked because judging feedback has started.",
+    });
+    await member.projects.update({
+      ...existingProject,
+      projectId: existingProject.id,
+      challengeIds: [optIn.id, optIn.id],
+      members: [{ name: "Test Hacker", email: "test@example.test" }],
+    });
+    expect(
+      await database.query.ProjectEvaluation.findFirst({
+        where: eq(schema.ProjectEvaluation.id, feedback.id),
+      }),
+    ).toEqual(feedback);
+
+    const [schedule] = await database
+      .insert(schema.JudgingSchedule)
+      .values({
+        hackathonId: eventId,
+        startsAt: new Date("2026-09-07T16:00:00Z"),
+        endsAt: new Date("2026-09-07T18:00:00Z"),
+        setupMinutes: 2,
+        judgingMinutes: 6,
+        teardownMinutes: 2,
+        sameBuildingBreakMinutes: 10,
+        differentBuildingBreakMinutes: 20,
+        savedByUserId: officerUserId,
+      })
+      .returning();
+    const storedProject = await database.query.Project.findFirst({
+      where: eq(schema.Project.id, existingProject.id),
+    });
+    const memberships = await database.query.ProjectToChallenge.findMany({
+      where: eq(schema.ProjectToChallenge.projectId, existingProject.id),
+    });
+    const lateRow = csvFor(["Another tool (MLH)"]).split("\n")[1];
+    if (!lateRow) throw new Error("Missing CSV fixture row");
+    const lateCsv =
+      csvFor(["Another tool (MLH)"]) +
+      "\n" +
+      lateRow.replace(
+        "Group project,https://example.devpost.com/project",
+        "Late project,https://example.devpost.com/late",
+      );
+    const lateInput = {
+      actor: { id: memberUserId, name: "Room Judge" },
+      csvContent: lateCsv,
+      fileSize: Buffer.byteLength(lateCsv),
+      hackathonId: eventId,
+    };
+    await expect(importDevpostProjects(lateInput)).resolves.toMatchObject({
+      addOnly: true,
+      importedProjects: 1,
+      skippedProjects: 1,
+    });
+    expect(
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(schema.ProjectToChallenge.projectId, existingProject.id),
+      }),
+    ).toEqual(memberships);
+    expect(
+      await database.query.JudgingSchedule.findFirst({
+        where: eq(schema.JudgingSchedule.hackathonId, eventId),
+      }),
+    ).toEqual(schedule);
+    expect(
+      await database.query.Project.findFirst({
+        where: eq(schema.Project.id, existingProject.id),
+      }),
+    ).toEqual(storedProject);
+    await expect(
+      importDevpostProjects({
+        ...lateInput,
+        mode: "replace",
+        confirmation: "Group imports",
+      }),
+    ).rejects.toThrow(/saved schedule exists/);
   });
 
   it("creates starter groups before any project import and initializes older hackathons only once", async () => {

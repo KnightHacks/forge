@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RouterOutputs } from "@forge/api";
 
 import { ChallengeConfigurationPanel } from "~/app/_components/judging/challenge-configuration-panel";
+import { JudgingConfigurationPanel } from "~/app/_components/judging/judging-configuration-panel";
 
 const mocks = vi.hoisted(() => ({
   update: vi.fn(),
@@ -27,6 +28,11 @@ vi.mock("~/trpc/react", () => ({
       projects: { invalidate: mocks.invalidate },
       judging: { listScheduleAdmin: { invalidate: mocks.invalidate } },
     }),
+    judging: {
+      saveRubric: { useMutation: () => ({ isPending: false }) },
+      setJudgingState: { useMutation: () => ({ isPending: false }) },
+      setDisplayAllResults: { useMutation: () => ({ isPending: false }) },
+    },
     projects: {
       createGroup: {
         useMutation: () => ({
@@ -101,6 +107,27 @@ describe("organizer challenge setup", () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(cleanup);
 
+  it("explains the saved-schedule rubric lock without mislabeling open judging", () => {
+    const view = render(
+      <JudgingConfigurationPanel data={{ ...data, setupLocked: true }} />,
+    );
+    expect(
+      screen.getByText(/A saved schedule locks the rubric/),
+    ).toBeInTheDocument();
+    view.rerender(
+      <JudgingConfigurationPanel
+        data={{
+          ...data,
+          setupLocked: true,
+          configuration: { ...data.configuration, state: "open" },
+        }}
+      />,
+    );
+    expect(
+      screen.getByText(/The rubric cannot change after judging opens/),
+    ).toBeInTheDocument();
+  });
+
   it("assigns an imported challenge to an editable group", async () => {
     const [general, firstTime] = data.challenges;
     if (!general || !firstTime) throw new Error("Missing challenge fixtures");
@@ -163,6 +190,7 @@ describe("organizer challenge setup", () => {
       screen.queryByRole("textbox", { name: "New parent challenge" }),
     ).not.toBeInTheDocument();
     for (const control of [
+      screen.getByRole("textbox", { name: "Group name: General" }),
       ...screen.getAllByRole("combobox"),
       ...screen.getAllByRole("checkbox"),
     ])

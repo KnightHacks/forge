@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from "@forge/ui/radio-group";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
+import { challengeTagStyle } from "~/app/_components/projects/challenge-tag-style";
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { useEvaluationAutosave } from "~/lib/judging/use-evaluation-autosave";
 import { useJudgingClock } from "~/lib/judging/use-judging-clock";
@@ -324,15 +325,7 @@ function EvaluationEditor({
                   <span
                     key={challenge.id}
                     className="max-w-full break-words rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-sm font-semibold text-primary"
-                    style={
-                      challenge.tagColor
-                        ? {
-                            backgroundColor: challenge.tagColor,
-                            borderColor: challenge.tagColor,
-                            color: "white",
-                          }
-                        : undefined
-                    }
+                    style={challengeTagStyle(challenge.tagColor)}
                   >
                     {challenge.label}
                   </span>

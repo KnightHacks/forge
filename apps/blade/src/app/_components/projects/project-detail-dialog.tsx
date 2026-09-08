@@ -15,6 +15,8 @@ import {
 } from "@forge/ui/dialog";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
+import { challengeTagStyle } from "./challenge-tag-style";
+
 type JudgeProject = RouterOutputs["projects"]["listJudge"]["projects"][number];
 type AdminProject = RouterOutputs["projects"]["listAdmin"]["projects"][number];
 type Project = JudgeProject | AdminProject;
@@ -36,15 +38,7 @@ function ChallengeBadges({ project }: { project: Project }) {
       {project.challenges.map((challenge) => (
         <Badge
           key={challenge.id}
-          style={
-            challenge.tagColor
-              ? {
-                  backgroundColor: challenge.tagColor,
-                  borderColor: challenge.tagColor,
-                  color: "white",
-                }
-              : undefined
-          }
+          style={challengeTagStyle(challenge.tagColor)}
           variant={challenge.isGeneral ? "outline" : "secondary"}
         >
           {challenge.label}

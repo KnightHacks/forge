@@ -192,8 +192,9 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
         <Alert>
           <AlertTitle>Rubric locked</AlertTitle>
           <AlertDescription>
-            The rubric cannot change after judging opens. Close and reopen
-            judging without changing the questions.
+            {data.configuration.state === "draft" && data.setupLocked
+              ? "A saved schedule locks the rubric. Open the Schedule tab and drop the eligible schedule before changing questions."
+              : "The rubric cannot change after judging opens. Close and reopen judging without changing the questions."}
           </AlertDescription>
         </Alert>
       ) : null}

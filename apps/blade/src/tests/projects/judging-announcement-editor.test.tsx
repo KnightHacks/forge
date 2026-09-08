@@ -221,10 +221,15 @@ describe("judging announcement editor", () => {
       rooms: [room],
       rubric: [],
     } as ControlData;
-    mutations.adminData = initialData;
+    mutations.adminData = { ...initialData, setupLocked: true };
     const view = render(
       <JudgingControlPanel hackathons={[]} initialData={initialData} />,
     );
+
+    expect(
+      screen.getByText(/A saved schedule locks room changes/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create room" })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Announce" }));
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue(

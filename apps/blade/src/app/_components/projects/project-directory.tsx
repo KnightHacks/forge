@@ -18,6 +18,7 @@ import {
 } from "@forge/ui/tooltip";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { challengeTagStyle } from "./challenge-tag-style";
 import { ProjectDetailDialog } from "./project-detail-dialog";
 
 type Project = RouterOutputs["projects"]["listJudge"]["projects"][number];
@@ -66,15 +67,7 @@ function ProjectBadges({ project }: { project: Project }) {
                 : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
           )}
           key={challenge.id}
-          style={
-            challenge.tagColor
-              ? {
-                  backgroundColor: challenge.tagColor,
-                  borderColor: challenge.tagColor,
-                  color: "white",
-                }
-              : undefined
-          }
+          style={challengeTagStyle(challenge.tagColor)}
           title={
             challenge.evaluationCount > 0
               ? `${challenge.evaluationCount} evaluation${challenge.evaluationCount === 1 ? "" : "s"}`

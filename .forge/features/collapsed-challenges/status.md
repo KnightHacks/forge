@@ -27,3 +27,16 @@ Validation for cleanup:
 - `pnpm db:migrate`: applied all 54 migrations on a fresh disposable database; a second run was a no-op.
 - `pnpm verify:precommit`: React analysis, formatting, lint, and 33 workspace typechecks passed. Lint reported existing warnings, with no errors.
 - Preview server stopped and disposable test databases removed. Screenshot deliverables are retained in the feature bundle.
+
+Review follow-up:
+
+- Human decision: restore main's add-only imports after scheduling. Replacement stays blocked; existing projects and memberships remain unchanged. Updated the spec and tests to match.
+- Both import entry points respect their disabled state, including a replacement dialog already open when a schedule appears.
+- Project tags choose black or white text from relative luminance in the directory, project details, and evaluation dialog. Room and rubric locks explain the saved schedule and where to drop it.
+- Duplicate copies of unchanged opt-in IDs no longer trip the feedback lock. Group/challenge updates record changed fields and before/after values; stale entities and malformed tag colors have specific error messages.
+- Retained independent group/prize identities when labels match, as required by the SRD. Regression coverage verifies re-import preserves that distinction. Deletion already rejects saved schedules and feedback before touching memberships; added coverage for those controlled errors.
+- CI run 34288075925 failed because the API surface snapshot omitted the four new group/challenge procedures. Reproduced the failure and updated only those four entries.
+- Full-suite validation also exposed a webhook test timeout: importing the shared API module inside the test used most of its five-second budget. Moved that import to collection without changing assertions or payment behavior. All 849 Blade tests pass.
+- `pnpm verify:precommit` passes React analysis, formatting, lint, and all 33 workspace typechecks. Lint reports existing warnings, with no errors.
+- `CI=true pnpm exec turbo run test --filter='!@forge/db'` passes all 28 tasks, including 938 API tests and 849 Blade tests. `CI=true` matches GitHub's environment; without it, this local checkout lacks `NEXT_PUBLIC_BLADE_URL` for the existing production-mode Discord config test.
+- Refreshed project screenshots and added add-only import and room-lock screenshots using disposable synthetic data. Verified the room lock at desktop and 320px widths; preview server and database removed afterward.

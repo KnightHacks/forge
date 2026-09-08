@@ -351,7 +351,7 @@ export function AdminProjectWorkspace({
             data && input ? (
               <div className="flex flex-wrap gap-2">
                 <ProjectImportDialog
-                  disabled={data.setupLocked}
+                  scheduleLocked={data.setupLocked}
                   hackathonId={input.hackathonId}
                   hackathonName={data.hackathon.displayName}
                   inventoryLocked={
@@ -380,7 +380,7 @@ export function AdminProjectWorkspace({
       ) : data && input ? (
         <div className="flex flex-wrap justify-end gap-2">
           <ProjectImportDialog
-            disabled={data.setupLocked}
+            scheduleLocked={data.setupLocked}
             hackathonId={input.hackathonId}
             hackathonName={data.hackathon.displayName}
             inventoryLocked={
