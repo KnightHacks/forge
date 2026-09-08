@@ -1,48 +1,80 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  judgingWindowMinutes,
-  judgingWindowStart,
+  judgingRoomActivity,
+  sortJudgingRooms,
 } from "~/lib/judging/schedule-display";
 
 const start = new Date("2026-09-07T16:03:00Z");
-describe("whole-slot judging window", () => {
-  it.each([7, 10, 12])(
-    "advances only at a %i-minute appointment boundary relative to the configured start",
-    (duration) => {
-      const end = new Date(start.getTime() + duration * 60_000);
-      expect(
-        judgingWindowStart(start, new Date(end.getTime() - 1), duration),
-      ).toEqual(start);
-      expect(judgingWindowStart(start, end, duration)).toEqual(end);
-      expect(
-        judgingWindowStart(start, new Date(end.getTime() + 1), duration),
-      ).toEqual(end);
-    },
-  );
-  it.each([7, 12, 45, 90])(
-    "navigates a full displayed grid for %i-minute appointments",
-    (duration) => {
-      const minutes = judgingWindowMinutes(duration);
-      const next = new Date(start.getTime() + minutes * 60_000);
-      expect(minutes).toBeGreaterThanOrEqual(60);
-      expect(minutes % duration).toBe(0);
-      expect(judgingWindowStart(start, next, duration)).toEqual(next);
-      expect(
-        judgingWindowStart(
-          start,
-          new Date(next.getTime() - minutes * 60_000),
-          duration,
-        ),
-      ).toEqual(start);
-    },
-  );
-  it("aligns manual navigation to the same reservation grid", () => {
+describe("live room activity", () => {
+  const rooms = [
+    { id: "general", scheduled: true },
+    { id: "sponsor", scheduled: true },
+    { id: "empty", scheduled: true },
+    { id: "mlh", scheduled: false },
+  ];
+  const appointments = ["general", "sponsor", "mlh"].map((roomId) => ({
+    roomId,
+    startsAt: new Date("2026-09-07T16:00:00Z"),
+    endsAt: new Date("2026-09-07T16:10:00Z"),
+  }));
+  it("counts scheduled rooms once and excludes MLH", () => {
     expect(
-      judgingWindowStart(start, new Date("2026-09-07T17:03:00Z"), 7),
-    ).toEqual(new Date("2026-09-07T16:59:00Z"));
+      judgingRoomActivity(
+        rooms,
+        [...appointments, ...appointments],
+        new Date("2026-09-07T16:00:00Z"),
+      ),
+    ).toEqual({ occupied: 2, idle: 1, total: 3 });
+  });
+  it("holds rooms through teardown, then releases them at the exact end", () => {
     expect(
-      judgingWindowStart(start, new Date("2026-09-07T16:02:59Z"), 7),
-    ).toEqual(new Date("2026-09-07T15:56:00Z"));
+      judgingRoomActivity(
+        rooms,
+        appointments,
+        new Date("2026-09-07T16:09:59Z"),
+      ),
+    ).toEqual({ occupied: 2, idle: 1, total: 3 });
+    expect(
+      judgingRoomActivity(
+        rooms,
+        appointments,
+        new Date("2026-09-07T16:10:00Z"),
+      ),
+    ).toEqual({ occupied: 0, idle: 3, total: 3 });
+  });
+  it("shows no active slots before judging and handles an empty inventory", () => {
+    expect(
+      judgingRoomActivity(
+        rooms,
+        appointments,
+        new Date("2026-09-07T15:59:59Z"),
+      ),
+    ).toEqual({ occupied: 0, idle: 3, total: 3 });
+    expect(judgingRoomActivity([], appointments, start)).toEqual({
+      occupied: 0,
+      idle: 0,
+      total: 0,
+    });
+  });
+});
+
+describe("room order", () => {
+  it("groups buildings and sorts room numbers naturally without mutating source order", () => {
+    const rooms = [
+      { id: "hec", buildingName: "HEC", name: "101" },
+      { id: "eng10", buildingName: "ENG", name: "10" },
+      { id: "unset", buildingName: null, name: "1" },
+      { id: "ba", buildingName: "BA", name: "201" },
+      { id: "eng2", buildingName: "eng", name: "2" },
+    ];
+    expect(sortJudgingRooms(rooms).map((room) => room.id)).toEqual([
+      "ba",
+      "eng2",
+      "eng10",
+      "hec",
+      "unset",
+    ]);
+    expect(rooms[0]?.id).toBe("hec");
   });
 });

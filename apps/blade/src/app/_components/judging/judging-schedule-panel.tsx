@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Clock3, RefreshCw } from "lucide-react";
+import { Clock3, RefreshCw } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
@@ -23,9 +23,9 @@ import type { AppointmentSelection } from "./appointment-move-dialog";
 import type { BoardAppointment } from "./schedule-board";
 import {
   appointmentStatusLabels,
+  judgingRoomActivity,
   judgingTime,
-  judgingWindowMinutes,
-  judgingWindowStart,
+  sortJudgingRooms,
 } from "~/lib/judging/schedule-display";
 import { useJudgingClock } from "~/lib/judging/use-judging-clock";
 import { api } from "~/trpc/react";
@@ -54,12 +54,11 @@ export function JudgingSchedulePanel({
   const data = query.data;
   const now = useJudgingClock(data.serverNow);
   const [view, setView] = useState({
-    mode: "hour" as "hour" | "agenda" | "project",
+    mode: "timeline" as "timeline" | "agenda" | "project",
     projectId: "",
     roomId: "all",
     status: "all",
     search: "",
-    offset: null as number | null,
   });
   const [acknowledgedCandidate, setAcknowledgedCandidate] = useState<
     string | null
@@ -140,6 +139,11 @@ export function JudgingSchedulePanel({
           canMove: false,
         };
       });
+  const roomActivity = judgingRoomActivity(
+    data.source.rooms,
+    data.appointments,
+    now,
+  );
   const visibleAppointments = appointments.filter(
     (appointment) =>
       (view.status === "all" || appointment.status === view.status) &&
@@ -147,21 +151,11 @@ export function JudgingSchedulePanel({
         .toLowerCase()
         .includes(view.search.trim().toLowerCase()),
   );
-  const rooms = data.source.rooms.filter(
-    (room) =>
-      room.scheduled && (view.roomId === "all" || room.id === view.roomId),
+  const scheduledRooms = sortJudgingRooms(
+    data.source.rooms.filter((room) => room.scheduled),
   );
-  const liveStart = timing
-    ? Math.max(
-        timing.startsAt.getTime(),
-        Math.min(now.getTime(), timing.endsAt.getTime()),
-      )
-    : now.getTime();
-  const gridStart = timing?.startsAt.getTime() ?? now.getTime();
-  const windowStart = judgingWindowStart(
-    new Date(gridStart),
-    new Date(view.offset ?? liveStart),
-    duration,
+  const rooms = scheduledRooms.filter(
+    (room) => view.roomId === "all" || room.id === view.roomId,
   );
   const unassigned = data.schedule
     ? data.source.tasks.filter(
@@ -276,6 +270,31 @@ export function JudgingSchedulePanel({
             </Button>
           ) : null}
         </div>
+        {data.schedule ? (
+          <div className="w-full border-t border-white/10 pt-3">
+            <h3 className="text-sm font-medium">Rooms right now</h3>
+            <dl
+              className="mt-2 grid grid-cols-3 gap-3"
+              aria-label="Live room activity"
+            >
+              {[
+                ["In a slot", roomActivity.occupied],
+                ["No current slot", roomActivity.idle],
+                ["Total rooms", roomActivity.total],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-sm text-muted-foreground">{label}</dt>
+                  <dd className="font-mono text-xl font-semibold tabular-nums">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-2 text-xs text-muted-foreground">
+              All scheduled rooms, including setup and teardown. MLH excluded.
+            </p>
+          </div>
+        ) : null}
       </section>
       {!data.schedule && job ? (
         <div className="space-y-2 text-sm" role="status">
@@ -386,7 +405,7 @@ export function JudgingSchedulePanel({
       <div className="flex flex-wrap gap-2" aria-label="Schedule views">
         {(
           [
-            ["hour", "60-minute timeline"],
+            ["timeline", "Room timeline"],
             ["agenda", "Full room agendas"],
             ["project", "Project itinerary"],
           ] as const
@@ -427,13 +446,11 @@ export function JudgingSchedulePanel({
               }
             >
               <option value="all">All scheduled rooms</option>
-              {data.source.rooms
-                .filter((room) => room.scheduled)
-                .map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.buildingName} {room.name}
-                  </option>
-                ))}
+              {scheduledRooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.buildingName} {room.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-1">
@@ -456,47 +473,6 @@ export function JudgingSchedulePanel({
               )}
             </select>
           </div>
-          {view.mode === "hour" ? (
-            <div className="flex gap-1">
-              <Button
-                className="min-h-11"
-                variant="outline"
-                aria-label="Previous window"
-                onClick={() =>
-                  setView({
-                    ...view,
-                    offset:
-                      windowStart.getTime() -
-                      judgingWindowMinutes(duration) * 60_000,
-                  })
-                }
-              >
-                <ChevronUp className="size-4" />
-              </Button>
-              <Button
-                className="min-h-11"
-                variant="outline"
-                onClick={() => setView({ ...view, offset: null })}
-              >
-                Now
-              </Button>
-              <Button
-                className="min-h-11"
-                variant="outline"
-                aria-label="Next window"
-                onClick={() =>
-                  setView({
-                    ...view,
-                    offset:
-                      windowStart.getTime() +
-                      judgingWindowMinutes(duration) * 60_000,
-                  })
-                }
-              >
-                <ChevronDown className="size-4" />
-              </Button>
-            </div>
-          ) : null}
         </div>
       ) : null}
       {view.mode === "project" ? (
@@ -517,7 +493,8 @@ export function JudgingSchedulePanel({
           appointments={visibleAppointments}
           rooms={rooms}
           timeZone={timeZone}
-          windowStart={windowStart}
+          startsAt={timing?.startsAt ?? now}
+          endsAt={timing?.endsAt ?? new Date(now.getTime() + 60 * 60_000)}
           durationMinutes={duration}
           mode={view.mode}
           now={now}

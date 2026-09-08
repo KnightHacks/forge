@@ -30,19 +30,46 @@ export const appointmentStatusLabels = {
   complete: "Judged",
 } as const;
 
-/** Advance the live board on appointment boundaries, keeping cards whole. */
-export function judgingWindowStart(
-  startsAt: Date,
-  at: Date,
-  durationMinutes: number,
+/** Count reserved rooms at the live clock, independent of board filters. */
+export function judgingRoomActivity(
+  rooms: { id: string; scheduled: boolean }[],
+  appointments: { roomId: string; startsAt: Date; endsAt: Date }[],
+  now: Date,
 ) {
-  const duration = durationMinutes * 60_000;
-  return new Date(
-    startsAt.getTime() +
-      Math.floor((at.getTime() - startsAt.getTime()) / duration) * duration,
+  const scheduledRooms = new Set(
+    rooms.filter((room) => room.scheduled).map((room) => room.id),
   );
+  const occupiedRooms = new Set(
+    appointments
+      .filter(
+        (appointment) =>
+          scheduledRooms.has(appointment.roomId) &&
+          appointment.startsAt <= now &&
+          now < appointment.endsAt,
+      )
+      .map((appointment) => appointment.roomId),
+  );
+  return {
+    occupied: occupiedRooms.size,
+    idle: scheduledRooms.size - occupiedRooms.size,
+    total: scheduledRooms.size,
+  };
 }
 
-export function judgingWindowMinutes(durationMinutes: number) {
-  return Math.max(1, Math.ceil(60 / durationMinutes)) * durationMinutes;
+export function sortJudgingRooms<
+  T extends { buildingName: string | null; name: string; id: string },
+>(rooms: T[]) {
+  return [...rooms].sort(
+    (a, b) =>
+      (a.buildingName === null ? 1 : 0) - (b.buildingName === null ? 1 : 0) ||
+      (a.buildingName ?? "").localeCompare(b.buildingName ?? "", "en", {
+        numeric: true,
+        sensitivity: "base",
+      }) ||
+      a.name.localeCompare(b.name, "en", {
+        numeric: true,
+        sensitivity: "base",
+      }) ||
+      a.id.localeCompare(b.id),
+  );
 }

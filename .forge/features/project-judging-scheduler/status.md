@@ -249,3 +249,11 @@ The organizer timeline remains the default view. Rooms now run across columns wi
 Validation passed: `pnpm verify:precommit`, including React analysis, format, lint, and all 33 typecheck tasks. Desktop and 390px mobile browser checks covered column alignment, chronological vertical placement, sticky room headings while scrolling, appointment inspection, switching to agendas, and containment of horizontal scrolling within the board. Reviewed desktop, scrolled, and mobile screenshots; the image files remain outside the repository.
 
 Quick Forge review found no actionable issues in this UI diff. Solver implementation and benchmarking were outside this review's scope.
+
+### Continuous scrolling and live room activity
+
+The owner's follow-up replaces hourly navigation with a continuous timeline from judging start through end. Cards stay at fixed schedule positions. Native scrolling covers both axes, left/right buttons navigate room columns, and Now scrolls to the live clock without resetting the selected horizontal position. Rooms and the room dropdown sort by building, then natural room-number order. Missing buildings sort last.
+
+The saved-schedule header shows rooms in a slot, rooms without a current slot, and total scheduled rooms. Counts use the server-aligned clock and all saved appointments independently of view filters. Setup and teardown occupy the room; the exact end releases it. MLH is excluded. No API, database, or solver changes are included.
+
+Validation passed: `pnpm verify:precommit` with all 33 typecheck tasks, four focused room activity/sorting tests, and a quick Forge review with no actionable findings. Visible browser checks used the isolated fixture plus read-only response expansion to 25 rooms. They verified native horizontal scrolling, left/right controls, full-window vertical scrolling, Now preserving horizontal position, building order, filter-independent totals, appointment inspection, and 390px mobile containment. Desktop and phone screenshots were inspected and remain outside the repository.

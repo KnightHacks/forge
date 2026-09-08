@@ -219,7 +219,7 @@ Use guest QR entry on 320- and 390-pixel phone viewports. Complete a score, insp
 ### Organizer and directory follow-up verification
 
 - Select a project with different-building reservations supplied out of order. Show all reservations chronologically, correct locations, complete/partial/future states, end-to-start gaps, and a reduced-break warning where applicable. Room/status filters cannot hide itinerary entries. Inspect or reassign one entry without changing another.
-- At one millisecond before and exactly at the end of 7-, 10-, and 12-minute slots, hold the live window at the slot start, then advance to the next boundary. Browser cards retain their full width and dequeue after their slot. Manual navigation stays on the schedule's grid.
+- Across 7-, 10-, and 12-minute slot boundaries, keep timeline cards at their full size and fixed schedule positions. Only the current-time marker and live occupancy change; polling must preserve the organizer's scroll position.
 - Appointment results include complete and partial judge identities, completed responses, and a complete-only average scoped to that appointment ID. Reject unrelated hackathon and unauthorized reads.
 - Room-only filtering defaults on for guests and authenticated judges. With several General rooms, results and pagination count only the selected room's assignments. Turning it off restores the permitted inventory. MLH remains untimed and challenge-scoped.
 - Wrong-room and wrong-slot actions remain disabled. Hover and keyboard focus expose a reason without opening an evaluation dialog. Check 320 px and 390 px guest views, a short viewport, and desktop.
@@ -240,3 +240,10 @@ Competing continuations may start only one native search per lease. Renew owners
 ### TC-CP-004: Shared API consumer builds
 
 Build Blade and Guild with the CI example environment. Both import the shared API at runtime and must keep the native CP-SAT package external to Next bundling. Their standalone output must include the platform addon and its libraries. Verify a native solve from the standalone files in an isolated, network-disabled Node container so repository dependencies cannot hide missing assets.
+
+### Continuous room timeline and live totals
+
+- Scroll from judging start to end without changing time windows. Confirm later appointments and trailing overflow remain reachable, with full cards and sticky room headings.
+- With 25 rooms, use horizontal scrolling and left/right controls. Confirm building grouping and natural room-number order, without widening the page on mobile.
+- Now scrolls to the live clock while preserving the horizontal room position. Polling does not reset either scroll position.
+- Live totals count all scheduled rooms independently of room/search/status filters. Occupancy includes setup and teardown, releases at the exact slot end, and excludes MLH. Check empty inventory and times before/after judging.

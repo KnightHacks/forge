@@ -167,7 +167,7 @@ Generation continuation and reconciliation remain API-owned functions called fro
 
 ## Frontend contract
 
-Add Schedule to Command Center with server-loaded initial configuration/data. Use a full-width schedule area, compact toolbar, bounded room columns, a live 60-minute view, and a full room agenda. Filter by room/project/status, navigate time manually, and return to now without losing the chosen view during polling.
+Add Schedule to Command Center with server-loaded initial configuration/data. Use a full-width schedule area, compact toolbar, bounded room columns, a continuous full-window timeline, and a full room agenda. Filter by room/project/status, scroll through time and rooms, and return to now without losing the chosen view during polling.
 
 Officer polling is five seconds; judge schedule polling is fifteen seconds, with lightweight payloads and visible stale/error state. Timers render from a server timestamp/deadline anchor; polling is not the clock. Preserve user inputs and open forms across query refresh.
 
@@ -201,7 +201,7 @@ No product questions remain. Implementation discoveries must be recorded in stat
 
 ### Review follow-up implementation
 
-The organizer board has three view modes: whole-slot room timeline, room agendas, and project itinerary. The default timeline shows rooms in columns with sticky room headings and appointments progressing downward through time. The itinerary derives a complete project list from all appointments, sorts the selected project's reservations by start time and ID, and computes end-to-start gaps against the configured building rules. It shares appointment inspection and individual reassignment. Live window start is aligned to the saved schedule's grid, and the board displays enough full slots to cover at least an hour. Cards advance at slot boundaries with reduced-motion support.
+The organizer board has three view modes: full-window room timeline, room agendas, and project itinerary. The default timeline shows rooms in columns with sticky room headings and appointments progressing downward through time. The itinerary derives a complete project list from all appointments, sorts the selected project's reservations by start time and ID, and computes end-to-start gaps against the configured building rules. It shares appointment inspection and individual reassignment. The timeline renders the entire configured window with fixed card positions. Native scrolling covers both axes; left/right buttons scroll the room columns, and Now scrolls vertically to the server-aligned clock. Room ordering uses building name followed by natural room-number order. Live occupancy uses all scheduled rooms and unfiltered saved appointments, with an inclusive start and exclusive end; it includes setup/teardown and excludes MLH rooms.
 
 `judging.getAppointmentResults` is an officer read keyed by hackathon and appointment ID. It lists complete and partial judge identities, exposes ratings/responses only for complete submissions, and averages per-judge means for that appointment. Earlier/unlinked project results are identified separately and cannot affect that average. The inspection dialog polls every five seconds while open.
 
