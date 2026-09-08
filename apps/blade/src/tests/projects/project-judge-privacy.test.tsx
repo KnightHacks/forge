@@ -877,7 +877,17 @@ describe("evaluation feedback visibility", () => {
         challengeLabel="General"
         onOpenChange={vi.fn()}
         open
-        project={{ id: judgeProject.id, title: judgeProject.title }}
+        project={{
+          id: judgeProject.id,
+          title: judgeProject.title,
+          challenges: [
+            {
+              id: "child",
+              label: "First-time hacker",
+              parentId: "challenge-1",
+            },
+          ],
+        }}
         workspace={{
           challengeId: "challenge-1",
           displayAllResults: false,
@@ -899,6 +909,9 @@ describe("evaluation feedback visibility", () => {
       />,
     );
 
+    expect(
+      screen.getByRole("group", { name: "Challenge opt-ins" }),
+    ).toHaveTextContent("First-time hacker");
     expect(
       screen.getByText("Your feedback is shared with hackers"),
     ).toBeInTheDocument();

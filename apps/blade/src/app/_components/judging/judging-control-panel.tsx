@@ -147,7 +147,8 @@ function RoomEditor({
   );
   const [challengeId, setChallengeId] = useState(
     room && room !== "new"
-      ? room.challengeId
+      ? (data.challenges.find((challenge) => challenge.id === room.challengeId)
+          ?.parentId ?? room.challengeId)
       : (data.challenges.find((challenge) => !challenge.parentId)?.id ?? ""),
   );
   const challengeChanges =
@@ -157,6 +158,7 @@ function RoomEditor({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (data.setupLocked) return;
     const form = new FormData(event.currentTarget);
     const name = formString(form.get("name"));
     const confirmation = formString(form.get("confirmation"));

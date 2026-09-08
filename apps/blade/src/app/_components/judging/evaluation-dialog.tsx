@@ -315,6 +315,7 @@ function EvaluationEditor({
           ) ? (
             <div
               className="mt-2 flex max-h-28 flex-wrap gap-2 overflow-y-auto"
+              role="group"
               aria-label="Challenge opt-ins"
             >
               {project.challenges

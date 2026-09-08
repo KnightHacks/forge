@@ -508,10 +508,10 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         ...guestListInput,
         challengeIds: [mlhOptInId],
       }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(
       guest.projects.listJudge({ ...guestListInput, challengeIds: [mlhId] }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     const scheduleView = await member.judging.listJudgeSchedule({
       hackathonId,
       challengeId: firstTimeId,
