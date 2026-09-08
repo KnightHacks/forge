@@ -17,6 +17,7 @@ import {
 import { EvaluationAuditPanel } from "./evaluation-audit-panel";
 import { JudgingConfigurationPanel } from "./judging-configuration-panel";
 import { JudgingControlPanel } from "./judging-control-panel";
+import { JudgingSchedulePanel } from "./judging-schedule-panel";
 
 type AdminData = RouterOutputs["projects"]["listAdmin"];
 type ControlData = RouterOutputs["judging"]["listAdmin"];
@@ -30,6 +31,7 @@ export function ProjectCommandCenter({
   projectData,
   projectInput,
   selectedTab,
+  scheduleData,
 }: {
   controlData: ControlData;
   evaluations: Evaluations;
@@ -39,7 +41,8 @@ export function ProjectCommandCenter({
     deleted: "active" | "all" | "deleted";
     hackathonId: string;
   };
-  selectedTab: "evaluations" | "projects" | "rooms" | "setup";
+  selectedTab: "evaluations" | "projects" | "rooms" | "setup" | "schedule";
+  scheduleData: RouterOutputs["judging"]["listScheduleAdmin"] | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -94,10 +97,11 @@ export function ProjectCommandCenter({
         title="Project command center"
       />
       <Tabs onValueChange={selectTab} value={activeTab}>
-        <TabsList className="grid h-11 w-full grid-cols-4 sm:w-fit sm:min-w-[34rem]">
+        <TabsList className="flex h-auto min-h-11 w-full flex-wrap gap-1 sm:w-fit sm:min-w-[34rem]">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="rooms">Rooms</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
         </TabsList>
         <TabsContent className="mt-4" value="setup">
@@ -126,6 +130,16 @@ export function ProjectCommandCenter({
             evaluations={evaluations}
             timeZone={controlData.hackathon.timezone}
           />
+        </TabsContent>
+        <TabsContent className="mt-4" value="schedule">
+          {scheduleData ? (
+            <JudgingSchedulePanel
+              key={controlData.hackathon.id}
+              initialData={scheduleData}
+              hackathonId={controlData.hackathon.id}
+              timeZone={controlData.hackathon.timezone}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </main>

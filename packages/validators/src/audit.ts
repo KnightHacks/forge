@@ -485,6 +485,45 @@ export const AUDIT_ACTION_CATALOG = {
     "projectId",
     "revision",
   ]),
+  "judging.schedule.generated": policy(
+    "hackathons",
+    "Generated judging schedule",
+    ["jobId", "status"],
+  ),
+  "judging.schedule.saved": policy("hackathons", "Saved judging schedule", [
+    "scheduleId",
+    "appointmentCount",
+    "reducedBreakCount",
+  ]),
+  "judging.schedule.dropped": policy("hackathons", "Dropped judging schedule", [
+    "scheduleId",
+  ]),
+  "judging.appointment.contacts_viewed": policy(
+    "hackathons",
+    "Viewed judging appointment contacts",
+    ["projectId", "challengeId", "appointmentId", "memberCount"],
+  ),
+  "judging.appointment.moved": policy(
+    "hackathons",
+    "Moved judging appointment",
+    [
+      "appointmentId",
+      "fromRoomId",
+      "toRoomId",
+      "fromStartsAt",
+      "toStartsAt",
+      "reducedBreakCount",
+    ],
+  ),
+  "judging.appointment.assigned": policy(
+    "hackathons",
+    "Assigned judging appointment",
+    ["appointmentId", "projectId", "challengeId", "roomId", "startsAt"],
+  ),
+  "judging.building.created": policy("hackathons", "Created judging building", [
+    "buildingId",
+    "name",
+  ]),
   "judging.room.created": policy("hackathons", "Created judging room", [
     "challengeId",
   ]),
@@ -1051,6 +1090,10 @@ export const AUDIT_TARGET_TYPES = [
   "issue_template",
   "issue_tree",
   "judging_room",
+  "judging_building",
+  "judging_schedule",
+  "judging_schedule_job",
+  "judging_appointment",
   "member",
   "member_directory",
   "provider",

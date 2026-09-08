@@ -10,6 +10,11 @@ const monorepoRoot = path.join(
 const config = {
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
+  // The shared API includes the native solver; match apps/blade/next.config.js.
+  serverExternalPackages: ["@ortools-node/cp-sat"],
+  outputFileTracingIncludes: {
+    "/*": ["../../node_modules/@ortools-node/cp-sat-*/**/*"],
+  },
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */

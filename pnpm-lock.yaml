@@ -1270,6 +1270,9 @@ importers:
       '@forge/validators':
         specifier: workspace:*
         version: link:../validators
+      '@ortools-node/cp-sat':
+        specifier: 9.15.0-node.0-rc.2
+        version: 9.15.0-node.0-rc.2
       '@t3-oss/env-core':
         specifier: ^0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
@@ -2569,6 +2572,9 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@bufbuild/protobuf@2.14.1':
+    resolution: {integrity: sha512-agRJn3+EJDUe8AvxTx/LnHA/GErvLE62pSaSk7+MwFOtOv8eWBu/qCq2qoZjBjVZ3C2aiFJCveuSs17KMkYGOw==}
 
   '@csstools/color-helpers@6.1.0':
     resolution: {integrity: sha512-064IFJdjTfUqnjpCVpMOdbr8FLQBhinbZj6yRv2An2E41O/pLEXqfFRWqGq/SxlE5PEUYTlvWsG2r8MswAVvkg==}
@@ -4121,6 +4127,46 @@ packages:
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
     engines: {node: '>=14'}
+
+  '@ortools-node/cp-sat-darwin-arm64@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-H2mfd6FftyC4xUpmkmriZhD8IjidfaftKJH91lEyb22ie6d1+7ZMwteXwkUzFzDrhzf1bMH5USNgZOrHIFObXw==}
+    engines: {node: '>=20.0.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@ortools-node/cp-sat-darwin-x64@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-yMp/YCp0Z7QI8k24EHi9OVw9VnHLHXn/9kyA3xKqijV/nTvT2LY0mt/SPxEMS2veVaaBq0lUawiB9c4Qjx8iNQ==}
+    engines: {node: '>=20.0.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@ortools-node/cp-sat-linux-arm64-musl@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-9KTkF0VXPiD/dj9df8RvexwrK1Ya1s0pMMxgslEOkMAOdi0qysILu0/ZT72AWDnrzPJflFOVjlPMMRUX2Owa7w==}
+    engines: {node: '>=20.0.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@ortools-node/cp-sat-linux-arm64@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-lHDkErNpK+bx92honzE2Yw2RPuaPaMOmNwVeb8EL+1vEe5uyOX8J8tSBPIvMzOOa/cPcowpWlE7EVmcZOCk2/Q==}
+    engines: {node: '>=20.0.0'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@ortools-node/cp-sat-linux-x64-musl@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-NM6GiEugRwNw6rkTh/vQAUMyfdOgxR6QRuUUZ2EIbbRV4lD3NIzLQRyPU98TIOoKovY+V+cm27TLXmuMXoJO2w==}
+    engines: {node: '>=20.0.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@ortools-node/cp-sat-linux-x64@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-1Bj6NFNc4hskKLgzuakqNCv3SDC3lPyVfdeY9p5FaHyQLhM8WOtZON13YF/j0/N5zGUOyvBIkuHERqBG/XlAKA==}
+    engines: {node: '>=20.0.0'}
+    cpu: [x64]
+    os: [linux]
+
+  '@ortools-node/cp-sat@9.15.0-node.0-rc.2':
+    resolution: {integrity: sha512-ov82LCJT+utGJdPLHElLvNRDYIeGr5Dh7lqYaEfhbszaKqN7maEQgMxMQK9xv0q8LYOyIa3DCu+7gbAaN+VioQ==}
+    engines: {node: '>=20.0.0'}
 
   '@oxc-parser/binding-android-arm-eabi@0.140.0':
     resolution: {integrity: sha512-ZfjDZ422mo7eo3b3VltqNsV9kmv1qt/sPEAMSl64iOSwhVfd0eIZ9LB79Mbs1xYXJnk7WSROwzBCKDIiVxPTvQ==}
@@ -11518,6 +11564,8 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
+  '@bufbuild/protobuf@2.14.1': {}
+
   '@csstools/color-helpers@6.1.0': {}
 
   '@csstools/css-calc@3.3.0(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)':
@@ -12763,6 +12811,35 @@ snapshots:
   '@nolyfill/is-core-module@1.0.39': {}
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
+
+  '@ortools-node/cp-sat-darwin-arm64@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat-darwin-x64@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat-linux-arm64-musl@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat-linux-arm64@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat-linux-x64-musl@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat-linux-x64@9.15.0-node.0-rc.2':
+    optional: true
+
+  '@ortools-node/cp-sat@9.15.0-node.0-rc.2':
+    dependencies:
+      '@bufbuild/protobuf': 2.14.1
+    optionalDependencies:
+      '@ortools-node/cp-sat-darwin-arm64': 9.15.0-node.0-rc.2
+      '@ortools-node/cp-sat-darwin-x64': 9.15.0-node.0-rc.2
+      '@ortools-node/cp-sat-linux-arm64': 9.15.0-node.0-rc.2
+      '@ortools-node/cp-sat-linux-arm64-musl': 9.15.0-node.0-rc.2
+      '@ortools-node/cp-sat-linux-x64': 9.15.0-node.0-rc.2
+      '@ortools-node/cp-sat-linux-x64-musl': 9.15.0-node.0-rc.2
 
   '@oxc-parser/binding-android-arm-eabi@0.140.0':
     optional: true

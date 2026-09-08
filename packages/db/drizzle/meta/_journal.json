@@ -358,6 +358,20 @@
       "when": 1788731370167,
       "tag": "0050_marvelous_payback",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1788806096276,
+      "tag": "0051_modern_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1788816161752,
+      "tag": "0052_tan_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

@@ -2279,6 +2279,24 @@ export const HackathonJudgingConfiguration = createTable(
   }),
 );
 
+export const JudgingBuilding = createTable(
+  "judging_building",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.varchar({ length: 80 }).notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    nameUnique: uniqueIndex("knight_hacks_judging_building_name_unique").on(
+      sql`lower(btrim(${table.name}))`,
+    ),
+    nameNotBlank: check(
+      "knight_hacks_judging_building_name_check",
+      sql`length(btrim(${table.name})) > 0`,
+    ),
+  }),
+);
+
 export const JudgingRoom = createTable(
   "judging_room",
   (t) => ({
@@ -2289,6 +2307,9 @@ export const JudgingRoom = createTable(
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     challengeId: t.uuid().notNull(),
     name: t.varchar({ length: 120 }).notNull(),
+    buildingId: t
+      .uuid()
+      .references(() => JudgingBuilding.id, { onDelete: "restrict" }),
     displayOrder: t.integer().notNull().default(0),
     discordThreadId: t.varchar({ length: 20 }),
     archivedAt: t.timestamp({ withTimezone: true }),
@@ -2315,10 +2336,152 @@ export const JudgingRoom = createTable(
       "knight_hacks_judging_room_active_name_unique",
     )
       .on(table.hackathonId, table.name)
-      .where(sql`${table.archivedAt} IS NULL`),
+      .where(sql`${table.archivedAt} IS NULL AND ${table.buildingId} IS NULL`),
+    activeLocationUnique: uniqueIndex(
+      "knight_hacks_judging_room_active_location_unique",
+    )
+      .on(table.hackathonId, table.buildingId, sql`lower(btrim(${table.name}))`)
+      .where(
+        sql`${table.archivedAt} IS NULL AND ${table.buildingId} IS NOT NULL`,
+      ),
     hackathonIdx: index("knight_hacks_judging_room_hackathon_idx").on(
       table.hackathonId,
       table.displayOrder,
+    ),
+  }),
+);
+
+export const JudgingScheduleJob = createTable(
+  "judging_schedule_job",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    createdByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    sourceFingerprint: t.text().notNull(),
+    timing: t.jsonb().notNull(),
+    problem: t.jsonb().notNull(),
+    checkpoint: t.jsonb().notNull(),
+    status: t.varchar({ length: 24 }).notNull().default("searching"),
+    revision: t.integer().notNull().default(1),
+    leaseToken: t.uuid(),
+    leaseExpiresAt: t.timestamp({ withTimezone: true }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    expiresAt: t.timestamp({ withTimezone: true }).notNull(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    hackathonIdx: index("knight_hacks_judging_schedule_job_hackathon_idx").on(
+      table.hackathonId,
+      table.createdAt,
+    ),
+  }),
+);
+
+export const JudgingSchedule = createTable(
+  "judging_schedule",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    startsAt: t.timestamp({ withTimezone: true }).notNull(),
+    endsAt: t.timestamp({ withTimezone: true }).notNull(),
+    setupMinutes: t.integer().notNull(),
+    judgingMinutes: t.integer().notNull(),
+    teardownMinutes: t.integer().notNull(),
+    sameBuildingBreakMinutes: t.integer().notNull(),
+    differentBuildingBreakMinutes: t.integer().notNull(),
+    reducedBreaksAcknowledgedAt: t.timestamp({ withTimezone: true }),
+    firstResultAt: t.timestamp({ withTimezone: true }),
+    savedByUserId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    onePerHackathon: unique(
+      "knight_hacks_judging_schedule_hackathon_unique",
+    ).on(table.hackathonId),
+    scopeUnique: unique("knight_hacks_judging_schedule_scope_unique").on(
+      table.id,
+      table.hackathonId,
+    ),
+    timingCheck: check(
+      "knight_hacks_judging_schedule_timing_check",
+      sql`${table.endsAt} > ${table.startsAt} AND ${table.setupMinutes} >= 0 AND ${table.judgingMinutes} > 0 AND ${table.teardownMinutes} >= 0 AND ${table.sameBuildingBreakMinutes} > 0 AND ${table.differentBuildingBreakMinutes} >= ${table.sameBuildingBreakMinutes}`,
+    ),
+    minuteCheck: check(
+      "knight_hacks_judging_schedule_minute_check",
+      sql`extract(second from ${table.startsAt}) = 0 AND extract(second from ${table.endsAt}) = 0`,
+    ),
+  }),
+);
+
+export const JudgingAppointment = createTable(
+  "judging_appointment",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    scheduleId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    projectId: t.uuid().notNull(),
+    challengeId: t.uuid().notNull(),
+    roomId: t.uuid().notNull(),
+    startsAt: t.timestamp({ withTimezone: true }).notNull(),
+    deadlineAt: t.timestamp({ withTimezone: true }).notNull(),
+    endsAt: t.timestamp({ withTimezone: true }).notNull(),
+    revision: t.integer().notNull().default(1),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    scheduleScopeFk: foreignKey({
+      columns: [table.scheduleId, table.hackathonId],
+      foreignColumns: [JudgingSchedule.id, JudgingSchedule.hackathonId],
+      name: "knight_hacks_judging_appointment_schedule_fk",
+    }).onDelete("cascade"),
+    roomScopeFk: foreignKey({
+      columns: [table.roomId, table.hackathonId],
+      foreignColumns: [JudgingRoom.id, JudgingRoom.hackathonId],
+      name: "knight_hacks_judging_appointment_room_fk",
+    }).onDelete("restrict"),
+    projectChallengeScopeFk: foreignKey({
+      columns: [table.projectId, table.challengeId, table.hackathonId],
+      foreignColumns: [
+        ProjectToChallenge.projectId,
+        ProjectToChallenge.challengeId,
+        ProjectToChallenge.hackathonId,
+      ],
+      name: "knight_hacks_judging_appointment_project_challenge_fk",
+    }).onDelete("restrict"),
+    taskUnique: unique("knight_hacks_judging_appointment_task_unique").on(
+      table.scheduleId,
+      table.projectId,
+      table.challengeId,
+    ),
+    slotUnique: unique("knight_hacks_judging_appointment_room_slot_unique").on(
+      table.scheduleId,
+      table.roomId,
+      table.startsAt,
+    ),
+    scopeUnique: unique("knight_hacks_judging_appointment_scope_unique").on(
+      table.id,
+      table.hackathonId,
+    ),
+    timesCheck: check(
+      "knight_hacks_judging_appointment_times_check",
+      sql`${table.startsAt} < ${table.deadlineAt} AND ${table.deadlineAt} <= ${table.endsAt}`,
+    ),
+    projectIdx: index("knight_hacks_judging_appointment_project_idx").on(
+      table.projectId,
+      table.startsAt,
     ),
   }),
 );
@@ -2566,6 +2729,9 @@ export const ProjectEvaluation = createTable(
     challengeId: t.uuid().notNull(),
     judgeId: t.uuid().notNull(),
     revision: t.integer().notNull().default(1),
+    isComplete: t.boolean().notNull().default(true),
+    appointmentId: t.uuid(),
+    autoSubmittedAt: t.timestamp({ withTimezone: true }),
     createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: t
       .timestamp({ withTimezone: true })
@@ -2574,6 +2740,11 @@ export const ProjectEvaluation = createTable(
       .$onUpdate(() => new Date()),
   }),
   (table) => ({
+    appointmentScopeFk: foreignKey({
+      columns: [table.appointmentId, table.hackathonId],
+      foreignColumns: [JudgingAppointment.id, JudgingAppointment.hackathonId],
+      name: "knight_hacks_project_evaluation_appointment_fk",
+    }).onDelete("restrict"),
     projectChallengeScopeFk: foreignKey({
       columns: [table.projectId, table.challengeId, table.hackathonId],
       foreignColumns: [
@@ -2600,6 +2771,68 @@ export const ProjectEvaluation = createTable(
     judgeIdx: index("knight_hacks_project_evaluation_judge_idx").on(
       table.judgeId,
       table.updatedAt,
+    ),
+  }),
+);
+
+export const ProjectEvaluationDraft = createTable(
+  "project_evaluation_draft",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t.uuid().notNull(),
+    projectId: t.uuid().notNull(),
+    challengeId: t.uuid().notNull(),
+    judgeId: t.uuid().notNull(),
+    appointmentId: t.uuid(),
+    evaluationId: t
+      .uuid()
+      .references(() => ProjectEvaluation.id, { onDelete: "cascade" }),
+    baseEvaluationRevision: t.integer(),
+    ratings: t
+      .jsonb()
+      .$type<{ itemId: string; value: number }[]>()
+      .notNull()
+      .default([]),
+    responses: t
+      .jsonb()
+      .$type<{ itemId: string; value: string; isPublic: boolean }[]>()
+      .notNull()
+      .default([]),
+    deadlineAt: t.timestamp({ withTimezone: true }),
+    reconciliationFailedAt: t.timestamp({ withTimezone: true }),
+    reconciliationErrorCode: t.text(),
+    revision: t.integer().notNull().default(1),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    appointmentScopeFk: foreignKey({
+      columns: [table.appointmentId, table.hackathonId],
+      foreignColumns: [JudgingAppointment.id, JudgingAppointment.hackathonId],
+      name: "knight_hacks_evaluation_draft_appointment_fk",
+    }).onDelete("cascade"),
+    projectScopeFk: foreignKey({
+      columns: [table.projectId, table.challengeId, table.hackathonId],
+      foreignColumns: [
+        ProjectToChallenge.projectId,
+        ProjectToChallenge.challengeId,
+        ProjectToChallenge.hackathonId,
+      ],
+      name: "knight_hacks_evaluation_draft_project_fk",
+    }).onDelete("cascade"),
+    judgeScopeFk: foreignKey({
+      columns: [table.judgeId, table.hackathonId],
+      foreignColumns: [Judge.id, Judge.hackathonId],
+      name: "knight_hacks_evaluation_draft_judge_fk",
+    }).onDelete("cascade"),
+    authorUnique: unique("knight_hacks_evaluation_draft_author_unique").on(
+      table.judgeId,
+      table.projectId,
+      table.challengeId,
+    ),
+    dueIdx: index("knight_hacks_evaluation_draft_due_idx").on(
+      table.hackathonId,
+      table.deadlineAt,
     ),
   }),
 );

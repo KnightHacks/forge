@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { RouterOutputs } from "@forge/api";
 
 import { EvaluationDialog } from "~/app/_components/judging/evaluation-dialog";
+import { JudgeSubmissions } from "~/app/_components/judging/judge-submissions";
 import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
 import { ProjectDetailDialog } from "~/app/_components/projects/project-detail-dialog";
 import { ProjectDirectory } from "~/app/_components/projects/project-directory";
@@ -19,6 +20,22 @@ const navigation = vi.hoisted(() => ({
   joinRoom: vi.fn(),
   leaveRoom: vi.fn(),
   saveEvaluation: vi.fn(),
+  editorQuery: vi.fn<
+    () =>
+      | {
+          data: RouterOutputs["judging"]["getEvaluationEditor"];
+          isFetchedAfterMount: boolean;
+          isSuccess: boolean;
+        }
+      | undefined
+  >(),
+  saveDraft: vi.fn(() =>
+    Promise.resolve({
+      revision: 1,
+      updatedAt: new Date("2026-09-07T16:00:00Z"),
+      deadlineAt: null,
+    }),
+  ),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -41,6 +58,45 @@ vi.mock("~/trpc/react", () => ({
       },
     }),
     judging: {
+      listJudgeSchedule: {
+        useQuery: () => ({
+          data: {
+            serverNow: new Date("2026-09-07T16:00:00Z"),
+            scheduleExists: false,
+            activeRoomId: null,
+            untimed: true,
+            currentAppointment: null,
+            appointments: [],
+            editLockedEvaluationIds: [],
+          },
+        }),
+      },
+      getEvaluationEditor: {
+        useQuery: () =>
+          navigation.editorQuery() ?? {
+            isFetchedAfterMount: true,
+            isSuccess: true,
+            data: {
+              serverNow: new Date("2026-09-07T16:00:00Z"),
+              canEdit: true,
+              reason: null,
+              timed: false,
+              appointmentId: null,
+              deadlineAt: null,
+              lockAt: null,
+              evaluationId: null,
+              evaluationRevision: 0,
+              isComplete: false,
+              draft: null,
+            },
+          },
+      },
+      saveEvaluationDraft: {
+        useMutation: () => ({
+          isPending: false,
+          mutateAsync: navigation.saveDraft,
+        }),
+      },
       heartbeat: {
         useMutation: () => ({ mutate: vi.fn() }),
       },
@@ -173,6 +229,81 @@ describe("judge project privacy", () => {
 });
 
 describe("judge project directory", () => {
+  it("shows the room filter enabled by default", () => {
+    render(
+      <ProjectDirectory
+        data={{
+          challenges: [],
+          page: 1,
+          pageSize: 10,
+          projects: [judgeProject],
+          totalCount: 1,
+        }}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 10,
+          query: "",
+          showInRoomOnly: true,
+          sort: "title",
+        }}
+        showRoomFilter
+      />,
+    );
+
+    expect(
+      screen.getByRole("switch", { name: "Show projects in my room only" }),
+    ).toBeChecked();
+  });
+
+  it("shows room filtering as inactive without a selected room and resets unsent search text after navigation", async () => {
+    const user = userEvent.setup();
+    const data = {
+      challenges: [],
+      page: 1,
+      pageSize: 10,
+      projects: [judgeProject],
+      totalCount: 1,
+    };
+    const input = {
+      challengeIds: [],
+      direction: "asc" as const,
+      page: 1,
+      pageSize: 10,
+      query: "",
+      showInRoomOnly: true,
+      sort: "title" as const,
+    };
+    const { rerender } = render(
+      <ProjectDirectory
+        data={data}
+        input={input}
+        showRoomFilter
+        roomFilterUnavailableReason="Choose a judging room to use this filter."
+      />,
+    );
+    const toggle = screen.getByRole("switch", {
+      name: "Show projects in my room only",
+    });
+    expect(toggle).not.toBeChecked();
+    expect(toggle).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "Search project titles" }),
+      "unsent search",
+    );
+    rerender(
+      <ProjectDirectory
+        data={data}
+        input={{ ...input, showInRoomOnly: false }}
+        showRoomFilter
+      />,
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Search project titles" }),
+    ).toHaveValue("");
+  });
+
   it("uses judge-specific filters and project count copy", () => {
     render(
       <JudgeProjectWorkspace
@@ -183,6 +314,7 @@ describe("judge project directory", () => {
             endDate: new Date("2026-10-01T00:00:00.000Z"),
             id: judgeProject.hackathonId,
             startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
           },
           page: 1,
           pageSize: 25,
@@ -279,6 +411,7 @@ describe("judge project directory", () => {
         endDate: new Date("2026-10-01T00:00:00.000Z"),
         id: judgeProject.hackathonId,
         startDate: new Date("2026-09-01T00:00:00.000Z"),
+        timezone: "America/New_York",
       },
       page: 1,
       pageSize: 25,
@@ -290,6 +423,8 @@ describe("judge project directory", () => {
       challengeLabel: "Acme Challenge",
       id: "00000000-0000-4000-8000-000000000006",
       name: "Sponsor suite A",
+      buildingId: null,
+      buildingName: null,
     };
     const context = {
       activeRoomId: null,
@@ -387,6 +522,7 @@ describe("judge project directory", () => {
         endDate: new Date("2026-10-01T00:00:00.000Z"),
         id: judgeProject.hackathonId,
         startDate: new Date("2026-09-01T00:00:00.000Z"),
+        timezone: "America/New_York",
       },
       page: 1,
       pageSize: 25,
@@ -398,6 +534,8 @@ describe("judge project directory", () => {
       challengeLabel: "Acme Challenge",
       id: "00000000-0000-4000-8000-000000000006",
       name: "Sponsor suite A",
+      buildingId: null,
+      buildingName: null,
     };
     const context = {
       activeRoomId: oldRoomAnnouncement.roomId,
@@ -475,6 +613,7 @@ describe("judge project directory", () => {
             endDate: new Date("2026-10-01T00:00:00.000Z"),
             id: judgeProject.hackathonId,
             startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
           },
           page: 1,
           pageSize: 25,
@@ -578,6 +717,97 @@ describe("judge project directory", () => {
 });
 
 describe("evaluation feedback visibility", () => {
+  it("waits for fresh saved progress on reopen and preserves typing across heartbeats", async () => {
+    const responseId = "00000000-0000-4000-8000-000000000012";
+    const workspace: RouterOutputs["judging"]["getWorkspace"] = {
+      challengeId: "challenge-1",
+      hackathonId: judgeProject.hackathonId,
+      displayAllResults: false,
+      principalKind: "member",
+      state: "open",
+      rubric: [
+        {
+          id: responseId,
+          kind: "short_response",
+          label: "Feedback",
+          description: "Leave a note.",
+          required: false,
+          memberVisibilityPolicy: "public",
+          guestVisibilityPolicy: "public_optional",
+        },
+      ],
+    };
+    const editor: RouterOutputs["judging"]["getEvaluationEditor"] = {
+      serverNow: new Date(),
+      canEdit: true,
+      reason: null,
+      timed: false,
+      appointmentId: null,
+      deadlineAt: null,
+      lockAt: null,
+      evaluationId: null,
+      evaluationRevision: 0,
+      isComplete: false,
+      draft: null,
+    };
+    const props = {
+      challengeLabel: "General",
+      onOpenChange: vi.fn(),
+      open: true,
+      project: { id: judgeProject.id, title: judgeProject.title },
+      workspace,
+    };
+    navigation.editorQuery.mockReturnValue({
+      data: editor,
+      isFetchedAfterMount: false,
+      isSuccess: true,
+    });
+    const { rerender, unmount } = render(<EvaluationDialog {...props} />);
+    try {
+      expect(screen.queryByRole("textbox", { name: "Feedback" })).toBeNull();
+      const fresh = {
+        ...editor,
+        draft: {
+          revision: 7,
+          updatedAt: new Date(),
+          ratings: [],
+          responses: [
+            { itemId: responseId, value: "Latest saved draft", isPublic: true },
+          ],
+        },
+      };
+      navigation.editorQuery.mockReturnValue({
+        data: fresh,
+        isFetchedAfterMount: true,
+        isSuccess: true,
+      });
+      rerender(<EvaluationDialog {...props} />);
+      const field = await screen.findByRole("textbox", { name: "Feedback" });
+      expect(field).toHaveValue("Latest saved draft");
+      const user = userEvent.setup();
+      await user.clear(field);
+      await user.type(field, "Still typing");
+      navigation.editorQuery.mockReturnValue({
+        data: { ...fresh, serverNow: new Date() },
+        isFetchedAfterMount: true,
+        isSuccess: true,
+      });
+      rerender(<EvaluationDialog {...props} />);
+      expect(field).toHaveValue("Still typing");
+      await waitFor(() =>
+        expect(navigation.saveDraft).toHaveBeenCalledWith(
+          expect.objectContaining({
+            expectedDraftRevision: 7,
+            responses: [expect.objectContaining({ value: "Still typing" })],
+          }),
+        ),
+      );
+    } finally {
+      unmount();
+      navigation.editorQuery.mockReset();
+    }
+  });
+
   it("makes authenticated feedback sharing explicit and fixed", () => {
     render(
       <EvaluationDialog
@@ -609,9 +839,7 @@ describe("evaluation feedback visibility", () => {
     expect(
       screen.getByText("Your feedback is shared with hackers"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Shared with hackers").length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.queryByText("Shared with hackers")).toBeNull();
     expect(
       screen.queryByRole("checkbox", {
         name: "Share this response with this project's hackers",
@@ -657,6 +885,9 @@ describe("evaluation feedback visibility", () => {
     );
 
     expect(
+      screen.queryByText("Your feedback is shared with hackers"),
+    ).toBeNull();
+    expect(
       screen.getByText("Choose what will be shared with hackers"),
     ).toBeInTheDocument();
     expect(
@@ -670,6 +901,57 @@ describe("evaluation feedback visibility", () => {
     expect(
       screen.getByRole("radiogroup", { name: "Technical understanding" }),
     ).toBeInTheDocument();
+  });
+
+  it("locks every submission edit control during a booking and restores it during downtime", () => {
+    const submission = {
+      id: "evaluation-1",
+      challengeId: "challenge-1",
+      challengeLabel: "General",
+      projectId: judgeProject.id,
+      projectTitle: judgeProject.title,
+      projectAvailable: true,
+      isComplete: false,
+      autoSubmittedAt: new Date("2026-09-07T16:08:00Z"),
+      createdAt: new Date("2026-09-07T16:08:00Z"),
+      updatedAt: new Date("2026-09-07T16:08:00Z"),
+      revision: 1,
+      score: null,
+      ratings: [],
+      responses: [],
+    } satisfies RouterOutputs["judging"]["listMySubmissions"][number];
+    const workspace = {
+      challengeId: submission.challengeId,
+      hackathonId: judgeProject.hackathonId,
+      principalKind: "member",
+      state: "open",
+      rubric: [],
+      displayAllResults: false,
+    } satisfies RouterOutputs["judging"]["getWorkspace"];
+    const { rerender } = render(
+      <JudgeSubmissions
+        submissions={[submission]}
+        workspace={workspace}
+        lockedEvaluationIds={[submission.id]}
+      />,
+    );
+    const editControls = screen.getAllByRole("button", {
+      name: "Edit",
+    });
+    expect(editControls).toHaveLength(2);
+    for (const button of editControls) expect(button).toBeDisabled();
+    expect(screen.getAllByText("Wait until downtime to edit")).toHaveLength(2);
+    rerender(
+      <JudgeSubmissions
+        submissions={[submission]}
+        workspace={workspace}
+        lockedEvaluationIds={[]}
+      />,
+    );
+    for (const button of screen.getAllByRole("button", {
+      name: "Edit",
+    }))
+      expect(button).toBeEnabled();
   });
 
   it("prefills and edits a saved guest evaluation", async () => {
@@ -716,6 +998,8 @@ describe("evaluation feedback visibility", () => {
       createdAt: new Date("2026-09-05T12:00:00.000Z"),
       id: "00000000-0000-4000-8000-000000000021",
       projectAvailable: true,
+      isComplete: true,
+      autoSubmittedAt: null,
       projectId: judgeProject.id,
       projectTitle: judgeProject.title,
       ratings: [
@@ -769,6 +1053,7 @@ describe("evaluation feedback visibility", () => {
 
     await waitFor(() =>
       expect(navigation.saveEvaluation).toHaveBeenCalledWith({
+        expectedRevision: 2,
         challengeId: workspace.challengeId,
         hackathonId: workspace.hackathonId,
         projectId: judgeProject.id,

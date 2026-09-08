@@ -32,6 +32,18 @@ cd forge
 pnpm install
 ```
 
+### Judging scheduler
+
+Blade's scheduler uses the pinned `@ortools-node/cp-sat` Node binding installed by
+`pnpm install`. Keep optional dependencies enabled: they supply the native binary
+for Linux (glibc or musl) and macOS on x64/arm64. Windows contributors should use
+WSL. No Python environment or separate solver service is needed.
+
+Generation runs asynchronously with eight native workers per active job, sharing
+one 290-second budget across objectives and recovery. Allow CPU and memory for
+those workers. Blade's standalone build includes the platform libraries; a native
+loading error preserves any validated preview and appears in generation diagnostics.
+
 ### 3. Set Up Environment Variables
 
 Create a `.env` file in the repository root.

@@ -1,4 +1,6 @@
 export const AUDITED_ADMIN_PROCEDURES = [
+  "judging-schedule.getUnassignedPresentationChoices",
+  "judging-schedule.getAppointmentMoveChoices",
   "alumni.archiveBulletinPost",
   "alumni.createBulletinPost",
   "alumni.removeBulletinImage",
@@ -113,6 +115,11 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "judging-scores.saveRubric",
   "judging-scores.setDisplayAllResults",
   "judging-scores.setJudgingState",
+  "judging-schedule.generateSchedule",
+  "judging-schedule.saveSchedule",
+  "judging-schedule.dropSchedule",
+  "judging-schedule.moveAppointment",
+  "judging-schedule.assignPresentation",
   "member-admin.accessAdminMemberResume",
   "member-admin.deleteAdminMember",
   "member-admin.exportAdminMembers",
@@ -139,6 +146,10 @@ export const AUDITED_ADMIN_PROCEDURES = [
 ] as const;
 
 export const HYBRID_ADMIN_PROCEDURES = [
+  // Checkpoint continuations audit completion; creating an already-existing
+  // building is an idempotent read and does not emit a second creation event.
+  "judging-schedule.continueScheduleGeneration",
+  "judging-schedule.createBuilding",
   "forms.createUpload",
   "forms.finalizeUpload",
   "forms.getAttachmentDownload",
@@ -146,6 +157,9 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "judging-appointment-results.getAppointmentResults",
+  "judging-schedule.listScheduleAdmin",
+  "judging-schedule.listBuildings",
   "alumni.listBulletinAdmin",
   "alumni.listLinkableForms",
   "analytics.getDiscordReport",

@@ -41,4 +41,11 @@ describe("project directory parameters", () => {
       "00000000-0000-4000-8000-000000000527",
     );
   });
+
+  it("defaults to room projects and accepts an explicit all-projects view", () => {
+    expect(parseProjectDirectoryParams({}).showInRoomOnly).toBe(true);
+    expect(parseProjectDirectoryParams({ room: "all" }).showInRoomOnly).toBe(
+      false,
+    );
+  });
 });

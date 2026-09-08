@@ -39,6 +39,7 @@ export default async function JudgeProjectsPage({
     direction: parsed.direction,
     hackathonId: isOfficer ? requestedHackathon : undefined,
     includeJudged: parsed.includeJudged,
+    showInRoomOnly: parsed.showInRoomOnly,
     page: parsed.page,
     pageSize: parsed.pageSize,
     query: parsed.query,

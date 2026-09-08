@@ -10,6 +10,7 @@ import {
   JudgingRoom,
   JudgingRoomAccessLink,
   JudgingRoomPresence,
+  JudgingSchedule,
   Project,
   ProjectChallenge,
   ProjectEvaluation,
@@ -22,6 +23,7 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "./utils/audit/service";
+import { importedChallengeLabels } from "./utils/projects/challenge-labels";
 import {
   parseDevpostProjects,
   ProjectImportError,
@@ -76,7 +78,17 @@ export async function importDevpostProjects(input: {
     ]);
     const locked =
       lock?.projectInventoryLockedAt !== null && lock !== undefined;
-    const addOnly = (locked || Boolean(evaluation)) && input.mode !== "replace";
+    const schedule = await tx.query.JudgingSchedule.findFirst({
+      columns: { id: true },
+      where: eq(JudgingSchedule.hackathonId, hackathon.id),
+    });
+    if (schedule && input.mode === "replace")
+      throw new ProjectImportError(
+        "A saved schedule exists. Add new projects normally, or drop the eligible schedule before replacing inventory.",
+      );
+    const addOnly =
+      (locked || Boolean(evaluation) || Boolean(schedule)) &&
+      input.mode !== "replace";
     if (evaluation && input.mode === "replace") {
       throw new ProjectImportError(
         "The project inventory cannot be replaced after judging submissions exist. Import normally to add new projects.",
@@ -277,15 +289,13 @@ export async function importDevpostProjects(input: {
     const joinValues = projectsToInsert.flatMap((project) => {
       const projectId = projectIds.get(project.submissionUrl);
       if (!projectId) throw new Error("Imported project ID was not returned.");
-      return Array.from(new Set(["General", ...project.prizeCategories])).map(
-        (label) => {
-          const challengeId = challengeIds.get(label);
-          if (!challengeId) {
-            throw new Error(`Imported challenge ${label} was not returned.`);
-          }
-          return { challengeId, hackathonId: hackathon.id, projectId };
-        },
-      );
+      return importedChallengeLabels(project.prizeCategories).map((label) => {
+        const challengeId = challengeIds.get(label);
+        if (!challengeId) {
+          throw new Error(`Imported challenge ${label} was not returned.`);
+        }
+        return { challengeId, hackathonId: hackathon.id, projectId };
+      });
     });
     if (joinValues.length > 0) {
       await tx.insert(ProjectToChallenge).values(joinValues);

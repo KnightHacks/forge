@@ -21,7 +21,10 @@ import {
   Hackathon,
   HackathonJudgingConfiguration,
   Judge,
+  JudgingAppointment,
   JudgingRoom,
+  JudgingRoomPresence,
+  JudgingSchedule,
   Project,
   ProjectChallenge,
   ProjectEvaluation,
@@ -42,7 +45,11 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { assertNoProjectReservations } from "../utils/judging-schedule/appointments";
+import { reconcileExpiredJudgingDrafts } from "../utils/judging-schedule/reconcile";
+import { lockScheduleHackathon } from "../utils/judging-schedule/source";
 import { assertCanManageProjects } from "../utils/projects/access";
+import { isMlhChallenge } from "../utils/projects/challenge-labels";
 import { projectForJudge } from "../utils/projects/view";
 
 function projectSort(
@@ -50,11 +57,26 @@ function projectSort(
     | "challengeRating"
     | "participantCount"
     | "rating"
+    | "scheduledAt"
     | "submittedAt"
     | "title",
   direction: "asc" | "desc",
   challengeId?: string,
+  timeChallengeIds: string[] = [],
 ) {
+  if (sort === "scheduledAt") {
+    const challengeFilter = timeChallengeIds.length
+      ? sql`AND ${JudgingAppointment.challengeId} IN (${sql.join(
+          timeChallengeIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})`
+      : sql``;
+    const time = sql<Date | null>`(SELECT MIN(${JudgingAppointment.startsAt}) FROM ${JudgingAppointment} WHERE ${JudgingAppointment.projectId} = ${Project.id} ${challengeFilter})`;
+    return [
+      sql`${time} IS NULL`,
+      direction === "desc" ? desc(time) : asc(time),
+    ] as const;
+  }
   if (sort === "challengeRating" || sort === "rating") {
     const challengeFilter =
       sort === "challengeRating" && challengeId
@@ -68,6 +90,7 @@ function projectSort(
         INNER JOIN ${ProjectEvaluationRating}
           ON ${ProjectEvaluationRating.evaluationId} = ${ProjectEvaluation.id}
         WHERE ${ProjectEvaluation.projectId} = ${Project.id}
+          AND ${ProjectEvaluation.isComplete} = true
           ${challengeFilter}
         GROUP BY ${ProjectEvaluation.id}
       ) project_evaluation_means
@@ -99,6 +122,7 @@ function projectWhere(input: {
   maxParticipants?: number;
   minParticipants?: number;
   query: string;
+  roomAssignment?: { challengeId: string; roomId: string };
 }) {
   const challengeMatch = input.challengeIds.length
     ? exists(
@@ -148,6 +172,28 @@ function projectWhere(input: {
       ? lte(Project.participantCount, input.maxParticipants)
       : undefined,
     challengeMatch,
+    input.roomAssignment
+      ? exists(
+          db
+            .select({ one: sql`1` })
+            .from(JudgingAppointment)
+            .innerJoin(
+              JudgingSchedule,
+              eq(JudgingSchedule.id, JudgingAppointment.scheduleId),
+            )
+            .where(
+              and(
+                eq(JudgingAppointment.projectId, Project.id),
+                eq(
+                  JudgingAppointment.challengeId,
+                  input.roomAssignment.challengeId,
+                ),
+                eq(JudgingAppointment.roomId, input.roomAssignment.roomId),
+                eq(JudgingSchedule.hackathonId, input.hackathonId),
+              ),
+            ),
+        )
+      : undefined,
     notPreviouslyJudged,
   );
 }
@@ -197,7 +243,12 @@ async function relatedProjects(projectIds: string[]) {
         value: count(),
       })
       .from(ProjectEvaluation)
-      .where(inArray(ProjectEvaluation.projectId, projectIds))
+      .where(
+        and(
+          inArray(ProjectEvaluation.projectId, projectIds),
+          eq(ProjectEvaluation.isComplete, true),
+        ),
+      )
       .groupBy(ProjectEvaluation.projectId, ProjectEvaluation.challengeId),
   ]);
   const membersByProject = new Map<
@@ -239,6 +290,7 @@ async function relatedProjects(projectIds: string[]) {
 
 async function listProjects(input: {
   challengeIds: string[];
+  timeChallengeIds?: string[];
   deleted: "active" | "all" | "deleted";
   direction: "asc" | "desc";
   hackathonId: string;
@@ -248,10 +300,12 @@ async function listProjects(input: {
   page: number;
   pageSize: number;
   query: string;
+  roomAssignment?: { challengeId: string; roomId: string };
   sort:
     | "challengeRating"
     | "participantCount"
     | "rating"
+    | "scheduledAt"
     | "submittedAt"
     | "title";
 }) {
@@ -272,7 +326,12 @@ async function listProjects(input: {
     .from(Project)
     .where(where)
     .orderBy(
-      ...projectSort(input.sort, input.direction, input.challengeIds[0]),
+      ...projectSort(
+        input.sort,
+        input.direction,
+        input.challengeIds[0],
+        input.timeChallengeIds ?? input.challengeIds,
+      ),
       asc(Project.id),
     )
     .limit(input.pageSize)
@@ -298,6 +357,7 @@ async function activeHackathon(now: Date) {
       endDate: Hackathon.endDate,
       id: Hackathon.id,
       startDate: Hackathon.startDate,
+      timezone: Hackathon.timezone,
     })
     .from(Hackathon)
     .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
@@ -313,6 +373,7 @@ async function upcomingHackathon(now: Date) {
       endDate: Hackathon.endDate,
       id: Hackathon.id,
       startDate: Hackathon.startDate,
+      timezone: Hackathon.timezone,
     })
     .from(Hackathon)
     .where(gte(Hackathon.startDate, now))
@@ -333,6 +394,7 @@ export const projectsRouter = createTRPCRouter({
           HackathonJudgingConfiguration.projectInventoryLockedAt,
         projectCount: count(Project.id),
         startDate: Hackathon.startDate,
+        timezone: Hackathon.timezone,
       })
       .from(Hackathon)
       .leftJoin(Project, eq(Project.hackathonId, Hackathon.id))
@@ -391,6 +453,7 @@ export const projectsRouter = createTRPCRouter({
               endDate: true,
               id: true,
               startDate: true,
+              timezone: true,
             },
             where: and(
               eq(Hackathon.id, guestPrincipal.hackathonId),
@@ -405,6 +468,7 @@ export const projectsRouter = createTRPCRouter({
                 endDate: true,
                 id: true,
                 startDate: true,
+                timezone: true,
               },
               where: eq(Hackathon.id, input.hackathonId),
             })
@@ -418,7 +482,9 @@ export const projectsRouter = createTRPCRouter({
           projects: [],
           totalCount: 0,
           challenges: [],
+          roomFilterUnavailableReason: null,
         };
+      await reconcileExpiredJudgingDrafts(selected.id);
       if (input.sort === "challengeRating") {
         const config = await db.query.HackathonJudgingConfiguration.findFirst({
           columns: { displayAllResultsToMembers: true },
@@ -440,7 +506,72 @@ export const projectsRouter = createTRPCRouter({
                 ),
               })
             )?.id;
+      const generalChallenge =
+        !guestPrincipal && !input.challengeIds[0]
+          ? await db.query.ProjectChallenge.findFirst({
+              columns: { id: true, label: true },
+              where: and(
+                eq(ProjectChallenge.hackathonId, selected.id),
+                eq(ProjectChallenge.label, "General"),
+              ),
+            })
+          : null;
+      const selectedChallengeId =
+        guestPrincipal?.challengeId ??
+        input.challengeIds[0] ??
+        generalChallenge?.id;
+      const selectedChallenge = selectedChallengeId
+        ? await db.query.ProjectChallenge.findFirst({
+            columns: { label: true },
+            where: and(
+              eq(ProjectChallenge.id, selectedChallengeId),
+              eq(ProjectChallenge.hackathonId, selected.id),
+            ),
+          })
+        : generalChallenge;
+      const schedule = input.showInRoomOnly
+        ? await db.query.JudgingSchedule.findFirst({
+            columns: { id: true },
+            where: eq(JudgingSchedule.hackathonId, selected.id),
+          })
+        : null;
+      const memberPresence =
+        !guestPrincipal && judgeId && input.showInRoomOnly
+          ? await db.query.JudgingRoomPresence.findFirst({
+              columns: { roomId: true },
+              where: and(
+                eq(JudgingRoomPresence.judgeId, judgeId),
+                eq(JudgingRoomPresence.hackathonId, selected.id),
+                isNull(JudgingRoomPresence.leftAt),
+              ),
+            })
+          : null;
+      const roomId = guestPrincipal?.roomId ?? memberPresence?.roomId;
+      const roomAssignment =
+        input.showInRoomOnly &&
+        schedule &&
+        roomId &&
+        selectedChallengeId &&
+        !isMlhChallenge(selectedChallenge?.label ?? "")
+          ? { challengeId: selectedChallengeId, roomId }
+          : undefined;
+      const timeChallengeIds = guestPrincipal
+        ? [guestPrincipal.challengeId]
+        : input.challengeIds.length
+          ? input.challengeIds
+          : [
+              (
+                await db.query.ProjectChallenge.findFirst({
+                  columns: { id: true },
+                  where: and(
+                    eq(ProjectChallenge.hackathonId, selected.id),
+                    eq(ProjectChallenge.label, "General"),
+                  ),
+                })
+              )?.id ?? "00000000-0000-4000-8000-000000000000",
+            ];
       const listed = await listProjects({
+        timeChallengeIds,
         ...input,
         challengeIds: guestPrincipal
           ? [guestPrincipal.challengeId]
@@ -466,10 +597,19 @@ export const projectsRouter = createTRPCRouter({
                 judgeId,
               }
             : undefined,
+        roomAssignment,
       });
       return {
         hackathon: selected,
         ...listed,
+        roomFilterUnavailableReason:
+          input.showInRoomOnly &&
+          schedule &&
+          isMlhChallenge(selectedChallenge?.label ?? "")
+            ? "MLH judging is untimed, so room filtering is unavailable."
+            : input.showInRoomOnly && schedule && !roomId && !guestPrincipal
+              ? "Choose a judging room to use this filter."
+              : null,
         challenges: guestPrincipal
           ? listed.challenges.filter(
               (challenge) => challenge.id === guestPrincipal.challengeId,
@@ -478,7 +618,17 @@ export const projectsRouter = createTRPCRouter({
         projects: listed.projects.map((project) => {
           const judgeProject = projectForJudge(project);
           return guestPrincipal
-            ? { ...judgeProject, challenges: [] }
+            ? {
+                ...judgeProject,
+                challenges: [],
+                prizeCategories: listed.challenges.some(
+                  (challenge) =>
+                    challenge.id === guestPrincipal.challengeId &&
+                    isMlhChallenge(challenge.label),
+                )
+                  ? judgeProject.prizeCategories.filter(isMlhChallenge)
+                  : [],
+              }
             : judgeProject;
         }),
       };
@@ -573,6 +723,12 @@ export const projectsRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
+        const scopeProject = await tx.query.Project.findFirst({
+          columns: { hackathonId: true },
+          where: eq(Project.id, input.projectId),
+        });
+        if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
+        await lockScheduleHackathon(tx, scopeProject.hackathonId);
         const [existing] = await tx
           .select()
           .from(Project)
@@ -607,15 +763,36 @@ export const projectsRouter = createTRPCRouter({
             message: "Every project must retain the General challenge.",
           });
         }
+        const currentMemberships = await tx
+          .select({ challengeId: ProjectToChallenge.challengeId })
+          .from(ProjectToChallenge)
+          .where(eq(ProjectToChallenge.projectId, existing.id));
+        const removedChallengeIds = currentMemberships
+          .filter(
+            (membership) =>
+              !input.challengeIds.includes(membership.challengeId),
+          )
+          .map((membership) => membership.challengeId);
+        if (removedChallengeIds.length)
+          await assertNoProjectReservations(tx, [existing.id]);
         const [saved] = await tx
           .update(Project)
           .set({
             demoLinks: input.demoLinks,
             description: input.description,
             participantCount: input.participantCount,
-            prizeCategories: challengeRows
-              .filter((challenge) => challenge.label !== "General")
-              .map((challenge) => challenge.label),
+            prizeCategories: Array.from(
+              new Set(
+                challengeRows
+                  .filter((challenge) => challenge.label !== "General")
+                  .flatMap((challenge) =>
+                    challenge.label === "MLH Challenges" &&
+                    existing.prizeCategories.some(isMlhChallenge)
+                      ? existing.prizeCategories.filter(isMlhChallenge)
+                      : [challenge.label],
+                  ),
+              ),
+            ),
             submissionUrl: input.submissionUrl,
             technologies: input.technologies,
             title: input.title,
@@ -634,16 +811,29 @@ export const projectsRouter = createTRPCRouter({
             projectId: existing.id,
           })),
         );
-        await tx
-          .delete(ProjectToChallenge)
-          .where(eq(ProjectToChallenge.projectId, existing.id));
-        await tx.insert(ProjectToChallenge).values(
-          Array.from(new Set(input.challengeIds)).map((challengeId) => ({
-            challengeId,
-            hackathonId: existing.hackathonId,
-            projectId: existing.id,
-          })),
+        if (removedChallengeIds.length)
+          await tx
+            .delete(ProjectToChallenge)
+            .where(
+              and(
+                eq(ProjectToChallenge.projectId, existing.id),
+                inArray(ProjectToChallenge.challengeId, removedChallengeIds),
+              ),
+            );
+        const addedChallengeIds = [...new Set(input.challengeIds)].filter(
+          (id) =>
+            !currentMemberships.some(
+              (membership) => membership.challengeId === id,
+            ),
         );
+        if (addedChallengeIds.length)
+          await tx.insert(ProjectToChallenge).values(
+            addedChallengeIds.map((challengeId) => ({
+              challengeId,
+              hackathonId: existing.hackathonId,
+              projectId: existing.id,
+            })),
+          );
         await createAdminAuditEvent(
           {
             actionKey: "project.updated",
@@ -670,6 +860,12 @@ export const projectsRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
+        const scopeProject = await tx.query.Project.findFirst({
+          columns: { hackathonId: true },
+          where: eq(Project.id, input.projectId),
+        });
+        if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
+        await lockScheduleHackathon(tx, scopeProject.hackathonId);
         const [project] = await tx
           .select()
           .from(Project)
@@ -678,6 +874,7 @@ export const projectsRouter = createTRPCRouter({
           .limit(1);
         if (!project) throw new TRPCError({ code: "NOT_FOUND" });
         if (project.deletedAt) return project;
+        await assertNoProjectReservations(tx, [project.id]);
 
         const [saved] = await tx
           .update(Project)
@@ -717,6 +914,12 @@ export const projectsRouter = createTRPCRouter({
       assertCanManageProjects(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
+        const scopeProject = await tx.query.Project.findFirst({
+          columns: { hackathonId: true },
+          where: eq(Project.id, input.projectId),
+        });
+        if (!scopeProject) throw new TRPCError({ code: "NOT_FOUND" });
+        await lockScheduleHackathon(tx, scopeProject.hackathonId);
         const [project] = await tx
           .select({ id: Project.id, title: Project.title })
           .from(Project)

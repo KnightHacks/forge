@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -21,6 +22,8 @@ import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { useEvaluationAutosave } from "~/lib/judging/use-evaluation-autosave";
+import { useJudgingClock } from "~/lib/judging/use-judging-clock";
 import { api } from "~/trpc/react";
 
 type Workspace = RouterOutputs["judging"]["getWorkspace"];
@@ -29,6 +32,7 @@ type Submission = RouterOutputs["judging"]["listMySubmissions"][number];
 export interface EvaluationProject {
   id: string;
   title: string;
+  prizeCategories?: string[];
 }
 
 function policyCopy(
@@ -61,13 +65,73 @@ function policyCopy(
   };
 }
 
-export function EvaluationDialog({
+interface EvaluationDialogProps {
+  challengeLabel: string;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  project: EvaluationProject;
+  submission?: Submission;
+  workspace: Workspace;
+}
+
+export function EvaluationDialog(props: EvaluationDialogProps) {
+  return props.open ? <EvaluationSession {...props} /> : null;
+}
+
+function EvaluationSession(props: EvaluationDialogProps) {
+  const [ready, setReady] = useState(false);
+  const editor = api.judging.getEvaluationEditor.useQuery(
+    {
+      challengeId: props.workspace.challengeId,
+      hackathonId: props.workspace.hackathonId,
+      projectId: props.project.id,
+    },
+    {
+      enabled: props.open,
+      refetchInterval: props.open ? 5000 : false,
+      refetchOnMount: "always",
+      staleTime: 0,
+    },
+  );
+  // Seed answers once from a fresh successful response; later heartbeats must
+  // not remount the editor or replace what the judge is currently typing.
+  if (!ready && editor.isFetchedAfterMount && editor.isSuccess) setReady(true);
+  if (
+    !ready ||
+    !editor.data ||
+    (!editor.data.canEdit && !editor.data.evaluationId)
+  )
+    return (
+      <Dialog open onOpenChange={props.onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{props.project.title}</DialogTitle>
+            <DialogDescription>
+              {editor.error?.message ??
+                editor.data?.reason ??
+                "Checking your room and appointment..."}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  return (
+    <EvaluationEditor
+      {...props}
+      editor={editor.data}
+      key={`${props.project.id}:${props.workspace.challengeId}`}
+    />
+  );
+}
+
+function EvaluationEditor({
   challengeLabel,
   onOpenChange,
   open,
   project,
   submission,
   workspace,
+  editor,
 }: {
   challengeLabel: string;
   onOpenChange: (open: boolean) => void;
@@ -75,10 +139,11 @@ export function EvaluationDialog({
   project: EvaluationProject;
   submission?: Submission;
   workspace: Workspace;
+  editor: RouterOutputs["judging"]["getEvaluationEditor"];
 }) {
   const [ratings, setRatings] = useState<Record<string, number>>(() =>
     Object.fromEntries(
-      (submission?.ratings ?? []).map((answer) => [
+      (editor.draft?.ratings ?? submission?.ratings ?? []).map((answer) => [
         answer.itemId,
         answer.value,
       ]),
@@ -86,7 +151,7 @@ export function EvaluationDialog({
   );
   const [responses, setResponses] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      (submission?.responses ?? []).map((answer) => [
+      (editor.draft?.responses ?? submission?.responses ?? []).map((answer) => [
         answer.itemId,
         answer.value,
       ]),
@@ -94,7 +159,7 @@ export function EvaluationDialog({
   );
   const [shared, setShared] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(
-      (submission?.responses ?? []).map((answer) => [
+      (editor.draft?.responses ?? submission?.responses ?? []).map((answer) => [
         answer.itemId,
         answer.isPublic,
       ]),
@@ -111,11 +176,76 @@ export function EvaluationDialog({
     () => workspace.rubric.filter((item) => item.kind === "short_response"),
     [workspace.rubric],
   );
-  const challengeName = /challenge$/i.test(challengeLabel)
+  const challengeName = /challenges?$/i.test(challengeLabel)
     ? challengeLabel
     : `${challengeLabel} Challenge`;
 
   const activeProject = project;
+  const now = useJudgingClock(editor.serverNow);
+  const [deadline] = useState(editor.deadlineAt);
+  const expiryHandled = useRef(false);
+  const seconds = deadline
+    ? Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / 1000))
+    : null;
+  const expired = deadline !== null && seconds === 0;
+  const gapEnded = !deadline && editor.lockAt !== null && now >= editor.lockAt;
+  const editable =
+    editor.canEdit && workspace.state === "open" && !expired && !gapEnded;
+  const answers = useMemo(
+    () => ({
+      challengeId: workspace.challengeId,
+      hackathonId: workspace.hackathonId,
+      projectId: project.id,
+      expectedRevision: submission?.revision ?? editor.evaluationRevision,
+      ratings: Object.entries(ratings).map(([itemId, value]) => ({
+        itemId,
+        value,
+      })),
+      responses: responseItems.map((item) => ({
+        itemId: item.id,
+        value: responses[item.id] ?? "",
+        isPublic: shared[item.id] === true,
+      })),
+    }),
+    [
+      editor.evaluationRevision,
+      project.id,
+      ratings,
+      responseItems,
+      responses,
+      shared,
+      submission?.revision,
+      workspace.challengeId,
+      workspace.hackathonId,
+    ],
+  );
+  const autosave = useEvaluationAutosave(answers, editor, editable);
+  const utils = api.useUtils();
+  useEffect(() => {
+    if ((!expired && !gapEnded) || expiryHandled.current) return;
+    expiryHandled.current = true;
+    void utils.judging.getEvaluationEditor
+      .invalidate()
+      .then(() => utils.judging.listMySubmissions.invalidate())
+      .catch(() => undefined);
+    router.refresh();
+    if (gapEnded) {
+      toast.message(
+        "Your room's next booking has started. Finish this submission during downtime.",
+      );
+      onOpenChange(false);
+    }
+  }, [expired, gapEnded, onOpenChange, router, utils]);
+  async function close(nextOpen: boolean) {
+    if (!nextOpen && editable) {
+      try {
+        await autosave.flush();
+      } catch {
+        return;
+      }
+    }
+    onOpenChange(nextOpen);
+  }
 
   async function submit() {
     const missingRating = ratingItems.some((item) => !ratings[item.id]);
@@ -130,7 +260,9 @@ export function EvaluationDialog({
     }
     setSaveError(null);
     try {
+      await autosave.flush();
       await save.mutateAsync({
+        expectedRevision: submission?.revision ?? editor.evaluationRevision,
         challengeId: workspace.challengeId,
         hackathonId: workspace.hackathonId,
         projectId: activeProject.id,
@@ -163,17 +295,66 @@ export function EvaluationDialog({
   }
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-border/70 p-5 pr-12 text-left sm:p-6">
-          <DialogTitle>
+    <Dialog onOpenChange={(value) => void close(value)} open={open}>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 [&>button]:right-2 [&>button]:top-2 [&>button]:z-10 [&>button]:size-11">
+        <DialogHeader className="shrink-0 border-b border-border/70 p-4 pr-14 text-left sm:p-6 sm:pr-14">
+          <DialogTitle className="break-words text-base leading-6 sm:text-lg">
             {submission ? "Edit" : "Judge"} {project.title}
           </DialogTitle>
-          <DialogDescription className="mt-2 rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
-            Judging for the {challengeName}
+          <DialogDescription className="mt-2 break-words rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
+            {challengeName}
           </DialogDescription>
+          {seconds !== null ? (
+            <div
+              role="timer"
+              aria-label="Judging time remaining"
+              className={`mt-3 rounded-md border px-3 py-2 font-mono text-xl font-semibold sm:text-2xl ${seconds < 90 ? "border-red-400/50 bg-red-400/10 text-red-200 motion-safe:animate-pulse" : seconds < 180 ? "border-amber-400/50 bg-amber-400/10 text-amber-200" : "border-white/15 bg-background/60"}`}
+            >
+              {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+              <span className="ml-3 font-sans text-sm font-normal">
+                until teardown
+              </span>
+            </div>
+          ) : null}
         </DialogHeader>
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:space-y-6 sm:p-6">
+          {project.prizeCategories?.some((label) => isMlhChallenge(label)) &&
+          isMlhChallenge(challengeLabel) ? (
+            <details className="rounded-md border border-white/10 bg-background/60 px-3 text-sm">
+              <summary className="min-h-11 cursor-pointer content-center font-semibold">
+                MLH opt-ins
+              </summary>
+              <ul className="list-disc space-y-1 break-words pb-3 pl-4">
+                {project.prizeCategories
+                  .filter((label) => isMlhChallenge(label))
+                  .map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+              </ul>
+            </details>
+          ) : null}
+
+          {expired ? (
+            <Alert>
+              <AlertTitle>
+                {editor.evaluationId
+                  ? editor.isComplete
+                    ? "Automatically submitted"
+                    : "Saved incomplete"
+                  : "Judging time has ended"}
+              </AlertTitle>
+              <AlertDescription>
+                {editor.evaluationId
+                  ? "Return to the Submissions tab during room downtime to review or finish your answers."
+                  : "Checking the last saved answers. Keep this window open until the submission state is confirmed."}
+              </AlertDescription>
+            </Alert>
+          ) : !editable && editor.reason ? (
+            <Alert>
+              <AlertTitle>Wait until downtime</AlertTitle>
+              <AlertDescription>{editor.reason}</AlertDescription>
+            </Alert>
+          ) : null}
           {workspace.state !== "open" ? (
             <Alert>
               <LockKeyhole className="size-4" />
@@ -196,7 +377,7 @@ export function EvaluationDialog({
               </AlertTitle>
               <AlertDescription>
                 {workspace.principalKind === "guest"
-                  ? "Each written response below shows whether it is marked for sharing with this project's hackers. Authenticated judges and officers can review every response."
+                  ? "Choose which responses to mark for hacker sharing. Judges and officers can review every response."
                   : "Every written response you submit is marked for sharing with this project's hackers. Other authenticated judges and officers can also review it."}
               </AlertDescription>
             </Alert>
@@ -214,6 +395,7 @@ export function EvaluationDialog({
               ) : null}
               <RadioGroup
                 aria-label={item.label}
+                disabled={!editable}
                 className="grid grid-cols-5 gap-2"
                 onValueChange={(value) =>
                   setRatings((current) => ({
@@ -265,6 +447,7 @@ export function EvaluationDialog({
                   </p>
                 ) : null}
                 <Textarea
+                  disabled={!editable}
                   className="min-h-28 resize-y"
                   id={item.id}
                   maxLength={2000}
@@ -277,54 +460,68 @@ export function EvaluationDialog({
                   placeholder="Write useful feedback for the project team"
                   value={responses[item.id] ?? ""}
                 />
-                <div className="flex items-start gap-2 rounded-md border border-white/10 bg-background/60 p-3 text-sm text-muted-foreground">
-                  {policy === "public" ||
-                  (policy === "public_optional" && shared[item.id] === true) ? (
-                    <Eye
-                      className="mt-0.5 size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <LockKeyhole
-                      className="mt-0.5 size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="space-y-2">
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {visibility.label}
-                      </p>
-                      <p className="mt-1">{visibility.description}</p>
+                {workspace.principalKind === "guest" || policy !== "public" ? (
+                  <div className="flex items-start gap-2 rounded-md border border-white/10 bg-background/60 p-3 text-sm text-muted-foreground">
+                    {policy === "public" ||
+                    (policy === "public_optional" &&
+                      shared[item.id] === true) ? (
+                      <Eye
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <LockKeyhole
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="space-y-2">
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {visibility.label}
+                        </p>
+                        <p className="mt-1">{visibility.description}</p>
+                      </div>
+                      {policy === "public_optional" ? (
+                        <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-foreground">
+                          <Checkbox
+                            checked={shared[item.id] === true}
+                            onCheckedChange={(checked) =>
+                              setShared((current) => ({
+                                ...current,
+                                [item.id]: checked === true,
+                              }))
+                            }
+                          />
+                          Share this response with this project's hackers
+                        </Label>
+                      ) : null}
                     </div>
-                    {policy === "public_optional" ? (
-                      <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-foreground">
-                        <Checkbox
-                          checked={shared[item.id] === true}
-                          onCheckedChange={(checked) =>
-                            setShared((current) => ({
-                              ...current,
-                              [item.id]: checked === true,
-                            }))
-                          }
-                        />
-                        Share this response with this project's hackers
-                      </Label>
-                    ) : null}
                   </div>
-                </div>
+                ) : null}
               </div>
             );
           })}
         </div>
-        <DialogFooter className="shrink-0 border-t border-border/70 bg-card/95 p-4 sm:p-5">
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-xs leading-5 text-muted-foreground">
-              <p>
-                {workspace.principalKind === "guest"
-                  ? "Judges and officers can review every response. Hacker sharing follows the setting shown under each field."
-                  : "Your written responses are marked for sharing with this project's hackers."}
+        <DialogFooter className="shrink-0 border-t border-border/70 bg-card p-3 sm:p-5">
+          <div className="flex w-full items-center justify-between gap-3">
+            <div className="min-w-0 text-xs leading-5 text-muted-foreground">
+              <p
+                role="status"
+                className={
+                  autosave.status === "error" ? "text-destructive" : ""
+                }
+              >
+                {autosave.message}
               </p>
+              {autosave.status === "error" && editable ? (
+                <Button
+                  variant="link"
+                  onClick={() => void autosave.flush().catch(() => undefined)}
+                >
+                  Retry saving progress
+                </Button>
+              ) : null}
               {saveError ? (
                 <p className="text-destructive" role="alert">
                   {saveError}
@@ -332,8 +529,8 @@ export function EvaluationDialog({
               ) : null}
             </div>
             <Button
-              className="shrink-0"
-              disabled={workspace.state !== "open" || save.isPending}
+              className="min-h-11 shrink-0"
+              disabled={!editable || save.isPending}
               onClick={() => void submit()}
               type="button"
             >

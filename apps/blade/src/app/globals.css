@@ -161,3 +161,10 @@ a {
     transform: translateX(400%);
   }
 }
+
+/* Judging pickers must remain tappable while earlier save notices are visible.
+   The drawer does not submit data; errors still appear above scoring dialogs. */
+body:has([data-judging-workspace]):has([data-vaul-drawer][data-state="open"])
+  [data-sonner-toaster] {
+  z-index: 40 !important;
+}

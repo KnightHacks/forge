@@ -67,6 +67,26 @@ function projectRow(
 }
 
 describe("Devpost project import parsing", () => {
+  it("consolidates MLH memberships but preserves original opt-ins for judges", () => {
+    const labels = [
+      "MLH - Best Use of Arm",
+      "mlh - Best Use of Gemini",
+      "NVIDIA",
+    ];
+    const result = parseDevpostProjects(
+      csv([
+        headers,
+        ...labels.map((label) => projectRow({ "Opt-In Prize": label })),
+      ]),
+    );
+    expect(result.challengeLabels).toEqual([
+      "General",
+      "MLH Challenges",
+      "NVIDIA",
+    ]);
+    expect(result.projects[0]?.prizeCategories).toEqual([...labels].sort());
+  });
+
   it("groups repeated URLs into one project and derives exact challenges", () => {
     const input = csv([
       headers,

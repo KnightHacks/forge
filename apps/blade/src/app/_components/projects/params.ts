@@ -33,8 +33,10 @@ export function parseProjectDirectoryParams(params: SearchParams) {
     | "challengeRating"
     | "participantCount"
     | "rating"
+    | "scheduledAt"
     | "submittedAt"
     | "title" =
+    requestedSort === "scheduledAt" ||
     requestedSort === "submittedAt" ||
     requestedSort === "participantCount" ||
     requestedSort === "challengeRating" ||
@@ -67,6 +69,7 @@ export function parseProjectDirectoryParams(params: SearchParams) {
     deleted,
     direction,
     includeJudged: first(params.includeJudged) === "1",
+    showInRoomOnly: first(params.room) !== "all",
     maxParticipants,
     minParticipants,
     page: positiveInteger(first(params.page), 1),

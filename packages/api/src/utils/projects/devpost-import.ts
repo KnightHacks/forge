@@ -1,5 +1,7 @@
 import { parse } from "csv-parse/sync";
 
+import { importedChallengeLabels } from "./challenge-labels";
+
 const REQUIRED_HEADERS = [
   "Project Title",
   "Submission Url",
@@ -329,7 +331,7 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
             .filter(Boolean),
         ),
       ).sort();
-      for (const challenge of prizeCategories)
+      for (const challenge of importedChallengeLabels(prizeCategories))
         allChallengeLabels.add(challenge);
 
       const demoLinks = splitList(at(first.row, '"Try it out" Links')).map(

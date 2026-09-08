@@ -59,6 +59,8 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_hacker_event_attendee",
   "knight_hacks_hacker_profile",
   "knight_hacks_hacker_profile_revision",
+  // Reusable room-location catalog contains configuration, not judging records.
+  "knight_hacks_judging_building",
   "knight_hacks_member",
   "knight_hacks_sponsor",
   // Officer-authored issue-tree configuration. This is unrelated to the email
@@ -131,6 +133,10 @@ export const TABLES_TO_DROP = [
   "knight_hacks_judging_room_presence",
   "knight_hacks_judging_room",
   "knight_hacks_judging_rubric_item",
+  "knight_hacks_judging_schedule_job",
+  "knight_hacks_judging_schedule",
+  "knight_hacks_judging_appointment",
+  "knight_hacks_project_evaluation_draft",
   "knight_hacks_project_evaluation",
   "knight_hacks_project_evaluation_rating",
   "knight_hacks_project_evaluation_response",
