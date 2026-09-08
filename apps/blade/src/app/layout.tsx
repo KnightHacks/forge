@@ -19,6 +19,7 @@ import {
 } from "./seo";
 
 import "./globals.css";
+import { TooltipProvider } from "@forge/ui/tooltip";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -96,7 +97,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           GeistMono.variable,
         )}
       >
+        <TooltipProvider>
         <Providers>{props.children}</Providers>
+        </TooltipProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
