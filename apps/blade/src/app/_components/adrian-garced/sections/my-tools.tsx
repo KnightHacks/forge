@@ -1,0 +1,75 @@
+import Playground from "$/adrian-garced/playground";
+
+const CATEGORIES = [
+  {
+    title: "Systems & Low-Level",
+    technologies: ["C", "C++", "Rust", "Linux"],
+  },
+  {
+    title: "Web Development",
+    technologies: ["TypeScript", "Next.js", "Hono", "SvelteKit"],
+  },
+  {
+    title: "Graphics & Game Development",
+    technologies: ["C++", "OpenGL", "GLFW", "GLM", "Godot"],
+  },
+  {
+    title: "Currently Learning",
+    technologies: [
+      "Computer Architecture",
+      "Vulkan",
+      "Operating Systems",
+    ],
+  },
+];
+
+export default function MyTools({ id }: { id: string }) {
+  return (
+    <section id={id} className="mt-32 scroll-mt-24">
+      <div className="max-w-3xl">
+        <p className="text-sm font-medium tracking-wider text-emerald-400">
+          WHAT I WORK WITH
+        </p>
+
+        <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+          Tech Stack & Tools I use
+        </h2>
+      </div>
+
+      <div className="mt-2 grid gap-8 sm:grid-cols-2">
+        {CATEGORIES.map((category) => (
+          <div key={category.title}>
+            <h3 className="text-sm font-medium text-neutral-200">
+              {category.title}
+            </h3>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {category.technologies.map((technology) => (
+                <span
+                  key={technology}
+                  className="rounded-md border border-neutral-800 bg-neutral-900 px-2.5 py-1 text-xs text-neutral-400"
+                >
+                  {technology}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div id="playground" className="mt-10 max-w-3xl! scroll-mt-24">
+        <p className="text-sm font-medium tracking-wider text-emerald-400">
+          PLAYGROUND
+        </p>
+
+        <h3 className="mt-2 text-2xl font-bold tracking-tight sm:text-xl">
+          Sandbox
+        </h3>
+
+        <p className="mt-2 max-w-2xl text-neutral-400">
+          DVD Animation but for my Technologies
+        </p>
+        <Playground />
+      </div>
+    </section>
+  );
+}

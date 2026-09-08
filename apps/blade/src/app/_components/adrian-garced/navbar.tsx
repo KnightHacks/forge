@@ -34,12 +34,12 @@ const NAVICONS = [
   {
     tooltip: "Resume",
     icon: FileText,
-    url: "resume.pdf"
+    url: "/adrian-garced/resume.pdf"
   },
   {
     tooltip: "Email",
     icon: Mail,
-    url: "mailto://agadrian1331@gmail.com"
+    url: "mailto:agadrian1331@gmail.com"
   }
 ] as const;
 

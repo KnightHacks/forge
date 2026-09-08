@@ -5,7 +5,8 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "$/*": ["./src/app/_components/*"]
     },
     "plugins": [{ "name": "next" }],
     "module": "esnext"
