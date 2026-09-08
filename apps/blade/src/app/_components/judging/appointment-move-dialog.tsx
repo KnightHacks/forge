@@ -153,7 +153,9 @@ export function AppointmentMoveDialog({
                   }
                 }}
               >
-                Smart reassign: choose the best opening
+                {"appointmentId" in selection
+                  ? "Emergency reassignment"
+                  : "Choose best opening"}
               </Button>
             ) : (
               <p className="text-sm text-amber-200">

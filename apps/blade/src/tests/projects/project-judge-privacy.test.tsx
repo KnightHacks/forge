@@ -839,9 +839,7 @@ describe("evaluation feedback visibility", () => {
     expect(
       screen.getByText("Your feedback is shared with hackers"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Shared with hackers").length).toBeGreaterThan(
-      0,
-    );
+    expect(screen.queryByText("Shared with hackers")).toBeNull();
     expect(
       screen.queryByRole("checkbox", {
         name: "Share this response with this project's hackers",

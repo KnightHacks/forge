@@ -65,23 +65,6 @@ export function ScheduleBoard({
             : undefined
         }
       >
-        {mode === "hour" ? (
-          <div className="sticky top-0 z-20 grid grid-cols-[180px_1fr] border-b border-white/10 bg-card p-3 text-sm">
-            <span className="font-semibold">Room</span>
-            <div className="flex justify-between font-mono">
-              {Array.from({ length: slotCount + 1 }, (_, index) => (
-                <span key={index}>
-                  {judgingTime(
-                    new Date(
-                      windowStart.getTime() + index * durationMinutes * 60_000,
-                    ),
-                    timeZone,
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : null}
         {rooms.map((room) => {
           const items = appointments.filter(
             (appointment) =>

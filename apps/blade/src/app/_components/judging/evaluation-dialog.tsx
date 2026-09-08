@@ -460,42 +460,45 @@ function EvaluationEditor({
                   placeholder="Write useful feedback for the project team"
                   value={responses[item.id] ?? ""}
                 />
-                <div className="flex items-start gap-2 rounded-md border border-white/10 bg-background/60 p-3 text-sm text-muted-foreground">
-                  {policy === "public" ||
-                  (policy === "public_optional" && shared[item.id] === true) ? (
-                    <Eye
-                      className="mt-0.5 size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <LockKeyhole
-                      className="mt-0.5 size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="space-y-2">
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {visibility.label}
-                      </p>
-                      <p className="mt-1">{visibility.description}</p>
+                {workspace.principalKind === "guest" || policy !== "public" ? (
+                  <div className="flex items-start gap-2 rounded-md border border-white/10 bg-background/60 p-3 text-sm text-muted-foreground">
+                    {policy === "public" ||
+                    (policy === "public_optional" &&
+                      shared[item.id] === true) ? (
+                      <Eye
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <LockKeyhole
+                        className="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="space-y-2">
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {visibility.label}
+                        </p>
+                        <p className="mt-1">{visibility.description}</p>
+                      </div>
+                      {policy === "public_optional" ? (
+                        <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-foreground">
+                          <Checkbox
+                            checked={shared[item.id] === true}
+                            onCheckedChange={(checked) =>
+                              setShared((current) => ({
+                                ...current,
+                                [item.id]: checked === true,
+                              }))
+                            }
+                          />
+                          Share this response with this project's hackers
+                        </Label>
+                      ) : null}
                     </div>
-                    {policy === "public_optional" ? (
-                      <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-foreground">
-                        <Checkbox
-                          checked={shared[item.id] === true}
-                          onCheckedChange={(checked) =>
-                            setShared((current) => ({
-                              ...current,
-                              [item.id]: checked === true,
-                            }))
-                          }
-                        />
-                        Share this response with this project's hackers
-                      </Label>
-                    ) : null}
                   </div>
-                </div>
+                ) : null}
               </div>
             );
           })}

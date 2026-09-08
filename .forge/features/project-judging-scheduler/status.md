@@ -192,3 +192,9 @@ The review of 50dce23e returned three inline findings and one minor comment. Fai
 The previous revision passed every GitHub CI check. The closure commit requires a fresh review and CI run before completion.
 
 Closure verification passed all 33 static tasks, 29 workspace test tasks, and 21 build tasks. API 927, Blade 842, DB 156, and validators 316 tests passed. Migration lineage now includes 0052. The appointment-results fixture selects an appointment with neither evaluations nor retained drafts, so its independent judge list is deterministic. Fresh CodeRabbit approval and CI remain the final external gates.
+
+### Human review nits
+
+Chris reviewed the screenshots in the Dev Discord pull-request channel. The owner accepted removing the redundant timeline time-header row, using "Emergency reassignment" for the existing appointment's smart selection action, and removing repeated authenticated sharing notices under each response. The owner explicitly kept the timeline as the default. Guest sharing choices and saved flags are unchanged.
+
+Human-review follow-up verification passed the 33-task static gate, all 20 judge privacy tests, and visible desktop/mobile checks. Quick Forge review found no actionable issues. Updated screenshots are attached to PR #545.
