@@ -205,9 +205,9 @@ describe("judging room and announcement editors", () => {
       <JudgingControlPanel hackathons={[]} initialData={initialData} />,
     );
     await user.click(screen.getByRole("button", { name: "Edit" }));
-    expect(
-      screen.getByRole("combobox", { name: "Challenge" }),
-    ).toHaveValue(parent.id);
+    expect(screen.getByRole("combobox", { name: "Challenge" })).toHaveValue(
+      parent.id,
+    );
     expect(screen.getByText("This revokes the room QR")).toBeInTheDocument();
     await user.type(screen.getByLabelText("Confirm room name"), "101");
     await user.click(screen.getByRole("button", { name: "Save room" }));
