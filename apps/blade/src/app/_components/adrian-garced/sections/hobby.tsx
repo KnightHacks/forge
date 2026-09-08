@@ -15,23 +15,23 @@ function ProjectMedia({ project }: { project: VideoProject | ImageProject }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleMouseEnter = () => {
-    if (project.visualType === VisualType.Video && videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
-  };
+  // const handleMouseEnter = () => {
+  //   if (project.visualType === VisualType.Video && videoRef.current) {
+  //     videoRef.current.play().catch(() => {});
+  //   }
+  // };
 
-  const handleMouseLeave = () => {
-    if (project.visualType === VisualType.Video && videoRef.current) {
-      videoRef.current.pause();
-    }
-  };
+  // const handleMouseLeave = () => {
+  //   if (project.visualType === VisualType.Video && videoRef.current) {
+  //     videoRef.current.pause();
+  //   }
+  // };
 
   return (
     <div 
       className="relative overflow-hidden rounded-md border bg-black aspect-video flex items-center justify-center group cursor-pointer"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      // onMouseEnter={handleMouseEnter}
+      // onMouseLeave={handleMouseLeave}
     >
       {/* loading skeleton wrapper */}
       {!isLoaded && (
@@ -48,6 +48,7 @@ function ProjectMedia({ project }: { project: VideoProject | ImageProject }) {
           muted
           loop
           playsInline
+          autoPlay
           onLoadedData={() => setIsLoaded(true)}
         />
       ) : (

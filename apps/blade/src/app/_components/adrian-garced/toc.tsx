@@ -61,15 +61,19 @@ export default function TableOfContents({ sections }: { sections: NavEntry[] }) 
               {sections.map((section) => (
                 <li key={section.id}>
                   <a href={`#${section.id}`} className={`block transition-colors duration-200 ${
-                      activeId === section.id
-                        ? "font-medium text-emerald-400!"
-                        : "text-neutral-300! hover:text-neutral-100!"
-                    }`}>{section.label}</a>
+                    activeId === section.id
+                      ? "font-medium text-emerald-400!"
+                      : "text-neutral-300! hover:text-neutral-100!"
+                  }`}>{section.label}</a>
                   {section.subsections && (
                     <ul className="mt-1 space-y-1 border-l border-neutral-800 pl-3">
                       {section.subsections.map(sub => (
                         <li key={sub.id}>
-                          <a href={`#${sub.id}`} className="font-normal text-neutral-400! hover:text-neutral-200!">{sub.label}</a>
+                          <a href={`#${sub.id}`} className={`block transition-colors duration-200 ${
+                            activeId === sub.id
+                              ? "font-medium text-emerald-400!"
+                              : "text-neutral-400! hover:text-neutral-200!"
+                          }`}>{sub.label}</a>
                         </li>
                       ))}
                     </ul>

@@ -1,4 +1,6 @@
-export default function Intro() {
+"use server"
+
+export default async function Intro() {
   return (
   <section id="intro" className="scroll-mt-24">
     <div className="max-w-3xl">
@@ -10,7 +12,9 @@ export default function Intro() {
         Hi, I'm Adrian!
       </h1>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      <p className="mt-2 px-1 py-2 text-medium font-medium text-neutral-300">My contact info is on my resume.</p>
+
+      <div className="mt-4 flex flex-wrap gap-3">
         <a
           href="#about-me"
           className="rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-black! transition-colors hover:bg-emerald-400"

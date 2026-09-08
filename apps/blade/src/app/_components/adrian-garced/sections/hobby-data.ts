@@ -33,8 +33,8 @@ export const PROJECTS: Project[] = [
     title: "tort",
     description: "Cross-Platform shell",
     content: "A super basic shell with basic features, like child process creation, builtins, and prompt customization (very hacky). I wrote majority of the project within a weekend as a challenge to myself, however, I do plan on working on this project further and making it more practical, and add more complex features like piping, redirecting, and autocompletion (similar to the fish shell).",
-    visualType: VisualType.None,
-    // videoUrl: "https://github.com/user-attachments/assets/565d9330-d81a-404d-9639-d2b12d7ff514",
+    visualType: VisualType.Video,
+    videoUrl: "https://github.com/user-attachments/assets/ed16a1e4-ab37-4188-89d6-c33ce164c86c",
     repoUrl: "https://github.com/pinkytoefoo/tort",
     tags: ["C", "Unix", "Windows", "System Calls", "Written within a weekend"]
   },
@@ -48,8 +48,8 @@ export const PROJECTS: Project[] = [
     tags: ["C++", "OpenGL", "GLFW", "GLM", "Dear ImGui"]
   },
   {
-    title: "Soundboard",
-    description: "Desktop audio application",
+    title: "Cuebox",
+    description: "Desktop soundboard application",
     content: "A desktop soundboard exploring Rust, Tauri, audio playback, and virtual audio devices. I currently am working on adding sounds, removing sounds, and adjusting the audio levels.",
     visualType: VisualType.None,
     repoUrl: "https://codeberg.org/pinkytoefoo/cuebox",

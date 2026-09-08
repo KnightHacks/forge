@@ -1,3 +1,5 @@
+"use server"
+
 import {
   GithubIcon,
   CodebergIcon
@@ -43,7 +45,7 @@ const NAVICONS = [
   }
 ] as const;
 
-export default function Navbar() {
+export default async function Navbar() {
   return (
     <nav className="w-full border-b sticky top-0 z-40 backdrop-blur" style={{ backgroundColor: 'rgba(var(--background), 0.8)' }}>
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">

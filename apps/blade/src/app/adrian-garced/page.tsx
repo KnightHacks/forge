@@ -5,7 +5,6 @@
     - [ ] add more concrete sections
 */
 // "use server"
-"use client"
 
 import Navbar from "$/adrian-garced/navbar";
 import Footer from "$/adrian-garced/footer";
@@ -14,7 +13,7 @@ import Projects from "~/app/_components/adrian-garced/sections/hobby";
 import Selected from "$/adrian-garced/sections/selected";
 import MyTools from "$/adrian-garced/sections/my-tools";
 import AboutMe from "$/adrian-garced/sections/about-me";
-import { SELECTED_PROJECTS } from "$/adrian-garced/sections/selected";
+import { SELECTED_PROJECTS } from "$/adrian-garced/sections/selected-data";
 import { PROJECTS } from "$/adrian-garced/sections/hobby-data";
 import TableOfContents from "$/adrian-garced/toc";
 
@@ -43,7 +42,7 @@ const PAGE_SECTIONS = [
   { id: "about-me", label: "About Me", component: AboutMe },
 ];
 
-export default async function AdrianG() {
+export default function AdrianG() {
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-neutral-100 scroll-smooth scroll-bg-[#0a0a0a] bg-[radial-gradient(rgba(255,255,255,0.2)_1px,transparent_1px)] bg-size-[24px_24px]">
     {/* scroll offset visualizer */ }

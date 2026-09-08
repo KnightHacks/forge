@@ -1,3 +1,5 @@
+"use server"
+
 import Playground from "$/adrian-garced/playground";
 
 const CATEGORIES = [
@@ -23,7 +25,7 @@ const CATEGORIES = [
   },
 ];
 
-export default function MyTools({ id }: { id: string }) {
+export default async function MyTools({ id }: { id: string }) {
   return (
     <section id={id} className="mt-32 scroll-mt-24">
       <div className="max-w-3xl">
@@ -56,19 +58,22 @@ export default function MyTools({ id }: { id: string }) {
           </div>
         ))}
       </div>
-      <div id="playground" className="mt-10 max-w-3xl! scroll-mt-24">
-        <p className="text-sm font-medium tracking-wider text-emerald-400">
-          PLAYGROUND
-        </p>
+      <div className="flex w-full justify-center">
+        <div id="playground" className="mt-10 w-full max-w-2xl scroll-mt-24">
 
-        <h3 className="mt-2 text-2xl font-bold tracking-tight sm:text-xl">
-          Sandbox
-        </h3>
+          <p className="text-sm font-medium tracking-wider text-emerald-600">
+            PLAYGROUND
+          </p>
 
-        <p className="mt-2 max-w-2xl text-neutral-400">
-          DVD Animation but for my Technologies
-        </p>
-        <Playground />
+          <h3 className="mt-2 text-2xl text-neutral-300 *:font-bold tracking-tight sm:text-xl">
+            {/* Sandbox */}
+          </h3>
+
+          <p className="mt-2 max-w-2xl text-neutral-200 *:font-bold tracking-tight sm:text-base">
+            DVD Animation but for my Technologies
+          </p>
+          <Playground />
+        </div>
       </div>
     </section>
   );
