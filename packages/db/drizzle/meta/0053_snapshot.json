@@ -1,5 +1,5 @@
 {
-  "id": "e385bbb6-45b5-465f-9923-b573d7782b62",
+  "id": "92ed82ea-d240-4810-8ff0-94be4b10d3dd",
   "prevId": "b74f3936-67fc-4bac-b604-a58b811795c1",
   "version": "7",
   "dialect": "postgresql",
@@ -6498,6 +6498,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "challenge_groups_initialized_at": {
+          "name": "challenge_groups_initialized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "project_inventory_locked_at": {
           "name": "project_inventory_locked_at",
           "type": "timestamp with time zone",
@@ -12522,6 +12528,25 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_group": {
+          "name": "is_group",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "tag_color": {
+          "name": "tag_color",
+          "type": "varchar(7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_label_prefix": {
+          "name": "import_label_prefix",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_general": {
           "name": "is_general",
           "type": "boolean",
@@ -12559,22 +12584,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "project_challenge_general_unique": {
-          "name": "project_challenge_general_unique",
-          "columns": [
-            {
-              "expression": "hackathon_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"knight_hacks_project_challenge\".\"is_general\"",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -12602,7 +12611,7 @@
         "knight_hacks_project_challenge_hackathon_label_unique": {
           "name": "knight_hacks_project_challenge_hackathon_label_unique",
           "nullsNotDistinct": false,
-          "columns": ["hackathon_id", "label"]
+          "columns": ["hackathon_id", "label", "is_group"]
         },
         "knight_hacks_project_challenge_id_hackathon_unique": {
           "name": "knight_hacks_project_challenge_id_hackathon_unique",

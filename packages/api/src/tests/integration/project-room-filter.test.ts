@@ -843,11 +843,16 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     const { readFile } = await import("node:fs/promises");
     const migration = await readFile(
       new URL(
-        "../../../../db/drizzle/0055_initialize_judging_groups.sql",
+        "../../../../db/drizzle/0053_challenge_groups.sql",
         import.meta.url,
       ),
       "utf8",
     );
+    // Replay only the data backfill; the disposable database already has the schema.
+    const backfill = migration.slice(
+      migration.indexOf("-- Only initialize hackathons"),
+    );
+    expect(backfill).toContain("Only initialize hackathons");
     const oldId = randomUUID();
     await database.insert(schema.Hackathon).values({
       id: oldId,
@@ -857,7 +862,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       startDate: new Date("2026-09-01"),
       endDate: new Date("2026-10-01"),
     });
-    for (const statement of migration.split("--> statement-breakpoint"))
+    for (const statement of backfill.split("--> statement-breakpoint"))
       await database.$client.query(statement);
     expect(
       await database.query.ProjectChallenge.findMany({
@@ -870,7 +875,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId: created.id,
       groupId: mlh.id,
     });
-    for (const statement of migration.split("--> statement-breakpoint"))
+    for (const statement of backfill.split("--> statement-breakpoint"))
       await database.$client.query(statement);
     expect(
       await database.query.ProjectChallenge.findMany({

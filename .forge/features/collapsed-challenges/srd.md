@@ -12,10 +12,12 @@ Hackathon creation initializes starter groups; a data migration initializes olde
 
 Filters hide children and every-project groups while project tags remain visible. Evaluation scope, score aggregation, and scheduling resolve children to parents. Guest filters cannot broaden authorization. Saved schedule and existing feedback guards remain enforced server-side.
 
-Migrations 0053 and 0054 are additive/forward changes; 0054 removes the earlier single-default restriction and classifies existing umbrella rows once. The user authorized local KH8/KH9 judging cleanup separately; no migration clears production judging data. KH8 is the local test workspace. Never commit the source CSV or participant data.
+Migration 0053_challenge_groups consolidates the four unpublished migrations originally numbered 0053–0056. It preserves their schema and ordered backfills with one final Drizzle snapshot, including group initialization and MLH tag color. Migrations through main’s 0052 remain unchanged. The user authorized local KH8/KH9 judging cleanup separately; no migration clears production judging data. KH8 is the local test workspace. Never commit the source CSV or participant data.
 
 Validate group CRUD, deletion without resurrection, multiple/no every-project groups, imported-only opt-ins, MLH defaults with rename and explicit override preservation, hidden search options with visible child tags, missing-room scheduling errors, guest isolation, and saved-schedule locks. Run root precommit checks, targeted DB/API/Blade tests, and real browser screenshots before committing.
 
 Upgrade limitation: legacy MLH inventories stored only the umbrella membership. Their original child memberships must be restored by a replacement Devpost import before using the new grouping controls. The migration does not reconstruct historical prize opt-ins or evaluations. The local KH8 testing reset/re-import was explicitly authorized; production rollout must arrange equivalent inventory replacement before judging.
 
 Organizers can designate any group as the default for new MLH imports. Selecting it moves that import policy from the previous group without moving existing children. Clearing or deleting the default disables this automation until another group is designated.
+
+Local upgrade note: databases that applied all four original migrations already have the final schema. Do not rerun the consolidated SQL against them. A database partway through the original sequence must finish that sequence before switching, or use a fresh disposable database. This cleanup does not reset a local database or rewrite its migration ledger. Shared and production rollout starts from main’s 0052 and applies consolidated 0053 normally.
