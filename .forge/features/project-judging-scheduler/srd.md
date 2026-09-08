@@ -15,7 +15,7 @@ Follow [engineering principles](../../../docs/agentic-development/forge-engineer
 | packages/validators | Shared timing, schedule, building, move, and draft input contracts                                                                       |
 | apps/blade          | Command Center schedule, room fields, judge refresh, timer, autosave and incomplete-submission UX                                        |
 
-Scope is Blade and the API/DB/validator packages it consumes. No changes to Cron, T.K., other apps, Dockerfiles, deployment, runtime dependencies, publication, hacker delivery, or production settings. No deployment is part of this task.
+Scope is Blade and the API/DB/validator packages it consumes. No changes to Cron, T.K., other apps, publication, hacker delivery, or production settings. The owner subsequently authorized CP-SAT with eight workers, using TypeScript in the Node process and the necessary package/build setup. No deployment is part of this task.
 
 ## Access policy
 
@@ -67,7 +67,7 @@ Rooms have one fixed challenge. A task chooses exactly one eligible room and one
 
 For each project's chronological sequence, enforce the configured same-building break, or cross-building break when consecutive locations differ. Count building changes over this sequence. Do not impose a fixed challenge order. General may run concurrently with sponsors.
 
-Run cheap total and per-challenge capacity checks first. Spend a bounded initial probe on the sponsor capacity lower bound before continuing the full search. A failed probe is not an infeasibility proof. Missing challenge capacity cannot be fixed through a travel fallback. At default timing, a four-hour room has 24 slots. The user's twelve total rooms include one MLH room, leaving eleven schedulable rooms and 264 slots before challenge-specific capacity. At 250 General presentations, at least eleven General rooms are needed. This is a diagnostic example, not a feasible benchmark.
+Run cheap total and per-challenge capacity checks first. Use necessary per-challenge capacity bounds in the CP-SAT model. A failed search attempt is not an infeasibility proof. Missing challenge capacity cannot be fixed through a travel fallback. At default timing, a four-hour room has 24 slots. The user's twelve total rooms include one MLH room, leaving eleven schedulable rooms and 264 slots before challenge-specific capacity. At 250 General presentations, at least eleven General rooms are needed. This is a diagnostic example, not a feasible benchmark.
 
 ### Objectives
 
@@ -83,9 +83,11 @@ Room balancing follows the sponsor finish and idle objectives; it must not overr
 
 ### Solver and bounded execution
 
-Use a TypeScript constraint search in Blade's existing API runtime, with no external solver/runtime dependency. Represent legal starts as integer grid indices and precompute room/challenge domains. Use minimum-remaining-values task selection, forward checking, occupancy bitsets or equivalent indexed sets, and branch-and-bound against the accepted lexicographic objectives. Seed with deterministic feasible constructions and use their objective vector as an incumbent. Exhaustive tiny-model comparison is mandatory to test pruning correctness.
+Use OR-Tools CP-SAT with exactly eight search workers through a pinned native Node binding. Define the model and orchestrate asynchronous solves in TypeScript inside the existing Blade Node process. Keep the model and capacity checks in packages/api. Use optional room intervals, no-overlap constraints, chronological project circuits with building-dependent travel, and staged lexicographic optimization. Fix an objective only after CP-SAT proves its optimum. Tiny-model exhaustive comparisons remain the correctness oracle.
 
-Keep heavy search out of one uninterrupted event-loop turn. Search advances in bounded cooperative chunks and stores recoverable run state/progress behind officer-authorized operations. A generation request/continuation never holds a database transaction during computation. Use a lease/version to reject competing continuations and a source fingerprint to prevent applying stale results. The organizer's generation flow drives continuation while open; returning to it can resume an unfinished valid run. No external scheduled process is needed.
+Keep the Node event loop and HTTP continuations responsive while the native solver runs. Persist independently validated incumbents and completed objective proofs in the existing JSON checkpoint, renewing the existing database lease. A generation request never holds a database transaction during computation. Loss of the lease, saving, supersession, process failure, or the shared deadline cancels the native search. A returning organizer can claim an expired lease after a server restart, rebuilding CP-SAT with the last validated candidate as a hint and previously proved objectives as constraints. Internal solver state is not serializable; elapsed wall time is never reset. Old DFS checkpoints remain readable and their validated candidates remain usable without a database migration.
+
+No separate service, scheduled process, public endpoint, or credentials are required. Existing officer guards, source fingerprints, candidate hashes, Save revalidation, and the organizer UI remain authoritative. Runtime failures retain the last validated candidate and expose a diagnostic; they never claim infeasibility or relax travel.
 
 Enforce one overall wall-time budget below five minutes, including strict/relaxed attempts and objective improvement. Return the best independently validated candidate if optimality remains unproven. With no candidate and unfinished search, report search-incomplete. Only exhausted valid search or an independent sound capacity contradiction proves infeasibility.
 
@@ -183,7 +185,7 @@ Generate and commit additive Drizzle migrations after schema edits. Preserve exi
 
 Exclude schedule jobs, reservations, and drafts from sanitized backups. Retain the reusable building catalog as configuration. Validate empty DB migration and upgrade using synthetic existing room/QR/evaluation fixtures. Preserve submitted data on rollback; a rollback cannot reinterpret incomplete results as complete.
 
-Use the current Blade runtime and existing dependencies. No Python, external solver, Cron, Dockerfile, secret, or deployment changes. No production migration or deployment is authorized by this task.
+Install the pinned `@ortools-node/cp-sat` package with pnpm. Keep it external to Next bundling and trace its platform-specific native assets into the standalone output. No Python runtime, subprocess bridge, separate service, or Docker/CI runtime setup is needed. The third-party binding is a release candidate; pin the exact version and verify callbacks, cancellation, native loading, and model parity. No new service, secret, production migration, or deployment is authorized. The owner must review the prepared commit before it is pushed to the existing PR.
 
 ## Verification and exit condition
 

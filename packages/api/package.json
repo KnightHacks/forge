@@ -59,6 +59,7 @@
     "@forge/hacker-sdk": "workspace:*",
     "@forge/utils": "workspace:*",
     "@forge/validators": "workspace:*",
+    "@ortools-node/cp-sat": "9.15.0-node.0-rc.2",
     "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "archiver": "^6.0.2",

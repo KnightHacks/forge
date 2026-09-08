@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
@@ -49,8 +50,8 @@ import {
   reconcileExpiredJudgingDrafts,
 } from "../utils/judging-schedule/reconcile";
 import {
-  advanceScheduleSearch,
   createScheduleSearch,
+  runScheduleSearch,
 } from "../utils/judging-schedule/solver";
 import {
   lockScheduleHackathon,
@@ -136,6 +137,87 @@ function publicJob(job: typeof JudgingScheduleJob.$inferSelect) {
         })) ?? [])
       : [],
   };
+}
+
+/** A DB lease owns the in-process solver across short browser polling requests.
+ * Only validated incumbents/proofs are persisted; a new process can resume them.
+ */
+async function runScheduleJob(
+  job: typeof JudgingScheduleJob.$inferSelect,
+  leaseToken: string,
+  actor: AuditActor,
+) {
+  const problem = scheduleProblemSchema.parse(job.problem);
+  const search = scheduleSearchSchema.parse(job.checkpoint);
+  const controller = new AbortController();
+  const ownedJob = and(
+    eq(JudgingScheduleJob.id, job.id),
+    eq(JudgingScheduleJob.leaseToken, leaseToken),
+    eq(JudgingScheduleJob.status, "searching"),
+  );
+  const execution = runScheduleSearch(problem, search, {
+    deadline: job.expiresAt,
+    signal: controller.signal,
+  })
+    .catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      logger.error("Judging CP-SAT generation failed", {
+        jobId: job.id,
+        error,
+      });
+      search.diagnostics.push(
+        "CP-SAT stopped unexpectedly. Any validated preview is still available. Check the server logs and installed judging solver before generating again.",
+      );
+    })
+    .then(() => true);
+
+  try {
+    while (!(await Promise.race([execution, delay(1000, false)]))) {
+      const [owned] = await db
+        .update(JudgingScheduleJob)
+        .set({
+          checkpoint: structuredClone(search),
+          leaseExpiresAt: sql`now() + interval '15 seconds'`,
+          revision: sql`${JudgingScheduleJob.revision} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(ownedJob)
+        .returning({ id: JudgingScheduleJob.id });
+      if (!owned) return; // Save, supersession, or another lease owner won.
+    }
+    const status = search.incumbent
+      ? search.exhausted
+        ? "optimal"
+        : "feasible"
+      : search.exhausted
+        ? "infeasible"
+        : "incomplete";
+    await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(JudgingScheduleJob)
+        .set({
+          checkpoint: search,
+          status,
+          leaseToken: null,
+          leaseExpiresAt: null,
+          revision: sql`${JudgingScheduleJob.revision} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(ownedJob)
+        .returning({ id: JudgingScheduleJob.id });
+      if (updated)
+        await auditSchedule(
+          tx,
+          actor,
+          job.hackathonId,
+          "judging.schedule.generated",
+          { jobId: job.id, status },
+        );
+    });
+  } finally {
+    controller.abort();
+    await execution;
+  }
 }
 
 async function requireNoSchedule(tx: WriteDb, hackathonId: string) {
@@ -282,7 +364,7 @@ export const judgingScheduleRouter = {
       const leaseToken = randomUUID();
       const [job] = await db
         .update(JudgingScheduleJob)
-        .set({ leaseToken, leaseExpiresAt: new Date(Date.now() + 15_000) })
+        .set({ leaseToken, leaseExpiresAt: sql`now() + interval '15 seconds'` })
         .where(
           and(
             eq(JudgingScheduleJob.id, input.jobId),
@@ -295,76 +377,29 @@ export const judgingScheduleRouter = {
           ),
         )
         .returning();
-      if (!job) {
-        const current = await db.query.JudgingScheduleJob.findFirst({
-          where: and(
-            eq(JudgingScheduleJob.id, input.jobId),
-            eq(JudgingScheduleJob.hackathonId, input.hackathonId),
-          ),
-        });
-        if (!current) throw new TRPCError({ code: "NOT_FOUND" });
-        return publicJob(current);
+      // Keep HTTP requests short while the native solver retains its search.
+      // A lost process is recoverable once its lease expires, within expiresAt.
+      if (job) {
+        const execution = runScheduleJob(job, leaseToken, actor).catch(
+          (error: unknown) => {
+            logger.error("Judging generation lease failed", {
+              jobId: job.id,
+              error,
+            });
+          },
+        );
+        await Promise.race([execution, delay(750)]);
+      } else {
+        await delay(750);
       }
-      const problem = scheduleProblemSchema.parse(job.problem);
-      let search = scheduleSearchSchema.parse(job.checkpoint);
-      const remaining = job.expiresAt.getTime() - Date.now();
-      if (remaining > 0)
-        advanceScheduleSearch(problem, search, {
-          maxNodes: 100_000,
-          maxMilliseconds: Math.min(750, remaining),
-        });
-      if (
-        search.exhausted &&
-        !search.incumbent &&
-        !search.relaxed &&
-        search.diagnostics.length === 0
-      )
-        search = createScheduleSearch(problem, true);
-      const finished =
-        search.exhausted || Date.now() >= job.expiresAt.getTime();
-      const status = !finished
-        ? "searching"
-        : search.incumbent
-          ? search.exhausted
-            ? "optimal"
-            : "feasible"
-          : search.exhausted
-            ? "infeasible"
-            : "incomplete";
-      return db.transaction(async (tx) => {
-        const [updated] = await tx
-          .update(JudgingScheduleJob)
-          .set({
-            checkpoint: search,
-            status,
-            leaseToken: null,
-            leaseExpiresAt: null,
-            revision: job.revision + 1,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(JudgingScheduleJob.id, job.id),
-              eq(JudgingScheduleJob.leaseToken, leaseToken),
-              eq(JudgingScheduleJob.status, "searching"),
-            ),
-          )
-          .returning();
-        if (!updated)
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "This generation was replaced by another preview.",
-          });
-        if (finished)
-          await auditSchedule(
-            tx,
-            actor,
-            input.hackathonId,
-            "judging.schedule.generated",
-            { jobId: updated.id, status },
-          );
-        return publicJob(updated);
+      const current = await db.query.JudgingScheduleJob.findFirst({
+        where: and(
+          eq(JudgingScheduleJob.id, input.jobId),
+          eq(JudgingScheduleJob.hackathonId, input.hackathonId),
+        ),
       });
+      if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+      return publicJob(current);
     }),
 
   saveSchedule: permProcedure

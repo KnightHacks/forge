@@ -34,14 +34,9 @@ const placement = z.object({
 });
 
 export const scheduleSearchSchema: z.ZodType<ScheduleSearch> = z.object({
-  assignments: z.array(placement),
-  stack: z.array(
-    z.object({
-      taskIndex: z.number().int().nonnegative(),
-      candidates: z.array(z.number().int().nonnegative()),
-      next: z.number().int().nonnegative(),
-    }),
-  ),
+  // Old DFS checkpoints have no proofs. Preserve their candidates while
+  // discarding the obsolete stack; recovery rebuilds the native model.
+  provenObjectives: z.array(z.number().int()).max(5).default([]),
   incumbent: z.array(placement).nullable(),
   score: z
     .tuple([z.number(), z.number(), z.number(), z.number(), z.number()])

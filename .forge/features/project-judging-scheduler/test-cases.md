@@ -224,3 +224,15 @@ Use guest QR entry on 320- and 390-pixel phone viewports. Complete a score, insp
 - Room-only filtering defaults on for guests and authenticated judges. With several General rooms, results and pagination count only the selected room's assignments. Turning it off restores the permitted inventory. MLH remains untimed and challenge-scoped.
 - Wrong-room and wrong-slot actions remain disabled. Hover and keyboard focus expose a reason without opening an evaluation dialog. Check 320 px and 390 px guest views, a short viewport, and desktop.
 - Race two saves with the same expected draft revision. Exactly one succeeds. Put an invalid expired draft beside a valid one; retain the invalid answers and still materialize the valid result. Repeated autosave failures back off, stop automatic retries, and permit manual recovery without losing typed answers.
+
+### TC-CP-001: Native model and proof ordering
+
+Compare the eight-worker CP-SAT result with exhaustive enumeration for tiny schedules covering multiple rooms/buildings, empty inputs, non-grid breaks, sponsor idle, and three-stop project itineraries. All five objective values must match. Only proved earlier objectives may constrain later phases. A valid candidate without all five proofs remains feasible.
+
+### TC-CP-002: Native failure, timeout, and cancellation
+
+Cancel the native solve before and after a valid candidate. Retain only independently validated work; a missing native binding, invalid result, or time limit cannot claim infeasibility or enable reduced travel. Propagate cancellation and the remaining absolute deadline to the native solver. Node remains responsive while the solver runs.
+
+### TC-CP-003: Leases, recovery, and checkpoint compatibility
+
+Competing continuations may start only one native search per lease. Renew ownership while the solver works. Saving or superseding a job prevents any later worker write. After a restart, retain the original expiry, validated incumbent, and proved objective prefix when rebuilding the model. Existing DFS checkpoints remain readable and their candidates retain the same review hash. No saved schedule changes during generation.

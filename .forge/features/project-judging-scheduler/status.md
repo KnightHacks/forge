@@ -1,6 +1,6 @@
 # Project judging scheduler status
 
-Current phase: Pull request open, awaiting CI and CodeRabbit
+Current phase: In-process TypeScript CP-SAT ready for owner review before push
 Last updated: 2026-09-07
 
 ## Discovery decision log
@@ -133,7 +133,7 @@ The active Codex goal contains the same exit condition. This status file is the 
 - [Technical intake](srd.md)
 - [Candidate behavioral cases](test-cases.md)
 
-## Final implementation decisions
+## Original implementation decisions (before CP-SAT follow-up)
 
 - Bounded TypeScript search runs in Blade's existing API runtime. It uses a sponsor lower-bound probe followed by unrestricted resumable search. A failed probe or timeout never proves infeasibility. Exact small-model oracles verify soundness.
 - The adversarial 200-project fixture reaches the 90-minute sponsor and 230-minute overall capacity bounds, compared with the original 110-minute sponsor result after a full 290-second search. The 32-project boundary reaches minute 90 for both sponsor and overall finish. These fixtures do not imply every inventory fits or that every result is globally optimal.
@@ -198,3 +198,26 @@ Closure verification passed all 33 static tasks, 29 workspace test tasks, and 21
 Chris reviewed the screenshots in the Dev Discord pull-request channel. The owner accepted removing the redundant timeline time-header row, using "Emergency reassignment" for the existing appointment's smart selection action, and removing repeated authenticated sharing notices under each response. The owner explicitly kept the timeline as the default. Guest sharing choices and saved flags are unchanged.
 
 Human-review follow-up verification passed the 33-task static gate, all 20 judge privacy tests, and visible desktop/mobile checks. Quick Forge review found no actionable issues. Updated screenshots are attached to PR #545.
+
+### CP-SAT follow-up
+
+The owner approved CP-SAT with eight workers after a benchmark of the supplied KH VIII CSV, then required the implementation to run through TypeScript in the Node process. The final benchmark inventory has 188 projects and 437 appointments, with 16 sponsor rooms, eight General rooms, and 25 ten-minute slots. The eight-worker CP-SAT prototype found a validated candidate in 3.85 seconds and proved sponsor finish 220 minutes, zero sponsor idle, and overall finish 240 minutes. It returned 107 building changes after 60 seconds. The previous solver returned 230/280/250 minutes and 124 changes after 290 seconds. These measurements used the Python prototype; the TypeScript port is verified for correctness without another performance benchmark.
+
+The implementation pins `@ortools-node/cp-sat` at `9.15.0-node.0-rc.2`. TypeScript builds the model and handles callbacks, while the native CP-SAT engine runs asynchronously with eight threads inside Node. Next keeps the binding external and includes the platform binaries and libraries in standalone output. No Python, subprocess, external service, Docker runtime change, schema migration, or UI change is included. The binding is a third-party release candidate; exact model, cancellation, loading, and packaging checks are required.
+
+- [x] Trace import eligibility, constraints, scoring, checkpoints, and UI consumers.
+- [x] Replace DFS with the TypeScript model and eight-worker native solver.
+- [x] Preserve leases, deadline, recovery, preview hashes, and Save semantics.
+- [x] Verify native callbacks, failure/cancellation, objective proofs, and legacy recovery.
+- [x] Pass required root static checks and affected consumer checks.
+- [x] Build and smoke-test native loading in Blade's standalone container.
+- [x] Prepare the local implementation commit for owner review.
+- [ ] Push to PR #545 only after owner approval. No merge or deployment.
+
+Only project/challenge memberships and declared room/timing configuration enter the model. The original CSV and participant data remain outside the repository. Python implementation checks are superseded by validation of this TypeScript replacement.
+
+The TypeScript port passed all 29 workspace test tasks, including API 933, Blade 842, DB 156, and validators 316 tests. The full command used `NEXT_PUBLIC_BLADE_URL=http://localhost:3000 pnpm exec turbo run test --concurrency=1 -- --maxWorkers=4`; the URL satisfies an existing production-mode Discord configuration test. Auth retained its five existing skipped tests. The scheduler's 18 focused tests cover oracle equality, travel fallback, failure/cancellation, leases, supersession, recovery, and scale regressions.
+
+Incorporated the existing PR's UI-only follow-up c9466d4f before preparing this commit. Its changes remain intact. After integration, all 28 judging privacy/display tests passed, along with root `pnpm format` (24 tasks), `pnpm lint` (31 tasks, warnings only), and `pnpm typecheck` (33 tasks). No new UI code is part of the CP-SAT change.
+
+The Node-only Blade Docker build passed. A network-disabled smoke test ran the actual compiled TypeScript scheduler in that standalone image as UID 1000, proved all five objectives on a small fixture, and independently validated the candidate with no Python installed. Frozen offline pnpm installation accepted the pinned lockfile. No additional performance benchmark was run.

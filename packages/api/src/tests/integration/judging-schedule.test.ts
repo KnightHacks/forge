@@ -213,13 +213,81 @@ describe.runIf(canRunDatabaseTests())(
         sameBuildingBreakMinutes: 10,
         differentBuildingBreakMinutes: 20,
       };
+      // Concurrent polls share one native search. Supersession cancels its
+      // lease without letting its final checkpoint overwrite the new preview.
+      const solver = await import("../../utils/judging-schedule/solver");
+      let cancelled = false;
+      const heldSearch = vi
+        .spyOn(solver, "runScheduleSearch")
+        .mockImplementationOnce(async (_problem, _search, { signal }) => {
+          await new Promise<void>((resolve) =>
+            signal?.addEventListener(
+              "abort",
+              () => {
+                cancelled = true;
+                resolve();
+              },
+              { once: true },
+            ),
+          );
+        });
+      const abandoned = await admin.judging.generateSchedule({
+        hackathonId,
+        timing,
+      });
+      const polls = await Promise.all([
+        admin.judging.continueScheduleGeneration({
+          hackathonId,
+          jobId: abandoned.id,
+        }),
+        admin.judging.continueScheduleGeneration({
+          hackathonId,
+          jobId: abandoned.id,
+        }),
+      ]);
+      expect(heldSearch).toHaveBeenCalledOnce();
+      expect(polls.every((poll) => poll.status === "searching")).toBe(true);
       let job = await admin.judging.generateSchedule({ hackathonId, timing });
+      await vi.waitFor(() => expect(cancelled).toBe(true), { timeout: 3000 });
+      heldSearch.mockRestore();
+      const superseded = await client.query.JudgingScheduleJob.findFirst({
+        where: eq(schema.JudgingScheduleJob.id, abandoned.id),
+      });
+      expect(superseded?.status).toBe("superseded");
+      expect(superseded?.leaseToken).toBeNull();
       for (let count = 0; count < 20 && job.status === "searching"; count += 1)
         job = await admin.judging.continueScheduleGeneration({
           hackathonId,
           jobId: job.id,
         });
       expect(job.status).toBe("optimal");
+      const originalDeadline = job.expiresAt;
+      const stored = await client.query.JudgingScheduleJob.findFirst({
+        where: eq(schema.JudgingScheduleJob.id, job.id),
+      });
+      const { scheduleSearchSchema } =
+        await import("../../utils/judging-schedule/checkpoint");
+      const checkpoint = scheduleSearchSchema.parse(stored?.checkpoint);
+      checkpoint.provenObjectives = checkpoint.provenObjectives.slice(0, 3);
+      checkpoint.exhausted = false;
+      await client
+        .update(schema.JudgingScheduleJob)
+        .set({
+          checkpoint,
+          status: "searching",
+          leaseToken: randomUUID(),
+          leaseExpiresAt: new Date(0),
+        })
+        .where(eq(schema.JudgingScheduleJob.id, job.id));
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        job = await admin.judging.continueScheduleGeneration({
+          hackathonId,
+          jobId: job.id,
+        });
+        if (job.status !== "searching") break;
+      }
+      expect(job.status).toBe("optimal");
+      expect(job.expiresAt).toEqual(originalDeadline);
       expect(job.candidate).toHaveLength(4);
       expect(
         job.candidate.every(

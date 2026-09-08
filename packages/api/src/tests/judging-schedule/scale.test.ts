@@ -2,12 +2,12 @@ import { expect, it } from "vitest";
 
 import type { ScheduleProblem } from "../../utils/judging-schedule/model";
 import {
-  advanceScheduleSearch,
   createScheduleSearch,
+  runScheduleSearch,
 } from "../../utils/judging-schedule/solver";
 import { validateSchedule } from "../../utils/judging-schedule/validate";
 
-it("finds and independently validates a 200-project schedule within the generation budget", () => {
+it("finds and independently validates a 200-project schedule within the generation budget", async () => {
   const problem: ScheduleProblem = {
     durationMinutes: 10,
     windowMinutes: 240,
@@ -33,17 +33,9 @@ it("finds and independently validates a 200-project schedule within the generati
     ]).flat(),
   };
   const state = createScheduleSearch(problem);
-  const started = performance.now();
-  while (
-    !state.incumbent &&
-    !state.exhausted &&
-    performance.now() - started < 20_000
-  ) {
-    advanceScheduleSearch(problem, state, {
-      maxNodes: 1000,
-      maxMilliseconds: 500,
-    });
-  }
+  await runScheduleSearch(problem, state, {
+    deadline: new Date(Date.now() + 20_000),
+  });
   expect(
     state.incumbent,
     `No incumbent after ${state.nodes} nodes`,
@@ -55,8 +47,8 @@ it("finds and independently validates a 200-project schedule within the generati
 }, 25_000);
 
 it.each([32, 200])(
-  "reaches sponsor and overall bounds with %i projects before enumerating General permutations",
-  (projectCount) => {
+  "reaches sponsor and overall bounds with %i projects using the native model",
+  async (projectCount) => {
     const problem: ScheduleProblem = {
       durationMinutes: 10,
       windowMinutes: 240,
@@ -82,19 +74,9 @@ it.each([32, 200])(
       ]).flat(),
     };
     const state = createScheduleSearch(problem);
-    const deadline = Date.now() + 10_000;
-    do {
-      advanceScheduleSearch(problem, state, {
-        maxNodes: 1000,
-        maxMilliseconds: 750,
-      });
-    } while (
-      !state.exhausted &&
-      Date.now() < deadline &&
-      (state.score?.[0] !== 90 ||
-        state.score[1] !== 0 ||
-        state.score[2] !== Math.max(90, Math.ceil(projectCount / 9) * 10))
-    );
+    await runScheduleSearch(problem, state, {
+      deadline: new Date(Date.now() + 10_000),
+    });
     expect(validateSchedule(problem, state.incumbent ?? [], false).valid).toBe(
       true,
     );
