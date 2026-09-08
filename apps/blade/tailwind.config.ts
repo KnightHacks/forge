@@ -51,8 +51,10 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        // sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        // mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+        mono: ['var(--font-ibm-plex-mono)', ...fontFamily.mono],
+        sans: ['var(--font-space-grotesk)', ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {
