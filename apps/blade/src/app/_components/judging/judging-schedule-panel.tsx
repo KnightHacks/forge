@@ -277,13 +277,19 @@ export function JudgingSchedulePanel({
               className="mt-2 grid grid-cols-3 gap-3"
               aria-label="Live room activity"
             >
-              {[
-                ["In a slot", roomActivity.occupied],
-                ["No current slot", roomActivity.idle],
-                ["Total rooms", roomActivity.total],
-              ].map(([label, value]) => (
-                <div key={label}>
-                  <dt className="text-sm text-muted-foreground">{label}</dt>
+              {(
+                [
+                  [
+                    "Judging",
+                    roomActivity.occupied,
+                    "text-[hsl(var(--chart-2))]",
+                  ],
+                  ["Idle", roomActivity.idle, "text-red-200"],
+                  ["Total rooms", roomActivity.total, ""],
+                ] as const
+              ).map(([label, value, color]) => (
+                <div key={label} className={color}>
+                  <dt className="text-sm">{label}</dt>
                   <dd className="font-mono text-xl font-semibold tabular-nums">
                     {value}
                   </dd>
