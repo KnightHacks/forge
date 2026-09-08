@@ -66,6 +66,15 @@ function ProjectBadges({ project }: { project: Project }) {
                 : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
           )}
           key={challenge.id}
+          style={
+            challenge.tagColor
+              ? {
+                  backgroundColor: challenge.tagColor,
+                  borderColor: challenge.tagColor,
+                  color: "white",
+                }
+              : undefined
+          }
           title={
             challenge.evaluationCount > 0
               ? `${challenge.evaluationCount} evaluation${challenge.evaluationCount === 1 ? "" : "s"}`

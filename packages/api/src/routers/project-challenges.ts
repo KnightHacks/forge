@@ -62,6 +62,7 @@ export const projectChallengesRouter = {
             isScheduled: input.isScheduled,
             isGroup: true,
             importLabelMatch: input.isMlhImportDefault ? "MLH" : null,
+            tagColor: input.tagColor,
           })
           .onConflictDoNothing()
           .returning();
@@ -81,6 +82,7 @@ export const projectChallengesRouter = {
               label: group.label,
               isGeneral: group.isGeneral,
               isScheduled: group.isScheduled,
+              tagColor: group.tagColor,
             },
             subjects: [
               {
@@ -144,6 +146,7 @@ export const projectChallengesRouter = {
             label: input.label,
             isGeneral: input.isGeneral,
             isScheduled: input.isScheduled,
+            tagColor: input.tagColor === undefined ? undefined : input.tagColor,
           })
           .where(
             and(
@@ -165,6 +168,7 @@ export const projectChallengesRouter = {
               label: group.label,
               isGeneral: group.isGeneral,
               isScheduled: group.isScheduled,
+              tagColor: group.tagColor,
             },
             subjects: [
               {

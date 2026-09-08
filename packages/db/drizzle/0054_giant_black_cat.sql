@@ -7,6 +7,15 @@ ALTER TABLE "knight_hacks_project_challenge" ADD CONSTRAINT "knight_hacks_projec
 -- Classify the previous import-created umbrella rows once; runtime uses group metadata.
 UPDATE "knight_hacks_project_challenge" SET "is_group" = true WHERE "is_general" OR "label" = 'MLH Challenges';
 --> statement-breakpoint
+-- Legacy inventories may have had General without an MLH umbrella. Seed the
+-- missing starter before marking this event initialized, so later deletion is
+-- still intentional and does not cause automatic recreation.
+INSERT INTO "knight_hacks_project_challenge" ("hackathon_id", "label", "is_group", "is_general", "is_scheduled")
+SELECT DISTINCT c."hackathon_id", 'MLH Challenges', true, false, false
+FROM "knight_hacks_project_challenge" c
+WHERE c."is_group" AND c."is_general"
+ON CONFLICT ("hackathon_id", "label", "is_group") DO NOTHING;
+--> statement-breakpoint
 UPDATE "knight_hacks_project_challenge" SET "import_label_prefix" = 'MLH' WHERE "is_group" AND "label" = 'MLH Challenges';
 --> statement-breakpoint
 UPDATE "knight_hacks_project_to_challenge" m SET "is_opt_in" = false FROM "knight_hacks_project_challenge" c WHERE m."challenge_id" = c."id" AND c."is_group";

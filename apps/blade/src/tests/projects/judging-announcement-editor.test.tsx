@@ -200,6 +200,7 @@ describe("judging announcement editor", () => {
           isMlhImportDefault: false,
           isGeneral: false,
           isScheduled: true,
+          tagColor: null,
         },
       ],
       configuration: {

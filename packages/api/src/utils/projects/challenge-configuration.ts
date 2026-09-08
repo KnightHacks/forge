@@ -174,6 +174,7 @@ export const challengeSelection = {
   label: ProjectChallenge.label,
   parentId: ProjectChallenge.parentId,
   isGroup: ProjectChallenge.isGroup,
+  tagColor: ProjectChallenge.tagColor,
   isMlhImportDefault: sql<boolean>`coalesce(${ProjectChallenge.importLabelMatch} = 'MLH', false)`,
   isGeneral: ProjectChallenge.isGeneral,
   isScheduled: ProjectChallenge.isScheduled,

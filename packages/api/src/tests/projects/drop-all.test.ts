@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Session } from "@forge/auth/server";
-import {
-  HackathonJudgingConfiguration,
-  Project,
-  ProjectChallenge,
-} from "@forge/db/schemas/knight-hacks";
+import { Project, ProjectChallenge } from "@forge/db/schemas/knight-hacks";
 
 const HACKATHON_ID = "00000000-0000-4000-8000-000000000527";
 
@@ -140,12 +136,7 @@ describe("project inventory hard deletion", () => {
 
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(1, Project);
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(2, ProjectChallenge);
-    expect(mocks.updateTable).toHaveBeenCalledWith(
-      HackathonJudgingConfiguration,
-    );
-    expect(mocks.updateSet).toHaveBeenCalledWith({
-      challengeGroupsInitializedAt: null,
-    });
+    expect(mocks.updateTable).not.toHaveBeenCalled();
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledOnce();
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

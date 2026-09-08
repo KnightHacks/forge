@@ -530,6 +530,7 @@ export const AUDIT_ACTION_CATALOG = {
     "isGeneral",
     "isScheduled",
     "isMlhImportDefault",
+    "tagColor",
   ]),
   "judging.group.updated": policy("hackathons", "Updated judging group", [
     "groupId",
@@ -537,6 +538,7 @@ export const AUDIT_ACTION_CATALOG = {
     "isGeneral",
     "isScheduled",
     "isMlhImportDefault",
+    "tagColor",
   ]),
   "judging.group.deleted": policy("hackathons", "Deleted judging group", [
     "groupId",

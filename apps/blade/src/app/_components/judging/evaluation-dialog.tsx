@@ -32,7 +32,12 @@ export interface EvaluationProject {
   id: string;
   title: string;
   prizeCategories?: string[];
-  challenges?: { id: string; label: string; parentId: string | null }[];
+  challenges?: {
+    id: string;
+    label: string;
+    parentId: string | null;
+    tagColor?: string | null;
+  }[];
 }
 
 function policyCopy(
@@ -319,6 +324,15 @@ function EvaluationEditor({
                   <span
                     key={challenge.id}
                     className="max-w-full break-words rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-sm font-semibold text-primary"
+                    style={
+                      challenge.tagColor
+                        ? {
+                            backgroundColor: challenge.tagColor,
+                            borderColor: challenge.tagColor,
+                            color: "white",
+                          }
+                        : undefined
+                    }
                   >
                     {challenge.label}
                   </span>

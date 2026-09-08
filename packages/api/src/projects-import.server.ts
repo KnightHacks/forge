@@ -28,14 +28,12 @@ import {
   challengeSelection,
   rebuildParentMemberships,
 } from "./utils/projects/challenge-configuration";
-import {
-  defaultJudgingChallenges,
-  importedChallengeLabels,
-} from "./utils/projects/challenge-labels";
+import { importedChallengeLabels } from "./utils/projects/challenge-labels";
 import {
   parseDevpostProjects,
   ProjectImportError,
 } from "./utils/projects/devpost-import";
+import { initializeJudgingGroups } from "./utils/projects/initialize-judging-groups";
 
 export { ProjectImportError };
 
@@ -113,42 +111,7 @@ export async function importDevpostProjects(input: {
       );
     }
 
-    const groupSetup = await tx.query.HackathonJudgingConfiguration.findFirst({
-      where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
-    });
-    if (!groupSetup?.challengeGroupsInitializedAt) {
-      const configuredMlhDefault = await tx.query.ProjectChallenge.findFirst({
-        columns: { id: true },
-        where: and(
-          eq(ProjectChallenge.hackathonId, hackathon.id),
-          eq(ProjectChallenge.isGroup, true),
-          eq(ProjectChallenge.importLabelMatch, "MLH"),
-        ),
-      });
-      await tx
-        .insert(ProjectChallenge)
-        .values(
-          defaultJudgingChallenges.map((group) => ({
-            ...group,
-            importLabelMatch: configuredMlhDefault
-              ? null
-              : group.importLabelMatch,
-            hackathonId: hackathon.id,
-            isGroup: true,
-          })),
-        )
-        .onConflictDoNothing();
-      await tx
-        .insert(HackathonJudgingConfiguration)
-        .values({
-          hackathonId: hackathon.id,
-          challengeGroupsInitializedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: HackathonJudgingConfiguration.hackathonId,
-          set: { challengeGroupsInitializedAt: new Date() },
-        });
-    }
+    await initializeJudgingGroups(tx, hackathon.id);
     const currentChallenges = await tx
       .select({
         ...challengeSelection,

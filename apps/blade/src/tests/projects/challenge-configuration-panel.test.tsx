@@ -68,6 +68,7 @@ const data = {
       isGroup: true,
       isMlhImportDefault: false,
       isScheduled: true,
+      tagColor: "#7c3aed",
     },
     {
       id: "00000000-0000-4000-8000-000000000003",
@@ -77,6 +78,7 @@ const data = {
       isGroup: false,
       isMlhImportDefault: false,
       isScheduled: true,
+      tagColor: null,
     },
   ],
   setupLocked: false,
@@ -126,6 +128,10 @@ describe("organizer challenge setup", () => {
   it("creates a named group with optional every-project membership", async () => {
     const user = userEvent.setup();
     render(<ChallengeConfigurationPanel data={data} />);
+    expect(
+      screen.queryByRole("textbox", { name: "New judging group" }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add judging group" }));
     await user.type(
       screen.getByRole("textbox", { name: "New judging group" }),
       "Community awards",
@@ -137,7 +143,11 @@ describe("organizer challenge setup", () => {
       isMlhImportDefault: false,
       isGeneral: false,
       isScheduled: true,
+      tagColor: "#7c3aed",
     });
+    expect(
+      screen.queryByRole("textbox", { name: "New judging group" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps saved setup readable and prevents editing every setup control", () => {
@@ -160,6 +170,9 @@ describe("organizer challenge setup", () => {
     expect(
       screen.getByRole("textbox", { name: "Find a challenge" }),
     ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add judging group" }),
+    ).toBeDisabled();
     expect(mocks.update).not.toHaveBeenCalled();
   });
 });

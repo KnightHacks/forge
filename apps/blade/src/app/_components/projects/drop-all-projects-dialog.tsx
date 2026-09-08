@@ -77,8 +77,8 @@ export function DropAllProjectsDialog({
             <DialogDescription className="leading-6">
               This permanently deletes all {projectCount} active and deleted
               projects for {hackathonName}, including team contacts and imported
-              challenges. The hackathon itself stays in Forge. This cannot be
-              undone.
+              challenges. Judging groups and their settings stay in Forge, along
+              with the hackathon. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
 

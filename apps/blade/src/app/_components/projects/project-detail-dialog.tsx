@@ -36,6 +36,15 @@ function ChallengeBadges({ project }: { project: Project }) {
       {project.challenges.map((challenge) => (
         <Badge
           key={challenge.id}
+          style={
+            challenge.tagColor
+              ? {
+                  backgroundColor: challenge.tagColor,
+                  borderColor: challenge.tagColor,
+                  color: "white",
+                }
+              : undefined
+          }
           variant={challenge.isGeneral ? "outline" : "secondary"}
         >
           {challenge.label}

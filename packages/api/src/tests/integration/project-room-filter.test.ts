@@ -41,10 +41,12 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
   async function caller(input: { headers?: Headers; session: Session | null }) {
     const trpc = await import("../../trpc");
     const { projectsRouter } = await import("../../routers/projects");
+    const { hackathonRouter } = await import("../../routers/hackathon");
     const { judgingRouter } = await import("../../routers/judging");
     return trpc.createCallerFactory(
       trpc.createTRPCRouter({
         projects: projectsRouter,
+        hackathon: hackathonRouter,
         judging: judgingRouter,
       }),
     )({
@@ -620,6 +622,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     const first = await challenge("First time", false);
     const toolA = await challenge("MLH - Tool A", false);
     expect(toolA.parentId).toBe(mlh.id);
+    expect(mlh.tagColor).toBe("#e93227");
     await expect(
       member.projects.updateGroup({
         hackathonId: eventId,
@@ -768,40 +771,111 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       confirmation: "Group imports",
     });
     await runImport(["[MLH] New import"]);
-    expect((await challenge("[MLH] New import", false)).parentId).toBe(
-      (await challenge("MLH Challenges", true)).id,
-    );
+    expect((await challenge("[MLH] New import", false)).parentId).toBeNull();
     const customMlh = await member.projects.createGroup({
       hackathonId: eventId,
       label: "Custom sponsor fair",
-      isGeneral: false,
+      isGeneral: true,
       isScheduled: false,
       isMlhImportDefault: true,
     });
-    await runImport(["[MLH] New import", "Another tool (MLH)"]);
-    expect((await challenge("Another tool (MLH)", false)).parentId).toBe(
-      customMlh.id,
-    );
-    expect(
-      (await challenge("MLH Challenges", true)).importLabelMatch,
-    ).toBeNull();
     await member.projects.dropAll({
       hackathonId: eventId,
       confirmation: "Group imports",
     });
-    const preImportDefault = await member.projects.createGroup({
-      hackathonId: eventId,
-      label: "Sponsor judging",
-      isGeneral: false,
+    expect(await challenge("Custom sponsor fair", true)).toMatchObject({
+      id: customMlh.id,
+      isGeneral: true,
       isScheduled: false,
-      isMlhImportDefault: true,
+      importLabelMatch: "MLH",
     });
-    await runImport(["Tool selected before import (MLH)"]);
     expect(
-      (await challenge("Tool selected before import (MLH)", false)).parentId,
-    ).toBe(preImportDefault.id);
+      await database.query.ProjectChallenge.findMany({
+        where: eq(schema.ProjectChallenge.hackathonId, eventId),
+      }),
+    ).toHaveLength(1);
+    await runImport(["Another tool (MLH)"]);
+    expect((await challenge("Another tool (MLH)", false)).parentId).toBe(
+      customMlh.id,
+    );
     expect(
-      (await challenge("MLH Challenges", true)).importLabelMatch,
-    ).toBeNull();
+      await database.query.ProjectToChallenge.findMany({
+        where: eq(schema.ProjectToChallenge.challengeId, customMlh.id),
+      }),
+    ).toHaveLength(1);
+  });
+
+  it("creates starter groups before any project import and initializes older hackathons only once", async () => {
+    const { eq } = await import("@forge/db");
+    const member = await caller({ session });
+    const created = await member.hackathon.create({
+      displayName: "New judging defaults",
+      theme: "Testing",
+      startDate: new Date("2026-10-01"),
+      endDate: new Date("2026-10-03"),
+      applicationOpen: new Date("2026-08-01"),
+      applicationDeadline: new Date("2026-09-01"),
+      confirmationDeadline: new Date("2026-09-15"),
+      applicationUrl: null,
+    });
+    const groups = await database.query.ProjectChallenge.findMany({
+      where: eq(schema.ProjectChallenge.hackathonId, created.id),
+    });
+    expect(groups).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "General",
+          isGroup: true,
+          isGeneral: true,
+          isScheduled: true,
+        }),
+        expect.objectContaining({
+          label: "MLH Challenges",
+          isGroup: true,
+          isGeneral: false,
+          isScheduled: false,
+          importLabelMatch: "MLH",
+          tagColor: "#e93227",
+        }),
+      ]),
+    );
+    expect(groups).toHaveLength(2);
+    const { readFile } = await import("node:fs/promises");
+    const migration = await readFile(
+      new URL(
+        "../../../../db/drizzle/0055_initialize_judging_groups.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const oldId = randomUUID();
+    await database.insert(schema.Hackathon).values({
+      id: oldId,
+      name: oldId,
+      displayName: "Older uninitialized hackathon",
+      theme: "Testing",
+      startDate: new Date("2026-09-01"),
+      endDate: new Date("2026-10-01"),
+    });
+    for (const statement of migration.split("--> statement-breakpoint"))
+      await database.$client.query(statement);
+    expect(
+      await database.query.ProjectChallenge.findMany({
+        where: eq(schema.ProjectChallenge.hackathonId, oldId),
+      }),
+    ).toHaveLength(2);
+    const mlh = groups.find((group) => group.importLabelMatch === "MLH");
+    if (!mlh) throw new Error("Missing MLH fixture");
+    await member.projects.deleteGroup({
+      hackathonId: created.id,
+      groupId: mlh.id,
+    });
+    for (const statement of migration.split("--> statement-breakpoint"))
+      await database.$client.query(statement);
+    expect(
+      await database.query.ProjectChallenge.findMany({
+        where: eq(schema.ProjectChallenge.hackathonId, created.id),
+      }),
+    ).toHaveLength(1);
   });
 });

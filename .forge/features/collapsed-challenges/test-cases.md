@@ -10,3 +10,6 @@
 8. Reject nesting, self-parenting, cross-hackathon parents, assigning an imported challenge as a parent, and deleting a group with active rooms. Deleting a group without active rooms detaches its children without deleting prize definitions.
 9. Scheduled scopes with projects but no staffed rooms block scheduling. Explicitly untimed scopes consume no capacity. Scheduling has no mandatory General or every-project scope.
 10. Inspect group forms, long challenge names, hidden filters, and visible child tags in the actual browser. Check responsive layouts and guest privacy.
+
+- Dropping all projects preserves custom group IDs, names, every-project/scheduling settings, and MLH default; re-import restores derived memberships without recreating deleted groups.
+- New hackathons have starter groups before CSV import. Existing uninitialized hackathons receive defaults once; initialized organizer choices survive migration.

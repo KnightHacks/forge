@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, X } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
@@ -18,6 +19,7 @@ interface GroupValues {
   label: string;
   isGeneral: boolean;
   isScheduled: boolean;
+  tagColor: string;
 }
 
 function GroupForm({
@@ -47,6 +49,10 @@ function GroupForm({
           isGeneral: values.has("everyProject"),
           isMlhImportDefault: values.has("mlhDefault"),
           isScheduled: values.has("scheduled"),
+          tagColor:
+            typeof values.get("tagColor") === "string"
+              ? (values.get("tagColor") as string)
+              : "#7c3aed",
         })
           .then(() => {
             if (!group) form.reset();
@@ -74,7 +80,7 @@ function GroupForm({
           defaultChecked={group?.isGeneral ?? false}
           disabled={disabled}
         />
-        Every project
+        Assigned to all projects
       </label>
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input
@@ -83,7 +89,7 @@ function GroupForm({
           defaultChecked={group?.isScheduled ?? true}
           disabled={disabled}
         />
-        Scheduled
+        On hacker schedule
       </label>
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input
@@ -94,8 +100,19 @@ function GroupForm({
         />
         Default for MLH imports
       </label>
+      <label className="flex min-h-11 items-center gap-2 text-sm">
+        Tag color
+        <input
+          aria-label="Tag color"
+          className="size-8 cursor-pointer rounded border border-input bg-transparent p-0.5"
+          defaultValue={group?.tagColor ?? "#7c3aed"}
+          disabled={disabled}
+          name="tagColor"
+          type="color"
+        />
+      </label>
       <Button type="submit" disabled={disabled} className="h-11">
-        {group ? "Save group" : "Create group"}
+        {group ? "Update group" : "Create group"}
       </Button>
       {onDelete ? (
         <Button
@@ -120,6 +137,7 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
   const updateGroup = api.projects.updateGroup.useMutation();
   const deleteGroup = api.projects.deleteGroup.useMutation();
   const [query, setQuery] = useState("");
+  const [showNewGroup, setShowNewGroup] = useState(false);
   const pending =
     update.isPending ||
     createGroup.isPending ||
@@ -160,14 +178,13 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="challenge-setup-title" className="text-lg font-semibold">
-          Judging groups and challenges
+          Challenge groups
         </h2>
         {locked ? <Badge variant="secondary">Setup locked</Badge> : null}
       </div>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
         Groups share one evaluation and appointment across their challenges. You
         can rename or remove the starter groups, or create your own.
-        Every-project groups include all projects; no such group is required.
       </p>
       {locked ? (
         <p className="mt-2 text-sm text-muted-foreground">
@@ -203,19 +220,45 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
             }
           />
         ))}
-        <GroupForm
-          disabled={disabled}
-          onSave={(values) =>
-            change(
-              () =>
-                createGroup.mutateAsync({
-                  ...values,
-                  hackathonId: data.hackathon.id,
-                }),
-              "Group created.",
-            )
-          }
-        />
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11"
+            aria-label={
+              showNewGroup ? "Cancel new judging group" : "Add judging group"
+            }
+            aria-expanded={showNewGroup}
+            aria-controls="new-judging-group"
+            disabled={disabled}
+            onClick={() => setShowNewGroup(!showNewGroup)}
+          >
+            {showNewGroup ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {showNewGroup ? (
+          <div id="new-judging-group">
+            <GroupForm
+              disabled={disabled}
+              onSave={async (values) => {
+                await change(
+                  () =>
+                    createGroup.mutateAsync({
+                      ...values,
+                      hackathonId: data.hackathon.id,
+                    }),
+                  "Group created.",
+                );
+                setShowNewGroup(false);
+              }}
+            />
+          </div>
+        ) : null}
       </div>
       <h3 className="mt-6 font-semibold">Imported challenges</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -300,7 +343,7 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
                     ).catch(() => undefined)
                   }
                 />
-                Scheduled
+                On hacker schedule
               </label>
             </div>
           ))
