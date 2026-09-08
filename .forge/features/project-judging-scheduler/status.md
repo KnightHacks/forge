@@ -257,3 +257,11 @@ The owner's follow-up replaces hourly navigation with a continuous timeline from
 The saved-schedule header shows rooms in a slot, rooms without a current slot, and total scheduled rooms. Counts use the server-aligned clock and all saved appointments independently of view filters. Setup and teardown occupy the room; the exact end releases it. MLH is excluded. No API, database, or solver changes are included.
 
 Validation passed: `pnpm verify:precommit` with all 33 typecheck tasks, four focused room activity/sorting tests, and a quick Forge review with no actionable findings. Visible browser checks used the isolated fixture plus read-only response expansion to 25 rooms. They verified native horizontal scrolling, left/right controls, full-window vertical scrolling, Now preserving horizontal position, building order, filter-independent totals, appointment inspection, and 390px mobile containment. Desktop and phone screenshots were inspected and remain outside the repository.
+
+### Native final-result callback race
+
+CI run 34224094088 failed the brute-force solver comparison with `Optimal objective has no matching incumbent`. Reproduced locally. The pinned native binding explicitly discards queued solution callbacks after the solve promise resolves, so callbacks alone cannot reliably retain the final candidate. The adapter now reads optimal and feasible final responses through the same independent placement, score, and proof validation used for callback candidates, before advancing objective proofs. It preserves better existing candidates and keeps cancellation and strict-travel fallback behavior.
+
+Two deterministic regressions suppress solution callbacks while keeping the real native result. Both fail before the fix and pass afterward, covering optimal completion and feasible-result retention without claiming proof. Three repeated solver/engine runs passed all 16 tests each. The static gate passed all 33 typecheck tasks, and the full API suite passed all 936 tests. No dependency, UI, schema, or solver-objective changes.
+
+All 29 workspace test tasks passed. Quick Forge review found no issues in the final-result handling or regression tests. CI verification follows the push.

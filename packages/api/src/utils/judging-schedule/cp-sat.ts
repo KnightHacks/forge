@@ -287,40 +287,45 @@ export async function solveCpSat(
       const branchBase = search.nodes;
       class Incumbents extends CpSolverSolutionCallback {
         error: Error | undefined;
+        retain(
+          context: Pick<
+            SolutionContext,
+            "value" | "booleanValue" | "numBranches"
+          >,
+        ) {
+          const incumbent = presentations.map((presentation) => {
+            const choice = presentation.choices.find(({ selected }) =>
+              context.booleanValue(selected),
+            );
+            if (!choice)
+              throw new Error("CP-SAT omitted a presentation's room.");
+            return {
+              taskIndex: presentation.taskIndex,
+              roomIndex: choice.roomIndex,
+              slot: Number(context.value(presentation.start)),
+            };
+          });
+          const score = scoreSchedule(problem, incumbent);
+          objectives.forEach((value, position) => {
+            if (
+              Number(context.value(value)) * (position === 3 ? 1 : duration) !==
+              score[position]
+            )
+              throw new Error("CP-SAT reported an incorrect candidate score.");
+          });
+          const next = { ...search, incumbent, score };
+          validateScheduleSearch(problem, next);
+          if (!search.score || compareScheduleScores(score, search.score) < 0)
+            Object.assign(search, next);
+          search.nodes = Math.max(
+            search.nodes,
+            branchBase + context.numBranches,
+          );
+        }
         onSolutionCallback(context: SolutionContext) {
           if (this.error) return;
           try {
-            const incumbent = presentations.map((presentation) => {
-              const choice = presentation.choices.find(({ selected }) =>
-                context.booleanValue(selected),
-              );
-              if (!choice)
-                throw new Error("CP-SAT omitted a presentation's room.");
-              return {
-                taskIndex: presentation.taskIndex,
-                roomIndex: choice.roomIndex,
-                slot: Number(context.value(presentation.start)),
-              };
-            });
-            const score = scoreSchedule(problem, incumbent);
-            objectives.forEach((value, position) => {
-              if (
-                Number(context.value(value)) *
-                  (position === 3 ? 1 : duration) !==
-                score[position]
-              )
-                throw new Error(
-                  "CP-SAT reported an incorrect candidate score.",
-                );
-            });
-            const next = { ...search, incumbent, score };
-            validateScheduleSearch(problem, next);
-            if (!search.score || compareScheduleScores(score, search.score) < 0)
-              Object.assign(search, next);
-            search.nodes = Math.max(
-              search.nodes,
-              branchBase + context.numBranches,
-            );
+            this.retain(context);
           } catch (error) {
             this.error =
               error instanceof Error
@@ -348,6 +353,13 @@ export async function solveCpSat(
         search.exhausted = true;
         return;
       }
+      // The binding may drop queued callbacks as solve completes. Its final
+      // response is authoritative and must pass the same independent checks.
+      if (
+        status === CpSolverStatus.OPTIMAL ||
+        status === CpSolverStatus.FEASIBLE
+      )
+        callback.retain(solver);
       if (status !== CpSolverStatus.OPTIMAL) return;
       const optimum = Math.round(solver.objectiveValue);
       const value = optimum * (index === 3 ? 1 : duration);

@@ -10,6 +10,7 @@ import type { ScheduleProblem } from "../../utils/judging-schedule/model";
 import {
   createScheduleSearch,
   runScheduleSearch,
+  validateScheduleSearch,
 } from "../../utils/judging-schedule/solver";
 
 const problem: ScheduleProblem = {
@@ -114,3 +115,33 @@ it("uses eight workers and propagates the remaining deadline without blocking No
   expect(state.exhausted).toBe(false);
   expect(state.relaxed).toBe(false);
 });
+
+it.each([CpSolverStatus.OPTIMAL, CpSolverStatus.FEASIBLE])(
+  "retains and validates the final native solution without callbacks, status %s",
+  async (returnedStatus) => {
+    const solve = vi.spyOn(CpSolver.prototype, "solve");
+    solve.mockImplementationOnce(function (this: CpSolver, model, options) {
+      // The binding can drop queued callbacks when solve finishes. Keep the
+      // actual native result while deterministically suppressing notifications.
+      solve.mockRestore();
+      return this.solve(model, { signal: options?.signal }).then((status) => {
+        expect(status).toBe(CpSolverStatus.OPTIMAL);
+        return returnedStatus;
+      });
+    });
+    const state = createScheduleSearch(problem);
+    await runScheduleSearch(problem, state, {
+      deadline: new Date(Date.now() + 5000),
+    });
+    validateScheduleSearch(problem, state);
+    expect(state.incumbent).toHaveLength(1);
+    expect(state.score).not.toBeNull();
+    expect(state.exhausted).toBe(returnedStatus === CpSolverStatus.OPTIMAL);
+    if (returnedStatus === CpSolverStatus.OPTIMAL) {
+      expect(state.score).toEqual([0, 0, 10, 0, -0]);
+      expect(state.provenObjectives).toEqual([0, 0, 10, 0, 0]);
+    } else {
+      expect(state.provenObjectives).toEqual([]);
+    }
+  },
+);
