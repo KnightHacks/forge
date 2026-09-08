@@ -1,9 +1,36 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
-import { ProjectMember, ProjectToChallenge } from "../schemas/knight-hacks";
+import {
+  ProjectChallenge,
+  ProjectMember,
+  ProjectToChallenge,
+} from "../schemas/knight-hacks";
 
 describe("project inventory storage", () => {
+  it("keeps collapsed parents inside the child's hackathon", () => {
+    const parent = getTableConfig(ProjectChallenge).foreignKeys.find(
+      (key) => key.getName() === "project_challenge_parent_scope_fk",
+    );
+    expect(parent?.reference().columns.map((column) => column.name)).toEqual([
+      "parentId",
+      "hackathonId",
+    ]);
+    expect(
+      parent?.reference().foreignColumns.map((column) => column.name),
+    ).toEqual(["id", "hackathonId"]);
+    expect(
+      getTableConfig(ProjectChallenge).checks.map(
+        (constraint) => constraint.name,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "project_challenge_not_self",
+        "project_challenge_root_general",
+      ]),
+    );
+  });
+
   it("scopes every project challenge link to one hackathon", () => {
     const foreignKeys = getTableConfig(ProjectToChallenge).foreignKeys.map(
       (foreignKey) => {

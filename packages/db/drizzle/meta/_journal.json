@@ -372,6 +372,20 @@
       "when": 1788816161752,
       "tag": "0052_tan_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1788888919851,
+      "tag": "0053_naive_wasp",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1788895557674,
+      "tag": "0054_giant_black_cat",
+      "breakpoints": true
     }
   ]
 }
