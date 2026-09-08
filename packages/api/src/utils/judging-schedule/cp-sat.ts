@@ -41,13 +41,16 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     : Math.ceil(
         problem.differentBuildingBreakMinutes / problem.durationMinutes,
       );
-  const buildings = [...new Set(problem.rooms.map((room) => room.buildingId))];
+  // Preserve the benchmarked model's variable/constraint order: CP-SAT's
+  // bounded search can change when equivalent variables are renumbered.
+  const buildings = problem.rooms.map((room) => room.buildingId);
   const rooms = problem.rooms.map((room) => ({
     ...room,
     intervals: [] as IntervalVar[],
     assignments: [] as { presentation: Presentation; selected: BoolVar }[],
   }));
   const projects = new Map<string, Presentation[]>();
+  const activeRooms = new Map<number, (typeof rooms)[number]>();
   const presentations = problem.tasks.map((task, taskIndex) => {
     const eligible = rooms.flatMap((room, roomIndex) =>
       room.challengeId === task.challengeId ? [{ room, roomIndex }] : [],
@@ -59,7 +62,7 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
       end: model.newIntVar(1, slots, `end_${taskIndex}`),
       building: model.newIntVarFromDomain(
         Domain.fromValues(
-          eligible.map(({ room }) => buildings.indexOf(room.buildingId)),
+          eligible.map(({ room }) => buildings.lastIndexOf(room.buildingId)),
         ),
         `building_${taskIndex}`,
       ),
@@ -67,6 +70,7 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     };
     model.addEquality(presentation.end, presentation.start.add(1));
     for (const { room, roomIndex } of eligible) {
+      activeRooms.set(roomIndex, room);
       const selected = model.newBoolVar(`choose_${taskIndex}_${roomIndex}`);
       room.intervals.push(
         model.newOptionalIntervalVar(
@@ -80,7 +84,10 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
       room.assignments.push({ presentation, selected });
       presentation.choices.push({ roomIndex, selected });
       model
-        .addEquality(presentation.building, buildings.indexOf(room.buildingId))
+        .addEquality(
+          presentation.building,
+          buildings.lastIndexOf(room.buildingId),
+        )
         .onlyEnforceIf(selected);
     }
     model.addExactlyOne(presentation.choices.map(({ selected }) => selected));
@@ -89,7 +96,7 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     projects.set(task.projectId, itinerary);
     return presentation;
   });
-  for (const room of rooms) model.addNoOverlap(room.intervals);
+  for (const room of activeRooms.values()) model.addNoOverlap(room.intervals);
 
   const changes: BoolVar[] = [];
   const totalBreaks: LinearExpr[] = [];
@@ -100,6 +107,8 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     for (const [index, before] of itinerary.entries()) {
       arcs.push([0, index + 1, model.newBoolVar(`first_${before.taskIndex}`)]);
       arcs.push([index + 1, 0, model.newBoolVar(`last_${before.taskIndex}`)]);
+    }
+    for (const [index, before] of itinerary.entries()) {
       for (const [nextIndex, after] of itinerary.entries()) {
         if (index === nextIndex) continue;
         const pair = `${before.taskIndex}_${after.taskIndex}`;
@@ -150,8 +159,8 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     presentations.map(({ end }) => end),
   );
   const idleTerms: IntVar[] = [];
-  const equivalentRooms = new Map<string, IntVar>();
-  for (const [roomIndex, room] of rooms.entries()) {
+  const equivalentRooms = new Map<string, IntVar[]>();
+  for (const [roomIndex, room] of activeRooms) {
     const firstAssignment = room.assignments[0];
     if (!firstAssignment) continue;
     const count = model.newIntVar(0, slots, `count_${roomIndex}`);
@@ -161,9 +170,9 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     );
     // These rooms are interchangeable in every constraint and objective.
     const key = JSON.stringify([room.challengeId, room.buildingId]);
-    const previous = equivalentRooms.get(key);
-    if (previous) model.addGreaterOrEqual(previous, count);
-    equivalentRooms.set(key, count);
+    const counts = equivalentRooms.get(key) ?? [];
+    counts.push(count);
+    equivalentRooms.set(key, counts);
     if (!firstAssignment.presentation.task.sponsor) continue;
     const starts: IntVar[] = [];
     const ends: IntVar[] = [];
@@ -196,6 +205,12 @@ function buildModel(problem: ScheduleProblem, relaxed: boolean) {
     model.addEquality(idle, last.sub(first).sub(count)).onlyEnforceIf(used);
     model.addEquality(idle, 0).onlyEnforceIf(used.not());
     idleTerms.push(idle);
+  }
+  for (const counts of equivalentRooms.values()) {
+    for (const [index, count] of counts.entries()) {
+      const previous = counts[index - 1];
+      if (previous) model.addGreaterOrEqual(previous, count);
+    }
   }
   for (const challenge of new Set(
     problem.tasks.map((task) => task.challengeId),

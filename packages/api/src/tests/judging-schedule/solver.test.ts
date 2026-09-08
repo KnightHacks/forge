@@ -118,6 +118,20 @@ describe("judging schedule search", () => {
     expect(empty.provenObjectives).toEqual([0, 0, 0, 0, 0]);
   });
 
+  it("preserves the optimum with reordered equivalent rooms and unused rooms", async () => {
+    const rooms = [
+      ...problem.rooms,
+      { id: "general2", challengeId: "general", buildingId: "ENG" },
+      { id: "unused", challengeId: "unused", buildingId: "HS" },
+    ];
+    const expected = oracle({ ...problem, rooms }, false);
+    for (const ordering of [rooms, [...rooms].reverse()]) {
+      const state = await solve({ ...problem, rooms: ordering });
+      expect(state.score).toEqual(expected);
+      expect(state.provenObjectives).toEqual(expected);
+    }
+  });
+
   it("does not confuse search budget exhaustion with infeasibility", async () => {
     const state = createScheduleSearch(problem);
     await runScheduleSearch(problem, state, {
