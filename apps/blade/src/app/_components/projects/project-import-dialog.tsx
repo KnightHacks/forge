@@ -34,12 +34,14 @@ interface ImportResult {
 }
 
 export function ProjectImportDialog({
+  disabled = false,
   hackathonId,
   hackathonName,
   inventoryLocked,
   onImported,
   projectCount,
 }: {
+  disabled?: boolean;
   hackathonId: string;
   hackathonName: string;
   inventoryLocked: boolean;
@@ -114,7 +116,11 @@ export function ProjectImportDialog({
     >
       <div className="flex flex-wrap gap-2">
         <DialogTrigger asChild>
-          <Button className="h-11 gap-2" onClick={() => setMode("automatic")}>
+          <Button
+            disabled={disabled}
+            className="h-11 gap-2"
+            onClick={() => setMode("automatic")}
+          >
             <Upload className="size-4" aria-hidden="true" />
             {inventoryLocked ? "Add new projects" : "Import Devpost CSV"}
           </Button>

@@ -31,11 +31,10 @@ export default async function JudgeProjectsPage({
   if (judgingContext.kind === "incomplete-guest") {
     return <GuestNameGate />;
   }
-  const isGuest = judgingContext.kind === "guest";
   const isOfficer =
     judgingContext.kind === "member" && judgingContext.isOfficer;
   const input = {
-    challengeIds: isGuest ? [judgingContext.challengeId] : parsed.challengeIds,
+    challengeIds: parsed.challengeIds,
     direction: parsed.direction,
     hackathonId: isOfficer ? requestedHackathon : undefined,
     includeJudged: parsed.includeJudged,
@@ -49,9 +48,7 @@ export default async function JudgeProjectsPage({
     api.projects.listJudge(input),
     isOfficer ? api.projects.listAdminHackathons() : Promise.resolve([]),
   ]);
-  const challengeId =
-    (isGuest ? judgingContext.challengeId : parsed.challengeIds[0]) ??
-    data.challenges[0]?.id;
+  const challengeId = data.selectedChallengeId ?? undefined;
   const tabParam = first(params.tab);
   const tab =
     tabParam === "submissions" || tabParam === "deliberation"

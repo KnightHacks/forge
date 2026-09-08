@@ -19,11 +19,13 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 export function DropAllProjectsDialog({
+  disabled = false,
   hackathonId,
   hackathonName,
   onDropped,
   projectCount,
 }: {
+  disabled?: boolean;
   hackathonId: string;
   hackathonName: string;
   onDropped: () => void;
@@ -57,7 +59,7 @@ export function DropAllProjectsDialog({
     <>
       <Button
         className="h-11 gap-2"
-        disabled={projectCount === 0}
+        disabled={disabled || projectCount === 0}
         onClick={() => setOpen(true)}
         type="button"
         variant="destructive"

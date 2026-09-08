@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
@@ -33,6 +32,7 @@ export interface EvaluationProject {
   id: string;
   title: string;
   prizeCategories?: string[];
+  challenges?: { id: string; label: string; parentId: string | null }[];
 }
 
 function policyCopy(
@@ -304,6 +304,27 @@ function EvaluationEditor({
           <DialogDescription className="mt-2 break-words rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
             {challengeName}
           </DialogDescription>
+          {project.challenges?.some(
+            (challenge) => challenge.parentId === workspace.challengeId,
+          ) ? (
+            <div
+              className="mt-2 flex max-h-28 flex-wrap gap-2 overflow-y-auto"
+              aria-label="Challenge opt-ins"
+            >
+              {project.challenges
+                .filter(
+                  (challenge) => challenge.parentId === workspace.challengeId,
+                )
+                .map((challenge) => (
+                  <span
+                    key={challenge.id}
+                    className="max-w-full break-words rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-sm font-semibold text-primary"
+                  >
+                    {challenge.label}
+                  </span>
+                ))}
+            </div>
+          ) : null}
           {seconds !== null ? (
             <div
               role="timer"
@@ -318,22 +339,6 @@ function EvaluationEditor({
           ) : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:space-y-6 sm:p-6">
-          {project.prizeCategories?.some((label) => isMlhChallenge(label)) &&
-          isMlhChallenge(challengeLabel) ? (
-            <details className="rounded-md border border-white/10 bg-background/60 px-3 text-sm">
-              <summary className="min-h-11 cursor-pointer content-center font-semibold">
-                MLH opt-ins
-              </summary>
-              <ul className="list-disc space-y-1 break-words pb-3 pl-4">
-                {project.prizeCategories
-                  .filter((label) => isMlhChallenge(label))
-                  .map((label) => (
-                    <li key={label}>{label}</li>
-                  ))}
-              </ul>
-            </details>
-          ) : null}
-
           {expired ? (
             <Alert>
               <AlertTitle>

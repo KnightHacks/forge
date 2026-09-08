@@ -1,6 +1,6 @@
 # Status
 
-Phase: implementation and standard agent review complete; final checks and commits in progress.
+Phase: implementation, validation, and standard agent review complete; PR publication pending GitHub authentication.
 
 Confirmed behavior: editable judging groups are separate from Devpost prize challenges. General and MLH are starter groups, not fixed identities. Every-project membership is optional and non-unique. New MLH imports default to the organizer-selected group (initially MLH Challenges); re-import preserves overrides and never recreates deleted groups. Search hides children and every-project groups. Child tags remain visible during judging. Saving a schedule locks setup.
 
@@ -22,6 +22,6 @@ Live KH8 verification: created, renamed, and deleted a temporary group; confirme
 
 Final validation: root format, lint, typecheck, and React analysis; 53 API regression tests, 52 Blade project tests, and three DB schema tests. Migration generation reports no pending schema changes. The final MLH-default review caught first-import bootstrap overriding an organizer choice; the fix and regression test preserve that choice.
 
-Remaining: make scoped commits and publish the PR. GitHub SSH access works, but the internal browser is signed out; the user has been asked to sign in for issue/PR publication. GitHub CLI is not installed.
+Work is split into database, API/configuration, and Blade UI commits on fix/first-time-hacker-room-tagging. Remaining: publish the issue and PR once GitHub authentication is available. GitHub SSH access works, but the internal browser is signed out; the user has been asked to sign in for issue/PR publication. GitHub CLI is not installed.
 
 PR/issue: pending GitHub authentication.

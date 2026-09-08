@@ -132,7 +132,19 @@ type JudgeProject = RouterOutputs["projects"]["listJudge"]["projects"][number];
 type AdminProject = RouterOutputs["projects"]["listAdmin"]["projects"][number];
 
 const sharedProject = {
-  challenges: [{ evaluationCount: 1, id: "challenge-1", label: "General" }],
+  challenges: [
+    {
+      parentId: null,
+      isGroup: true,
+      isMlhImportDefault: false,
+      isGeneral: true,
+      isScheduled: true,
+      isOptIn: true,
+      evaluationCount: 1,
+      id: "challenge-1",
+      label: "General",
+    },
+  ],
   createdAt: new Date("2026-08-01T12:00:00.000Z"),
   deletedAt: null,
   deletedByUserId: null,
@@ -351,14 +363,23 @@ describe("judge project directory", () => {
       screen.queryByRole("spinbutton", { name: "Maximum team size" }),
     ).toBeNull();
     expect(screen.getAllByText("Casey Captain").length).toBeGreaterThan(0);
-    expect(screen.getByRole("option", { name: "General" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "All challenges" }),
+    ).toBeInTheDocument();
   });
 
-  it("shows a fixed room challenge instead of a guest challenge selector", () => {
+  it("hides child filters within a fixed guest parent scope", () => {
     render(
       <ProjectDirectory
         data={{
-          challenges: [{ id: "challenge-acme", label: "Acme Challenge" }],
+          challenges: [
+            { id: "challenge-acme", label: "Acme Challenge" },
+            {
+              id: "child-acme",
+              label: "First-time hacker",
+              parentId: "challenge-acme",
+            },
+          ],
           page: 1,
           pageSize: 10,
           projects: [
@@ -366,6 +387,12 @@ describe("judge project directory", () => {
               ...judgeProject,
               challenges: [
                 {
+                  parentId: null,
+                  isGroup: false,
+                  isMlhImportDefault: false,
+                  isGeneral: false,
+                  isScheduled: true,
+                  isOptIn: true,
                   evaluationCount: 0,
                   id: "challenge-acme",
                   label: "Acme Challenge",
@@ -388,8 +415,15 @@ describe("judge project directory", () => {
       />,
     );
 
-    expect(screen.getByText("Room scope")).toBeInTheDocument();
-    expect(screen.queryByRole("combobox", { name: "Challenge" })).toBeNull();
+    expect(
+      screen.getByRole("combobox", { name: "Challenge" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Acme Challenge" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "First-time hacker" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("columnheader", { name: "Challenges" }),
     ).toBeNull();
@@ -911,6 +945,7 @@ describe("evaluation feedback visibility", () => {
       projectId: judgeProject.id,
       projectTitle: judgeProject.title,
       projectAvailable: true,
+      projectChallenges: [],
       isComplete: false,
       autoSubmittedAt: new Date("2026-09-07T16:08:00Z"),
       createdAt: new Date("2026-09-07T16:08:00Z"),
@@ -998,6 +1033,7 @@ describe("evaluation feedback visibility", () => {
       createdAt: new Date("2026-09-05T12:00:00.000Z"),
       id: "00000000-0000-4000-8000-000000000021",
       projectAvailable: true,
+      projectChallenges: [],
       isComplete: true,
       autoSubmittedAt: null,
       projectId: judgeProject.id,

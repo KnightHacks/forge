@@ -99,6 +99,8 @@ type ControlData = RouterOutputs["judging"]["listAdmin"];
 type Announcement = NonNullable<ControlData["globalAnnouncement"]>;
 
 const data = {
+  setupLocked: false,
+  challengeSetupLocked: false,
   hackathon: { id: "00000000-0000-4000-8000-000000000001" },
 } as ControlData;
 
@@ -187,7 +189,19 @@ describe("judging announcement editor", () => {
       name: "Sponsor suite A",
     } as ControlData["rooms"][number];
     const initialData = {
-      challenges: [{ id: room.challengeId, label: room.challengeLabel }],
+      setupLocked: false,
+      challengeSetupLocked: false,
+      challenges: [
+        {
+          id: room.challengeId,
+          label: room.challengeLabel,
+          parentId: null,
+          isGroup: false,
+          isMlhImportDefault: false,
+          isGeneral: false,
+          isScheduled: true,
+        },
+      ],
       configuration: {
         closedAt: null,
         displayAllResults: false,

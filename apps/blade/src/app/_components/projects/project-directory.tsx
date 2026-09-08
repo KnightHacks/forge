@@ -42,7 +42,12 @@ export interface ProjectDirectoryInput {
 }
 
 export interface ProjectDirectoryData<TProject extends Project = Project> {
-  challenges: { id: string; label: string }[];
+  challenges: {
+    id: string;
+    label: string;
+    isGeneral?: boolean;
+    parentId?: string | null;
+  }[];
   page: number;
   pageSize: number;
   projects: TProject[];
@@ -56,7 +61,7 @@ function ProjectBadges({ project }: { project: Project }) {
         <Badge
           className={cn(
             challenge.evaluationCount > 0 &&
-              (challenge.label === "General"
+              (challenge.isGeneral
                 ? "border-emerald-950 bg-emerald-950 text-emerald-100"
                 : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
           )}
@@ -69,7 +74,7 @@ function ProjectBadges({ project }: { project: Project }) {
           variant={
             challenge.evaluationCount > 0
               ? "outline"
-              : challenge.label === "General"
+              : challenge.isGeneral
                 ? "outline"
                 : "secondary"
           }
@@ -116,7 +121,10 @@ function ProjectFilters({
     input.maxParticipants?.toString() ?? "",
   );
   const filterableChallenges = challenges.filter(
-    (challenge) => challenge.label !== "General",
+    (challenge) =>
+      !challenge.isGeneral &&
+      !challenge.parentId &&
+      challenge.id !== lockedChallenge?.id,
   );
   const selectedChallenge = filterableChallenges.some(
     (challenge) => challenge.id === input.challengeIds[0],
@@ -167,39 +175,30 @@ function ProjectFilters({
             value={query}
           />
         </label>
-        {lockedChallenge ? (
-          <div className="col-span-2 flex min-h-11 min-w-0 items-center rounded-md border border-primary/25 bg-primary/10 px-3 text-sm lg:col-span-1">
-            <span className="truncate font-medium">
-              {lockedChallenge.label}
-            </span>
-            <span className="ml-auto pl-3 text-xs text-muted-foreground">
-              Room scope
-            </span>
-          </div>
-        ) : (
-          <label
-            className={
-              showTeamSizeFilters ? undefined : "col-span-2 lg:col-span-1"
+        <label
+          className={
+            showTeamSizeFilters ? undefined : "col-span-2 lg:col-span-1"
+          }
+        >
+          <span className="sr-only">Challenge</span>
+          <select
+            aria-label="Challenge"
+            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            onChange={(event) =>
+              navigate({ challenge: event.target.value, page: 1 })
             }
+            value={selectedChallenge}
           >
-            <span className="sr-only">Challenge</span>
-            <select
-              aria-label="Challenge"
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-              onChange={(event) =>
-                navigate({ challenge: event.target.value, page: 1 })
-              }
-              value={selectedChallenge}
-            >
-              <option value="">{defaultChallengeLabel}</option>
-              {filterableChallenges.map((challenge) => (
-                <option key={challenge.id} value={challenge.id}>
-                  {challenge.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+            <option value="">
+              {lockedChallenge?.label ?? defaultChallengeLabel}
+            </option>
+            {filterableChallenges.map((challenge) => (
+              <option key={challenge.id} value={challenge.id}>
+                {challenge.label}
+              </option>
+            ))}
+          </select>
+        </label>
         {showTeamSizeFilters
           ? (["min", "max"] as const).map((bound) => (
               <label key={bound}>

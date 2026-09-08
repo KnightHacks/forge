@@ -197,31 +197,18 @@ function ProjectEditDialog({
             <fieldset className="space-y-3 rounded-lg border border-border/70 p-4">
               <legend className="px-1 text-sm font-semibold">Challenges</legend>
               <div className="grid gap-3 sm:grid-cols-2">
-                {challenges.map((challenge) => {
-                  const checked = project.challenges.some(
-                    (selected) => selected.id === challenge.id,
-                  );
-                  return (
-                    <label
-                      className="flex min-h-10 items-center gap-3"
-                      key={challenge.id}
-                    >
-                      {challenge.label === "General" ? (
-                        <>
-                          <input
-                            checked
-                            className="size-4 accent-primary"
-                            disabled
-                            readOnly
-                            type="checkbox"
-                          />
-                          <input
-                            name="challengeIds"
-                            type="hidden"
-                            value={challenge.id}
-                          />
-                        </>
-                      ) : (
+                {challenges
+                  .filter((challenge) => !challenge.isGroup)
+                  .map((challenge) => {
+                    const checked = project.challenges.some(
+                      (selected) =>
+                        selected.id === challenge.id && selected.isOptIn,
+                    );
+                    return (
+                      <label
+                        className="flex min-h-10 items-center gap-3"
+                        key={challenge.id}
+                      >
                         <input
                           defaultChecked={checked}
                           className="size-4 accent-primary"
@@ -229,11 +216,10 @@ function ProjectEditDialog({
                           type="checkbox"
                           value={challenge.id}
                         />
-                      )}
-                      <span className="text-sm">{challenge.label}</span>
-                    </label>
-                  );
-                })}
+                        <span className="text-sm">{challenge.label}</span>
+                      </label>
+                    );
+                  })}
               </div>
             </fieldset>
 
@@ -365,6 +351,7 @@ export function AdminProjectWorkspace({
             data && input ? (
               <div className="flex flex-wrap gap-2">
                 <ProjectImportDialog
+                  disabled={data.setupLocked}
                   hackathonId={input.hackathonId}
                   hackathonName={data.hackathon.displayName}
                   inventoryLocked={
@@ -376,6 +363,7 @@ export function AdminProjectWorkspace({
                   projectCount={projectCount}
                 />
                 <DropAllProjectsDialog
+                  disabled={data.setupLocked}
                   hackathonId={input.hackathonId}
                   hackathonName={data.hackathon.displayName}
                   onDropped={refresh}
@@ -392,6 +380,7 @@ export function AdminProjectWorkspace({
       ) : data && input ? (
         <div className="flex flex-wrap justify-end gap-2">
           <ProjectImportDialog
+            disabled={data.setupLocked}
             hackathonId={input.hackathonId}
             hackathonName={data.hackathon.displayName}
             inventoryLocked={
@@ -402,6 +391,7 @@ export function AdminProjectWorkspace({
             projectCount={projectCount}
           />
           <DropAllProjectsDialog
+            disabled={data.setupLocked}
             hackathonId={input.hackathonId}
             hackathonName={data.hackathon.displayName}
             onDropped={refresh}
@@ -467,6 +457,7 @@ export function AdminProjectWorkspace({
               <>
                 {!project.deletedAt ? (
                   <Button
+                    disabled={data.setupLocked}
                     aria-label={`Edit ${project.title}`}
                     onClick={() => setEditing(project)}
                     size="sm"
@@ -477,6 +468,7 @@ export function AdminProjectWorkspace({
                   </Button>
                 ) : null}
                 <Button
+                  disabled={data.setupLocked}
                   aria-label={`${project.deletedAt ? "Restore" : "Delete"} ${project.title}`}
                   onClick={() => setChangingState(project)}
                   size="sm"

@@ -251,6 +251,7 @@ export function JudgeSubmissions({
           project={{
             id: editing.projectId,
             title: editing.projectTitle,
+            challenges: editing.projectChallenges,
           }}
           submission={editing}
           workspace={{

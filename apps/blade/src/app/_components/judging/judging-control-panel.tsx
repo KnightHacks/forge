@@ -146,7 +146,9 @@ function RoomEditor({
     room && room !== "new" ? (room.buildingId ?? "") : "",
   );
   const [challengeId, setChallengeId] = useState(
-    room && room !== "new" ? room.challengeId : (data.challenges[0]?.id ?? ""),
+    room && room !== "new"
+      ? room.challengeId
+      : (data.challenges.find((challenge) => !challenge.parentId)?.id ?? ""),
   );
   const challengeChanges =
     room && room !== "new" && room.challengeId !== challengeId;
@@ -257,14 +259,16 @@ function RoomEditor({
               required
               value={challengeId}
             >
-              {data.challenges.map((challenge) => (
-                <option key={challenge.id} value={challenge.id}>
-                  {challenge.label}
-                </option>
-              ))}
+              {data.challenges
+                .filter((challenge) => !challenge.parentId)
+                .map((challenge) => (
+                  <option key={challenge.id} value={challenge.id}>
+                    {challenge.label}
+                  </option>
+                ))}
             </select>
-            {data.challenges.find((item) => item.id === challengeId)?.label ===
-            "General" ? (
+            {data.challenges.find((item) => item.id === challengeId)
+              ?.isGeneral ? (
               <p className="text-xs leading-5 text-muted-foreground">
                 General guest judges can browse every imported project.
               </p>
@@ -296,7 +300,10 @@ function RoomEditor({
             </Button>
             <Button
               disabled={
-                create.isPending || update.isPending || createBuilding.isPending
+                data.setupLocked ||
+                create.isPending ||
+                update.isPending ||
+                createBuilding.isPending
               }
               type="submit"
             >
@@ -717,7 +724,7 @@ export function JudgingControlPanel({
               </Button>
               <Button
                 className="h-11 gap-2"
-                disabled={!data.challenges.length}
+                disabled={data.setupLocked || !data.challenges.length}
                 onClick={() => setEditing("new")}
               >
                 <Plus className="size-4" aria-hidden="true" /> Create room
@@ -741,7 +748,7 @@ export function JudgingControlPanel({
           </Button>
           <Button
             className="h-11 gap-2"
-            disabled={!data.challenges.length}
+            disabled={data.setupLocked || !data.challenges.length}
             onClick={() => setEditing("new")}
           >
             <Plus className="size-4" aria-hidden="true" /> Create room
@@ -997,7 +1004,9 @@ export function JudgingControlPanel({
                         </h2>
                         <Badge
                           variant={
-                            room.challengeLabel === "General"
+                            data.challenges.find(
+                              (challenge) => challenge.id === room.challengeId,
+                            )?.isGeneral
                               ? "outline"
                               : "secondary"
                           }
@@ -1045,7 +1054,11 @@ export function JudgingControlPanel({
                       <div className="flex flex-wrap gap-2">
                         <Button
                           aria-label={`Move ${room.name} up`}
-                          disabled={activeRoomIndex <= 0 || move.isPending}
+                          disabled={
+                            data.setupLocked ||
+                            activeRoomIndex <= 0 ||
+                            move.isPending
+                          }
                           onClick={() => void moveRoom(room.id, "up")}
                           size="icon"
                           variant="ghost"
@@ -1055,6 +1068,7 @@ export function JudgingControlPanel({
                         <Button
                           aria-label={`Move ${room.name} down`}
                           disabled={
+                            data.setupLocked ||
                             activeRoomIndex === activeRoomIds.length - 1 ||
                             move.isPending
                           }
@@ -1065,6 +1079,7 @@ export function JudgingControlPanel({
                           <ArrowDown className="size-4" />
                         </Button>
                         <Button
+                          disabled={data.setupLocked}
                           onClick={() => setEditing(room)}
                           size="sm"
                           variant="outline"
@@ -1187,6 +1202,7 @@ export function JudgingControlPanel({
                           </>
                         ) : null}
                         <Button
+                          disabled={data.setupLocked}
                           onClick={() => setArchiving(room)}
                           size="sm"
                           variant="ghost"
