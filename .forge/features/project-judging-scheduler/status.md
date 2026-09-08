@@ -1,7 +1,7 @@
 # Project judging scheduler status
 
-Current phase: In-process TypeScript CP-SAT ready for owner review before push
-Last updated: 2026-09-07
+Current phase: CP-SAT pushed; Guild build fix validated and ready to push
+Last updated: 2026-09-08
 
 ## Discovery decision log
 
@@ -212,7 +212,7 @@ The implementation pins `@ortools-node/cp-sat` at `9.15.0-node.0-rc.2`. TypeScri
 - [x] Pass required root static checks and affected consumer checks.
 - [x] Build and smoke-test native loading in Blade's standalone container.
 - [x] Prepare the local implementation commit for owner review.
-- [ ] Push to PR #545 only after owner approval. No merge or deployment.
+- [x] Push to PR #545 after owner approval. No merge or deployment.
 
 Only project/challenge memberships and declared room/timing configuration enter the model. The original CSV and participant data remain outside the repository. Python implementation checks are superseded by validation of this TypeScript replacement.
 
@@ -233,3 +233,11 @@ Serialized-model comparison confirms identical 8,509 variables and 14,546 constr
 Selected CP-SAT for production. The supplied MCMF result independently validates at 220/0/240 minutes, 107 changes, and 17,370 aggregate team-break minutes, with a reported 72 ms first candidate. It beats the native 60-second results on team breaks and preview latency. Its current constructor requires each challenge's rooms to share a building, and its outer local search cannot certify strict infeasibility, which the accepted travel fallback requires. CP-SAT covers those cases and provides objective proofs within the existing sub-five-minute generation budget. No MCMF implementation or hybrid is included. Commit and owner review precede any push.
 
 Verification of this construction-order correction passed all 19 focused solver/engine/scale/integration tests, the reproducible model-equivalence check, and root format (24 tasks), lint (31 tasks, warnings only), and typecheck (33 tasks). Full benchmark sources, every run, model comparison, and the decision report remain outside the repository; no CSV or participant records are committed. The prepared CP-SAT commit awaits owner review before push.
+
+### Guild CI build follow-up
+
+After the owner approved and pushed the CP-SAT commits, CI run 34183671357 failed in Guild's Turbopack build. Guild imports the shared API through its server tRPC caller and sitemap, so it also reaches the native solver. Only Blade had configured that package as external. Reproduced Guild's `Module not found: Can't resolve <dynamic>` failure using the CI example environment before editing.
+
+Guild now uses the same external-package and standalone tracing settings as Blade. Comments in both configs identify the required pairing. No solver, UI, dependency, schema, or CI workflow changes are included. The owner explicitly authorized fixing CI and pushing this follow-up.
+
+Validation passed: Guild's production build with `.env.example`; an optimal eight-worker CP-SAT solve from Guild's standalone files in a read-only, network-disabled Node 24 container; and root `pnpm format` (24 tasks), `pnpm lint` (31 tasks, warnings only), and `pnpm typecheck` (33 tasks). The container could not access repository dependencies. CI verification will follow the push.

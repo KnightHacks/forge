@@ -236,3 +236,7 @@ Cancel the native solve before and after a valid candidate. Retain only independ
 ### TC-CP-003: Leases, recovery, and checkpoint compatibility
 
 Competing continuations may start only one native search per lease. Renew ownership while the solver works. Saving or superseding a job prevents any later worker write. After a restart, retain the original expiry, validated incumbent, and proved objective prefix when rebuilding the model. Existing DFS checkpoints remain readable and their candidates retain the same review hash. No saved schedule changes during generation.
+
+### TC-CP-004: Shared API consumer builds
+
+Build Blade and Guild with the CI example environment. Both import the shared API at runtime and must keep the native CP-SAT package external to Next bundling. Their standalone output must include the platform addon and its libraries. Verify a native solve from the standalone files in an isolated, network-disabled Node container so repository dependencies cannot hide missing assets.
