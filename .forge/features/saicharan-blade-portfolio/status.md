@@ -41,21 +41,23 @@ Current phase: Complete
 
 - `pnpm exec prettier --write ...` — pass
 - targeted ESLint with 8 GB heap — pass
-- Blade `tsc --noEmit` with 8 GB heap — pass
+- Blade `tsc --noEmit` with 8 GB heap — pass before rebasing onto the latest upstream `main`
 - `pnpm analyze:react apps/blade/src/app/_components/applications` — pass (3 files, 3 components, 0 failures)
 - `pnpm analyze:react:changed` — pass (4 files, 3 components, 0 failures)
 - `pnpm format` — pass (24 tasks)
 - `NODE_OPTIONS=--max-old-space-size=8192 pnpm lint` — pass (31 tasks; existing warnings, no errors)
-- `NODE_OPTIONS=--max-old-space-size=8192 pnpm typecheck` — pass (33 tasks)
-- `pnpm --filter=@forge/blade build` with process-only validation values — pass; route emitted as static and bridge as dynamic
+- `NODE_OPTIONS=--max-old-space-size=8192 pnpm typecheck` — pass before rebasing onto the latest upstream `main` (33 tasks)
+- Post-rebase Blade typecheck — blocked by existing judging/API errors in files outside this feature diff; no reported error points to the application
+- `pnpm --filter=@forge/blade build` with process-only validation values — pass before rebase; route emitted as static and bridge as dynamic
 - Tech Knight regeneration through Blender 5.2 — pass
 - Local `/saicharan-ramineni` render — HTTP 200
 - Local `/saicharan-ramineni/site` bridge — HTTP 200 with injected remote base URL
 - Bridged portfolio response — executable original scripts with Cloudflare's inert wrappers removed
 - Live frame inspection — `cosmos-ready`; genuine canvas visible at 1614×1490 CSS-pixel-backed resolution; no new runtime errors
+- Post-rebase browser review — Tech Knight hero and original Gargantua handoff captured in the checked-in review screenshots
 
 ## Links
 
-- PRs:
+- PRs: https://github.com/KnightHacks/forge/pull/554
 - Issues: https://github.com/KnightHacks/forge/issues/553
 - Discord/thread context:
