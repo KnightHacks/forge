@@ -63,7 +63,7 @@
     "@t3-oss/env-core": "^0.13.10",
     "@trpc/server": "catalog:",
     "archiver": "^6.0.2",
-    "csv-parse": "^6.1.0",
+    "csv-parse": "^7.0.2",
     "discord-api-types": "^0.38.40",
     "minio": "^8.0.6",
     "qrcode": "^1.5.4",
