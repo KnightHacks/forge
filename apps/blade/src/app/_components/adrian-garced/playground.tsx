@@ -2,25 +2,33 @@
 
 import { useEffect, useRef } from "react";
 import {
+  siC,
   siCplusplus,
-  siRust,
-  siTypescript,
-  siPython,
+  siGit,
   siHono,
+  siPython,
+  siRust,
+  siShadcnui,
   siSolid,
+  siSqlite,
   siTailwindcss,
-  siShadcnui
+  siTypescript,
+  siVercel,
 } from "simple-icons";
 
 const ICONS = [
   siCplusplus,
+  siC,
+  siSqlite,
+  siGit,
   siRust,
   siTypescript,
+  siVercel,
   siPython,
   siHono,
   siSolid,
   siTailwindcss,
-  siShadcnui
+  siShadcnui,
 ];
 
 const SIZE = 60;
@@ -51,8 +59,7 @@ export default function Playground() {
     const loadIcon = () => {
       const currentIcon = ICONS[iconIndex];
 
-      if(!currentIcon)
-        return;
+      if (!currentIcon) return;
 
       icon.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

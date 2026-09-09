@@ -8,6 +8,8 @@ import {
 
 import { SELECTED_PROJECTS } from "./selected-data";
 
+const slugify = (s: string) => s.toLowerCase().replace(/\s+/g, "-");
+
 export default function SelectedProjects({ id }: { id: string }) {
   return (
     <section id={id} className="mt-32 scroll-mt-24">
@@ -29,7 +31,8 @@ export default function SelectedProjects({ id }: { id: string }) {
         {SELECTED_PROJECTS.map((project, index) => (
           <div
             key={project.title}
-            className="scroll-mt-24 opacity-0 transition-transform duration-500 hover:-translate-y-1 animate-fade-in-up"
+            id={slugify(project.title)}
+            className="animate-fade-in-up scroll-mt-24 opacity-0 transition-transform duration-500 hover:-translate-y-1"
             style={{
               animationDelay: `${Math.floor(index / 2) * 300}ms`,
             }}
@@ -66,7 +69,7 @@ export default function SelectedProjects({ id }: { id: string }) {
                     href={project.repoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm font-medium text-neutral-300! transition-colors hover:text-emerald-400!"
+                    className="text-neutral-300! hover:text-emerald-400! text-sm font-medium transition-colors"
                   >
                     Repo →
                   </a>
@@ -76,7 +79,7 @@ export default function SelectedProjects({ id }: { id: string }) {
                       href={project.liveUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-medium text-neutral-300! transition-colors hover:text-emerald-400!"
+                      className="text-neutral-300! hover:text-emerald-400! text-sm font-medium transition-colors"
                     >
                       Live site →
                     </a>

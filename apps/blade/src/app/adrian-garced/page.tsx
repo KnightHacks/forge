@@ -5,16 +5,21 @@
     - [ ] add more concrete sections
 */
 
+// components
 import Footer from "$/adrian-garced/footer";
 import Navbar from "$/adrian-garced/navbar";
+import Reveal from "$/adrian-garced/reveal";
 import AboutMe from "$/adrian-garced/sections/about-me";
 import { PROJECTS } from "$/adrian-garced/sections/hobby-data";
+// sections
 import Intro from "$/adrian-garced/sections/intro";
 import MyTools from "$/adrian-garced/sections/my-tools";
 import Selected from "$/adrian-garced/sections/selected";
+// shared data
 import { SELECTED_PROJECTS } from "$/adrian-garced/sections/selected-data";
 import TableOfContents from "$/adrian-garced/toc";
-import Reveal from "$/adrian-garced/reveal";
+
+import { Separator } from "@forge/ui/separator";
 
 import Projects from "~/app/_components/adrian-garced/sections/hobby";
 
@@ -66,17 +71,25 @@ export default function AdrianG() {
             <Intro id="intro" />
           </Reveal>
 
+          <Separator className="my-24 bg-neutral-800" />
+
           <Reveal>
             <Selected id="selected-projects" />
           </Reveal>
+
+          <Separator className="my-24 bg-neutral-800" />
 
           <Reveal>
             <MyTools id="stack" />
           </Reveal>
 
+          <Separator className="my-24 bg-neutral-800" />
+
           <Reveal>
             <Projects id="projects" />
           </Reveal>
+
+          <Separator className="my-24 bg-neutral-800" />
 
           <Reveal>
             <AboutMe id="about-me" />

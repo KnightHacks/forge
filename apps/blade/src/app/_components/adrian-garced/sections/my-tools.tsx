@@ -7,15 +7,15 @@ const CATEGORIES = [
   },
   {
     title: "Web Development",
-    technologies: ["TypeScript", "Next.js", "Hono", "SvelteKit"],
+    technologies: ["TypeScript", "Next.js", "Hono", "Solid.js"],
   },
   {
     title: "Graphics & Game Development",
-    technologies: ["C++", "OpenGL", "GLFW", "GLM", "Godot"],
+    technologies: ["C++", "OpenGL", "GLFW", "GLM", "Godot", "C#"],
   },
   {
     title: "Currently Learning",
-    technologies: ["Computer Architecture", "Vulkan", "Operating Systems"],
+    technologies: ["Computer Architecture", "Operating Systems"],
   },
 ];
 
@@ -66,6 +66,17 @@ export default function MyTools({ id }: { id: string }) {
             DVD Animation but for my Technologies
           </p>
           <Playground />
+          <p className="text-neutral-500! mt-2">
+            Inspiration:{" "}
+            <a
+              href="https://www.dvidal.dev/skills"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              dvidal
+            </a>
+          </p>
         </div>
       </div>
     </section>
