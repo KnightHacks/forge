@@ -228,7 +228,6 @@ async function relatedProjects(projectIds: string[]) {
           id: string;
           label: string;
           parentId: string | null;
-          tagColor: string | null;
           isGeneral: boolean;
           isOptIn: boolean;
         }[]
@@ -283,11 +282,6 @@ async function relatedProjects(projectIds: string[]) {
     string,
     { email: string; id: string; name: string; order: number }[]
   >();
-  const colorsByGroup = new Map(
-    challengeRows
-      .filter((challenge) => challenge.isGroup)
-      .map((challenge) => [challenge.id, challenge.tagColor]),
-  );
   for (const member of members) {
     const list = membersByProject.get(member.projectId) ?? [];
     list.push({
@@ -305,7 +299,6 @@ async function relatedProjects(projectIds: string[]) {
       id: string;
       label: string;
       parentId: string | null;
-      tagColor: string | null;
       isGeneral: boolean;
       isOptIn: boolean;
     }[]
@@ -326,9 +319,6 @@ async function relatedProjects(projectIds: string[]) {
       id: row.id,
       label: row.label,
       parentId: row.parentId,
-      tagColor: row.parentId
-        ? (colorsByGroup.get(row.parentId) ?? null)
-        : row.tagColor,
       isGeneral: row.isGeneral,
       isOptIn: row.isOptIn,
     });

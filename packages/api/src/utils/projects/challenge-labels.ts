@@ -12,7 +12,6 @@ export const defaultJudgingChallenges = [
   },
   {
     label: "MLH Challenges",
-    tagColor: "#e93227",
     isGeneral: false,
     isScheduled: false,
     importLabelMatch: "MLH",

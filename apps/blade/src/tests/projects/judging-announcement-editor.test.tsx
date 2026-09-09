@@ -169,7 +169,6 @@ describe("judging room and announcement editors", () => {
       isMlhImportDefault: false,
       isGeneral: true,
       isScheduled: true,
-      tagColor: null,
     };
     const initialData = {
       ...data,
@@ -318,7 +317,6 @@ describe("judging room and announcement editors", () => {
           isMlhImportDefault: false,
           isGeneral: false,
           isScheduled: true,
-          tagColor: null,
         },
       ],
       configuration: {

@@ -12535,12 +12535,6 @@
           "notNull": true,
           "default": false
         },
-        "tag_color": {
-          "name": "tag_color",
-          "type": "varchar(7)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "import_label_prefix": {
           "name": "import_label_prefix",
           "type": "varchar(255)",

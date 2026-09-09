@@ -2207,7 +2207,6 @@ export const ProjectChallenge = createTable(
     label: t.varchar({ length: 255 }).notNull(),
     parentId: t.uuid(),
     isGroup: t.boolean().notNull().default(false),
-    tagColor: t.varchar({ length: 7 }),
     importLabelMatch: t.varchar("import_label_prefix", { length: 255 }),
     isGeneral: t.boolean().notNull().default(false),
     isScheduled: t.boolean().notNull().default(true),

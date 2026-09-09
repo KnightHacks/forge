@@ -2,7 +2,6 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
 import {
-  alias,
   and,
   asc,
   count,
@@ -142,11 +141,6 @@ async function setTemporaryOrder(
 ) {
   await tx.update(table).set({ displayOrder: order }).where(eq(table.id, id));
 }
-
-const ParentChallenge = alias(
-  ProjectChallenge,
-  "project_evaluation_tag_parent_challenge",
-);
 
 export const judgingScoresRouter = {
   getWorkspace: judgeProcedure
@@ -586,16 +580,11 @@ export const judgingScoresRouter = {
             id: ProjectChallenge.id,
             label: ProjectChallenge.label,
             parentId: ProjectChallenge.parentId,
-            tagColor: ParentChallenge.tagColor,
           })
           .from(ProjectToChallenge)
           .innerJoin(
             ProjectChallenge,
             eq(ProjectChallenge.id, ProjectToChallenge.challengeId),
-          )
-          .innerJoin(
-            ParentChallenge,
-            eq(ParentChallenge.id, ProjectChallenge.parentId),
           )
           .where(
             and(
@@ -623,11 +612,10 @@ export const judgingScoresRouter = {
                 tag.projectId === evaluation.projectId &&
                 tag.parentId === evaluation.challengeId,
             )
-            .map(({ id, label, parentId, tagColor }) => ({
+            .map(({ id, label, parentId }) => ({
               id,
               label,
               parentId,
-              tagColor,
             })),
           ratings: ownRatings,
           responses: responses.filter(

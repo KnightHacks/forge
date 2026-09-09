@@ -24,6 +24,7 @@ import { lockScheduleHackathon } from "../utils/judging-schedule/source";
 import { assertCanManageProjects } from "../utils/projects/access";
 import {
   assertChallengeSetupEditable,
+  challengeSelection,
   rebuildParentMemberships,
   validateChallengeGrouping,
 } from "../utils/projects/challenge-configuration";
@@ -62,10 +63,9 @@ export const projectChallengesRouter = {
             isScheduled: input.isScheduled,
             isGroup: true,
             importLabelMatch: input.isMlhImportDefault ? "MLH" : null,
-            tagColor: input.tagColor,
           })
           .onConflictDoNothing()
-          .returning();
+          .returning(challengeSelection);
         if (!group)
           throw new TRPCError({
             code: "CONFLICT",
@@ -78,11 +78,10 @@ export const projectChallengesRouter = {
             actor,
             metadata: {
               groupId: group.id,
-              isMlhImportDefault: group.importLabelMatch === "MLH",
+              isMlhImportDefault: group.isMlhImportDefault,
               label: group.label,
               isGeneral: group.isGeneral,
               isScheduled: group.isScheduled,
-              tagColor: group.tagColor,
             },
             subjects: [
               {
@@ -111,6 +110,12 @@ export const projectChallengesRouter = {
           columns: { displayName: true },
         });
         const previous = await tx.query.ProjectChallenge.findFirst({
+          columns: {
+            label: true,
+            isGeneral: true,
+            isScheduled: true,
+            importLabelMatch: true,
+          },
           where: and(
             eq(ProjectChallenge.id, input.groupId),
             eq(ProjectChallenge.hackathonId, input.hackathonId),
@@ -123,6 +128,7 @@ export const projectChallengesRouter = {
             message: "Judging group not found in this hackathon.",
           });
         const duplicate = await tx.query.ProjectChallenge.findFirst({
+          columns: { id: true },
           where: and(
             eq(ProjectChallenge.hackathonId, input.hackathonId),
             eq(ProjectChallenge.isGroup, true),
@@ -158,7 +164,6 @@ export const projectChallengesRouter = {
             label: input.label,
             isGeneral: input.isGeneral,
             isScheduled: input.isScheduled,
-            tagColor: input.tagColor === undefined ? undefined : input.tagColor,
           })
           .where(
             and(
@@ -167,7 +172,7 @@ export const projectChallengesRouter = {
               eq(ProjectChallenge.isGroup, true),
             ),
           )
-          .returning();
+          .returning(challengeSelection);
         if (!group)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -184,26 +189,21 @@ export const projectChallengesRouter = {
                 "isGeneral",
                 "isScheduled",
                 "isMlhImportDefault",
-                "tagColor",
               ] as const
             ).flatMap((field) => {
               const before =
                 field === "isMlhImportDefault"
                   ? previous.importLabelMatch === "MLH"
                   : previous[field];
-              const after =
-                field === "isMlhImportDefault"
-                  ? group.importLabelMatch === "MLH"
-                  : group[field];
+              const after = group[field];
               return before === after ? [] : [{ field, before, after }];
             }),
             metadata: {
               groupId: group.id,
-              isMlhImportDefault: group.importLabelMatch === "MLH",
+              isMlhImportDefault: group.isMlhImportDefault,
               label: group.label,
               isGeneral: group.isGeneral,
               isScheduled: group.isScheduled,
-              tagColor: group.tagColor,
             },
             subjects: [
               {
@@ -232,6 +232,7 @@ export const projectChallengesRouter = {
           columns: { displayName: true },
         });
         const group = await tx.query.ProjectChallenge.findFirst({
+          columns: { id: true, label: true },
           where: and(
             eq(ProjectChallenge.id, input.groupId),
             eq(ProjectChallenge.hackathonId, input.hackathonId),
@@ -300,7 +301,7 @@ export const projectChallengesRouter = {
           columns: { displayName: true },
         });
         const challenges = await tx
-          .select()
+          .select(challengeSelection)
           .from(ProjectChallenge)
           .where(eq(ProjectChallenge.hackathonId, input.hackathonId));
         const previous = challenges.find(
@@ -334,7 +335,7 @@ export const projectChallengesRouter = {
           .update(ProjectChallenge)
           .set({ parentId: input.parentId, isScheduled: input.isScheduled })
           .where(eq(ProjectChallenge.id, input.challengeId))
-          .returning();
+          .returning(challengeSelection);
         if (!challenge || !previous)
           throw new TRPCError({
             code: "NOT_FOUND",

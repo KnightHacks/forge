@@ -19,7 +19,6 @@ interface GroupValues {
   label: string;
   isGeneral: boolean;
   isScheduled: boolean;
-  tagColor: string;
 }
 
 function GroupForm({
@@ -49,10 +48,6 @@ function GroupForm({
           isGeneral: values.has("everyProject"),
           isMlhImportDefault: values.has("mlhDefault"),
           isScheduled: values.has("scheduled"),
-          tagColor:
-            typeof values.get("tagColor") === "string"
-              ? (values.get("tagColor") as string)
-              : "#7c3aed",
         })
           .then(() => {
             if (!group) form.reset();
@@ -99,17 +94,6 @@ function GroupForm({
           disabled={disabled}
         />
         Default for MLH imports
-      </label>
-      <label className="flex min-h-11 items-center gap-2 text-sm">
-        Tag color
-        <input
-          aria-label="Tag color"
-          className="size-8 cursor-pointer rounded border border-input bg-transparent p-0.5"
-          defaultValue={group?.tagColor ?? "#7c3aed"}
-          disabled={disabled}
-          name="tagColor"
-          type="color"
-        />
       </label>
       <Button type="submit" disabled={disabled} className="h-11">
         {group ? "Update group" : "Create group"}
@@ -264,9 +248,9 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
         Challenges come from Devpost. New MLH challenges default to the MLH
         group; your grouping changes survive re-imports. Child tags stay visible
-        on projects and during judging, but children and every-project groups
-        are hidden from search filters. Deleting a group keeps its imported
-        challenges.
+        in project details and during judging. Children stay available in search
+        filters; every-project groups are hidden from those filters. Deleting a
+        group keeps its imported challenges.
       </p>
       <Input
         className="mt-4 h-11"

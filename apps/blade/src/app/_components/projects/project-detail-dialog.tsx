@@ -15,8 +15,6 @@ import {
 } from "@forge/ui/dialog";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
-import { challengeTagStyle } from "./challenge-tag-style";
-
 type JudgeProject = RouterOutputs["projects"]["listJudge"]["projects"][number];
 type AdminProject = RouterOutputs["projects"]["listAdmin"]["projects"][number];
 type Project = JudgeProject | AdminProject;
@@ -35,15 +33,19 @@ function formatDate(value: Date) {
 function ChallengeBadges({ project }: { project: Project }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {project.challenges.map((challenge) => (
-        <Badge
-          key={challenge.id}
-          style={challengeTagStyle(challenge.tagColor)}
-          variant={challenge.isGeneral ? "outline" : "secondary"}
-        >
-          {challenge.label}
-        </Badge>
-      ))}
+      {project.challenges.map((challenge) => {
+        const parent = project.challenges.find(
+          (candidate) => candidate.id === challenge.parentId,
+        );
+        return (
+          <Badge
+            key={challenge.id}
+            variant={(parent ?? challenge).isGeneral ? "outline" : "secondary"}
+          >
+            {challenge.label}
+          </Badge>
+        );
+      })}
     </div>
   );
 }

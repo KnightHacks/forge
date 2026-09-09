@@ -127,7 +127,11 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         isScheduled: false,
         isGroup: true,
       },
-      { id: firstTimeId, hackathonId, label: "First-time hacker" },
+      {
+        id: firstTimeId,
+        hackathonId,
+        label: "First-time hacker",
+      },
       { id: mlhOptInId, hackathonId, label: "MLH - Best Use of AI" },
     ]);
     await database.insert(schema.JudgingRoom).values([
@@ -244,12 +248,13 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         isScheduled: true,
       }),
     ).rejects.toThrow(/judging group/);
-    await member.projects.updateChallenge({
+    const updatedChild = await member.projects.updateChallenge({
       hackathonId,
       challengeId: firstTimeId,
       parentId: generalId,
       isScheduled: true,
     });
+    expect(updatedChild).not.toHaveProperty("tagColor");
     await member.projects.updateChallenge({
       hackathonId,
       challengeId: mlhOptInId,
@@ -536,6 +541,35 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       .where(eq(schema.ProjectEvaluation.projectId, scoredProjectId));
     expect(rows).toHaveLength(1);
     expect(rows[0]?.challengeId).toBe(generalId);
+    const judgedDirectory = await member.projects.listJudge({
+      ...listInput,
+      challengeIds: [firstTimeId],
+      showInRoomOnly: false,
+    });
+    const judgedTags = judgedDirectory.projects.find(
+      (project) => project.id === scoredProjectId,
+    )?.challenges;
+    expect(judgedTags).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: generalId,
+          isGeneral: true,
+          evaluationCount: 1,
+        }),
+        expect.objectContaining({
+          id: firstTimeId,
+          parentId: generalId,
+          isGeneral: false,
+          evaluationCount: 1,
+        }),
+      ]),
+    );
+    for (const challenge of [
+      ...judgedDirectory.challenges,
+      ...judgedDirectory.projects.flatMap((project) => project.challenges),
+    ]) {
+      expect(challenge).not.toHaveProperty("tagColor");
+    }
     const remaining = await member.projects.listJudge({
       ...listInput,
       challengeIds: [firstTimeId],
@@ -544,6 +578,11 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     });
     expect(remaining.totalCount).toBe(1);
     expect(remaining.projects[0]?.id).toBe(generalProjectIds[4]);
+    expect(remaining.projects[0]?.challenges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: firstTimeId, evaluationCount: 0 }),
+      ]),
+    );
     vi.setSystemTime(new Date("2026-09-07T16:45:00Z"));
     const editedEvaluation = await member.judging.saveEvaluation({
       hackathonId,
@@ -563,11 +602,9 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       submissions.find(
         (submission) => submission.id === savedEvaluation.evaluationId,
       )?.projectChallenges,
-    ).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: firstTimeId, parentId: generalId }),
-      ]),
-    );
+    ).toEqual([
+      { id: firstTimeId, label: "First-time hacker", parentId: generalId },
+    ]);
     const parentRows = await database
       .select()
       .from(schema.ProjectEvaluation)
@@ -632,7 +669,6 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
 
     const toolA = await challenge("MLH - Tool A", false);
     expect(toolA.parentId).toBe(mlh.id);
-    expect(mlh.tagColor).toBe("#e93227");
     await expect(
       member.projects.updateGroup({
         hackathonId: eventId,
@@ -648,6 +684,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       isGeneral: true,
       isScheduled: true,
     });
+    expect(extra).not.toHaveProperty("tagColor");
     expect(
       await database.query.ProjectToChallenge.findMany({
         where: eq(schema.ProjectToChallenge.challengeId, extra.id),
@@ -667,13 +704,14 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       defaultDirectory.selectedChallengeId,
     );
 
-    await member.projects.updateGroup({
+    const updatedGroup = await member.projects.updateGroup({
       hackathonId: eventId,
       groupId: extra.id,
       label: "Optional community",
       isGeneral: false,
       isScheduled: true,
     });
+    expect(updatedGroup).not.toHaveProperty("tagColor");
     expect(
       await database.query.ProjectToChallenge.findMany({
         where: eq(schema.ProjectToChallenge.challengeId, extra.id),
@@ -694,6 +732,16 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     });
     await runImport(["MLH - Tool A", "Best tool B (MLH)", "First time"]);
     const auditEvents = await database.select().from(AdminAuditEvent);
+    for (const event of auditEvents.filter(
+      (event) =>
+        event.actionKey === "judging.group.created" ||
+        event.actionKey === "judging.group.updated",
+    )) {
+      expect(event.metadata).not.toHaveProperty("tagColor");
+      expect(event.changes.some((change) => change.field === "tagColor")).toBe(
+        false,
+      );
+    }
     expect(
       auditEvents.find(
         (event) =>
@@ -991,7 +1039,6 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
           isGeneral: false,
           isScheduled: false,
           importLabelMatch: "MLH",
-          tagColor: "#e93227",
         }),
       ]),
     );

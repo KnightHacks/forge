@@ -6,8 +6,12 @@ On hackathon creation, provide General (every project, scheduled) and MLH Challe
 
 New imported MLH challenges default into the starter MLH group, including after it is renamed. Re-imports preserve existing organizer grouping decisions. Deleting the starter group does not recreate it or redirect imports to a similarly named replacement.
 
-Search filters exclude every-project groups and all child challenges. Other groups and standalone imported challenges remain filterable. Child eligibility tags remain apparent in project details, directory cards, and the evaluation dialog. Guest judges retain only their room's scope.
+Search filters exclude every-project groups but include child challenges. Directory pills show only parent groups and standalone challenges. Child eligibility remains visible in project details and the evaluation dialog. Guest judges retain only their room's scope.
 
 Saving a schedule locks groups, challenge grouping, rooms, rubrics, and changes to existing project inventory. Add-only imports remain available for late projects: existing projects, memberships, and appointments stay unchanged, and inventory replacement stays blocked. Operational judging remains available. Feedback also prevents regrouping. Scheduled scopes with projects require staffed rooms; untimed scopes are explicitly configured. No General or every-project group is required to save.
 
 Organizers can designate any group as the default for new MLH imports. Selecting it moves that import policy from the previous group without moving existing children. Clearing or deleting the default disables this automation until another group is designated.
+
+Tag colors are not configurable. Preserve the existing General/non-General badge styles and green judged-state colors. Child tags inherit their parent's styling and evaluation count, regardless of either label. Evaluation-dialog child tags use the existing primary-theme style.
+
+Review regression: child challenges remain selectable in member and scoped guest dropdowns, never render as directory pills, and remain visible within the active parent feedback modal. Every-project groups remain absent from filters.

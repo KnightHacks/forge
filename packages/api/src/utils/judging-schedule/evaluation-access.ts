@@ -46,6 +46,7 @@ export async function evaluationTimingAccess(
   };
   if (!schedule) return { ...base, canEdit: true, reason: null, timed: false };
   const challenge = await tx.query.ProjectChallenge.findFirst({
+    columns: { isScheduled: true },
     where: and(
       eq(ProjectChallenge.id, input.challengeId),
       eq(ProjectChallenge.hackathonId, input.hackathonId),

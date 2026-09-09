@@ -3,7 +3,6 @@ ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "is_general" boolean DEF
 ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "is_scheduled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_to_challenge" ADD COLUMN "is_opt_in" boolean DEFAULT true NOT NULL;--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" ADD CONSTRAINT "project_challenge_parent_scope_fk" FOREIGN KEY ("parent_id","hackathon_id") REFERENCES "public"."knight_hacks_project_challenge"("id","hackathon_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "project_challenge_general_unique" ON "knight_hacks_project_challenge" USING btree ("hackathon_id") WHERE "knight_hacks_project_challenge"."is_general";--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" ADD CONSTRAINT "project_challenge_root_general" CHECK (NOT "knight_hacks_project_challenge"."is_general" OR "knight_hacks_project_challenge"."parent_id" IS NULL);--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" ADD CONSTRAINT "project_challenge_not_self" CHECK ("knight_hacks_project_challenge"."parent_id" IS NULL OR "knight_hacks_project_challenge"."parent_id" <> "knight_hacks_project_challenge"."id");
 --> statement-breakpoint
@@ -13,7 +12,6 @@ UPDATE "knight_hacks_project_challenge" SET "is_general" = true WHERE "label" = 
 UPDATE "knight_hacks_project_challenge" SET "is_scheduled" = false WHERE "label" ILIKE '%mlh%';
 --> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" DROP CONSTRAINT "knight_hacks_project_challenge_hackathon_label_unique";--> statement-breakpoint
-DROP INDEX "project_challenge_general_unique";--> statement-breakpoint
 ALTER TABLE "knight_hacks_hackathon_judging_configuration" ADD COLUMN "challenge_groups_initialized_at" timestamp with time zone;--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "is_group" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "import_label_prefix" varchar(255);--> statement-breakpoint
@@ -35,8 +33,6 @@ UPDATE "knight_hacks_project_challenge" SET "import_label_prefix" = 'MLH' WHERE 
 UPDATE "knight_hacks_project_to_challenge" m SET "is_opt_in" = false FROM "knight_hacks_project_challenge" c WHERE m."challenge_id" = c."id" AND c."is_group";
 --> statement-breakpoint
 INSERT INTO "knight_hacks_hackathon_judging_configuration" ("hackathon_id", "challenge_groups_initialized_at") SELECT DISTINCT "hackathon_id", now() FROM "knight_hacks_project_challenge" WHERE "is_group" ON CONFLICT ("hackathon_id") DO UPDATE SET "challenge_groups_initialized_at" = EXCLUDED."challenge_groups_initialized_at";
---> statement-breakpoint
-ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "tag_color" varchar(7);
 --> statement-breakpoint
 -- Only initialize hackathons that have never had group setup. Organizer deletions
 -- remain intentional, and custom group names/settings are not overwritten.
@@ -61,7 +57,3 @@ INSERT INTO "knight_hacks_hackathon_judging_configuration" ("hackathon_id", "cha
 SELECT "id", now() FROM "knight_hacks_hackathon"
 ON CONFLICT ("hackathon_id") DO UPDATE SET "challenge_groups_initialized_at" = EXCLUDED."challenge_groups_initialized_at"
 WHERE "knight_hacks_hackathon_judging_configuration"."challenge_groups_initialized_at" IS NULL;
---> statement-breakpoint
-UPDATE "knight_hacks_project_challenge"
-SET "tag_color" = '#e93227'
-WHERE "is_group" AND "import_label_prefix" = 'MLH';

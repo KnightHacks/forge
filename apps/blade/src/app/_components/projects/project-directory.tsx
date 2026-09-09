@@ -18,7 +18,6 @@ import {
 } from "@forge/ui/tooltip";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
-import { challengeTagStyle } from "./challenge-tag-style";
 import { ProjectDetailDialog } from "./project-detail-dialog";
 
 type Project = RouterOutputs["projects"]["listJudge"]["projects"][number];
@@ -58,32 +57,36 @@ export interface ProjectDirectoryData<TProject extends Project = Project> {
 function ProjectBadges({ project }: { project: Project }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {project.challenges.map((challenge) => (
-        <Badge
-          className={cn(
-            challenge.evaluationCount > 0 &&
-              (challenge.isGeneral
-                ? "border-emerald-950 bg-emerald-950 text-emerald-100"
-                : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
-          )}
-          key={challenge.id}
-          style={challengeTagStyle(challenge.tagColor)}
-          title={
-            challenge.evaluationCount > 0
-              ? `${challenge.evaluationCount} evaluation${challenge.evaluationCount === 1 ? "" : "s"}`
-              : "Not yet evaluated"
-          }
-          variant={
-            challenge.evaluationCount > 0
-              ? "outline"
-              : challenge.isGeneral
-                ? "outline"
-                : "secondary"
-          }
-        >
-          {challenge.label}
-        </Badge>
-      ))}
+      {project.challenges
+        .filter((challenge) => !challenge.parentId)
+        .map((challenge) => {
+          const isGeneral = challenge.isGeneral;
+          return (
+            <Badge
+              className={cn(
+                challenge.evaluationCount > 0 &&
+                  (isGeneral
+                    ? "border-emerald-950 bg-emerald-950 text-emerald-100"
+                    : "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"),
+              )}
+              key={challenge.id}
+              title={
+                challenge.evaluationCount > 0
+                  ? `${challenge.evaluationCount} evaluation${challenge.evaluationCount === 1 ? "" : "s"}`
+                  : "Not yet evaluated"
+              }
+              variant={
+                challenge.evaluationCount > 0
+                  ? "outline"
+                  : isGeneral
+                    ? "outline"
+                    : "secondary"
+              }
+            >
+              {challenge.label}
+            </Badge>
+          );
+        })}
     </div>
   );
 }
@@ -123,10 +126,7 @@ function ProjectFilters({
     input.maxParticipants?.toString() ?? "",
   );
   const filterableChallenges = challenges.filter(
-    (challenge) =>
-      !challenge.isGeneral &&
-      !challenge.parentId &&
-      challenge.id !== lockedChallenge?.id,
+    (challenge) => !challenge.isGeneral && challenge.id !== lockedChallenge?.id,
   );
   const selectedChallenge = filterableChallenges.some(
     (challenge) => challenge.id === input.challengeIds[0],

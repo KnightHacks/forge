@@ -1,14 +1,14 @@
 # Status
 
-Phase: verified; ready for PR review.
+Phase: addressing latest human review; final unmerged schema removes custom colors and directory child pills.
 
 PR: [#550](https://github.com/KnightHacks/forge/pull/550). Issue: [#549](https://github.com/KnightHacks/forge/issues/549).
 Branch: `fix/first-time-hacker-room-tagging`.
 
 Completed behavior:
 
-- Editable groups with independent every-project membership, scheduling, MLH import defaults, and tag colors.
-- Imported challenges retain organizer grouping choices across re-imports. Child tags remain visible while child/every-project filters stay hidden.
+- Editable groups with independent every-project membership, scheduling, and MLH import defaults.
+- Imported challenges retain organizer grouping choices across re-imports. Child eligibility remains in details and feedback. Directory pills hide children; filters include children and exclude every-project groups.
 - Dropping projects preserves groups and initialization history. New and previously uninitialized hackathons receive starter groups; deliberate deletions remain respected.
 - Existing permission, audit, saved-schedule, evaluation, and membership guards remain in place.
 
@@ -42,3 +42,22 @@ Review follow-up:
 - GitHub run 34290298700 passed the application test job but exposed a separate 15-second timeout in the whole-schema truncate/restore database test. Increased only that test's timeout to 60 seconds, matching its migration setup budget; retained every ledger, tag, and orphan check. All 157 DB tests pass locally. No restore code or migrations changed.
 - Refreshed project screenshots and added add-only import and room-lock screenshots using disposable synthetic data. Verified the room lock at desktop and 320px widths; preview server and database removed afterward.
 - Follow-up review: normalize an existing child room to its parent in the editor while preserving QR-revocation confirmation; stop locked form submissions before creating a building; expose challenge opt-ins as an accessible group; assert `FORBIDDEN` for guest scope violations. Reproduced both room-editor failures, then passed all 61 project UI tests and the database-backed room/filter suite. Browser verification saved a synthetic child room under its parent group; `screenshots/room-editor.jpg` shows the selected parent.
+
+Custom-color removal:
+
+- Human clarified removal of custom tag colors and pickers: preserve General/non-General styling and make children inherit their parent's color, including judged state. No label-specific behavior.
+- Human could not confirm migration application; retain the current column and migration history. After concurrent branch updates consolidated the migrations, human approved continuing against the latest branch.
+- Removed color inputs, API reads/writes/defaults, inline rendering, and the contrast helper. Retained historical audit field support and all unrelated grouping/import behavior.
+- Corrected directory/detail styling to resolve parentId rather than the child's own isGeneral flag. Regression fixtures use renamed groups and arbitrary imported prizes; there are no label-specific rules.
+- `pnpm verify:precommit` passed: React analysis, formatting, lint (warnings only), and all workspace typechecks. Blade project tests: 63 passed. Targeted API room/filter and judging-access tests: 8 passed. Targeted validator project/audit tests: 10 passed. `git diff --check` passed.
+- Quick scoped review found no correctness issues. Browser verification remains blocked by unavailable authenticated synthetic preview access; earlier color screenshots describe the superseded implementation.
+- Changes remain uncommitted and unpushed. Remote PR tooling is unavailable (`gh: command not found`). Database schema and migration history remain untouched.
+
+Latest human review (supersedes earlier color-retention decisions):
+
+- Reviewed concurrent and uncommitted changes without overwriting contributor work. Feedback-modal opt-ins already exist and remain scoped to the parent evaluation.
+- Directory pills now show roots only; member and scoped guest dropdowns include child challenges. Existing General/non-General and green judged styling remains.
+- Human authorized removing unmerged schema history for the abandoned color feature. Removed the challenge color column from the schema, consolidated 0053 SQL and matching snapshot, as well as obsolete audit color support and a redundant create/drop index. Exactly one new SQL migration remains; existing main migrations are untouched.
+- Full DB suite: 157 tests passed. API room/filter and judging access: 8 tests passed. Blade projects: 63 tests passed. Project/audit validators: 9 tests passed. Drizzle generation reports no schema changes.
+- Browser inspection confirms child dropdown choices and root-only pills in the live directory. Judging is currently closed, so modal verification used the existing component and API regression tests. No local data was changed.
+- Final `pnpm verify:precommit` passed React analysis, formatting, lint (existing warnings), and all 33 workspace typechecks. Browser navigation later stalled on the local development server, so end-to-end dropdown navigation and new modal screenshots are not claimed. Changes remain uncommitted for the ongoing shared-branch review.

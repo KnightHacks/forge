@@ -74,7 +74,6 @@ const data = {
       isGroup: true,
       isMlhImportDefault: false,
       isScheduled: true,
-      tagColor: "#7c3aed",
     },
     {
       id: "00000000-0000-4000-8000-000000000003",
@@ -84,7 +83,6 @@ const data = {
       isGroup: false,
       isMlhImportDefault: false,
       isScheduled: true,
-      tagColor: null,
     },
   ],
   setupLocked: false,
@@ -133,6 +131,7 @@ describe("organizer challenge setup", () => {
     if (!general || !firstTime) throw new Error("Missing challenge fixtures");
     const user = userEvent.setup();
     render(<ChallengeConfigurationPanel data={data} />);
+    expect(screen.queryByLabelText("Tag color")).not.toBeInTheDocument();
     expect(
       screen.getByRole("textbox", { name: "Group name: General" }),
     ).toBeEnabled();
@@ -159,6 +158,7 @@ describe("organizer challenge setup", () => {
       screen.queryByRole("textbox", { name: "New judging group" }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add judging group" }));
+    expect(screen.queryByLabelText("Tag color")).not.toBeInTheDocument();
     await user.type(
       screen.getByRole("textbox", { name: "New judging group" }),
       "Community awards",
@@ -170,7 +170,6 @@ describe("organizer challenge setup", () => {
       isMlhImportDefault: false,
       isGeneral: false,
       isScheduled: true,
-      tagColor: "#7c3aed",
     });
     expect(
       screen.queryByRole("textbox", { name: "New judging group" }),

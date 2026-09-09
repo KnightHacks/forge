@@ -28,6 +28,7 @@ export const judgingScheduleViewRouter = {
         where: eq(JudgingSchedule.hackathonId, scope.hackathonId),
       });
       const challenge = await db.query.ProjectChallenge.findFirst({
+        columns: { isScheduled: true },
         where: eq(ProjectChallenge.id, scope.challengeId),
       });
       const filterChallenges = input.challengeIds.length

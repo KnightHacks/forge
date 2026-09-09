@@ -22,20 +22,10 @@ export const judgingGroupCreateSchema = projectHackathonIdSchema.extend({
   label: z.string().trim().min(1).max(255),
   isGeneral: z.boolean(),
   isScheduled: z.boolean(),
-  tagColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex color, such as #7c3aed.")
-    .nullable()
-    .default(null),
 });
 export const judgingGroupUpdateSchema = judgingGroupCreateSchema.extend({
   isMlhImportDefault: z.boolean().optional(),
   groupId: z.string().uuid(),
-  tagColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Use a six-digit hex color, such as #7c3aed.")
-    .nullable()
-    .optional(),
 });
 export const judgingGroupDeleteSchema = projectHackathonIdSchema.extend({
   groupId: z.string().uuid(),

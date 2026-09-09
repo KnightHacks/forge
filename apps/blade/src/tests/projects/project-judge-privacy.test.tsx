@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -141,7 +141,6 @@ const sharedProject = {
       isScheduled: true,
       isOptIn: true,
       evaluationCount: 1,
-      tagColor: null,
       id: "challenge-1",
       label: "General",
     },
@@ -183,30 +182,37 @@ const adminProject = {
 } satisfies AdminProject;
 
 describe("judge project privacy", () => {
-  it.each([
-    ["#ffffff", "rgb(255, 255, 255)", "rgb(0, 0, 0)"],
-    ["#ffcc00", "rgb(255, 204, 0)", "rgb(0, 0, 0)"],
-    ["#777777", "rgb(119, 119, 119)", "rgb(0, 0, 0)"],
-    ["#7c3aed", "rgb(124, 58, 237)", "rgb(255, 255, 255)"],
-  ])(
-    "keeps %s challenge tags readable in project details",
-    (tagColor, backgroundColor, color) => {
+  it.each([false, true])(
+    "inherits parent badge styling in project details (General: %s)",
+    (isGeneral) => {
+      const parent = sharedProject.challenges[0];
+      if (!parent) throw new Error("Missing parent fixture");
       render(
         <ProjectDetailDialog
           onOpenChange={vi.fn()}
           project={{
             ...judgeProject,
-            challenges: judgeProject.challenges.map((challenge) => ({
-              ...challenge,
-              tagColor,
-            })),
+            challenges: [
+              { ...parent, label: "Renamed group", isGeneral },
+              {
+                ...parent,
+                id: "child",
+                label: "Imported prize",
+                parentId: "challenge-1",
+                isGeneral: false,
+              },
+            ],
           }}
         />,
       );
-      expect(screen.getByText("General")).toHaveStyle({
-        backgroundColor,
-        color,
-      });
+      const parentBadge = screen.getByText("Renamed group");
+      const childBadge = screen.getByText("Imported prize");
+      expect(parentBadge).toHaveClass(
+        isGeneral ? "text-foreground" : "bg-secondary",
+      );
+      expect(childBadge.className).toBe(parentBadge.className);
+      expect(parentBadge).not.toHaveAttribute("style");
+      expect(childBadge).not.toHaveAttribute("style");
     },
   );
 
@@ -269,6 +275,77 @@ describe("judge project privacy", () => {
 });
 
 describe("judge project directory", () => {
+  it.each([
+    { isGeneral: true, evaluationCount: 0 },
+    { isGeneral: true, evaluationCount: 1 },
+    { isGeneral: false, evaluationCount: 0 },
+    { isGeneral: false, evaluationCount: 1 },
+  ])(
+    "shows only parent pills with status styling (General: $isGeneral, evaluations: $evaluationCount)",
+    ({ isGeneral, evaluationCount }) => {
+      const parent = sharedProject.challenges[0];
+      if (!parent) throw new Error("Missing parent fixture");
+      const challenges = [
+        { ...parent, label: "Renamed group", isGeneral, evaluationCount },
+        {
+          ...parent,
+          id: "child",
+          label: "Imported prize",
+          parentId: "challenge-1",
+          isGeneral: false,
+          isGroup: false,
+          evaluationCount,
+        },
+      ];
+      render(
+        <ProjectDirectory
+          data={{
+            challenges,
+            page: 1,
+            pageSize: 10,
+            projects: [{ ...judgeProject, challenges }],
+            totalCount: 1,
+          }}
+          input={{
+            challengeIds: [],
+            direction: "asc",
+            page: 1,
+            pageSize: 10,
+            query: "",
+            sort: "title",
+          }}
+        />,
+      );
+      for (const badge of within(screen.getByRole("table")).getAllByText(
+        "Renamed group",
+      )) {
+        expect(badge).toHaveClass(
+          evaluationCount
+            ? isGeneral
+              ? "bg-emerald-950"
+              : "bg-emerald-500/15"
+            : isGeneral
+              ? "text-foreground"
+              : "bg-secondary",
+        );
+        expect(badge).not.toHaveAttribute("style");
+      }
+      expect(
+        screen.getByRole("option", { name: "Imported prize" }),
+      ).toBeInTheDocument();
+      for (const row of screen.getAllByRole("row")) {
+        expect(
+          within(row).queryByText("Imported prize"),
+        ).not.toBeInTheDocument();
+      }
+      if (isGeneral) {
+        expect(
+          screen.queryByRole("option", { name: "Renamed group" }),
+        ).not.toBeInTheDocument();
+      }
+    },
+  );
+
   it("shows the room filter enabled by default", () => {
     render(
       <ProjectDirectory
@@ -396,7 +473,7 @@ describe("judge project directory", () => {
     ).toBeInTheDocument();
   });
 
-  it("hides child filters within a fixed guest parent scope", () => {
+  it("offers child filters within a fixed guest parent scope", () => {
     render(
       <ProjectDirectory
         data={{
@@ -422,7 +499,6 @@ describe("judge project directory", () => {
                   isScheduled: true,
                   isOptIn: true,
                   evaluationCount: 0,
-                  tagColor: null,
                   id: "challenge-acme",
                   label: "Acme Challenge",
                 },
@@ -451,8 +527,8 @@ describe("judge project directory", () => {
       screen.getByRole("option", { name: "Acme Challenge" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("option", { name: "First-time hacker" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("option", { name: "First-time hacker" }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("columnheader", { name: "Challenges" }),
     ).toBeNull();
@@ -912,6 +988,8 @@ describe("evaluation feedback visibility", () => {
     expect(
       screen.getByRole("group", { name: "Challenge opt-ins" }),
     ).toHaveTextContent("First-time hacker");
+    expect(screen.getByText("First-time hacker")).toHaveClass("bg-primary/10");
+    expect(screen.getByText("First-time hacker")).not.toHaveAttribute("style");
     expect(
       screen.getByText("Your feedback is shared with hackers"),
     ).toBeInTheDocument();
