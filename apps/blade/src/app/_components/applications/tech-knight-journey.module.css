@@ -1,0 +1,267 @@
+.journey {
+  --arrival-opacity: 1;
+  --hero-exit: 0;
+  position: relative;
+  height: 220svh;
+  background: #02040d;
+  color: #f2f6f7;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  isolation: isolate;
+  height: 100svh;
+  min-height: 38rem;
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, rgb(30 40 92 / 38%), transparent 31%),
+    radial-gradient(circle at 12% 80%, rgb(36 20 78 / 24%), transparent 30%),
+    #02040d;
+}
+
+.stage::before,
+.stage::after {
+  position: absolute;
+  z-index: 1;
+  content: "";
+  pointer-events: none;
+}
+
+.stage::before {
+  inset: 0;
+  opacity: calc(1 - var(--hero-exit));
+  background-image:
+    linear-gradient(rgb(110 140 175 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(110 140 175 / 6%) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(circle at 50% 45%, black, transparent 70%);
+}
+
+.stage::after {
+  right: -12%;
+  bottom: -55%;
+  left: -12%;
+  height: 68%;
+  border: 1px solid rgb(113 226 255 / 18%);
+  border-radius: 50%;
+  box-shadow:
+    0 -20px 90px rgb(55 99 218 / 12%),
+    0 -1px 0 rgb(255 255 255 / 10%);
+  transform: translateY(calc(var(--hero-exit) * 20%));
+}
+
+.wordmark {
+  position: absolute;
+  z-index: 1;
+  inset: 50% 3.5vw auto;
+  opacity: calc(var(--arrival-opacity) * (1 - var(--hero-exit)));
+  transform: translateY(calc(-50% - var(--hero-exit) * 3rem));
+  transition: opacity 120ms linear;
+}
+
+.wordmark p {
+  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
+  color: rgb(172 190 205 / 70%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.12em;
+}
+
+.wordmark h1 {
+  font-size: clamp(5.5rem, 13vw, 14rem);
+  font-weight: 620;
+  line-height: 0.71;
+  letter-spacing: -0.085em;
+}
+
+.wordmark h1 span {
+  display: block;
+}
+
+.wordmark h1 span:last-child {
+  text-align: right;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(224 236 241 / 40%);
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+}
+
+.grade {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(2 4 13 / 48%),
+      transparent 20% 70%,
+      rgb(2 4 13 / 88%)
+    ),
+    radial-gradient(
+      circle at 50% 44%,
+      transparent 28%,
+      rgb(2 4 13 / 38%) 74%,
+      rgb(2 4 13 / 82%)
+    );
+}
+
+.header {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  min-height: 6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem clamp(1.5rem, 3.5vw, 4rem);
+  opacity: var(--arrival-opacity);
+}
+
+.brand {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.brand img {
+  width: 6.4rem;
+  height: auto;
+}
+
+.header nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.header nav > a {
+  min-height: 2.75rem;
+  align-content: center;
+  color: rgb(202 213 220 / 78%);
+  transition: color 180ms ease;
+}
+
+.header nav > a:hover,
+.header nav > a:focus-visible {
+  color: white;
+}
+
+.resumeButton {
+  min-height: 2.75rem;
+  border-color: rgb(255 255 255 / 16%);
+  background: rgb(2 4 13 / 34%);
+  backdrop-filter: blur(14px);
+}
+
+.resumeButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.continueLink {
+  position: absolute;
+  z-index: 6;
+  right: clamp(1.5rem, 3.5vw, 4rem);
+  bottom: 1.2rem;
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 1rem;
+  color: rgb(220 229 234 / 78%);
+  font-size: 0.875rem;
+  opacity: calc(var(--arrival-opacity) * (1 - var(--hero-exit)));
+}
+
+.continueLink svg {
+  width: 1rem;
+  height: 1rem;
+  color: #7fe9ff;
+  animation: descend 1.8s ease-in-out infinite;
+}
+
+@keyframes descend {
+  50% {
+    transform: translateY(0.35rem);
+  }
+}
+
+@media (max-width: 700px) {
+  .sticky {
+    min-height: 40rem;
+  }
+
+  .header {
+    min-height: 5rem;
+    padding: 1rem;
+  }
+
+  .brand img {
+    width: 5.2rem;
+  }
+
+  .header nav > a {
+    display: none;
+  }
+
+  .wordmark {
+    inset: 25% 1rem auto;
+    transform: translateY(calc(-50% - var(--hero-exit) * 2rem));
+  }
+
+  .wordmark p {
+    max-width: 12rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .wordmark h1 {
+    font-size: clamp(4rem, 21vw, 6rem);
+    line-height: 0.78;
+  }
+
+  .wordmark h1 span:last-child {
+    margin-top: 0.22em;
+    text-align: left;
+  }
+
+  .continueLink {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey {
+    height: 105svh;
+  }
+
+  .continueLink svg {
+    animation: none;
+  }
+
+  .canvas,
+  .wordmark,
+  .stage::after {
+    transition: none;
+  }
+}

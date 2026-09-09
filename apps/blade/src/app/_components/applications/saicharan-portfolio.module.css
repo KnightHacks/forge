@@ -1,0 +1,137 @@
+.page {
+  min-height: 100vh;
+  overflow-x: clip;
+  background: #02040d;
+  color: #f3f6f7;
+}
+
+.handoff {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 100svh;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  overflow: hidden;
+  padding: clamp(4rem, 8vw, 8rem) 1.5rem;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 46%, rgb(41 86 162 / 22%), transparent 32%),
+    #02040d;
+}
+
+.handoff::before {
+  position: absolute;
+  width: min(78vw, 70rem);
+  aspect-ratio: 1;
+  content: "";
+  border: 1px solid rgb(122 231 248 / 16%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 9vw rgb(93 127 241 / 3%),
+    0 0 0 18vw rgb(93 127 241 / 2%);
+  pointer-events: none;
+}
+
+.handoff > * {
+  position: relative;
+}
+
+.handoff > p {
+  color: rgb(181 203 214 / 66%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.handoff h2 {
+  max-width: 70rem;
+  font-size: clamp(3.6rem, 8.5vw, 9.5rem);
+  font-weight: 560;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+}
+
+.handoff button {
+  display: inline-flex;
+  min-height: 4.25rem;
+  align-items: center;
+  gap: 1.2rem;
+  border: 1px solid rgb(131 232 248 / 42%);
+  border-radius: 999px;
+  padding: 0.9rem 1.8rem;
+  color: #061319;
+  background: #8de5ee;
+  box-shadow: 0 0 60px rgb(74 181 230 / 18%);
+  font-size: 1rem;
+  font-weight: 560;
+  cursor: pointer;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.handoff button:hover,
+.handoff button:focus-visible {
+  background: #b8f5fa;
+  box-shadow: 0 0 80px rgb(74 181 230 / 34%);
+  transform: translateY(-3px);
+}
+
+.handoff button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
+
+.handoff button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  transition: transform 220ms ease;
+}
+
+.handoff button:hover svg,
+.handoff button:focus-visible svg {
+  transform: translateX(0.25rem);
+}
+
+.framePage {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.siteFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+@media (max-width: 620px) {
+  .handoff {
+    gap: 2.5rem;
+  }
+
+  .handoff h2 {
+    font-size: clamp(3.4rem, 18vw, 6rem);
+  }
+
+  .handoff button {
+    width: 100%;
+    max-width: 24rem;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handoff button,
+  .handoff button svg {
+    transition: none;
+  }
+}
