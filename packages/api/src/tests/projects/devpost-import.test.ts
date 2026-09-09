@@ -67,7 +67,7 @@ function projectRow(
 }
 
 describe("Devpost project import parsing", () => {
-  it("consolidates MLH memberships but preserves original opt-ins for judges", () => {
+  it("preserves every MLH opt-in as an independent challenge for explicit grouping", () => {
     const labels = [
       "MLH - Best Use of Arm",
       "mlh - Best Use of Gemini",
@@ -80,9 +80,9 @@ describe("Devpost project import parsing", () => {
       ]),
     );
     expect(result.challengeLabels).toEqual([
-      "General",
-      "MLH Challenges",
+      "MLH - Best Use of Arm",
       "NVIDIA",
+      "mlh - Best Use of Gemini",
     ]);
     expect(result.projects[0]?.prizeCategories).toEqual([...labels].sort());
   });
@@ -311,6 +311,6 @@ describe("Devpost project import parsing", () => {
     );
 
     expect(result.projects[0]?.prizeCategories).toEqual([]);
-    expect(result.challengeLabels).toEqual(["General"]);
+    expect(result.challengeLabels).toEqual([]);
   });
 });

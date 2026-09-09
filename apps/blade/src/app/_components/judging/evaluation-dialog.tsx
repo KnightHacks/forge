@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
+import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
@@ -33,6 +33,12 @@ export interface EvaluationProject {
   id: string;
   title: string;
   prizeCategories?: string[];
+  challenges?: {
+    id: string;
+    isGeneral?: boolean;
+    label: string;
+    parentId: string | null;
+  }[];
 }
 
 function policyCopy(
@@ -176,9 +182,19 @@ function EvaluationEditor({
     () => workspace.rubric.filter((item) => item.kind === "short_response"),
     [workspace.rubric],
   );
-  const challengeName = /challenges?$/i.test(challengeLabel)
-    ? challengeLabel
-    : `${challengeLabel} Challenge`;
+  const activeChallenge = project.challenges?.find(
+    (challenge) => challenge.id === workspace.challengeId,
+  );
+  const visibleChallenges = [
+    {
+      id: workspace.challengeId,
+      isGeneral: activeChallenge?.isGeneral,
+      label: challengeLabel,
+    },
+    ...(project.challenges?.filter(
+      (challenge) => challenge.parentId === workspace.challengeId,
+    ) ?? []),
+  ];
 
   const activeProject = project;
   const now = useJudgingClock(editor.serverNow);
@@ -301,9 +317,28 @@ function EvaluationEditor({
           <DialogTitle className="break-words text-base leading-6 sm:text-lg">
             {submission ? "Edit" : "Judge"} {project.title}
           </DialogTitle>
-          <DialogDescription className="mt-2 break-words rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
-            {challengeName}
+          <DialogDescription className="sr-only">
+            Evaluate {project.title} for {challengeLabel}.
           </DialogDescription>
+          <div
+            className="mt-2 flex max-h-28 flex-wrap gap-1.5 overflow-y-auto"
+            role="group"
+            aria-label="Challenges"
+          >
+            {visibleChallenges.map((challenge) => (
+              <Badge
+                className="max-w-full break-words"
+                key={challenge.id}
+                variant={
+                  (activeChallenge ?? challenge).isGeneral
+                    ? "outline"
+                    : "secondary"
+                }
+              >
+                {challenge.label}
+              </Badge>
+            ))}
+          </div>
           {seconds !== null ? (
             <div
               role="timer"
@@ -318,22 +353,6 @@ function EvaluationEditor({
           ) : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:space-y-6 sm:p-6">
-          {project.prizeCategories?.some((label) => isMlhChallenge(label)) &&
-          isMlhChallenge(challengeLabel) ? (
-            <details className="rounded-md border border-white/10 bg-background/60 px-3 text-sm">
-              <summary className="min-h-11 cursor-pointer content-center font-semibold">
-                MLH opt-ins
-              </summary>
-              <ul className="list-disc space-y-1 break-words pb-3 pl-4">
-                {project.prizeCategories
-                  .filter((label) => isMlhChallenge(label))
-                  .map((label) => (
-                    <li key={label}>{label}</li>
-                  ))}
-              </ul>
-            </details>
-          ) : null}
-
           {expired ? (
             <Alert>
               <AlertTitle>

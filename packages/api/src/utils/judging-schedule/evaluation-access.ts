@@ -11,7 +11,6 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 
 import type { WriteDb } from "../db";
-import { isMlhChallenge } from "../projects/challenge-labels";
 
 export async function evaluationTimingAccess(
   tx: WriteDb,
@@ -47,6 +46,7 @@ export async function evaluationTimingAccess(
   };
   if (!schedule) return { ...base, canEdit: true, reason: null, timed: false };
   const challenge = await tx.query.ProjectChallenge.findFirst({
+    columns: { isScheduled: true },
     where: and(
       eq(ProjectChallenge.id, input.challengeId),
       eq(ProjectChallenge.hackathonId, input.hackathonId),
@@ -142,9 +142,9 @@ export async function evaluationTimingAccess(
       lockAt: next?.startsAt ?? null,
     };
   }
-  // MLH remains untimed, but a judge cannot evade their currently occupied
+  // Unscheduled challenges remain untimed, but a judge cannot evade their currently occupied
   // scheduled room by selecting an unrelated challenge in the project browser.
-  if (isMlhChallenge(challenge.label) && !current)
+  if (!challenge.isScheduled && !current)
     return { ...base, canEdit: true, reason: null, timed: false };
   if (presence?.challengeId !== input.challengeId)
     return {

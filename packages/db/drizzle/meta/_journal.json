@@ -372,6 +372,13 @@
       "when": 1788816161752,
       "tag": "0052_tan_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1788888919851,
+      "tag": "0053_challenge_groups",
+      "breakpoints": true
     }
   ]
 }

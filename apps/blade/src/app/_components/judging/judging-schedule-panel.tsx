@@ -297,7 +297,8 @@ export function JudgingSchedulePanel({
               ))}
             </dl>
             <p className="mt-2 text-xs text-muted-foreground">
-              All scheduled rooms, including setup and teardown. MLH excluded.
+              All scheduled rooms, including setup and teardown. Untimed
+              challenges excluded.
             </p>
           </div>
         ) : null}
@@ -508,8 +509,9 @@ export function JudgingSchedulePanel({
         />
       )}
       <p className="text-sm text-muted-foreground">
-        MLH rooms are unscheduled. Room warnings do not move or cancel bookings.
-        Schedules are internal to judging; hacker distribution comes later.
+        Untimed challenges are excluded. Room warnings do not move or cancel
+        bookings. Schedules are internal to judging; hacker distribution comes
+        later.
       </p>
       {selection ? (
         <AppointmentMoveDialog

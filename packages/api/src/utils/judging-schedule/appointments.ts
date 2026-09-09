@@ -10,7 +10,6 @@ import {
 
 import type { WriteDb } from "../db";
 import type { SchedulePlacement, ScheduleProblem } from "./model";
-import { isSponsorChallenge } from "../projects/challenge-labels";
 import { compareScheduleScores } from "./model";
 import { readScheduleSource } from "./source";
 import { scoreSchedule, validateSchedule } from "./validate";
@@ -169,7 +168,11 @@ export async function appointmentMoveChoices(
     tasks: saved.appointments.map((appointment) => ({
       projectId: appointment.projectId,
       challengeId: appointment.challengeId,
-      sponsor: isSponsorChallenge(appointment.challengeLabel),
+      sponsor: !saved.source.tasks.find(
+        (task) =>
+          task.projectId === appointment.projectId &&
+          task.challengeId === appointment.challengeId,
+      )?.isGeneral,
     })),
   };
   const selectedIndex = saved.appointments.findIndex(

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
-import { isMlhChallenge } from "@forge/api/projects/challenge-labels";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import {
@@ -34,14 +33,19 @@ function formatDate(value: Date) {
 function ChallengeBadges({ project }: { project: Project }) {
   return (
     <div className="flex flex-wrap gap-1.5">
-      {project.challenges.map((challenge) => (
-        <Badge
-          key={challenge.id}
-          variant={challenge.label === "General" ? "outline" : "secondary"}
-        >
-          {challenge.label}
-        </Badge>
-      ))}
+      {project.challenges.map((challenge) => {
+        const parent = project.challenges.find(
+          (candidate) => candidate.id === challenge.parentId,
+        );
+        return (
+          <Badge
+            key={challenge.id}
+            variant={(parent ?? challenge).isGeneral ? "outline" : "secondary"}
+          >
+            {challenge.label}
+          </Badge>
+        );
+      })}
     </div>
   );
 }
@@ -199,20 +203,6 @@ export function ProjectDetailDialog({
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold">Challenges</h3>
                   <ChallengeBadges project={project} />
-                  {project.prizeCategories.some((label) =>
-                    isMlhChallenge(label),
-                  ) ? (
-                    <div className="mt-3 rounded-md border border-white/10 bg-background/60 p-3 text-sm">
-                      <h4 className="font-semibold">MLH opt-ins</h4>
-                      <ul className="mt-2 list-inside list-disc">
-                        {project.prizeCategories
-                          .filter((label) => isMlhChallenge(label))
-                          .map((label) => (
-                            <li key={label}>{label}</li>
-                          ))}
-                      </ul>
-                    </div>
-                  ) : null}
                 </div>
                 {project.technologies.length ? (
                   <div className="space-y-1">

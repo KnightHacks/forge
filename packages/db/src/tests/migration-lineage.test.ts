@@ -106,15 +106,15 @@ describe("canonical production migration lineage", () => {
       await readFile(new URL("_journal.json", metadataDirectory), "utf8"),
     ) as { entries: JournalEntry[] };
 
-    expect(journal.entries).toHaveLength(53);
+    expect(journal.entries).toHaveLength(54);
     expect(journal.entries[10]).toMatchObject({
       idx: 10,
       tag: "0010_wooden_supreme_intelligence",
       when: PRODUCTION_MAIN_MIGRATION.createdAt,
     });
     expect(journal.entries.at(-1)).toMatchObject({
-      idx: 52,
-      tag: "0052_tan_secret_warriors",
+      idx: 53,
+      tag: "0053_challenge_groups",
     });
 
     for (const [position, entry] of journal.entries.entries()) {

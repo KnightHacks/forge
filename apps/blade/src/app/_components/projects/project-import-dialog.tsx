@@ -34,17 +34,21 @@ interface ImportResult {
 }
 
 export function ProjectImportDialog({
+  disabled = false,
   hackathonId,
   hackathonName,
   inventoryLocked,
   onImported,
   projectCount,
+  scheduleLocked = false,
 }: {
+  disabled?: boolean;
   hackathonId: string;
   hackathonName: string;
   inventoryLocked: boolean;
   onImported: () => void;
   projectCount: number;
+  scheduleLocked?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -53,6 +57,8 @@ export function ProjectImportDialog({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [mode, setMode] = useState<"automatic" | "replace">("automatic");
   const [confirmation, setConfirmation] = useState("");
+  const addOnly = inventoryLocked || scheduleLocked;
+  const importDisabled = disabled || (mode === "replace" && scheduleLocked);
 
   function reset() {
     setFile(null);
@@ -62,7 +68,7 @@ export function ProjectImportDialog({
   }
 
   async function submit() {
-    if (!file) return;
+    if (!file || importDisabled || submitting) return;
     if (file.size > MAX_FILE_BYTES) {
       toast.error("The CSV must be 25 MiB or smaller.");
       return;
@@ -114,14 +120,19 @@ export function ProjectImportDialog({
     >
       <div className="flex flex-wrap gap-2">
         <DialogTrigger asChild>
-          <Button className="h-11 gap-2" onClick={() => setMode("automatic")}>
+          <Button
+            disabled={disabled}
+            className="h-11 gap-2"
+            onClick={() => setMode("automatic")}
+          >
             <Upload className="size-4" aria-hidden="true" />
-            {inventoryLocked ? "Add new projects" : "Import Devpost CSV"}
+            {addOnly ? "Add new projects" : "Import Devpost CSV"}
           </Button>
         </DialogTrigger>
         {inventoryLocked ? (
           <DialogTrigger asChild>
             <Button
+              disabled={disabled || scheduleLocked}
               className="h-11"
               onClick={() => setMode("replace")}
               variant="destructive"
@@ -136,14 +147,14 @@ export function ProjectImportDialog({
           <DialogTitle>
             {mode === "replace"
               ? `Destructive replacement for ${hackathonName}`
-              : inventoryLocked
+              : addOnly
                 ? `Add new ${hackathonName} projects`
                 : `Import ${hackathonName} projects`}
           </DialogTitle>
           <DialogDescription>
             {mode === "replace"
               ? "Replace the project inventory and revoke every active guest judging session."
-              : inventoryLocked
+              : addOnly
                 ? "Only projects with unseen Devpost URLs are added. Existing records and room access stay unchanged."
                 : "Import submitted Devpost projects and derive this hackathon's challenge list. Drafts and incomplete projects are ignored."}
           </DialogDescription>
@@ -245,6 +256,7 @@ export function ProjectImportDialog({
               </Button>
               <Button
                 disabled={
+                  importDisabled ||
                   !file ||
                   submitting ||
                   (mode === "replace" &&
@@ -258,7 +270,7 @@ export function ProjectImportDialog({
                   ? "Importing…"
                   : mode === "replace"
                     ? "Revoke access and replace"
-                    : inventoryLocked
+                    : addOnly
                       ? "Add unseen projects"
                       : "Import projects"}
               </Button>

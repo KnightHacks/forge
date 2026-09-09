@@ -15,6 +15,7 @@ import { toast } from "@forge/ui/toast";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
+import { ChallengeConfigurationPanel } from "./challenge-configuration-panel";
 
 type ControlData = RouterOutputs["judging"]["listAdmin"];
 type RubricItem = ControlData["rubric"][number];
@@ -57,7 +58,7 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
   const saveRubric = api.judging.saveRubric.useMutation();
   const setState = api.judging.setJudgingState.useMutation();
   const setResults = api.judging.setDisplayAllResults.useMutation();
-  const rubricLocked = data.configuration.state !== "draft";
+  const rubricLocked = data.setupLocked || data.configuration.state !== "draft";
 
   function updateItem(id: string, patch: Partial<RubricItem>) {
     setItems((current) =>
@@ -108,6 +109,7 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
 
   return (
     <div className="space-y-4">
+      <ChallengeConfigurationPanel data={data} />
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
         <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -190,8 +192,9 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
         <Alert>
           <AlertTitle>Rubric locked</AlertTitle>
           <AlertDescription>
-            The rubric cannot change after judging opens. Close and reopen
-            judging without changing the questions.
+            {data.configuration.state === "draft" && data.setupLocked
+              ? "A saved schedule locks the rubric. Open the Schedule tab and drop the eligible schedule before changing questions."
+              : "The rubric cannot change after judging opens. Close and reopen judging without changing the questions."}
           </AlertDescription>
         </Alert>
       ) : null}

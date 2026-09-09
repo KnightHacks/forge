@@ -9,6 +9,9 @@ const mocks = vi.hoisted(() => ({
   captureAdminAuditActor: vi.fn(),
   createAdminAuditEvent: vi.fn().mockResolvedValue({ id: "audit-event" }),
   deleteTable: vi.fn(),
+  updateTable: vi.fn(),
+  updateSet: vi.fn(),
+  updateWhere: vi.fn().mockResolvedValue(undefined),
   deleteWhere: vi.fn().mockResolvedValue(undefined),
   findJudgingConfiguration: vi.fn().mockResolvedValue(undefined),
   findJudgingRoom: vi.fn().mockResolvedValue(undefined),
@@ -89,6 +92,11 @@ describe("project inventory hard deletion", () => {
       .mockImplementationOnce(selectProjectCount);
 
     const tx = {
+      update: mocks.updateTable.mockImplementation(() => ({
+        set: mocks.updateSet.mockImplementation(() => ({
+          where: mocks.updateWhere,
+        })),
+      })),
       delete: mocks.deleteTable.mockImplementation(() => ({
         where: mocks.deleteWhere,
       })),
@@ -128,6 +136,7 @@ describe("project inventory hard deletion", () => {
 
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(1, Project);
     expect(mocks.deleteTable).toHaveBeenNthCalledWith(2, ProjectChallenge);
+    expect(mocks.updateTable).not.toHaveBeenCalled();
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledOnce();
     expect(mocks.createAdminAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
