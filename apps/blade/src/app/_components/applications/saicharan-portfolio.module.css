@@ -1,108 +1,29 @@
 .page {
-  min-height: 100vh;
-  overflow-x: clip;
-  background: #02040d;
-  color: #f3f6f7;
-}
-
-.handoff {
-  position: relative;
-  z-index: 2;
-  display: grid;
+  --portal-x: 82%;
+  --portal-y: 28%;
+  position: fixed;
+  isolation: isolate;
+  inset: 0;
   min-height: 100svh;
-  align-content: center;
-  justify-items: center;
-  gap: clamp(2rem, 5vw, 4.5rem);
   overflow: hidden;
-  padding: clamp(4rem, 8vw, 8rem) 1.5rem;
-  text-align: center;
-  background:
-    radial-gradient(circle at 50% 46%, rgb(41 86 162 / 22%), transparent 32%),
-    #02040d;
-}
-
-.handoff::before {
-  position: absolute;
-  width: min(78vw, 70rem);
-  aspect-ratio: 1;
-  content: "";
-  border: 1px solid rgb(122 231 248 / 16%);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 9vw rgb(93 127 241 / 3%),
-    0 0 0 18vw rgb(93 127 241 / 2%);
-  pointer-events: none;
-}
-
-.handoff > * {
-  position: relative;
-}
-
-.handoff > p {
-  color: rgb(181 203 214 / 66%);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8125rem;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.handoff h2 {
-  max-width: 70rem;
-  font-size: clamp(3.6rem, 8.5vw, 9.5rem);
-  font-weight: 560;
-  line-height: 0.9;
-  letter-spacing: -0.075em;
-}
-
-.handoff button {
-  display: inline-flex;
-  min-height: 4.25rem;
-  align-items: center;
-  gap: 1.2rem;
-  border: 1px solid rgb(131 232 248 / 42%);
-  border-radius: 999px;
-  padding: 0.9rem 1.8rem;
-  color: #061319;
-  background: #8de5ee;
-  box-shadow: 0 0 60px rgb(74 181 230 / 18%);
-  font-size: 1rem;
-  font-weight: 560;
-  cursor: pointer;
-  transition:
-    transform 220ms ease,
-    box-shadow 220ms ease,
-    background-color 220ms ease;
-}
-
-.handoff button:hover,
-.handoff button:focus-visible {
-  background: #b8f5fa;
-  box-shadow: 0 0 80px rgb(74 181 230 / 34%);
-  transform: translateY(-3px);
-}
-
-.handoff button:focus-visible {
-  outline: 2px solid white;
-  outline-offset: 4px;
-}
-
-.handoff button svg {
-  width: 1.1rem;
-  height: 1.1rem;
-  transition: transform 220ms ease;
-}
-
-.handoff button:hover svg,
-.handoff button:focus-visible svg {
-  transform: translateX(0.25rem);
+  color: hsl(var(--foreground));
+  background: #010207;
 }
 
 .framePage {
-  position: fixed;
-  z-index: 100;
+  position: absolute;
+  z-index: 1;
   inset: 0;
   overflow: hidden;
   background: #000;
+  clip-path: circle(0 at var(--portal-x) var(--portal-y));
+  pointer-events: none;
+  transition: clip-path 2450ms cubic-bezier(0.7, 0, 0.16, 1);
+}
+
+.page[data-reveal="true"] .framePage {
+  clip-path: circle(160vmax at var(--portal-x) var(--portal-y));
+  pointer-events: auto;
 }
 
 .siteFrame {
@@ -113,25 +34,140 @@
   background: #000;
 }
 
-@media (max-width: 620px) {
-  .handoff {
-    gap: 2.5rem;
+.cinemaLayer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  transition:
+    opacity 1250ms ease 1050ms,
+    filter 1250ms ease 1050ms;
+}
+
+.page[data-reveal="true"] .cinemaLayer {
+  filter: brightness(1.4);
+  opacity: 0;
+}
+
+.portalRim {
+  position: absolute;
+  z-index: 4;
+  top: var(--portal-y);
+  left: var(--portal-x);
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid rgb(171 244 255 / 86%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0.8rem rgb(141 238 255 / 80%),
+    0 0 3rem rgb(77 126 255 / 72%),
+    inset 0 0 1rem rgb(255 255 255 / 72%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.1);
+}
+
+.page[data-reveal="true"] .portalRim {
+  animation: open-portal 2450ms cubic-bezier(0.7, 0, 0.16, 1) both;
+}
+
+.skipButton {
+  position: absolute;
+  z-index: 12;
+  right: clamp(1rem, 3vw, 3rem);
+  bottom: clamp(1rem, 2.5vw, 2.5rem);
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  color: rgb(225 235 240 / 76%);
+  background: rgb(2 4 13 / 50%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.skipButton:hover,
+.skipButton:focus-visible {
+  border-color: rgb(142 232 248 / 48%);
+  color: white;
+  background: rgb(13 28 52 / 72%);
+}
+
+.skipButton:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+.skipButton:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.skipButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.loadingStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes open-portal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
   }
 
-  .handoff h2 {
-    font-size: clamp(3.4rem, 18vw, 6rem);
+  12% {
+    opacity: 1;
   }
 
-  .handoff button {
-    width: 100%;
-    max-width: 24rem;
-    justify-content: center;
+  72% {
+    opacity: 0.76;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(220);
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    --portal-x: 70%;
+    --portal-y: 28%;
+  }
+
+  .skipButton {
+    right: 1rem;
+    bottom: 1rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .handoff button,
-  .handoff button svg {
+  .framePage,
+  .cinemaLayer,
+  .skipButton {
     transition: none;
+  }
+
+  .page[data-reveal="true"] .portalRim {
+    display: none;
+    animation: none;
   }
 }

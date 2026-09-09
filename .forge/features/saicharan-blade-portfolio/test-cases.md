@@ -4,7 +4,7 @@ Status: Approved
 
 ## Scope
 
-Validate the public application route, real-time 3D entrance, minimal handoff, sandboxed personal-site frame, responsive layout, loading behavior, and reduced-motion behavior. Authentication and backend behavior are excluded.
+Validate the public application route, real-time 3D departure, singularity-to-portfolio reveal, sandboxed personal-site frame, responsive layout, loading behavior, and reduced-motion behavior. Authentication and backend behavior are excluded.
 
 ## Test placement plan
 
@@ -24,7 +24,7 @@ Action:
 
 Expected observations:
 
-- Saicharan's name, Blade application identity, résumé, and final personal-site action are visible and usable without duplicated portfolio detail.
+- Saicharan's name, Blade application identity, résumé, and intro-skip action are visible and usable without duplicated portfolio detail.
 
 ### TC-002: Responsive presentation
 
@@ -40,7 +40,7 @@ Expected observations:
 
 - Content wraps without document-level horizontal overflow, touch targets remain usable, and key content is not clipped.
 
-### TC-003: Automatic 3D entrance
+### TC-003: Automatic 3D departure
 
 Setup:
 
@@ -48,49 +48,64 @@ Setup:
 
 Action:
 
-- Load the opening cinematic and allow its timeline to complete.
+- Load the opening cinematic and allow its timeline to complete without interacting.
 
 Expected observations:
 
-- A distant singularity and energy field build while the Tech Knight remains invisible. The live GLB then materializes and travels toward the camera through volumetric light and depth streaks before impact waves resolve around the settled pose.
-- The title and navigation reveal only after the arrival becomes readable.
+- The live Tech Knight GLB is the opening focal point at full scale.
+- A black hole forms behind the model with a black event horizon, luminous accretion structure, warped particles, and responsive scene lighting.
+- Tech Knight accelerates backward into the core, with controlled rotation, stretching, scale loss, and material fade that remain spatially aligned with the singularity.
 - No PNG, canvas texture, or other model placeholder is displayed.
 
-### TC-004: Entrance skip and scroll handoff
+### TC-004: Singularity portfolio reveal
 
 Setup:
 
-- Load the route in a WebGL-capable browser.
+- Load the route with a working personal-site bridge.
 
 Action:
 
-- Scroll before the automatic entrance finishes, then continue through the hero.
+- Allow the departure to reach the event horizon.
 
 Expected observations:
 
-- The entrance completes immediately without trapping the visitor.
-- Further scrolling moves the settled model and camera into the application content without a blank frame.
+- The personal site reveals from the black-hole core rather than appearing as an unrelated page replacement.
+- The reveal expands to the full viewport without a flash, blank frame, or visible iframe edge.
+- The Three.js layer disappears only after the portfolio is established.
 
-### TC-005: Personal-site handoff
+### TC-005: Personal-site bridge
 
 Setup:
 
-- Reach the final action.
+- Reach the completed singularity reveal.
 
 Action:
 
-- Select “Enter saicharanramineni.com”, then use browser Back.
+- Inspect and interact with the revealed personal site.
 
 Expected observations:
 
-- The Blade page is replaced by a full-viewport frame of the personal website.
+- The Blade cinematic yields to a full-viewport frame of the personal website.
 - The frame loads through the fixed local bridge despite the upstream site's direct-frame denial.
 - Cloudflare's transformed script types and Rocket Loader wrapper are absent from the bridged response, while the original portfolio scripts remain executable.
 - The portfolio reaches `cosmos-ready`; its genuine Gargantua canvas is visible and sized above the default 300×150 canvas dimensions.
 - The remote-base history guard prevents cross-origin `pushState` and `replaceState` crashes during hydration.
 - Hash links remain in-frame; route and external links open outside it.
 - The fixed-source frame is sandboxed with the script and same-origin capabilities required by the original renderer.
-- Browser Back restores the Blade application.
+
+### TC-006: Skip control
+
+Setup:
+
+- Load the route while the cinematic is running.
+
+Action:
+
+- Select “Skip intro”.
+
+Expected observations:
+
+- The portfolio is revealed immediately and the visitor is not trapped behind the WebGL sequence.
 
 ## Negative / regression cases
 
@@ -106,7 +121,7 @@ Action:
 
 Expected observations:
 
-- The Tech Knight starts in its fully arrived state, decorative animations stop, and all content and links remain visible.
+- Tech Knight is shown in a static full-scale composition, decorative motion does not autoplay, and an explicit action reveals the portfolio.
 
 ### TC-NEG-002: Model or WebGL unavailable
 
@@ -120,7 +135,7 @@ Action:
 
 Expected observations:
 
-- The semantic identity, navigation, application, work evidence, résumé, and contact links remain visible; no misleading raster model substitute appears.
+- The already-loading personal-site frame is revealed, no misleading raster model substitute appears, and the visitor does not remain on a broken cinematic surface.
 
 ## Open questions
 

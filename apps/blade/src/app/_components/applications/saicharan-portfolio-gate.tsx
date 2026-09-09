@@ -1,53 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { FastForward } from "lucide-react";
 
 import styles from "./saicharan-portfolio.module.css";
 import { TechKnightJourney } from "./tech-knight-journey";
 
 export function SaicharanPortfolioGate() {
-  const [showPersonalSite, setShowPersonalSite] = useState(false);
+  const [cinemaComplete, setCinemaComplete] = useState(false);
+  const [portfolioReady, setPortfolioReady] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [revealRequested, setRevealRequested] = useState(false);
+  const revealPortfolio = revealRequested && portfolioReady;
 
   useEffect(() => {
-    const syncWithHistory = () => {
-      setShowPersonalSite(window.location.hash === "#portfolio");
-    };
-    syncWithHistory();
-    window.addEventListener("popstate", syncWithHistory);
-    return () => window.removeEventListener("popstate", syncWithHistory);
+    const timeout = window.setTimeout(() => setPortfolioReady(true), 3000);
+    return () => window.clearTimeout(timeout);
   }, []);
 
-  const enterPortfolio = () => {
-    window.history.pushState({ portfolio: true }, "", "#portfolio");
-    setShowPersonalSite(true);
-    window.scrollTo({ left: 0, top: 0 });
-  };
+  useEffect(() => {
+    if (!revealPortfolio) return;
+    const timeout = window.setTimeout(() => setCinemaComplete(true), 2700);
+    return () => window.clearTimeout(timeout);
+  }, [revealPortfolio]);
 
-  if (showPersonalSite) {
-    return (
-      <main className={styles.framePage}>
+  const requestReveal = useCallback(() => setRevealRequested(true), []);
+  const useReducedMotion = useCallback(() => setReducedMotion(true), []);
+
+  return (
+    <main
+      className={styles.page}
+      data-reveal={revealPortfolio}
+      data-complete={cinemaComplete}
+    >
+      <section
+        className={styles.framePage}
+        aria-label="Saicharan Ramineni's personal website"
+        aria-hidden={!revealPortfolio}
+      >
         <iframe
           src="/saicharan-ramineni/site"
           title="Saicharan Ramineni's personal website"
           className={styles.siteFrame}
           referrerPolicy="no-referrer"
           sandbox="allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+          tabIndex={revealPortfolio ? 0 : -1}
+          onLoad={() => setPortfolioReady(true)}
         />
-      </main>
-    );
-  }
-
-  return (
-    <main className={styles.page}>
-      <TechKnightJourney />
-      <section id="application" className={styles.handoff}>
-        <p>Knight Hacks · Dev application 2026—27</p>
-        <h2>The rest is better experienced than explained.</h2>
-        <button type="button" onClick={enterPortfolio}>
-          Enter saicharanramineni.com <ArrowRight aria-hidden="true" />
-        </button>
       </section>
+
+      {!cinemaComplete && (
+        <div className={styles.cinemaLayer}>
+          <TechKnightJourney
+            portfolioReady={portfolioReady}
+            onFailure={requestReveal}
+            onReducedMotion={useReducedMotion}
+            onReveal={requestReveal}
+          />
+        </div>
+      )}
+
+      <div className={styles.portalRim} aria-hidden="true" />
+
+      {!revealPortfolio && (
+        <button
+          type="button"
+          className={styles.skipButton}
+          onClick={requestReveal}
+          disabled={revealRequested && !portfolioReady}
+        >
+          {revealRequested && !portfolioReady
+            ? "Preparing portfolio"
+            : reducedMotion
+              ? "Enter portfolio"
+              : "Skip intro"}
+          <FastForward aria-hidden="true" />
+        </button>
+      )}
+
+      <p className={styles.loadingStatus} aria-live="polite">
+        {portfolioReady ? "Portfolio ready" : "Loading portfolio"}
+      </p>
     </main>
   );
 }

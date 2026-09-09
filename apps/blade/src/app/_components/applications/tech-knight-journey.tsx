@@ -9,18 +9,21 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 
 import type { ModelMaterialState } from "./tech-knight-model-materials";
 import {
-  arrivalFragmentShader,
-  arrivalVertexShader,
-} from "./tech-knight-arrival-shaders";
+  createGravityField,
+  createSingularityRig,
+  createStarField,
+  MOBILE_SINGULARITY_POSITION,
+  SINGULARITY_POSITION,
+} from "./tech-knight-black-hole-effects";
 import { JourneyMarkup } from "./tech-knight-journey-markup";
 import {
   disposeSceneResources,
   prepareModelForArrival,
 } from "./tech-knight-model-materials";
 
-const ENTRANCE_DURATION = 5400;
-const SOURCE = new THREE.Vector3(2.9, 3.45, -34);
-const DESTINATION = new THREE.Vector3(0.1, -0.28, 0);
+const SEQUENCE_DURATION = 9000;
+const REVEAL_THRESHOLD = 0.75;
+const MODEL_START = new THREE.Vector3(0, -0.3, 0);
 
 function clamp(value: number, minimum = 0, maximum = 1) {
   return Math.min(Math.max(value, minimum), maximum);
@@ -36,175 +39,6 @@ function pulse(center: number, width: number, value: number) {
   return Math.exp(-(distance * distance));
 }
 
-function seededRandom(index: number) {
-  const value = Math.sin(index * 91.3458) * 47453.5453;
-  return value - Math.floor(value);
-}
-
-function createStarField() {
-  const positions = new Float32Array(620 * 3);
-  for (let index = 0; index < 620; index += 1) {
-    positions[index * 3] = (seededRandom(index * 3) - 0.5) * 30;
-    positions[index * 3 + 1] = (seededRandom(index * 3 + 1) - 0.5) * 18;
-    positions[index * 3 + 2] = 4 - seededRandom(index * 3 + 2) * 60;
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const material = new THREE.PointsMaterial({
-    blending: THREE.AdditiveBlending,
-    color: 0x8197c9,
-    depthWrite: false,
-    opacity: 0.48,
-    size: 0.022,
-    transparent: true,
-  });
-  return { geometry, material, points: new THREE.Points(geometry, material) };
-}
-
-function createWarpField() {
-  const count = 180;
-  const positions = new Float32Array(count * 6);
-  const anchors = Array.from({ length: count }, (_, index) => ({
-    x: (seededRandom(index * 5 + 900) - 0.5) * 18,
-    y: (seededRandom(index * 5 + 901) - 0.5) * 11,
-    z: seededRandom(index * 5 + 902),
-  }));
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const material = new THREE.LineBasicMaterial({
-    blending: THREE.AdditiveBlending,
-    color: 0x89dfff,
-    depthWrite: false,
-    opacity: 0,
-    transparent: true,
-  });
-  const lines = new THREE.LineSegments(geometry, material);
-
-  const update = (time: number, intensity: number) => {
-    const attribute = geometry.getAttribute(
-      "position",
-    ) as THREE.BufferAttribute;
-    const length = 0.08 + intensity * 5.4;
-    anchors.forEach((anchor, index) => {
-      const z = 8 - ((anchor.z * 60 + time * 0.022 * intensity) % 60);
-      attribute.setXYZ(index * 2, anchor.x, anchor.y, z);
-      attribute.setXYZ(index * 2 + 1, anchor.x, anchor.y, z - length);
-    });
-    attribute.needsUpdate = true;
-    material.opacity = intensity * 0.58;
-  };
-
-  return { geometry, lines, material, update };
-}
-
-function orientBetween(
-  object: THREE.Object3D,
-  start: THREE.Vector3,
-  end: THREE.Vector3,
-) {
-  const direction = end.clone().sub(start);
-  const length = direction.length();
-  object.position.copy(start).add(end).multiplyScalar(0.5);
-  object.quaternion.setFromUnitVectors(
-    new THREE.Vector3(0, 1, 0),
-    direction.normalize(),
-  );
-  object.scale.y = length;
-}
-
-function createArrivalRig() {
-  const group = new THREE.Group();
-  const coreMaterial = new THREE.MeshBasicMaterial({
-    blending: THREE.AdditiveBlending,
-    color: 0xeaffff,
-    depthWrite: false,
-    opacity: 0,
-    transparent: true,
-    toneMapped: false,
-  });
-  const core = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(0.11, 3),
-    coreMaterial,
-  );
-  core.position.copy(SOURCE);
-  group.add(core);
-
-  const ringMaterials: THREE.MeshBasicMaterial[] = [];
-  const rings = Array.from({ length: 7 }, (_, index) => {
-    const material = new THREE.MeshBasicMaterial({
-      blending: THREE.AdditiveBlending,
-      color: index % 2 === 0 ? 0xa8f7ff : 0x596dff,
-      depthWrite: false,
-      opacity: 0,
-      side: THREE.DoubleSide,
-      transparent: true,
-      toneMapped: false,
-    });
-    ringMaterials.push(material);
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.18 + index * 0.075, 0.007, 8, 80),
-      material,
-    );
-    ring.position.copy(SOURCE);
-    ring.rotation.set(index * 0.17, index * 0.31, index * 0.11);
-    group.add(ring);
-    return ring;
-  });
-
-  const beamUniforms = {
-    uIntensity: { value: 0 },
-    uTime: { value: 0 },
-  };
-  const beamMaterial = new THREE.ShaderMaterial({
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    fragmentShader: arrivalFragmentShader,
-    side: THREE.DoubleSide,
-    transparent: true,
-    uniforms: beamUniforms,
-    vertexShader: arrivalVertexShader,
-  });
-  const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.2, 0.03, 1, 48, 8, true),
-    beamMaterial,
-  );
-  orientBetween(beam, SOURCE, DESTINATION);
-  group.add(beam);
-
-  const shockwaveMaterials: THREE.MeshBasicMaterial[] = [];
-  const shockwaves = Array.from({ length: 3 }, (_, index) => {
-    const material = new THREE.MeshBasicMaterial({
-      blending: THREE.AdditiveBlending,
-      color: index === 1 ? 0xffffff : 0x71dfff,
-      depthWrite: false,
-      opacity: 0,
-      side: THREE.DoubleSide,
-      transparent: true,
-      toneMapped: false,
-    });
-    shockwaveMaterials.push(material);
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(1, 0.013 + index * 0.006, 8, 120),
-      material,
-    );
-    ring.position.set(0.1, -0.1, -0.5 - index * 0.22);
-    group.add(ring);
-    return ring;
-  });
-
-  return {
-    beamMaterial,
-    beamUniforms,
-    core,
-    coreMaterial,
-    group,
-    ringMaterials,
-    rings,
-    shockwaveMaterials,
-    shockwaves,
-  };
-}
-
 function normalizeModel(model: THREE.Group) {
   const bounds = new THREE.Box3().setFromObject(model);
   const center = bounds.getCenter(new THREE.Vector3());
@@ -218,159 +52,252 @@ function normalizeModel(model: THREE.Group) {
   model.scale.setScalar(normalization);
 }
 
+function setModelOpacity(states: ModelMaterialState[], opacity: number) {
+  states.forEach((state) => {
+    state.material.opacity = state.opacity * opacity;
+    state.material.transparent = state.transparent || opacity < 0.999;
+    state.material.depthWrite = state.depthWrite && opacity > 0.94;
+  });
+}
+
 type JourneyWorld = ReturnType<typeof createJourneyWorld>;
+
+type JourneyPhase = "hero" | "ignition" | "gravity" | "reveal";
 
 interface JourneyState {
   disposed: boolean;
-  entranceStart?: number;
   frame: number;
+  phase: JourneyPhase;
   pointerX: number;
   pointerY: number;
-  progress: number;
+  previousTime?: number;
+  revealSent: boolean;
+  running: boolean;
+  timeline: number;
+}
+
+interface JourneyOptions {
+  canReveal: () => boolean;
+  onFailure: () => void;
+  onReducedMotion: () => void;
+  onReveal: () => void;
 }
 
 function createJourneyWorld(renderer: THREE.WebGLRenderer) {
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x02040d, 0.018);
-  const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 140);
+  scene.fog = new THREE.FogExp2(0x02040d, 0.025);
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
   const composer = new EffectComposer(renderer);
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 1.15, 0.72, 0.22);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.58, 0.54, 0.55);
   composer.addPass(new RenderPass(scene, camera));
   composer.addPass(bloom);
 
   const modelStage = new THREE.Group();
-  modelStage.visible = false;
+  modelStage.position.copy(MODEL_START);
   const modelMaterials: ModelMaterialState[] = [];
   const stars = createStarField();
-  const warp = createWarpField();
-  const arrivalRig = createArrivalRig();
-  const ambientLight = new THREE.HemisphereLight(0xa7d8ff, 0x08020f, 1.5);
-  const cyanLight = new THREE.PointLight(0x34d9ff, 48, 20, 1.7);
-  const violetLight = new THREE.PointLight(0x6332c5, 56, 22, 1.6);
-  const warmLight = new THREE.PointLight(0xe0c65a, 18, 14, 1.9);
-  const sourceLight = new THREE.PointLight(0xdafaff, 0, 50, 1.25);
-  cyanLight.position.set(4.5, 2.5, 5);
-  violetLight.position.set(-4.8, 2, 1);
-  warmLight.position.set(3.2, -2.2, 3.5);
-  sourceLight.position.copy(SOURCE);
+  const gravity = createGravityField();
+  const singularity = createSingularityRig();
+  const overlayScene = new THREE.Scene();
+  const coreOccluder = new THREE.Mesh(
+    new THREE.SphereGeometry(0.47, 48, 32),
+    new THREE.MeshBasicMaterial({ color: 0x000000, depthTest: false }),
+  );
+  coreOccluder.position.copy(SINGULARITY_POSITION);
+  coreOccluder.scale.setScalar(0.001);
+  overlayScene.add(coreOccluder);
+  const ambientLight = new THREE.HemisphereLight(0xb2deff, 0x05010d, 1.2);
+  const cyanLight = new THREE.PointLight(0x4bdcff, 42, 18, 1.65);
+  const violetLight = new THREE.PointLight(0x5e37d7, 48, 20, 1.55);
+  const warmLight = new THREE.PointLight(0xdbc049, 14, 12, 1.8);
+  const gravityLight = new THREE.PointLight(0x79e7ff, 0, 22, 1.35);
+  cyanLight.position.set(4.2, 2.4, 5);
+  violetLight.position.set(-4.6, 1.2, 1.6);
+  warmLight.position.set(2.8, -2.5, 3.8);
+  gravityLight.position
+    .copy(SINGULARITY_POSITION)
+    .add(new THREE.Vector3(0, 0, 1.2));
   scene.add(
-    modelStage,
     stars.points,
-    warp.lines,
-    arrivalRig.group,
+    gravity.lines,
+    singularity.group,
+    modelStage,
     ambientLight,
     cyanLight,
     violetLight,
     warmLight,
-    sourceLight,
+    gravityLight,
   );
 
-  const path = new THREE.CatmullRomCurve3([
-    SOURCE,
-    new THREE.Vector3(2.25, 2.8, -21),
-    new THREE.Vector3(1.35, 1.5, -9),
-    new THREE.Vector3(0.35, 0.1, -1.8),
-    DESTINATION,
+  const desktopExtractionPath = new THREE.CatmullRomCurve3([
+    MODEL_START,
+    new THREE.Vector3(0.28, -0.1, -0.35),
+    new THREE.Vector3(1.05, 0.3, -0.95),
+    new THREE.Vector3(2.35, 0.92, -1.9),
+    new THREE.Vector3(3.65, 1.55, -3.15),
   ]);
+  const mobileExtractionPath = new THREE.CatmullRomCurve3([
+    MODEL_START,
+    new THREE.Vector3(0.06, -0.08, -0.35),
+    new THREE.Vector3(0.22, 0.3, -0.95),
+    new THREE.Vector3(0.52, 0.92, -1.9),
+    new THREE.Vector3(0.78, 1.55, -3.15),
+  ]);
+
   return {
-    arrivalRig,
+    ambientLight,
     bloom,
     camera,
     composer,
+    coreOccluder,
     cyanLight,
+    desktopExtractionPath,
+    gravity,
+    gravityLight,
+    mobileExtractionPath,
     modelMaterials,
+    modelPosition: new THREE.Vector3(),
     modelStage,
-    path,
-    pathPosition: new THREE.Vector3(),
+    overlayScene,
     scene,
-    sourceLight,
+    singularity,
     stars,
     violetLight,
-    warp,
   };
 }
 
-function updateArrivalEffects(
+function updateSingularity(
   world: JourneyWorld,
   timeline: number,
   time: number,
 ) {
-  const ignition = smoothstep(0.02, 0.2, timeline);
-  const translationFlash = pulse(0.57, 0.075, timeline);
-  const sourceFade = 1 - smoothstep(0.54, 0.84, timeline);
-  world.arrivalRig.coreMaterial.opacity = ignition * sourceFade;
-  world.arrivalRig.core.scale.setScalar(
-    1 + ignition * 5 + translationFlash * 16,
+  const birth = smoothstep(0.14, 0.34, timeline);
+  const pull = smoothstep(0.31, 0.75, timeline);
+  const flash = pulse(0.755, 0.028, timeline);
+  const expansion = smoothstep(0.75, 0.985, timeline);
+  const breathing = 1 + Math.sin(time * 0.0023) * 0.018 * birth;
+  const occlusion = smoothstep(0.29, 0.43, timeline);
+  const singularityScale = Math.max(
+    0.001,
+    birth * breathing * (1 + expansion * 13.5),
   );
-  world.arrivalRig.rings.forEach((ring, index) => {
-    const phase = smoothstep(0.04 + index * 0.018, 0.32, timeline);
-    ring.scale.setScalar(0.25 + phase * (2.8 + index * 0.32));
-    ring.rotation.z += 0.0018 * (index % 2 === 0 ? 1 : -1);
-    const material = world.arrivalRig.ringMaterials[index];
-    if (material) material.opacity = phase * sourceFade * 0.62;
+
+  world.singularity.group.scale.setScalar(singularityScale);
+  world.singularity.group.rotation.z = time * 0.000045 * birth;
+  world.singularity.discUniforms.uBirth.value = birth;
+  world.singularity.discUniforms.uFlash.value = flash;
+  world.singularity.discUniforms.uPull.value = pull;
+  world.singularity.discUniforms.uTime.value = time * 0.001;
+  world.singularity.core.scale.setScalar(0.72 + pull * 0.28 + flash * 0.32);
+  world.coreOccluder.scale.setScalar(
+    singularityScale * occlusion * (0.72 + pull * 0.28 + flash * 0.32),
+  );
+  world.singularity.rings.forEach((ring, index) => {
+    ring.rotation.z += (0.0015 + index * 0.00035) * (index % 2 ? -1 : 1);
+    ring.scale.x = 1 + Math.sin(time * 0.0018 + index) * 0.04;
+    const material = world.singularity.ringMaterials[index];
+    if (material) {
+      material.opacity = birth * (0.16 + index * 0.055) * (1 - expansion);
+    }
   });
-  world.arrivalRig.beamUniforms.uTime.value = time * 0.001;
-  world.arrivalRig.beamUniforms.uIntensity.value =
-    ignition * sourceFade * (0.5 + translationFlash * 0.85);
-  world.arrivalRig.shockwaves.forEach((ring, index) => {
-    const wave = smoothstep(
-      0.59 + index * 0.055,
-      0.7 + index * 0.055,
-      timeline,
-    );
-    const waveFade = 1 - smoothstep(0.72 + index * 0.055, 0.92, timeline);
-    ring.scale.setScalar(0.08 + wave * (5.4 + index * 1.8));
-    const material = world.arrivalRig.shockwaveMaterials[index];
-    if (material) material.opacity = wave * waveFade * 0.72;
-  });
-  world.sourceLight.intensity =
-    ignition * sourceFade * 110 + translationFlash * 150;
-  world.cyanLight.intensity = 38 + translationFlash * 34;
-  world.violetLight.intensity = 48 + translationFlash * 30;
-  world.warp.update(time, ignition * sourceFade);
-  world.bloom.strength = 0.92 + translationFlash * 1.35;
+  world.gravity.update(time, birth * (0.15 + pull * 0.85) * (1 - expansion));
+  world.gravityLight.intensity = birth * 34 + pull * 78 + flash * 180;
+  world.cyanLight.intensity = 42 + pull * 18 + flash * 26;
+  world.violetLight.intensity = 48 + birth * 18;
+  world.ambientLight.intensity = 1.2 - pull * 0.55;
+  world.bloom.strength = 0.58 + birth * 0.2 + pull * 0.14 + flash * 1.2;
+}
+
+function updateModel(
+  world: JourneyWorld,
+  state: JourneyState,
+  timeline: number,
+  time: number,
+) {
+  const pull = smoothstep(0.3, 0.765, timeline);
+  const strain = pulse(0.55, 0.18, timeline) * pull;
+  const collapse = smoothstep(0.57, 0.765, timeline);
+  const mobile = window.innerWidth < 700;
+  const baseScale = mobile ? 0.69 : 0.84;
+  const scale = baseScale * (1 - collapse * 0.975);
+
+  const extractionPath = mobile
+    ? world.mobileExtractionPath
+    : world.desktopExtractionPath;
+  extractionPath.getPoint(pull, world.modelPosition);
+  world.modelStage.position.copy(world.modelPosition);
+  world.modelStage.position.x += Math.sin(time * 0.007) * strain * 0.055;
+  world.modelStage.rotation.set(
+    state.pointerY * 0.018 * (1 - pull) + pull * 0.28,
+    -0.08 + state.pointerX * 0.038 * (1 - pull) + pull * 1.85,
+    -pull * pull * 2.25,
+  );
+  world.modelStage.scale.set(
+    scale * (1 - strain * 0.24),
+    scale * (1 + strain * 0.5),
+    scale * (1 - strain * 0.18),
+  );
+  setModelOpacity(world.modelMaterials, 1 - smoothstep(0.69, 0.765, timeline));
+}
+
+function phaseFor(timeline: number): JourneyPhase {
+  if (timeline < 0.14) return "hero";
+  if (timeline < 0.34) return "ignition";
+  if (timeline < REVEAL_THRESHOLD) return "gravity";
+  return "reveal";
 }
 
 function updateJourneyFrame(
   journey: HTMLElement,
   world: JourneyWorld,
   state: JourneyState,
+  options: JourneyOptions,
+  reducedMotion: boolean,
   time: number,
 ) {
-  const timeline = state.entranceStart
-    ? clamp((time - state.entranceStart) / ENTRANCE_DURATION)
+  const delta = state.previousTime
+    ? Math.min(time - state.previousTime, 48)
     : 0;
-  const travel = smoothstep(0.2, 0.79, timeline);
-  const materialization = smoothstep(0.4, 0.6, timeline);
-  const reveal = smoothstep(0.72, 0.96, timeline);
-  const mobile = window.innerWidth < 700;
-  const scrollEase = smoothstep(0, 1, state.progress);
-  const baseScale = mobile ? 0.76 : 0.95;
+  state.previousTime = time;
+  if (state.running && !reducedMotion) {
+    const waitingForPortfolio =
+      state.timeline >= REVEAL_THRESHOLD && !options.canReveal();
+    if (!waitingForPortfolio) {
+      state.timeline = clamp(state.timeline + delta / SEQUENCE_DURATION);
+    }
+  }
 
-  world.camera.position.set(0, mobile ? 0.45 : 0.18, 9.4 - scrollEase * 2.1);
-  world.camera.lookAt(0, mobile ? 0.05 : 0.18, 0);
-  world.path.getPoint(travel, world.pathPosition);
-  world.modelStage.visible = timeline >= 0.38;
-  world.modelMaterials.forEach((state) => {
-    state.material.opacity = state.opacity * materialization;
-    state.material.transparent = state.transparent || materialization < 0.999;
-    state.material.depthWrite = state.depthWrite && materialization >= 0.92;
-  });
-  world.modelStage.position.copy(world.pathPosition);
-  world.modelStage.position.x -= scrollEase * 0.35;
-  world.modelStage.position.y += scrollEase * 0.25;
-  world.modelStage.rotation.set(
-    state.pointerY * 0.014,
-    -0.08 - (1 - travel) * 0.62 + scrollEase * 0.62 + state.pointerX * 0.035,
-    (1 - travel) * -0.11,
-  );
-  world.modelStage.scale.setScalar(
-    baseScale * (0.54 + smoothstep(0.3, 0.83, timeline) * 0.46),
-  );
-  world.stars.points.rotation.y = time * 0.000012 + scrollEase * 0.12;
-  world.stars.points.position.z = scrollEase * 1.5;
-  journey.style.setProperty("--arrival-opacity", `${reveal}`);
-  updateArrivalEffects(world, timeline, time);
+  if (
+    state.timeline >= REVEAL_THRESHOLD &&
+    !state.revealSent &&
+    options.canReveal()
+  ) {
+    state.revealSent = true;
+    options.onReveal();
+  }
+
+  const timeline = reducedMotion ? 0 : state.timeline;
+  const birth = smoothstep(0.14, 0.34, timeline);
+  const pull = smoothstep(0.3, 0.765, timeline);
+  const reveal = smoothstep(0.75, 0.985, timeline);
+  const mobile = window.innerWidth < 700;
+  const phase = phaseFor(timeline);
+  if (phase !== state.phase) {
+    state.phase = phase;
+    journey.dataset.phase = phase;
+  }
+
+  world.camera.position.set(0, mobile ? 0.25 : 0.08, 8.75 - pull * 0.24);
+  world.camera.lookAt(0, mobile ? 0.12 : 0.08, -0.8 - pull * 0.5);
+  world.stars.points.rotation.z = -time * 0.000006 * (1 + pull * 12);
+  world.stars.points.rotation.y = time * 0.000008;
+  world.stars.material.opacity = 0.46 * (1 - reveal);
+  journey.style.setProperty("--black-hole", `${birth}`);
+  journey.style.setProperty("--pull", `${pull}`);
+  journey.style.setProperty("--reveal", `${reveal}`);
+
+  updateSingularity(world, timeline, time);
+  updateModel(world, state, timeline, time);
 }
 
 function createRenderer(canvas: HTMLCanvasElement) {
@@ -383,7 +310,7 @@ function createRenderer(canvas: HTMLCanvasElement) {
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.95;
+    renderer.toneMappingExposure = 0.78;
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.65));
     return renderer;
@@ -392,21 +319,41 @@ function createRenderer(canvas: HTMLCanvasElement) {
   }
 }
 
-function mountJourney(journey: HTMLElement, canvas: HTMLCanvasElement) {
+function applyViewportLayout(world: JourneyWorld, mobile: boolean) {
+  const position = mobile ? MOBILE_SINGULARITY_POSITION : SINGULARITY_POSITION;
+  const offset = position.clone().sub(SINGULARITY_POSITION);
+  world.singularity.group.position.copy(position);
+  world.coreOccluder.position.copy(position);
+  world.gravity.lines.position.copy(offset);
+  world.gravityLight.position.copy(position).add(new THREE.Vector3(0, 0, 1.2));
+}
+
+function mountJourney(
+  journey: HTMLElement,
+  canvas: HTMLCanvasElement,
+  options: JourneyOptions,
+) {
   const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
   const renderer = createRenderer(canvas);
-  if (!renderer) return;
+  if (!renderer) {
+    options.onFailure();
+    return;
+  }
   const world = createJourneyWorld(renderer);
   const state: JourneyState = {
     disposed: false,
     frame: 0,
+    phase: "hero",
     pointerX: 0,
     pointerY: 0,
-    progress: 0,
+    revealSent: false,
+    running: false,
+    timeline: 0,
   };
-  journey.style.setProperty("--arrival-opacity", reducedMotion ? "1" : "0");
+  journey.dataset.phase = "hero";
+  if (reducedMotion) options.onReducedMotion();
 
   new GLTFLoader().load(
     "/saicharan/tech-knight.glb",
@@ -418,40 +365,27 @@ function mountJourney(journey: HTMLElement, canvas: HTMLCanvasElement) {
       normalizeModel(gltf.scene);
       world.modelMaterials.push(...prepareModelForArrival(gltf.scene));
       world.modelStage.add(gltf.scene);
-      state.entranceStart =
-        reducedMotion || state.progress > 0.025
-          ? performance.now() - ENTRANCE_DURATION
-          : performance.now();
+      setModelOpacity(world.modelMaterials, 1);
+      state.running = true;
+      state.previousTime = performance.now();
+      journey.dataset.modelReady = "true";
     },
     undefined,
     () => {
       journey.dataset.modelError = "true";
-      journey.style.setProperty("--arrival-opacity", "1");
+      options.onFailure();
     },
   );
 
   const resize = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
+    applyViewportLayout(world, width < 700);
     renderer.setSize(width, height, false);
     world.composer.setSize(width, height);
     world.bloom.resolution.set(width, height);
     world.camera.aspect = width / height;
     world.camera.updateProjectionMatrix();
-  };
-  const updateProgress = () => {
-    const journeyTop = journey.getBoundingClientRect().top + window.scrollY;
-    const range = Math.max(1, journey.offsetHeight - window.innerHeight);
-    state.progress = reducedMotion
-      ? 0
-      : clamp((window.scrollY - journeyTop) / range);
-    journey.style.setProperty(
-      "--hero-exit",
-      `${smoothstep(0.18, 0.7, state.progress)}`,
-    );
-    if (state.progress > 0.025 && state.entranceStart) {
-      state.entranceStart = performance.now() - ENTRANCE_DURATION;
-    }
   };
   const handlePointerMove = (event: PointerEvent) => {
     if (reducedMotion || event.pointerType !== "mouse") return;
@@ -460,15 +394,17 @@ function mountJourney(journey: HTMLElement, canvas: HTMLCanvasElement) {
   };
   const render = (time: number) => {
     if (state.disposed) return;
-    updateJourneyFrame(journey, world, state, time);
+    updateJourneyFrame(journey, world, state, options, reducedMotion, time);
     world.composer.render();
+    renderer.autoClear = false;
+    renderer.clearDepth();
+    renderer.render(world.overlayScene, world.camera);
+    renderer.autoClear = true;
     state.frame = window.requestAnimationFrame(render);
   };
 
   resize();
-  updateProgress();
   window.addEventListener("resize", resize, { passive: true });
-  window.addEventListener("scroll", updateProgress, { passive: true });
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   state.frame = window.requestAnimationFrame(render);
 
@@ -476,27 +412,54 @@ function mountJourney(journey: HTMLElement, canvas: HTMLCanvasElement) {
     state.disposed = true;
     window.cancelAnimationFrame(state.frame);
     window.removeEventListener("resize", resize);
-    window.removeEventListener("scroll", updateProgress);
     window.removeEventListener("pointermove", handlePointerMove);
     disposeSceneResources(world.scene);
+    disposeSceneResources(world.overlayScene);
     world.stars.geometry.dispose();
     world.stars.material.dispose();
-    world.warp.geometry.dispose();
-    world.warp.material.dispose();
+    world.gravity.geometry.dispose();
+    world.gravity.material.dispose();
     world.composer.dispose();
     renderer.dispose();
   };
 }
 
-export function TechKnightJourney() {
+interface TechKnightJourneyProps {
+  onFailure: () => void;
+  onReducedMotion: () => void;
+  onReveal: () => void;
+  portfolioReady: boolean;
+}
+
+export function TechKnightJourney({
+  onFailure,
+  onReducedMotion,
+  onReveal,
+  portfolioReady,
+}: TechKnightJourneyProps) {
   const journeyRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const portfolioReadyRef = useRef(portfolioReady);
+  const callbacksRef = useRef({ onFailure, onReducedMotion, onReveal });
+
+  useEffect(() => {
+    portfolioReadyRef.current = portfolioReady;
+  }, [portfolioReady]);
+
+  useEffect(() => {
+    callbacksRef.current = { onFailure, onReducedMotion, onReveal };
+  }, [onFailure, onReducedMotion, onReveal]);
 
   useEffect(() => {
     const journey = journeyRef.current;
     const canvas = canvasRef.current;
     if (!journey || !canvas) return;
-    return mountJourney(journey, canvas);
+    return mountJourney(journey, canvas, {
+      canReveal: () => portfolioReadyRef.current,
+      onFailure: () => callbacksRef.current.onFailure(),
+      onReducedMotion: () => callbacksRef.current.onReducedMotion(),
+      onReveal: () => callbacksRef.current.onReveal(),
+    });
   }, []);
 
   return <JourneyMarkup journeyRef={journeyRef} canvasRef={canvasRef} />;

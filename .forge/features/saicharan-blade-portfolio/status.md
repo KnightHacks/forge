@@ -15,6 +15,7 @@ Current phase: Complete
 - 2026-09-08: Remove the application letter, project field notes, open-source details, contact block, and profile list. End on one personal-site handoff instead.
 - 2026-09-08: Because the personal site returns `X-Frame-Options: DENY`, use a fixed-source HTML bridge and a sandboxed iframe; browser history provides the return path.
 - 2026-09-08: Restore Cloudflare-transformed script MIME types, remove Rocket Loader, and guard the one cross-origin history mutation caused by the remote base URL so the original portfolio and Gargantua runtime execute unchanged.
+- 2026-09-09: Replace the arrival-and-button flow with one automatic eclipse transition: Tech Knight begins full-scale, a black hole pulls the real GLB backward, and the already-loaded portfolio expands from the same core.
 
 ## Open questions
 
@@ -36,6 +37,11 @@ Current phase: Complete
 - [x] Add and validate the sandboxed personal-site frame.
 - [x] Restore the personal site's original cinematic WebGL runtime inside the frame.
 - [x] Validate code and responsive presentation.
+- [x] Rebuild the Three.js timeline around the full-scale departure.
+- [x] Reveal the portfolio through the singularity without a separate handoff section.
+- [x] Add skip, reduced-motion, loading, and WebGL-failure paths.
+- [x] Validate the new cinematic on desktop and 320px mobile.
+- [x] Update the existing draft PR.
 
 ## Validation / commands
 
@@ -55,6 +61,14 @@ Current phase: Complete
 - Bridged portfolio response — executable original scripts with Cloudflare's inert wrappers removed
 - Live frame inspection — `cosmos-ready`; genuine canvas visible at 1614×1490 CSS-pixel-backed resolution; no new runtime errors
 - Post-rebase browser review — Tech Knight hero and original Gargantua handoff captured in the checked-in review screenshots
+- 2026-09-09 desktop browser review — full-scale hero, extraction path, singularity reveal, live portfolio, and skip/unmount behavior pass
+- 2026-09-09 320px browser review — full-scale hero, mobile extraction path, controls, typography, and final portfolio presentation pass
+- 2026-09-09 `pnpm analyze:react:changed` — pass (4 files, 3 components, 0 failures)
+- 2026-09-09 `pnpm format` — pass (24 tasks)
+- 2026-09-09 `NODE_OPTIONS=--max-old-space-size=8192 pnpm lint` — pass (31 tasks; existing warnings, no errors)
+- 2026-09-09 `NODE_OPTIONS=--max-old-space-size=8192 pnpm typecheck` — pass (33 tasks)
+- 2026-09-09 `pnpm --filter=@forge/blade build` with process-only validation values — pass; the application route is static and the bridge is dynamic
+- 2026-09-09 `/saicharan-ramineni` and `/saicharan-ramineni/site` — HTTP 200
 
 ## Links
 

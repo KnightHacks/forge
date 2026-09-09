@@ -1,103 +1,52 @@
 .journey {
-  --arrival-opacity: 1;
-  --hero-exit: 0;
-  position: relative;
-  height: 220svh;
-  background: #02040d;
-  color: #f2f6f7;
+  --black-hole: 0;
+  --pull: 0;
+  --reveal: 0;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  min-height: 100svh;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  background: #010207;
+  opacity: 0;
+  transition: opacity 700ms ease;
 }
 
-.sticky {
-  position: sticky;
-  top: 0;
-  isolation: isolate;
-  height: 100svh;
-  min-height: 38rem;
-  overflow: hidden;
+.journey[data-model-ready="true"] {
+  opacity: 1;
 }
 
 .stage {
   position: absolute;
-  z-index: 0;
+  isolation: isolate;
   inset: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 44%, rgb(30 40 92 / 38%), transparent 31%),
-    radial-gradient(circle at 12% 80%, rgb(36 20 78 / 24%), transparent 30%),
-    #02040d;
+    radial-gradient(circle at 50% 44%, rgb(24 38 91 / 42%), transparent 32%),
+    radial-gradient(circle at 12% 82%, rgb(52 23 91 / 25%), transparent 31%),
+    #010207;
 }
 
-.stage::before,
-.stage::after {
+.grid {
   position: absolute;
   z-index: 1;
-  content: "";
-  pointer-events: none;
-}
-
-.stage::before {
   inset: 0;
-  opacity: calc(1 - var(--hero-exit));
   background-image:
-    linear-gradient(rgb(110 140 175 / 6%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(110 140 175 / 6%) 1px, transparent 1px);
-  background-size: 88px 88px;
-  mask-image: radial-gradient(circle at 50% 45%, black, transparent 70%);
-}
-
-.stage::after {
-  right: -12%;
-  bottom: -55%;
-  left: -12%;
-  height: 68%;
-  border: 1px solid rgb(113 226 255 / 18%);
-  border-radius: 50%;
-  box-shadow:
-    0 -20px 90px rgb(55 99 218 / 12%),
-    0 -1px 0 rgb(255 255 255 / 10%);
-  transform: translateY(calc(var(--hero-exit) * 20%));
-}
-
-.wordmark {
-  position: absolute;
-  z-index: 1;
-  inset: 50% 3.5vw auto;
-  opacity: calc(var(--arrival-opacity) * (1 - var(--hero-exit)));
-  transform: translateY(calc(-50% - var(--hero-exit) * 3rem));
-  transition: opacity 120ms linear;
-}
-
-.wordmark p {
-  margin-bottom: clamp(1.25rem, 2.5vw, 2rem);
-  color: rgb(172 190 205 / 70%);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8125rem;
-  letter-spacing: 0.12em;
-}
-
-.wordmark h1 {
-  font-size: clamp(5.5rem, 13vw, 14rem);
-  font-weight: 620;
-  line-height: 0.71;
-  letter-spacing: -0.085em;
-}
-
-.wordmark h1 span {
-  display: block;
-}
-
-.wordmark h1 span:last-child {
-  text-align: right;
-  color: transparent;
-  -webkit-text-stroke: 1px rgb(224 236 241 / 40%);
+    linear-gradient(rgb(127 158 194 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(127 158 194 / 6%) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: radial-gradient(circle at 50% 45%, black, transparent 72%);
+  opacity: calc((1 - var(--pull)) * 0.8);
+  transform: scale(calc(1 + var(--pull) * 0.12));
 }
 
 .canvas {
   position: absolute;
+  z-index: 3;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 3;
 }
 
 .grade {
@@ -108,16 +57,47 @@
   background:
     linear-gradient(
       to bottom,
-      rgb(2 4 13 / 48%),
-      transparent 20% 70%,
-      rgb(2 4 13 / 88%)
+      rgb(1 2 7 / 46%),
+      transparent 18% 66%,
+      rgb(1 2 7 / 86%)
     ),
     radial-gradient(
-      circle at 50% 44%,
-      transparent 28%,
-      rgb(2 4 13 / 38%) 74%,
-      rgb(2 4 13 / 82%)
+      circle at 50% 47%,
+      transparent 20%,
+      rgb(1 2 7 / 20%) 56%,
+      rgb(1 2 7 / 78%) 100%
     );
+  opacity: calc(1 - var(--reveal) * 0.7);
+}
+
+.frameMarks {
+  position: absolute;
+  z-index: 5;
+  inset: clamp(1rem, 2.4vw, 2.5rem);
+  border: 1px solid rgb(177 215 230 / 10%);
+  clip-path: polygon(
+    0 0,
+    4.5rem 0,
+    4.5rem 1px,
+    calc(100% - 4.5rem) 1px,
+    calc(100% - 4.5rem) 0,
+    100% 0,
+    100% 4.5rem,
+    calc(100% - 1px) 4.5rem,
+    calc(100% - 1px) calc(100% - 4.5rem),
+    100% calc(100% - 4.5rem),
+    100% 100%,
+    calc(100% - 4.5rem) 100%,
+    calc(100% - 4.5rem) calc(100% - 1px),
+    4.5rem calc(100% - 1px),
+    4.5rem 100%,
+    0 100%,
+    0 calc(100% - 4.5rem),
+    1px calc(100% - 4.5rem),
+    1px 4.5rem,
+    0 4.5rem
+  );
+  opacity: calc((1 - var(--pull)) * 0.9);
 }
 
 .header {
@@ -132,14 +112,14 @@
   justify-content: space-between;
   gap: 2rem;
   padding: 1.5rem clamp(1.5rem, 3.5vw, 4rem);
-  opacity: var(--arrival-opacity);
+  opacity: calc(1 - var(--pull) * 1.7);
+  transform: translateY(calc(var(--pull) * -1.5rem));
 }
 
 .brand {
   display: flex;
   min-height: 2.75rem;
   align-items: center;
-  gap: 1.1rem;
 }
 
 .brand img {
@@ -147,28 +127,10 @@
   height: auto;
 }
 
-.header nav {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  font-size: 0.875rem;
-}
-
-.header nav > a {
-  min-height: 2.75rem;
-  align-content: center;
-  color: rgb(202 213 220 / 78%);
-  transition: color 180ms ease;
-}
-
-.header nav > a:hover,
-.header nav > a:focus-visible {
-  color: white;
-}
-
 .resumeButton {
   min-height: 2.75rem;
   border-color: rgb(255 255 255 / 16%);
+  color: hsl(var(--foreground));
   background: rgb(2 4 13 / 34%);
   backdrop-filter: blur(14px);
 }
@@ -178,38 +140,84 @@
   height: 1rem;
 }
 
-.continueLink {
+.identity {
   position: absolute;
-  z-index: 6;
-  right: clamp(1.5rem, 3.5vw, 4rem);
-  bottom: 1.2rem;
-  display: inline-flex;
-  min-height: 3rem;
-  align-items: center;
-  gap: 1rem;
-  color: rgb(220 229 234 / 78%);
-  font-size: 0.875rem;
-  opacity: calc(var(--arrival-opacity) * (1 - var(--hero-exit)));
+  z-index: 7;
+  bottom: clamp(2.2rem, 5vw, 4.8rem);
+  left: clamp(1.5rem, 4.5vw, 5.5rem);
+  max-width: min(76vw, 60rem);
+  opacity: calc(1 - var(--pull) * 1.7);
+  transform: translate3d(
+    calc(var(--pull) * -2rem),
+    calc(var(--pull) * 1.5rem),
+    0
+  );
 }
 
-.continueLink svg {
-  width: 1rem;
-  height: 1rem;
+.identity p,
+.identity span,
+.sequenceLabel {
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+}
+
+.identity p {
+  margin-bottom: 0.9rem;
+  color: rgb(185 207 218 / 72%);
+  font-size: 0.8125rem;
+  letter-spacing: 0.11em;
+}
+
+.identity h1 {
+  font-size: clamp(3.2rem, 6.6vw, 7.25rem);
+  font-weight: 610;
+  line-height: 0.82;
+  letter-spacing: -0.075em;
+  text-shadow: 0 0 3.5rem rgb(28 85 150 / 25%);
+}
+
+.identity span {
+  display: inline-block;
+  margin-top: 1.05rem;
   color: #7fe9ff;
-  animation: descend 1.8s ease-in-out infinite;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
 }
 
-@keyframes descend {
-  50% {
-    transform: translateY(0.35rem);
+.sequenceLabel {
+  position: absolute;
+  z-index: 7;
+  right: clamp(1.5rem, 4vw, 4.5rem);
+  bottom: clamp(5.2rem, 7vw, 6.5rem);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: rgb(184 225 238 / 78%);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  opacity: calc(var(--black-hole) * (1 - var(--reveal)));
+}
+
+.sequenceLabel span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid #9df2ff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.24rem rgb(105 225 255 / 8%),
+    0 0 1.4rem rgb(105 225 255 / 65%);
+  background: #dffcff;
+  animation: signal 900ms ease-in-out infinite alternate;
+}
+
+@keyframes signal {
+  to {
+    opacity: 0.45;
+    transform: scale(0.72);
   }
 }
 
 @media (max-width: 700px) {
-  .sticky {
-    min-height: 40rem;
-  }
-
   .header {
     min-height: 5rem;
     padding: 1rem;
@@ -219,49 +227,46 @@
     width: 5.2rem;
   }
 
-  .header nav > a {
-    display: none;
+  .frameMarks {
+    inset: 0.75rem;
   }
 
-  .wordmark {
-    inset: 25% 1rem auto;
-    transform: translateY(calc(-50% - var(--hero-exit) * 2rem));
+  .identity {
+    right: 1rem;
+    bottom: 4.8rem;
+    left: 1rem;
+    max-width: none;
   }
 
-  .wordmark p {
-    max-width: 12rem;
+  .identity p {
+    max-width: 17rem;
     font-size: 0.75rem;
     line-height: 1.5;
   }
 
-  .wordmark h1 {
-    font-size: clamp(4rem, 21vw, 6rem);
-    line-height: 0.78;
+  .identity h1 {
+    max-width: 19rem;
+    font-size: clamp(3.4rem, 17.5vw, 5.6rem);
+    line-height: 0.86;
   }
 
-  .wordmark h1 span:last-child {
-    margin-top: 0.22em;
-    text-align: left;
-  }
-
-  .continueLink {
-    right: 1rem;
-    bottom: 1rem;
+  .sequenceLabel {
+    right: auto;
+    bottom: 4.8rem;
+    left: 1rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .journey {
-    height: 105svh;
-  }
-
-  .continueLink svg {
-    animation: none;
-  }
-
-  .canvas,
-  .wordmark,
-  .stage::after {
+  .journey,
+  .header,
+  .identity,
+  .grid,
+  .grade {
     transition: none;
+  }
+
+  .sequenceLabel {
+    display: none;
   }
 }
