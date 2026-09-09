@@ -1092,8 +1092,6 @@ describe.runIf(runDatabaseContract)(
       }
     });
 
-    // Whole-schema TRUNCATE CASCADE competes with other migration tests for
-    // PostgreSQL I/O in CI; this checks restore correctness, not a 15s budget.
     it("keeps the migration ledger and tag catalog through a truncate restore", async () => {
       const localOnlyHackathonId = "00000000-0000-4000-8000-0000000001f8";
       await db().query(`CREATE SCHEMA IF NOT EXISTS "drizzle";
@@ -1150,6 +1148,6 @@ describe.runIf(runDatabaseContract)(
         [localOnlyHackathonId],
       );
       expect(orphanedTag.rows[0]?.count).toBe(0);
-    }, 60_000);
+    }, 15_000);
   },
 );

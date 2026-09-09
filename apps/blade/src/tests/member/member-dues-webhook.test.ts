@@ -39,12 +39,6 @@ vi.mock("@forge/utils/stripe", () => ({
   stripe: mocks.stripe,
 }));
 
-// Load the shared API barrel during collection so module transforms do not
-// consume the webhook test's timeout when the full suite runs concurrently.
-const actualUtils = await vi.importActual<{
-  recordSucceededDuesPayment: typeof recordSucceededDuesPaymentType;
-}>("@forge/api/utils");
-
 async function postMembershipWebhook() {
   const { POST } = await import("~/app/api/membership/route");
 
@@ -120,6 +114,9 @@ describe("/api/membership Stripe webhook", () => {
       (callback: (transactionHandle: typeof transaction) => unknown) =>
         Promise.resolve(callback(transaction)),
     );
+    const actualUtils = await vi.importActual<{
+      recordSucceededDuesPayment: typeof recordSucceededDuesPaymentType;
+    }>("@forge/api/utils");
     mocks.recordSucceededDuesPayment.mockImplementation(
       actualUtils.recordSucceededDuesPayment,
     );
