@@ -5,6 +5,7 @@ import { Eye, LockKeyhole, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
+import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Checkbox } from "@forge/ui/checkbox";
 import {
@@ -34,6 +35,7 @@ export interface EvaluationProject {
   prizeCategories?: string[];
   challenges?: {
     id: string;
+    isGeneral?: boolean;
     label: string;
     parentId: string | null;
   }[];
@@ -180,9 +182,19 @@ function EvaluationEditor({
     () => workspace.rubric.filter((item) => item.kind === "short_response"),
     [workspace.rubric],
   );
-  const challengeName = /challenges?$/i.test(challengeLabel)
-    ? challengeLabel
-    : `${challengeLabel} Challenge`;
+  const activeChallenge = project.challenges?.find(
+    (challenge) => challenge.id === workspace.challengeId,
+  );
+  const visibleChallenges = [
+    {
+      id: workspace.challengeId,
+      isGeneral: activeChallenge?.isGeneral,
+      label: challengeLabel,
+    },
+    ...(project.challenges?.filter(
+      (challenge) => challenge.parentId === workspace.challengeId,
+    ) ?? []),
+  ];
 
   const activeProject = project;
   const now = useJudgingClock(editor.serverNow);
@@ -305,31 +317,28 @@ function EvaluationEditor({
           <DialogTitle className="break-words text-base leading-6 sm:text-lg">
             {submission ? "Edit" : "Judge"} {project.title}
           </DialogTitle>
-          <DialogDescription className="mt-2 break-words rounded-md border border-primary/25 bg-primary/10 px-3 py-2 font-medium text-primary">
-            {challengeName}
+          <DialogDescription className="sr-only">
+            Evaluate {project.title} for {challengeLabel}.
           </DialogDescription>
-          {project.challenges?.some(
-            (challenge) => challenge.parentId === workspace.challengeId,
-          ) ? (
-            <div
-              className="mt-2 flex max-h-28 flex-wrap gap-2 overflow-y-auto"
-              role="group"
-              aria-label="Challenge opt-ins"
-            >
-              {project.challenges
-                .filter(
-                  (challenge) => challenge.parentId === workspace.challengeId,
-                )
-                .map((challenge) => (
-                  <span
-                    key={challenge.id}
-                    className="max-w-full break-words rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-sm font-semibold text-primary"
-                  >
-                    {challenge.label}
-                  </span>
-                ))}
-            </div>
-          ) : null}
+          <div
+            className="mt-2 flex max-h-28 flex-wrap gap-1.5 overflow-y-auto"
+            role="group"
+            aria-label="Challenges"
+          >
+            {visibleChallenges.map((challenge) => (
+              <Badge
+                className="max-w-full break-words"
+                key={challenge.id}
+                variant={
+                  (activeChallenge ?? challenge).isGeneral
+                    ? "outline"
+                    : "secondary"
+                }
+              >
+                {challenge.label}
+              </Badge>
+            ))}
+          </div>
           {seconds !== null ? (
             <div
               role="timer"

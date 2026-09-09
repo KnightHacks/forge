@@ -958,6 +958,12 @@ describe("evaluation feedback visibility", () => {
           title: judgeProject.title,
           challenges: [
             {
+              id: "challenge-1",
+              isGeneral: true,
+              label: "General",
+              parentId: null,
+            },
+            {
               id: "child",
               label: "First-time hacker",
               parentId: "challenge-1",
@@ -985,11 +991,15 @@ describe("evaluation feedback visibility", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("group", { name: "Challenge opt-ins" }),
-    ).toHaveTextContent("First-time hacker");
-    expect(screen.getByText("First-time hacker")).toHaveClass("bg-primary/10");
-    expect(screen.getByText("First-time hacker")).not.toHaveAttribute("style");
+    const challenges = screen.getByRole("group", { name: "Challenges" });
+    expect(challenges).toHaveTextContent("General");
+    expect(challenges).toHaveTextContent("First-time hacker");
+    const generalBadge = within(challenges).getByText("General");
+    const childBadge = within(challenges).getByText("First-time hacker");
+    expect(generalBadge).toHaveClass("text-xs", "text-foreground");
+    expect(childBadge).toHaveClass("text-xs", "text-foreground");
+    expect(childBadge).not.toHaveClass("bg-primary/10");
+    expect(childBadge).not.toHaveAttribute("style");
     expect(
       screen.getByText("Your feedback is shared with hackers"),
     ).toBeInTheDocument();
