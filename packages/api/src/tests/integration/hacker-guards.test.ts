@@ -265,7 +265,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .where(eq(auth.Roles.id, OFFICER_ROLE));
     await client
       .update(knightHacks.Hacker)
-      .set({ isFirstTime: false })
+      .set({ isFirstTime: false, survey1: "", survey2: "" })
       .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
     // Date of birth, which the age tests move.
     await client
@@ -324,10 +324,45 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .where(eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE));
     await client
       .update(knightHacks.HackerAttendee)
-      .set({ blacklistReason: null, blacklistedAt: null, blacklistedBy: null })
+      .set({
+        blacklistReason: null,
+        blacklistedAt: null,
+        blacklistedBy: null,
+        survey1: null,
+        survey2: null,
+      })
       .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
     await client.delete(knightHacks.EmailSendRecipient);
     await client.delete(knightHacks.EmailSend);
+  });
+
+  it.each([
+    {
+      label: "application answers",
+      survey1: "First paragraph.\n\nSecond paragraph.",
+      survey2: "Build with friends.",
+    },
+    { label: "legacy answers", survey1: null, survey2: null },
+    { label: "intentionally empty answers", survey1: "", survey2: "" },
+  ])("returns $label in applicant details", async ({ survey1, survey2 }) => {
+    await client
+      .update(knightHacks.Hacker)
+      .set({ survey1: "Legacy motivation.", survey2: "Legacy goals." })
+      .where(eq(knightHacks.Hacker.id, PLAIN_HACKER));
+    await client
+      .update(knightHacks.HackerAttendee)
+      .set({ survey1, survey2 })
+      .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
+
+    const detail = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+    expect(detail.survey1).toBe(survey1 ?? "Legacy motivation.");
+    expect(detail.survey2).toBe(survey2 ?? "Legacy goals.");
+    const roster = await caller.hacker.listForHackathon({
+      hackathonId: READY_HACKATHON,
+    });
+    expect(
+      roster.hackers.find((row) => row.attendeeId === PLAIN_ATTENDEE),
+    ).not.toHaveProperty("survey1");
   });
 
   describe("delegated hacker permissions", () => {

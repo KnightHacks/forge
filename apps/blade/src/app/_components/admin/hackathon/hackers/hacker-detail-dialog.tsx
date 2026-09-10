@@ -609,6 +609,34 @@ export function HackerDetailDialog({
                 </DetailSection>
 
                 <DetailSection
+                  className="lg:col-span-2"
+                  description="Their written answers on the application."
+                  icon={MessageSquareText}
+                  title="Application responses"
+                >
+                  <dl
+                    aria-label="Application responses"
+                    className="max-h-96 overflow-y-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    tabIndex={0}
+                  >
+                    {[
+                      ["Why do you want to attend?", hacker.survey1],
+                      ["What do you hope to achieve?", hacker.survey2],
+                    ].map(([question, answer]) => (
+                      <div
+                        className="border-b border-border/40 px-3 py-3 last:border-b-0 sm:px-4"
+                        key={question}
+                      >
+                        <dt className="text-sm font-medium">{question}</dt>
+                        <dd className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">
+                          {answer?.trim() ? answer : "No response provided."}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </DetailSection>
+
+                <DetailSection
                   description="Every adjustment is logged under the person who made it."
                   icon={Sparkles}
                   title="Points"

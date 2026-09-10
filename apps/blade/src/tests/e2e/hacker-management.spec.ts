@@ -38,6 +38,11 @@ const ENDED_ATTENDEE = "00000000-0000-4000-8000-000000000909";
  * tested what it claimed.
  */
 const ENDED_HACKER = "00000000-0000-4000-8000-00000000090a";
+const APPLICATION_MOTIVATION =
+  "I want to learn from other hackers.\n\n" +
+  "I enjoy building useful tools and sharing what I learn.\n\n".repeat(16) +
+  "This is the final paragraph of my response.";
+const APPLICATION_GOALS = "Build a project with a new team and demo it.";
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const maxIndex = Math.max(
@@ -152,6 +157,8 @@ test.describe("Hacker management critical flow", () => {
         hackerId: HACKER_ONE,
         id: ATTENDEE_ONE,
         status: "pending",
+        survey1: APPLICATION_MOTIVATION,
+        survey2: APPLICATION_GOALS,
       },
       {
         hackathonId: HACKATHON_ID,
@@ -235,6 +242,27 @@ test.describe("Hacker management critical flow", () => {
       await expect(
         dialog.getByText("No attendance recorded for this hackathon."),
       ).toBeVisible();
+      const responses = dialog.getByLabel("Application responses", {
+        exact: true,
+      });
+      await responses.scrollIntoViewIfNeeded();
+      await expect(responses.locator("dd").first()).toHaveText(
+        APPLICATION_MOTIVATION,
+        { useInnerText: false },
+      );
+      await expect(responses.locator("dd").last()).toHaveText(
+        APPLICATION_GOALS,
+      );
+      expect(
+        await responses.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true);
+      await responses.focus();
+      await expect(responses).toBeFocused();
+      await responses.hover();
+      await page.mouse.wheel(0, 2000);
+      await expect(responses.locator("dd").last()).toBeInViewport();
       await expect(
         dialog.getByRole("button", {
           name: /^(Edit|Adjust points|Accepted|Delete application|Blacklist applicant|Remove blacklist)$/,
