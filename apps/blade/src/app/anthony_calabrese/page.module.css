@@ -1,0 +1,204 @@
+.page {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.titleAnimate {
+  animation: title 30s ease-in-out infinite alternate;
+}
+
+@keyframes title {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.5) rotate(5deg);
+  }
+  50% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1.5) rotate(-5deg);
+  }
+}
+
+.boxPulse {
+  animation: box 30s ease-in-out infinite alternate;
+}
+
+@keyframes box {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.2) rotate(2.5deg);
+  }
+  50% {
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1.2) rotate(-2.5deg);
+  }
+}
+
+.curtain1 {
+  animation: curtain1 10s ease-in forwards;
+}
+
+@keyframes curtain1 {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.curtain2 {
+  animation: curtain2 10s ease-in forwards;
+}
+
+@keyframes curtain2 {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  75% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.curtain3 {
+  animation: curtain3 10s ease-in forwards;
+}
+
+@keyframes curtain3 {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.piping {
+  background-image: url("/pipefactory.png");
+  background-repeat: repeat;
+  background-size: 20rem;
+}
+
+.pipingMove {
+  animation: pipeMove 20s linear infinite;
+}
+
+@keyframes pipeMove {
+  0% {
+    background-position: 0;
+  }
+  100% {
+    background-position: 20rem;
+  }
+}
+
+.tkFactory {
+  background-image: url("/tkgreen.png"), url("/sidewalk.svg");
+  background-repeat: repeat-x, repeat-x;
+  background-size:
+    18rem 22rem,
+    25rem;
+}
+
+.tkFactoryMove {
+  animation: tkMove 20s linear infinite;
+}
+
+@keyframes tkMove {
+  0% {
+    background-position:
+      0 80%,
+      0 100%;
+  }
+  100% {
+    background-position:
+      18rem 80%,
+      25rem 100%;
+  }
+}
+
+.gearMoveRight {
+  animation: gearMoveRight 20s linear infinite;
+}
+
+@keyframes gearMoveRight {
+  0% {
+    transform: translate(50%, -50%) rotate(360deg);
+  }
+  100% {
+    transform: translate(50%, -50%) rotate(0deg);
+  }
+}
+.gearMoveRightBottom {
+  animation: gearMoveRightBottom 20s linear infinite;
+}
+
+@keyframes gearMoveRightBottom {
+  0% {
+    transform: translateX(65%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(65%) rotate(360deg);
+  }
+}
+
+.gearMoveLeftBottom {
+  animation: gearMoveLeftBottom 20s linear infinite;
+}
+
+@keyframes gearMoveLeftBottom {
+  0% {
+    transform: translateX(-65%) rotate(360deg);
+  }
+  100% {
+    transform: translateX(-65%) rotate(0deg);
+  }
+}
+
+.gearMoveLeft {
+  animation: gearMoveLeft 20s linear infinite;
+}
+
+@keyframes gearMoveLeft {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
