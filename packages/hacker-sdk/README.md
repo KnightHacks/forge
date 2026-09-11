@@ -171,6 +171,8 @@ export function HackerSessionBoundary({ children }: { children: ReactNode }) {
 ```
 
 The adapter validates `returnTo`. It only accepts a path on the yearly site.
+For claim links, preserve the query string in that path so the claim credential
+survives sign-in. See KH IX's session boundary for the integration.
 Choose the post-authentication destination from the portal's own configuration.
 For example, KH IX sends its public navigation sign-in action back to the
 application flow:
@@ -811,31 +813,47 @@ Do not display raw tRPC, storage, mail, Discord, database, or provider errors.
 
 ### Read hooks
 
-| Hook                   | Result                                                                             |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| `usePublicHackathon`   | Public dates, timezone, capacity, theme, and agreement definitions.                |
-| `useHackerSession`     | Authentication state, display name, and session expiry.                            |
-| `useHackerApplication` | Profile prefill, application, agreement choices, resume metadata, and editability. |
-| `useHackerDashboard`   | Current participant state and server-authoritative actions.                        |
-| `useHackerResume`      | Resume metadata or `null`.                                                         |
-| `useHackerSchedule`    | Checked-in Hackathon Events schedule.                                              |
-| `useHackerAttendance`  | Personal event check-in occurrences.                                               |
-| `useHackerPoints`      | Personal point entries and total.                                                  |
-| `useHackerLeaderboard` | Overall or configured-class ranking.                                               |
+| Hook                           | Result                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `usePublicHackathon`           | Public dates, timezone, capacity, theme, and agreement definitions.                          |
+| `useHackerSession`             | Authentication state, display name, and session expiry.                                      |
+| `useHackerApplication`         | Profile prefill, application, agreement choices, resume metadata, and editability.           |
+| `useHackerDashboard`           | Current participant state and server-authoritative actions.                                  |
+| `useHackerResume`              | Resume metadata or `null`.                                                                   |
+| `useHackerSchedule`            | Checked-in Hackathon Events schedule.                                                        |
+| `useHackerAttendance`          | Personal event check-in occurrences.                                                         |
+| `useHackerPoints`              | Personal point entries and total.                                                            |
+| `useHackerLeaderboard`         | Overall or configured-class ranking.                                                         |
+| `useHackerJudging(projectId?)` | Own project, publication state, and itinerary; optional project selection in emergency mode. |
+| `useProjectClaim(token)`       | Available project members for a claim link; reading does not consume it.                     |
 
 ### Mutation hooks
 
-| Hook                           | Action                                                         |
-| ------------------------------ | -------------------------------------------------------------- |
-| `useSubmitHackerApplication`   | Create the per-hack application and reusable profile revision. |
-| `useUpdateHackerProfile`       | Update shared profile fields with revision control.            |
-| `useUpdateHackerApplication`   | Update per-hack first-time status, surveys, or agreements.     |
-| `useConfirmHackerAttendance`   | Accept confirmation agreements and claim capacity.             |
-| `useWithdrawHackerApplication` | Irreversibly withdraw an eligible application.                 |
-| `useIssueHackerCheckInPass`    | Rotate and return an opaque check-in pass.                     |
-| `useUploadHackerResume`        | Upload one PDF resume.                                         |
-| `useRemoveHackerResume`        | Remove the current resume.                                     |
-| `useHackerSignOut`             | Revoke the portal session and reset participant queries.       |
+| Hook                           | Action                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `useSubmitHackerApplication`   | Create the per-hack application and reusable profile revision.             |
+| `useUpdateHackerProfile`       | Update shared profile fields with revision control.                        |
+| `useUpdateHackerApplication`   | Update per-hack first-time status, surveys, or agreements.                 |
+| `useConfirmHackerAttendance`   | Accept confirmation agreements and claim capacity.                         |
+| `useWithdrawHackerApplication` | Irreversibly withdraw an eligible application.                             |
+| `useIssueHackerCheckInPass`    | Rotate and return an opaque check-in pass.                                 |
+| `useUploadHackerResume`        | Upload one PDF resume.                                                     |
+| `useRemoveHackerResume`        | Remove the current resume.                                                 |
+| `useHackerSignOut`             | Revoke the portal session and reset participant queries.                   |
+| `useClaimProject`              | Claim a member with `{ token, memberId }`; consume the link on success.    |
+| `useInviteProjectMember`       | Reserve a team slot and email an existing hacker account with `{ email }`. |
+
+Judging and claims require check-in to the configured event. Claims work before
+officers open the schedule. `useHackerJudging` refreshes every two minutes;
+portals must also refetch after an appointment ends before showing it as missed.
+On request failure, show a retry state instead of deriving a missed appointment
+from the browser clock.
+
+Emergency mode permits one selected project itinerary at a time and excludes
+all feedback and scores. Keep the own-project query active to observe mode
+changes, clear the selection when emergency mode ends, and hide stale data on
+errors. Normal feedback contains completed authenticated evaluations without
+judge identities. Team member names are visible within the claimed project.
 
 ## Lifecycle reference
 
@@ -867,7 +885,8 @@ Keep these rules in every yearly portal:
 - Never request club membership or dues through the hacker flow.
 - Never store portal access tokens, refresh tokens, or check-in pass payloads.
 - Never expose provider IDs, storage keys, audit metadata, or operator data.
-- Never reveal another hacker’s attendance history or full surname.
+- Never reveal another hacker’s attendance history. Team names are available
+  through a valid claim link or the authenticated hacker's own project roster.
 - Derive age from DOB at the relevant timestamp. Do not store mutable age
   history in the yearly site.
 - Keep schedule data hidden until the server returns `checkedin` access.

@@ -105,4 +105,4 @@ Emergency mode replaces claim-based entry with a searchable project dropdown. Se
 
 ## Open questions
 
-See [status.md](./status.md). This draft is not approved for implementation.
+Implementation was authorized on 2026-09-11. See [status.md](./status.md) for rollout progress and deferred scope.
