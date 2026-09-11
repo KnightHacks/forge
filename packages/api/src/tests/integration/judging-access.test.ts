@@ -189,7 +189,13 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       theme: "Judging",
     });
     await client.insert(schemas.ProjectChallenge).values([
-      { hackathonId: HACKATHON, id: GENERAL, label: "General" },
+      {
+        hackathonId: HACKATHON,
+        id: GENERAL,
+        isGeneral: true,
+        isGroup: true,
+        label: "General",
+      },
       { hackathonId: HACKATHON, id: SPONSOR, label: "Acme Challenge" },
     ]);
     const projectDefaults = {
@@ -443,8 +449,15 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
         roomId: null,
       }),
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      guestCaller.projects.listJudge({
+        challengeIds: [GENERAL],
+        page: 1,
+        pageSize: 25,
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
     const scoped = await guestCaller.projects.listJudge({
-      challengeIds: [GENERAL],
+      challengeIds: [],
       direction: "asc",
       page: 1,
       pageSize: 25,
@@ -456,7 +469,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     );
     expect(scoped.projects).toHaveLength(2);
     expect(scoped.challenges).toEqual([
-      { id: SPONSOR, label: "Acme Challenge" },
+      expect.objectContaining({ id: SPONSOR, label: "Acme Challenge" }),
     ]);
 
     const control = await officerCaller.judging.listAdmin({
@@ -550,7 +563,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       displayName: "General Sponsor",
     });
     const generalProjects = await generalCaller.projects.listJudge({
-      challengeIds: [SPONSOR],
+      challengeIds: [],
       direction: "asc",
       page: 1,
       pageSize: 25,
@@ -966,7 +979,10 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       sort: "title",
     });
     expect(restoredJudgedProject.projects).toEqual([
-      expect.objectContaining({ challenges: [], id: SPONSOR_PROJECT }),
+      expect.objectContaining({
+        challenges: [expect.objectContaining({ id: SPONSOR })],
+        id: SPONSOR_PROJECT,
+      }),
     ]);
     await expect(
       guestCaller.projects.listJudge({

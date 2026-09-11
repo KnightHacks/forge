@@ -17,6 +17,26 @@ export const projectHackathonIdSchema = z.object({
   hackathonId: z.string().uuid(),
 });
 
+export const judgingGroupCreateSchema = projectHackathonIdSchema.extend({
+  isMlhImportDefault: z.boolean().default(false),
+  label: z.string().trim().min(1).max(255),
+  isGeneral: z.boolean(),
+  isScheduled: z.boolean(),
+});
+export const judgingGroupUpdateSchema = judgingGroupCreateSchema.extend({
+  isMlhImportDefault: z.boolean().optional(),
+  groupId: z.string().uuid(),
+});
+export const judgingGroupDeleteSchema = projectHackathonIdSchema.extend({
+  groupId: z.string().uuid(),
+});
+
+export const projectChallengeUpdateSchema = projectHackathonIdSchema.extend({
+  challengeId: z.string().uuid(),
+  parentId: z.string().uuid().nullable(),
+  isScheduled: z.boolean(),
+});
+
 export const projectDropAllInputSchema = projectHackathonIdSchema.extend({
   confirmation: z.string().min(1).max(255),
 });
@@ -79,7 +99,7 @@ export const projectMemberInputSchema = z.object({
 });
 
 export const projectUpdateInputSchema = z.object({
-  challengeIds: z.array(z.string().uuid()).min(1).max(50),
+  challengeIds: z.array(z.string().uuid()).max(50),
   demoLinks: z.array(httpUrlSchema).max(20),
   description: z.string().trim().max(50_000),
   members: z.array(projectMemberInputSchema).min(1).max(100),

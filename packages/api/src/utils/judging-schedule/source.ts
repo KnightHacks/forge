@@ -16,10 +16,6 @@ import {
 
 import type { WriteDb } from "../db";
 import type { ScheduleProblem } from "./model";
-import {
-  isMlhChallenge,
-  isSponsorChallenge,
-} from "../projects/challenge-labels";
 
 export async function lockScheduleHackathon(tx: WriteDb, hackathonId: string) {
   const [hackathon] = await tx
@@ -42,6 +38,9 @@ export async function readScheduleSource(
       id: JudgingRoom.id,
       challengeId: JudgingRoom.challengeId,
       challengeLabel: ProjectChallenge.label,
+      isGeneral: ProjectChallenge.isGeneral,
+      isScheduled: ProjectChallenge.isScheduled,
+      parentId: ProjectChallenge.parentId,
       buildingId: JudgingRoom.buildingId,
       buildingName: JudgingBuilding.name,
       name: JudgingRoom.name,
@@ -88,6 +87,9 @@ export async function readScheduleSource(
       title: Project.title,
       challengeId: ProjectChallenge.id,
       challengeLabel: ProjectChallenge.label,
+      isGeneral: ProjectChallenge.isGeneral,
+      isScheduled: ProjectChallenge.isScheduled,
+      parentId: ProjectChallenge.parentId,
     })
     .from(ProjectToChallenge)
     .innerJoin(Project, eq(Project.id, ProjectToChallenge.projectId))
@@ -103,10 +105,10 @@ export async function readScheduleSource(
     )
     .orderBy(asc(Project.id), asc(ProjectChallenge.id));
   const scheduledRooms = rooms.filter(
-    (room) => !isMlhChallenge(room.challengeLabel),
+    (room) => room.parentId === null && room.isScheduled,
   );
   const tasks = inventory.filter(
-    (task) => !isMlhChallenge(task.challengeLabel),
+    (task) => task.parentId === null && task.isScheduled,
   );
   const eligibleRooms = scheduledRooms.flatMap((room) =>
     room.buildingId && staffedIds.has(room.id)
@@ -132,7 +134,7 @@ export async function readScheduleSource(
     rooms: rooms.map((room) => ({
       ...room,
       staffed: staffedIds.has(room.id),
-      scheduled: !isMlhChallenge(room.challengeLabel),
+      scheduled: room.parentId === null && room.isScheduled,
     })),
     eligibleRooms,
     tasks,
@@ -164,10 +166,10 @@ export function scheduleProblemFromSource(
       buildingId,
       challengeId,
     })),
-    tasks: source.tasks.map(({ projectId, challengeId, challengeLabel }) => ({
+    tasks: source.tasks.map(({ projectId, challengeId, isGeneral }) => ({
       projectId,
       challengeId,
-      sponsor: isSponsorChallenge(challengeLabel),
+      sponsor: !isGeneral,
     })),
   };
 }

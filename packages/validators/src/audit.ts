@@ -524,6 +524,29 @@ export const AUDIT_ACTION_CATALOG = {
     "buildingId",
     "name",
   ]),
+  "judging.group.created": policy("hackathons", "Created judging group", [
+    "groupId",
+    "label",
+    "isGeneral",
+    "isScheduled",
+    "isMlhImportDefault",
+  ]),
+  "judging.group.updated": policy(
+    "hackathons",
+    "Updated judging group",
+    ["groupId", "label", "isGeneral", "isScheduled", "isMlhImportDefault"],
+    ["label", "isGeneral", "isScheduled", "isMlhImportDefault"],
+  ),
+  "judging.group.deleted": policy("hackathons", "Deleted judging group", [
+    "groupId",
+    "label",
+  ]),
+  "judging.challenge.updated": policy(
+    "hackathons",
+    "Updated judging challenge",
+    ["challengeId", "label", "parentId", "isScheduled"],
+    ["parentId", "isScheduled"],
+  ),
   "judging.room.created": policy("hackathons", "Created judging room", [
     "challengeId",
   ]),

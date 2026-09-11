@@ -1,3 +1,4 @@
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   check,
@@ -2204,6 +2205,11 @@ export const ProjectChallenge = createTable(
       .notNull()
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     label: t.varchar({ length: 255 }).notNull(),
+    parentId: t.uuid(),
+    isGroup: t.boolean().notNull().default(false),
+    importLabelMatch: t.varchar("import_label_prefix", { length: 255 }),
+    isGeneral: t.boolean().notNull().default(false),
+    isScheduled: t.boolean().notNull().default(true),
     createdAt: t
       .timestamp({ mode: "date", withTimezone: true })
       .notNull()
@@ -2215,10 +2221,26 @@ export const ProjectChallenge = createTable(
     ),
     labelUnique: unique(
       "knight_hacks_project_challenge_hackathon_label_unique",
-    ).on(table.hackathonId, table.label),
+    ).on(table.hackathonId, table.label, table.isGroup),
     hackathonScopeUnique: unique(
       "knight_hacks_project_challenge_id_hackathon_unique",
     ).on(table.id, table.hackathonId),
+    parentScopeFk: foreignKey({
+      columns: [table.parentId, table.hackathonId],
+      foreignColumns: ((): [AnyPgColumn, AnyPgColumn] => [
+        ProjectChallenge.id,
+        ProjectChallenge.hackathonId,
+      ])(),
+      name: "project_challenge_parent_scope_fk",
+    }),
+    rootGeneral: check(
+      "project_challenge_root_general",
+      sql`NOT ${table.isGeneral} OR ${table.parentId} IS NULL`,
+    ),
+    notSelf: check(
+      "project_challenge_not_self",
+      sql`${table.parentId} IS NULL OR ${table.parentId} <> ${table.id}`,
+    ),
   }),
 );
 
@@ -2228,6 +2250,7 @@ export const ProjectToChallenge = createTable(
     projectId: t.uuid().notNull(),
     challengeId: t.uuid().notNull(),
     hackathonId: t.uuid().notNull(),
+    isOptIn: t.boolean().notNull().default(true),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.projectId, table.challengeId] }),
@@ -2261,6 +2284,7 @@ export const HackathonJudgingConfiguration = createTable(
       .notNull()
       .primaryKey()
       .references(() => Hackathon.id, { onDelete: "cascade" }),
+    challengeGroupsInitializedAt: t.timestamp({ withTimezone: true }),
     projectInventoryLockedAt: t.timestamp({ withTimezone: true }),
     projectInventoryLockedByUserId: t
       .uuid()

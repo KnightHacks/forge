@@ -42,7 +42,7 @@ import { ProjectDirectory } from "./project-directory";
 
 type JudgeData = Omit<
   RouterOutputs["projects"]["listJudge"],
-  "roomFilterUnavailableReason"
+  "roomFilterUnavailableReason" | "selectedChallengeId"
 > & { roomFilterUnavailableReason?: string | null };
 type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
 type JudgingContext = RouterOutputs["judging"]["getContext"];
@@ -285,7 +285,7 @@ export function JudgeProjectWorkspace({
   const challengeLabel =
     data.challenges.find((challenge) => challenge.id === workspace?.challengeId)
       ?.label ??
-    (context.kind === "guest" ? context.challengeLabel : "General") ??
+    (context.kind === "guest" ? context.challengeLabel : "Judging") ??
     "Room challenge";
   const selectedSubmission = submissions.find(
     (submission) =>
@@ -517,7 +517,7 @@ export function JudgeProjectWorkspace({
                     );
                   }}
                   data={data}
-                  defaultChallengeLabel="General"
+                  defaultChallengeLabel="All challenges"
                   emptyDescription={
                     input.includeJudged
                       ? "No projects match this view yet."
@@ -612,7 +612,7 @@ export function JudgeProjectWorkspace({
                     context.kind === "member" && workspace.displayAllResults
                   }
                   showRatingSort={context.kind === "member"}
-                  showChallenges={context.kind === "member"}
+                  showChallenges
                   showPreviouslyJudgedFilter
                   showRoomFilter
                   roomFilterUnavailableReason={

@@ -528,6 +528,9 @@ export const hackerRouter = createTRPCRouter({
           sendStatus: EmailSend.status,
           shirtSize: Hacker.shirtSize,
           status: HackerAttendee.status,
+          // Older applications kept these answers on the hacker record.
+          survey1: sql<string>`coalesce(${HackerAttendee.survey1}, ${Hacker.survey1})`,
+          survey2: sql<string>`coalesce(${HackerAttendee.survey2}, ${Hacker.survey2})`,
           timeApplied: HackerAttendee.timeApplied,
           timeConfirmed: HackerAttendee.timeConfirmed,
           websiteUrl: Hacker.websiteUrl,

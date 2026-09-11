@@ -16,7 +16,6 @@ import { judgingScheduleReadSchema } from "@forge/validators";
 import { judgeProcedure } from "../trpc";
 import { reconcileExpiredJudgingDrafts } from "../utils/judging-schedule/reconcile";
 import { resolveJudgeScope } from "../utils/judging/scope";
-import { isMlhChallenge } from "../utils/projects/challenge-labels";
 
 export const judgingScheduleViewRouter = {
   listJudgeSchedule: judgeProcedure
@@ -29,8 +28,23 @@ export const judgingScheduleViewRouter = {
         where: eq(JudgingSchedule.hackathonId, scope.hackathonId),
       });
       const challenge = await db.query.ProjectChallenge.findFirst({
+        columns: { isScheduled: true },
         where: eq(ProjectChallenge.id, scope.challengeId),
       });
+      const filterChallenges = input.challengeIds.length
+        ? await db
+            .select({
+              id: ProjectChallenge.id,
+              parentId: ProjectChallenge.parentId,
+            })
+            .from(ProjectChallenge)
+            .where(eq(ProjectChallenge.hackathonId, scope.hackathonId))
+        : [];
+      const parentFilters = input.challengeIds.map(
+        (id) =>
+          filterChallenges.find((challenge) => challenge.id === id)?.parentId ??
+          id,
+      );
       const [presence] = scope.judgeId
         ? await db
             .select({ roomId: JudgingRoomPresence.roomId })
@@ -104,14 +118,13 @@ export const judgingScheduleViewRouter = {
         scheduleExists: !!schedule,
         activeRoomId: presence?.roomId ?? null,
         untimed:
-          !schedule ||
-          (!!challenge && isMlhChallenge(challenge.label) && !current),
+          !schedule || (!!challenge && !challenge.isScheduled && !current),
         currentAppointment:
           current?.challengeId === scope.challengeId ? current : null,
         appointments: appointments.filter((appointment) =>
           scope.principalKind === "guest" || !input.challengeIds.length
             ? appointment.challengeId === scope.challengeId
-            : input.challengeIds.includes(appointment.challengeId),
+            : parentFilters.includes(appointment.challengeId),
         ),
         editLockedEvaluationIds,
       };

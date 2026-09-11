@@ -28,7 +28,10 @@ import {
   JudgingRoomAccessLink,
   JudgingRoomPresence,
   JudgingRubricItem,
+  JudgingSchedule,
   ProjectChallenge,
+  ProjectEvaluation,
+  ProjectEvaluationDraft,
 } from "@forge/db/schemas/knight-hacks";
 import {
   guestJudgeNameSchema,
@@ -83,6 +86,10 @@ import {
   resolveMemberDisplayNamesByUserId,
 } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
+import {
+  assertJudgingSetupEditable,
+  challengeSelection,
+} from "../utils/projects/challenge-configuration";
 import { judgingAppointmentResultsRouter } from "./judging-appointment-results";
 import { judgingDraftsRouter } from "./judging-drafts";
 import { judgingScheduleRouter } from "./judging-schedule";
@@ -1038,11 +1045,11 @@ export const judgingRouter = createTRPCRouter({
         .where(eq(JudgingRoom.hackathonId, input.hackathonId))
         .orderBy(asc(JudgingRoom.displayOrder), asc(JudgingRoom.name));
       const challenges = await db
-        .select({ id: ProjectChallenge.id, label: ProjectChallenge.label })
+        .select(challengeSelection)
         .from(ProjectChallenge)
         .where(eq(ProjectChallenge.hackathonId, input.hackathonId))
         .orderBy(
-          sql`CASE WHEN ${ProjectChallenge.label} = 'General' THEN 0 ELSE 1 END`,
+          sql`${ProjectChallenge.isGeneral} DESC`,
           asc(ProjectChallenge.label),
         );
       const links = await db
@@ -1136,8 +1143,24 @@ export const judgingRouter = createTRPCRouter({
           .where(eq(JudgingRubricItem.hackathonId, input.hackathonId))
           .orderBy(asc(JudgingRubricItem.displayOrder)),
       ]);
+      const [savedSchedule, feedback, draft] = await Promise.all([
+        db.query.JudgingSchedule.findFirst({
+          columns: { id: true },
+          where: eq(JudgingSchedule.hackathonId, input.hackathonId),
+        }),
+        db.query.ProjectEvaluation.findFirst({
+          columns: { id: true },
+          where: eq(ProjectEvaluation.hackathonId, input.hackathonId),
+        }),
+        db.query.ProjectEvaluationDraft.findFirst({
+          columns: { id: true },
+          where: eq(ProjectEvaluationDraft.hackathonId, input.hackathonId),
+        }),
+      ]);
       const discordGuildId = await judgingDiscordGuildId();
       return {
+        setupLocked: !!savedSchedule,
+        challengeSetupLocked: !!savedSchedule || !!feedback || !!draft,
         hackathon,
         challenges,
         configuration: {
@@ -1180,12 +1203,14 @@ export const judgingRouter = createTRPCRouter({
             .for("update")
             .limit(1);
           if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+          await assertJudgingSetupEditable(tx, input.hackathonId);
           const [challenge] = await tx
             .select({ id: ProjectChallenge.id })
             .from(ProjectChallenge)
             .where(
               and(
                 eq(ProjectChallenge.id, input.challengeId),
+                isNull(ProjectChallenge.parentId),
                 eq(ProjectChallenge.hackathonId, input.hackathonId),
               ),
             )
@@ -1236,6 +1261,7 @@ export const judgingRouter = createTRPCRouter({
           const current = await lockRoomAggregate(tx, input.roomId, {
             active: true,
           });
+          await assertJudgingSetupEditable(tx, current.hackathonId);
           if (
             current.challengeId !== input.challengeId ||
             (input.buildingId !== undefined &&
@@ -1250,6 +1276,7 @@ export const judgingRouter = createTRPCRouter({
             .where(
               and(
                 eq(ProjectChallenge.id, input.challengeId),
+                isNull(ProjectChallenge.parentId),
                 eq(ProjectChallenge.hackathonId, current.hackathonId),
               ),
             )
@@ -1321,6 +1348,7 @@ export const judgingRouter = createTRPCRouter({
         const current = await lockRoomAggregate(tx, input.roomId, {
           active: true,
         });
+        await assertJudgingSetupEditable(tx, current.hackathonId);
         const rooms = await tx
           .select({
             displayOrder: JudgingRoom.displayOrder,
@@ -1369,6 +1397,7 @@ export const judgingRouter = createTRPCRouter({
         const current = await lockRoomAggregate(tx, input.roomId, {
           active: true,
         });
+        await assertJudgingSetupEditable(tx, current.hackathonId);
         await assertNoRoomReservations(tx, current.id);
         await revokeRoomAccessWithDb(tx, {
           reason: "room-archived",
