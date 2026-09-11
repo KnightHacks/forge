@@ -1,0 +1,272 @@
+.journey {
+  --black-hole: 0;
+  --pull: 0;
+  --reveal: 0;
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  min-height: 100svh;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  background: #010207;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.journey[data-model-ready="true"] {
+  opacity: 1;
+}
+
+.stage {
+  position: absolute;
+  isolation: isolate;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 44%, rgb(24 38 91 / 42%), transparent 32%),
+    radial-gradient(circle at 12% 82%, rgb(52 23 91 / 25%), transparent 31%),
+    #010207;
+}
+
+.grid {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(127 158 194 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(127 158 194 / 6%) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: radial-gradient(circle at 50% 45%, black, transparent 72%);
+  opacity: calc((1 - var(--pull)) * 0.8);
+  transform: scale(calc(1 + var(--pull) * 0.12));
+}
+
+.canvas {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.grade {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      rgb(1 2 7 / 46%),
+      transparent 18% 66%,
+      rgb(1 2 7 / 86%)
+    ),
+    radial-gradient(
+      circle at 50% 47%,
+      transparent 20%,
+      rgb(1 2 7 / 20%) 56%,
+      rgb(1 2 7 / 78%) 100%
+    );
+  opacity: calc(1 - var(--reveal) * 0.7);
+}
+
+.frameMarks {
+  position: absolute;
+  z-index: 5;
+  inset: clamp(1rem, 2.4vw, 2.5rem);
+  border: 1px solid rgb(177 215 230 / 10%);
+  clip-path: polygon(
+    0 0,
+    4.5rem 0,
+    4.5rem 1px,
+    calc(100% - 4.5rem) 1px,
+    calc(100% - 4.5rem) 0,
+    100% 0,
+    100% 4.5rem,
+    calc(100% - 1px) 4.5rem,
+    calc(100% - 1px) calc(100% - 4.5rem),
+    100% calc(100% - 4.5rem),
+    100% 100%,
+    calc(100% - 4.5rem) 100%,
+    calc(100% - 4.5rem) calc(100% - 1px),
+    4.5rem calc(100% - 1px),
+    4.5rem 100%,
+    0 100%,
+    0 calc(100% - 4.5rem),
+    1px calc(100% - 4.5rem),
+    1px 4.5rem,
+    0 4.5rem
+  );
+  opacity: calc((1 - var(--pull)) * 0.9);
+}
+
+.header {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  min-height: 6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem clamp(1.5rem, 3.5vw, 4rem);
+  opacity: calc(1 - var(--pull) * 1.7);
+  transform: translateY(calc(var(--pull) * -1.5rem));
+}
+
+.brand {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+}
+
+.brand img {
+  width: 6.4rem;
+  height: auto;
+}
+
+.resumeButton {
+  min-height: 2.75rem;
+  border-color: rgb(255 255 255 / 16%);
+  color: hsl(var(--foreground));
+  background: rgb(2 4 13 / 34%);
+  backdrop-filter: blur(14px);
+}
+
+.resumeButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.identity {
+  position: absolute;
+  z-index: 7;
+  bottom: clamp(2.2rem, 5vw, 4.8rem);
+  left: clamp(1.5rem, 4.5vw, 5.5rem);
+  max-width: min(76vw, 60rem);
+  opacity: calc(1 - var(--pull) * 1.7);
+  transform: translate3d(
+    calc(var(--pull) * -2rem),
+    calc(var(--pull) * 1.5rem),
+    0
+  );
+}
+
+.identity p,
+.identity span,
+.sequenceLabel {
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+}
+
+.identity p {
+  margin-bottom: 0.9rem;
+  color: rgb(185 207 218 / 72%);
+  font-size: 0.8125rem;
+  letter-spacing: 0.11em;
+}
+
+.identity h1 {
+  font-size: clamp(3.2rem, 6.6vw, 7.25rem);
+  font-weight: 610;
+  line-height: 0.82;
+  letter-spacing: -0.075em;
+  text-shadow: 0 0 3.5rem rgb(28 85 150 / 25%);
+}
+
+.identity span {
+  display: inline-block;
+  margin-top: 1.05rem;
+  color: #7fe9ff;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+}
+
+.sequenceLabel {
+  position: absolute;
+  z-index: 7;
+  right: clamp(1.5rem, 4vw, 4.5rem);
+  bottom: clamp(5.2rem, 7vw, 6.5rem);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: rgb(184 225 238 / 78%);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  opacity: calc(var(--black-hole) * (1 - var(--reveal)));
+}
+
+.sequenceLabel span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid #9df2ff;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.24rem rgb(105 225 255 / 8%),
+    0 0 1.4rem rgb(105 225 255 / 65%);
+  background: #dffcff;
+  animation: signal 900ms ease-in-out infinite alternate;
+}
+
+@keyframes signal {
+  to {
+    opacity: 0.45;
+    transform: scale(0.72);
+  }
+}
+
+@media (max-width: 700px) {
+  .header {
+    min-height: 5rem;
+    padding: 1rem;
+  }
+
+  .brand img {
+    width: 5.2rem;
+  }
+
+  .frameMarks {
+    inset: 0.75rem;
+  }
+
+  .identity {
+    right: 1rem;
+    bottom: 4.8rem;
+    left: 1rem;
+    max-width: none;
+  }
+
+  .identity p {
+    max-width: 17rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .identity h1 {
+    max-width: 19rem;
+    font-size: clamp(3.4rem, 17.5vw, 5.6rem);
+    line-height: 0.86;
+  }
+
+  .sequenceLabel {
+    right: auto;
+    bottom: 4.8rem;
+    left: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey,
+  .header,
+  .identity,
+  .grid,
+  .grade {
+    transition: none;
+  }
+
+  .sequenceLabel {
+    display: none;
+  }
+}
