@@ -1,6 +1,6 @@
 # Project claims and hacker judging status
 
-Current phase: UI refinement and CodeRabbit follow-up.
+Current phase: Implementation and review complete; final CI verification.
 
 ## Decision log
 
@@ -49,24 +49,25 @@ Current phase: UI refinement and CodeRabbit follow-up.
 - [x] Branded claim email delivered to dylan@dvidal.dev and visually inspected in Zoho.
 - [x] Initial standard Forge review; three reviewers covered API/access, schema/validation, and UI/boundaries. Findings fixed: cross-member link recovery, malformed URL validation, emergency restoration, undefined CSS token.
 - [x] Final static gate and review verification.
-- [x] MR with 19 hosted screenshots.
-- [ ] CodeRabbit findings addressed.
+- [x] MR with 23 updated hosted screenshots, including desktop/mobile dialogs.
+- [x] CodeRabbit findings addressed. The bot acknowledged the fixes and scope decisions and resolved all 12 review threads. Forge review stayed within the five-round cap.
 
 ## Validation
 
-- Final API suite: 122 files / 948 tests passed. Claim integration suite: 6 tests passed, including anonymous feedback/emergency restoration and cross-member link recovery.
+- Final API suite: 122 files / 951 tests passed. Claim integration suite: 9 tests passed, including anonymous feedback/emergency restoration and cross-member link recovery.
 - Database: 157 tests passed. CI first found missing backup classification and the prior migration-count pin; both were updated. Backup exports exclude claim credentials and associations alongside the rest of live judging data.
-- Blade project UI: 63 tests passed.
+- Blade project UI: 64 tests passed.
 - Email: 86 tests passed. Validators: 318 tests passed. Hacker SDK: 31 tests passed. KHIX: 14 tests passed.
 - Initial `pnpm verify:precommit`: passed, including React analysis, formatting, lint, and monorepo typecheck. Final rerun passed after review fixes.
 - Disposable PostgreSQL migration and claim/invite concurrency tests passed. Local migration applied successfully.
-- Browser: direct claim, invite capacity, separate publication, completed rubric/feedback, emergency suppression, and 390px overflow passed. No-reload emergency restoration, missed dialogs, check-in gate, and failed final-poll verification also passed. Failed verification offers retry and does not invent a missed appointment. Nineteen hosted captures include desktop/mobile and email.
+- Browser: direct claim, invite capacity, separate publication, completed rubric/feedback, emergency suppression, and 390px overflow passed. No-reload emergency restoration, missed dialogs, check-in gate, and failed final-poll verification also passed. Failed verification offers retry and does not invent a missed appointment. Twenty-three updated hosted captures include desktop/mobile dialogs and the generic email.
+- Updated browser checks passed for themed dialogs, feedback entry points, locked navigation, failed-recipient batch continuation, and emergency access during total delivery failure. The generic email was delivered again and inspected in Zoho.
 - No production migrations, deployment, or merge performed. Visual fixtures use a disposable loopback database.
 
 ## Links
 
 - Issue: https://github.com/KnightHacks/forge/issues/559
-- Visual evidence: https://github.com/KnightHacks/forge/issues/559#issuecomment-5637758122
+- Visual evidence: https://github.com/KnightHacks/forge/pull/560#issuecomment-5638369849
 - MR: https://github.com/KnightHacks/forge/pull/560
 - Prior scheduler PR #545, challenge groups PR #550.
 
