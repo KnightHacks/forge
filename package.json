@@ -56,7 +56,7 @@
     "tsx": "^4.21.0",
     "turbo": "^2.8.11",
     "typescript": "catalog:",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   },
   "prettier": "@forge/prettier-config",
   "pnpm": {
