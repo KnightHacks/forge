@@ -42,7 +42,7 @@
     "prettier": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "^8.56.1",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   },
   "prettier": "@forge/prettier-config"
 }
