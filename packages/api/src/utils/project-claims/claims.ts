@@ -223,7 +223,11 @@ export async function prepareClaimLink(hackathonId: string, memberId: string) {
   return db.transaction(async (tx) => {
     await lockScheduleHackathon(tx, hackathonId);
     const [member] = await tx
-      .select({ id: ProjectMember.id })
+      .select({
+        id: ProjectMember.id,
+        projectId: Project.id,
+        participantCount: Project.participantCount,
+      })
       .from(ProjectMember)
       .innerJoin(Project, eq(Project.id, ProjectMember.projectId))
       .where(
@@ -238,6 +242,17 @@ export async function prepareClaimLink(hackathonId: string, memberId: string) {
       throw new TRPCError({
         code: "CONFLICT",
         message: "This claim recipient is unavailable.",
+      });
+    if (
+      Math.max(
+        member.participantCount,
+        (await projectRoster(member.projectId, tx)).length,
+      ) > 4
+    )
+      throw new TRPCError({
+        code: "CONFLICT",
+        message:
+          "Reduce this project to four members before sending claim links.",
       });
     const [link] = await tx
       .insert(ProjectClaimLink)
@@ -271,7 +286,7 @@ export async function projectClaimDelivery(
       email: ProjectMember.email,
       invited: ProjectMember.invitedUserId,
       title: Project.title,
-      event: Hackathon.displayName,
+      projectId: Project.id,
       endDate: Hackathon.endDate,
       claimUrl: HackathonJudgingConfiguration.projectClaimUrl,
     })
@@ -304,7 +319,6 @@ export async function projectClaimDelivery(
     await sendEmail({
       to: details.email,
       ...projectClaimEmail({
-        event: details.event,
         project: details.title,
         name: details.name,
         url: url.toString(),
@@ -316,7 +330,34 @@ export async function projectClaimDelivery(
       .set({ sentAt: new Date() })
       .where(eq(ProjectClaimLink.id, link.id));
   }
-  return { url: url.toString() };
+  return { url: url.toString(), projectId: details.projectId };
+}
+
+// ponytail: process-local abuse limit; use a shared store if Blade runs multiple replicas.
+const inviteAttempts = new Map<string, { count: number; resetsAt: number }>();
+function limitInvitations(userId: string, hackathonId: string) {
+  const now = Date.now();
+  const key = `${hackathonId}:${userId}`;
+  let window = inviteAttempts.get(key);
+  if (!window || now >= window.resetsAt) {
+    if (inviteAttempts.size >= 10_000) {
+      for (const [candidate, value] of inviteAttempts) {
+        if (value.resetsAt <= now) inviteAttempts.delete(candidate);
+      }
+      if (inviteAttempts.size >= 10_000)
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Please wait a minute before inviting again.",
+        });
+    }
+    window = { count: 0, resetsAt: now + 60_000 };
+    inviteAttempts.set(key, window);
+  }
+  if (++window.count > 10)
+    throw new TRPCError({
+      code: "TOO_MANY_REQUESTS",
+      message: "Please wait a minute before inviting again.",
+    });
 }
 
 export async function inviteProjectMember(
@@ -327,6 +368,7 @@ export async function inviteProjectMember(
   const memberId = await db.transaction(async (tx) => {
     await lockScheduleHackathon(tx, hackathonId);
     await requireClaimParticipant(userId, hackathonId, tx);
+    limitInvitations(userId, hackathonId);
     const claim = await ownProjectClaim(userId, hackathonId, tx);
     if (!claim)
       throw new TRPCError({
@@ -353,17 +395,23 @@ export async function inviteProjectMember(
       .where(sql`lower(${HackerProfile.email}) = ${email.trim().toLowerCase()}`)
       .limit(2);
     const recipient = recipients[0];
-    if (recipients.length !== 1 || !recipient)
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Use the email on your teammate's existing hacker profile.",
-      });
-    await requireClaimParticipant(recipient.userId, hackathonId, tx);
-    if (await ownProjectClaim(recipient.userId, hackathonId, tx))
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "That hacker has already claimed a project for this event.",
-      });
+    const unavailable = new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "That email cannot be invited. Use your teammate's hacker profile email and ensure they are checked in.",
+    });
+    if (recipients.length !== 1 || !recipient) throw unavailable;
+    const application = await loadParticipantApplication(
+      recipient.userId,
+      hackathonId,
+      tx,
+    );
+    if (
+      !application?.checkedInAt ||
+      application.status !== "checkedin" ||
+      (await ownProjectClaim(recipient.userId, hackathonId, tx))
+    )
+      throw unavailable;
     const roster = await projectRoster(project.id, tx);
     const existing = roster.find(
       (item) => item.invitedUserId === recipient.userId,

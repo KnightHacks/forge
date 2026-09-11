@@ -20,7 +20,11 @@ export const projectClaimAdminReadSchema = projectClaimSearchSchema
   .extend({ hackathonId: id })
   .strict();
 export const projectClaimAdminActionSchema = z
-  .object({ hackathonId: id, memberId: id.optional() })
+  .object({
+    hackathonId: id,
+    memberId: id.optional(),
+    afterMemberId: id.optional(),
+  })
   .strict();
 export const projectClaimSettingsSchema = z
   .object({
@@ -30,6 +34,10 @@ export const projectClaimSettingsSchema = z
     claimUrl: z.string().url().max(2000),
   })
   .strict()
+  .refine(({ published, emergency }) => published || !emergency, {
+    message: "Open the schedule before enabling emergency search.",
+    path: ["emergency"],
+  })
   .refine(
     ({ claimUrl }) => {
       if (!URL.canParse(claimUrl)) return false;
@@ -75,6 +83,7 @@ export const projectClaimSearchDtoSchema = z
   .max(25);
 export const hackerJudgingDtoSchema = z
   .object({
+    claimsOpen: z.boolean(),
     published: z.boolean(),
     emergency: z.boolean(),
     serverNow: z.string().datetime(),
@@ -111,8 +120,10 @@ export const hackerJudgingDtoSchema = z
     unscheduled: z.array(
       z
         .object({
+          challengeId: id,
           challenge: z.string(),
           children: z.array(z.string()),
+          judged: z.boolean(),
           rooms: z.array(z.string()),
         })
         .strict(),
@@ -120,6 +131,7 @@ export const hackerJudgingDtoSchema = z
     feedback: z.array(
       z
         .object({
+          challengeId: id,
           challenge: z.string(),
           ratings: z.array(
             z

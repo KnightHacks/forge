@@ -153,7 +153,6 @@ export const AUDITED_ADMIN_PROCEDURES = [
 ] as const;
 
 export const HYBRID_ADMIN_PROCEDURES = [
-  "project-claims.getClaimsAdmin",
   // Checkpoint continuations audit completion; creating an already-existing
   // building is an idempotent read and does not emit a second creation event.
   "judging-schedule.continueScheduleGeneration",
@@ -165,6 +164,7 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "project-claims.getClaimsAdmin",
   "judging-appointment-results.getAppointmentResults",
   "judging-schedule.listScheduleAdmin",
   "judging-schedule.listBuildings",

@@ -26,7 +26,7 @@ Provide an Invite hacker button accepting an email for teammates who forgot to j
 
 ### Hacker portal judging tab
 
-Add Judging using the existing portal's locked-navigation pattern. Claiming is available before schedule generation or room assignment. Organizers separately use Open schedule to publish timings to hackers. This action is independent of emergency lookup. The initial tab is locked. Every hacker action requires check-in to the relevant event, including claiming, sending or accepting teammate invitations, viewing results, and emergency search. Claiming may precede scheduling but never check-in. The exact pre-publication claim entry remains to be designed.
+Add Judging using the existing portal's locked-navigation pattern. Claiming is available before schedule generation or room assignment. Organizers separately use Open schedule to publish timings to hackers. This action is independent of emergency lookup. The initial tab is locked. Every hacker action requires check-in to the relevant event, including claiming, sending or accepting teammate invitations, viewing results, and emergency search. Claiming may precede scheduling but never check-in. The navigation unlocks after check-in and at least one claim email has been sent for the event, independently of schedule publication. Direct claim links remain usable by checked-in hackers before email delivery, including officer-shared links. Other visits to the locked judging route return to the dashboard.
 
 Once available, show only the claimed project's chronological itinerary. Each appointment identifies its time, building and room, challenge, and relevant collapsed sub-challenges. Do not expose other projects' appointments or judge rosters.
 
@@ -38,21 +38,21 @@ Once available, show only the claimed project's chronological itinerary. Each ap
 | Expired without evaluation              | Red, missing result |
 | At least one completed evaluation       | Green, judged       |
 
-Pair color with text. Release written feedback and individual rubric scores from completed authenticated-judge evaluations. Show no judge names, guest scores, or guest feedback. Aggregates and rankings are not part of the requested results view. Later judge edits appear on the next successful refresh.
+Pair color with text. A completed judging card opens a themed feedback dialog instead of adding a separate feedback card. Release written feedback and individual rubric scores from completed authenticated-judge evaluations. Show no judge names, guest scores, or guest feedback. Aggregates and rankings are not part of the requested results view. Later judge edits appear on the next successful refresh.
 
 Use a two-minute hacker-view heartbeat. Feedback is eligible immediately upon completed submission and appears on the next successful read. After an appointment ends, make a final verification request before displaying red or opening the missed-appointment dialog. Failed verification must not present a stale assumption as a confirmed missed appointment.
 
-After final verification confirms a missed appointment, show a prominent dialog with this message:
+Use KHIX-themed dialogs and remove decorative eyebrow headings. After final verification confirms a missed appointment, show a prominent dialog and a solid red warning with space before the itinerary. Use this message:
 
 > You missed your judging appointment. Expect a message from an organizer. You must respond to avoid disqualification across all challenges.
 
 Do not offer or promise rescheduling. Any reassignment is at officer discretion through the existing organizer workflow. The warning covers all challenges, not only the missed challenge. No automatic disqualification mechanism or response deadline has been requested. Dialog dismissal behavior remains to be settled.
 
-List unscheduled challenges at the bottom with their rooms and relevant child entries. Explain that hackers should make their way to the room when they have available time. Do not invent appointment times.
+List unscheduled challenges at the bottom as ordinary itinerary cards with their rooms and relevant child entries. Their time reads "When you have time - unscheduled". Do not invent appointment times.
 
 ### Command Center recovery
 
-Provide an explicit bulk Send claim links action and individual resend/copy actions. Claim links are single-use. No revoke or rotate controls are required. Issue a separate link per emailed recipient. Each link permits selecting any available member of its project. Consume it only after successful member selection. Resend/copy returns the same unused link. A used link cannot create another claim.
+Provide an explicit bulk Send claim links action and individual resend/copy actions. Email styling is shared across Knight Hacks hackathons, with generic project-claim copy. Distinguish linked team membership from recipient email delivery in the officer table. Claim links are single-use. No revoke or rotate controls are required. Issue a separate link per emailed recipient. Each link permits selecting any available member of its project. Consume it only after successful member selection. Resend/copy returns the same unused link. A used link cannot create another claim.
 
 Organizers can search for a person and copy their claim link for manual Discord or text delivery. Once a hacker claims, add their linked Discord contact to the project contact information so organizers can message them quickly. Preserve existing name/email contacts and handle missing Discord information honestly. This does not send messages automatically.
 
@@ -106,3 +106,5 @@ Emergency mode replaces claim-based entry with a searchable project dropdown. Se
 ## Open questions
 
 Implementation was authorized on 2026-09-11. See [status.md](./status.md) for rollout progress and deferred scope.
+
+Published emergency mode bypasses the email-delivery navigation lock so a total provider outage cannot disable the fallback. Check-in and schedule publication remain required.

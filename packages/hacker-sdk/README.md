@@ -844,7 +844,9 @@ Do not display raw tRPC, storage, mail, Discord, database, or provider errors.
 | `useInviteProjectMember`       | Reserve a team slot and email an existing hacker account with `{ email }`. |
 
 Judging and claims require check-in to the configured event. Claims work before
-officers open the schedule. `useHackerJudging` refreshes every two minutes;
+officers open the schedule. The `claimsOpen` field lets yearly portals lock their
+Judging navigation until the first claim email is sent. Direct claim links can
+still be used after check-in. `useHackerJudging` refreshes every two minutes;
 portals must also refetch after an appointment ends before showing it as missed.
 On request failure, show a retry state instead of deriving a missed appointment
 from the browser clock.

@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Check,
   Clock,
-  LockKeyhole,
   MapPin,
   Search,
   UserPlus,
   Users,
 } from "lucide-react";
 
+import type { HackerJudgingDto } from "@forge/hacker-sdk/contracts";
 import {
   useClaimProject,
   useHackerDashboard,
@@ -30,6 +30,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -37,6 +38,7 @@ import { toast } from "@forge/ui/toast";
 
 import styles from "./hacker-judging.module.css";
 import { KhixDashboardShell } from "./khix-dashboard";
+import dashboardStyles from "./khix-dashboard.module.css";
 
 const statusLabels = {
   future: "Upcoming",
@@ -64,7 +66,8 @@ export function HackerJudging({ token }: { token: string | null }) {
   const claim = useProjectClaim(token);
   const selectMember = useClaimProject();
   const invite = useInviteProjectMember();
-  const data = judging.error ? undefined : judging.data;
+  const data =
+    dashboard.error || access.error || judging.error ? undefined : judging.data;
   const checkedIn = dashboard.data?.application?.status === "checkedin";
   const searchResults = useQuery({
     queryKey: ["forge-hacker-sdk", "v1", portalKey, "judging-search", search],
@@ -80,8 +83,9 @@ export function HackerJudging({ token }: { token: string | null }) {
     .map((appointment) => Date.parse(appointment.endsAt));
   const nextEnd = endsAt?.length ? Math.min(...endsAt) : null;
   const refetch = judging.refetch;
+  const serverNow = data?.serverNow;
   useEffect(() => {
-    if (!nextEnd || !data) return;
+    if (!nextEnd || !serverNow) return;
     // Verify with the server after the deadline; never turn red from the local clock alone.
     const timer = window.setTimeout(
       () => {
@@ -89,11 +93,11 @@ export function HackerJudging({ token }: { token: string | null }) {
       },
       Math.min(
         2_147_483_647,
-        Math.max(0, nextEnd - Date.parse(data.serverNow)) + 100,
+        Math.max(0, nextEnd - Date.parse(serverNow)) + 100,
       ),
     );
     return () => window.clearTimeout(timer);
-  }, [nextEnd, data?.serverNow, refetch]);
+  }, [nextEnd, serverNow, refetch]);
   const missed =
     data?.appointments.filter(
       (appointment) => appointment.status === "missed",
@@ -134,30 +138,38 @@ export function HackerJudging({ token }: { token: string | null }) {
       );
     }
   }
+  if (!dashboard.error && dashboard.data && !checkedIn) redirect("/dashboard");
+  if (
+    checkedIn &&
+    data &&
+    !data.claimsOpen &&
+    !(data.published && data.emergency) &&
+    !token
+  )
+    redirect("/dashboard");
   return (
     <KhixDashboardShell activeItem="judging">
       <section className={styles.page}>
         <header className={styles.header}>
-          <p className={styles.eyebrow}>Your project · Your next stop</p>
           <h1>Judging</h1>
           <p>Know where to go and what to present.</p>
         </header>
-        {dashboard.isPending ? (
-          <div className={styles.panel}>Loading your hacker profile…</div>
-        ) : !checkedIn ? (
-          <div className={styles.panel}>
-            <LockKeyhole />
-            <h2>Check in to unlock judging</h2>
-            <p>
-              Your event check-in is required to claim a project and view
-              judging information.
-            </p>
+        {dashboard.error ? (
+          <div className={styles.panel} role="alert">
+            <p>{dashboard.error.message}</p>
+            <Button
+              className={styles.action}
+              onClick={() => void dashboard.refetch()}
+            >
+              Retry
+            </Button>
           </div>
+        ) : dashboard.isPending ? (
+          <div className={styles.panel}>Loading your hacker profile…</div>
         ) : (
           <>
             {token && !data?.emergency && (
               <section className={styles.panel} aria-label="Claim your project">
-                <p className={styles.eyebrow}>Connect your team</p>
                 <h2>{claim.data?.title ?? "Claim your project"}</h2>
                 <p>
                   Select your name to link this project to your hacker profile.
@@ -191,10 +203,18 @@ export function HackerJudging({ token }: { token: string | null }) {
                 Loading your judging itinerary…
               </div>
             )}
-            {judging.error && (
+            {(access.error ?? judging.error) && (
               <div className={styles.panel} role="alert">
-                <p>{judging.error.message}</p>
-                <Button onClick={() => void judging.refetch()}>Retry</Button>
+                <p>{(access.error ?? judging.error)?.message}</p>
+                <Button
+                  className={styles.action}
+                  onClick={() => {
+                    void access.refetch();
+                    void judging.refetch();
+                  }}
+                >
+                  Retry
+                </Button>
               </div>
             )}
             {data && (
@@ -212,7 +232,10 @@ export function HackerJudging({ token }: { token: string | null }) {
                 )}
                 {data.published && data.emergency && (
                   <section className={styles.panel}>
-                    <Label htmlFor="project-search" className={styles.eyebrow}>
+                    <Label
+                      htmlFor="project-search"
+                      className={styles.searchLabel}
+                    >
                       Find your project
                     </Label>
                     <div className={styles.search}>
@@ -220,7 +243,10 @@ export function HackerJudging({ token }: { token: string | null }) {
                       <Input
                         id="project-search"
                         value={search}
-                        onChange={(event) => setSearch(event.target.value)}
+                        onChange={(event) => {
+                          setSearch(event.target.value);
+                          setProjectId(undefined);
+                        }}
                         placeholder="Search project names"
                       />
                     </div>
@@ -266,7 +292,6 @@ export function HackerJudging({ token }: { token: string | null }) {
                   <>
                     <section className={styles.team}>
                       <div>
-                        <p className={styles.eyebrow}>Your team</p>
                         <h2>{data.project.title}</h2>
                         {!data.emergency && (
                           <p>
@@ -278,6 +303,7 @@ export function HackerJudging({ token }: { token: string | null }) {
                       </div>
                       {!data.emergency && (
                         <Button
+                          className={styles.action}
                           variant="outline"
                           onClick={() => setInviteOpen(true)}
                           disabled={!data.project.canInvite}
@@ -333,6 +359,17 @@ export function HackerJudging({ token }: { token: string | null }) {
                                     </ul>
                                   </div>
                                 )}
+                                {appointment.status === "complete" &&
+                                  !data.emergency && (
+                                    <JudgingFeedback
+                                      feedback={data.feedback.filter(
+                                        (entry) =>
+                                          entry.challengeId ===
+                                          appointment.challengeId,
+                                      )}
+                                      challenge={appointment.challenge}
+                                    />
+                                  )}
                               </div>
                             </article>
                           ))}
@@ -343,77 +380,55 @@ export function HackerJudging({ token }: { token: string | null }) {
                             project yet.
                           </p>
                         )}
-                        {!!data.unscheduled.length && (
-                          <section className={styles.panel}>
-                            <p className={styles.eyebrow}>When you have time</p>
-                            <h2>Unscheduled challenges</h2>
-                            <p>
-                              Make your way to these rooms when you have
-                              available time.
-                            </p>
-                            {data.unscheduled.map((entry) => (
-                              <div
-                                className={styles.unscheduled}
-                                key={entry.challenge}
-                              >
+                        <div className={styles.itinerary}>
+                          {data.unscheduled.map((entry) => (
+                            <article
+                              className={styles.appointment}
+                              key={entry.challengeId}
+                              data-status={entry.judged ? "complete" : "future"}
+                            >
+                              <div className={styles.time}>
+                                <Clock size={16} />
+                                <strong>
+                                  When you have time - unscheduled
+                                </strong>
+                              </div>
+                              <div className={styles.destination}>
+                                {entry.judged && (
+                                  <div className={styles.status}>
+                                    <Check size={14} /> Judged
+                                  </div>
+                                )}
                                 <h3>{entry.challenge}</h3>
-                                <p>
-                                  <MapPin size={16} />
+                                <p className={styles.room}>
+                                  <MapPin size={18} />
                                   {entry.rooms.join(" / ") ||
                                     "Ask an organizer for the room"}
                                 </p>
-                                <ul>
-                                  {entry.children.map((child) => (
-                                    <li key={child}>{child}</li>
-                                  ))}
-                                </ul>
+                                {!!entry.children.length && (
+                                  <div className={styles.challenges}>
+                                    <p>Prepare for</p>
+                                    <ul>
+                                      {entry.children.map((child) => (
+                                        <li key={child}>{child}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {entry.judged && !data.emergency && (
+                                  <JudgingFeedback
+                                    feedback={data.feedback.filter(
+                                      (evaluation) =>
+                                        evaluation.challengeId ===
+                                        entry.challengeId,
+                                    )}
+                                    challenge={entry.challenge}
+                                  />
+                                )}
                               </div>
-                            ))}
-                          </section>
-                        )}
-                        {!data.emergency && (
-                          <section className={styles.panel}>
-                            <p className={styles.eyebrow}>
-                              After your presentation
-                            </p>
-                            <h2>Feedback & rubric scores</h2>
-                            {!data.feedback.length ? (
-                              <p>
-                                Completed feedback will appear here after
-                                judging.
-                              </p>
-                            ) : (
-                              data.feedback.map((evaluation, index) => (
-                                <details
-                                  className={styles.feedback}
-                                  key={`${evaluation.challenge}:${index}`}
-                                >
-                                  <summary>
-                                    {evaluation.challenge} · Evaluation{" "}
-                                    {index + 1}
-                                  </summary>
-                                  <dl>
-                                    {evaluation.ratings.map((rating) => (
-                                      <div key={rating.label}>
-                                        <dt>{rating.label}</dt>
-                                        <dd>{rating.value} / 5</dd>
-                                      </div>
-                                    ))}
-                                  </dl>
-                                  {evaluation.responses.map((response) => (
-                                    <div
-                                      className={styles.response}
-                                      key={response.label}
-                                    >
-                                      <h3>{response.label}</h3>
-                                      <p>{response.value}</p>
-                                    </div>
-                                  ))}
-                                </details>
-                              ))
-                            )}
-                          </section>
-                        )}
+                            </article>
+                          ))}
+                        </div>
                         <p className={styles.muted}>
                           Times shown in {data.timezone}. Updates every two
                           minutes.
@@ -432,13 +447,20 @@ export function HackerJudging({ token }: { token: string | null }) {
             if (!open) setAcknowledged((previous) => [...previous, warningKey]);
           }}
         >
-          <DialogContent>
+          <DialogContent
+            className={`${dashboardStyles.dialog} ${styles.dialog}`}
+          >
             <DialogHeader>
-              <DialogTitle>Missed judging appointment</DialogTitle>
-              <DialogDescription>{missedMessage}</DialogDescription>
+              <DialogTitle className={styles.dialogTitle}>
+                Missed judging appointment
+              </DialogTitle>
+              <DialogDescription className={styles.dialogCopy}>
+                {missedMessage}
+              </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:space-x-0">
               <Button
+                className={styles.action}
                 onClick={() =>
                   setAcknowledged((previous) => [...previous, warningKey])
                 }
@@ -454,10 +476,14 @@ export function HackerJudging({ token }: { token: string | null }) {
             if (!invite.isPending) setInviteOpen(open);
           }}
         >
-          <DialogContent>
+          <DialogContent
+            className={`${dashboardStyles.dialog} ${styles.dialog}`}
+          >
             <DialogHeader>
-              <DialogTitle>Invite a teammate</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={styles.dialogTitle}>
+                Invite a teammate
+              </DialogTitle>
+              <DialogDescription className={styles.dialogCopy}>
                 Use the email on their hacker profile. They must be checked in
                 to this event. The invitation reserves one of your team's four
                 places.
@@ -465,14 +491,16 @@ export function HackerJudging({ token }: { token: string | null }) {
             </DialogHeader>
             <Label htmlFor="invite-email">Hacker email</Label>
             <Input
+              className={styles.input}
               id="invite-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="teammate@example.com"
             />
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:space-x-0">
               <Button
+                className={styles.action}
                 variant="outline"
                 disabled={invite.isPending}
                 onClick={() => setInviteOpen(false)}
@@ -480,6 +508,7 @@ export function HackerJudging({ token }: { token: string | null }) {
                 Cancel
               </Button>
               <Button
+                className={styles.action}
                 disabled={!email || invite.isPending}
                 onClick={() => void sendInvite()}
               >
@@ -490,5 +519,58 @@ export function HackerJudging({ token }: { token: string | null }) {
         </Dialog>
       </section>
     </KhixDashboardShell>
+  );
+}
+
+function JudgingFeedback({
+  feedback,
+  challenge,
+}: {
+  feedback: HackerJudgingDto["feedback"];
+  challenge: string;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" className={styles.action}>
+          View feedback
+        </Button>
+      </DialogTrigger>
+      <DialogContent className={`${dashboardStyles.dialog} ${styles.dialog}`}>
+        <DialogHeader>
+          <DialogTitle className={styles.dialogTitle}>
+            {challenge} feedback
+          </DialogTitle>
+          <DialogDescription className={styles.dialogCopy}>
+            Completed rubric scores and written feedback. Judge identities are
+            private.
+          </DialogDescription>
+        </DialogHeader>
+        {!feedback.length && <p>Completed feedback is not available yet.</p>}
+        {feedback.map((evaluation, index) => (
+          <section
+            className={styles.feedback}
+            key={index}
+            aria-label={`Evaluation ${index + 1}`}
+          >
+            {feedback.length > 1 && <h3>Evaluation {index + 1}</h3>}
+            <dl>
+              {evaluation.ratings.map((rating) => (
+                <div key={rating.label}>
+                  <dt>{rating.label}</dt>
+                  <dd>{rating.value} / 5</dd>
+                </div>
+              ))}
+            </dl>
+            {evaluation.responses.map((response) => (
+              <div className={styles.response} key={response.label}>
+                <h3>{response.label}</h3>
+                <p>{response.value}</p>
+              </div>
+            ))}
+          </section>
+        ))}
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { db } from "@forge/db/client";
 import type * as Schema from "@forge/db/schemas/knight-hacks";
 import type { DisposableDatabase } from "@forge/db/testing";
-import { and, eq } from "@forge/db";
+import { and, eq, sql } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -137,6 +145,10 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     schema = await import("@forge/db/schemas/knight-hacks");
     claims = await import("../../utils/project-claims/claims");
     reads = await import("../../utils/project-claims/itinerary");
+  }, 120_000);
+  beforeEach(async () => {
+    const { User } = await import("@forge/db/schemas/auth");
+    await client.execute(sql`TRUNCATE ${schema.Hackathon}, ${User} CASCADE`);
     event = await seedEvent();
     otherEvent = await seedEvent();
     users = [];
@@ -144,7 +156,14 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     const seeded = await seedProject(event, 3);
     project = seeded.id;
     members = seeded.members;
-  }, 120_000);
+  }, 30_000);
+  async function seedClaim() {
+    const link = await claims.prepareClaimLink(event, required(members[0]));
+    await claims.selectProjectMember(required(users[0]), event, {
+      token: required(link.token),
+      memberId: required(members[1]),
+    });
+  }
   afterAll(async () => {
     await client.$client.end();
     await database.drop();
@@ -157,6 +176,9 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       event,
       required(members[1]),
     );
+    expect(
+      (await reads.hackerJudging(required(users[0]), event)).claimsOpen,
+    ).toBe(false);
     expect(link.token).toBeTruthy();
     await expect(
       claims.previewProjectClaim(
@@ -201,6 +223,7 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     );
   });
   it("TC-008/017: invitation occupies the fourth slot; retry and acceptance never add another", async () => {
+    await seedClaim();
     expect(
       await claims.inviteProjectMember(
         required(users[0]),
@@ -208,6 +231,12 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
         "hacker2@example.test",
       ),
     ).toMatchObject({ sent: true });
+    expect(
+      (await reads.hackerJudging(required(users[0]), event)).claimsOpen,
+    ).toBe(true);
+    expect(
+      (await reads.hackerJudging(required(users[0]), otherEvent)).claimsOpen,
+    ).toBe(false);
     expect(
       await claims.inviteProjectMember(
         required(users[0]),
@@ -263,6 +292,7 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     ).toHaveLength(1);
   });
   it("TC-007/015/016: event isolation, unpublished emergency, restored claims", async () => {
+    await seedClaim();
     const own = await reads.hackerJudging(required(users[0]), event);
     expect(own.project?.id).toBe(project);
     expect(own.appointments).toEqual([]);
@@ -318,6 +348,11 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     });
   });
   it("TC-004/015: completed authenticated feedback is anonymous and disappears in emergency mode", async () => {
+    await seedClaim();
+    await client
+      .update(schema.HackathonJudgingConfiguration)
+      .set({ hackerSchedulePublished: true })
+      .where(eq(schema.HackathonJudgingConfiguration.hackathonId, event));
     const challengeId = randomUUID(),
       judgeId = randomUUID(),
       guestId = randomUUID(),
@@ -404,6 +439,7 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     const own = await reads.hackerJudging(required(users[0]), event);
     expect(own.feedback).toEqual([
       {
+        challengeId,
         challenge: "General",
         ratings: [{ label: "Technical execution", value: 4 }],
         responses: [{ label: "Feedback", value: "Great demo" }],
@@ -426,7 +462,118 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       (await reads.hackerJudging(required(users[0]), event)).feedback,
     ).toEqual(own.feedback);
   });
+  it("preserves the reserved slot and credential after a provider failure", async () => {
+    await seedClaim();
+    const { sendEmail } = await import("@forge/email");
+    vi.mocked(sendEmail).mockRejectedValueOnce(
+      new Error("provider unavailable"),
+    );
+    expect(
+      await claims.inviteProjectMember(
+        required(users[0]),
+        event,
+        "hacker2@example.test",
+      ),
+    ).toMatchObject({ sent: false });
+    const roster = await claims.projectRoster(project);
+    expect(roster).toHaveLength(4);
+    const invited = required(
+      roster.find((member) => member.invitedUserId === users[2]),
+    );
+    const link = await claims.prepareClaimLink(event, invited.id);
+    expect(link.token).toBeTruthy();
+    expect(link.sentAt).toBeNull();
+    expect(
+      (await reads.hackerJudging(required(users[0]), event)).claimsOpen,
+    ).toBe(false);
+    expect(
+      await claims.inviteProjectMember(
+        required(users[0]),
+        event,
+        "hacker2@example.test",
+      ),
+    ).toMatchObject({ sent: true });
+    expect((await claims.prepareClaimLink(event, invited.id)).token).toBe(
+      link.token,
+    );
+    expect(await claims.projectRoster(project)).toHaveLength(4);
+  });
+
+  it("rejects legacy oversized projects before issuing links or linking profiles", async () => {
+    const oversized = await seedProject(event, 5);
+    await expect(
+      claims.prepareClaimLink(event, required(oversized.members[0])),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await client.query.ProjectClaimLink.findMany()).toHaveLength(0);
+    const token = "a".repeat(64);
+    await client
+      .insert(schema.ProjectClaimLink)
+      .values({ memberId: required(oversized.members[0]), token });
+    await expect(
+      claims.previewProjectClaim(required(users[0]), event, token),
+    ).rejects.toThrow();
+    await expect(
+      claims.selectProjectMember(required(users[0]), event, {
+        token,
+        memberId: required(oversized.members[0]),
+      }),
+    ).rejects.toThrow();
+    await client.insert(schema.ProjectClaim).values({
+      projectId: oversized.id,
+      hackathonId: event,
+      memberId: required(oversized.members[0]),
+      userId: required(users[0]),
+    });
+    await expect(
+      claims.inviteProjectMember(
+        required(users[0]),
+        event,
+        "hacker2@example.test",
+      ),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await claims.projectRoster(oversized.id)).toHaveLength(5);
+  });
+
+  it("hides recipient state and throttles repeated invitation attempts", async () => {
+    await seedClaim();
+    const failures = [];
+    for (const email of [
+      "unknown@example.test",
+      "hacker6@example.test",
+      "hacker0@example.test",
+    ]) {
+      try {
+        await claims.inviteProjectMember(required(users[0]), event, email);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    expect(failures).toHaveLength(3);
+    for (const error of failures)
+      expect(error).toMatchObject({
+        code: "BAD_REQUEST",
+        message:
+          "That email cannot be invited. Use your teammate's hacker profile email and ensure they are checked in.",
+      });
+    for (let index = 0; index < 7; index++)
+      await expect(
+        claims.inviteProjectMember(
+          required(users[0]),
+          event,
+          "unknown@example.test",
+        ),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      claims.inviteProjectMember(
+        required(users[0]),
+        event,
+        "unknown@example.test",
+      ),
+    ).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS" });
+  });
+
   it("TC-011: first claim permanently blocks replacement, before any rooms exist", async () => {
+    await seedClaim();
     const [config] = await client
       .select()
       .from(schema.HackathonJudgingConfiguration)

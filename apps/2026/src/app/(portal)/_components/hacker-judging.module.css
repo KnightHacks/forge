@@ -8,13 +8,8 @@
 .header {
   margin-bottom: 2rem;
 }
-.eyebrow {
-  color: var(--khix-gold);
-  font-size: 0.72rem;
+.searchLabel {
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  margin-bottom: 0.5rem;
 }
 .header h1 {
   font-family: var(--khix-display-font);
@@ -56,7 +51,7 @@
   gap: 1rem;
   margin: 2rem 0 1.5rem;
 }
-.team p:not(.eyebrow) {
+.team p {
   opacity: 0.7;
   font-size: 0.8rem;
 }
@@ -110,6 +105,7 @@
 .itinerary {
   display: grid;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 .appointment {
   display: grid;
@@ -185,8 +181,7 @@
   opacity: 0.6;
   margin-bottom: 0.4rem;
 }
-.challenges ul,
-.unscheduled ul {
+.challenges ul {
   padding-left: 1rem;
   list-style: disc;
   line-height: 1.7;
@@ -195,7 +190,10 @@
   display: flex;
   gap: 0.8rem;
   border: 1px solid hsl(var(--destructive));
-  padding: 1rem;
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
   border-radius: 0.7rem;
   font-size: 0.9rem;
   line-height: 1.6;
@@ -203,29 +201,11 @@
 .warning svg {
   flex-shrink: 0;
 }
-.unscheduled,
 .feedback {
   margin-top: 1rem;
   padding: 1rem;
   background: var(--khix-near-black-violet);
   border-radius: 0.7rem;
-}
-.unscheduled h3 {
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-}
-.unscheduled p {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-}
-.feedback summary {
-  cursor: pointer;
-  min-height: 44px;
-  align-content: center;
-  font-weight: 600;
 }
 .feedback dl > div {
   display: flex;
@@ -271,4 +251,53 @@
   .destination {
     padding: 1rem;
   }
+}
+
+.dialog {
+  --khix-near-black-violet: #190925;
+  width: calc(100% - 2rem);
+  gap: 1.25rem;
+  padding: 1.75rem;
+}
+.dialogTitle {
+  padding-right: 1.5rem;
+  font-family: var(--font-cormorant-garamond, Georgia), Georgia, serif;
+  font-size: 2rem;
+  line-height: 1.15;
+  color: var(--khix-ink);
+}
+.dialogCopy {
+  color: var(--khix-muted);
+  line-height: 1.65;
+}
+.action {
+  min-height: 44px;
+  border: 1px solid var(--khix-gold);
+  border-radius: 0.66rem;
+  background: var(--khix-near-black-violet);
+  color: var(--khix-gold);
+  white-space: normal;
+}
+.destination .action {
+  margin-top: 1rem;
+}
+.action:hover:not(:disabled) {
+  background: var(--khix-gold);
+  color: var(--khix-near-black-violet);
+}
+.action:focus-visible {
+  outline: 2px solid var(--khix-gold);
+  outline-offset: 3px;
+}
+.input {
+  min-height: 44px;
+  border-color: var(--khix-muted);
+  background: var(--khix-near-black-violet);
+  color: var(--khix-ink);
+}
+
+.dialog :focus-visible {
+  outline: 2px solid var(--khix-gold);
+  outline-offset: 3px;
+  box-shadow: none;
 }

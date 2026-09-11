@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
 import type { HackerJudgingDto } from "@forge/hacker-sdk/contracts";
-import { and, asc, eq, ilike, inArray, isNull } from "@forge/db";
+import { and, asc, eq, ilike, inArray, isNotNull, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   Hackathon,
@@ -13,9 +13,11 @@ import {
   JudgingRubricItem,
   Project,
   ProjectChallenge,
+  ProjectClaimLink,
   ProjectEvaluation,
   ProjectEvaluationRating,
   ProjectEvaluationResponse,
+  ProjectMember,
   ProjectToChallenge,
 } from "@forge/db/schemas/knight-hacks";
 
@@ -63,7 +65,7 @@ export async function hackerJudging(
   selectedId?: string,
 ): Promise<HackerJudgingDto> {
   await requireClaimParticipant(userId, hackathonId);
-  const [config, own, hackathon] = await Promise.all([
+  const [config, own, hackathon, sentLink] = await Promise.all([
     db.query.HackathonJudgingConfiguration.findFirst({
       where: eq(HackathonJudgingConfiguration.hackathonId, hackathonId),
     }),
@@ -72,11 +74,23 @@ export async function hackerJudging(
       columns: { timezone: true },
       where: eq(Hackathon.id, hackathonId),
     }),
+    db
+      .select({ id: ProjectClaimLink.id })
+      .from(ProjectClaimLink)
+      .innerJoin(ProjectMember, eq(ProjectMember.id, ProjectClaimLink.memberId))
+      .innerJoin(Project, eq(Project.id, ProjectMember.projectId))
+      .where(
+        and(
+          eq(Project.hackathonId, hackathonId),
+          isNull(Project.deletedAt),
+          isNotNull(ProjectClaimLink.sentAt),
+        ),
+      )
+      .limit(1),
   ]);
-  if (config?.hackerSchedulePublished)
-    await reconcileExpiredJudgingDrafts(hackathonId);
   const now = new Date();
   const output: HackerJudgingDto = {
+    claimsOpen: sentLink.length > 0,
     published: config?.hackerSchedulePublished ?? false,
     emergency: config?.hackerScheduleEmergency ?? false,
     serverNow: now.toISOString(),
@@ -119,6 +133,9 @@ export async function hackerJudging(
       Math.max(project.participantCount, roster.length) < 4,
   };
   if (!output.published) return output;
+  // Materialize deadline submissions before the final missed-appointment check.
+  // Unclaimed hackers and an empty emergency selection never run this work.
+  await reconcileExpiredJudgingDrafts(hackathonId);
   const [challenges, rooms, appointments, evaluations] = await Promise.all([
     db
       .select({
@@ -209,7 +226,12 @@ export async function hackerJudging(
   output.unscheduled = challenges
     .filter((challenge) => !challenge.parentId && !challenge.isScheduled)
     .map((challenge) => ({
+      challengeId: challenge.id,
       challenge: challenge.label,
+      judged: evaluations.some(
+        (evaluation) =>
+          evaluation.challengeId === challenge.id && evaluation.isComplete,
+      ),
       children: children(challenge.id),
       rooms: rooms
         .filter((room) => room.challengeId === challenge.id)
@@ -251,6 +273,7 @@ export async function hackerJudging(
         .orderBy(asc(JudgingRubricItem.displayOrder)),
     ]);
     output.feedback = eligible.map((evaluation) => ({
+      challengeId: evaluation.challengeId,
       challenge:
         challenges.find((challenge) => challenge.id === evaluation.challengeId)
           ?.label ?? "Judging",

@@ -690,7 +690,10 @@ export const projectsRouter = createTRPCRouter({
         }
         const [lock, activeRoom] = await Promise.all([
           tx.query.HackathonJudgingConfiguration.findFirst({
-            columns: { projectInventoryLockedAt: true },
+            columns: {
+              projectInventoryLockedAt: true,
+              projectClaimsStartedAt: true,
+            },
             where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
           }),
           tx.query.JudgingRoom.findFirst({
@@ -704,8 +707,9 @@ export const projectsRouter = createTRPCRouter({
         if (lock?.projectInventoryLockedAt) {
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message:
-              "The judging inventory is locked. Use the confirmed full replacement import instead.",
+            message: lock.projectClaimsStartedAt
+              ? "Project claims have started. The inventory is add-only."
+              : "The judging inventory is locked. Use the confirmed full replacement import instead.",
           });
         }
         if (activeRoom) {
@@ -989,6 +993,16 @@ export const projectsRouter = createTRPCRouter({
         if (!project) throw new TRPCError({ code: "NOT_FOUND" });
         if (project.deletedAt) return project;
         await assertNoProjectReservations(tx, [project.id]);
+        if (
+          await tx.query.ProjectClaim.findFirst({
+            columns: { memberId: true },
+            where: eq(ProjectClaim.projectId, project.id),
+          })
+        )
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Claimed projects cannot be deleted.",
+          });
 
         const [saved] = await tx
           .update(Project)

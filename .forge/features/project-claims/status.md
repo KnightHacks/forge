@@ -1,6 +1,6 @@
 # Project claims and hacker judging status
 
-Current phase: Implementation and validation.
+Current phase: UI refinement and CodeRabbit follow-up.
 
 ## Decision log
 
@@ -35,6 +35,9 @@ Current phase: Implementation and validation.
 - 2026-09-11, round four: Invitations consume capacity immediately. Imported, invited, and claimed identities share the same four slots. Claiming links an existing slot to the real hacker profile, never adds a second person.
 - 2026-09-11, round four: Missed dialog says to expect an organizer message and respond to avoid disqualification across all challenges. No offer or promise of rescheduling. This supersedes earlier rescheduling copy; officers retain discretion.
 - 2026-09-11, round four: Updated all four draft artifacts and added shared-capacity/oversized-import acceptance cases. Implementation has not started.
+
+- 2026-09-11, UI revision: Theme KHIX dialogs; remove eyebrow headings; use a solid red missed warning with spacing; put unscheduled entries in itinerary cards; move feedback into completed-card dialogs. Lock the rail before check-in or initial email delivery. Keep direct claim links available after check-in. Use event-agnostic Knight Hacks email copy and separate membership from email-delivery status in Blade.
+- 2026-09-11, CodeRabbit: Accepted audit target/URL fixes, bounded delivery, recipient privacy/throttling, single-use mutation retry fix, independent test fixtures, claimed-project deletion guard, and oversized-link prevention. Retained emergency suppression for owners and the fixed four-member limit as explicitly required. Kept deadline reconciliation so final verification cannot invent misses, but skip it when no authorized project is selected.
 
 ## Implementation progress
 
@@ -83,3 +86,5 @@ Current phase: Implementation and validation.
 - Missed dialogs may be acknowledged for an appointment attempt on the current page; a persistent warning stays visible. No disqualification automation.
 - Officer recovery copies/resends unused recipient links, including when a different teammate claimed the recipient’s original slot. No reset of used credentials.
 - Exit: required checks, Forge review capped at five rounds, issue/MR with hosted desktop/mobile screenshots, CodeRabbit findings addressed, and real email inspection.
+
+Published emergency mode bypasses the email-delivery navigation lock so a total provider outage cannot disable the fallback. Check-in and schedule publication remain required.

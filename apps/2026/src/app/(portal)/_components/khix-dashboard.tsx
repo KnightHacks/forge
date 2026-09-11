@@ -1461,7 +1461,10 @@ export function KhixDashboardShell({
                   </span>
                 </button>
               )}
-              {eventsUnlocked && judgingQuery.data?.published ? (
+              {eventsUnlocked &&
+              (judgingQuery.data?.claimsOpen ||
+                (judgingQuery.data?.published &&
+                  judgingQuery.data.emergency)) ? (
                 <Link
                   className={joinClasses(
                     styles.railLink,
@@ -1483,7 +1486,7 @@ export function KhixDashboardShell({
                     styles.railButton,
                     styles.railLinkLocked,
                   )}
-                  aria-label="Judging locked until check-in and schedule publication"
+                  aria-label="Judging locked until check-in and claim emails are sent"
                   disabled
                 >
                   <span className={styles.railIcon} aria-hidden="true">

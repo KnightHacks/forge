@@ -215,12 +215,13 @@ export function useHackerLeaderboard(
 
 function useParticipantMutation<TInput, TOutput>(
   mutation: (input: TInput) => Promise<TOutput>,
+  retry = true,
 ) {
   const { portalKey } = useHackerSdkClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: mutation,
-    retry: shouldRetryHackerSdkRequest,
+    retry: retry ? shouldRetryHackerSdkRequest : false,
     retryDelay: hackerSdkRetryDelay,
     async onSuccess() {
       await invalidateHackerParticipantQueries(queryClient, portalKey);
@@ -344,8 +345,9 @@ export function useProjectClaim(token: string | null) {
 
 export function useClaimProject() {
   const { client } = useHackerSdkClient();
-  return useParticipantMutation((input: { token: string; memberId: string }) =>
-    client.claimProject(input),
+  return useParticipantMutation(
+    (input: { token: string; memberId: string }) => client.claimProject(input),
+    false,
   );
 }
 

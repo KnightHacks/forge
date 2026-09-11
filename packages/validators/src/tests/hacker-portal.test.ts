@@ -133,6 +133,13 @@ describe("Hacker Portal validators", () => {
         claimUrl: "https://2026.knighthacks.org/dashboard/judging",
       }).success,
     ).toBe(true);
+    expect(
+      projectClaimSettingsSchema.safeParse({
+        ...settings,
+        emergency: true,
+        claimUrl: "https://2026.knighthacks.org/dashboard/judging",
+      }).success,
+    ).toBe(false);
   });
 
   it("TC-SDK-001 publishes schemas for every participant v1 procedure", () => {

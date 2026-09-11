@@ -33,16 +33,46 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
   const [dialog, setDialog] = useState<"settings" | "send" | null>(null);
   const data = api.judging.getClaimsAdmin.useQuery({ hackathonId, query });
   const utils = api.useUtils();
-  const send = api.judging.sendClaimLinks.useMutation({
-    onSuccess: async (result) => {
-      toast[result.failed ? "error" : "success"](
-        `${result.sent} sent${result.failed ? `, ${result.failed} failed. Retry to send the remaining links.` : "."}`,
+  const [delivery, setDelivery] = useState({
+    running: false,
+    sent: 0,
+    failed: 0,
+  });
+  const send = api.judging.sendClaimLinks.useMutation();
+  async function sendLinks(memberId?: string) {
+    let sent = 0;
+    let failed = 0;
+    setDelivery({ running: true, sent, failed });
+    try {
+      let hasMore = true;
+      let afterMemberId: string | undefined;
+      while (hasMore) {
+        const result = await send.mutateAsync({
+          hackathonId,
+          memberId,
+          afterMemberId,
+        });
+        sent += result.sent;
+        failed += result.failed;
+        setDelivery({ running: true, sent, failed });
+        hasMore = !memberId && result.hasMore;
+        afterMemberId = result.nextMemberId;
+      }
+      toast[failed ? "error" : "success"](
+        `${sent} sent${failed ? `, ${failed} failed. Retry to resend failed links.` : "."}`,
       );
       setDialog(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Email delivery failed. Retry to continue.",
+      );
+    } finally {
+      setDelivery({ running: false, sent, failed });
       await utils.judging.getClaimsAdmin.invalidate();
-    },
-    onError: (error) => toast.error(error.message),
-  });
+    }
+  }
   const copy = api.judging.copyClaimLink.useMutation({
     onSuccess: async ({ url }) => {
       try {
@@ -90,7 +120,7 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                 <Settings className="mr-2 size-4" /> Publication settings
               </Button>
               <Button
-                disabled={!claims.claimUrl || send.isPending}
+                disabled={!claims.claimUrl || delivery.running}
                 onClick={() => setDialog("send")}
               >
                 <Mail className="mr-2 size-4" /> Send claim links
@@ -146,7 +176,8 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                 <tr>
                   <th className="p-3">Hacker / project</th>
                   <th className="p-3">Contact</th>
-                  <th className="p-3">Claim</th>
+                  <th className="p-3">Team member</th>
+                  <th className="p-3">Recipient email</th>
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
@@ -186,14 +217,15 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                     </td>
                     <td className="p-3">
                       {member.userId
-                        ? "Claimed"
-                        : member.usedAt
-                          ? "Link used"
-                          : member.invited
-                            ? "Invited"
-                            : "Unclaimed"}
+                        ? "Profile linked"
+                        : member.invited
+                          ? "Invitation pending"
+                          : "Not linked"}
+                    </td>
+                    <td className="p-3">
+                      {member.sentAt ? "Email sent" : "Not emailed"}
                       <p className="text-xs text-muted-foreground">
-                        {member.sentAt ? "Email sent" : "Not sent"}
+                        {member.usedAt ? "Link redeemed" : "Link unused"}
                       </p>
                     </td>
                     <td className="p-3">
@@ -219,12 +251,10 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                           aria-label={`Send claim email to ${member.name}`}
                           disabled={
                             !!member.usedAt ||
-                            send.isPending ||
+                            delivery.running ||
                             !claims.claimUrl
                           }
-                          onClick={() =>
-                            send.mutate({ hackathonId, memberId: member.id })
-                          }
+                          onClick={() => void sendLinks(member.id)}
                         >
                           <Mail className="size-4" />
                         </Button>
@@ -241,7 +271,9 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
             )}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Showing up to 100 members. Narrow the search to find someone.
+            Team membership and email delivery are separate. A hacker can use a
+            teammate's link or one shared by an organizer. Showing up to 100
+            members.
           </p>
         </CardContent>
       </Card>
@@ -256,7 +288,7 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
       <Dialog
         open={dialog === "send"}
         onOpenChange={(open) => {
-          if (!open && !send.isPending) setDialog(null);
+          if (!open && !delivery.running) setDialog(null);
         }}
       >
         <DialogContent>
@@ -271,16 +303,18 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
           <DialogFooter>
             <Button
               variant="outline"
-              disabled={send.isPending}
+              disabled={delivery.running}
               onClick={() => setDialog(null)}
             >
               Cancel
             </Button>
             <Button
-              disabled={send.isPending}
-              onClick={() => send.mutate({ hackathonId })}
+              disabled={delivery.running}
+              onClick={() => void sendLinks()}
             >
-              {send.isPending ? "Sending…" : "Send claim links"}
+              {delivery.running
+                ? `Sending… ${delivery.sent} sent`
+                : "Send claim links"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -350,7 +384,13 @@ function ClaimSettings({
             <Switch
               id="schedule-published"
               checked={form.published}
-              onCheckedChange={(published) => setForm({ ...form, published })}
+              onCheckedChange={(published) =>
+                setForm({
+                  ...form,
+                  published,
+                  emergency: published && form.emergency,
+                })
+              }
             />
           </div>
           <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
@@ -360,6 +400,7 @@ function ClaimSettings({
               </Label>
               <Switch
                 id="schedule-emergency"
+                disabled={!form.published}
                 checked={form.emergency}
                 onCheckedChange={(emergency) => setForm({ ...form, emergency })}
               />

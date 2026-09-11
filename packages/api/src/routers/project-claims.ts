@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
-import { and, asc, eq, ilike, isNull, or } from "@forge/db";
+import { and, asc, eq, gt, ilike, isNull, or } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
@@ -13,6 +13,7 @@ import {
   ProjectClaimLink,
   ProjectMember,
 } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 import {
   projectClaimAdminActionSchema,
   projectClaimAdminReadSchema,
@@ -107,6 +108,15 @@ export const projectClaimsRouter = {
             code: "PRECONDITION_FAILED",
             message: "Save a schedule before opening it to hackers.",
           });
+        const previous = await tx.query.HackathonJudgingConfiguration.findFirst(
+          {
+            columns: { projectClaimUrl: true },
+            where: eq(
+              HackathonJudgingConfiguration.hackathonId,
+              input.hackathonId,
+            ),
+          },
+        );
         const settings = {
           hackerSchedulePublished: input.published,
           hackerScheduleEmergency: input.emergency,
@@ -129,6 +139,13 @@ export const projectClaimsRouter = {
                 targetType: "hackathon",
                 targetId: input.hackathonId,
                 targetLabel: "Hacker judging publication",
+              },
+            ],
+            changes: [
+              {
+                field: "claimUrl",
+                before: previous?.projectClaimUrl ?? null,
+                after: input.claimUrl,
               },
             ],
             metadata: {
@@ -162,7 +179,7 @@ export const projectClaimsRouter = {
           {
             relation: "primary",
             targetType: "project",
-            targetId: input.memberId,
+            targetId: result.projectId,
             targetLabel: "Project claim recipient",
           },
         ],
@@ -187,25 +204,36 @@ export const projectClaimsRouter = {
             eq(Project.hackathonId, input.hackathonId),
             isNull(Project.deletedAt),
             isNull(ProjectClaimLink.consumedAt),
+            input.afterMemberId && !input.memberId
+              ? gt(ProjectMember.id, input.afterMemberId)
+              : undefined,
             input.memberId
               ? eq(ProjectMember.id, input.memberId)
               : isNull(ProjectClaimLink.sentAt),
           ),
-        );
+        )
+        .orderBy(asc(ProjectMember.id))
+        .limit(6);
+      const hasMore = members.length > 5;
+      const batch = members.slice(0, 5);
       let sent = 0;
       let failed = 0;
-      // Bound provider concurrency; each failed recipient retains the same retryable link.
-      for (let offset = 0; offset < members.length; offset += 5) {
-        const results = await Promise.allSettled(
-          members
-            .slice(offset, offset + 5)
-            .map((member) =>
-              projectClaimDelivery(input.hackathonId, member.id, true),
-            ),
-        );
-        for (const result of results) {
-          if (result.status === "fulfilled") sent++;
-          else failed++;
+      // Five concurrent deliveries per request; the client continues in bounded batches.
+      const results = await Promise.allSettled(
+        batch.map((member) =>
+          projectClaimDelivery(input.hackathonId, member.id, true),
+        ),
+      );
+      for (const result of results) {
+        if (result.status === "fulfilled") sent++;
+        else {
+          failed++;
+          logger.error("Project claim delivery failed", {
+            code:
+              result.reason instanceof TRPCError
+                ? result.reason.code
+                : "EMAIL_PROVIDER_FAILURE",
+          });
         }
       }
       await createAdminAuditEvent({
@@ -221,6 +249,11 @@ export const projectClaimsRouter = {
         ],
         metadata: { sent, failed },
       });
-      return { sent, failed };
+      return {
+        sent,
+        failed,
+        hasMore,
+        nextMemberId: hasMore ? batch.at(-1)?.id : undefined,
+      };
     }),
 } satisfies TRPCRouterRecord;

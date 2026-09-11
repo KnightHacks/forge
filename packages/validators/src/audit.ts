@@ -39,6 +39,7 @@ export const AUDIT_ACTION_CATALOG = {
     "hackathons",
     "Updated hacker judging settings",
     ["published", "emergency"],
+    ["claimUrl"],
   ),
   "project.claim.link_copied": policy(
     "hackathons",

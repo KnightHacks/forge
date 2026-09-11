@@ -5,7 +5,6 @@ import { projectClaimEmail } from "../project-claim";
 describe("project claim email", () => {
   it("escapes imported names and keeps the claim action in HTML and text", () => {
     const mail = projectClaimEmail({
-      event: "Future Hack",
       project: '<img src=x onerror="bad()">',
       name: "A&B",
       url: "https://hack.example/claim?token=123",
@@ -15,6 +14,7 @@ describe("project claim email", () => {
     expect(mail.html).toContain("A&amp;B");
     expect(mail.html).toContain('href="https://hack.example/claim?token=123"');
     expect(mail.text).toContain("https://hack.example/claim?token=123");
-    expect(mail.subject).toContain("Future Hack");
+    expect(mail.subject).toContain("Knight Hacks: Claim");
+    expect(mail.html).toContain("for a Knight Hacks hackathon");
   });
 });

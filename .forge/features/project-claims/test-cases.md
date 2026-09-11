@@ -40,7 +40,7 @@ Expected observations: Neutral, yellow, red, yellow, and green respectively, wit
 
 Setup: Complete authenticated feedback, incomplete work, and guest feedback exist.
 
-Action: Read project feedback after completion.
+Action: Open View feedback on a completed judging card.
 
 Expected observations: Eligible authenticated feedback appears without waiting for the event to finish. Return individual rubric scores and written feedback without judge names or identity fields. Guest scores, guest feedback, and incomplete work are absent.
 
@@ -108,7 +108,7 @@ Setup: An expired appointment lacks evaluations; another has incomplete judge wo
 
 Action: Open or refresh the itinerary.
 
-Expected observations: Verify once with the server after the appointment ends before showing red and the warning. Completed results resolve green; incomplete work resolves yellow. Failed verification does not assert a miss. The dialog says the appointment was missed, tells the hacker to expect organizer contact, and requires a response to avoid disqualification across all challenges. It contains no rescheduling offer or guarantee. Dismissal behavior remains open.
+Expected observations: Verify once with the server after the appointment ends before showing red and the warning. Completed results resolve green; incomplete work resolves yellow. Failed verification does not assert a miss. The dialog says the appointment was missed, tells the hacker to expect organizer contact, and requires a response to avoid disqualification across all challenges. It contains no rescheduling offer or guarantee. Acknowledgement closes the dialog for this page visit; the solid red warning remains with spacing above the itinerary.
 
 ### TC-NEG-004: Mode and schedule changes
 
@@ -193,3 +193,19 @@ Expected observations: The project is rejected as over the fixed four-person lim
 ## Open questions
 
 Validation results are in [status.md](./status.md). Mistaken-claim correction and invitation cancellation are outside this slice; token rotation/revocation remains excluded.
+
+### TC-019: KHIX navigation and compact itinerary
+
+Setup: Compare a hacker who has not checked in, a checked-in hacker before any claim emails are sent, and a checked-in hacker after delivery.
+
+Action: Inspect the rail and navigate directly to Judging. Open a valid claim link separately.
+
+Expected observations: The first two rails stay locked and direct visits return to the dashboard. Delivery unlocks the checked-in rail before schedule publication. A valid manually shared link can still open member selection after check-in. Unscheduled entries use normal itinerary cards. Feedback opens in a themed dialog from the completed card. No decorative eyebrow headings or separate feedback parent card remain.
+
+### TC-020: Failed delivery and recipient privacy
+
+Setup: An imported three-person project has been claimed. The email provider fails for an invitation.
+
+Action: Invite and retry the same teammate. Try missing, non-checked-in, and already-claimed recipient emails, then exceed ten invitation attempts in a minute.
+
+Expected observations: A failed send preserves the fourth slot and unused link. Retry succeeds without a fifth slot. Recipient-state failures share one message and repeated attempts are throttled. No delivery errors expose email content or credentials.

@@ -50,6 +50,7 @@ async function judgingRequest<T>(request: () => Promise<T>): Promise<T> {
         "CONFLICT",
         "NOT_FOUND",
         "PRECONDITION_FAILED",
+        "TOO_MANY_REQUESTS",
       ].includes(error.code)
     ) {
       portalFailure(error.code, error.message, { trpcCode: error.code });

@@ -43,6 +43,10 @@ export const listmonkHttpTransport: EmailHttpTransport = async (
       "Content-Type": "application/json",
     },
     method: request.method,
+    signal:
+      request.path === "/api/tx" || request.path.startsWith("/api/templates")
+        ? AbortSignal.timeout(10_000)
+        : undefined,
   });
   if (!response.ok) {
     let providerMessage: string | undefined;
