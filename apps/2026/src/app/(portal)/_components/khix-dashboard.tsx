@@ -467,7 +467,10 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
           headline="Looks like you haven't applied yet."
           greeting={`Hi, ${fallbackName}!`}
         />
-        <ToolDock supportUrl={config.copy.supportChannelUrl} />
+        <ToolDock
+          guideUrl={config.guideUrl}
+          supportUrl={config.copy.supportChannelUrl}
+        />
       </KhixDashboardShell>
     );
   }
@@ -530,6 +533,7 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
             atCapacity={atCapacity}
             confirmationClosed={confirmationClosed}
             agreements={confirmationAgreements}
+            guideUrl={config.guideUrl}
             loadQRCode={loadQRCode}
             onConfirm={handleConfirm}
             onWithdraw={handleWithdraw}
@@ -586,6 +590,7 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
         qrLoading={qrMutation.isPending}
         loadQRCode={loadQRCode}
         hideApplications={participant.status === "checkedin"}
+        guideUrl={config.guideUrl}
         supportUrl={config.copy.supportChannelUrl}
       />
     </KhixDashboardShell>
@@ -3636,6 +3641,7 @@ function StatusAction({
   agreements,
   atCapacity,
   confirmationClosed,
+  guideUrl,
   loadQRCode,
   onConfirm,
   onWithdraw,
@@ -3649,6 +3655,7 @@ function StatusAction({
   agreements: HackerAgreementDefinitionDto[];
   atCapacity: boolean;
   confirmationClosed: boolean;
+  guideUrl: string;
   loadQRCode: () => Promise<unknown>;
   onConfirm: (agreements: HackerAgreementAcceptanceInput[]) => Promise<void>;
   onWithdraw: () => Promise<void>;
@@ -3812,13 +3819,10 @@ function StatusAction({
           Join Discord <ExternalLink className="size-4" />
         </a>
       </Button>
-      <Button
-        variant="outline"
-        className={styles.ghostButton}
-        disabled
-        type="button"
-      >
-        Hackers guide <LockKeyhole className="size-4" />
+      <Button asChild variant="outline" className={styles.ghostButton}>
+        <a href={guideUrl} target="_blank" rel="noopener noreferrer">
+          Hackers guide <ExternalLink className="size-4" />
+        </a>
       </Button>
     </>
   );
@@ -4102,6 +4106,7 @@ function RemoveResumeDialog({
 }
 
 function ToolDock({
+  guideUrl,
   hideApplications = false,
   loadQRCode,
   qrAvailable,
@@ -4113,6 +4118,7 @@ function ToolDock({
   resumeUrl,
   supportUrl,
 }: {
+  guideUrl: string;
   hideApplications?: boolean;
   loadQRCode?: () => Promise<unknown>;
   qrAvailable?: boolean;
@@ -4134,11 +4140,12 @@ function ToolDock({
       aria-label="Dashboard links"
     >
       <ActionTile
-        description="Rules, arrival notes, and prep open closer to Knight Hacks IX."
-        icon={<LockKeyhole className="size-4" />}
+        description="Rules, arrival notes, and everything you need to prepare."
+        href={guideUrl}
+        icon={<BookOpen className="size-4" />}
         label="Hackers guide"
-        meta="Locked"
-        disabled
+        meta="Open"
+        external
       />
       {!hideApplications && (
         <>
