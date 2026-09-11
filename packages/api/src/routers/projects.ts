@@ -27,6 +27,8 @@ import {
   JudgingSchedule,
   Project,
   ProjectChallenge,
+  ProjectClaim,
+  ProjectClaimLink,
   ProjectEvaluation,
   ProjectEvaluationRating,
   ProjectMember,
@@ -861,16 +863,53 @@ export const projectsRouter = createTRPCRouter({
           })
           .where(eq(Project.id, existing.id))
           .returning();
-        await tx
-          .delete(ProjectMember)
-          .where(eq(ProjectMember.projectId, existing.id));
-        await tx.insert(ProjectMember).values(
-          input.members.map((member, index) => ({
-            ...member,
-            displayOrder: index,
-            projectId: existing.id,
-          })),
-        );
+        const roster = await tx
+          .select()
+          .from(ProjectMember)
+          .where(eq(ProjectMember.projectId, existing.id))
+          .orderBy(asc(ProjectMember.displayOrder));
+        const rosterChanged =
+          roster.length !== input.members.length ||
+          roster.some(
+            (member, index) =>
+              member.name !== input.members[index]?.name ||
+              member.email !== input.members[index].email,
+          );
+        if (
+          rosterChanged ||
+          existing.participantCount !== input.participantCount
+        ) {
+          const [link] = await tx
+            .select({ id: ProjectClaimLink.id })
+            .from(ProjectClaimLink)
+            .innerJoin(
+              ProjectMember,
+              eq(ProjectMember.id, ProjectClaimLink.memberId),
+            )
+            .where(eq(ProjectMember.projectId, existing.id))
+            .limit(1);
+          const [claim] = await tx
+            .select({ id: ProjectClaim.memberId })
+            .from(ProjectClaim)
+            .where(eq(ProjectClaim.projectId, existing.id))
+            .limit(1);
+          if (link || claim)
+            throw new TRPCError({
+              code: "CONFLICT",
+              message:
+                "This roster has claim links or claimed members. Keep the existing team; teammates can invite missing hackers from their portal.",
+            });
+          await tx
+            .delete(ProjectMember)
+            .where(eq(ProjectMember.projectId, existing.id));
+          await tx.insert(ProjectMember).values(
+            input.members.map((member, index) => ({
+              ...member,
+              displayOrder: index,
+              projectId: existing.id,
+            })),
+          );
+        }
         if (removedChallengeIds.length)
           await tx
             .delete(ProjectToChallenge)

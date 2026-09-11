@@ -1,5 +1,16 @@
+import { TRPCError } from "@trpc/server";
+
 import { HACKER_PARTICIPANT_V1_SCHEMAS } from "@forge/hacker-sdk/contracts";
 
+import {
+  inviteProjectMember,
+  previewProjectClaim,
+  selectProjectMember,
+} from "../utils/project-claims/claims";
+import {
+  hackerJudging,
+  searchJudgingProjects,
+} from "../utils/project-claims/itinerary";
 import {
   confirmAttendance,
   getCheckInPass,
@@ -23,12 +34,89 @@ import { getResume, removeResume } from "./resume";
 import {
   createHackerPortalRouter,
   participantProcedure,
+  portalFailure,
   portalProcedure,
 } from "./trpc";
+
+async function judgingRequest<T>(request: () => Promise<T>): Promise<T> {
+  try {
+    return await request();
+  } catch (error) {
+    if (
+      error instanceof TRPCError &&
+      [
+        "BAD_REQUEST",
+        "FORBIDDEN",
+        "CONFLICT",
+        "NOT_FOUND",
+        "PRECONDITION_FAILED",
+      ].includes(error.code)
+    ) {
+      portalFailure(error.code, error.message, { trpcCode: error.code });
+    }
+    throw error;
+  }
+}
 
 export const hackerParticipantV1Router: ReturnType<
   typeof createHackerPortalRouter
 > = createHackerPortalRouter({
+  searchJudgingProjects: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.searchJudgingProjects)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.searchJudgingProjects)
+    .query(({ ctx, input }) =>
+      judgingRequest(() =>
+        searchJudgingProjects(
+          ctx.session.userId,
+          ctx.client.hackathonId,
+          input.query,
+        ),
+      ),
+    ),
+  inviteProjectMember: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.inviteProjectMember)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.inviteProjectMember)
+    .mutation(({ ctx, input }) =>
+      judgingRequest(() =>
+        inviteProjectMember(
+          ctx.session.userId,
+          ctx.client.hackathonId,
+          input.email,
+        ),
+      ),
+    ),
+  claimProject: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.claimProject)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.claimProject)
+    .mutation(({ ctx, input }) =>
+      judgingRequest(() =>
+        selectProjectMember(ctx.session.userId, ctx.client.hackathonId, input),
+      ),
+    ),
+  getProjectClaim: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getProjectClaim)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getProjectClaim)
+    .query(({ ctx, input }) =>
+      judgingRequest(() =>
+        previewProjectClaim(
+          ctx.session.userId,
+          ctx.client.hackathonId,
+          input.token,
+        ),
+      ),
+    ),
+  getJudging: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getJudging)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getJudging)
+    .query(({ ctx, input }) =>
+      judgingRequest(() =>
+        hackerJudging(
+          ctx.session.userId,
+          ctx.client.hackathonId,
+          input.projectId,
+        ),
+      ),
+    ),
   confirmAttendance: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.confirmAttendance)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.confirmAttendance)

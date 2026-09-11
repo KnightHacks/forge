@@ -63,6 +63,7 @@ export default async function JudgingAdminPage({
   };
   const requestedTab = first(params.tab);
   const selectedTab =
+    requestedTab === "claims" ||
     requestedTab === "evaluations" ||
     requestedTab === "projects" ||
     requestedTab === "schedule" ||

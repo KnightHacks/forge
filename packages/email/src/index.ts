@@ -151,3 +151,5 @@ export const sendEmail = async ({
 
 export * from "./provider";
 export * from "./templates";
+
+export { projectClaimEmail } from "./project-claim";

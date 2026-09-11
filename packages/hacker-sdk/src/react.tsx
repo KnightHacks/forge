@@ -303,3 +303,55 @@ export function useHackerSignOut() {
       client.signOut(options?.returnTo),
   });
 }
+
+/** Event-scoped judging read. The server enforces check-in and project ownership. */
+export function useHackerJudging(projectId?: string) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "judging",
+      projectId ?? "own",
+    ],
+    queryFn: () => client.getJudging(projectId ? { projectId } : {}),
+    enabled: canLoadCheckedInParticipantData(
+      dashboard.data?.application?.status,
+    ),
+    refetchInterval: 120_000,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function useProjectClaim(token: string | null) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "project-claim",
+      token,
+    ],
+    queryFn: () => client.getProjectClaim({ token: token ?? "" }),
+    enabled:
+      !!token &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
+    retry: false,
+    gcTime: 0,
+  });
+}
+
+export function useClaimProject() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: { token: string; memberId: string }) =>
+    client.claimProject(input),
+  );
+}
+
+export function useInviteProjectMember() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: { email: string }) =>
+    client.inviteProjectMember(input),
+  );
+}

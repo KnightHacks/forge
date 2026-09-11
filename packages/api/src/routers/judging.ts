@@ -95,6 +95,7 @@ import { judgingDraftsRouter } from "./judging-drafts";
 import { judgingScheduleRouter } from "./judging-schedule";
 import { judgingScheduleViewRouter } from "./judging-schedule-view";
 import { judgingScoresRouter } from "./judging-scores";
+import { projectClaimsRouter } from "./project-claims";
 
 const contextInputSchema = z.object({
   hackathonId: z.string().uuid().optional(),
@@ -470,6 +471,7 @@ async function joinMemberRoom(input: {
 }
 
 export const judgingRouter = createTRPCRouter({
+  ...projectClaimsRouter,
   ...judgingScoresRouter,
   ...judgingDraftsRouter,
   ...judgingScheduleRouter,

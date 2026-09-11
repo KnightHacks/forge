@@ -35,6 +35,20 @@ export const AUDIT_DOMAINS = [
 export type AuditDomain = (typeof AUDIT_DOMAINS)[number];
 
 export const AUDIT_ACTION_CATALOG = {
+  "project.claim.settings_updated": policy(
+    "hackathons",
+    "Updated hacker judging settings",
+    ["published", "emergency"],
+  ),
+  "project.claim.link_copied": policy(
+    "hackathons",
+    "Copied project claim link",
+    [],
+  ),
+  "project.claim.links_sent": policy("hackathons", "Sent project claim links", [
+    "sent",
+    "failed",
+  ]),
   "analytics.report.exported": policy(
     "analytics",
     "Exported analytics report",
