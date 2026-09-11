@@ -141,7 +141,7 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
             tabIndex={0}
             aria-label="Project claim recipients"
           >
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[44rem] text-left text-sm">
               <thead className="bg-background/60">
                 <tr>
                   <th className="p-3">Hacker / project</th>
