@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowBigLeft, ArrowBigRight } from "lucide-react";
 
 import type { SpeakerShowcaseSpeaker } from "./speakers";
+import { useViewportActivity } from "../../useViewportActivity";
 import styles from "./SpeakerShowcase.module.css";
 
 const AUTO_SCROLL_DELAY_MS = 4200;
@@ -87,7 +88,6 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
           sizes="(max-width: 640px) 12rem, (max-width: 960px) 13rem, 16rem"
           className={styles.image}
           priority={false}
-          unoptimized
           draggable={false}
         />
       </div>
@@ -98,7 +98,6 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
         sizes="(max-width: 640px) 13rem, (max-width: 960px) 14rem, 17rem"
         className={styles.frameImage}
         priority={false}
-        unoptimized
         draggable={false}
       />
     </div>
@@ -129,6 +128,7 @@ export function SpeakerShowcase({
   title = "Speakers",
   titleId = "khix-speakers-title",
 }: SpeakerShowcaseProps) {
+  const [showcaseRef, isShowcaseActive] = useViewportActivity<HTMLElement>();
   const [activeSpeakerIndex, setActiveSpeakerIndex] = useState(0);
   const [autoScrollResetKey, setAutoScrollResetKey] = useState(0);
   const [visibleSpeakerCount, setVisibleSpeakerCount] = useState(
@@ -227,7 +227,7 @@ export function SpeakerShowcase({
   }, []);
 
   useEffect(() => {
-    if (!hasScrollableSpeakers || isTransitioning) return;
+    if (!hasScrollableSpeakers || !isShowcaseActive || isTransitioning) return;
 
     const timeoutId = window.setTimeout(showNextSpeaker, AUTO_SCROLL_DELAY_MS);
 
@@ -235,6 +235,7 @@ export function SpeakerShowcase({
   }, [
     autoScrollResetKey,
     hasScrollableSpeakers,
+    isShowcaseActive,
     isTransitioning,
     normalizedActiveSpeakerIndex,
     showNextSpeaker,
@@ -279,7 +280,11 @@ export function SpeakerShowcase({
   };
 
   return (
-    <section className={speakerShowcaseClassName} aria-labelledby={titleId}>
+    <section
+      ref={showcaseRef}
+      className={speakerShowcaseClassName}
+      aria-labelledby={titleId}
+    >
       <h2 id={titleId} className={styles.title}>
         {title}
       </h2>

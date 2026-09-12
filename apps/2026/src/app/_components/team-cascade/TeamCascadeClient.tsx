@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode, Ref } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
 import { FaLinkedin } from "react-icons/fa";
@@ -10,6 +10,7 @@ import type {
   TeamCascadeMember,
   TeamCascadeRole,
 } from "./team-roster";
+import { useViewportActivity } from "../useViewportActivity";
 import { loadTeamCascadeGroups } from "./team-roster";
 import styles from "./TeamCascade.module.css";
 
@@ -279,16 +280,18 @@ function TeamRoster({ members }: { members: TeamCascadePerson[] }) {
 function TeamCascadeStatusMessage({
   children,
   className,
+  elementRef,
 }: {
   children: ReactNode;
   className?: string;
+  elementRef?: Ref<HTMLDivElement>;
 }) {
   const statusClassName = className
     ? `${styles.teamCascadeStatusFrame} ${className}`
     : styles.teamCascadeStatusFrame;
 
   return (
-    <div className={statusClassName}>
+    <div ref={elementRef} className={statusClassName}>
       <p className={styles.teamStatus}>{children}</p>
     </div>
   );
@@ -301,6 +304,12 @@ export function TeamCascadeClient({
   bladeUrl: string;
   className?: string;
 }) {
+  const [cascadeRef, isCascadeNearViewport] =
+    useViewportActivity<HTMLDivElement>({
+      once: true,
+      respectReducedMotion: false,
+      rootMargin: "800px 0px",
+    });
   const [groups, setGroups] = useState<TeamCascadeGroup[]>([]);
   const [status, setStatus] = useState<TeamCascadeStatus>(
     bladeUrl ? "loading" : "error",
@@ -311,7 +320,7 @@ export function TeamCascadeClient({
     : styles.teamCascade;
 
   useEffect(() => {
-    if (!bladeUrl) return;
+    if (!bladeUrl || !isCascadeNearViewport) return;
 
     const abortController = new AbortController();
 
@@ -334,11 +343,14 @@ export function TeamCascadeClient({
     void loadRoster();
 
     return () => abortController.abort();
-  }, [bladeUrl]);
+  }, [bladeUrl, isCascadeNearViewport]);
 
   if (status === "loading") {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         Loading public team profiles.
       </TeamCascadeStatusMessage>
     );
@@ -346,7 +358,10 @@ export function TeamCascadeClient({
 
   if (status === "error") {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         Could not load Blade team profiles. Check the configured Blade URL or
         local Blade server.
       </TeamCascadeStatusMessage>
@@ -355,14 +370,17 @@ export function TeamCascadeClient({
 
   if (teamMembers.length === 0) {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         No visible team profiles found.
       </TeamCascadeStatusMessage>
     );
   }
 
   return (
-    <div className={cascadeClassName}>
+    <div ref={cascadeRef} className={cascadeClassName}>
       <TeamRoster members={teamMembers} />
     </div>
   );

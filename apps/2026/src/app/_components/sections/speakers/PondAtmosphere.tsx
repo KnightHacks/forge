@@ -1,4 +1,7 @@
+"use client";
+
 import { AssetCredit } from "../../assets";
+import { useViewportActivity } from "../../useViewportActivity";
 import styles from "./PondAtmosphere.module.css";
 
 const FIREFLY_IDS = Array.from({ length: 24 }, (_, index) => String(index + 1));
@@ -18,6 +21,8 @@ interface PondAtmosphereProps {
 }
 
 export function PondAtmosphere({ className }: PondAtmosphereProps) {
+  const [atmosphereRef, isAtmosphereActive] =
+    useViewportActivity<HTMLSpanElement>();
   const rootClassName = className
     ? `${styles.pondAssetCredit} ${className}`
     : styles.pondAssetCredit;
@@ -33,7 +38,12 @@ export function PondAtmosphere({ className }: PondAtmosphereProps) {
         },
       ]}
     >
-      <span className={styles.pondAtmosphere} aria-hidden="true">
+      <span
+        ref={atmosphereRef}
+        className={styles.pondAtmosphere}
+        data-active={isAtmosphereActive ? "true" : "false"}
+        aria-hidden="true"
+      >
         <span className={styles.fireflies}>
           {FIREFLY_IDS.map((fireflyId) => (
             <span

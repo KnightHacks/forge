@@ -33,6 +33,13 @@
   background: transparent;
   isolation: isolate;
   overflow: hidden;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 350rem;
+}
+
+.waterfallVisuals {
+  position: absolute;
+  inset: 0;
 }
 
 .waterfallTransition {
@@ -66,9 +73,6 @@
   height: var(--waterfall-art-height);
   overflow: hidden;
   background-color: var(--waterfall-fallback-color);
-  box-shadow:
-    0 0 0 1px rgba(83, 232, 255, 0.16),
-    0 0 3rem rgba(20, 238, 231, 0.18);
 }
 
 .scene::after {
@@ -77,6 +81,13 @@
   z-index: 2;
   content: "";
   background:
+    linear-gradient(
+      180deg,
+      transparent 84%,
+      rgb(7 12 27 / 0.12) var(--waterfall-basin-blend-start),
+      rgb(7 12 27 / 0.82) var(--waterfall-basin-blend-end),
+      #070c1b 100%
+    ),
     radial-gradient(
       ellipse at 50% 9%,
       rgba(3, 25, 31, 0.34) 0%,
@@ -124,107 +135,46 @@
 .waterfallTwo,
 .waterfallThree {
   z-index: 1;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: 100% auto;
+  object-fit: fill;
+  object-position: center top;
   transform: translateX(var(--waterfall-stream-offset-x));
 }
 
 .waterfallOne {
   top: var(--waterfall-artwork-top);
   height: calc(var(--waterfall-width) * 1.3916667);
-  background-image: url("https://assets.knighthacks.org/waterfall-animated-one-desktop.webp");
 }
 
 .waterfallTwo {
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 1.3861111);
   height: calc(var(--waterfall-width) * 1.3944444);
-  background-image: url("https://assets.knighthacks.org/waterfall-animated-two-desktop.webp");
 }
 
 .waterfallThree {
   top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
   height: calc(var(--waterfall-width) * 1.3916667);
-  background-image: url("https://assets.knighthacks.org/waterfall-animated-three-desktop.webp");
+  transform: skewX(-0.7deg);
+  transform-origin: center bottom;
 }
 
-.waterfallThree::after {
-  position: absolute;
-  inset: 0;
-  background-image: inherit;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-size: 100% auto;
-  content: "";
-  transform: translateX(calc(var(--waterfall-stream-offset-x) * -1));
-  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000000 76%);
-  mask-image: linear-gradient(to bottom, transparent 65%, #000000 76%);
-}
-
-.waterfallAtmosphere,
-.waterfallForegroundAtmosphere {
+.waterfallAtmosphereCanvas {
   position: absolute;
   top: var(--waterfall-scene-top);
   left: 0;
+  z-index: 2;
   width: var(--waterfall-width);
   height: var(--waterfall-art-height);
-  overflow: hidden;
   pointer-events: none;
-  contain: layout paint style;
+  contain: layout paint size style;
 }
 
-.waterfallAtmosphere {
-  z-index: 2;
-}
-
-.waterfallForegroundAtmosphere {
-  z-index: 5;
-}
-
-.dropletLayer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.droplet {
-  position: absolute;
-  top: var(--droplet-y);
-  left: var(--droplet-x);
-  width: var(--droplet-width);
-  height: var(--droplet-height);
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgb(236 255 253 / 0.18),
-    rgb(245 255 254 / 0.78) 34%,
-    rgb(255 255 255 / 0.98) 68%,
-    rgb(116 218 222 / 0.42)
-  );
-  box-shadow:
-    0 0 0.3rem rgb(234 255 253 / 0.72),
-    0 0.12rem 0.16rem rgb(8 91 102 / 0.42);
-  opacity: 0;
-  transform: translate3d(0, -0.45rem, 0) scale(0.72);
-  animation: waterfallDropletFall var(--droplet-duration) linear
-    var(--droplet-delay) infinite;
-  animation-play-state: paused;
-}
-
-.droplet[data-shape="bead"] {
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 35% 30%,
-    rgb(255 255 255),
-    rgb(213 255 252 / 0.94) 42%,
-    rgb(71 183 194 / 0.34) 78%
-  );
-  animation-timing-function: ease-in-out;
-}
-
-.waterfallAtmosphere[data-active="true"] .droplet,
-.waterfallForegroundAtmosphere[data-active="true"] .droplet {
-  animation-play-state: running;
+.waterfallParticleCanvas {
+  position: sticky;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100svh;
+  opacity: 0.82;
 }
 
 .bridge {
@@ -236,8 +186,6 @@
   height: var(--team-separator-height);
   background: url("https://assets.knighthacks.org/separator-rocks-desktop.webp")
     center top / 100% auto no-repeat;
-  filter: drop-shadow(0 -0.35rem 0.7rem rgba(3, 7, 12, 0.22))
-    drop-shadow(0 0.5rem 0.65rem rgba(2, 4, 8, 0.28));
   transform: translateX(-50%);
 }
 
@@ -651,12 +599,6 @@
   margin: 0 auto;
 }
 
-@media (min-width: 761px) {
-  .dropletLayer {
-    clip-path: inset(7% 0 0);
-  }
-}
-
 @media (min-width: 1181px) {
   .waterfallShowcase {
     --waterfall-art-height: calc(var(--waterfall-width) * 2.6);
@@ -731,6 +673,14 @@
 }
 
 @media (max-width: 760px) {
+  .waterfallShowcase {
+    contain-intrinsic-block-size: auto 110rem;
+  }
+
+  .waterfallThree {
+    transform: skewX(-0.82deg);
+  }
+
   .sponsorRockSeparator {
     background-image: url("https://assets.knighthacks.org/sponsor-rock-separator-mobile.webp");
   }
@@ -743,28 +693,12 @@
     background-image: url("https://assets.knighthacks.org/rocks-waterfall-bottom-mobile.webp");
   }
 
-  .waterfallOne {
-    background-image: url("https://assets.knighthacks.org/waterfall-animated-one-mobile.webp");
-  }
-
-  .waterfallTwo {
-    background-image: url("https://assets.knighthacks.org/waterfall-animated-two-mobile.webp");
-  }
-
-  .waterfallThree {
-    background-image: url("https://assets.knighthacks.org/waterfall-animated-three-mobile.webp");
-  }
-
   .partnerRock::before {
     background-image: url("https://assets.knighthacks.org/khix/large-sponsor-rock-mobile.webp");
   }
 
   .bridge {
     background-image: url("https://assets.knighthacks.org/separator-rocks-mobile.webp");
-  }
-
-  .droplet[data-mobile-hidden="true"] {
-    display: none;
   }
 
   .sponsorShowcase {
@@ -798,6 +732,10 @@
         min(calc(var(--waterfall-art-height) * 0.64), 66rem) +
         var(--team-mobile-section-lift)
     );
+  }
+
+  .waterfallThree {
+    transform: skewX(-1.1deg);
   }
 
   .sponsorShowcase {
@@ -852,9 +790,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .droplet {
+  .waterfallAtmosphereCanvas {
     display: none;
-    animation: none;
   }
 
   .partnerRock::before,
@@ -867,32 +804,5 @@
   .partnerStone:hover .partnerVisual,
   .partnerStone:focus-visible .partnerVisual {
     animation: none;
-  }
-}
-
-@keyframes waterfallDropletFall {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, -0.45rem, 0) scale(0.72);
-  }
-
-  14% {
-    opacity: var(--droplet-opacity);
-  }
-
-  48% {
-    opacity: var(--droplet-opacity);
-    transform: translate3d(
-        var(--droplet-mid-drift),
-        var(--droplet-mid-travel),
-        0
-      )
-      scale(0.9);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--droplet-drift), var(--droplet-travel), 0)
-      scale(1.04);
   }
 }

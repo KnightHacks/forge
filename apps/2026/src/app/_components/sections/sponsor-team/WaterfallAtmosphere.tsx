@@ -1,210 +1,233 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useEffect, useRef } from "react";
 
+import { useViewportActivity } from "../../useViewportActivity";
 import styles from "./SponsorTeamSection.module.css";
 
-type DropletStyle = CSSProperties & {
-  "--droplet-delay": string;
-  "--droplet-drift": string;
-  "--droplet-duration": string;
-  "--droplet-height": string;
-  "--droplet-mid-drift": string;
-  "--droplet-mid-travel": string;
-  "--droplet-opacity": string;
-  "--droplet-travel": string;
-  "--droplet-width": string;
-  "--droplet-x": string;
-  "--droplet-y": string;
-};
+interface WaterParticle {
+  alpha: number;
+  bead: boolean;
+  delay: number;
+  drift: number;
+  duration: number;
+  size: number;
+  sway: number;
+  travel: number;
+  x: number;
+  y: number;
+}
 
-const BASE_DROPLET_COUNT = 384;
-const BASE_BUBBLE_INTERVAL = 5;
-const EXTRA_BUBBLE_COUNT = Math.ceil(BASE_DROPLET_COUNT / BASE_BUBBLE_INTERVAL);
-const BUBBLE_CURVE_STEP = 0.438447187;
-const BUBBLE_DIRECTION_STEP = 0.414213562;
-const BUBBLE_DISTANCE_STEP = 0.732050808;
-const BUBBLE_LIFESPAN_STEP = 0.569840291;
-const HORIZONTAL_DISTRIBUTION_STEP = 0.754877666;
-const VERTICAL_DISTRIBUTION_STEP = 0.618033989;
+const PARTICLE_COUNT = 88;
+const MAX_PIXEL_RATIO = 1;
 
 function fractionalPart(value: number) {
   return value - Math.floor(value);
 }
 
-function createDroplet({
-  bubble,
-  id,
-  mobileIndex,
-}: {
-  bubble: boolean;
-  id: number;
-  mobileIndex: number;
-}) {
-  const sequenceIndex = id + 1;
-  const distributionCycle = Math.floor(id / 12);
-  const x =
-    18 + fractionalPart(sequenceIndex * HORIZONTAL_DISTRIBUTION_STEP) * 64;
-  const y = 3 + fractionalPart(sequenceIndex * VERTICAL_DISTRIBUTION_STEP) * 94;
-  const duration = bubble
-    ? 3.4 + fractionalPart(sequenceIndex * BUBBLE_LIFESPAN_STEP) * 5.6
-    : 2 + ((id * 7) % 13) / 10;
-  const delay = -((id * 0.73 + distributionCycle * 0.41) % duration);
-  const direction =
-    fractionalPart(sequenceIndex * BUBBLE_DIRECTION_STEP) * Math.PI * 2;
-  const bubbleDistance =
-    80 + fractionalPart(sequenceIndex * BUBBLE_DISTANCE_STEP) * 120;
-  const drift = bubble
-    ? Math.cos(direction) * bubbleDistance
-    : ((id * 23) % 81) - 40;
-  const travel = bubble
-    ? Math.sin(direction) * bubbleDistance
-    : 190 + ((id * 29) % 151);
-  const curveDirection = id % 2 === 0 ? 1 : -1;
-  const curveDistance =
-    20 + fractionalPart(sequenceIndex * BUBBLE_CURVE_STEP) * 38;
-  const midDrift = bubble
-    ? drift * 0.44 +
-      Math.cos(direction + Math.PI / 2) * curveDistance * curveDirection
-    : drift * 0.28;
-  const midTravel = bubble
-    ? travel * 0.44 +
-      Math.sin(direction + Math.PI / 2) * curveDistance * curveDirection
-    : travel * 0.24;
-  const width = bubble ? 3.6 + (id % 3) * 0.65 : 2.1 + (id % 4) * 0.48;
-  const height = bubble ? width : 17 + ((id * 7) % 18);
-  const opacity = 0.62 + ((id * 7) % 6) * 0.055;
+const PARTICLES: readonly WaterParticle[] = Array.from(
+  { length: PARTICLE_COUNT },
+  (_, index) => {
+    const sequence = index + 1;
+    const bead = index % 5 === 0;
 
-  return {
-    bead: bubble,
-    delay,
-    drift,
-    duration,
-    foreground: (id + distributionCycle) % 4 === 0,
-    height,
-    id,
-    midDrift,
-    midTravel,
-    mobileHidden: mobileIndex % 12 !== 0,
-    opacity,
-    travel,
-    width,
-    x,
-    y,
-  };
-}
-
-const BASE_DROPLETS = Array.from({ length: BASE_DROPLET_COUNT }, (_, index) =>
-  createDroplet({
-    bubble: index % BASE_BUBBLE_INTERVAL === 0,
-    id: index,
-    mobileIndex: index,
-  }),
+    return {
+      alpha: 0.48 + fractionalPart(sequence * 0.569840291) * 0.46,
+      bead,
+      delay: fractionalPart(sequence * 0.414213562) * 7,
+      drift: (fractionalPart(sequence * 0.732050808) - 0.5) * 76,
+      duration: bead
+        ? 4.2 + fractionalPart(sequence * 0.438447187) * 4.8
+        : 2.2 + fractionalPart(sequence * 0.754877666) * 1.5,
+      size: bead ? 3.4 + (index % 3) * 0.8 : 2 + (index % 4) * 0.55,
+      sway: 0.7 + fractionalPart(sequence * 0.618033989) * 1.2,
+      travel: bead ? 100 + (index % 7) * 12 : 190 + (index % 9) * 18,
+      x: 0.17 + fractionalPart(sequence * 0.754877666) * 0.66,
+      y: fractionalPart(sequence * 0.618033989),
+    };
+  },
 );
 
-const EXTRA_BUBBLES = Array.from(
-  { length: EXTRA_BUBBLE_COUNT },
-  (_, bubbleIndex) =>
-    createDroplet({
-      bubble: true,
-      id: BASE_DROPLET_COUNT + bubbleIndex,
-      mobileIndex: bubbleIndex,
-    }),
-);
+function createParticleSprite(bead: boolean) {
+  const sprite = document.createElement("canvas");
+  const context = sprite.getContext("2d");
 
-const DROPLETS = [...BASE_DROPLETS, ...EXTRA_BUBBLES];
+  sprite.width = bead ? 32 : 24;
+  sprite.height = bead ? 32 : 64;
 
-type WaterfallDroplet = (typeof DROPLETS)[number];
+  if (!context) return sprite;
 
-const BACKGROUND_DROPLETS = DROPLETS.filter((droplet) => !droplet.foreground);
-const FOREGROUND_DROPLETS = DROPLETS.filter((droplet) => droplet.foreground);
+  context.shadowColor = "rgba(190, 255, 250, 0.72)";
+  context.shadowBlur = 7;
 
-function DropletField({ droplets }: { droplets: readonly WaterfallDroplet[] }) {
-  return (
-    <div className={styles.dropletLayer}>
-      {droplets.map((droplet) => (
-        <span
-          key={droplet.id}
-          className={styles.droplet}
-          data-mobile-hidden={droplet.mobileHidden ? "true" : undefined}
-          data-shape={droplet.bead ? "bead" : "streak"}
-          style={
-            {
-              "--droplet-delay": `${droplet.delay.toFixed(2)}s`,
-              "--droplet-drift": `${droplet.drift.toFixed(2)}px`,
-              "--droplet-duration": `${droplet.duration.toFixed(2)}s`,
-              "--droplet-height": `${droplet.height.toFixed(2)}px`,
-              "--droplet-mid-drift": `${droplet.midDrift.toFixed(2)}px`,
-              "--droplet-mid-travel": `${droplet.midTravel.toFixed(2)}px`,
-              "--droplet-opacity": droplet.opacity.toFixed(2),
-              "--droplet-travel": `${droplet.travel.toFixed(2)}px`,
-              "--droplet-width": `${droplet.width.toFixed(2)}px`,
-              "--droplet-x": `${droplet.x.toFixed(2)}%`,
-              "--droplet-y": `${droplet.y.toFixed(2)}%`,
-            } as DropletStyle
-          }
-        />
-      ))}
-    </div>
-  );
+  if (bead) {
+    const gradient = context.createRadialGradient(12, 10, 1, 16, 16, 13);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+    gradient.addColorStop(0.4, "rgba(213, 255, 252, 0.94)");
+    gradient.addColorStop(1, "rgba(71, 183, 194, 0.12)");
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.arc(16, 16, 7, 0, Math.PI * 2);
+    context.fill();
+  } else {
+    const gradient = context.createLinearGradient(12, 8, 12, 56);
+    gradient.addColorStop(0, "rgba(236, 255, 253, 0.08)");
+    gradient.addColorStop(0.38, "rgba(245, 255, 254, 0.82)");
+    gradient.addColorStop(0.72, "rgba(255, 255, 255, 0.94)");
+    gradient.addColorStop(1, "rgba(116, 218, 222, 0.08)");
+    context.strokeStyle = gradient;
+    context.lineCap = "round";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(12, 9);
+    context.lineTo(12, 55);
+    context.stroke();
+  }
+
+  return sprite;
 }
 
 export function WaterfallAtmosphere() {
-  const atmosphereRef = useRef<HTMLDivElement>(null);
-  const foregroundRef = useRef<HTMLDivElement>(null);
+  const [atmosphereRef, isAtmosphereActive] =
+    useViewportActivity<HTMLDivElement>({ rootMargin: "10% 0px" });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const atmosphere = atmosphereRef.current;
-    const foreground = foregroundRef.current;
+    const container = atmosphereRef.current;
+    const canvas = canvasRef.current;
 
-    if (!atmosphere || !foreground) {
-      return;
-    }
+    if (!container || !canvas || !isAtmosphereActive) return;
 
-    const setActive = (isActive: boolean) => {
-      const activeValue = isActive ? "true" : "false";
+    const context = canvas.getContext("2d", { alpha: true });
 
-      atmosphere.dataset.active = activeValue;
-      foreground.dataset.active = activeValue;
+    if (!context) return;
+
+    const streakSprite = createParticleSprite(false);
+    const beadSprite = createParticleSprite(true);
+    let animationFrame = 0;
+    let currentPixelRatio = Math.min(
+      window.devicePixelRatio || 1,
+      MAX_PIXEL_RATIO,
+    );
+    let measuredFrames = 0;
+    let measuredTime = 0;
+    let previousTime = performance.now();
+    let width = 0;
+    let height = 0;
+
+    const resize = () => {
+      const nextWidth = Math.max(1, Math.round(canvas.clientWidth));
+      const nextHeight = Math.max(1, Math.round(canvas.clientHeight));
+
+      if (nextWidth === width && nextHeight === height && canvas.width > 0) {
+        return;
+      }
+
+      width = nextWidth;
+      height = nextHeight;
+      canvas.width = Math.round(width * currentPixelRatio);
+      canvas.height = Math.round(height * currentPixelRatio);
+      context.setTransform(currentPixelRatio, 0, 0, currentPixelRatio, 0, 0);
     };
 
-    if (!("IntersectionObserver" in window)) {
-      setActive(true);
-      return;
-    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
+    resize();
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setActive(entry?.isIntersecting ?? false);
-      },
-      { rootMargin: "20% 0px", threshold: 0.01 },
-    );
+    const render = (time: number) => {
+      resize();
 
-    observer.observe(atmosphere);
+      const frameDuration = Math.min(50, time - previousTime);
+      previousTime = time;
+      measuredFrames += 1;
+      measuredTime += frameDuration;
 
-    return () => observer.disconnect();
-  }, []);
+      if (measuredFrames >= 90) {
+        const averageFrameDuration = measuredTime / measuredFrames;
+        const nextPixelRatio =
+          averageFrameDuration > 24
+            ? Math.max(0.72, currentPixelRatio * 0.82)
+            : averageFrameDuration < 17 && currentPixelRatio < MAX_PIXEL_RATIO
+              ? Math.min(MAX_PIXEL_RATIO, currentPixelRatio * 1.08)
+              : currentPixelRatio;
+
+        if (Math.abs(nextPixelRatio - currentPixelRatio) > 0.04) {
+          currentPixelRatio = nextPixelRatio;
+          canvas.width = 0;
+          resize();
+        }
+
+        measuredFrames = 0;
+        measuredTime = 0;
+      }
+
+      context.clearRect(0, 0, width, height);
+      context.globalCompositeOperation = "lighter";
+
+      const containerRect = container.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const sceneHeight = Math.max(containerRect.height, height);
+      const elapsed = time / 1000;
+
+      for (const particle of PARTICLES) {
+        const progress =
+          ((elapsed + particle.delay) % particle.duration) / particle.duration;
+        const easedProgress = particle.bead
+          ? 0.5 - Math.cos(progress * Math.PI) / 2
+          : progress;
+        const worldY =
+          (particle.y * sceneHeight + easedProgress * particle.travel) %
+          sceneHeight;
+        const screenY = worldY + containerRect.top - canvasRect.top;
+
+        if (screenY < -70 || screenY > height + 70) continue;
+
+        const fade = Math.sin(progress * Math.PI);
+        const x =
+          particle.x * width +
+          particle.drift * progress +
+          Math.sin(elapsed * particle.sway + particle.delay) * 6;
+        const sprite = particle.bead ? beadSprite : streakSprite;
+        const drawWidth = particle.bead
+          ? particle.size * 4
+          : particle.size * 4.5;
+        const drawHeight = particle.bead
+          ? particle.size * 4
+          : 28 + particle.size * 8;
+
+        context.globalAlpha = particle.alpha * fade;
+        context.drawImage(
+          sprite,
+          x - drawWidth / 2,
+          screenY - drawHeight / 2,
+          drawWidth,
+          drawHeight,
+        );
+      }
+
+      context.globalAlpha = 1;
+      context.globalCompositeOperation = "source-over";
+      animationFrame = window.requestAnimationFrame(render);
+    };
+
+    animationFrame = window.requestAnimationFrame(render);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.width = 0;
+      canvas.height = 0;
+    };
+  }, [atmosphereRef, isAtmosphereActive]);
 
   return (
-    <>
-      <div
-        ref={atmosphereRef}
-        className={styles.waterfallAtmosphere}
-        data-active="true"
-        aria-hidden="true"
-      >
-        <DropletField droplets={BACKGROUND_DROPLETS} />
-      </div>
-
-      <div
-        ref={foregroundRef}
-        className={styles.waterfallForegroundAtmosphere}
-        data-active="true"
-        aria-hidden="true"
-      >
-        <DropletField droplets={FOREGROUND_DROPLETS} />
-      </div>
-    </>
+    <div
+      ref={atmosphereRef}
+      className={styles.waterfallAtmosphereCanvas}
+      aria-hidden="true"
+    >
+      <canvas ref={canvasRef} className={styles.waterfallParticleCanvas} />
+    </div>
   );
 }

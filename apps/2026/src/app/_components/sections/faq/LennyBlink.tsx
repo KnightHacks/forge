@@ -1,5 +1,5 @@
-import Image from "next/image";
-
+import { AmbientVideo } from "../../AmbientVideo";
+import { getTransparentVideoSources } from "../../ambientVideoSources";
 import { AssetCredit } from "../../assets";
 import styles from "./LennyBlink.module.css";
 
@@ -18,22 +18,17 @@ export function LennyBlink({ className }: LennyBlinkProps) {
       label="Animation by"
       credits={[{ name: "Knight Hacks Design Team" }]}
     >
-      <picture className={styles.frameStack}>
-        <source
-          media="(prefers-reduced-motion: reduce)"
-          srcSet="https://assets.knighthacks.org/khix/faq-lennyblink-Frame%201.webp"
-        />
-        <Image
-          src="https://assets.knighthacks.org/khix/faq-lennyblink-lennyblink.webp"
-          alt="Lenny the Knight Hacks dragon blinking"
-          width={2667}
-          height={3318}
+      <span
+        className={styles.frameStack}
+        role="img"
+        aria-label="Lenny the Knight Hacks dragon blinking"
+      >
+        <AmbientVideo
           className={styles.frame}
-          data-active="true"
-          priority
-          unoptimized
+          poster="/media/homepage/lenny-blink-poster.webp"
+          sources={getTransparentVideoSources("/media/homepage/lenny-blink")}
         />
-      </picture>
+      </span>
     </AssetCredit>
   );
 }

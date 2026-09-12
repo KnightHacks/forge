@@ -679,7 +679,6 @@ function CanopyLeaf({ leaf }: { leaf: LeafConfig }) {
       width={asset.width}
       height={asset.height}
       sizes="(max-width: 760px) 40vw, 18vw"
-      unoptimized
       draggable={false}
       className={`${styles.leaf} ${
         leaf.layer === "rear" ? styles.rearLeaf : styles.frontLeaf
@@ -697,7 +696,6 @@ function ForestCharacter({ character }: { character: CharacterConfig }) {
       width={2048}
       height={2048}
       sizes="(max-width: 760px) 31vw, (max-width: 1100px) 18vw, 15vw"
-      unoptimized
       draggable={false}
       data-character={character.asset}
       className={`${styles.character} ${
@@ -820,7 +818,6 @@ export function TracksSection() {
               width={2202}
               height={722}
               sizes="(max-width: 760px) 180vw, 110vw"
-              unoptimized
               draggable={false}
               className={styles.branch}
             />

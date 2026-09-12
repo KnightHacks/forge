@@ -5,7 +5,7 @@
 .frameStack {
   position: relative;
   display: block;
-  aspect-ratio: 2667 / 3318;
+  aspect-ratio: 2 / 3;
   width: 100%;
   filter: drop-shadow(0 0.6rem 0.5rem rgba(5, 8, 24, 0.35));
   transform: translateZ(0);
@@ -17,11 +17,6 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0;
   user-select: none;
   transform: translateZ(0);
-}
-
-.frame[data-active="true"] {
-  opacity: 1;
 }

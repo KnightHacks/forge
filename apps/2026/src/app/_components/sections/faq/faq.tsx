@@ -231,6 +231,7 @@ interface FloatingAsset {
   className: string;
   width: number;
   height: number;
+  sizes: string;
   depth: number;
   hotspots?: readonly GemHotspot[];
 }
@@ -247,19 +248,21 @@ function faqClass(name: string) {
 
 const floatingAssets = [
   {
-    src: "https://assets.knighthacks.org/khix/faq-FAQ cave ceiling - Thomas Ha.webp",
+    src: "/media/homepage/faq-static/cave-ceiling-primary.webp",
     alt: "",
     className: faqClass("caveCeilingPrimary"),
-    width: 4500,
-    height: 3000,
+    width: 2048,
+    height: 1365,
+    sizes: "(max-width: 820px) 132vw, (min-width: 1800px) 1344px, 132vw",
     depth: -18,
   },
   {
-    src: "https://assets.knighthacks.org/khix/FAQ cave ceiling.webp",
+    src: "/media/homepage/faq-static/cave-ceiling-secondary.webp",
     alt: "",
     className: faqClass("caveCeilingSecondary"),
-    width: 4500,
-    height: 3000,
+    width: 2048,
+    height: 1365,
+    sizes: "(max-width: 820px) 108vw, (min-width: 1320px) 1120px, 108vw",
     depth: -12,
   },
   {
@@ -268,6 +271,7 @@ const floatingAssets = [
     className: faqClass("leftColumn"),
     width: 698,
     height: 2291,
+    sizes: "(max-width: 820px) 62vw, (min-width: 1556px) 560px, 36vw",
     depth: 16,
     hotspots: [
       {
@@ -333,6 +337,7 @@ const floatingAssets = [
     className: faqClass("rightColumn"),
     width: 982,
     height: 2140,
+    sizes: "(max-width: 820px) 78vw, (min-width: 1566px) 720px, 46vw",
     depth: 16,
     hotspots: [
       {
@@ -407,7 +412,7 @@ const floatingAssets = [
 
 type FaqSectionId = (typeof faqSections)[number]["id"];
 
-const FAQ_ASSET_PRELOAD_MARGIN = "2000px 0px";
+const FAQ_ASSET_PRELOAD_MARGIN = "1000px 0px";
 const FAQ_BACKGROUND_IMAGE =
   'url("https://assets.knighthacks.org/khix/faq-background-1440.webp")';
 const FAQ_MOBILE_BACKGROUND_IMAGE =
@@ -420,6 +425,7 @@ const FAQ_MOBILE_SEPARATOR_IMAGE =
 function useDeferredFaqAssets<T extends Element>() {
   const elementRef = useRef<T>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const element = elementRef.current;
@@ -429,22 +435,26 @@ function useDeferredFaqAssets<T extends Element>() {
       return () => window.cancelAnimationFrame(frameId);
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-
-        setShouldLoad(true);
-        observer.disconnect();
-      },
+    const preloadObserver = new IntersectionObserver(
+      ([entry]) => setShouldLoad(entry?.isIntersecting ?? false),
       { rootMargin: FAQ_ASSET_PRELOAD_MARGIN },
     );
+    const visibilityObserver = new IntersectionObserver(
+      ([entry]) =>
+        setIsVisible((entry?.isIntersecting ?? false) && !document.hidden),
+      { rootMargin: "10% 0px", threshold: 0.01 },
+    );
 
-    observer.observe(element);
+    preloadObserver.observe(element);
+    visibilityObserver.observe(element);
 
-    return () => observer.disconnect();
+    return () => {
+      preloadObserver.disconnect();
+      visibilityObserver.disconnect();
+    };
   }, []);
 
-  return [elementRef, shouldLoad] as const;
+  return [elementRef, shouldLoad, isVisible] as const;
 }
 
 function useFaqResponsiveAsset(desktopAsset: string, mobileAsset: string) {
@@ -465,8 +475,34 @@ function useFaqResponsiveAsset(desktopAsset: string, mobileAsset: string) {
   return asset;
 }
 
+let caveAudioContext: AudioContext | null = null;
+
 const getAudioContext = () => {
-  return new AudioContext();
+  let context = caveAudioContext;
+
+  if (!context || context.state === "closed") {
+    context = new AudioContext();
+    caveAudioContext = context;
+    const pageContext = context;
+
+    window.addEventListener(
+      "pagehide",
+      () => {
+        if (caveAudioContext === pageContext) caveAudioContext = null;
+
+        if (pageContext.state !== "closed") {
+          void pageContext.close();
+        }
+      },
+      { once: true },
+    );
+  }
+
+  if (context.state === "suspended") {
+    void context.resume();
+  }
+
+  return context;
 };
 
 function playCaveNote(frequency: number) {
@@ -532,6 +568,28 @@ function playCaveNote(frequency: number) {
   wetGain.connect(output);
   output.connect(context.destination);
 
+  const nodes: AudioNode[] = [
+    primary,
+    shimmer,
+    rumble,
+    primaryGain,
+    shimmerGain,
+    rumbleGain,
+    filter,
+    delay,
+    feedback,
+    wetGain,
+    output,
+  ];
+
+  rumble.addEventListener(
+    "ended",
+    () => {
+      nodes.forEach((node) => node.disconnect());
+    },
+    { once: true },
+  );
+
   primary.start(now);
   shimmer.start(now);
   rumble.start(now);
@@ -544,7 +602,8 @@ export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
   const [openQuestion, setOpenQuestion] = useState<number | null>(null);
-  const [faqRef, shouldLoadFaqAssets] = useDeferredFaqAssets<HTMLElement>();
+  const [faqRef, shouldLoadFaqAssets, isFaqActive] =
+    useDeferredFaqAssets<HTMLElement>();
   const faqBackgroundImage = useFaqResponsiveAsset(
     FAQ_BACKGROUND_IMAGE,
     FAQ_MOBILE_BACKGROUND_IMAGE,
@@ -565,6 +624,7 @@ export default function FAQ() {
     <section
       ref={faqRef}
       className={styles.faq}
+      data-active={isFaqActive ? "true" : "false"}
       aria-labelledby="faq-title"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
@@ -582,9 +642,11 @@ export default function FAQ() {
           aria-hidden="true"
         />
 
-        {floatingAssets.map((asset) => (
-          <ParallaxAsset key={asset.className} asset={asset} />
-        ))}
+        {shouldLoadFaqAssets
+          ? floatingAssets.map((asset) => (
+              <ParallaxAsset key={asset.className} asset={asset} />
+            ))
+          : null}
       </div>
 
       <div className={styles.atmosphereVeil} aria-hidden="true" />
@@ -693,6 +755,8 @@ function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
         alt={asset.alt}
         width={asset.width}
         height={asset.height}
+        sizes={asset.sizes}
+        unoptimized={asset.src.startsWith("/")}
       />
       {asset.hotspots?.map((hotspot) => (
         <button

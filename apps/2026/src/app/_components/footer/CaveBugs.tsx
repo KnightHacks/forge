@@ -1,5 +1,8 @@
+"use client";
+
 import type { CSSProperties } from "react";
 
+import { useViewportActivity } from "../useViewportActivity";
 import styles from "./CaveBugs.module.css";
 
 type BugColor = "cyan" | "purple" | "yellow" | "green";
@@ -22,64 +25,66 @@ interface BugConfig {
 
 // A loose scattering of critters at different depths, speeds, and tints so the
 // swarm never looks like it marches in lockstep.
-const BUGS: BugConfig[] = [
-  {
-    color: "cyan",
-    band: 0.75,
-    scale: 1.05,
-    duration: 26,
-    delay: -4,
-    direction: "ltr",
-  },
-  {
-    color: "purple",
-    band: 0.31,
-    scale: 0.8,
-    duration: 34,
-    delay: -18,
-    direction: "rtl",
-  },
-  {
-    color: "yellow",
-    band: 1,
-    scale: 0.9,
-    duration: 22,
-    delay: -11,
-    direction: "ltr",
-  },
-  {
-    color: "green",
-    band: 0.5,
-    scale: 1.15,
-    duration: 38,
-    delay: -30,
-    direction: "rtl",
-  },
-  {
-    color: "cyan",
-    band: 0,
-    scale: 0.7,
-    duration: 30,
-    delay: -8,
-    direction: "rtl",
-  },
-  {
-    color: "yellow",
-    band: 0.16,
-    scale: 1,
-    duration: 28,
-    delay: -21,
-    direction: "ltr",
-  },
-  {
-    color: "purple",
-    band: 0.94,
-    scale: 0.85,
-    duration: 24,
-    delay: -14,
-    direction: "ltr",
-  },
-];
+const BUGS = (
+  [
+    {
+      color: "cyan",
+      band: 0.75,
+      scale: 1.05,
+      duration: 26,
+      delay: -4,
+      direction: "ltr",
+    },
+    {
+      color: "purple",
+      band: 0.31,
+      scale: 0.8,
+      duration: 34,
+      delay: -18,
+      direction: "rtl",
+    },
+    {
+      color: "yellow",
+      band: 1,
+      scale: 0.9,
+      duration: 22,
+      delay: -11,
+      direction: "ltr",
+    },
+    {
+      color: "green",
+      band: 0.5,
+      scale: 1.15,
+      duration: 38,
+      delay: -30,
+      direction: "rtl",
+    },
+    {
+      color: "cyan",
+      band: 0,
+      scale: 0.7,
+      duration: 30,
+      delay: -8,
+      direction: "rtl",
+    },
+    {
+      color: "yellow",
+      band: 0.16,
+      scale: 1,
+      duration: 28,
+      delay: -21,
+      direction: "ltr",
+    },
+    {
+      color: "purple",
+      band: 0.94,
+      scale: 0.85,
+      duration: 24,
+      delay: -14,
+      direction: "ltr",
+    },
+  ] satisfies BugConfig[]
+).slice(0, 4);
 
 function Bug({ config }: { config: BugConfig }) {
   const style = {
@@ -141,8 +146,15 @@ function Bug({ config }: { config: BugConfig }) {
 }
 
 export function CaveBugs() {
+  const [swarmRef, isSwarmActive] = useViewportActivity<HTMLDivElement>();
+
   return (
-    <div className={styles.swarm} aria-hidden="true">
+    <div
+      ref={swarmRef}
+      className={styles.swarm}
+      data-active={isSwarmActive ? "true" : "false"}
+      aria-hidden="true"
+    >
       {BUGS.map((config, index) => (
         <Bug key={index} config={config} />
       ))}

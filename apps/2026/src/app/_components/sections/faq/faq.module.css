@@ -13,6 +13,8 @@
   overflow-anchor: none;
   isolation: isolate;
   background: #15192d;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 100svh;
 }
 
 .motionLayer {
@@ -37,7 +39,7 @@
     0
   );
   backface-visibility: hidden;
-  will-change: transform;
+  will-change: auto;
 }
 
 .atmosphereVeil {
@@ -172,6 +174,16 @@
   transform: translate(-50%, -50%);
   user-select: none;
   pointer-events: none;
+  filter: drop-shadow(0 0.5rem 0.7rem rgb(2 10 22 / 0.2));
+  transition: filter 180ms ease;
+}
+
+.gemButton:hover .gemImage,
+.gemButton:focus-visible .gemImage,
+.gemButton[data-active="true"] .gemImage {
+  filter: brightness(1.06) saturate(1.08)
+    drop-shadow(0 0.55rem 0.85rem rgb(7 18 36 / 0.26))
+    drop-shadow(0 0 0.7rem rgb(195 242 255 / 0.18));
 }
 
 .gemButton span {
@@ -237,6 +249,11 @@
 
 .questionButton[aria-expanded="true"] {
   transform: none;
+}
+
+.questionButton:hover,
+.questionButton:focus-visible {
+  transform: translateY(-0.12rem);
 }
 
 .questionButton:focus-visible {
@@ -344,7 +361,14 @@
     0
   );
   backface-visibility: hidden;
-  will-change: transform;
+  will-change: auto;
+}
+
+@media (min-width: 821px) and (hover: hover) and (pointer: fine) {
+  .faq:hover .background,
+  .faq:hover .floatingAsset {
+    will-change: transform;
+  }
 }
 
 .floatingAsset img {
@@ -396,6 +420,7 @@
   left: 0;
   width: clamp(21rem, 36vw, 35rem);
   animation: faqWallBreathe 7.1s ease-in-out infinite;
+  animation-play-state: paused;
 }
 
 .rightColumn {
@@ -403,6 +428,12 @@
   right: 0;
   width: clamp(27rem, 46vw, 45rem);
   animation: faqWallBreathe 7.4s ease-in-out 0.3s infinite reverse;
+  animation-play-state: paused;
+}
+
+.faq[data-active="true"] .leftColumn,
+.faq[data-active="true"] .rightColumn {
+  animation-play-state: running;
 }
 
 @media (hover: hover) and (pointer: fine) {

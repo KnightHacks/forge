@@ -4,17 +4,18 @@ import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
+import { AmbientVideo } from "../../AmbientVideo";
+import { getTransparentVideoSources } from "../../ambientVideoSources";
 import { FallingLeaves } from "./FallingLeaves";
 import styles from "./Hero.module.css";
-import { HeroLayerImage } from "./HeroLayerImage";
 import { HeroApplyButton, HeroTitle } from "./HeroTitle";
-import { HERO_LAYERS } from "./layers";
 import { useHeroMotion } from "./useHeroMotion";
 
 export default function Hero() {
   const { sectionRef, stageRef, handlePointerMove, handlePointerLeave } =
     useHeroMotion();
   const [viewport, setViewport] = useState<"desktop" | "mobile" | null>(null);
+  const [shouldMountHeroEffects, setShouldMountHeroEffects] = useState(true);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 700px)");
@@ -27,6 +28,21 @@ export default function Hero() {
 
     return () => mediaQuery.removeEventListener("change", updateViewport);
   }, []);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+
+    if (!section || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShouldMountHeroEffects(entry?.isIntersecting ?? false),
+      { rootMargin: "100% 0px", threshold: 0.01 },
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
+  }, [sectionRef]);
 
   return (
     <section
@@ -45,21 +61,16 @@ export default function Hero() {
           Knight Hacks IX
         </h1>
         <div className={styles.art} data-hero-art aria-hidden="true">
-          {viewport === "desktop" ? (
-            <div className={styles.desktopHeroLayers}>
-              {HERO_LAYERS.map((layer, index) => (
-                <HeroLayerImage
-                  key={layer.filename}
-                  layer={layer}
-                  index={index}
-                />
-              ))}
-            </div>
+          <HeroBaseLayer />
+          {shouldMountHeroEffects && viewport === "desktop" ? (
+            <DesktopHeroAmbient />
           ) : null}
-          {viewport === "mobile" ? <MobileHeroLayers /> : null}
+          {shouldMountHeroEffects && viewport === "mobile" ? (
+            <MobileHeroLayers />
+          ) : null}
           <div className={styles.shade} aria-hidden="true" />
           <HeroTitle />
-          <FallingLeaves />
+          {shouldMountHeroEffects ? <FallingLeaves /> : null}
         </div>
         <div
           className={styles.introVeil}
@@ -72,81 +83,88 @@ export default function Hero() {
   );
 }
 
-const MOBILE_HERO_LAYERS = [
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-7bg.webp",
-    className: styles.mobileHeroLayerSeven,
-    depthX: -6,
-    depthY: -2,
-    scrollY: -10,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-6.webp",
-    className: styles.mobileHeroLayerSix,
-    depthX: -5,
-    depthY: -1.6,
-    scrollY: -8,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-5.webp",
-    className: styles.mobileHeroLayerFive,
-    depthX: -3,
-    depthY: -1,
-    scrollY: -5,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-4.webp",
-    className: styles.mobileHeroLayerFour,
-    depthX: 3,
-    depthY: 1,
-    scrollY: 5,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-pond-animated.webp",
-    className: styles.mobileHeroPondAnimationLayer,
-    depthX: 3,
-    depthY: 1,
-    scrollY: 5,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-3.webp",
-    className: styles.mobileHeroLayerThree,
-    depthX: 5,
-    depthY: 1.8,
-    scrollY: 8,
-  },
-  {
-    src: "https://assets.knighthacks.org/khix/hero-mobile-2.webp",
-    className: styles.mobileHeroLayerTwo,
-    depthX: 5,
-    depthY: 1.8,
-    scrollY: 8,
-  },
-];
-
 function MobileHeroLayers() {
   return (
     <div className={styles.mobileHeroLayers} data-mobile-hero-layers>
-      {MOBILE_HERO_LAYERS.map((layer, index) => (
-        <Image
-          key={layer.src}
-          src={layer.src}
-          alt=""
-          fill
-          priority={index === 0}
-          unoptimized
-          sizes="100vw"
-          draggable={false}
-          style={
-            {
-              "--khix-mobile-layer-depth-x": layer.depthX,
-              "--khix-mobile-layer-depth-y": layer.depthY,
-              "--khix-mobile-layer-scroll-y": `${layer.scrollY}px`,
-            } as CSSProperties
-          }
-          className={[styles.mobileHeroLayer, layer.className].join(" ")}
+      <Image
+        src="/media/homepage/hero-static/hero-mobile-composite.webp"
+        alt=""
+        fill
+        sizes="100vw"
+        unoptimized
+        loading="eager"
+        fetchPriority="high"
+        draggable={false}
+        className={`${styles.mobileHeroLayer} ${styles.mobileHeroCompositeLayer}`}
+        style={
+          {
+            "--khix-mobile-layer-depth-x": 2,
+            "--khix-mobile-layer-depth-y": 0.8,
+            "--khix-mobile-layer-scroll-y": "5px",
+          } as CSSProperties
+        }
+      />
+    </div>
+  );
+}
+
+function HeroBaseLayer() {
+  return (
+    <div
+      className={`${styles.layer} ${styles.baseLayer}`}
+      data-hero-layer
+      style={
+        {
+          "--khix-layer-depth-x": -4,
+          "--khix-layer-depth-y": -2,
+          "--khix-layer-scale": 1.012,
+          "--khix-layer-scroll-y": "-10px",
+          zIndex: 1,
+        } as CSSProperties
+      }
+    >
+      <picture>
+        <source
+          media="(max-width: 700px)"
+          srcSet="/media/homepage/hero-static/hero-mobile-7bg.webp"
         />
-      ))}
+        <img
+          src="/media/homepage/hero-static/hero-desktop-composite.avif"
+          alt=""
+          className={styles.baseLayerImage}
+          loading="eager"
+          fetchPriority="high"
+          draggable={false}
+          data-hero-layer-image
+        />
+      </picture>
+    </div>
+  );
+}
+
+function DesktopHeroAmbient() {
+  return (
+    <div
+      className={`${styles.layer} ${styles.heroAmbientLayer}`}
+      data-hero-layer
+      style={
+        {
+          "--khix-layer-depth-x": 5,
+          "--khix-layer-depth-y": 2.5,
+          "--khix-layer-scale": 1.012,
+          "--khix-layer-scroll-y": "8px",
+          zIndex: 2,
+        } as CSSProperties
+      }
+    >
+      <AmbientVideo
+        className={styles.heroAmbientFrameSequence}
+        preload="auto"
+        rootMargin="0px"
+        sources={getTransparentVideoSources(
+          "/media/homepage/hero-ambient-combined",
+        ).map((source) => ({ ...source, media: "(min-width: 701px)" }))}
+      />
     </div>
   );
 }
