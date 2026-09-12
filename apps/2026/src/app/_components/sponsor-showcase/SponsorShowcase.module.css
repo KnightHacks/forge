@@ -302,6 +302,27 @@
   user-select: none;
 }
 
+.sponsorLockup {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: calc(var(--logo-height) * 0.88);
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  filter: var(--sponsor-logo-filter);
+}
+
+.sponsorLockup img {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
 .sponsorLink[data-size="small"] .sponsorLogo,
 .sponsorLink[data-size="x-small"] .sponsorLogo {
   width: min(var(--logo-width), 78%);
@@ -419,6 +440,10 @@
   .mediumStoneGrid {
     width: min(100%, 24rem);
     gap: 0.8rem 0.65rem;
+  }
+
+  .mediumStoneGrid > .sponsorLink {
+    max-width: calc((100% - 0.65rem) / 2);
   }
 
   .smallStoneGrid {
@@ -576,4 +601,14 @@
   to {
     transform: translate3d(0, 0.3rem, 0) rotate(0.16deg);
   }
+}
+
+/* The official Student Government PNG has a white background. Multiply keeps
+   that original artwork intact while letting the rock show through the white. */
+.sponsorLink[data-blend-logo-background="true"] .sponsorLogo {
+  mix-blend-mode: multiply;
+}
+
+.sponsorLink[data-blend-logo-background="true"] .sponsorLogoImage {
+  filter: none;
 }

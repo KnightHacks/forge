@@ -20,6 +20,8 @@ export interface SponsorShowcaseSponsor {
   name: string;
   websiteUrl: string;
   logoSrc: string;
+  logoWordmark?: string;
+  blendLogoBackground?: boolean;
   logoScale?: number;
   mobileLogoScale?: number;
   preserveLogoContrast?: boolean;
@@ -103,6 +105,9 @@ function SponsorRockCard({ sponsor }: { sponsor: SponsorShowcaseSponsor }) {
       className={styles.sponsorLink}
       data-size={tierConfig.size}
       data-tier={sponsor.tier}
+      data-blend-logo-background={
+        sponsor.blendLogoBackground ? "true" : undefined
+      }
       data-preserve-logo-contrast={
         sponsor.preserveLogoContrast ? "true" : undefined
       }
@@ -117,15 +122,29 @@ function SponsorRockCard({ sponsor }: { sponsor: SponsorShowcaseSponsor }) {
       <span className={styles.sponsorVisual} aria-hidden="true">
         <span className={styles.rockFrame} aria-hidden="true" />
         <span className={styles.sponsorLogo}>
-          <Image
-            src={sponsor.logoSrc}
-            alt=""
-            fill
-            className={styles.sponsorLogoImage}
-            sizes="(max-width: 760px) 9rem, 16rem"
-            unoptimized
-            draggable={false}
-          />
+          {sponsor.logoWordmark ? (
+            <span className={styles.sponsorLockup}>
+              <Image
+                src={sponsor.logoSrc}
+                alt=""
+                width={24}
+                height={24}
+                unoptimized
+                draggable={false}
+              />
+              <span>{sponsor.logoWordmark}</span>
+            </span>
+          ) : (
+            <Image
+              src={sponsor.logoSrc}
+              alt=""
+              fill
+              className={styles.sponsorLogoImage}
+              sizes="(max-width: 760px) 9rem, 16rem"
+              unoptimized
+              draggable={false}
+            />
+          )}
         </span>
       </span>
     </a>
