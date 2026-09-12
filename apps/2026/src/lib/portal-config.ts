@@ -8,7 +8,7 @@ export const KHIX_PORTAL_CONFIG = {
     profile: "/dashboard/profile",
   },
   termsUrl: "https://knight-hacks.notion.site/knight-hacks-26-tos",
-  guideUrl: "https://knight-hacks.notion.site/knighthacksix",
+  guideUrl: "https://knight-hacks.notion.site/knight-hacks-ix-hackers-guide",
   copy: {
     applicationName: "Knight Hacks IX",
     supportChannelUrl: "https://discord.knighthacks.org/",
