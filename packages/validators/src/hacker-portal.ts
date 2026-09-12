@@ -3,6 +3,18 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
+import {
+  hackerJudgingDtoSchema,
+  hackerJudgingReadSchema,
+  projectClaimPreviewDtoSchema,
+  projectClaimResultDtoSchema,
+  projectClaimSearchDtoSchema,
+  projectClaimSearchSchema,
+  projectClaimSelectSchema,
+  projectClaimTokenSchema,
+  projectInviteResultDtoSchema,
+  projectInviteSchema,
+} from "./project-claims";
 import { nullableSocialProfileUrl } from "./social-profile";
 
 export const HACKER_WITHDRAWAL_ACKNOWLEDGEMENT =
@@ -496,6 +508,11 @@ export const participantDomainErrorSchema = z
 const noInputSchema = z.undefined();
 
 export const hackerPortalV1InputSchemas = {
+  searchJudgingProjects: projectClaimSearchSchema,
+  inviteProjectMember: projectInviteSchema,
+  claimProject: projectClaimSelectSchema,
+  getProjectClaim: projectClaimTokenSchema,
+  getJudging: hackerJudgingReadSchema,
   confirmAttendance: hackerConfirmAttendanceSchema,
   getApplicationContext: noInputSchema,
   getCheckInPass: hackerIssueCheckInPassSchema,
@@ -516,6 +533,11 @@ export const hackerPortalV1InputSchemas = {
 } as const;
 
 export interface HackerPortalV1OutputSchemaMap {
+  searchJudgingProjects: typeof projectClaimSearchDtoSchema;
+  inviteProjectMember: typeof projectInviteResultDtoSchema;
+  claimProject: typeof projectClaimResultDtoSchema;
+  getProjectClaim: typeof projectClaimPreviewDtoSchema;
+  getJudging: typeof hackerJudgingDtoSchema;
   confirmAttendance: typeof participantMutationResultDtoSchema;
   getApplicationContext: typeof applicationContextDtoSchema;
   getCheckInPass: typeof checkInPassDtoSchema;
@@ -536,6 +558,11 @@ export interface HackerPortalV1OutputSchemaMap {
 }
 
 export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
+  searchJudgingProjects: projectClaimSearchDtoSchema,
+  inviteProjectMember: projectInviteResultDtoSchema,
+  claimProject: projectClaimResultDtoSchema,
+  getProjectClaim: projectClaimPreviewDtoSchema,
+  getJudging: hackerJudgingDtoSchema,
   confirmAttendance: participantMutationResultDtoSchema,
   getApplicationContext: applicationContextDtoSchema,
   getCheckInPass: checkInPassDtoSchema,

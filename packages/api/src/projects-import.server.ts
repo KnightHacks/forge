@@ -73,7 +73,10 @@ export async function importDevpostProjects(input: {
 
     const [lock, evaluation] = await Promise.all([
       tx.query.HackathonJudgingConfiguration.findFirst({
-        columns: { projectInventoryLockedAt: true },
+        columns: {
+          projectInventoryLockedAt: true,
+          projectClaimsStartedAt: true,
+        },
         where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
       }),
       tx.query.ProjectEvaluation.findFirst({
@@ -81,6 +84,10 @@ export async function importDevpostProjects(input: {
         where: eq(ProjectEvaluation.hackathonId, hackathon.id),
       }),
     ]);
+    if (lock?.projectClaimsStartedAt && input.mode === "replace")
+      throw new ProjectImportError(
+        "Projects have been claimed. Only add-only imports are allowed.",
+      );
     const locked =
       lock?.projectInventoryLockedAt !== null && lock !== undefined;
     const schedule = await tx.query.JudgingSchedule.findFirst({
@@ -92,7 +99,10 @@ export async function importDevpostProjects(input: {
         "A saved schedule exists. Add new projects normally, or drop the eligible schedule before replacing inventory.",
       );
     const addOnly =
-      (locked || Boolean(evaluation) || Boolean(schedule)) &&
+      (locked ||
+        Boolean(lock?.projectClaimsStartedAt) ||
+        Boolean(evaluation) ||
+        Boolean(schedule)) &&
       input.mode !== "replace";
     if (evaluation && input.mode === "replace") {
       throw new ProjectImportError(

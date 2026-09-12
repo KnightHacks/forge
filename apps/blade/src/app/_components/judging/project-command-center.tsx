@@ -18,6 +18,7 @@ import { EvaluationAuditPanel } from "./evaluation-audit-panel";
 import { JudgingConfigurationPanel } from "./judging-configuration-panel";
 import { JudgingControlPanel } from "./judging-control-panel";
 import { JudgingSchedulePanel } from "./judging-schedule-panel";
+import { ProjectClaimsPanel } from "./project-claims-panel";
 
 type AdminData = RouterOutputs["projects"]["listAdmin"];
 type ControlData = RouterOutputs["judging"]["listAdmin"];
@@ -41,7 +42,13 @@ export function ProjectCommandCenter({
     deleted: "active" | "all" | "deleted";
     hackathonId: string;
   };
-  selectedTab: "evaluations" | "projects" | "rooms" | "setup" | "schedule";
+  selectedTab:
+    | "claims"
+    | "evaluations"
+    | "projects"
+    | "rooms"
+    | "setup"
+    | "schedule";
   scheduleData: RouterOutputs["judging"]["listScheduleAdmin"] | null;
 }) {
   const pathname = usePathname();
@@ -102,8 +109,15 @@ export function ProjectCommandCenter({
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="rooms">Rooms</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="claims">Hacker access</TabsTrigger>
           <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
         </TabsList>
+        <TabsContent className="mt-4" value="claims">
+          <ProjectClaimsPanel
+            key={controlData.hackathon.id}
+            hackathonId={controlData.hackathon.id}
+          />
+        </TabsContent>
         <TabsContent className="mt-4" value="setup">
           <JudgingConfigurationPanel
             data={controlData}

@@ -27,6 +27,8 @@ import {
   JudgingSchedule,
   Project,
   ProjectChallenge,
+  ProjectClaim,
+  ProjectClaimLink,
   ProjectEvaluation,
   ProjectEvaluationRating,
   ProjectMember,
@@ -688,7 +690,10 @@ export const projectsRouter = createTRPCRouter({
         }
         const [lock, activeRoom] = await Promise.all([
           tx.query.HackathonJudgingConfiguration.findFirst({
-            columns: { projectInventoryLockedAt: true },
+            columns: {
+              projectInventoryLockedAt: true,
+              projectClaimsStartedAt: true,
+            },
             where: eq(HackathonJudgingConfiguration.hackathonId, hackathon.id),
           }),
           tx.query.JudgingRoom.findFirst({
@@ -702,8 +707,9 @@ export const projectsRouter = createTRPCRouter({
         if (lock?.projectInventoryLockedAt) {
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message:
-              "The judging inventory is locked. Use the confirmed full replacement import instead.",
+            message: lock.projectClaimsStartedAt
+              ? "Project claims have started. The inventory is add-only."
+              : "The judging inventory is locked. Use the confirmed full replacement import instead.",
           });
         }
         if (activeRoom) {
@@ -861,16 +867,53 @@ export const projectsRouter = createTRPCRouter({
           })
           .where(eq(Project.id, existing.id))
           .returning();
-        await tx
-          .delete(ProjectMember)
-          .where(eq(ProjectMember.projectId, existing.id));
-        await tx.insert(ProjectMember).values(
-          input.members.map((member, index) => ({
-            ...member,
-            displayOrder: index,
-            projectId: existing.id,
-          })),
-        );
+        const roster = await tx
+          .select()
+          .from(ProjectMember)
+          .where(eq(ProjectMember.projectId, existing.id))
+          .orderBy(asc(ProjectMember.displayOrder));
+        const rosterChanged =
+          roster.length !== input.members.length ||
+          roster.some(
+            (member, index) =>
+              member.name !== input.members[index]?.name ||
+              member.email !== input.members[index].email,
+          );
+        if (
+          rosterChanged ||
+          existing.participantCount !== input.participantCount
+        ) {
+          const [link] = await tx
+            .select({ id: ProjectClaimLink.id })
+            .from(ProjectClaimLink)
+            .innerJoin(
+              ProjectMember,
+              eq(ProjectMember.id, ProjectClaimLink.memberId),
+            )
+            .where(eq(ProjectMember.projectId, existing.id))
+            .limit(1);
+          const [claim] = await tx
+            .select({ id: ProjectClaim.memberId })
+            .from(ProjectClaim)
+            .where(eq(ProjectClaim.projectId, existing.id))
+            .limit(1);
+          if (link || claim)
+            throw new TRPCError({
+              code: "CONFLICT",
+              message:
+                "This roster has claim links or claimed members. Keep the existing team; teammates can invite missing hackers from their portal.",
+            });
+          await tx
+            .delete(ProjectMember)
+            .where(eq(ProjectMember.projectId, existing.id));
+          await tx.insert(ProjectMember).values(
+            input.members.map((member, index) => ({
+              ...member,
+              displayOrder: index,
+              projectId: existing.id,
+            })),
+          );
+        }
         if (removedChallengeIds.length)
           await tx
             .delete(ProjectToChallenge)
@@ -950,6 +993,16 @@ export const projectsRouter = createTRPCRouter({
         if (!project) throw new TRPCError({ code: "NOT_FOUND" });
         if (project.deletedAt) return project;
         await assertNoProjectReservations(tx, [project.id]);
+        if (
+          await tx.query.ProjectClaim.findFirst({
+            columns: { memberId: true },
+            where: eq(ProjectClaim.projectId, project.id),
+          })
+        )
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Claimed projects cannot be deleted.",
+          });
 
         const [saved] = await tx
           .update(Project)

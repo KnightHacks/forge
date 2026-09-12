@@ -1,4 +1,7 @@
 export const AUDITED_ADMIN_PROCEDURES = [
+  "project-claims.setClaimSettings",
+  "project-claims.copyClaimLink",
+  "project-claims.sendClaimLinks",
   "judging-schedule.getUnassignedPresentationChoices",
   "judging-schedule.getAppointmentMoveChoices",
   "alumni.archiveBulletinPost",
@@ -161,6 +164,7 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "project-claims.getClaimsAdmin",
   "judging-appointment-results.getAppointmentResults",
   "judging-schedule.listScheduleAdmin",
   "judging-schedule.listBuildings",
