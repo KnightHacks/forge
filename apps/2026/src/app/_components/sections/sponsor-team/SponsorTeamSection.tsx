@@ -17,6 +17,13 @@ const HOMEPAGE_SPONSORS = [
     tier: "golden-dawn",
   },
   {
+    name: "Hugging Face",
+    websiteUrl: "https://huggingface.co/",
+    logoSrc: "/sponsors/hugging-face.svg",
+    logoScale: 1.1,
+    tier: "golden-dawn",
+  },
+  {
     name: "AMD",
     websiteUrl: "https://www.amd.com/",
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-amd.svg",
@@ -34,6 +41,12 @@ const HOMEPAGE_SPONSORS = [
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-databricks.svg",
     logoScale: 1.65,
     mobileLogoScale: 1.65,
+    tier: "silver-moon",
+  },
+  {
+    name: "NVIDIA",
+    websiteUrl: "https://www.nvidia.com/",
+    logoSrc: "/sponsors/nvidia.svg",
     tier: "silver-moon",
   },
   {
@@ -66,8 +79,7 @@ const HOMEPAGE_SPONSORS = [
     name: "Codex",
     websiteUrl: "https://openai.com/codex/",
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-codex.svg",
-    logoScale: 2,
-    mobileLogoScale: 1.7,
+    logoWordmark: "Codex",
     tier: "bronze-ember",
   },
   {
@@ -84,6 +96,27 @@ const HOMEPAGE_SPONSORS = [
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-rfsmart.svg",
     logoScale: 1.25,
     mobileLogoScale: 1.2,
+    tier: "bronze-ember",
+  },
+  {
+    name: "UCF Student Government",
+    websiteUrl: "https://studentgovernment.ucf.edu/",
+    logoSrc: "/sponsors/ucf-student-government.png",
+    blendLogoBackground: true,
+    logoScale: 1.75,
+    mobileLogoScale: 1.7,
+    tier: "bronze-ember",
+  },
+  {
+    name: "GitHub",
+    websiteUrl: "https://github.com/",
+    logoSrc: "/sponsors/github.svg",
+    tier: "bronze-ember",
+  },
+  {
+    name: "Bloomberg",
+    websiteUrl: "https://www.bloomberg.com/",
+    logoSrc: "/sponsors/bloomberg.svg",
     tier: "bronze-ember",
   },
 ] satisfies SponsorShowcaseSponsor[];
@@ -116,6 +149,21 @@ const PARTNERS = [
     websiteUrl: "https://mlh.io/",
   },
   {
+    name: "ACM & ACM-W at UCF",
+    logoSrc: "/partners/acm-ucf.svg",
+    websiteUrl: "https://ucf.acm.org/",
+  },
+  {
+    name: "Robotics Club of Central Florida",
+    logoSrc: "/partners/rccf.png",
+    websiteUrl: "https://rccf.club/",
+  },
+  {
+    name: "SHPE UCF",
+    logoSrc: "/partners/shpe-ucf.png",
+    websiteUrl: "https://www.shpeucf.com/",
+  },
+  {
     name: "Society of Asian Scientists and Engineers",
     logoSrc: "https://assets.knighthacks.org/khix/partner-sase.svg",
     websiteUrl: "https://www.instagram.com/saseucf/",
@@ -145,7 +193,6 @@ export function SponsorTeamSection() {
         <span className={`${styles.sceneAsset} ${styles.waterfallThree}`} />
       </div>
       <WaterfallAtmosphere />
-      <div className={styles.bridge} aria-hidden="true" />
 
       <div className={styles.content}>
         <section
@@ -206,6 +253,7 @@ export function SponsorTeamSection() {
           className={styles.teamPanel}
           aria-labelledby="team-title"
         >
+          <div className={styles.bridge} aria-hidden="true" />
           <h2 id="team-title" className={styles.sectionTitle}>
             Team
           </h2>
