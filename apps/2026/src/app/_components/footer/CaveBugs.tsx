@@ -86,6 +86,7 @@ const BUGS = (
   ] satisfies BugConfig[]
 ).slice(0, 4);
 
+/** Renders one deterministic ambient cave bug from its motion configuration. */
 function Bug({ config }: { config: BugConfig }) {
   const style = {
     "--bug-band": config.band,
@@ -145,6 +146,7 @@ function Bug({ config }: { config: BugConfig }) {
   );
 }
 
+/** Renders the reduced, viewport-aware set of animated footer cave bugs. */
 export function CaveBugs() {
   const [swarmRef, isSwarmActive] = useViewportActivity<HTMLDivElement>();
 

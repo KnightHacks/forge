@@ -236,6 +236,7 @@ interface FloatingAsset {
   hotspots?: readonly GemHotspot[];
 }
 
+/** Resolves a required FAQ CSS-module class and fails loudly when it is absent. */
 function faqClass(name: string) {
   const className = styles[name];
 
@@ -422,6 +423,7 @@ const FAQ_SEPARATOR_IMAGE =
 const FAQ_MOBILE_SEPARATOR_IMAGE =
   'url("https://assets.knighthacks.org/khix/separator-rocks-faq-768.webp")';
 
+/** Defers FAQ artwork and reports whether the section is currently active. */
 function useDeferredFaqAssets<T extends Element>() {
   const elementRef = useRef<T>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -439,29 +441,40 @@ function useDeferredFaqAssets<T extends Element>() {
       ([entry]) => setShouldLoad(entry?.isIntersecting ?? false),
       { rootMargin: FAQ_ASSET_PRELOAD_MARGIN },
     );
+    let isIntersecting = false;
+    /** Synchronizes animation activity with intersection and tab visibility. */
+    const updateVisibility = () => {
+      setIsVisible(isIntersecting && !document.hidden);
+    };
     const visibilityObserver = new IntersectionObserver(
-      ([entry]) =>
-        setIsVisible((entry?.isIntersecting ?? false) && !document.hidden),
+      ([entry]) => {
+        isIntersecting = entry?.isIntersecting ?? false;
+        updateVisibility();
+      },
       { rootMargin: "10% 0px", threshold: 0.01 },
     );
 
     preloadObserver.observe(element);
     visibilityObserver.observe(element);
+    document.addEventListener("visibilitychange", updateVisibility);
 
     return () => {
       preloadObserver.disconnect();
       visibilityObserver.disconnect();
+      document.removeEventListener("visibilitychange", updateVisibility);
     };
   }, []);
 
   return [elementRef, shouldLoad, isVisible] as const;
 }
 
+/** Selects the FAQ artwork URL matching the current responsive breakpoint. */
 function useFaqResponsiveAsset(desktopAsset: string, mobileAsset: string) {
   const [asset, setAsset] = useState(desktopAsset);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 820px)");
+    /** Applies the artwork URL for the active responsive breakpoint. */
     const updateAsset = () => {
       setAsset(mediaQuery.matches ? mobileAsset : desktopAsset);
     };
@@ -477,6 +490,7 @@ function useFaqResponsiveAsset(desktopAsset: string, mobileAsset: string) {
 
 let caveAudioContext: AudioContext | null = null;
 
+/** Returns the reusable cave-note audio context and resumes it when necessary. */
 const getAudioContext = () => {
   let context = caveAudioContext;
 
@@ -505,6 +519,7 @@ const getAudioContext = () => {
   return context;
 };
 
+/** Synthesizes one short layered cave note and releases its audio graph. */
 function playCaveNote(frequency: number) {
   const context = getAudioContext();
 
@@ -598,6 +613,7 @@ function playCaveNote(frequency: number) {
   rumble.stop(now + 1.6);
 }
 
+/** Renders the interactive FAQ cave with deferred decorative artwork. */
 export default function FAQ() {
   const [activeSectionId, setActiveSectionId] =
     useState<FaqSectionId>("general");
@@ -693,6 +709,7 @@ export default function FAQ() {
   );
 }
 
+/** Renders the deferred rock separator and accessible FAQ heading. */
 export function FAQTitle({ className }: { className?: string }) {
   const [titleRef, shouldLoadSeparator] =
     useDeferredFaqAssets<HTMLDivElement>();
@@ -738,6 +755,7 @@ export function FAQTitle({ className }: { className?: string }) {
   );
 }
 
+/** Renders one decorative cave layer and any playable gemstone hotspots. */
 function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
   return (
     <div
@@ -780,6 +798,7 @@ function ParallaxAsset({ asset }: { asset: FloatingAsset }) {
   );
 }
 
+/** Maintains a stable question-stack height as answers and categories change. */
 function useStableFaqStack(activeSectionId: FaqSectionId) {
   const questionStackRef = useRef<HTMLDivElement>(null);
 
@@ -793,6 +812,7 @@ function useStableFaqStack(activeSectionId: FaqSectionId) {
     let measurementFrame = 0;
     let measuredWidth = questionStack.getBoundingClientRect().width;
 
+    /** Measures and locks the collapsed question-stack height. */
     const lockRestingHeight = () => {
       // Measure without the lock, then remove the open answer's contribution so
       // a resize while expanded still preserves the collapsed stack height.
@@ -817,6 +837,7 @@ function useStableFaqStack(activeSectionId: FaqSectionId) {
       questionStack.dataset.heightLocked = "true";
     };
 
+    /** Coalesces stack-height measurements into the next animation frame. */
     const scheduleMeasurement = () => {
       window.cancelAnimationFrame(measurementFrame);
       measurementFrame = window.requestAnimationFrame(lockRestingHeight);
@@ -846,6 +867,7 @@ function useStableFaqStack(activeSectionId: FaqSectionId) {
   return questionStackRef;
 }
 
+/** Renders one accessible FAQ category selector. */
 function GemstoneButton({
   section,
   isActive,
@@ -879,6 +901,7 @@ function GemstoneButton({
   );
 }
 
+/** Renders one expandable FAQ question and its clipped rock answer panel. */
 function FaqQuestion({
   item,
   isOpen,

@@ -37,6 +37,8 @@ Current phase: Complete
   first attempt failed because dependencies were absent; passed after install.
 - Live desktop Lighthouse baseline: performance 62, LCP 11.7 s, 87 requests,
   19,334 KiB transferred, with about 7,116 KiB estimated image-delivery savings.
+- Observed Chrome memory on the same full-page test fell from approximately
+  1.3 GB to 450 MB after the rendering and media lifecycle changes.
 - Media inspection: the nine largest static/animated suspects represent roughly
   1.34 GiB of worst-case RGBA frame data; `extended-front.webp` alone is
   3840x12000 (175.8 MiB decoded), and the animated WebPs contain 5-20 frames.

@@ -7,6 +7,7 @@ import { useViewportActivity } from "../../useViewportActivity";
 import { AboutGallery } from "./AboutGallery";
 import styles from "./AboutSection.module.css";
 
+/** Renders the about story while gating ambient motion to the nearby viewport. */
 export function AboutSection() {
   const [aboutRef, isAboutActive] = useViewportActivity<HTMLElement>({
     rootMargin: "10% 0px",

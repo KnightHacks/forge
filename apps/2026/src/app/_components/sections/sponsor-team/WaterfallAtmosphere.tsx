@@ -21,6 +21,7 @@ interface WaterParticle {
 const PARTICLE_COUNT = 88;
 const MAX_PIXEL_RATIO = 1;
 
+/** Returns the fractional component used for deterministic particle placement. */
 function fractionalPart(value: number) {
   return value - Math.floor(value);
 }
@@ -48,6 +49,7 @@ const PARTICLES: readonly WaterParticle[] = Array.from(
   },
 );
 
+/** Pre-renders one reusable bead or streak sprite for the particle canvas. */
 function createParticleSprite(bead: boolean) {
   const sprite = document.createElement("canvas");
   const context = sprite.getContext("2d");
@@ -87,6 +89,7 @@ function createParticleSprite(bead: boolean) {
   return sprite;
 }
 
+/** Draws an adaptive, viewport-bound waterfall particle field on one canvas. */
 export function WaterfallAtmosphere() {
   const [atmosphereRef, isAtmosphereActive] =
     useViewportActivity<HTMLDivElement>({ rootMargin: "10% 0px" });
@@ -115,6 +118,7 @@ export function WaterfallAtmosphere() {
     let width = 0;
     let height = 0;
 
+    /** Resizes the backing buffer without exceeding the adaptive pixel ratio. */
     const resize = () => {
       const nextWidth = Math.max(1, Math.round(canvas.clientWidth));
       const nextHeight = Math.max(1, Math.round(canvas.clientHeight));
@@ -134,9 +138,8 @@ export function WaterfallAtmosphere() {
     resizeObserver.observe(canvas);
     resize();
 
+    /** Draws one particle frame and adapts resolution from observed frame time. */
     const render = (time: number) => {
-      resize();
-
       const frameDuration = Math.min(50, time - previousTime);
       previousTime = time;
       measuredFrames += 1;

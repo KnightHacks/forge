@@ -12,6 +12,7 @@ interface ViewportActivityOptions {
  * Keeps decorative work active only while it can contribute to the page.
  * Document visibility is included so background tabs do not keep animating.
  */
+/** Tracks whether an element is near the viewport and its document is visible. */
 export function useViewportActivity<T extends Element>({
   once = false,
   respectReducedMotion = true,
@@ -31,6 +32,7 @@ export function useViewportActivity<T extends Element>({
     let isIntersecting = false;
     let observer: IntersectionObserver | null = null;
 
+    /** Commits activity only when the target intersects and the tab is visible. */
     const updateActivity = () => {
       const nextIsActive =
         isIntersecting &&

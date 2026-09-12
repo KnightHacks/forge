@@ -31,6 +31,7 @@ const rosterIdPrefixes = [
   "design-",
 ] as const;
 
+/** Derives compact profile initials from a member's display name. */
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -41,6 +42,7 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+/** Normalizes a member's name for the constrained profile-card layout. */
 function getDisplayName(name: string) {
   return name
     .trim()
@@ -51,6 +53,7 @@ function getDisplayName(name: string) {
     );
 }
 
+/** Chooses the most useful role label available for a team member. */
 function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
   if (roleLabel === "Organizer" && member.teamRole !== "Hack Lead") {
     return "Hackathon Organizer";
@@ -61,6 +64,7 @@ function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
   return member.teamRole;
 }
 
+/** Returns the stable identity key used for team profile rendering. */
 function getMemberProfileKey(member: TeamCascadeMember) {
   const prefix = rosterIdPrefixes.find((candidate) =>
     member.id.startsWith(candidate),
@@ -69,6 +73,7 @@ function getMemberProfileKey(member: TeamCascadeMember) {
   return prefix ? member.id.slice(prefix.length) : member.id;
 }
 
+/** Flattens role groups into the ordered people shown by the team cascade. */
 function getTeamMembers(groups: TeamCascadeGroup[]) {
   const membersByProfileId = new Map<string, TeamCascadePerson>();
 
@@ -89,6 +94,7 @@ function getTeamMembers(groups: TeamCascadeGroup[]) {
   return [...membersByProfileId.values()];
 }
 
+/** Renders a member's profile image with an initials fallback. */
 function ProfileImage({ member }: { member: TeamCascadeMember }) {
   if (member.imageUrl) {
     return (
@@ -110,6 +116,7 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
   );
 }
 
+/** Renders one compact team profile card with optional external links. */
 function TeamProfile({
   detailsId,
   index,
@@ -133,6 +140,7 @@ function TeamProfile({
     </span>
   );
 
+  /** Selects a profile and keeps mobile taps inside the expandable roster. */
   function handleProfileLinkClick(event: MouseEvent<HTMLAnchorElement>) {
     onSelect();
 
@@ -181,6 +189,7 @@ function TeamProfile({
   );
 }
 
+/** Renders the expanded identity and role details for a team member. */
 function TeamMemberDetails({
   detailsId,
   person,
@@ -243,6 +252,7 @@ function TeamMemberDetails({
   );
 }
 
+/** Renders the ordered, animated roster of team members. */
 function TeamRoster({ members }: { members: TeamCascadePerson[] }) {
   const detailsId = useId();
   const [selectedProfileKey, setSelectedProfileKey] = useState(
@@ -277,6 +287,7 @@ function TeamRoster({ members }: { members: TeamCascadePerson[] }) {
   );
 }
 
+/** Renders loading or failure feedback for the remote team roster. */
 function TeamCascadeStatusMessage({
   children,
   className,
@@ -297,6 +308,7 @@ function TeamCascadeStatusMessage({
   );
 }
 
+/** Loads and renders the team roster only when its scene approaches view. */
 export function TeamCascadeClient({
   bladeUrl,
   className,
@@ -324,6 +336,7 @@ export function TeamCascadeClient({
 
     const abortController = new AbortController();
 
+    /** Fetches public team groups and ignores results after cancellation. */
     async function loadRoster() {
       setStatus("loading");
 

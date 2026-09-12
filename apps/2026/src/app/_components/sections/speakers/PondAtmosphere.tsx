@@ -20,6 +20,7 @@ interface PondAtmosphereProps {
   className?: string;
 }
 
+/** Renders pond fireflies and wisps while pausing their motion offscreen. */
 export function PondAtmosphere({ className }: PondAtmosphereProps) {
   const [atmosphereRef, isAtmosphereActive] =
     useViewportActivity<HTMLSpanElement>();

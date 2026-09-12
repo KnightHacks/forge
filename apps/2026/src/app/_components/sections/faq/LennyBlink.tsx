@@ -7,6 +7,7 @@ interface LennyBlinkProps {
   className?: string;
 }
 
+/** Renders Lenny's transparent blink animation with a static fallback poster. */
 export function LennyBlink({ className }: LennyBlinkProps) {
   const rootClassName = className
     ? `${styles.lenny} ${className}`

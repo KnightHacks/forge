@@ -30,10 +30,12 @@ export interface SpeakerShowcaseProps {
   titleId?: string;
 }
 
+/** Returns a stable carousel key for a speaker record. */
 function getSpeakerKey(speaker: SpeakerShowcaseSpeaker, index: number) {
   return `${speaker.name}-${speaker.companyRole}-${index}`;
 }
 
+/** Builds useful portrait alternative text from available speaker metadata. */
 function getSpeakerImageAlt(speaker: SpeakerShowcaseSpeaker) {
   if (speaker.name.toLowerCase() === "coming soon") {
     return "";
@@ -42,18 +44,22 @@ function getSpeakerImageAlt(speaker: SpeakerShowcaseSpeaker) {
   return `${speaker.name} speaker portrait`;
 }
 
+/** Builds the accessible label for a speaker's LinkedIn profile link. */
 function getLinkedInLabel(speaker: SpeakerShowcaseSpeaker) {
   return `Open ${speaker.name}'s LinkedIn profile`;
 }
 
+/** Wraps the carousel index to the previous speaker. */
 function getPreviousSpeakerIndex(currentIndex: number, speakerCount: number) {
   return (currentIndex - 1 + speakerCount) % speakerCount;
 }
 
+/** Wraps the carousel index to the next speaker. */
 function getNextSpeakerIndex(currentIndex: number, speakerCount: number) {
   return (currentIndex + 1) % speakerCount;
 }
 
+/** Returns the previous, active, and next speakers for the carousel stage. */
 function getVisibleSpeakers(
   speakers: readonly SpeakerShowcaseSpeaker[],
   activeSpeakerIndex: number,
@@ -77,6 +83,7 @@ function getVisibleSpeakers(
   return visibleSpeakers;
 }
 
+/** Renders a speaker portrait with an optional external profile link. */
 function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
   const portraitStage = (
     <div className={styles.portraitStage}>
@@ -122,6 +129,7 @@ function SpeakerPortrait({ speaker }: { speaker: SpeakerShowcaseSpeaker }) {
   );
 }
 
+/** Renders the responsive speaker carousel and pauses auto-rotation offscreen. */
 export function SpeakerShowcase({
   className,
   speakers,
@@ -155,6 +163,7 @@ export function SpeakerShowcase({
     ? `${styles.speakerShowcase} ${className}`
     : styles.speakerShowcase;
 
+  /** Starts a direction-aware transition to a requested speaker. */
   const startSpeakerTransition = useCallback(
     (nextSpeakerIndex: number, direction: SpeakerTransitionDirection) => {
       if (!hasScrollableSpeakers || isTransitioning) return;
@@ -175,6 +184,7 @@ export function SpeakerShowcase({
     ],
   );
 
+  /** Moves the carousel to the previous speaker. */
   const showPreviousSpeaker = useCallback(() => {
     if (!hasScrollableSpeakers) return;
 
@@ -189,6 +199,7 @@ export function SpeakerShowcase({
     startSpeakerTransition,
   ]);
 
+  /** Moves the carousel to the next speaker. */
   const showNextSpeaker = useCallback(() => {
     if (!hasScrollableSpeakers) return;
 
@@ -207,6 +218,7 @@ export function SpeakerShowcase({
     const visibleSpeakersQuery = window.matchMedia(
       LARGE_DESKTOP_VISIBLE_SPEAKERS_QUERY,
     );
+    /** Chooses the number of staged portraits for the current breakpoint. */
     const updateVisibleSpeakerCount = () => {
       setVisibleSpeakerCount(
         visibleSpeakersQuery.matches
@@ -265,15 +277,18 @@ export function SpeakerShowcase({
     return null;
   }
 
+  /** Restarts the idle interval after a manual carousel interaction. */
   const resetAutoScrollTimer = () => {
     setAutoScrollResetKey((currentKey) => currentKey + 1);
   };
 
+  /** Handles previous-speaker navigation and resets auto-rotation. */
   const handlePreviousSpeaker = () => {
     resetAutoScrollTimer();
     showPreviousSpeaker();
   };
 
+  /** Handles next-speaker navigation and resets auto-rotation. */
   const handleNextSpeaker = () => {
     resetAutoScrollTimer();
     showNextSpeaker();

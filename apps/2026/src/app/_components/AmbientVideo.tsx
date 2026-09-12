@@ -15,6 +15,7 @@ interface AmbientVideoProps {
   style?: CSSProperties;
 }
 
+/** Renders decorative video that loads and plays only while its region is active. */
 export function AmbientVideo({
   className,
   poster,

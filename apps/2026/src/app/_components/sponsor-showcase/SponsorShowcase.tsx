@@ -73,12 +73,14 @@ const SPONSOR_TIER_CONFIG = {
   },
 } as const satisfies Record<SponsorTier, SponsorTierConfig>;
 
+/** Orders sponsor cards by tier while preserving source order within each tier. */
 function getOrderedSponsors(sponsors: readonly SponsorShowcaseSponsor[]) {
   return SPONSOR_TIER_DISPLAY_ORDER.flatMap((tier) =>
     sponsors.filter((sponsor) => sponsor.tier === tier),
   );
 }
 
+/** Returns a stable render key for one sponsor card. */
 function getSponsorCardKey(
   groupName: SponsorGroupName,
   sponsor: SponsorShowcaseSponsor,
@@ -87,6 +89,7 @@ function getSponsorCardKey(
   return `${groupName}-${index}-${sponsor.tier}-${sponsor.name}-${sponsor.websiteUrl}`;
 }
 
+/** Renders one responsive sponsor logo inside its tier-specific rock frame. */
 function SponsorRockCard({
   sponsor,
   shouldLoadLogo,
@@ -140,6 +143,7 @@ function SponsorRockCard({
   );
 }
 
+/** Renders the sponsor grid while deferring cards until the scene is nearby. */
 export function SponsorShowcase({
   className,
   sponsors,

@@ -7,6 +7,7 @@ import { useViewportActivity } from "../../useViewportActivity";
 import styles from "./SponsorTeamSection.module.css";
 import { WaterfallAtmosphere } from "./WaterfallAtmosphere";
 
+/** Returns responsive transparent-video sources for one waterfall segment. */
 const getWaterfallSources = (waterfall: "one" | "two" | "three") => [
   ...getTransparentVideoSources(
     `/media/homepage/waterfall-${waterfall}-mobile`,
@@ -16,6 +17,7 @@ const getWaterfallSources = (waterfall: "one" | "two" | "three") => [
   ).map((source) => ({ ...source, media: "(min-width: 761px)" })),
 ];
 
+/** Renders the three waterfall segments with center-weighted decode lifecycles. */
 export function DeferredWaterfallArt() {
   const [artRef, isArtNearby] = useViewportActivity<HTMLDivElement>({
     respectReducedMotion: false,

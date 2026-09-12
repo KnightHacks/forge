@@ -24,6 +24,7 @@ const GALLERY_IMAGES = [
   },
 ] as const;
 
+/** Renders the rotating event gallery and incrementally loads adjacent slides. */
 export function AboutGallery() {
   const [galleryRef, isGalleryActive] = useViewportActivity<HTMLDivElement>();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -32,6 +33,7 @@ export function AboutGallery() {
     () => new Set([0, 1]),
   );
 
+  /** Adds one gallery image to the mounted neighborhood. */
   const loadImage = useCallback((index: number) => {
     setLoadedImageIndexes((currentIndexes) => {
       if (currentIndexes.has(index)) return currentIndexes;
@@ -40,6 +42,7 @@ export function AboutGallery() {
     });
   }, []);
 
+  /** Selects a slide and primes its adjacent images. */
   const showImage = useCallback(
     (index: number) => {
       loadImage(index);
@@ -49,12 +52,14 @@ export function AboutGallery() {
     [loadImage],
   );
 
+  /** Moves the gallery to the previous slide. */
   const showPreviousImage = () => {
     showImage(
       (activeImageIndex - 1 + GALLERY_IMAGES.length) % GALLERY_IMAGES.length,
     );
   };
 
+  /** Advances the gallery to the next slide. */
   const showNextImage = useCallback(() => {
     showImage((activeImageIndex + 1) % GALLERY_IMAGES.length);
   }, [activeImageIndex, showImage]);

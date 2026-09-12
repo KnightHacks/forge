@@ -4,6 +4,7 @@ export interface AmbientVideoSource {
   type: string;
 }
 
+/** Builds cross-browser WebM and HEVC-alpha sources for transparent video. */
 export function getTransparentVideoSources(srcBase: string) {
   return [
     {
@@ -17,6 +18,7 @@ export function getTransparentVideoSources(srcBase: string) {
   ] satisfies AmbientVideoSource[];
 }
 
+/** Builds mobile and desktop transparent-video sources with media queries. */
 export function getResponsiveTransparentVideoSources(srcBase: string) {
   return [
     ...getTransparentVideoSources(`${srcBase}-mobile`).map((source) => ({

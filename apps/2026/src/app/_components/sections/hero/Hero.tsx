@@ -11,6 +11,7 @@ import styles from "./Hero.module.css";
 import { HeroApplyButton, HeroTitle } from "./HeroTitle";
 import { useHeroMotion } from "./useHeroMotion";
 
+/** Renders the responsive hero and mounts ambient effects only near the viewport. */
 export default function Hero() {
   const { sectionRef, stageRef, handlePointerMove, handlePointerLeave } =
     useHeroMotion();
@@ -19,6 +20,7 @@ export default function Hero() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 700px)");
+    /** Selects the hero composition matching the active breakpoint. */
     const updateViewport = () => {
       setViewport(mediaQuery.matches ? "mobile" : "desktop");
     };
@@ -83,6 +85,7 @@ export default function Hero() {
   );
 }
 
+/** Renders the precomposed mobile foreground as a single lightweight layer. */
 function MobileHeroLayers() {
   return (
     <div className={styles.mobileHeroLayers} data-mobile-hero-layers>
@@ -108,6 +111,7 @@ function MobileHeroLayers() {
   );
 }
 
+/** Renders the eager static scene that anchors the hero's first paint. */
 function HeroBaseLayer() {
   return (
     <div
@@ -142,6 +146,7 @@ function HeroBaseLayer() {
   );
 }
 
+/** Renders the merged pond and waterfall animation for desktop viewports. */
 function DesktopHeroAmbient() {
   return (
     <div

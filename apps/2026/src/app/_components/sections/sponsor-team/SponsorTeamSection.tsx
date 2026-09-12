@@ -121,6 +121,7 @@ const PARTNERS = [
   },
 ] as const;
 
+/** Renders the sponsor waterfall and team cascade as one continuous scene. */
 export function SponsorTeamSection() {
   return (
     <div className={styles.waterfallShowcase}>
