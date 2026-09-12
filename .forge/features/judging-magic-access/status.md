@@ -126,7 +126,8 @@ Current phase: Implementation complete; PR open
   nearest upcoming hackathon when none is active. Guest sessions stay bound to
   their QR room and are accepted when its hackathon is that selected event, so
   the complete room QR flow can be tested before the event starts. Follow-up
-  issue: [#567](https://github.com/KnightHacks/forge/issues/567).
+  issue: [#567](https://github.com/KnightHacks/forge/issues/567); implementation:
+  [#568](https://github.com/KnightHacks/forge/pull/568).
 - 2026-09-12: The owner clarified that authenticated judges retain a hackathon
   dropdown for browsing old project inventories. Guest sessions remain bound
   to their QR room's hackathon.

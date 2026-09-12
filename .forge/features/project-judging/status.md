@@ -317,4 +317,5 @@ src/tests/projects/devpost-import.test.ts`: passed; 10 parser tests, including
   tested. The owner then clarified that authenticated judges retain a hackathon
   dropdown for browsing old project inventories; guest sessions remain
   room-bound. Follow-up issue:
-  [#567](https://github.com/KnightHacks/forge/issues/567).
+  [#567](https://github.com/KnightHacks/forge/issues/567); implementation:
+  [#568](https://github.com/KnightHacks/forge/pull/568).

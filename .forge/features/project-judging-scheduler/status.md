@@ -25,7 +25,8 @@ This section records the conversation in order. Later decisions supersede earlie
 - 2026-09-12: Owner superseded staffing as a scheduling requirement. Generation
   uses all configured scheduled rooms so organizers can build the schedule
   before judges arrive; presence remains live operational status. Follow-up
-  issue: [#567](https://github.com/KnightHacks/forge/issues/567).
+  issue: [#567](https://github.com/KnightHacks/forge/issues/567); implementation:
+  [#568](https://github.com/KnightHacks/forge/pull/568).
 
 - 2026-09-07: Owner allowed relaxing the twenty-minute cross-building gap to the ten-minute baseline only if the strict schedule is genuinely undoable. Alert an organizer if the fallback is also infeasible.
 - 2026-09-07: Owner requested fewer building trips across each project's appointments. Ranking this preference is pending.
