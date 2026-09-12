@@ -10,6 +10,8 @@
   isolation: isolate;
   overflow-x: clip;
   overflow-y: visible;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 61rem;
 }
 
 .tracksSection::before {

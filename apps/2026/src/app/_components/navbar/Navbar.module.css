@@ -87,13 +87,16 @@
   margin: 0 auto;
   gap: clamp(1.08rem, 2.15vw, 1.68rem);
   padding: 0.62rem 0.86rem 0.62rem clamp(1rem, 1.9vw, 1.36rem);
-  border: 0;
+  border: 1px solid rgb(222 255 234 / 0.13);
   border-radius: 999px;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
+  background:
+    linear-gradient(180deg, rgb(10 31 35 / 0.88), rgb(5 20 24 / 0.78)),
+    radial-gradient(circle at 18% 0%, rgb(209 255 229 / 0.12), transparent 34%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    0 0.75rem 2.25rem rgb(3 13 20 / 0.2),
+    0 0 1.25rem rgb(118 241 194 / 0.05);
   pointer-events: auto;
-  -webkit-backdrop-filter: none;
 }
 
 .brand {
@@ -234,12 +237,10 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgb(255 255 255 / 0.24);
-  background: rgb(2 26 25 / 0.58);
+  background: rgb(2 26 25 / 0.88);
   color: #fff;
   box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 0.24);
   text-decoration: none;
-  backdrop-filter: blur(0.55rem);
-  -webkit-backdrop-filter: blur(0.55rem);
   transition:
     border-color 180ms ease,
     background 180ms ease,
@@ -809,9 +810,15 @@ button.mobileLink:disabled {
 
   .menuButton {
     display: inline-flex;
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    border: 1px solid rgb(224 255 235 / 0.2);
+    background: linear-gradient(
+      155deg,
+      rgb(10 31 35 / 0.92),
+      rgb(5 20 24 / 0.84)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 0.5rem 1.4rem rgb(0 0 0 / 0.26);
   }
 
   .navbar[data-menu-open="true"] .menuButton {

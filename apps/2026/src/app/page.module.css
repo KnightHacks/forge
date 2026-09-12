@@ -40,6 +40,8 @@
   padding: clamp(4rem, 8svh, 7rem) clamp(0.5rem, 2.5vw, 2rem);
   isolation: isolate;
   place-items: center;
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 100svh;
 }
 
 .speakersSection::after {
@@ -90,10 +92,6 @@
   background-position: center top;
   background-repeat: no-repeat;
   background-size: 100% auto;
-  filter: drop-shadow(
-    0 clamp(0.7rem, 1vw, 1.2rem) clamp(0.8rem, 1.3vw, 1.5rem)
-      rgba(2, 4, 15, 0.85)
-  );
   transform: translateX(-50%);
 }
 

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { ArrowBigLeft, ArrowBigRight } from "lucide-react";
 
+import { useViewportActivity } from "../../useViewportActivity";
 import styles from "./AboutSection.module.css";
 
 const AUTO_ADVANCE_DELAY_MS = 4600;
@@ -10,65 +12,69 @@ const AUTO_ADVANCE_DELAY_MS = 4600;
 const GALLERY_IMAGES = [
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-community.webp",
-    srcSet:
-      "https://assets.knighthacks.org/khix/about-gallery-community-640.webp 640w, https://assets.knighthacks.org/khix/about-gallery-community-1280.webp 1280w",
     alt: "Hackers gathering in the UCF Student Union during Knight Hacks",
   },
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-crowd.webp",
-    srcSet:
-      "https://assets.knighthacks.org/khix/about-gallery-crowd-640.webp 640w, https://assets.knighthacks.org/khix/about-gallery-crowd-1280.webp 1280w",
     alt: "Knight Hacks participants filling the UCF Student Union",
   },
   {
     src: "https://assets.knighthacks.org/khix/about-gallery-team.webp",
-    srcSet:
-      "https://assets.knighthacks.org/khix/about-gallery-team-640.webp 640w, https://assets.knighthacks.org/khix/about-gallery-team-1280.webp 1280w",
     alt: "Knight Hacks organizers and attendees holding a signed event banner",
   },
 ] as const;
 
+/** Renders the rotating event gallery and incrementally loads adjacent slides. */
 export function AboutGallery() {
+  const [galleryRef, isGalleryActive] = useViewportActivity<HTMLDivElement>();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [loadedImageIndexes, setLoadedImageIndexes] = useState(
     () => new Set([0, 1]),
   );
 
-  const loadImage = (index: number) => {
+  /** Adds one gallery image to the mounted neighborhood. */
+  const loadImage = useCallback((index: number) => {
     setLoadedImageIndexes((currentIndexes) => {
       if (currentIndexes.has(index)) return currentIndexes;
 
       return new Set(currentIndexes).add(index);
     });
-  };
+  }, []);
 
-  const showImage = (index: number) => {
-    loadImage(index);
-    setActiveImageIndex(index);
-    loadImage((index + 1) % GALLERY_IMAGES.length);
-  };
+  /** Selects a slide and primes its adjacent images. */
+  const showImage = useCallback(
+    (index: number) => {
+      loadImage(index);
+      setActiveImageIndex(index);
+      loadImage((index + 1) % GALLERY_IMAGES.length);
+    },
+    [loadImage],
+  );
 
+  /** Moves the gallery to the previous slide. */
   const showPreviousImage = () => {
     showImage(
       (activeImageIndex - 1 + GALLERY_IMAGES.length) % GALLERY_IMAGES.length,
     );
   };
 
-  const showNextImage = () => {
+  /** Advances the gallery to the next slide. */
+  const showNextImage = useCallback(() => {
     showImage((activeImageIndex + 1) % GALLERY_IMAGES.length);
-  };
+  }, [activeImageIndex, showImage]);
 
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || !isGalleryActive) return;
 
     const timeoutId = window.setTimeout(showNextImage, AUTO_ADVANCE_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeImageIndex, isPaused]);
+  }, [isGalleryActive, isPaused, showNextImage]);
 
   return (
     <div
+      ref={galleryRef}
       className={styles.gallery}
       aria-label="Knight Hacks event photo gallery"
       onMouseEnter={() => setIsPaused(true)}
@@ -83,10 +89,10 @@ export function AboutGallery() {
       <div className={styles.galleryViewport}>
         {GALLERY_IMAGES.map((image, index) =>
           loadedImageIndexes.has(index) ? (
-            <img
+            <Image
               key={image.src}
               src={image.src}
-              srcSet={image.srcSet}
+              fill
               sizes="(max-width: 760px) 100vw, (max-width: 1100px) 58vw, 43vw"
               alt={image.alt}
               className={styles.galleryImage}
@@ -94,6 +100,7 @@ export function AboutGallery() {
               decoding="async"
               fetchPriority={index === activeImageIndex ? "high" : "low"}
               loading="eager"
+              quality={72}
               draggable={false}
             />
           ) : null,
