@@ -5,11 +5,11 @@ import {
   JudgingAppointment,
   JudgingSchedule,
   ProjectEvaluation,
-  ProjectMember,
 } from "@forge/db/schemas/knight-hacks";
 
 import type { WriteDb } from "../db";
 import type { SchedulePlacement, ScheduleProblem } from "./model";
+import { projectRoster } from "../project-claims/claims";
 import { compareScheduleScores } from "./model";
 import { readScheduleSource } from "./source";
 import { scoreSchedule, validateSchedule } from "./validate";
@@ -256,11 +256,16 @@ export async function appointmentMoveChoices(
       a.startsAt.getTime() - b.startsAt.getTime() ||
       a.roomId.localeCompare(b.roomId),
   );
-  const members = await tx
-    .select({ name: ProjectMember.name, email: ProjectMember.email })
-    .from(ProjectMember)
-    .where(eq(ProjectMember.projectId, selected.projectId))
-    .orderBy(asc(ProjectMember.displayOrder));
+  const members = (await projectRoster(selected.projectId, tx)).map(
+    (member) => ({
+      name: member.profileFirstName
+        ? `${member.profileFirstName} ${member.profileLastName ?? ""}`.trim()
+        : member.name,
+      email: member.email,
+      discordUserId: member.discordUserId,
+      discordUser: member.discordUser,
+    }),
+  );
   return {
     appointment: selected,
     members,

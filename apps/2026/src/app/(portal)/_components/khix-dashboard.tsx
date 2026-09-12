@@ -45,7 +45,7 @@ import type {
 } from "@forge/hacker-sdk";
 import { FORMS } from "@forge/consts";
 import { normalizeSocialProfileUrl } from "@forge/hacker-sdk";
-import { useHackerDashboard } from "@forge/hacker-sdk/react";
+import { useHackerDashboard, useHackerJudging } from "@forge/hacker-sdk/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -1097,18 +1097,19 @@ export function KhixDashboardNotFound({ sessionUser }: KhixDashboardProps) {
   );
 }
 
-function KhixDashboardShell({
+export function KhixDashboardShell({
   activeItem = "status",
   children,
   navAction,
   sessionUser,
 }: {
-  activeItem?: "events" | "journey" | "lore" | "profile" | "status";
+  activeItem?: "judging" | "events" | "journey" | "lore" | "profile" | "status";
   children: ReactNode;
   navAction?: ReactNode;
   sessionUser?: KhixSessionUser;
 }) {
   const dashboardQuery = useHackerDashboard();
+  const judgingQuery = useHackerJudging();
   const logout = usePortalSignOut();
   const [mobileMenuState, setMobileMenuState] =
     useState<MobileDrawerState>("closed");
@@ -1462,6 +1463,42 @@ function KhixDashboardShell({
                       <span className={styles.railLinkLabel}>Events</span>
                       <LockKeyhole className={styles.railLockIcon} />
                     </span>
+                  </span>
+                </button>
+              )}
+              {eventsUnlocked &&
+              (judgingQuery.data?.claimsOpen ||
+                (judgingQuery.data?.published &&
+                  judgingQuery.data.emergency)) ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "judging" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/judging"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Trophy className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Judging</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="Judging locked until check-in and claim emails are sent"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Trophy className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Judging <LockKeyhole className={styles.railLockIcon} />
                   </span>
                 </button>
               )}

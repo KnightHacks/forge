@@ -2181,8 +2181,13 @@ export const ProjectMember = createTable(
     name: t.varchar({ length: 255 }).notNull(),
     email: t.varchar({ length: 320 }).notNull(),
     displayOrder: t.integer().notNull(),
+    invitedUserId: t.uuid().references(() => User.id, { onDelete: "restrict" }),
   }),
   (table) => ({
+    projectScopeUnique: unique("project_member_id_project_unique").on(
+      table.id,
+      table.projectId,
+    ),
     displayOrderCheck: check(
       "knight_hacks_project_member_display_order_check",
       sql`${table.displayOrder} >= 0`,
@@ -2193,6 +2198,63 @@ export const ProjectMember = createTable(
     projectOrderUnique: unique(
       "knight_hacks_project_member_project_order_unique",
     ).on(table.projectId, table.displayOrder),
+  }),
+);
+
+export const ProjectClaim = createTable(
+  "project_claim",
+  (t) => ({
+    memberId: t.uuid().notNull().primaryKey(),
+    projectId: t.uuid().notNull(),
+    hackathonId: t.uuid().notNull(),
+    userId: t
+      .uuid()
+      .notNull()
+      .references(() => User.id, { onDelete: "restrict" }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    userEventUnique: unique("project_claim_user_event_unique").on(
+      table.userId,
+      table.hackathonId,
+    ),
+    memberScopeFk: foreignKey({
+      columns: [table.memberId, table.projectId],
+      foreignColumns: [ProjectMember.id, ProjectMember.projectId],
+      name: "project_claim_member_scope_fk",
+    }).onDelete("restrict"),
+    projectScopeFk: foreignKey({
+      columns: [table.projectId, table.hackathonId],
+      foreignColumns: [Project.id, Project.hackathonId],
+      name: "project_claim_project_scope_fk",
+    }).onDelete("restrict"),
+  }),
+);
+
+export const ProjectClaimLink = createTable(
+  "project_claim_link",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    memberId: t
+      .uuid()
+      .notNull()
+      .references(() => ProjectMember.id, { onDelete: "cascade" }),
+    // Recoverable only by officers for manual delivery. Erased after successful use.
+    token: t.varchar({ length: 64 }),
+    consumedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "restrict" }),
+    consumedAt: t.timestamp({ withTimezone: true }),
+    sentAt: t.timestamp({ withTimezone: true }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    memberUnique: unique("project_claim_link_member_unique").on(table.memberId),
+    tokenUnique: unique("project_claim_link_token_unique").on(table.token),
+    consumptionCheck: check(
+      "project_claim_link_consumed_check",
+      sql`(${table.consumedAt} IS NULL AND ${table.consumedByUserId} IS NULL AND ${table.token} IS NOT NULL) OR (${table.consumedAt} IS NOT NULL AND ${table.consumedByUserId} IS NOT NULL AND ${table.token} IS NULL)`,
+    ),
   }),
 );
 
@@ -2284,6 +2346,10 @@ export const HackathonJudgingConfiguration = createTable(
       .notNull()
       .primaryKey()
       .references(() => Hackathon.id, { onDelete: "cascade" }),
+    hackerSchedulePublished: t.boolean().notNull().default(false),
+    hackerScheduleEmergency: t.boolean().notNull().default(false),
+    projectClaimsStartedAt: t.timestamp({ withTimezone: true }),
+    projectClaimUrl: t.text(),
     challengeGroupsInitializedAt: t.timestamp({ withTimezone: true }),
     projectInventoryLockedAt: t.timestamp({ withTimezone: true }),
     projectInventoryLockedByUserId: t
