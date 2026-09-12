@@ -55,7 +55,7 @@ Add a shared building catalog with seeded labels ENG, BA, HEC, HS, plus custom a
 
 Existing room IDs, QR links, memberships, and Discord thread IDs remain unchanged. Existing rooms receive no guessed building; an officer selects one before scheduling. Enforce normalized building + room uniqueness within a hackathon. Same room number in different buildings is valid.
 
-Keep the existing Command Center roster's eligible joined-member/valid-guest semantics, including its fifteen-minute recent-presence cutoff. Its two-minute active label remains presentation only. No new staffing authority is created. Snapshot eligible non-MLH rooms at generation and revalidate before save. Staffing loss after save warns and never moves bookings.
+Keep the existing Command Center roster's eligible joined-member/valid-guest semantics, including its fifteen-minute recent-presence cutoff, for live staffing status only. Its two-minute active label remains presentation only. Snapshot every active non-MLH room with a configured building at generation and revalidate that room configuration before save. Staffing changes do not change schedule capacity or move bookings.
 
 Block room/challenge/location edits and archival that would invalidate saved reservations. New rooms may contribute unused grid intervals for individual assignment; they never cause existing appointments to move.
 

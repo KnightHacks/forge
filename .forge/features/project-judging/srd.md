@@ -41,11 +41,11 @@ judge-submission work will build on the new project and challenge identifiers.
 - **Authenticated without access:** no project read or write access. Blade
   renders the established forbidden experience, navigation is hidden, and
   server boundaries return `FORBIDDEN`/403.
-- **Judge:** effective `IS_JUDGE` may read the automatically selected active
-  hackathon, list/filter projects, and open project details. Judge responses
-  include team names but omit participant emails and schools. Judge access
-  grants no import, edit, delete, restore, hard deletion, or inactive-hackathon
-  override.
+- **Judge:** effective `IS_JUDGE` may read the automatically selected active or
+  nearest upcoming hackathon, list/filter projects, and open project details.
+  Judge responses include team names but omit participant emails and schools.
+  Judge access grants no import, edit, delete, restore, hard deletion, or
+  write access. A hackathon dropdown permits read-only historical browsing.
 - **Officer:** existing `IS_OFFICER` bypass semantics grant judge reads and all
   `/admin/projects` management operations. Officers may explicitly preview any
   selected hackathon from the admin workflow; otherwise judge preview resolves
@@ -185,8 +185,10 @@ context.
 - `projects.listAdminHackathons`: officer-only selector data with project counts.
 - `projects.listAdmin`: officer-only paginated project inventory for an explicit
   hackathon, including deleted-state filtering.
-- `projects.listJudge`: judge/officer paginated directory. Judges receive only
-  the active hackathon; an officer-only optional override supports preview.
+- `projects.listJudgeHackathons`: authenticated judge/officer selector data.
+- `projects.listJudge`: judge/officer paginated directory. Default selection is
+  the active hackathon, then the nearest upcoming hackathon; authenticated
+  judges and officers may explicitly select another hackathon.
 - `projects.getDetail`: judge/officer project detail. The server repeats the
   hackathon/access decision rather than trusting a prior list response.
 - `projects.update`: officer-only allowlisted field update.
@@ -202,11 +204,11 @@ The multipart endpoint is an upload transport, not a parallel business API. It
 calls the same API-owned import service and maps known errors to safe HTTP
 responses.
 
-Active selection is inclusive: `startDate <= now <= endDate`. Judges receive
-`NOT_FOUND` plus a safe empty-state contract when no hackathon is active.
-Officer preview uses an explicit selected hackathon when supplied; otherwise it
-uses the active hackathon, then the earliest upcoming `startDate`, with ID as a
-stable tie-breaker.
+Active selection is inclusive: `startDate <= now <= endDate`. When no hackathon
+is active, judges and officers default to the earliest upcoming `startDate`,
+with ID as a stable tie-breaker. Authenticated judges and officers may override
+that selection for browsing. Guests remain bound to the active or nearest
+upcoming hackathon encoded by their room session.
 
 List procedures use server-side offset/page pagination consistent with current
 Blade tables, a bounded page-size allowlist, an allowlisted sort field/direction,

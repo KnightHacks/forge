@@ -22,6 +22,10 @@ This section records the conversation in order. Later decisions supersede earlie
 - 2026-09-07: Owner approved objective order: earliest last-sponsor finish, fewer sponsor idle gaps, earliest overall finish, then hacker breaks. General can run concurrently with sponsors.
 - 2026-09-07: Owner confirmed the project, across all challenge appointments, is the hacker/team scheduling unit. No individual presenter model.
 - 2026-09-07: Owner confirmed room staffing means a guest or organizer is currently joined, reusing existing Command Center logic. Staffing changes after generation remain open.
+- 2026-09-12: Owner superseded staffing as a scheduling requirement. Generation
+  uses all configured scheduled rooms so organizers can build the schedule
+  before judges arrive; presence remains live operational status. Follow-up
+  issue: [#567](https://github.com/KnightHacks/forge/issues/567).
 
 - 2026-09-07: Owner allowed relaxing the twenty-minute cross-building gap to the ten-minute baseline only if the strict schedule is genuinely undoable. Alert an organizer if the fallback is also infeasible.
 - 2026-09-07: Owner requested fewer building trips across each project's appointments. Ranking this preference is pending.
@@ -166,7 +170,8 @@ CodeRabbit inline findings addressed in the working diff, pending final checks a
 - Saved schedule reads index tasks, rooms, and results rather than repeatedly scanning the whole inventory.
 - Sponsor classification uses one helper for generation and moves. General is a canonical import-created label and has no rename API.
 - Move choices reject unavailable existing locations before constructing candidates.
-- Member writes recheck the active hackathon under a transaction lock.
+- Member writes recheck the selected active or nearest upcoming hackathon under
+  a transaction lock.
 - Replaced the arbitrary phase and break caps with PostgreSQL integer storage limits. A 1,440-slot-per-room grid bound prevents unbounded candidate enumeration while allowing longer windows with longer appointments. Whole-minute and window-fit checks remain.
 
 Other review changes include expired generation-job cleanup, retry backoff with manual recovery, one pure MLH matcher exported through a browser-safe API subpath, corrected nested headings, specific room-location conflict messages, clearer overflow wording, and schedule reads only on the Schedule tab. Solver tests name the rejecting rule and allow bounded continuation under loaded CI. Absolute local paths were removed from this public status file.

@@ -110,7 +110,9 @@ Implementation and test generation were authorized on 2026-09-07. Completion req
 - Slot: an interval in one room associated with that room's challenge. Its duration is the sum of the configured setup, judging, and teardown minutes.
 - Appointment: a project's assignment to a slot, with a stable identity across individual moves.
 - Hacker/team: the project as a whole, across all of its challenge appointments.
-- Staffed room: a room with a guest or organizer currently joined, using the existing Command Center roster behavior.
+- Scheduled room: an active non-MLH room with a configured building. Current
+  judge presence remains visible operational status, but is not planning
+  capacity.
 - Break: time between the end of one full presentation slot, including teardown, and the start of the next. Default minimums are ten minutes in the same building and twenty across buildings. The configured minimum is measured from the full slot end to the next start.
 - Soft submission: preserved incomplete answers that do not count as a completed evaluation.
 - Overflow: time remaining after scheduled judging finishes, available for exceptions.
@@ -120,7 +122,7 @@ Implementation and test generation were authorized on 2026-09-07. Completion req
 These criteria summarize the accepted behavior. The SRD defines technical enforcement and the test cases define its observable proof.
 
 - AC01: Organizers provide one judging window per hackathon and generate assignments; hackers do not select their own times. Timing is configurable in whole minutes with default 2/6/2 and any whole-minute total. Same-building/cross-building breaks are configurable with default ten/twenty minutes. Inputs must not introduce seconds or violate the phase/break bounds above.
-- AC02: Each project receives one General presentation and one per scheduled opted-in challenge. Multiple rooms divide a challenge's presentations. Optimize the last sponsor finish first, sponsor idle gaps second, overall finish third, building changes fourth, and hacker breaks within that finish last. General can run concurrently with sponsor judging. Use rooms with currently joined judges under the existing Command Center logic.
+- AC02: Each project receives one General presentation and one per scheduled opted-in challenge. Multiple rooms divide a challenge's presentations. Optimize the last sponsor finish first, sponsor idle gaps second, overall finish third, building changes fourth, and hacker breaks within that finish last. General can run concurrently with sponsor judging. Use every active non-MLH room with a configured building, even when no judge is currently present.
 - AC03: Hackers never receive back-to-back presentations. The configured same-building minimum is mandatory; cross-building breaks use their configured higher minimum unless the strict schedule genuinely cannot fit. Retry with the same-building minimum before alerting an organizer. Defaults remain ten/twenty minutes.
 - AC04: Rooms identify their building and room. A cross-hackathon catalog starts with ENG, BA, HEC, and HS and supports Other with trimmed case-insensitive duplicate prevention. Building-and-room combinations are unique per hackathon. Existing room IDs and QR links survive; building assignment is required before scheduling.
 - AC05: Organizers can inspect judging across rooms over the entire judging window and inspect an individual room's schedule.

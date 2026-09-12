@@ -309,3 +309,12 @@ src/tests/projects/devpost-import.test.ts`: passed; 10 parser tests, including
 - PRs: [#527](https://github.com/KnightHacks/forge/pull/527)
 - Issues: [#526](https://github.com/KnightHacks/forge/issues/526)
 - Discord/thread context:
+
+## Later owner decisions
+
+- 2026-09-12: When no hackathon is active, authenticated judges and officers
+  default to the nearest upcoming hackathon so pre-event judging setup can be
+  tested. The owner then clarified that authenticated judges retain a hackathon
+  dropdown for browsing old project inventories; guest sessions remain
+  room-bound. Follow-up issue:
+  [#567](https://github.com/KnightHacks/forge/issues/567).

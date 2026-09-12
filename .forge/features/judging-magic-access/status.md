@@ -120,6 +120,17 @@ Current phase: Implementation complete; PR open
 - Unslop and Forge deslop review: passed with no em dashes, decorative Unicode,
   filler transitions, or generic conclusion text left in the bundle.
 
+## Later owner decisions
+
+- 2026-09-12: Authenticated judging defaults to the active hackathon, or the
+  nearest upcoming hackathon when none is active. Guest sessions stay bound to
+  their QR room and are accepted when its hackathon is that selected event, so
+  the complete room QR flow can be tested before the event starts. Follow-up
+  issue: [#567](https://github.com/KnightHacks/forge/issues/567).
+- 2026-09-12: The owner clarified that authenticated judges retain a hackathon
+  dropdown for browsing old project inventories. Guest sessions remain bound
+  to their QR room's hackathon.
+
 ## Links
 
 - Prior project inventory PR: [#527](https://github.com/KnightHacks/forge/pull/527)
