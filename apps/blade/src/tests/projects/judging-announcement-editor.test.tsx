@@ -9,6 +9,7 @@ import {
   AnnouncementDialog,
   JudgingControlPanel,
 } from "~/app/_components/judging/judging-control-panel";
+import { JudgingLaunchChecklist } from "~/app/_components/judging/judging-launch-checklist";
 
 const mutations = vi.hoisted(() => ({
   adminData: undefined as unknown,
@@ -43,6 +44,7 @@ vi.mock("~/trpc/react", () => {
     api: {
       judging: {
         archiveRoom: { useMutation: idleMutation },
+        deleteRoom: { useMutation: idleMutation },
         clearAnnouncement: {
           useMutation: () => ({
             isPending: false,
@@ -123,6 +125,10 @@ type Announcement = NonNullable<ControlData["globalAnnouncement"]>;
 const data = {
   setupLocked: false,
   challengeSetupLocked: false,
+  hasEvaluationData: false,
+  hasSavedSchedule: false,
+  hasScheduleData: false,
+  scheduleDropLocked: false,
   hackathon: {
     id: "00000000-0000-4000-8000-000000000001",
     displayName: "Knight Hacks",
@@ -131,6 +137,7 @@ const data = {
   configuration: {
     closedAt: null,
     displayAllResults: false,
+    hackerSchedulePublished: false,
     judgingCommsChannelId: null,
     openedAt: null,
     state: "draft",
@@ -139,6 +146,7 @@ const data = {
   discordGuildId: null,
   globalAnnouncement: null,
   inventoryLockedAt: null,
+  inventory: { claimLinksSent: false, memberCount: 0, projectCount: 0 },
   rooms: [],
   rubric: [],
 } satisfies ControlData;
@@ -308,6 +316,10 @@ describe("judging room and announcement editors", () => {
     const initialData = {
       setupLocked: false,
       challengeSetupLocked: false,
+      hasEvaluationData: false,
+      hasSavedSchedule: false,
+      hasScheduleData: false,
+      scheduleDropLocked: false,
       challenges: [
         {
           id: room.challengeId,
@@ -322,6 +334,7 @@ describe("judging room and announcement editors", () => {
       configuration: {
         closedAt: null,
         displayAllResults: false,
+        hackerSchedulePublished: false,
         judgingCommsChannelId: null,
         openedAt: null,
         state: "draft",
@@ -334,6 +347,7 @@ describe("judging room and announcement editors", () => {
         timezone: "America/New_York",
       },
       inventoryLockedAt: null,
+      inventory: { claimLinksSent: false, memberCount: 0, projectCount: 0 },
       rooms: [room],
       rubric: [],
     } as ControlData;
@@ -343,7 +357,7 @@ describe("judging room and announcement editors", () => {
     );
 
     expect(
-      screen.getByText(/A saved schedule locks room changes/),
+      screen.getByText(/A saved schedule locks room layout changes/),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create room" })).toBeDisabled();
 
@@ -376,5 +390,76 @@ describe("judging room and announcement editors", () => {
     expect(
       screen.getByRole("switch", { name: /Urgent announcement/ }),
     ).toBeChecked();
+  });
+});
+
+describe("judging launch checklist", () => {
+  it("counts readiness and navigates to the owning section", async () => {
+    const user = userEvent.setup();
+    const onNavigate = vi.fn();
+    const view = render(
+      <JudgingLaunchChecklist data={data} onNavigate={onNavigate} />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /Launch checklist.*0\/8/ }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Launch checklist/ }));
+    await user.click(
+      screen.getByRole("button", { name: /1\. Import projects/ }),
+    );
+    expect(onNavigate).toHaveBeenCalledWith("projects", "project-inventory");
+
+    const ready = {
+      ...data,
+      challenges: [
+        {
+          id: "00000000-0000-4000-8000-000000000010",
+          isGeneral: true,
+          isGroup: true,
+          isMlhImportDefault: false,
+          isScheduled: true,
+          label: "General",
+          parentId: null,
+        },
+      ],
+      configuration: { ...data.configuration, state: "open" as const },
+      hasSavedSchedule: true,
+      hasScheduleData: true,
+      scheduleDropLocked: false,
+      inventory: { claimLinksSent: true, memberCount: 1, projectCount: 1 },
+      rooms: [
+        {
+          activeLinkId: "00000000-0000-4000-8000-000000000011",
+          announcement: null,
+          archivedAt: null,
+          buildingId: "00000000-0000-4000-8000-000000000012",
+          buildingName: "Engineering",
+          challengeId: "00000000-0000-4000-8000-000000000010",
+          challengeLabel: "General",
+          discordThreadId: null,
+          id: "00000000-0000-4000-8000-000000000013",
+          judges: [],
+          name: "101",
+        },
+      ],
+      rubric: [
+        {
+          description: "",
+          guestVisibilityPolicy: null,
+          id: "00000000-0000-4000-8000-000000000014",
+          kind: "rating" as const,
+          label: "Quality",
+          memberVisibilityPolicy: null,
+          required: true,
+        },
+      ],
+    } satisfies ControlData;
+    view.rerender(
+      <JudgingLaunchChecklist data={ready} onNavigate={onNavigate} />,
+    );
+    expect(
+      screen.getByRole("button", { name: /Launch checklist.*8\/8/ }),
+    ).toBeInTheDocument();
   });
 });

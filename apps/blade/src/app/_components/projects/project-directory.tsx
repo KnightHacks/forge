@@ -105,6 +105,7 @@ function ProjectFilters({
   roomFilterUnavailableReason,
   showRatingSort,
   showTeamSizeFilters,
+  toolbar,
 }: {
   challenges: ProjectDirectoryData["challenges"];
   defaultChallengeLabel: string;
@@ -117,6 +118,7 @@ function ProjectFilters({
   roomFilterUnavailableReason?: string;
   showRatingSort: boolean;
   showTeamSizeFilters: boolean;
+  toolbar?: React.ReactNode;
 }) {
   const [query, setQuery] = useState(input.query);
   const [minParticipants, setMinParticipants] = useState(
@@ -136,6 +138,9 @@ function ProjectFilters({
 
   return (
     <section className="rounded-lg border border-white/10 bg-card/90 p-3 shadow-xl shadow-black/15 sm:p-4">
+      {toolbar ? (
+        <div className="mb-3 border-b border-border/60 pb-3">{toolbar}</div>
+      ) : null}
       <form
         className={`grid gap-3 ${showTeamSizeFilters ? "lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_9rem_9rem_auto]" : "grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-[minmax(14rem,1fr)_minmax(12rem,16rem)_auto]"}`}
         onSubmit={(event) => {
@@ -591,6 +596,7 @@ export function ProjectDirectory<TProject extends Project>({
   showRatingSort = false,
   showTeamSizeFilters = true,
   showViewAction = false,
+  toolbar,
 }: {
   actions?: (project: TProject) => React.ReactNode;
   data: ProjectDirectoryData<TProject>;
@@ -612,6 +618,7 @@ export function ProjectDirectory<TProject extends Project>({
   showRatingSort?: boolean;
   showTeamSizeFilters?: boolean;
   showViewAction?: boolean;
+  toolbar?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -647,6 +654,7 @@ export function ProjectDirectory<TProject extends Project>({
         roomFilterUnavailableReason={roomFilterUnavailableReason}
         showRatingSort={showRatingSort}
         showTeamSizeFilters={showTeamSizeFilters}
+        toolbar={toolbar}
       />
       <ProjectList
         actions={actions}
