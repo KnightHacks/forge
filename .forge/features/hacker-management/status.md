@@ -30,6 +30,8 @@ the owner's final UI pass.
   and the hacker detail dialog; it is not represented as a roster status.
 - Final targeted validation passed: 178 API tests and 41 Blade tests. The full
   pre-commit gate and all 21 workspace build tasks passed.
+- Issue: [#570](https://github.com/KnightHacks/forge/issues/570). PR:
+  [#571](https://github.com/KnightHacks/forge/pull/571).
 
 ## Delegated hacker permissions — 2026-09-06
 

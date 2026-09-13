@@ -1,6 +1,6 @@
 # Judging Command Center Reset Status
 
-Current phase: Awaiting owner UI approval
+Current phase: PR open; awaiting CI and review
 
 ## Decision log
 
@@ -21,7 +21,7 @@ Current phase: Awaiting owner UI approval
 - [x] Implement reset procedures and initial command-center layout.
 - [x] Complete component, integration, and browser validation for judging scope.
 - [x] Complete final Forge review after the owner's layout refinements.
-- [ ] Show desktop/mobile screenshots to the user before opening the PR.
+- [x] Show desktop/mobile screenshots to the user before opening the PR.
 
 ## Validation / commands
 
@@ -38,6 +38,6 @@ Current phase: Awaiting owner UI approval
 
 ## Links
 
-- PRs:
-- Issues:
+- PRs: [#571](https://github.com/KnightHacks/forge/pull/571)
+- Issues: [#570](https://github.com/KnightHacks/forge/issues/570)
 - Discord/thread context:
