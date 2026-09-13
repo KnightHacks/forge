@@ -307,6 +307,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "projects.listAdmin",
   "projects.listAdminHackathons",
   "projects.listJudge",
+  "projects.listJudgeHackathons",
   "projects.restore",
   "projects.update",
   "projects.updateChallenge",

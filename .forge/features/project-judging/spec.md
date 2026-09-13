@@ -12,9 +12,11 @@ inventory permanently when needed, and decide when it is ready for judges to
 inspect.
 
 Judges need a fast, mobile-friendly directory of every imported project in the
-active hackathon so they can find projects, understand what each team built,
-and identify team members. Participant contact and school data stays in the
-officer surface. Scoring and judging responses are not part of this slice.
+current hackathon so they can find projects, understand what each team built,
+and identify team members. The current hackathon is active when one is running,
+or the nearest upcoming hackathon during setup. Participant contact and school
+data stays in the officer surface. Scoring and judging responses are not part
+of this slice.
 
 ## Users / actors
 
@@ -23,7 +25,9 @@ officer surface. Scoring and judging responses are not part of this slice.
   selected hackathon's complete inventory after typed confirmation, and can
   preview the judge experience outside an active hackathon.
 - **Judge:** an authenticated member whose effective role permissions include
-  `IS_JUDGE`. A judge can view projects while the selected hackathon is active.
+  `IS_JUDGE`. A judge can view projects for the active hackathon, or the nearest
+  upcoming hackathon when none is active, and can select another hackathon to
+  browse its project history.
 - **Authenticated member without judge or officer access:** cannot view or
   manage imported projects.
 - **Unauthenticated visitor:** must authenticate before reaching either
@@ -166,11 +170,12 @@ containing:
   inventory only after typing the hackathon display name exactly once.
 - Dropping one hackathon's inventory does not change another hackathon or the
   hackathon configuration itself.
-- A judge visiting `/judge/projects` sees the currently active hackathon.
-- A judge cannot select an inactive hackathon or view its projects.
-- An officer can open the judge experience for the hackathon whose start date
-  is the nearest upcoming start when no hackathon is active, for setup and
-  testing.
+- A judge visiting `/judge/projects` sees the active hackathon, or the nearest
+  upcoming hackathon when none is active.
+- An authenticated judge can use the hackathon dropdown to browse past project
+  inventories. Guest judges remain bound to their QR room's hackathon.
+- An officer can open the judge experience for an explicit hackathon, or use
+  the same active-then-nearest-upcoming default for setup and testing.
 - The judge directory exposes project title, Devpost link, and challenge tags.
   `General` is always displayed first.
 - A judge can search by project title, sort and paginate the directory, and

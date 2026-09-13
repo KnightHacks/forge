@@ -26,13 +26,15 @@ does not remove their existing access to other challenges.
   project imports after judging setup begins.
 - **Authenticated judge:** a Blade user whose effective permissions include
   `IS_JUDGE`. The judge may select or leave a room and may view any challenge in
-  the active hackathon.
+  the active hackathon, or the nearest upcoming hackathon when none is active.
+  A hackathon dropdown also permits read-only browsing of old project
+  inventories.
 - **Authenticated officer:** a Blade user whose effective permissions include
   `IS_OFFICER`. The officer has the same unrestricted project access and
   optional room selection as an authenticated judge.
 - **Guest judge:** a sponsor judge who enters through a room QR code, supplies
   a display name, and may view only projects associated with that room's
-  challenge.
+  challenge while its hackathon is active or is the nearest upcoming event.
 - **Authenticated user without judge or officer access:** may use a valid room
   QR as a guest but does not gain unrestricted judge access from their Blade
   account.

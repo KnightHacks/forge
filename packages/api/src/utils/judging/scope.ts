@@ -33,12 +33,27 @@ import {
 async function activeHackathon() {
   const now = new Date();
   const [hackathon] = await db
-    .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+    .select({
+      displayName: Hackathon.displayName,
+      endDate: Hackathon.endDate,
+      id: Hackathon.id,
+    })
     .from(Hackathon)
     .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
     .orderBy(desc(Hackathon.startDate))
     .limit(1);
-  return hackathon ?? null;
+  if (hackathon) return hackathon;
+  const [upcoming] = await db
+    .select({
+      displayName: Hackathon.displayName,
+      endDate: Hackathon.endDate,
+      id: Hackathon.id,
+    })
+    .from(Hackathon)
+    .where(gte(Hackathon.startDate, now))
+    .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+    .limit(1);
+  return upcoming ?? null;
 }
 
 export async function resolveJudgeScope(
@@ -60,6 +75,9 @@ export async function resolveJudgeScope(
   input: { challengeId?: string; hackathonId?: string },
 ) {
   if (principal.kind === "guest") {
+    const selected = await activeHackathon();
+    if (selected?.id !== principal.hackathonId)
+      throw new TRPCError({ code: "FORBIDDEN" });
     return {
       challengeId: principal.challengeId,
       hackathonId: principal.hackathonId,
@@ -67,20 +85,21 @@ export async function resolveJudgeScope(
       principalKind: principal.kind,
     } as const;
   }
-  if (
-    input.hackathonId &&
-    !principal.isOfficer &&
-    (await activeHackathon())?.id !== input.hackathonId
-  ) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
+  const now = new Date();
+  const defaultHackathon = await activeHackathon();
   const hackathon = input.hackathonId
     ? await db.query.Hackathon.findFirst({
-        columns: { displayName: true, id: true },
+        columns: { displayName: true, endDate: true, id: true },
         where: eq(Hackathon.id, input.hackathonId),
       })
-    : await activeHackathon();
+    : defaultHackathon;
   if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+  if (
+    hackathon.id !== defaultHackathon?.id &&
+    hackathon.endDate >= now &&
+    !principal.isOfficer
+  )
+    throw new TRPCError({ code: "FORBIDDEN" });
   const challenges = await db
     .select(challengeSelection)
     .from(ProjectChallenge)
@@ -142,6 +161,26 @@ export async function requireWritableJudging(tx: WriteDb, hackathonId: string) {
   }
 }
 
+async function lockWritableHackathonId(tx: WriteDb) {
+  const now = new Date();
+  const [active] = await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
+    .orderBy(desc(Hackathon.startDate))
+    .for("share")
+    .limit(1);
+  if (active) return active.id;
+  const [upcoming] = await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(gte(Hackathon.startDate, now))
+    .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+    .for("share")
+    .limit(1);
+  return upcoming?.id ?? null;
+}
+
 export async function resolveWritableJudge(
   tx: WriteDb,
   principal:
@@ -188,6 +227,8 @@ export async function resolveWritableJudge(
       .for("update", { of: GuestJudgeSession })
       .limit(1);
     if (!access?.judgeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    if ((await lockWritableHackathonId(tx)) !== access.hackathonId)
+      throw new TRPCError({ code: "FORBIDDEN" });
     return {
       challengeId: access.challengeId,
       hackathonId: access.hackathonId,
@@ -200,7 +241,7 @@ export async function resolveWritableJudge(
         columns: { id: true },
         where: eq(Hackathon.id, input.hackathonId),
       })
-    : (
+    : ((
         await tx
           .select({ id: Hackathon.id })
           .from(Hackathon)
@@ -212,7 +253,15 @@ export async function resolveWritableJudge(
           )
           .orderBy(desc(Hackathon.startDate))
           .limit(1)
-      )[0];
+      )[0] ??
+      (
+        await tx
+          .select({ id: Hackathon.id })
+          .from(Hackathon)
+          .where(gte(Hackathon.startDate, new Date()))
+          .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+          .limit(1)
+      )[0]);
   if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
   await tx
     .select({ id: Hackathon.id })
@@ -239,18 +288,8 @@ export async function resolveWritableJudge(
     hackathonId: hackathon.id,
     userId: principal.userId,
   });
-  if (!principal.isOfficer) {
-    // Recheck the active event under a lock held until this write commits.
-    const now = new Date();
-    const [active] = await tx
-      .select({ id: Hackathon.id })
-      .from(Hackathon)
-      .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
-      .orderBy(desc(Hackathon.startDate))
-      .for("share")
-      .limit(1);
-    if (active?.id !== hackathon.id) throw new TRPCError({ code: "FORBIDDEN" });
-  }
+  if ((await lockWritableHackathonId(tx)) !== hackathon.id)
+    throw new TRPCError({ code: "FORBIDDEN" });
   return {
     challengeId: challenge.parentId ?? challenge.id,
     hackathonId: hackathon.id,

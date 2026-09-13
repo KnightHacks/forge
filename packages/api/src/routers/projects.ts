@@ -12,8 +12,10 @@ import {
   inArray,
   isNotNull,
   isNull,
+  lt,
   lte,
   not,
+  or,
   sql,
 } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -430,6 +432,33 @@ async function upcomingHackathon(now: Date) {
 
 export const projectsRouter = createTRPCRouter({
   ...projectChallengesRouter,
+  listJudgeHackathons: judgeProcedure.query(async ({ ctx }) => {
+    if (ctx.judgePrincipal.kind !== "member")
+      throw new TRPCError({ code: "FORBIDDEN" });
+    const now = new Date();
+    const selected =
+      (await activeHackathon(now)) ?? (await upcomingHackathon(now));
+    const query = db
+      .select({
+        displayName: Hackathon.displayName,
+        endDate: Hackathon.endDate,
+        id: Hackathon.id,
+        startDate: Hackathon.startDate,
+        timezone: Hackathon.timezone,
+      })
+      .from(Hackathon);
+    if (ctx.judgePrincipal.isOfficer) {
+      return query.orderBy(desc(Hackathon.startDate), asc(Hackathon.id));
+    }
+    return query
+      .where(
+        selected
+          ? or(lt(Hackathon.endDate, now), eq(Hackathon.id, selected.id))
+          : lt(Hackathon.endDate, now),
+      )
+      .orderBy(desc(Hackathon.startDate), asc(Hackathon.id));
+  }),
+
   listAdminHackathons: permProcedure.query(async ({ ctx }) => {
     assertCanManageProjects(ctx);
     return db
@@ -488,10 +517,7 @@ export const projectsRouter = createTRPCRouter({
       const guestPrincipal =
         ctx.judgePrincipal.kind === "guest" ? ctx.judgePrincipal : null;
       const isGuest = guestPrincipal !== null;
-      const isOfficer =
-        ctx.judgePrincipal.kind === "member" &&
-        ctx.judgePrincipal.isOfficer === true;
-      if (input.hackathonId && !isOfficer) {
+      if (input.hackathonId && isGuest) {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       if (
@@ -501,21 +527,12 @@ export const projectsRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const now = new Date();
+      const defaultHackathon =
+        (await activeHackathon(now)) ?? (await upcomingHackathon(now));
       const selected = isGuest
-        ? await db.query.Hackathon.findFirst({
-            columns: {
-              displayName: true,
-              endDate: true,
-              id: true,
-              startDate: true,
-              timezone: true,
-            },
-            where: and(
-              eq(Hackathon.id, guestPrincipal.hackathonId),
-              lte(Hackathon.startDate, now),
-              gte(Hackathon.endDate, now),
-            ),
-          })
+        ? defaultHackathon?.id === guestPrincipal.hackathonId
+          ? defaultHackathon
+          : null
         : input.hackathonId
           ? await db.query.Hackathon.findFirst({
               columns: {
@@ -527,8 +544,15 @@ export const projectsRouter = createTRPCRouter({
               },
               where: eq(Hackathon.id, input.hackathonId),
             })
-          : ((await activeHackathon(now)) ??
-            (isOfficer ? await upcomingHackathon(now) : null));
+          : defaultHackathon;
+      if (
+        selected &&
+        selected.id !== defaultHackathon?.id &&
+        selected.endDate >= now &&
+        !(ctx.judgePrincipal.kind === "member" && ctx.judgePrincipal.isOfficer)
+      ) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
       if (!selected)
         return {
           hackathon: null,

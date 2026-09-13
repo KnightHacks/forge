@@ -182,9 +182,11 @@ Action:
 Expected observations:
 
 - `startDate <= now <= endDate` is active.
-- Judges see only the active hackathon and cannot override it.
-- Officer selection order is explicit override, active, then nearest upcoming
-  with stable ID tie-breaking; recently ended does not win.
+- Judges use the active hackathon, then the nearest upcoming hackathon with
+  stable ID tie-breaking, and can use the hackathon dropdown to browse past
+  project inventories.
+- Officer selection order is explicit override, active, then nearest upcoming;
+  recently ended does not win.
 
 ### TC-009: Judge directory discovery controls compose correctly
 

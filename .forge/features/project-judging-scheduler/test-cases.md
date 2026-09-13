@@ -38,7 +38,7 @@ Setup: A challenge has several equivalent available rooms and more than one elig
 
 Action: Generate a schedule.
 
-Expected observations: Projects use compatible rooms without collisions. Each project receives one presentation per scheduled non-MLH opted-in challenge and one for General; several rooms divide a challenge's work. General may run alongside sponsor judging. Only rooms with judges under the existing Command Center roster semantics qualify at generation time. Exact balancing and later staffing-loss behavior remain open.
+Expected observations: Projects use compatible rooms without collisions. Each project receives one presentation per scheduled non-MLH opted-in challenge and one for General; several rooms divide a challenge's work. General may run alongside sponsor judging. Every active non-MLH room with a configured building qualifies at generation time, including rooms with no judge currently present. Live staffing remains visible but does not change capacity.
 
 ### TC-004: Reusable buildings
 

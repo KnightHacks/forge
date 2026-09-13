@@ -183,15 +183,7 @@ async function writeJudgingAudit(
   );
 }
 
-async function selectedHackathon(hackathonId?: string, allowAny = false) {
-  if (hackathonId && allowAny) {
-    return (
-      (await db.query.Hackathon.findFirst({
-        columns: { displayName: true, id: true },
-        where: eq(Hackathon.id, hackathonId),
-      })) ?? null
-    );
-  }
+async function selectedHackathon(hackathonId?: string, allowFuture = false) {
   const now = new Date();
   const [active] = await db
     .select({ displayName: Hackathon.displayName, id: Hackathon.id })
@@ -199,7 +191,26 @@ async function selectedHackathon(hackathonId?: string, allowAny = false) {
     .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
     .orderBy(desc(Hackathon.startDate))
     .limit(1);
-  return active ?? null;
+  const selected =
+    active ??
+    (
+      await db
+        .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+        .from(Hackathon)
+        .where(gte(Hackathon.startDate, now))
+        .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+        .limit(1)
+    )[0] ??
+    null;
+  if (!hackathonId) return selected;
+  const requested = await db.query.Hackathon.findFirst({
+    columns: { displayName: true, endDate: true, id: true },
+    where: eq(Hackathon.id, hackathonId),
+  });
+  if (!requested) return null;
+  if (requested.id !== selected?.id && requested.endDate >= now && !allowFuture)
+    throw new TRPCError({ code: "FORBIDDEN" });
+  return { displayName: requested.displayName, id: requested.id };
 }
 
 async function listActiveRooms(hackathonId: string) {
@@ -411,6 +422,7 @@ async function joinMemberRoom(input: {
   roomId: string;
   userId: string;
 }) {
+  const hackathon = await selectedHackathon();
   return db.transaction(async (tx) => {
     const [room] = await tx
       .select({
@@ -425,6 +437,8 @@ async function joinMemberRoom(input: {
       .for("update")
       .limit(1);
     if (!room) throw new TRPCError({ code: "NOT_FOUND" });
+    if (room.hackathonId !== hackathon?.id)
+      throw new TRPCError({ code: "FORBIDDEN" });
 
     const judge = await upsertMemberJudge(tx, {
       displayName: input.displayName,
