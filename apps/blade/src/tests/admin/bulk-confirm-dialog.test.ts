@@ -91,6 +91,9 @@ describe("bulk hacker deletion", () => {
       hackathonId: "hackathon-1",
     });
     expect(mutations.previewStatus).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("heading", { name: "Delete 1 application" }),
+    ).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", { name: "Delete 1 application" }),

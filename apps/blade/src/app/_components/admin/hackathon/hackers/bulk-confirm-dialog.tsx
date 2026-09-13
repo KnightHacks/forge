@@ -213,6 +213,7 @@ export function BulkConfirmDialog({
   const skipped = result?.skipped ?? [];
   const hasResult = result !== undefined;
   const copy = action ? bulkActionCopy(action, affected.length) : null;
+  const subject = deleting ? "application" : "applicant";
   const confirmPending = deleting
     ? deleteConfirm.isPending
     : statusConfirm.isPending;
@@ -223,7 +224,9 @@ export function BulkConfirmDialog({
         <DialogHeader>
           <DialogTitle>
             {copy?.title ?? ""}{" "}
-            {hasResult ? `${affected.length} applicants` : "applicants…"}
+            {hasResult
+              ? `${affected.length} ${subject}${affected.length === 1 ? "" : "s"}`
+              : `${subject}s…`}
           </DialogTitle>
           <DialogDescription>
             {copy?.description ?? "Preparing this bulk action."}

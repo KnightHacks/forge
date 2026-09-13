@@ -132,9 +132,11 @@ because of how it is selected, not because of a separate feature:
 Several hundred uuids in a `previewBulk` payload is unremarkable, and the
 snapshot semantics still earn their keep: something can change between preview
 and confirm — an applicant gets blacklisted, or withdraws on the hack site — so
-`previewBulk` still returns a `previewVersion` and `confirmBulk` still reports
-anything that moved rather than silently including or dropping it. That is
-AC-029, and it holds regardless of how the selection was made.
+`confirmBulk` re-resolves the selected rows and reports anything that moved
+rather than silently including or dropping it. Deletion is stricter:
+`confirmBulkDelete` rejects the request if its eligible ids differ from the
+previewed ids. That is AC-029, and it holds regardless of how the selection was
+made.
 
 **No custom pointer machinery.** An earlier draft made click-and-drag a
 requirement and flagged it as the risky part. It is not required: a shift-click
