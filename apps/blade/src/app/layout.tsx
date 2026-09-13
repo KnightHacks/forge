@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
+import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 
 import { cn } from "@forge/ui";
 
@@ -19,6 +20,7 @@ import {
 } from "./seo";
 
 import "./globals.css";
+import { TooltipProvider } from "@forge/ui/tooltip";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -86,9 +88,20 @@ export const viewport: Viewport = {
   themeColor: "#050505",
 };
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-ibm-plex-mono",
+});
+
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`"dark" ${spaceGrotesk.variable} ${ibmPlexMono.variable}`} suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans text-foreground antialiased",
@@ -96,7 +109,9 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           GeistMono.variable,
         )}
       >
+        <TooltipProvider>
         <Providers>{props.children}</Providers>
+        </TooltipProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
