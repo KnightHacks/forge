@@ -22,6 +22,8 @@ import {
   Hackathon,
   HackathonJudgingConfiguration,
   Judge,
+  JudgeDeliberationEntry,
+  JudgeDeliberationSection,
   JudgingAnnouncement,
   JudgingBuilding,
   JudgingRoom,
@@ -29,20 +31,28 @@ import {
   JudgingRoomPresence,
   JudgingRubricItem,
   JudgingSchedule,
+  JudgingScheduleJob,
+  Project,
   ProjectChallenge,
+  ProjectClaim,
+  ProjectClaimLink,
   ProjectEvaluation,
   ProjectEvaluationDraft,
+  ProjectMember,
+  ProjectToChallenge,
 } from "@forge/db/schemas/knight-hacks";
 import {
   guestJudgeNameSchema,
   judgingAnnouncementClearSchema,
   judgingAnnouncementPublishSchema,
   judgingCommsChannelSchema,
+  judgingDestructiveActionSchema,
   judgingGuestSessionIdSchema,
   judgingHackathonIdSchema,
   judgingJudgeIdSchema,
   judgingPresenceHeartbeatSchema,
   judgingRoomCreateSchema,
+  judgingRoomDeleteSchema,
   judgingRoomIdSchema,
   judgingRoomMoveSchema,
   judgingRoomUpdateSchema,
@@ -87,9 +97,12 @@ import {
 } from "../utils/member/display-name";
 import { assertCanManageProjects } from "../utils/projects/access";
 import {
+  assertChallengeSetupEditable,
   assertJudgingSetupEditable,
   challengeSelection,
+  rebuildParentMemberships,
 } from "../utils/projects/challenge-configuration";
+import { initializeJudgingGroups } from "../utils/projects/initialize-judging-groups";
 import { judgingAppointmentResultsRouter } from "./judging-appointment-results";
 import { judgingDraftsRouter } from "./judging-drafts";
 import { judgingScheduleRouter } from "./judging-schedule";
@@ -181,6 +194,26 @@ async function writeJudgingAudit(
     },
     tx,
   );
+}
+
+async function lockConfirmedHackathon(
+  tx: WriteDb,
+  input: { confirmation: string; hackathonId: string },
+) {
+  const [hackathon] = await tx
+    .select({ displayName: Hackathon.displayName, id: Hackathon.id })
+    .from(Hackathon)
+    .where(eq(Hackathon.id, input.hackathonId))
+    .for("update")
+    .limit(1);
+  if (!hackathon)
+    throw new TRPCError({ code: "NOT_FOUND", message: "Hackathon not found." });
+  if (input.confirmation !== hackathon.displayName)
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "The confirmation does not match the hackathon name.",
+    });
+  return hackathon;
 }
 
 async function selectedHackathon(hackathonId?: string, allowFuture = false) {
@@ -1135,6 +1168,7 @@ export const judgingRouter = createTRPCRouter({
           columns: {
             closedAt: true,
             displayAllResultsToMembers: true,
+            hackerSchedulePublished: true,
             judgingCommsChannelId: true,
             openedAt: true,
             projectInventoryLockedAt: true,
@@ -1159,34 +1193,71 @@ export const judgingRouter = createTRPCRouter({
           .where(eq(JudgingRubricItem.hackathonId, input.hackathonId))
           .orderBy(asc(JudgingRubricItem.displayOrder)),
       ]);
-      const [savedSchedule, feedback, draft] = await Promise.all([
-        db.query.JudgingSchedule.findFirst({
-          columns: { id: true },
-          where: eq(JudgingSchedule.hackathonId, input.hackathonId),
-        }),
-        db.query.ProjectEvaluation.findFirst({
-          columns: { id: true },
-          where: eq(ProjectEvaluation.hackathonId, input.hackathonId),
-        }),
-        db.query.ProjectEvaluationDraft.findFirst({
-          columns: { id: true },
-          where: eq(ProjectEvaluationDraft.hackathonId, input.hackathonId),
-        }),
-      ]);
+      const [savedSchedule, scheduleJob, feedback, draft, inventory] =
+        await Promise.all([
+          db.query.JudgingSchedule.findFirst({
+            columns: { firstResultAt: true, id: true },
+            where: eq(JudgingSchedule.hackathonId, input.hackathonId),
+          }),
+          db.query.JudgingScheduleJob.findFirst({
+            columns: { id: true },
+            where: eq(JudgingScheduleJob.hackathonId, input.hackathonId),
+          }),
+          db.query.ProjectEvaluation.findFirst({
+            columns: { id: true },
+            where: eq(ProjectEvaluation.hackathonId, input.hackathonId),
+          }),
+          db.query.ProjectEvaluationDraft.findFirst({
+            columns: { id: true },
+            where: eq(ProjectEvaluationDraft.hackathonId, input.hackathonId),
+          }),
+          db
+            .select({
+              memberCount: sql<number>`count(${ProjectMember.id})::int`,
+              projectCount: sql<number>`count(distinct ${Project.id})::int`,
+              sentMemberCount: sql<number>`count(${ProjectClaimLink.sentAt})::int`,
+            })
+            .from(Project)
+            .leftJoin(ProjectMember, eq(ProjectMember.projectId, Project.id))
+            .leftJoin(
+              ProjectClaimLink,
+              eq(ProjectClaimLink.memberId, ProjectMember.id),
+            )
+            .where(
+              and(
+                eq(Project.hackathonId, input.hackathonId),
+                isNull(Project.deletedAt),
+              ),
+            )
+            .then((rows) => rows[0]),
+        ]);
       const discordGuildId = await judgingDiscordGuildId();
       return {
         setupLocked: !!savedSchedule,
         challengeSetupLocked: !!savedSchedule || !!feedback || !!draft,
+        hasEvaluationData: !!feedback || !!draft,
+        hasScheduleData: !!savedSchedule || !!scheduleJob,
+        hasSavedSchedule: !!savedSchedule,
+        scheduleDropLocked: !!savedSchedule?.firstResultAt,
         hackathon,
         challenges,
         configuration: {
           closedAt: configuration?.closedAt ?? null,
           displayAllResults: configuration?.displayAllResultsToMembers ?? false,
+          hackerSchedulePublished:
+            configuration?.hackerSchedulePublished ?? false,
           judgingCommsChannelId: configuration?.judgingCommsChannelId ?? null,
           openedAt: configuration?.openedAt ?? null,
           state: configuration?.state ?? ("draft" as const),
         },
         inventoryLockedAt: configuration?.projectInventoryLockedAt ?? null,
+        inventory: {
+          claimLinksSent:
+            (inventory?.memberCount ?? 0) > 0 &&
+            (inventory?.sentMemberCount ?? 0) === (inventory?.memberCount ?? 0),
+          memberCount: inventory?.memberCount ?? 0,
+          projectCount: inventory?.projectCount ?? 0,
+        },
         discordGuildId,
         globalAnnouncement:
           announcements.find((announcement) => announcement.roomId === null) ??
@@ -1203,6 +1274,384 @@ export const judgingRouter = createTRPCRouter({
           judges: currentRoster.filter((judge) => judge.roomId === room.id),
         })),
       };
+    }),
+
+  dropEvaluations: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        const drafts = await tx
+          .delete(ProjectEvaluationDraft)
+          .where(eq(ProjectEvaluationDraft.hackathonId, hackathon.id))
+          .returning({ id: ProjectEvaluationDraft.id });
+        const evaluations = await tx
+          .delete(ProjectEvaluation)
+          .where(eq(ProjectEvaluation.hackathonId, hackathon.id))
+          .returning({ id: ProjectEvaluation.id });
+        await tx
+          .update(JudgingSchedule)
+          .set({ firstResultAt: null })
+          .where(eq(JudgingSchedule.hackathonId, hackathon.id));
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.evaluations.dropped",
+            actor,
+            metadata: {
+              draftCount: drafts.length,
+              evaluationCount: evaluations.length,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return {
+          draftCount: drafts.length,
+          evaluationCount: evaluations.length,
+        };
+      });
+    }),
+
+  resetProjects: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        const [schedule, scheduleJob, room, evaluation, draft] =
+          await Promise.all([
+            tx.query.JudgingSchedule.findFirst({
+              columns: { id: true },
+              where: eq(JudgingSchedule.hackathonId, hackathon.id),
+            }),
+            tx.query.JudgingScheduleJob.findFirst({
+              columns: { id: true },
+              where: eq(JudgingScheduleJob.hackathonId, hackathon.id),
+            }),
+            tx.query.JudgingRoom.findFirst({
+              columns: { id: true },
+              where: eq(JudgingRoom.hackathonId, hackathon.id),
+            }),
+            tx.query.ProjectEvaluation.findFirst({
+              columns: { id: true },
+              where: eq(ProjectEvaluation.hackathonId, hackathon.id),
+            }),
+            tx.query.ProjectEvaluationDraft.findFirst({
+              columns: { id: true },
+              where: eq(ProjectEvaluationDraft.hackathonId, hackathon.id),
+            }),
+          ]);
+        if (schedule || scheduleJob || room || evaluation || draft)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "Reset evaluations, schedule, and rooms before resetting projects.",
+          });
+        await tx
+          .delete(JudgeDeliberationEntry)
+          .where(eq(JudgeDeliberationEntry.hackathonId, hackathon.id));
+        await tx
+          .delete(ProjectClaim)
+          .where(eq(ProjectClaim.hackathonId, hackathon.id));
+        const projects = await tx
+          .delete(Project)
+          .where(eq(Project.hackathonId, hackathon.id))
+          .returning({ id: Project.id });
+        await tx
+          .delete(ProjectChallenge)
+          .where(
+            and(
+              eq(ProjectChallenge.hackathonId, hackathon.id),
+              eq(ProjectChallenge.isGroup, false),
+            ),
+          );
+        await tx
+          .update(HackathonJudgingConfiguration)
+          .set({
+            projectClaimsStartedAt: null,
+            projectClaimUrl: null,
+            projectInventoryLockedAt: null,
+            projectInventoryLockedByUserId: null,
+          })
+          .where(eq(HackathonJudgingConfiguration.hackathonId, hackathon.id));
+        await createAdminAuditEvent(
+          {
+            actionKey: "project.inventory_dropped",
+            actor,
+            metadata: { projectCount: projects.length },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return { projectCount: projects.length };
+      });
+    }),
+
+  dropRooms: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        await assertJudgingSetupEditable(tx, hackathon.id);
+        await tx
+          .delete(JudgingAnnouncement)
+          .where(eq(JudgingAnnouncement.hackathonId, hackathon.id));
+        const rooms = await tx
+          .delete(JudgingRoom)
+          .where(eq(JudgingRoom.hackathonId, hackathon.id))
+          .returning({ id: JudgingRoom.id });
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.rooms.dropped",
+            actor,
+            metadata: { roomCount: rooms.length },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return { roomCount: rooms.length };
+      });
+    }),
+
+  resetSetup: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        await assertChallengeSetupEditable(tx, hackathon.id);
+        const room = await tx.query.JudgingRoom.findFirst({
+          columns: { id: true },
+          where: eq(JudgingRoom.hackathonId, hackathon.id),
+        });
+        if (room)
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Drop all room configuration before resetting setup.",
+          });
+        await tx
+          .delete(ProjectToChallenge)
+          .where(
+            and(
+              eq(ProjectToChallenge.hackathonId, hackathon.id),
+              eq(ProjectToChallenge.isOptIn, false),
+            ),
+          );
+        await tx
+          .update(ProjectChallenge)
+          .set({ isScheduled: true, parentId: null })
+          .where(
+            and(
+              eq(ProjectChallenge.hackathonId, hackathon.id),
+              eq(ProjectChallenge.isGroup, false),
+            ),
+          );
+        const groups = await tx
+          .delete(ProjectChallenge)
+          .where(
+            and(
+              eq(ProjectChallenge.hackathonId, hackathon.id),
+              eq(ProjectChallenge.isGroup, true),
+            ),
+          )
+          .returning({ id: ProjectChallenge.id });
+        const rubric = await tx
+          .delete(JudgingRubricItem)
+          .where(eq(JudgingRubricItem.hackathonId, hackathon.id))
+          .returning({ id: JudgingRubricItem.id });
+        await tx
+          .update(HackathonJudgingConfiguration)
+          .set({ challengeGroupsInitializedAt: null })
+          .where(eq(HackathonJudgingConfiguration.hackathonId, hackathon.id));
+        await initializeJudgingGroups(tx, hackathon.id);
+        await rebuildParentMemberships(tx, hackathon.id);
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.setup.reset",
+            actor,
+            metadata: {
+              groupCount: groups.length,
+              rubricItemCount: rubric.length,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return { groupCount: groups.length, rubricItemCount: rubric.length };
+      });
+    }),
+
+  resetLaunch: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        const claims = await tx
+          .delete(ProjectClaim)
+          .where(eq(ProjectClaim.hackathonId, hackathon.id))
+          .returning({ memberId: ProjectClaim.memberId });
+        const memberIds = tx
+          .select({ id: ProjectMember.id })
+          .from(ProjectMember)
+          .innerJoin(Project, eq(Project.id, ProjectMember.projectId))
+          .where(eq(Project.hackathonId, hackathon.id));
+        const links = await tx
+          .delete(ProjectClaimLink)
+          .where(inArray(ProjectClaimLink.memberId, memberIds))
+          .returning({ id: ProjectClaimLink.id });
+        await tx
+          .insert(HackathonJudgingConfiguration)
+          .values({ hackathonId: hackathon.id })
+          .onConflictDoUpdate({
+            target: HackathonJudgingConfiguration.hackathonId,
+            set: {
+              closedAt: null,
+              displayAllResultsToMembers: false,
+              hackerScheduleEmergency: false,
+              hackerSchedulePublished: false,
+              openedAt: null,
+              projectClaimsStartedAt: null,
+              projectClaimUrl: null,
+              state: "draft",
+            },
+          });
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.launch.reset",
+            actor,
+            metadata: {
+              claimCount: claims.length,
+              claimLinkCount: links.length,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return { claimCount: claims.length, claimLinkCount: links.length };
+      });
+    }),
+
+  resetHackathon: permProcedure
+    .input(judgingDestructiveActionSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const hackathon = await lockConfirmedHackathon(tx, input);
+        const drafts = await tx
+          .delete(ProjectEvaluationDraft)
+          .where(eq(ProjectEvaluationDraft.hackathonId, hackathon.id))
+          .returning({ id: ProjectEvaluationDraft.id });
+        const evaluations = await tx
+          .delete(ProjectEvaluation)
+          .where(eq(ProjectEvaluation.hackathonId, hackathon.id))
+          .returning({ id: ProjectEvaluation.id });
+        await tx
+          .delete(JudgeDeliberationSection)
+          .where(eq(JudgeDeliberationSection.hackathonId, hackathon.id));
+        const schedules = await tx
+          .delete(JudgingSchedule)
+          .where(eq(JudgingSchedule.hackathonId, hackathon.id))
+          .returning({ id: JudgingSchedule.id });
+        await tx
+          .delete(JudgingScheduleJob)
+          .where(eq(JudgingScheduleJob.hackathonId, hackathon.id));
+        await tx
+          .delete(JudgingAnnouncement)
+          .where(eq(JudgingAnnouncement.hackathonId, hackathon.id));
+        const rooms = await tx
+          .delete(JudgingRoom)
+          .where(eq(JudgingRoom.hackathonId, hackathon.id))
+          .returning({ id: JudgingRoom.id });
+        await tx.delete(Judge).where(eq(Judge.hackathonId, hackathon.id));
+        await tx
+          .delete(ProjectClaim)
+          .where(eq(ProjectClaim.hackathonId, hackathon.id));
+        const projects = await tx
+          .delete(Project)
+          .where(eq(Project.hackathonId, hackathon.id))
+          .returning({ id: Project.id });
+        await tx
+          .delete(ProjectChallenge)
+          .where(eq(ProjectChallenge.hackathonId, hackathon.id));
+        await tx
+          .delete(JudgingRubricItem)
+          .where(eq(JudgingRubricItem.hackathonId, hackathon.id));
+        await tx
+          .delete(HackathonJudgingConfiguration)
+          .where(eq(HackathonJudgingConfiguration.hackathonId, hackathon.id));
+        await initializeJudgingGroups(tx, hackathon.id);
+        await createAdminAuditEvent(
+          {
+            actionKey: "judging.reset",
+            actor,
+            metadata: {
+              draftCount: drafts.length,
+              evaluationCount: evaluations.length,
+              hadSchedule: schedules.length > 0,
+              projectCount: projects.length,
+              roomCount: rooms.length,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return {
+          evaluationCount: evaluations.length,
+          projectCount: projects.length,
+          roomCount: rooms.length,
+        };
+      });
     }),
 
   createRoom: permProcedure
@@ -1443,6 +1892,30 @@ export const judgingRouter = createTRPCRouter({
           roomName: current.name,
         });
         return room;
+      });
+    }),
+
+  deleteRoom: permProcedure
+    .input(judgingRoomDeleteSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManageProjects(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const room = await lockRoomAggregate(tx, input.roomId);
+        await assertNoRoomReservations(tx, room.id);
+        if (input.confirmation !== room.name)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The confirmation does not match the room name.",
+          });
+        await tx.delete(JudgingRoom).where(eq(JudgingRoom.id, room.id));
+        await writeJudgingAudit(tx, {
+          actionKey: "judging.room.deleted",
+          actor,
+          roomId: room.id,
+          roomName: room.name,
+        });
+        return { id: room.id, name: room.name };
       });
     }),
 

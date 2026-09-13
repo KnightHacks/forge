@@ -302,7 +302,12 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .where(eq(knightHacks.Hackathon.id, READY_HACKATHON));
     await client
       .update(knightHacks.HackerAttendee)
-      .set({ lastStatusSendId: null, status: "pending" })
+      .set({
+        checkedInAt: null,
+        checkedInBy: null,
+        lastStatusSendId: null,
+        status: "pending",
+      })
       .where(eq(knightHacks.HackerAttendee.hackathonId, READY_HACKATHON));
     await client
       .update(knightHacks.HackerAttendee)
@@ -310,6 +315,8 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
         blacklistReason: null,
         blacklistedAt: null,
         blacklistedBy: null,
+        checkedInAt: null,
+        checkedInBy: null,
         lastStatusSendId: null,
         status: "pending",
       })
@@ -447,6 +454,23 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       expect(row?.lastStatusSendId).not.toBeNull();
     });
 
+    it("does not let a delegated editor check in hackers", async () => {
+      await client
+        .update(auth.Roles)
+        .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+        .where(eq(auth.Roles.id, OFFICER_ROLE));
+
+      for (const operation of ["previewBulk", "confirmBulk"] as const) {
+        await expect(
+          caller.hacker[operation]({
+            attendeeIds: [PLAIN_ATTENDEE],
+            hackathonId: READY_HACKATHON,
+            status: "checkedin",
+          }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      }
+    });
+
     it("preserves blacklist safeguards without disclosing them to editors", async () => {
       await client
         .update(auth.Roles)
@@ -490,6 +514,28 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           ]);
         }
       }
+      await expect(
+        caller.hacker.previewBulkDelete({
+          attendeeIds: [BLACKLISTED_ATTENDEE],
+          hackathonId: READY_HACKATHON,
+        }),
+      ).resolves.toEqual({
+        deleting: [],
+        skipped: [
+          {
+            attendeeId: BLACKLISTED_ATTENDEE,
+            name: "Test blocked",
+            reason: null,
+          },
+        ],
+      });
+      await expect(
+        caller.hacker.confirmBulkDelete({
+          attendeeIds: [BLACKLISTED_ATTENDEE],
+          confirmed: true,
+          hackathonId: READY_HACKATHON,
+        }),
+      ).resolves.toMatchObject({ deletedCount: 0 });
       const blocked = await client.query.HackerAttendee.findFirst({
         where: eq(knightHacks.HackerAttendee.id, BLACKLISTED_ATTENDEE),
       });
@@ -618,6 +664,49 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   });
 
   describe("gaps the first review found", () => {
+    it("checks in selected hackers without requiring or sending email", async () => {
+      await client
+        .update(knightHacks.Hacker)
+        .set({ email: "   " })
+        .where(eq(knightHacks.Hacker.id, UNREADY_HACKER));
+      const input = {
+        attendeeIds: [UNREADY_ATTENDEE],
+        hackathonId: UNREADY_HACKATHON,
+        status: "checkedin" as const,
+      };
+
+      await expect(caller.hacker.previewBulk(input)).resolves.toMatchObject({
+        sending: [expect.objectContaining({ attendeeId: UNREADY_ATTENDEE })],
+        skipped: [],
+      });
+      const result = await caller.hacker.confirmBulk(input);
+
+      expect(result).toMatchObject({
+        movedCount: 1,
+        sendId: null,
+        skipped: [],
+        withheldCount: 0,
+      });
+      const [attendee] = await client
+        .select({
+          checkedInAt: knightHacks.HackerAttendee.checkedInAt,
+          checkedInBy: knightHacks.HackerAttendee.checkedInBy,
+          lastStatusSendId: knightHacks.HackerAttendee.lastStatusSendId,
+          status: knightHacks.HackerAttendee.status,
+        })
+        .from(knightHacks.HackerAttendee)
+        .where(eq(knightHacks.HackerAttendee.id, UNREADY_ATTENDEE));
+      expect(attendee?.checkedInAt).toBeInstanceOf(Date);
+      expect(attendee).toMatchObject({
+        checkedInBy: OFFICER_USER,
+        lastStatusSendId: null,
+        status: "checkedin",
+      });
+      await expect(
+        client.select().from(knightHacks.EmailSend),
+      ).resolves.toEqual([]);
+    });
+
     it("confirmBulk refuses on an unconfigured hackathon", async () => {
       // The readiness gate on the bulk path had a positive control and no
       // negative case, so deleting it entirely left the suite green while an
@@ -1418,6 +1507,217 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   });
 
   describe("application deletion", () => {
+    async function createDeleteFixture(
+      sequence: 2 | 3 | 4,
+      blacklisted = false,
+    ) {
+      const suffix = `0000000000f${sequence}`;
+      const userId = `10000000-0000-4000-8000-${suffix}`;
+      const hackerId = `70000000-0000-4000-8000-${suffix}`;
+      const attendeeId = `60000000-0000-4000-8000-${suffix}`;
+      const profileId = `90000000-0000-4000-8000-${suffix}`;
+      const profileRevisionId = `91000000-0000-4000-8000-${suffix}`;
+      const profileFields = {
+        country: "United States of America" as const,
+        discordUser: `bulk-delete-${sequence}`,
+        dob: "2006-01-01",
+        email: `bulk-delete-${sequence}@example.test`,
+        firstName: "Bulk",
+        foodAllergies: null,
+        gender: "Prefer not to answer" as const,
+        githubProfileUrl: null,
+        gradDate: "2030-05-01",
+        lastName: `Delete ${sequence}`,
+        levelOfStudy: "Undergraduate University (3+ year)" as const,
+        linkedinProfileUrl: null,
+        major: "Computer Science" as const,
+        phoneNumber: `000000000${sequence}`,
+        raceOrEthnicity: "Prefer not to answer" as const,
+        school: "University of Central Florida",
+        shirtSize: "M" as const,
+        websiteUrl: null,
+      };
+
+      await client.insert(auth.User).values({
+        discordUserId: `discord-bulk-delete-${sequence}`,
+        id: userId,
+      });
+      await client.insert(knightHacks.HackerProfile).values({
+        ...profileFields,
+        id: profileId,
+        resumeUrl: null,
+        userId,
+      });
+      await client.insert(knightHacks.Hacker).values({
+        ...profileFields,
+        age: 20,
+        id: hackerId,
+        resumeUrl: null,
+        survey1: "",
+        survey2: "",
+        userId,
+      });
+      await client.insert(knightHacks.HackerProfileRevision).values({
+        ...profileFields,
+        id: profileRevisionId,
+        legacyHackerId: hackerId,
+        profileId,
+        resumeUrl: null,
+        revision: 1,
+      });
+      await client.insert(knightHacks.HackerAttendee).values({
+        blacklistReason: blacklisted ? "Officer-reviewed deletion." : null,
+        blacklistedAt: blacklisted ? new Date() : null,
+        blacklistedBy: blacklisted ? OFFICER_USER : null,
+        hackerId,
+        hackathonId: READY_HACKATHON,
+        id: attendeeId,
+        profileId,
+        profileRevisionId,
+        status: "pending",
+      });
+      await client.insert(knightHacks.HackerParticipantCommand).values({
+        completedAt: new Date(),
+        expiresAt: since(1),
+        hackathonId: READY_HACKATHON,
+        idempotencyKey: `bulk-delete-${sequence}`,
+        operation: "submit_application",
+        payloadHash: String(sequence).repeat(64),
+        result: { attendeeId },
+        state: "completed",
+        userId,
+      });
+
+      return {
+        attendeeId,
+        hackerId,
+        profileId,
+        profileRevisionId,
+        userId,
+      };
+    }
+
+    it("previews and permanently deletes a selection without email", async () => {
+      const fixtures = await Promise.all([
+        createDeleteFixture(2),
+        createDeleteFixture(3),
+      ]);
+      const attendeeIds = fixtures.map((row) => row.attendeeId);
+
+      try {
+        await expect(
+          caller.hacker.previewBulkDelete({
+            attendeeIds,
+            hackathonId: READY_HACKATHON,
+          }),
+        ).resolves.toMatchObject({
+          deleting: [expect.anything(), expect.anything()],
+          skipped: [],
+        });
+        await expect(
+          caller.hacker.confirmBulkDelete({
+            attendeeIds,
+            confirmed: true,
+            hackathonId: READY_HACKATHON,
+          }),
+        ).resolves.toEqual({ deletedCount: 2, skipped: [] });
+
+        await expect(
+          client
+            .select({ id: knightHacks.HackerAttendee.id })
+            .from(knightHacks.HackerAttendee)
+            .where(inArray(knightHacks.HackerAttendee.id, attendeeIds)),
+        ).resolves.toEqual([]);
+        await expect(
+          client
+            .select({ id: knightHacks.HackerParticipantCommand.id })
+            .from(knightHacks.HackerParticipantCommand)
+            .where(
+              inArray(
+                knightHacks.HackerParticipantCommand.userId,
+                fixtures.map((row) => row.userId),
+              ),
+            ),
+        ).resolves.toEqual([]);
+        await expect(
+          client
+            .select({ id: knightHacks.Hacker.id })
+            .from(knightHacks.Hacker)
+            .where(
+              inArray(
+                knightHacks.Hacker.id,
+                fixtures.map((row) => row.hackerId),
+              ),
+            ),
+        ).resolves.toEqual([]);
+        await expect(
+          client
+            .select({ id: knightHacks.HackerProfile.id })
+            .from(knightHacks.HackerProfile)
+            .where(
+              inArray(
+                knightHacks.HackerProfile.id,
+                fixtures.map((row) => row.profileId),
+              ),
+            ),
+        ).resolves.toHaveLength(2);
+        await expect(
+          client
+            .select({ id: knightHacks.HackerProfileRevision.id })
+            .from(knightHacks.HackerProfileRevision)
+            .where(
+              inArray(
+                knightHacks.HackerProfileRevision.id,
+                fixtures.map((row) => row.profileRevisionId),
+              ),
+            ),
+        ).resolves.toHaveLength(2);
+        await expect(
+          client.select().from(knightHacks.EmailSend),
+        ).resolves.toEqual([]);
+      } finally {
+        await client.delete(auth.User).where(
+          inArray(
+            auth.User.id,
+            fixtures.map((row) => row.userId),
+          ),
+        );
+      }
+    });
+
+    it("allows an officer to delete a blacklisted application", async () => {
+      const fixture = await createDeleteFixture(4, true);
+
+      try {
+        await expect(
+          caller.hacker.previewBulkDelete({
+            attendeeIds: [fixture.attendeeId],
+            hackathonId: READY_HACKATHON,
+          }),
+        ).resolves.toMatchObject({
+          deleting: [
+            expect.objectContaining({ attendeeId: fixture.attendeeId }),
+          ],
+          skipped: [],
+        });
+        await expect(
+          caller.hacker.confirmBulkDelete({
+            attendeeIds: [fixture.attendeeId],
+            confirmed: true,
+            hackathonId: READY_HACKATHON,
+          }),
+        ).resolves.toEqual({ deletedCount: 1, skipped: [] });
+        await expect(
+          client
+            .select()
+            .from(knightHacks.HackerAttendee)
+            .where(eq(knightHacks.HackerAttendee.id, fixture.attendeeId)),
+        ).resolves.toHaveLength(0);
+      } finally {
+        await client.delete(auth.User).where(eq(auth.User.id, fixture.userId));
+      }
+    });
+
     it("removes the application while preserving the reusable profile", async () => {
       const userId = "10000000-0000-4000-8000-0000000000f1";
       const hackerId = "70000000-0000-4000-8000-0000000000f1";

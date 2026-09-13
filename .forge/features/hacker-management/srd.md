@@ -34,10 +34,11 @@ officer-only policy. Existing permission bits are reused; no migration is needed
 
 - `READ_HACKERS` or `EDIT_HACKERS`: roster options, filters, counts, selection
   survival, application details, and the existing hacker event-attendance read.
-- `EDIT_HACKERS`: profile corrections, point adjustments, single/bulk status
-  changes (including preview), and application deletion.
-- `IS_OFFICER`: overrides the above and is still required for blacklist access
-  and hackathon configuration. Do not broaden the platform configuration guard.
+- `EDIT_HACKERS`: profile corrections, point adjustments, single/bulk
+  mail-sending status changes (including preview), and application deletion.
+- `IS_OFFICER`: overrides the above and is required for blacklist access,
+  hackathon configuration, and the bulk `checkedin` transition. Do not broaden
+  the platform configuration guard.
 - No hacker capability: no navigation, page access, or API access.
 
 The API redacts blacklist fields to null for non-officers, rejects blacklist
@@ -49,7 +50,9 @@ Officer responses retain their existing shape and values.
 Blade must gate its admin layout, navigation, and page consistently. It passes
 read/edit/officer capabilities to the roster and detail controls. Read-only
 users cannot select rows or see mutations. The event-attendance read uses hacker
-read access; general event administration and check-in keep their existing gates.
+read access. The roster exposes Checked-In only to officers; event administration
+and its class, attendance, point, and Discord side effects keep their existing
+gates.
 
 Validation covers the actual routers, role unions/revocation, read-only UI, and
 blacklist redaction/filtering. Rollout is a normal application deployment;
@@ -196,14 +199,16 @@ the filtered path has to be as fast as the unfiltered one, and `school` and
 
 New `hacker` router, registered in `root.ts` as `api.hacker.*`.
 
-| Procedure          | Shape                                                            | Notes                                                                         |
-| ------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `listForHackathon` | query(`{hackathonId, search?, status?, cursor?}`) → page         | Paginated. 2537 rows exist today; the largest hackathon must not be one read. |
-| `statusCounts`     | query(`{hackathonId}`) → count per status                        | One grouped query, not seven.                                                 |
-| `setStatus`        | mutation(`{attendeeId, status}`)                                 | Enqueues the configured mail. Refuses on blacklist and on unconfigured.       |
-| `previewBulk`      | mutation(`{hackathonId, filter, status}`) → who sends, who skips | Takes a **filter**, not an id list. Nothing is written.                       |
-| `confirmBulk`      | mutation(`{previewVersion}`) → per-hacker result                 | Acts on the snapshot the preview took. Best-effort.                           |
-| `setBlacklist`     | mutation(`{attendeeId, blacklisted, reason?}`)                   | Never changes status. Sends nothing.                                          |
+| Procedure           | Shape                                                                 | Notes                                                                         |
+| ------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `listForHackathon`  | query(`{hackathonId, search?, status?, cursor?}`) → page              | Paginated. 2537 rows exist today; the largest hackathon must not be one read. |
+| `statusCounts`      | query(`{hackathonId}`) → count per status                             | One grouped query, not seven.                                                 |
+| `setStatus`         | mutation(`{attendeeId, status}`)                                      | Enqueues the configured mail. Refuses on blacklist and on unconfigured.       |
+| `previewBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → who moves, who skips | Nothing is written. `checkedin` requires officer access and no mail config.   |
+| `confirmBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → per-hacker result    | Re-resolves selected rows. `checkedin` records time and actor; no mail.       |
+| `previewBulkDelete` | mutation(`{hackathonId, attendeeIds}`) → who deletes, who skips       | Nothing is written. Uses the existing blacklist permission rule.              |
+| `confirmBulkDelete` | mutation(`{hackathonId, attendeeIds, confirmed:true}`) → result       | Hard-deletes in one transaction, clears commands, and sends no mail.          |
+| `setBlacklist`      | mutation(`{attendeeId, blacklisted, reason?}`)                        | Never changes status. Sends nothing.                                          |
 
 Errors: `NOT_FOUND` for unknown ids, `PRECONDITION_FAILED` for a blacklisted
 accept and for an unconfigured hackathon, `BAD_REQUEST` for validation.
@@ -216,11 +221,9 @@ diff; blacklist events carry the reason.
 
 ## Validation
 
-New module `packages/validators/src/hackers.ts`, or an extension of the existing
-hackathon validators if it stays small. `hackathonSendingStatusSchema` already
-exists and is exactly the set reachable here — `checkedin` is excluded by
-construction, which is what AC-007 needs, so it should be reused rather than
-re-derived.
+`packages/validators/src/hackers.ts` reuses `hackathonSendingStatusSchema` for
+single and mail-sending transitions. The bulk schema extends that union with
+`checkedin`; the API applies the additional officer guard.
 
 ## Data / migration / compatibility
 
@@ -248,8 +251,9 @@ here but this slice adds to the watermark.
 
 ## Discord integration
 
-None. Class assignment and role application moved to the event slice with
-check-in. This slice must not write `classId` or touch a guild.
+None. Roster check-in writes only attendee status and check-in attribution.
+Class assignment, event attendance, points, and role application remain in the
+event slice; this path must not write them or touch a guild.
 
 ## Configurability review
 
@@ -289,6 +293,15 @@ will say plainly if either is skipped.
 Guards get DB-backed integration tests with positive controls, following
 `hackathon-destructive-guards.test.ts` — a guard test that passes against an
 unconditionally-refusing guard proves nothing.
+
+Application deletion remains the existing hard-delete model. Single and bulk
+paths remove `HackerAttendee`, clear the participant command for that hackathon,
+and delete the legacy `Hacker` snapshot only when no attendee still references
+it. `HackerProfile` and its revisions remain so the participant can apply again.
+Bulk preview and confirmation share target resolution, skip missing rows, and
+skip blacklisted rows for delegated editors without disclosing the blacklist.
+One bulk audit event names the hackathon and affected attendees. No schema,
+migration, restore flow, Deleted tab, or email send is introduced.
 
 ## Resolved: what "enqueued" actually guarantees
 

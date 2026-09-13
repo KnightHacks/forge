@@ -377,80 +377,61 @@ export function AdminProjectWorkspace({
           icon={Database}
           title="Project import"
         />
-      ) : data && input ? (
-        <div className="flex flex-wrap justify-end gap-2">
-          <ProjectImportDialog
-            scheduleLocked={data.setupLocked}
-            hackathonId={input.hackathonId}
-            hackathonName={data.hackathon.displayName}
-            inventoryLocked={
-              hackathons.find((hackathon) => hackathon.id === input.hackathonId)
-                ?.inventoryLockedAt != null
-            }
-            onImported={refresh}
-            projectCount={projectCount}
-          />
-          <DropAllProjectsDialog
-            disabled={data.setupLocked}
-            hackathonId={input.hackathonId}
-            hackathonName={data.hackathon.displayName}
-            onDropped={refresh}
-            projectCount={projectCount}
-          />
-        </div>
       ) : null}
 
       {data && input ? (
         <>
-          <section className="flex flex-col gap-3 rounded-lg border border-white/10 bg-card/80 p-4 shadow-xl shadow-black/10 sm:flex-row sm:items-end sm:justify-between">
-            {!embedded ? (
-              <label className="min-w-0 space-y-2">
-                <span className="block text-sm font-medium">Hackathon</span>
-                <select
-                  aria-label="Manage hackathon projects"
-                  className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
-                  onChange={(event) =>
-                    navigate({
-                      challenge: undefined,
-                      hackathon: event.target.value,
-                    })
-                  }
-                  value={input.hackathonId}
-                >
-                  {hackathons.map((hackathon) => (
-                    <option key={hackathon.id} value={hackathon.id}>
-                      {hackathon.displayName} ({hackathon.projectCount})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <div>
-                <p className="text-sm font-medium">Project inventory</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {data.hackathon.displayName} · {projectCount} imported
-                </p>
+          {!embedded ? (
+            <>
+              <section className="flex flex-col gap-3 rounded-lg border border-white/10 bg-card/80 p-4 shadow-xl shadow-black/10 sm:flex-row sm:items-end sm:justify-between">
+                <label className="min-w-0 space-y-2">
+                  <span className="block text-sm font-medium">Hackathon</span>
+                  <select
+                    aria-label="Manage hackathon projects"
+                    className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
+                    onChange={(event) =>
+                      navigate({
+                        challenge: undefined,
+                        hackathon: event.target.value,
+                      })
+                    }
+                    value={input.hackathonId}
+                  >
+                    {hackathons.map((hackathon) => (
+                      <option key={hackathon.id} value={hackathon.id}>
+                        {hackathon.displayName} ({hackathon.projectCount})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-2">
+                  <span className="block text-sm font-medium">
+                    Inventory state
+                  </span>
+                  <select
+                    aria-label="Project inventory state"
+                    className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                    onChange={(event) =>
+                      navigate({ deleted: event.target.value })
+                    }
+                    value={input.deleted}
+                  >
+                    <option value="active">Active projects</option>
+                    <option value="deleted">Deleted projects</option>
+                    <option value="all">All projects</option>
+                  </select>
+                </label>
+              </section>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">
+                  {data.totalCount} in this view
+                </Badge>
+                <Badge variant="outline">
+                  {data.challenges.length} challenges
+                </Badge>
               </div>
-            )}
-            <label className="space-y-2">
-              <span className="block text-sm font-medium">Inventory state</span>
-              <select
-                aria-label="Project inventory state"
-                className="h-11 rounded-md border border-input bg-background px-3 text-sm"
-                onChange={(event) => navigate({ deleted: event.target.value })}
-                value={input.deleted}
-              >
-                <option value="active">Active projects</option>
-                <option value="deleted">Deleted projects</option>
-                <option value="all">All projects</option>
-              </select>
-            </label>
-          </section>
-
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{data.totalCount} in this view</Badge>
-            <Badge variant="outline">{data.challenges.length} challenges</Badge>
-          </div>
+            </>
+          ) : null}
 
           <ProjectDirectory
             actions={(project) => (
@@ -488,6 +469,55 @@ export function AdminProjectWorkspace({
             data={data}
             input={input}
             showPrivateDetails
+            toolbar={
+              embedded ? (
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      {data.totalCount} in this view
+                    </span>{" "}
+                    · {data.challenges.length} challenge
+                    {data.challenges.length === 1 ? "" : "s"}
+                  </p>
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <label>
+                      <span className="sr-only">Inventory state</span>
+                      <select
+                        aria-label="Project inventory state"
+                        className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+                        onChange={(event) =>
+                          navigate({ deleted: event.target.value })
+                        }
+                        value={input.deleted}
+                      >
+                        <option value="active">Active projects</option>
+                        <option value="deleted">Deleted projects</option>
+                        <option value="all">All projects</option>
+                      </select>
+                    </label>
+                    <ProjectImportDialog
+                      scheduleLocked={data.setupLocked}
+                      hackathonId={input.hackathonId}
+                      hackathonName={data.hackathon.displayName}
+                      inventoryLocked={
+                        hackathons.find(
+                          (hackathon) => hackathon.id === input.hackathonId,
+                        )?.inventoryLockedAt != null
+                      }
+                      onImported={refresh}
+                      projectCount={projectCount}
+                    />
+                    <DropAllProjectsDialog
+                      disabled={data.setupLocked}
+                      hackathonId={input.hackathonId}
+                      hackathonName={data.hackathon.displayName}
+                      onDropped={refresh}
+                      projectCount={projectCount}
+                    />
+                  </div>
+                </div>
+              ) : undefined
+            }
           />
 
           <ProjectEditDialog

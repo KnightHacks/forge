@@ -5,6 +5,7 @@ import {
   CalendarOff,
   Loader2,
   Search,
+  Trash2,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -17,8 +18,12 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
+import {
+  HACKATHON_SENDING_STATUSES,
+  HACKER_STATUS_LABELS,
+} from "@forge/validators";
 
+import type { HackerBulkAction } from "./bulk-confirm-dialog";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
@@ -38,7 +43,6 @@ import { useRosterUrlState } from "./use-roster-url-state";
 
 type Options = RouterOutputs["hacker"]["listHackathonOptions"]["hackathons"];
 export type RosterFilter = HackerRosterFilter;
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** Shown until `filterOptions` lands, so every combobox renders empty rather
  * than absent. */
@@ -113,7 +117,7 @@ export function HackerRoster({
   });
   const utils = api.useUtils();
 
-  const [bulkStatus, setBulkStatus] = useState<SendingStatus | null>(null);
+  const [bulkAction, setBulkAction] = useState<HackerBulkAction | null>(null);
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -420,20 +424,42 @@ export function HackerRoster({
               and cannot be recalled.
             */}
             <span className="text-sm font-medium">Move to</span>
-            {(Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]).map(
-              (status) => (
-                <Button
-                  className="min-h-11 text-sm"
-                  disabled={blocked || filterBusy}
-                  key={status}
-                  onClick={() => setBulkStatus(status)}
-                  size="sm"
-                  variant={status === "accepted" ? "primary" : "secondary"}
-                >
-                  {HACKER_STATUS_LABELS[status]}
-                </Button>
-              ),
-            )}
+            {HACKATHON_SENDING_STATUSES.map((status) => (
+              <Button
+                className="min-h-11 text-sm"
+                disabled={blocked || filterBusy}
+                key={status}
+                onClick={() => setBulkAction(status)}
+                size="sm"
+                variant={status === "accepted" ? "primary" : "secondary"}
+              >
+                {HACKER_STATUS_LABELS[status]}
+              </Button>
+            ))}
+            {isOfficer ? (
+              <Button
+                className="min-h-11 text-sm"
+                disabled={blocked || filterBusy}
+                onClick={() => setBulkAction("checkedin")}
+                size="sm"
+                variant="secondary"
+              >
+                {HACKER_STATUS_LABELS.checkedin}
+              </Button>
+            ) : null}
+            <span className="ml-1 border-l border-border pl-3 text-sm font-medium">
+              Actions
+            </span>
+            <Button
+              className="min-h-11 gap-2 text-sm"
+              disabled={blocked || filterBusy}
+              onClick={() => setBulkAction("delete")}
+              size="sm"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete
+            </Button>
             <Button
               className="ml-auto min-h-11 text-sm"
               onClick={selection.clear}
@@ -514,17 +540,17 @@ export function HackerRoster({
 
       {canEdit ? (
         <BulkConfirmDialog
+          action={bulkAction}
           attendeeIds={selectedIds}
           hackathonId={selected.id}
           onDone={() => {
-            setBulkStatus(null);
+            setBulkAction(null);
             selection.clear();
             void refresh();
           }}
           onOpenChange={(open) => {
-            if (!open) setBulkStatus(null);
+            if (!open) setBulkAction(null);
           }}
-          status={bulkStatus}
         />
       ) : null}
 

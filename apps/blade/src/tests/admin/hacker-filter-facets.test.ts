@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { changedFacets } from "~/app/_components/admin/hackathon/hackers/hacker-filters";
+import {
+  changedFacets,
+  HACKER_STATUS_FILTERS,
+} from "~/app/_components/admin/hackathon/hackers/hacker-filters";
+
+describe("hacker status filters", () => {
+  it("includes checked-in applicants", () => {
+    expect(HACKER_STATUS_FILTERS).toContain("checkedin");
+  });
+});
 
 /**
  * What the Filters panel sends when Apply is pressed.

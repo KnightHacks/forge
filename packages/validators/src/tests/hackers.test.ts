@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   HACKER_STATUS_LABELS,
+  hackerBulkDeleteConfirmSchema,
+  hackerBulkDeletePreviewSchema,
   hackerBulkPreviewSchema,
   hackerRosterListSchema,
   hackerSetBlacklistSchema,
@@ -9,17 +11,24 @@ import {
   hackerUpdateProfileSchema,
 } from "../hackers";
 
-describe("TC-NEG-004: checked-in is unreachable from the roster", () => {
-  // The whole point of reusing `hackathonSendingStatusSchema` rather than the
-  // wider application-state list. Check-in belongs to the event slice and
-  // reaches the column another way; an officer must not be able to fake it.
-  it("rejects a transition to checkedin", () => {
+describe("checked-in roster transitions", () => {
+  it("rejects checkedin for the single-applicant mail action", () => {
     expect(
       hackerSetStatusSchema.safeParse({
         attendeeId: "00000000-0000-4000-8000-000000000001",
         status: "checkedin",
       }).success,
     ).toBe(false);
+  });
+
+  it("allows checkedin for a bulk action", () => {
+    expect(
+      hackerBulkPreviewSchema.safeParse({
+        attendeeIds: ["00000000-0000-4000-8000-000000000001"],
+        hackathonId: "00000000-0000-4000-8000-000000000002",
+        status: "checkedin",
+      }).success,
+    ).toBe(true);
   });
 
   it.each([
@@ -113,6 +122,29 @@ describe("bulk bounds", () => {
   });
 });
 
+describe("bulk application deletion", () => {
+  const base = {
+    attendeeIds: ["00000000-0000-4000-8000-000000000001"],
+    hackathonId: "00000000-0000-4000-8000-000000000002",
+  };
+
+  it("previews a bounded selection", () => {
+    expect(hackerBulkDeletePreviewSchema.safeParse(base).success).toBe(true);
+    expect(
+      hackerBulkDeletePreviewSchema.safeParse({ ...base, attendeeIds: [] })
+        .success,
+    ).toBe(false);
+  });
+
+  it("requires explicit confirmation", () => {
+    expect(hackerBulkDeleteConfirmSchema.safeParse(base).success).toBe(false);
+    expect(
+      hackerBulkDeleteConfirmSchema.safeParse({ ...base, confirmed: true })
+        .success,
+    ).toBe(true);
+  });
+});
+
 describe("roster limit", () => {
   const hackathonId = "00000000-0000-4000-8000-000000000002";
 
@@ -143,17 +175,18 @@ describe("officer-facing status labels", () => {
     expect(HACKER_STATUS_LABELS.pending).toBe("Applied");
   });
 
-  it("labels every status an officer can set", () => {
-    // Missing a label renders a raw slug, so this pins the two lists together.
-    const settable = [
+  it("labels every stored status", () => {
+    // Missing a label renders a blank badge, so this pins the two lists together.
+    const statuses = [
       "accepted",
+      "checkedin",
       "confirmed",
       "denied",
       "pending",
       "waitlisted",
       "withdrawn",
     ];
-    expect(Object.keys(HACKER_STATUS_LABELS).sort()).toEqual(settable.sort());
+    expect(Object.keys(HACKER_STATUS_LABELS).sort()).toEqual(statuses.sort());
   });
 });
 

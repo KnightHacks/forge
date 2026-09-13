@@ -21,8 +21,10 @@ the readiness signal that slice computed finally means something.
 - **Hacker readers** — users granted Read Hackers can browse, search, filter,
   and open applications, including their event attendance. They cannot edit.
 - **Hacker editors** — users granted Edit Hackers can also correct applications,
-  adjust points, change statuses singly or in bulk, and delete applications.
-- **Officers** — retain full access, including blacklist information and controls.
+  adjust points, change mail-sending statuses singly or in bulk, and delete
+  applications.
+- **Officers** — retain full access, including blacklist information and
+  controls, and can bulk check in selected hackers.
 - **Applicants** — never see this screen. They experience it only as the mail a
   transition sends. They are the reason the guards exist.
 
@@ -46,7 +48,7 @@ the configuration screen.
 
 - A table of applicants: name, email, school, status, points, and a blacklist
   marker. Searchable by name and email, filterable by status, school, level of
-  study, and graduation year.
+  study, and graduation year. Checked-In is one of the status filters.
 - **Bulk is the primary flow.** Filter the roster down to the group you mean —
   UCF undergraduates, say — then sweep across the rows and act on them together.
   Accepting people one at a time is possible but is not what this screen is
@@ -70,7 +72,10 @@ invisible to the applicant.
 
 - Roster: list, search, filter by status, for one hackathon.
 - Per-hacker status transitions, which send the configured status mail.
-- Bulk accept and bulk deny, best-effort, with a per-hacker result report.
+- Bulk status changes, including an officer-only Checked-In action, best-effort,
+  with a per-hacker result report. Checked-In sends no email.
+- Permanent deletion from either an application detail or a selected group,
+  with preview and confirmation for the bulk action. Deletion sends no email.
 - Soft blacklist: a per-hackathon, officer-only flag that does **not** change
   status.
 - The readiness gate: transitions that would send mail are refused while the
@@ -79,8 +84,8 @@ invisible to the applicant.
 
 ### Out of scope
 
-- **Check-in.** Moved to the event page slice, with class assignment and live
-  Discord role application.
+- **Event check-in side effects.** Class assignment, event attendance, points,
+  and live Discord role application remain on the event page.
 - **Granting points.** The column is displayed; nothing here writes it. Awarding
   arrives with events.
 - **Creating hackers.** This slice operates on rows that already exist. New
@@ -91,8 +96,8 @@ invisible to the applicant.
 
 ## Vocabulary
 
-- **Status** — one of the seven application states. Six send mail; `checkedin`
-  does not, and is not reachable from this screen at all.
+- **Status** — one of the seven application states. Six send mail. Officers can
+  bulk move selected hackers to `checkedin` without sending mail.
 - **Capacity reject** — the officer-facing name for transitioning to `denied`.
   The status is stored as `denied`; the mail the applicant receives is the
   capacity template. Officers see "capacity"; applicants never see "denied".
@@ -144,7 +149,9 @@ invisible to the applicant.
   the officer is told which status is missing.
 - AC-006 A transition that would send mail is refused while the hackathon is not
   fully configured. Blacklisting and viewing stay available.
-- AC-007 `checkedin` is not reachable from this screen.
+- AC-007 Checked-In appears as a roster status filter. Officers can bulk move
+  selected hackers to Checked-In through preview and confirmation; no email is
+  queued, and delegated Hacker Editors cannot use this transition.
 - AC-008 The mail an applicant receives is the one an officer previewed in the
   configuration screen — same template, same subject, same rendered fields.
 - AC-009 **Revised.** The status change and the queuing of its mail succeed or
@@ -176,12 +183,19 @@ invisible to the applicant.
 
 **Bulk**
 
-- AC-016 An officer can select many applicants and accept or deny them together.
+- AC-016 An officer can select many applicants and change their status together,
+  including moving them to Checked-In without email.
 - AC-017 A bulk action processes each applicant independently; one failure does
   not stop the rest.
 - AC-018 After a bulk action the officer sees exactly who moved and who did not,
   and why for each one that did not.
 - AC-019 A bulk action sends at most one mail per applicant.
+- AC-034 A Hacker Editor can permanently delete one application from its detail
+  view or delete a selected group after previewing exactly who will be removed.
+  The roster and selection refresh after completion, and no email is sent.
+- AC-035 A delegated Hacker Editor cannot delete a blacklisted application;
+  that row is skipped in bulk without revealing its blacklist. Officers may
+  delete it.
 
 **Honesty**
 

@@ -7,6 +7,10 @@ export const judgingHackathonIdSchema = z.object({
   hackathonId: uuidSchema,
 });
 
+export const judgingDestructiveActionSchema = judgingHackathonIdSchema.extend({
+  confirmation: z.string().min(1).max(255),
+});
+
 export const judgingStateSchema = z.enum(["draft", "open", "closed"]);
 export const judgingRubricItemKindSchema = z.enum(["rating", "short_response"]);
 export const judgingResponseVisibilitySchema = z.enum([
@@ -168,6 +172,10 @@ export const judgingEntryReorderSchema = judgingReorderSchema.extend({
 
 export const judgingRoomIdSchema = z.object({
   roomId: z.string().uuid(),
+});
+
+export const judgingRoomDeleteSchema = judgingRoomIdSchema.extend({
+  confirmation: roomNameSchema,
 });
 
 const discordSnowflakeSchema = z.string().regex(/^\d{17,20}$/);

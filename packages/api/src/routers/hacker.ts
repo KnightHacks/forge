@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { SQL } from "@forge/db";
-import type { HackerRosterFilter, SkipReason } from "@forge/validators";
+import type {
+  HackerBulkStatus,
+  HackerRosterFilter,
+  SkipReason,
+} from "@forge/validators";
 import {
   and,
   count,
@@ -27,6 +31,8 @@ import {
 import {
   HACKATHON_SENDING_STATUSES,
   hackerAwardPointsSchema,
+  hackerBulkDeleteConfirmSchema,
+  hackerBulkDeletePreviewSchema,
   hackerBulkPreviewSchema,
   hackerDeleteApplicationSchema,
   hackerFilterOptionsSchema,
@@ -49,6 +55,7 @@ import { getDiscordEngagement } from "../utils/discord/engagement";
 import {
   redactHackerBlacklist,
   redactHackerSkipReasons,
+  requireHackerBulkEdit,
   requireHackerEdit,
   requireHackerRead,
 } from "../utils/hacker/access";
@@ -374,6 +381,21 @@ interface BulkSkip {
   email?: string;
   name: string;
   reason: SkipReason;
+}
+
+interface ApplicationDeleteTarget {
+  attendeeId: string;
+  blacklistedAt: Date | null;
+  firstName: string;
+  hackerId: string;
+  hackathonId: string;
+  lastName: string;
+  userId: string;
+}
+
+interface BulkApplicationDeleteTarget extends ApplicationDeleteTarget {
+  email: string;
+  name: string;
 }
 
 export const hackerRouter = createTRPCRouter({
@@ -806,22 +828,24 @@ export const hackerRouter = createTRPCRouter({
   previewBulk: permProcedure
     .input(hackerBulkPreviewSchema)
     .mutation(async ({ ctx, input }) => {
-      requireHackerEdit(ctx);
+      requireHackerBulkEdit(ctx, input.status);
       const hackathon = await requireHackathon(input.hackathonId);
       assertHackathonNotEnded(hackathon);
-      await assertHackathonReady(db, input.hackathonId);
+      if (input.status !== "checkedin") {
+        await assertHackathonReady(db, input.hackathonId);
 
-      // Runs the *whole* preparation and throws the result away.
-      //
-      // Checking the gates individually was not enough: `assertHackathonReady`
-      // only counts configured rows, while `prepareStatusMail` also resolves
-      // the template and its published revision. A hackathon with all six
-      // statuses set but an archived template, or one whose template has no
-      // published version, previewed "Send 300 emails" and then died on
-      // confirm — the exact failure the preview exists to prevent. Compiling
-      // twice costs one template render; being wrong costs an officer's
-      // confidence in the preview.
-      await prepareStatusMail({ hackathon, status: input.status });
+        // Runs the *whole* preparation and throws the result away.
+        //
+        // Checking the gates individually was not enough: `assertHackathonReady`
+        // only counts configured rows, while `prepareStatusMail` also resolves
+        // the template and its published revision. A hackathon with all six
+        // statuses set but an archived template, or one whose template has no
+        // published version, previewed "Send 300 emails" and then died on
+        // confirm — the exact failure the preview exists to prevent. Compiling
+        // twice costs one template render; being wrong costs an officer's
+        // confidence in the preview.
+        await prepareStatusMail({ hackathon, status: input.status });
+      }
 
       const { sending, skipped } = await resolveBulkTargets(db, input);
 
@@ -855,17 +879,20 @@ export const hackerRouter = createTRPCRouter({
   confirmBulk: permProcedure
     .input(hackerBulkPreviewSchema)
     .mutation(async ({ ctx, input }) => {
-      requireHackerEdit(ctx);
+      requireHackerBulkEdit(ctx, input.status);
       const hackathon = await requireHackathon(input.hackathonId);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       // Read and compiled before the transaction, for the pool reason above.
       assertHackathonNotEnded(hackathon);
-      await assertHackathonReady(db, input.hackathonId);
-      const prepared = await prepareStatusMail({
-        hackathon,
-        status: input.status,
-      });
+      let prepared: Awaited<ReturnType<typeof prepareStatusMail>> | null = null;
+      if (input.status !== "checkedin") {
+        await assertHackathonReady(db, input.hackathonId);
+        prepared = await prepareStatusMail({
+          hackathon,
+          status: input.status,
+        });
+      }
 
       return db.transaction(async (tx) => {
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
@@ -879,16 +906,32 @@ export const hackerRouter = createTRPCRouter({
           };
         }
 
-        const sendId = await writeStatusMail(
-          tx,
-          prepared,
-          ctx.session.user.id,
-          sending,
-        );
+        const sendId = prepared
+          ? await writeStatusMail(
+              tx,
+              prepared,
+              ctx.session.user.id,
+              sending.map((row) => ({ ...row, status: prepared.status })),
+            )
+          : null;
+        const withheldCount = prepared
+          ? withheldByDevelopmentGate(
+              prepared.teamUserIds,
+              sending.map((row) => ({ ...row, status: prepared.status })),
+            )
+          : 0;
 
         await tx
           .update(HackerAttendee)
-          .set({ lastStatusSendId: sendId, status: input.status })
+          .set(
+            input.status === "checkedin"
+              ? {
+                  checkedInAt: new Date(),
+                  checkedInBy: ctx.session.user.id,
+                  status: input.status,
+                }
+              : { lastStatusSendId: sendId, status: input.status },
+          )
           .where(
             inArray(
               HackerAttendee.id,
@@ -922,10 +965,7 @@ export const hackerRouter = createTRPCRouter({
               // Stated when the subject list below is partial, so nobody reads
               // a truncated list as the whole bulk.
               subjectsTruncated: sending.length > BULK_AUDIT_SUBJECT_LIMIT,
-              withheldCount: withheldByDevelopmentGate(
-                prepared.teamUserIds,
-                sending,
-              ),
+              withheldCount,
             },
             subjects: bulkAuditSubjects(
               { displayName: hackathon.displayName, id: input.hackathonId },
@@ -942,10 +982,79 @@ export const hackerRouter = createTRPCRouter({
           // Surfaced so the officer is told when a development run mails fewer
           // people than it moved, instead of reporting a clean success and
           // sending nothing.
-          withheldCount: withheldByDevelopmentGate(
-            prepared.teamUserIds,
-            sending,
-          ),
+          withheldCount,
+        };
+      });
+    }),
+
+  /** Hacker edit access. Preview a permanent bulk application deletion. */
+  previewBulkDelete: permProcedure
+    .input(hackerBulkDeletePreviewSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackerEdit(ctx);
+      await requireHackathon(input.hackathonId);
+
+      const { deleting, skipped } = await resolveBulkDeleteTargets(
+        db,
+        input,
+        ctx.session.permissions.IS_OFFICER === true,
+      );
+      return {
+        deleting: deleting.map((row) => ({
+          attendeeId: row.attendeeId,
+          email: row.email,
+          name: row.name,
+        })),
+        skipped: redactHackerSkipReasons(skipped, ctx),
+      };
+    }),
+
+  /** Hacker edit access. Permanently delete the selected applications. */
+  confirmBulkDelete: permProcedure
+    .input(hackerBulkDeleteConfirmSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackerEdit(ctx);
+      const hackathon = await requireHackathon(input.hackathonId);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const { deleting, skipped } = await resolveBulkDeleteTargets(
+          tx,
+          input,
+          ctx.session.permissions.IS_OFFICER === true,
+          true,
+        );
+        if (deleting.length === 0) {
+          return {
+            deletedCount: 0,
+            skipped: redactHackerSkipReasons(skipped, ctx),
+          };
+        }
+
+        const deletion = await deleteApplications(tx, deleting);
+        await createAdminAuditEvent(
+          {
+            actionKey: "hacker.bulk_applications_deleted",
+            actor: auditActor,
+            metadata: {
+              clearedCommandCount: deletion.clearedCommandCount,
+              deletedCount: deleting.length,
+              hackathonId: input.hackathonId,
+              legacySnapshotDeletedCount: deletion.legacySnapshotDeletedCount,
+              skippedCount: skipped.length,
+              subjectsTruncated: deleting.length > BULK_AUDIT_SUBJECT_LIMIT,
+            },
+            subjects: bulkAuditSubjects(
+              { displayName: hackathon.displayName, id: input.hackathonId },
+              deleting,
+            ),
+          },
+          tx,
+        );
+
+        return {
+          deletedCount: deleting.length,
+          skipped: redactHackerSkipReasons(skipped, ctx),
         };
       });
     }),
@@ -1186,6 +1295,7 @@ export const hackerRouter = createTRPCRouter({
       return db.transaction(async (tx) => {
         const [application] = await tx
           .select({
+            attendeeId: HackerAttendee.id,
             blacklistedAt: HackerAttendee.blacklistedAt,
             firstName: Hacker.firstName,
             hackerId: HackerAttendee.hackerId,
@@ -1214,36 +1324,15 @@ export const hackerRouter = createTRPCRouter({
           });
         }
 
-        const clearedCommands = await tx
-          .delete(HackerParticipantCommand)
-          .where(
-            and(
-              eq(HackerParticipantCommand.userId, application.userId),
-              eq(HackerParticipantCommand.hackathonId, application.hackathonId),
-            ),
-          )
-          .returning({ id: HackerParticipantCommand.id });
-
-        await tx
-          .delete(HackerAttendee)
-          .where(eq(HackerAttendee.id, input.attendeeId));
-
-        const [remainingReference] = await tx
-          .select({ id: HackerAttendee.id })
-          .from(HackerAttendee)
-          .where(eq(HackerAttendee.hackerId, application.hackerId))
-          .limit(1);
-        const legacySnapshotDeleted = !remainingReference;
-        if (legacySnapshotDeleted) {
-          await tx.delete(Hacker).where(eq(Hacker.id, application.hackerId));
-        }
+        const deletion = await deleteApplications(tx, [application]);
+        const legacySnapshotDeleted = deletion.legacySnapshotDeletedCount === 1;
 
         await createAdminAuditEvent(
           {
             actionKey: "hacker.application_deleted",
             actor: auditActor,
             metadata: {
-              clearedCommandCount: clearedCommands.length,
+              clearedCommandCount: deletion.clearedCommandCount,
               hackathonId: application.hackathonId,
               legacySnapshotDeleted,
             },
@@ -1277,16 +1366,13 @@ async function resolveBulkTargets(
   input: {
     attendeeIds: string[];
     hackathonId: string;
-    status:
-      | "accepted"
-      | "confirmed"
-      | "denied"
-      | "pending"
-      | "waitlisted"
-      | "withdrawn";
+    status: HackerBulkStatus;
   },
   lock = false,
-): Promise<{ sending: StatusMailRecipient[]; skipped: BulkSkip[] }> {
+): Promise<{
+  sending: Omit<StatusMailRecipient, "status">[];
+  skipped: BulkSkip[];
+}> {
   const base = executor
     .select({
       attendeeId: HackerAttendee.id,
@@ -1314,7 +1400,7 @@ async function resolveBulkTargets(
   const rows = await (lock ? base.for("update", { of: HackerAttendee }) : base);
 
   const found = new Map(rows.map((row) => [row.attendeeId, row]));
-  const sending: StatusMailRecipient[] = [];
+  const sending: Omit<StatusMailRecipient, "status">[] = [];
   const skipped: BulkSkip[] = [];
   /**
    * Addresses already claimed by an earlier applicant in this selection.
@@ -1378,6 +1464,20 @@ async function resolveBulkTargets(
       skipped.push({ attendeeId, name, reason: "blacklisted" });
       continue;
     }
+    if (input.status === "checkedin") {
+      if (row.status === input.status) {
+        skipped.push({ attendeeId, name, reason: "already" });
+        continue;
+      }
+      sending.push({
+        attendeeId,
+        email: row.email,
+        firstName: row.firstName,
+        name,
+        userId: row.userId,
+      });
+      continue;
+    }
     if (!row.email.trim()) {
       skipped.push({ attendeeId, name, reason: "no_email" });
       continue;
@@ -1409,10 +1509,100 @@ async function resolveBulkTargets(
       email: row.email,
       firstName: row.firstName,
       name,
-      status: input.status,
       userId: row.userId,
     });
   }
 
   return { sending, skipped };
+}
+
+async function resolveBulkDeleteTargets(
+  executor: WriteDb,
+  input: { attendeeIds: string[]; hackathonId: string },
+  isOfficer: boolean,
+  lock = false,
+) {
+  const base = executor
+    .select({
+      attendeeId: HackerAttendee.id,
+      blacklistedAt: HackerAttendee.blacklistedAt,
+      email: Hacker.email,
+      firstName: Hacker.firstName,
+      hackerId: HackerAttendee.hackerId,
+      hackathonId: HackerAttendee.hackathonId,
+      lastName: Hacker.lastName,
+      userId: Hacker.userId,
+    })
+    .from(HackerAttendee)
+    .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+    .where(
+      and(
+        eq(HackerAttendee.hackathonId, input.hackathonId),
+        inArray(HackerAttendee.id, input.attendeeIds),
+      ),
+    );
+  const rows = await (lock ? base.for("update", { of: HackerAttendee }) : base);
+  const found = new Map(rows.map((row) => [row.attendeeId, row]));
+  const deleting: BulkApplicationDeleteTarget[] = [];
+  const skipped: BulkSkip[] = [];
+
+  for (const attendeeId of new Set(input.attendeeIds)) {
+    const row = found.get(attendeeId);
+    if (!row) {
+      skipped.push({
+        attendeeId,
+        name: "Unknown applicant",
+        reason: "missing",
+      });
+      continue;
+    }
+    const name = `${row.firstName} ${row.lastName}`.trim();
+    if (row.blacklistedAt && !isOfficer) {
+      skipped.push({ attendeeId, name, reason: "blacklisted" });
+      continue;
+    }
+    deleting.push({ ...row, name });
+  }
+
+  return { deleting, skipped };
+}
+
+async function deleteApplications(
+  tx: WriteDb,
+  applications: ApplicationDeleteTarget[],
+) {
+  const attendeeIds = applications.map((row) => row.attendeeId);
+  const hackerIds = [...new Set(applications.map((row) => row.hackerId))];
+  const userIds = [...new Set(applications.map((row) => row.userId))];
+  const hackathonIds = [...new Set(applications.map((row) => row.hackathonId))];
+
+  const clearedCommands = await tx
+    .delete(HackerParticipantCommand)
+    .where(
+      and(
+        inArray(HackerParticipantCommand.userId, userIds),
+        inArray(HackerParticipantCommand.hackathonId, hackathonIds),
+      ),
+    )
+    .returning({ id: HackerParticipantCommand.id });
+  await tx
+    .delete(HackerAttendee)
+    .where(inArray(HackerAttendee.id, attendeeIds));
+
+  const remaining = await tx
+    .selectDistinct({ hackerId: HackerAttendee.hackerId })
+    .from(HackerAttendee)
+    .where(inArray(HackerAttendee.hackerId, hackerIds));
+  const retainedHackerIds = new Set(remaining.map((row) => row.hackerId));
+  const deletedHackerIds = hackerIds.filter(
+    (hackerId) => !retainedHackerIds.has(hackerId),
+  );
+  if (deletedHackerIds.length > 0) {
+    await tx.delete(Hacker).where(inArray(Hacker.id, deletedHackerIds));
+  }
+
+  return {
+    clearedCommandCount: clearedCommands.length,
+    legacySnapshotDeletedCount: deletedHackerIds.length,
+  };
 }

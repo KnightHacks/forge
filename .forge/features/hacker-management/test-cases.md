@@ -15,8 +15,9 @@ Intentionally excluded:
 - **Actual delivery.** The provider gateway has a fake
   (`packages/email/src/provider.ts`); these cases assert what is _enqueued_ and
   what the pipeline records, never that Listmonk sent anything.
-- **Check-in.** Moved to the event slice. `checkedin` appears here only as a
-  status that must be unreachable (TC-NEG-004).
+- **Event check-in side effects.** Class assignment, event attendance, points,
+  and Discord role application remain in the event slice. The roster path only
+  changes attendee status and check-in attribution.
 - **Awarding points.** Read-only this slice; the only assertion is that nothing
   writes the column.
 - **The cron itself.** `runEmailDeliveryCycle` is pre-existing and tested by
@@ -183,6 +184,20 @@ makes the symptom impossible. If someone later "simplifies" the roster by
 joining through the recipient snapshot, this fails immediately rather than
 months later when retention first bites.
 
+### TC-022: Bulk deletion previews and permanently removes the selection (AC-034, AC-035)
+
+Setup: two ordinary applications and one blacklisted application, with a
+delegated Hacker Editor and an officer.
+
+Action: preview and confirm deletion of the ordinary selection; preview the
+blacklisted row as the editor.
+
+Expected: the preview names the ordinary applications, confirmation removes
+their attendee rows and participant commands, orphaned legacy Hacker snapshots
+are removed, reusable profiles remain, and no email send is created. The editor
+sees the blacklisted row as an undisclosed skip; an officer may delete it. Blade
+states that deletion is permanent and sends no email.
+
 ### TC-015: The selection is amendable (AC-027)
 
 Setup: a filtered roster spanning more than one page.
@@ -313,15 +328,18 @@ Action: render.
 Expected: every action disabled except capacity reject and un-blacklist. Asserted
 by accessible name, not by class or `data-*`.
 
-### TC-NEG-004: `checkedin` is unreachable (AC-007)
+### TC-NEG-004: Checked-In is limited to officer bulk actions (AC-007)
 
-Setup: a configured hackathon.
+Setup: selected hackers in a hackathon without complete status-mail
+configuration; one officer and one delegated Hacker Editor.
 
-Action: attempt a transition to `checkedin`.
+Action: filter to Checked-In; have the officer preview and confirm a bulk
+Checked-In transition; have the editor attempt the same transition.
 
-Expected: rejected at the input boundary. `hackathonSendingStatusSchema` already
-excludes it, so this proves the router uses that schema rather than the wider
-one — which is the mistake worth catching.
+Expected: the filter is available. The officer preview succeeds, confirmation
+sets `status`, `checkedInAt`, and `checkedInBy`, and no email send is created.
+The editor receives `FORBIDDEN`. The single-applicant mail action still rejects
+`checkedin` at the input boundary.
 
 ### TC-NEG-005: An unconfigured hackathon blocks mail-sending transitions (AC-006)
 

@@ -649,6 +649,16 @@ function differs(
 }
 
 /** The status tabs, with their counts. Always visible — this is the main axis. */
+export const HACKER_STATUS_FILTERS = [
+  "pending",
+  "accepted",
+  "confirmed",
+  "checkedin",
+  "waitlisted",
+  "denied",
+  "withdrawn",
+] as const;
+
 export function StatusTabs({
   busy,
   counts,
@@ -660,15 +670,6 @@ export function StatusTabs({
   filter: RosterFilter;
   onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
-  const order = [
-    "pending",
-    "accepted",
-    "confirmed",
-    "waitlisted",
-    "denied",
-    "withdrawn",
-  ] as const;
-
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1">
       <StatusTab
@@ -678,7 +679,7 @@ export function StatusTabs({
         label="All"
         onClick={() => onFilterChange({ status: undefined })}
       />
-      {order.map((status) => (
+      {HACKER_STATUS_FILTERS.map((status) => (
         <StatusTab
           active={filter.status === status}
           busy={busy}
