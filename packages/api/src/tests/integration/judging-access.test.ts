@@ -1,5 +1,13 @@
 import { randomBytes } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
@@ -91,6 +99,8 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   let officer: Session;
   let member: Session;
   let fallbackMember: Session;
+
+  afterEach(() => vi.useRealTimers());
 
   beforeAll(async () => {
     disposable = await provisionDisposableDatabase("forge_api");
@@ -256,6 +266,143 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     )({ headers, session, source: "judging-integration" });
   }
 
+  it("selects the nearest upcoming hackathon for authenticated judges", async () => {
+    await client.insert(schemas.Hackathon).values([
+      {
+        displayName: "Knight Hacks Later",
+        endDate: new Date("2026-12-01T00:00:00Z"),
+        id: "30000000-0000-4000-8000-000000000998",
+        name: "knight-hacks-later",
+        startDate: new Date("2026-11-01T00:00:00Z"),
+        theme: "Later",
+      },
+      {
+        displayName: "Knight Hacks IX Tie",
+        endDate: new Date("2026-10-01T00:00:00Z"),
+        id: "30000000-0000-4000-8000-000000000999",
+        name: "knight-hacks-ix-tie",
+        startDate: new Date("2026-09-01T00:00:00Z"),
+        theme: "Tie",
+      },
+    ]);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00Z"));
+    try {
+      const memberCaller = await caller(member);
+      await expect(memberCaller.judging.getContext({})).resolves.toMatchObject({
+        hackathon: { id: HACKATHON },
+        kind: "member",
+      });
+      await expect(
+        memberCaller.projects.listJudge({
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }),
+      ).resolves.toMatchObject({ hackathon: { id: HACKATHON } });
+      await expect(
+        memberCaller.judging.getWorkspace({}),
+      ).resolves.toMatchObject({ hackathonId: HACKATHON });
+      const judgeHackathons = await memberCaller.projects.listJudgeHackathons();
+      for (const futureId of [
+        "30000000-0000-4000-8000-000000000998",
+        "30000000-0000-4000-8000-000000000999",
+      ]) {
+        expect(judgeHackathons).not.toEqual(
+          expect.arrayContaining([expect.objectContaining({ id: futureId })]),
+        );
+        await expect(
+          memberCaller.projects.listJudge({
+            challengeIds: [],
+            direction: "asc",
+            hackathonId: futureId,
+            page: 1,
+            pageSize: 25,
+            query: "",
+            sort: "title",
+          }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(
+          memberCaller.judging.getContext({ hackathonId: futureId }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await expect(
+          memberCaller.judging.getWorkspace({ hackathonId: futureId }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+      }
+      const officerCaller = await caller(officer);
+      await expect(
+        officerCaller.judging.getContext({
+          hackathonId: "30000000-0000-4000-8000-000000000998",
+        }),
+      ).resolves.toMatchObject({
+        hackathon: { id: "30000000-0000-4000-8000-000000000998" },
+      });
+      const { resolveJudgeAccess } =
+        await import("../../utils/judging/principal");
+      const principal = await resolveJudgeAccess({
+        headers: new Headers(),
+        session: member,
+      });
+      if (principal.kind !== "member")
+        throw new Error("Expected member judge access.");
+      const { resolveWritableJudge } =
+        await import("../../utils/judging/scope");
+      await expect(
+        resolveWritableJudge(client, principal, {}),
+      ).resolves.toMatchObject({ hackathonId: HACKATHON });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("lets authenticated judges browse a past hackathon", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-01-01T00:00:00Z"));
+    const memberCaller = await caller(member);
+
+    await expect(memberCaller.projects.listJudgeHackathons()).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: HACKATHON })]),
+    );
+    await expect(
+      memberCaller.judging.getContext({ hackathonId: HACKATHON }),
+    ).resolves.toMatchObject({ hackathon: { id: HACKATHON }, kind: "member" });
+    await expect(
+      memberCaller.projects.listJudge({
+        challengeIds: [],
+        direction: "asc",
+        hackathonId: HACKATHON,
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "title",
+      }),
+    ).resolves.toMatchObject({ hackathon: { id: HACKATHON } });
+    await expect(
+      memberCaller.judging.getWorkspace({ hackathonId: HACKATHON }),
+    ).resolves.toMatchObject({ hackathonId: HACKATHON });
+    await expect(
+      memberCaller.judging.saveEvaluation({
+        challengeId: SPONSOR,
+        hackathonId: HACKATHON,
+        projectId: SPONSOR_PROJECT,
+        ratings: [],
+        responses: [],
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      (await caller(officer)).judging.saveEvaluation({
+        challengeId: SPONSOR,
+        hackathonId: HACKATHON,
+        projectId: SPONSOR_PROJECT,
+        ratings: [],
+        responses: [],
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("provisions rooms, scopes a guest, reports presence, and revokes access", async () => {
     const officerCaller = await caller(officer);
     const room = await officerCaller.judging.createRoom({
@@ -263,6 +410,12 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       hackathonId: HACKATHON,
       name: "Acme room A",
     });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-01-01T00:00:00Z"));
+    await expect(
+      (await caller(member)).judging.joinRoom({ roomId: room.id }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.useRealTimers();
     const secondRoom = await officerCaller.judging.createRoom({
       challengeId: SPONSOR,
       hackathonId: HACKATHON,
@@ -366,6 +519,8 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
 
     const activationUrl = new URL(link.url);
     const { activateJudgingRoom } = await import("../../judging-access.server");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00Z"));
     const activation = await activateJudgingRoom({
       linkId: link.id,
       session: null,
@@ -389,6 +544,56 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     await guestCaller.judging.completeGuest({ displayName: "Casey Sponsor" });
+    await client
+      .update(schemas.GuestJudgeSession)
+      .set({ expiresAt: new Date("2028-01-01T00:00:00Z") })
+      .where(eq(schemas.GuestJudgeSession.accessLinkId, link.id));
+    vi.setSystemTime(new Date("2027-01-01T00:00:00Z"));
+    await expect(guestCaller.judging.getWorkspace({})).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(
+      guestCaller.judging.saveEvaluation({
+        projectId: SPONSOR_PROJECT,
+        ratings: [],
+        responses: [],
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      guestCaller.projects.listJudge({
+        challengeIds: [],
+        direction: "asc",
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "title",
+      }),
+    ).resolves.toMatchObject({ hackathon: null, projects: [] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00Z"));
+    await expect(
+      guestCaller.projects.listJudgeHackathons(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      guestCaller.projects.listJudge({
+        challengeIds: [],
+        direction: "asc",
+        hackathonId: "30000000-0000-4000-8000-000000000998",
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "title",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      guestCaller.projects.listJudge({
+        challengeIds: [],
+        direction: "asc",
+        page: 1,
+        pageSize: 25,
+        query: "",
+        sort: "title",
+      }),
+    ).resolves.toMatchObject({ hackathon: { id: HACKATHON } });
     await client
       .insert(schemas.HackathonJudgingConfiguration)
       .values({

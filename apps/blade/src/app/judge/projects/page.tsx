@@ -24,19 +24,18 @@ export default async function JudgeProjectsPage({
   const params = await searchParams;
   const parsed = parseProjectDirectoryParams(params);
   const requestedHackathon = parseUuidParam(first(params.hackathon));
-  const judgingContext = await api.judging.getContext({
-    hackathonId: requestedHackathon,
-  });
+  const judgingContext = await api.judging.getContext({});
   if (judgingContext.kind === "none") redirect("/");
   if (judgingContext.kind === "incomplete-guest") {
     return <GuestNameGate />;
   }
   const isOfficer =
     judgingContext.kind === "member" && judgingContext.isOfficer;
+  const isMember = judgingContext.kind === "member";
   const input = {
     challengeIds: parsed.challengeIds,
     direction: parsed.direction,
-    hackathonId: isOfficer ? requestedHackathon : undefined,
+    hackathonId: isMember ? requestedHackathon : undefined,
     includeJudged: parsed.includeJudged,
     showInRoomOnly: parsed.showInRoomOnly,
     page: parsed.page,
@@ -46,8 +45,9 @@ export default async function JudgeProjectsPage({
   };
   const [data, hackathons] = await Promise.all([
     api.projects.listJudge(input),
-    isOfficer ? api.projects.listAdminHackathons() : Promise.resolve([]),
+    isMember ? api.projects.listJudgeHackathons() : Promise.resolve([]),
   ]);
+  if (isMember) input.hackathonId = data.hackathon?.id;
   const challengeId = data.selectedChallengeId ?? undefined;
   const tabParam = first(params.tab);
   const tab =
@@ -56,7 +56,7 @@ export default async function JudgeProjectsPage({
       : "projects";
   const workspaceInput = {
     challengeId,
-    hackathonId: isOfficer ? requestedHackathon : undefined,
+    hackathonId: input.hackathonId,
   };
   const workspace =
     data.hackathon && challengeId
@@ -81,6 +81,7 @@ export default async function JudgeProjectsPage({
       input={input}
       isOfficer={isOfficer}
       judgingContext={judgingContext}
+      readOnly={isMember && data.hackathon?.id !== judgingContext.hackathon?.id}
       scores={scores}
       selectedTab={tab}
       submissions={submissions}

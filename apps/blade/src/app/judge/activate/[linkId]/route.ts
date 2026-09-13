@@ -12,8 +12,8 @@ import { auth } from "~/server/auth";
 
 export const runtime = "nodejs";
 
-function projectsRedirect(request: Request, result: RoomActivationResult) {
-  const url = new URL("/judge/projects", request.url);
+function projectsRedirect(result: RoomActivationResult) {
+  const url = new URL("/judge/projects", env.BLADE_URL);
   if (result.kind === "member") {
     url.searchParams.set("challenge", result.challengeId);
   }
@@ -32,7 +32,7 @@ export async function GET(
       session: await auth(),
       signature,
     });
-    const response = projectsRedirect(request, result);
+    const response = projectsRedirect(result);
     response.headers.set("Cache-Control", "private, no-store");
     if (result.kind === "guest") {
       response.cookies.set(JUDGING_GUEST_COOKIE, result.credential, {
@@ -45,7 +45,7 @@ export async function GET(
     }
     return response;
   } catch {
-    const url = new URL("/judge/access-error", request.url);
+    const url = new URL("/judge/access-error", env.BLADE_URL);
     return NextResponse.redirect(url);
   }
 }

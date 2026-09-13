@@ -202,8 +202,6 @@ describe.runIf(canRunDatabaseTests())(
           buildingId: eng.id,
         }),
       ).rejects.toMatchObject({ code: "CONFLICT" });
-      await admin.judging.joinRoom({ roomId: sponsorRoom.id });
-      await judge.judging.joinRoom({ roomId: generalRoom.id });
       const timing = {
         startsAt: new Date("2026-09-07T16:30:00Z"),
         endsAt: new Date("2026-09-07T17:30:00Z"),
@@ -318,6 +316,8 @@ describe.runIf(canRunDatabaseTests())(
       expect(
         saves.filter((result) => result.status === "fulfilled"),
       ).toHaveLength(1);
+      await admin.judging.joinRoom({ roomId: sponsorRoom.id });
+      await judge.judging.joinRoom({ roomId: generalRoom.id });
       await expect(
         admin.judging.generateSchedule({ hackathonId, timing }),
       ).rejects.toMatchObject({ code: "CONFLICT" });

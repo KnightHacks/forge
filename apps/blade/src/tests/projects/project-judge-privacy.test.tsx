@@ -438,7 +438,22 @@ describe("judge project directory", () => {
           projects: [judgeProject],
           totalCount: 1,
         }}
-        hackathons={[]}
+        hackathons={[
+          {
+            displayName: "Knight Hacks IX",
+            endDate: new Date("2026-10-01T00:00:00.000Z"),
+            id: judgeProject.hackathonId,
+            startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
+          },
+          {
+            displayName: "Knight Hacks VIII",
+            endDate: new Date("2025-03-01T00:00:00.000Z"),
+            id: "00000000-0000-4000-8000-000000000008",
+            startDate: new Date("2025-02-01T00:00:00.000Z"),
+            timezone: "America/New_York",
+          },
+        ]}
         input={{
           challengeIds: [],
           direction: "asc",
@@ -448,6 +463,20 @@ describe("judge project directory", () => {
           sort: "title",
         }}
         isOfficer={false}
+        judgingContext={{
+          activeRoomId: null,
+          announcements: [],
+          displayName: "Morgan Judge",
+          discordUserId: "123456789012345678",
+          hackathon: {
+            displayName: "Knight Hacks IX",
+            id: judgeProject.hackathonId,
+          },
+          isOfficer: false,
+          kind: "member",
+          rooms: [],
+          userId: "00000000-0000-4000-8000-000000000007",
+        }}
         workspace={{
           challengeId: "challenge-1",
           displayAllResults: false,
@@ -470,6 +499,12 @@ describe("judge project directory", () => {
     expect(screen.getAllByText("Casey Captain").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("option", { name: "All challenges" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Hackathon" })).toHaveValue(
+      judgeProject.hackathonId,
+    );
+    expect(
+      screen.getByRole("option", { name: "Knight Hacks VIII" }),
     ).toBeInTheDocument();
   });
 
