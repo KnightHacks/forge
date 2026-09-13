@@ -3,11 +3,17 @@ import { describe, expect, it } from "vitest";
 import {
   changedFacets,
   HACKER_STATUS_FILTERS,
+  hackerStatusFiltersFor,
 } from "~/app/_components/admin/hackathon/hackers/hacker-filters";
 
 describe("hacker status filters", () => {
   it("includes checked-in applicants", () => {
     expect(HACKER_STATUS_FILTERS).toContain("checkedin");
+  });
+
+  it("shows Checked-In only to officers", () => {
+    expect(hackerStatusFiltersFor(false)).not.toContain("checkedin");
+    expect(hackerStatusFiltersFor(true)).toContain("checkedin");
   });
 });
 

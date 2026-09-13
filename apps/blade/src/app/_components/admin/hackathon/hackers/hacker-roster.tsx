@@ -376,6 +376,7 @@ export function HackerRoster({
                 busy={filterBusy}
                 counts={displayedCounts ?? { byStatus: {}, total: 0 }}
                 filter={url.filter}
+                isOfficer={isOfficer}
                 onFilterChange={(patch) => void requestFilter(patch)}
               />
             )}

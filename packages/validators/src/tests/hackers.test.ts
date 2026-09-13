@@ -139,8 +139,11 @@ describe("bulk application deletion", () => {
   it("requires explicit confirmation", () => {
     expect(hackerBulkDeleteConfirmSchema.safeParse(base).success).toBe(false);
     expect(
-      hackerBulkDeleteConfirmSchema.safeParse({ ...base, confirmed: true })
-        .success,
+      hackerBulkDeleteConfirmSchema.safeParse({
+        ...base,
+        confirmed: true,
+        previewedAttendeeIds: base.attendeeIds,
+      }).success,
     ).toBe(true);
   });
 });

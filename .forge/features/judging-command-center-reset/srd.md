@@ -26,6 +26,7 @@ Every reset/delete procedure uses `permProcedure` and `assertCanManageProjects`.
 
 - `judging.dropEvaluations`: deletes drafts/evaluations and clears `firstResultAt` so the saved schedule can be dropped again.
 - `judging.dropRooms`: deletes all rooms and room-scoped access data after the schedule is gone.
+- `judging.resetProjects`: deletes deliberation entries, claims, projects, and non-group challenges, and clears inventory-lock metadata after downstream judging data is gone.
 - `judging.resetSetup`: restores starter groups and clears the rubric after downstream rooms, schedules, and feedback are gone.
 - `judging.resetLaunch`: clears claims/claim links and restores publication, visibility, and judging-state defaults.
 - `judging.resetHackathon`: performs the full reset atomically.

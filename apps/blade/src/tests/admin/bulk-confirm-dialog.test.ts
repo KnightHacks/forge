@@ -93,12 +93,13 @@ describe("bulk hacker deletion", () => {
     expect(mutations.previewStatus).not.toHaveBeenCalled();
 
     await user.click(
-      screen.getByRole("button", { name: "Delete 1 applications" }),
+      screen.getByRole("button", { name: "Delete 1 application" }),
     );
     expect(mutations.confirmDelete).toHaveBeenCalledWith({
       attendeeIds: ["attendee-1"],
       confirmed: true,
       hackathonId: "hackathon-1",
+      previewedAttendeeIds: ["attendee-1"],
     });
     expect(mutations.confirmStatus).not.toHaveBeenCalled();
   });

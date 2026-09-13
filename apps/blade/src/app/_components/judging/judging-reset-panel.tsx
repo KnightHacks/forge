@@ -216,6 +216,7 @@ export function DropEvaluationsButton({
 
 export function JudgingResetPanel({ data }: { data: ControlData }) {
   const router = useRouter();
+  const utils = api.useUtils();
   const [action, setAction] = useState<Action | null>(null);
   const evaluations = api.judging.dropEvaluations.useMutation();
   const projects = api.judging.resetProjects.useMutation();
@@ -252,6 +253,14 @@ export function JudgingResetPanel({ data }: { data: ControlData }) {
           : `${actionCopy[action].button} complete.`,
       );
       setAction(null);
+      await Promise.all([
+        utils.judging.listAdmin.invalidate({
+          hackathonId: data.hackathon.id,
+        }),
+        utils.judging.listScheduleAdmin.invalidate({
+          hackathonId: data.hackathon.id,
+        }),
+      ]);
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Reset failed.");

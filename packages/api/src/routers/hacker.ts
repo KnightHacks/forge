@@ -15,6 +15,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  ne,
   or,
   sql,
 } from "@forge/db";
@@ -562,7 +563,14 @@ export const hackerRouter = createTRPCRouter({
         // Left, not inner: an application can outlive the account that made it.
         .leftJoin(User, eq(User.id, Hacker.userId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
-        .where(eq(HackerAttendee.id, input.attendeeId))
+        .where(
+          and(
+            eq(HackerAttendee.id, input.attendeeId),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
+          ),
+        )
         .limit(1);
 
       if (!row) {
@@ -597,6 +605,9 @@ export const hackerRouter = createTRPCRouter({
         .where(
           and(
             rosterWhere(input.hackathonId, input.filter),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
             cursorAfter(input.cursor),
           ),
         )
@@ -636,7 +647,14 @@ export const hackerRouter = createTRPCRouter({
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
-        .where(rosterWhere(input.hackathonId, countable))
+        .where(
+          and(
+            rosterWhere(input.hackathonId, countable),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
+          ),
+        )
         .groupBy(HackerAttendee.status);
 
       return {
@@ -663,6 +681,9 @@ export const hackerRouter = createTRPCRouter({
       const rows = await rosterQuery().where(
         and(
           rosterWhere(input.hackathonId, input.filter),
+          ctx.session.permissions.IS_OFFICER
+            ? undefined
+            : ne(HackerAttendee.status, "checkedin"),
           inArray(HackerAttendee.id, input.attendeeIds),
         ),
       );
@@ -1024,6 +1045,17 @@ export const hackerRouter = createTRPCRouter({
           ctx.session.permissions.IS_OFFICER === true,
           true,
         );
+        const previewed = new Set(input.previewedAttendeeIds);
+        if (
+          deleting.length !== previewed.size ||
+          deleting.some((row) => !previewed.has(row.attendeeId))
+        ) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "The deletion set changed after preview. Review it again before deleting.",
+          });
+        }
         if (deleting.length === 0) {
           return {
             deletedCount: 0,

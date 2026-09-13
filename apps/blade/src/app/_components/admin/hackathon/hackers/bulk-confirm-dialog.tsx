@@ -23,7 +23,7 @@ export type HackerBulkAction = HackerBulkStatus | "delete";
 export function bulkActionCopy(action: HackerBulkAction, count: number) {
   if (action === "delete") {
     return {
-      confirm: `Delete ${count} applications`,
+      confirm: `Delete ${count} application${count === 1 ? "" : "s"}`,
       description:
         "This permanently removes their applications and hackathon activity. Their accounts and reusable profiles remain. No email is sent.",
       label: "Will be permanently deleted",
@@ -115,10 +115,10 @@ export function BulkConfirmDialog({
   });
   const statusConfirm = api.hacker.confirmBulk.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       const skippedNote =
         result.skipped.length > 0 ? `, ${result.skipped.length} skipped` : "";
-      if (action === "checkedin") {
+      if (variables.status === "checkedin") {
         toast.success(
           `${result.movedCount} checked in${skippedNote}. No email sent.`,
         );
@@ -323,6 +323,7 @@ export function BulkConfirmDialog({
                   attendeeIds,
                   confirmed: true,
                   hackathonId,
+                  previewedAttendeeIds: affected.map((row) => row.attendeeId),
                 });
               } else if (action) {
                 statusConfirm.mutate({

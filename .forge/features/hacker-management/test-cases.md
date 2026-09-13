@@ -196,7 +196,9 @@ Expected: the preview names the ordinary applications, confirmation removes
 their attendee rows and participant commands, orphaned legacy Hacker snapshots
 are removed, reusable profiles remain, and no email send is created. The editor
 sees the blacklisted row as an undisclosed skip; an officer may delete it. Blade
-states that deletion is permanent and sends no email.
+states that deletion is permanent and sends no email. If a skipped application
+becomes eligible after preview, confirmation rejects the changed set and deletes
+nothing until the editor reviews it again.
 
 ### TC-015: The selection is amendable (AC-027)
 

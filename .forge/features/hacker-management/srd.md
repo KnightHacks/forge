@@ -199,16 +199,16 @@ the filtered path has to be as fast as the unfiltered one, and `school` and
 
 New `hacker` router, registered in `root.ts` as `api.hacker.*`.
 
-| Procedure           | Shape                                                                 | Notes                                                                         |
-| ------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `listForHackathon`  | query(`{hackathonId, search?, status?, cursor?}`) → page              | Paginated. 2537 rows exist today; the largest hackathon must not be one read. |
-| `statusCounts`      | query(`{hackathonId}`) → count per status                             | One grouped query, not seven.                                                 |
-| `setStatus`         | mutation(`{attendeeId, status}`)                                      | Enqueues the configured mail. Refuses on blacklist and on unconfigured.       |
-| `previewBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → who moves, who skips | Nothing is written. `checkedin` requires officer access and no mail config.   |
-| `confirmBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → per-hacker result    | Re-resolves selected rows. `checkedin` records time and actor; no mail.       |
-| `previewBulkDelete` | mutation(`{hackathonId, attendeeIds}`) → who deletes, who skips       | Nothing is written. Uses the existing blacklist permission rule.              |
-| `confirmBulkDelete` | mutation(`{hackathonId, attendeeIds, confirmed:true}`) → result       | Hard-deletes in one transaction, clears commands, and sends no mail.          |
-| `setBlacklist`      | mutation(`{attendeeId, blacklisted, reason?}`)                        | Never changes status. Sends nothing.                                          |
+| Procedure           | Shape                                                                                 | Notes                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `listForHackathon`  | query(`{hackathonId, filter?, cursor?, limit?}`) → page                               | Paginated. 2537 rows exist today; the largest hackathon must not be one read.                   |
+| `statusCounts`      | query(`{hackathonId, filter?}`) → count per status                                    | One grouped query, not seven.                                                                   |
+| `setStatus`         | mutation(`{attendeeId, status}`)                                                      | Enqueues the configured mail. Refuses on blacklist and on unconfigured.                         |
+| `previewBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → who moves, who skips                 | Nothing is written. `checkedin` requires officer access and no mail config.                     |
+| `confirmBulk`       | mutation(`{hackathonId, attendeeIds, status}`) → per-hacker result                    | Re-resolves selected rows. `checkedin` records time and actor; no mail.                         |
+| `previewBulkDelete` | mutation(`{hackathonId, attendeeIds}`) → who deletes, who skips                       | Nothing is written. Uses the existing blacklist permission rule.                                |
+| `confirmBulkDelete` | mutation(`{hackathonId, attendeeIds, previewedAttendeeIds, confirmed:true}`) → result | Rejects a changed preview, hard-deletes in one transaction, clears commands, and sends no mail. |
+| `setBlacklist`      | mutation(`{attendeeId, blacklisted, reason?}`)                                        | Never changes status. Sends nothing.                                                            |
 
 Errors: `NOT_FOUND` for unknown ids, `PRECONDITION_FAILED` for a blacklisted
 accept and for an unconfigured hackathon, `BAD_REQUEST` for validation.

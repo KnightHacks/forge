@@ -199,7 +199,7 @@ export function JudgingSchedulePanel({
       ? job
       : null;
   const alertKey = query.error
-    ? `refresh:${query.error.message}`
+    ? `refresh:${query.dataUpdatedAt}:${query.error.message}`
     : failedJob
       ? `job:${failedJob.id}:${failedJob.status}`
       : null;

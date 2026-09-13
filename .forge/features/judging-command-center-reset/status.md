@@ -9,6 +9,7 @@ Current phase: PR open; awaiting CI and review
 - 2026-09-13: Routine alerts must not occupy document flow; urgent announcements remain blocking dialogs.
 - 2026-09-13: Project inventory, visibility, import, deletion, search, and filters share one compact control surface.
 - 2026-09-13: Every granular destructive action is a direct Reset action; navigation-only tiles were removed.
+- 2026-09-13: The owner approved the revised layout and requested PR publication after reviewing the desktop and mobile captures.
 
 ## Open questions
 

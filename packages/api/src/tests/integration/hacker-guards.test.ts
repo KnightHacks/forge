@@ -421,6 +421,49 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       },
     );
 
+    it("keeps Checked-In applicants officer-only in roster reads", async () => {
+      await client
+        .update(knightHacks.HackerAttendee)
+        .set({ status: "checkedin" })
+        .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
+      await client
+        .update(auth.Roles)
+        .set({ permissions: permissionBitstring("READ_HACKERS") })
+        .where(eq(auth.Roles.id, OFFICER_ROLE));
+
+      const roster = await caller.hacker.listForHackathon({
+        hackathonId: READY_HACKATHON,
+      });
+      expect(roster.hackers.map((row) => row.attendeeId)).not.toContain(
+        PLAIN_ATTENDEE,
+      );
+      await expect(
+        caller.hacker.statusCounts({ hackathonId: READY_HACKATHON }),
+      ).resolves.toMatchObject({ total: 2 });
+      await expect(
+        caller.hacker.listForHackathon({
+          filter: { status: "checkedin" },
+          hackathonId: READY_HACKATHON,
+        }),
+      ).resolves.toMatchObject({ hackers: [] });
+      await expect(
+        caller.hacker.get({ attendeeId: PLAIN_ATTENDEE }),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+      await client
+        .update(auth.Roles)
+        .set({ permissions: permissionBitstring("IS_OFFICER") })
+        .where(eq(auth.Roles.id, OFFICER_ROLE));
+      await expect(
+        caller.hacker.listForHackathon({
+          filter: { status: "checkedin" },
+          hackathonId: READY_HACKATHON,
+        }),
+      ).resolves.toMatchObject({
+        hackers: [expect.objectContaining({ attendeeId: PLAIN_ATTENDEE })],
+      });
+    });
+
     it("keeps blacklist details available to officers", async () => {
       await expect(
         caller.hacker.get({ attendeeId: BLACKLISTED_ATTENDEE }),
@@ -534,6 +577,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           attendeeIds: [BLACKLISTED_ATTENDEE],
           confirmed: true,
           hackathonId: READY_HACKATHON,
+          previewedAttendeeIds: [],
         }),
       ).resolves.toMatchObject({ deletedCount: 0 });
       const blocked = await client.query.HackerAttendee.findFirst({
@@ -1619,6 +1663,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
             attendeeIds,
             confirmed: true,
             hackathonId: READY_HACKATHON,
+            previewedAttendeeIds: attendeeIds,
           }),
         ).resolves.toEqual({ deletedCount: 2, skipped: [] });
 
@@ -1685,6 +1730,58 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       }
     });
 
+    it("rejects deletion when the eligible set changes after preview", async () => {
+      const deleting = await createDeleteFixture(2);
+      const initiallySkipped = await createDeleteFixture(3, true);
+      const attendeeIds = [deleting.attendeeId, initiallySkipped.attendeeId];
+
+      try {
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        const preview = await caller.hacker.previewBulkDelete({
+          attendeeIds,
+          hackathonId: READY_HACKATHON,
+        });
+        expect(preview.deleting.map((row) => row.attendeeId)).toEqual([
+          deleting.attendeeId,
+        ]);
+
+        await client
+          .update(knightHacks.HackerAttendee)
+          .set({
+            blacklistReason: null,
+            blacklistedAt: null,
+            blacklistedBy: null,
+          })
+          .where(
+            eq(knightHacks.HackerAttendee.id, initiallySkipped.attendeeId),
+          );
+
+        await expect(
+          caller.hacker.confirmBulkDelete({
+            attendeeIds,
+            confirmed: true,
+            hackathonId: READY_HACKATHON,
+            previewedAttendeeIds: preview.deleting.map((row) => row.attendeeId),
+          }),
+        ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+        await expect(
+          client
+            .select({ id: knightHacks.HackerAttendee.id })
+            .from(knightHacks.HackerAttendee)
+            .where(inArray(knightHacks.HackerAttendee.id, attendeeIds)),
+        ).resolves.toHaveLength(2);
+      } finally {
+        await client
+          .delete(auth.User)
+          .where(
+            inArray(auth.User.id, [deleting.userId, initiallySkipped.userId]),
+          );
+      }
+    });
+
     it("allows an officer to delete a blacklisted application", async () => {
       const fixture = await createDeleteFixture(4, true);
 
@@ -1705,6 +1802,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
             attendeeIds: [fixture.attendeeId],
             confirmed: true,
             hackathonId: READY_HACKATHON,
+            previewedAttendeeIds: [fixture.attendeeId],
           }),
         ).resolves.toEqual({ deletedCount: 1, skipped: [] });
         await expect(

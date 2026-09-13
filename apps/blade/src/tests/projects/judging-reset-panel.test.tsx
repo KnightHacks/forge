@@ -17,12 +17,22 @@ const mutations = vi.hoisted(() => ({
   resetProjects: vi.fn().mockResolvedValue({}),
   resetSetup: vi.fn().mockResolvedValue({}),
 }));
+const invalidations = vi.hoisted(() => ({
+  listAdmin: vi.fn().mockResolvedValue(undefined),
+  listScheduleAdmin: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("~/app/_components/shared/route-transition-link", () => ({
   useNavigationRouter: () => ({ refresh: mutations.refresh }),
 }));
 vi.mock("~/trpc/react", () => ({
   api: {
+    useUtils: () => ({
+      judging: {
+        listAdmin: { invalidate: invalidations.listAdmin },
+        listScheduleAdmin: { invalidate: invalidations.listScheduleAdmin },
+      },
+    }),
     judging: {
       dropEvaluations: {
         useMutation: () => mutation(mutations.dropEvaluations),
@@ -131,6 +141,12 @@ describe("judging reset actions", () => {
           .filter((candidate) => candidate !== mutations.refresh)
           .reduce((total, candidate) => total + candidate.mock.calls.length, 0),
       ).toBe(1);
+      expect(invalidations.listAdmin).toHaveBeenCalledWith({
+        hackathonId: "hackathon-1",
+      });
+      expect(invalidations.listScheduleAdmin).toHaveBeenCalledWith({
+        hackathonId: "hackathon-1",
+      });
     },
   );
 

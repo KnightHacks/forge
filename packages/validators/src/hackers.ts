@@ -129,15 +129,16 @@ const hackerBulkDeleteBaseSchema = z.object({
 export const hackerBulkDeletePreviewSchema = hackerBulkDeleteBaseSchema;
 export const hackerBulkDeleteConfirmSchema = hackerBulkDeleteBaseSchema.extend({
   confirmed: z.literal(true),
+  previewedAttendeeIds: z.array(z.string().uuid()).max(5000),
 });
 
 /**
- * A bulk action carries the ids the officer actually selected.
+ * A bulk action carries the ids the officer actually selected. Destructive
+ * confirmation also carries the eligible ids shown by preview; the API locks
+ * and re-resolves the selection, then rejects if that set changed.
  *
- * Preview and confirm take the same shape on purpose. There is no stored
- * preview handle: the ids are the selection, so a persisted snapshot would add
- * a lifecycle to manage and would act on eligibility frozen at preview time.
- * Re-resolving at confirm catches anyone blacklisted in between and names them.
+ * There is no stored preview handle: the compared ids bind confirmation to the
+ * visible preview without adding a persisted snapshot lifecycle.
  *
  * Not a filter: filtering the table and selecting across it already *is*
  * selecting by filter, and resolving a filter server-side at confirm time

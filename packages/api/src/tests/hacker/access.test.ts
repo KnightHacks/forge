@@ -128,6 +128,7 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
         attendeeIds: [ATTENDEE_ID],
         confirmed: true,
         hackathonId: HACKATHON_ID,
+        previewedAttendeeIds: [ATTENDEE_ID],
       }),
   ],
   [

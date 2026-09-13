@@ -192,7 +192,8 @@ invisible to the applicant.
 - AC-019 A bulk action sends at most one mail per applicant.
 - AC-034 A Hacker Editor can permanently delete one application from its detail
   view or delete a selected group after previewing exactly who will be removed.
-  The roster and selection refresh after completion, and no email is sent.
+  Confirmation is rejected if that previewed deletion set changes. The roster
+  and selection refresh after completion, and no email is sent.
 - AC-035 A delegated Hacker Editor cannot delete a blacklisted application;
   that row is skipped in bulk without revealing its blacklist. Officers may
   delete it.

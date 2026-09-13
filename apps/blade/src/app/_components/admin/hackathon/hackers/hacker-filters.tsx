@@ -659,15 +659,24 @@ export const HACKER_STATUS_FILTERS = [
   "withdrawn",
 ] as const;
 
+/** Checked-In attendance stays on the officer surface. */
+export function hackerStatusFiltersFor(isOfficer: boolean) {
+  return HACKER_STATUS_FILTERS.filter(
+    (status) => isOfficer || status !== "checkedin",
+  );
+}
+
 export function StatusTabs({
   busy,
   counts,
   filter,
+  isOfficer,
   onFilterChange,
 }: {
   busy: boolean;
   counts: RouterOutputs["hacker"]["statusCounts"];
   filter: RosterFilter;
+  isOfficer: boolean;
   onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
   return (
@@ -679,7 +688,7 @@ export function StatusTabs({
         label="All"
         onClick={() => onFilterChange({ status: undefined })}
       />
-      {HACKER_STATUS_FILTERS.map((status) => (
+      {hackerStatusFiltersFor(isOfficer).map((status) => (
         <StatusTab
           active={filter.status === status}
           busy={busy}
