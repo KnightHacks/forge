@@ -27,7 +27,7 @@ const HOMEPAGE_SPONSORS = [
     name: "AMD",
     websiteUrl: "https://www.amd.com/",
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-amd.svg",
-    tier: "silver-moon",
+    tier: "golden-dawn",
   },
   {
     name: "BNY",

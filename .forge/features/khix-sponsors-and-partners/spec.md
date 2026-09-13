@@ -19,7 +19,8 @@ public KHIX homepage. Preserve the floating rocks, waterfall, and team section.
 
 ## Placement assumption
 
-Preserve current tiers. Provisionally place Hugging Face beside OneEthos,
+Promote AMD to Gold (`golden-dawn`) at the user's request; preserve other current
+tiers. Provisionally place Hugging Face beside OneEthos,
 NVIDIA in the middle group, and UCF SG/GitHub/Bloomberg in the smaller
 group, following visual prominence in the reference. This is a display decision,
 not a claim about sponsorship amounts. Clarification was requested.

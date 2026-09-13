@@ -1,13 +1,14 @@
 # Sponsor and Partner Update Status
 
-Phase: Validation incomplete; full typecheck and visual validation pending
+Phase: AMD static validation complete; visual validation pending
 
 ## Decisions
 
 - User requested temporarily removing Lovable. Removed its homepage roster entry
   and retained its logo asset for later reuse; the active roster has 15 sponsors.
 - User requested additions from a supplied roster graphic and a Codex fix.
-- Preserve existing tiers and floating-rock/engraved styling.
+- Promote AMD to Gold at the user's request; preserve other tiers and
+  floating-rock/engraved styling.
 - New sponsor placements provisionally follow prominence in the reference.
 - Existing Codex SVG is an icon only; add its wordmark.
 - Brain-and-gear partner confirmed as Robotics Club of Central Florida (RCCF).
@@ -50,6 +51,42 @@ Phase: Validation incomplete; full typecheck and visual validation pending
   final partner row, waterfall continuity, and Team clearance.
 
 PR/issue: none created for this task.
+
+## AMD Gold update
+
+- Changed AMD from `silver-moon` to `golden-dawn` on
+  `codex/2026-amd-gold-tier`; the existing renderer supplies Gold placement and
+  sizing with the same logo and link.
+- Scoped Prettier and ESLint passed through the installed Node CLIs. ESLint
+  reported the existing informational missing-Pages-directory message.
+- Changed React analysis passed via
+  `node --import tsx scripts/analyze-react-changed.ts`: two files, zero failures.
+- The pnpm wrappers for scoped formatting, typechecking, development, and
+  changed React analysis stalled without output and were interrupted (exit 130).
+- Direct local development startup succeeded, but the browser displayed
+  `Invalid environment variables`; `KHIX_HACKER_PORTAL_CLIENT_ID` is missing.
+  Gold placement could not be visually verified.
+- Direct app typechecking (`node ../../node_modules/typescript/bin/tsc --noEmit`
+  from `apps/2026`) failed with `JavaScript heap out of memory` (exit 134).
+- `git diff --check` passed. No commit or deployment was made.
+
+### AMD validation retry
+
+- The supplied commit-hook logs show both typed ESLint and TypeScript exhausting
+  Node's default heap, approximately 2 GiB on this machine.
+- App typechecking passed with
+  `node --max-old-space-size=4096 ../../node_modules/typescript/bin/tsc --noEmit --extendedDiagnostics`
+  from `apps/2026`: 4,505 files, 2,285,456 KiB reported memory, 22.64 seconds.
+- Scoped ESLint passed with
+  `node --max-old-space-size=4096 node_modules/.bin/eslint apps/2026/src/app/_components/sections/sponsor-team/SponsorTeamSection.tsx`.
+- Unstaged the local `.pnpm-store` cache files; retained them on disk.
+- All three commit-hook checks passed with
+  `NODE_OPTIONS=--max-old-space-size=4096 TURBO_ENV_MODE=loose pnpm exec lefthook run pre-commit`:
+  formatting, scoped lint, and scoped typecheck with all eight dependency builds
+  (nine Turbo tasks passed, none cached). Used the already installed pnpm 9.12.1
+  directory first in the command's PATH.
+- The heap setting is local to the command. Turbo's loose environment mode
+  passes it through to TypeScript; no repository tooling settings were changed.
 
 ## Temporary Lovable removal validation
 
