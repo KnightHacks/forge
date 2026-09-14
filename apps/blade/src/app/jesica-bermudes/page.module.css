@@ -1,0 +1,125 @@
+.page {
+  min-height: 100vh;
+  background-color: #fffafa;
+  background-image: radial-gradient(#f7dbe6 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: #4f4650;
+  font-family: Georgia, "Times New Roman", serif;
+}
+.nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 40px;
+}
+.nav a {
+  color: #6f6870;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.nav a:hover {
+  color: #e58fac;
+}
+.hero {
+  max-width: 800px;
+  min-height: 85vh;
+  margin: 0 auto;
+  padding: 60px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.label {
+  color: #d97fa2;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.hero h1 {
+  margin: 10px 0 20px;
+  font-size: 64px;
+  font-weight: normal;
+}
+.hero h1 span {
+  color: #e995b5;
+}
+.intro {
+  max-width: 600px;
+  color: #81777f;
+  font-size: 18px;
+  line-height: 1.7;
+}
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+.buttons a {
+  padding: 11px 18px;
+  border: 1px solid #efcbd8;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+.primary {
+  background-color: #e995b5;
+  color: white;
+}
+.secondary {
+  background-color: white;
+  color: #5d555e;
+}
+.buttons a:hover {
+  transform: translateY(-2px);
+}
+.section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 70px 30px;
+}
+.section .label {
+  text-align: center;
+}
+.section h2 {
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: normal;
+}
+.projectList {
+  display: grid;
+  gap: 20px;
+}
+.card {
+  padding: 26px;
+  background-color: white;
+  border: 1px solid #f0dce5;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(170, 120, 140, 0.07);
+  transition: transform 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 22px;
+  font-weight: normal;
+}
+.card p {
+  color: #81777f;
+  line-height: 1.7;
+}
+.card p + p {
+  margin-top: 14px;
+}
+.tech {
+  color: #d584a2;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
