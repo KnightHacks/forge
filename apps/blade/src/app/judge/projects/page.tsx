@@ -41,7 +41,7 @@ export default async function JudgeProjectsPage({
     page: parsed.page,
     pageSize: parsed.pageSize,
     query: parsed.query,
-    sort: parsed.sort,
+    sort: first(params.sort) ? parsed.sort : "scheduledAt",
   };
   const [data, hackathons] = await Promise.all([
     api.projects.listJudge(input),

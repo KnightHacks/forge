@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Mail, Search, Settings, Users } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -28,10 +28,23 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 type Claims = RouterOutputs["judging"]["getClaimsAdmin"];
+export const CLAIM_SEARCH_DEBOUNCE_MS = 300;
+
 export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
   const [query, setQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [dialog, setDialog] = useState<"settings" | "send" | null>(null);
-  const data = api.judging.getClaimsAdmin.useQuery({ hackathonId, query });
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setSearchQuery(query.trim()),
+      CLAIM_SEARCH_DEBOUNCE_MS,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [query]);
+  const data = api.judging.getClaimsAdmin.useQuery(
+    { hackathonId, query: searchQuery },
+    { placeholderData: (previousData) => previousData },
+  );
   const utils = api.useUtils();
   const [delivery, setDelivery] = useState({
     running: false,
@@ -166,6 +179,55 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
           </div>
         </CardHeader>
         <CardContent>
+          <dl
+            className={
+              delivery.failed > 0
+                ? "mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4"
+                : "mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3"
+            }
+            aria-label="Project claim summary"
+          >
+            <div className="rounded-md border border-white/10 bg-background/60 p-3">
+              <dt className="text-xs text-muted-foreground">Emails sent</dt>
+              <dd
+                className="mt-1 text-2xl font-semibold"
+                aria-label="Emails sent"
+              >
+                {claims.summary.sent}
+              </dd>
+            </div>
+            {delivery.failed > 0 && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <dt className="text-xs text-muted-foreground">
+                  Failed this run
+                </dt>
+                <dd
+                  className="mt-1 text-2xl font-semibold text-destructive dark:text-red-300"
+                  aria-label="Failed this run"
+                >
+                  {delivery.failed}
+                </dd>
+              </div>
+            )}
+            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3">
+              <dt className="text-xs text-muted-foreground">Claimed</dt>
+              <dd
+                className="mt-1 text-2xl font-semibold text-emerald-700 dark:text-emerald-300"
+                aria-label="Claimed"
+              >
+                {claims.summary.claimed}
+              </dd>
+            </div>
+            <div className="rounded-md border border-white/10 bg-background/60 p-3">
+              <dt className="text-xs text-muted-foreground">Unclaimed</dt>
+              <dd
+                className="mt-1 text-2xl font-semibold"
+                aria-label="Unclaimed"
+              >
+                {claims.summary.unclaimed}
+              </dd>
+            </div>
+          </dl>
           <div
             className="max-h-[36rem] overflow-auto rounded-lg border"
             tabIndex={0}
@@ -183,7 +245,10 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
               </thead>
               <tbody className="divide-y">
                 {claims.members.map((member) => (
-                  <tr key={member.id}>
+                  <tr
+                    key={member.id}
+                    className={member.usedAt ? "bg-emerald-500/10" : undefined}
+                  >
                     <td className="p-3">
                       <p className="font-medium">
                         {member.firstName
@@ -224,8 +289,14 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                     </td>
                     <td className="p-3">
                       {member.sentAt ? "Email sent" : "Not emailed"}
-                      <p className="text-xs text-muted-foreground">
-                        {member.usedAt ? "Link redeemed" : "Link unused"}
+                      <p
+                        className={
+                          member.usedAt
+                            ? "text-xs font-medium text-emerald-700 dark:text-emerald-300"
+                            : "text-xs text-muted-foreground"
+                        }
+                      >
+                        {member.usedAt ? "Link used" : "Link unused"}
                       </p>
                     </td>
                     <td className="p-3">

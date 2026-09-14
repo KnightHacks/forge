@@ -7,6 +7,7 @@ import {
   authorizedJudgingDiscordIds,
   buildJudgingRoomMessage,
   buildJudgingRoomMessages,
+  buildJudgingRoomStarterMessage,
   judgingDiscordNonce,
   judgingRoomThreadName,
   serializeJudgingAnnouncement,
@@ -35,6 +36,12 @@ function validationGateway(
 }
 
 describe("judging Discord messages", () => {
+  it("names the full room and challenge in the thread starter", () => {
+    expect(buildJudgingRoomStarterMessage("ENG 101", "General").content).toBe(
+      "Judging communications for **ENG 101** for **General** challenge track.",
+    );
+  });
+
   it("keeps only current judge and officer permission holders", () => {
     const recipients = authorizedJudgingDiscordIds([
       {
@@ -200,6 +207,7 @@ describe("judging Discord messages", () => {
 
     expect(message?.allowedMentions.users).toEqual([memberOne, memberTwo]);
     expect(message?.content).toContain("Urgent judging announcement");
+    expect(message?.content).toContain("for **Sponsor suite A**");
     expect(message?.content).toContain("Stop judging");
     expect(message?.content).not.toContain("@here");
   });
@@ -279,21 +287,23 @@ describe("judging Discord messages", () => {
     ).toEqual(recipients.sort());
   });
 
-  it("resends a QR with current recipients and a PNG attachment", () => {
+  it("posts a generated QR with the full room name", () => {
     const message = buildJudgingRoomMessage({
       notice: {
         kind: "qr",
         qrCodeUrl: "data:image/png;base64,aGVsbG8=",
-        reason: "sent",
+        reason: "generated",
         url: "http://localhost:3000/judge/activate/link?signature=signed",
       },
       recipientIds: [memberTwo],
-      roomName: "Sponsor suite A",
+      roomName: "ENG 101",
     });
 
     expect(message.allowedMentions.users).toEqual([memberTwo]);
-    expect(message.content).toContain("current guest judging QR");
-    expect(message.file).toMatchObject({ name: "sponsor-suite-a-qr.png" });
+    expect(message.content).toContain(
+      "A guest judging QR is ready for **ENG 101**",
+    );
+    expect(message.file).toMatchObject({ name: "eng-101-qr.png" });
     expect(message.file?.data.toString()).toBe("hello");
   });
 

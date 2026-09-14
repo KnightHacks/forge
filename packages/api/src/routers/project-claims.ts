@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 
-import { and, asc, eq, gt, ilike, isNull, or } from "@forge/db";
+import { and, asc, eq, gt, ilike, isNull, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
@@ -32,7 +32,7 @@ export const projectClaimsRouter = {
     .query(async ({ ctx, input }) => {
       assertCanManageProjects(ctx);
       const pattern = `%${input.query.replace(/[\\%_]/g, "\\$&")}%`;
-      const [configuration, members] = await Promise.all([
+      const [configuration, members, summary] = await Promise.all([
         db.query.HackathonJudgingConfiguration.findFirst({
           where: eq(
             HackathonJudgingConfiguration.hackathonId,
@@ -82,12 +82,38 @@ export const projectClaimsRouter = {
           )
           .orderBy(asc(Project.title), asc(ProjectMember.displayOrder))
           .limit(100),
+        db
+          .select({
+            claimed: sql<number>`count(${ProjectClaim.memberId})::int`,
+            sent: sql<number>`count(${ProjectClaimLink.sentAt})::int`,
+            total: sql<number>`count(${ProjectMember.id})::int`,
+          })
+          .from(Project)
+          .leftJoin(ProjectMember, eq(ProjectMember.projectId, Project.id))
+          .leftJoin(ProjectClaim, eq(ProjectClaim.memberId, ProjectMember.id))
+          .leftJoin(
+            ProjectClaimLink,
+            eq(ProjectClaimLink.memberId, ProjectMember.id),
+          )
+          .where(
+            and(
+              eq(Project.hackathonId, input.hackathonId),
+              isNull(Project.deletedAt),
+            ),
+          )
+          .then((rows) => rows[0]),
       ]);
+      const claimed = summary?.claimed ?? 0;
       return {
         published: configuration?.hackerSchedulePublished ?? false,
         emergency: configuration?.hackerScheduleEmergency ?? false,
         claimUrl: configuration?.projectClaimUrl ?? "",
         locked: !!configuration?.projectClaimsStartedAt,
+        summary: {
+          claimed,
+          sent: summary?.sent ?? 0,
+          unclaimed: (summary?.total ?? 0) - claimed,
+        },
         members,
       };
     }),

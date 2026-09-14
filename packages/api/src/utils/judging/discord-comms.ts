@@ -2,16 +2,17 @@ import { randomBytes } from "node:crypto";
 import type { APIChannel, APIMessage } from "discord-api-types/v10";
 import { ChannelType, Routes } from "discord-api-types/v10";
 
-import { and, eq, inArray, isNull } from "@forge/db";
+import { and, eq, gte, inArray, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
-  Hackathon,
   HackathonJudgingConfiguration,
   Judge,
   JudgingAnnouncement,
+  JudgingBuilding,
   JudgingRoom,
   JudgingRoomPresence,
+  ProjectChallenge,
 } from "@forge/db/schemas/knight-hacks";
 import * as discord from "@forge/utils/discord";
 import { getKnightHacksGuildId } from "@forge/utils/discord-config";
@@ -21,6 +22,7 @@ import { roleHasPermission } from "../roles/management";
 const THREAD_NAME_LIMIT = 100;
 const MESSAGE_LIMIT = 2_000;
 const MENTION_BATCH_SIZE = 75;
+const RECENT_PRESENCE_WINDOW_MS = 15 * 60 * 1000;
 const DISCORD_SNOWFLAKE = /^\d{17,20}$/;
 const roomThreadQueues = new Map<string, Promise<void>>();
 const announcementQueues = new Map<string, Promise<void>>();
@@ -436,28 +438,45 @@ export const liveJudgingDiscordGateway: JudgingDiscordGateway = {
   },
 };
 
-function starterMessage(roomName: string): JudgingDiscordMessage {
+export function buildJudgingRoomStarterMessage(
+  roomName: string,
+  challengeLabel: string,
+): JudgingDiscordMessage {
   return {
     allowedMentions: { parse: [], users: [] },
-    content: `Judging communications for **${escapeMarkdown(roomName)}**. Blade posts room arrivals and guest-access updates here.`,
+    content: `Judging communications for **${escapeMarkdown(roomName)}** for **${escapeMarkdown(challengeLabel)}** challenge track.`,
   };
 }
 
 async function roomDiscordTarget(roomId: string) {
   const [target] = await db
     .select({
+      buildingName: JudgingBuilding.name,
       channelId: HackathonJudgingConfiguration.judgingCommsChannelId,
+      challengeLabel: ProjectChallenge.label,
       roomName: JudgingRoom.name,
       threadId: JudgingRoom.discordThreadId,
     })
     .from(JudgingRoom)
+    .leftJoin(JudgingBuilding, eq(JudgingBuilding.id, JudgingRoom.buildingId))
+    .innerJoin(
+      ProjectChallenge,
+      eq(ProjectChallenge.id, JudgingRoom.challengeId),
+    )
     .leftJoin(
       HackathonJudgingConfiguration,
       eq(HackathonJudgingConfiguration.hackathonId, JudgingRoom.hackathonId),
     )
     .where(and(eq(JudgingRoom.id, roomId), isNull(JudgingRoom.archivedAt)))
     .limit(1);
-  return target ?? null;
+  return target
+    ? {
+        ...target,
+        roomLabel: [target.buildingName, target.roomName]
+          .filter(Boolean)
+          .join(" "),
+      }
+    : null;
 }
 
 async function currentAuthorizedDiscordIds(input: {
@@ -481,32 +500,26 @@ async function currentAuthorizedDiscordIds(input: {
   return authorizedJudgingDiscordIds(rows, input.includeJudgeRole);
 }
 
-function isHackathonActive(startDate: Date, endDate: Date) {
-  const now = Date.now();
-  return startDate.getTime() <= now && endDate.getTime() >= now;
-}
-
 async function currentMemberDiscordIds(roomId: string) {
   const rows = await db
     .select({
-      endDate: Hackathon.endDate,
-      startDate: Hackathon.startDate,
       userId: Judge.userId,
     })
     .from(JudgingRoomPresence)
     .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
-    .innerJoin(JudgingRoom, eq(JudgingRoom.id, JudgingRoomPresence.roomId))
-    .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
     .where(
       and(
         eq(JudgingRoomPresence.roomId, roomId),
         eq(Judge.kind, "member"),
         isNull(JudgingRoomPresence.leftAt),
+        gte(
+          JudgingRoomPresence.lastSeenAt,
+          new Date(Date.now() - RECENT_PRESENCE_WINDOW_MS),
+        ),
       ),
     );
   return currentAuthorizedDiscordIds({
-    includeJudgeRole:
-      !!rows[0] && isHackathonActive(rows[0].startDate, rows[0].endDate),
+    includeJudgeRole: true,
     userIds: rows
       .map((row) => row.userId)
       .filter((id): id is string => id !== null),
@@ -514,14 +527,26 @@ async function currentMemberDiscordIds(roomId: string) {
 }
 
 async function hackathonMemberDiscordIds(hackathonId: string) {
-  const [hackathon] = await db
-    .select({ endDate: Hackathon.endDate, startDate: Hackathon.startDate })
-    .from(Hackathon)
-    .where(eq(Hackathon.id, hackathonId))
-    .limit(1);
-  if (!hackathon) return [];
+  const rows = await db
+    .select({ userId: Judge.userId })
+    .from(JudgingRoomPresence)
+    .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
+    .where(
+      and(
+        eq(JudgingRoomPresence.hackathonId, hackathonId),
+        eq(Judge.kind, "member"),
+        isNull(JudgingRoomPresence.leftAt),
+        gte(
+          JudgingRoomPresence.lastSeenAt,
+          new Date(Date.now() - RECENT_PRESENCE_WINDOW_MS),
+        ),
+      ),
+    );
   return currentAuthorizedDiscordIds({
-    includeJudgeRole: isHackathonActive(hackathon.startDate, hackathon.endDate),
+    includeJudgeRole: true,
+    userIds: rows
+      .map((row) => row.userId)
+      .filter((id): id is string => id !== null),
   });
 }
 
@@ -537,7 +562,7 @@ export async function ensureJudgingRoomThread(
       try {
         await gateway.prepareRoomThread({
           channelId: target.channelId,
-          roomName: target.roomName,
+          roomName: target.roomLabel,
           threadId: target.threadId,
         });
         return target.threadId;
@@ -547,8 +572,11 @@ export async function ensureJudgingRoomThread(
     }
     const threadId = await gateway.createRoomThread({
       channelId: target.channelId,
-      roomName: target.roomName,
-      starter: starterMessage(target.roomName),
+      roomName: target.roomLabel,
+      starter: buildJudgingRoomStarterMessage(
+        target.roomLabel,
+        target.challengeLabel,
+      ),
     });
     return db.transaction(async (tx) => {
       const [current] = await tx
@@ -600,7 +628,7 @@ export async function deliverJudgingRoomNotice(
     const messages = buildJudgingRoomMessages({
       notice,
       recipientIds,
-      roomName: target.roomName,
+      roomName: target.roomLabel,
     });
     for (const message of messages) {
       await gateway.sendMessage({ message, threadId });
