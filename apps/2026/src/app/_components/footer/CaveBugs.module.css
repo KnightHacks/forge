@@ -20,12 +20,13 @@
   top: calc(
     var(--band-top) + var(--bug-band) * (var(--band-bottom) - var(--band-top))
   );
-  left: -12%;
+  left: 0;
   width: clamp(2.4rem, 4.5vw, 3.4rem);
-  transform: scaleX(calc(var(--bug-dir) * var(--bug-scale)))
-    scaleY(var(--bug-scale));
-  will-change: left;
+  transform: translate3d(-100%, 0, 0)
+    scaleX(calc(var(--bug-dir) * var(--bug-scale))) scaleY(var(--bug-scale));
+  will-change: auto;
   animation: crawl var(--bug-duration) linear var(--bug-delay) infinite;
+  animation-play-state: paused;
 }
 
 .bug[data-direction="rtl"] {
@@ -58,6 +59,7 @@
 .bugBob {
   display: block;
   animation: bob 2.4s ease-in-out calc(var(--bug-delay) / 2) infinite alternate;
+  animation-play-state: paused;
 }
 
 .bugSvg {
@@ -102,20 +104,31 @@
 }
 
 .legsA {
-  animation: scuttle 0.36s ease-in-out infinite alternate;
+  transform: rotate(-3deg);
 }
 
 .legsB {
-  animation: scuttle 0.36s ease-in-out infinite alternate-reverse;
+  transform: rotate(3deg);
+}
+
+.swarm[data-active="true"] .bug,
+.swarm[data-active="true"] .bugBob {
+  animation-play-state: running;
+}
+
+.swarm[data-active="true"] .bug {
+  will-change: transform;
 }
 
 @keyframes crawl {
   from {
-    left: -12%;
+    transform: translate3d(-100%, 0, 0)
+      scaleX(calc(var(--bug-dir) * var(--bug-scale))) scaleY(var(--bug-scale));
   }
 
   to {
-    left: 112%;
+    transform: translate3d(100vw, 0, 0)
+      scaleX(calc(var(--bug-dir) * var(--bug-scale))) scaleY(var(--bug-scale));
   }
 }
 
@@ -166,6 +179,8 @@
   /* Park a few visible so it still reads as a cave floor of critters. */
   .bug {
     left: clamp(1rem, 8vw, 6rem);
+    transform: scaleX(calc(var(--bug-dir) * var(--bug-scale)))
+      scaleY(var(--bug-scale));
   }
 
   .bug[data-direction="rtl"] {

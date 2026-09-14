@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import type { MouseEvent, ReactNode, Ref } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 import Image from "next/image";
 import { FaLinkedin } from "react-icons/fa";
@@ -10,6 +10,7 @@ import type {
   TeamCascadeMember,
   TeamCascadeRole,
 } from "./team-roster";
+import { useViewportActivity } from "../useViewportActivity";
 import { loadTeamCascadeGroups } from "./team-roster";
 import styles from "./TeamCascade.module.css";
 
@@ -30,6 +31,7 @@ const rosterIdPrefixes = [
   "design-",
 ] as const;
 
+/** Derives compact profile initials from a member's display name. */
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -40,6 +42,7 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+/** Normalizes a member's name for the constrained profile-card layout. */
 function getDisplayName(name: string) {
   return name
     .trim()
@@ -50,6 +53,7 @@ function getDisplayName(name: string) {
     );
 }
 
+/** Chooses the most useful role label available for a team member. */
 function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
   if (roleLabel === "Organizer" && member.teamRole !== "Hack Lead") {
     return "Hackathon Organizer";
@@ -60,6 +64,7 @@ function getDisplayTitle({ member, roleLabel }: TeamCascadePerson) {
   return member.teamRole;
 }
 
+/** Returns the stable identity key used for team profile rendering. */
 function getMemberProfileKey(member: TeamCascadeMember) {
   const prefix = rosterIdPrefixes.find((candidate) =>
     member.id.startsWith(candidate),
@@ -68,6 +73,7 @@ function getMemberProfileKey(member: TeamCascadeMember) {
   return prefix ? member.id.slice(prefix.length) : member.id;
 }
 
+/** Flattens role groups into the ordered people shown by the team cascade. */
 function getTeamMembers(groups: TeamCascadeGroup[]) {
   const membersByProfileId = new Map<string, TeamCascadePerson>();
 
@@ -88,6 +94,7 @@ function getTeamMembers(groups: TeamCascadeGroup[]) {
   return [...membersByProfileId.values()];
 }
 
+/** Renders a member's profile image with an initials fallback. */
 function ProfileImage({ member }: { member: TeamCascadeMember }) {
   if (member.imageUrl) {
     return (
@@ -109,6 +116,7 @@ function ProfileImage({ member }: { member: TeamCascadeMember }) {
   );
 }
 
+/** Renders one compact team profile card with optional external links. */
 function TeamProfile({
   detailsId,
   index,
@@ -132,6 +140,7 @@ function TeamProfile({
     </span>
   );
 
+  /** Selects a profile and keeps mobile taps inside the expandable roster. */
   function handleProfileLinkClick(event: MouseEvent<HTMLAnchorElement>) {
     onSelect();
 
@@ -180,6 +189,7 @@ function TeamProfile({
   );
 }
 
+/** Renders the expanded identity and role details for a team member. */
 function TeamMemberDetails({
   detailsId,
   person,
@@ -242,6 +252,7 @@ function TeamMemberDetails({
   );
 }
 
+/** Renders the ordered, animated roster of team members. */
 function TeamRoster({ members }: { members: TeamCascadePerson[] }) {
   const detailsId = useId();
   const [selectedProfileKey, setSelectedProfileKey] = useState(
@@ -276,24 +287,28 @@ function TeamRoster({ members }: { members: TeamCascadePerson[] }) {
   );
 }
 
+/** Renders loading or failure feedback for the remote team roster. */
 function TeamCascadeStatusMessage({
   children,
   className,
+  elementRef,
 }: {
   children: ReactNode;
   className?: string;
+  elementRef?: Ref<HTMLDivElement>;
 }) {
   const statusClassName = className
     ? `${styles.teamCascadeStatusFrame} ${className}`
     : styles.teamCascadeStatusFrame;
 
   return (
-    <div className={statusClassName}>
+    <div ref={elementRef} className={statusClassName}>
       <p className={styles.teamStatus}>{children}</p>
     </div>
   );
 }
 
+/** Loads and renders the team roster only when its scene approaches view. */
 export function TeamCascadeClient({
   bladeUrl,
   className,
@@ -301,6 +316,12 @@ export function TeamCascadeClient({
   bladeUrl: string;
   className?: string;
 }) {
+  const [cascadeRef, isCascadeNearViewport] =
+    useViewportActivity<HTMLDivElement>({
+      once: true,
+      respectReducedMotion: false,
+      rootMargin: "800px 0px",
+    });
   const [groups, setGroups] = useState<TeamCascadeGroup[]>([]);
   const [status, setStatus] = useState<TeamCascadeStatus>(
     bladeUrl ? "loading" : "error",
@@ -311,10 +332,11 @@ export function TeamCascadeClient({
     : styles.teamCascade;
 
   useEffect(() => {
-    if (!bladeUrl) return;
+    if (!bladeUrl || !isCascadeNearViewport) return;
 
     const abortController = new AbortController();
 
+    /** Fetches public team groups and ignores results after cancellation. */
     async function loadRoster() {
       setStatus("loading");
 
@@ -334,11 +356,14 @@ export function TeamCascadeClient({
     void loadRoster();
 
     return () => abortController.abort();
-  }, [bladeUrl]);
+  }, [bladeUrl, isCascadeNearViewport]);
 
   if (status === "loading") {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         Loading public team profiles.
       </TeamCascadeStatusMessage>
     );
@@ -346,7 +371,10 @@ export function TeamCascadeClient({
 
   if (status === "error") {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         Could not load Blade team profiles. Check the configured Blade URL or
         local Blade server.
       </TeamCascadeStatusMessage>
@@ -355,14 +383,17 @@ export function TeamCascadeClient({
 
   if (teamMembers.length === 0) {
     return (
-      <TeamCascadeStatusMessage className={cascadeClassName}>
+      <TeamCascadeStatusMessage
+        className={cascadeClassName}
+        elementRef={cascadeRef}
+      >
         No visible team profiles found.
       </TeamCascadeStatusMessage>
     );
   }
 
   return (
-    <div className={cascadeClassName}>
+    <div ref={cascadeRef} className={cascadeClassName}>
       <TeamRoster members={teamMembers} />
     </div>
   );

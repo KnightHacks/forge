@@ -1,12 +1,26 @@
+"use client";
+
 import Image from "next/image";
 
 import { AssetCredit } from "../../assets";
+import { useViewportActivity } from "../../useViewportActivity";
 import { AboutGallery } from "./AboutGallery";
 import styles from "./AboutSection.module.css";
 
+/** Renders the about story while gating ambient motion to the nearby viewport. */
 export function AboutSection() {
+  const [aboutRef, isAboutActive] = useViewportActivity<HTMLElement>({
+    rootMargin: "10% 0px",
+  });
+
   return (
-    <section id="about" className={styles.about} aria-labelledby="about-title">
+    <section
+      ref={aboutRef}
+      id="about"
+      className={styles.about}
+      data-active={isAboutActive ? "true" : "false"}
+      aria-labelledby="about-title"
+    >
       <AssetCredit
         className={styles.leftRune}
         label="Art by"
@@ -48,7 +62,6 @@ export function AboutSection() {
           width={629}
           height={755}
           sizes="(max-width: 760px) 62vw, (max-width: 1199px) 38vw, 34vw"
-          unoptimized
         />
       </AssetCredit>
       <div className={styles.content}>

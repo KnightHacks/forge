@@ -43,6 +43,7 @@
     drop-shadow(0 0 1.15rem rgb(0 195 255 / 0.48));
   opacity: 0.88;
   animation: aboutRuneGlowPulse 2.8s ease-in-out infinite alternate;
+  animation-play-state: paused;
   will-change: filter, opacity;
 }
 
@@ -162,12 +163,13 @@
   width: 100%;
   aspect-ratio: 3 / 2;
   overflow: hidden;
-  border: 1px solid rgb(207 255 224 / 0.24);
-  border-radius: 0.5rem;
+  border: 1px solid rgb(215 255 229 / 0.42);
+  border-radius: 1rem;
   background: #112522;
   box-shadow:
-    0 1.2rem 3rem rgb(0 0 0 / 0.32),
-    0 0 2.5rem rgb(73 255 196 / 0.09);
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 1.2rem 3rem rgb(0 0 0 / 0.38),
+    0 0 2.5rem rgb(73 255 196 / 0.13);
 }
 
 .galleryViewport::after {
@@ -197,6 +199,10 @@
 .galleryImage[data-active="true"] {
   opacity: 1;
   transform: scale(1);
+}
+
+.gallery:hover .galleryImage[data-active="true"] {
+  transform: scale(1.018);
 }
 
 .galleryControls {
@@ -300,6 +306,14 @@
     0 0 0.42rem rgb(202 150 248 / 0.58),
     0 0 1.05rem rgb(202 150 248 / 0.38);
   animation: aboutMetricGlowPulse 2.8s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+
+.about[data-active="true"] .glowImage,
+.about[data-active="true"] .metricNumber,
+.about[data-active="true"] .copy,
+.about[data-active="true"] .copy::after {
+  animation-play-state: running;
 }
 
 .metric dd {
@@ -529,10 +543,12 @@
 @media (max-width: 760px) {
   .copy {
     animation: aboutCopyGlow 3.8s ease-in-out infinite alternate;
+    animation-play-state: paused;
   }
 
   .copy::after {
     animation: aboutCopyLineGlow 3.8s ease-in-out infinite alternate;
+    animation-play-state: paused;
   }
 }
 

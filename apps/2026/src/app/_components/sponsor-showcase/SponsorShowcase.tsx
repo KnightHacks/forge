@@ -1,9 +1,9 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useRef } from "react";
 import Image from "next/image";
 
+import { useViewportActivity } from "../useViewportActivity";
 import styles from "./SponsorShowcase.module.css";
 
 export const SPONSOR_TIER_ORDER = [
@@ -75,12 +75,14 @@ const SPONSOR_TIER_CONFIG = {
   },
 } as const satisfies Record<SponsorTier, SponsorTierConfig>;
 
+/** Orders sponsor cards by tier while preserving source order within each tier. */
 function getOrderedSponsors(sponsors: readonly SponsorShowcaseSponsor[]) {
   return SPONSOR_TIER_DISPLAY_ORDER.flatMap((tier) =>
     sponsors.filter((sponsor) => sponsor.tier === tier),
   );
 }
 
+/** Returns a stable render key for one sponsor card. */
 function getSponsorCardKey(
   groupName: SponsorGroupName,
   sponsor: SponsorShowcaseSponsor,
@@ -89,7 +91,14 @@ function getSponsorCardKey(
   return `${groupName}-${index}-${sponsor.tier}-${sponsor.name}-${sponsor.websiteUrl}`;
 }
 
-function SponsorRockCard({ sponsor }: { sponsor: SponsorShowcaseSponsor }) {
+/** Renders one responsive sponsor logo inside its tier-specific rock frame. */
+function SponsorRockCard({
+  sponsor,
+  shouldLoadLogo,
+}: {
+  sponsor: SponsorShowcaseSponsor;
+  shouldLoadLogo: boolean;
+}) {
   const tierConfig = SPONSOR_TIER_CONFIG[sponsor.tier];
   const logoScale = sponsor.logoScale ?? 1;
   const mobileLogoScale = sponsor.mobileLogoScale ?? logoScale;
@@ -122,42 +131,48 @@ function SponsorRockCard({ sponsor }: { sponsor: SponsorShowcaseSponsor }) {
       <span className={styles.sponsorVisual} aria-hidden="true">
         <span className={styles.rockFrame} aria-hidden="true" />
         <span className={styles.sponsorLogo}>
-          {sponsor.logoWordmark ? (
-            <span className={styles.sponsorLockup}>
+          {shouldLoadLogo ? (
+            sponsor.logoWordmark ? (
+              <span className={styles.sponsorLockup}>
+                <Image
+                  src={sponsor.logoSrc}
+                  alt=""
+                  width={24}
+                  height={24}
+                  unoptimized
+                  draggable={false}
+                />
+                <span>{sponsor.logoWordmark}</span>
+              </span>
+            ) : (
               <Image
                 src={sponsor.logoSrc}
                 alt=""
-                width={24}
-                height={24}
+                fill
+                className={styles.sponsorLogoImage}
+                sizes="(max-width: 760px) 9rem, 16rem"
                 unoptimized
                 draggable={false}
               />
-              <span>{sponsor.logoWordmark}</span>
-            </span>
-          ) : (
-            <Image
-              src={sponsor.logoSrc}
-              alt=""
-              fill
-              className={styles.sponsorLogoImage}
-              sizes="(max-width: 760px) 9rem, 16rem"
-              unoptimized
-              draggable={false}
-            />
-          )}
+            )
+          ) : null}
         </span>
       </span>
     </a>
   );
 }
 
+/** Renders the sponsor grid while deferring cards until the scene is nearby. */
 export function SponsorShowcase({
   className,
   sponsors,
   title = "Sponsors",
   titleId = "khix-sponsors-title",
 }: SponsorShowcaseProps) {
-  const showcaseRef = useRef<HTMLElement>(null);
+  const [showcaseRef, isShowcaseActive] = useViewportActivity<HTMLElement>({
+    respectReducedMotion: false,
+    rootMargin: "25% 0px",
+  });
   const orderedSponsors = getOrderedSponsors(sponsors);
   const slabSponsors = orderedSponsors.filter(
     (sponsor) =>
@@ -177,34 +192,6 @@ export function SponsorShowcase({
     ? `${styles.sponsorShowcase} ${className}`
     : styles.sponsorShowcase;
 
-  useEffect(() => {
-    const showcase = showcaseRef.current;
-
-    if (!showcase) {
-      return;
-    }
-
-    const setActive = (isActive: boolean) => {
-      showcase.dataset.active = isActive ? "true" : "false";
-    };
-
-    if (!("IntersectionObserver" in window)) {
-      setActive(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setActive(entry?.isIntersecting ?? false);
-      },
-      { rootMargin: "20% 0px", threshold: 0.01 },
-    );
-
-    observer.observe(showcase);
-
-    return () => observer.disconnect();
-  }, []);
-
   if (orderedSponsors.length === 0) {
     return null;
   }
@@ -213,7 +200,7 @@ export function SponsorShowcase({
     <section
       ref={showcaseRef}
       className={sponsorShowcaseClassName}
-      data-active="false"
+      data-active={isShowcaseActive ? "true" : "false"}
       aria-labelledby={titleId}
     >
       <h2 id={titleId} className={styles.sponsorTitle}>
@@ -230,6 +217,7 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("slab", sponsor, index)}
                 sponsor={sponsor}
+                shouldLoadLogo={isShowcaseActive}
               />
             ))}
           </div>
@@ -241,6 +229,7 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("medium-stone", sponsor, index)}
                 sponsor={sponsor}
+                shouldLoadLogo={isShowcaseActive}
               />
             ))}
           </div>
@@ -252,6 +241,7 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("small-stone", sponsor, index)}
                 sponsor={sponsor}
+                shouldLoadLogo={isShowcaseActive}
               />
             ))}
           </div>
@@ -263,6 +253,7 @@ export function SponsorShowcase({
               <SponsorRockCard
                 key={getSponsorCardKey("small-stone", sponsor, index)}
                 sponsor={sponsor}
+                shouldLoadLogo={isShowcaseActive}
               />
             ))}
           </div>
