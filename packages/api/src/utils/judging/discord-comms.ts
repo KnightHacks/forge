@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { APIChannel, APIMessage } from "discord-api-types/v10";
 import { ChannelType, Routes } from "discord-api-types/v10";
 
-import { and, eq, inArray, isNull } from "@forge/db";
+import { and, eq, gte, inArray, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
@@ -22,6 +22,7 @@ import { roleHasPermission } from "../roles/management";
 const THREAD_NAME_LIMIT = 100;
 const MESSAGE_LIMIT = 2_000;
 const MENTION_BATCH_SIZE = 75;
+const RECENT_PRESENCE_WINDOW_MS = 15 * 60 * 1000;
 const DISCORD_SNOWFLAKE = /^\d{17,20}$/;
 const roomThreadQueues = new Map<string, Promise<void>>();
 const announcementQueues = new Map<string, Promise<void>>();
@@ -511,6 +512,10 @@ async function currentMemberDiscordIds(roomId: string) {
         eq(JudgingRoomPresence.roomId, roomId),
         eq(Judge.kind, "member"),
         isNull(JudgingRoomPresence.leftAt),
+        gte(
+          JudgingRoomPresence.lastSeenAt,
+          new Date(Date.now() - RECENT_PRESENCE_WINDOW_MS),
+        ),
       ),
     );
   return currentAuthorizedDiscordIds({
@@ -531,6 +536,10 @@ async function hackathonMemberDiscordIds(hackathonId: string) {
         eq(JudgingRoomPresence.hackathonId, hackathonId),
         eq(Judge.kind, "member"),
         isNull(JudgingRoomPresence.leftAt),
+        gte(
+          JudgingRoomPresence.lastSeenAt,
+          new Date(Date.now() - RECENT_PRESENCE_WINDOW_MS),
+        ),
       ),
     );
   return currentAuthorizedDiscordIds({

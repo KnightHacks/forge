@@ -243,6 +243,21 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       .where(
         eq(schema.ProjectClaimLink.memberId, required(otherProject.members[0])),
       );
+    const deletedProject = await seedProject(event, 1);
+    await claims.prepareClaimLink(event, required(deletedProject.members[0]));
+    await client
+      .update(schema.ProjectClaimLink)
+      .set({ sentAt: new Date() })
+      .where(
+        eq(
+          schema.ProjectClaimLink.memberId,
+          required(deletedProject.members[0]),
+        ),
+      );
+    await client
+      .update(schema.Project)
+      .set({ deletedAt: new Date() })
+      .where(eq(schema.Project.id, deletedProject.id));
 
     const { Permissions, Roles } = await import("@forge/db/schemas/auth");
     const roleId = randomUUID();

@@ -202,7 +202,7 @@ export function ProjectClaimsPanel({ hackathonId }: { hackathonId: string }) {
                   Failed this run
                 </dt>
                 <dd
-                  className="mt-1 text-2xl font-semibold text-destructive"
+                  className="mt-1 text-2xl font-semibold text-destructive dark:text-red-300"
                   aria-label="Failed this run"
                 >
                   {delivery.failed}

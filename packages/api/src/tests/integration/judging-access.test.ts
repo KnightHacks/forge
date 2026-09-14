@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import {
   afterAll,
   afterEach,
@@ -720,6 +720,33 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     expect(sentRecipientIds).toEqual([
       ["222222222222222222", "333333333333333333"],
     ]);
+    await fallbackCaller.judging.leaveRoom({ roomId: secondRoom.id });
+    await deliverJudgingAnnouncement(
+      {
+        hackathonId: HACKATHON,
+        isUrgent: false,
+        message: "All rooms update",
+        roomId: null,
+      },
+      gateway,
+    );
+    expect(sentRecipientIds.at(-1)).toEqual(["222222222222222222"]);
+    await fallbackCaller.judging.joinRoom({ roomId: secondRoom.id });
+    await client
+      .update(schemas.JudgingRoomPresence)
+      .set({ lastSeenAt: new Date(Date.now() - 16 * 60 * 1000) })
+      .where(eq(schemas.JudgingRoomPresence.roomId, secondRoom.id));
+    await deliverJudgingAnnouncement(
+      {
+        hackathonId: HACKATHON,
+        isUrgent: false,
+        message: "All rooms update",
+        roomId: null,
+      },
+      gateway,
+    );
+    expect(sentRecipientIds.at(-1)).toEqual(["222222222222222222"]);
+    await fallbackCaller.judging.joinRoom({ roomId: secondRoom.id });
     await client
       .update(schemas.HackathonJudgingConfiguration)
       .set({ judgingCommsChannelId: null })
@@ -914,6 +941,12 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   });
 
   it("serializes concurrent room-thread provisioning", async () => {
+    const buildingId = randomUUID();
+    const buildingName = `ENG-${buildingId.slice(0, 8)}`;
+    await client.insert(schemas.JudgingBuilding).values({
+      id: buildingId,
+      name: buildingName,
+    });
     await client
       .insert(schemas.HackathonJudgingConfiguration)
       .values({
@@ -925,6 +958,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
         target: schemas.HackathonJudgingConfiguration.hackathonId,
       });
     await client.insert(schemas.JudgingRoom).values({
+      buildingId,
       challengeId: SPONSOR,
       displayOrder: 99,
       hackathonId: HACKATHON,
@@ -939,20 +973,36 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     const creationDidStart = new Promise<void>((resolve) => {
       creationStarted = resolve;
     });
-    const createRoomThread = vi.fn(async () => {
-      creationStarted();
-      await creationReleased;
-      return "223456789012345678";
-    });
+    const createdRooms: Parameters<
+      JudgingDiscordGateway["createRoomThread"]
+    >[0][] = [];
+    const createRoomThread = vi.fn(
+      async (
+        input: Parameters<JudgingDiscordGateway["createRoomThread"]>[0],
+      ) => {
+        createdRooms.push(input);
+        creationStarted();
+        await creationReleased;
+        return "223456789012345678";
+      },
+    );
     const prepareRoomThread = vi.fn(() => Promise.resolve());
+    const deliveredMessages: Parameters<
+      JudgingDiscordGateway["sendMessage"]
+    >[0][] = [];
     const gateway: JudgingDiscordGateway = {
       createRoomThread,
       getChannel: vi.fn(() => Promise.reject(new Error("unused"))),
       listTextChannels: vi.fn(() => Promise.resolve([])),
       prepareRoomThread,
-      sendMessage: vi.fn(() => Promise.resolve()),
+      sendMessage: vi.fn(
+        (input: Parameters<JudgingDiscordGateway["sendMessage"]>[0]) => {
+          deliveredMessages.push(input);
+          return Promise.resolve();
+        },
+      ),
     };
-    const { ensureJudgingRoomThread } =
+    const { deliverJudgingRoomNotice, ensureJudgingRoomThread } =
       await import("../../utils/judging/discord-comms");
 
     const first = ensureJudgingRoomThread(CONCURRENT_ROOM, gateway);
@@ -965,11 +1015,31 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       "223456789012345678",
     ]);
     expect(createRoomThread).toHaveBeenCalledTimes(1);
+    expect(createdRooms[0]?.roomName).toBe(`${buildingName} Concurrent room`);
+    expect(createdRooms[0]?.starter.content).toBe(
+      `Judging communications for **${buildingName} Concurrent room** for **Acme Challenge** challenge track.`,
+    );
     expect(prepareRoomThread).toHaveBeenCalledWith({
       channelId: "123456789012345678",
-      roomName: "Concurrent room",
+      roomName: `${buildingName} Concurrent room`,
       threadId: "223456789012345678",
     });
+    await deliverJudgingRoomNotice(
+      CONCURRENT_ROOM,
+      {
+        kind: "qr",
+        qrCodeUrl: "data:image/png;base64,aGVsbG8=",
+        reason: "sent",
+        url: "https://example.test/judge/activate/signed",
+      },
+      gateway,
+    );
+    expect(deliveredMessages[0]?.message.content).toContain(
+      `for **${buildingName} Concurrent room**`,
+    );
+    expect(deliveredMessages[0]?.message.file?.name).toBe(
+      `${buildingName.toLowerCase()}-concurrent-room-qr.png`,
+    );
   });
 
   it("does not replace a room thread after a transient Discord failure", async () => {

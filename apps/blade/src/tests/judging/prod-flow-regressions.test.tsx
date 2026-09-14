@@ -162,12 +162,12 @@ describe("production judging flow regressions", () => {
       await import("~/app/judge/projects/page");
 
     const page = await JudgeProjectsPage({
-      searchParams: Promise.resolve({ hackathon: hackathonId }),
+      searchParams: Promise.resolve({ hackathon: hackathonId, sort: "title" }),
     });
 
     expect(mocks.getContext).toHaveBeenCalledWith({});
     expect(mocks.listJudge).toHaveBeenCalledWith(
-      expect.objectContaining({ hackathonId }),
+      expect.objectContaining({ hackathonId, sort: "title" }),
     );
     if (
       !isValidElement<{
