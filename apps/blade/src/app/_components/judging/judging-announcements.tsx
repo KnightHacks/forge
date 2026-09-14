@@ -93,32 +93,26 @@ export function JudgingAnnouncements({
       <div className="pointer-events-auto flex max-h-[calc(100svh-1.5rem)] flex-col gap-2 overflow-y-auto overscroll-contain">
         {banners.map((announcement) => (
           <section
-            className="overflow-hidden rounded-lg border border-[#DBC049]/45 bg-[#17140a]/95 shadow-2xl shadow-black/45 backdrop-blur"
+            className="overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/35"
             key={announcement.id}
             role="status"
           >
-            <div className="h-1 bg-[#DBC049]" />
             <div className="flex items-start gap-3 p-4">
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#DBC049]/15 text-[#DBC049]">
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <BellRing className="size-4" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-semibold">Judging announcement</p>
-                  <Badge
-                    className="border-[#DBC049]/35 text-[#DBC049]"
-                    variant="outline"
-                  >
-                    {scopeLabel(announcement)}
-                  </Badge>
+                  <Badge variant="outline">{scopeLabel(announcement)}</Badge>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-white/85">
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">
                   {announcement.message}
                 </p>
               </div>
               <Button
                 aria-label={`Dismiss announcement for ${scopeLabel(announcement)}`}
-                className="size-11 shrink-0 text-white/75 hover:text-white"
+                className="size-11 shrink-0"
                 onClick={() => dismiss(announcement.id)}
                 size="icon"
                 type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock3, RefreshCw } from "lucide-react";
+import { AlertTriangle, Clock3, RefreshCw } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
@@ -64,6 +64,7 @@ export function JudgingSchedulePanel({
     string | null
   >(null);
   const [dropping, setDropping] = useState(false);
+  const [dismissedAlert, setDismissedAlert] = useState<string | null>(null);
   const [selection, setSelection] = useState<AppointmentSelection | null>(null);
   const [inspecting, setInspecting] = useState<string | null>(null);
   const refresh = () =>
@@ -191,18 +192,29 @@ export function JudgingSchedulePanel({
             : job?.status === "incomplete"
               ? "Search ended without a complete schedule"
               : "Preview";
+  const failedJob =
+    !data.schedule &&
+    job &&
+    (job.status === "infeasible" || job.status === "incomplete")
+      ? job
+      : null;
+  const alertKey = query.error
+    ? `refresh:${query.dataUpdatedAt}:${query.error.message}`
+    : failedJob
+      ? `job:${failedJob.id}:${failedJob.status}`
+      : null;
+  const diagnostics = (failedJob?.diagnostics ?? []).map((message) =>
+    data.source.tasks.reduce(
+      (copy, task) =>
+        copy
+          .replaceAll(task.challengeId, task.challengeLabel)
+          .replaceAll(task.projectId, task.title),
+      message,
+    ),
+  );
 
   return (
     <div className="flex flex-col gap-4">
-      {query.error ? (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/40 p-3 text-sm text-destructive"
-        >
-          Refresh failed: {query.error.message}. The schedule shown may be out
-          of date.
-        </p>
-      ) : null}
       {!data.schedule ? (
         <ScheduleConfiguration
           key={hackathonId}
@@ -217,7 +229,11 @@ export function JudgingSchedulePanel({
           <Clock3 className="mt-1 size-5 text-primary" />
           <div>
             <h2 className="text-lg font-semibold">
-              {data.schedule ? "Judging schedule" : generationLabel}
+              {data.schedule
+                ? "Judging schedule"
+                : failedJob
+                  ? "Schedule preview"
+                  : generationLabel}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {timing
@@ -303,7 +319,9 @@ export function JudgingSchedulePanel({
           </div>
         ) : null}
       </section>
-      {!data.schedule && job ? (
+      {!data.schedule &&
+      job &&
+      (job.status === "searching" || job.status === "feasible") ? (
         <div className="space-y-2 text-sm" role="status">
           {job.status === "searching" ? (
             <p className="flex items-center gap-2">
@@ -316,33 +334,6 @@ export function JudgingSchedulePanel({
             <p>
               The candidate satisfies all constraints. The time limit ended
               before optimality could be proven.
-            </p>
-          ) : null}
-          {job.status === "incomplete" ? (
-            <p>
-              No complete candidate was found within the limit. This does not
-              prove the window is impossible, so travel breaks have not been
-              silently relaxed.
-            </p>
-          ) : null}
-          {job.diagnostics.map((message) => (
-            <p
-              className="rounded-md border border-amber-400/40 bg-amber-400/10 p-3"
-              key={message}
-            >
-              {data.source.tasks.reduce(
-                (copy, task) =>
-                  copy
-                    .replaceAll(task.challengeId, task.challengeLabel)
-                    .replaceAll(task.projectId, task.title),
-                message,
-              )}
-            </p>
-          ))}
-          {job.status === "infeasible" && !job.diagnostics.length ? (
-            <p className="text-amber-200">
-              Neither the full travel break nor the baseline break can fit every
-              presentation. Adjust the window, timing, or staffed rooms.
             </p>
           ) : null}
         </div>
@@ -557,6 +548,57 @@ export function JudgingSchedulePanel({
         }
         timeZone={timeZone}
       />
+      <Dialog
+        open={alertKey !== null && dismissedAlert !== alertKey}
+        onOpenChange={(open) => {
+          if (!open) setDismissedAlert(alertKey);
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="text-left">
+            <div className="mb-2 grid size-10 place-items-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-5" aria-hidden="true" />
+            </div>
+            <DialogTitle>
+              {query.error ? "Schedule refresh failed" : generationLabel}
+            </DialogTitle>
+            <DialogDescription className="leading-6">
+              {query.error
+                ? `${query.error.message}. The schedule shown may be out of date.`
+                : failedJob?.status === "incomplete"
+                  ? "No complete candidate was found within the limit. This does not prove the window is impossible, and travel breaks were not silently relaxed."
+                  : "The current window and room configuration cannot fit every presentation."}
+            </DialogDescription>
+          </DialogHeader>
+          {!query.error ? (
+            diagnostics.length ? (
+              <ul className="space-y-2 text-sm leading-6">
+                {diagnostics.map((message) => (
+                  <li
+                    className="rounded-md border border-border bg-muted/30 px-3 py-2"
+                    key={message}
+                  >
+                    {message}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm leading-6 text-muted-foreground">
+                Adjust the judging window, appointment timing, or available
+                rooms, then generate another preview.
+              </p>
+            )
+          ) : null}
+          <DialogFooter>
+            <Button
+              onClick={() => setDismissedAlert(alertKey)}
+              variant="outline"
+            >
+              {query.error ? "Keep current view" : "Adjust schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={dropping} onOpenChange={setDropping}>
         <DialogContent>
           <DialogHeader>

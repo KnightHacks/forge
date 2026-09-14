@@ -138,7 +138,8 @@ Expected observations:
 
 - Every active, non-deleted project in that hackathon is available because all
   imported projects belong to `General`.
-- Inactive hackathons and deleted projects remain unavailable.
+- Other hackathons and deleted projects remain unavailable. When none is
+  active, a room for the nearest upcoming hackathon remains available.
 - The page still presents `General` as a fixed guest scope.
 
 ### TC-007: Authenticated judges retain full access after room selection
@@ -151,7 +152,7 @@ Setup:
 Action:
 
 - The judge joins the first room, changes the project filter, switches rooms,
-  and then leaves the room.
+  leaves the room, and selects a past hackathon from the hackathon dropdown.
 
 Expected observations:
 
@@ -160,6 +161,7 @@ Expected observations:
 - The judge may change to any challenge without leaving the room.
 - Switching closes the old presence and moves the judge to the new roster.
 - Leaving removes current room presence without changing judge permission.
+- The past hackathon's projects remain readable through the dropdown.
 - No guest name dialog appears.
 
 ### TC-008: Authenticated QR scans select a room without reducing access

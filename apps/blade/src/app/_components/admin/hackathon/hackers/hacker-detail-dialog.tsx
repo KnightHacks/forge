@@ -34,7 +34,10 @@ import { Label } from "@forge/ui/label";
 import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
 import { toast } from "@forge/ui/toast";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
+import {
+  HACKATHON_SENDING_STATUSES,
+  HACKER_STATUS_LABELS,
+} from "@forge/validators";
 
 import {
   DetailRow,
@@ -50,7 +53,7 @@ import {
 } from "./first-time-status";
 import { HackerEventAttendancePanel } from "./hacker-event-attendance-panel";
 
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
+type HackerStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** Only what the edit form reads, so it does not depend on the whole DTO. */
 interface HackerEditable {
@@ -75,14 +78,14 @@ interface HackerEditable {
   websiteUrl: string | null;
 }
 
-/** `checkedin` is filterable but not settable, so it has no label entry. */
+/** Safely label a stored status, including stale values from an open tab. */
 function statusLabel(status: string) {
   // `hasOwn`, not `in`, which walks the prototype and would return a function
   // for a wire value like `"toString"` — React throws on that, so an officer
   // would get an error boundary instead of this fallback.
   return Object.hasOwn(HACKER_STATUS_LABELS, status)
-    ? HACKER_STATUS_LABELS[status as SendingStatus]
-    : "Checked in";
+    ? HACKER_STATUS_LABELS[status as HackerStatus]
+    : "Unknown status";
 }
 
 function HackerDetailSkeleton() {
@@ -443,9 +446,7 @@ export function HackerDetailDialog({
                     title="Status and actions"
                   >
                     <div className="flex flex-wrap gap-2 px-3 py-3 sm:px-4">
-                      {(
-                        Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]
-                      ).map((status) => (
+                      {HACKATHON_SENDING_STATUSES.map((status) => (
                         <Button
                           className="min-h-11 text-sm"
                           disabled={

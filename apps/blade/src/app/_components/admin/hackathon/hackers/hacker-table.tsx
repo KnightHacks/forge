@@ -19,19 +19,15 @@ import { resolveFirstTimeStatus } from "./first-time-status";
 
 type Roster = RouterOutputs["hacker"]["listForHackathon"]["hackers"];
 type Hacker = Roster[number];
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
+type HackerStatus = keyof typeof HACKER_STATUS_LABELS;
 
-/**
- * `checkedin` is a real stored status the roster can filter to but an officer
- * cannot set, so it has no entry in the label map — casting the lookup hid that
- * and rendered a blank badge for every checked-in applicant.
- */
+/** Safely label a stored status, including stale values from an open tab. */
 function statusLabel(status: string) {
   // `hasOwn`, not `in`, which walks the prototype and would return a function
   // for `"toString"`.
   return Object.hasOwn(HACKER_STATUS_LABELS, status)
-    ? HACKER_STATUS_LABELS[status as SendingStatus]
-    : "Checked in";
+    ? HACKER_STATUS_LABELS[status as HackerStatus]
+    : "Unknown status";
 }
 
 export function HackerTable({

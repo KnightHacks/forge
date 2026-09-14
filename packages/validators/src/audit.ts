@@ -500,6 +500,30 @@ export const AUDIT_ACTION_CATALOG = {
     "projectId",
     "revision",
   ]),
+  "judging.evaluations.dropped": policy(
+    "hackathons",
+    "Dropped all judging evaluations",
+    ["draftCount", "evaluationCount"],
+  ),
+  "judging.rooms.dropped": policy("hackathons", "Dropped all judging rooms", [
+    "roomCount",
+  ]),
+  "judging.room.deleted": policy("hackathons", "Deleted judging room"),
+  "judging.setup.reset": policy("hackathons", "Reset judging setup", [
+    "groupCount",
+    "rubricItemCount",
+  ]),
+  "judging.launch.reset": policy("hackathons", "Reset judging launch", [
+    "claimCount",
+    "claimLinkCount",
+  ]),
+  "judging.reset": policy("hackathons", "Reset hackathon judging", [
+    "draftCount",
+    "evaluationCount",
+    "hadSchedule",
+    "projectCount",
+    "roomCount",
+  ]),
   "judging.schedule.generated": policy(
     "hackathons",
     "Generated judging schedule",
@@ -511,6 +535,7 @@ export const AUDIT_ACTION_CATALOG = {
     "reducedBreakCount",
   ]),
   "judging.schedule.dropped": policy("hackathons", "Dropped judging schedule", [
+    "jobCount",
     "scheduleId",
   ]),
   "judging.appointment.contacts_viewed": policy(
@@ -752,6 +777,18 @@ export const AUDIT_ACTION_CATALOG = {
     "hackathons",
     "Deleted hackathon application",
     ["hackathonId", "legacySnapshotDeleted", "clearedCommandCount"],
+  ),
+  "hacker.bulk_applications_deleted": policy(
+    "hackathons",
+    "Bulk deleted hackathon applications",
+    [
+      "hackathonId",
+      "deletedCount",
+      "skippedCount",
+      "clearedCommandCount",
+      "legacySnapshotDeletedCount",
+      "subjectsTruncated",
+    ],
   ),
   "hacker.application_withdrawn": policy(
     "hackathons",

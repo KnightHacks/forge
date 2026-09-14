@@ -111,9 +111,7 @@ export async function readScheduleSource(
     (task) => task.parentId === null && task.isScheduled,
   );
   const eligibleRooms = scheduledRooms.flatMap((room) =>
-    room.buildingId && staffedIds.has(room.id)
-      ? [{ ...room, buildingId: room.buildingId }]
-      : [],
+    room.buildingId ? [{ ...room, buildingId: room.buildingId }] : [],
   );
   const fingerprint = createHash("sha256")
     .update(

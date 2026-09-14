@@ -64,9 +64,6 @@ export function DeferredWaterfallArt() {
       </div>
 
       {isArtNearby ? <WaterfallAtmosphere /> : null}
-      {isArtNearby ? (
-        <div className={styles.bridge} aria-hidden="true" />
-      ) : null}
     </div>
   );
 }

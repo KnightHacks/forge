@@ -114,6 +114,24 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
       }),
   ],
   [
+    "previewBulkDelete",
+    (caller) =>
+      caller.previewBulkDelete({
+        attendeeIds: [ATTENDEE_ID],
+        hackathonId: HACKATHON_ID,
+      }),
+  ],
+  [
+    "confirmBulkDelete",
+    (caller) =>
+      caller.confirmBulkDelete({
+        attendeeIds: [ATTENDEE_ID],
+        confirmed: true,
+        hackathonId: HACKATHON_ID,
+        previewedAttendeeIds: [ATTENDEE_ID],
+      }),
+  ],
+  [
     "deleteApplication",
     (caller) =>
       caller.deleteApplication({ attendeeId: ATTENDEE_ID, confirmed: true }),

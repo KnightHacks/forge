@@ -533,24 +533,34 @@ export const judgingScheduleRouter = {
         const schedule = await tx.query.JudgingSchedule.findFirst({
           where: eq(JudgingSchedule.hackathonId, input.hackathonId),
         });
-        if (!schedule) return { dropped: false };
-        if (schedule.firstResultAt)
+        if (schedule?.firstResultAt)
           throw new TRPCError({
             code: "CONFLICT",
             message:
               "The first scheduled result has been submitted. This schedule can no longer be dropped.",
           });
-        await tx
-          .delete(JudgingSchedule)
-          .where(eq(JudgingSchedule.id, schedule.id));
+        if (schedule) {
+          await tx
+            .delete(JudgingSchedule)
+            .where(eq(JudgingSchedule.id, schedule.id));
+        }
+        const jobs = await tx
+          .delete(JudgingScheduleJob)
+          .where(eq(JudgingScheduleJob.hackathonId, input.hackathonId))
+          .returning({ id: JudgingScheduleJob.id });
+        if (!schedule && jobs.length === 0)
+          return { dropped: false, jobCount: 0 };
         await auditSchedule(
           tx,
           actor,
           input.hackathonId,
           "judging.schedule.dropped",
-          { scheduleId: schedule.id },
+          {
+            jobCount: jobs.length,
+            ...(schedule ? { scheduleId: schedule.id } : {}),
+          },
         );
-        return { dropped: true };
+        return { dropped: !!schedule, jobCount: jobs.length };
       });
     }),
 

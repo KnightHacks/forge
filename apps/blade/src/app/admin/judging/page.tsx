@@ -63,13 +63,17 @@ export default async function JudgingAdminPage({
   };
   const requestedTab = first(params.tab);
   const selectedTab =
-    requestedTab === "claims" ||
-    requestedTab === "evaluations" ||
-    requestedTab === "projects" ||
-    requestedTab === "schedule" ||
-    requestedTab === "rooms"
-      ? requestedTab
-      : "setup";
+    requestedTab === "claims"
+      ? "launch"
+      : requestedTab === "evaluations" ||
+          requestedTab === "launch" ||
+          requestedTab === "projects" ||
+          requestedTab === "reset" ||
+          requestedTab === "schedule" ||
+          requestedTab === "rooms" ||
+          requestedTab === "setup"
+        ? requestedTab
+        : "projects";
   const [controlData, projectData, evaluations, scheduleData] =
     await Promise.all([
       api.judging.listAdmin({ hackathonId: selected.id }),
