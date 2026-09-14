@@ -126,6 +126,9 @@ describe("production judging flow regressions", () => {
       challengeId,
       hackathonId,
     });
+    expect(mocks.listJudge).toHaveBeenCalledWith(
+      expect.objectContaining({ direction: "asc", sort: "scheduledAt" }),
+    );
     if (!isValidElement<{ input: { hackathonId?: string } }>(page))
       throw new Error("Expected the judge workspace element.");
     expect(page.props.input.hackathonId).toBe(hackathonId);
