@@ -38,7 +38,7 @@ function validationGateway(
 describe("judging Discord messages", () => {
   it("names the full room and challenge in the thread starter", () => {
     expect(buildJudgingRoomStarterMessage("ENG 101", "General").content).toBe(
-      "Judging communications for **ENG 101** for General challenge track.",
+      "Judging communications for **ENG 101** for **General** challenge track.",
     );
   });
 
@@ -207,6 +207,7 @@ describe("judging Discord messages", () => {
 
     expect(message?.allowedMentions.users).toEqual([memberOne, memberTwo]);
     expect(message?.content).toContain("Urgent judging announcement");
+    expect(message?.content).toContain("for **Sponsor suite A**");
     expect(message?.content).toContain("Stop judging");
     expect(message?.content).not.toContain("@here");
   });

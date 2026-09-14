@@ -6,7 +6,6 @@ import { and, eq, inArray, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
-  Hackathon,
   HackathonJudgingConfiguration,
   Judge,
   JudgingAnnouncement,
@@ -444,7 +443,7 @@ export function buildJudgingRoomStarterMessage(
 ): JudgingDiscordMessage {
   return {
     allowedMentions: { parse: [], users: [] },
-    content: `Judging communications for **${escapeMarkdown(roomName)}** for ${escapeMarkdown(challengeLabel)} challenge track.`,
+    content: `Judging communications for **${escapeMarkdown(roomName)}** for **${escapeMarkdown(challengeLabel)}** challenge track.`,
   };
 }
 
@@ -500,22 +499,13 @@ async function currentAuthorizedDiscordIds(input: {
   return authorizedJudgingDiscordIds(rows, input.includeJudgeRole);
 }
 
-function isHackathonActive(startDate: Date, endDate: Date) {
-  const now = Date.now();
-  return startDate.getTime() <= now && endDate.getTime() >= now;
-}
-
 async function currentMemberDiscordIds(roomId: string) {
   const rows = await db
     .select({
-      endDate: Hackathon.endDate,
-      startDate: Hackathon.startDate,
       userId: Judge.userId,
     })
     .from(JudgingRoomPresence)
     .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
-    .innerJoin(JudgingRoom, eq(JudgingRoom.id, JudgingRoomPresence.roomId))
-    .innerJoin(Hackathon, eq(Hackathon.id, JudgingRoom.hackathonId))
     .where(
       and(
         eq(JudgingRoomPresence.roomId, roomId),
@@ -524,8 +514,7 @@ async function currentMemberDiscordIds(roomId: string) {
       ),
     );
   return currentAuthorizedDiscordIds({
-    includeJudgeRole:
-      !!rows[0] && isHackathonActive(rows[0].startDate, rows[0].endDate),
+    includeJudgeRole: true,
     userIds: rows
       .map((row) => row.userId)
       .filter((id): id is string => id !== null),
@@ -533,14 +522,22 @@ async function currentMemberDiscordIds(roomId: string) {
 }
 
 async function hackathonMemberDiscordIds(hackathonId: string) {
-  const [hackathon] = await db
-    .select({ endDate: Hackathon.endDate, startDate: Hackathon.startDate })
-    .from(Hackathon)
-    .where(eq(Hackathon.id, hackathonId))
-    .limit(1);
-  if (!hackathon) return [];
+  const rows = await db
+    .select({ userId: Judge.userId })
+    .from(JudgingRoomPresence)
+    .innerJoin(Judge, eq(Judge.id, JudgingRoomPresence.judgeId))
+    .where(
+      and(
+        eq(JudgingRoomPresence.hackathonId, hackathonId),
+        eq(Judge.kind, "member"),
+        isNull(JudgingRoomPresence.leftAt),
+      ),
+    );
   return currentAuthorizedDiscordIds({
-    includeJudgeRole: isHackathonActive(hackathon.startDate, hackathon.endDate),
+    includeJudgeRole: true,
+    userIds: rows
+      .map((row) => row.userId)
+      .filter((id): id is string => id !== null),
   });
 }
 

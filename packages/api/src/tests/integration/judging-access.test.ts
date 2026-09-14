@@ -111,7 +111,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     schemas = await import("@forge/db/schemas/knight-hacks");
 
     await client.insert(authSchemas.User).values({
-      discordUserId: "judging-officer",
+      discordUserId: "111111111111111111",
       id: OFFICER_USER,
       name: "Jordan Officer",
     });
@@ -130,7 +130,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       user: { id: OFFICER_USER, name: "Jordan Officer" },
     } as unknown as Session;
     await client.insert(authSchemas.User).values({
-      discordUserId: "judging-member",
+      discordUserId: "222222222222222222",
       id: MEMBER_USER,
       name: "Morgan Judge",
     });
@@ -149,7 +149,7 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
       user: { id: MEMBER_USER, name: "Morgan Judge" },
     } as unknown as Session;
     await client.insert(authSchemas.User).values({
-      discordUserId: "fallback-discord-label",
+      discordUserId: "333333333333333333",
       id: FALLBACK_USER,
       name: "Fallback Discord Label",
     });
@@ -688,6 +688,42 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     ]);
     await memberCaller.judging.joinRoom({ roomId: room.id });
     await fallbackCaller.judging.joinRoom({ roomId: secondRoom.id });
+    await client
+      .update(schemas.HackathonJudgingConfiguration)
+      .set({ judgingCommsChannelId: "123456789012345678" })
+      .where(eq(schemas.HackathonJudgingConfiguration.hackathonId, HACKATHON));
+    const sentRecipientIds: string[][] = [];
+    const sendMessage = vi.fn(
+      (input: Parameters<JudgingDiscordGateway["sendMessage"]>[0]) => {
+        sentRecipientIds.push(input.message.allowedMentions.users);
+        return Promise.resolve();
+      },
+    );
+    const gateway: JudgingDiscordGateway = {
+      createRoomThread: vi.fn(() => Promise.reject(new Error("unused"))),
+      getChannel: vi.fn(() => Promise.reject(new Error("unused"))),
+      listTextChannels: vi.fn(() => Promise.resolve([])),
+      prepareRoomThread: vi.fn(() => Promise.reject(new Error("unused"))),
+      sendMessage,
+    };
+    const { deliverJudgingAnnouncement } =
+      await import("../../utils/judging/discord-comms");
+    await deliverJudgingAnnouncement(
+      {
+        hackathonId: HACKATHON,
+        isUrgent: false,
+        message: "All rooms update",
+        roomId: null,
+      },
+      gateway,
+    );
+    expect(sentRecipientIds).toEqual([
+      ["222222222222222222", "333333333333333333"],
+    ]);
+    await client
+      .update(schemas.HackathonJudgingConfiguration)
+      .set({ judgingCommsChannelId: null })
+      .where(eq(schemas.HackathonJudgingConfiguration.hackathonId, HACKATHON));
     await client
       .update(schemas.Judge)
       .set({ displayName: "mjudge" })
