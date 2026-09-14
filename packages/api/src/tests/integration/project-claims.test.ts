@@ -10,6 +10,7 @@ import {
   vi,
 } from "vitest";
 
+import type { Session } from "@forge/auth/server";
 import type { db } from "@forge/db/client";
 import type * as Schema from "@forge/db/schemas/knight-hacks";
 import type { DisposableDatabase } from "@forge/db/testing";
@@ -18,6 +19,8 @@ import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
 } from "@forge/db/testing";
+
+import { permissionBitstring } from "../support/permissions";
 
 vi.mock("@forge/email", async (original) => ({
   ...(await original<typeof import("@forge/email")>()),
@@ -221,6 +224,58 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     expect((await claims.projectRoster(project))[1]?.discordUserId).toBe(
       "123456789012345600",
     );
+  });
+  it("reports hackathon-wide claim totals while recipients are filtered", async () => {
+    await seedClaim();
+    await claims.prepareClaimLink(event, required(members[2]));
+    await client
+      .update(schema.ProjectClaimLink)
+      .set({ sentAt: new Date() })
+      .where(eq(schema.ProjectClaimLink.memberId, required(members[2])));
+    const otherProject = await seedProject(otherEvent, 1);
+    await claims.prepareClaimLink(
+      otherEvent,
+      required(otherProject.members[0]),
+    );
+    await client
+      .update(schema.ProjectClaimLink)
+      .set({ sentAt: new Date() })
+      .where(
+        eq(schema.ProjectClaimLink.memberId, required(otherProject.members[0])),
+      );
+
+    const { Permissions, Roles } = await import("@forge/db/schemas/auth");
+    const roleId = randomUUID();
+    await client.insert(Roles).values({
+      id: roleId,
+      discordRoleId: "990000000000000901",
+      name: "Claims officer",
+      permissions: permissionBitstring("IS_OFFICER"),
+    });
+    await client
+      .insert(Permissions)
+      .values({ roleId, userId: required(users[0]) });
+    const trpc = await import("../../trpc");
+    const { projectClaimsRouter } =
+      await import("../../routers/project-claims");
+    const caller = trpc.createCallerFactory(
+      trpc.createTRPCRouter({ judging: projectClaimsRouter }),
+    )({
+      headers: new Headers(),
+      session: {
+        session: { id: "project-claims", userAgent: "vitest" },
+        user: { id: required(users[0]), name: "Claims Officer" },
+      } as unknown as Session,
+      source: "project-claims-integration",
+    });
+
+    const result = await caller.judging.getClaimsAdmin({
+      hackathonId: event,
+      query: "Imported 2",
+    });
+
+    expect(result.members).toHaveLength(1);
+    expect(result.summary).toEqual({ claimed: 1, sent: 1, unclaimed: 2 });
   });
   it("TC-008/017: invitation occupies the fourth slot; retry and acceptance never add another", async () => {
     await seedClaim();
