@@ -56,8 +56,6 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
   const router = useRouter();
   const [items, setItems] = useState(data.rubric);
   const saveRubric = api.judging.saveRubric.useMutation();
-  const setState = api.judging.setJudgingState.useMutation();
-  const setResults = api.judging.setDisplayAllResults.useMutation();
   const rubricLocked = data.setupLocked || data.configuration.state !== "draft";
 
   function updateItem(id: string, patch: Partial<RubricItem>) {
@@ -93,101 +91,9 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
     }
   }
 
-  async function changeState(state: "closed" | "open") {
-    try {
-      await setState.mutateAsync({ hackathonId: data.hackathon.id, state });
-      toast.success(
-        state === "open" ? "Judging is open." : "Judging is closed.",
-      );
-      router.refresh();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "State update failed.",
-      );
-    }
-  }
-
   return (
     <div className="space-y-4">
       <ChallengeConfigurationPanel data={data} />
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
-        <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold">Judging state</h2>
-                <Badge
-                  variant={
-                    data.configuration.state === "open" ? "default" : "outline"
-                  }
-                >
-                  {data.configuration.state[0]?.toUpperCase()}
-                  {data.configuration.state.slice(1)}
-                </Badge>
-              </div>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Draft blocks submissions. Open accepts new and edited scores.
-                Closed keeps every submission readable but locks changes.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {data.configuration.state === "open" ? (
-                <Button
-                  disabled={setState.isPending}
-                  onClick={() => void changeState("closed")}
-                  variant="outline"
-                >
-                  Close judging
-                </Button>
-              ) : (
-                <Button
-                  disabled={setState.isPending}
-                  onClick={() => void changeState("open")}
-                >
-                  {data.configuration.state === "closed" ? "Reopen" : "Open"}{" "}
-                  judging
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <Label htmlFor="display-results">Display all results</Label>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Reveal scoped ratings to authenticated judges before they
-                submit. Guest judges stay gated.
-              </p>
-            </div>
-            <Switch
-              checked={data.configuration.displayAllResults}
-              disabled={setResults.isPending}
-              id="display-results"
-              onCheckedChange={async (checked) => {
-                try {
-                  await setResults.mutateAsync({
-                    displayAllResults: checked,
-                    hackathonId: data.hackathon.id,
-                  });
-                  toast.success(
-                    checked ? "Results revealed." : "Results gated.",
-                  );
-                  router.refresh();
-                } catch (error) {
-                  toast.error(
-                    error instanceof Error
-                      ? error.message
-                      : "Result visibility update failed.",
-                  );
-                }
-              }}
-            />
-          </div>
-        </div>
-      </section>
-
       {rubricLocked ? (
         <Alert>
           <AlertTitle>Rubric locked</AlertTitle>
@@ -377,5 +283,106 @@ export function JudgingConfigurationPanel({ data }: { data: ControlData }) {
         </footer>
       </section>
     </div>
+  );
+}
+
+export function JudgingLaunchControls({ data }: { data: ControlData }) {
+  const router = useRouter();
+  const setState = api.judging.setJudgingState.useMutation();
+  const setResults = api.judging.setDisplayAllResults.useMutation();
+
+  async function changeState(state: "closed" | "open") {
+    try {
+      await setState.mutateAsync({ hackathonId: data.hackathon.id, state });
+      toast.success(
+        state === "open" ? "Judging is open." : "Judging is closed.",
+      );
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "State update failed.",
+      );
+    }
+  }
+
+  return (
+    <section
+      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]"
+      id="judging-state"
+    >
+      <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold">Judging state</h2>
+              <Badge
+                variant={
+                  data.configuration.state === "open" ? "default" : "outline"
+                }
+              >
+                {data.configuration.state[0]?.toUpperCase()}
+                {data.configuration.state.slice(1)}
+              </Badge>
+            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Draft blocks submissions. Open accepts new and edited scores.
+              Closed keeps every submission readable but locks changes.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {data.configuration.state === "open" ? (
+              <Button
+                disabled={setState.isPending}
+                onClick={() => void changeState("closed")}
+                variant="outline"
+              >
+                Close judging
+              </Button>
+            ) : (
+              <Button
+                disabled={setState.isPending}
+                onClick={() => void changeState("open")}
+              >
+                {data.configuration.state === "closed" ? "Reopen" : "Open"}{" "}
+                judging
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/15 sm:p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Label htmlFor="display-results">Display all results</Label>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Reveal scoped ratings to authenticated judges before they submit.
+              Guest judges stay gated.
+            </p>
+          </div>
+          <Switch
+            checked={data.configuration.displayAllResults}
+            disabled={setResults.isPending}
+            id="display-results"
+            onCheckedChange={async (checked) => {
+              try {
+                await setResults.mutateAsync({
+                  displayAllResults: checked,
+                  hackathonId: data.hackathon.id,
+                });
+                toast.success(checked ? "Results revealed." : "Results gated.");
+                router.refresh();
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Result visibility update failed.",
+                );
+              }
+            }}
+          />
+        </div>
+      </div>
+    </section>
   );
 }

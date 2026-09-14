@@ -45,7 +45,7 @@ export function scheduleCapacityErrors(problem: ScheduleProblem) {
     ).length;
     if (count > rooms * slots)
       errors.push(
-        `Challenge ${challenge} requires ${count} appointments but its staffed rooms fit ${rooms * slots}.`,
+        `Challenge ${challenge} requires ${count} appointments but its configured rooms fit ${rooms * slots}.`,
       );
   }
   const gapSlots = Math.ceil(

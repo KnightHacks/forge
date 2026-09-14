@@ -1,7 +1,37 @@
 # Hacker Management Status
 
 Phase: **implemented** — whole bundle approved 2026-08-03 and built. Awaiting
-`forge-review` and the owner's UI pass.
+the owner's final UI pass.
+
+## Officer bulk Checked-In — 2026-09-13
+
+- Owner approved a Checked-In roster filter and an officer-only bulk Checked-In
+  transition. It keeps the existing preview/confirm flow but does not require
+  status-mail configuration or create an email send.
+- The roster path records `status`, `checkedInAt`, and `checkedInBy`. Event
+  attendance, class assignment, points, and Discord side effects remain out of
+  scope.
+- Targeted validation: validators 20 tests, Blade filter facets 16 tests, and
+  API hacker guards 57 tests passed. Validator, API, and Blade typechecks passed.
+  Targeted formatting and `git diff --check` passed. Targeted ESLint passed with
+  the repository's existing file/function-length and import-style warnings after
+  the first run hit Node's default heap limit.
+
+## Individual and bulk deletion — 2026-09-13
+
+- Owner clarified that deletion remains permanent: no Deleted tab, restore
+  flow, schema change, or migration.
+- The existing detail action remains available to Hacker Editors. A selected
+  group now uses preview and confirmation before the same hard-delete cleanup;
+  reusable profiles remain, and no email is sent.
+- The existing blacklisted-row safeguard remains: delegated editors receive a
+  redacted skip, while officers may delete the application.
+- Delete is a separate destructive action in both the selected-row action bar
+  and the hacker detail dialog; it is not represented as a roster status.
+- Final targeted validation passed: 178 API tests and 41 Blade tests. The full
+  pre-commit gate and all 21 workspace build tasks passed.
+- Issue: [#570](https://github.com/KnightHacks/forge/issues/570). PR:
+  [#571](https://github.com/KnightHacks/forge/pull/571).
 
 ## Delegated hacker permissions — 2026-09-06
 
@@ -50,8 +80,9 @@ officer-facing surface.
 
 **Scope, from the first reverse-prompt round:**
 
-- **Check-in moved out**, to the event page slice, taking class assignment and
-  live Discord role application with it. This was originally in this slice.
+- **Event check-in moved out**, taking class assignment, attendance, points, and
+  live Discord role application with it. The later officer roster action only
+  moves selected attendee records to Checked-In and records attribution.
 - **Points moved in**, but read-only — the column is displayed and nothing here
   writes it. Awarding arrives with events.
 - **Bulk accept/deny is in.**
@@ -134,7 +165,7 @@ not specified.
 - [x] Roster UI with amendable multi-select, filters, bulk preview/confirm,
       blacklist, and the failed-delivery surface.
 - [x] Tests, **including both files the previous bundle promised and skipped**.
-- [ ] `forge-review` until clean.
+- [x] `forge-review` until clean.
 - [ ] Owner UI pass.
 
 ## Deviations from the approved SRD

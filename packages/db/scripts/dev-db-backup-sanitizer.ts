@@ -123,6 +123,8 @@ export const TABLES_TO_DROP = [
   // backups; officers can recreate the inventory from the Devpost export.
   "knight_hacks_project",
   "knight_hacks_project_challenge",
+  "knight_hacks_project_claim_link",
+  "knight_hacks_project_claim",
   "knight_hacks_project_member",
   "knight_hacks_project_to_challenge",
   "knight_hacks_hackathon_judging_configuration",

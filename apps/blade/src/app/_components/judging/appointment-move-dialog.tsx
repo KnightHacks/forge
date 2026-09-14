@@ -131,6 +131,18 @@ export function AppointmentMoveDialog({
                   >
                     {member.email}
                   </a>
+                  {member.discordUserId ? (
+                    <a
+                      className="mt-1 block text-primary underline"
+                      href={`https://discord.com/users/${member.discordUserId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Message on Discord
+                    </a>
+                  ) : member.discordUser ? (
+                    <p>{member.discordUser}</p>
+                  ) : null}
                 </div>
               ))}
               {!data.members.length ? (

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Trash2, UserCheck } from "lucide-react";
 
-import type { SkipReason } from "@forge/validators";
+import type { HackerBulkStatus, SkipReason } from "@forge/validators";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -18,7 +18,34 @@ import { HACKER_STATUS_LABELS } from "@forge/validators";
 
 import { api } from "~/trpc/react";
 
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
+export type HackerBulkAction = HackerBulkStatus | "delete";
+
+export function bulkActionCopy(action: HackerBulkAction, count: number) {
+  if (action === "delete") {
+    return {
+      confirm: `Delete ${count} application${count === 1 ? "" : "s"}`,
+      description:
+        "This permanently removes their applications and hackathon activity. Their accounts and reusable profiles remain. No email is sent.",
+      label: "Will be permanently deleted",
+      title: "Delete",
+    };
+  }
+  if (action === "checkedin") {
+    return {
+      confirm: `Check in ${count} hackers`,
+      description: "This checks them into the hackathon without sending email.",
+      label: "Will be checked in",
+      title: HACKER_STATUS_LABELS[action],
+    };
+  }
+  return {
+    confirm: `Send ${count} emails`,
+    description:
+      "This sends each of them the configured email immediately. It cannot be recalled.",
+    label: "Will be emailed",
+    title: HACKER_STATUS_LABELS[action],
+  };
+}
 
 /**
  * Read through a widening helper, the same way `hacker-table.tsx` reads status
@@ -60,9 +87,8 @@ const SKIP_REASONS: Record<SkipReason, string> = {
 };
 
 /**
- * Preview, then confirm — the same two-step the email portal uses for a
- * campaign, because this is the same act: a lot of mail leaving at once,
- * unrecallable.
+ * Preview, then confirm. Status changes queue their configured email; check-in
+ * and permanent deletion use the same confirmation flow but do not send mail.
  *
  * The preview writes nothing. It exists so an officer sees exactly who is about
  * to be mailed and who is being skipped *before* committing, rather than
@@ -73,22 +99,32 @@ export function BulkConfirmDialog({
   hackathonId,
   onDone,
   onOpenChange,
-  status,
+  action,
 }: {
+  action: HackerBulkAction | null;
   attendeeIds: string[];
   hackathonId: string;
   onDone: () => void;
   onOpenChange: (open: boolean) => void;
-  status: SendingStatus | null;
 }) {
-  const preview = api.hacker.previewBulk.useMutation({
+  const statusPreview = api.hacker.previewBulk.useMutation({
     onError: (error) => toast.error(error.message),
   });
-  const confirm = api.hacker.confirmBulk.useMutation({
+  const deletePreview = api.hacker.previewBulkDelete.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: (result) => {
+  });
+  const statusConfirm = api.hacker.confirmBulk.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: (result, variables) => {
       const skippedNote =
         result.skipped.length > 0 ? `, ${result.skipped.length} skipped` : "";
+      if (variables.status === "checkedin") {
+        toast.success(
+          `${result.movedCount} checked in${skippedNote}. No email sent.`,
+        );
+        onDone();
+        return;
+      }
       // The withheld note only ever appears outside production, where sends are
       // narrowed to the team. Saying "queued" with nothing queued is how a live
       // test looked successful and mailed nobody.
@@ -99,15 +135,27 @@ export function BulkConfirmDialog({
       onDone();
     },
   });
+  const deleteConfirm = api.hacker.confirmBulkDelete.useMutation({
+    onError: (error) => toast.error(error.message),
+    onSuccess: (result) => {
+      const skippedNote =
+        result.skipped.length > 0 ? `, ${result.skipped.length} skipped` : "";
+      toast.success(
+        `${result.deletedCount} applications deleted${skippedNote}. No email sent.`,
+      );
+      onDone();
+    },
+  });
 
-  const open = status !== null;
+  const open = action !== null;
 
   // An effect, not a render-phase call. `previewBulk` is a network request, and
   // firing it during render means StrictMode's double-invoke sends it twice —
   // and a render discarded by a parent transition sends it anyway. The
   // `isPending` guard could not see either, because it reads a render-time
   // snapshot.
-  const { mutate: runPreview, reset: resetPreview } = preview;
+  const { mutate: runStatusPreview, reset: resetStatusPreview } = statusPreview;
+  const { mutate: runDeletePreview, reset: resetDeletePreview } = deletePreview;
   /**
    * The selection's contents, as a value the dependency array can compare.
    *
@@ -120,8 +168,9 @@ export function BulkConfirmDialog({
    */
   const idsKey = attendeeIds.join(",");
   useEffect(() => {
-    if (status === null) {
-      resetPreview();
+    if (action === null) {
+      resetStatusPreview();
+      resetDeletePreview();
       return;
     }
     // `previewBulk` requires at least one id. If the selection empties while
@@ -129,35 +178,76 @@ export function BulkConfirmDialog({
     // in place of the preview, and retrying fails the same way — so it says
     // what happened instead.
     if (attendeeIds.length === 0) {
-      resetPreview();
+      resetStatusPreview();
+      resetDeletePreview();
       return;
     }
-    runPreview({ attendeeIds, hackathonId, status });
-  }, [attendeeIds, hackathonId, idsKey, resetPreview, runPreview, status]);
+    if (action === "delete") {
+      resetStatusPreview();
+      runDeletePreview({ attendeeIds, hackathonId });
+      return;
+    }
+    resetDeletePreview();
+    runStatusPreview({ attendeeIds, hackathonId, status: action });
+  }, [
+    action,
+    attendeeIds,
+    hackathonId,
+    idsKey,
+    resetDeletePreview,
+    resetStatusPreview,
+    runDeletePreview,
+    runStatusPreview,
+  ]);
 
-  const result = preview.data;
+  const deleting = action === "delete";
+  const checkingIn = action === "checkedin";
+  const previewError = deleting ? deletePreview.error : statusPreview.error;
+  const previewPending = deleting
+    ? deletePreview.isPending
+    : statusPreview.isPending;
+  const result = deleting ? deletePreview.data : statusPreview.data;
+  const affected =
+    (deleting ? deletePreview.data?.deleting : statusPreview.data?.sending) ??
+    [];
+  const skipped = result?.skipped ?? [];
+  const hasResult = result !== undefined;
+  const copy = action ? bulkActionCopy(action, affected.length) : null;
+  const subject = deleting ? "application" : "applicant";
+  const confirmPending = deleting
+    ? deleteConfirm.isPending
+    : statusConfirm.isPending;
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {status ? HACKER_STATUS_LABELS[status] : ""}{" "}
-            {result ? `${result.sending.length} applicants` : "applicants…"}
+            {copy?.title ?? ""}{" "}
+            {hasResult
+              ? `${affected.length} ${subject}${affected.length === 1 ? "" : "s"}`
+              : `${subject}s…`}
           </DialogTitle>
           <DialogDescription>
-            This sends each of them the configured email immediately. It cannot
-            be recalled.
+            {copy?.description ?? "Preparing this bulk action."}
           </DialogDescription>
         </DialogHeader>
 
-        {preview.isError ? (
+        {previewError ? (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
-            <p className="text-sm text-destructive">{preview.error.message}</p>
+            <p className="text-sm text-destructive">{previewError.message}</p>
             <Button
               className="mt-2 min-h-11"
               onClick={() => {
-                if (status) runPreview({ attendeeIds, hackathonId, status });
+                if (action === "delete") {
+                  runDeletePreview({ attendeeIds, hackathonId });
+                } else if (action) {
+                  runStatusPreview({
+                    attendeeIds,
+                    hackathonId,
+                    status: action,
+                  });
+                }
               }}
               size="sm"
               variant="secondary"
@@ -174,21 +264,21 @@ export function BulkConfirmDialog({
           </p>
         ) : null}
 
-        {preview.isPending ? (
+        {previewPending ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             Working out who this affects…
           </p>
         ) : null}
 
-        {result ? (
+        {hasResult ? (
           <div className="grid gap-4">
             <div>
               <p className="font-medium">
-                Will be emailed ({result.sending.length})
+                {copy?.label} ({affected.length})
               </p>
               <ul className="mt-1 max-h-48 overflow-y-auto text-sm text-muted-foreground">
-                {result.sending.map((row) => (
+                {affected.map((row) => (
                   <li className="break-all" key={row.attendeeId}>
                     {row.name} — {row.email}
                   </li>
@@ -196,13 +286,13 @@ export function BulkConfirmDialog({
               </ul>
             </div>
 
-            {result.skipped.length > 0 ? (
+            {skipped.length > 0 ? (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                 <p className="font-medium text-destructive">
-                  Skipped ({result.skipped.length})
+                  Skipped ({skipped.length})
                 </p>
                 <ul className="mt-1 max-h-40 overflow-y-auto text-sm text-destructive/90">
-                  {result.skipped.map((row) => (
+                  {skipped.map((row) => (
                     <li key={row.attendeeId}>
                       {row.name} — {skipLabel(row.reason)}
                       {row.email ? ` (${row.email})` : ""}
@@ -225,21 +315,45 @@ export function BulkConfirmDialog({
           <Button
             className="min-h-11 gap-2"
             disabled={
-              confirm.isPending ||
-              preview.isPending ||
-              !status ||
-              (result?.sending.length ?? 0) === 0
+              confirmPending ||
+              previewPending ||
+              !action ||
+              affected.length === 0
             }
             onClick={() => {
-              if (status) confirm.mutate({ attendeeIds, hackathonId, status });
+              if (action === "delete") {
+                deleteConfirm.mutate({
+                  attendeeIds,
+                  confirmed: true,
+                  hackathonId,
+                  previewedAttendeeIds: affected.map((row) => row.attendeeId),
+                });
+              } else if (action) {
+                statusConfirm.mutate({
+                  attendeeIds,
+                  hackathonId,
+                  status: action,
+                });
+              }
             }}
+            variant={deleting ? "destructive" : "primary"}
           >
-            {confirm.isPending ? (
+            {confirmPending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : deleting ? (
+              <Trash2 className="size-4" aria-hidden="true" />
+            ) : checkingIn ? (
+              <UserCheck className="size-4" aria-hidden="true" />
             ) : (
               <Send className="size-4" aria-hidden="true" />
             )}
-            {result ? `Send ${result.sending.length} emails` : "Send emails"}
+            {hasResult
+              ? copy?.confirm
+              : deleting
+                ? "Delete applications"
+                : checkingIn
+                  ? "Check in hackers"
+                  : "Send emails"}
           </Button>
         </DialogFooter>
       </DialogContent>

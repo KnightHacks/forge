@@ -15,6 +15,7 @@ import {
   portalLogoutRequestSchema,
   portalRefreshSchema,
 } from "../hacker-portal";
+import { projectClaimSettingsSchema } from "../project-claims";
 
 describe("Hacker Portal validators", () => {
   it("accepts a trimmed custom school without weakening the school field", () => {
@@ -110,20 +111,56 @@ describe("Hacker Portal validators", () => {
     ).toBe(true);
   });
 
+  it("invalid claim-page URLs return validation errors", () => {
+    const settings = {
+      hackathonId: "11111111-1111-4111-8111-111111111111",
+      published: false,
+      emergency: false,
+    };
+    for (const claimUrl of [
+      "garbage",
+      "javascript:alert(1)",
+      "http://example.com",
+      "https://example.com?claim=secret",
+    ]) {
+      expect(
+        projectClaimSettingsSchema.safeParse({ ...settings, claimUrl }).success,
+      ).toBe(false);
+    }
+    expect(
+      projectClaimSettingsSchema.safeParse({
+        ...settings,
+        claimUrl: "https://2026.knighthacks.org/dashboard/judging",
+      }).success,
+    ).toBe(true);
+    expect(
+      projectClaimSettingsSchema.safeParse({
+        ...settings,
+        emergency: true,
+        claimUrl: "https://2026.knighthacks.org/dashboard/judging",
+      }).success,
+    ).toBe(false);
+  });
+
   it("TC-SDK-001 publishes schemas for every participant v1 procedure", () => {
     const keys = [
+      "claimProject",
       "confirmAttendance",
       "getApplicationContext",
       "getCheckInPass",
       "getDashboard",
+      "getJudging",
       "getLeaderboard",
       "getMyAttendance",
       "getMyPoints",
+      "getProjectClaim",
       "getPublicHackathon",
       "getResume",
       "getSchedule",
       "getSession",
+      "inviteProjectMember",
       "removeResume",
+      "searchJudgingProjects",
       "submitApplication",
       "updateApplication",
       "updateParticipant",

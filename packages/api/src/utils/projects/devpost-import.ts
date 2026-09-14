@@ -280,9 +280,11 @@ export function parseDevpostProjects(csvContent: string): ParsedProjectImport {
       if (
         !Number.isInteger(additionalCount) ||
         additionalCount < 0 ||
-        additionalCount > 99
+        additionalCount > 3
       ) {
-        throw new ProjectImportError("Participant count is invalid.");
+        throw new ProjectImportError(
+          "Projects must have between one and four participants.",
+        );
       }
 
       const members: ParsedProjectMember[] = [];

@@ -219,7 +219,7 @@ describe("judging schedule search", () => {
       })),
     };
     expect(scheduleCapacityErrors(input)).toContain(
-      "Challenge general requires 250 appointments but its staffed rooms fit 24.",
+      "Challenge general requires 250 appointments but its configured rooms fit 24.",
     );
     const state = createScheduleSearch(input);
     expect(state.exhausted).toBe(true);

@@ -1,4 +1,7 @@
 export const AUDITED_ADMIN_PROCEDURES = [
+  "project-claims.setClaimSettings",
+  "project-claims.copyClaimLink",
+  "project-claims.sendClaimLinks",
   "judging-schedule.getUnassignedPresentationChoices",
   "judging-schedule.getAppointmentMoveChoices",
   "alumni.archiveBulletinPost",
@@ -86,6 +89,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "hackathon-event.voidAttendance",
   "hacker.awardPoints",
   "hacker.confirmBulk",
+  "hacker.confirmBulkDelete",
   "hacker.deleteApplication",
   "hacker.setBlacklist",
   "hacker.updateProfile",
@@ -101,6 +105,9 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "judging.archiveRoom",
   "judging.clearAnnouncement",
   "judging.createRoom",
+  "judging.deleteRoom",
+  "judging.dropEvaluations",
+  "judging.dropRooms",
   "project-challenges.updateChallenge",
   "project-challenges.createGroup",
   "project-challenges.updateGroup",
@@ -110,6 +117,10 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "judging.provisionRoomThreads",
   "judging.publishAnnouncement",
   "judging.removeJudgeFromRoom",
+  "judging.resetHackathon",
+  "judging.resetLaunch",
+  "judging.resetProjects",
+  "judging.resetSetup",
   "judging.revokeGuest",
   "judging.revokeRoomLink",
   "judging.rotateRoomLink",
@@ -161,6 +172,7 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "project-claims.getClaimsAdmin",
   "judging-appointment-results.getAppointmentResults",
   "judging-schedule.listScheduleAdmin",
   "judging-schedule.listBuildings",
@@ -234,6 +246,7 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "hacker.listForHackathon",
   "hacker.listHackathonOptions",
   "hacker.previewBulk",
+  "hacker.previewBulkDelete",
   "hacker.selectionSurvival",
   "hacker.statusCounts",
   "issues.get",

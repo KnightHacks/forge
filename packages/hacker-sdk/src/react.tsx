@@ -215,12 +215,13 @@ export function useHackerLeaderboard(
 
 function useParticipantMutation<TInput, TOutput>(
   mutation: (input: TInput) => Promise<TOutput>,
+  retry = true,
 ) {
   const { portalKey } = useHackerSdkClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: mutation,
-    retry: shouldRetryHackerSdkRequest,
+    retry: retry ? shouldRetryHackerSdkRequest : false,
     retryDelay: hackerSdkRetryDelay,
     async onSuccess() {
       await invalidateHackerParticipantQueries(queryClient, portalKey);
@@ -302,4 +303,57 @@ export function useHackerSignOut() {
     mutationFn: (options?: { returnTo?: string }) =>
       client.signOut(options?.returnTo),
   });
+}
+
+/** Event-scoped judging read. The server enforces check-in and project ownership. */
+export function useHackerJudging(projectId?: string) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "judging",
+      projectId ?? "own",
+    ],
+    queryFn: () => client.getJudging(projectId ? { projectId } : {}),
+    enabled: canLoadCheckedInParticipantData(
+      dashboard.data?.application?.status,
+    ),
+    refetchInterval: 120_000,
+    staleTime: 0,
+    gcTime: 0,
+  });
+}
+
+export function useProjectClaim(token: string | null) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "project-claim",
+      token,
+    ],
+    queryFn: () => client.getProjectClaim({ token: token ?? "" }),
+    enabled:
+      !!token &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
+    retry: false,
+    gcTime: 0,
+  });
+}
+
+export function useClaimProject() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation(
+    (input: { token: string; memberId: string }) => client.claimProject(input),
+    false,
+  );
+}
+
+export function useInviteProjectMember() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: { email: string }) =>
+    client.inviteProjectMember(input),
+  );
 }

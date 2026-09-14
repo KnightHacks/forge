@@ -343,7 +343,9 @@ export function PortalAuthBoundary({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session.data && !session.data.authenticated) {
-      window.location.replace(client.signInPath(pathname));
+      window.location.replace(
+        client.signInPath(`${pathname}${window.location.search}`),
+      );
     }
   }, [client, pathname, session.data]);
 

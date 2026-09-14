@@ -67,6 +67,26 @@ function projectRow(
 }
 
 describe("Devpost project import parsing", () => {
+  it("TC-018 rejects oversized projects while preserving valid rows", () => {
+    const parsed = parseDevpostProjects(
+      csv([
+        headers,
+        projectRow(),
+        projectRow({
+          "Additional Team Member Count": "4",
+          "Submission Url": "https://devpost.com/software/oversized",
+          "Project Title": "Too many",
+        }),
+      ]),
+    );
+    expect(parsed.projects).toHaveLength(1);
+    expect(parsed.rejections).toEqual([
+      {
+        project: "Too many",
+        reason: "Projects must have between one and four participants.",
+      },
+    ]);
+  });
   it("preserves every MLH opt-in as an independent challenge for explicit grouping", () => {
     const labels = [
       "MLH - Best Use of Arm",

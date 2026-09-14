@@ -15,9 +15,18 @@ import {
   adminPageLayoutClassName,
 } from "../shared/admin-page";
 import { EvaluationAuditPanel } from "./evaluation-audit-panel";
-import { JudgingConfigurationPanel } from "./judging-configuration-panel";
+import {
+  JudgingConfigurationPanel,
+  JudgingLaunchControls,
+} from "./judging-configuration-panel";
 import { JudgingControlPanel } from "./judging-control-panel";
+import { JudgingLaunchChecklist } from "./judging-launch-checklist";
+import {
+  DropEvaluationsButton,
+  JudgingResetPanel,
+} from "./judging-reset-panel";
 import { JudgingSchedulePanel } from "./judging-schedule-panel";
+import { ProjectClaimsPanel } from "./project-claims-panel";
 
 type AdminData = RouterOutputs["projects"]["listAdmin"];
 type ControlData = RouterOutputs["judging"]["listAdmin"];
@@ -41,7 +50,14 @@ export function ProjectCommandCenter({
     deleted: "active" | "all" | "deleted";
     hackathonId: string;
   };
-  selectedTab: "evaluations" | "projects" | "rooms" | "setup" | "schedule";
+  selectedTab:
+    | "evaluations"
+    | "launch"
+    | "projects"
+    | "reset"
+    | "rooms"
+    | "setup"
+    | "schedule";
   scheduleData: RouterOutputs["judging"]["listScheduleAdmin"] | null;
 }) {
   const pathname = usePathname();
@@ -51,13 +67,16 @@ export function ProjectCommandCenter({
 
   const [activeTab, setActiveTab] = useOptimistic<string>(selectedTab);
 
-  function selectTab(tab: string) {
+  function selectTab(tab: string, section?: string) {
     const next = new URLSearchParams(searchParams.toString());
-    if (tab === "setup") next.delete("tab");
+    if (tab === "projects") next.delete("tab");
     else next.set("tab", tab);
     startTransition(() => {
       setActiveTab(tab);
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+      router.replace(
+        `${pathname}?${next.toString()}${section ? `#${section}` : ""}`,
+        { scroll: section !== undefined },
+      );
     });
   }
 
@@ -73,37 +92,52 @@ export function ProjectCommandCenter({
     <main className={adminPageLayoutClassName} aria-busy={pending}>
       <AdminPageHeader
         actions={
-          <label className="space-y-1">
-            <span className="block text-xs font-medium text-muted-foreground">
-              Hackathon
-            </span>
-            <select
-              aria-label="Manage judging for hackathon"
-              className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
-              onChange={(event) => selectHackathon(event.target.value)}
-              value={controlData.hackathon.id}
-            >
-              {hackathons.map((hackathon) => (
-                <option key={hackathon.id} value={hackathon.id}>
-                  {hackathon.displayName}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex min-w-0 flex-wrap items-end gap-2">
+            <JudgingLaunchChecklist data={controlData} onNavigate={selectTab} />
+            <label className="space-y-1">
+              <span className="block text-xs font-medium text-muted-foreground">
+                Hackathon
+              </span>
+              <select
+                aria-label="Manage judging for hackathon"
+                className="h-11 max-w-full rounded-md border border-input bg-background px-3 text-sm sm:min-w-72"
+                onChange={(event) => selectHackathon(event.target.value)}
+                value={controlData.hackathon.id}
+              >
+                {hackathons.map((hackathon) => (
+                  <option key={hackathon.id} value={hackathon.id}>
+                    {hackathon.displayName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         }
         description="Configure the rubric, manage the Devpost inventory, provision rooms, and control what judges can see."
         eyebrow="Officer tools"
         icon={ClipboardList}
         title="Project command center"
       />
-      <Tabs onValueChange={selectTab} value={activeTab}>
-        <TabsList className="flex h-auto min-h-11 w-full flex-wrap gap-1 sm:w-fit sm:min-w-[34rem]">
-          <TabsTrigger value="setup">Setup</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-          <TabsTrigger value="rooms">Rooms</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
-        </TabsList>
+      <Tabs onValueChange={(tab) => selectTab(tab)} value={activeTab}>
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Setup flow
+          </p>
+          <TabsList className="flex h-auto min-h-11 w-full flex-wrap justify-start gap-1 sm:w-fit">
+            <TabsTrigger value="projects">1 · Projects</TabsTrigger>
+            <TabsTrigger value="setup">2 · Rubric</TabsTrigger>
+            <TabsTrigger value="rooms">3 · Rooms</TabsTrigger>
+            <TabsTrigger value="schedule">4 · Schedule</TabsTrigger>
+            <TabsTrigger value="launch">5 · Launch</TabsTrigger>
+            <TabsTrigger value="evaluations">Evaluations</TabsTrigger>
+            <TabsTrigger
+              className="text-destructive data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground"
+              value="reset"
+            >
+              Reset
+            </TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent className="mt-4" value="setup">
           <JudgingConfigurationPanel
             data={controlData}
@@ -111,35 +145,61 @@ export function ProjectCommandCenter({
           />
         </TabsContent>
         <TabsContent className="mt-4" value="projects">
-          <AdminProjectWorkspace
-            data={projectData}
-            embedded
-            hackathons={hackathons}
-            input={projectInput}
-          />
+          <div id="project-inventory">
+            <AdminProjectWorkspace
+              data={projectData}
+              embedded
+              hackathons={hackathons}
+              input={projectInput}
+            />
+          </div>
         </TabsContent>
         <TabsContent className="mt-4" value="rooms">
-          <JudgingControlPanel
-            embedded
-            hackathons={hackathons}
-            initialData={controlData}
-          />
+          <div id="judging-rooms">
+            <JudgingControlPanel
+              embedded
+              hackathons={hackathons}
+              initialData={controlData}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent className="mt-4" value="launch">
+          <div className="space-y-4">
+            <JudgingLaunchControls data={controlData} />
+            <div id="hacker-access">
+              <ProjectClaimsPanel
+                key={controlData.hackathon.id}
+                hackathonId={controlData.hackathon.id}
+              />
+            </div>
+          </div>
         </TabsContent>
         <TabsContent className="mt-4" value="evaluations">
+          <div className="mb-4 flex justify-end">
+            <DropEvaluationsButton
+              data={controlData}
+              onDropped={() => router.refresh()}
+            />
+          </div>
           <EvaluationAuditPanel
             evaluations={evaluations}
             timeZone={controlData.hackathon.timezone}
           />
         </TabsContent>
         <TabsContent className="mt-4" value="schedule">
-          {scheduleData ? (
-            <JudgingSchedulePanel
-              key={controlData.hackathon.id}
-              initialData={scheduleData}
-              hackathonId={controlData.hackathon.id}
-              timeZone={controlData.hackathon.timezone}
-            />
-          ) : null}
+          <div id="schedule-workspace">
+            {scheduleData ? (
+              <JudgingSchedulePanel
+                key={controlData.hackathon.id}
+                initialData={scheduleData}
+                hackathonId={controlData.hackathon.id}
+                timeZone={controlData.hackathon.timezone}
+              />
+            ) : null}
+          </div>
+        </TabsContent>
+        <TabsContent className="mt-4" value="reset">
+          <JudgingResetPanel data={controlData} />
         </TabsContent>
       </Tabs>
     </main>

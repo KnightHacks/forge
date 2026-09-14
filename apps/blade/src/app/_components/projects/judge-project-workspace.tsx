@@ -44,7 +44,7 @@ type JudgeData = Omit<
   RouterOutputs["projects"]["listJudge"],
   "roomFilterUnavailableReason" | "selectedChallengeId"
 > & { roomFilterUnavailableReason?: string | null };
-type Hackathons = RouterOutputs["projects"]["listAdminHackathons"];
+type Hackathons = RouterOutputs["projects"]["listJudgeHackathons"];
 type JudgingContext = RouterOutputs["judging"]["getContext"];
 type Workspace = RouterOutputs["judging"]["getWorkspace"];
 type Scores = RouterOutputs["judging"]["getProjectScores"];
@@ -197,6 +197,7 @@ export function JudgeProjectWorkspace({
   input,
   isOfficer,
   judgingContext,
+  readOnly = false,
   scores = [],
   selectedTab = "projects",
   submissions = [],
@@ -211,6 +212,7 @@ export function JudgeProjectWorkspace({
     JudgingContext,
     { kind: "none" | "incomplete-guest" }
   >;
+  readOnly?: boolean;
   scores?: Scores;
   selectedTab?: "deliberation" | "projects" | "submissions";
   submissions?: Submissions;
@@ -314,11 +316,11 @@ export function JudgeProjectWorkspace({
                   hackathonId={announcementHackathonId}
                 />
               ) : null}
-              {isOfficer && hackathons.length ? (
+              {hackathons.length ? (
                 <label className="w-full min-w-0 sm:w-72">
-                  <span className="sr-only">Preview hackathon</span>
+                  <span className="sr-only">Hackathon</span>
                   <select
-                    aria-label="Preview hackathon"
+                    aria-label="Hackathon"
                     className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
                     onChange={(event) => selectHackathon(event.target.value)}
                     value={input.hackathonId ?? data.hackathon?.id ?? ""}
@@ -402,26 +404,35 @@ export function JudgeProjectWorkspace({
             </section>
           ) : null}
           {workspace ? (
-            <Tabs onValueChange={selectTab} value={selectedTab}>
-              <TabsList className="grid h-11 w-full grid-cols-3 sm:w-fit sm:min-w-[28rem]">
+            <Tabs
+              onValueChange={selectTab}
+              value={readOnly ? "projects" : selectedTab}
+            >
+              <TabsList
+                className={`grid h-11 w-full ${readOnly ? "grid-cols-1 sm:w-40" : "grid-cols-3 sm:w-fit sm:min-w-[28rem]"}`}
+              >
                 <TabsTrigger
                   className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
                   value="projects"
                 >
                   Projects
                 </TabsTrigger>
-                <TabsTrigger
-                  className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
-                  value="submissions"
-                >
-                  Submissions
-                </TabsTrigger>
-                <TabsTrigger
-                  className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
-                  value="deliberation"
-                >
-                  Deliberation
-                </TabsTrigger>
+                {!readOnly ? (
+                  <>
+                    <TabsTrigger
+                      className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
+                      value="submissions"
+                    >
+                      Submissions
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
+                      value="deliberation"
+                    >
+                      Deliberation
+                    </TabsTrigger>
+                  </>
+                ) : null}
               </TabsList>
               <TabsContent className="mt-4" value="projects">
                 {scheduleQuery.data?.scheduleExists &&
@@ -462,8 +473,9 @@ export function JudgeProjectWorkspace({
                             submission.challengeId === workspace.challengeId,
                         ),
                       );
-                    const disabledReason =
-                      workspace.state !== "open"
+                    const disabledReason = readOnly
+                      ? "Historical events are read-only."
+                      : workspace.state !== "open"
                         ? "Judging is not open."
                         : scheduleUnavailable
                           ? "Checking your room schedule."
@@ -621,25 +633,29 @@ export function JudgeProjectWorkspace({
                   showViewAction
                 />
               </TabsContent>
-              <TabsContent className="mt-4" value="submissions">
-                <JudgeSubmissions
-                  submissions={submissions}
-                  lockedEvaluationIds={
-                    scheduleQuery.data?.editLockedEvaluationIds
-                  }
-                  workspace={workspace}
-                />
-              </TabsContent>
-              <TabsContent className="mt-4" value="deliberation">
-                <JudgeDeliberation
-                  initialSections={deliberation}
-                  key={JSON.stringify(deliberation)}
-                  submissions={submissions.filter(
-                    (submission) => submission.isComplete,
-                  )}
-                  workspace={workspace}
-                />
-              </TabsContent>
+              {!readOnly ? (
+                <>
+                  <TabsContent className="mt-4" value="submissions">
+                    <JudgeSubmissions
+                      submissions={submissions}
+                      lockedEvaluationIds={
+                        scheduleQuery.data?.editLockedEvaluationIds
+                      }
+                      workspace={workspace}
+                    />
+                  </TabsContent>
+                  <TabsContent className="mt-4" value="deliberation">
+                    <JudgeDeliberation
+                      initialSections={deliberation}
+                      key={JSON.stringify(deliberation)}
+                      submissions={submissions.filter(
+                        (submission) => submission.isComplete,
+                      )}
+                      workspace={workspace}
+                    />
+                  </TabsContent>
+                </>
+              ) : null}
             </Tabs>
           ) : null}
           {workspace && evaluationProject ? (

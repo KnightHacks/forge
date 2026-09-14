@@ -43,15 +43,17 @@ scheduling and scoring work. It does not implement either workflow.
 - **Valid room activation credential:** may create an incomplete guest browser
   session for that room. It cannot read projects until a valid display name is
   saved.
-- **Named guest judge:** may read active, non-deleted projects belonging to the
-  room's hackathon and challenge. The guest may read project details only when
-  the project has that challenge. The guest cannot select another room or
-  challenge.
+- **Named guest judge:** may read non-deleted projects belonging to the room's
+  hackathon and challenge when that hackathon is active or is the nearest
+  upcoming event. The guest may read project details only when the project has
+  that challenge. The guest cannot select another room or challenge.
 - **Authenticated user without judge or officer permission:** has no role-based
   judge access but may use a valid room credential as a guest.
 - **Authenticated judge:** effective `IS_JUDGE` may read every active project
-  and challenge for the selected active hackathon. The judge may select one
-  room, leave it, and change the project challenge filter independently.
+  and challenge for the active hackathon, or the nearest upcoming hackathon
+  when none is active. The judge may explicitly select another hackathon for
+  read-only project browsing, select one room, leave it, and change the project
+  challenge filter independently.
 - **Authenticated officer:** effective `IS_OFFICER` receives the same
   unrestricted judge access and room-selection behavior. Officer preview rules
   from the existing project directory remain intact.

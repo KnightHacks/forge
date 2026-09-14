@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Send,
   ShieldAlert,
+  Trash2,
   UserRoundX,
   UsersRound,
 } from "lucide-react";
@@ -535,7 +536,7 @@ function AnnouncementDialogContent({
           </div>
 
           {current ? (
-            <div className="bg-[#DBC049]/8 rounded-md border border-[#DBC049]/30 px-4 py-3 text-sm">
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
               A current {current.isUrgent ? "urgent dialog" : "banner"} is live
               for {scope}. Publishing replaces it immediately.
             </div>
@@ -589,6 +590,8 @@ export function JudgingControlPanel({
     null,
   );
   const [archiving, setArchiving] = useState<Room | null>(null);
+  const [deleting, setDeleting] = useState<Room | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [announcementTarget, setAnnouncementTarget] = useState<string | null>(
     null,
   );
@@ -609,6 +612,7 @@ export function JudgingControlPanel({
   const rotate = api.judging.rotateRoomLink.useMutation();
   const move = api.judging.moveRoom.useMutation();
   const archive = api.judging.archiveRoom.useMutation();
+  const deleteRoom = api.judging.deleteRoom.useMutation();
   const revokeGuest = api.judging.revokeGuest.useMutation();
   const removeJudge = api.judging.removeJudgeFromRoom.useMutation();
   const data = query.data;
@@ -762,8 +766,9 @@ export function JudgingControlPanel({
         <Alert>
           <AlertTitle>Room setup locked</AlertTitle>
           <AlertDescription>
-            A saved schedule locks room changes. Open the Schedule tab and drop
-            the eligible schedule before changing rooms.
+            A saved schedule locks room layout changes. Unreserved rooms can
+            still be permanently deleted; drop the eligible schedule to edit,
+            create, or archive rooms.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -952,7 +957,7 @@ export function JudgingControlPanel({
       </section>
 
       {data.globalAnnouncement ? (
-        <section className="bg-[#DBC049]/8 rounded-lg border border-[#DBC049]/35 p-4 shadow-lg shadow-black/10">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -1221,8 +1226,23 @@ export function JudgingControlPanel({
                         >
                           <Archive className="mr-1 size-4" /> Archive
                         </Button>
+                        <Button
+                          onClick={() => setDeleting(room)}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          <Trash2 className="mr-1 size-4" /> Delete
+                        </Button>
                       </div>
-                    ) : null}
+                    ) : (
+                      <Button
+                        onClick={() => setDeleting(room)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Trash2 className="mr-1 size-4" /> Delete room
+                      </Button>
+                    )}
                   </div>
 
                   <div className="mt-4 overflow-hidden rounded-md border border-border/70 bg-background/60">
@@ -1429,6 +1449,76 @@ export function JudgingControlPanel({
               variant="destructive"
             >
               {archive.isPending ? "Archiving…" : "Archive room"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteRoom.isPending) {
+            setDeleting(null);
+            setDeleteConfirmation("");
+          }
+        }}
+      >
+        <DialogContent className="border-destructive/30 sm:max-w-md">
+          <DialogHeader className="text-left">
+            <DialogTitle>Permanently delete {deleting?.name}?</DialogTitle>
+            <DialogDescription>
+              This deletes the room, its Blade access link, guest sessions,
+              roster presence, and room announcement. Its Discord thread stays
+              in Discord. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-judging-room-confirmation">
+              Type {deleting?.name} to confirm
+            </Label>
+            <Input
+              autoComplete="off"
+              id="delete-judging-room-confirmation"
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              value={deleteConfirmation}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              disabled={deleteRoom.isPending}
+              onClick={() => {
+                setDeleting(null);
+                setDeleteConfirmation("");
+              }}
+              variant="outline"
+            >
+              Keep room
+            </Button>
+            <Button
+              disabled={
+                deleteConfirmation !== deleting?.name || deleteRoom.isPending
+              }
+              onClick={async () => {
+                if (!deleting) return;
+                try {
+                  await deleteRoom.mutateAsync({
+                    confirmation: deleteConfirmation,
+                    roomId: deleting.id,
+                  });
+                  toast.success(`${deleting.name} permanently deleted.`);
+                  setDeleting(null);
+                  setDeleteConfirmation("");
+                  refresh();
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Room deletion failed.",
+                  );
+                }
+              }}
+              variant="destructive"
+            >
+              {deleteRoom.isPending ? "Deleting…" : "Delete room"}
             </Button>
           </DialogFooter>
         </DialogContent>

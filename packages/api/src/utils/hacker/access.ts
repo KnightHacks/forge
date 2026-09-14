@@ -1,6 +1,10 @@
 import { TRPCError } from "@trpc/server";
 
-import type { HackerRosterFilter, SkipReason } from "@forge/validators";
+import type {
+  HackerBulkStatus,
+  HackerRosterFilter,
+  SkipReason,
+} from "@forge/validators";
 import { permissions } from "@forge/utils";
 
 type PermissionContext = Parameters<typeof permissions.controlPerms.or>[1];
@@ -21,6 +25,19 @@ export function requireHackerRead(
 
 export function requireHackerEdit(ctx: PermissionContext) {
   return permissions.controlPerms.or(["EDIT_HACKERS"], ctx);
+}
+
+export function requireHackerBulkEdit(
+  ctx: PermissionContext,
+  status: HackerBulkStatus,
+) {
+  requireHackerEdit(ctx);
+  if (status === "checkedin" && ctx.session.permissions.IS_OFFICER !== true) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Officer permission is required to check in hackers.",
+    });
+  }
 }
 
 export function redactHackerBlacklist<
