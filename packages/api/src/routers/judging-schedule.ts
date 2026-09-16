@@ -59,6 +59,7 @@ import {
   scheduleProblemFromSource,
 } from "../utils/judging-schedule/source";
 import { validateSchedule } from "../utils/judging-schedule/validate";
+import { notifyJudgingChanged } from "../utils/judging/realtime";
 import { assertCanManageProjects } from "../utils/projects/access";
 
 async function auditSchedule(
@@ -300,6 +301,7 @@ export const judgingScheduleRouter = {
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         await lockScheduleHackathon(tx, input.hackathonId);
+        await notifyJudgingChanged(tx, input.hackathonId);
         await requireNoSchedule(tx, input.hackathonId);
         if (input.timing.startsAt <= new Date())
           throw new TRPCError({
@@ -409,6 +411,7 @@ export const judgingScheduleRouter = {
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         await lockScheduleHackathon(tx, input.hackathonId);
+        await notifyJudgingChanged(tx, input.hackathonId);
         await requireNoSchedule(tx, input.hackathonId);
         const [job] = await tx
           .select()
@@ -529,6 +532,7 @@ export const judgingScheduleRouter = {
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         await lockScheduleHackathon(tx, input.hackathonId);
+        await notifyJudgingChanged(tx, input.hackathonId);
         await reconcileExpiredDraftsWithDb(tx, input.hackathonId);
         const schedule = await tx.query.JudgingSchedule.findFirst({
           where: eq(JudgingSchedule.hackathonId, input.hackathonId),
@@ -645,6 +649,7 @@ export const judgingScheduleRouter = {
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         await lockScheduleHackathon(tx, input.hackathonId);
+        await notifyJudgingChanged(tx, input.hackathonId);
         const { schedule, choices } = await appointmentMoveChoices(
           tx,
           input.hackathonId,
@@ -717,6 +722,7 @@ export const judgingScheduleRouter = {
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         await lockScheduleHackathon(tx, input.hackathonId);
+        await notifyJudgingChanged(tx, input.hackathonId);
         const { appointment, schedule, choices } = await appointmentMoveChoices(
           tx,
           input.hackathonId,

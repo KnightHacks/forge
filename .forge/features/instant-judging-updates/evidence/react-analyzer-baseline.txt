@@ -1,0 +1,19 @@
+
+> forge@ analyze:react /home/rhygon/Desktop/projects/knighthacks/forge
+> tsx scripts/analyze-react.ts "/tmp/forge-judging-before/apps/blade/src/trpc/react.tsx"
+
+{
+  "analyzedFiles": 1,
+  "componentCount": 0,
+  "failures": 1,
+  "results": [
+    {
+      "file": "../../../../../../tmp/forge-judging-before/apps/blade/src/trpc/react.tsx",
+      "ok": false,
+      "error": "/tmp/forge-judging-before/apps/blade/src/trpc/react.tsx: Cannot read properties of undefined (reading 'type')"
+    }
+  ]
+}
+(node:70677) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:70677) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.

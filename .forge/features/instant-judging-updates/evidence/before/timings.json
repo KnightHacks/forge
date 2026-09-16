@@ -1,0 +1,28 @@
+{
+  "mode": "before",
+  "baseline": "361d10a5",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "events": [
+    {
+      "event": "announcement",
+      "buttonClickedAt": 1789591205650,
+      "visibleAt": 1789591235637,
+      "latencyMs": 29987
+    },
+    {
+      "event": "reassignment",
+      "buttonClickedAt": 1789591239742,
+      "visibleAt": 1789591240681,
+      "latencyMs": 939
+    }
+  ],
+  "readyAt": 1789591205461,
+  "sse": {
+    "connections": [],
+    "messages": []
+  },
+  "finishedAt": 1789591242880
+}

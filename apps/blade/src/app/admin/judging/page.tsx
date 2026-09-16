@@ -5,6 +5,7 @@ import { ClipboardList } from "lucide-react";
 import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { SearchParams } from "~/lib/search-params";
+import { JudgingLiveUpdates } from "~/app/_components/judging/judging-live-updates";
 import { ProjectCommandCenter } from "~/app/_components/judging/project-command-center";
 import { parseProjectDirectoryParams } from "~/app/_components/projects/params";
 import {
@@ -84,14 +85,17 @@ export default async function JudgingAdminPage({
         : null,
     ]);
   return (
-    <ProjectCommandCenter
-      controlData={controlData}
-      evaluations={evaluations}
-      hackathons={hackathons}
-      projectData={projectData}
-      projectInput={projectInput}
-      selectedTab={selectedTab}
-      scheduleData={scheduleData}
-    />
+    <>
+      <JudgingLiveUpdates hackathonId={selected.id} />
+      <ProjectCommandCenter
+        controlData={controlData}
+        evaluations={evaluations}
+        hackathons={hackathons}
+        projectData={projectData}
+        projectInput={projectInput}
+        selectedTab={selectedTab}
+        scheduleData={scheduleData}
+      />
+    </>
   );
 }

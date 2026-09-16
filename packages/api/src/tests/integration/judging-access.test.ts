@@ -254,7 +254,11 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     vi.unstubAllEnvs();
   }, 30_000);
 
-  async function caller(session: Session | null, headers = new Headers()) {
+  async function caller(
+    session: Session | null,
+    headers = new Headers(),
+    signal?: AbortSignal,
+  ) {
     const trpc = await import("../../trpc");
     const { judgingRouter } = await import("../../routers/judging");
     const { projectsRouter } = await import("../../routers/projects");
@@ -263,8 +267,97 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
         judging: judgingRouter,
         projects: projectsRouter,
       }),
-    )({ headers, session, source: "judging-integration" });
+    )({ headers, session, source: "judging-integration" }, { signal });
   }
+
+  it("delivers committed changes across database connections and discards rollbacks", async () => {
+    const { notifyJudgingChanged, watchJudgingChanges } =
+      await import("../../utils/judging/realtime");
+    const abort = new AbortController();
+    const stream = watchJudgingChanges(HACKATHON, abort.signal);
+    const observer = await client.$client.connect();
+    const notices: string[] = [];
+    observer.on("notification", (event) => {
+      if (event.payload) notices.push(event.payload);
+    });
+    try {
+      await observer.query("LISTEN forge_judging");
+      await stream.next();
+      await expect(
+        client.transaction(async (tx) => {
+          await notifyJudgingChanged(tx, "rolled-back");
+          throw new Error("rollback");
+        }),
+      ).rejects.toThrow("rollback");
+      const next = stream.next();
+      await client.transaction(async (tx) => {
+        await notifyJudgingChanged(tx, HACKATHON);
+        // Neither listener may observe uncommitted data.
+        expect(notices).toEqual([]);
+      });
+      expect(await next).toEqual({ done: false, value: true });
+      await vi.waitFor(() => expect(notices).toEqual([HACKATHON]));
+    } finally {
+      abort.abort();
+      await stream.return();
+      observer.release(true);
+    }
+  });
+
+  it("pushes announcements to authenticated subscriptions and rechecks permissions", async () => {
+    const officerCaller = await caller(officer);
+    const abort = new AbortController();
+    const memberCaller = await caller(member, new Headers(), abort.signal);
+    const anonymousCaller = await caller(null);
+    await expect(
+      anonymousCaller.judging.onChange({ hackathonId: HACKATHON }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    const stream = await memberCaller.judging.onChange({
+      hackathonId: HACKATHON,
+    });
+    const iterator = stream[Symbol.asyncIterator]();
+    let announcementId: string | undefined;
+    try {
+      expect(await iterator.next()).toEqual({
+        done: false,
+        value: { changed: true },
+      });
+      const next = iterator.next();
+      const announcement = await officerCaller.judging.publishAnnouncement({
+        hackathonId: HACKATHON,
+        message: "Live announcement",
+        roomId: null,
+      });
+      announcementId = announcement.id;
+      expect(await next).toEqual({ done: false, value: { changed: true } });
+      await expect(memberCaller.judging.listAnnouncements({})).resolves.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: announcement.id }),
+        ]),
+      );
+      await client
+        .delete(authSchemas.Permissions)
+        .where(eq(authSchemas.Permissions.userId, MEMBER_USER));
+      const rejected = expect(iterator.next()).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+      });
+      await officerCaller.judging.clearAnnouncement({
+        announcementId: announcement.id,
+      });
+      await rejected;
+    } finally {
+      abort.abort();
+      await iterator.return?.();
+      await client
+        .insert(authSchemas.Permissions)
+        .values({ roleId: MEMBER_ROLE, userId: MEMBER_USER })
+        .onConflictDoNothing();
+      if (announcementId)
+        await client
+          .delete(schemas.JudgingAnnouncement)
+          .where(eq(schemas.JudgingAnnouncement.id, announcementId));
+    }
+  }, 10_000);
 
   it("selects the nearest upcoming hackathon for authenticated judges", async () => {
     await client.insert(schemas.Hackathon).values([
@@ -797,7 +890,20 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
     expect(
       staleControl.rooms.find((candidate) => candidate.id === room.id)?.judges,
     ).toEqual([]);
+    const wrongEvent = await guestCaller.judging.onChange({
+      hackathonId: randomUUID(),
+    });
+    await expect(
+      wrongEvent[Symbol.asyncIterator]().next(),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const guestStream = await guestCaller.judging.onChange({});
+    const guestIterator = guestStream[Symbol.asyncIterator]();
+    await guestIterator.next();
+    const disconnected = expect(guestIterator.next()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
     await officerCaller.judging.revokeRoomLink({ roomId: room.id });
+    await disconnected;
     await expect(
       guestCaller.projects.listJudge({
         challengeIds: [],

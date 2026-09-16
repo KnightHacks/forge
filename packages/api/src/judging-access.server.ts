@@ -25,6 +25,7 @@ import type { WriteDb } from "./utils/db";
 import { env } from "./env";
 import { deliverJudgingRoomNotice } from "./utils/judging/discord-comms";
 import { resolveJudgeAccess } from "./utils/judging/principal";
+import { notifyJudgingChanged } from "./utils/judging/realtime";
 
 function judgingSecret() {
   const secret = authEnv.JUDGING_ACCESS_SECRET;
@@ -156,6 +157,7 @@ export async function activateJudgingRoom(input: {
             isNull(JudgingRoomPresence.leftAt),
           ),
         );
+      await notifyJudgingChanged(tx, access.hackathonId);
       await tx.insert(JudgingRoomPresence).values({
         hackathonId: access.hackathonId,
         judgeId: judge.id,
@@ -263,6 +265,7 @@ export async function completeGuestJudge(input: {
       .update(GuestJudgeSession)
       .set({ completedAt: now, judgeId: judge.id, lastSeenAt: now })
       .where(eq(GuestJudgeSession.id, record.guestSessionId));
+    await notifyJudgingChanged(tx, record.hackathonId);
     await tx.insert(JudgingRoomPresence).values({
       hackathonId: record.hackathonId,
       judgeId: judge.id,

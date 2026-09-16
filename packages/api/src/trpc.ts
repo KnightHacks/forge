@@ -37,6 +37,10 @@ const t = initTRPC
   .meta<ForgeTRPCMeta>()
   .create({
     transformer: superjson,
+    sse: {
+      ping: { enabled: true, intervalMs: 15_000 },
+      client: { reconnectAfterInactivityMs: 45_000 },
+    },
     errorFormatter: ({ shape, error }) => ({
       ...shape,
       data: {

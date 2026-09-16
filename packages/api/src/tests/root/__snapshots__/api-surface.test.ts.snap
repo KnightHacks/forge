@@ -262,6 +262,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "judging.listScheduleAdmin",
   "judging.moveAppointment",
   "judging.moveRoom",
+  "judging.onChange",
   "judging.provisionRoomThreads",
   "judging.publishAnnouncement",
   "judging.removeDeliberationProject",
