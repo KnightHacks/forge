@@ -1,6 +1,7 @@
 # Instant Judging Updates Status
 
-Phase: pull request open; CI and code review pending.
+Phase: pull request open; implementation validated, awaiting human review.
+Latest automated check status is available on the linked PR.
 
 ## Decisions
 
@@ -31,6 +32,9 @@ Phase: pull request open; CI and code review pending.
 - [x] Build all apps/packages with the CI example environment: 21 tasks passed.
 - [x] Put the recordings, timings, screenshots, and reproduction steps directly
       in the PR description; inline animations preserve normal playback speed.
+- [x] Verify CI on the corrected application/test commit `6b70662d`: all checks
+      passed, including the full test suite and production build.
+- [x] Address the review note by redacting workstation roots in analyzer evidence.
 
 ## Validation
 
@@ -80,3 +84,4 @@ Phase: pull request open; CI and code review pending.
 - Evidence and PR description: stored in this feature bundle.
 - Issue: https://github.com/KnightHacks/forge/issues/574
 - PR: https://github.com/KnightHacks/forge/pull/575
+- Successful CI on `6b70662d`: https://github.com/KnightHacks/forge/actions/runs/35152330825

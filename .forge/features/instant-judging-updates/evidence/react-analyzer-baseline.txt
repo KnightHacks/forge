@@ -1,6 +1,7 @@
+Local filesystem roots normalized below; analyzer diagnostics unchanged.
 
-> forge@ analyze:react /home/rhygon/Desktop/projects/knighthacks/forge
-> tsx scripts/analyze-react.ts "/tmp/forge-judging-before/apps/blade/src/trpc/react.tsx"
+> forge@ analyze:react <repository>
+> tsx scripts/analyze-react.ts "<baseline-worktree>/apps/blade/src/trpc/react.tsx"
 
 {
   "analyzedFiles": 1,
@@ -8,9 +9,9 @@
   "failures": 1,
   "results": [
     {
-      "file": "../../../../../../tmp/forge-judging-before/apps/blade/src/trpc/react.tsx",
+      "file": "<baseline-worktree>/apps/blade/src/trpc/react.tsx",
       "ok": false,
-      "error": "/tmp/forge-judging-before/apps/blade/src/trpc/react.tsx: Cannot read properties of undefined (reading 'type')"
+      "error": "<baseline-worktree>/apps/blade/src/trpc/react.tsx: Cannot read properties of undefined (reading 'type')"
     }
   ]
 }

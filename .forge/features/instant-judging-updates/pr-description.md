@@ -94,6 +94,8 @@ feature bundle for provenance; the comparison above is self-contained.
 
 # Test Plan
 
+[CI on `6b70662d`](https://github.com/KnightHacks/forge/actions/runs/35152330825): **passed**, including all **2,481 tests**, database tests, migrations, lint, formatting, typechecking, and the full production build.
+
 - Repository `pnpm format`, `pnpm lint`, and `pnpm typecheck`: passed.
 - Initial focused tests: 25 API tests and 11 Blade tests passed.
 - CI exposed two existing page tests that assumed the workspace was the outer
@@ -112,6 +114,11 @@ feature bundle for provenance; the comparison above is self-contained.
 - `pnpm analyze:react:changed` hits an existing parser error in the tRPC provider:
   `Cannot read properties of undefined (reading 'type')`. Reproduced on main at
   `361d10a5`; no check bypass was added.
+
+Local workstation roots in the analyzer transcript are redacted. CodeRabbit's
+advisory docstring-coverage suggestion was not applied: the transport helpers
+already document transaction delivery, listener ownership, and reconnect behavior;
+extra docstrings repeating handler names would add little.
 
 Production proxy streaming and database connection mode still need verification;
 the recordings use loopback HTTP. No deployment was run. Schedule solver progress
