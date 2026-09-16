@@ -1,4 +1,4 @@
-import { isValidElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   getContext: vi.fn(),
   getProjectScores: vi.fn(),
   getWorkspace: vi.fn(),
+  judgeProjectWorkspace: vi.fn(() => null),
+  judgingLiveUpdates: vi.fn(() => null),
   listJudgeHackathons: vi.fn(),
   listJudge: vi.fn(),
   listMyDeliberation: vi.fn(),
@@ -46,7 +48,10 @@ vi.mock("~/app/_components/judging/guest-name-gate", () => ({
   GuestNameGate: () => null,
 }));
 vi.mock("~/app/_components/projects/judge-project-workspace", () => ({
-  JudgeProjectWorkspace: () => null,
+  JudgeProjectWorkspace: mocks.judgeProjectWorkspace,
+}));
+vi.mock("~/app/_components/judging/judging-live-updates", () => ({
+  JudgingLiveUpdates: mocks.judgingLiveUpdates,
 }));
 
 describe("production judging flow regressions", () => {
@@ -129,9 +134,14 @@ describe("production judging flow regressions", () => {
     expect(mocks.listJudge).toHaveBeenCalledWith(
       expect.objectContaining({ direction: "asc", sort: "scheduledAt" }),
     );
-    if (!isValidElement<{ input: { hackathonId?: string } }>(page))
-      throw new Error("Expected the judge workspace element.");
-    expect(page.props.input.hackathonId).toBe(hackathonId);
+    renderToStaticMarkup(page);
+    expect(mocks.judgeProjectWorkspace.mock.calls).toMatchObject([
+      [{ input: { hackathonId } }, undefined],
+    ]);
+    expect(mocks.judgingLiveUpdates).toHaveBeenCalledWith(
+      { hackathonId },
+      undefined,
+    );
   });
 
   it("lets an authenticated judge select a past hackathon", async () => {
@@ -169,14 +179,20 @@ describe("production judging flow regressions", () => {
     expect(mocks.listJudge).toHaveBeenCalledWith(
       expect.objectContaining({ hackathonId, sort: "title" }),
     );
-    if (
-      !isValidElement<{
-        hackathons: { id: string }[];
-        readOnly: boolean;
-      }>(page)
-    )
-      throw new Error("Expected the judge workspace element.");
-    expect(page.props.hackathons).toEqual([{ id: hackathonId }]);
-    expect(page.props.readOnly).toBe(true);
+    renderToStaticMarkup(page);
+    expect(mocks.judgeProjectWorkspace.mock.calls).toMatchObject([
+      [
+        {
+          hackathons: [{ id: hackathonId }],
+          input: { hackathonId },
+          readOnly: true,
+        },
+        undefined,
+      ],
+    ]);
+    expect(mocks.judgingLiveUpdates).toHaveBeenCalledWith(
+      { hackathonId },
+      undefined,
+    );
   });
 });

@@ -18,6 +18,11 @@ from polling. Both recordings use the same fixture and actions.
 
 ## Videos and screenshots
 
+The PR description embeds the before/after recordings as GIF animations, with
+the timing table, result screenshots, and reproduction procedure inline. The GIFs
+are 1280 pixels wide at five frames per second and preserve normal playback speed
+(duration rounded by less than one frame). The MP4s below retain full resolution.
+
 - [Before: organizer and judge](before.mp4)
 - [After: organizer and judge, including recovery](after.mp4)
 - Original videos: [before organizer](before/organizer.webm),
