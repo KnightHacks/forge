@@ -19,6 +19,8 @@ and recovery. Scope is Blade and its API implementation.
 
 Closes #574.
 
+PR: https://github.com/KnightHacks/forge/pull/575
+
 # Test Plan
 
 - Repository `pnpm format`, `pnpm lint`, and `pnpm typecheck`: passed.

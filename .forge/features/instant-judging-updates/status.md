@@ -1,6 +1,6 @@
 # Instant Judging Updates Status
 
-Phase: publishing the reviewed local implementation for code review.
+Phase: pull request open; CI and code review pending.
 
 ## Decisions
 
@@ -63,4 +63,4 @@ Phase: publishing the reviewed local implementation for code review.
 
 - Evidence and PR description: stored in this feature bundle.
 - Issue: https://github.com/KnightHacks/forge/issues/574
-- PR: publishing from blade/instant-judging-updates.
+- PR: https://github.com/KnightHacks/forge/pull/575
