@@ -24,7 +24,7 @@ export default function RaulPage() {
       <Card className="mt-8 max-w-xl">
         <CardHeader>
           <CardTitle className="mb-4 text-center">Knight Information</CardTitle>
-          <CardDescription>CS Major</CardDescription>
+          <CardDescription>ID No. RR-2028</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
@@ -34,7 +34,7 @@ export default function RaulPage() {
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Party</span>
             <span className="text-foreground">
-              Java, Python, Typescript, C, HTML/CSS/JS
+              Java, Python, TypeScript, C, HTML/CSS/JS
             </span>
           </div>
           <div className="flex items-center justify-between">
@@ -79,6 +79,34 @@ export default function RaulPage() {
           </a>
         </Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="mb-4 text-center">Pokedex</CardTitle>
+          <CardDescription>Projects Collected</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="font-medium text-foreground">Car Price Predictor</h3>
+            <p className="max-w-2xl text-muted-foreground">
+              Random forest regressor trained on a Kaggle Craigslist used-car
+              dataset. The first run returned a negative R² with mean absolute
+              error in the millions, which pointed at the data rather than the
+              model — $1 listings and million-dollar Hondas. Cleaning those out
+              brought R² to 0.67 and MAE to about $5,500.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-medium text-foreground">
+              Parking Space Detector
+            </h3>
+            <p className="max-w-2xl text-muted-foreground">
+              YOLOv8 and OpenCV pipeline that reads video frames and tracks
+              parking spot occupancy in real time.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }
