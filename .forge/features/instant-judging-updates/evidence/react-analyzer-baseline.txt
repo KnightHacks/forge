@@ -1,0 +1,20 @@
+Local filesystem roots normalized below; analyzer diagnostics unchanged.
+
+> forge@ analyze:react <repository>
+> tsx scripts/analyze-react.ts "<baseline-worktree>/apps/blade/src/trpc/react.tsx"
+
+{
+  "analyzedFiles": 1,
+  "componentCount": 0,
+  "failures": 1,
+  "results": [
+    {
+      "file": "<baseline-worktree>/apps/blade/src/trpc/react.tsx",
+      "ok": false,
+      "error": "<baseline-worktree>/apps/blade/src/trpc/react.tsx: Cannot read properties of undefined (reading 'type')"
+    }
+  ]
+}
+(node:70677) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:70677) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.

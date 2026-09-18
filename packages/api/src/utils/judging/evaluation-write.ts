@@ -17,6 +17,7 @@ import {
 import type { AuditActor } from "../audit/service";
 import type { WriteDb } from "../db";
 import { createAdminAuditEvent } from "../audit/service";
+import { notifyJudgingChanged } from "./realtime";
 import { evaluationMean, resolveResponseVisibility } from "./scoring";
 
 export interface EvaluationAnswers {
@@ -265,6 +266,7 @@ export async function writeEvaluation(
       })
       .where(eq(JudgingSchedule.id, appointment.scheduleId));
   }
+  await notifyJudgingChanged(tx, input.hackathonId);
   return {
     evaluationId: evaluation.id,
     revision,

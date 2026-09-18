@@ -259,7 +259,10 @@ export function JudgeProjectWorkspace({
   );
   useEffect(() => {
     if (!workspace) return;
-    const timer = window.setInterval(() => router.refresh(), 15_000);
+    const timer = window.setInterval(() => {
+      // A failed RSC refresh can replace the page with a browser error offline.
+      if (navigator.onLine) router.refresh();
+    }, 15_000);
     return () => window.clearInterval(timer);
   }, [router, workspace]);
 

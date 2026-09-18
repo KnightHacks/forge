@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import type { SearchParams } from "~/lib/search-params";
 import { GuestNameGate } from "~/app/_components/judging/guest-name-gate";
+import { JudgingLiveUpdates } from "~/app/_components/judging/judging-live-updates";
 import { JudgeProjectWorkspace } from "~/app/_components/projects/judge-project-workspace";
 import {
   parseProjectDirectoryParams,
@@ -74,18 +75,25 @@ export default async function JudgeProjectsPage({
     : [[], [], []];
 
   return (
-    <JudgeProjectWorkspace
-      data={data}
-      deliberation={deliberation}
-      hackathons={hackathons}
-      input={input}
-      isOfficer={isOfficer}
-      judgingContext={judgingContext}
-      readOnly={isMember && data.hackathon?.id !== judgingContext.hackathon?.id}
-      scores={scores}
-      selectedTab={tab}
-      submissions={submissions}
-      workspace={workspace}
-    />
+    <>
+      {data.hackathon ? (
+        <JudgingLiveUpdates hackathonId={data.hackathon.id} />
+      ) : null}
+      <JudgeProjectWorkspace
+        data={data}
+        deliberation={deliberation}
+        hackathons={hackathons}
+        input={input}
+        isOfficer={isOfficer}
+        judgingContext={judgingContext}
+        readOnly={
+          isMember && data.hackathon?.id !== judgingContext.hackathon?.id
+        }
+        scores={scores}
+        selectedTab={tab}
+        submissions={submissions}
+        workspace={workspace}
+      />
+    </>
   );
 }

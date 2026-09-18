@@ -60,6 +60,7 @@ import {
   reconcileExpiredJudgingDrafts,
 } from "../utils/judging-schedule/reconcile";
 import { writeEvaluation } from "../utils/judging/evaluation-write";
+import { notifyJudgingChanged } from "../utils/judging/realtime";
 import {
   requireWritableJudging,
   resolveJudgeScope,
@@ -954,6 +955,7 @@ export const judgingScoresRouter = {
           label: hackathon.displayName,
           metadata: { itemCount: input.items.length },
         });
+        await notifyJudgingChanged(tx, input.hackathonId);
         return { itemCount: input.items.length };
       });
     }),
@@ -1046,6 +1048,7 @@ export const judgingScoresRouter = {
           label: hackathon.displayName,
           metadata: { fromState: current, toState: input.state },
         });
+        await notifyJudgingChanged(tx, input.hackathonId);
         return { state: input.state };
       });
     }),
@@ -1080,6 +1083,7 @@ export const judgingScoresRouter = {
           label: hackathon.displayName,
           metadata: { displayAllResults: input.displayAllResults },
         });
+        await notifyJudgingChanged(tx, input.hackathonId);
         return { displayAllResults: input.displayAllResults };
       });
     }),

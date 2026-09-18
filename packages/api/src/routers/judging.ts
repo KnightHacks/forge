@@ -92,6 +92,10 @@ import {
 } from "../utils/judging/discord-comms";
 import { resolveJudgeAccess } from "../utils/judging/principal";
 import {
+  notifyJudgingChanged,
+  watchJudgingChanges,
+} from "../utils/judging/realtime";
+import {
   resolveCurrentJudgeDisplayNames,
   resolveMemberDisplayNamesByUserId,
 } from "../utils/member/display-name";
@@ -513,6 +517,7 @@ async function joinMemberRoom(input: {
       judgeId: judge.id,
       roomId: room.roomId,
     });
+    await notifyJudgingChanged(tx, room.hackathonId);
     return { ...room, newlyJoined: true };
   });
 }
@@ -618,6 +623,44 @@ export const judgingRouter = createTRPCRouter({
       announcementsForPrincipal(ctx.judgePrincipal, input.hackathonId),
     ),
 
+  onChange: judgeProcedure
+    .input(contextInputSchema)
+    .subscription(async function* ({ ctx, input, signal }) {
+      const hackathonId =
+        ctx.judgePrincipal.kind === "guest"
+          ? ctx.judgePrincipal.hackathonId
+          : (
+              await selectedHackathon(
+                input.hackathonId,
+                ctx.judgePrincipal.isOfficer,
+              )
+            )?.id;
+      if (!hackathonId) throw new TRPCError({ code: "NOT_FOUND" });
+      if (
+        ctx.judgePrincipal.kind === "guest" &&
+        input.hackathonId &&
+        input.hackathonId !== hackathonId
+      )
+        throw new TRPCError({ code: "FORBIDDEN" });
+
+      for await (const changed of watchJudgingChanges(hackathonId, signal)) {
+        // Recheck live permissions and guest revocation throughout the stream.
+        const principal = await resolveJudgeAccess(ctx);
+        if (principal.kind !== "member" && principal.kind !== "guest")
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (ctx.session && ctx.session.session.expiresAt <= new Date())
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (principal.kind === "member") {
+          if (!(await selectedHackathon(hackathonId, principal.isOfficer)))
+            throw new TRPCError({ code: "NOT_FOUND" });
+        } else if (principal.hackathonId !== hackathonId) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
+        // Fetch data through the existing room/guest-filtered queries.
+        if (changed) yield { changed: true };
+      }
+    }),
+
   completeGuest: publicProcedure
     .input(guestJudgeNameSchema)
     .mutation(({ ctx, input }) =>
@@ -632,6 +675,7 @@ export const judgingRouter = createTRPCRouter({
       throw new TRPCError({ code: "FORBIDDEN" });
     }
     const guestSessionId = ctx.judgePrincipal.guestSessionId;
+    const hackathonId = ctx.judgePrincipal.hackathonId;
     return db.transaction(async (tx) => {
       const now = new Date();
       const [session] = await tx
@@ -659,6 +703,7 @@ export const judgingRouter = createTRPCRouter({
             ),
           );
       }
+      await notifyJudgingChanged(tx, hackathonId);
       return { ended: true };
     });
   }),
@@ -691,20 +736,28 @@ export const judgingRouter = createTRPCRouter({
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       const now = new Date();
-      const ended = await db
-        .update(JudgingRoomPresence)
-        .set({ leftAt: now, leaveReason: "left-room" })
-        .where(
-          and(
-            eq(JudgingRoomPresence.roomId, input.roomId),
-            isNull(JudgingRoomPresence.leftAt),
-            sql`${JudgingRoomPresence.judgeId} IN (
+      const userId = ctx.judgePrincipal.userId;
+      const ended = await db.transaction(async (tx) => {
+        const ended = await tx
+          .update(JudgingRoomPresence)
+          .set({ leftAt: now, leaveReason: "left-room" })
+          .where(
+            and(
+              eq(JudgingRoomPresence.roomId, input.roomId),
+              isNull(JudgingRoomPresence.leftAt),
+              sql`${JudgingRoomPresence.judgeId} IN (
             SELECT ${Judge.id} FROM ${Judge}
-            WHERE ${Judge.userId} = ${ctx.judgePrincipal.userId}
+            WHERE ${Judge.userId} = ${userId}
           )`,
-          ),
-        )
-        .returning({ id: JudgingRoomPresence.id });
+            ),
+          )
+          .returning({
+            id: JudgingRoomPresence.id,
+            hackathonId: JudgingRoomPresence.hackathonId,
+          });
+        if (ended[0]) await notifyJudgingChanged(tx, ended[0].hackathonId);
+        return ended;
+      });
       return { left: ended.length > 0 };
     }),
 
@@ -963,6 +1016,7 @@ export const judgingRouter = createTRPCRouter({
             },
             tx,
           );
+          await notifyJudgingChanged(tx, input.hackathonId);
           return created;
         });
         const discordDelivery = await deliverCurrentJudgingAnnouncement({
@@ -1048,6 +1102,7 @@ export const judgingRouter = createTRPCRouter({
             },
             tx,
           );
+          await notifyJudgingChanged(tx, current.hackathonId);
           return { cleared: true };
         }),
       );
@@ -1283,6 +1338,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         const drafts = await tx
           .delete(ProjectEvaluationDraft)
           .where(eq(ProjectEvaluationDraft.hackathonId, hackathon.id))
@@ -1328,6 +1384,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         const [schedule, scheduleJob, room, evaluation, draft] =
           await Promise.all([
             tx.query.JudgingSchedule.findFirst({
@@ -1411,6 +1468,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         await assertJudgingSetupEditable(tx, hackathon.id);
         await tx
           .delete(JudgingAnnouncement)
@@ -1446,6 +1504,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         await assertChallengeSetupEditable(tx, hackathon.id);
         const room = await tx.query.JudgingRoom.findFirst({
           columns: { id: true },
@@ -1522,6 +1581,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         const claims = await tx
           .delete(ProjectClaim)
           .where(eq(ProjectClaim.hackathonId, hackathon.id))
@@ -1581,6 +1641,7 @@ export const judgingRouter = createTRPCRouter({
       const actor = await captureAdminAuditActor(ctx.session.user);
       return db.transaction(async (tx) => {
         const hackathon = await lockConfirmedHackathon(tx, input);
+        await notifyJudgingChanged(tx, hackathon.id);
         const drafts = await tx
           .delete(ProjectEvaluationDraft)
           .where(eq(ProjectEvaluationDraft.hackathonId, hackathon.id))
@@ -1703,6 +1764,7 @@ export const judgingRouter = createTRPCRouter({
             roomId: room.id,
             roomName: room.name,
           });
+          await notifyJudgingChanged(tx, input.hackathonId);
           return room;
         });
         try {
@@ -1791,6 +1853,7 @@ export const judgingRouter = createTRPCRouter({
             roomId: room.id,
             roomName: room.name,
           });
+          await notifyJudgingChanged(tx, current.hackathonId);
           return room;
         });
         try {
@@ -1849,6 +1912,7 @@ export const judgingRouter = createTRPCRouter({
           roomId: current.id,
           roomName: current.name,
         });
+        await notifyJudgingChanged(tx, current.hackathonId);
         return { moved: true };
       });
     }),
@@ -1891,6 +1955,7 @@ export const judgingRouter = createTRPCRouter({
           roomId: room.id,
           roomName: current.name,
         });
+        await notifyJudgingChanged(tx, current.hackathonId);
         return room;
       });
     }),
@@ -1915,6 +1980,7 @@ export const judgingRouter = createTRPCRouter({
           roomId: room.id,
           roomName: room.name,
         });
+        await notifyJudgingChanged(tx, room.hackathonId);
         return { id: room.id, name: room.name };
       });
     }),
@@ -1982,6 +2048,7 @@ export const judgingRouter = createTRPCRouter({
           roomId: input.roomId,
           roomName: room.name,
         });
+        await notifyJudgingChanged(tx, room.hackathonId);
         return { ...created, created: true };
       });
       const qr = await renderRoomQr(link.id);
@@ -2061,6 +2128,7 @@ export const judgingRouter = createTRPCRouter({
             roomName: room.name,
           });
         }
+        await notifyJudgingChanged(tx, room.hackathonId);
         return result;
       });
       const discordDelivery = result.revoked
@@ -2102,6 +2170,7 @@ export const judgingRouter = createTRPCRouter({
           roomId: input.roomId,
           roomName: room.name,
         });
+        await notifyJudgingChanged(tx, room.hackathonId);
         return created;
       });
       const qr = await renderRoomQr(link.id);
@@ -2125,6 +2194,7 @@ export const judgingRouter = createTRPCRouter({
       const result = await db.transaction(async (tx) => {
         const [target] = await tx
           .select({
+            hackathonId: JudgingRoom.hackathonId,
             id: JudgingRoom.id,
             judgeDisplayName: Judge.displayName,
             name: JudgingRoom.name,
@@ -2147,6 +2217,7 @@ export const judgingRouter = createTRPCRouter({
           )
           .limit(1);
         if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+        await notifyJudgingChanged(tx, target.hackathonId);
         const now = new Date();
         const [session] = await tx
           .update(GuestJudgeSession)
@@ -2200,6 +2271,7 @@ export const judgingRouter = createTRPCRouter({
       return db.transaction(async (tx) => {
         const [target] = await tx
           .select({
+            hackathonId: JudgingRoom.hackathonId,
             judgeDisplayName: Judge.displayName,
             judgeKind: Judge.kind,
             judgeUserId: Judge.userId,
@@ -2222,6 +2294,7 @@ export const judgingRouter = createTRPCRouter({
           .for("update")
           .limit(1);
         if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+        await notifyJudgingChanged(tx, target.hackathonId);
         const [currentTarget] = await resolveCurrentJudgeDisplayNames(
           [
             {
