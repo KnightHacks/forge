@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Github, Linkedin } from "lucide-react";
+import localFont from "next/font/local";
+import Image from "next/image";
+import { Briefcase, Github, Linkedin, MessageCircle } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import {
@@ -10,54 +12,68 @@ import {
   CardTitle,
 } from "@forge/ui/card";
 
+const pixel = localFont({
+  src: "./pokemon-dppt.woff2",
+});
 export const metadata: Metadata = {
   title: "Raul Rodriguez | KnightHacks Dev Team Application",
 };
 
 export default function RaulPage() {
   return (
-    <main className="min-h-screen bg-background p-8">
-      <h1 className="text-4xl font-semibold text-foreground">Raul Rodriguez</h1>
-      <p className="mt-4 max-w-2xl text-muted-foreground">
-        CS Student at UCF. I build things that solve annoying problems.
-      </p>
-      <Card className="mt-8 max-w-xl">
-        <CardHeader>
-          <CardTitle className="mb-4 text-center">Knight Information</CardTitle>
-          <CardDescription>ID No. RR-2028</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Region</span>
-            <span className="text-foreground">Orlando, FL</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Party</span>
-            <span className="text-foreground">
-              Java, Python, TypeScript, C, HTML/CSS/JS
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Current Objective</span>
-            <span className="text-foreground">Knight Hacks Dev Team</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Battle Type</span>
-            <span className="text-foreground">
-              AI/ML, Embedded Systems, Robotics
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Adventure Started</span>
-            <span className="text-foreground">Valencia 2024 → UCF 2026</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Projects</span>
-            <span className="text-foreground">2 Caught</span>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="mt-6 flex flex-wrap gap-3">
+    <main
+      className={`${pixel.className} mx-auto min-h-screen max-w-[1920px] bg-background p-8`}
+    >
+      <h1 className="text-4xl font-semibold text-primary">Trainer Card</h1>
+      <p className="mt-4 max-w-2xl text-muted-foreground">Raul Rodriguez</p>
+      <div className="mt-8 flex min-h-[75vh] flex-col items-center gap-6 md:flex-row md:justify-evenly">
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="mb-4 text-center">
+              Knight Information
+            </CardTitle>
+            <CardDescription>ID No. RR-2028</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Region</span>
+              <span className="text-foreground">Orlando, FL</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Party</span>
+              <span className="text-foreground">
+                Java, Python, TypeScript, C, HTML/CSS/JS
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Current Objective</span>
+              <span className="text-foreground">Knight Hacks Dev Team</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Battle Type</span>
+              <span className="text-foreground">
+                AI/ML, Embedded Systems, Robotics
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Adventure Started</span>
+              <span className="text-foreground">Valencia 2024 → UCF 2026</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Projects</span>
+              <span className="text-foreground">2 caught</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Image
+          src="/trainer.png"
+          alt="Pixel art trainer sprite of Raul Rodriguez"
+          width={140}
+          height={200}
+          className="h-auto w-56 [image-rendering:pixelated]"
+        />
+      </div>
+      <div className="mt-6 flex flex-wrap justify-evenly gap-3">
         <Button asChild variant="outline">
           <a
             href="https://github.com/Raul001R"
@@ -78,17 +94,37 @@ export default function RaulPage() {
             LinkedIn
           </a>
         </Button>
+        <Button asChild variant="outline">
+          <a
+            href="https://discord.com/users/1511029202223239228"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <MessageCircle className="size-4" />
+            Discord
+          </a>
+        </Button>
+        <Button asChild variant="outline">
+          <a
+            href="https://drive.google.com/file/d/1YV_9Wu4uZDDWrfn67H6WLd7jhcqFIQVX/view?usp=drive_link"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Briefcase className="size-4" />
+            Resume
+          </a>
+        </Button>
       </div>
 
-      <Card>
+      <Card className="mt-8 font-sans">
         <CardHeader>
           <CardTitle className="mb-4 text-center">Pokedex</CardTitle>
           <CardDescription>Projects Collected</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="grid gap-8 md:grid-cols-2">
           <div>
             <h3 className="font-medium text-foreground">Car Price Predictor</h3>
-            <p className="max-w-2xl text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-muted-foreground">
               Random forest regressor trained on a Kaggle Craigslist used-car
               dataset. The first run returned a negative R² with mean absolute
               error in the millions, which pointed at the data rather than the
@@ -100,7 +136,7 @@ export default function RaulPage() {
             <h3 className="font-medium text-foreground">
               Parking Space Detector
             </h3>
-            <p className="max-w-2xl text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-muted-foreground">
               YOLOv8 and OpenCV pipeline that reads video frames and tracks
               parking spot occupancy in real time.
             </p>
