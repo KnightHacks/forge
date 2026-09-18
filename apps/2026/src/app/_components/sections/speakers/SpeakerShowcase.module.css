@@ -78,6 +78,10 @@
   justify-content: center;
   overflow: visible;
   transform: translate3d(0, 0, 0);
+  will-change: auto;
+}
+
+.speakerList:not([data-transition-state="idle"]) {
   will-change: opacity, filter, transform;
 }
 
@@ -118,10 +122,19 @@
   color: inherit;
   text-decoration: none;
   transform: translate3d(0, 0, 0);
+  transition:
+    filter 220ms ease,
+    transform 220ms cubic-bezier(0.18, 0.7, 0.2, 1);
 }
 
 .portraitLink {
   cursor: pointer;
+}
+
+.portraitLink:hover,
+.portraitLink:focus-visible {
+  filter: brightness(1.04) saturate(1.06);
+  transform: translate3d(0, -0.3rem, 0) scale(1.015);
 }
 
 .portraitLink:focus-visible {

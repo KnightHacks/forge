@@ -1,11 +1,10 @@
 import Image from "next/image";
 
 import type { SponsorShowcaseSponsor } from "../../sponsor-showcase";
-import { AssetCredit } from "../../assets";
 import { SponsorShowcase } from "../../sponsor-showcase";
 import { TeamCascade } from "../../team-cascade";
+import { DeferredWaterfallArt } from "./DeferredWaterfallArt";
 import styles from "./SponsorTeamSection.module.css";
-import { WaterfallAtmosphere } from "./WaterfallAtmosphere";
 
 const HOMEPAGE_SPONSORS = [
   {
@@ -85,7 +84,7 @@ const HOMEPAGE_SPONSORS = [
   {
     name: "Impress Ink",
     websiteUrl: "https://impressink.com/",
-    logoSrc: "https://assets.knighthacks.org/khix/sponsor-impressink.png",
+    logoSrc: "/media/homepage/sponsor-impressink.webp",
     logoScale: 1.25,
     mobileLogoScale: 1,
     tier: "bronze-ember",
@@ -170,29 +169,11 @@ const PARTNERS = [
   },
 ] as const;
 
+/** Renders the sponsor waterfall and team cascade as one continuous scene. */
 export function SponsorTeamSection() {
   return (
     <div className={styles.waterfallShowcase}>
-      <AssetCredit
-        className={styles.waterfallTransition}
-        label="Separator art by"
-        credits={[
-          {
-            name: "Adrian Osorio",
-            href: "https://www.linkedin.com/in/adrianosoriob/",
-          },
-        ]}
-      >
-        <div className={styles.sponsorRockSeparator} />
-      </AssetCredit>
-      <div className={styles.scene} aria-hidden="true">
-        <span className={`${styles.sceneAsset} ${styles.rocksTop}`} />
-        <span className={`${styles.sceneAsset} ${styles.rocksBottom}`} />
-        <span className={`${styles.sceneAsset} ${styles.waterfallOne}`} />
-        <span className={`${styles.sceneAsset} ${styles.waterfallTwo}`} />
-        <span className={`${styles.sceneAsset} ${styles.waterfallThree}`} />
-      </div>
-      <WaterfallAtmosphere />
+      <DeferredWaterfallArt />
 
       <div className={styles.content}>
         <section

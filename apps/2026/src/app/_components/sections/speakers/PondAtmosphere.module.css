@@ -64,7 +64,8 @@
   transform-origin: center;
   animation: pondFireflyFloat var(--firefly-duration) ease-in-out
     var(--firefly-delay) infinite alternate;
-  will-change: transform;
+  animation-play-state: paused;
+  will-change: auto;
 }
 
 .firefly[data-firefly="1"] {
@@ -421,9 +422,10 @@
     rotate(var(--wisp-rotate)) scale(var(--wisp-scale));
   animation: pondSpiritWisp var(--wisp-duration) ease-in-out var(--wisp-delay)
     infinite alternate;
+  animation-play-state: paused;
   isolation: isolate;
   mix-blend-mode: screen;
-  will-change: opacity, transform;
+  will-change: auto;
 }
 
 .wisp::before {
@@ -433,7 +435,6 @@
     center / contain no-repeat;
   opacity: var(--wisp-sprite-opacity);
   transform: translateZ(0) scale(0.98);
-  animation: pondWispSpriteFlicker 7.2s ease-in-out infinite;
   image-rendering: auto;
 }
 
@@ -445,7 +446,19 @@
   filter: blur(10px) saturate(1.2);
   opacity: var(--wisp-glow-opacity);
   transform: translate3d(0.15rem, 0.12rem, 0) scale(1.22);
-  animation: pondWispSpriteGlow 8.4s ease-in-out infinite;
+}
+
+.pondAtmosphere[data-active="true"] .firefly,
+.pondAtmosphere[data-active="true"] .wisp {
+  animation-play-state: running;
+}
+
+.pondAtmosphere[data-active="true"] .firefly {
+  will-change: transform;
+}
+
+.pondAtmosphere[data-active="true"] .wisp {
+  will-change: opacity, transform;
 }
 
 .wisp[data-wisp="one"] {

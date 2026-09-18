@@ -646,6 +646,7 @@ const LEAVES: readonly LeafConfig[] = [
   },
 ] as const;
 
+/** Converts a canopy leaf configuration into its CSS custom properties. */
 function getLeafStyle(leaf: LeafConfig): LeafStyle {
   return {
     "--leaf-x": leaf.x,
@@ -669,6 +670,7 @@ function getLeafStyle(leaf: LeafConfig): LeafStyle {
   };
 }
 
+/** Renders one decorative leaf in the tracks canopy. */
 function CanopyLeaf({ leaf }: { leaf: LeafConfig }) {
   const asset = LEAF_ASSETS[leaf.asset];
 
@@ -679,7 +681,6 @@ function CanopyLeaf({ leaf }: { leaf: LeafConfig }) {
       width={asset.width}
       height={asset.height}
       sizes="(max-width: 760px) 40vw, 18vw"
-      unoptimized
       draggable={false}
       className={`${styles.leaf} ${
         leaf.layer === "rear" ? styles.rearLeaf : styles.frontLeaf
@@ -689,6 +690,7 @@ function CanopyLeaf({ leaf }: { leaf: LeafConfig }) {
   );
 }
 
+/** Renders one responsive track character with its surrounding leaf group. */
 function ForestCharacter({ character }: { character: CharacterConfig }) {
   return (
     <Image
@@ -697,7 +699,6 @@ function ForestCharacter({ character }: { character: CharacterConfig }) {
       width={2048}
       height={2048}
       sizes="(max-width: 760px) 31vw, (max-width: 1100px) 18vw, 15vw"
-      unoptimized
       draggable={false}
       data-character={character.asset}
       className={`${styles.character} ${
@@ -710,6 +711,7 @@ function ForestCharacter({ character }: { character: CharacterConfig }) {
   );
 }
 
+/** Renders the interactive track forest and its responsive artwork. */
 export function TracksSection() {
   const [revealStage, setRevealStage] = useState<RevealStage>(0);
   const revealStageRef = useRef<RevealStage>(0);
@@ -719,6 +721,7 @@ export function TracksSection() {
   const settleTimerRef = useRef<number | null>(null);
   const revealCopy = REVEAL_COPY[revealStage];
 
+  /** Advances one queued reveal after the current canopy motion settles. */
   function processNextStage() {
     if (
       isSettlingRef.current ||
@@ -747,6 +750,7 @@ export function TracksSection() {
     }, settleDelay);
   }
 
+  /** Queues one user-requested forest reveal without skipping stages. */
   function handleReveal() {
     const queuedStage = revealStageRef.current + pendingActivationsRef.current;
 
@@ -756,6 +760,7 @@ export function TracksSection() {
     processNextStage();
   }
 
+  /** Handles touch and pen activation without also processing the synthetic click. */
   function handleCanopyPointerUp(event: PointerEvent<HTMLButtonElement>) {
     if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
 
@@ -763,6 +768,7 @@ export function TracksSection() {
     handleReveal();
   }
 
+  /** Handles mouse and keyboard activation of the canopy reveal. */
   function handleCanopyClick() {
     if (Date.now() < ignoreClickUntilRef.current) return;
 
@@ -820,7 +826,6 @@ export function TracksSection() {
               width={2202}
               height={722}
               sizes="(max-width: 760px) 180vw, 110vw"
-              unoptimized
               draggable={false}
               className={styles.branch}
             />
