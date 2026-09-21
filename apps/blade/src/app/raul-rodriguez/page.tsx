@@ -1,7 +1,7 @@
 "use client";
 
 import type { Ref } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import localFont from "next/font/local";
 import Image from "next/image";
 import {
@@ -73,20 +73,43 @@ const projects = [
   },
 ];
 
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeToMotionPreference(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    subscribeToMotionPreference,
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => false,
+  );
+}
+
 export default function RaulPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [introDone, setIntroDone] = useState(false);
+  const [videoDone, setVideoDone] = useState(false);
+
+  // Nobody who asked for reduced motion should be made to sit through the
+  // intro, so skip straight to the page and leave the video on its poster.
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const introDone = videoDone || prefersReducedMotion;
 
   useEffect(() => {
-    void videoRef.current?.play().catch(() => setIntroDone(true));
+    if (prefersReducedMotion) return;
+
+    void videoRef.current?.play().catch(() => setVideoDone(true));
 
     // A stalled video fires neither `ended` nor `error`, which would leave the
     // page permanently invisible, so reveal it regardless after a ceiling.
-    const ceiling = setTimeout(() => setIntroDone(true), 15_000);
+    const ceiling = setTimeout(() => setVideoDone(true), 15_000);
     return () => clearTimeout(ceiling);
-  }, []);
+  }, [prefersReducedMotion]);
 
-  const reveal = `transition-opacity duration-700 ${
+  const reveal = `transition-opacity duration-700 motion-reduce:transition-none ${
     introDone ? "opacity-100" : "pointer-events-none opacity-0"
   }`;
 
@@ -95,7 +118,7 @@ export default function RaulPage() {
       className={`${pixel.className} mx-auto min-h-screen max-w-[1920px] scroll-smooth bg-background p-8`}
     >
       <section className="relative isolate -mx-8 -mt-8 overflow-hidden px-8 pt-8">
-        <IntroVideo videoRef={videoRef} onFinish={() => setIntroDone(true)} />
+        <IntroVideo videoRef={videoRef} onFinish={() => setVideoDone(true)} />
         <div className={reveal} aria-hidden={!introDone}>
           <h1 className="text-4xl font-semibold text-primary">Trainer Card</h1>
           <p className="mt-4 max-w-2xl text-muted-foreground">Raul Rodriguez</p>
@@ -128,7 +151,16 @@ export default function RaulPage() {
       </section>
       <div className="-mx-8 bg-gradient-to-b from-primary/25 to-transparent px-8">
         <Pokedex />
+      </div>
+      <div className="mt-16 border-t border-white/10 pt-16">
         <WhyKnightHacks />
+        <Image
+          src="/knight-hacks-logo.svg"
+          alt="Knight hacks logo"
+          width={140}
+          height={200}
+          className="mx-auto mt-16 h-auto w-[17.5rem]"
+        />
       </div>
     </main>
   );
@@ -144,7 +176,6 @@ function IntroVideo({
   return (
     <video
       ref={videoRef}
-      autoPlay
       muted
       playsInline
       poster="/forest.png"
@@ -201,12 +232,12 @@ function SocialLinks() {
 
 function Pokedex() {
   return (
-    <Card id="pokedex" className="mt-8 font-sans">
+    <Card id="pokedex" className="mt-8">
       <CardHeader>
         <CardTitle className="mb-4 text-center">Pokedex</CardTitle>
         <CardDescription>Projects Collected</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-8 md:grid-cols-2">
+      <CardContent className="grid gap-8 font-sans md:grid-cols-2">
         {projects.map((project) => (
           <ProjectCard key={project.title} project={project} />
         ))}
@@ -241,18 +272,18 @@ function ProjectCard({ project }: { project: (typeof projects)[number] }) {
 function WhyKnightHacks() {
   return (
     <section>
-      <div className="mt-8 flex flex-col items-center gap-6 md:flex-row md:justify-evenly">
-        <Card id="why" className="p-8 font-sans">
+      <div className="mt-8 flex flex-col items-center justify-center gap-6 md:flex-row">
+        <Card id="why" className="w-full max-w-[52.5rem] p-8">
           <CardHeader>
             <CardTitle className="mb-4 text-center">
               Why Knight Hacks Dev Team?
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="font-sans">
             <p className="max-w-2xl text-muted-foreground">
-              chose to apply for the Knight Hacks Dev Team to build things with
-              a team. Most of my projects and classwork have been alone and I'd
-              like to change this and learn to work with a team. As a recent
+              I chose to apply for the Knight Hacks Dev Team to build things
+              with a team. Most of my projects and classwork have been alone and
+              I'd like to change this and learn to work with a team. As a recent
               Valencia transfer, I figured KH Dev Team would be the best place
               to make friends with like-minded people and finally do that. I'd
               also like to widen my knowledge in web development, since I
@@ -262,13 +293,6 @@ function WhyKnightHacks() {
             </p>
           </CardContent>
         </Card>
-        <Image
-          src="/knight-hacks-logo.svg"
-          alt="Knight hacks logo"
-          width={140}
-          height={200}
-          className="h-auto w-[17.5rem]"
-        />
       </div>
     </section>
   );
