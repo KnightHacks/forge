@@ -87,8 +87,41 @@
   overflow: hidden;
   background-color: var(--khix-near-black-violet);
   color: var(--khix-ink);
+  color-scheme: dark;
   font-family: var(--khix-body-font);
   isolation: isolate;
+  -webkit-tap-highlight-color: rgb(210 211 131 / 0.16);
+}
+
+.dashboard
+  :where(
+    a[href],
+    button:not(:disabled),
+    input:not(:disabled),
+    textarea:not(:disabled),
+    select:not(:disabled),
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ) {
+  touch-action: manipulation;
+}
+
+.dashboard
+  :where(
+    a[href],
+    button:not(:disabled),
+    input:not(:disabled),
+    textarea:not(:disabled),
+    select:not(:disabled),
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline: 2px solid rgb(227 239 141 / 0.95);
+  outline-offset: 3px;
+}
+
+.dashboard :where(h1[id], h2[id], h3[id], section[id]) {
+  scroll-margin-top: calc(5rem + env(safe-area-inset-top));
 }
 
 .statusDashboard {
@@ -115,9 +148,8 @@
   transition: transform 180ms ease;
 }
 
-.skipLink:focus {
+.skipLink:focus-visible {
   transform: translateY(0);
-  outline: none;
 }
 
 .chrome {
@@ -1760,8 +1792,19 @@
 }
 
 .eventsMain .portalMagic,
+.mapMain .portalMagic,
 .profileMain .portalMagic,
 .loreMain .portalMagic {
+  display: none;
+}
+
+.mapMain .mainCanvas {
+  display: block;
+  min-height: 100dvh;
+  padding: clamp(4.7rem, 9dvh, 6rem) 0 0;
+}
+
+.mapMain .mainCanvas::before {
   display: none;
 }
 
@@ -3678,6 +3721,10 @@
   min-width: 0;
 }
 
+.profileFormField:focus-within .profileFormLabel {
+  color: rgb(255 252 244 / 0.96);
+}
+
 .profileFormLabel {
   color: rgb(210 211 131 / 0.9);
   font-size: 0.76rem;
@@ -3892,10 +3939,17 @@
 }
 
 .profileCheckbox {
+  position: relative;
   flex: 0 0 auto;
   border-color: rgb(145 181 97 / 0.56) !important;
   background: rgb(25 9 37 / 0.42);
   color: var(--khix-ink);
+}
+
+.profileCheckbox::before {
+  position: absolute;
+  inset: -0.75rem;
+  content: "";
 }
 
 .profileConsentList {
@@ -3905,9 +3959,10 @@
 
 .profileConsent {
   display: grid;
+  min-height: 2.75rem;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.58rem;
-  align-items: flex-start;
+  align-items: center;
   border: 0;
   border-top: 1px solid rgb(162 153 194 / 0.12);
   border-radius: 0;
@@ -4823,12 +4878,14 @@
 
   .statusMain .mainCanvas,
   .eventsMain .mainCanvas,
+  .mapMain .mainCanvas,
   .profileMain .mainCanvas,
   .loreMain .mainCanvas {
     padding-top: clamp(6rem, 14dvh, 9rem);
   }
 
   .eventsMain .mainCanvas,
+  .mapMain .mainCanvas,
   .profileMain .mainCanvas {
     padding-top: clamp(3.6rem, 8dvh, 5.25rem);
   }
@@ -5145,6 +5202,7 @@
 
   .portalNavInner[data-mobile-dragging="true"] {
     transition: none;
+    user-select: none;
   }
 
   .railBrand {
@@ -5162,7 +5220,8 @@
 
   .mobileMenuButton {
     display: grid;
-    width: 2.65rem;
+    width: 2.75rem;
+    min-height: 2.75rem;
     aspect-ratio: 1;
     place-items: center;
     border: 1px solid transparent;
@@ -5252,6 +5311,13 @@
     scrollbar-gutter: auto;
   }
 
+  .mapMain {
+    height: calc(100dvh - 4.35rem);
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   .mainCanvas {
     min-height: calc(100dvh - 4.35rem);
     grid-template-rows: auto;
@@ -5262,6 +5328,13 @@
       max(1.1rem, env(safe-area-inset-right))
       calc(1.15rem + env(safe-area-inset-bottom))
       max(1.1rem, env(safe-area-inset-left));
+  }
+
+  .mapMain .mainCanvas {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
   }
 
   .statusMain {
@@ -5742,6 +5815,25 @@
     gap: 0.16rem 0.28rem;
     font-size: 0.72rem;
     line-height: 1.18;
+  }
+
+  .primaryButton,
+  .ghostButton,
+  .toolLink,
+  .toolButton,
+  .issueButton,
+  .profileRemoveResume,
+  .profileSelectTrigger,
+  .profileComboboxTrigger,
+  .profileAllergyTrigger,
+  .profileAllergyOption {
+    min-height: 2.75rem;
+  }
+
+  .profileInput,
+  .profileTextarea,
+  .issueTextarea {
+    font-size: 1rem;
   }
 
   .profileOptional {

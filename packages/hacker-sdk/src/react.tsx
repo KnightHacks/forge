@@ -59,6 +59,10 @@ export function canLoadCheckedInParticipantData(status: string | undefined) {
   return status === "checkedin";
 }
 
+export function canLoadParticipantSchedule(status: string | undefined) {
+  return status === "confirmed" || status === "checkedin";
+}
+
 export async function invalidateHackerParticipantQueries(
   queryClient: QueryClient,
   portalKey: string,
@@ -165,7 +169,7 @@ export function useHackerSchedule(options: HackerSdkQueryOptions = {}) {
   return useQuery({
     enabled:
       (options.enabled ?? true) &&
-      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
+      canLoadParticipantSchedule(dashboard.data?.application?.status),
     queryFn: () => client.getSchedule(),
     queryKey: hackerSdkQueryKeys.schedule(portalKey),
   });

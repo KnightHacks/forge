@@ -209,7 +209,7 @@ async function requireApplicationWithStatuses(
 }
 
 export async function getSchedule(ctx: AuthenticatedPortalContext) {
-  await requireApplicationWithStatuses(ctx, ["checkedin"]);
+  await requireApplicationWithStatuses(ctx, ["confirmed", "checkedin"]);
   const events = await db
     .select({
       description: Event.description,

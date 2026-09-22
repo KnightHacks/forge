@@ -130,7 +130,7 @@ export function getHackerCapabilityHints({
     canEditProfile: editable,
     canGetCheckInPass: status === "confirmed" || status === "checkedin",
     canViewLeaderboard: status === "confirmed" || status === "checkedin",
-    canViewSchedule: status === "checkedin",
+    canViewSchedule: status === "confirmed" || status === "checkedin",
     canWithdraw:
       status !== null && beforeStart && WITHDRAWABLE_STATUSES.has(status),
   };

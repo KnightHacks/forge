@@ -1018,7 +1018,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     expect(preservedCount[0]?.value).toBe(1);
   });
 
-  it("[TC-DASH-001/002] hides Forge schedule data until whole-hack check-in", async () => {
+  it("[TC-DASH-001/002] opens Forge schedule after confirmation", async () => {
     const hackathon = await seedHackathon();
     const applications = await Promise.all(
       (["pending", "accepted", "confirmed", "checkedin"] as const).map(
@@ -1039,7 +1039,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     );
     const early = await seedEvent(hackathon.id, "Opening", since(30.25), 0);
 
-    for (const participant of applications.slice(0, 3)) {
+    for (const participant of applications.slice(0, 2)) {
       const caller = await participantCaller(participant.userId, hackathon.id);
       await expectDomainError(caller.getSchedule(), "FORBIDDEN_STATUS");
     }
@@ -1050,6 +1050,15 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       hackathon.id,
     );
     const schedule = await checkedInCaller.getSchedule();
+    const confirmed = applications[2];
+    if (!confirmed) throw new Error("Confirmed participant was not seeded.");
+    const confirmedCaller = await participantCaller(
+      confirmed.userId,
+      hackathon.id,
+    );
+    expect(
+      (await confirmedCaller.getSchedule()).events.map(({ id }) => id),
+    ).toEqual([early, late]);
     expect(schedule.events.map(({ id }) => id)).toEqual([early, late]);
     expect(schedule.events[0]).toMatchObject({
       description: "Opening description",

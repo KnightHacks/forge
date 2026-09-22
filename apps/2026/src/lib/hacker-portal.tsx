@@ -338,6 +338,21 @@ export function usePortalConfig() {
 
 export function PortalAuthBoundary({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
+  return (
+    <AuthenticatedPortalBoundary pathname={pathname}>
+      {children}
+    </AuthenticatedPortalBoundary>
+  );
+}
+
+function AuthenticatedPortalBoundary({
+  children,
+  pathname,
+}: {
+  children: ReactNode;
+  pathname: string;
+}) {
   const session = useHackerSession();
   const { client } = useHackerSdkClient();
 
@@ -401,12 +416,17 @@ export function usePortalSignOut() {
 
 export function PortalSessionControl() {
   const pathname = usePathname();
+
+  if (pathname.startsWith("/dashboard")) return null;
+
+  return <AuthenticatedPortalSessionControl />;
+}
+
+function AuthenticatedPortalSessionControl() {
   const session = useHackerSession();
   const logout = usePortalSignOut();
 
-  if (pathname.startsWith("/dashboard") || !session.data?.authenticated) {
-    return null;
-  }
+  if (!session.data?.authenticated) return null;
 
   return (
     <aside

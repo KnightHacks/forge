@@ -46,7 +46,8 @@ export function getParticipantCapabilities(input: {
     canGetPass: input.status === "confirmed" || input.status === "checkedin",
     canViewLeaderboard:
       input.status === "confirmed" || input.status === "checkedin",
-    canViewSchedule: input.status === "checkedin",
+    canViewSchedule:
+      input.status === "confirmed" || input.status === "checkedin",
     canWithdraw: beforeStart && WITHDRAWABLE_STATUSES.has(input.status),
   };
 }
