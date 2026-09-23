@@ -569,7 +569,7 @@ importers:
         version: 2.5.1(@types/emscripten@1.41.5)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       lucide-react:
         specifier: ^0.575.0
         version: 0.575.0(react@19.2.4)
@@ -579,6 +579,9 @@ importers:
       monaco-editor:
         specifier: ^0.56.0
         version: 0.56.0
+      motion:
+        specifier: ^13.2.0
+        version: 13.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next:
         specifier: ^16.2.11
         version: 16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -591,6 +594,9 @@ importers:
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react-is@18.3.1)(react@19.2.4)(redux@5.0.1)
+      simple-icons:
+        specifier: ^16.30.0
+        version: 16.30.0
       superjson:
         specifier: 2.2.6
         version: 2.2.6
@@ -702,7 +708,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -972,7 +978,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -1087,7 +1093,7 @@ importers:
         version: 12.34.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        version: 1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       gsap:
         specifier: ^3.14.2
         version: 3.14.2
@@ -2688,11 +2694,11 @@ packages:
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild-kit/esm-loader@2.6.5':
     resolution: {integrity: sha512-FxEMIkJKnodyA1OaCUoEvbYRkoZlLZ4d/eXFu9Fh8CbBBgP5EmZxrfTRyN0qpXZ4vOvqnE5YdRdcrmUUXuU+dA==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -7593,6 +7599,17 @@ packages:
       react-dom:
         optional: true
 
+  framer-motion@13.2.0:
+    resolution: {integrity: sha512-9E33ebgMaO33w1nN/jEdW8z3/GO483fMi4rqbMG9rt83XgW9QLKRe4NcmJ8s+fQ3O34++UHrIQwlIWGIWTITjA==}
+    peerDependencies:
+      react: ^19.2.4
+      react-dom: ^19.2.4
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
@@ -8765,8 +8782,25 @@ packages:
   motion-dom@12.34.3:
     resolution: {integrity: sha512-sYgFe+pR9aIM7o4fhs2aXtOI+oqlUd33N9Yoxcgo1Fv7M20sRkHtCmzE/VRNIcq7uNJ+qio+Xubt1FXH3pQ+eQ==}
 
+  motion-dom@13.2.0:
+    resolution: {integrity: sha512-N6gdSoWRDk0Rh/fVtlqUtLs+fEN3ELFZI3cn3IQE9Mnf3E+Mh8wjO6MstzCOPFh4Yf0L1as5m2eUyYWj8ylVSQ==}
+
   motion-utils@12.29.2:
     resolution: {integrity: sha512-G3kc34H2cX2gI63RqU+cZq+zWRRPSsNIOjpdl9TN4AQwC4sgwYPl/Q/Obf/d53nOm569T0fYK+tcoSV50BWx8A==}
+
+  motion-utils@13.0.0:
+    resolution: {integrity: sha512-7DnN7TmbLcYXcG4RVadXIihWlyuM9afoUww8Y5Agg431kGKiuL2/OMyP4mJ5wLz+pvN3t5ySClLOaVXJ+wekRQ==}
+
+  motion@13.2.0:
+    resolution: {integrity: sha512-4Hrb5vD6HhjFstLUiCmWvtpsw+WTpP4R+QXfSDYZBz7+uxE/LrRg3aV0ReJxHrTRffHhbIE6svEqnotngXvesQ==}
+    peerDependencies:
+      react: ^19.2.4
+      react-dom: ^19.2.4
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   mpath@0.9.0:
     resolution: {integrity: sha512-ikJRQTk8hw5DEoFVxHG1Gn9T/xcjtdnOKIU1JTmGjZZlg9LST2mBLmcX3/ICIbgJydT2GOc15RnNy5mHmzfSew==}
@@ -9782,6 +9816,10 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
+
+  simple-icons@16.30.0:
+    resolution: {integrity: sha512-YX/HmgEqjpn5Zs3myzKp8ek5Ti+TdrkvNWn9skGLetg9tOg0cTjYizj9ESAYJn4xwc0GQYVGzQxBELDfbxq7WQ==}
+    engines: {node: '>=0.12.18'}
 
   simple-xml-to-json@1.2.3:
     resolution: {integrity: sha512-kWJDCr9EWtZ+/EYYM5MareWj2cRnZGF93YDNpH4jQiHB+hBIZnfPFSQiVMzZOdk+zXWqTZ/9fTeQNu2DqeiudA==}
@@ -16395,6 +16433,15 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
+  framer-motion@13.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      motion-dom: 13.2.0
+      motion-utils: 13.0.0
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   fs.realpath@1.0.0: {}
 
   fsevents@2.3.2:
@@ -16433,7 +16480,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  geist@1.7.0(next@16.2.11(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.0(next@16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.2.11(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
@@ -17757,7 +17804,21 @@ snapshots:
     dependencies:
       motion-utils: 12.29.2
 
+  motion-dom@13.2.0:
+    dependencies:
+      motion-utils: 13.0.0
+
   motion-utils@12.29.2: {}
+
+  motion-utils@13.0.0: {}
+
+  motion@13.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      framer-motion: 13.2.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   mpath@0.9.0: {}
 
@@ -18994,6 +19055,8 @@ snapshots:
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
+
+  simple-icons@16.30.0: {}
 
   simple-xml-to-json@1.2.3: {}
 
