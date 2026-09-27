@@ -16,6 +16,7 @@ import * as help from "./help";
 import * as joke from "./joke";
 import * as leaderboard from "./leaderboard";
 import * as links from "./links";
+import * as rock from "./rock";
 import * as weather from "./weather";
 
 // Export all commands
