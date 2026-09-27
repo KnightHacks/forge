@@ -39,6 +39,7 @@ export const commands = {
   joke,
   leaderboard,
   links,
+  rock,
   weather,
 };
 // please keep this in alphabetical order for ease of reference
