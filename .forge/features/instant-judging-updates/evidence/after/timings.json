@@ -1,0 +1,64 @@
+{
+  "mode": "after",
+  "baseline": "361d10a5",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "events": [
+    {
+      "event": "announcement",
+      "buttonClickedAt": 1789592165332,
+      "visibleAt": 1789592166305,
+      "latencyMs": 973
+    },
+    {
+      "event": "reassignment",
+      "buttonClickedAt": 1789592169026,
+      "visibleAt": 1789592169890,
+      "latencyMs": 864
+    },
+    {
+      "event": "reconnect",
+      "reconnectedAt": 1789592194152,
+      "visibleAt": 1789592194366,
+      "latencyMs": 214
+    }
+  ],
+  "readyAt": 1789592164999,
+  "offlineAt": 1789592171636,
+  "sse": {
+    "connections": [1789592164766, 1789592194157],
+    "messages": [
+      1789592164877, 1789592165555, 1789592169177, 1789592174105, 1789592194249
+    ],
+    "opens": [1789592164856, 1789592194242],
+    "navigations": [
+      {
+        "at": 1789592161867,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      },
+      {
+        "at": 1789592164589,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      },
+      {
+        "at": 1789592165360,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      },
+      {
+        "at": 1789592166063,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      },
+      {
+        "at": 1789592169587,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      },
+      {
+        "at": 1789592194531,
+        "url": "http://127.0.0.1:3123/judge/projects?room=all"
+      }
+    ]
+  },
+  "finishedAt": 1789592196533
+}

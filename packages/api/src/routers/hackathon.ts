@@ -46,6 +46,7 @@ import {
 import { assertHackathonEventProviderPayloadLimits } from "../utils/events/orchestration";
 import { ensureEventPublicationWork } from "../utils/hackathon-events/publication";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
+import { initializeJudgingGroups } from "../utils/projects/initialize-judging-groups";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
 /**
@@ -817,6 +818,8 @@ export const hackathonRouter = createTRPCRouter({
             message: "Could not create the hackathon.",
           });
         }
+
+        await initializeJudgingGroups(tx, created.id);
 
         await createAdminAuditEvent(
           {

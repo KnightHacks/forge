@@ -111,6 +111,20 @@ export const BULLETIN_IMAGE_UPLOAD_POLICY = uploadPolicyFor(
   "Bulletin image",
 );
 
+export const FORM_BANNER_UPLOAD_POLICY: UploadPolicy = {
+  ...IMAGE_UPLOAD_POLICY,
+  maxBytes: 10 * 1024 * 1024,
+  sizeLabel: "10MB",
+  subject: "Form banner",
+};
+
+export const ISSUE_IMAGE_UPLOAD_POLICY: UploadPolicy = {
+  ...IMAGE_UPLOAD_POLICY,
+  maxBytes: 10 * 1024 * 1024,
+  sizeLabel: "10MB",
+  subject: "Issue image",
+};
+
 /** Content types the browser sends when it could not identify the file. */
 const UNIDENTIFIED_CONTENT_TYPES = new Set([
   "",

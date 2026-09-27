@@ -461,10 +461,10 @@ Playwright writes three images per failure into `.playwright-results/` —
 3. **The whole page is blank white.** The dev server returned a 500. Restart it
    — a long-running Turbopack process accumulates stale chunks and starts
    throwing module-evaluation errors that a restart clears.
-4. **The content is right but shifted 160px.** The admin rail is
-   `w-16 hover:w-56 focus-within:w-56`. Something left the pointer or focus
-   inside it. `settle()` in `visual-harness.ts` parks the pointer in the page
-   gutter; a new test that clicks before capturing needs to call it again.
+4. **The content is right but shifted 160px.** The admin rail expands from
+   `w-16` to `w-56` only when its top-left opener button is toggled open, never
+   from hover or focus. If a baseline shifts, check whether a test left the
+   rail expanded from an earlier click before capturing.
 
 ### What is covered, and what is deliberately not
 

@@ -142,6 +142,46 @@ describe("development database backup sanitizer", () => {
     );
   });
 
+  it("drops project inventory and judging access data from development backups", () => {
+    expect(TABLES_TO_DROP).toEqual(
+      expect.arrayContaining([
+        "knight_hacks_guest_judge_session",
+        "knight_hacks_hackathon_judging_configuration",
+        "knight_hacks_judge",
+        "knight_hacks_judging_announcement",
+        "knight_hacks_judging_room",
+        "knight_hacks_judging_room_access_link",
+        "knight_hacks_judging_room_presence",
+        "knight_hacks_judging_rubric_item",
+        "knight_hacks_project_evaluation",
+        "knight_hacks_project_evaluation_rating",
+        "knight_hacks_project_evaluation_response",
+        "knight_hacks_project_evaluation_revision",
+        "knight_hacks_judge_deliberation_section",
+        "knight_hacks_judge_deliberation_entry",
+        "knight_hacks_project",
+        "knight_hacks_project_challenge",
+        "knight_hacks_project_member",
+        "knight_hacks_project_to_challenge",
+      ]),
+    );
+  });
+
+  it("does not query judging tables removed by the project migration", () => {
+    const sanitizer = teamDataSanitizerSql();
+
+    for (const removedTable of [
+      "auth_judge_session",
+      "knight_hacks_challenges",
+      "knight_hacks_judged_submission",
+      "knight_hacks_judges",
+      "knight_hacks_submissions",
+      "knight_hacks_teams",
+    ]) {
+      expect(sanitizer).not.toContain(removedTable);
+    }
+  });
+
   it("defines members of the team by club roster classification, not by role name", () => {
     const sanitizer = teamDataSanitizerSql();
 

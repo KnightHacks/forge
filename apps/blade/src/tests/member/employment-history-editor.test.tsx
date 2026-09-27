@@ -70,7 +70,9 @@ describe("EmploymentHistoryEditor", () => {
     expect(html).toContain("Orlando, FL");
     expect(html).toContain("Knight Hacks");
     expect(html).toContain("Software Engineer");
-    expect(html).toContain("Unconfirmed legacy entry");
+    expect(html).toContain(
+      "Imported entry: choose an experience type and confirm whether this role is current or former.",
+    );
     expect(html).toContain("Make this experience public");
     expect(html).toContain('aria-label="Start month: month"');
     expect(html).toContain('aria-label="Start month: year"');
@@ -88,5 +90,158 @@ describe("EmploymentHistoryEditor", () => {
     expect(employmentMonthValue("05", "2026")).toBe("2026-05");
     expect(employmentMonthValue("05", "")).toBeNull();
     expect(employmentMonthValue("13", "2026")).toBeNull();
+  });
+
+  it("marks required fields and associates an issue with its exact control", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmploymentHistoryEditor, {
+        currentCityKey: "12-53000",
+        currentCityLabel: "Orlando, FL",
+        guildLocationVisible: true,
+        history,
+        onCurrentCityChange: vi.fn(),
+        onGuildLocationVisibleChange: vi.fn(),
+        onHistoryChange: vi.fn(),
+        validationIssues: [
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "title",
+            fieldLabel: "Position title",
+            message: "Enter a position title.",
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("Position title");
+    expect(html).toContain('aria-required="true"');
+    expect(html).toContain('data-career-field="employment-draft-one:title"');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain(
+      'aria-describedby="employment-employment-draft-one-title-error"',
+    );
+    expect(html).toContain('id="employment-employment-draft-one-title-error"');
+    expect(html).toContain("Enter a position title.");
+  });
+
+  it("associates every required selector and reserves guidance for legacy entries", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmploymentHistoryEditor, {
+        currentCityKey: "12-53000",
+        currentCityLabel: "Orlando, FL",
+        guildLocationVisible: true,
+        history,
+        onCurrentCityChange: vi.fn(),
+        onGuildLocationVisibleChange: vi.fn(),
+        onHistoryChange: vi.fn(),
+        validationIssues: [
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "company",
+            fieldLabel: "Company",
+            message: "Choose an existing company or enter a new one.",
+          },
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "experienceType",
+            fieldLabel: "Experience type",
+            message: "Choose an experience type.",
+          },
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "state",
+            fieldLabel: "Employment status",
+            message: "Choose whether this employment is current or former.",
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('data-career-field="employment-draft-one:company"');
+    expect(html).toContain(
+      'data-career-field="employment-draft-one:experienceType"',
+    );
+    expect(html).toContain('data-career-field="employment-draft-one:state"');
+    expect(html).toContain("Choose an existing company or enter a new one.");
+    expect(html).toContain("Choose an experience type.");
+    expect(html).toContain(
+      "Choose whether this employment is current or former.",
+    );
+    expect(html).toContain(
+      "Imported entry: choose an experience type and confirm whether this role is current or former.",
+    );
+  });
+
+  it("does not label a current entry with a missing type as imported", () => {
+    const currentEntry = history[0];
+    if (!currentEntry) throw new Error("Expected the current test entry.");
+    const currentEntryWithoutType = {
+      ...currentEntry,
+      experienceType: null,
+    };
+    const html = renderToStaticMarkup(
+      createElement(EmploymentHistoryEditor, {
+        currentCityKey: "12-53000",
+        currentCityLabel: "Orlando, FL",
+        guildLocationVisible: true,
+        history: [currentEntryWithoutType],
+        onCurrentCityChange: vi.fn(),
+        onGuildLocationVisibleChange: vi.fn(),
+        onHistoryChange: vi.fn(),
+        validationIssues: [
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "experienceType",
+            fieldLabel: "Experience type",
+            message: "Choose an experience type.",
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain("Choose an experience type.");
+    expect(html).not.toContain("Imported entry:");
+  });
+
+  it("places month and city schema errors beside their compound controls", () => {
+    const html = renderToStaticMarkup(
+      createElement(EmploymentHistoryEditor, {
+        currentCityKey: "12-53000",
+        currentCityLabel: "Orlando, FL",
+        guildLocationVisible: true,
+        history,
+        onCurrentCityChange: vi.fn(),
+        onGuildLocationVisibleChange: vi.fn(),
+        onHistoryChange: vi.fn(),
+        validationIssues: [
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "startMonth",
+            fieldLabel: "Start month",
+            message: "Use a valid month and year.",
+          },
+          {
+            draftId: "employment-draft-one",
+            entryIndex: 0,
+            field: "cityKey",
+            fieldLabel: "City",
+            message: "Choose a city from the U.S. city search.",
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain(
+      'data-career-field="employment-draft-one:startMonth"',
+    );
+    expect(html).toContain('data-career-field="employment-draft-one:cityKey"');
+    expect(html).toContain("Use a valid month and year.");
+    expect(html).toContain("Choose a city from the U.S. city search.");
   });
 });

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   CalendarClock,
   Check,
@@ -24,6 +22,10 @@ import {
 import { toast } from "@forge/ui/toast";
 
 import type { IssueWorkspaceItem } from "./types";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { clubDateKey, formatClubDayTime, formatUtcFullDate } from "~/lib/dates";
 import { api } from "~/trpc/react";
 

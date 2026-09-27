@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -71,17 +70,22 @@ import {
   normalizeSocialProfileUrl,
 } from "@forge/validators";
 
-import type { CareerSettingsState } from "~/app/_components/member/member-career-settings";
+import type {
+  CareerHistoryValidationIssue,
+  CareerHistoryValidationResult,
+  CareerSettingsState,
+} from "~/app/_components/member/member-career-settings";
 import type { MemberSettingsSection } from "~/app/_components/member/member-settings-sections";
 import type { CurrentMember } from "~/hooks/use-member";
 import { signOutFromBlade } from "~/app/_components/auth/sign-out-flow";
 import { EmploymentHistoryEditor } from "~/app/_components/member/employment-history-editor";
 import {
+  careerHistoryFirstIssueSummary,
   careerHistoryMutationInput,
-  careerHistoryValidationError,
   careerSaveErrorMessage,
   careerSettingsStateFromCareerData,
   hasCareerSettingsChanged,
+  validateCareerHistory,
 } from "~/app/_components/member/member-career-settings";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
 import { MemberProfilePictureUpload } from "~/app/_components/member/member-profile-picture-upload";
@@ -91,7 +95,10 @@ import {
   memberSettingsFieldsBySection,
   memberSettingsSectionOrder,
 } from "~/app/_components/member/member-settings-sections";
-import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import {
+  RouteTransitionLink,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { useDebugLatency } from "~/hooks/use-debug-latency";
 import { getGuildMemberUrl, GUILD_URL } from "~/lib/guild-urls";
 import { memberProfileFormDefaults } from "~/lib/member-profile-form-values";
@@ -425,7 +432,13 @@ function MemberProfileSettingsEditor({
     useState<CareerSettingsState>(initialCareerState);
   const [careerDraft, setCareerDraft] =
     useState<CareerSettingsState>(initialCareerState);
-  const [careerError, setCareerError] = useState<string | null>(null);
+  const [careerValidation, setCareerValidation] =
+    useState<CareerHistoryValidationResult | null>(null);
+  const [careerSaveError, setCareerSaveError] = useState<string | null>(null);
+  const [careerFocusRequestRevision, setCareerFocusRequestRevision] =
+    useState(0);
+  const [careerFocusTarget, setCareerFocusTarget] =
+    useState<CareerHistoryValidationIssue | null>(null);
   const initialValues = useMemo(
     () => memberProfileFormDefaults(member),
     [member],
@@ -437,6 +450,9 @@ function MemberProfileSettingsEditor({
   const isProfileDirty = form.formState.isDirty;
   const isCareerDirty = hasCareerSettingsChanged(careerDraft, savedCareerState);
   const hasUnsavedChanges = isProfileDirty || isCareerDirty;
+  const careerValidationSummary = careerValidation
+    ? careerHistoryFirstIssueSummary(careerValidation)
+    : null;
 
   const fieldsBySection = useMemo(() => memberSettingsFieldsBySection(), []);
 
@@ -456,7 +472,16 @@ function MemberProfileSettingsEditor({
     value: CareerSettingsState[Key],
   ) => {
     setCareerDraft((current) => ({ ...current, [key]: value }));
-    setCareerError(null);
+    setCareerSaveError(null);
+    setSavedMessage(null);
+  };
+
+  const updateCareerHistory = (history: CareerSettingsState["history"]) => {
+    setCareerDraft((current) => ({ ...current, history }));
+    setCareerValidation((current) =>
+      current === null ? null : validateCareerHistory(history),
+    );
+    setCareerSaveError(null);
     setSavedMessage(null);
   };
 
@@ -477,13 +502,24 @@ function MemberProfileSettingsEditor({
   const saveAllChanges = async (values: MemberUpdateFormValues) => {
     const saveProfile = isProfileDirty;
     const saveCareer = isCareerDirty;
-    const validationError = saveCareer
-      ? careerHistoryValidationError(careerDraft.history)
-      : null;
     setSavedMessage(null);
     setSubmitError(null);
-    setCareerError(validationError);
-    if (validationError) return false;
+    setCareerSaveError(null);
+
+    if (saveCareer) {
+      const validation = validateCareerHistory(careerDraft.history);
+      setCareerValidation(validation);
+      if (validation.issues.length > 0) {
+        setCareerFocusTarget(
+          validation.issues.find((issue) => issue.draftId && issue.field) ??
+            null,
+        );
+        setCareerFocusRequestRevision((current) => current + 1);
+        return false;
+      }
+      setCareerValidation(null);
+      setCareerFocusTarget(null);
+    }
 
     if (saveProfile) {
       try {
@@ -504,7 +540,7 @@ function MemberProfileSettingsEditor({
       try {
         await persistCareer();
       } catch (error) {
-        setCareerError(careerSaveErrorMessage(error));
+        setCareerSaveError(careerSaveErrorMessage(error));
         return false;
       }
     }
@@ -515,7 +551,9 @@ function MemberProfileSettingsEditor({
 
   const resetCareerChanges = () => {
     setCareerDraft(cloneCareerSettingsState(savedCareerState));
-    setCareerError(null);
+    setCareerValidation(null);
+    setCareerSaveError(null);
+    setCareerFocusTarget(null);
   };
 
   const handleDashboardNavigation = () => {
@@ -602,7 +640,7 @@ function MemberProfileSettingsEditor({
                 beforeNavigate={handleDashboardNavigation}
               >
                 <ArrowLeft
-                  className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5 group-data-[exiting=true]:-translate-x-2 motion-reduce:transition-none"
+                  className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5 group-data-[pending=true]:-translate-x-2 motion-reduce:transition-none"
                   aria-hidden="true"
                 />
                 Dashboard
@@ -820,6 +858,8 @@ function MemberProfileSettingsEditor({
                 <EmploymentHistoryEditor
                   currentCityKey={careerDraft.currentCityKey}
                   currentCityLabel={careerDraft.currentCityLabel}
+                  focusRequestRevision={careerFocusRequestRevision}
+                  focusTarget={careerFocusTarget}
                   guildLocationVisible={careerDraft.guildLocationVisible}
                   history={careerDraft.history}
                   onCurrentCityChange={(city) => {
@@ -829,13 +869,23 @@ function MemberProfileSettingsEditor({
                   onGuildLocationVisibleChange={(visible) =>
                     updateCareerDraft("guildLocationVisible", visible)
                   }
-                  onHistoryChange={(history) =>
-                    updateCareerDraft("history", history)
-                  }
+                  onHistoryChange={updateCareerHistory}
+                  validationIssues={careerValidation?.issues}
                 />
-                {careerError && (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                    {careerError}
+                {careerValidationSummary && (
+                  <div
+                    className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                    role="alert"
+                  >
+                    {careerValidationSummary}
+                  </div>
+                )}
+                {careerSaveError && (
+                  <div
+                    className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                    role="alert"
+                  >
+                    {careerSaveError}
                   </div>
                 )}
                 <p className="border-t border-white/10 pt-4 text-sm text-muted-foreground">

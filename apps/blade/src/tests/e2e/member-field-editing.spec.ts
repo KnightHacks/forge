@@ -454,12 +454,92 @@ test.describe("member field editing", () => {
       .getByRole("link", { name: "Dashboard" })
       .click();
     await expect(page).toHaveURL(routeURL(MEMBER_DASHBOARD_PATH));
-    await expect(page.getByText("Welcome, Riley")).toBeVisible();
+    await expect(
+      page
+        .getByRole("heading", { name: "Welcome, Riley", exact: true })
+        .first(),
+    ).toBeVisible();
     await expect(page.getByText("Updated Guild tagline")).toBeVisible();
-    await expect(page.getByText("Private")).toBeVisible();
+    await expect(page.getByText("Private", { exact: true })).toBeVisible();
 
     await page.reload();
-    await expect(page.getByText("Welcome, Riley")).toBeVisible();
+    await expect(
+      page
+        .getByRole("heading", { name: "Welcome, Riley", exact: true })
+        .first(),
+    ).toBeVisible();
+  });
+
+  test("shows employment errors inline, focuses the first issue, and revalidates while correcting", async ({
+    page,
+  }) => {
+    await signInAs(page, EDIT_USER_ID, MEMBER_SETTINGS_PATH);
+
+    await page.getByRole("button", { name: "Add experience" }).click();
+    const companyInput = page.getByPlaceholder("Search companies");
+    const titleInput = page.getByPlaceholder("Software Engineer");
+    const careerAlert = page
+      .locator('[role="alert"]')
+      .filter({ hasText: "Employment entry" });
+
+    await expect(companyInput).not.toHaveAttribute("aria-invalid");
+    await expect(titleInput).not.toHaveAttribute("aria-invalid");
+
+    await page.getByRole("button", { name: "Save changes" }).click();
+
+    await expect(careerAlert).toHaveText(
+      "Employment entry 1, Company: Choose an existing company or enter a new one.",
+    );
+    await expect(companyInput).toBeFocused();
+    await expect(companyInput).toHaveAttribute("aria-invalid", "true");
+    await expect(titleInput).toHaveAttribute("aria-invalid", "true");
+    await expect(
+      page.getByText("Choose an existing company or enter a new one.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Enter a position title.", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/Imported entry:/)).toHaveCount(0);
+    await page.screenshot({
+      path: ".playwright-results/member-settings-employment-validation-desktop.png",
+    });
+
+    await page.setViewportSize({ width: 320, height: 844 });
+    await companyInput.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: ".playwright-results/member-settings-employment-validation-320.png",
+    });
+
+    await companyInput.fill("Forge Labs");
+    await page.getByRole("option", { name: "Forge Labs" }).click();
+
+    await expect(
+      page.getByText("Choose an existing company or enter a new one.", {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(careerAlert).toHaveText(
+      "Employment entry 1, Position title: Enter a position title.",
+    );
+    await expect(titleInput).not.toBeFocused();
+
+    await titleInput.fill("Member");
+
+    await expect(careerAlert).toHaveCount(0);
+    await expect(titleInput).not.toHaveAttribute("aria-invalid");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Changes saved.")).toBeVisible();
+
+    const member = await getMember(EDIT_USER_ID);
+    const employment = member ? await getEmployment(member.id) : null;
+    expect(employment).toMatchObject({
+      companyId: FORGE_LABS_COMPANY_ID,
+      experienceType: "full_time",
+      state: "current",
+      title: "Member",
+    });
   });
 
   test("backfills a missing signup response for legacy members", async ({
@@ -550,11 +630,17 @@ test.describe("member field editing", () => {
       .locator('input[accept="application/pdf,.pdf"]')
       .setInputFiles(pdfPayload);
     await expect(
+      page.getByRole("status", { name: "Resume uploaded successfully." }),
+    ).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Resume" })).toHaveCount(0);
+    await page.getByRole("button", { name: "View", exact: true }).click();
+    await expect(
       page.getByTitle("blade-settings-resume.pdf preview"),
     ).toBeVisible();
     await expect
       .poll(async () => (await getMember(EDIT_USER_ID))?.resumeUrl)
       .toContain(EDIT_USER_ID);
+    await page.getByRole("button", { name: "Close" }).click();
 
     // Addressed by its label rather than its `accept` list: the attribute is
     // derived from the upload policy, so pinning its exact value made this fail

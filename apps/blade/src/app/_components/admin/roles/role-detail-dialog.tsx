@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
   BellRing,
@@ -34,6 +33,7 @@ import { Switch } from "@forge/ui/switch";
 import { toast } from "@forge/ui/toast";
 import { ROLE_UNLINK_CONFIRMATION } from "@forge/validators";
 
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { RolePermissionEditor } from "./role-permission-editor";
 

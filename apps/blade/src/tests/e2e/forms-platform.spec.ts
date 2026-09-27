@@ -227,6 +227,20 @@ test.describe("forms platform cross-surface journey", () => {
     await expect(page.getByText("published")).toBeVisible();
 
     await page.setViewportSize({ width: 320, height: 740 });
+    // The builder's top-level `grid gap-N` wrappers had no `min-w-0`, so a
+    // CSS Grid item's default min-content sizing forced the whole "Form
+    // details"/"Questions" column to its content's min-content width (which
+    // this trivial fixture already exceeds at 320px) instead of shrinking to
+    // the viewport. The shell's `overflow-x-hidden` silently cropped the
+    // difference rather than producing a scrollbar, so this needs an actual
+    // overflow measurement rather than a visual check.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        ),
+      )
+      .toBeLessThanOrEqual(1);
     await page.goto("/admin/forms");
     const sectionSelect = page.locator(
       'select[aria-label="Form section"]:visible',
@@ -280,7 +294,14 @@ test.describe("forms platform cross-surface journey", () => {
     await answer.fill("More club tools");
     await page.getByRole("button", { name: "Submit response" }).click();
     await expect(
-      page.getByRole("heading", { name: "Your submitted response" }),
+      page.getByRole("heading", { name: "Response submitted" }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(
+      new RegExp(`/form/${FORM_SLUG}\\?responseId=[0-9a-f-]+$`),
+    );
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Response submitted" }),
     ).toBeVisible();
     const submittedAnswers = page.getByRole("region", {
       name: "Submitted answers",
@@ -374,6 +395,19 @@ test.describe("forms platform cross-surface journey", () => {
       .click();
     await expect(
       page.getByRole("dialog").getByText("More club tools"),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Delete response", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Delete permanently", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(
+      page.getByText("Response deleted.", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("59 identified submissions", { exact: true }),
     ).toBeVisible();
   });
 });

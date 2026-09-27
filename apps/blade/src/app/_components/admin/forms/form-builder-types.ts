@@ -21,9 +21,27 @@ export interface BuilderInitial extends FormAvailabilitySource {
  */
 export type BuilderDialog = "actions" | "callbacks" | "none" | "settings";
 
+export interface CallbackCatalogInput {
+  allowedSources: readonly ("fixed" | "question" | "respondent")[];
+  description?: string;
+  fixedInputType: "email" | "number" | "text";
+  key: string;
+  label: string;
+  placeholder?: string;
+  questionTypes?: readonly FormDefinition["questions"][number]["type"][];
+  respondentValues?: readonly (
+    | "auth_user_id"
+    | "discord_user_id"
+    | "member_id"
+    | "respondent_email"
+    | "respondent_name"
+  )[];
+}
+
 export interface CallbackCatalogItem {
   available: boolean;
   description: string;
+  inputs: CallbackCatalogInput[];
   label: string;
   requiredPermission: string;
   slug: string;

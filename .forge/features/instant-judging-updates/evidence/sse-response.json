@@ -1,0 +1,6 @@
+{
+  "status": 200,
+  "contentType": "text/event-stream",
+  "buffering": "no",
+  "sample": "event: connected\ndata: {\"reconnectAfterInactivityMs\":45000}\n\n\ndata: {\"json\":{\"changed\":true}}\n"
+}

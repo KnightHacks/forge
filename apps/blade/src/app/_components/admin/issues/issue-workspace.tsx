@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Archive, ListTodo } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@forge/ui/alert";
@@ -22,6 +20,10 @@ import {
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import {
   formatIssueCalendarPeriod,
@@ -231,7 +233,11 @@ export function IssueWorkspace({
               Narrow the current workspace without moving the work surface.
             </DialogDescription>
           </DialogHeader>
-          <IssueFilters input={input} teams={data.teams} />
+          <IssueFilters
+            input={input}
+            teams={data.teams}
+            onApply={() => setOverlay("none")}
+          />
         </DialogContent>
       </Dialog>
 

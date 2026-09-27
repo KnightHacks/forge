@@ -83,13 +83,13 @@ export async function preparePage(page: Page) {
 }
 
 /**
- * Parks the pointer somewhere harmless.
+ * Parks the pointer somewhere harmless and clears focus.
  *
- * Playwright starts every page with the pointer at (0, 0), which sits directly
- * on Blade's admin rail. The rail is `w-16 hover:w-56 focus-within:w-56`, so an
- * unparked pointer expands it by 160px and shifts the entire content column.
- * The page gutter — outside the `container`'s 1400px max-width — has no
- * interactive content at desktop widths.
+ * The admin rail no longer expands from hover or focus — R-03 replaced that
+ * with an explicit click-to-open toggle — so this only prevents a stray
+ * focus ring from bleeding into a screenshot. The page gutter, outside the
+ * `container`'s 1400px max-width, has no interactive content at desktop
+ * widths.
  */
 async function parkPointer(page: Page) {
   const viewport = page.viewportSize();

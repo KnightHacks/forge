@@ -1,0 +1,299 @@
+import { TRPCError } from "@trpc/server";
+
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  isNotNull,
+  isNull,
+  lte,
+  sql,
+} from "@forge/db";
+import { db } from "@forge/db/client";
+import {
+  GuestJudgeSession,
+  Hackathon,
+  HackathonJudgingConfiguration,
+  Judge,
+  JudgingRoom,
+  JudgingRoomAccessLink,
+  ProjectChallenge,
+} from "@forge/db/schemas/knight-hacks";
+
+import type { WriteDb } from "../db";
+import { upsertMemberJudge } from "../../judging-access.server";
+import {
+  challengeSelection,
+  defaultJudgingChallenge,
+} from "../projects/challenge-configuration";
+
+async function activeHackathon() {
+  const now = new Date();
+  const [hackathon] = await db
+    .select({
+      displayName: Hackathon.displayName,
+      endDate: Hackathon.endDate,
+      id: Hackathon.id,
+    })
+    .from(Hackathon)
+    .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
+    .orderBy(desc(Hackathon.startDate))
+    .limit(1);
+  if (hackathon) return hackathon;
+  const [upcoming] = await db
+    .select({
+      displayName: Hackathon.displayName,
+      endDate: Hackathon.endDate,
+      id: Hackathon.id,
+    })
+    .from(Hackathon)
+    .where(gte(Hackathon.startDate, now))
+    .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+    .limit(1);
+  return upcoming ?? null;
+}
+
+export async function resolveJudgeScope(
+  principal:
+    | {
+        displayName: string;
+        isOfficer: boolean;
+        kind: "member";
+        userId: string;
+      }
+    | {
+        challengeId: string;
+        displayName: string;
+        guestSessionId: string;
+        hackathonId: string;
+        judgeId: string;
+        kind: "guest";
+      },
+  input: { challengeId?: string; hackathonId?: string },
+) {
+  if (principal.kind === "guest") {
+    const selected = await activeHackathon();
+    if (selected?.id !== principal.hackathonId)
+      throw new TRPCError({ code: "FORBIDDEN" });
+    return {
+      challengeId: principal.challengeId,
+      hackathonId: principal.hackathonId,
+      judgeId: principal.judgeId,
+      principalKind: principal.kind,
+    } as const;
+  }
+  const now = new Date();
+  const defaultHackathon = await activeHackathon();
+  const hackathon = input.hackathonId
+    ? await db.query.Hackathon.findFirst({
+        columns: { displayName: true, endDate: true, id: true },
+        where: eq(Hackathon.id, input.hackathonId),
+      })
+    : defaultHackathon;
+  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+  if (
+    hackathon.id !== defaultHackathon?.id &&
+    hackathon.endDate >= now &&
+    !principal.isOfficer
+  )
+    throw new TRPCError({ code: "FORBIDDEN" });
+  const challenges = await db
+    .select(challengeSelection)
+    .from(ProjectChallenge)
+    .where(eq(ProjectChallenge.hackathonId, hackathon.id))
+    .orderBy(
+      sql`${ProjectChallenge.isGeneral} DESC`,
+      asc(ProjectChallenge.label),
+    );
+  const selected =
+    challenges.find((challenge) => challenge.id === input.challengeId) ??
+    defaultJudgingChallenge(challenges);
+  if (!selected) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Import projects before opening the judging workspace.",
+    });
+  }
+  const [judge] = await db
+    .select({ id: Judge.id })
+    .from(Judge)
+    .where(
+      and(
+        eq(Judge.hackathonId, hackathon.id),
+        eq(Judge.userId, principal.userId),
+      ),
+    )
+    .limit(1);
+  return {
+    challengeId: selected.parentId ?? selected.id,
+    challenges,
+    hackathon,
+    hackathonId: hackathon.id,
+    judgeId: judge?.id ?? null,
+    principalKind: principal.kind,
+  } as const;
+}
+
+export async function requireWritableJudging(tx: WriteDb, hackathonId: string) {
+  const [hackathon] = await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(eq(Hackathon.id, hackathonId))
+    .for("share")
+    .limit(1);
+  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+
+  const config = await tx.query.HackathonJudgingConfiguration.findFirst({
+    columns: { state: true },
+    where: eq(HackathonJudgingConfiguration.hackathonId, hackathonId),
+  });
+  if (config?.state !== "open") {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message:
+        config?.state === "closed"
+          ? "Judging is closed. Your saved work is read-only."
+          : "Judging has not opened yet.",
+    });
+  }
+}
+
+async function lockWritableHackathonId(tx: WriteDb) {
+  const now = new Date();
+  const [active] = await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(and(lte(Hackathon.startDate, now), gte(Hackathon.endDate, now)))
+    .orderBy(desc(Hackathon.startDate))
+    .for("share")
+    .limit(1);
+  if (active) return active.id;
+  const [upcoming] = await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(gte(Hackathon.startDate, now))
+    .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+    .for("share")
+    .limit(1);
+  return upcoming?.id ?? null;
+}
+
+export async function resolveWritableJudge(
+  tx: WriteDb,
+  principal:
+    | {
+        displayName: string;
+        isOfficer: boolean;
+        kind: "member";
+        userId: string;
+      }
+    | {
+        challengeId: string;
+        displayName: string;
+        guestSessionId: string;
+        hackathonId: string;
+        judgeId: string;
+        kind: "guest";
+      },
+  input: { challengeId?: string; hackathonId?: string },
+) {
+  if (principal.kind === "guest") {
+    const [access] = await tx
+      .select({
+        challengeId: JudgingRoom.challengeId,
+        hackathonId: JudgingRoom.hackathonId,
+        judgeId: GuestJudgeSession.judgeId,
+      })
+      .from(GuestJudgeSession)
+      .innerJoin(
+        JudgingRoomAccessLink,
+        eq(JudgingRoomAccessLink.id, GuestJudgeSession.accessLinkId),
+      )
+      .innerJoin(JudgingRoom, eq(JudgingRoom.id, JudgingRoomAccessLink.roomId))
+      .where(
+        and(
+          eq(GuestJudgeSession.id, principal.guestSessionId),
+          eq(GuestJudgeSession.judgeId, principal.judgeId),
+          gt(GuestJudgeSession.expiresAt, new Date()),
+          isNotNull(GuestJudgeSession.completedAt),
+          isNull(GuestJudgeSession.revokedAt),
+          isNull(JudgingRoomAccessLink.revokedAt),
+          isNull(JudgingRoom.archivedAt),
+        ),
+      )
+      .for("update", { of: GuestJudgeSession })
+      .limit(1);
+    if (!access?.judgeId) throw new TRPCError({ code: "UNAUTHORIZED" });
+    if ((await lockWritableHackathonId(tx)) !== access.hackathonId)
+      throw new TRPCError({ code: "FORBIDDEN" });
+    return {
+      challengeId: access.challengeId,
+      hackathonId: access.hackathonId,
+      judgeId: access.judgeId,
+      principalKind: principal.kind,
+    } as const;
+  }
+  const hackathon = input.hackathonId
+    ? await tx.query.Hackathon.findFirst({
+        columns: { id: true },
+        where: eq(Hackathon.id, input.hackathonId),
+      })
+    : ((
+        await tx
+          .select({ id: Hackathon.id })
+          .from(Hackathon)
+          .where(
+            and(
+              lte(Hackathon.startDate, new Date()),
+              gte(Hackathon.endDate, new Date()),
+            ),
+          )
+          .orderBy(desc(Hackathon.startDate))
+          .limit(1)
+      )[0] ??
+      (
+        await tx
+          .select({ id: Hackathon.id })
+          .from(Hackathon)
+          .where(gte(Hackathon.startDate, new Date()))
+          .orderBy(asc(Hackathon.startDate), asc(Hackathon.id))
+          .limit(1)
+      )[0]);
+  if (!hackathon) throw new TRPCError({ code: "NOT_FOUND" });
+  await tx
+    .select({ id: Hackathon.id })
+    .from(Hackathon)
+    .where(eq(Hackathon.id, hackathon.id))
+    .for("share");
+  const challenges = await tx
+    .select(challengeSelection)
+    .from(ProjectChallenge)
+    .where(
+      and(
+        eq(ProjectChallenge.hackathonId, hackathon.id),
+        input.challengeId
+          ? eq(ProjectChallenge.id, input.challengeId)
+          : undefined,
+      ),
+    );
+  const challenge = input.challengeId
+    ? challenges[0]
+    : defaultJudgingChallenge(challenges);
+  if (!challenge) throw new TRPCError({ code: "BAD_REQUEST" });
+  const judge = await upsertMemberJudge(tx, {
+    displayName: principal.displayName,
+    hackathonId: hackathon.id,
+    userId: principal.userId,
+  });
+  if ((await lockWritableHackathonId(tx)) !== hackathon.id)
+    throw new TRPCError({ code: "FORBIDDEN" });
+  return {
+    challengeId: challenge.parentId ?? challenge.id,
+    hackathonId: hackathon.id,
+    judgeId: judge.id,
+    principalKind: principal.kind,
+  } as const;
+}

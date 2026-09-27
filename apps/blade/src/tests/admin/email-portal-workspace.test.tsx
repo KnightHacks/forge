@@ -47,7 +47,7 @@ describe("Email Portal workspace", () => {
     );
 
     expect(html).toContain("42");
-    expect(html).toContain("Campaign communications");
+    expect(html).not.toContain("Campaign communications");
     expect(html).toContain("Send test to directors");
     expect(html).not.toContain("Safety rail");
     expect(html).not.toContain("Expressive, bounded TSX");

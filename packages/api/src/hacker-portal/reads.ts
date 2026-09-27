@@ -26,7 +26,7 @@ import {
   loadParticipantApplication,
   loadParticipantProfile,
   loadResumeMetadata,
-  profileDto,
+  profileDtoResult,
   requirePortalHackathon,
 } from "./data";
 import { portalFailure } from "./trpc";
@@ -85,6 +85,9 @@ async function participantState(ctx: AuthenticatedPortalContext) {
 
 export async function getApplicationContext(ctx: AuthenticatedPortalContext) {
   const state = await participantState(ctx);
+  const profileResult = state.profile
+    ? profileDtoResult(state.profile)
+    : { profile: null, profileIssues: [] };
   const agreements = await loadActiveAgreements(
     ctx.session.hackathonId,
     "application",
@@ -108,7 +111,10 @@ export async function getApplicationContext(ctx: AuthenticatedPortalContext) {
     agreementAcceptances: agreementAcceptances.map(agreementAcceptanceDto),
     agreements: agreements.map(agreementDto),
     editable,
-    profile: state.profile ? profileDto(state.profile) : null,
+    profile: profileResult.profile,
+    ...(profileResult.profileIssues.length > 0
+      ? { profileIssues: profileResult.profileIssues }
+      : {}),
     resume: state.resume,
   };
 }
@@ -131,6 +137,9 @@ function action(
 
 export async function getDashboard(ctx: AuthenticatedPortalContext) {
   const state = await participantState(ctx);
+  const profileResult = state.profile
+    ? profileDtoResult(state.profile)
+    : { profile: null, profileIssues: [] };
   const now = new Date();
   const applicationOpen =
     now >= state.hackathon.applicationOpen &&
@@ -171,7 +180,10 @@ export async function getDashboard(ctx: AuthenticatedPortalContext) {
       ? (deriveAgeOnDate(state.profile.dob, state.hackathon.startDate) ?? 18) <
         18
       : null,
-    profile: state.profile ? profileDto(state.profile) : null,
+    profile: profileResult.profile,
+    ...(profileResult.profileIssues.length > 0
+      ? { profileIssues: profileResult.profileIssues }
+      : {}),
     resume: state.resume,
   };
 }

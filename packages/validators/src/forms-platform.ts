@@ -114,6 +114,12 @@ const instructionSchema = z.discriminatedUnion("type", [
 
 export const formDefinitionSchema = z
   .object({
+    banner: z
+      .object({
+        alt: z.string().trim().min(1).max(500),
+        attachmentId: z.string().uuid(),
+      })
+      .optional(),
     description: z.string().max(5_000),
     instructions: z.array(instructionSchema).max(100),
     questions: z.array(formQuestionSchema).max(500),
@@ -406,13 +412,13 @@ const callbackSourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("fixed"), value: z.unknown() }),
   z.object({ kind: z.literal("question"), questionId: z.string().uuid() }),
   z.object({
-    kind: z.literal("system"),
+    kind: z.literal("respondent"),
     value: z.enum([
-      "user_id",
+      "auth_user_id",
+      "discord_user_id",
       "member_id",
-      "response_id",
-      "submitted_at",
-      "event_id",
+      "respondent_email",
+      "respondent_name",
     ]),
   }),
 ]);

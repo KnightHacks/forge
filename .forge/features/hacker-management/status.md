@@ -1,9 +1,75 @@
 # Hacker Management Status
 
 Phase: **implemented** — whole bundle approved 2026-08-03 and built. Awaiting
-`forge-review` and the owner's UI pass.
+the owner's final UI pass.
 
-## Context
+## Officer bulk Checked-In — 2026-09-13
+
+- Owner approved a Checked-In roster filter and an officer-only bulk Checked-In
+  transition. It keeps the existing preview/confirm flow but does not require
+  status-mail configuration or create an email send.
+- The roster path records `status`, `checkedInAt`, and `checkedInBy`. Event
+  attendance, class assignment, points, and Discord side effects remain out of
+  scope.
+- Targeted validation: validators 20 tests, Blade filter facets 16 tests, and
+  API hacker guards 57 tests passed. Validator, API, and Blade typechecks passed.
+  Targeted formatting and `git diff --check` passed. Targeted ESLint passed with
+  the repository's existing file/function-length and import-style warnings after
+  the first run hit Node's default heap limit.
+
+## Individual and bulk deletion — 2026-09-13
+
+- Owner clarified that deletion remains permanent: no Deleted tab, restore
+  flow, schema change, or migration.
+- The existing detail action remains available to Hacker Editors. A selected
+  group now uses preview and confirmation before the same hard-delete cleanup;
+  reusable profiles remain, and no email is sent.
+- The existing blacklisted-row safeguard remains: delegated editors receive a
+  redacted skip, while officers may delete the application.
+- Delete is a separate destructive action in both the selected-row action bar
+  and the hacker detail dialog; it is not represented as a roster status.
+- Final targeted validation passed: 178 API tests and 41 Blade tests. The full
+  pre-commit gate and all 21 workspace build tasks passed.
+- Issue: [#570](https://github.com/KnightHacks/forge/issues/570). PR:
+  [#571](https://github.com/KnightHacks/forge/pull/571).
+
+## Delegated hacker permissions — 2026-09-06
+
+Phase: PR open; awaiting CI and review. Branch: `codex/blade-hacker-permissions`.
+
+- Issue: [#538](https://github.com/KnightHacks/forge/issues/538).
+- PR: [#539](https://github.com/KnightHacks/forge/pull/539).
+- Rebased onto `main` before publishing to exclude the unrelated navigation
+  changes in PR #537. The permission fix applied without conflicts; validation
+  passed again on this standalone branch (194 API tests, 34 Blade tests, and
+  seven browser tests).
+
+- Owner approved making Read Hackers functional without officer status, with
+  Edit Hackers controlling writes and blacklist/configuration remaining officer-only.
+- Scope: Blade hacker navigation/page/controls, hacker API guards and responses,
+  and the hacker detail's event-attendance read. No schema or dependency changes.
+- Regression proof: the new API matrix failed 31 cases before implementation.
+  The completed API checks pass 194 tests across hacker access, real database
+  guards, hackathon configuration access, event access, and role permissions.
+- Blade: 34 targeted tests pass. All seven hacker-management browser tests pass,
+  including readers at 1440px and 320px, the legacy link, filtering/search,
+  details and attendance, editor controls, unauthorized redirects, and existing
+  officer flows. Roster/detail screenshots were inspected at both widths.
+- Database and browser checks used disposable local databases, dropped afterward.
+  Status-mail tests enqueue only in the disposable database; no delivery worker runs.
+- `pnpm format`, `pnpm lint`, `pnpm typecheck`, and
+  `pnpm analyze:react:changed` pass. Lint retains the repository's existing
+  warnings. The root typecheck covers shared API consumers.
+- No schema, permission-bit layout, dependency, or persistent environment changes.
+  `pnpm build` was attempted before publishing and failed while collecting page
+  data: Guild lacks `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`; the 2026
+  app lacks `KHIX_HACKER_PORTAL_CLIENT_ID` and `KHIX_HACKER_PORTAL_ORIGIN`.
+  `pnpm --filter=@forge/blade build` also failed collecting `/judge/end` due to
+  missing `JUDGING_ACCESS_SECRET` and `NEXT_PUBLIC_BLADE_URL`.
+  No environment values were changed to bypass this. Deployment is not performed.
+- Screenshot files are excluded from the repository at the owner's request.
+
+## Original context
 
 The slice after hackathon configuration. That slice made per-status mail
 officer-editable; nothing sends it, and `isConfigured` is computed and read by
@@ -14,8 +80,9 @@ officer-facing surface.
 
 **Scope, from the first reverse-prompt round:**
 
-- **Check-in moved out**, to the event page slice, taking class assignment and
-  live Discord role application with it. This was originally in this slice.
+- **Event check-in moved out**, taking class assignment, attendance, points, and
+  live Discord role application with it. The later officer roster action only
+  moves selected attendee records to Checked-In and records attribution.
 - **Points moved in**, but read-only — the column is displayed and nothing here
   writes it. Awarding arrives with events.
 - **Bulk accept/deny is in.**
@@ -98,7 +165,7 @@ not specified.
 - [x] Roster UI with amendable multi-select, filters, bulk preview/confirm,
       blacklist, and the failed-delivery surface.
 - [x] Tests, **including both files the previous bundle promised and skipped**.
-- [ ] `forge-review` until clean.
+- [x] `forge-review` until clean.
 - [ ] Owner UI pass.
 
 ## Deviations from the approved SRD

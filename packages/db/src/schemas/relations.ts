@@ -9,9 +9,11 @@ import {
   EventAttendee,
   EventPublicationWork,
   FormsSchemas,
+  GuestJudgeSession,
   Hackathon,
   HackathonAgreementDefinition,
   HackathonEventPublication,
+  HackathonJudgingConfiguration,
   HackathonPortalAuthorizationCode,
   HackathonPortalClient,
   HackathonPortalSession,
@@ -28,7 +30,15 @@ import {
   IssueReminderDelivery,
   IssuesToTeamsVisibility,
   IssuesToUsersAssignment,
+  Judge,
+  JudgingRoom,
+  JudgingRoomAccessLink,
+  JudgingRoomPresence,
   Member,
+  Project,
+  ProjectChallenge,
+  ProjectMember,
+  ProjectToChallenge,
 } from "./knight-hacks";
 
 export const UserRelations = relations(User, ({ many, one }) => ({
@@ -48,6 +58,7 @@ export const UserRelations = relations(User, ({ many, one }) => ({
   updatedAlumniBulletinPosts: many(AlumniBulletinPost, {
     relationName: "alumniBulletinUpdatedBy",
   }),
+  deletedProjects: many(Project),
 }));
 
 export const RoleRelations = relations(Roles, ({ many }) => ({
@@ -190,13 +201,134 @@ export const EventRelations = relations(Event, ({ many }) => ({
   publicationWork: many(EventPublicationWork),
 }));
 
-export const HackathonRelations = relations(Hackathon, ({ many }) => ({
+export const HackathonRelations = relations(Hackathon, ({ many, one }) => ({
   agreementDefinitions: many(HackathonAgreementDefinition),
   attendees: many(HackerAttendee),
   participantCommands: many(HackerParticipantCommand),
   portalClients: many(HackathonPortalClient),
   publications: many(HackathonEventPublication),
+  projects: many(Project),
+  projectChallenges: many(ProjectChallenge),
+  judgingConfiguration: one(HackathonJudgingConfiguration),
+  judges: many(Judge),
+  judgingRooms: many(JudgingRoom),
 }));
+
+export const ProjectRelations = relations(Project, ({ many, one }) => ({
+  challenges: many(ProjectToChallenge),
+  deletedBy: one(User, {
+    fields: [Project.deletedByUserId],
+    references: [User.id],
+  }),
+  hackathon: one(Hackathon, {
+    fields: [Project.hackathonId],
+    references: [Hackathon.id],
+  }),
+  members: many(ProjectMember),
+}));
+
+export const ProjectMemberRelations = relations(ProjectMember, ({ one }) => ({
+  project: one(Project, {
+    fields: [ProjectMember.projectId],
+    references: [Project.id],
+  }),
+}));
+
+export const ProjectChallengeRelations = relations(
+  ProjectChallenge,
+  ({ many, one }) => ({
+    hackathon: one(Hackathon, {
+      fields: [ProjectChallenge.hackathonId],
+      references: [Hackathon.id],
+    }),
+    projects: many(ProjectToChallenge),
+  }),
+);
+
+export const ProjectToChallengeRelations = relations(
+  ProjectToChallenge,
+  ({ one }) => ({
+    challenge: one(ProjectChallenge, {
+      fields: [ProjectToChallenge.challengeId, ProjectToChallenge.hackathonId],
+      references: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+    }),
+    project: one(Project, {
+      fields: [ProjectToChallenge.projectId, ProjectToChallenge.hackathonId],
+      references: [Project.id, Project.hackathonId],
+    }),
+  }),
+);
+
+export const HackathonJudgingConfigurationRelations = relations(
+  HackathonJudgingConfiguration,
+  ({ one }) => ({
+    hackathon: one(Hackathon, {
+      fields: [HackathonJudgingConfiguration.hackathonId],
+      references: [Hackathon.id],
+    }),
+  }),
+);
+
+export const JudgingRoomRelations = relations(JudgingRoom, ({ many, one }) => ({
+  accessLinks: many(JudgingRoomAccessLink),
+  challenge: one(ProjectChallenge, {
+    fields: [JudgingRoom.challengeId, JudgingRoom.hackathonId],
+    references: [ProjectChallenge.id, ProjectChallenge.hackathonId],
+  }),
+  hackathon: one(Hackathon, {
+    fields: [JudgingRoom.hackathonId],
+    references: [Hackathon.id],
+  }),
+  presences: many(JudgingRoomPresence),
+}));
+
+export const JudgeRelations = relations(Judge, ({ many, one }) => ({
+  hackathon: one(Hackathon, {
+    fields: [Judge.hackathonId],
+    references: [Hackathon.id],
+  }),
+  presences: many(JudgingRoomPresence),
+  user: one(User, { fields: [Judge.userId], references: [User.id] }),
+}));
+
+export const JudgingRoomAccessLinkRelations = relations(
+  JudgingRoomAccessLink,
+  ({ many, one }) => ({
+    guestSessions: many(GuestJudgeSession),
+    room: one(JudgingRoom, {
+      fields: [JudgingRoomAccessLink.roomId, JudgingRoomAccessLink.hackathonId],
+      references: [JudgingRoom.id, JudgingRoom.hackathonId],
+    }),
+  }),
+);
+
+export const GuestJudgeSessionRelations = relations(
+  GuestJudgeSession,
+  ({ one }) => ({
+    accessLink: one(JudgingRoomAccessLink, {
+      fields: [GuestJudgeSession.accessLinkId, GuestJudgeSession.hackathonId],
+      references: [JudgingRoomAccessLink.id, JudgingRoomAccessLink.hackathonId],
+    }),
+    judge: one(Judge, {
+      fields: [GuestJudgeSession.judgeId, GuestJudgeSession.hackathonId],
+      references: [Judge.id, Judge.hackathonId],
+    }),
+  }),
+);
+
+export const JudgingRoomPresenceRelations = relations(
+  JudgingRoomPresence,
+  ({ one }) => ({
+    judge: one(Judge, {
+      fields: [JudgingRoomPresence.judgeId, JudgingRoomPresence.hackathonId],
+      references: [Judge.id, Judge.hackathonId],
+    }),
+    room: one(JudgingRoom, {
+      fields: [JudgingRoomPresence.roomId, JudgingRoomPresence.hackathonId],
+      references: [JudgingRoom.id, JudgingRoom.hackathonId],
+    }),
+  }),
+);
 
 export const HackerProfileRelations = relations(
   HackerProfile,

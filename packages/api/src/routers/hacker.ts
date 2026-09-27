@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import type { SQL } from "@forge/db";
-import type { HackerRosterFilter, SkipReason } from "@forge/validators";
+import type {
+  HackerBulkStatus,
+  HackerRosterFilter,
+  SkipReason,
+} from "@forge/validators";
 import {
   and,
   count,
@@ -11,6 +15,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  ne,
   or,
   sql,
 } from "@forge/db";
@@ -27,6 +32,8 @@ import {
 import {
   HACKATHON_SENDING_STATUSES,
   hackerAwardPointsSchema,
+  hackerBulkDeleteConfirmSchema,
+  hackerBulkDeletePreviewSchema,
   hackerBulkPreviewSchema,
   hackerDeleteApplicationSchema,
   hackerFilterOptionsSchema,
@@ -47,6 +54,13 @@ import {
 } from "../utils/audit/service";
 import { getDiscordEngagement } from "../utils/discord/engagement";
 import {
+  redactHackerBlacklist,
+  redactHackerSkipReasons,
+  requireHackerBulkEdit,
+  requireHackerEdit,
+  requireHackerRead,
+} from "../utils/hacker/access";
+import {
   prepareStatusMail,
   withheldByDevelopmentGate,
   writeStatusMail,
@@ -56,8 +70,8 @@ import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
 /**
  * The columns the roster reads.
  *
- * `blacklistReason` is included because the roster is the one screen allowed to
- * show it. Nothing here may be lifted into a member-facing or SDK procedure —
+ * Blacklist fields are redacted for non-officers before returning these rows.
+ * Nothing here may be lifted into a member-facing or SDK procedure —
  * the flag is a judgement about a person recorded where they cannot see it.
  */
 const ROSTER_COLUMNS = {
@@ -370,9 +384,24 @@ interface BulkSkip {
   reason: SkipReason;
 }
 
+interface ApplicationDeleteTarget {
+  attendeeId: string;
+  blacklistedAt: Date | null;
+  firstName: string;
+  hackerId: string;
+  hackathonId: string;
+  lastName: string;
+  userId: string;
+}
+
+interface BulkApplicationDeleteTarget extends ApplicationDeleteTarget {
+  email: string;
+  name: string;
+}
+
 export const hackerRouter = createTRPCRouter({
   /**
-   * Officer-only. The hackathons the roster's picker offers.
+   * Hacker read access. The hackathons the roster's picker offers.
    *
    * Ordered by how close the start date is to now, so the default selection is
    * the hackathon an officer is most likely working on — the one about to
@@ -381,7 +410,7 @@ export const hackerRouter = createTRPCRouter({
    * them read-only rather than hiding them.
    */
   listHackathonOptions: permProcedure.query(async ({ ctx }) => {
-    assertCanManagePlatformConfig(ctx.session.permissions);
+    requireHackerRead(ctx);
 
     const rows = await db
       .select({
@@ -420,7 +449,7 @@ export const hackerRouter = createTRPCRouter({
   }),
 
   /**
-   * Officer-only. The distinct values the filters offer, for this hackathon.
+   * Hacker read access. The distinct values the filters offer, for this hackathon.
    *
    * Read from the applicants who actually exist rather than from the full
    * school enum — offering five thousand universities when eleven appear in
@@ -429,7 +458,7 @@ export const hackerRouter = createTRPCRouter({
   filterOptions: permProcedure
     .input(hackerFilterOptionsSchema)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx);
 
       // DISTINCT at the database. Without it this moved every attendee row —
       // 1448 on the largest hackathon today — to build a list of about a dozen
@@ -468,7 +497,7 @@ export const hackerRouter = createTRPCRouter({
     }),
 
   /**
-   * Officer-only. One applicant in full.
+   * Hacker read access. One applicant in full.
    *
    * A hacker record is a superset of a member's — everything a member has,
    * plus what MLH requires and what the hackathon needs — so the detail panel
@@ -479,7 +508,7 @@ export const hackerRouter = createTRPCRouter({
   get: permProcedure
     .input(z.object({ attendeeId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx);
 
       const [row] = await db
         .select({
@@ -522,6 +551,9 @@ export const hackerRouter = createTRPCRouter({
           sendStatus: EmailSend.status,
           shirtSize: Hacker.shirtSize,
           status: HackerAttendee.status,
+          // Older applications kept these answers on the hacker record.
+          survey1: sql<string>`coalesce(${HackerAttendee.survey1}, ${Hacker.survey1})`,
+          survey2: sql<string>`coalesce(${HackerAttendee.survey2}, ${Hacker.survey2})`,
           timeApplied: HackerAttendee.timeApplied,
           timeConfirmed: HackerAttendee.timeConfirmed,
           websiteUrl: Hacker.websiteUrl,
@@ -531,7 +563,14 @@ export const hackerRouter = createTRPCRouter({
         // Left, not inner: an application can outlive the account that made it.
         .leftJoin(User, eq(User.id, Hacker.userId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
-        .where(eq(HackerAttendee.id, input.attendeeId))
+        .where(
+          and(
+            eq(HackerAttendee.id, input.attendeeId),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
+          ),
+        )
         .limit(1);
 
       if (!row) {
@@ -546,19 +585,18 @@ export const hackerRouter = createTRPCRouter({
         : null;
 
       return {
-        ...row,
+        ...redactHackerBlacklist(row, ctx),
         discord,
-        blacklisted: row.blacklistedAt !== null,
         deliveryFailed: row.sendStatus === "failed",
         name: `${row.firstName} ${row.lastName}`.trim(),
       };
     }),
 
-  /** Officer-only. One page of the roster, or the whole filtered set. */
+  /** Hacker read access. One page of the roster, or the whole filtered set. */
   listForHackathon: permProcedure
     .input(hackerRosterListSchema)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx, input.filter);
       await requireHackathon(input.hackathonId);
 
       // One extra row, to know whether another page exists without a second
@@ -567,6 +605,9 @@ export const hackerRouter = createTRPCRouter({
         .where(
           and(
             rosterWhere(input.hackathonId, input.filter),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
             cursorAfter(input.cursor),
           ),
         )
@@ -576,8 +617,7 @@ export const hackerRouter = createTRPCRouter({
       const page = rows.slice(0, input.limit);
       return {
         hackers: page.map((row) => ({
-          ...row,
-          blacklisted: row.blacklistedAt !== null,
+          ...redactHackerBlacklist(row, ctx),
           deliveryFailed: row.sendStatus === "failed",
           name: `${row.firstName} ${row.lastName}`.trim(),
         })),
@@ -587,11 +627,11 @@ export const hackerRouter = createTRPCRouter({
       };
     }),
 
-  /** Officer-only. One grouped query, not one per status. */
+  /** Hacker read access. One grouped query, not one per status. */
   statusCounts: permProcedure
     .input(hackerRosterCountsSchema)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx, input.filter);
       await requireHackathon(input.hackathonId);
 
       // `status` is stripped: this query groups *by* status, so applying it as
@@ -607,7 +647,14 @@ export const hackerRouter = createTRPCRouter({
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
         .leftJoin(EmailSend, eq(EmailSend.id, HackerAttendee.lastStatusSendId))
-        .where(rosterWhere(input.hackathonId, countable))
+        .where(
+          and(
+            rosterWhere(input.hackathonId, countable),
+            ctx.session.permissions.IS_OFFICER
+              ? undefined
+              : ne(HackerAttendee.status, "checkedin"),
+          ),
+        )
         .groupBy(HackerAttendee.status);
 
       return {
@@ -619,7 +666,7 @@ export const hackerRouter = createTRPCRouter({
     }),
 
   /**
-   * Officer-only. Which of a set of selected applicants survive a prospective
+   * Hacker read access. Which of a set of selected applicants survive a prospective
    * filter.
    *
    * Answered here rather than in the browser because the client only knows the
@@ -629,11 +676,14 @@ export const hackerRouter = createTRPCRouter({
   selectionSurvival: permProcedure
     .input(hackerSelectionSurvivalSchema)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx, input.filter);
 
       const rows = await rosterQuery().where(
         and(
           rosterWhere(input.hackathonId, input.filter),
+          ctx.session.permissions.IS_OFFICER
+            ? undefined
+            : ne(HackerAttendee.status, "checkedin"),
           inArray(HackerAttendee.id, input.attendeeIds),
         ),
       );
@@ -645,11 +695,11 @@ export const hackerRouter = createTRPCRouter({
       };
     }),
 
-  /** Officer-only. Moves one applicant and queues the mail for the new status. */
+  /** Hacker edit access. Moves one applicant and queues the mail for the new status. */
   setStatus: permProcedure
     .input(hackerSetStatusSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerEdit(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       // Everything read here, before the transaction opens. A pooled read
@@ -699,8 +749,9 @@ export const hackerRouter = createTRPCRouter({
         if (attendee.blacklistedAt && input.status !== "denied") {
           throw new TRPCError({
             code: "PRECONDITION_FAILED",
-            message:
-              "This applicant is blacklisted. Remove the blacklist first, or reject them for capacity.",
+            message: ctx.session.permissions.IS_OFFICER
+              ? "This applicant is blacklisted. Remove the blacklist first, or reject them for capacity."
+              : "This status change requires officer review.",
           });
         }
 
@@ -789,7 +840,7 @@ export const hackerRouter = createTRPCRouter({
     }),
 
   /**
-   * Officer-only. Who a bulk action would move and who it would skip.
+   * Hacker edit access. Who a bulk action would move and who it would skip.
    *
    * Writes nothing. Mirrors the email portal's preview step, which is the
    * interaction officers already know for "you are about to mail a lot of
@@ -798,22 +849,24 @@ export const hackerRouter = createTRPCRouter({
   previewBulk: permProcedure
     .input(hackerBulkPreviewSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerBulkEdit(ctx, input.status);
       const hackathon = await requireHackathon(input.hackathonId);
       assertHackathonNotEnded(hackathon);
-      await assertHackathonReady(db, input.hackathonId);
+      if (input.status !== "checkedin") {
+        await assertHackathonReady(db, input.hackathonId);
 
-      // Runs the *whole* preparation and throws the result away.
-      //
-      // Checking the gates individually was not enough: `assertHackathonReady`
-      // only counts configured rows, while `prepareStatusMail` also resolves
-      // the template and its published revision. A hackathon with all six
-      // statuses set but an archived template, or one whose template has no
-      // published version, previewed "Send 300 emails" and then died on
-      // confirm — the exact failure the preview exists to prevent. Compiling
-      // twice costs one template render; being wrong costs an officer's
-      // confidence in the preview.
-      await prepareStatusMail({ hackathon, status: input.status });
+        // Runs the *whole* preparation and throws the result away.
+        //
+        // Checking the gates individually was not enough: `assertHackathonReady`
+        // only counts configured rows, while `prepareStatusMail` also resolves
+        // the template and its published revision. A hackathon with all six
+        // statuses set but an archived template, or one whose template has no
+        // published version, previewed "Send 300 emails" and then died on
+        // confirm — the exact failure the preview exists to prevent. Compiling
+        // twice costs one template render; being wrong costs an officer's
+        // confidence in the preview.
+        await prepareStatusMail({ hackathon, status: input.status });
+      }
 
       const { sending, skipped } = await resolveBulkTargets(db, input);
 
@@ -823,13 +876,13 @@ export const hackerRouter = createTRPCRouter({
           email: row.email,
           name: row.name,
         })),
-        skipped,
+        skipped: redactHackerSkipReasons(skipped, ctx),
         status: input.status,
       };
     }),
 
   /**
-   * Officer-only. Applies the bulk action.
+   * Hacker edit access. Applies the bulk action.
    *
    * Takes the same selection the preview took, not a stored preview id. The
    * SRD proposed a `previewVersion` handle; carrying one would mean persisting
@@ -847,35 +900,59 @@ export const hackerRouter = createTRPCRouter({
   confirmBulk: permProcedure
     .input(hackerBulkPreviewSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerBulkEdit(ctx, input.status);
       const hackathon = await requireHackathon(input.hackathonId);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       // Read and compiled before the transaction, for the pool reason above.
       assertHackathonNotEnded(hackathon);
-      await assertHackathonReady(db, input.hackathonId);
-      const prepared = await prepareStatusMail({
-        hackathon,
-        status: input.status,
-      });
+      let prepared: Awaited<ReturnType<typeof prepareStatusMail>> | null = null;
+      if (input.status !== "checkedin") {
+        await assertHackathonReady(db, input.hackathonId);
+        prepared = await prepareStatusMail({
+          hackathon,
+          status: input.status,
+        });
+      }
 
       return db.transaction(async (tx) => {
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
 
         if (sending.length === 0) {
-          return { movedCount: 0, sendId: null, skipped, withheldCount: 0 };
+          return {
+            movedCount: 0,
+            sendId: null,
+            skipped: redactHackerSkipReasons(skipped, ctx),
+            withheldCount: 0,
+          };
         }
 
-        const sendId = await writeStatusMail(
-          tx,
-          prepared,
-          ctx.session.user.id,
-          sending,
-        );
+        const sendId = prepared
+          ? await writeStatusMail(
+              tx,
+              prepared,
+              ctx.session.user.id,
+              sending.map((row) => ({ ...row, status: prepared.status })),
+            )
+          : null;
+        const withheldCount = prepared
+          ? withheldByDevelopmentGate(
+              prepared.teamUserIds,
+              sending.map((row) => ({ ...row, status: prepared.status })),
+            )
+          : 0;
 
         await tx
           .update(HackerAttendee)
-          .set({ lastStatusSendId: sendId, status: input.status })
+          .set(
+            input.status === "checkedin"
+              ? {
+                  checkedInAt: new Date(),
+                  checkedInBy: ctx.session.user.id,
+                  status: input.status,
+                }
+              : { lastStatusSendId: sendId, status: input.status },
+          )
           .where(
             inArray(
               HackerAttendee.id,
@@ -909,10 +986,7 @@ export const hackerRouter = createTRPCRouter({
               // Stated when the subject list below is partial, so nobody reads
               // a truncated list as the whole bulk.
               subjectsTruncated: sending.length > BULK_AUDIT_SUBJECT_LIMIT,
-              withheldCount: withheldByDevelopmentGate(
-                prepared.teamUserIds,
-                sending,
-              ),
+              withheldCount,
             },
             subjects: bulkAuditSubjects(
               { displayName: hackathon.displayName, id: input.hackathonId },
@@ -925,14 +999,94 @@ export const hackerRouter = createTRPCRouter({
         return {
           movedCount: sending.length,
           sendId,
-          skipped,
+          skipped: redactHackerSkipReasons(skipped, ctx),
           // Surfaced so the officer is told when a development run mails fewer
           // people than it moved, instead of reporting a clean success and
           // sending nothing.
-          withheldCount: withheldByDevelopmentGate(
-            prepared.teamUserIds,
-            sending,
-          ),
+          withheldCount,
+        };
+      });
+    }),
+
+  /** Hacker edit access. Preview a permanent bulk application deletion. */
+  previewBulkDelete: permProcedure
+    .input(hackerBulkDeletePreviewSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackerEdit(ctx);
+      await requireHackathon(input.hackathonId);
+
+      const { deleting, skipped } = await resolveBulkDeleteTargets(
+        db,
+        input,
+        ctx.session.permissions.IS_OFFICER === true,
+      );
+      return {
+        deleting: deleting.map((row) => ({
+          attendeeId: row.attendeeId,
+          email: row.email,
+          name: row.name,
+        })),
+        skipped: redactHackerSkipReasons(skipped, ctx),
+      };
+    }),
+
+  /** Hacker edit access. Permanently delete the selected applications. */
+  confirmBulkDelete: permProcedure
+    .input(hackerBulkDeleteConfirmSchema)
+    .mutation(async ({ ctx, input }) => {
+      requireHackerEdit(ctx);
+      const hackathon = await requireHackathon(input.hackathonId);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+
+      return db.transaction(async (tx) => {
+        const { deleting, skipped } = await resolveBulkDeleteTargets(
+          tx,
+          input,
+          ctx.session.permissions.IS_OFFICER === true,
+          true,
+        );
+        const previewed = new Set(input.previewedAttendeeIds);
+        if (
+          deleting.length !== previewed.size ||
+          deleting.some((row) => !previewed.has(row.attendeeId))
+        ) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message:
+              "The deletion set changed after preview. Review it again before deleting.",
+          });
+        }
+        if (deleting.length === 0) {
+          return {
+            deletedCount: 0,
+            skipped: redactHackerSkipReasons(skipped, ctx),
+          };
+        }
+
+        const deletion = await deleteApplications(tx, deleting);
+        await createAdminAuditEvent(
+          {
+            actionKey: "hacker.bulk_applications_deleted",
+            actor: auditActor,
+            metadata: {
+              clearedCommandCount: deletion.clearedCommandCount,
+              deletedCount: deleting.length,
+              hackathonId: input.hackathonId,
+              legacySnapshotDeletedCount: deletion.legacySnapshotDeletedCount,
+              skippedCount: skipped.length,
+              subjectsTruncated: deleting.length > BULK_AUDIT_SUBJECT_LIMIT,
+            },
+            subjects: bulkAuditSubjects(
+              { displayName: hackathon.displayName, id: input.hackathonId },
+              deleting,
+            ),
+          },
+          tx,
+        );
+
+        return {
+          deletedCount: deleting.length,
+          skipped: redactHackerSkipReasons(skipped, ctx),
         };
       });
     }),
@@ -949,7 +1103,7 @@ export const hackerRouter = createTRPCRouter({
   awardPoints: permProcedure
     .input(hackerAwardPointsSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerEdit(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       return db.transaction(async (tx) => {
@@ -1021,7 +1175,7 @@ export const hackerRouter = createTRPCRouter({
   updateProfile: permProcedure
     .input(hackerUpdateProfileSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerEdit(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
       const { attendeeId, ...patch } = input;
 
@@ -1167,12 +1321,14 @@ export const hackerRouter = createTRPCRouter({
   deleteApplication: permProcedure
     .input(hackerDeleteApplicationSchema)
     .mutation(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerEdit(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       return db.transaction(async (tx) => {
         const [application] = await tx
           .select({
+            attendeeId: HackerAttendee.id,
+            blacklistedAt: HackerAttendee.blacklistedAt,
             firstName: Hacker.firstName,
             hackerId: HackerAttendee.hackerId,
             hackathonId: HackerAttendee.hackathonId,
@@ -1192,36 +1348,23 @@ export const hackerRouter = createTRPCRouter({
           });
         }
 
-        const clearedCommands = await tx
-          .delete(HackerParticipantCommand)
-          .where(
-            and(
-              eq(HackerParticipantCommand.userId, application.userId),
-              eq(HackerParticipantCommand.hackathonId, application.hackathonId),
-            ),
-          )
-          .returning({ id: HackerParticipantCommand.id });
-
-        await tx
-          .delete(HackerAttendee)
-          .where(eq(HackerAttendee.id, input.attendeeId));
-
-        const [remainingReference] = await tx
-          .select({ id: HackerAttendee.id })
-          .from(HackerAttendee)
-          .where(eq(HackerAttendee.hackerId, application.hackerId))
-          .limit(1);
-        const legacySnapshotDeleted = !remainingReference;
-        if (legacySnapshotDeleted) {
-          await tx.delete(Hacker).where(eq(Hacker.id, application.hackerId));
+        // Deleting the application would also clear its officer-only blacklist.
+        if (application.blacklistedAt && !ctx.session.permissions.IS_OFFICER) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Deleting this application requires officer review.",
+          });
         }
+
+        const deletion = await deleteApplications(tx, [application]);
+        const legacySnapshotDeleted = deletion.legacySnapshotDeletedCount === 1;
 
         await createAdminAuditEvent(
           {
             actionKey: "hacker.application_deleted",
             actor: auditActor,
             metadata: {
-              clearedCommandCount: clearedCommands.length,
+              clearedCommandCount: deletion.clearedCommandCount,
               hackathonId: application.hackathonId,
               legacySnapshotDeleted,
             },
@@ -1255,16 +1398,13 @@ async function resolveBulkTargets(
   input: {
     attendeeIds: string[];
     hackathonId: string;
-    status:
-      | "accepted"
-      | "confirmed"
-      | "denied"
-      | "pending"
-      | "waitlisted"
-      | "withdrawn";
+    status: HackerBulkStatus;
   },
   lock = false,
-): Promise<{ sending: StatusMailRecipient[]; skipped: BulkSkip[] }> {
+): Promise<{
+  sending: Omit<StatusMailRecipient, "status">[];
+  skipped: BulkSkip[];
+}> {
   const base = executor
     .select({
       attendeeId: HackerAttendee.id,
@@ -1292,7 +1432,7 @@ async function resolveBulkTargets(
   const rows = await (lock ? base.for("update", { of: HackerAttendee }) : base);
 
   const found = new Map(rows.map((row) => [row.attendeeId, row]));
-  const sending: StatusMailRecipient[] = [];
+  const sending: Omit<StatusMailRecipient, "status">[] = [];
   const skipped: BulkSkip[] = [];
   /**
    * Addresses already claimed by an earlier applicant in this selection.
@@ -1356,6 +1496,20 @@ async function resolveBulkTargets(
       skipped.push({ attendeeId, name, reason: "blacklisted" });
       continue;
     }
+    if (input.status === "checkedin") {
+      if (row.status === input.status) {
+        skipped.push({ attendeeId, name, reason: "already" });
+        continue;
+      }
+      sending.push({
+        attendeeId,
+        email: row.email,
+        firstName: row.firstName,
+        name,
+        userId: row.userId,
+      });
+      continue;
+    }
     if (!row.email.trim()) {
       skipped.push({ attendeeId, name, reason: "no_email" });
       continue;
@@ -1387,10 +1541,100 @@ async function resolveBulkTargets(
       email: row.email,
       firstName: row.firstName,
       name,
-      status: input.status,
       userId: row.userId,
     });
   }
 
   return { sending, skipped };
+}
+
+async function resolveBulkDeleteTargets(
+  executor: WriteDb,
+  input: { attendeeIds: string[]; hackathonId: string },
+  isOfficer: boolean,
+  lock = false,
+) {
+  const base = executor
+    .select({
+      attendeeId: HackerAttendee.id,
+      blacklistedAt: HackerAttendee.blacklistedAt,
+      email: Hacker.email,
+      firstName: Hacker.firstName,
+      hackerId: HackerAttendee.hackerId,
+      hackathonId: HackerAttendee.hackathonId,
+      lastName: Hacker.lastName,
+      userId: Hacker.userId,
+    })
+    .from(HackerAttendee)
+    .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+    .where(
+      and(
+        eq(HackerAttendee.hackathonId, input.hackathonId),
+        inArray(HackerAttendee.id, input.attendeeIds),
+      ),
+    );
+  const rows = await (lock ? base.for("update", { of: HackerAttendee }) : base);
+  const found = new Map(rows.map((row) => [row.attendeeId, row]));
+  const deleting: BulkApplicationDeleteTarget[] = [];
+  const skipped: BulkSkip[] = [];
+
+  for (const attendeeId of new Set(input.attendeeIds)) {
+    const row = found.get(attendeeId);
+    if (!row) {
+      skipped.push({
+        attendeeId,
+        name: "Unknown applicant",
+        reason: "missing",
+      });
+      continue;
+    }
+    const name = `${row.firstName} ${row.lastName}`.trim();
+    if (row.blacklistedAt && !isOfficer) {
+      skipped.push({ attendeeId, name, reason: "blacklisted" });
+      continue;
+    }
+    deleting.push({ ...row, name });
+  }
+
+  return { deleting, skipped };
+}
+
+async function deleteApplications(
+  tx: WriteDb,
+  applications: ApplicationDeleteTarget[],
+) {
+  const attendeeIds = applications.map((row) => row.attendeeId);
+  const hackerIds = [...new Set(applications.map((row) => row.hackerId))];
+  const userIds = [...new Set(applications.map((row) => row.userId))];
+  const hackathonIds = [...new Set(applications.map((row) => row.hackathonId))];
+
+  const clearedCommands = await tx
+    .delete(HackerParticipantCommand)
+    .where(
+      and(
+        inArray(HackerParticipantCommand.userId, userIds),
+        inArray(HackerParticipantCommand.hackathonId, hackathonIds),
+      ),
+    )
+    .returning({ id: HackerParticipantCommand.id });
+  await tx
+    .delete(HackerAttendee)
+    .where(inArray(HackerAttendee.id, attendeeIds));
+
+  const remaining = await tx
+    .selectDistinct({ hackerId: HackerAttendee.hackerId })
+    .from(HackerAttendee)
+    .where(inArray(HackerAttendee.hackerId, hackerIds));
+  const retainedHackerIds = new Set(remaining.map((row) => row.hackerId));
+  const deletedHackerIds = hackerIds.filter(
+    (hackerId) => !retainedHackerIds.has(hackerId),
+  );
+  if (deletedHackerIds.length > 0) {
+    await tx.delete(Hacker).where(inArray(Hacker.id, deletedHackerIds));
+  }
+
+  return {
+    clearedCommandCount: clearedCommands.length,
+    legacySnapshotDeletedCount: deletedHackerIds.length,
+  };
 }

@@ -38,6 +38,11 @@ const ENDED_ATTENDEE = "00000000-0000-4000-8000-000000000909";
  * tested what it claimed.
  */
 const ENDED_HACKER = "00000000-0000-4000-8000-00000000090a";
+const APPLICATION_MOTIVATION =
+  "I want to learn from other hackers.\n\n" +
+  "I enjoy building useful tools and sharing what I learn.\n\n".repeat(16) +
+  "This is the final paragraph of my response.";
+const APPLICATION_GOALS = "Build a project with a new team and demo it.";
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
   const maxIndex = Math.max(
@@ -152,6 +157,8 @@ test.describe("Hacker management critical flow", () => {
         hackerId: HACKER_ONE,
         id: ATTENDEE_ONE,
         status: "pending",
+        survey1: APPLICATION_MOTIVATION,
+        survey2: APPLICATION_GOALS,
       },
       {
         hackathonId: HACKATHON_ID,
@@ -168,8 +175,152 @@ test.describe("Hacker management critical flow", () => {
     ]);
   });
 
+  test.beforeEach(async () => {
+    await db
+      .update(Roles)
+      .set({ permissions: permissionBitstring("IS_OFFICER") })
+      .where(eq(Roles.id, ADMIN_ROLE_ID));
+  });
+
   test.afterAll(async () => {
     await cleanupFixtures();
+  });
+
+  for (const width of [1440, 320]) {
+    test(`READ_HACKERS works without officer at ${width}px`, async ({
+      page,
+    }, testInfo) => {
+      await db
+        .update(Roles)
+        .set({ permissions: permissionBitstring("READ_HACKERS") })
+        .where(eq(Roles.id, ADMIN_ROLE_ID));
+      await page.setViewportSize({ width, height: 1000 });
+      // The legacy link must reach the same permission-aware standalone roster.
+      await page.goto(
+        `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackathon/${HACKATHON_ID}/hackers`)}`,
+      );
+      await expect(page).toHaveURL(
+        new RegExp(`/admin/hackers\\?hackathon=${HACKATHON_ID}`),
+      );
+      await expect(page.getByText("Edge alpha")).toBeVisible();
+      expect(
+        await page.locator('a[href="/admin/hackers"]').count(),
+      ).toBeGreaterThan(0);
+      await expect(page.locator('a[href="/admin/hackathon"]')).toHaveCount(0);
+      await expect(page.getByRole("checkbox", { name: /Select/ })).toHaveCount(
+        0,
+      );
+      await page
+        .getByRole("button", { name: /^Accepted/ })
+        .first()
+        .click();
+      await expect(
+        page.getByText("No applicants match these filters."),
+      ).toBeVisible();
+      await page
+        .getByRole("button", { name: /^Applied/ })
+        .first()
+        .click();
+      await expect(page.getByText("Edge alpha")).toBeVisible();
+      await page
+        .getByRole("textbox", { name: "Search applicants" })
+        .fill("alpha");
+      await expect(page.getByText("Edge beta")).toHaveCount(0);
+      await expect(page.getByText("Edge alpha")).toBeVisible();
+      await page.screenshot({
+        path: testInfo.outputPath("reader-roster.png"),
+        fullPage: true,
+      });
+      await page.getByText("Edge alpha").click();
+      const dialog = page.getByRole("dialog");
+      await expect(
+        dialog.getByRole("heading", { name: "Edge alpha" }),
+      ).toBeVisible();
+      await expect(
+        dialog.getByText("e2e-alpha@example.test", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        dialog.getByText("No attendance recorded for this hackathon."),
+      ).toBeVisible();
+      const responses = dialog.getByLabel("Application responses", {
+        exact: true,
+      });
+      await responses.scrollIntoViewIfNeeded();
+      await expect(responses.locator("dd").first()).toHaveText(
+        APPLICATION_MOTIVATION,
+        { useInnerText: false },
+      );
+      await expect(responses.locator("dd").last()).toHaveText(
+        APPLICATION_GOALS,
+      );
+      expect(
+        await responses.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true);
+      await responses.focus();
+      await expect(responses).toBeFocused();
+      await responses.hover();
+      await page.mouse.wheel(0, 2000);
+      await expect(responses.locator("dd").last()).toBeInViewport();
+      await expect(
+        dialog.getByRole("button", {
+          name: /^(Edit|Adjust points|Accepted|Delete application|Blacklist applicant|Remove blacklist)$/,
+        }),
+      ).toHaveCount(0);
+      await page.screenshot({
+        path: testInfo.outputPath("reader-detail.png"),
+        fullPage: true,
+      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+    });
+  }
+
+  test("EDIT_HACKERS exposes editing without blacklist or configuration controls", async ({
+    page,
+  }) => {
+    await db
+      .update(Roles)
+      .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+      .where(eq(Roles.id, ADMIN_ROLE_ID));
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackers?hackathon=${HACKATHON_ID}`)}`,
+    );
+    await expect(
+      page.getByRole("checkbox", { name: "Select Edge alpha" }),
+    ).toBeVisible();
+    await page.getByText("Edge alpha").click();
+    const dialog = page.getByRole("dialog");
+    await expect(
+      dialog.getByRole("button", { name: "Edit", exact: true }),
+    ).toBeEnabled();
+    await expect(
+      dialog.getByRole("button", { name: "Adjust points" }),
+    ).toBeEnabled();
+    await expect(
+      dialog.getByRole("button", { name: "Accepted", exact: true }),
+    ).toBeEnabled();
+    await expect(dialog.getByRole("button", { name: /Blacklist/ })).toHaveCount(
+      0,
+    );
+  });
+
+  test("no hacker capability redirects a direct roster link", async ({
+    page,
+  }) => {
+    await db
+      .update(Roles)
+      .set({ permissions: permissionBitstring() })
+      .where(eq(Roles.id, ADMIN_ROLE_ID));
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackers?hackathon=${HACKATHON_ID}`)}`,
+    );
+    await expect(page).toHaveURL(/\/form\/member-signup/);
+    await expect(page.getByText("Edge alpha")).toHaveCount(0);
   });
 
   test("TC-001/TC-015 lists applicants and builds an amendable selection", async ({

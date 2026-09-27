@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowLeft, LayoutDashboard } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 import { Card, CardContent } from "@forge/ui/card";
 
 import { PageEntrance } from "~/app/_components/shared/motion";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 
 export const metadata: Metadata = {
   title: "Page not found | Blade",

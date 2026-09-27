@@ -1,13 +1,6 @@
-export interface TestEventTagRecord {
-  active: boolean;
-  color: string;
-  createdAt: Date;
-  defaultPoints: number;
-  id: string;
-  name: string;
-  normalizedName: string;
-  updatedAt: Date;
-}
+import type { EventTagRecord } from "../../../utils/events/tags";
+
+export type TestEventTagRecord = EventTagRecord;
 
 export class InMemoryEventTagState {
   readonly tags = new Map<string, TestEventTagRecord>();

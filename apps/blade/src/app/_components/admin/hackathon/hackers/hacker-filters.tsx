@@ -223,6 +223,7 @@ function MultiSelectFilter({
  * chips once applied.
  */
 export function HackerFilters({
+  canViewBlacklist,
   busy,
   filter,
   hackathonId,
@@ -233,6 +234,7 @@ export function HackerFilters({
   optionsError,
   optionsLoading,
 }: {
+  canViewBlacklist: boolean;
   filter: RosterFilter;
   hackathonId: string;
   hackathons: Options;
@@ -545,25 +547,27 @@ export function HackerFilters({
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Only show</Label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    aria-pressed={draft.blacklisted === true}
-                    className="min-h-11 text-sm"
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        blacklisted: draft.blacklisted ? undefined : true,
-                      })
-                    }
-                    size="sm"
-                    variant={draft.blacklisted ? "secondary" : "outline"}
-                  >
-                    Blacklisted
-                  </Button>
+              {canViewBlacklist ? (
+                <div className="grid gap-2">
+                  <Label>Only show</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      aria-pressed={draft.blacklisted === true}
+                      className="min-h-11 text-sm"
+                      onClick={() =>
+                        setDraft({
+                          ...draft,
+                          blacklisted: draft.blacklisted ? undefined : true,
+                        })
+                      }
+                      size="sm"
+                      variant={draft.blacklisted ? "secondary" : "outline"}
+                    >
+                      Blacklisted
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           )}
 
@@ -645,26 +649,36 @@ function differs(
 }
 
 /** The status tabs, with their counts. Always visible — this is the main axis. */
+export const HACKER_STATUS_FILTERS = [
+  "pending",
+  "accepted",
+  "confirmed",
+  "checkedin",
+  "waitlisted",
+  "denied",
+  "withdrawn",
+] as const;
+
+/** Checked-In attendance stays on the officer surface. */
+export function hackerStatusFiltersFor(isOfficer: boolean) {
+  return HACKER_STATUS_FILTERS.filter(
+    (status) => isOfficer || status !== "checkedin",
+  );
+}
+
 export function StatusTabs({
   busy,
   counts,
   filter,
+  isOfficer,
   onFilterChange,
 }: {
   busy: boolean;
   counts: RouterOutputs["hacker"]["statusCounts"];
   filter: RosterFilter;
+  isOfficer: boolean;
   onFilterChange: (patch: RosterFilterPatch) => void;
 }) {
-  const order = [
-    "pending",
-    "accepted",
-    "confirmed",
-    "waitlisted",
-    "denied",
-    "withdrawn",
-  ] as const;
-
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-1">
       <StatusTab
@@ -674,7 +688,7 @@ export function StatusTabs({
         label="All"
         onClick={() => onFilterChange({ status: undefined })}
       />
-      {order.map((status) => (
+      {hackerStatusFiltersFor(isOfficer).map((status) => (
         <StatusTab
           active={filter.status === status}
           busy={busy}

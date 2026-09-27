@@ -111,6 +111,11 @@ export type HackerParticipantV1Contract = {
 };
 
 export const HACKER_PARTICIPANT_V1_PROCEDURES = {
+  getJudging: "query",
+  getProjectClaim: "query",
+  claimProject: "mutation",
+  inviteProjectMember: "mutation",
+  searchJudgingProjects: "query",
   confirmAttendance: "mutation",
   getApplicationContext: "query",
   getCheckInPass: "mutation",
@@ -138,3 +143,5 @@ export const HACKER_PARTICIPANT_V1_SCHEMAS: {
   input: hackerPortalV1InputSchemas,
   output: hackerPortalV1OutputSchemas,
 } as const;
+
+export type HackerJudgingDto = HackerParticipantOutput<"getJudging">;

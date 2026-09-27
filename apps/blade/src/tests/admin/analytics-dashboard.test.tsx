@@ -275,7 +275,7 @@ describe("AnalyticsDashboard", () => {
   it("[TC-022] renders the complete section navigation and metric definitions", () => {
     const html = renderSection("overview");
 
-    expect(html).toContain("Club intelligence");
+    expect(html).not.toContain("Club intelligence");
     expect(html).toContain("2025-2026 academic school year");
     expect(html).toContain("Overview");
     expect(html).toContain("Events");

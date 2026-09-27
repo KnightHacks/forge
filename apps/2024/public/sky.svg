@@ -1,0 +1,56 @@
+<!-- <svg width="1440" height="1000" viewBox="0 0 1440 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1440" height="1000" fill="url(#paint0_linear_281_71)"/>
+<defs>
+<linearGradient id="paint0_linear_281_71" x1="720" y1="0" x2="720" y2="1000" gradientUnits="userSpaceOnUse">
+<stop stop-color="#08649F"/>
+<stop offset="1" stop-color="#81C5E8"/>
+</linearGradient>
+</defs>
+</svg> -->
+
+
+
+
+<!-- <svg width="1440" height="1000" viewBox="0 0 1440 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1440" height="1000" fill="url(#paint0_linear_281_71)"/>
+<defs>
+<linearGradient id="paint0_linear_281_71" x1="720" y1="0" x2="720" y2="1000" gradientUnits="userSpaceOnUse">
+<stop stop-color="#08649F" offset="0"/>
+<stop stop-color="#81C5E8" offset="0.3"/>
+</linearGradient>
+</defs>
+</svg> -->
+
+<!-- <svg width="1440" height="1000" viewBox="0 0 1440 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <rect width="1440" height="500" fill="url(#sky_gradient)"/>
+
+    <rect y="500" width="1440" height="500" fill="url(#ocean_gradient)"/>
+    <defs>
+        <linearGradient id="sky_gradient" x1="720" y1="0" x2="720" y2="1000" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#08649F" offset="0"/>
+            <stop stop-color="#81C5E8" offset="0.3"/>
+        </linearGradient>
+        <linearGradient id="ocean_gradient" x1="720" y1="500" x2="720" y2="1500" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0277BD" offset="0"/>
+            <stop stop-color="#58ACFA" offset="1"/>
+        </linearGradient>
+    </defs>
+</svg> -->
+
+<svg width="1440" height="1000" viewBox="0 0 1440 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sky gradient from top to the neck of the dragon -->
+    <rect width="1440" height="400" fill="url(#sky_gradient)"/>
+    <!-- Ocean starting from the neck of the dragon downwards -->
+    <rect y="400" width="1440" height="600" fill="url(#ocean_gradient)"/>
+    <defs>
+        <linearGradient id="sky_gradient" x1="720" y1="0" x2="720" y2="1000" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#08649F" offset="0"/>
+            <stop stop-color="#81C5E8" offset="0.3"/>
+        </linearGradient>
+        <linearGradient id="ocean_gradient" x1="720" y1="400" x2="720" y2="1000" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#2D9CDB" offset="0"/>  <!-- Lighter blue color -->
+            <stop stop-color="#81C5E8" offset="1"/>  <!-- Even lighter blue at the end -->
+        </linearGradient>
+    </defs>
+</svg>

@@ -1,12 +1,30 @@
-import type { APIEmbed } from "discord-api-types/v10";
+import type {
+  APIContainerComponent,
+  APIEmbed,
+  APIMessageTopLevelComponent,
+  APITextDisplayComponent,
+} from "discord-api-types/v10";
+import {
+  AllowedMentionsTypes,
+  ComponentType,
+  MessageFlags,
+  SeparatorSpacingSize,
+} from "discord-api-types/v10";
 
 import { EVENTS } from "@forge/consts";
+import { logger } from "@forge/utils";
 
-const DISCORD_PROD_GUILD_ID = "486628710443778071";
+import { reminderEventEmbed, reminderEventRow } from "./reminder-row";
+
 const DISCORD_REMINDER_ROLE_ID = "1264770451578552401";
-const EVENT_BANNER_IMAGE = "https://i.imgur.com/Jr1cyxT.png";
+const REMINDER_FOOTER =
+  "-# Note: show up with your Blade QR. Don’t have an account? [Sign up](<https://blade.knighthacks.org>)";
 
 export interface ClubReminderCandidate {
+  announcementChannelId?: string | null;
+  emoji?: string | null;
+  requiresDues?: boolean;
+  skipNextWeek?: boolean;
   description: string;
   discordId: string;
   endDateTime: string | Date;
@@ -17,7 +35,14 @@ export interface ClubReminderCandidate {
   tag: string;
 }
 
-type ReminderPayload = string | { content: string } | { embeds: APIEmbed[] };
+interface ReminderPayload {
+  components?: APIMessageTopLevelComponent[];
+  flags?: MessageFlags.IsComponentsV2;
+  withComponents?: true;
+  embeds?: APIEmbed[];
+  content?: string;
+  allowedMentions: { parse: AllowedMentionsTypes[]; roles: string[] };
+}
 
 function dateKey(value: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -60,15 +85,6 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-function formatTime(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    hour12: true,
-    minute: "2-digit",
-    timeZone: EVENTS.CALENDAR_TIME_ZONE,
-  }).format(value);
-}
-
 function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   const isSunday = weekday(now) === "Sunday";
   const today = dateKey(now);
@@ -91,14 +107,7 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
     } else if (eventDate === tomorrow) {
       key = "Tomorrow";
     } else if (eventDate === weekFromToday) {
-      const tag = event.tag.toLowerCase();
-      const name = event.name.toLowerCase();
-      const isOperations = tag === "ops";
-      const isProjectLaunchLab =
-        tag === "project launch" &&
-        (name.includes("lab") || name.includes("hours"));
-
-      if (!isOperations && !isProjectLaunchLab) key = "Next Week";
+      if (!event.skipNextWeek) key = "Next Week";
     }
 
     if (!key) continue;
@@ -108,26 +117,73 @@ function groupCandidates(candidates: ClubReminderCandidate[], now: Date) {
   return [...groups.entries()].map(([prefix, events]) => ({ prefix, events }));
 }
 
-function eventEmbed(event: ClubReminderCandidate): APIEmbed {
-  const start = new Date(event.startDateTime);
-  const end = new Date(event.endDateTime);
-  return {
-    author: {
-      name: `[${event.tag.toUpperCase().replaceAll(" ", "-")}]`,
-    },
-    color: 0xcca4f4,
-    description: event.description,
-    fields: [
-      { inline: true, name: "Date", value: formatDate(start) },
-      { inline: true, name: "Location", value: event.location },
-      { name: "\t", value: "\t" },
-      { inline: true, name: "Start", value: formatTime(start) },
-      { inline: true, name: "End", value: formatTime(end) },
-    ],
-    thumbnail: { url: EVENT_BANNER_IMAGE },
-    title: event.name,
-    url: `https://discord.com/events/${DISCORD_PROD_GUILD_ID}/${event.discordId}`,
-  };
+function reminderCards(
+  groups: ReturnType<typeof groupCandidates>,
+  title: string,
+  audience: string,
+): APIContainerComponent[] {
+  const sections: APITextDisplayComponent[] = [];
+  for (const group of groups) {
+    let content = "";
+    for (const event of group.events) {
+      const start = new Date(event.startDateTime);
+      const date = new Intl.DateTimeFormat("en-US", {
+        month: "numeric",
+        day: "numeric",
+        timeZone: EVENTS.CALENDAR_TIME_ZONE,
+      }).format(start);
+      const heading = `### ${group.prefix.toUpperCase()} · ${date}`;
+      const row = reminderEventRow({
+        ...event,
+        url: `https://blade.knighthacks.org/member/events?selected=${encodeURIComponent(event.id)}`,
+      });
+      if (content && content.length + row.length + 2 > 2000) {
+        sections.push({ type: ComponentType.TextDisplay, content });
+        content = `${heading} · CONTINUED`;
+      }
+      if (!content) content = heading;
+      content += `\n\n${row}`;
+    }
+    sections.push({ type: ComponentType.TextDisplay, content });
+  }
+
+  const cards: APIContainerComponent[] = [];
+  let textLength = 0;
+  for (const section of sections) {
+    let card = cards.at(-1);
+    // Reserve two children for the footer and its divider. Like issue reminders,
+    // keep each text display <=2000, each container <=10 children, and total text <=6000.
+    if (
+      !card ||
+      card.components.length === 8 ||
+      textLength + section.content.length > 6000
+    ) {
+      const heading = `## ${title}${cards.length ? " (continued)" : ""}`;
+      textLength =
+        heading.length +
+        REMINDER_FOOTER.length +
+        (cards.length ? 0 : audience.length);
+      card = {
+        type: ComponentType.Container,
+        accent_color: 0xcca4f4,
+        components: [{ type: ComponentType.TextDisplay, content: heading }],
+      };
+      cards.push(card);
+    }
+    card.components.push(section);
+    textLength += section.content.length;
+  }
+  for (const card of cards) {
+    card.components.push(
+      {
+        type: ComponentType.Separator,
+        divider: true,
+        spacing: SeparatorSpacingSize.Small,
+      },
+      { type: ComponentType.TextDisplay, content: REMINDER_FOOTER },
+    );
+  }
+  return cards;
 }
 
 export function createClubReminderExecutor({
@@ -137,15 +193,24 @@ export function createClubReminderExecutor({
 }: {
   getCandidates: (input: { now: Date }) => Promise<ClubReminderCandidate[]>;
   now: () => Date;
-  send: (payload: ReminderPayload) => Promise<unknown>;
+  send: (
+    payload: ReminderPayload,
+    channelId?: string | null,
+  ) => Promise<unknown>;
 }) {
   return async () => {
     const currentTime = now();
     const candidates = await getCandidates({ now: currentTime });
-    const groups = groupCandidates(candidates, currentTime);
-    if (groups.length === 0) return;
+    const destinations = new Map<string | null, ClubReminderCandidate[]>();
+    for (const event of candidates) {
+      const channelId = event.announcementChannelId ?? null;
+      const events = destinations.get(channelId) ?? [];
+      events.push(event);
+      destinations.set(channelId, events);
+    }
 
     const sunday = weekday(currentTime) === "Sunday";
+    let title = `Event Reminders\n-# ${formatDate(currentTime)}`;
     if (sunday) {
       const end = dateFromKey(dateKeyAfter(currentTime, 6));
       const range = `${new Intl.DateTimeFormat("en-US", {
@@ -157,24 +222,71 @@ export function createClubReminderExecutor({
         month: "numeric",
         timeZone: EVENTS.CALENDAR_TIME_ZONE,
       }).format(end)}`;
-      await send({
-        content: `# Events this Week (${range})\nWe hope you've had an amazing weekend so far, @everyone :D\nHere are some of the events planned for this week!`,
-      });
-    } else {
-      await send({
-        content: `# Event Reminders\nGood morning, <@&${DISCORD_REMINDER_ROLE_ID}>!\nToday is ${formatDate(currentTime)}, and here are some reminders about upcoming events!`,
-      });
+      title = `Events this Week (${range})`;
     }
 
-    for (const group of groups) {
-      await send(`## ${group.prefix}`);
-      for (const event of group.events) {
-        await send({ embeds: [eventEmbed(event)] });
+    const audience = `Want reminders like these? Add the reminder role in <id:customize>\ncc: ${sunday ? "@everyone" : `<@&${DISCORD_REMINDER_ROLE_ID}>`}`;
+    for (const [channelId, events] of destinations) {
+      const groups = groupCandidates(events, currentTime);
+      const singleEventGroup =
+        !sunday && groups.length === 1 && groups[0]?.events.length === 1
+          ? groups[0]
+          : undefined;
+      const cards = singleEventGroup
+        ? singleEventGroup.events.map((event) =>
+            reminderEventEmbed(
+              {
+                ...event,
+                url: `https://blade.knighthacks.org/member/events?selected=${encodeURIComponent(event.id)}`,
+              },
+              REMINDER_FOOTER.replace(/^-# /, ""),
+            ),
+          )
+        : reminderCards(groups, title, audience);
+      for (const [index, card] of cards.entries()) {
+        const allowedMentions = {
+          parse:
+            sunday && index === 0 && channelId === null
+              ? [AllowedMentionsTypes.Everyone]
+              : [],
+          roles: !sunday && index === 0 ? [DISCORD_REMINDER_ROLE_ID] : [],
+        };
+        const payload: ReminderPayload =
+          card.type === ComponentType.Container
+            ? {
+                components: [
+                  ...(index === 0
+                    ? [
+                        {
+                          type: ComponentType.TextDisplay as const,
+                          content: audience,
+                        },
+                      ]
+                    : []),
+                  card,
+                ],
+                flags: MessageFlags.IsComponentsV2,
+                withComponents: true,
+                allowedMentions,
+              }
+            : {
+                embeds: [card],
+                ...(index === 0
+                  ? {
+                      content: `## ${title}\n### ${singleEventGroup?.prefix}\n${audience}`,
+                    }
+                  : {}),
+                allowedMentions,
+              };
+        try {
+          await send(payload, channelId);
+        } catch (error) {
+          logger.error(
+            `Failed to send Club reminder card "${title}" (part ${index + 1}, channel ${channelId ?? "default"}):`,
+            error,
+          );
+        }
       }
     }
-
-    await send({
-      content: `We hope to see you all there! Let us know you're attending an event by clicking its title and pressing "Interested"!\nIf you are interested in opting in to daily event reminders, please assign yourself the Event Reminders role in <id:customize>!\nAlso, please make sure to sign up to [Blade](https://blade.knighthacks.org) for membership management and check-in to events!`,
-    });
   };
 }

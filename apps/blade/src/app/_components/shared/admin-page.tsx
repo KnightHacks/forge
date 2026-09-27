@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { cn } from "@forge/ui";
 import { Skeleton } from "@forge/ui/skeleton";
 
+import { AdminPageInfoTooltip } from "./admin-page-info-tooltip";
+
 export const adminPageClassName =
   "container min-w-0 px-3 pb-12 pt-4 sm:px-8 sm:pb-16 sm:pt-6 md:pt-10";
 
@@ -15,8 +17,6 @@ export function AdminPageHeader({
   actions,
   className,
   description,
-  eyebrow,
-  icon: Icon,
   title,
   titleClassName,
 }: {
@@ -35,11 +35,7 @@ export function AdminPageHeader({
         className,
       )}
     >
-      <div className="min-w-0 space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-          <Icon className="size-4 shrink-0" aria-hidden="true" />
-          <span>{eyebrow}</span>
-        </div>
+      <div className="flex min-w-0 items-center gap-2">
         <h1
           className={cn(
             "text-2xl font-semibold tracking-normal sm:text-3xl md:text-4xl",
@@ -48,9 +44,7 @@ export function AdminPageHeader({
         >
           {title}
         </h1>
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-          {description}
-        </p>
+        <AdminPageInfoTooltip description={description} />
       </div>
       {actions ? (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -63,7 +57,6 @@ export function AdminPageHeader({
 
 export function AdminPageHeaderSkeleton({
   actions = 0,
-  descriptionWidth = "max-w-2xl",
   titleWidth = "w-72",
 }: {
   actions?: number;
@@ -72,13 +65,8 @@ export function AdminPageHeaderSkeleton({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div className="min-w-0 space-y-2">
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 shrink-0" />
-          <Skeleton className="h-5 w-36" />
-        </div>
+      <div className="min-w-0">
         <Skeleton className={cn("h-10 max-w-full sm:h-12", titleWidth)} />
-        <Skeleton className={cn("h-5 w-full", descriptionWidth)} />
       </div>
       {actions > 0 ? (
         <div className="flex flex-wrap gap-2">

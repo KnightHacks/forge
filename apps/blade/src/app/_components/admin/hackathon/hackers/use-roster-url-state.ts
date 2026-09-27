@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import type { HackerRosterFilter } from "@forge/validators";
 import { hackerRosterFilterSchema } from "@forge/validators";
+
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 
 /**
  * Filter state, the selected hackathon, and show-all live in the URL, like the

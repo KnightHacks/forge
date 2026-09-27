@@ -2,74 +2,137 @@ import { describe, expect, it } from "vitest";
 
 import { callbackConfigurationSchema } from "@forge/validators";
 
-import { callbackInputMappings } from "~/app/_components/admin/forms/form-callback-mappings";
+import type { CallbackCatalogItem } from "~/app/_components/admin/forms/form-builder-types";
+import {
+  callbackInputMappings,
+  emptyCallbackDraft,
+  isCallbackDraftComplete,
+  savedCallbackDraft,
+} from "~/app/_components/admin/forms/form-callback-mappings";
+
+const recruiting: CallbackCatalogItem = {
+  available: true,
+  description: "Notify recruiting",
+  inputs: [
+    {
+      allowedSources: ["question", "respondent", "fixed"],
+      fixedInputType: "text",
+      key: "name",
+      label: "Name",
+      respondentValues: ["respondent_name"],
+    },
+    {
+      allowedSources: ["question", "fixed"],
+      fixedInputType: "text",
+      key: "team",
+      label: "Team",
+    },
+  ],
+  label: "Notify recruiting",
+  requiredPermission: "EDIT_FORMS",
+  slug: "recruiting.notify",
+};
 
 describe("form callback mappings", () => {
-  it("always identifies the responding member", () => {
-    const [member] = callbackInputMappings({
-      questionId: "",
-      slug: "recruiting.notify",
-      value: "",
-    });
-
-    expect(member).toEqual({
-      inputKey: "memberId",
-      source: { kind: "system", value: "member_id" },
-    });
-  });
-
-  it("sends the typed role id when assigning a Discord role", () => {
-    const mappings = callbackInputMappings({
-      questionId: "0f1c9c4e-1f4a-4d5a-9c1e-2f3a4b5c6d7e",
-      slug: "discord.assign-role",
-      value: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
-    });
-
-    expect(mappings[1]).toEqual({
-      inputKey: "roleId",
-      source: { kind: "fixed", value: "6ba7b810-9dad-11d1-80b4-00c04fd430c8" },
-    });
-  });
-
-  it("pulls a recruiting note from the chosen question", () => {
-    const mappings = callbackInputMappings({
-      questionId: "0f1c9c4e-1f4a-4d5a-9c1e-2f3a4b5c6d7e",
-      slug: "recruiting.notify",
-      value: "ignored once a question is chosen",
-    });
-
-    expect(mappings[1]).toEqual({
-      inputKey: "note",
-      source: {
-        kind: "question",
-        questionId: "0f1c9c4e-1f4a-4d5a-9c1e-2f3a4b5c6d7e",
+  it("defaults semantic respondent fields and leaves question mappings explicit", () => {
+    expect(emptyCallbackDraft(recruiting)).toEqual({
+      mappings: {
+        name: { kind: "respondent", value: "respondent_name" },
+        team: { kind: "question", questionId: "" },
       },
-    });
-  });
-
-  it("falls back to the typed note when no question is chosen", () => {
-    const mappings = callbackInputMappings({
-      questionId: "",
       slug: "recruiting.notify",
-      value: "Reach out about the internship",
-    });
-
-    expect(mappings[1]).toEqual({
-      inputKey: "note",
-      source: { kind: "fixed", value: "Reach out about the internship" },
     });
   });
 
-  // `forms.configureCallback` takes `z.array(z.unknown())` and validates on the
-  // server, so a client-side shape change would have reached the API before
-  // anything rejected it.
+  it("serializes every procedure input without callback-specific branches", () => {
+    const mappings = callbackInputMappings({
+      mappings: {
+        name: { kind: "respondent", value: "respondent_name" },
+        team: { kind: "fixed", value: "Outreach" },
+      },
+      slug: "recruiting.notify",
+    });
+
+    expect(mappings).toEqual([
+      {
+        inputKey: "name",
+        source: { kind: "respondent", value: "respondent_name" },
+      },
+      { inputKey: "team", source: { kind: "fixed", value: "Outreach" } },
+    ]);
+  });
+
+  it("restores saved question, respondent, and manual mappings", () => {
+    expect(
+      savedCallbackDraft(
+        {
+          active: true,
+          callbackSlug: "recruiting.notify",
+          id: "callback-1",
+          mappings: [
+            {
+              inputKey: "name",
+              source: { kind: "respondent", value: "respondent_name" },
+            },
+            {
+              inputKey: "team",
+              source: { kind: "fixed", value: "Development" },
+            },
+          ],
+        },
+        recruiting,
+      ),
+    ).toEqual({
+      mappings: {
+        name: { kind: "respondent", value: "respondent_name" },
+        team: { kind: "fixed", value: "Development" },
+      },
+      slug: "recruiting.notify",
+    });
+  });
+
+  it("marks legacy mappings invalid until an admin replaces them", () => {
+    const draft = savedCallbackDraft(
+      {
+        active: true,
+        callbackSlug: "recruiting.notify",
+        id: "callback-1",
+        mappings: [
+          {
+            inputKey: "name",
+            source: { kind: "note", value: "legacy" },
+          },
+        ],
+      },
+      recruiting,
+    );
+
+    expect(draft.invalidSavedMappings).toBe(true);
+    expect(isCallbackDraftComplete(draft)).toBe(false);
+  });
+
+  it("requires a selected question or non-empty manual value", () => {
+    expect(isCallbackDraftComplete(emptyCallbackDraft(recruiting))).toBe(false);
+    expect(
+      isCallbackDraftComplete({
+        mappings: {
+          name: { kind: "respondent", value: "respondent_name" },
+          team: { kind: "fixed", value: "Outreach" },
+        },
+        slug: "recruiting.notify",
+      }),
+    ).toBe(true);
+  });
+
   it("produces mappings the stored configuration accepts", () => {
     const parsed = callbackConfigurationSchema.safeParse({
-      callbackSlug: "discord.assign-role",
+      callbackSlug: "recruiting.notify",
       mappings: callbackInputMappings({
-        questionId: "",
-        slug: "discord.assign-role",
-        value: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        mappings: {
+          name: { kind: "respondent", value: "respondent_name" },
+          team: { kind: "fixed", value: "Outreach" },
+        },
+        slug: "recruiting.notify",
       }),
       responseMode: "single_locked",
     });

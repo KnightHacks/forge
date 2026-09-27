@@ -1,0 +1,697 @@
+"use client";
+
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  DoorOpen,
+  FolderKanban,
+  LogOut,
+  MapPin,
+  Pencil,
+  ShieldCheck,
+  Star,
+} from "lucide-react";
+
+import type { RouterOutputs } from "@forge/api";
+import { Badge } from "@forge/ui/badge";
+import { Button } from "@forge/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
+import { toast } from "@forge/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@forge/ui/tooltip";
+
+import type { ProjectDirectoryInput } from "./project-directory";
+import {
+  AdminPageHeader,
+  adminPageLayoutClassName,
+} from "~/app/_components/shared/admin-page";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { judgingTime } from "~/lib/judging/schedule-display";
+import { useJudgingClock } from "~/lib/judging/use-judging-clock";
+import { api } from "~/trpc/react";
+import { EvaluationDialog } from "../judging/evaluation-dialog";
+import { JudgeDeliberation } from "../judging/judge-deliberation";
+import { JudgeSubmissions } from "../judging/judge-submissions";
+import { JudgingAnnouncements } from "../judging/judging-announcements";
+import { ProjectScoreDialog } from "../judging/project-score-dialog";
+import { ProjectDirectory } from "./project-directory";
+
+type JudgeData = Omit<
+  RouterOutputs["projects"]["listJudge"],
+  "roomFilterUnavailableReason" | "selectedChallengeId"
+> & { roomFilterUnavailableReason?: string | null };
+type Hackathons = RouterOutputs["projects"]["listJudgeHackathons"];
+type JudgingContext = RouterOutputs["judging"]["getContext"];
+type Workspace = RouterOutputs["judging"]["getWorkspace"];
+type Scores = RouterOutputs["judging"]["getProjectScores"];
+type Submissions = RouterOutputs["judging"]["listMySubmissions"];
+type Deliberation = RouterOutputs["judging"]["listMyDeliberation"];
+type JudgeProject = JudgeData["projects"][number];
+
+function JudgingHeartbeat({ roomId }: { roomId: string }) {
+  const router = useRouter();
+  const heartbeat = api.judging.heartbeat.useMutation();
+  const mutate = heartbeat.mutate;
+  useEffect(() => {
+    const send = () =>
+      mutate(
+        { roomId },
+        {
+          onError(error) {
+            if (
+              error.data?.code === "UNAUTHORIZED" ||
+              error.data?.code === "NOT_FOUND"
+            ) {
+              window.location.replace("/judge/access-error");
+            }
+          },
+          onSuccess(result) {
+            if (!result.updated) router.refresh();
+          },
+        },
+      );
+    send();
+    const interval = window.setInterval(send, 60_000);
+    return () => window.clearInterval(interval);
+  }, [mutate, roomId, router]);
+  return null;
+}
+
+function GuestSessionControl() {
+  const endGuest = api.judging.endGuest.useMutation();
+
+  async function endSession() {
+    try {
+      await endGuest.mutateAsync();
+      window.location.assign("/judge/end");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not end the session.",
+      );
+    }
+  }
+
+  return (
+    <Button
+      className="h-11 gap-1 px-3 text-xs"
+      disabled={endGuest.isPending}
+      onClick={() => void endSession()}
+      size="sm"
+      variant="ghost"
+    >
+      <LogOut className="size-3" aria-hidden="true" />
+      {endGuest.isPending ? "Ending…" : "End session"}
+    </Button>
+  );
+}
+
+function MemberRoomSelector({
+  context,
+  hackathonId,
+}: {
+  context: Extract<JudgingContext, { kind: "member" }>;
+  hackathonId?: string;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const utils = api.useUtils();
+  const joinRoom = api.judging.joinRoom.useMutation();
+  const leaveRoom = api.judging.leaveRoom.useMutation();
+  const announcementInput = { hackathonId };
+
+  async function selectRoom(roomId: string) {
+    try {
+      if (!roomId) {
+        if (context.activeRoomId) {
+          await leaveRoom.mutateAsync({ roomId: context.activeRoomId });
+        }
+        utils.judging.listAnnouncements.setData(announcementInput, []);
+        await utils.judging.listAnnouncements
+          .invalidate(announcementInput)
+          .catch(() => undefined);
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("challenge");
+        next.delete("page");
+        toast.success("Left judging room.");
+        const query = next.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname);
+        router.refresh();
+        return;
+      }
+      const room = await joinRoom.mutateAsync({ roomId });
+      utils.judging.listAnnouncements.setData(announcementInput, []);
+      await utils.judging.listAnnouncements
+        .invalidate(announcementInput)
+        .catch(() => undefined);
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("challenge", room.challengeId);
+      next.delete("page");
+      if (room.discordDelivery === "failed") {
+        toast.error(
+          "Room selected, but Discord could not open the room thread for you.",
+        );
+      } else {
+        toast.success("Judging room selected.");
+      }
+      router.replace(`${pathname}?${next.toString()}`);
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Room update failed.",
+      );
+    }
+  }
+
+  return (
+    <label className="w-full min-w-0 space-y-1 sm:w-72">
+      <span className="block text-xs font-medium text-muted-foreground">
+        Judging room
+      </span>
+      <select
+        aria-label="Judging room"
+        className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+        disabled={joinRoom.isPending || leaveRoom.isPending}
+        onChange={(event) => void selectRoom(event.target.value)}
+        value={context.activeRoomId ?? ""}
+      >
+        <option value="">No room selected</option>
+        {context.rooms.map((room) => (
+          <option key={room.id} value={room.id}>
+            {room.buildingName} {room.name} · {room.challengeLabel}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function JudgeProjectWorkspace({
+  data,
+  deliberation = [],
+  hackathons,
+  input,
+  isOfficer,
+  judgingContext,
+  readOnly = false,
+  scores = [],
+  selectedTab = "projects",
+  submissions = [],
+  workspace = null,
+}: {
+  data: JudgeData;
+  deliberation?: Deliberation;
+  hackathons: Hackathons;
+  input: ProjectDirectoryInput & { hackathonId?: string };
+  isOfficer: boolean;
+  judgingContext?: Exclude<
+    JudgingContext,
+    { kind: "none" | "incomplete-guest" }
+  >;
+  readOnly?: boolean;
+  scores?: Scores;
+  selectedTab?: "deliberation" | "projects" | "submissions";
+  submissions?: Submissions;
+  workspace?: Workspace | null;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [pending, startTransition] = useTransition();
+  const [evaluationProject, setEvaluationProject] =
+    useState<JudgeProject | null>(null);
+  const [scoreProject, setScoreProject] = useState<JudgeProject | null>(null);
+  const hackathonTimeZone = data.hackathon?.timezone ?? "America/New_York";
+  const context = judgingContext ?? {
+    activeRoomId: null,
+    announcements: [],
+    displayName: "",
+    hackathon: null,
+    isOfficer,
+    kind: "member" as const,
+    rooms: [],
+    userId: "",
+  };
+
+  const memberContext =
+    judgingContext?.kind === "member" ? judgingContext : null;
+  const activeRoom = memberContext?.rooms.find(
+    (room) => room.id === memberContext.activeRoomId,
+  );
+  const heartbeatRoomId =
+    context.kind === "guest" ? context.roomId : activeRoom?.id;
+  const announcementHackathonId =
+    context.kind === "member" ? context.hackathon?.id : undefined;
+  const scheduleQuery = api.judging.listJudgeSchedule.useQuery(
+    {
+      challengeId: workspace?.challengeId,
+      hackathonId: input.hackathonId,
+      challengeIds: input.challengeIds,
+    },
+    { enabled: !!workspace, refetchInterval: 15_000 },
+  );
+  const scheduleNow = useJudgingClock(
+    scheduleQuery.data?.serverNow ?? data.hackathon?.startDate ?? new Date(0),
+  );
+  useEffect(() => {
+    if (!workspace) return;
+    const timer = window.setInterval(() => {
+      // A failed RSC refresh can replace the page with a browser error offline.
+      if (navigator.onLine) router.refresh();
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [router, workspace]);
+
+  function selectHackathon(hackathonId: string) {
+    const next = new URLSearchParams(searchParams.toString());
+    if (hackathonId) next.set("hackathon", hackathonId);
+    else next.delete("hackathon");
+    next.delete("page");
+    next.delete("challenge");
+    next.delete("maxParticipants");
+    next.delete("minParticipants");
+    startTransition(() => router.replace(`${pathname}?${next.toString()}`));
+  }
+
+  function selectTab(tab: string) {
+    const next = new URLSearchParams(searchParams.toString());
+    if (tab === "projects") next.delete("tab");
+    else next.set("tab", tab);
+    startTransition(() => router.replace(`${pathname}?${next.toString()}`));
+  }
+
+  const scoreByProject = new Map(
+    scores.map((score) => [score.projectId, score]),
+  );
+  const challengeLabel =
+    data.challenges.find((challenge) => challenge.id === workspace?.challengeId)
+      ?.label ??
+    (context.kind === "guest" ? context.challengeLabel : "Judging") ??
+    "Room challenge";
+  const selectedSubmission = submissions.find(
+    (submission) =>
+      submission.projectId === evaluationProject?.id &&
+      submission.challengeId === workspace?.challengeId,
+  );
+
+  return (
+    <main
+      data-judging-workspace
+      className={adminPageLayoutClassName}
+      aria-busy={pending}
+    >
+      <JudgingAnnouncements
+        hackathonId={announcementHackathonId}
+        initialAnnouncements={context.announcements}
+      />
+      <AdminPageHeader
+        titleClassName="min-w-0 break-words text-xl sm:text-3xl md:text-4xl"
+        actions={
+          memberContext ? (
+            <div className="flex w-full flex-wrap items-end gap-2 lg:w-auto">
+              {memberContext.rooms.length ? (
+                <MemberRoomSelector
+                  context={memberContext}
+                  hackathonId={announcementHackathonId}
+                />
+              ) : null}
+              {hackathons.length ? (
+                <label className="w-full min-w-0 sm:w-72">
+                  <span className="sr-only">Hackathon</span>
+                  <select
+                    aria-label="Hackathon"
+                    className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    onChange={(event) => selectHackathon(event.target.value)}
+                    value={input.hackathonId ?? data.hackathon?.id ?? ""}
+                  >
+                    <option value="">Select a hackathon</option>
+                    {hackathons.map((hackathon) => (
+                      <option key={hackathon.id} value={hackathon.id}>
+                        {hackathon.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
+          ) : undefined
+        }
+        description={
+          context.kind === "guest"
+            ? `You are judging ${context.challengeLabel ?? "this room's challenge"}. Search the assigned projects and open any entry for details.`
+            : "Browse every submitted project, filter the field, and open a project to review its story and team."
+        }
+        eyebrow={
+          context.kind === "guest" ? context.roomName : "Judge workspace"
+        }
+        icon={FolderKanban}
+        title={data.hackathon?.displayName ?? "Hackathon projects"}
+      />
+
+      {scheduleQuery.error ? (
+        <p role="alert" className="text-sm text-amber-200">
+          Schedule refresh failed. Appointment times may be out of date; opening
+          an evaluation checks your room again.
+        </p>
+      ) : null}
+      {data.hackathon ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">
+              {data.totalCount} project{data.totalCount === 1 ? "" : "s"}
+            </Badge>
+            {isOfficer ? (
+              <Badge variant="outline">Officer preview</Badge>
+            ) : null}
+            {context.kind === "guest" ? (
+              <>
+                <Badge className="gap-1" variant="outline">
+                  <MapPin className="size-3" aria-hidden="true" />
+                  {context.roomName}
+                </Badge>
+                <Badge
+                  className="max-w-full gap-1 border-[#DBC049]/35 text-[#DBC049]"
+                  variant="outline"
+                >
+                  <ShieldCheck className="size-3" aria-hidden="true" />
+                  <span className="min-w-0 break-words">
+                    {context.displayName}
+                  </span>
+                </Badge>
+                <GuestSessionControl />
+              </>
+            ) : activeRoom ? (
+              <Badge
+                className="gap-1 border-[#DBC049]/35 text-[#DBC049]"
+                variant="outline"
+              >
+                <DoorOpen className="size-3" aria-hidden="true" />
+                {activeRoom.buildingName} {activeRoom.name}
+              </Badge>
+            ) : null}
+          </div>
+          {heartbeatRoomId ? (
+            <JudgingHeartbeat roomId={heartbeatRoomId} />
+          ) : null}
+          {!workspace ? (
+            <section className="rounded-lg border border-dashed border-white/15 bg-card/75 px-5 py-16 text-center shadow-xl shadow-black/10">
+              <h2 className="text-xl font-semibold">No projects imported</h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                An officer must import the Devpost project inventory before
+                judging can begin.
+              </p>
+            </section>
+          ) : null}
+          {workspace ? (
+            <Tabs
+              onValueChange={selectTab}
+              value={readOnly ? "projects" : selectedTab}
+            >
+              <TabsList
+                className={`grid h-11 w-full ${readOnly ? "grid-cols-1 sm:w-40" : "grid-cols-3 sm:w-fit sm:min-w-[28rem]"}`}
+              >
+                <TabsTrigger
+                  className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
+                  value="projects"
+                >
+                  Projects
+                </TabsTrigger>
+                {!readOnly ? (
+                  <>
+                    <TabsTrigger
+                      className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
+                      value="submissions"
+                    >
+                      Submissions
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="h-full min-w-0 px-1 text-xs sm:px-3 sm:text-sm"
+                      value="deliberation"
+                    >
+                      Deliberation
+                    </TabsTrigger>
+                  </>
+                ) : null}
+              </TabsList>
+              <TabsContent className="mt-4" value="projects">
+                {scheduleQuery.data?.scheduleExists &&
+                !scheduleQuery.data.untimed ? (
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    Judge opens only for the project currently booked in your
+                    room, before its scoring deadline. Past submissions can be
+                    edited during downtime.
+                  </p>
+                ) : null}
+                <ProjectDirectory
+                  actions={(project) => {
+                    const submitted = submissions.some(
+                      (submission) =>
+                        submission.projectId === project.id &&
+                        submission.challengeId === workspace.challengeId,
+                    );
+                    const scheduleUnavailable =
+                      scheduleQuery.isPending && !scheduleQuery.data;
+                    const appointmentMismatch =
+                      !!scheduleQuery.data &&
+                      !submitted &&
+                      !scheduleQuery.data.untimed &&
+                      !(
+                        scheduleQuery.data.currentAppointment?.projectId ===
+                          project.id &&
+                        scheduleQuery.data.currentAppointment.deadlineAt >
+                          scheduleNow
+                      );
+                    const editLocked =
+                      !!scheduleQuery.data &&
+                      submitted &&
+                      scheduleQuery.data.editLockedEvaluationIds.some((id) =>
+                        submissions.some(
+                          (submission) =>
+                            submission.id === id &&
+                            submission.projectId === project.id &&
+                            submission.challengeId === workspace.challengeId,
+                        ),
+                      );
+                    const disabledReason = readOnly
+                      ? "Historical events are read-only."
+                      : workspace.state !== "open"
+                        ? "Judging is not open."
+                        : scheduleUnavailable
+                          ? "Checking your room schedule."
+                          : editLocked
+                            ? "Wait until downtime to edit this submission."
+                            : appointmentMismatch
+                              ? scheduleQuery.data.activeRoomId
+                                ? "This project is not in your room's current time slot."
+                                : "Choose a judging room before scoring scheduled projects."
+                              : null;
+                    return (
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              tabIndex={disabledReason ? 0 : undefined}
+                              aria-label={disabledReason ?? undefined}
+                            >
+                              <Button
+                                className="min-h-11 sm:min-h-9"
+                                disabled={!!disabledReason}
+                                variant={
+                                  disabledReason ? "secondary" : "primary"
+                                }
+                                onClick={() => setEvaluationProject(project)}
+                                size="sm"
+                                type="button"
+                              >
+                                {submitted ? (
+                                  <Pencil
+                                    className="mr-2 size-4"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <Star
+                                    className="mr-2 size-4"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                                {submitted ? "Edit" : "Judge"}
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          {disabledReason ? (
+                            <TooltipContent side="top">
+                              {disabledReason}
+                            </TooltipContent>
+                          ) : null}
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }}
+                  data={data}
+                  defaultChallengeLabel="All challenges"
+                  emptyDescription={
+                    input.includeJudged
+                      ? "No projects match this view yet."
+                      : "You have judged every project in this challenge. Turn on See previously judged to review them."
+                  }
+                  extraColumns={[
+                    {
+                      header: "Judging time",
+                      cell: (project) => {
+                        const appointment =
+                          scheduleQuery.data?.appointments.find(
+                            (appointment) =>
+                              appointment.projectId === project.id,
+                          );
+                        return appointment ? (
+                          <div className="text-sm">
+                            <p className="font-mono">
+                              {judgingTime(
+                                appointment.startsAt,
+                                hackathonTimeZone,
+                              )}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {appointment.buildingName} {appointment.roomName}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Unscheduled
+                          </span>
+                        );
+                      },
+                    },
+                    {
+                      cell: (project) => {
+                        const score = scoreByProject.get(project.id)?.scoped;
+                        return score?.value === null || score === undefined ? (
+                          <>
+                            <span aria-hidden="true">(?)</span>
+                            <span className="sr-only">Not rated</span>
+                          </>
+                        ) : (
+                          <Button
+                            className="h-auto p-0 font-mono"
+                            onClick={() => setScoreProject(project)}
+                            type="button"
+                            variant="link"
+                          >
+                            {score.value.toFixed(2)} ({score.count})
+                            <span className="sr-only">
+                              , view judge feedback for {project.title}
+                            </span>
+                          </Button>
+                        );
+                      },
+                      header: "Challenge rating",
+                      mobileLabel: "Challenge rating",
+                    },
+                    ...(context.kind === "member"
+                      ? [
+                          {
+                            cell: (project: JudgeProject) => {
+                              const score = scoreByProject.get(
+                                project.id,
+                              )?.overall;
+                              return score?.value === null ||
+                                score === undefined ? (
+                                <>
+                                  <span aria-hidden="true">(?)</span>
+                                  <span className="sr-only">Not rated</span>
+                                </>
+                              ) : (
+                                `${score.value.toFixed(2)} (${score.count})`
+                              );
+                            },
+                            header: "Rating",
+                          },
+                        ]
+                      : []),
+                  ]}
+                  input={input}
+                  lockedChallenge={
+                    context.kind === "guest"
+                      ? {
+                          id: context.challengeId,
+                          label: context.challengeLabel ?? "Room challenge",
+                        }
+                      : undefined
+                  }
+                  showTeamSizeFilters={false}
+                  showChallengeRatingSort={
+                    context.kind === "member" && workspace.displayAllResults
+                  }
+                  showRatingSort={context.kind === "member"}
+                  showChallenges
+                  showPreviouslyJudgedFilter
+                  showRoomFilter
+                  roomFilterUnavailableReason={
+                    data.roomFilterUnavailableReason ?? undefined
+                  }
+                  showViewAction
+                />
+              </TabsContent>
+              {!readOnly ? (
+                <>
+                  <TabsContent className="mt-4" value="submissions">
+                    <JudgeSubmissions
+                      submissions={submissions}
+                      lockedEvaluationIds={
+                        scheduleQuery.data?.editLockedEvaluationIds
+                      }
+                      workspace={workspace}
+                    />
+                  </TabsContent>
+                  <TabsContent className="mt-4" value="deliberation">
+                    <JudgeDeliberation
+                      initialSections={deliberation}
+                      key={JSON.stringify(deliberation)}
+                      submissions={submissions.filter(
+                        (submission) => submission.isComplete,
+                      )}
+                      workspace={workspace}
+                    />
+                  </TabsContent>
+                </>
+              ) : null}
+            </Tabs>
+          ) : null}
+          {workspace && evaluationProject ? (
+            <EvaluationDialog
+              challengeLabel={challengeLabel}
+              key={`${evaluationProject.id}:${workspace.challengeId}`}
+              onOpenChange={(open) => !open && setEvaluationProject(null)}
+              open
+              project={evaluationProject}
+              submission={selectedSubmission}
+              workspace={workspace}
+            />
+          ) : null}
+          {workspace ? (
+            <ProjectScoreDialog
+              challengeLabel={challengeLabel}
+              key={scoreProject?.id ?? "closed-score"}
+              onOpenChange={(open) => !open && setScoreProject(null)}
+              open={!!scoreProject}
+              project={scoreProject}
+              workspace={workspace}
+            />
+          ) : null}
+        </>
+      ) : (
+        <section className="rounded-lg border border-dashed border-white/15 bg-card/75 px-5 py-16 text-center shadow-xl shadow-black/10">
+          <h2 className="text-xl font-semibold">No active hackathon</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+            The project directory becomes available to judges when a hackathon
+            reaches its configured start time.
+          </p>
+        </section>
+      )}
+    </main>
+  );
+}

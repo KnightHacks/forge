@@ -76,6 +76,7 @@ export interface TestEventRecord {
   startAt: Date;
   synchronizedVisibility: TestVisibility | null;
   tag: string;
+  tagId: string | null;
   tagColor: string;
 }
 
@@ -161,6 +162,7 @@ export function eventRecord(
     startAt: new Date("2026-07-01T22:00:00.000Z"),
     synchronizedVisibility: { audience, internal, roleIds },
     tag: "Workshop",
+    tagId: TAG_IDS.workshop,
     tagColor: "#7c3aed",
   };
 

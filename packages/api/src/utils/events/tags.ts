@@ -4,6 +4,9 @@ import { logger } from "@forge/utils";
 
 export interface EventTagRecord {
   active: boolean;
+  emoji: string | null;
+  announcementChannelId: string | null;
+  skipNextWeek: boolean;
   color: string;
   createdAt: Date;
   defaultPoints: number;
@@ -111,6 +114,9 @@ export function createEventTagService({
 
     async create(input: {
       actorId: string;
+      emoji?: string | null;
+      announcementChannelId?: string | null;
+      skipNextWeek?: boolean;
       color: string;
       defaultPoints: number;
       name: string;
@@ -120,6 +126,9 @@ export function createEventTagService({
       const now = clock();
       const tag: EventTagRecord = {
         active: true,
+        emoji: input.emoji ?? null,
+        announcementChannelId: input.announcementChannelId ?? null,
+        skipNextWeek: input.skipNextWeek ?? false,
         color: normalizeColor(input.color),
         createdAt: now,
         defaultPoints: input.defaultPoints,
@@ -162,6 +171,9 @@ export function createEventTagService({
 
     async update(input: {
       actorId: string;
+      emoji?: string | null;
+      announcementChannelId?: string | null;
+      skipNextWeek?: boolean;
       color?: string;
       defaultPoints?: number;
       name?: string;
@@ -178,6 +190,12 @@ export function createEventTagService({
         await assertUnique(name, input.tagId);
         const updated = await state.saveTag({
           ...tag,
+          emoji: input.emoji === undefined ? tag.emoji : input.emoji,
+          announcementChannelId:
+            input.announcementChannelId === undefined
+              ? tag.announcementChannelId
+              : input.announcementChannelId,
+          skipNextWeek: input.skipNextWeek ?? tag.skipNextWeek,
           color: normalizeColor(color),
           defaultPoints,
           name: normalizeName(name),

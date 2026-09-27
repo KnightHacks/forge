@@ -36,6 +36,7 @@ export interface EventListItem {
   roleIds?: string[];
   startDateTime: string;
   tag: string;
+  tagId?: string | null;
   tagColor: string;
 }
 
@@ -89,6 +90,7 @@ export interface EventDetailData {
     roles: { id: string; name: string }[];
     startDateTime: string;
     tag: string;
+    tagId?: string | null;
     tagColor: string;
   };
   integrations: {
@@ -131,10 +133,16 @@ export interface EventAdminDashboardProps {
   input: AdminEventInput;
 }
 
-export interface EventTagItem {
-  active: boolean;
+export interface EventTagValues {
+  emoji?: string | null;
+  announcementChannelId?: string | null;
+  skipNextWeek?: boolean;
   color: string;
   defaultPoints: number;
-  id: string;
   name: string;
+}
+
+export interface EventTagItem extends EventTagValues {
+  active: boolean;
+  id: string;
 }

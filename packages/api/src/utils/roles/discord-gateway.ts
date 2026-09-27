@@ -2,6 +2,7 @@ import type {
   APIChannel,
   APIGuildMember,
   APIRole,
+  APIUser,
 } from "discord-api-types/v10";
 import { ChannelType, Routes } from "discord-api-types/v10";
 
@@ -10,9 +11,16 @@ import * as discord from "@forge/utils/discord";
 import { getKnightHacksGuildId } from "@forge/utils/discord-config";
 
 import { nodeEnv } from "../../env";
+import { canSendToChannel } from "./channel-permissions";
+
+interface ChannelOptions {
+  requireSendPermission?: boolean;
+}
 
 export interface RoleDiscordGateway {
-  getGuildTextChannels?: () => Promise<{ id: string; name: string }[]>;
+  getGuildTextChannels?: (
+    options?: ChannelOptions,
+  ) => Promise<{ id: string; name: string }[]>;
   getGuildMember: (
     discordUserId: string,
     context: { discordRoleId: string; hasAssignment: boolean },
@@ -24,7 +32,22 @@ export interface RoleDiscordGateway {
   getRoleCounts: () => Promise<Record<string, number> | null>;
   grantRole: (discordUserId: string, discordRoleId: string) => Promise<void>;
   revokeRole: (discordUserId: string, discordRoleId: string) => Promise<void>;
-  validateTextChannel?: (channelId: string) => Promise<boolean>;
+  validateTextChannel?: (
+    channelId: string,
+    options?: ChannelOptions,
+  ) => Promise<boolean>;
+}
+
+async function botChannelPermissions(guildId: string) {
+  const [user, roles] = await Promise.all([
+    discord.api.get(Routes.user()) as Promise<APIUser>,
+    discord.api.get(Routes.guildRoles(guildId)) as Promise<APIRole[]>,
+  ]);
+  // The OAuth current-user guild-member endpoint does not accept bot tokens.
+  const member = (await discord.api.get(
+    Routes.guildMember(guildId, user.id),
+  )) as APIGuildMember;
+  return { member, roles };
 }
 
 let roleCountCache:
@@ -32,11 +55,14 @@ let roleCountCache:
   | undefined;
 
 export const liveRoleDiscordGateway: RoleDiscordGateway = {
-  async getGuildTextChannels() {
+  async getGuildTextChannels(options) {
     const guildId = await getKnightHacksGuildId();
     const channels = (await discord.api.get(
       Routes.guildChannels(guildId),
     )) as APIChannel[];
+    const posting = options?.requireSendPermission
+      ? await botChannelPermissions(guildId)
+      : null;
     return channels
       .filter(
         (channel) =>
@@ -44,7 +70,9 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
           channel.guild_id === guildId &&
           "name" in channel &&
           (channel.type === ChannelType.GuildText ||
-            channel.type === ChannelType.GuildAnnouncement),
+            channel.type === ChannelType.GuildAnnouncement) &&
+          (!posting ||
+            canSendToChannel(guildId, channel, posting.member, posting.roles)),
       )
       .map((channel) => ({ id: channel.id, name: channel.name ?? channel.id }))
       .sort((left, right) => left.name.localeCompare(right.name));
@@ -106,17 +134,20 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
 
   grantRole: discord.addRoleToMember,
   revokeRole: discord.removeRoleFromMember,
-  async validateTextChannel(channelId) {
+  async validateTextChannel(channelId, options) {
     try {
       const channel = (await discord.api.get(
         Routes.channel(channelId),
       )) as APIChannel;
-      return (
+      const guildId = await getKnightHacksGuildId();
+      const valid =
         "guild_id" in channel &&
-        channel.guild_id === (await getKnightHacksGuildId()) &&
+        channel.guild_id === guildId &&
         (channel.type === ChannelType.GuildText ||
-          channel.type === ChannelType.GuildAnnouncement)
-      );
+          channel.type === ChannelType.GuildAnnouncement);
+      if (!valid || !options?.requireSendPermission) return valid;
+      const posting = await botChannelPermissions(guildId);
+      return canSendToChannel(guildId, channel, posting.member, posting.roles);
     } catch {
       return false;
     }

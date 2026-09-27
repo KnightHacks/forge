@@ -48,6 +48,7 @@ export interface HackathonEventFormInitial {
   purpose: "event" | "primary_check_in";
   startAt: Date | string;
   tag: string;
+  tagId?: string | null;
 }
 
 export interface HackathonEventDraft {
@@ -97,7 +98,8 @@ function initialDraft(
     purpose: initial.purpose,
     start: clubDateTimeInput(initial.startAt),
     startOffset: offsetForInstant(initial.startAt),
-    tagId: tags.find(({ name }) => name === initial.tag)?.id ?? "",
+    tagId:
+      initial.tagId ?? tags.find(({ name }) => name === initial.tag)?.id ?? "",
   };
 }
 

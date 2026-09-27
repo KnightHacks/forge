@@ -1,4 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { ZodError } from "zod";
 
 import {
   createHackerPortalContext,
@@ -40,12 +41,20 @@ const handler = async (request: Request) => {
     createContext: () =>
       createHackerPortalContext({ headers: boundedRequest.headers }),
     endpoint: "/api/hacker/v1/trpc",
-    onError({ error, path }) {
+    onError({ ctx, error, path }) {
+      const validationIssues =
+        error.cause instanceof ZodError
+          ? error.cause.issues.map((issue) => ({
+              code: issue.code,
+              path: issue.path,
+            }))
+          : undefined;
       // eslint-disable-next-line no-console
-      console.error(
-        `Hacker participant tRPC error on '${path}'`,
-        error.message,
-      );
+      console.error(`Hacker participant tRPC error on '${path}'`, {
+        message: error.message,
+        requestId: ctx?.requestId,
+        validationIssues,
+      });
     },
     req: boundedRequest,
     router: hackerParticipantV1Router,

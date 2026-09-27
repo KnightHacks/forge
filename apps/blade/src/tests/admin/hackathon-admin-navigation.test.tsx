@@ -19,11 +19,6 @@ vi.mock("~/app/_components/auth/sign-out-button", () => ({
   SignOutButton: () => createElement("button", null, "Sign out"),
 }));
 
-vi.mock("~/app/_components/shared/route-transition-link", () => ({
-  RouteTransitionSurface: ({ children }: { children: React.ReactNode }) =>
-    createElement("div", null, children),
-}));
-
 const session = {
   user: {
     id: "00000000-0000-4000-8000-000000000501",
@@ -81,5 +76,16 @@ describe("hackathon admin navigation", () => {
     expect(
       isAdminNavigationActive("hackathon", "/admin/hackathon-check-in"),
     ).toBe(false);
+  });
+
+  it("highlights the judge workspace and merged project command center", () => {
+    expect(isAdminNavigationActive("judgeProjects", "/judge/projects")).toBe(
+      true,
+    );
+    expect(isAdminNavigationActive("judging", "/admin/judging")).toBe(true);
+    expect(isAdminNavigationActive("judging", "/admin/projects")).toBe(true);
+    expect(isAdminNavigationActive("judgeProjects", "/admin/projects")).toBe(
+      false,
+    );
   });
 });

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { redirect } from "next/navigation";
 import {
   ArrowDown,
   CalendarDays,
@@ -31,14 +30,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@forge/ui/card";
-import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
-import { DiscordSignInLink } from "~/app/_components/auth/discord-sign-in-link";
 import {
   ClosingCallToAction,
   EditorialCopy,
   landingInsetClassName as insetClassName,
   LandingFooter,
+  LandingPrimaryCta,
   landingPanelClassName as panelClassName,
 } from "~/app/_components/public/member-landing-support";
 import { PageEntrance, RevealOnView } from "~/app/_components/shared/motion";
@@ -53,8 +51,7 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const session = await auth();
-
-  if (session) redirect(MEMBER_DASHBOARD_PATH);
+  const isAuthenticated = session !== null;
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-background">
@@ -63,7 +60,7 @@ export default async function HomePage() {
         className="pointer-events-none fixed inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"
       />
 
-      <Hero />
+      <Hero isAuthenticated={isAuthenticated} />
 
       <div className="relative z-10">
         <RevealOnView>
@@ -82,7 +79,7 @@ export default async function HomePage() {
           <ContinuityPanel />
         </RevealOnView>
         <RevealOnView>
-          <ClosingCallToAction />
+          <ClosingCallToAction isAuthenticated={isAuthenticated} />
         </RevealOnView>
         <LandingFooter />
       </div>
@@ -90,7 +87,7 @@ export default async function HomePage() {
   );
 }
 
-function Hero() {
+function Hero({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <section className="container relative z-10 grid min-h-[100svh] items-center gap-8 px-4 py-10 sm:px-8 md:grid-cols-[minmax(0,0.95fr)_minmax(20rem,0.8fr)] md:py-14 lg:gap-12">
       <PageEntrance className="space-y-7">
@@ -116,9 +113,10 @@ function Hero() {
 
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row">
-            <DiscordSignInLink className="h-12 gap-2 px-6 text-base">
-              Sign in with Discord
-            </DiscordSignInLink>
+            <LandingPrimaryCta
+              className="h-12 gap-2 px-6 text-base"
+              isAuthenticated={isAuthenticated}
+            />
             <div className="relative z-10 overflow-hidden rounded-md p-[1.5px]">
               <div
                 aria-hidden="true"
@@ -137,10 +135,12 @@ function Hero() {
               </Button>
             </div>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-            First time here? Blade opens the member signup form after you sign
-            in.
-          </p>
+          {isAuthenticated ? null : (
+            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+              First time here? Blade opens the member signup form after you sign
+              in.
+            </p>
+          )}
         </div>
       </PageEntrance>
 

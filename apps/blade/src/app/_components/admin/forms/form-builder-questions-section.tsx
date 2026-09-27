@@ -11,7 +11,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ArrowDown, ArrowUp, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
 import type { FormQuestion } from "@forge/validators";
 import { Button } from "@forge/ui/button";
@@ -100,8 +100,9 @@ function QuestionCardFields({
               <ArrowDown className="h-4 w-4" />
             </Button>
             <Button
+              aria-label={`Remove question ${index + 1}`}
+              size="icon"
               variant="ghost"
-              size="sm"
               onClick={() =>
                 dispatchQuestions({
                   id: question.id,
@@ -109,13 +110,13 @@ function QuestionCardFields({
                 })
               }
             >
-              Remove
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         )}
       </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem] md:items-end">
-        <div className="grid gap-2">
+      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem] md:items-end">
+        <div className="grid min-w-0 gap-2">
           <Label htmlFor={`prompt-${question.id}`}>Prompt</Label>
           <Input
             disabled={readOnly}
@@ -130,7 +131,7 @@ function QuestionCardFields({
             }
           />
         </div>
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           <Label htmlFor={`type-${question.id}`}>Type</Label>
           <Select
             disabled={readOnly}
@@ -211,8 +212,8 @@ export function FormBuilderQuestionsSection({
   }
 
   return (
-    <section className="rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/20 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="min-w-0 rounded-lg border border-white/10 bg-card/95 p-4 shadow-xl shadow-black/20 sm:p-5">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Questions</h2>
           <p className="text-sm text-muted-foreground">
@@ -244,7 +245,7 @@ export function FormBuilderQuestionsSection({
           items={questions.map(({ id }) => id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid min-w-0 gap-3">
             {questions.length === 0 && (
               <p className="rounded-md border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">
                 Add the first question.

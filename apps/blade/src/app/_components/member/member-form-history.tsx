@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { CalendarClock, FileText, LockKeyhole } from "lucide-react";
 
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { formatClubLongDate } from "~/lib/dates";
 
 interface MemberFormResponseItem {

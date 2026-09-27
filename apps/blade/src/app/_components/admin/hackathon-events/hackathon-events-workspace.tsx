@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDownAZ,
@@ -61,6 +60,10 @@ import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
@@ -116,6 +119,7 @@ function initialFromRow(
         : event.purpose,
     startAt: event.startAt,
     tag: event.tag,
+    tagId: event.tagId,
   };
 }
 
@@ -174,6 +178,7 @@ function asCalendarEvent(event: EventRow): EventListItem {
     revision: event.revision,
     startDateTime: new Date(event.startAt).toISOString(),
     tag: event.tag,
+    tagId: event.tagId,
     tagColor: event.tagColor,
   };
 }
@@ -415,6 +420,10 @@ export function HackathonEventsWorkspace({
   const resolveDiscord =
     api.hackathonEvent.resolveDiscordProjection.useMutation();
   const provisionFeedback = api.hackathonEvent.provisionFeedback.useMutation();
+  const announcementChannels =
+    api.hackathonEvent.listAnnouncementChannels.useQuery(undefined, {
+      enabled: canEdit && view === "tags",
+    });
   const createTag = api.hackathonEvent.createTag.useMutation();
   const updateTag = api.hackathonEvent.updateTag.useMutation();
   const archiveTag = api.hackathonEvent.archiveTag.useMutation();
@@ -1200,7 +1209,12 @@ export function HackathonEventsWorkspace({
           </Card>
         ) : selectedHackathon ? (
           <EventTagManagement
-            description="Set the label, color, and default points for this hackathon's events."
+            channels={announcementChannels.data ?? []}
+            channelsLoading={announcementChannels.isLoading}
+            channelsError={announcementChannels.error?.message}
+            onRetryChannels={() => void announcementChannels.refetch()}
+            showSkipNextWeek={false}
+            description="Manage labels, defaults, and announcements for this hackathon's events."
             headerActions={
               <HackathonTagImportDialog
                 hackathonId={selectedHackathon.id}

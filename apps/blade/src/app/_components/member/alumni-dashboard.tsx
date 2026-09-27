@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -25,6 +24,7 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { MemberQRCodeDialog } from "./member-qr-code-dialog";
 
 const alumniDiscordUrl =

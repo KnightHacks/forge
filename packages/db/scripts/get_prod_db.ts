@@ -24,10 +24,12 @@
  */
 
 import { execFile } from "child_process";
-import { createWriteStream } from "fs";
+import { once } from "events";
+import { createReadStream, createWriteStream } from "fs";
 import { mkdtemp, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { createInterface } from "readline";
 import { pipeline } from "stream/promises";
 import { promisify } from "util";
 
@@ -35,11 +37,32 @@ import { minioClient } from "../../api/src/minio/minio-client";
 import { env } from "../src/env";
 import {
   psqlFileArgs,
+  RetiredJudgingDumpFilter,
   truncateRestorePostlude,
   truncateRestorePrelude,
 } from "./prod-db-restore";
 
 const execFileAsync = promisify(execFile);
+
+async function writeCompatibleBackup(source: string, destination: string) {
+  const lines = createInterface({
+    crlfDelay: Infinity,
+    input: createReadStream(source),
+  });
+  const output = createWriteStream(destination);
+  const filter = new RetiredJudgingDumpFilter();
+  try {
+    for await (const line of lines) {
+      if (!filter.shouldInclude(line)) continue;
+      if (!output.write(`${line}\n`)) await once(output, "drain");
+    }
+    output.end();
+    await once(output, "finish");
+  } catch (error) {
+    output.destroy();
+    throw error;
+  }
+}
 
 interface LocalDbCommand {
   database: string;
@@ -89,13 +112,6 @@ async function repairLocalAuthTables(
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
   CONSTRAINT "auth_account_provider_provider_account_id_pk" PRIMARY KEY("provider","provider_account_id")
-);
-
-CREATE TABLE IF NOT EXISTS "auth_judge_session" (
-  "session_token" varchar(255) PRIMARY KEY NOT NULL,
-  "room_name" text NOT NULL,
-  "expires" timestamp with time zone NOT NULL,
-  "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "auth_permissions" (
@@ -177,6 +193,10 @@ async function main() {
   const objectName = "backup.sql";
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "forge-db-pull-"));
   const backupFile = join(temporaryDirectory, objectName);
+  const compatibleBackupFile = join(
+    temporaryDirectory,
+    "compatible-backup.sql",
+  );
 
   try {
     const fileUrl = await minioClient.presignedGetObject(
@@ -193,6 +213,7 @@ async function main() {
     }
 
     await pipeline(res.body, createWriteStream(backupFile));
+    await writeCompatibleBackup(backupFile, compatibleBackupFile);
 
     const { originalDb: database, user, password, host, port } = parsePg();
     /* eslint-disable no-restricted-properties */
@@ -208,11 +229,13 @@ async function main() {
         writeFile(preludeFile, truncateRestorePrelude()),
         writeFile(postludeFile, truncateRestorePostlude()),
       ]);
-      await runLocalSqlFiles([preludeFile, backupFile, postludeFile], command, {
-        singleTransaction: true,
-      });
+      await runLocalSqlFiles(
+        [preludeFile, compatibleBackupFile, postludeFile],
+        command,
+        { singleTransaction: true },
+      );
     } else {
-      await runLocalSqlFiles([backupFile], command, {
+      await runLocalSqlFiles([compatibleBackupFile], command, {
         singleTransaction: true,
       });
     }

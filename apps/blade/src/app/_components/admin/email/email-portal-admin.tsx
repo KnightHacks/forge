@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import type { RouterOutputs } from "@forge/api";
 import { toast } from "@forge/ui/toast";
@@ -12,6 +11,7 @@ import type {
   EmailPortalTab,
   TemplateEditorSeed,
 } from "./email-portal-workspace";
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { EmailPortalWorkspace } from "./email-portal-workspace";
 

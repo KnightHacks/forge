@@ -375,7 +375,7 @@ describe("forms platform state, availability, callbacks, and uploads", () => {
         },
         {
           inputKey: "memberId",
-          source: { kind: "system", value: "member_id" },
+          source: { kind: "respondent", value: "member_id" },
         },
       ],
       responseMode: "single_locked",
@@ -496,5 +496,21 @@ describe("forms platform state, availability, callbacks, and uploads", () => {
       ),
     });
     expect(largestAllowed.success).toBe(true);
+  });
+
+  it("[TC-019] accepts a managed form banner with required alt text", () => {
+    const attachmentId = crypto.randomUUID();
+    expect(
+      formDefinitionSchema.safeParse({
+        ...baseDefinition,
+        banner: { alt: "Knight Hacks registration", attachmentId },
+      }).success,
+    ).toBe(true);
+    expect(
+      formDefinitionSchema.safeParse({
+        ...baseDefinition,
+        banner: { alt: " ", attachmentId },
+      }).success,
+    ).toBe(false);
   });
 });

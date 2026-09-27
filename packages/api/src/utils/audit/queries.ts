@@ -24,6 +24,8 @@ import {
 } from "@forge/db/schemas/knight-hacks";
 import { AUDIT_ACTION_CATALOG, AUDIT_ACTION_KEYS } from "@forge/validators";
 
+import { resolveMemberDisplayNames } from "../member/display-name";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function auditActionLabel(actionKey: string) {
@@ -328,6 +330,9 @@ export async function listAdminAuditEvents(input: AuditListInput) {
     subjectsByEventId.set(subject.eventId, values);
   }
   const checkInContexts = await loadCheckInAttemptContexts(subjects);
+  const currentNames = await resolveMemberDisplayNames(
+    events.map((event) => event.actorMemberId),
+  );
 
   const items = events.map((event) => {
     const eventSubjects = subjectsByEventId.get(event.id) ?? [];
@@ -359,7 +364,9 @@ export async function listAdminAuditEvents(input: AuditListInput) {
       actionLabel: auditActionLabel(event.actionKey),
       actor: {
         discordUserId: event.actorDiscordUserId,
-        label: event.actorLabel,
+        label:
+          (event.actorMemberId && currentNames.get(event.actorMemberId)) ??
+          event.actorLabel,
         memberId: event.actorMemberId,
         roleColor: event.actorRoleColor,
         roleLabel: event.actorRoleLabel,

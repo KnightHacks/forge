@@ -5,13 +5,7 @@ import { useCallback, useState } from "react";
 import { BellRing, Hash, Loader2, Save, ShieldCheck } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@forge/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
@@ -100,10 +94,6 @@ export function HackathonDiscordEventConfig({
           <ShieldCheck className="size-5" aria-hidden="true" /> Hackathon
           Discord
         </CardTitle>
-        <CardDescription>
-          Configure the role granted at primary check-in and the channel used
-          for this hackathon&apos;s event reminders.
-        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         {config.isError ? (

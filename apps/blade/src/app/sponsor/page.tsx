@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -21,6 +20,7 @@ import {
 } from "@forge/ui/card";
 
 import { PageEntrance, RevealOnView } from "~/app/_components/shared/motion";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { OG_IMAGE_URL, SITE_NAME, SITE_URL } from "../seo";
 
 const SPONSOR_EMAIL = "sponsorship@knighthacks.org";

@@ -8,12 +8,10 @@ import { Button } from "@forge/ui/button";
 import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
-import {
-  formatEventDate,
-  formatEventTime,
-  loadClubEvents,
-} from "../_lib/club-events";
+import { formatEventTime, loadClubEvents } from "../_lib/club-events";
 import { ClubEventAccessBadge } from "./club-event-access-badge";
+import { ClubEventDate } from "./club-event-date";
+import { ClubEventDetailsDialog } from "./club-event-details-dialog";
 import { useDeferredSectionLoad } from "./use-deferred-section-load";
 
 const HOME_EVENT_LIMIT = 3;
@@ -35,19 +33,19 @@ function LoadingRows({ eventLimit }: { eventLimit: number }) {
       {Array.from({ length: eventLimit }).map((_, index) => (
         <article
           key={index}
-          className="grid grid-cols-[4rem_4.5rem_1fr] items-center gap-4 border-b border-white/10 py-8 md:grid-cols-[5rem_5.5rem_1fr_15rem] md:gap-6"
+          className="grid grid-cols-[5rem_1fr] items-center gap-4 border-b border-white/10 py-8 md:grid-cols-[5.5rem_1fr_15rem] md:gap-6"
         >
-          <div className="space-y-2">
+          <div className="space-y-2 text-center">
             <div className="mx-auto h-3 w-8 animate-pulse rounded-sm bg-white/20" />
+            <div className="mx-auto h-12 w-16 animate-pulse rounded-sm bg-white/20" />
             <div className="mx-auto h-3 w-7 animate-pulse rounded-sm bg-white/15" />
           </div>
-          <div className="h-12 w-16 animate-pulse rounded-sm bg-white/20 md:h-16" />
           <div className="space-y-3">
             <div className="bg-[var(--club-gold)]/35 h-3 w-36 animate-pulse rounded-sm" />
             <div className="h-6 w-44 animate-pulse rounded-sm bg-white/20" />
             <div className="h-4 max-w-[21rem] animate-pulse rounded-sm bg-white/15" />
           </div>
-          <div className="col-span-3 hidden aspect-[1.65] animate-pulse rounded-lg bg-[#59168b]/55 md:col-span-1 md:block" />
+          <div className="col-span-2 hidden aspect-[1.65] animate-pulse rounded-lg bg-[#59168b]/55 md:col-span-1 md:block" />
         </article>
       ))}
     </div>
@@ -55,19 +53,15 @@ function LoadingRows({ eventLimit }: { eventLimit: number }) {
 }
 
 function EventRow({ event }: { event: PublicClubEvent }) {
-  const eventDate = formatEventDate(event.startDateTime);
   const eventTime = formatEventTime(event.startDateTime);
   const meta = [eventTime, event.location].filter(Boolean).join(" | ");
 
   return (
-    <article className="club-event-row grid grid-cols-[4rem_4.5rem_1fr] items-center gap-4 border-b border-white/10 py-8 md:grid-cols-[5rem_5.5rem_1fr_15rem] md:gap-6">
-      <div className="club-event-row-date text-center text-xs font-bold uppercase leading-4 text-white/70">
-        <p>{eventDate.month}</p>
-        <p>{eventDate.dayName}</p>
-      </div>
-      <p className="club-event-row-day text-5xl font-black leading-none text-white md:text-6xl">
-        {eventDate.day}
-      </p>
+    <article className="club-event-row grid grid-cols-[5rem_1fr] items-center gap-4 border-b border-white/10 py-8 md:grid-cols-[5.5rem_1fr_15rem] md:gap-6">
+      <ClubEventDate
+        startDateTime={event.startDateTime}
+        dayClassName="md:text-6xl"
+      />
       <div className="club-event-row-copy">
         <p className="text-xs font-bold uppercase text-[var(--club-gold)]">
           {meta}
@@ -84,9 +78,10 @@ function EventRow({ event }: { event: PublicClubEvent }) {
         >
           {event.description}
         </MarkdownContent>
+        <ClubEventDetailsDialog event={event} />
       </div>
       <div
-        className="club-event-tag-card col-span-3 hidden aspect-[1.65] items-center justify-center rounded-lg px-5 text-center md:col-span-1 md:flex"
+        className="club-event-tag-card col-span-2 hidden aspect-[1.65] items-center justify-center rounded-lg px-5 text-center md:col-span-1 md:flex"
         style={{ backgroundColor: `${event.tagColor}55` }}
       >
         <span className="text-white/72 text-xs font-black uppercase">

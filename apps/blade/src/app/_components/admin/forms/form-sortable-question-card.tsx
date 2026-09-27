@@ -40,7 +40,7 @@ export function SortableQuestionCard({
 
   return (
     <article
-      className="relative grid gap-3 rounded-md border border-white/10 bg-background/60 p-4 pl-12 transition-[border-color,box-shadow,opacity,transform] duration-150 data-[dragging=true]:scale-[1.01] data-[dragging=true]:border-primary/60 data-[over=true]:border-primary/50 data-[over=true]:bg-primary/5 data-[dragging=true]:opacity-90 data-[dragging=true]:shadow-xl motion-reduce:!transition-none motion-reduce:data-[dragging=true]:scale-100"
+      className="relative grid min-w-0 gap-3 rounded-md border border-white/10 bg-background/60 p-4 pl-12 transition-[border-color,box-shadow,opacity,transform] duration-150 data-[dragging=true]:scale-[1.01] data-[dragging=true]:border-primary/60 data-[over=true]:border-primary/50 data-[over=true]:bg-primary/5 data-[dragging=true]:opacity-90 data-[dragging=true]:shadow-xl motion-reduce:!transition-none motion-reduce:data-[dragging=true]:scale-100"
       data-dragging={isDragging}
       data-over={isOver && !isDragging}
       data-sortable-question={id}

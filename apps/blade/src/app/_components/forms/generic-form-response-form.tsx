@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 import type { RouterInputs } from "@forge/api";
 import type { FormDefinition, FormQuestion } from "@forge/validators";
@@ -10,6 +12,7 @@ import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import { Skeleton } from "@forge/ui/skeleton";
 import { Textarea } from "@forge/ui/textarea";
+import { toast } from "@forge/ui/toast";
 import {
   countNonWhitespaceCharacters,
   FORM_LINEAR_SCALE_ENDPOINT_MAX,
@@ -20,6 +23,7 @@ import {
 } from "@forge/validators";
 
 import { api } from "~/trpc/react";
+import { InstructionMedia } from "./instruction-media";
 
 type CatalogId = RouterInputs["forms"]["searchCatalog"]["catalogId"];
 type AnswerMap = Record<string, unknown>;
@@ -37,47 +41,6 @@ export function linearScaleValues(min: number, max: number) {
     return [];
   }
   return Array.from({ length: span + 1 }, (_, index) => min + index);
-}
-
-function InstructionMedia({
-  attachmentId,
-  alt,
-  type,
-}: {
-  attachmentId: string;
-  alt: string;
-  type: "image" | "video";
-}) {
-  const download = api.forms.getAttachmentDownload.useQuery({ attachmentId });
-  if (download.isPending) {
-    return (
-      <div aria-label="Instruction media loading" aria-busy="true">
-        <Skeleton className="h-56 w-full rounded-md sm:h-80" />
-      </div>
-    );
-  }
-  if (download.isError || !download.data.url) {
-    return (
-      <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-        Instruction media could not be loaded.
-      </p>
-    );
-  }
-  return type === "image" ? (
-    // eslint-disable-next-line @next/next/no-img-element -- private presigned form media
-    <img
-      alt={alt}
-      className="max-h-[60svh] w-full rounded-md border border-white/10 object-contain sm:max-h-[32rem]"
-      src={download.data.url}
-    />
-  ) : (
-    <video
-      aria-label={alt}
-      className="max-h-[60svh] w-full rounded-md border border-white/10 sm:max-h-[32rem]"
-      controls
-      src={download.data.url}
-    />
-  );
 }
 
 function PresetChoice({
@@ -623,6 +586,11 @@ export function GenericFormResponseForm({
   onSubmitted?: () => void;
 }) {
   const [answers, setAnswers] = useState<AnswerMap>(initialAnswers);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isRefreshing, refresh] = useTransition();
+  const [receiptHref, setReceiptHref] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingUploadQuestionIds, setPendingUploadQuestionIds] = useState(
     () => new Set<string>(),
@@ -635,10 +603,16 @@ export function GenericFormResponseForm({
     onError(mutationError) {
       setError(mutationError.message);
     },
-    onSuccess() {
+    onSuccess(result) {
       setError(null);
       if (onSubmitted) onSubmitted();
-      else window.location.reload();
+      else {
+        const query = new URLSearchParams(searchParams.toString());
+        query.set("responseId", result.formResponseId);
+        const href = `${pathname}?${query.toString()}`;
+        setReceiptHref(href);
+        refresh(() => router.replace(href));
+      }
     },
   });
   const update = api.forms.updateResponse.useMutation({
@@ -647,12 +621,15 @@ export function GenericFormResponseForm({
     },
     onSuccess() {
       setError(null);
+      toast.success("Response updated.");
       if (onSubmitted) onSubmitted();
-      else window.location.reload();
+      else refresh(() => router.refresh());
     },
   });
 
   async function handleSubmit() {
+    if (submit.isPending || update.isPending || isRefreshing || receiptHref)
+      return;
     setError(null);
     const missingQuestion = questions.find((question) => {
       if (!question.required) return false;
@@ -700,6 +677,36 @@ export function GenericFormResponseForm({
     }
   }
 
+  if (receiptHref)
+    return (
+      <section
+        role="status"
+        className="grid min-w-0 gap-3 rounded-md border border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.08)] p-4"
+        ref={(node) => {
+          node?.focus();
+        }}
+        tabIndex={-1}
+      >
+        <div className="flex items-center gap-2">
+          <CheckCircle2
+            aria-hidden="true"
+            className="size-5 shrink-0 text-[hsl(var(--chart-2))]"
+          />
+          <h2 className="font-semibold">Response submitted</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Your answers have been saved.
+        </p>
+        <Button
+          asChild
+          variant="outline"
+          className="h-auto min-h-11 whitespace-normal"
+        >
+          <Link href={receiptHref}>Review submitted response</Link>
+        </Button>
+      </section>
+    );
+
   return (
     <form
       className="grid min-w-0 gap-3 sm:gap-4"
@@ -732,7 +739,7 @@ export function GenericFormResponseForm({
           data-question-id={question.id}
           key={question.id}
         >
-          <legend className="max-w-full break-words px-1 text-sm font-medium leading-5">
+          <legend className="float-left w-full max-w-full text-sm font-medium leading-5 [overflow-wrap:anywhere]">
             {question.prompt}
             {question.required && <span className="text-destructive"> *</span>}
           </legend>
@@ -774,7 +781,8 @@ export function GenericFormResponseForm({
           disabled={
             pendingUploadQuestionIds.size > 0 ||
             submit.isPending ||
-            update.isPending
+            update.isPending ||
+            isRefreshing
           }
           type="submit"
         >

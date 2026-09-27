@@ -1,6 +1,21 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const monorepoRoot = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+
 /** @type {import("next").NextConfig} */
 const config = {
   distDir: process.env.BLADE_E2E_AUTH === "true" ? ".next-e2e" : ".next",
+  output: "standalone",
+  outputFileTracingRoot: monorepoRoot,
+  // Keep native solver packaging in sync with apps/guild/next.config.js.
+  serverExternalPackages: ["@ortools-node/cp-sat"],
+  outputFileTracingIncludes: {
+    "/*": ["../../node_modules/@ortools-node/cp-sat-*/**/*"],
+  },
   reactStrictMode: true,
   transpilePackages: [
     "@forge/api",

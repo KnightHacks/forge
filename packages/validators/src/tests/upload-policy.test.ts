@@ -5,8 +5,10 @@ import {
   checkUploadContent,
   checkUploadMetadata,
   COMPANY_IMAGE_UPLOAD_POLICY,
+  FORM_BANNER_UPLOAD_POLICY,
   hasExecutableSignature,
   IMAGE_UPLOAD_POLICY,
+  ISSUE_IMAGE_UPLOAD_POLICY,
   matchesUploadSignature,
   maxDataUrlLength,
   mimeTypeAllowed,
@@ -91,6 +93,30 @@ describe("upload policies", () => {
       message: "Bulletin image must be a JPEG, PNG, GIF, or WebP image.",
       ok: false,
     });
+  });
+
+  it("[TC-016, TC-019] gives managed issue and banner images a 10MB closed policy", () => {
+    for (const policy of [
+      ISSUE_IMAGE_UPLOAD_POLICY,
+      FORM_BANNER_UPLOAD_POLICY,
+    ]) {
+      expect(policy.types).toBe(IMAGE_UPLOAD_POLICY.types);
+      expect(policy.maxBytes).toBe(10 * 1024 * 1024);
+      expect(
+        checkUploadMetadata(policy, {
+          contentType: "image/svg+xml",
+          fileName: "unsafe.svg",
+          size: 10,
+        }),
+      ).toMatchObject({ ok: false, reason: "wrong_type" });
+      expect(
+        checkUploadMetadata(policy, {
+          contentType: "image/png",
+          fileName: "too-large.png",
+          size: 10 * 1024 * 1024 + 1,
+        }),
+      ).toMatchObject({ ok: false, reason: "too_large" });
+    }
   });
 
   it("derives the accept attribute from the policy so the two cannot drift", () => {

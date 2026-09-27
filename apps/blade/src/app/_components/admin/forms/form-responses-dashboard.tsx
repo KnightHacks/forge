@@ -3,11 +3,12 @@
 import {
   startTransition,
   useMemo,
+  useOptimistic,
   useState,
   useSyncExternalStore,
+  useTransition,
 } from "react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   BarChart3,
@@ -58,12 +59,17 @@ import {
   TableRow,
 } from "@forge/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
+import { toast } from "@forge/ui/toast";
 
 import { FormResponseValue } from "~/app/_components/forms/form-response-value";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { formatClubDateTime } from "~/lib/dates";
 import { api } from "~/trpc/react";
@@ -635,21 +641,40 @@ function ResponseDetailDialog({
   response,
 }: {
   deletePending: boolean;
-  onDelete: (responseId: string) => void;
+  onDelete: (responseId: string) => Promise<void> | void;
   onOpenChange: (open: boolean) => void;
   response?: IdentifiedFormResponse;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    if (!response || deletePending) return;
+    setDeleteError(null);
+    try {
+      await onDelete(response.responseId);
+      setConfirmingDelete(false);
+      onOpenChange(false);
+    } catch (cause) {
+      setDeleteError(
+        cause instanceof Error
+          ? cause.message
+          : "Response could not be deleted.",
+      );
+    }
+  }
 
   return (
     <Dialog
       onOpenChange={(open) => {
+        if (deletePending) return;
         if (!open) setConfirmingDelete(false);
+        setDeleteError(null);
         onOpenChange(open);
       }}
       open={response !== undefined}
     >
-      <DialogContent className="flex h-[100svh] max-h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[90svh] sm:max-w-3xl sm:rounded-lg">
+      <DialogContent className="flex h-[100svh] max-h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[90svh] sm:max-w-3xl sm:rounded-lg [&>button]:right-1 [&>button]:top-1 [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center">
         <DialogHeader className="shrink-0 border-b border-border/70 p-5 pr-12">
           <DialogTitle>{response?.member.name ?? "Response"}</DialogTitle>
           <DialogDescription>
@@ -686,7 +711,15 @@ function ResponseDetailDialog({
               })}
           </dl>
         </div>
-        <DialogFooter className="shrink-0 gap-2 border-t border-border/70 p-4 sm:items-center sm:justify-between sm:space-x-0">
+        {deleteError && (
+          <p
+            role="alert"
+            className="break-words px-4 py-2 text-sm text-destructive"
+          >
+            {deleteError}
+          </p>
+        )}
+        <DialogFooter className="shrink-0 gap-2 border-t border-border/70 p-4 sm:flex-wrap sm:items-center sm:justify-between sm:space-x-0">
           {confirmingDelete ? (
             <>
               <p className="mr-auto text-sm text-destructive">
@@ -694,6 +727,7 @@ function ResponseDetailDialog({
               </p>
               <Button
                 className="min-h-11"
+                disabled={deletePending}
                 onClick={() => setConfirmingDelete(false)}
                 variant="outline"
               >
@@ -702,7 +736,7 @@ function ResponseDetailDialog({
               <Button
                 className="min-h-11 gap-2"
                 disabled={deletePending || !response}
-                onClick={() => response && onDelete(response.responseId)}
+                onClick={() => void confirmDelete()}
                 variant="destructive"
               >
                 {deletePending ? (
@@ -734,7 +768,7 @@ export function IdentifiedResponses({
   responses,
 }: {
   deletePending: boolean;
-  onDelete: (responseId: string) => void;
+  onDelete: (responseId: string) => Promise<void> | void;
   responses: readonly IdentifiedFormResponse[];
 }) {
   const [query, setQuery] = useState("");
@@ -873,12 +907,14 @@ function workspaceHref(
 
 export function FormResponsesDashboard({
   callbacks,
+  callbackCatalog = [],
   formId,
   formName,
   responses,
   responsesError,
 }: {
   callbacks: RouterOutputs["forms"]["listCallbackExecutions"] | null;
+  callbackCatalog?: RouterOutputs["forms"]["listCallbacks"];
   formId: string;
   formName?: string;
   responses: RouterOutputs["forms"]["listResponses"] | null;
@@ -886,23 +922,43 @@ export function FormResponsesDashboard({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isRefreshing, startRefresh] = useTransition();
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const requestedView = searchParams.get("view");
-  const activeView =
+  const resolvedView =
     requestedView === "responses" || requestedView === "delivery"
       ? requestedView
       : "analytics";
+  const [activeView, setActiveView] = useOptimistic<string>(resolvedView);
   const exportQuery = api.forms.exportResponses.useQuery(
     { formId },
     { enabled: false },
   );
   const refresh = () => {
-    startTransition(() => router.refresh());
+    startRefresh(() => router.refresh());
   };
   const deleteResponse = api.forms.deleteResponse.useMutation({
-    onSuccess: refresh,
+    onSuccess() {
+      toast.success("Response deleted.");
+      refresh();
+    },
   });
-  const retry = api.forms.retryCallback.useMutation({ onSuccess: refresh });
+  const retry = api.forms.retryCallback.useMutation({
+    onSuccess(result) {
+      if (result?.status === "succeeded") toast.success("Callback delivered.");
+      else if (result?.status === "failed")
+        toast.error("Delivery failed. See the delivery details.");
+      else toast.info("Delivery status changed. Check the latest result.");
+      refresh();
+    },
+    onError(error) {
+      toast.error(error.message);
+    },
+    onSettled() {
+      setRetryingId(null);
+    },
+  });
 
   async function exportCsv() {
     const result = await exportQuery.refetch();
@@ -951,11 +1007,14 @@ export function FormResponsesDashboard({
         </p>
       ) : (
         <Tabs
-          onValueChange={(view) =>
-            router.replace(workspaceHref(pathname, searchParams, view), {
-              scroll: false,
-            })
-          }
+          onValueChange={(view) => {
+            startTransition(() => {
+              setActiveView(view);
+              router.replace(workspaceHref(pathname, searchParams, view), {
+                scroll: false,
+              });
+            });
+          }}
           value={activeView}
         >
           <TabsList className="grid h-auto min-h-11 w-full grid-cols-3 p-1 sm:w-auto">
@@ -1019,9 +1078,9 @@ export function FormResponsesDashboard({
 
           <TabsContent className="mt-4" value="responses">
             <IdentifiedResponses
-              deletePending={deleteResponse.isPending}
-              onDelete={(responseId) => {
-                deleteResponse.mutate({ formId, responseId });
+              deletePending={deleteResponse.isPending || isRefreshing}
+              onDelete={async (responseId) => {
+                await deleteResponse.mutateAsync({ formId, responseId });
               }}
               responses={responses?.responses ?? []}
             />
@@ -1042,7 +1101,9 @@ export function FormResponsesDashboard({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="break-all font-medium">
-                          {execution.callbackSlug}
+                          {callbackCatalog.find(
+                            ({ slug }) => slug === execution.callbackSlug,
+                          )?.label ?? execution.callbackSlug}
                         </span>
                         <Badge
                           variant={
@@ -1054,6 +1115,20 @@ export function FormResponsesDashboard({
                           {execution.status}
                         </Badge>
                       </div>
+                      <p className="mt-1 break-all text-xs text-muted-foreground">
+                        {execution.callbackSlug}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {execution.status === "pending"
+                          ? "Waiting for delivery."
+                          : execution.status === "running"
+                            ? "Delivery is in progress."
+                            : execution.status === "succeeded"
+                              ? "Delivered successfully."
+                              : execution.status === "cancelled"
+                                ? "Cancelled; this callback will not be delivered."
+                                : "Delivery failed. The submitted response was saved."}
+                      </p>
                       {execution.lastError && (
                         <p className="mt-1 break-words text-sm text-destructive">
                           {execution.lastError}
@@ -1063,16 +1138,17 @@ export function FormResponsesDashboard({
                         Attempts: {execution.attempts}
                       </p>
                     </div>
-                    {execution.status === "failed" && (
+                    {execution.status === "failed" && execution.responseId && (
                       <Button
                         className="min-h-11 gap-2"
-                        disabled={retry.isPending}
-                        onClick={() =>
-                          retry.mutate({ executionId: execution.id })
-                        }
+                        disabled={retry.isPending || isRefreshing}
+                        onClick={() => {
+                          setRetryingId(execution.id);
+                          retry.mutate({ executionId: execution.id });
+                        }}
                         variant="outline"
                       >
-                        {retry.isPending ? (
+                        {retry.isPending && retryingId === execution.id ? (
                           <Loader2 className="size-4 animate-spin" />
                         ) : (
                           <RefreshCw className="size-4" />
@@ -1084,7 +1160,8 @@ export function FormResponsesDashboard({
                 ))}
                 {callbacks?.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    No callback executions.
+                    No callback executions. Configure an action in the form
+                    builder to enable delivery for future responses.
                   </p>
                 )}
               </div>

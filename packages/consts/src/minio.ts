@@ -4,6 +4,7 @@ export const BUCKET_REGION = "us-east-1";
 
 export const PROFILE_PICTURES_BUCKET_NAME = "guild-profile-pictures";
 export const FORM_ASSETS_BUCKET_NAME = "form-assets";
+export const ISSUE_ASSETS_BUCKET_NAME = "issue-assets";
 
 // TODO: check if this should be MB or MiB
 export const MAX_RESUME_SIZE = 5 * 1000000; // 5MB

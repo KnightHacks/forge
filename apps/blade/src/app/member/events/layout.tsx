@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
 
 import { AuthenticatedShell } from "~/app/_components/shared/authenticated-shell";
 import { getAdminNavigationAccess } from "~/lib/admin-access";
@@ -12,7 +11,8 @@ export default async function MemberEventsLayout({
   children: ReactNode;
 }) {
   const session = await auth();
-  if (!session) redirect("/");
+  // The page preserves its selected event through the existing sign-in flow.
+  if (!session) return children;
   const permissions = await api.roles.getPermissions();
 
   return (

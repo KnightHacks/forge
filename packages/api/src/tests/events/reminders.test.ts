@@ -29,6 +29,10 @@ describe("Club reminder candidate selection", () => {
     ]);
     expect(result[0]).toEqual({
       description: "Build something useful.",
+      emoji: null,
+      announcementChannelId: null,
+      skipNextWeek: false,
+      requiresDues: false,
       discordId: "discord-event-1",
       endDateTime: "2026-07-02T00:00:00.000Z",
       id: EVENT_IDS.public,
@@ -37,6 +41,39 @@ describe("Club reminder candidate selection", () => {
       startDateTime: "2026-07-01T22:00:00.000Z",
       tag: "Workshop",
     });
+  });
+
+  it("carries tag configuration and effective dues requirements without exposing restricted events", () => {
+    const announcement = {
+      emoji: "🚀",
+      announcementChannelId: "990000000000000950",
+      skipNextWeek: true,
+    };
+    const desiredDues = { ...eventRecord({ audience: "dues" }), announcement };
+    const synchronizedDues = {
+      ...eventRecord({
+        audience: "public",
+        synchronizedVisibility: {
+          audience: "dues",
+          internal: false,
+          roleIds: [],
+        },
+      }),
+      announcement,
+    };
+    for (const event of [desiredDues, synchronizedDues]) {
+      expect(
+        selectClubReminderCandidates([event], { now: NOW })[0],
+      ).toMatchObject({ ...announcement, requiresDues: true });
+    }
+    const internal = { ...eventRecord({ internal: true }), announcement };
+    const restricted = {
+      ...eventRecord({ audience: "roles", roleIds: ["private-role"] }),
+      announcement,
+    };
+    expect(
+      selectClubReminderCandidates([internal, restricted], { now: NOW }),
+    ).toEqual([]);
   });
 
   it("keeps a future public Legacy event in reminders during cutover", () => {

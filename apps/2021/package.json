@@ -1,0 +1,43 @@
+{
+  "name": "@forge/2021",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.1",
+  "scripts": {
+    "analyze:react": "tsx ../../scripts/analyze-react.ts src",
+    "analyze:react:changed": "tsx ../../scripts/analyze-react-changed.ts",
+    "build": "next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules out",
+    "dev": "next dev --port 3009",
+    "e2e": "playwright test --pass-with-no-tests",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "start": "serve out -l 3009",
+    "test": "vitest run src --passWithNoTests",
+    "test:watch": "vitest src --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lottie-web": "^5.13.0",
+    "minimatch": "^10.2.4",
+    "next": "^16.2.11",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "serve": "^14.2.6"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/prettier-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@types/node": "^25.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "catalog:",
+    "playwright": "^1.61.1",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1"
+  },
+  "prettier": "@forge/prettier-config"
+}

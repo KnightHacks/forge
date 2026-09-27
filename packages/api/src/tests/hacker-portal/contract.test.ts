@@ -2,7 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { SelectHackerProfile } from "@forge/db/schemas/knight-hacks";
 import { HACKER_PARTICIPANT_V1_PROCEDURES } from "@forge/hacker-sdk/contracts";
-import { hackerProfileDtoSchema } from "@forge/validators";
+import {
+  applicationContextDtoSchema,
+  hackerProfileDtoSchema,
+  hackerProfileFieldsSchema,
+  resumeDtoSchema,
+  resumeUploadMetadataSchema,
+} from "@forge/validators";
 
 import { participantPayloadHash } from "../../hacker-portal/commands";
 
@@ -125,5 +131,81 @@ describe("hacker participant v1 API contract", () => {
       linkedinProfileUrl: "https://www.linkedin.com/in/knighthacks",
       websiteUrl: "https://knighthacks.org",
     });
+  });
+
+  it("returns legacy profile fields without weakening profile writes", async () => {
+    const { profileDto, profileDtoResult } =
+      await import("../../hacker-portal/data");
+    const legacyProfile = {
+      ...profile,
+      dob: "0001-01-01",
+      gradDate: "0001-01-01",
+      phoneNumber: "",
+    };
+    const dto = profileDto(legacyProfile);
+    const result = profileDtoResult(legacyProfile);
+
+    expect(hackerProfileDtoSchema.safeParse(dto).success).toBe(true);
+    expect(hackerProfileFieldsSchema.safeParse(dto).success).toBe(false);
+    expect(result).toEqual({ profile: dto, profileIssues: [] });
+    expect(
+      applicationContextDtoSchema.safeParse({
+        agreementAcceptances: [],
+        agreements: [],
+        application: null,
+        editable: true,
+        profile: result.profile,
+        resume: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("returns a repair state instead of rejecting an incompatible legacy profile", async () => {
+    const { profileDtoResult } = await import("../../hacker-portal/data");
+    const result = profileDtoResult({
+      ...profile,
+      country: "Legacy country label",
+      major: "Legacy major label",
+    });
+
+    expect(result.profile).toBeNull();
+    expect(result.profileIssues).toEqual([
+      {
+        message: "This saved profile field needs to be updated.",
+        path: ["profile", "country"],
+      },
+      {
+        message: "This saved profile field needs to be updated.",
+        path: ["profile", "major"],
+      },
+    ]);
+    expect(
+      applicationContextDtoSchema.safeParse({
+        agreementAcceptances: [],
+        agreements: [],
+        application: null,
+        editable: true,
+        profile: result.profile,
+        profileIssues: result.profileIssues,
+        resume: null,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("reads oversized legacy resumes without weakening upload limits", () => {
+    const legacyResume = {
+      fileName: "Resume.pdf",
+      size: 8_000_000,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+
+    expect(resumeDtoSchema.safeParse(legacyResume).success).toBe(true);
+    expect(
+      resumeUploadMetadataSchema.safeParse({
+        contentType: "application/pdf",
+        fileName: legacyResume.fileName,
+        size: legacyResume.size,
+      }).success,
+    ).toBe(false);
   });
 });

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   CalendarOff,
   Loader2,
   Search,
+  Trash2,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -18,12 +18,17 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { toast } from "@forge/ui/toast";
-import { HACKER_STATUS_LABELS } from "@forge/validators";
+import {
+  HACKATHON_SENDING_STATUSES,
+  HACKER_STATUS_LABELS,
+} from "@forge/validators";
 
+import type { HackerBulkAction } from "./bulk-confirm-dialog";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { BulkConfirmDialog } from "./bulk-confirm-dialog";
@@ -38,7 +43,6 @@ import { useRosterUrlState } from "./use-roster-url-state";
 
 type Options = RouterOutputs["hacker"]["listHackathonOptions"]["hackathons"];
 export type RosterFilter = HackerRosterFilter;
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** Shown until `filterOptions` lands, so every combobox renders empty rather
  * than absent. */
@@ -95,9 +99,13 @@ function PaneTab({
 }
 
 export function HackerRoster({
+  canEdit,
+  isOfficer,
   hackathons,
   selected,
 }: {
+  canEdit: boolean;
+  isOfficer: boolean;
   hackathons: Options;
   selected: Options[number] | null;
 }) {
@@ -109,7 +117,7 @@ export function HackerRoster({
   });
   const utils = api.useUtils();
 
-  const [bulkStatus, setBulkStatus] = useState<SendingStatus | null>(null);
+  const [bulkAction, setBulkAction] = useState<HackerBulkAction | null>(null);
 
   const hackathonId = selected?.id ?? "";
   const enabled = hackathonId !== "";
@@ -220,13 +228,17 @@ export function HackerRoster({
           title="Hackers"
         />
         <p className="rounded-md border border-dashed p-6 text-center text-muted-foreground">
-          Create a hackathon before managing applicants.{" "}
-          <Link
-            className="underline underline-offset-4"
-            href="/admin/hackathon"
-          >
-            Hackathons
-          </Link>
+          {isOfficer
+            ? "Create a hackathon before managing applicants."
+            : "Ask an officer to create a hackathon before managing applicants."}{" "}
+          {isOfficer ? (
+            <Link
+              className="underline underline-offset-4"
+              href="/admin/hackathon"
+            >
+              Hackathons
+            </Link>
+          ) : null}
         </p>
       </main>
     );
@@ -267,7 +279,11 @@ export function HackerRoster({
   return (
     <main className={adminPageLayoutClassName}>
       <AdminPageHeader
-        description="Everyone who applied. Filter to the group you mean, click across the rows, and act on them together."
+        description={
+          canEdit
+            ? "Everyone who applied. Filter to the group you mean, click across the rows, and act on them together."
+            : "Everyone who applied. Search, filter, and open an application to read its details."
+        }
         eyebrow={ADMIN_PAGE_EYEBROWS.hackers}
         icon={Users}
         title="Hackers"
@@ -307,6 +323,7 @@ export function HackerRoster({
               />
             </div>
             <HackerFilters
+              canViewBlacklist={isOfficer}
               busy={filterBusy}
               options={filterOptions.data ?? EMPTY_FILTER_OPTIONS}
               optionsError={filterOptions.isError}
@@ -359,6 +376,7 @@ export function HackerRoster({
                 busy={filterBusy}
                 counts={displayedCounts ?? { byStatus: {}, total: 0 }}
                 filter={url.filter}
+                isOfficer={isOfficer}
                 onFilterChange={(patch) => void requestFilter(patch)}
               />
             )}
@@ -395,7 +413,7 @@ export function HackerRoster({
           ) : null}
         </CardHeader>
 
-        {selectedCount > 0 ? (
+        {canEdit && selectedCount > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-b border-border/70 bg-primary/5 px-3 py-3 sm:px-4 md:px-6">
             <Badge className="text-sm" variant="secondary">
               {selectedCount} selected
@@ -407,20 +425,42 @@ export function HackerRoster({
               and cannot be recalled.
             */}
             <span className="text-sm font-medium">Move to</span>
-            {(Object.keys(HACKER_STATUS_LABELS) as SendingStatus[]).map(
-              (status) => (
-                <Button
-                  className="min-h-11 text-sm"
-                  disabled={blocked || filterBusy}
-                  key={status}
-                  onClick={() => setBulkStatus(status)}
-                  size="sm"
-                  variant={status === "accepted" ? "primary" : "secondary"}
-                >
-                  {HACKER_STATUS_LABELS[status]}
-                </Button>
-              ),
-            )}
+            {HACKATHON_SENDING_STATUSES.map((status) => (
+              <Button
+                className="min-h-11 text-sm"
+                disabled={blocked || filterBusy}
+                key={status}
+                onClick={() => setBulkAction(status)}
+                size="sm"
+                variant={status === "accepted" ? "primary" : "secondary"}
+              >
+                {HACKER_STATUS_LABELS[status]}
+              </Button>
+            ))}
+            {isOfficer ? (
+              <Button
+                className="min-h-11 text-sm"
+                disabled={blocked || filterBusy}
+                onClick={() => setBulkAction("checkedin")}
+                size="sm"
+                variant="secondary"
+              >
+                {HACKER_STATUS_LABELS.checkedin}
+              </Button>
+            ) : null}
+            <span className="ml-1 border-l border-border pl-3 text-sm font-medium">
+              Actions
+            </span>
+            <Button
+              className="min-h-11 gap-2 text-sm"
+              disabled={blocked || filterBusy}
+              onClick={() => setBulkAction("delete")}
+              size="sm"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete
+            </Button>
             <Button
               className="ml-auto min-h-11 text-sm"
               onClick={selection.clear}
@@ -461,6 +501,7 @@ export function HackerRoster({
               )}
             >
               <HackerTable
+                canSelect={canEdit}
                 busy={resultsUpdating}
                 hackers={hackers}
                 onOpen={(hacker) => url.setHackerId(hacker.attendeeId)}
@@ -492,26 +533,31 @@ export function HackerRoster({
             ? ` · capped at ${SHOW_ALL_SIZE}; narrow the filter to reach the rest`
             : url.showAll
               ? ""
-              : ` · first ${PAGE_SIZE}, use Show all to select across the list`}
-          {" · "}click a row to open it, shift-click to select a range
+              : ` · first ${PAGE_SIZE}, use Show all to see the rest`}
+          {" · "}click a row to open it
+          {canEdit ? ", shift-click to select a range" : " · read-only"}
         </div>
       </Card>
 
-      <BulkConfirmDialog
-        attendeeIds={selectedIds}
-        hackathonId={selected.id}
-        onDone={() => {
-          setBulkStatus(null);
-          selection.clear();
-          void refresh();
-        }}
-        onOpenChange={(open) => {
-          if (!open) setBulkStatus(null);
-        }}
-        status={bulkStatus}
-      />
+      {canEdit ? (
+        <BulkConfirmDialog
+          action={bulkAction}
+          attendeeIds={selectedIds}
+          hackathonId={selected.id}
+          onDone={() => {
+            setBulkAction(null);
+            selection.clear();
+            void refresh();
+          }}
+          onOpenChange={(open) => {
+            if (!open) setBulkAction(null);
+          }}
+        />
+      ) : null}
 
       <HackerDetailDialog
+        canEdit={canEdit}
+        isOfficer={isOfficer}
         attendeeId={url.hackerId}
         blocked={blocked}
         blockedReason={blockedReason}

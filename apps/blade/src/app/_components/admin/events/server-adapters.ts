@@ -37,6 +37,7 @@ interface EventRow {
   roleIds: string[];
   startAt: Date | string;
   tag: string;
+  tagId: string | null;
   tagColor: string;
 }
 
@@ -96,6 +97,7 @@ export function eventRowToListItem(
     roleIds: row.roleIds,
     startDateTime: dateString(row.startAt),
     tag: row.tag,
+    tagId: row.tagId,
     tagColor: row.tagColor,
   };
 }
@@ -187,6 +189,7 @@ export function eventRowToDetail({
       })),
       startDateTime: dateString(row.startAt),
       tag: row.tag,
+      tagId: row.tagId,
       tagColor: row.tagColor,
     },
     integrations: {

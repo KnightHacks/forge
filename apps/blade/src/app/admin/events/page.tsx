@@ -101,6 +101,9 @@ export default async function AdminEventsPage({
     active: tag.active,
     color: tag.color,
     defaultPoints: tag.defaultPoints,
+    emoji: tag.emoji,
+    announcementChannelId: tag.announcementChannelId,
+    skipNextWeek: tag.skipNextWeek,
     id: tag.id,
     name: tag.name,
   }));

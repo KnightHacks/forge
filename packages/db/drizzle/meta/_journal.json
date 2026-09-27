@@ -288,6 +288,104 @@
       "when": 1786501513660,
       "tag": "0040_gigantic_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788221261577,
+      "tag": "0041_salty_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1788289956255,
+      "tag": "0042_aberrant_zarda",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1788356585936,
+      "tag": "0043_complex_serpent_society",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788471179982,
+      "tag": "0044_open_mikhail_rasputin",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1788537512267,
+      "tag": "0045_soft_makkari",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1788641685783,
+      "tag": "0046_hot_zarda",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788650755175,
+      "tag": "0047_fluffy_alex_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788662145431,
+      "tag": "0048_little_tarot",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1788665684207,
+      "tag": "0049_real_redwing",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1788731370167,
+      "tag": "0050_marvelous_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1788806096276,
+      "tag": "0051_modern_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1788816161752,
+      "tag": "0052_tan_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1788888919851,
+      "tag": "0053_challenge_groups",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1789143269037,
+      "tag": "0054_worried_reptil",
+      "breakpoints": true
     }
   ]
 }

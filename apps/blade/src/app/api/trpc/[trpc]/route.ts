@@ -62,6 +62,9 @@ const handler = async (req: Request) => {
     },
   });
 
+  if (response.headers.get("content-type")?.startsWith("text/event-stream")) {
+    response.headers.set("X-Accel-Buffering", "no");
+  }
   setCorsHeaders(response);
   return response;
 };

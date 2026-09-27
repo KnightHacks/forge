@@ -2,7 +2,6 @@
 
 import type { Appearance } from "@stripe/stripe-js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Elements,
   PaymentElement,
@@ -30,7 +29,10 @@ import { MEMBER_DASHBOARD_PATH } from "@forge/validators";
 
 import type { CurrentDuesStatus } from "~/app/_components/member/member-dashboard";
 import { dashboardNestedSurfaceClass } from "~/app/_components/member/member-dashboard";
-import { RouteTransitionLink } from "~/app/_components/shared/route-transition-link";
+import {
+  RouteTransitionLink,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { env } from "~/env";
 import { api } from "~/trpc/react";
 

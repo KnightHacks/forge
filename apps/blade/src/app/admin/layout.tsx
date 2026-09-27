@@ -16,8 +16,10 @@ import {
   canAccessHackathonAdmin,
   canAccessHackathonCheckIn,
   canAccessHackathonEvents,
+  canAccessHackerAdmin,
   canAccessIssues,
   canAccessMemberAdmin,
+  canAccessProjectAdmin,
   canAccessRoleAdmin,
   getAdminNavigationAccess,
 } from "~/lib/admin-access";
@@ -42,11 +44,13 @@ export default async function AdminLayout({
     !canAccessEmailPortal(effectivePermissions) &&
     !canAccessEventCheckIn(effectivePermissions) &&
     !canAccessFormAdmin(effectivePermissions) &&
+    !canAccessHackerAdmin(effectivePermissions) &&
     !canAccessHackathonAdmin(effectivePermissions) &&
     !canAccessHackathonCheckIn(effectivePermissions) &&
     !canAccessHackathonEvents(effectivePermissions) &&
     !canAccessIssues(effectivePermissions) &&
     !canAccessMemberAdmin(effectivePermissions) &&
+    !canAccessProjectAdmin(effectivePermissions) &&
     !canAccessRoleAdmin(effectivePermissions)
   ) {
     redirect(MEMBER_DASHBOARD_PATH);

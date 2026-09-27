@@ -56,6 +56,12 @@ function selectClubReminderCandidatesFromRows(
     )
     .map(({ discordId, event }) => ({
       description: event.description,
+      emoji: event.announcement?.emoji ?? null,
+      announcementChannelId: event.announcement?.announcementChannelId ?? null,
+      skipNextWeek: event.announcement?.skipNextWeek ?? false,
+      requiresDues:
+        event.audience === "dues" ||
+        event.synchronizedVisibility?.audience === "dues",
       discordId,
       endDateTime: event.endAt.toISOString(),
       id: event.id,

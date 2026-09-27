@@ -35,6 +35,21 @@ export const AUDIT_DOMAINS = [
 export type AuditDomain = (typeof AUDIT_DOMAINS)[number];
 
 export const AUDIT_ACTION_CATALOG = {
+  "project.claim.settings_updated": policy(
+    "hackathons",
+    "Updated hacker judging settings",
+    ["published", "emergency"],
+    ["claimUrl"],
+  ),
+  "project.claim.link_copied": policy(
+    "hackathons",
+    "Copied project claim link",
+    [],
+  ),
+  "project.claim.links_sent": policy("hackathons", "Sent project claim links", [
+    "sent",
+    "failed",
+  ]),
   "analytics.report.exported": policy(
     "analytics",
     "Exported analytics report",
@@ -154,6 +169,8 @@ export const AUDIT_ACTION_CATALOG = {
       "color",
       "defaultPoints",
       "creationSource",
+      "emoji",
+      "announcementChannelId",
       "operationId",
       "sourceHackathonId",
       "sourceTagId",
@@ -164,7 +181,7 @@ export const AUDIT_ACTION_CATALOG = {
     "hackathons",
     "Updated hackathon event tag",
     [],
-    ["name", "color", "defaultPoints"],
+    ["name", "color", "defaultPoints", "emoji", "announcementChannelId"],
   ),
   "hackathon_event.tag.archived": policy(
     "hackathons",
@@ -450,6 +467,185 @@ export const AUDIT_ACTION_CATALOG = {
     ],
   ),
   "hackathon.deleted": policy("hackathons", "Deleted hackathon"),
+  "project.inventory_imported": policy(
+    "hackathons",
+    "Imported project inventory",
+    [
+      "addOnly",
+      "byteLength",
+      "challengeCount",
+      "collapsedDuplicateRows",
+      "excludedDraftProjects",
+      "fileHash",
+      "memberCount",
+      "projectCount",
+      "rejectedProjects",
+      "skippedProjectCount",
+    ],
+  ),
+  "project.inventory_dropped": policy(
+    "hackathons",
+    "Permanently deleted project inventory",
+    ["projectCount"],
+  ),
+  "project.updated": policy("hackathons", "Updated project", ["changedFields"]),
+  "project.deleted": policy("hackathons", "Deleted project"),
+  "project.restored": policy("hackathons", "Restored project"),
+  "judging.evaluation.saved": policy("hackathons", "Saved judging evaluation", [
+    "actorKind",
+    "challengeId",
+    "evaluationId",
+    "hackathonId",
+    "judgeId",
+    "projectId",
+    "revision",
+  ]),
+  "judging.evaluations.dropped": policy(
+    "hackathons",
+    "Dropped all judging evaluations",
+    ["draftCount", "evaluationCount"],
+  ),
+  "judging.rooms.dropped": policy("hackathons", "Dropped all judging rooms", [
+    "roomCount",
+  ]),
+  "judging.room.deleted": policy("hackathons", "Deleted judging room"),
+  "judging.setup.reset": policy("hackathons", "Reset judging setup", [
+    "groupCount",
+    "rubricItemCount",
+  ]),
+  "judging.launch.reset": policy("hackathons", "Reset judging launch", [
+    "claimCount",
+    "claimLinkCount",
+  ]),
+  "judging.reset": policy("hackathons", "Reset hackathon judging", [
+    "draftCount",
+    "evaluationCount",
+    "hadSchedule",
+    "projectCount",
+    "roomCount",
+  ]),
+  "judging.schedule.generated": policy(
+    "hackathons",
+    "Generated judging schedule",
+    ["jobId", "status"],
+  ),
+  "judging.schedule.saved": policy("hackathons", "Saved judging schedule", [
+    "scheduleId",
+    "appointmentCount",
+    "reducedBreakCount",
+  ]),
+  "judging.schedule.dropped": policy("hackathons", "Dropped judging schedule", [
+    "jobCount",
+    "scheduleId",
+  ]),
+  "judging.appointment.contacts_viewed": policy(
+    "hackathons",
+    "Viewed judging appointment contacts",
+    ["projectId", "challengeId", "appointmentId", "memberCount"],
+  ),
+  "judging.appointment.moved": policy(
+    "hackathons",
+    "Moved judging appointment",
+    [
+      "appointmentId",
+      "fromRoomId",
+      "toRoomId",
+      "fromStartsAt",
+      "toStartsAt",
+      "reducedBreakCount",
+    ],
+  ),
+  "judging.appointment.assigned": policy(
+    "hackathons",
+    "Assigned judging appointment",
+    ["appointmentId", "projectId", "challengeId", "roomId", "startsAt"],
+  ),
+  "judging.building.created": policy("hackathons", "Created judging building", [
+    "buildingId",
+    "name",
+  ]),
+  "judging.group.created": policy("hackathons", "Created judging group", [
+    "groupId",
+    "label",
+    "isGeneral",
+    "isScheduled",
+    "isMlhImportDefault",
+  ]),
+  "judging.group.updated": policy(
+    "hackathons",
+    "Updated judging group",
+    ["groupId", "label", "isGeneral", "isScheduled", "isMlhImportDefault"],
+    ["label", "isGeneral", "isScheduled", "isMlhImportDefault"],
+  ),
+  "judging.group.deleted": policy("hackathons", "Deleted judging group", [
+    "groupId",
+    "label",
+  ]),
+  "judging.challenge.updated": policy(
+    "hackathons",
+    "Updated judging challenge",
+    ["challengeId", "label", "parentId", "isScheduled"],
+    ["parentId", "isScheduled"],
+  ),
+  "judging.room.created": policy("hackathons", "Created judging room", [
+    "challengeId",
+  ]),
+  "judging.room.updated": policy("hackathons", "Updated judging room", [
+    "challengeId",
+    "displayOrder",
+    "guestAccessRevoked",
+  ]),
+  "judging.room.archived": policy("hackathons", "Archived judging room"),
+  "judging.comms.updated": policy(
+    "hackathons",
+    "Updated judging communications",
+    ["channelId"],
+  ),
+  "judging.comms.threads_provisioned": policy(
+    "hackathons",
+    "Provisioned judging room threads",
+    ["failedRoomCount", "provisionedCount"],
+  ),
+  "judging.announcement.published": policy(
+    "hackathons",
+    "Published judging announcement",
+    ["includeGuests", "isUrgent", "scope"],
+  ),
+  "judging.announcement.cleared": policy(
+    "hackathons",
+    "Cleared judging announcement",
+    ["scope"],
+  ),
+  "judging.room_qr.sent": policy("hackathons", "Sent judging room QR", [
+    "discordDelivery",
+  ]),
+  "judging.room_link.generated": policy(
+    "hackathons",
+    "Generated judging room QR",
+  ),
+  "judging.room_link.viewed": policy("hackathons", "Viewed judging room QR"),
+  "judging.room_link.revoked": policy("hackathons", "Revoked judging room QR"),
+  "judging.room_link.rotated": policy("hackathons", "Rotated judging room QR"),
+  "judging.guest.revoked": policy("hackathons", "Revoked guest judge", [
+    "guestSessionId",
+    "judgeDisplayName",
+  ]),
+  "judging.presence.removed": policy("hackathons", "Removed judge from room", [
+    "judgeId",
+    "judgeDisplayName",
+  ]),
+  "judging.rubric.updated": policy("hackathons", "Updated judging rubric", [
+    "itemCount",
+  ]),
+  "judging.state.updated": policy("hackathons", "Updated judging state", [
+    "fromState",
+    "toState",
+  ]),
+  "judging.results_visibility.updated": policy(
+    "hackathons",
+    "Updated judging result visibility",
+    ["displayAllResults"],
+  ),
   // `status` names which applicant status the mail belongs to, and
   // `templateName` records what it pointed at *then* — the template can be
   // renamed later, and the log should not silently follow it.
@@ -582,6 +778,18 @@ export const AUDIT_ACTION_CATALOG = {
     "Deleted hackathon application",
     ["hackathonId", "legacySnapshotDeleted", "clearedCommandCount"],
   ),
+  "hacker.bulk_applications_deleted": policy(
+    "hackathons",
+    "Bulk deleted hackathon applications",
+    [
+      "hackathonId",
+      "deletedCount",
+      "skippedCount",
+      "clearedCommandCount",
+      "legacySnapshotDeletedCount",
+      "subjectsTruncated",
+    ],
+  ),
   "hacker.application_withdrawn": policy(
     "hackathons",
     "Withdrew hackathon application",
@@ -679,12 +887,22 @@ export const AUDIT_ACTION_CATALOG = {
     "name",
     "color",
     "defaultPoints",
+    "emoji",
+    "announcementChannelId",
+    "skipNextWeek",
   ]),
   "event.tag.updated": policy(
     "events",
     "Updated event tag",
     [],
-    ["name", "color", "defaultPoints"],
+    [
+      "name",
+      "color",
+      "defaultPoints",
+      "emoji",
+      "announcementChannelId",
+      "skipNextWeek",
+    ],
   ),
   "event.tag.archived": policy("events", "Archived event tag", [], ["active"]),
   "event.feedback_template.updated": policy(
@@ -789,6 +1007,13 @@ export const AUDIT_ACTION_CATALOG = {
     "Uploaded form instruction media",
     ["filename", "mimeType", "byteSize", "attachmentId"],
   ),
+  "form.banner_attachment.uploaded": policy("forms", "Uploaded form banner", [
+    "filename",
+    "mimeType",
+    "byteSize",
+    "attachmentId",
+    "purpose",
+  ]),
   "form.callback.configured": policy("forms", "Configured form callback", [
     "callbackSlug",
     "active",
@@ -837,6 +1062,13 @@ export const AUDIT_ACTION_CATALOG = {
     "eventId",
     "parentId",
     "originTemplateId",
+  ]),
+  "issue.image.uploaded": policy("issues", "Uploaded managed issue image", [
+    "filename",
+    "mimeType",
+    "byteSize",
+    "attachmentId",
+    "draft",
   ]),
   "issue.status.changed": policy(
     "issues",
@@ -932,9 +1164,15 @@ export const AUDIT_TARGET_TYPES = [
   "issue",
   "issue_template",
   "issue_tree",
+  "judging_room",
+  "judging_building",
+  "judging_schedule",
+  "judging_schedule_job",
+  "judging_appointment",
   "member",
   "member_directory",
   "provider",
+  "project",
   "role",
   "role_assignment_batch",
   "user",

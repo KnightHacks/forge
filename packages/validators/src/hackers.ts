@@ -5,16 +5,14 @@ import { FORMS } from "@forge/consts";
 import { hackathonSendingStatusSchema } from "./hackathons";
 import { nullableSocialProfileUrl } from "./social-profile";
 
-/**
- * The statuses an officer can move an applicant to.
- *
- * Reused rather than re-derived, and that reuse is the point:
- * `HACKATHON_SENDING_STATUSES` is `HACKATHON_APPLICATION_STATES` minus
- * `checkedin`, so "checked-in is unreachable from the roster" is enforced by
- * construction instead of by a second list someone has to remember to keep in
- * step. Check-in belongs to the event slice and reaches the column another way.
- */
+/** The statuses whose single-applicant transition sends mail. */
 export const hackerTransitionStatusSchema = hackathonSendingStatusSchema;
+
+/** Bulk check-in is the one roster transition that does not send mail. */
+export const hackerBulkStatusSchema = hackerTransitionStatusSchema.or(
+  z.literal("checkedin"),
+);
+export type HackerBulkStatus = z.infer<typeof hackerBulkStatusSchema>;
 
 /**
  * Officers see "capacity"; the stored value is `denied` and the applicant
@@ -22,10 +20,11 @@ export const hackerTransitionStatusSchema = hackathonSendingStatusSchema;
  * agree on the mapping rather than each spelling it out.
  */
 export const HACKER_STATUS_LABELS: Record<
-  z.infer<typeof hackathonSendingStatusSchema>,
+  (typeof FORMS.HACKATHON_APPLICATION_STATES)[number],
   string
 > = {
   accepted: "Accepted",
+  checkedin: "Checked-In",
   confirmed: "Confirmed",
   denied: "Capacity",
   pending: "Applied",
@@ -122,13 +121,24 @@ export const hackerDeleteApplicationSchema = z.object({
   confirmed: z.literal(true),
 });
 
+const hackerBulkDeleteBaseSchema = z.object({
+  attendeeIds: z.array(z.string().uuid()).min(1).max(5000),
+  hackathonId: z.string().uuid(),
+});
+
+export const hackerBulkDeletePreviewSchema = hackerBulkDeleteBaseSchema;
+export const hackerBulkDeleteConfirmSchema = hackerBulkDeleteBaseSchema.extend({
+  confirmed: z.literal(true),
+  previewedAttendeeIds: z.array(z.string().uuid()).max(5000),
+});
+
 /**
- * A bulk action carries the ids the officer actually selected.
+ * A bulk action carries the ids the officer actually selected. Destructive
+ * confirmation also carries the eligible ids shown by preview; the API locks
+ * and re-resolves the selection, then rejects if that set changed.
  *
- * Preview and confirm take the same shape on purpose. There is no stored
- * preview handle: the ids are the selection, so a persisted snapshot would add
- * a lifecycle to manage and would act on eligibility frozen at preview time.
- * Re-resolving at confirm catches anyone blacklisted in between and names them.
+ * There is no stored preview handle: the compared ids bind confirmation to the
+ * visible preview without adding a persisted snapshot lifecycle.
  *
  * Not a filter: filtering the table and selecting across it already *is*
  * selecting by filter, and resolving a filter server-side at confirm time
@@ -141,7 +151,7 @@ export const hackerDeleteApplicationSchema = z.object({
 export const hackerBulkPreviewSchema = z.object({
   attendeeIds: z.array(z.string().uuid()).min(1).max(5000),
   hackathonId: z.string().uuid(),
-  status: hackerTransitionStatusSchema,
+  status: hackerBulkStatusSchema,
 });
 
 /**

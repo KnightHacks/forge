@@ -12,6 +12,7 @@ node_modules
 coverage
 playwright-report
 .playwright-results
+test-results
 
 # next.js
 .next/

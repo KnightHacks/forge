@@ -19,22 +19,19 @@ import { resolveFirstTimeStatus } from "./first-time-status";
 
 type Roster = RouterOutputs["hacker"]["listForHackathon"]["hackers"];
 type Hacker = Roster[number];
-type SendingStatus = keyof typeof HACKER_STATUS_LABELS;
+type HackerStatus = keyof typeof HACKER_STATUS_LABELS;
 
-/**
- * `checkedin` is a real stored status the roster can filter to but an officer
- * cannot set, so it has no entry in the label map — casting the lookup hid that
- * and rendered a blank badge for every checked-in applicant.
- */
+/** Safely label a stored status, including stale values from an open tab. */
 function statusLabel(status: string) {
   // `hasOwn`, not `in`, which walks the prototype and would return a function
   // for `"toString"`.
   return Object.hasOwn(HACKER_STATUS_LABELS, status)
-    ? HACKER_STATUS_LABELS[status as SendingStatus]
-    : "Checked in";
+    ? HACKER_STATUS_LABELS[status as HackerStatus]
+    : "Unknown status";
 }
 
 export function HackerTable({
+  canSelect,
   busy,
   hackers,
   onOpen,
@@ -43,6 +40,7 @@ export function HackerTable({
   onToggleRange,
   selected,
 }: {
+  canSelect: boolean;
   /**
    * True while a filter change is being checked against the selection, and
    * while the officer is answering the prompt that check produced.
@@ -77,14 +75,16 @@ export function HackerTable({
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="w-12 pl-4">
-            <Checkbox
-              aria-label="Select every applicant shown"
-              checked={headerChecked}
-              disabled={busy}
-              onCheckedChange={(next) => onSelectAllShown(next === true)}
-            />
-          </TableHead>
+          {canSelect ? (
+            <TableHead className="w-12 pl-4">
+              <Checkbox
+                aria-label="Select every applicant shown"
+                checked={headerChecked}
+                disabled={busy}
+                onCheckedChange={(next) => onSelectAllShown(next === true)}
+              />
+            </TableHead>
+          ) : null}
           <TableHead>Applicant</TableHead>
           <TableHead className="hidden md:table-cell">School</TableHead>
           <TableHead>Status</TableHead>
@@ -116,14 +116,14 @@ export function HackerTable({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  if (event.shiftKey) {
+                  if (canSelect && event.shiftKey) {
                     if (!busy) onToggleRange(hacker.attendeeId);
                   } else onOpen(hacker);
                   return;
                 }
                 if (event.key === " ") {
                   event.preventDefault();
-                  if (!busy) onToggle(hacker.attendeeId);
+                  if (canSelect && !busy) onToggle(hacker.attendeeId);
                 }
               }}
               tabIndex={0}
@@ -132,7 +132,7 @@ export function HackerTable({
               // column, so both gestures are available — requiring a 20px
               // checkbox for every pick is what made multi-select feel broken.
               onClick={(event) => {
-                if (event.shiftKey) {
+                if (canSelect && event.shiftKey) {
                   if (!busy) onToggleRange(hacker.attendeeId);
                   return;
                 }
@@ -142,7 +142,7 @@ export function HackerTable({
               // painting a text selection across a shift-sweep — that is
               // decided on mousedown.
               onMouseDown={(event) => {
-                if (event.shiftKey) event.preventDefault();
+                if (canSelect && event.shiftKey) event.preventDefault();
               }}
             >
               {/*
@@ -150,37 +150,39 @@ export function HackerTable({
                 densest part of the screen and a mis-tap would open the detail
                 dialog instead of selecting.
               */}
-              <TableCell
-                className="pl-4"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (busy) return;
-                  // Shift on the checkbox means the same thing it means on the
-                  // row. Previously it silently degraded to a single toggle,
-                  // with no signal that the gesture had done something else.
-                  if (event.shiftKey) onToggleRange(hacker.attendeeId);
-                  else onToggle(hacker.attendeeId);
-                }}
-              >
-                <Checkbox
-                  aria-label={`Select ${hacker.name}`}
-                  checked={isSelected}
-                  disabled={busy}
-                  // The cell owns the click; this is the visual affordance, so
-                  // it must not toggle a second time.
-                  onClick={(event) => event.preventDefault()}
-                  // Radix keeps focus on this button after a mouse click, and
-                  // the row's handler would then read Space as "open". Handling
-                  // it here keeps Space meaning "toggle" wherever focus landed.
-                  onKeyDown={(event) => {
-                    if (event.key !== " " && event.key !== "Enter") return;
-                    event.preventDefault();
+              {canSelect ? (
+                <TableCell
+                  className="pl-4"
+                  onClick={(event) => {
                     event.stopPropagation();
-                    if (!busy) onToggle(hacker.attendeeId);
+                    if (busy) return;
+                    // Shift on the checkbox means the same thing it means on the
+                    // row. Previously it silently degraded to a single toggle,
+                    // with no signal that the gesture had done something else.
+                    if (event.shiftKey) onToggleRange(hacker.attendeeId);
+                    else onToggle(hacker.attendeeId);
                   }}
-                  tabIndex={-1}
-                />
-              </TableCell>
+                >
+                  <Checkbox
+                    aria-label={`Select ${hacker.name}`}
+                    checked={isSelected}
+                    disabled={busy}
+                    // The cell owns the click; this is the visual affordance, so
+                    // it must not toggle a second time.
+                    onClick={(event) => event.preventDefault()}
+                    // Radix keeps focus on this button after a mouse click, and
+                    // the row's handler would then read Space as "open". Handling
+                    // it here keeps Space meaning "toggle" wherever focus landed.
+                    onKeyDown={(event) => {
+                      if (event.key !== " " && event.key !== "Enter") return;
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!busy) onToggle(hacker.attendeeId);
+                    }}
+                    tabIndex={-1}
+                  />
+                </TableCell>
+              ) : null}
               <TableCell className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Underlined, because the whole row opens the applicant and

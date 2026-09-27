@@ -69,7 +69,7 @@ const TEAM_APPLICATIONS = [
 ] as const;
 
 function getFormHref(bladeUrl: string, slug: string) {
-  return new URL(`/forms/${encodeURIComponent(slug)}`, bladeUrl).toString();
+  return new URL(`/form/${encodeURIComponent(slug)}`, bladeUrl).toString();
 }
 
 function getInitials(name: string) {

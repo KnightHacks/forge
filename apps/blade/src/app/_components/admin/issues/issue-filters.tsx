@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { ISSUE } from "@forge/consts";
@@ -13,13 +12,19 @@ import { Label } from "@forge/ui/label";
 
 import type { IssueSearchInput } from "./params";
 import type { IssueWorkspaceData } from "./types";
+import {
+  RouteTransitionLink as Link,
+  RouteSearchForm,
+} from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 
 export function IssueFilters({
   input,
   teams,
+  onApply,
 }: {
   input: IssueSearchInput;
+  onApply: () => void;
   teams: IssueWorkspaceData["teams"];
 }) {
   const [selectedTeam, setSelectedTeam] = useState(input.teamIds[0] ?? "");
@@ -28,9 +33,9 @@ export function IssueFilters({
     { enabled: Boolean(selectedTeam) },
   );
   return (
-    <form
+    <RouteSearchForm
+      onSubmit={onApply}
       className="grid max-h-[78svh] gap-4 overflow-y-auto p-4 sm:p-5 lg:grid-cols-2"
-      method="get"
     >
       {input.calendarMode !== "month" && (
         <input type="hidden" name="mode" value={input.calendarMode} />
@@ -164,12 +169,14 @@ export function IssueFilters({
       </label>
       <DialogFooter className="sticky bottom-0 -mx-4 -mb-4 gap-2 border-t border-white/10 bg-card/95 p-3 sm:-mx-5 sm:-mb-5 lg:col-span-2">
         <Button className="h-11" variant="outline" asChild>
-          <Link href="?">Clear all</Link>
+          <Link href="?" onClick={onApply}>
+            Clear all
+          </Link>
         </Button>
         <Button className="h-11" type="submit">
           Apply filters
         </Button>
       </DialogFooter>
-    </form>
+    </RouteSearchForm>
   );
 }

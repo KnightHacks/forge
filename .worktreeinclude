@@ -1,0 +1,2 @@
+# Copy the ignored local environment file into new supported managed worktrees.
+.env

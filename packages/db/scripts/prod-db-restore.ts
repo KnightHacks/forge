@@ -5,6 +5,118 @@ export interface PsqlConnection {
   user: string;
 }
 
+const RETIRED_JUDGING_TABLES = new Set([
+  "auth_judge_session",
+  "knight_hacks_challenges",
+  "knight_hacks_judged_submission",
+  "knight_hacks_judges",
+  "knight_hacks_submissions",
+  "knight_hacks_teams",
+]);
+
+export function isRetiredJudgingDumpStatement(line: string) {
+  const statementPattern =
+    /^\s*(?:INSERT INTO|ALTER TABLE(?: ONLY)?)\s+(?:"?public"?\.)?"?([a-z0-9_]+)"?\b/u;
+  const table = statementPattern.exec(line)?.[1];
+  return table ? RETIRED_JUDGING_TABLES.has(table) : false;
+}
+
+export class RetiredJudgingDumpFilter {
+  private blockComment = false;
+  private dollarQuote: string | null = null;
+  private doubleQuoted = false;
+  private dropping = false;
+  private escapeString = false;
+  private singleQuoted = false;
+
+  shouldInclude(line: string) {
+    const startsInSql =
+      !this.blockComment &&
+      !this.dollarQuote &&
+      !this.doubleQuoted &&
+      !this.singleQuoted;
+    if (startsInSql && isRetiredJudgingDumpStatement(line)) {
+      this.dropping = true;
+    }
+
+    const include = !this.dropping;
+    const statementEnded = this.scan(line);
+    if (this.dropping && statementEnded) this.dropping = false;
+    return include;
+  }
+
+  private scan(line: string) {
+    let statementEnded = false;
+    for (let index = 0; index < line.length; index += 1) {
+      if (this.dollarQuote) {
+        if (line.startsWith(this.dollarQuote, index)) {
+          index += this.dollarQuote.length - 1;
+          this.dollarQuote = null;
+        }
+        continue;
+      }
+      if (this.singleQuoted) {
+        if (this.escapeString && line[index] === "\\") {
+          index += 1;
+        } else if (line[index] === "'" && line[index + 1] === "'") {
+          index += 1;
+        } else if (line[index] === "'") {
+          this.escapeString = false;
+          this.singleQuoted = false;
+        }
+        continue;
+      }
+      if (this.doubleQuoted) {
+        if (line[index] === '"' && line[index + 1] === '"') {
+          index += 1;
+        } else if (line[index] === '"') {
+          this.doubleQuoted = false;
+        }
+        continue;
+      }
+      if (this.blockComment) {
+        if (line[index] === "*" && line[index + 1] === "/") {
+          index += 1;
+          this.blockComment = false;
+        }
+        continue;
+      }
+
+      if (line[index] === "-" && line[index + 1] === "-") break;
+      if (line[index] === "/" && line[index + 1] === "*") {
+        index += 1;
+        this.blockComment = true;
+        continue;
+      }
+      if (line[index] === "'") {
+        const prefix = line[index - 1];
+        const beforePrefix = line[index - 2];
+        this.escapeString =
+          (prefix === "E" || prefix === "e") &&
+          (beforePrefix === undefined || !/[A-Za-z0-9_$]/u.test(beforePrefix));
+        this.singleQuoted = true;
+        continue;
+      }
+      if (line[index] === '"') {
+        this.doubleQuoted = true;
+        continue;
+      }
+      if (line[index] === "$") {
+        const delimiter = /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/u.exec(
+          line.slice(index),
+        )?.[0];
+        if (delimiter) {
+          this.dollarQuote = delimiter;
+          index += delimiter.length - 1;
+          continue;
+        }
+      }
+      if (line[index] === ";") statementEnded = true;
+    }
+    return statementEnded;
+  }
+}
+
 export function psqlFileArgs(
   connection: PsqlConnection,
   files: readonly string[],

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useReducer, useState, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   KeyboardSensor,
   PointerSensor,
@@ -15,19 +14,31 @@ import { ArrowLeft, FilePenLine } from "lucide-react";
 import type { RouterOutputs } from "@forge/api";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
-import { formDefinitionSchema } from "@forge/validators";
+import { toast } from "@forge/ui/toast";
+import {
+  checkUploadMetadata,
+  FORM_BANNER_UPLOAD_POLICY,
+  formDefinitionSchema,
+} from "@forge/validators";
 
 import type {
   BuilderDialog,
   BuilderInitial,
   CallbackCatalogItem,
 } from "./form-builder-types";
-import type { FormCallbackDraft } from "./form-callback-mappings";
+import type {
+  ConfiguredFormCallback,
+  FormCallbackDraft,
+} from "./form-callback-mappings";
 import type { MediaInstruction } from "./form-definition-draft";
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
+import {
+  RouteTransitionLink as Link,
+  useNavigationRouter as useRouter,
+} from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { api } from "~/trpc/react";
 import { FormAvailabilityDialog } from "./form-availability-dialog";
@@ -42,7 +53,10 @@ import {
 } from "./form-builder-formatting";
 import { FormBuilderHeaderActions } from "./form-builder-header-actions";
 import { FormBuilderQuestionsSection } from "./form-builder-questions-section";
-import { callbackInputMappings } from "./form-callback-mappings";
+import {
+  callbackInputMappings,
+  emptyCallbackDraft,
+} from "./form-callback-mappings";
 import { FormCallbacksDialog } from "./form-callbacks-dialog";
 import {
   buildFormDefinition,
@@ -64,7 +78,7 @@ export function AdminFormBuilder({
   shareAssets,
 }: {
   callbacks: CallbackCatalogItem[];
-  configuredCallbacks?: { active: boolean; callbackSlug: string; id: string }[];
+  configuredCallbacks?: ConfiguredFormCallback[];
   initial?: BuilderInitial;
   readOnly?: boolean;
   respondentRoles: { id: string; name: string }[];
@@ -83,6 +97,7 @@ export function AdminFormBuilder({
   const [description, setDescription] = useState(
     initial?.definition.description ?? "",
   );
+  const [banner, setBanner] = useState(initial?.definition.banner);
   const [instructions, setInstructions] = useState(
     draftInstructionsBody(savedInstructions),
   );
@@ -98,11 +113,11 @@ export function AdminFormBuilder({
     draftAvailability(initial, sections),
   );
   const [message, setMessage] = useState<string | null>(null);
-  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>({
-    questionId: "",
-    slug: "discord.assign-role",
-    value: "",
-  });
+  const [callbackError, setCallbackError] = useState<string | null>(null);
+  const [callbacksRefreshing, refreshCallbacks] = useTransition();
+  const [callbackDraft, setCallbackDraft] = useState<FormCallbackDraft>(() =>
+    emptyCallbackDraft(callbacks.find((callback) => callback.available)),
+  );
   const [openDialog, setOpenDialog] = useState<BuilderDialog>("none");
   const [respondentRoleSearch, setRespondentRoleSearch] = useState("");
   const questionSensors = useSensors(
@@ -137,10 +152,12 @@ export function AdminFormBuilder({
     dialog: Exclude<BuilderDialog, "none">,
     open: boolean,
   ) {
+    if (dialog === "callbacks") setCallbackError(null);
     setOpenDialog(open ? dialog : "none");
   }
 
   const definition = buildFormDefinition({
+    banner,
     description,
     instructions,
     media: mediaInstructions,
@@ -234,17 +251,24 @@ export function AdminFormBuilder({
     }
   }
 
-  async function addCallback() {
+  async function saveFormCallback(draft = callbackDraft, enabling = false) {
     if (!initial) return;
+    setCallbackError(null);
     try {
       await configureCallback.mutateAsync({
-        callbackSlug: callbackDraft.slug,
+        callbackSlug: draft.slug,
         formId: initial.id,
-        mappings: callbackInputMappings(callbackDraft),
+        mappings: callbackInputMappings(draft),
       });
-      setMessage("Callback configured for future responses.");
+      setOpenDialog("none");
+      toast.success(
+        enabling
+          ? "Callback enabled for future responses."
+          : "Callback saved for future responses.",
+      );
+      refreshCallbacks(() => router.refresh());
     } catch (cause) {
-      setMessage(
+      setCallbackError(
         cause instanceof Error
           ? cause.message
           : "Callback configuration failed.",
@@ -252,14 +276,21 @@ export function AdminFormBuilder({
     }
   }
 
-  function disableFormCallback(callbackSlug: string) {
+  async function disableFormCallback(callbackSlug: string) {
     if (!initial) return;
-    void disableCallback
-      .mutateAsync({ callbackSlug, formId: initial.id })
-      .then(() => {
-        setMessage("Callback disabled for future responses.");
-        router.refresh();
-      });
+    setCallbackError(null);
+    try {
+      await disableCallback.mutateAsync({ callbackSlug, formId: initial.id });
+      setOpenDialog("none");
+      toast.success("Callback disabled for future responses.");
+      refreshCallbacks(() => router.refresh());
+    } catch (cause) {
+      setCallbackError(
+        cause instanceof Error
+          ? cause.message
+          : "Callback could not be disabled.",
+      );
+    }
   }
 
   function deleteFormPermanently() {
@@ -289,7 +320,7 @@ export function AdminFormBuilder({
       });
       const result = await fetch(upload.uploadUrl, {
         body: file,
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": upload.contentType },
         method: "PUT",
       });
       if (!result.ok) throw new Error("Instruction upload failed.");
@@ -304,6 +335,40 @@ export function AdminFormBuilder({
         },
       ]);
       setMessage("Instruction media uploaded. Save the form to publish it.");
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : "Upload failed.");
+    }
+  }
+
+  async function uploadBanner(file: File) {
+    if (!initial) return;
+    const check = checkUploadMetadata(FORM_BANNER_UPLOAD_POLICY, {
+      contentType: file.type,
+      fileName: file.name,
+      size: file.size,
+    });
+    if (!check.ok) {
+      setMessage(check.message);
+      return;
+    }
+    try {
+      setMessage(`Uploading ${file.name}…`);
+      const upload = await createUpload.mutateAsync({
+        contentType: file.type,
+        fileName: file.name,
+        formId: initial.id,
+        purpose: "banner",
+        size: file.size,
+      });
+      const result = await fetch(upload.uploadUrl, {
+        body: file,
+        headers: { "Content-Type": upload.contentType },
+        method: "PUT",
+      });
+      if (!result.ok) throw new Error("Banner upload failed.");
+      await finalizeUpload.mutateAsync({ attachmentId: upload.attachmentId });
+      setBanner({ alt: file.name, attachmentId: upload.attachmentId });
+      setMessage("Banner uploaded. Save the form to publish it.");
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : "Upload failed.");
     }
@@ -369,16 +434,19 @@ export function AdminFormBuilder({
         </p>
       )}
 
-      <div className="grid gap-5">
-        <section className="grid gap-4">
+      <div className="grid min-w-0 gap-5">
+        <section className="grid min-w-0 gap-4">
           <FormBuilderDetailsCard
+            banner={banner}
             description={description}
             initial={initial}
             instructions={instructions}
             mediaInstructions={mediaInstructions}
             name={name}
+            onUploadBanner={uploadBanner}
             onUploadInstruction={uploadInstruction}
             readOnly={readOnly}
+            setBanner={setBanner}
             setDescription={setDescription}
             setInstructions={setInstructions}
             setMediaInstructions={setMediaInstructions}
@@ -412,12 +480,18 @@ export function AdminFormBuilder({
         <FormCallbacksDialog
           callbackDraft={callbackDraft}
           callbacks={callbacks}
-          configureCallbackPending={configureCallback.isPending}
+          configureCallbackPending={
+            configureCallback.isPending || callbacksRefreshing
+          }
           configuredCallbacks={configuredCallbacks}
-          disableCallbackPending={disableCallback.isPending}
-          onAddCallback={addCallback}
+          disableCallbackPending={
+            disableCallback.isPending || callbacksRefreshing
+          }
+          error={callbackError}
+          onAddCallback={saveFormCallback}
           onClose={() => setOpenDialog("none")}
           onDisableCallback={disableFormCallback}
+          onEnableCallback={(draft) => saveFormCallback(draft, true)}
           onOpenChange={(open) => setDialogOpen("callbacks", open)}
           open={openDialog === "callbacks"}
           questions={questions}

@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
-import Link from "next/link";
 
 import { cn } from "@forge/ui";
+
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 
 export interface EventWorkspaceSection<T extends string> {
   href: string;

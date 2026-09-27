@@ -61,6 +61,7 @@ export function draftMediaInstructions(
  * validation error the user cannot see the cause of.
  */
 export function buildFormDefinition({
+  banner,
   description,
   instructions,
   media,
@@ -68,6 +69,7 @@ export function buildFormDefinition({
   questions,
   textId,
 }: {
+  banner?: FormDefinition["banner"];
   description: string;
   instructions: string;
   media: MediaInstruction[];
@@ -76,6 +78,7 @@ export function buildFormDefinition({
   textId: string;
 }): FormDefinition {
   return {
+    ...(banner && { banner }),
     description,
     instructions: [
       ...(instructions.trim()

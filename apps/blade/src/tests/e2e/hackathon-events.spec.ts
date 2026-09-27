@@ -45,7 +45,7 @@ async function cleanupFixtures() {
   await db.delete(HackerAttendee).where(eq(HackerAttendee.id, ATTENDEE_ID));
   await db.delete(Hacker).where(eq(Hacker.id, HACKER_ID));
   await db.delete(Event).where(eq(Event.id, EVENT_ID));
-  await db.delete(EventTag).where(eq(EventTag.id, TAG_ID));
+  await db.delete(EventTag).where(eq(EventTag.hackathonId, HACKATHON_ID));
   await db
     .delete(HackathonClass)
     .where(inArray(HackathonClass.id, [CLASS_ID, VIP_ID]));
@@ -141,6 +141,7 @@ test.describe("Hackathon event and check-in critical flow", () => {
       roles: [],
       start_datetime: new Date("2027-08-05T00:00:00.000Z"),
       tag: "Operations",
+      tagId: TAG_ID,
       tagColor: "#6d28d9",
       visibilityDuesPaying: false,
       visibilityInternal: false,
@@ -176,6 +177,139 @@ test.describe("Hackathon event and check-in critical flow", () => {
   });
 
   test.afterAll(cleanupFixtures);
+
+  test("keeps linked hack tag identity after rename and an unrelated event edit", async ({
+    page,
+  }) => {
+    await db
+      .update(EventTag)
+      .set({ name: "Technical", normalizedName: "technical" })
+      .where(eq(EventTag.id, TAG_ID));
+    await db.insert(EventTag).values({
+      id: "00000000-0000-4000-8000-000000000a0c",
+      hackathonId: HACKATHON_ID,
+      name: "Operations",
+      normalizedName: "operations",
+      color: "#ffffff",
+      defaultPoints: 99,
+      emoji: "🎮",
+    });
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackathon-events?hackathon=${HACKATHON_ID}`)}`,
+    );
+    await page
+      .getByRole("button", { name: "Edit Whole Hack Check-in", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", {
+      name: "Edit event",
+      exact: true,
+    });
+    await expect(dialog.getByLabel("Tag", { exact: true })).toHaveValue(TAG_ID);
+    await dialog
+      .getByLabel("Location", { exact: true })
+      .fill("Updated Hack Room");
+    await dialog
+      .getByRole("button", { name: "Save changes", exact: true })
+      .click();
+    await expect(dialog).not.toBeVisible();
+
+    const updated = await db.query.Event.findFirst({
+      where: eq(Event.id, EVENT_ID),
+    });
+    expect(updated).toMatchObject({
+      tagId: TAG_ID,
+      location: "Updated Hack Room",
+      points: 25,
+    });
+  });
+
+  test("persists hack tag announcement settings without Club-only scheduling", async ({
+    page,
+  }, testInfo) => {
+    await page.goto(
+      `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackathon-events?hackathon=${HACKATHON_ID}&view=tags`)}`,
+    );
+    await page.getByRole("button", { name: "Create tag", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Create tag" });
+    await dialog.getByLabel("Name", { exact: true }).fill("E2E Hack Workshop");
+    await dialog.getByLabel("Announcement emoji").fill("🛠️");
+    await expect(dialog.getByLabel("Skip Next Week reminders")).toHaveCount(0);
+    await dialog
+      .getByRole("combobox", {
+        name: "Announcement channel override (optional)",
+      })
+      .click();
+    await page
+      .getByRole("option", { name: "#event-announcements-e2e" })
+      .click();
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("hack-tag-settings-desktop.png"),
+    });
+    await dialog.getByRole("button", { name: "Save tag" }).click();
+    await expect(dialog).not.toBeVisible();
+
+    const [created] = await db
+      .select()
+      .from(EventTag)
+      .where(
+        and(
+          eq(EventTag.hackathonId, HACKATHON_ID),
+          eq(EventTag.name, "E2E Hack Workshop"),
+        ),
+      );
+    expect(created).toMatchObject({
+      emoji: "🛠️",
+      announcementChannelId: "990000000000000950",
+      skipNextWeek: false,
+    });
+
+    await page.reload();
+    await page.setViewportSize({ width: 320, height: 780 });
+    await page
+      .getByRole("button", { name: "Edit E2E Hack Workshop", exact: true })
+      .click();
+    const edit = page.getByRole("dialog", { name: "Edit tag" });
+    await expect(edit.getByLabel("Announcement emoji")).toHaveValue("🛠️");
+    await expect(
+      edit.getByRole("combobox", {
+        name: "Announcement channel override (optional)",
+      }),
+    ).toHaveText("#event-announcements-e2e");
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("hack-tag-settings-320.png"),
+    });
+    await edit.getByLabel("Announcement emoji").clear();
+    await edit
+      .getByRole("combobox", {
+        name: "Announcement channel override (optional)",
+      })
+      .click();
+    await page.getByRole("option", { name: "Use default channel" }).click();
+    await edit.getByRole("button", { name: "Save tag" }).click();
+    await expect(edit).not.toBeVisible();
+
+    const [updated] = await db
+      .select()
+      .from(EventTag)
+      .where(
+        and(
+          eq(EventTag.hackathonId, HACKATHON_ID),
+          eq(EventTag.name, "E2E Hack Workshop"),
+        ),
+      );
+    expect(updated).toMatchObject({
+      emoji: null,
+      announcementChannelId: null,
+      skipNextWeek: false,
+    });
+  });
 
   test("keeps list, calendar day, tags, and duplicate workflows aligned", async ({
     page,

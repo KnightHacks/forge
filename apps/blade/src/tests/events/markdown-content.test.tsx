@@ -31,4 +31,16 @@ describe("MarkdownContent", () => {
     expect(html).not.toContain("<script");
     expect(html).not.toContain("<p>");
   });
+
+  it("can omit external Markdown images", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownContent hideImages>
+        {"Before ![Broken diagram](https://example.test/missing.png) after"}
+      </MarkdownContent>,
+    );
+
+    expect(html).toContain("Before");
+    expect(html).toContain("after");
+    expect(html).not.toContain("<img");
+  });
 });

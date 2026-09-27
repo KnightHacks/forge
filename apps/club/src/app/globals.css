@@ -467,6 +467,30 @@ html[data-club-static-background="true"] .club-home-bg::before {
   padding-top: var(--club-hero-logo-aligned-content-padding);
 }
 
+@media (min-width: 1024px) and (max-height: 900px) {
+  .club-history-page .club-history-hero-content {
+    top: calc(var(--club-home-hero-logo-top) - 2rem);
+  }
+
+  .club-history-hero-content .club-history-hero-eyebrow {
+    margin-bottom: 1rem;
+  }
+
+  .club-history-hero-content .club-history-hero-title {
+    font-size: 76px;
+    line-height: 0.92;
+  }
+
+  .club-history-hero-content .club-history-hero-description {
+    margin-top: 1.25rem;
+    line-height: 1.75rem;
+  }
+
+  .club-history-hero-content .club-history-hero-cta {
+    margin-top: 1.75rem;
+  }
+}
+
 .club-about-hero-content {
   padding-top: var(--club-hero-logo-aligned-content-padding);
 }

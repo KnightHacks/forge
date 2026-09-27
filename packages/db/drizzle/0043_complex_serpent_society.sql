@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_project_member" ALTER COLUMN "email" SET NOT NULL;

@@ -10,6 +10,10 @@ export const env = createEnv({
         ? z.string().min(1)
         : z.string().min(1).optional(),
     BLADE_URL: z.string(),
+    JUDGING_ACCESS_SECRET:
+      process.env.NODE_ENV === "production"
+        ? z.string().min(32)
+        : z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_BLADE_URL: z.string().url(),

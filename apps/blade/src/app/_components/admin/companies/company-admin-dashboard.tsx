@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { ArrowUpRight, Building2, CheckCircle2, Search } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
@@ -16,6 +15,7 @@ import {
   AdminPageHeader,
   adminPageStackClassName,
 } from "~/app/_components/shared/admin-page";
+import { RouteTransitionLink as Link } from "~/app/_components/shared/route-transition-link";
 import { ADMIN_PAGE_EYEBROWS } from "~/consts/admin-page-eyebrows";
 import { CompanyAdminMark } from "./company-admin-mark";
 

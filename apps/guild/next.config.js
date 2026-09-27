@@ -1,5 +1,20 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const monorepoRoot = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+
 /** @type {import("next").NextConfig} */
 const config = {
+  output: "standalone",
+  outputFileTracingRoot: monorepoRoot,
+  // The shared API includes the native solver; match apps/blade/next.config.js.
+  serverExternalPackages: ["@ortools-node/cp-sat"],
+  outputFileTracingIncludes: {
+    "/*": ["../../node_modules/@ortools-node/cp-sat-*/**/*"],
+  },
   reactStrictMode: true,
 
   /** Enables hot reloading for local packages without a build step */

@@ -1,0 +1,67 @@
+import type { inferRouterOutputs } from "@trpc/server";
+
+import type { AppRouter } from "@forge/api";
+
+import { getBladeTrpcClient } from "./blade-trpc";
+import { getKhixProfilePictureUrl } from "./profile-picture-url";
+
+type PublicClubTeamRoster =
+  inferRouterOutputs<AppRouter>["guild"]["getPublicClubTeamRoster"];
+
+export type TeamCascadeMember = PublicClubTeamRoster["members"][string][number];
+
+export type TeamCascadeRole = "Officer" | "Director" | "Organizer" | "Designer";
+
+export interface TeamCascadeGroup {
+  roleLabel: TeamCascadeRole;
+  members: TeamCascadeMember[];
+}
+
+const featuredDesignerIds = [
+  "design-f06cbff5-b5f8-49d5-8a3c-5b40a59dfcc6",
+  "design-f56f4444-7962-4090-b937-f31674a6ac7e",
+] as const;
+
+const teamCascadeRosterGroups = [
+  { roleLabel: "Officer", rosterKey: "executive" },
+  { roleLabel: "Director", rosterKey: "directors" },
+  { roleLabel: "Organizer", rosterKey: "hackathon" },
+  {
+    roleLabel: "Designer",
+    rosterKey: "design",
+    memberIds: featuredDesignerIds,
+  },
+] as const satisfies readonly {
+  roleLabel: TeamCascadeRole;
+  rosterKey: string;
+  memberIds?: readonly string[];
+}[];
+
+export async function loadTeamCascadeGroups(
+  bladeUrl: string,
+  signal: AbortSignal,
+): Promise<TeamCascadeGroup[]> {
+  const roster = await getBladeTrpcClient(
+    bladeUrl,
+  ).guild.getPublicClubTeamRoster.query(undefined, {
+    signal,
+  });
+
+  return teamCascadeRosterGroups.map((group) => {
+    const members = roster.members[group.rosterKey] ?? [];
+    const visibleMembers =
+      "memberIds" in group
+        ? members.filter((member) =>
+            group.memberIds.some((memberId) => memberId === member.id),
+          )
+        : members;
+
+    return {
+      roleLabel: group.roleLabel,
+      members: visibleMembers.map((member) => ({
+        ...member,
+        imageUrl: getKhixProfilePictureUrl(member.imageUrl),
+      })),
+    };
+  });
+}

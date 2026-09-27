@@ -26,7 +26,7 @@ export default async function FormResponsesPage({
   }
 
   const { formId } = await params;
-  const [responses, callbacks, workspace] = await Promise.all([
+  const [responses, callbacks, workspace, callbackCatalog] = await Promise.all([
     api.forms
       .listResponses({ formId })
       .then((data) => ({ data, error: null }))
@@ -39,12 +39,14 @@ export default async function FormResponsesPage({
       })),
     api.forms.listCallbackExecutions({ formId }).catch(() => null),
     api.forms.listAdmin().catch(() => null),
+    api.forms.listCallbacks().catch(() => []),
   ]);
   const formName = workspace?.forms.find((form) => form.id === formId)?.name;
 
   return (
     <FormResponsesDashboard
       callbacks={callbacks}
+      callbackCatalog={callbackCatalog}
       formId={formId}
       formName={formName}
       responses={responses.data}

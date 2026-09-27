@@ -17,7 +17,6 @@ export const TABLES_TO_KEEP = [
   "email_template",
   "email_template_revision",
   "knight_hacks_alumni_bulletin_post",
-  "knight_hacks_challenges",
   "knight_hacks_club_team",
   "knight_hacks_club_team_role",
   "knight_hacks_companies",
@@ -60,10 +59,10 @@ export const TABLES_TO_KEEP = [
   "knight_hacks_hacker_event_attendee",
   "knight_hacks_hacker_profile",
   "knight_hacks_hacker_profile_revision",
+  // Reusable room-location catalog contains configuration, not judging records.
+  "knight_hacks_judging_building",
   "knight_hacks_member",
   "knight_hacks_sponsor",
-  "knight_hacks_submissions",
-  "knight_hacks_teams",
   // Officer-authored issue-tree configuration. This is unrelated to the email
   // template catalog despite the older table's generic name.
   "knight_hacks_template",
@@ -83,7 +82,6 @@ export const TABLES_TO_DROP = [
   "audit_event",
   "audit_subject",
   // Live credentials. A backup that carries these hands out logins.
-  "auth_judge_session",
   "auth_session",
   "auth_verification",
   // Members' private Discord conversations.
@@ -114,13 +112,39 @@ export const TABLES_TO_DROP = [
   "knight_hacks_event_publication_work",
   // Work queues. Real assignments and reminders aimed at real officers.
   "knight_hacks_issue",
+  "knight_hacks_issue_attachment_reference",
+  "knight_hacks_issue_attachment",
   "knight_hacks_issue_history",
   "knight_hacks_issue_reminder_delivery",
   "knight_hacks_issues_to_teams_visibility",
   "knight_hacks_issues_to_users_assignment",
-  // Judging data: scores attached to named people.
-  "knight_hacks_judged_submission",
-  "knight_hacks_judges",
+  // Imported project inventories are replaceable and contain participant
+  // names and email addresses. Keep that PII out of shared development
+  // backups; officers can recreate the inventory from the Devpost export.
+  "knight_hacks_project",
+  "knight_hacks_project_challenge",
+  "knight_hacks_project_claim_link",
+  "knight_hacks_project_claim",
+  "knight_hacks_project_member",
+  "knight_hacks_project_to_challenge",
+  "knight_hacks_hackathon_judging_configuration",
+  "knight_hacks_guest_judge_session",
+  "knight_hacks_judge",
+  "knight_hacks_judging_announcement",
+  "knight_hacks_judging_room_access_link",
+  "knight_hacks_judging_room_presence",
+  "knight_hacks_judging_room",
+  "knight_hacks_judging_rubric_item",
+  "knight_hacks_judging_schedule_job",
+  "knight_hacks_judging_schedule",
+  "knight_hacks_judging_appointment",
+  "knight_hacks_project_evaluation_draft",
+  "knight_hacks_project_evaluation",
+  "knight_hacks_project_evaluation_rating",
+  "knight_hacks_project_evaluation_response",
+  "knight_hacks_project_evaluation_revision",
+  "knight_hacks_judge_deliberation_section",
+  "knight_hacks_judge_deliberation_entry",
 ] as const;
 
 /** Actual database tables that have no explicit development-backup policy. */
@@ -226,11 +250,6 @@ SET logo_object_name = NULL;
 UPDATE knight_hacks_alumni_bulletin_post
 SET image_object_name = NULL,
     image_alt = NULL;
-
-UPDATE knight_hacks_teams
-SET emails = NULL,
-    notes = NULL,
-    match_key = NULL;
 
 DELETE FROM auth_user AS app_user
 WHERE NOT EXISTS (

@@ -1,6 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+
+import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 
 export function sectionSelectionHref(
   pathname: string,
@@ -25,6 +28,8 @@ export function AdminFormsSectionSelect({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [sectionId, setSectionId] = useOptimistic(selectedSectionId ?? "");
+  const [pending, startTransition] = useTransition();
 
   return (
     <div className="ml-auto min-w-0 basis-full sm:basis-auto">
@@ -37,16 +42,21 @@ export function AdminFormsSectionSelect({
         data-auto-swap="query-param"
         id="form-section"
         name="section"
-        onChange={(event) =>
-          router.replace(
-            sectionSelectionHref(
-              pathname,
-              searchParams.toString(),
-              event.target.value,
-            ),
-          )
-        }
-        value={selectedSectionId ?? ""}
+        aria-busy={pending}
+        onChange={(event) => {
+          const nextSectionId = event.target.value;
+          startTransition(() => {
+            setSectionId(nextSectionId);
+            router.replace(
+              sectionSelectionHref(
+                pathname,
+                searchParams.toString(),
+                nextSectionId,
+              ),
+            );
+          });
+        }}
+        value={sectionId}
       >
         <option value="">All sections</option>
         {sections.map((section) => (

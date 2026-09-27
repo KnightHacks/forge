@@ -37,4 +37,21 @@ describe("team roster loading placeholders", () => {
     expect(html).not.toContain('aria-label="Team filters"');
     expect(html).toContain("Loading team members");
   });
+
+  it("links team applications to Blade's singular form route", () => {
+    const html = renderToStaticMarkup(
+      createElement(TeamsClient, { bladeUrl: "http://localhost:3000" }),
+    );
+
+    for (const slug of [
+      "sponsorship-team-application",
+      "workshop-team-application",
+      "design-team-applications",
+      "outreach-team-applications",
+      "dev-team-applications",
+    ]) {
+      expect(html).toContain(`href="http://localhost:3000/form/${slug}"`);
+    }
+    expect(html).not.toContain("/forms/");
+  });
 });

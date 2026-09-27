@@ -43,8 +43,12 @@ import {
   finalizeFormAttachment,
   getFormAttachmentDownloadUrl,
   getLegacyFormFileDownloadUrl,
+  isRespondentFormAsset,
 } from "../utils/forms/attachments";
-import { listFormCallbackCatalog } from "../utils/forms/callbacks";
+import {
+  getFormCallbackRegistry,
+  listFormCallbackCatalog,
+} from "../utils/forms/callbacks";
 import {
   codeOwnedFormConfigs,
   formResponseCallbacks,
@@ -67,7 +71,7 @@ import {
   updateResponse,
   updateResponseInputSchema,
 } from "../utils/forms/manager";
-import { formCallbackRegistry } from "../utils/forms/registry";
+import { formCallbackProcedures } from "../utils/forms/procedures";
 import {
   provisionFormSection,
   requirePlatformFormCapability,
@@ -93,10 +97,11 @@ function containsExactValue(value: unknown, expected: string): boolean {
   );
 }
 
-function requireCallbackPermission(
+async function requireCallbackPermission(
   permissions: Awaited<ReturnType<typeof loadPlatformFormActor>>["permissions"],
   callbackSlug: string,
 ) {
+  const formCallbackRegistry = await getFormCallbackRegistry();
   const definition = formCallbackRegistry.get(callbackSlug);
   if (!definition) {
     throw new TRPCError({
@@ -142,14 +147,15 @@ function catalogValue(label: string) {
 }
 
 export const formsRouter = {
+  ...formCallbackProcedures,
   createUpload: permProcedure
     .input(
       z
         .object({
-          contentType: z.string().trim().min(1).max(255),
+          contentType: z.string().trim().max(255),
           fileName: z.string().trim().min(1).max(255),
           formId: z.string().uuid(),
-          purpose: z.enum(["instruction", "response"]),
+          purpose: z.enum(["banner", "instruction", "response"]),
           questionId: z.string().uuid().optional(),
           size: z.number().int().positive(),
         })
@@ -168,7 +174,7 @@ export const formsRouter = {
         where: eq(FormsSchemas.id, input.formId),
       });
       if (!form) throw new Error("Form not found.");
-      if (input.purpose === "instruction") {
+      if (input.purpose !== "response") {
         await requirePlatformFormCapability(
           await loadPlatformFormActor(ctx.session),
           form.id,
@@ -220,7 +226,7 @@ export const formsRouter = {
       if (attachment?.ownerUserId !== ctx.session.user.id) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
-      if (attachment.purpose === "instruction") {
+      if (attachment.purpose !== "response") {
         await requirePlatformFormCapability(
           await loadPlatformFormActor(ctx.session),
           attachment.formId,
@@ -229,7 +235,7 @@ export const formsRouter = {
       }
       return finalizeFormAttachment({
         auditActor:
-          attachment.purpose === "instruction" ? ctx.session.user : undefined,
+          attachment.purpose !== "response" ? ctx.session.user : undefined,
         attachmentId: input.attachmentId,
         ownerUserId: ctx.session.user.id,
       });
@@ -243,36 +249,66 @@ export const formsRouter = {
       });
       if (!attachment) throw new Error("Attachment not found.");
       let adminAccess = false;
-      if (attachment.ownerUserId !== ctx.session.user.id) {
+      if (
+        attachment.purpose === "banner" ||
+        attachment.ownerUserId !== ctx.session.user.id
+      ) {
         const form = await db.query.FormsSchemas.findFirst({
           where: eq(FormsSchemas.id, attachment.formId),
         });
         if (!form) throw new TRPCError({ code: "NOT_FOUND" });
         const definition = formDefinitionSchema.safeParse(form.formData);
-        const isPublishedInstruction =
-          attachment.purpose === "instruction" &&
+        const isReferenced =
+          attachment.purpose !== "response" &&
           attachment.responseId === null &&
-          form.state === "published" &&
           definition.success &&
-          definition.data.instructions.some(
-            (instruction) =>
-              instruction.type !== "text" &&
-              instruction.attachmentId === attachment.id,
-          );
+          (attachment.purpose === "banner"
+            ? definition.data.banner?.attachmentId === attachment.id
+            : definition.data.instructions.some(
+                (instruction) =>
+                  instruction.type !== "text" &&
+                  instruction.attachmentId === attachment.id,
+              ));
         const accessKind = classifyFormAttachmentAccess({
-          isPublishedInstruction,
+          isRespondentAsset: isRespondentFormAsset({
+            formState: form.state,
+            isReferenced,
+            purpose: attachment.purpose,
+          }),
           ownerUserId: attachment.ownerUserId,
           purpose: attachment.purpose,
           requesterUserId: ctx.session.user.id,
         });
-        if (accessKind === "published_instruction") {
+        let hasAdminDefinitionAccess = false;
+        if (
+          attachment.purpose === "banner" &&
+          accessKind === "published_asset"
+        ) {
+          try {
+            await requirePlatformFormCapability(
+              await loadPlatformFormActor(ctx.session),
+              attachment.formId,
+              "read_definition",
+            );
+            hasAdminDefinitionAccess = true;
+          } catch (error) {
+            if (
+              !(error instanceof TRPCError) ||
+              !["FORBIDDEN", "NOT_FOUND"].includes(error.code)
+            ) {
+              throw error;
+            }
+          }
+        }
+        if (accessKind === "published_asset" && !hasAdminDefinitionAccess) {
           const view = await respondentForm(form.slugName, ctx.session.user.id);
-          // Ineligibility is a rendered state for the form page, but it still
-          // withholds the instruction files that page would have shown.
+          // Ineligibility withholds every managed asset from a form the actor
+          // cannot read. Archived forms still pass this authorization check for
+          // eligible respondents and members reviewing an existing response.
           if (view.respondentState.status === "ineligible") {
             throw new TRPCError({ code: "FORBIDDEN" });
           }
-        } else if (accessKind === "admin_instruction") {
+        } else if (accessKind === "admin_asset") {
           await requirePlatformFormCapability(
             await loadPlatformFormActor(ctx.session),
             attachment.formId,
@@ -490,8 +526,11 @@ export const formsRouter = {
     };
   }),
 
-  listCallbacks: permProcedure.query(({ ctx }) =>
-    listFormCallbackCatalog(formCallbackRegistry, ctx.session.permissions),
+  listCallbacks: permProcedure.query(async ({ ctx }) =>
+    listFormCallbackCatalog(
+      await getFormCallbackRegistry(),
+      ctx.session.permissions,
+    ),
   ),
 
   listRespondentRoles: permProcedure.query(async ({ ctx }) => {
@@ -572,7 +611,8 @@ export const formsRouter = {
         const destinationIds = mappings.flatMap(({ source }) =>
           source.kind === "fixed" &&
           typeof source.value === "string" &&
-          z.string().uuid().safeParse(source.value).success
+          (z.string().uuid().safeParse(source.value).success ||
+            /^\d{17,20}$/.test(source.value))
             ? [source.value]
             : [],
         );
@@ -659,7 +699,7 @@ export const formsRouter = {
       }
       const actor = await loadPlatformFormActor(ctx.session);
       await requirePlatformFormCapability(actor, row.formId, "edit_definition");
-      requireCallbackPermission(actor.permissions, row.callbackSlug);
+      await requireCallbackPermission(actor.permissions, row.callbackSlug);
       const result = await dispatchFormCallbackExecution(input.executionId);
       if (!result) return result;
       const execution = await db.query.FormCallbackExecution.findFirst({
@@ -730,7 +770,7 @@ export const formsRouter = {
         input.formId,
         "edit_definition",
       );
-      requireCallbackPermission(actor.permissions, input.callbackSlug);
+      await requireCallbackPermission(actor.permissions, input.callbackSlug);
       return db.transaction(async (tx) => {
         const existing = await tx.query.FormCallbackConfiguration.findFirst({
           where: and(

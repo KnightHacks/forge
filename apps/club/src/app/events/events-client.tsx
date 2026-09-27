@@ -14,9 +14,10 @@ import { MarkdownContent } from "@forge/ui/markdown-content";
 
 import type { EventsStatus, PublicClubEvent } from "../_lib/club-events";
 import { ClubEventAccessBadge } from "../_components/club-event-access-badge";
+import { ClubEventDate } from "../_components/club-event-date";
+import { ClubEventDetailsDialog } from "../_components/club-event-details-dialog";
 import { useDeferredSectionLoad } from "../_components/use-deferred-section-load";
 import {
-  formatEventDate,
   formatEventTime,
   formatMonthLabel,
   getClubCurrentMonth,
@@ -308,19 +309,9 @@ function CalendarPanel({
 }
 
 function CalendarEventCard({ event }: { event: PublicClubEvent }) {
-  const eventDate = formatEventDate(event.startDateTime);
-
   return (
     <article className="club-event-row grid gap-5 border-b border-white/10 bg-[#5b164d]/35 p-5 first:rounded-lg first:border-b-0 first:bg-[#6a1b57]/65 md:grid-cols-[5.25rem_1fr]">
-      <div className="club-event-row-date flex items-center gap-3 md:block">
-        <div className="text-xs font-black uppercase leading-4 text-white/60">
-          <p>{eventDate.month}</p>
-          <p>{eventDate.dayName}</p>
-        </div>
-        <p className="club-event-row-day text-5xl font-black leading-none text-white">
-          {eventDate.day}
-        </p>
-      </div>
+      <ClubEventDate startDateTime={event.startDateTime} />
       <div className="club-event-row-copy">
         <EventMeta event={event} />
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
@@ -332,6 +323,7 @@ function CalendarEventCard({ event }: { event: PublicClubEvent }) {
         >
           {event.description}
         </MarkdownContent>
+        <ClubEventDetailsDialog event={event} />
       </div>
     </article>
   );
@@ -383,22 +375,12 @@ function UpcomingSkeleton() {
 }
 
 function UpcomingEventRow({ event }: { event: PublicClubEvent }) {
-  const eventDate = formatEventDate(event.startDateTime);
-
   return (
-    <article className="club-event-row grid gap-5 border-b border-white/10 py-8 md:grid-cols-[5rem_5rem_1fr_13rem] md:items-center md:gap-7">
-      <div className="club-event-row-date flex items-center gap-3 md:block md:text-center">
-        <div className="text-xs font-black uppercase leading-4 text-white/55">
-          <p>{eventDate.month}</p>
-          <p>{eventDate.dayName}</p>
-        </div>
-        <p className="club-event-row-day text-5xl font-black leading-none text-white md:hidden">
-          {eventDate.day}
-        </p>
-      </div>
-      <p className="club-event-row-day hidden text-6xl font-black leading-none text-white md:block">
-        {eventDate.day}
-      </p>
+    <article className="club-event-row grid gap-5 border-b border-white/10 py-8 md:grid-cols-[5.5rem_1fr_13rem] md:items-center md:gap-7">
+      <ClubEventDate
+        startDateTime={event.startDateTime}
+        dayClassName="md:text-6xl"
+      />
       <div className="club-event-row-copy">
         <EventMeta event={event} />
         <h3 className="mt-2 text-2xl font-black leading-tight text-white">
@@ -410,6 +392,7 @@ function UpcomingEventRow({ event }: { event: PublicClubEvent }) {
         >
           {event.description}
         </MarkdownContent>
+        <ClubEventDetailsDialog event={event} />
       </div>
       <div
         className="club-event-tag-card flex min-h-24 items-center justify-center rounded-lg px-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] md:min-h-28"

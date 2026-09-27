@@ -63,6 +63,7 @@ import {
   captureAdminAuditActor,
   createAdminAuditEvent,
 } from "../utils/audit/service";
+import { validateEventAnnouncementChannel } from "../utils/events/announcement-channel";
 import {
   createDbEventFeedbackService,
   loadEventFeedbackListMetrics,
@@ -90,6 +91,7 @@ import {
   deliverHackathonRoleGrants,
   loadHackathonRoleGrantHealth,
 } from "../utils/hackathon-events/roles";
+import { requireHackerRead } from "../utils/hacker/access";
 import { assertCanManagePlatformConfig } from "../utils/platform-config/access";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
@@ -599,6 +601,7 @@ export const hackathonEventRouter = {
               roles: [],
               start_datetime: new Date(input.start),
               tag: tag.name,
+              tagId: tag.id,
               tagColor: tag.color,
             })
             .onConflictDoNothing({ target: Event.creationKey })
@@ -783,6 +786,7 @@ export const hackathonEventRouter = {
               start_datetime: new Date(input.start),
               syncRevision: event.syncRevision + 1,
               tag: tag.name,
+              tagId: tag.id,
               tagColor: tag.color,
             })
             .where(
@@ -1227,6 +1231,7 @@ export const hackathonEventRouter = {
           revision: row.syncRevision,
           startAt: row.start_datetime,
           tag: row.tag,
+          tagId: row.tagId,
           tagColor: row.tagColor,
           feedback: metrics.get(row.id) ?? {
             averageOverall: null,
@@ -1448,6 +1453,8 @@ export const hackathonEventRouter = {
           active: EventTag.active,
           color: EventTag.color,
           defaultPoints: EventTag.defaultPoints,
+          emoji: EventTag.emoji,
+          announcementChannelId: EventTag.announcementChannelId,
           id: EventTag.id,
           name: EventTag.name,
         })
@@ -1526,6 +1533,8 @@ export const hackathonEventRouter = {
                 color: tag.color,
                 creationSource: "hackathon_import",
                 defaultPoints: tag.defaultPoints,
+                emoji: tag.emoji,
+                announcementChannelId: tag.announcementChannelId,
                 name: tag.name,
                 operationId,
                 sourceHackathonId: candidate.sourceHackathon.id,
@@ -1572,10 +1581,22 @@ export const hackathonEventRouter = {
       return (await resolveEventGateways(ctx.session)).listDiscordChannels();
     }),
 
+  listAnnouncementChannels: permProcedure.query(async ({ ctx }) => {
+    requireHackathonEventEdit(ctx);
+    const gateway = await resolveRoleDiscordGateway(ctx.session);
+    return (
+      gateway.getGuildTextChannels?.({ requireSendPermission: true }) ?? []
+    );
+  }),
+
   createTag: permProcedure
     .input(hackathonEventTagCreateSchema)
     .mutation(async ({ ctx, input }) => {
       requireHackathonEventEdit(ctx);
+      await validateEventAnnouncementChannel(
+        input.announcementChannelId,
+        ctx.session,
+      );
       const actor = await captureAdminAuditActor(ctx.session.user);
       const normalized = normalizeTagName(input.name);
       return db
@@ -1598,6 +1619,8 @@ export const hackathonEventRouter = {
                 color: tag.color,
                 creationSource: "manual",
                 defaultPoints: tag.defaultPoints,
+                emoji: tag.emoji,
+                announcementChannelId: tag.announcementChannelId,
                 name: tag.name,
                 targetHackathonId: input.hackathonId,
               },
@@ -1622,6 +1645,10 @@ export const hackathonEventRouter = {
     .input(hackathonEventTagUpdateSchema)
     .mutation(async ({ ctx, input }) => {
       requireHackathonEventEdit(ctx);
+      await validateEventAnnouncementChannel(
+        input.announcementChannelId,
+        ctx.session,
+      );
       const actor = await captureAdminAuditActor(ctx.session.user);
       const { hackathonId, tagId, ...fields } = input;
       const normalized = fields.name ? normalizeTagName(fields.name) : null;
@@ -1671,11 +1698,18 @@ export const hackathonEventRouter = {
             {
               actionKey: "hackathon_event.tag.updated",
               actor,
-              changes: (["name", "color", "defaultPoints"] as const).flatMap(
-                (field) =>
-                  before[field] === tag[field]
-                    ? []
-                    : [{ field, before: before[field], after: tag[field] }],
+              changes: (
+                [
+                  "name",
+                  "color",
+                  "defaultPoints",
+                  "emoji",
+                  "announcementChannelId",
+                ] as const
+              ).flatMap((field) =>
+                before[field] === tag[field]
+                  ? []
+                  : [{ field, before: before[field], after: tag[field] }],
               ),
               subjects: [
                 {
@@ -1762,21 +1796,12 @@ export const hackathonEventRouter = {
     .input(hackathonEventDiscordConfigSchema)
     .mutation(async ({ ctx, input }) => {
       assertCanManagePlatformConfig(ctx.session.permissions);
-      const discord = await resolveRoleDiscordGateway(ctx.session);
-      if (
-        input.eventAnnouncementChannelId &&
-        (!discord.validateTextChannel ||
-          !(await discord.validateTextChannel(
-            input.eventAnnouncementChannelId,
-          )))
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Choose a text or announcement channel in this Discord server.",
-        });
-      }
+      await validateEventAnnouncementChannel(
+        input.eventAnnouncementChannelId,
+        ctx.session,
+      );
       if (input.generalHackerDiscordRoleId) {
+        const discord = await resolveRoleDiscordGateway(ctx.session);
         const roles = await discord.getGuildRoles();
         if (!roles.available) {
           throw new TRPCError({
@@ -2265,11 +2290,11 @@ export const hackathonEventRouter = {
       };
     }),
 
-  /** Existing hacker-management detail panel; still officer-only. */
+  /** Attendance read embedded in the permission-gated hacker detail panel. */
   listHackerEventAttendance: permProcedure
     .input(hackerAttendanceInput)
     .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
+      requireHackerRead(ctx);
       const attendee = await db.query.HackerAttendee.findFirst({
         columns: { id: true },
         where: and(

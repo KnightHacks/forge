@@ -21,3 +21,8 @@ export * from "./platform-config";
 export * from "./hackers";
 export * from "./hacker-portal";
 export * from "./hackathon-portal-admin";
+export * from "./projects";
+export * from "./judging";
+export * from "./judging-schedule";
+
+export * from "./project-claims";
