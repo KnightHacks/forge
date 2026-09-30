@@ -25,6 +25,9 @@ than guessing.
 - `forge-api` — tRPC procedure anatomy, the capability and scope access tiers,
   audit coverage, transactions, and when workflow logic belongs in
   `utils/<domain>/`.
+- `postgres-drizzle` — table shape, constraints, indexes, transactions, and
+  migrations in `packages/db`. Adapted from an MIT upstream skill and rewritten
+  against Forge's schema conventions.
 - `forge-react` — components, state classification, hooks, the server/client
   boundary, mutation UX, and how to split a large component without changing
   pixels.

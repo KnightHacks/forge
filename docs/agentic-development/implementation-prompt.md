@@ -32,6 +32,7 @@ Use these during code implementation and validation. Do not substitute spec/SRD/
 | ---------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Forge placement  | `.claude/skills/forge-placement`  | Adding a helper, constant, type, or component, or unsure which file or package owns something. Read it before creating a file. |
 | Forge API        | `.claude/skills/forge-api`        | Adding or changing a tRPC procedure, access guard, audit event, or anything under `packages/api`.                              |
+| Postgres Drizzle | `.claude/skills/postgres-drizzle` | Adding or changing a table, column, index, or constraint, writing a non-trivial query, or generating a migration.              |
 | Forge React      | `.claude/skills/forge-react`      | Building or changing components, client state, hooks, mutation UX, or splitting a large component.                             |
 | Frontend design  | `.claude/skills/frontend-design`  | Any meaningful UI creation, reshaping, dashboard, form, data-display, responsive, or interaction work.                         |
 | React analyzer   | `.claude/skills/react-analyzer`   | Before or after meaningful React/TSX changes; pair with `pnpm analyze:react <path>` or `pnpm analyze:react:changed`.           |
