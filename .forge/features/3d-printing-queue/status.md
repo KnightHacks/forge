@@ -1,6 +1,7 @@
 # 3D Printing Queue Status
 
-Current phase: Artifacts approved. Next: consts, schema, and migration.
+Current phase: Step 2 (consts, schema, migration 0055) done and waiting for
+review. Next: validators, then the API.
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -50,8 +51,9 @@ Current phase: Artifacts approved. Next: consts, schema, and migration.
 - [x] Draft `test-cases.md`.
 - [x] Resolve open questions.
 - [x] Human approves artifact bundle before implementation/test generation.
-- [ ] Consts, schema, and migration 0055 (approval checkpoint).
-- [ ] Validators and upload policy (approval checkpoint).
+- [x] Consts, schema, and migration 0055 (approval checkpoint).
+- [ ] Validators and upload policy (approval checkpoint). Moved into the API
+      step because the API is their only consumer.
 - [ ] API: Blade router, utilities, participant procedures, upload route.
 - [ ] Email template and DM delivery (approval checkpoint).
 - [ ] Hacker SDK contract, client, hooks, and adapter.
@@ -62,7 +64,24 @@ Current phase: Artifacts approved. Next: consts, schema, and migration.
 
 ## Validation / commands
 
-- Not started.
+- 2026-09-30, Step 2:
+  - `print-job-schema.test.ts` (10 tests) and `database-harness.test.ts`
+    (5 tests) on a disposable database: pass. Migrations 0000 to 0055 apply to
+    a fresh database.
+  - `@forge/db` vitest: 157 of 157 pass (lineage and backup-sanitizer gates
+    included).
+  - `@forge/blade` `src/tests/admin`: 388 of 388 pass (role permission editor
+    included).
+  - `pnpm typecheck`: every package passes except `@forge/api`, which fails only
+    because `@ortools-node/cp-sat` is missing from local `node_modules`. This is
+    a stale install, unrelated to this feature.
+  - ESLint on changed files: no errors.
+  - `pnpm db:migrate` on the local database fails before 0055. The local
+    database records 0 applied migrations and predates 0049, so it needs a
+    reset. This is local state, unrelated to this feature.
+- The first 0055 draft had a CHECK that NULL notes slipped through
+  (`NULL ~ ...` is NULL, and a NULL CHECK passes). The schema test caught it,
+  and 0055 was regenerated before it was applied anywhere.
 
 ## Links
 
