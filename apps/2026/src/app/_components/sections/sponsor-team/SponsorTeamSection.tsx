@@ -119,6 +119,12 @@ const HOMEPAGE_SPONSORS = [
     logoSrc: "/sponsors/bloomberg.svg",
     tier: "bronze-ember",
   },
+  {
+    name: "Figma",
+    websiteUrl: "https://www.figma.com/",
+    logoSrc: "/sponsors/figma.svg",
+    tier: "bronze-ember",
+  },
 ] satisfies SponsorShowcaseSponsor[];
 
 const PARTNERS = [
