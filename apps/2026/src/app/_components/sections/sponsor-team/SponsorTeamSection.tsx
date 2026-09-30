@@ -9,6 +9,20 @@ import { WaterfallAtmosphere } from "./WaterfallAtmosphere";
 
 const HOMEPAGE_SPONSORS = [
   {
+    name: "Full Sail University",
+    websiteUrl: "https://www.fullsail.edu/",
+    logoSrc: "/sponsors/full-sail.svg",
+    logoScale: 0.9,
+    tier: "platinum-crown",
+  },
+  {
+    name: "Crest",
+    websiteUrl: "https://www.crest.com/",
+    logoSrc: "/sponsors/crest.svg",
+    logoScale: 0.9,
+    tier: "platinum-crown",
+  },
+  {
     name: "OneEthos",
     websiteUrl: "https://www.oneethos.com/",
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-oneethos.svg",
@@ -83,6 +97,27 @@ const HOMEPAGE_SPONSORS = [
     tier: "bronze-ember",
   },
   {
+    name: "Adobe Next",
+    websiteUrl: "https://www.adobe.com/",
+    logoSrc: "/sponsors/adobe-next.svg",
+    logoScale: 0.95,
+    tier: "bronze-ember",
+  },
+  {
+    name: "AWS",
+    websiteUrl: "https://aws.amazon.com/",
+    logoSrc: "/sponsors/aws.svg",
+    logoScale: 1.05,
+    tier: "bronze-ember",
+  },
+  {
+    name: "Pheratech Systems",
+    websiteUrl: "https://pheratech.com/",
+    logoSrc: "/sponsors/pheratech-systems.svg",
+    logoScale: 0.95,
+    tier: "bronze-ember",
+  },
+  {
     name: "Impress Ink",
     websiteUrl: "https://impressink.com/",
     logoSrc: "https://assets.knighthacks.org/khix/sponsor-impressink.png",
@@ -124,6 +159,13 @@ const HOMEPAGE_SPONSORS = [
     websiteUrl: "https://www.figma.com/",
     logoSrc: "/sponsors/figma.svg",
     tier: "bronze-ember",
+  },
+  {
+    name: "Encompass",
+    websiteUrl: "https://www.encompasshealth.com/",
+    logoSrc: "/sponsors/encompass.svg",
+    logoScale: 0.95,
+    tier: "silver-moon",
   },
 ] satisfies SponsorShowcaseSponsor[];
 
