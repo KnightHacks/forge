@@ -321,7 +321,7 @@ function Checkout({
                     <span className="break-words">
                       {entry.name} · {entry.price} pts
                       <span className="block text-xs text-muted-foreground">
-                        {entry.soldOut
+                        {entry.soldOut || entry.stock === 0
                           ? "Sold out"
                           : entry.stock === null
                             ? "Available · untracked"

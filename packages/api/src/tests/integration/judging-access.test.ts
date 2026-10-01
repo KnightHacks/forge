@@ -3,6 +3,7 @@ import {
   afterAll,
   afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
   it,
@@ -100,6 +101,11 @@ describe.runIf(canRunDatabaseTests())("judging room access", () => {
   let member: Session;
   let fallbackMember: Session;
 
+  beforeEach(() => {
+    // Keep the fixture hackathon active regardless of the day CI runs.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-15T00:00:00Z"));
+  });
   afterEach(() => vi.useRealTimers());
 
   beforeAll(async () => {

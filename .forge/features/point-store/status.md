@@ -1,6 +1,6 @@
 # Point Store Status
 
-Current phase: PR review
+Current phase: Implemented; PR review
 
 Branch: `codex/point-store`, created from `origin/main` at `99a8718b`.
 
@@ -24,26 +24,30 @@ Branch: `codex/point-store`, created from `origin/main` at `99a8718b`.
 - [x] Verify permission boundaries, concurrency, retry safety, stock, voids, image lifecycle, and portal behavior.
 - [x] Run the standard Forge review with API/access, data/contracts, and UI/boundary reviewers; no findings.
 - [x] Verify `.env` uses `localhost:5433/local`; tests and browser fixtures use separate disposable local databases.
-- [x] Capture 15 screenshots using the real local Blade API and KHIX portal session, with synthetic data and no API mocks.
+- [x] Capture 17 screenshots using the real local Blade API and KHIX portal session, with synthetic data and no API mocks.
 - [x] Finish final static gate and production build after UI polish.
-- [x] Open PR with 15 screenshots.
-- [ ] Resolve CodeRabbit review and verify its final status.
+- [x] Open PR with 17 screenshots.
+- [x] Address initial CodeRabbit feedback: zero-stock labels and a full attendee index for deletion integrity checks.
+- Follow-up CodeRabbit and CI results are tracked on PR #586.
 
 ## Validation
 
 - `pnpm db:generate`: passed. Generated migration applies in disposable PostgreSQL integration tests.
 - `pnpm verify:precommit`: passed after final UI polish. Changed React analysis includes all eight touched React files.
 - `pnpm build`: passed, 21 tasks including Blade and KHIX.
-- API integration, audit, portal contract, and surface tests: 52 passed, including 7 point-store integration tests.
+- Full API suite: 995 tests passed, including 7 point-store integration tests.
+- Database suite: 159 tests passed after updating the development-backup classification and migration lineage expectations. Catalog configuration is retained with image references cleared; purchase identities are excluded. A disposable PostgreSQL test executes the sanitizer and verifies retained item details.
 - Hacker SDK: 31 tests passed. Validators: 321 passed. KHIX: 14 passed. Blade admin access/navigation: 10 passed.
 - Browser checks exercised item creation, purchase, void/restock, editable location, real participant balances, visibility, open/closed states, and check-in locks.
+- Added two real-browser screenshots verifying zero tracked stock reads “Sold out” and cannot be purchased.
+- CI exposed a pre-existing judging fixture that expired on October 1, 2026. Its test clock is now pinned within the fixture event dates; application behavior is unchanged.
 - Screenshots cover desktop, 390px mobile, and 320px narrow layouts. No horizontal overflow in checked pages.
 - Image signature validation, replacement, removal, stale-revision rejection, and cleanup are integration-tested with mocked object storage. External storage was not modified.
-- Production migrations and deployments have not been run. Migration 0055 must be applied before deploying the feature.
+- Production migrations and deployments have not been run. Migrations 0055 and 0056 must be applied before deploying the feature.
 
 ## Screenshots
 
-Evidence is in [evidence/](./evidence/): nine Blade views and six KHIX views, including item management, settings, checkout, history, voids, mobile forms, catalog affordability, closed/hidden states, and check-in locks.
+Evidence is in [evidence/](./evidence/): eleven Blade views and six KHIX views, including item management, settings, checkout, history, voids, mobile forms, catalog affordability, closed/hidden states, and check-in locks.
 
 ## Links
 

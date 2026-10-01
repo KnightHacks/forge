@@ -4152,9 +4152,8 @@ export const PointStorePurchase = createTable(
       t.createdAt,
       t.id,
     ),
-    index("point_store_purchase_balance_idx")
-      .on(t.attendeeId, t.hackathonId)
-      .where(sql`${t.voidedAt} IS NULL`),
+    // Include voided rows so attendee deletion can use this index for SET NULL.
+    index("point_store_purchase_balance_idx").on(t.attendeeId, t.hackathonId),
     check(
       "point_store_purchase_amount_check",
       sql`${t.unitPrice} BETWEEN 0 AND 1000000 AND ${t.quantity} BETWEEN 1 AND 1000 AND ${t.total} = ${t.unitPrice} * ${t.quantity}`,

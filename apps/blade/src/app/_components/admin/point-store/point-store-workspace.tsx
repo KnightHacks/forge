@@ -204,18 +204,18 @@ function StoreContent({ hackathonId }: { hackathonId: string }) {
                       <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
                         <Badge
                           variant={
-                            item.archived || item.soldOut
+                            item.archived || item.soldOut || item.stock === 0
                               ? "secondary"
                               : "outline"
                           }
                         >
                           {item.archived
                             ? "Archived"
-                            : item.stock === null
-                              ? item.soldOut
-                                ? "Sold out"
-                                : "Available · untracked"
-                              : `${item.stock} in stock`}
+                            : item.soldOut || item.stock === 0
+                              ? "Sold out"
+                              : item.stock === null
+                                ? "Available · untracked"
+                                : `${item.stock} in stock`}
                         </Badge>
                         <Button
                           variant="outline"
