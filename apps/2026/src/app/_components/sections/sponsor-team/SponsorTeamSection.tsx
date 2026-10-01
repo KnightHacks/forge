@@ -162,7 +162,7 @@ const HOMEPAGE_SPONSORS = [
   },
   {
     name: "Encompass",
-    websiteUrl: "https://www.encompasshealth.com/",
+    websiteUrl: "https://www.encompassonsite.com/",
     logoSrc: "/sponsors/encompass.svg",
     logoScale: 0.95,
     tier: "silver-moon",
