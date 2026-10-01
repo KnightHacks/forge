@@ -84,6 +84,8 @@ export const TABLES_TO_DROP = [
   "audit_event",
   "audit_subject",
   "knight_hacks_point_store_purchase",
+  "knight_hacks_hacker_team",
+  "knight_hacks_hacker_team_member",
   // Live credentials. A backup that carries these hands out logins.
   "auth_session",
   "auth_verification",

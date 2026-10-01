@@ -35,6 +35,11 @@ export const AUDIT_DOMAINS = [
 export type AuditDomain = (typeof AUDIT_DOMAINS)[number];
 
 export const AUDIT_ACTION_CATALOG = {
+  "hacker_team.changed": policy("hackathons", "Changed hacker team", [
+    "operation",
+    "hackathonId",
+    "organizer",
+  ]),
   "point_store.settings_updated": policy(
     "hackathons",
     "Updated point store settings",
@@ -1161,6 +1166,7 @@ export const auditActionKeySchema = z.enum(
 export const auditDomainSchema = z.enum(AUDIT_DOMAINS);
 
 export const AUDIT_TARGET_TYPES = [
+  "hacker_team",
   "point_store_item",
   "point_store_purchase",
   "alumni_bulletin",

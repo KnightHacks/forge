@@ -3,6 +3,10 @@ import { TRPCError } from "@trpc/server";
 import { HACKER_PARTICIPANT_V1_SCHEMAS } from "@forge/hacker-sdk/contracts";
 
 import {
+  changeHackerTeam,
+  participantTeams,
+} from "../utils/hacker-teams/teams";
+import {
   inviteProjectMember,
   previewProjectClaim,
   selectProjectMember,
@@ -63,6 +67,22 @@ async function judgingRequest<T>(request: () => Promise<T>): Promise<T> {
 export const hackerParticipantV1Router: ReturnType<
   typeof createHackerPortalRouter
 > = createHackerPortalRouter({
+  getTeams: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getTeams)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getTeams)
+    .query(({ ctx, input }) =>
+      judgingRequest(() =>
+        participantTeams(ctx.session.userId, ctx.client.hackathonId, input),
+      ),
+    ),
+  changeTeam: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.changeTeam)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.changeTeam)
+    .mutation(({ ctx, input }) =>
+      judgingRequest(() =>
+        changeHackerTeam(ctx.session.userId, ctx.client.hackathonId, input),
+      ),
+    ),
   searchJudgingProjects: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.searchJudgingProjects)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.searchJudgingProjects)
