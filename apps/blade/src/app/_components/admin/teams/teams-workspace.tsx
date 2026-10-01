@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Crown, UsersRound } from "lucide-react";
 
@@ -81,6 +81,14 @@ function TeamList({
     page: number;
     together?: boolean;
   }>({ query: "", page: 0 });
+  const [input, setInput] = useState("");
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setSearch((current) => ({ ...current, query: input, page: 0 })),
+      250,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [input]);
   const list = api.hackerTeam.list.useQuery({ hackathonId, ...search });
   const utils = api.useUtils();
   const [rename, setRename] = useState<Team | null>(null);
@@ -127,11 +135,9 @@ function TeamList({
           </Label>
           <Input
             id="organizer-team-search"
-            value={search.query}
+            value={input}
             maxLength={100}
-            onChange={(e) =>
-              setSearch({ ...search, query: e.target.value, page: 0 })
-            }
+            onChange={(e) => setInput(e.target.value)}
             className="mt-2 min-h-11"
           />
         </div>

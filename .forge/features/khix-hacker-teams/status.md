@@ -87,3 +87,4 @@ None blocking implementation.
 - Previous head 5961f5fe passed CI and received CodeRabbit approval with both findings resolved. Revalidate this follow-up and refresh PR evidence before handoff.
 - Follow-up static gate passed, including both apps and all shared consumers. All 10 targeted team integration tests passed. Browser checks passed for help focus, copy, class labels, combined filters, pagination reset, and 320px overflow. Standard scoped API/validation and UI reviewers found no issues.
 - Updated screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5932823992
+- CodeRabbit's follow-up review requested a Blade search debounce. Added 250ms debounce with a functional update so concurrent preference changes are preserved.
