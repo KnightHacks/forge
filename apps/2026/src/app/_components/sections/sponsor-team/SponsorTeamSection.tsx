@@ -17,7 +17,7 @@ const HOMEPAGE_SPONSORS = [
   },
   {
     name: "Crest",
-    websiteUrl: "https://www.crest.com/",
+    websiteUrl: "https://crestadvisorygroup.com/",
     logoSrc: "/sponsors/crest.svg",
     logoScale: 0.9,
     tier: "platinum-crown",
@@ -162,7 +162,7 @@ const HOMEPAGE_SPONSORS = [
   },
   {
     name: "Encompass",
-    websiteUrl: "https://www.encompasshealth.com/",
+    websiteUrl: "https://www.encompassonsite.com/",
     logoSrc: "/sponsors/encompass.svg",
     logoScale: 0.95,
     tier: "silver-moon",
