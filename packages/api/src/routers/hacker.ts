@@ -533,6 +533,7 @@ export const hackerRouter = createTRPCRouter({
           githubProfileUrl: Hacker.githubProfileUrl,
           gradDate: Hacker.gradDate,
           isFirstTime: effectiveFirstTime,
+          isVip: HackerAttendee.isVip,
           firstTimeStatus: sql<"first" | "returning" | "unknown">`case
             when ${effectiveFirstTime} = true then 'first'
             when ${effectiveFirstTime} = false then 'returning'
@@ -1189,6 +1190,7 @@ export const hackerRouter = createTRPCRouter({
           .from(HackerAttendee)
           .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
           .where(eq(HackerAttendee.id, attendeeId))
+          .for("update", { of: HackerAttendee })
           .limit(1);
         if (!attendee) {
           throw new TRPCError({
@@ -1209,10 +1211,20 @@ export const hackerRouter = createTRPCRouter({
         const changes = patch;
         if (Object.keys(changes).length === 0) return { updated: false };
 
-        await tx
-          .update(Hacker)
-          .set(changes)
-          .where(eq(Hacker.id, attendee.hackerId));
+        const { isVip, ...profileChanges } = changes;
+        if (Object.keys(profileChanges).length > 0) {
+          await tx
+            .update(Hacker)
+            .set(profileChanges)
+            .where(eq(Hacker.id, attendee.hackerId));
+        }
+        // VIP belongs to this application, not the reusable hacker profile.
+        if (isVip !== undefined) {
+          await tx
+            .update(HackerAttendee)
+            .set({ isVip })
+            .where(eq(HackerAttendee.id, attendeeId));
+        }
 
         await createAdminAuditEvent(
           {

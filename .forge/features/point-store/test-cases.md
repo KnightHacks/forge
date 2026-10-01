@@ -33,3 +33,7 @@ API integration tests use disposable PostgreSQL and real router calls. Validator
 ## Open questions
 
 None blocking implementation. Record actual results in status.md.
+
+## VIP addendum
+
+An editor can grant and remove VIP on one hackathon application. A read-only caller is denied, another application for the same hacker remains unchanged, and profile, points, and status survive the edit. Browser checks verify saving, persistence after reload, removal, the detail badge, and the mobile form.

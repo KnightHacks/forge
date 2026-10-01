@@ -35,3 +35,7 @@ Use disposable PostgreSQL tests for permission gates, isolation, race conditions
 ## Configurability
 
 No yearly developer change is required. Catalog, point prices, stock, location, visibility, and store status are managed per hackathon.
+
+## VIP addendum
+
+Extend the existing `hacker.updateProfile` input with optional `isVip`, split that field from shared profile edits, and write it to the selected `HackerAttendee` in the existing audited transaction. Return it from `hacker.get`, add it to the existing audit field allowlist, and use an uncontrolled checkbox in the current application editor. No schema or procedure additions are needed.

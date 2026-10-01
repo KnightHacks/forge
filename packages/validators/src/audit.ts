@@ -765,6 +765,7 @@ export const AUDIT_ACTION_CATALOG = {
     "Edited hacker profile",
     ["revision"],
     [
+      "isVip",
       "country",
       "dob",
       "discordUser",

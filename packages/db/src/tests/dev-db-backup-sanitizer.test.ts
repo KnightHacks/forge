@@ -153,6 +153,7 @@ describe("development database backup sanitizer", () => {
         await database.drop();
       }
     },
+    30_000,
   );
 
   it("does not retain protected content, work queues, or recipient snapshots", () => {

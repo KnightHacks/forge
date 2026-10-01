@@ -38,3 +38,7 @@ Online checkout, cash payments, reservations, size variants within one item, shi
 ## Open questions
 
 None blocking. Implementation choices and verification are tracked in the SRD and status.
+
+## Approved VIP addendum
+
+The user requested a small VIP assignment control in this slice. The existing hacker application editor can set or clear VIP for that hackathon under its existing edit permission. The detail header shows a VIP badge. Initial check-in already grants the configured Discord VIP role for flagged attendees; event check-in already uses the flag to bypass class restrictions. This control does not sync a manually assigned Discord role back into Blade or change Discord roles immediately after check-in.
