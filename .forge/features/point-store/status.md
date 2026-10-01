@@ -1,6 +1,6 @@
 # Point Store Status
 
-Current phase: Validation and PR review
+Current phase: PR review
 
 Branch: `codex/point-store`, created from `origin/main` at `99a8718b`.
 
@@ -26,7 +26,8 @@ Branch: `codex/point-store`, created from `origin/main` at `99a8718b`.
 - [x] Verify `.env` uses `localhost:5433/local`; tests and browser fixtures use separate disposable local databases.
 - [x] Capture 15 screenshots using the real local Blade API and KHIX portal session, with synthetic data and no API mocks.
 - [x] Finish final static gate and production build after UI polish.
-- [ ] Open PR and resolve CodeRabbit review.
+- [x] Open PR with 15 screenshots.
+- [ ] Resolve CodeRabbit review and verify its final status.
 
 ## Validation
 
@@ -47,4 +48,4 @@ Evidence is in [evidence/](./evidence/): nine Blade views and six KHIX views, in
 ## Links
 
 - Issue: https://github.com/KnightHacks/forge/issues/585
-- PR: pending.
+- PR: https://github.com/KnightHacks/forge/pull/586
