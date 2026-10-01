@@ -182,8 +182,21 @@ export async function performHackathonEventCheckIn({
   now?: Date;
 }) {
   const internal = await db.transaction(async (tx) => {
-    // ponytail: serialize per hackathon; narrower event locks can follow if check-in throughput requires it.
-    await lockHackerTeams(tx, input.hackathonId);
+    // Read purpose before locking parent rows: primary admission takes the
+    // allocation lock before event/hackathon and attendee locks. Ordinary
+    // event scans do not need to serialize with team changes.
+    const [purpose] = await tx
+      .select({ value: Event.purpose })
+      .from(Event)
+      .where(
+        and(
+          eq(Event.id, input.eventId),
+          eq(Event.hackathonId, input.hackathonId),
+        ),
+      )
+      .limit(1);
+    const allocatesClass = purpose?.value === "primary_check_in";
+    if (allocatesClass) await lockHackerTeams(tx, input.hackathonId);
     const [event] = await tx
       .select({
         deletionIntentAt: Event.deletionIntentAt,
@@ -207,6 +220,12 @@ export async function performHackathonEventCheckIn({
       .limit(1);
     if (!event) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+    }
+    if (event.purpose === "primary_check_in" && !allocatesClass) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Event configuration changed. Try the check-in again.",
+      });
     }
     if (event.deletionIntentAt) {
       throw new TRPCError({

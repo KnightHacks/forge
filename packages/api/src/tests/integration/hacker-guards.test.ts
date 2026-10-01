@@ -752,6 +752,67 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       ).resolves.toEqual([]);
     });
 
+    it.each(["single", "bulk"] as const)(
+      "removes revoked team owners through %s status changes",
+      async (mode) => {
+        await client
+          .update(knightHacks.HackerAttendee)
+          .set({ status: "confirmed" })
+          .where(
+            inArray(knightHacks.HackerAttendee.id, [
+              PLAIN_ATTENDEE,
+              SECOND_ATTENDEE,
+            ]),
+          );
+        const [team] = await client
+          .insert(knightHacks.HackerTeam)
+          .values({ hackathonId: READY_HACKATHON, name: "Status departure" })
+          .returning();
+        if (!team) throw new Error("Missing team fixture");
+        await client.insert(knightHacks.HackerTeamMember).values([
+          {
+            attendeeId: PLAIN_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "owner",
+          },
+          {
+            attendeeId: SECOND_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "member",
+          },
+        ]);
+        if (mode === "single")
+          await caller.hacker.setStatus({
+            attendeeId: PLAIN_ATTENDEE,
+            status: "denied",
+          });
+        else
+          await caller.hacker.confirmBulk({
+            attendeeIds: [PLAIN_ATTENDEE],
+            hackathonId: READY_HACKATHON,
+            status: "denied",
+          });
+        expect(
+          await client
+            .select()
+            .from(knightHacks.HackerTeamMember)
+            .where(eq(knightHacks.HackerTeamMember.teamId, team.id)),
+        ).toMatchObject([{ attendeeId: SECOND_ATTENDEE, role: "owner" }]);
+        await caller.hacker.setStatus({
+          attendeeId: SECOND_ATTENDEE,
+          status: "denied",
+        });
+        expect(
+          await client
+            .select()
+            .from(knightHacks.HackerTeam)
+            .where(eq(knightHacks.HackerTeam.id, team.id)),
+        ).toEqual([]);
+      },
+    );
+
     it("requires the allocation-aware check-in flow for team members", async () => {
       const [team] = await client
         .insert(knightHacks.HackerTeam)

@@ -723,6 +723,7 @@ export const hackerRouter = createTRPCRouter({
       });
 
       return db.transaction(async (tx) => {
+        await lockHackerTeams(tx, existing.hackathonId);
         // Re-read under a lock. The pre-read above only decided *which*
         // hackathon's mail to compile; this is the authoritative state, so a
         // concurrent blacklist or transition lands here rather than being
@@ -798,6 +799,8 @@ export const hackerRouter = createTRPCRouter({
           .update(HackerAttendee)
           .set({ lastStatusSendId: sendId, status: input.status })
           .where(eq(HackerAttendee.id, input.attendeeId));
+        if (input.status !== "confirmed")
+          await removeHackerTeamMember(tx, input.attendeeId);
 
         await createAdminAuditEvent(
           {
@@ -922,8 +925,7 @@ export const hackerRouter = createTRPCRouter({
       }
 
       return db.transaction(async (tx) => {
-        if (input.status === "checkedin")
-          await lockHackerTeams(tx, input.hackathonId);
+        await lockHackerTeams(tx, input.hackathonId);
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
 
         if (sending.length === 0) {
@@ -967,6 +969,10 @@ export const hackerRouter = createTRPCRouter({
               sending.map((row) => row.attendeeId),
             ),
           );
+
+        if (input.status !== "confirmed" && input.status !== "checkedin")
+          for (const row of sending)
+            await removeHackerTeamMember(tx, row.attendeeId);
 
         // One event for the officer's single act, with counts rather than a
         // list — a bulk of two hundred would otherwise write a payload nobody

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Crown, LockKeyhole, UsersRound } from "lucide-react";
 
 import type {
@@ -85,7 +85,15 @@ export function KhixTeams() {
 }
 
 function TeamsContent() {
+  const [input, setInput] = useState("");
   const [search, setSearch] = useState({ query: "", page: 0 });
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setSearch({ query: input, page: 0 }),
+      250,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [input]);
   const teams = useHackerTeams(search.query, search.page);
   const change = useChangeHackerTeam();
   const [editor, setEditor] = useState<Team | "new" | null>(null);
@@ -321,8 +329,8 @@ function TeamsContent() {
             <Input
               id="team-search"
               className="mt-2 min-h-11 bg-black/20"
-              value={search.query}
-              onChange={(e) => setSearch({ query: e.target.value, page: 0 })}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
               maxLength={100}
             />
           </div>

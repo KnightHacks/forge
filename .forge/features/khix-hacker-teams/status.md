@@ -68,3 +68,12 @@ None blocking implementation.
 - Required final handoff: PR CI green, completed CodeRabbit review with findings resolved, and screenshots attached. No merge/deployment requested.
 
 - KHIX screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5924156988
+
+## CodeRabbit follow-up
+
+- Review requested cleanup when organizer status changes revoke team eligibility. Single and bulk status transitions now use the allocation lock and depart teams in the same transaction, preserving ownership or deleting empty teams.
+- Ordinary event scans no longer take the hackathon allocation lock. A purpose pre-read preserves the allocation-before-parent-lock order for primary admission; a concurrent purpose change returns a retryable conflict.
+- Added status-transition and ordinary-scan lock regressions. All 87 focused API tests and the full static gate passed.
+- Debounced KHIX search by 250ms. A real mobile browser check typed a full search string with one getTeams request and preserved focus.
+- The avatar/email suggestion does not match the current SDK session boundary. Dashboard and Journey use the same displayName-only session DTO as Teams; expanding identity data is outside this feature.
+- Blade screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5924164509

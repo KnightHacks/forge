@@ -8,7 +8,7 @@ KHIX and Blade are clients. Shared validators and portal DTOs live in @forge/val
 
 ## Persistence and lifecycle
 
-Add a hackathon-scoped team with name, together preference, frozen timestamp, and persistent selected class. Add membership/request rows keyed by attendee, with pending/member/owner state. Composite foreign keys enforce matching hackathons; one owner index prevents duplicate owners. Mutations enforce four accepted members, one membership/request, and owner succession. Remove application memberships through the same departure rules before application deletion. The attendee FK uses NO ACTION to prevent account cascades from orphaning teams; account deletion requires leaving teams and cancelling requests first.
+Add a hackathon-scoped team with name, together preference, frozen timestamp, and persistent selected class. Add membership/request rows keyed by attendee, with pending/member/owner state. Composite foreign keys enforce matching hackathons; one owner index prevents duplicate owners. Mutations enforce four accepted members, one membership/request, and owner succession. Remove application memberships through the same departure rules before application deletion and when organizer status changes revoke confirmed/checked-in eligibility. The attendee FK uses NO ACTION to prevent account cascades from orphaning teams; account deletion requires leaving teams and cancelling requests first.
 
 ## Consistency and access
 
