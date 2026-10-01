@@ -52,13 +52,13 @@ None blocking implementation.
 
 ## Links
 
-- PR: opening from `codex/khix-hacker-teams`.
+- PR: https://github.com/KnightHacks/forge/pull/588
 - Issue: https://github.com/KnightHacks/forge/issues/587
 
 ## Implementation validation
 
 - Static gate passed: changed React analysis, formatting, lint, and all consumer typechecks.
-- Shared suites: API 1,003 tests, DB 159, validators 321, SDK 31. Blade 883 and KHIX 14 tests passed.
+- Shared suites: API 1,006 tests, DB 159, validators 321, SDK 31. Blade 883 and KHIX 14 tests passed.
 - Real browser workflow passed with no page errors: create, settings, approvals/denials, search, requests/cancel, leave, empty-team deletion, locked/frozen states, Blade read/edit controls, and active navigation. Screenshots captured outside the repository at desktop, 390px, and 320px.
 - Standard Forge review covered access/API shape, migration/validation/test quality, React/boundaries, and placement. Fixed review findings around legacy bulk check-in and account deletion. Targeted lifecycle regressions passed, the final static gate passed, and reviewers confirmed both fixes.
 - Legacy bulk check-in rejects team members and pending applicants, directing organizers to Hackathon Check-in for class allocation. Account deletion requires leaving teams first; the FK prevents concurrent cascades from orphaning teams.
@@ -66,3 +66,5 @@ None blocking implementation.
 - Blade and KHIX production builds passed.
 - Density check passed with 62 teams and 64-character names at 320px. Evidence remains in `/tmp/khix-teams-evidence` for GitHub attachment upload.
 - Required final handoff: PR CI green, completed CodeRabbit review with findings resolved, and screenshots attached. No merge/deployment requested.
+
+- KHIX screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5924156988
