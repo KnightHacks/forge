@@ -255,6 +255,33 @@ describe.skipIf(!canRunDatabaseTests())("hackathon event check-in core", () => {
     source: "scanner" as const,
   });
 
+  it("does not make ordinary event scans wait for team allocation", async () => {
+    const { lockHackerTeams } = await import("../../utils/hacker-teams/teams");
+    await client.transaction(async (tx) => {
+      await lockHackerTeams(tx, HACKATHON_ID);
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const result = await Promise.race([
+          checkIn({
+            actor,
+            input: manualInput(ORDINARY_EVENT_ID, people.base),
+            now: NOW,
+          }),
+          new Promise<never>((_resolve, reject) => {
+            timeout = setTimeout(
+              () =>
+                reject(new Error("Ordinary scan waited for allocation lock")),
+              3000,
+            );
+          }),
+        ]);
+        expect(result.result.status).toBe("not_checked_in");
+      } finally {
+        clearTimeout(timeout);
+      }
+    });
+  });
+
   it("admits a confirmed first-time VIP with immutable operational snapshots", async () => {
     const ids = personIds(people.base);
     await client

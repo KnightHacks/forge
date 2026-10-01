@@ -164,6 +164,9 @@ export const Hackathon = createTable(
      * them. Optional; nothing is blocked by its absence.
      */
     applicationUrl: t.text(),
+    storeCatalogVisible: t.boolean().notNull().default(false),
+    storeOpen: t.boolean().notNull().default(false),
+    storeLocation: t.varchar({ length: 240 }).notNull().default(""),
     /**
      * Retired application-template fields retained for stored-data
      * compatibility. Current workflows must not read or write them.
@@ -4076,5 +4079,154 @@ export const EmailSendEvent = pgTable(
       table.createdAt,
       table.id,
     ),
+  }),
+);
+
+export const PointStoreItem = createTable(
+  "point_store_item",
+  (t) => ({
+    id: t.uuid().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    name: t.varchar({ length: 120 }).notNull(),
+    description: t.varchar({ length: 2000 }).notNull().default(""),
+    price: t.integer().notNull(),
+    stock: t.integer(),
+    soldOut: t.boolean().notNull().default(false),
+    archived: t.boolean().notNull().default(false),
+    imageObjectName: t.text(),
+    revision: t.integer().notNull().default(1),
+  }),
+  (t) => [
+    index("point_store_item_hackathon_idx").on(t.hackathonId),
+    unique("point_store_item_hackathon_unique").on(t.id, t.hackathonId),
+    check(
+      "point_store_item_price_check",
+      sql`${t.price} BETWEEN 0 AND 1000000`,
+    ),
+    check(
+      "point_store_item_stock_check",
+      sql`${t.stock} IS NULL OR ${t.stock} BETWEEN 0 AND 1000000`,
+    ),
+  ],
+);
+
+export const PointStorePurchase = createTable(
+  "point_store_purchase",
+  (t) => ({
+    // Client-generated ID makes a retried checkout the same purchase.
+    id: t.uuid().primaryKey(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    attendeeId: t
+      .uuid()
+      .references(() => HackerAttendee.id, { onDelete: "set null" }),
+    itemId: t.uuid().notNull(),
+    hackerName: t.text().notNull(),
+    itemName: t.varchar({ length: 120 }).notNull(),
+    unitPrice: t.integer().notNull(),
+    quantity: t.integer().notNull(),
+    total: t.integer().notNull(),
+    stockTracked: t.boolean().notNull(),
+    actorId: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    actorName: t.text().notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    voidedAt: t.timestamp({ withTimezone: true }),
+    voidedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    voidedByName: t.text(),
+    voidReason: t.varchar({ length: 500 }),
+    restocked: t.boolean().notNull().default(false),
+  }),
+  (t) => [
+    foreignKey({
+      name: "point_store_purchase_item_fk",
+      columns: [t.itemId, t.hackathonId],
+      foreignColumns: [PointStoreItem.id, PointStoreItem.hackathonId],
+    }),
+    index("point_store_purchase_history_idx").on(
+      t.hackathonId,
+      t.createdAt,
+      t.id,
+    ),
+    // Include voided rows so attendee deletion can use this index for SET NULL.
+    index("point_store_purchase_balance_idx").on(t.attendeeId, t.hackathonId),
+    check(
+      "point_store_purchase_amount_check",
+      sql`${t.unitPrice} BETWEEN 0 AND 1000000 AND ${t.quantity} BETWEEN 1 AND 1000 AND ${t.total} = ${t.unitPrice} * ${t.quantity}`,
+    ),
+    check(
+      "point_store_purchase_void_check",
+      sql`(${t.voidedAt} IS NULL AND NOT ${t.restocked}) OR ${t.voidedAt} IS NOT NULL`,
+    ),
+  ],
+);
+
+/** Social teams coordinate check-in classes, independently of judging projects. */
+export const HackerTeam = createTable(
+  "hacker_team",
+  (t) => ({
+    id: t.uuid().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    name: t.varchar({ length: 64 }).notNull(),
+    together: t.boolean().notNull().default(true),
+    frozenAt: t.timestamp({ mode: "date", withTimezone: true }),
+    classId: t.uuid(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    scope: unique("hacker_team_id_hackathon_unique").on(t.id, t.hackathonId),
+    hackathon: index("hacker_team_hackathon_idx").on(t.hackathonId),
+    classIndex: index("hacker_team_class_idx").on(t.classId),
+    nameRequired: check(
+      "hacker_team_name_required",
+      sql`length(trim(${t.name})) > 0`,
+    ),
+    scopedClass: foreignKey({
+      columns: [t.classId, t.hackathonId],
+      foreignColumns: [HackathonClass.id, HackathonClass.hackathonId],
+      name: "hacker_team_scoped_class_fk",
+    }).onDelete("restrict"),
+  }),
+);
+
+/** A pending request occupies no seat but prevents requests to multiple teams. */
+export const HackerTeamMember = createTable(
+  "hacker_team_member",
+  (t) => ({
+    attendeeId: t.uuid().primaryKey(),
+    hackathonId: t.uuid().notNull(),
+    teamId: t.uuid().notNull(),
+    role: t.text({ enum: ["pending", "member", "owner"] }).notNull(),
+  }),
+  (t) => ({
+    team: index("hacker_team_member_team_idx").on(t.teamId),
+    hackathon: index("hacker_team_member_hackathon_idx").on(t.hackathonId),
+    oneOwner: uniqueIndex("hacker_team_one_owner")
+      .on(t.teamId)
+      .where(sql`${t.role} = 'owner'`),
+    roleValid: check(
+      "hacker_team_member_role_valid",
+      sql`${t.role} in ('pending', 'member', 'owner')`,
+    ),
+    scopedTeam: foreignKey({
+      columns: [t.teamId, t.hackathonId],
+      foreignColumns: [HackerTeam.id, HackerTeam.hackathonId],
+      name: "hacker_team_member_scoped_team_fk",
+    }).onDelete("cascade"),
+    scopedAttendee: foreignKey({
+      columns: [t.attendeeId, t.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "hacker_team_member_scoped_attendee_fk",
+    }).onDelete("no action"),
   }),
 );

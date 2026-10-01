@@ -859,11 +859,23 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       .where(eq(knightHacks.HackerAttendee.hackathonId, hackathon.id));
     await caller.getCheckInPass({ idempotencyKey: "withdraw-pass" });
 
+    const { changeHackerTeam } = await import("../../utils/hacker-teams/teams");
+    await changeHackerTeam(userId, hackathon.id, {
+      action: "create",
+      name: "Leaving",
+    });
     const withdrawal = {
       acknowledgement: HACKER_WITHDRAWAL_ACKNOWLEDGEMENT,
       idempotencyKey: "withdraw-once",
     } as const;
     const first = await caller.withdrawApplication(withdrawal);
+    expect(
+      await client
+        .select()
+        .from(knightHacks.HackerTeam)
+        .where(eq(knightHacks.HackerTeam.hackathonId, hackathon.id)),
+    ).toEqual([]);
+
     await expect(caller.withdrawApplication(withdrawal)).resolves.toEqual(
       first,
     );
@@ -1067,7 +1079,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     );
   });
 
-  it("[TC-DASH-003/004] includes repeats in history but isolates event-award points", async () => {
+  it("[TC-DASH-003/004] includes repeats in history and manual adjustments in the earned total", async () => {
     const hackathon = await seedHackathon();
     const participant = await seedManualApplication({
       firstName: "Points",
@@ -1164,7 +1176,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     expect(
       attendance.occurrences.map(({ pointsAwarded }) => pointsAwarded),
     ).toEqual([25, 0]);
-    expect(points).toMatchObject({ total: 25 });
+    expect(points).toMatchObject({ total: 9_999 });
     expect(points.entries).toHaveLength(1);
     expect(points.entries[0]).toMatchObject({ eventId, points: 25 });
   });
@@ -1239,6 +1251,10 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
         since(30 + index / 10),
         award,
       );
+      await client
+        .update(knightHacks.HackerAttendee)
+        .set({ points: award })
+        .where(eq(knightHacks.HackerAttendee.id, participant.attendeeId));
       await client.insert(knightHacks.HackerEventAttendee).values({
         checkedInAt: since(30 + index / 10),
         eventId,

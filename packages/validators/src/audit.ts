@@ -35,6 +35,38 @@ export const AUDIT_DOMAINS = [
 export type AuditDomain = (typeof AUDIT_DOMAINS)[number];
 
 export const AUDIT_ACTION_CATALOG = {
+  "hacker_team.changed": policy("hackathons", "Changed hacker team", [
+    "operation",
+    "hackathonId",
+    "organizer",
+  ]),
+  "point_store.settings_updated": policy(
+    "hackathons",
+    "Updated point store settings",
+    ["catalogVisible", "open", "location"],
+  ),
+  "point_store.item_saved": policy("hackathons", "Saved point store item", [
+    "hackathonId",
+    "price",
+    "stock",
+    "soldOut",
+    "archived",
+  ]),
+  "point_store.image_updated": policy(
+    "hackathons",
+    "Updated point store image",
+    ["removed"],
+  ),
+  "point_store.purchased": policy(
+    "hackathons",
+    "Recorded point store purchase",
+    ["hackathonId", "itemId", "quantity", "total"],
+  ),
+  "point_store.voided": policy("hackathons", "Voided point store purchase", [
+    "reason",
+    "restocked",
+    "total",
+  ]),
   "project.claim.settings_updated": policy(
     "hackathons",
     "Updated hacker judging settings",
@@ -738,6 +770,7 @@ export const AUDIT_ACTION_CATALOG = {
     "Edited hacker profile",
     ["revision"],
     [
+      "isVip",
       "country",
       "dob",
       "discordUser",
@@ -1133,6 +1166,9 @@ export const auditActionKeySchema = z.enum(
 export const auditDomainSchema = z.enum(AUDIT_DOMAINS);
 
 export const AUDIT_TARGET_TYPES = [
+  "hacker_team",
+  "point_store_item",
+  "point_store_purchase",
   "alumni_bulletin",
   "analytics_report",
   "attachment",

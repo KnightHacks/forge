@@ -53,6 +53,7 @@ describe("Hacker participant v1 contract", () => {
 
   it("exposes only the narrow participant procedure manifest", () => {
     expect(HACKER_PARTICIPANT_V1_PROCEDURES).toEqual({
+      changeTeam: "mutation",
       claimProject: "mutation",
       confirmAttendance: "mutation",
       getApplicationContext: "query",
@@ -62,11 +63,13 @@ describe("Hacker participant v1 contract", () => {
       getLeaderboard: "query",
       getMyAttendance: "query",
       getMyPoints: "query",
+      getPointStore: "query",
       getProjectClaim: "query",
       getPublicHackathon: "query",
       getResume: "query",
       getSchedule: "query",
       getSession: "query",
+      getTeams: "query",
       inviteProjectMember: "mutation",
       removeResume: "mutation",
       searchJudgingProjects: "query",

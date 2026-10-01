@@ -357,3 +357,40 @@ export function useInviteProjectMember() {
     client.inviteProjectMember(input),
   );
 }
+
+export function useHackerPointStore() {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [...hackerSdkQueryKeys.participant(portalKey), "point-store"],
+    queryFn: () => client.getPointStore(),
+    enabled: dashboard.data?.application?.status === "checkedin",
+    refetchInterval: 15_000,
+  });
+}
+
+export function useHackerTeams(query = "", page = 0) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "teams",
+      query,
+      page,
+    ],
+    queryFn: () => client.getTeams({ query, page }),
+    placeholderData: (previous) => previous,
+    enabled: ["confirmed", "checkedin"].includes(
+      dashboard.data?.application?.status ?? "",
+    ),
+    refetchInterval: 15_000,
+  });
+}
+export function useChangeHackerTeam() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation(
+    (input: import("./contracts").HackerParticipantInput<"changeTeam">) =>
+      client.changeTeam(input),
+  );
+}

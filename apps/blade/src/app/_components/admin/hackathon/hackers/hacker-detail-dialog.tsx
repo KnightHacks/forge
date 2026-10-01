@@ -57,6 +57,7 @@ type HackerStatus = keyof typeof HACKER_STATUS_LABELS;
 
 /** Only what the edit form reads, so it does not depend on the whole DTO. */
 interface HackerEditable {
+  isVip: boolean;
   country: string;
   dob: string;
   discordUser: string;
@@ -285,6 +286,7 @@ export function HackerDetailDialog({
                     <Badge className="text-sm" variant="secondary">
                       {statusLabel(hacker.status)}
                     </Badge>
+                    {hacker.isVip ? <Badge variant="outline">VIP</Badge> : null}
                     {firstTimeStatus === "first" ? (
                       <Badge className="gap-1 text-sm" variant="outline">
                         <Sparkles className="size-3" aria-hidden="true" />
@@ -958,7 +960,7 @@ function HackerEditForm({
   busy: boolean;
   hacker: HackerEditable;
   onCancel: () => void;
-  onSave: (patch: Record<string, number | string | null>) => void;
+  onSave: (patch: Record<string, boolean | number | string | null>) => void;
 }) {
   const sections: {
     fields: {
@@ -1095,7 +1097,9 @@ function HackerEditForm({
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const patch: Record<string, number | string | null> = {};
+        const patch: Record<string, boolean | number | string | null> = {};
+        const isVip = data.get("isVip") === "on";
+        if (isVip !== hacker.isVip) patch.isVip = isVip;
         for (const { fields } of sections) {
           for (const { name, value: original } of fields) {
             const entry = data.get(name);
@@ -1110,6 +1114,21 @@ function HackerEditForm({
         onSave(patch);
       }}
     >
+      <div className="flex items-start gap-3 rounded-md border border-border bg-background/60 p-4">
+        <Checkbox
+          defaultChecked={hacker.isVip}
+          disabled={busy}
+          id="hacker-edit-isVip"
+          name="isVip"
+        />
+        <div className="space-y-1">
+          <Label htmlFor="hacker-edit-isVip">VIP for this hackathon</Label>
+          <p className="text-sm text-muted-foreground">
+            Bypasses class restrictions. The configured Discord VIP role is
+            granted at initial hackathon check-in.
+          </p>
+        </div>
+      </div>
       {sections.map(({ fields, title }) => (
         <section
           className="space-y-4 rounded-md border border-white/10 bg-background/60 p-4"

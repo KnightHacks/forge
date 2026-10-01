@@ -17,6 +17,7 @@ import * as clubTeamSchema from "../schemas/club-team";
 import * as discordSchema from "../schemas/discord";
 import * as discordConfigSchema from "../schemas/discord-config";
 import * as knightHacksSchema from "../schemas/knight-hacks";
+import { canRunDatabaseTests, provisionDisposableDatabase } from "../testing";
 
 /**
  * Every table Drizzle knows about, read out of the schema modules rather than
@@ -116,6 +117,44 @@ describe("development database backup sanitizer", () => {
     expect(TABLES_TO_KEEP).toContain("knight_hacks_template");
     expect(TABLES_TO_DROP).not.toContain("knight_hacks_template");
   });
+
+  it("keeps merch configuration without purchase identities or external images", () => {
+    expect(TABLES_TO_KEEP).toContain("knight_hacks_point_store_item");
+    expect(TABLES_TO_DROP).toContain("knight_hacks_point_store_purchase");
+  });
+
+  it.skipIf(!canRunDatabaseTests())(
+    "clears merch image references while retaining catalog details",
+    async () => {
+      const database = await provisionDisposableDatabase("forge_store_backup");
+      try {
+        await database.client.query(`
+        INSERT INTO auth_user (id, discord_user_id, name)
+        VALUES ('10000000-0000-4000-8000-000000000001', 'store-team-user', 'Organizer');
+        INSERT INTO auth_roles (id, discord_role_id, name, permissions)
+        VALUES ('20000000-0000-4000-8000-000000000001', 'store-team-role', 'Organizer', '0');
+        INSERT INTO auth_permissions (user_id, role_id)
+        VALUES ('10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001');
+        INSERT INTO knight_hacks_club_team_role (role_id, kind, rank)
+        VALUES ('20000000-0000-4000-8000-000000000001', 'executive', 0);
+        INSERT INTO knight_hacks_hackathon (id, name, display_name, theme, start_date, end_date)
+        VALUES ('30000000-0000-4000-8000-000000000001', 'store', 'Store', 'Test', '2026-09-01', '2026-10-01');
+        INSERT INTO knight_hacks_point_store_item (hackathon_id, name, price, stock, image_object_name)
+        VALUES ('30000000-0000-4000-8000-000000000001', 'Tee', 30, 12, 'point-store/tee.png');
+      `);
+        await database.client.query(teamDataSanitizerSql());
+        const { rows } = await database.client.query(
+          "SELECT name, price, stock, image_object_name FROM knight_hacks_point_store_item",
+        );
+        expect(rows).toEqual([
+          { name: "Tee", price: 30, stock: 12, image_object_name: null },
+        ]);
+      } finally {
+        await database.drop();
+      }
+    },
+    30_000,
+  );
 
   it("does not retain protected content, work queues, or recipient snapshots", () => {
     expect(TABLES_TO_KEEP).not.toEqual(
