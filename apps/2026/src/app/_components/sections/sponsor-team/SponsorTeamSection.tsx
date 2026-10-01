@@ -17,7 +17,7 @@ const HOMEPAGE_SPONSORS = [
   },
   {
     name: "Crest",
-    websiteUrl: "https://www.crest.com/",
+    websiteUrl: "https://crestadvisorygroup.com/",
     logoSrc: "/sponsors/crest.svg",
     logoScale: 0.9,
     tier: "platinum-crown",
