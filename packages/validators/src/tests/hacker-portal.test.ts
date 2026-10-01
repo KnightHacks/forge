@@ -144,6 +144,7 @@ describe("Hacker Portal validators", () => {
 
   it("TC-SDK-001 publishes schemas for every participant v1 procedure", () => {
     const keys = [
+      "changeTeam",
       "claimProject",
       "confirmAttendance",
       "getApplicationContext",
@@ -159,6 +160,7 @@ describe("Hacker Portal validators", () => {
       "getResume",
       "getSchedule",
       "getSession",
+      "getTeams",
       "inviteProjectMember",
       "removeResume",
       "searchJudgingProjects",

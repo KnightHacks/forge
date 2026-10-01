@@ -124,6 +124,8 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   getMyAttendance: "query",
   getMyPoints: "query",
   getPointStore: "query",
+  getTeams: "query",
+  changeTeam: "mutation",
   getPublicHackathon: "query",
   getResume: "query",
   getSchedule: "query",

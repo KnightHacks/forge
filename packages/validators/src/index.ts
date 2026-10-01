@@ -27,3 +27,4 @@ export * from "./judging-schedule";
 
 export * from "./project-claims";
 export * from "./point-store";
+export * from "./hacker-teams";

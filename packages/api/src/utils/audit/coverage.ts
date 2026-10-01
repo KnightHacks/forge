@@ -1,4 +1,5 @@
 export const AUDITED_ADMIN_PROCEDURES = [
+  "hacker-team.change",
   "point-store.saveSettings",
   "point-store.saveItem",
   "point-store.setImage",
@@ -177,6 +178,8 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  "hacker-team.hackathons",
+  "hacker-team.list",
   "point-store.hackathons",
   "point-store.workspace",
   "point-store.searchHackers",

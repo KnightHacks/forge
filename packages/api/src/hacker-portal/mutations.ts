@@ -25,6 +25,10 @@ import { createAdminAuditEvent } from "../utils/audit/service";
 import { deriveOpaqueHackerCheckInPass } from "../utils/hacker-portal/check-in-pass";
 import { getParticipantCapabilities } from "../utils/hacker-portal/policy";
 import {
+  lockHackerTeams,
+  removeHackerTeamMember,
+} from "../utils/hacker-teams/teams";
+import {
   prepareStatusMail,
   writeStatusMail,
 } from "../utils/hacker/status-mail";
@@ -744,8 +748,9 @@ export async function withdrawApplication(
     optional: true,
     status: "withdrawn",
   });
-  return db.transaction(async (tx) =>
-    runParticipantCommand({
+  return db.transaction(async (tx) => {
+    await lockHackerTeams(tx, ctx.session.hackathonId);
+    return runParticipantCommand({
       hackathonId: ctx.session.hackathonId,
       idempotencyKey: input.idempotencyKey,
       input,
@@ -797,6 +802,7 @@ export async function withdrawApplication(
           .update(HackerAttendee)
           .set({ lastStatusSendId: sendId, status: "withdrawn" })
           .where(eq(HackerAttendee.id, application.attendeeId));
+        await removeHackerTeamMember(tx, application.attendeeId);
         await revokeActivePasses(tx, application.attendeeId, now);
         await createAdminAuditEvent(
           {
@@ -820,8 +826,8 @@ export async function withdrawApplication(
         );
         return mutationResult(tx, ctx);
       },
-    }),
-  );
+    });
+  });
 }
 
 export async function getCheckInPass(

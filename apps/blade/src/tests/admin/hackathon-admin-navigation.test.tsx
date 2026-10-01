@@ -101,4 +101,25 @@ describe("hackathon admin navigation", () => {
       false,
     );
   });
+  it("highlights Teams and exposes its permission-gated destination", () => {
+    expect(isAdminNavigationActive("teams", "/admin/teams")).toBe(true);
+    expect(isAdminNavigationActive("hackers", "/admin/teams")).toBe(false);
+    expect(isAdminNavigationActive("teams", "/admin/hackers")).toBe(false);
+    const html = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        adminNavigation: { teams: true },
+        children: createElement("main", null, "Teams"),
+        session,
+      }),
+    );
+    expect(html).toContain('href="/admin/teams"');
+    const denied = renderToStaticMarkup(
+      createElement(AuthenticatedShell, {
+        adminNavigation: { teams: false },
+        children: createElement("main", null, "Teams"),
+        session,
+      }),
+    );
+    expect(denied).not.toContain('href="/admin/teams"');
+  });
 });

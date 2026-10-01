@@ -4164,3 +4164,69 @@ export const PointStorePurchase = createTable(
     ),
   ],
 );
+
+/** Social teams coordinate check-in classes, independently of judging projects. */
+export const HackerTeam = createTable(
+  "hacker_team",
+  (t) => ({
+    id: t.uuid().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    name: t.varchar({ length: 64 }).notNull(),
+    together: t.boolean().notNull().default(true),
+    frozenAt: t.timestamp({ mode: "date", withTimezone: true }),
+    classId: t.uuid(),
+    createdAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+  (t) => ({
+    scope: unique("hacker_team_id_hackathon_unique").on(t.id, t.hackathonId),
+    hackathon: index("hacker_team_hackathon_idx").on(t.hackathonId),
+    classIndex: index("hacker_team_class_idx").on(t.classId),
+    nameRequired: check(
+      "hacker_team_name_required",
+      sql`length(trim(${t.name})) > 0`,
+    ),
+    scopedClass: foreignKey({
+      columns: [t.classId, t.hackathonId],
+      foreignColumns: [HackathonClass.id, HackathonClass.hackathonId],
+      name: "hacker_team_scoped_class_fk",
+    }).onDelete("restrict"),
+  }),
+);
+
+/** A pending request occupies no seat but prevents requests to multiple teams. */
+export const HackerTeamMember = createTable(
+  "hacker_team_member",
+  (t) => ({
+    attendeeId: t.uuid().primaryKey(),
+    hackathonId: t.uuid().notNull(),
+    teamId: t.uuid().notNull(),
+    role: t.text({ enum: ["pending", "member", "owner"] }).notNull(),
+  }),
+  (t) => ({
+    team: index("hacker_team_member_team_idx").on(t.teamId),
+    hackathon: index("hacker_team_member_hackathon_idx").on(t.hackathonId),
+    oneOwner: uniqueIndex("hacker_team_one_owner")
+      .on(t.teamId)
+      .where(sql`${t.role} = 'owner'`),
+    roleValid: check(
+      "hacker_team_member_role_valid",
+      sql`${t.role} in ('pending', 'member', 'owner')`,
+    ),
+    scopedTeam: foreignKey({
+      columns: [t.teamId, t.hackathonId],
+      foreignColumns: [HackerTeam.id, HackerTeam.hackathonId],
+      name: "hacker_team_member_scoped_team_fk",
+    }).onDelete("cascade"),
+    scopedAttendee: foreignKey({
+      columns: [t.attendeeId, t.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "hacker_team_member_scoped_attendee_fk",
+    }).onDelete("no action"),
+  }),
+);

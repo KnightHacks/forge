@@ -3,6 +3,12 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
+import {
+  hackerTeamActionResultSchema,
+  hackerTeamActionSchema,
+  hackerTeamsDtoSchema,
+  hackerTeamSearchSchema,
+} from "./hacker-teams";
 import { pointStoreCatalogDtoSchema } from "./point-store";
 import {
   hackerJudgingDtoSchema,
@@ -522,6 +528,8 @@ export const hackerPortalV1InputSchemas = {
   getMyAttendance: noInputSchema,
   getMyPoints: noInputSchema,
   getPointStore: noInputSchema,
+  getTeams: hackerTeamSearchSchema,
+  changeTeam: hackerTeamActionSchema,
   getPublicHackathon: noInputSchema,
   getResume: noInputSchema,
   getSchedule: noInputSchema,
@@ -535,6 +543,8 @@ export const hackerPortalV1InputSchemas = {
 } as const;
 
 export interface HackerPortalV1OutputSchemaMap {
+  getTeams: typeof hackerTeamsDtoSchema;
+  changeTeam: typeof hackerTeamActionResultSchema;
   searchJudgingProjects: typeof projectClaimSearchDtoSchema;
   inviteProjectMember: typeof projectInviteResultDtoSchema;
   claimProject: typeof projectClaimResultDtoSchema;
@@ -574,6 +584,8 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   getMyAttendance: attendanceDtoSchema,
   getMyPoints: pointsDtoSchema,
   getPointStore: pointStoreCatalogDtoSchema,
+  getTeams: hackerTeamsDtoSchema,
+  changeTeam: hackerTeamActionResultSchema,
   getPublicHackathon: publicHackathonDtoSchema,
   getResume: resumeDtoSchema.nullable(),
   getSchedule: scheduleDtoSchema,
