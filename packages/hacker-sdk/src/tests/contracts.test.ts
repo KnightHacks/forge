@@ -62,6 +62,7 @@ describe("Hacker participant v1 contract", () => {
       getLeaderboard: "query",
       getMyAttendance: "query",
       getMyPoints: "query",
+      getPointStore: "query",
       getProjectClaim: "query",
       getPublicHackathon: "query",
       getResume: "query",

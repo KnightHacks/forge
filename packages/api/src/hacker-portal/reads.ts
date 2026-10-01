@@ -18,6 +18,11 @@ import {
   toLeaderboardName,
 } from "../utils/hacker-portal/policy";
 import {
+  pointStoreBalance,
+  pointStoreItems,
+  pointStoreSettings,
+} from "../utils/point-store/queries";
+import {
   agreementAcceptanceDto,
   agreementDto,
   applicationDto,
@@ -291,6 +296,11 @@ export async function getMyAttendance(ctx: AuthenticatedPortalContext) {
 }
 
 export async function getMyPoints(ctx: AuthenticatedPortalContext) {
+  const application = await requireApplicationWithStatuses(ctx, ["checkedin"]);
+  const [earned] = await db
+    .select({ points: HackerAttendee.points })
+    .from(HackerAttendee)
+    .where(eq(HackerAttendee.id, application.attendeeId));
   const rows = await activeAttendance(ctx);
   const entries = rows
     .filter(
@@ -307,7 +317,7 @@ export async function getMyPoints(ctx: AuthenticatedPortalContext) {
     }));
   return {
     entries,
-    total: entries.reduce((sum, entry) => sum + entry.points, 0),
+    total: Math.max(0, earned?.points ?? 0),
   };
 }
 
@@ -346,6 +356,7 @@ export async function getLeaderboard(
   const participants = await db
     .select({
       attendeeId: HackerAttendee.id,
+      points: HackerAttendee.points,
       classId: HackerAttendee.classId,
       firstName: HackerProfileRevision.firstName,
       lastName: HackerProfileRevision.lastName,
@@ -366,31 +377,11 @@ export async function getLeaderboard(
           : undefined,
       ),
     );
-  const attendance = await db
-    .select({
-      attendeeId: HackerEventAttendee.hackerAttId,
-      points: HackerEventAttendee.pointsAwarded,
-    })
-    .from(HackerEventAttendee)
-    .where(
-      and(
-        eq(HackerEventAttendee.hackathonId, ctx.session.hackathonId),
-        eq(HackerEventAttendee.isInitialAttendance, true),
-        isNull(HackerEventAttendee.voidedAt),
-      ),
-    );
-  const totals = new Map<string, number>();
-  for (const row of attendance) {
-    totals.set(
-      row.attendeeId,
-      (totals.get(row.attendeeId) ?? 0) + Math.max(0, row.points ?? 0),
-    );
-  }
   const ranked = rankLeaderboardRows(
     participants.map((participant) => ({
       ...participant,
       id: participant.attendeeId,
-      points: totals.get(participant.attendeeId) ?? 0,
+      points: Math.max(0, participant.points),
     })),
   );
   const rows = ranked.map((row) => ({
@@ -406,5 +397,29 @@ export async function getLeaderboard(
       viewer.status === "checkedin"
         ? (rows.find((row) => row.isCurrentUser)?.rank ?? null)
         : null,
+  };
+}
+
+export async function getPointStore(ctx: AuthenticatedPortalContext) {
+  const application = await requireApplicationWithStatuses(ctx, ["checkedin"]);
+  const [settings, balance] = await Promise.all([
+    pointStoreSettings(ctx.session.hackathonId),
+    pointStoreBalance(ctx.session.hackathonId, application.attendeeId),
+  ]);
+  const items = settings.catalogVisible
+    ? await pointStoreItems(ctx.session.hackathonId)
+    : [];
+  return {
+    ...settings,
+    ...balance,
+    items: items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      stock: item.stock,
+      soldOut: item.soldOut,
+      imageUrl: item.imageUrl,
+    })),
   };
 }

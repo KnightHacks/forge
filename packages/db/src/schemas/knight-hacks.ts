@@ -164,6 +164,9 @@ export const Hackathon = createTable(
      * them. Optional; nothing is blocked by its absence.
      */
     applicationUrl: t.text(),
+    storeCatalogVisible: t.boolean().notNull().default(false),
+    storeOpen: t.boolean().notNull().default(false),
+    storeLocation: t.varchar({ length: 240 }).notNull().default(""),
     /**
      * Retired application-template fields retained for stored-data
      * compatibility. Current workflows must not read or write them.
@@ -4077,4 +4080,88 @@ export const EmailSendEvent = pgTable(
       table.id,
     ),
   }),
+);
+
+export const PointStoreItem = createTable(
+  "point_store_item",
+  (t) => ({
+    id: t.uuid().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    name: t.varchar({ length: 120 }).notNull(),
+    description: t.varchar({ length: 2000 }).notNull().default(""),
+    price: t.integer().notNull(),
+    stock: t.integer(),
+    soldOut: t.boolean().notNull().default(false),
+    archived: t.boolean().notNull().default(false),
+    imageObjectName: t.text(),
+    revision: t.integer().notNull().default(1),
+  }),
+  (t) => [
+    index("point_store_item_hackathon_idx").on(t.hackathonId),
+    unique("point_store_item_hackathon_unique").on(t.id, t.hackathonId),
+    check(
+      "point_store_item_price_check",
+      sql`${t.price} BETWEEN 0 AND 1000000`,
+    ),
+    check(
+      "point_store_item_stock_check",
+      sql`${t.stock} IS NULL OR ${t.stock} BETWEEN 0 AND 1000000`,
+    ),
+  ],
+);
+
+export const PointStorePurchase = createTable(
+  "point_store_purchase",
+  (t) => ({
+    // Client-generated ID makes a retried checkout the same purchase.
+    id: t.uuid().primaryKey(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    attendeeId: t
+      .uuid()
+      .references(() => HackerAttendee.id, { onDelete: "set null" }),
+    itemId: t.uuid().notNull(),
+    hackerName: t.text().notNull(),
+    itemName: t.varchar({ length: 120 }).notNull(),
+    unitPrice: t.integer().notNull(),
+    quantity: t.integer().notNull(),
+    total: t.integer().notNull(),
+    stockTracked: t.boolean().notNull(),
+    actorId: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    actorName: t.text().notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    voidedAt: t.timestamp({ withTimezone: true }),
+    voidedBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
+    voidedByName: t.text(),
+    voidReason: t.varchar({ length: 500 }),
+    restocked: t.boolean().notNull().default(false),
+  }),
+  (t) => [
+    foreignKey({
+      name: "point_store_purchase_item_fk",
+      columns: [t.itemId, t.hackathonId],
+      foreignColumns: [PointStoreItem.id, PointStoreItem.hackathonId],
+    }),
+    index("point_store_purchase_history_idx").on(
+      t.hackathonId,
+      t.createdAt,
+      t.id,
+    ),
+    index("point_store_purchase_balance_idx")
+      .on(t.attendeeId, t.hackathonId)
+      .where(sql`${t.voidedAt} IS NULL`),
+    check(
+      "point_store_purchase_amount_check",
+      sql`${t.unitPrice} BETWEEN 0 AND 1000000 AND ${t.quantity} BETWEEN 1 AND 1000 AND ${t.total} = ${t.unitPrice} * ${t.quantity}`,
+    ),
+    check(
+      "point_store_purchase_void_check",
+      sql`(${t.voidedAt} IS NULL AND NOT ${t.restocked}) OR ${t.voidedAt} IS NOT NULL`,
+    ),
+  ],
 );

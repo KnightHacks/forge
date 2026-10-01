@@ -153,6 +153,7 @@ describe("Hacker Portal validators", () => {
       "getLeaderboard",
       "getMyAttendance",
       "getMyPoints",
+      "getPointStore",
       "getProjectClaim",
       "getPublicHackathon",
       "getResume",

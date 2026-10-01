@@ -123,6 +123,7 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   getLeaderboard: "query",
   getMyAttendance: "query",
   getMyPoints: "query",
+  getPointStore: "query",
   getPublicHackathon: "query",
   getResume: "query",
   getSchedule: "query",

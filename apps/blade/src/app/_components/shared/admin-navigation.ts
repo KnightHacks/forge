@@ -16,6 +16,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Swords,
   UserSearch,
   UsersRound,
@@ -49,6 +50,7 @@ export interface AdminNavigationAccess {
   hackathonCheckIn?: boolean;
   hackathonEvents?: boolean;
   hackers?: boolean;
+  pointStore?: boolean;
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
@@ -190,6 +192,14 @@ export const adminNavigationItems = [
     icon: UserSearch,
     id: "hackers",
     label: "Hackers",
+  },
+  {
+    access: "pointStore",
+    group: "Hackathon",
+    href: "/admin/point-store",
+    icon: ShoppingBag,
+    id: "pointStore",
+    label: "Point Store",
   },
   {
     access: "hackathonEvents",
