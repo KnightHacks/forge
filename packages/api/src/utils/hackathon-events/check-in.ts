@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 
 import type { HackathonEventCheckInInput } from "@forge/validators";
-import { and, asc, count, eq, gt, isNull, or, sql } from "@forge/db";
+import { and, asc, count, eq, gt, isNull, ne, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
@@ -15,11 +15,15 @@ import {
   HackerCheckInPass,
   HackerDiscordRoleGrant,
   HackerEventAttendee,
+  HackerTeam,
+  HackerTeamMember,
 } from "@forge/db/schemas/knight-hacks";
 import { parseHackathonQrPayload } from "@forge/validators";
 
 import type { AuditActor, AuditSubjectInput } from "../audit/service";
 import { createAdminAuditEvent } from "../audit/service";
+import { selectTeamClass } from "../hacker-teams/allocation";
+import { lockHackerTeams } from "../hacker-teams/teams";
 
 const FAILURE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
 const CHECK_IN_TIME_ZONE = "America/New_York";
@@ -178,6 +182,8 @@ export async function performHackathonEventCheckIn({
   now?: Date;
 }) {
   const internal = await db.transaction(async (tx) => {
+    // ponytail: serialize per hackathon; narrower event locks can follow if check-in throughput requires it.
+    await lockHackerTeams(tx, input.hackathonId);
     const [event] = await tx
       .select({
         deletionIntentAt: Event.deletionIntentAt,
@@ -436,9 +442,6 @@ export async function performHackathonEventCheckIn({
         };
       }
 
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`blade:hackathon-allocation:${input.hackathonId}`}, 0))`,
-      );
       const [hackathonConfig] = await tx
         .select({
           displayName: Hackathon.displayName,
@@ -491,13 +494,64 @@ export async function performHackathonEventCheckIn({
       const countByClass = new Map(
         counts.map((entry) => [entry.classId, entry.value]),
       );
-      const assigned = [...normalClasses].sort(
-        (left, right) =>
-          (countByClass.get(left.id) ?? 0) -
-            (countByClass.get(right.id) ?? 0) ||
-          left.id.localeCompare(right.id),
-      )[0];
+      const [membership] = await tx
+        .select()
+        .from(HackerTeamMember)
+        .where(eq(HackerTeamMember.attendeeId, hacker.attendeeId));
+      const [team] =
+        membership && membership.role !== "pending"
+          ? await tx
+              .select()
+              .from(HackerTeam)
+              .where(eq(HackerTeam.id, membership.teamId))
+          : [];
+      const teammates =
+        team && !team.together
+          ? await tx
+              .select({ classId: HackerAttendee.classId, value: count() })
+              .from(HackerTeamMember)
+              .innerJoin(
+                HackerAttendee,
+                eq(HackerAttendee.id, HackerTeamMember.attendeeId),
+              )
+              .where(
+                and(
+                  eq(HackerTeamMember.teamId, team.id),
+                  ne(HackerTeamMember.role, "pending"),
+                  eq(HackerAttendee.status, "checkedin"),
+                ),
+              )
+              .groupBy(HackerAttendee.classId)
+          : [];
+      const assigned = selectTeamClass(
+        normalClasses,
+        countByClass,
+        new Map(teammates.map((row) => [row.classId, row.value])),
+        team?.together ? team.classId : null,
+      );
       if (!assigned) throw new Error("Configured class selection failed.");
+
+      if (team) {
+        await tx
+          .update(HackerTeam)
+          .set({
+            frozenAt: team.frozenAt ?? now,
+            classId: team.together ? assigned.id : null,
+          })
+          .where(eq(HackerTeam.id, team.id));
+        await tx
+          .delete(HackerTeamMember)
+          .where(
+            and(
+              eq(HackerTeamMember.teamId, team.id),
+              eq(HackerTeamMember.role, "pending"),
+            ),
+          );
+      } else if (membership?.role === "pending") {
+        await tx
+          .delete(HackerTeamMember)
+          .where(eq(HackerTeamMember.attendeeId, hacker.attendeeId));
+      }
 
       // The application answer is the canonical per-hack snapshot. The
       // reusable Hacker profile is only a bridge for legacy attendees whose

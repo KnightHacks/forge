@@ -34,6 +34,7 @@ import {
   Sparkles,
   Trophy,
   UserRound,
+  UsersRound,
   X,
 } from "lucide-react";
 
@@ -1105,6 +1106,7 @@ export function KhixDashboardShell({
   sessionUser,
 }: {
   activeItem?:
+    | "teams"
     | "merch"
     | "judging"
     | "events"
@@ -1436,6 +1438,40 @@ export function KhixDashboardShell({
                   <span className={styles.railLinkLabel}>Lore</span>
                 </span>
               </Link>
+              {journeyUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "teams" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/teams"
+                  onClick={closeMobileMenu}
+                  aria-current={activeItem === "teams" ? "page" : undefined}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <UsersRound className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Teams</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="Teams locked until confirmation"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <UsersRound className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Teams <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               {eventsUnlocked ? (
                 <Link
                   className={joinClasses(

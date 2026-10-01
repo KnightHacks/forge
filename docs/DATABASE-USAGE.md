@@ -180,3 +180,13 @@ Notes:
 ## Undocumented columns
 
 If a task needs a table or column not explained here, inspect existing usage first. If the intended semantics are still not clear from code, ask a clarifying question before setting a new precedent.
+
+### Hacker teams
+
+`knight_hacks_hacker_team` is a hackathon-scoped social team, separate from judging projects and event classes. `knight_hacks_hacker_team_member` holds one accepted membership or pending request per attendee. Its role distinguishes the owner, accepted members, and requests; pending requests do not consume one of the four seats.
+
+Team mutations and check-in share the hackathon allocation advisory lock. The first accepted member's primary check-in freezes joins and class preference, clears pending requests, and stores the class for a together team. Later arrivals reuse that class even if earlier members leave. Separate teams prefer classes unused by their current teammates, then global class balance. Existing assignments never move.
+
+Application withdrawal and deletion remove membership in the same transaction, promote a random remaining member if the owner leaves, and delete an empty team. Composite foreign keys keep attendees, teams, and the stored class within one hackathon. Both team tables are excluded from sanitized development backups.
+
+Legacy bulk status check-in rejects hackers with teams or pending requests; the Hackathon Check-in workspace performs their class assignment. The attendee membership foreign key uses `NO ACTION` so account cascades cannot silently orphan teams. Account deletion asks the user to leave teams/cancel requests first, with organizer removal available when their Teams page is locked.

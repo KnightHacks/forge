@@ -752,6 +752,39 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       ).resolves.toEqual([]);
     });
 
+    it("requires the allocation-aware check-in flow for team members", async () => {
+      const [team] = await client
+        .insert(knightHacks.HackerTeam)
+        .values({ hackathonId: READY_HACKATHON, name: "Bulk guard" })
+        .returning();
+      if (!team) throw new Error("Missing team fixture");
+      await client.insert(knightHacks.HackerTeamMember).values({
+        attendeeId: PLAIN_ATTENDEE,
+        hackathonId: READY_HACKATHON,
+        teamId: team.id,
+        role: "owner",
+      });
+      const input = {
+        attendeeIds: [PLAIN_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "checkedin" as const,
+      };
+      await expect(caller.hacker.previewBulk(input)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+      await expect(caller.hacker.confirmBulk(input)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+      const [attendee] = await client
+        .select()
+        .from(knightHacks.HackerAttendee)
+        .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
+      expect(attendee?.checkedInAt).toBeNull();
+      await client
+        .delete(knightHacks.HackerTeam)
+        .where(eq(knightHacks.HackerTeam.id, team.id));
+    });
+
     it("confirmBulk refuses on an unconfigured hackathon", async () => {
       // The readiness gate on the bulk path had a positive control and no
       // negative case, so deleting it entirely left the suite green while an
@@ -1946,12 +1979,41 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           userId,
         });
 
+        const [team] = await client
+          .insert(knightHacks.HackerTeam)
+          .values({ hackathonId: READY_HACKATHON, name: "Deletion succession" })
+          .returning();
+        if (!team) throw new Error("Missing team fixture");
+        await client.insert(knightHacks.HackerTeamMember).values([
+          {
+            attendeeId,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "owner",
+          },
+          {
+            attendeeId: SECOND_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "member",
+          },
+        ]);
         await expect(
           caller.hacker.deleteApplication({
             attendeeId,
             confirmed: true,
           }),
         ).resolves.toEqual({ deleted: true });
+        const remaining = await client
+          .select()
+          .from(knightHacks.HackerTeamMember)
+          .where(eq(knightHacks.HackerTeamMember.teamId, team.id));
+        expect(remaining).toMatchObject([
+          { attendeeId: SECOND_ATTENDEE, role: "owner" },
+        ]);
+        await client
+          .delete(knightHacks.HackerTeam)
+          .where(eq(knightHacks.HackerTeam.id, team.id));
 
         const [application, legacy, profile, revision, command] =
           await Promise.all([

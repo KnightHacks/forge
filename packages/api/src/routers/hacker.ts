@@ -28,6 +28,7 @@ import {
   Hacker,
   HackerAttendee,
   HackerParticipantCommand,
+  HackerTeamMember,
 } from "@forge/db/schemas/knight-hacks";
 import {
   HACKATHON_SENDING_STATUSES,
@@ -53,6 +54,10 @@ import {
   createAdminAuditEvent,
 } from "../utils/audit/service";
 import { getDiscordEngagement } from "../utils/discord/engagement";
+import {
+  lockHackerTeams,
+  removeHackerTeamMember,
+} from "../utils/hacker-teams/teams";
 import {
   redactHackerBlacklist,
   redactHackerSkipReasons,
@@ -917,6 +922,8 @@ export const hackerRouter = createTRPCRouter({
       }
 
       return db.transaction(async (tx) => {
+        if (input.status === "checkedin")
+          await lockHackerTeams(tx, input.hackathonId);
         const { sending, skipped } = await resolveBulkTargets(tx, input, true);
 
         if (sending.length === 0) {
@@ -1040,6 +1047,7 @@ export const hackerRouter = createTRPCRouter({
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       return db.transaction(async (tx) => {
+        await lockHackerTeams(tx, input.hackathonId);
         const { deleting, skipped } = await resolveBulkDeleteTargets(
           tx,
           input,
@@ -1337,6 +1345,11 @@ export const hackerRouter = createTRPCRouter({
       const auditActor = await captureAdminAuditActor(ctx.session.user);
 
       return db.transaction(async (tx) => {
+        const [scope] = await tx
+          .select({ hackathonId: HackerAttendee.hackathonId })
+          .from(HackerAttendee)
+          .where(eq(HackerAttendee.id, input.attendeeId));
+        if (scope) await lockHackerTeams(tx, scope.hackathonId);
         const [application] = await tx
           .select({
             attendeeId: HackerAttendee.id,
@@ -1417,6 +1430,24 @@ async function resolveBulkTargets(
   sending: Omit<StatusMailRecipient, "status">[];
   skipped: BulkSkip[];
 }> {
+  if (input.status === "checkedin") {
+    const [membership] = await executor
+      .select({ attendeeId: HackerTeamMember.attendeeId })
+      .from(HackerTeamMember)
+      .where(
+        and(
+          eq(HackerTeamMember.hackathonId, input.hackathonId),
+          inArray(HackerTeamMember.attendeeId, input.attendeeIds),
+        ),
+      )
+      .limit(1);
+    if (membership)
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "Use Hackathon Check-in for hackers with a team or pending join request so their class preference is honored.",
+      });
+  }
   const base = executor
     .select({
       attendeeId: HackerAttendee.id,
@@ -1619,6 +1650,9 @@ async function deleteApplications(
   const hackerIds = [...new Set(applications.map((row) => row.hackerId))];
   const userIds = [...new Set(applications.map((row) => row.userId))];
   const hackathonIds = [...new Set(applications.map((row) => row.hackathonId))];
+
+  for (const attendeeId of attendeeIds)
+    await removeHackerTeamMember(tx, attendeeId);
 
   const clearedCommands = await tx
     .delete(HackerParticipantCommand)

@@ -859,11 +859,23 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       .where(eq(knightHacks.HackerAttendee.hackathonId, hackathon.id));
     await caller.getCheckInPass({ idempotencyKey: "withdraw-pass" });
 
+    const { changeHackerTeam } = await import("../../utils/hacker-teams/teams");
+    await changeHackerTeam(userId, hackathon.id, {
+      action: "create",
+      name: "Leaving",
+    });
     const withdrawal = {
       acknowledgement: HACKER_WITHDRAWAL_ACKNOWLEDGEMENT,
       idempotencyKey: "withdraw-once",
     } as const;
     const first = await caller.withdrawApplication(withdrawal);
+    expect(
+      await client
+        .select()
+        .from(knightHacks.HackerTeam)
+        .where(eq(knightHacks.HackerTeam.hackathonId, hackathon.id)),
+    ).toEqual([]);
+
     await expect(caller.withdrawApplication(withdrawal)).resolves.toEqual(
       first,
     );

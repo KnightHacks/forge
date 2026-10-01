@@ -14,6 +14,7 @@ import { guildRouter } from "./routers/guild";
 import { hackathonRouter } from "./routers/hackathon";
 import { hackathonEventRouter } from "./routers/hackathon-event";
 import { hackerRouter } from "./routers/hacker";
+import { hackerTeamRouter } from "./routers/hacker-team";
 import { issuesRouter } from "./routers/issues";
 import { judgingRouter } from "./routers/judging";
 import { memberRouter } from "./routers/member";
@@ -55,6 +56,7 @@ export interface AppRouterShape {
   memberAdmin: typeof memberAdminRouter;
   profilePicture: typeof profilePictureRouter;
   pointStore: typeof pointStoreRouter;
+  hackerTeam: typeof hackerTeamRouter;
   projects: typeof projectsRouter;
   qr: typeof qrRouter;
   resume: typeof resumeRouter;
@@ -89,6 +91,7 @@ const appRouterRecord: AppRouterRecord = {
   memberAdmin: memberAdminRouter,
   profilePicture: profilePictureRouter,
   pointStore: pointStoreRouter,
+  hackerTeam: hackerTeamRouter,
   projects: projectsRouter,
   qr: qrRouter,
   resume: resumeRouter,

@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session } from "@forge/auth/server";
 import type { SelectMember } from "@forge/db/schemas/knight-hacks";
 import { Permissions, User } from "@forge/db/schemas/auth";
-import { FormResponse, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  FormResponse,
+  HackerTeamMember,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import { MEMBER_SIGNUP_FORM_ID } from "@forge/validators";
 
 import { memberRouter } from "../../routers/member";
@@ -159,7 +163,21 @@ function createSelectMock(readIdentityRows: () => unknown[]) {
     where,
   });
 
-  return vi.fn(() => ({ from: vi.fn(() => chain) }));
+  return vi.fn(() => ({
+    from: vi.fn((table: unknown) => {
+      if (table !== HackerTeamMember) return chain;
+      const empty: SelectChain = Object.assign(Promise.resolve<unknown[]>([]), {
+        innerJoin: (): SelectChain => empty,
+        leftJoin: (): SelectChain => empty,
+        orderBy: () => Promise.resolve<unknown[]>([]),
+        where: () =>
+          Object.assign(Promise.resolve<unknown[]>([]), {
+            limit: () => Promise.resolve<unknown[]>([]),
+          }),
+      });
+      return empty;
+    }),
+  }));
 }
 
 function createInsertMock(audit: ReturnType<typeof createAuditRecorder>) {

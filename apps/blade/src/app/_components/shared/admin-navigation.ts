@@ -51,6 +51,7 @@ export interface AdminNavigationAccess {
   hackathonEvents?: boolean;
   hackers?: boolean;
   pointStore?: boolean;
+  teams?: boolean;
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
@@ -194,6 +195,14 @@ export const adminNavigationItems = [
     label: "Hackers",
   },
   {
+    access: "teams",
+    group: "Hackathon",
+    href: "/admin/teams",
+    icon: UsersRound,
+    id: "teams",
+    label: "Teams",
+  },
+  {
     access: "pointStore",
     group: "Hackathon",
     href: "/admin/point-store",
@@ -294,6 +303,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
       pathname.startsWith("/admin/hackathon/")
     );
   if (id === "hackers") return pathname.startsWith("/admin/hackers");
+  if (id === "teams") return pathname.startsWith("/admin/teams");
   if (id === "pointStore") return pathname.startsWith("/admin/point-store");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
