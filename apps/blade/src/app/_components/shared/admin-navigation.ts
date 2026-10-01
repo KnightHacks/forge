@@ -16,6 +16,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Swords,
   UserSearch,
   UsersRound,
@@ -49,6 +50,7 @@ export interface AdminNavigationAccess {
   hackathonCheckIn?: boolean;
   hackathonEvents?: boolean;
   hackers?: boolean;
+  pointStore?: boolean;
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
@@ -192,6 +194,14 @@ export const adminNavigationItems = [
     label: "Hackers",
   },
   {
+    access: "pointStore",
+    group: "Hackathon",
+    href: "/admin/point-store",
+    icon: ShoppingBag,
+    id: "pointStore",
+    label: "Point Store",
+  },
+  {
     access: "hackathonEvents",
     group: "Hackathon",
     href: "/admin/hackathon-events",
@@ -284,6 +294,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
       pathname.startsWith("/admin/hackathon/")
     );
   if (id === "hackers") return pathname.startsWith("/admin/hackers");
+  if (id === "pointStore") return pathname.startsWith("/admin/point-store");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "companies") return pathname.startsWith("/admin/companies");

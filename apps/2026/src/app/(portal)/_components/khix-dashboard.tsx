@@ -30,6 +30,7 @@ import {
   QrCode,
   ScrollText,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Trophy,
   UserRound,
@@ -1103,7 +1104,14 @@ export function KhixDashboardShell({
   navAction,
   sessionUser,
 }: {
-  activeItem?: "judging" | "events" | "journey" | "lore" | "profile" | "status";
+  activeItem?:
+    | "merch"
+    | "judging"
+    | "events"
+    | "journey"
+    | "lore"
+    | "profile"
+    | "status";
   children: ReactNode;
   navAction?: ReactNode;
   sessionUser?: KhixSessionUser;
@@ -1502,6 +1510,39 @@ export function KhixDashboardShell({
                   </span>
                 </button>
               )}
+              {eventsUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "merch" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/merch"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <ShoppingBag className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Merch Store</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="Merch Store locked until check-in"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <ShoppingBag className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Merch Store <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               {journeyUnlocked ? (
                 <Link
                   className={joinClasses(
@@ -1613,7 +1654,8 @@ export function KhixDashboardShell({
             styles.main,
             activeItem === "status" && styles.statusMain,
             activeItem === "events" && styles.eventsMain,
-            activeItem === "journey" && styles.journeyMain,
+            (activeItem === "journey" || activeItem === "merch") &&
+              styles.journeyMain,
             activeItem === "lore" && styles.loreMain,
             activeItem === "profile" && styles.profileMain,
           )}

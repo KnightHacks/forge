@@ -18,6 +18,7 @@ import { issuesRouter } from "./routers/issues";
 import { judgingRouter } from "./routers/judging";
 import { memberRouter } from "./routers/member";
 import { memberAdminRouter } from "./routers/member-admin";
+import { pointStoreRouter } from "./routers/point-store";
 import { profilePictureRouter } from "./routers/profile-picture";
 import { projectsRouter } from "./routers/projects";
 import { qrRouter } from "./routers/qr";
@@ -53,6 +54,7 @@ export interface AppRouterShape {
   member: typeof memberRouter;
   memberAdmin: typeof memberAdminRouter;
   profilePicture: typeof profilePictureRouter;
+  pointStore: typeof pointStoreRouter;
   projects: typeof projectsRouter;
   qr: typeof qrRouter;
   resume: typeof resumeRouter;
@@ -86,6 +88,7 @@ const appRouterRecord: AppRouterRecord = {
   member: memberRouter,
   memberAdmin: memberAdminRouter,
   profilePicture: profilePictureRouter,
+  pointStore: pointStoreRouter,
   projects: projectsRouter,
   qr: qrRouter,
   resume: resumeRouter,

@@ -1,0 +1,2 @@
+DROP INDEX "point_store_purchase_balance_idx";--> statement-breakpoint
+CREATE INDEX "point_store_purchase_balance_idx" ON "knight_hacks_point_store_purchase" USING btree ("attendee_id","hackathon_id");

@@ -170,6 +170,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     hackathonCheckIn: canAccessHackathonCheckIn(permissions),
     hackathonEvents: canAccessHackathonEvents(permissions),
     hackers: canAccessHackerAdmin(permissions),
+    pointStore: permissions.EDIT_HACKERS === true,
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),

@@ -88,4 +88,17 @@ describe("hackathon admin navigation", () => {
       false,
     );
   });
+
+  it("highlights Point Store without selecting another hackathon destination", () => {
+    expect(isAdminNavigationActive("pointStore", "/admin/point-store")).toBe(
+      true,
+    );
+    expect(isAdminNavigationActive("pointStore", "/admin/hackers")).toBe(false);
+    expect(isAdminNavigationActive("hackers", "/admin/point-store")).toBe(
+      false,
+    );
+    expect(isAdminNavigationActive("hackathon", "/admin/point-store")).toBe(
+      false,
+    );
+  });
 });
