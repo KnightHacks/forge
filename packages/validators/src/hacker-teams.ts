@@ -38,6 +38,7 @@ export type HackerTeamAction = z.infer<typeof hackerTeamActionSchema>;
 export const hackerTeamScopeSchema = z.object({ hackathonId: teamId }).strict();
 export const hackerTeamAdminSearchSchema = hackerTeamSearchSchema.extend({
   hackathonId: teamId,
+  together: z.boolean().optional(),
 });
 export const hackerTeamAdminActionSchema = z
   .object({ hackathonId: teamId, change: hackerTeamActionSchema })

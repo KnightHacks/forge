@@ -77,3 +77,13 @@ None blocking implementation.
 - Debounced KHIX search by 250ms. A real mobile browser check typed a full search string with one getTeams request and preserved focus.
 - The avatar/email suggestion does not match the current SDK session boundary. Dashboard and Journey use the same displayName-only session DTO as Teams; expanding identity data is outside this feature.
 - Blade screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5924164509
+
+## UI follow-up, October 1
+
+- Remove class preferences from the hacker directory. Keep them on Your team with an information dialog explaining meal and career fair turns, attending together, and staggering work. Remove faction examples, the create-team default sentence, and class-retention copy from hacker departure confirmations.
+- Show the configured individual class name. Screenshot fixtures now use individual names without faction prefixes.
+- Put Blade's hackathon selector, search, and new together/separate filter in one responsive row. Filter on the server before pagination and reset the page when filters change.
+- Existing class headcounts are under Hacks → Hackathons → select a hackathon → Classes. They count Blade assignments, not Discord role membership.
+- Previous head 5961f5fe passed CI and received CodeRabbit approval with both findings resolved. Revalidate this follow-up and refresh PR evidence before handoff.
+- Follow-up static gate passed, including both apps and all shared consumers. All 10 targeted team integration tests passed. Browser checks passed for help focus, copy, class labels, combined filters, pagination reset, and 320px overflow. Standard scoped API/validation and UI reviewers found no issues.
+- Updated screenshot gallery: https://github.com/KnightHacks/forge/pull/588#issuecomment-5932823992

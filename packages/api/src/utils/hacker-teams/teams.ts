@@ -129,6 +129,7 @@ export async function searchHackerTeams(
   page: number,
   ownerId?: string,
   admin = false,
+  together?: boolean,
 ) {
   const search = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
   const ids = await db
@@ -149,6 +150,7 @@ export async function searchHackerTeams(
     .where(
       and(
         eq(HackerTeam.hackathonId, hackathonId),
+        together === undefined ? undefined : eq(HackerTeam.together, together),
         or(
           ilike(HackerTeam.name, search),
           ilike(

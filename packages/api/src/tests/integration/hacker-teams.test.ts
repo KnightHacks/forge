@@ -425,6 +425,80 @@ describe.skipIf(!canRunDatabaseTests())("hacker teams", () => {
       results[1].status === "fulfilled" ? 2 : 1,
     );
   });
+  it("filters class preferences before pagination and combines them with search", async () => {
+    const f = await fixture();
+    await db.insert(schema.HackerTeam).values([
+      ...Array.from({ length: 21 }, (_, i) => ({
+        id: randomUUID(),
+        hackathonId: f.hackathonId,
+        name: `A together ${i}`,
+        together: true,
+      })),
+      {
+        id: randomUUID(),
+        hackathonId: f.hackathonId,
+        name: "Z separate",
+        together: false,
+      },
+    ]);
+    const separate = await teams.searchHackerTeams(
+      f.hackathonId,
+      "",
+      0,
+      undefined,
+      true,
+      false,
+    );
+    expect(separate.teams.map((team) => team.name)).toEqual(["Z separate"]);
+    expect(separate.hasMore).toBe(false);
+    const together = await teams.searchHackerTeams(
+      f.hackathonId,
+      "",
+      0,
+      undefined,
+      true,
+      true,
+    );
+    expect(together.teams).toHaveLength(20);
+    expect(together.teams.every((team) => team.together)).toBe(true);
+    expect(together.hasMore).toBe(true);
+    expect(
+      (
+        await teams.searchHackerTeams(
+          f.hackathonId,
+          "",
+          1,
+          undefined,
+          true,
+          true,
+        )
+      ).teams,
+    ).toHaveLength(2);
+    expect(
+      (
+        await teams.searchHackerTeams(
+          f.hackathonId,
+          "Forest",
+          0,
+          undefined,
+          true,
+          false,
+        )
+      ).teams,
+    ).toEqual([]);
+    expect(
+      (
+        await teams.searchHackerTeams(
+          f.hackathonId,
+          "Forest",
+          0,
+          undefined,
+          true,
+          true,
+        )
+      ).teams.map((team) => team.id),
+    ).toEqual([f.team.id]);
+  });
   it("requires explicit read/edit grants for organizers and audits changes", async () => {
     const f = await fixture();
     const { createCallerFactory, createTRPCRouter } =
@@ -477,6 +551,12 @@ describe.skipIf(!canRunDatabaseTests())("hacker teams", () => {
     expect(
       (await read.list({ hackathonId: f.hackathonId })).teams,
     ).toHaveLength(1);
+    expect(
+      (await read.list({ hackathonId: f.hackathonId, together: true })).teams,
+    ).toHaveLength(1);
+    expect(
+      (await read.list({ hackathonId: f.hackathonId, together: false })).teams,
+    ).toEqual([]);
     await expect(
       read.change({
         hackathonId: f.hackathonId,

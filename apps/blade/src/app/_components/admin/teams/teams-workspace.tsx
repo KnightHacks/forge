@@ -43,7 +43,6 @@ export function TeamsWorkspace({
   hackathonId?: string;
   canEdit: boolean;
 }) {
-  const router = useRouter();
   return (
     <main className={adminPageLayoutClassName}>
       <AdminPageHeader
@@ -52,26 +51,13 @@ export function TeamsWorkspace({
         icon={UsersRound}
         description="See who is building together and where each hacker checked in."
       />
-      <div className="max-w-sm">
-        <Label htmlFor="teams-hackathon">Hackathon</Label>
-        <Select
-          value={hackathonId ?? ""}
-          onValueChange={(id) => router.push(`/admin/teams?hackathonId=${id}`)}
-        >
-          <SelectTrigger id="teams-hackathon" className="mt-2 min-h-11">
-            <SelectValue placeholder="Select a hackathon" />
-          </SelectTrigger>
-          <SelectContent>
-            {hackathons.map((h) => (
-              <SelectItem key={h.id} value={h.id}>
-                {h.name || "Untitled hackathon"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
       {hackathonId ? (
-        <TeamList hackathonId={hackathonId} canEdit={canEdit} />
+        <TeamList
+          key={hackathonId}
+          hackathonId={hackathonId}
+          hackathons={hackathons}
+          canEdit={canEdit}
+        />
       ) : (
         <p className="text-muted-foreground">
           Create a hackathon to view its teams.
@@ -81,13 +67,20 @@ export function TeamsWorkspace({
   );
 }
 function TeamList({
+  hackathons,
   hackathonId,
   canEdit,
 }: {
   hackathonId: string;
+  hackathons: RouterOutputs["hackerTeam"]["hackathons"];
   canEdit: boolean;
 }) {
-  const [search, setSearch] = useState({ query: "", page: 0 });
+  const router = useRouter();
+  const [search, setSearch] = useState<{
+    query: string;
+    page: number;
+    together?: boolean;
+  }>({ query: "", page: 0 });
   const list = api.hackerTeam.list.useQuery({ hackathonId, ...search });
   const utils = api.useUtils();
   const [rename, setRename] = useState<Team | null>(null);
@@ -107,8 +100,28 @@ function TeamList({
   });
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="w-full max-w-md">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-full min-w-0 md:w-64">
+          <Label htmlFor="teams-hackathon">Hackathon</Label>
+          <Select
+            value={hackathonId}
+            onValueChange={(id) =>
+              router.push(`/admin/teams?hackathonId=${id}`)
+            }
+          >
+            <SelectTrigger id="teams-hackathon" className="mt-2 min-h-11">
+              <SelectValue placeholder="Select a hackathon" />
+            </SelectTrigger>
+            <SelectContent>
+              {hackathons.map((h) => (
+                <SelectItem key={h.id} value={h.id}>
+                  {h.name || "Untitled hackathon"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full min-w-0 md:w-auto md:flex-1">
           <Label htmlFor="organizer-team-search">
             Search by person or team name
           </Label>
@@ -116,9 +129,39 @@ function TeamList({
             id="organizer-team-search"
             value={search.query}
             maxLength={100}
-            onChange={(e) => setSearch({ query: e.target.value, page: 0 })}
+            onChange={(e) =>
+              setSearch({ ...search, query: e.target.value, page: 0 })
+            }
             className="mt-2 min-h-11"
           />
+        </div>
+        <div className="w-full md:w-48">
+          <Label htmlFor="teams-preference">Class preference</Label>
+          <Select
+            value={
+              search.together === undefined
+                ? "all"
+                : search.together
+                  ? "together"
+                  : "separate"
+            }
+            onValueChange={(value) =>
+              setSearch({
+                ...search,
+                page: 0,
+                together: value === "all" ? undefined : value === "together",
+              })
+            }
+          >
+            <SelectTrigger id="teams-preference" className="mt-2 min-h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All preferences</SelectItem>
+              <SelectItem value="together">Together</SelectItem>
+              <SelectItem value="separate">Separate</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         {!canEdit && <Badge variant="secondary">Read-only</Badge>}
       </div>

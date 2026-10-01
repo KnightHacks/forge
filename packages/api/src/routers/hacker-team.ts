@@ -36,6 +36,7 @@ export const hackerTeamRouter = {
         input.page,
         undefined,
         true,
+        input.together,
       );
     }),
   change: permProcedure

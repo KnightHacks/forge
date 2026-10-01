@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Crown, LockKeyhole, UsersRound } from "lucide-react";
+import { Crown, Info, LockKeyhole, UsersRound } from "lucide-react";
 
 import type {
   HackerParticipantInput,
@@ -20,6 +20,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@forge/ui/dialog";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
@@ -33,7 +34,7 @@ type HackerTeamAction = HackerParticipantInput<"changeTeam">;
 
 type Team = NonNullable<HackerParticipantOutput<"getTeams">["ownTeam"]>;
 const preferenceCopy =
-  "Stay together to attend with friends, or take separate classes to stagger your work and keep your project moving. Separate classes can cross Bloom and Blight; event times may still overlap.";
+  "Your class sets your turn for food and events like the career fair. Choose together to eat and attend as a team, or separate to stagger your turns so someone can keep working. Pick what suits how your team works and socializes.";
 
 export function KhixTeams() {
   const session = useHackerSession();
@@ -182,7 +183,7 @@ function TeamsContent() {
                           attendeeId: member.attendeeId,
                         },
                         title: `Remove ${member.name}?`,
-                        copy: "They can find another team before check-in. Existing class assignments stay unchanged.",
+                        copy: "They can find another team before check-in.",
                       })
                     }
                   >
@@ -202,15 +203,39 @@ function TeamsContent() {
             ))}
           </div>
           <div className="border-t border-white/10 pt-4">
-            <p className="font-semibold">
-              {ownTeam.together
-                ? "Same class, together"
-                : "Separate classes, staggered"}
-              {ownTeam.className ? ` · ${ownTeam.className}` : ""}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold">
+                {ownTeam.together ? "Together" : "Separate"}
+                {ownTeam.className ? ` · ${ownTeam.className}` : ""}
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-11 shrink-0"
+                    aria-label="About class preferences"
+                  >
+                    <Info className="size-4" aria-hidden="true" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)]">
+                  <DialogHeader>
+                    <DialogTitle>
+                      How do you like to spend the hackathon?
+                    </DialogTitle>
+                    <DialogDescription>{preferenceCopy}</DialogDescription>
+                  </DialogHeader>
+                  <p className="text-sm text-muted-foreground">
+                    Separate classes spread your team across the available
+                    turns. Some turns may still overlap.
+                  </p>
+                </DialogContent>
+              </Dialog>
+            </div>
             <p className={`${styles.journeyIntro} mt-2`}>
               {ownTeam.frozen
-                ? "Check-in has started. New joins and class preferences are locked. Leaving will not change anyone's class."
+                ? "Check-in has started. New joins and class preferences are locked."
                 : "Your first teammate's check-in locks membership and this preference."}
             </p>
           </div>
@@ -224,8 +249,8 @@ function TeamsContent() {
                 copy: owner
                   ? ownTeam.members.length === 1
                     ? "You are the last member. This deletes the team and its pending requests."
-                    : "A remaining teammate will become the owner at random. Your assigned class stays unchanged."
-                  : "Your assigned class stays unchanged. You can join another team only before checking in.",
+                    : "A remaining teammate will become the owner at random."
+                  : "You can join another team only before checking in.",
               })
             }
           >
@@ -357,7 +382,6 @@ function TeamsContent() {
                     {team.members.map((m) => m.name).join(" · ")}
                   </p>
                   <p className="mt-2 text-xs opacity-65">
-                    {team.together ? "Together" : "Separate classes"} ·{" "}
                     {team.frozen
                       ? "Locked after check-in"
                       : team.members.length === 4
@@ -531,12 +555,6 @@ function TeamEditor({
                 </p>
               )}
             </div>
-          )}
-          {!team && (
-            <p className="text-sm text-muted-foreground">
-              New teams attend together by default. You can change this in Team
-              settings before anyone checks in.
-            </p>
           )}
           <div className="flex justify-end gap-2">
             <Button
