@@ -26,6 +26,7 @@ import {
   getLeaderboard,
   getMyAttendance,
   getMyPoints,
+  getPointStore,
   getPortalSession,
   getPublicHackathon,
   getSchedule,
@@ -142,6 +143,10 @@ export const hackerParticipantV1Router: ReturnType<
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getMyAttendance)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getMyAttendance)
     .query(({ ctx }) => getMyAttendance(ctx)),
+  getPointStore: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getPointStore)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getPointStore)
+    .query(({ ctx }) => getPointStore(ctx)),
   getMyPoints: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getMyPoints)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getMyPoints)

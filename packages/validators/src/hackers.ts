@@ -246,6 +246,7 @@ export const hackerAwardPointsSchema = z.object({
  */
 export const hackerUpdateProfileSchema = z.object({
   attendeeId: z.string().uuid(),
+  isVip: z.boolean().optional(),
   country: z.enum(FORMS.COUNTRIES).optional(),
   discordUser: z.string().trim().min(1).max(255).optional(),
   /**

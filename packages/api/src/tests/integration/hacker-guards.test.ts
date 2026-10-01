@@ -305,6 +305,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .set({
         checkedInAt: null,
         checkedInBy: null,
+        isVip: false,
         lastStatusSendId: null,
         status: "pending",
       })
@@ -1233,6 +1234,59 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   });
 
   describe("correcting an application", () => {
+    it("lets editors toggle VIP for one hackathon and denies read-only callers", async () => {
+      const otherAttendee = "60000000-0000-4000-8000-0000000000ff";
+      await client.insert(knightHacks.HackerAttendee).values({
+        id: otherAttendee,
+        hackerId: PLAIN_HACKER,
+        hackathonId: UNREADY_HACKATHON,
+        status: "pending",
+      });
+      try {
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring("READ_HACKERS") })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        await expect(
+          caller.hacker.updateProfile({
+            attendeeId: PLAIN_ATTENDEE,
+            isVip: true,
+          }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        const before = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+        await caller.hacker.updateProfile({
+          attendeeId: PLAIN_ATTENDEE,
+          isVip: true,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: PLAIN_ATTENDEE }),
+        ).resolves.toMatchObject({
+          isVip: true,
+          points: before.points,
+          status: before.status,
+          email: before.email,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: otherAttendee }),
+        ).resolves.toMatchObject({ isVip: false });
+        await caller.hacker.updateProfile({
+          attendeeId: PLAIN_ATTENDEE,
+          isVip: false,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: PLAIN_ATTENDEE }),
+        ).resolves.toMatchObject({ isVip: false });
+      } finally {
+        await client
+          .delete(knightHacks.HackerAttendee)
+          .where(eq(knightHacks.HackerAttendee.id, otherAttendee));
+      }
+    });
+
     it("writes only the fields that were sent", async () => {
       const before = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
 

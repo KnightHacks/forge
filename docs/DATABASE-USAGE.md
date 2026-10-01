@@ -100,6 +100,13 @@ Notes:
 - `Project.deletedAt` provides officer-restorable soft deletion between imports; an authoritative re-import removes the prior inventory, including deleted rows.
 - A guest session stores only the SHA-256 hash of its random browser credential. Shared development backups drop judging rooms, judge identities, links, guest sessions, and presence rows.
 
+## Point store
+
+- `Hackathon.storeCatalogVisible`, `storeOpen`, and `storeLocation` configure that hackathon's catalog and pickup status. Closed is informational; catalog visibility gates hacker item reads.
+- `PointStoreItem` owns price, optional stock, untracked sold-out status, image key, archive state, and revision. Stock writes increment the revision so stale organizer forms cannot overwrite purchases.
+- `PointStorePurchase` records immutable item, price, quantity, hacker, and organizer snapshots. Voids restore purchasing power and optionally tracked stock without deleting the receipt. Deleting an application clears its attendee reference but retains its history.
+- `HackerAttendee.points` is the earned total used by Blade and KHIX, including manual adjustments. Purchases never update it. Spending power is this total minus non-voided store spending, clamped at zero after later point corrections. Event attendance entries remain the event-award history.
+
 ## Dynamic forms
 
 | Table export         | SQL table                           | Usage                                                                                                                                                             |

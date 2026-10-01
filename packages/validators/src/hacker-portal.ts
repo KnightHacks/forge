@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FORMS } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
+import { pointStoreCatalogDtoSchema } from "./point-store";
 import {
   hackerJudgingDtoSchema,
   hackerJudgingReadSchema,
@@ -520,6 +521,7 @@ export const hackerPortalV1InputSchemas = {
   getLeaderboard: hackerLeaderboardInputSchema,
   getMyAttendance: noInputSchema,
   getMyPoints: noInputSchema,
+  getPointStore: noInputSchema,
   getPublicHackathon: noInputSchema,
   getResume: noInputSchema,
   getSchedule: noInputSchema,
@@ -545,6 +547,7 @@ export interface HackerPortalV1OutputSchemaMap {
   getLeaderboard: typeof leaderboardDtoSchema;
   getMyAttendance: typeof attendanceDtoSchema;
   getMyPoints: typeof pointsDtoSchema;
+  getPointStore: typeof pointStoreCatalogDtoSchema;
   getPublicHackathon: typeof publicHackathonDtoSchema;
   getResume: z.ZodNullable<typeof resumeDtoSchema>;
   getSchedule: typeof scheduleDtoSchema;
@@ -570,6 +573,7 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   getLeaderboard: leaderboardDtoSchema,
   getMyAttendance: attendanceDtoSchema,
   getMyPoints: pointsDtoSchema,
+  getPointStore: pointStoreCatalogDtoSchema,
   getPublicHackathon: publicHackathonDtoSchema,
   getResume: resumeDtoSchema.nullable(),
   getSchedule: scheduleDtoSchema,

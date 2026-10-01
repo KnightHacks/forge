@@ -357,3 +357,14 @@ export function useInviteProjectMember() {
     client.inviteProjectMember(input),
   );
 }
+
+export function useHackerPointStore() {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    queryKey: [...hackerSdkQueryKeys.participant(portalKey), "point-store"],
+    queryFn: () => client.getPointStore(),
+    enabled: dashboard.data?.application?.status === "checkedin",
+    refetchInterval: 15_000,
+  });
+}
