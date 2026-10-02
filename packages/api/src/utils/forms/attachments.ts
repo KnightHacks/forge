@@ -40,7 +40,7 @@ async function ensureFormAssetsBucket() {
   }
 }
 
-function safeFileName(value: string) {
+export function safeFileName(value: string) {
   return value
     .normalize("NFKC")
     .replace(/[^a-zA-Z0-9._ -]+/g, "-")

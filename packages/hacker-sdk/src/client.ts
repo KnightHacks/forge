@@ -1,7 +1,12 @@
 import { createTRPCUntypedClient, httpBatchLink } from "@trpc/client";
 import { ZodError } from "zod";
 
-import { resumeDtoSchema } from "@forge/validators";
+import {
+  checkUploadMetadata,
+  PRINT_FILE_UPLOAD_POLICY,
+  resumeDtoSchema,
+  stagedPrintFileDtoSchema,
+} from "@forge/validators";
 
 import type {
   HackerParticipantInput,
@@ -9,6 +14,7 @@ import type {
   HackerParticipantProcedure,
   HackerParticipantV1Contract,
   HackerResumeDto,
+  HackerStagedPrintFileDto,
 } from "./contracts";
 import {
   HACKER_PARTICIPANT_V1_PROCEDURES,
@@ -40,6 +46,11 @@ export type HackerParticipantClient = {
     file: Blob,
     options: { fileName: string; idempotencyKey: string },
   ): Promise<HackerResumeDto>;
+  /** Stages one print file; pass the returned `fileId` to `submitPrintJob`. */
+  uploadPrintFile(
+    file: Blob,
+    options: { fileName: string },
+  ): Promise<HackerStagedPrintFileDto>;
 };
 
 export interface HackerParticipantClientConfig {
@@ -238,6 +249,32 @@ export function createHackerParticipantClient(
       });
       return readSdkJson<HackerResumeDto>(response, (value) =>
         resumeDtoSchema.parse(value),
+      );
+    },
+    async uploadPrintFile(file: Blob, options: { fileName: string }) {
+      // Same type and size rules Blade applies, so a bad file fails before
+      // it is sent. Blade still checks the bytes.
+      const check = checkUploadMetadata(PRINT_FILE_UPLOAD_POLICY, {
+        contentType: file.type,
+        fileName: options.fileName,
+        size: file.size,
+      });
+      if (!check.ok) {
+        throw new HackerSdkError({
+          code: "INVALID_PRINT_FILE",
+          fieldIssues: [{ code: check.reason, path: ["file"] }],
+          message: check.message,
+          retryable: false,
+        });
+      }
+      const body = new FormData();
+      body.set("file", file, options.fileName);
+      const response = await requestFetch(
+        `${adapterBasePath}/printing/upload`,
+        { body, method: "POST" },
+      );
+      return readSdkJson<HackerStagedPrintFileDto>(response, (value) =>
+        stagedPrintFileDtoSchema.parse(value),
       );
     },
   });

@@ -1,3 +1,5 @@
+import { PRINT_FILE_UPLOAD_POLICY } from "@forge/validators";
+
 import { HackerSdkError, parseHackerSdkError } from "./errors";
 import {
   DEFAULT_HACKER_SDK_ADAPTER_PATH,
@@ -11,6 +13,7 @@ const DEFAULT_BLADE_PATHS = {
   authorize: "/api/hacker/v1/auth/authorize",
   logout: "/api/hacker/v1/auth/logout",
   refresh: "/api/hacker/v1/auth/refresh",
+  printing: "/api/hacker/v1/printing",
   resume: "/api/hacker/v1/resume",
   revoke: "/api/hacker/v1/auth/revoke",
   token: "/api/hacker/v1/auth/token",
@@ -42,6 +45,9 @@ const PRIVATE_HEADERS = {
 
 const MAX_TRPC_REQUEST_BYTES = 1_048_576;
 const MAX_RESUME_REQUEST_BYTES = 5_200_000;
+/** One print file plus multipart framing; matches Blade's route. */
+const MAX_PRINT_FILE_REQUEST_BYTES =
+  PRINT_FILE_UPLOAD_POLICY.maxBytes + 1024 * 1024;
 
 export interface HackerSdkNextOptions {
   /** The Blade deployment which owns participant data and portal auth. */
@@ -323,7 +329,7 @@ function expectedContentType(path: string, request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   if (path.startsWith("trpc/"))
     return contentType.startsWith("application/json");
-  if (path === "resume/upload")
+  if (path === "resume/upload" || path === "printing/upload")
     return contentType.startsWith("multipart/form-data");
   return contentType.startsWith("application/json");
 }
@@ -623,7 +629,8 @@ export function createHackerSdkNextHandler(
 
     const isTrpc = path.startsWith("trpc/");
     const isResume = path.startsWith("resume/");
-    if (!isTrpc && !isResume) {
+    const isPrinting = path === "printing/upload";
+    if (!isTrpc && !isResume && !isPrinting) {
       return jsonError(
         new HackerSdkError({
           code: "FORBIDDEN",
@@ -664,7 +671,11 @@ export function createHackerSdkNextHandler(
       try {
         requestBody = await readReplayableBody(
           request,
-          isResume ? MAX_RESUME_REQUEST_BYTES : MAX_TRPC_REQUEST_BYTES,
+          isPrinting
+            ? MAX_PRINT_FILE_REQUEST_BYTES
+            : isResume
+              ? MAX_RESUME_REQUEST_BYTES
+              : MAX_TRPC_REQUEST_BYTES,
         );
       } catch {
         return jsonError(
@@ -681,7 +692,10 @@ export function createHackerSdkNextHandler(
     const cookies = parseCookies(request);
     let accessToken = cookies.get(cookieNames.access);
     const refreshToken = cookies.get(cookieNames.refresh);
-    const targetBase = new URL(isTrpc ? paths.trpc : paths.resume, bladeOrigin);
+    const targetBase = new URL(
+      isTrpc ? paths.trpc : isPrinting ? paths.printing : paths.resume,
+      bladeOrigin,
+    );
     const targetSuffix = path.slice(path.indexOf("/") + 1);
     targetBase.pathname = `${targetBase.pathname.replace(/\/$/, "")}/${targetSuffix}`;
     targetBase.search = requestUrl.search;
