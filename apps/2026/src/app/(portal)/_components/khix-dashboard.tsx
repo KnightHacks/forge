@@ -1112,6 +1112,7 @@ export function KhixDashboardShell({
     | "events"
     | "journey"
     | "lore"
+    | "printing"
     | "profile"
     | "status";
   children: ReactNode;
@@ -1617,26 +1618,44 @@ export function KhixDashboardShell({
                   </span>
                 </button>
               )}
-              <button
-                type="button"
-                className={joinClasses(
-                  styles.railLink,
-                  styles.railButton,
-                  styles.railLinkLocked,
-                )}
-                aria-label="3D printing page locked"
-                disabled
-              >
-                <span className={styles.railIcon} aria-hidden="true">
-                  <Printer className="size-4" />
-                </span>
-                <span className={styles.railLinkText}>
-                  <span className={styles.railLockedLabel}>
-                    <span className={styles.railLinkLabel}>3D Printing</span>
-                    <LockKeyhole className={styles.railLockIcon} />
+              {eventsUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "printing" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/printing"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Printer className="size-4" />
                   </span>
-                </span>
-              </button>
+                  <span className={styles.railLinkText}>
+                    <span className={styles.railLinkLabel}>3D Printing</span>
+                  </span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="3D printing page locked until check-in"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <Printer className="size-4" />
+                  </span>
+                  <span className={styles.railLinkText}>
+                    <span className={styles.railLockedLabel}>
+                      <span className={styles.railLinkLabel}>3D Printing</span>
+                      <LockKeyhole className={styles.railLockIcon} />
+                    </span>
+                  </span>
+                </button>
+              )}
               <Link
                 className={joinClasses(
                   styles.railLink,
@@ -3685,7 +3704,7 @@ function CountdownUnit({
   );
 }
 
-function StatusStage({
+export function StatusStage({
   action,
   body,
   countdown,
