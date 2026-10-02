@@ -36,10 +36,11 @@ Action:
 
 Expected observations:
 
-- `allowedActions` has `use_3d_printing` false for the confirmed hacker and true
-  for the checked-in one.
 - The rail shows a locked `3D Printing` item for the confirmed hacker and a link
-  to `/dashboard/printing` for the checked-in one.
+  to `/dashboard/printing` for the checked-in one, decided from
+  `application.status` like Events (no `use_3d_printing` dashboard action; see
+  `status.md`).
+- Opening `/dashboard/printing` as the confirmed hacker shows the locked stage.
 
 ### TC-002: Checked-in hacker submits a job
 
@@ -207,6 +208,68 @@ Action:
 Expected observations:
 
 - Only the 25-hour-old unclaimed file's row and object are removed.
+
+### TC-012: Ready-time estimates
+
+Setup:
+
+- Fixed `now`. Default settings (no configuration row: 60 minutes, 1 printer).
+- Jobs in submission order: A `printing` (started 20 minutes ago), B
+  `received`, C `needs_clarification`, D `received`, E `ready_for_pickup`.
+
+Action:
+
+- Call `estimateReadyTimes`, then `listPrintJobs` as the owner of D, then
+  repeat with `printerCount` 2.
+
+Expected observations:
+
+- A: position 1, ready at start + 60 minutes (40 minutes from `now`).
+- B: position 2, ready at `now` + 120 minutes. D: position 3, `now` + 180
+  minutes, and the hacker sees 2 jobs ahead.
+- C and E have no position or estimate.
+- With 2 printers, B is `now` + 60 minutes and D is `now` + 120 minutes.
+- `listPrintJobs.queue` reports 3 waiting and an estimated wait of 240 minutes
+  with 1 printer.
+
+### TC-013: Organizer ready-time override
+
+Setup:
+
+- Job D from TC-012 and an organizer with `PRINTING_QUEUE`.
+
+Action:
+
+- Set D's exact ready time to 30 minutes from now, reload as the hacker, clear
+  it, then set it again and move D to `ready_for_pickup`.
+
+Expected observations:
+
+- After setting, the hacker sees the organizer's time, and B's estimate does
+  not change.
+- No DM or email is sent for either change. Each records
+  `printing.job.estimate_updated`.
+- After clearing, the computed estimate is back.
+- After `ready_for_pickup`, `estimatedReadyAt` is null in the database.
+
+### TC-014: Estimate settings and disclaimer
+
+Setup:
+
+- An organizer and a checked-in hacker.
+
+Action:
+
+- Save print time 45 and 2 printers, then open the KH IX printing page.
+
+Expected observations:
+
+- Configuration stores both values and records
+  `printing.estimate_settings.updated`.
+- The disclaimer names about 45 minutes per print and shows the waiting count
+  and estimated wait using 2 printers.
+- A status change to `printing` sends a DM and an email that include the
+  estimated ready time and a link to the printing page.
 
 ## Negative and regression cases
 
@@ -422,6 +485,22 @@ Expected observations:
 - Both are refused with a validation error on the note. The job stays
   `received`, and no DM or email is sent.
 - Updating to `printing` with no note succeeds.
+
+### TC-NEG-015: Invalid estimate input
+
+Setup:
+
+- An organizer and a `cancelled` job.
+
+Action:
+
+- Save print time 0, print time 601, or printer count 0. Set an override in the
+  past, more than 7 days out, or on the `cancelled` job.
+
+Expected observations:
+
+- Each is refused with a validation error. Stored values are unchanged, and the
+  database checks reject the same bounds if the API is bypassed.
 
 ### TC-REG-001: Existing permissions and adapter routes
 
