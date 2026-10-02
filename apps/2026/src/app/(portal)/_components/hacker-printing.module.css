@@ -1,0 +1,353 @@
+.page {
+  width: min(100%, 58rem);
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 3vw, 2rem) 4rem;
+  color: var(--khix-ink);
+  overflow-wrap: anywhere;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+.eyebrow {
+  color: var(--khix-gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.header h1 {
+  font-family: var(--khix-display-font);
+  font-size: clamp(2.8rem, 7vw, 4.5rem);
+  line-height: 1;
+  margin: 0.5rem 0 0.8rem;
+}
+.header > p:last-child {
+  opacity: 0.75;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.notice {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--khix-gold) 45%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--khix-gold) 8%, transparent);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.noticeIcon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.15rem;
+  color: var(--khix-gold);
+}
+.noticeQueue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin-top: 0.5rem;
+  opacity: 0.85;
+}
+.notice strong {
+  color: var(--khix-gold);
+}
+
+.panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  margin: 1.5rem 0;
+  background: color-mix(in srgb, var(--khix-plum-shadow) 90%, white 10%);
+  border: 1px solid color-mix(in srgb, var(--khix-ink) 16%, transparent);
+  border-radius: 1rem;
+  box-shadow: 0 12px 28px #0002;
+}
+.panel h2,
+.jobs h2 {
+  font-family: var(--khix-display-font);
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+.panel > button {
+  justify-self: start;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+.fieldLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.hint {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  opacity: 0.7;
+}
+.textarea {
+  min-height: 7rem;
+  background: var(--khix-near-black-violet);
+  font-size: 1rem;
+}
+
+.fileList {
+  display: grid;
+  gap: 0.5rem;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--khix-ink) 16%, transparent);
+  border-radius: 0.7rem;
+  background: var(--khix-near-black-violet);
+}
+.file[data-state="uploaded"] .fileState {
+  color: color-mix(in srgb, var(--khix-leaf-green) 55%, white);
+}
+.file[data-state="failed"] {
+  border-color: hsl(var(--destructive));
+}
+.file[data-state="failed"] .fileState,
+.file[data-state="failed"] .fileMeta {
+  color: color-mix(in srgb, hsl(var(--destructive)) 40%, white);
+}
+.fileState {
+  flex-shrink: 0;
+}
+.fileText {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.fileName {
+  overflow: hidden;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fileMeta {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+.fileRemove {
+  display: grid;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 0.5rem;
+}
+.fileRemove:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--khix-ink) 10%, transparent);
+}
+.fileRemove:disabled {
+  opacity: 0.4;
+}
+
+.picker {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px dashed var(--khix-forest-green);
+  border-radius: 0.7rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.picker:hover {
+  border-color: var(--khix-leaf-green);
+}
+.picker[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fileWarning {
+  font-size: 0.85rem;
+  color: color-mix(in srgb, hsl(var(--destructive)) 40%, white);
+}
+.picker:focus-within,
+.fileRemove:focus-visible {
+  outline: 2px solid var(--khix-gold);
+  outline-offset: 3px;
+}
+
+.jobs {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+.empty {
+  padding: 2rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--khix-ink) 25%, transparent);
+  border-radius: 1rem;
+  text-align: center;
+  opacity: 0.75;
+}
+.jobList {
+  display: grid;
+  gap: 1rem;
+}
+
+/* A print job reads like a numbered queue ticket: the stub holds the place in line. */
+.job {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--khix-plum-shadow) 90%, white 10%);
+  border: 1px solid color-mix(in srgb, var(--khix-ink) 20%, transparent);
+  border-radius: 1rem;
+}
+.ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  border-right: 2px dashed color-mix(in srgb, var(--khix-ink) 22%, transparent);
+  background: var(--khix-near-black-violet);
+  opacity: 0.6;
+}
+.ticketLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ticketNumber {
+  font-family: var(--khix-display-font);
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.job[data-status="received"] .ticket,
+.job[data-status="printing"] .ticket {
+  opacity: 1;
+}
+.job[data-status="printing"] {
+  border-color: var(--khix-gold);
+}
+.job[data-status="printing"] .ticket,
+.job[data-status="printing"] .status {
+  color: var(--khix-gold);
+}
+.job[data-status="ready_for_pickup"] {
+  border-color: var(--khix-leaf-green);
+}
+.job[data-status="ready_for_pickup"] .status {
+  color: color-mix(in srgb, var(--khix-leaf-green) 45%, white);
+}
+.job[data-status="needs_clarification"] {
+  border-color: hsl(var(--destructive));
+}
+.job[data-status="needs_clarification"] .status {
+  color: color-mix(in srgb, hsl(var(--destructive)) 40%, white);
+}
+.job[data-status="picked_up"],
+.job[data-status="cancelled"] {
+  opacity: 0.7;
+}
+
+.jobBody {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 1.1rem 1.25rem;
+}
+.jobTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+.status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.submitted {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.callout {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.6rem;
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.note {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  opacity: 0.85;
+}
+.estimate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.jobFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+.files {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+.cancel {
+  min-height: 44px;
+}
+
+.skeleton {
+  height: 12rem;
+  margin: 1.5rem 0;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--khix-plum-shadow) 90%, white 10%);
+  opacity: 0.6;
+}
+
+@media (max-width: 30rem) {
+  .job {
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+  }
+  .ticketNumber {
+    font-size: 1.7rem;
+  }
+  .jobBody {
+    padding: 0.9rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .file :global(.animate-spin) {
+    animation: none;
+  }
+}

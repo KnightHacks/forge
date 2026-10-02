@@ -35,6 +35,8 @@ import {
   JudgingRoomAccessLink,
   JudgingRoomPresence,
   Member,
+  PrintJob,
+  PrintJobFile,
   Project,
   ProjectChallenge,
   ProjectMember,
@@ -506,6 +508,25 @@ export const EventAttendeeRelations = relations(EventAttendee, ({ one }) => ({
     fields: [EventAttendee.checkedInBy],
     references: [User.id],
     relationName: "eventCheckInOperator",
+  }),
+}));
+
+export const PrintJobRelations = relations(PrintJob, ({ many, one }) => ({
+  attendee: one(HackerAttendee, {
+    fields: [PrintJob.hackerAttendeeId],
+    references: [HackerAttendee.id],
+  }),
+  files: many(PrintJobFile),
+  hackathon: one(Hackathon, {
+    fields: [PrintJob.hackathonId],
+    references: [Hackathon.id],
+  }),
+}));
+
+export const PrintJobFileRelations = relations(PrintJobFile, ({ one }) => ({
+  job: one(PrintJob, {
+    fields: [PrintJobFile.printJobId],
+    references: [PrintJob.id],
   }),
 }));
 

@@ -23,12 +23,14 @@ import type {
 import { WITHDRAWAL_ACKNOWLEDGEMENT } from "@forge/hacker-sdk";
 import {
   HackerSdkProvider,
+  useCancelPrintJob,
   useConfirmHackerAttendance,
   useHackerApplication,
   useHackerAttendance,
   useHackerDashboard,
   useHackerLeaderboard,
   useHackerPoints,
+  useHackerPrintJobs,
   useHackerResume,
   useHackerSchedule,
   useHackerSdkClient,
@@ -37,9 +39,12 @@ import {
   useIssueHackerCheckInPass,
   usePublicHackathon,
   useRemoveHackerResume,
+  useRemoveStagedPrintFile,
   useSubmitHackerApplication,
+  useSubmitPrintJob,
   useUpdateHackerParticipant,
   useUploadHackerResume,
+  useUploadPrintFile,
   useWithdrawHackerApplication,
 } from "@forge/hacker-sdk/react";
 import { toast } from "@forge/ui/toast";
@@ -748,5 +753,45 @@ export function useHackerProfileFlow() {
       return client.resumeDownloadPath;
     },
     uploadMutation,
+  };
+}
+
+/**
+ * 3D printing for a checked-in hacker. Submit and cancel each hold one
+ * idempotency key per payload, so a retried click cannot create a second job
+ * or cancel twice.
+ */
+export function useHackerPrintingFlow() {
+  const jobsQuery = useHackerPrintJobs();
+  const uploadMutation = useUploadPrintFile();
+  const removeMutation = useRemoveStagedPrintFile();
+  const submitMutation = useSubmitPrintJob();
+  const cancelMutation = useCancelPrintJob();
+  const submitKey = useIdempotencyLease("print-submit");
+  const cancelKey = useIdempotencyLease("print-cancel");
+
+  return {
+    cancel: async (jobId: string) => {
+      const job = await cancelMutation.mutateAsync({
+        idempotencyKey: cancelKey.acquire({ jobId }),
+        jobId,
+      });
+      cancelKey.release();
+      return job;
+    },
+    cancelMutation,
+    jobsQuery,
+    removeFile: (fileId: string) => removeMutation.mutateAsync({ fileId }),
+    submit: async (input: { description: string; fileIds: string[] }) => {
+      const job = await submitMutation.mutateAsync({
+        ...input,
+        idempotencyKey: submitKey.acquire(input),
+      });
+      submitKey.release();
+      return job;
+    },
+    submitMutation,
+    uploadFile: (file: File) =>
+      uploadMutation.mutateAsync({ file, fileName: file.name }),
   };
 }

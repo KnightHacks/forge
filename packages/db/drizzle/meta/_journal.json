@@ -407,6 +407,13 @@
       "when": 1790824936838,
       "tag": "0057_giant_risque",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1790905156682,
+      "tag": "0058_fresh_zombie",
+      "breakpoints": true
     }
   ]
 }
