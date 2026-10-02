@@ -1,0 +1,173 @@
+.page {
+  --portal-x: 82%;
+  --portal-y: 28%;
+  position: fixed;
+  isolation: isolate;
+  inset: 0;
+  min-height: 100svh;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  background: #010207;
+}
+
+.framePage {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  clip-path: circle(0 at var(--portal-x) var(--portal-y));
+  pointer-events: none;
+  transition: clip-path 2450ms cubic-bezier(0.7, 0, 0.16, 1);
+}
+
+.page[data-reveal="true"] .framePage {
+  clip-path: circle(160vmax at var(--portal-x) var(--portal-y));
+  pointer-events: auto;
+}
+
+.siteFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+.cinemaLayer {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  transition:
+    opacity 1250ms ease 1050ms,
+    filter 1250ms ease 1050ms;
+}
+
+.page[data-reveal="true"] .cinemaLayer {
+  filter: brightness(1.4);
+  opacity: 0;
+}
+
+.portalRim {
+  position: absolute;
+  z-index: 4;
+  top: var(--portal-y);
+  left: var(--portal-x);
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid rgb(171 244 255 / 86%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0.8rem rgb(141 238 255 / 80%),
+    0 0 3rem rgb(77 126 255 / 72%),
+    inset 0 0 1rem rgb(255 255 255 / 72%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.1);
+}
+
+.page[data-reveal="true"] .portalRim {
+  animation: open-portal 2450ms cubic-bezier(0.7, 0, 0.16, 1) both;
+}
+
+.skipButton {
+  position: absolute;
+  z-index: 12;
+  right: clamp(1rem, 3vw, 3rem);
+  bottom: clamp(1rem, 2.5vw, 2.5rem);
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  color: rgb(225 235 240 / 76%);
+  background: rgb(2 4 13 / 50%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.skipButton:hover,
+.skipButton:focus-visible {
+  border-color: rgb(142 232 248 / 48%);
+  color: white;
+  background: rgb(13 28 52 / 72%);
+}
+
+.skipButton:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+.skipButton:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.skipButton svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.loadingStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes open-portal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 0.76;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(220);
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    --portal-x: 70%;
+    --portal-y: 28%;
+  }
+
+  .skipButton {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .framePage,
+  .cinemaLayer,
+  .skipButton {
+    transition: none;
+  }
+
+  .page[data-reveal="true"] .portalRim {
+    display: none;
+    animation: none;
+  }
+}

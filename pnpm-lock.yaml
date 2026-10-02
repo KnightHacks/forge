@@ -594,6 +594,9 @@ importers:
       superjson:
         specifier: 2.2.6
         version: 2.2.6
+      three:
+        specifier: ^0.185.1
+        version: 0.185.1
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -637,6 +640,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      '@types/three':
+        specifier: ^0.185.1
+        version: 0.185.1
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0
