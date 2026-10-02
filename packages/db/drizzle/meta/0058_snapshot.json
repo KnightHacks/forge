@@ -1,5 +1,5 @@
 {
-  "id": "5b42ad5a-fac9-4831-af46-a9d3286eb061",
+  "id": "39a79c37-c270-43f3-9dae-c30eaf57e853",
   "prevId": "eb4fabe8-c4c7-44c6-9b2f-184dc6f487a9",
   "version": "7",
   "dialect": "postgresql",
@@ -12986,6 +12986,12 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "estimated_ready_at": {
+          "name": "estimated_ready_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -13278,6 +13284,20 @@
           "primaryKey": false,
           "notNull": false
         },
+        "print_minutes": {
+          "name": "print_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        },
+        "printer_count": {
+          "name": "printer_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp with time zone",
@@ -13302,6 +13322,14 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "knight_hacks_printing_configuration_print_minutes_check": {
+          "name": "knight_hacks_printing_configuration_print_minutes_check",
+          "value": "\"knight_hacks_printing_configuration\".\"print_minutes\" BETWEEN 5 AND 600"
+        },
+        "knight_hacks_printing_configuration_printer_count_check": {
+          "name": "knight_hacks_printing_configuration_printer_count_check",
+          "value": "\"knight_hacks_printing_configuration\".\"printer_count\" BETWEEN 1 AND 20"
+        },
         "knight_hacks_printing_configuration_channel_id_check": {
           "name": "knight_hacks_printing_configuration_channel_id_check",
           "value": "\"knight_hacks_printing_configuration\".\"discord_channel_id\" IS NULL OR \"knight_hacks_printing_configuration\".\"discord_channel_id\" ~ '^[0-9]{17,20}$'"
