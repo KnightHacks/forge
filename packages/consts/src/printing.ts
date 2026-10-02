@@ -29,6 +29,23 @@ export const HACKER_CANCELLABLE_PRINT_JOB_STATUSES = [
   "needs_clarification",
 ] as const satisfies readonly PrintJobStatus[];
 
+/** Jobs still waiting for the printer; only these get a position and an estimate. */
+export const PRINT_JOB_ACTIVE_STATUSES = [
+  "received",
+  "printing",
+] as const satisfies readonly PrintJobStatus[];
+
+/**
+ * Jobs that still need organizer attention: the Blade queue's default
+ * "Active" view. Wider than the active statuses above, which only count jobs
+ * waiting for the printer.
+ */
+export const PRINT_JOB_OPEN_STATUSES = [
+  "received",
+  "printing",
+  "needs_clarification",
+] as const satisfies readonly PrintJobStatus[];
+
 /** Setting one of these tells the hacker to act, so the organizer must say why. */
 export const NOTE_REQUIRED_PRINT_JOB_STATUSES = [
   "needs_clarification",
@@ -37,3 +54,11 @@ export const NOTE_REQUIRED_PRINT_JOB_STATUSES = [
 export const MAX_PRINT_JOB_FILES = 5;
 export const MAX_PRINT_JOB_DESCRIPTION_LENGTH = 2000;
 export const MAX_PRINT_JOB_NOTE_LENGTH = 500;
+
+/** Estimate settings used when a hackathon has no printing configuration row. */
+export const DEFAULT_PRINT_MINUTES = 60;
+export const MIN_PRINT_MINUTES = 5;
+export const MAX_PRINT_MINUTES = 600;
+export const DEFAULT_PRINTER_COUNT = 1;
+export const MIN_PRINTER_COUNT = 1;
+export const MAX_PRINTER_COUNT = 20;

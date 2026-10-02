@@ -4269,6 +4269,11 @@ export const PrintJob = createTable(
     statusChangedByUserId: t
       .uuid()
       .references(() => User.id, { onDelete: "set null" }),
+    /**
+     * Organizer-set ready time that replaces the computed estimate. Cleared
+     * when the job leaves the active statuses.
+     */
+    estimatedReadyAt: t.timestamp({ withTimezone: true }),
   }),
   (table) => ({
     attendeeScopeFk: foreignKey({
@@ -4387,7 +4392,8 @@ export type SelectPrintJobFile = typeof PrintJobFile.$inferSelect;
 
 /**
  * Per-hackathon printing settings. A missing row and a NULL channel both mean
- * no Discord notices; jobs still work.
+ * no Discord notices; jobs still work. A missing row means the default
+ * estimate settings.
  */
 export const PrintingConfiguration = createTable(
   "printing_configuration",
@@ -4399,9 +4405,21 @@ export const PrintingConfiguration = createTable(
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     /** Organizer-only channel that receives new-job notices. */
     discordChannelId: t.varchar({ length: 20 }),
+    /** Minutes one print is assumed to take, for ready-time estimates. */
+    printMinutes: t.integer().notNull().default(PRINTING.DEFAULT_PRINT_MINUTES),
+    /** Printers working the queue at once, for ready-time estimates. */
+    printerCount: t.integer().notNull().default(PRINTING.DEFAULT_PRINTER_COUNT),
     updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
   }),
   (table) => ({
+    printMinutesRange: check(
+      "knight_hacks_printing_configuration_print_minutes_check",
+      sql`${table.printMinutes} BETWEEN ${sql.raw(String(PRINTING.MIN_PRINT_MINUTES))} AND ${sql.raw(String(PRINTING.MAX_PRINT_MINUTES))}`,
+    ),
+    printerCountRange: check(
+      "knight_hacks_printing_configuration_printer_count_check",
+      sql`${table.printerCount} BETWEEN ${sql.raw(String(PRINTING.MIN_PRINTER_COUNT))} AND ${sql.raw(String(PRINTING.MAX_PRINTER_COUNT))}`,
+    ),
     validDiscordChannelId: check(
       "knight_hacks_printing_configuration_channel_id_check",
       sql`${table.discordChannelId} IS NULL OR ${table.discordChannelId} ~ '^[0-9]{17,20}$'`,

@@ -277,6 +277,44 @@ describe.skipIf(!canRunDatabaseTests())("print job schema", () => {
       .where(eq(schema.PrintingConfiguration.hackathonId, hackathon));
   });
 
+  it("starts with no ready-time override and accepts one", async () => {
+    const job = await insertJob();
+    expect(job.estimatedReadyAt).toBeNull();
+
+    const readyAt = new Date("2026-10-01T15:40:00Z");
+    await expect(insertJob({ estimatedReadyAt: readyAt })).resolves.toEqual(
+      expect.objectContaining({ estimatedReadyAt: readyAt }),
+    );
+  });
+
+  it("defaults estimate settings and bounds them", async () => {
+    const [config] = await client
+      .insert(schema.PrintingConfiguration)
+      .values({ hackathonId: hackathon })
+      .returning();
+    expect(config).toMatchObject({ printMinutes: 60, printerCount: 1 });
+
+    for (const values of [
+      { printMinutes: 4 },
+      { printMinutes: 601 },
+      { printerCount: 0 },
+      { printerCount: 21 },
+    ]) {
+      await rejectsWith(
+        client
+          .update(schema.PrintingConfiguration)
+          .set(values)
+          .where(eq(schema.PrintingConfiguration.hackathonId, hackathon)),
+        CHECK_VIOLATION,
+      );
+    }
+
+    await client
+      .update(schema.PrintingConfiguration)
+      .set({ printMinutes: 600, printerCount: 20 })
+      .where(eq(schema.PrintingConfiguration.hackathonId, hackathon));
+  });
+
   it("removes jobs, files, and configuration with their hackathon", async () => {
     const job = await insertJob();
     await insertFile({ printJobId: job.id });
