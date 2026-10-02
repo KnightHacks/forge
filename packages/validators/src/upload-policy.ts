@@ -41,6 +41,13 @@ export interface UploadPolicy {
   /** Human type list, e.g. "JPEG, PNG, GIF, or WebP image". */
   readonly typeLabel: string;
   readonly types: readonly UploadFileType[];
+  /**
+   * `"extension"` ignores the browser's declared type. For formats like STL,
+   * operating systems report anything from `model/stl` to
+   * `application/vnd.ms-pki.stl` to nothing, so the extension is the only
+   * consistent answer. The signature check still applies.
+   */
+  readonly typeFrom?: "extension";
 }
 
 export type UploadRejectionReason =
@@ -88,6 +95,25 @@ export const RESUME_UPLOAD_POLICY: UploadPolicy = {
   subject: "Resume",
   typeLabel: "PDF",
   types: [PDF],
+};
+
+const STL: UploadFileType = { extensions: ["stl"], mimeType: "model/stl" };
+const THREE_MF: UploadFileType = { extensions: ["3mf"], mimeType: "model/3mf" };
+const OBJ: UploadFileType = { extensions: ["obj"], mimeType: "model/obj" };
+const STEP: UploadFileType = {
+  extensions: ["step", "stp"],
+  mimeType: "model/step",
+};
+
+/** Hacker 3D print job files: printable models plus reference photos. */
+export const PRINT_FILE_UPLOAD_POLICY: UploadPolicy = {
+  contentNoun: "3D model or image",
+  maxBytes: 50 * 1024 * 1024,
+  sizeLabel: "50MB",
+  subject: "Print file",
+  typeFrom: "extension",
+  typeLabel: "STL, 3MF, OBJ, STEP, PNG, or JPEG file",
+  types: [STL, THREE_MF, OBJ, STEP, PNG, JPEG],
 };
 
 /** The same policy, re-subjected so rejections name what the member picked. */
@@ -189,9 +215,11 @@ export function resolveUploadType(
   input: { contentType: string; fileName?: string },
 ): UploadFileType | null {
   const mimeType = normalizeMimeType(input.contentType);
-  const declared = policy.types.find((type) => type.mimeType === mimeType);
-  if (declared) return declared;
-  if (!UNIDENTIFIED_CONTENT_TYPES.has(mimeType)) return null;
+  if (policy.typeFrom !== "extension") {
+    const declared = policy.types.find((type) => type.mimeType === mimeType);
+    if (declared) return declared;
+    if (!UNIDENTIFIED_CONTENT_TYPES.has(mimeType)) return null;
+  }
 
   const extension = uploadFileExtension(input.fileName ?? "");
   return (
@@ -259,6 +287,13 @@ const SIGNATURES: Record<string, (bytes: Uint8Array) => boolean> = {
     startsWithBytes(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   "image/webp": (bytes) =>
     asciiAt(bytes, 0, "RIFF") && asciiAt(bytes, 8, "WEBP"),
+  // 3MF is a ZIP package; STEP files open with their ISO standard number.
+  "model/3mf": ZIP_CONTAINER,
+  "model/step": (bytes) => asciiAt(bytes, 0, "ISO-10303-21"),
+  // STL (binary or ASCII) and OBJ have no fixed header. Refusing program
+  // images is the strongest content check those formats allow.
+  "model/obj": (bytes) => !hasExecutableSignature(bytes),
+  "model/stl": (bytes) => !hasExecutableSignature(bytes),
   "video/mp4": (bytes) => asciiAt(bytes, 4, "ftyp"),
   "video/webm": (bytes) => startsWithBytes(bytes, [0x1a, 0x45, 0xdf, 0xa3]),
 };
