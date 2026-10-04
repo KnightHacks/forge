@@ -1,10 +1,86 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  findVenueRoom,
   getVenueFloorPlan,
   getVenueFloors,
   INDOOR_BUILDING_IDS,
+  parseMapLocation,
 } from "./venue-floor-plans";
+
+describe("KHIX map location links", () => {
+  it.each([
+    ["HEC101", "hec", "101"],
+    ["ENG1224", "eng1", "224"],
+    ["BA1145A", "ba1", "145A"],
+    ["BA2101", "ba2", "101"],
+    ["ENG2101", "ucf-91", "101"],
+    ["SU140", "student-union", "140"],
+    ["STUN140", "student-union", "140"],
+    ["  eng1 224  ", "eng1", "224"],
+    ["ba1-145a", "ba1", "145A"],
+    ["ENG2 - 211F", "ucf-91", "211F"],
+    ["HEC", "hec", null],
+    ["BA1", "ba1", null],
+    ["BA2", "ba2", null],
+    ["ENG1", "eng1", null],
+    ["ENG2", "ucf-91", null],
+    ["su", "student-union", null],
+    ["STUN", "student-union", null],
+  ] as const)("parses %s", (location, buildingId, room) => {
+    expect(parseMapLocation(location)).toEqual({ buildingId, room });
+  });
+
+  it.each([
+    "",
+    "   ",
+    "Unknown101",
+    "ENG3101",
+    "HEC-",
+    "HEC--101",
+    "HEC10",
+    "HEC1010",
+    "HEC101AB",
+    "HEC101 extra",
+    "HEC101/102",
+    "HEC101&location=BA2101",
+    "SUFFIX140",
+    "Room HEC101",
+    "<script>",
+  ])("rejects malformed or unknown location %s", (location) => {
+    expect(parseMapLocation(location)).toBeNull();
+  });
+
+  it.each([
+    ["BA1135", "ba1", 1, "135"],
+    ["BA2101", "ba2", 1, "101"],
+    ["ENG1224", "eng1", 2, "224"],
+    ["ENG2211F", "ucf-91", 2, "211F"],
+    ["SU140", "student-union", 1, "140"],
+  ] as const)(
+    "resolves %s using the mapped building and room geometry",
+    (location, buildingId, floor, roomNumber) => {
+      const target = parseMapLocation(location);
+      expect(target).toEqual({ buildingId, room: roomNumber });
+      const match = target?.room
+        ? findVenueRoom(target.buildingId, target.room)
+        : undefined;
+      expect(match?.floor).toBe(floor);
+      expect(match?.room.roomIds).toContain(roomNumber);
+    },
+  );
+
+  it.each(["HEC101", "ENG2116", "ENG2194", "ENG2999"])(
+    "keeps %s recognizable without inventing unavailable room geometry",
+    (location) => {
+      const target = parseMapLocation(location);
+      expect(target?.room).toBeTruthy();
+      expect(
+        target?.room ? findVenueRoom(target.buildingId, target.room) : null,
+      ).toBeUndefined();
+    },
+  );
+});
 
 describe("KHIX indoor floor plans", () => {
   it("places ENG2 check-in in the lower atrium between entrances, away from stairs", () => {

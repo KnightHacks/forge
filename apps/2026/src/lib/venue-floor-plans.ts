@@ -1,5 +1,6 @@
 import type { VenueBuildingId } from "./venue-map";
 import { VENUE_FLOOR_PLANS } from "./venue-floor-plans.generated";
+import { CAMPUS_BUILDINGS } from "./venue-map";
 
 export type IndoorBuildingId = VenueBuildingId | "student-union" | "ucf-91";
 
@@ -11,6 +12,31 @@ export const INDOOR_BUILDING_IDS = [
   "student-union",
   "hec",
 ] as const satisfies readonly IndoorBuildingId[];
+
+export function parseMapLocation(
+  location: string,
+): { buildingId: IndoorBuildingId; room: string | null } | null {
+  // UCF labels Student Union as STUN; accept the familiar SU abbreviation too.
+  const normalized = location
+    .trim()
+    .toUpperCase()
+    .replace(/^SU(?=$|[\s\d-])/, "STUN");
+
+  for (const buildingId of INDOOR_BUILDING_IDS) {
+    const abbreviation = CAMPUS_BUILDINGS.find(
+      (building) => building.id === buildingId,
+    )?.abbreviation;
+    if (!abbreviation || !normalized.startsWith(abbreviation)) continue;
+
+    const remainder = normalized.slice(abbreviation.length);
+    if (!remainder) return { buildingId, room: null };
+
+    const room = /^(?:\s*-\s*|\s*)(\d{3}[A-Z]?)$/.exec(remainder)?.[1];
+    return room ? { buildingId, room } : null;
+  }
+
+  return null;
+}
 
 export interface VenueFloorRoom {
   id: string;

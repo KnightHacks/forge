@@ -1,7 +1,14 @@
 "use client";
 
 import type { KeyboardEvent, PointerEvent } from "react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowLeft,
   Clock3,
@@ -17,10 +24,12 @@ import {
 } from "lucide-react";
 
 import type { HackerMapConfigurationDto as MapConfiguration } from "@forge/hacker-sdk";
-import { useHackerMapConfiguration } from "@forge/hacker-sdk/react";
+import {
+  useHackerMapConfiguration,
+  useHackerSession,
+} from "@forge/hacker-sdk/react";
 import { Button } from "@forge/ui/button";
 
-import type { KhixSessionUser } from "./khix-dashboard";
 import type { IndoorBuildingId } from "~/lib/venue-floor-plans";
 import type {
   CampusBuildingId,
@@ -40,6 +49,7 @@ import {
   getVenueFloorPlan,
   getVenueFloors,
   INDOOR_BUILDING_IDS,
+  parseMapLocation,
 } from "~/lib/venue-floor-plans";
 import {
   CAMPUS_BUILDINGS,
@@ -226,11 +236,9 @@ const INDOOR_BUILDINGS = CAMPUS_BUILDINGS.filter(
   } => isIndoorBuildingId(building.id),
 );
 
-export function KhixVenueMap({
-  sessionUser,
-}: {
-  sessionUser?: KhixSessionUser;
-}) {
+export function KhixVenueMap({ location = "" }: { location?: string }) {
+  const session = useHackerSession();
+  const sessionUser = { name: session.data?.displayName };
   const { dashboard, dashboardQuery, schedule, scheduleQuery } =
     useHackerDashboardFlow({ schedule: true });
   const mapConfigurationQuery = useHackerMapConfiguration();
@@ -247,6 +255,7 @@ export function KhixVenueMap({
   const pinchChangedFloor = useRef(false);
   const [view, setView] = useState<MapView>(FULL_VIEW);
   const [viewportAspect, setViewportAspect] = useState(1000 / 700);
+  const [viewportMeasured, setViewportMeasured] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] =
     useState<CampusBuildingId | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -281,6 +290,9 @@ export function KhixVenueMap({
     () => undefined,
   );
   const mapRef = useRef<SVGSVGElement | null>(null);
+  const appliedLocation = useRef("");
+  const mapReady =
+    dashboardQuery.isSuccess && !!dashboard && !!mapConfigurationQuery.data;
 
   useLayoutEffect(() => {
     const map = mapRef.current;
@@ -322,6 +334,7 @@ export function KhixVenueMap({
     canvasHeight,
     selectedEventId,
     focusedRoomId,
+    mapReady,
   ]);
 
   useEffect(() => {
@@ -357,7 +370,7 @@ export function KhixVenueMap({
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [view, viewportAspect, canvasHeight]);
+  }, [view, viewportAspect, canvasHeight, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -368,6 +381,7 @@ export function KhixVenueMap({
       if (!bounds.width || !bounds.height) return;
       const aspect = bounds.width / bounds.height;
       setViewportAspect(aspect);
+      setViewportMeasured(true);
       if (!activeFloor)
         setView((current) => constrainView(current, aspect, canvasHeight));
     };
@@ -376,7 +390,7 @@ export function KhixVenueMap({
     resize();
 
     return () => observer.disconnect();
-  }, [canvasHeight, dashboardQuery.isSuccess, activeFloor]);
+  }, [canvasHeight, mapReady, activeFloor]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -388,7 +402,7 @@ export function KhixVenueMap({
     map.addEventListener("wheel", handleNativeWheel, { passive: false });
 
     return () => map.removeEventListener("wheel", handleNativeWheel);
-  }, [dashboardQuery.isSuccess]);
+  }, [mapReady]);
 
   useEffect(() => {
     const hydrateLocation = window.setTimeout(() => {
@@ -626,6 +640,43 @@ export function KhixVenueMap({
     }
     setSelectedEventId(event.id);
   };
+
+  const openLocationLink = useEffectEvent((destination: string) => {
+    setEventsExpanded(false);
+    setLocationMessage(null);
+    if (!destination) {
+      leaveFloor();
+      setView(FULL_VIEW);
+      return;
+    }
+    const target = parseMapLocation(destination);
+    if (!target) {
+      leaveFloor();
+      setView(FULL_VIEW);
+      setLocationMessage(
+        "Location not recognized. Choose a building on the map.",
+      );
+      return;
+    }
+    const { buildingId, room } = target;
+    if (!room) {
+      focusBuilding(buildingId);
+    } else if (focusRoom(buildingId, room)) {
+      setLocationMessage(`Showing ${buildingLabel(buildingId)} · ${room}.`);
+    } else {
+      focusCampusBuilding(buildingId);
+      setLocationMessage(
+        `${buildingLabel(buildingId)} · ${room}. ${getVenueFloors(buildingId).length ? "Room not mapped." : "Indoor plan unavailable."} Showing the building.`,
+      );
+    }
+  });
+  useEffect(() => {
+    if (!mapReady || !viewportMeasured || appliedLocation.current === location)
+      return;
+    appliedLocation.current = location;
+    // A URL change selects a destination; polling and panning must not reselect it.
+    openLocationLink(location);
+  }, [location, mapReady, viewportMeasured]);
 
   const handleMarkerKeyDown = (
     event: KeyboardEvent<SVGGElement>,
@@ -907,6 +958,7 @@ export function KhixVenueMap({
                       }
                       onClick={() => {
                         setFocusedRoomId(null);
+                        setLocationMessage(null);
                         setActiveFloor({ ...activeFloor, floor });
                         setSelectedEventId(null);
                         setView(
@@ -1040,6 +1092,7 @@ export function KhixVenueMap({
             {activeFloor ? (
               <IndoorFloorMap
                 activeFloor={activeFloor}
+                focusedRoomId={focusedRoomId}
                 configuration={mapConfigurationQuery.data}
                 now={now}
                 events={plottedEvents}
@@ -1392,6 +1445,7 @@ function IndoorMapMarker({ spot }: { spot: IndoorSpot }) {
 
 function IndoorFloorMap({
   activeFloor,
+  focusedRoomId,
   configuration,
   now,
   events,
@@ -1400,6 +1454,7 @@ function IndoorFloorMap({
   spot,
 }: {
   activeFloor: ActiveFloor;
+  focusedRoomId: string | null;
   configuration: MapConfiguration;
   now: Date;
   events: PlottedScheduleEvent[];
@@ -1509,7 +1564,9 @@ function IndoorFloorMap({
             data-live={presentation.state === "live" ? "true" : undefined}
             data-map-interactive={interactive ? "true" : undefined}
             data-selected={
-              roomEvent?.id === selectedEventId ? "true" : undefined
+              room.id === focusedRoomId || roomEvent?.id === selectedEventId
+                ? "true"
+                : undefined
             }
             filter={
               presentation.state === "live" ? "url(#khix-map-glow)" : undefined

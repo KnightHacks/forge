@@ -1,10 +1,12 @@
-"use client";
-
-import { useHackerSession } from "@forge/hacker-sdk/react";
-
 import { KhixVenueMap } from "../../_components/khix-venue-map";
 
-export default function MapPage() {
-  const session = useHackerSession();
-  return <KhixVenueMap sessionUser={{ name: session.data?.displayName }} />;
+export default async function MapPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ location?: string | string[] }>;
+}) {
+  const { location } = await searchParams;
+  return (
+    <KhixVenueMap location={Array.isArray(location) ? location[0] : location} />
+  );
 }
