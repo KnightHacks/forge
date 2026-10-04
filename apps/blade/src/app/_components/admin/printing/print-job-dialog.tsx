@@ -97,10 +97,10 @@ export function PrintJobDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open>
-      <DialogContent className="max-h-[calc(100svh-1rem)] w-[calc(100svw-1rem)] max-w-2xl grid-cols-[minmax(0,1fr)] overflow-y-auto border-white/10 p-4 sm:p-6 [&>button]:size-11">
+      <DialogContent className="max-h-[calc(100svh-2rem)] w-[calc(100svw-2rem)] max-w-2xl grid-cols-[minmax(0,1fr)] overflow-y-auto border-white/10 bg-card p-4 sm:p-6 [&>button]:size-11">
         <DialogHeader>
           <div className="flex min-w-0 flex-wrap items-center gap-3 pr-8">
-            <DialogTitle className="truncate">
+            <DialogTitle className="min-w-0 break-words">
               {job.submitter.name ?? "Unknown hacker"}
             </DialogTitle>
             <PrintStatusPill status={job.status} />
@@ -111,11 +111,22 @@ export function PrintJobDialog({
               ? ` · #${job.estimate.position} in the queue · ready ~${formatPrintTime(job.estimate.estimatedReadyAt, timezone)} (${formatReadyIn(job.estimate.estimatedReadyAt, new Date())})`
               : ""}
           </DialogDescription>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium tabular-nums text-foreground">
+              {job.requestCount} total print{" "}
+              {job.requestCount === 1 ? "request" : "requests"}
+            </span>{" "}
+            by this person at this hackathon, including completed and cancelled
+            jobs.
+          </p>
         </DialogHeader>
 
         <div className="grid min-w-0 gap-4">
           <section aria-label="Description" className={insetClassName}>
-            <p className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6">
+            <p
+              tabIndex={job.description.length > 180 ? 0 : undefined}
+              className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6"
+            >
               {job.description}
             </p>
           </section>
@@ -128,7 +139,10 @@ export function PrintJobDialog({
                   className={`${insetClassName} flex min-w-0 items-center gap-3`}
                   key={file.id}
                 >
-                  <span className="min-w-0 flex-1 truncate font-mono text-[13px]">
+                  <span
+                    title={file.fileName}
+                    className="min-w-0 flex-1 truncate font-mono text-[13px]"
+                  >
                     {file.fileName}
                   </span>
                   <span className="shrink-0 text-sm text-muted-foreground">
@@ -136,17 +150,17 @@ export function PrintJobDialog({
                   </span>
                   <Button
                     aria-label={`Download ${file.fileName}`}
-                    className="size-11 shrink-0"
+                    className="min-h-11 shrink-0 gap-2 px-3"
                     disabled={downloadingFileId !== null}
                     onClick={() => {
                       setDownloadingFileId(file.id);
                       download.mutate({ fileId: file.id });
                     }}
-                    size="icon"
                     type="button"
                     variant="outline"
                   >
                     <Download aria-hidden="true" className="size-4" />
+                    <span className="hidden sm:inline">Download</span>
                   </Button>
                 </li>
               ))}
@@ -162,7 +176,7 @@ export function PrintJobDialog({
               updateStatus.mutate({ jobId: job.id, note, status });
             }}
           >
-            <h3 className="text-sm font-medium">Status</h3>
+            <h3 className="text-base font-semibold">Update progress</h3>
             <Select
               onValueChange={(value) => {
                 const next = value as PrintJobStatus;
@@ -258,7 +272,7 @@ function ReadyTimeForm({
 
   return (
     <form
-      className="grid gap-3 border-t border-white/10 pt-4"
+      className="grid gap-3 rounded-md border border-white/10 bg-background/60 p-4"
       onSubmit={(event) => {
         event.preventDefault();
         setEstimatedReadyAt.mutate({

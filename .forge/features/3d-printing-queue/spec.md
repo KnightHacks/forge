@@ -230,3 +230,21 @@ The page shows one hackathon's queue, defaulting to the current hackathon.
 ## Open questions
 
 See `status.md`.
+
+## Shinies workshop refinement (2026-10-04)
+
+User direction: the current printing dashboard is too rough and must clearly represent Shinies as the sponsor. Both the hacker and organizer experiences should be polished and easy to operate.
+
+- KH IX shows the existing Shinies Props mark, a short description grounded in shinies.co, and an external sponsor link. Blade shows the partner only when KH IX is selected.
+- The hacker workspace foregrounds active prints, with finished/cancelled jobs in History. New print opens a focused dialog; dismissing it preserves the draft while the page remains mounted. Successful submission closes it.
+- Existing check-in, upload, submit, cancellation, status, estimate and notification contracts remain unchanged.
+- Organizer rows support local search within the selected status and remain bounded when many jobs are present.
+- Readable interface typography, visible focus, 44px controls and 320px layouts are required.
+
+## Organizer request counts (2026-10-04)
+
+Organizer queue rows and job details show each person's total submitted requests at the selected hackathon. Include all statuses, including completed and cancelled jobs. Count jobs, not attached files or requested physical copies. Search and status filters do not change the total.
+
+## Upload guardrails — 2026-10-04
+
+The user approved STL models and PNG/JPEG reference images only. Printing uploads receive code-level validation, not malware scanning. Each file remains limited to 50 MiB; an attendee may retain at most 25 files / 250 MiB per hackathon across staged and submitted jobs, including cancelled/completed jobs. The existing five-file staging/job limit remains. Uploads require a checked-in participant before the proxy buffers file bytes. Existing objects without the current validation marker require re-upload before organizer download.

@@ -1,8 +1,15 @@
+import { TRPCError } from "@trpc/server";
+
 import { MINIO } from "@forge/consts";
 import { and, isNull, lt } from "@forge/db";
 import { db } from "@forge/db/client";
 import { PrintJobFile } from "@forge/db/schemas/knight-hacks";
 import { logger } from "@forge/utils";
+import {
+  PRINT_FILE_UPLOAD_POLICY,
+  resolveUploadType,
+  uploadExtension,
+} from "@forge/validators";
 
 import { safeFileName } from "../forms/attachments";
 
@@ -25,7 +32,22 @@ export async function ensurePrintFilesBucket() {
 }
 
 export function printFileName(fileName: string) {
-  return safeFileName(fileName).slice(0, 255) || "print-file";
+  const type = resolveUploadType(PRINT_FILE_UPLOAD_POLICY, {
+    contentType: "",
+    fileName,
+  });
+  if (!type)
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Only STL, PNG, and JPEG print files are supported.",
+    });
+  const extension = uploadExtension(type);
+  const base =
+    safeFileName(fileName.slice(0, fileName.lastIndexOf(".")))
+      .replaceAll(".", "-")
+      .trim()
+      .slice(0, 179 - extension.length) || "print-file";
+  return `${base}.${extension}`;
 }
 
 export function printFileObjectName(input: {
@@ -49,7 +71,10 @@ export async function putPrintFileObject(input: {
     input.objectName,
     Buffer.from(input.bytes),
     input.bytes.length,
-    { "Content-Type": input.contentType },
+    {
+      "Content-Type": input.contentType,
+      "X-Amz-Meta-Print-Validation": "stl-images-v1",
+    },
   );
 }
 
@@ -70,13 +95,36 @@ export async function getPrintFileDownloadUrl(file: {
   objectName: string;
 }) {
   const minioClient = await storage();
+  const type = resolveUploadType(PRINT_FILE_UPLOAD_POLICY, {
+    contentType: "",
+    fileName: file.fileName,
+  });
+  if (type?.mimeType !== file.contentType) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message:
+        "This file is no longer supported. Ask the hacker to upload an STL, PNG, or JPEG file.",
+    });
+  }
+  const fileName = printFileName(file.fileName);
+  const metadata = await minioClient.statObject(
+    MINIO.PRINT_FILES_BUCKET_NAME,
+    file.objectName,
+  );
+  if (metadata.metaData["print-validation"] !== "stl-images-v1") {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message:
+        "This file predates upload validation. Ask the hacker to upload it again.",
+    });
+  }
   return minioClient.presignedGetObject(
     MINIO.PRINT_FILES_BUCKET_NAME,
     file.objectName,
     DOWNLOAD_EXPIRY_SECONDS,
     {
-      "response-content-disposition": `attachment; filename="${file.fileName.replaceAll('"', "")}"`,
-      "response-content-type": file.contentType,
+      "response-content-disposition": `attachment; filename="${fileName}"`,
+      "response-content-type": "application/octet-stream",
     },
   );
 }

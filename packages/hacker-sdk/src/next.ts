@@ -334,7 +334,11 @@ function expectedContentType(path: string, request: Request) {
   return contentType.startsWith("application/json");
 }
 
-async function readReplayableBody(request: Request, maxBytes: number) {
+async function readReplayableBody(
+  request: Request,
+  maxBytes: number,
+  deadlineMs?: number,
+) {
   const declaredLength = request.headers.get("content-length");
   if (declaredLength !== null) {
     const length = Number(declaredLength);
@@ -347,15 +351,27 @@ async function readReplayableBody(request: Request, maxBytes: number) {
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
-  while (true) {
-    const result = await reader.read();
-    if (result.done) break;
-    received += result.value.byteLength;
-    if (received > maxBytes) {
-      await reader.cancel().catch(() => undefined);
-      throw new Error("REQUEST_BODY_TOO_LARGE");
+  const deadline =
+    deadlineMs === undefined ? undefined : AbortSignal.timeout(deadlineMs);
+  const cancel = () => {
+    void reader.cancel().catch(() => undefined);
+  };
+  deadline?.addEventListener("abort", cancel, { once: true });
+  try {
+    while (true) {
+      const result = await reader.read();
+      if (deadline?.aborted) throw new Error("REQUEST_BODY_TIMEOUT");
+      if (result.done) break;
+      received += result.value.byteLength;
+      if (received > maxBytes) {
+        cancel();
+        throw new Error("REQUEST_BODY_TOO_LARGE");
+      }
+      chunks.push(result.value);
     }
-    chunks.push(result.value);
+  } finally {
+    deadline?.removeEventListener("abort", cancel);
+    reader.releaseLock();
   }
   const body = new Uint8Array(received);
   let offset = 0;
@@ -667,28 +683,6 @@ export function createHackerSdkNextHandler(
     }
 
     let requestBody: ArrayBuffer | undefined;
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      try {
-        requestBody = await readReplayableBody(
-          request,
-          isPrinting
-            ? MAX_PRINT_FILE_REQUEST_BYTES
-            : isResume
-              ? MAX_RESUME_REQUEST_BYTES
-              : MAX_TRPC_REQUEST_BYTES,
-        );
-      } catch {
-        return jsonError(
-          new HackerSdkError({
-            code: "VALIDATION_ERROR",
-            message: "The participant request is too large.",
-            retryable: false,
-          }),
-          413,
-        );
-      }
-    }
-
     const cookies = parseCookies(request);
     let accessToken = cookies.get(cookieNames.access);
     const refreshToken = cookies.get(cookieNames.refresh);
@@ -700,7 +694,7 @@ export function createHackerSdkNextHandler(
     targetBase.pathname = `${targetBase.pathname.replace(/\/$/, "")}/${targetSuffix}`;
     targetBase.search = requestUrl.search;
 
-    const forward = (token: string | undefined) => {
+    const forward = (token: string | undefined, method = request.method) => {
       const headers = new Headers();
       for (const name of ["accept", "content-type", "x-trpc-source"]) {
         const value = request.headers.get(name);
@@ -709,39 +703,101 @@ export function createHackerSdkNextHandler(
       headers.set("x-forge-portal-client", options.clientId);
       if (token) headers.set("authorization", `Bearer ${token}`);
       const init: RequestInit & { duplex?: "half" } = {
-        body: requestBody,
+        body: method === "HEAD" ? undefined : requestBody,
         headers,
-        method: request.method,
+        method,
+        signal: isPrinting ? AbortSignal.timeout(30_000) : undefined,
         redirect: "manual",
       };
       if (requestBody) init.duplex = "half";
       return requestFetch(targetBase, init);
     };
 
-    let response = await forward(accessToken).catch((cause) =>
-      jsonError(parseHackerSdkError(cause), 502),
-    );
     const responseHeaders = new Headers();
+    const forwardWithRefresh = async (
+      method = request.method,
+    ): Promise<Response> => {
+      let response = await forward(accessToken, method).catch((cause) =>
+        jsonError(parseHackerSdkError(cause), 502),
+      );
 
-    if ((await isExpiredSession(response)) && refreshToken) {
-      try {
-        const tokens = await refreshSession(refreshToken);
-        accessToken = tokens.accessToken;
-        setSessionCookies(responseHeaders, tokens, secure, cookieNames);
-        response = await forward(accessToken);
-      } catch (cause) {
-        const error = parseHackerSdkError(cause);
-        if (error.code === "REFRESH_RETRY") {
-          return jsonError(error, 409, responseHeaders);
+      if ((await isExpiredSession(response)) && refreshToken) {
+        try {
+          const tokens = await refreshSession(refreshToken);
+          accessToken = tokens.accessToken;
+          setSessionCookies(responseHeaders, tokens, secure, cookieNames);
+          response = await forward(accessToken, method);
+        } catch (cause) {
+          const error = parseHackerSdkError(cause);
+          if (error.code === "REFRESH_RETRY") {
+            return jsonError(error, 409);
+          }
+          clearSessionCookies(responseHeaders, secure, cookieNames);
+          return jsonError(error, 401);
         }
+      }
+
+      if (await isExpiredSession(response)) {
         clearSessionCookies(responseHeaders, secure, cookieNames);
-        return jsonError(error, 401, responseHeaders);
+      }
+      return response;
+    };
+
+    if (isPrinting) {
+      if (
+        Number(request.headers.get("content-length") ?? 0) >
+        MAX_PRINT_FILE_REQUEST_BYTES
+      ) {
+        return jsonError(
+          new HackerSdkError({
+            code: "VALIDATION_ERROR",
+            message:
+              "The participant request is too large or took too long to upload.",
+            retryable: false,
+          }),
+          413,
+        );
+      }
+      if (!accessToken && !refreshToken) {
+        return jsonError(
+          new HackerSdkError({
+            code: "SESSION_EXPIRED",
+            message: "Please sign in before uploading.",
+            retryable: false,
+          }),
+          401,
+        );
+      }
+      const authorization = await forwardWithRefresh("HEAD");
+      if (!authorization.ok)
+        return copyProxyResponse(authorization, responseHeaders);
+    }
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      try {
+        requestBody = await readReplayableBody(
+          request,
+          isPrinting
+            ? MAX_PRINT_FILE_REQUEST_BYTES
+            : isResume
+              ? MAX_RESUME_REQUEST_BYTES
+              : MAX_TRPC_REQUEST_BYTES,
+          isPrinting ? 30_000 : undefined,
+        );
+      } catch {
+        return jsonError(
+          new HackerSdkError({
+            code: "VALIDATION_ERROR",
+            message:
+              "The participant request is too large or took too long to upload.",
+            retryable: false,
+          }),
+          413,
+          responseHeaders,
+        );
       }
     }
 
-    if (await isExpiredSession(response)) {
-      clearSessionCookies(responseHeaders, secure, cookieNames);
-    }
+    const response = await forwardWithRefresh();
     return copyProxyResponse(response, responseHeaders);
   };
 }

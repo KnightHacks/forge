@@ -360,6 +360,70 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     });
   });
 
+  it("counts requests per attendee across statuses without counting files or other hackathons", async () => {
+    const hacker = await seedHacker("repeat", "checkedin");
+    const other = await seedHacker("first", "checkedin");
+    const received = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+      await stageFile(hacker.attendeeId),
+    ]);
+    const completed = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+    ]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ status: "picked_up" })
+      .where(eq(knightHacks.PrintJob.id, completed.id));
+    const first = await submit(other.ctx, [await stageFile(other.attendeeId)]);
+    const selectedHackathonId = hackathonId;
+    const otherHackathonId = randomUUID();
+    await client.insert(knightHacks.Hackathon).values({
+      applicationDeadline: since(-5),
+      applicationOpen: since(-30),
+      confirmationDeadline: since(-2),
+      displayName: "Other Print Hack",
+      endDate: since(1),
+      id: otherHackathonId,
+      name: `print-${otherHackathonId}`,
+      startDate: since(-1),
+      theme: "Printing",
+      timezone: "America/New_York",
+    });
+    hackathonId = otherHackathonId;
+    const otherAttendee = await seedHacker("elsewhere", "checkedin");
+    await submit(otherAttendee.ctx, [
+      await stageFile(otherAttendee.attendeeId),
+    ]);
+    hackathonId = selectedHackathonId;
+
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    for (const status of [
+      undefined,
+      "active",
+      "received",
+      "picked_up",
+    ] as const) {
+      const queue = await caller.printing.list({ hackathonId, status });
+      for (const job of queue.jobs) {
+        expect(job.requestCount).toBe(job.id === first.id ? 1 : 2);
+        expect(job.cancelCount).toBe(0);
+      }
+      if (status === "received") {
+        expect(queue.jobs.map((job) => job.id)).toEqual([
+          received.id,
+          first.id,
+        ]);
+      }
+      if (status === "picked_up") {
+        expect(queue.jobs.map((job) => job.id)).toEqual([completed.id]);
+      }
+    }
+    expect(
+      (await caller.printing.list({ hackathonId: otherHackathonId })).jobs[0]
+        ?.requestCount,
+    ).toBe(1);
+  });
+
   it("[TC-006/008/013/014/NEG-014] works the queue from Blade", async () => {
     const hacker = await seedHacker("ivy", "checkedin");
     const cancelled = await submit(hacker.ctx, [
@@ -381,8 +445,10 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     });
     expect(active.jobs.map((row) => row.id)).toEqual([job.id]);
     expect(active.counts).toEqual(queue.counts);
+    expect(active.jobs[0]?.requestCount).toBe(2);
     expect(queue.jobs[1]).toMatchObject({
       cancelCount: 1,
+      requestCount: 2,
       estimate: { overridden: false, position: 1 },
       submitter: {
         discordUser: "ivy-discord",
@@ -597,9 +663,81 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     expect(minutesLeft).toBeLessThanOrEqual(10);
   });
 
+  it("counts submitted and cancelled files against the retained byte limit", async () => {
+    const hacker = await seedHacker("quota", "checkedin");
+    const fileId = await stageFile(hacker.attendeeId);
+    const job = await submit(hacker.ctx, [fileId]);
+    await printing.cancelPrintJob(hacker.ctx, {
+      jobId: job.id,
+      idempotencyKey: randomUUID(),
+    });
+    await client
+      .update(knightHacks.PrintJobFile)
+      .set({ size: 250 * 1024 * 1024 })
+      .where(eq(knightHacks.PrintJobFile.id, fileId));
+    // PNG signatures suffice for reference images; no image decoder is run.
+    const input = {
+      bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+      contentType: "image/png",
+      fileName: "reference.png",
+    };
+    await expect(printing.uploadPrintFile(hacker.ctx, input)).rejects.toThrow(
+      "upload limit",
+    );
+    const other = await seedHacker("separate", "checkedin");
+    await expect(
+      printing.uploadPrintFile(other.ctx, input),
+    ).resolves.toHaveProperty("fileId");
+  });
+
+  it("caps retained file count even when small files belong to submitted jobs", async () => {
+    const hacker = await seedHacker("filequota", "checkedin");
+    const ids: string[] = [];
+    for (let index = 0; index < 25; index += 1)
+      ids.push(await stageFile(hacker.attendeeId));
+    for (let index = 0; index < 25; index += 5)
+      await submit(hacker.ctx, ids.slice(index, index + 5));
+    await expect(
+      printing.uploadPrintFile(hacker.ctx, {
+        bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+        contentType: "",
+        fileName: "reference.png",
+      }),
+    ).rejects.toThrow("upload limit");
+  });
+
+  it("keeps concurrent uploads within staging capacity", async () => {
+    const hacker = await seedHacker("concurrent", "checkedin");
+    const input = {
+      bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+      contentType: "",
+      fileName: "reference.png",
+    };
+    const results = await Promise.allSettled(
+      Array.from({ length: 12 }, () =>
+        printing.uploadPrintFile(hacker.ctx, input),
+      ),
+    );
+    expect(results.some((result) => result.status === "fulfilled")).toBe(true);
+    const retained = await client
+      .select()
+      .from(knightHacks.PrintJobFile)
+      .where(eq(knightHacks.PrintJobFile.hackerAttendeeId, hacker.attendeeId));
+    expect(retained.length).toBeGreaterThan(0);
+    expect(retained.length).toBeLessThanOrEqual(5);
+    for (const result of results) {
+      if (result.status === "rejected")
+        expect(String(result.reason)).toContain("Another upload");
+    }
+  });
+
   it("keeps at most five unsubmitted files per hacker", async () => {
     const hacker = await seedHacker("ola", "checkedin");
-    const stl = new Uint8Array(Buffer.from("solid part\nendsolid part"));
+    const stl = new Uint8Array(
+      Buffer.from(
+        "solid part\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid part",
+      ),
+    );
     const uploaded: string[] = [];
     for (let index = 0; index < 6; index += 1) {
       const staged = await printing.uploadPrintFile(hacker.ctx, {

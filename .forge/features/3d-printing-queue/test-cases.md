@@ -520,3 +520,26 @@ Expected observations:
 ## Open questions
 
 See `status.md`.
+
+## Shinies UI regression cases (2026-10-04)
+
+- Both KH IX printing views display a readable Shinies mark and working sponsor link; non-KH IX organizer events have no Shinies attribution.
+- Open New print, type details, upload a file, dismiss and reopen: draft and uploaded file remain. Successful submit closes the dialog and displays the received request. Unsupported uploads still block submit until removed.
+- In-progress contains received, printing, clarification and pickup-ready requests; History contains picked-up/cancelled requests. Cancellation confirmation still works and moves the request to History.
+- Organizer search matches submitter, description and filename within the current status. An unmatched query has a helpful empty state; clearing it restores the list. Status navigation retains URL behavior.
+- Clarification still requires a note; other statuses retain their prior requirements. Download, status updates, exact-ready override/reset and printer settings still work.
+- Inspect desktop and 320px layouts, modal keyboard focus, 60 jobs and long text. No horizontal document overflow; job collections stay height-bounded and full details remain accessible.
+
+## Organizer request count cases (2026-10-04)
+
+- One person with received, picked-up and cancelled jobs retains their total in All, Active and individual status views; cancellations retain their separate count.
+- Multiple attachments count as one request. Another attendee and another hackathon do not inflate a person's count. A first-time requester shows the singular label.
+- Search narrows visible jobs without changing per-person totals. Detail and row counts agree. Inspect desktop and 320px layouts for wrapping and overflow.
+
+## Upload guardrail regressions — 2026-10-04
+
+- Accept valid ASCII STL (including tabs/scientific notation) and binary STL. Reject renamed scripts, HTML, incomplete facets, invalid triangle counts/lengths, non-finite coordinates and trailing ASCII content. Reject OBJ/STEP/3MF even with previously accepted signatures.
+- Long `.cmd.stl` / `.html.stl` filenames preserve the final STL extension; canonicalize JPEG to JPG. No download URL for missing objects, mismatched name/type or missing validation marker. Validated downloads are octet-stream attachments.
+- Missing/forged sessions, failed check-in and upstream failures cause no SDK body read. Refresh succeeds before the first read and forwards refreshed credentials/cookies. Blade HEAD has no body parsing; POST checks authorization before parsing.
+- Database regressions: cancelled/submitted files count toward byte quota; submitted tiny files count toward file quota; another attendee has independent capacity; concurrent uploads never exceed staging capacity. These require the disposable loopback PostgreSQL test database.
+- Browser regression: a multi-file selection sends uploads sequentially and remains submittable after successful uploads. Local preview validates presentation/ordering only, not real database/storage authorization.

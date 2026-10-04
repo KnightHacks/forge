@@ -3,5 +3,5 @@ export {
   hackerParticipantV1Router,
   type HackerParticipantV1Router,
 } from "./router";
-export { uploadPrintFile } from "./printing";
+export { requirePrintUploadAccess, uploadPrintFile } from "./printing";
 export { openResumeDownload, uploadResume } from "./resume";

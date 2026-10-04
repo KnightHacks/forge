@@ -1713,6 +1713,7 @@ export function KhixDashboardShell({
               styles.journeyMain,
             activeItem === "lore" && styles.loreMain,
             activeItem === "profile" && styles.profileMain,
+            activeItem === "printing" && styles.printingMain,
           )}
           tabIndex={-1}
         >

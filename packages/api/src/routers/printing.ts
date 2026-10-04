@@ -178,7 +178,7 @@ export const printingRouter = createTRPCRouter({
         .orderBy(asc(PrintJob.createdAt), asc(PrintJob.id));
 
       const jobIds = jobs.map((job) => job.id);
-      const [files, statusCounts, cancelCounts, queue] = await Promise.all([
+      const [files, statusCounts, attendeeCounts, queue] = await Promise.all([
         jobIds.length === 0
           ? []
           : db
@@ -198,22 +198,20 @@ export const printingRouter = createTRPCRouter({
           .groupBy(PrintJob.status),
         db
           .select({
+            cancelCount: count(
+              sql`case when ${PrintJob.status} = 'cancelled' then 1 end`,
+            ),
             hackerAttendeeId: PrintJob.hackerAttendeeId,
-            value: count(),
+            requestCount: count(),
           })
           .from(PrintJob)
-          .where(
-            and(
-              eq(PrintJob.hackathonId, input.hackathonId),
-              eq(PrintJob.status, "cancelled"),
-            ),
-          )
+          .where(eq(PrintJob.hackathonId, input.hackathonId))
           .groupBy(PrintJob.hackerAttendeeId),
         loadQueueEstimates(input.hackathonId),
       ]);
 
-      const cancelCountByAttendee = new Map(
-        cancelCounts.map((row) => [row.hackerAttendeeId, row.value]),
+      const countsByAttendee = new Map(
+        attendeeCounts.map((row) => [row.hackerAttendeeId, row]),
       );
       const counts = Object.fromEntries(
         PRINTING.PRINT_JOB_STATUSES.map((status) => [
@@ -227,7 +225,8 @@ export const printingRouter = createTRPCRouter({
         jobs: jobs.map((job) => {
           const estimate = queue.estimates.get(job.id);
           return {
-            cancelCount: cancelCountByAttendee.get(job.hackerAttendeeId) ?? 0,
+            cancelCount:
+              countsByAttendee.get(job.hackerAttendeeId)?.cancelCount ?? 0,
             createdAt: job.createdAt,
             description: job.description,
             estimate: estimate
@@ -245,6 +244,8 @@ export const printingRouter = createTRPCRouter({
                 size: file.size,
               })),
             id: job.id,
+            requestCount:
+              countsByAttendee.get(job.hackerAttendeeId)?.requestCount ?? 0,
             status: job.status,
             statusChangedAt: job.statusChangedAt,
             statusNote: job.statusNote,

@@ -1,3 +1,5 @@
+import { isPrintStl } from "./print-stl";
+
 /**
  * Upload allowlists.
  *
@@ -33,6 +35,8 @@ export function uploadExtension(type: UploadFileType) {
 export interface UploadPolicy {
   /** Noun for "must be a valid ___." when the bytes contradict the type. */
   readonly contentNoun: string;
+  /** Optional stricter format validation for this particular upload surface. */
+  readonly validateContent?: (mimeType: string, bytes: Uint8Array) => boolean;
   readonly maxBytes: number;
   /** Human size cap, e.g. "2MB". */
   readonly sizeLabel: string;
@@ -98,13 +102,6 @@ export const RESUME_UPLOAD_POLICY: UploadPolicy = {
 };
 
 const STL: UploadFileType = { extensions: ["stl"], mimeType: "model/stl" };
-const THREE_MF: UploadFileType = { extensions: ["3mf"], mimeType: "model/3mf" };
-const OBJ: UploadFileType = { extensions: ["obj"], mimeType: "model/obj" };
-const STEP: UploadFileType = {
-  extensions: ["step", "stp"],
-  mimeType: "model/step",
-};
-
 /** Hacker 3D print job files: printable models plus reference photos. */
 export const PRINT_FILE_UPLOAD_POLICY: UploadPolicy = {
   contentNoun: "3D model or image",
@@ -112,8 +109,12 @@ export const PRINT_FILE_UPLOAD_POLICY: UploadPolicy = {
   sizeLabel: "50MB",
   subject: "Print file",
   typeFrom: "extension",
-  typeLabel: "STL, 3MF, OBJ, STEP, PNG, or JPEG file",
-  types: [STL, THREE_MF, OBJ, STEP, PNG, JPEG],
+  typeLabel: "STL, PNG, or JPEG file",
+  types: [STL, PNG, JPEG],
+  validateContent: (mimeType, bytes) =>
+    mimeType === "model/stl"
+      ? isPrintStl(bytes)
+      : matchesUploadSignature(mimeType, bytes) === true,
 };
 
 /** The same policy, re-subjected so rejections name what the member picked. */
@@ -250,7 +251,10 @@ export function checkUploadContent(
     size: input.bytes.length,
   });
   if (!metadata.ok) return metadata;
-  if (matchesUploadSignature(metadata.type.mimeType, input.bytes) !== true) {
+  const valid = policy.validateContent
+    ? policy.validateContent(metadata.type.mimeType, input.bytes)
+    : matchesUploadSignature(metadata.type.mimeType, input.bytes);
+  if (valid !== true) {
     return reject(policy, "content_mismatch");
   }
   return metadata;
@@ -290,8 +294,7 @@ const SIGNATURES: Record<string, (bytes: Uint8Array) => boolean> = {
   // 3MF is a ZIP package; STEP files open with their ISO standard number.
   "model/3mf": ZIP_CONTAINER,
   "model/step": (bytes) => asciiAt(bytes, 0, "ISO-10303-21"),
-  // STL (binary or ASCII) and OBJ have no fixed header. Refusing program
-  // images is the strongest content check those formats allow.
+  // Generic attachment signatures; the printing policy additionally checks STL structure.
   "model/obj": (bytes) => !hasExecutableSignature(bytes),
   "model/stl": (bytes) => !hasExecutableSignature(bytes),
   "video/mp4": (bytes) => asciiAt(bytes, 4, "ftyp"),

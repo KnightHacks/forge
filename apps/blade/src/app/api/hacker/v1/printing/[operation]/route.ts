@@ -1,4 +1,7 @@
-import { uploadPrintFile } from "@forge/api/hacker-portal";
+import {
+  requirePrintUploadAccess,
+  uploadPrintFile,
+} from "@forge/api/hacker-portal";
 import { PRINT_FILE_UPLOAD_POLICY } from "@forge/validators";
 
 import {
@@ -22,7 +25,12 @@ function participantError(error: unknown, requestId: string) {
     );
   }
   const status =
-    cause.code === "FORBIDDEN" || cause.code === "FORBIDDEN_STATUS" ? 403 : 400;
+    cause.code === "FORBIDDEN" || cause.code === "FORBIDDEN_STATUS"
+      ? 403
+      : cause.code === "PRINT_STORAGE_LIMIT" ||
+          cause.code === "PRINT_UPLOAD_BUSY"
+        ? 429
+        : 400;
   return errorResponse(cause.code, cause.message, status, requestId);
 }
 
@@ -52,6 +60,7 @@ export async function POST(
     );
   }
   try {
+    await requirePrintUploadAccess(portal);
     const form = await readBoundedFormData(request, MAX_BODY_BYTES);
     const file = form.get("file");
     if (!(file instanceof File)) {
@@ -72,5 +81,32 @@ export async function POST(
     });
   } catch (error) {
     return participantError(error, portal.requestId);
+  }
+}
+
+/** Authenticate the SDK proxy before it buffers any file bytes. */
+export async function HEAD(
+  request: Request,
+  context: { params: Promise<{ operation: string }> },
+) {
+  if ((await context.params).operation !== "upload")
+    return new Response(null, { status: 404 });
+  const portal = await authenticatedContext(request);
+  if (!portal)
+    return new Response(null, {
+      status: 401,
+      headers: { "cache-control": "private, no-store" },
+    });
+  try {
+    await requirePrintUploadAccess(portal);
+    return new Response(null, {
+      status: 204,
+      headers: { "cache-control": "private, no-store" },
+    });
+  } catch {
+    return new Response(null, {
+      status: 403,
+      headers: { "cache-control": "private, no-store" },
+    });
   }
 }

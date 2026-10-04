@@ -6,7 +6,17 @@ import type {
   HackerStagedPrintFileDto,
 } from "@forge/hacker-sdk/contracts";
 import { PRINTING } from "@forge/consts";
-import { and, asc, desc, eq, inArray, isNull } from "@forge/db";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  sql,
+  sum,
+} from "@forge/db";
 import { db } from "@forge/db/client";
 import { PrintJob, PrintJobFile } from "@forge/db/schemas/knight-hacks";
 import {
@@ -31,7 +41,7 @@ import { requireApplicationWithStatuses } from "./reads";
 import { portalFailure } from "./trpc";
 
 /** Every printing action requires whole-hack check-in. */
-function requireCheckedIn(ctx: AuthenticatedPortalContext) {
+export function requirePrintUploadAccess(ctx: AuthenticatedPortalContext) {
   return requireApplicationWithStatuses(ctx, ["checkedin"]);
 }
 
@@ -99,8 +109,9 @@ async function loadJobFiles(jobIds: readonly string[], executor: WriteDb) {
 async function dropOldestStagedFiles(
   hackathonId: string,
   hackerAttendeeId: string,
+  executor: WriteDb,
 ) {
-  const stale = await db
+  const stale = await executor
     .select({ id: PrintJobFile.id })
     .from(PrintJobFile)
     .where(
@@ -112,8 +123,8 @@ async function dropOldestStagedFiles(
     )
     .orderBy(desc(PrintJobFile.createdAt), desc(PrintJobFile.id))
     .offset(PRINTING.MAX_PRINT_JOB_FILES - 1);
-  if (stale.length === 0) return;
-  const removed = await db
+  if (stale.length === 0) return [];
+  const removed = await executor
     .delete(PrintJobFile)
     .where(
       and(
@@ -126,7 +137,7 @@ async function dropOldestStagedFiles(
       ),
     )
     .returning({ objectName: PrintJobFile.objectName });
-  await removePrintFileObjects(removed.map((file) => file.objectName));
+  return removed.map((file) => file.objectName);
 }
 
 /**
@@ -138,14 +149,13 @@ export async function uploadPrintFile(
   ctx: AuthenticatedPortalContext,
   input: { bytes: Uint8Array; contentType: string; fileName: string },
 ): Promise<HackerStagedPrintFileDto> {
-  const application = await requireCheckedIn(ctx);
+  const application = await requirePrintUploadAccess(ctx);
   const check = checkUploadContent(PRINT_FILE_UPLOAD_POLICY, input);
   if (!check.ok) {
     portalFailure("INVALID_PRINT_FILE", check.message, {
       trpcCode: "BAD_REQUEST",
     });
   }
-  await dropOldestStagedFiles(ctx.session.hackathonId, application.attendeeId);
   const fileId = randomUUID();
   const fileName = printFileName(input.fileName);
   const objectName = printFileObjectName({
@@ -154,25 +164,68 @@ export async function uploadPrintFile(
     hackathonId: ctx.session.hackathonId,
     hackerAttendeeId: application.attendeeId,
   });
-  await putPrintFileObject({
-    bytes: input.bytes,
-    contentType: check.type.mimeType,
-    objectName,
-  });
+  const storageAttempt = { started: false };
+  let pruned: string[] = [];
   try {
-    await db.insert(PrintJobFile).values({
-      contentType: check.type.mimeType,
-      fileName,
-      hackathonId: ctx.session.hackathonId,
-      hackerAttendeeId: application.attendeeId,
-      id: fileId,
-      objectName,
-      size: input.bytes.length,
+    await db.transaction(async (tx) => {
+      // A database lock works across server instances; fail fast on overlap.
+      const lock = await tx.execute<{ acquired: boolean }>(
+        sql`select pg_try_advisory_xact_lock(hashtextextended(${`printing:${ctx.session.hackathonId}:${application.attendeeId}`}, 0)) as acquired`,
+      );
+      if (!lock.rows[0]?.acquired) {
+        portalFailure(
+          "PRINT_UPLOAD_BUSY",
+          "Another upload is in progress. Please try again.",
+          { trpcCode: "TOO_MANY_REQUESTS" },
+        );
+      }
+      pruned = await dropOldestStagedFiles(
+        ctx.session.hackathonId,
+        application.attendeeId,
+        tx,
+      );
+      const [usage] = await tx
+        .select({ files: count(), bytes: sum(PrintJobFile.size) })
+        .from(PrintJobFile)
+        .where(
+          and(
+            eq(PrintJobFile.hackathonId, ctx.session.hackathonId),
+            eq(PrintJobFile.hackerAttendeeId, application.attendeeId),
+          ),
+        );
+      // Submitted, completed, and cancelled jobs still consume storage.
+      if (
+        !usage ||
+        usage.files >= 25 ||
+        Number(usage.bytes ?? 0) + input.bytes.length > 250 * 1024 * 1024
+      ) {
+        portalFailure(
+          "PRINT_STORAGE_LIMIT",
+          "You have reached your print upload limit (25 files or 250MB). Please contact the organizers.",
+          { trpcCode: "TOO_MANY_REQUESTS" },
+        );
+      }
+      storageAttempt.started = true;
+      await putPrintFileObject({
+        bytes: input.bytes,
+        contentType: check.type.mimeType,
+        objectName,
+      });
+      await tx.insert(PrintJobFile).values({
+        contentType: check.type.mimeType,
+        fileName,
+        hackathonId: ctx.session.hackathonId,
+        hackerAttendeeId: application.attendeeId,
+        id: fileId,
+        objectName,
+        size: input.bytes.length,
+      });
     });
   } catch (error) {
-    await removePrintFileObjects([objectName]);
+    if (storageAttempt.started) await removePrintFileObjects([objectName]);
     throw error;
   }
+  await removePrintFileObjects(pruned);
   return { fileId, fileName, size: input.bytes.length };
 }
 
@@ -181,7 +234,7 @@ export async function removeStagedPrintFile(
   ctx: AuthenticatedPortalContext,
   input: { fileId: string },
 ) {
-  const application = await requireCheckedIn(ctx);
+  const application = await requirePrintUploadAccess(ctx);
   const removed = await db
     .delete(PrintJobFile)
     .where(
@@ -200,7 +253,7 @@ export async function removeStagedPrintFile(
 export async function listPrintJobs(
   ctx: AuthenticatedPortalContext,
 ): Promise<HackerPrintJobsDto> {
-  const application = await requireCheckedIn(ctx);
+  const application = await requirePrintUploadAccess(ctx);
   const jobs = await db
     .select({
       createdAt: PrintJob.createdAt,
@@ -241,7 +294,7 @@ export async function submitPrintJob(
   ctx: AuthenticatedPortalContext,
   input: { description: string; fileIds: string[]; idempotencyKey: string },
 ): Promise<HackerPrintJobDto> {
-  const application = await requireCheckedIn(ctx);
+  const application = await requirePrintUploadAccess(ctx);
   // Set only when this request created the job, so a replayed submit does not
   // post a second channel notice.
   const created: { jobId: string | null } = { jobId: null };
@@ -325,7 +378,7 @@ export async function cancelPrintJob(
   ctx: AuthenticatedPortalContext,
   input: { idempotencyKey: string; jobId: string },
 ): Promise<HackerPrintJobDto> {
-  const application = await requireCheckedIn(ctx);
+  const application = await requirePrintUploadAccess(ctx);
   return db.transaction((tx) =>
     runParticipantCommand({
       hackathonId: ctx.session.hackathonId,

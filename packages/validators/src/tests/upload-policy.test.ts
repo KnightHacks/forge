@@ -275,7 +275,11 @@ describe("upload policies", () => {
 });
 
 describe("print file policy", () => {
-  const STL_ASCII = new Uint8Array(Buffer.from("solid bracket\nfacet"));
+  const STL_ASCII = new Uint8Array(
+    Buffer.from(
+      "solid bracket\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid bracket",
+    ),
+  );
   const STEP_BYTES = new Uint8Array(Buffer.from("ISO-10303-21;\nHEADER;"));
   const ZIP_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00]);
   const ELF_BYTES = new Uint8Array([0x7f, 0x45, 0x4c, 0x46, 0x02]);
@@ -312,18 +316,33 @@ describe("print file policy", () => {
         fileName,
       }).ok;
 
-    expect(check("part.3mf", ZIP_BYTES)).toBe(true);
+    expect(check("part.3mf", ZIP_BYTES)).toBe(false);
     expect(check("part.3mf", STL_ASCII)).toBe(false);
-    expect(check("part.step", STEP_BYTES)).toBe(true);
-    expect(check("part.stp", STEP_BYTES)).toBe(true);
+    expect(check("part.step", STEP_BYTES)).toBe(false);
+    expect(check("part.stp", STEP_BYTES)).toBe(false);
     expect(check("part.step", ZIP_BYTES)).toBe(false);
     expect(check("photo.jpeg", JPEG_BYTES)).toBe(true);
     expect(check("part.obj", new Uint8Array(Buffer.from("v 0 0 0")))).toBe(
-      true,
+      false,
     );
-    // STL and OBJ have no header, so program images are what gets refused.
+    // Renaming a program does not turn it into a model.
     expect(check("part.stl", ELF_BYTES)).toBe(false);
     expect(check("part.obj", ELF_BYTES)).toBe(false);
+  });
+
+  it("rejects the executable-extension truncation payload before storage", () => {
+    for (const [fileName, text] of [
+      ["a".repeat(176) + ".cmd.stl", "@echo off\ncalc.exe"],
+      ["a".repeat(175) + ".html.stl", "<html><script>alert(1)</script></html>"],
+    ]) {
+      expect(
+        checkUploadContent(PRINT_FILE_UPLOAD_POLICY, {
+          fileName,
+          contentType: "",
+          bytes: new TextEncoder().encode(text),
+        }),
+      ).toMatchObject({ ok: false, reason: "content_mismatch" });
+    }
   });
 
   it("[TC-NEG-004] caps each file at 50MB and names the reason", () => {
@@ -345,7 +364,7 @@ describe("print file policy", () => {
         size: 10,
       }),
     ).toMatchObject({
-      message: "Print file must be a STL, 3MF, OBJ, STEP, PNG, or JPEG file.",
+      message: "Print file must be a STL, PNG, or JPEG file.",
     });
   });
 });

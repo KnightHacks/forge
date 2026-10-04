@@ -347,3 +347,24 @@ Would this require a developer change next year?
 ## Open questions
 
 See `status.md`.
+
+## Shinies presentation refinement (2026-10-04)
+
+Changes stay in KH IX and Blade printing components, their local styles/static assets, and the KH IX shell's printing-only canvas class. No new dependencies, schema, API, auth or upload implementation changes.
+
+Visual thesis: a quiet workshop in the KH IX violet palette, anchored by Shinies' real white wordmark, with gold reserved for primary action and print estimates. Blade retains its semantic dark surfaces and violet action tokens.
+Content hierarchy: sponsor identity and factual introduction; printing workspace/action; queue timing; active requests/history. Interaction: clear hover/focus feedback, existing Radix dialog transitions, preserved draft on dismissal and immediate close after successful submission. Motion respects reduced-motion preferences.
+
+The unmodified logo is copied from apps/2025/public/sponsorSectionSvgs/shinies.svg into each consuming app's public/sponsors directory. Each app deploys independently; no shared package is needed for static assets. Sponsor description source: https://www.shinies.co/ (checked 2026-10-04).
+
+## Organizer request counts (2026-10-04)
+
+Extend the existing attendee aggregate in `printing.list` to return `requestCount` alongside `cancelCount`, grouped by attendee and scoped to the selected hackathon before display filtering. Reuse the existing query rather than add per-row reads. Blade consumes the additive field in queue rows and the detail header; no schema, permission, upload or notification changes. Keep the count in existing muted metadata, with the scope explained in job details.
+
+## Upload security implementation — 2026-10-04
+
+- Printing-specific content policy accepts complete ASCII STL facet grammar or exact-length binary STL records with finite coordinates/normals. PNG/JPEG references retain signature checks; no image/CAD renderer, archive extractor, or executable is invoked. This is structural validation, not certification of downstream viewer safety.
+- Filename sanitization truncates the basename and appends the canonical allowed extension. Downloads require matching supported name/type and a server-written `stl-images-v1` object metadata marker; links remain ten-minute attachments served as `application/octet-stream`. Previously issued links can remain valid until their existing expiry.
+- The SDK calls an authenticated, checked-in HEAD preflight before reading multipart data, handles session refresh there, and rejects failed preflights without consuming bytes. Printing body reads and upstream printing requests have 30-second deadlines. Blade repeats authorization before parsing POST data.
+- A transaction-scoped per-attendee/hackathon PostgreSQL advisory lock serializes staging eviction, aggregate retained quotas, object upload and metadata insertion. Overlap fails promptly. The form queues selected uploads, including overlapping selections. Pruned objects are removed only after commit; attempted new objects are removed on rollback. Cleanup is best effort, so failed storage deletion can leave orphan objects.
+- No schema, dependency, credential, environment-variable or production-storage configuration changes. Quotas bound retained tracked files, not total authenticated request concurrency. Deployment-level ingress limits, bucket ACLs, orphan reconciliation/retention scheduling and downstream slicer sandboxing remain operational concerns outside this patch.

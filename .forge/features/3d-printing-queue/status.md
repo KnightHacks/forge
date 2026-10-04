@@ -1,8 +1,6 @@
 # 3D Printing Queue Status
 
-Current phase: KH IX printing page done (2026-10-01). All feature steps are
-built and uncommitted, waiting for human review before any commit, push, or
-PR.
+Current phase: Shinies UI refinement implemented and locally validated (2026-10-04). Changes are uncommitted on `codex/shinies-printing-ui`, based on PR #592, for human visual review.
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -254,3 +252,43 @@ PR.
 - Issues:
 - Discord/thread context: Dylan's task brief (screenshot in the planning
   session).
+
+## Shinies UI refinement — 2026-10-04
+
+Current phase: locally validated; ready for visual review. Branch: codex/shinies-printing-ui, based on PR #592 (https://github.com/KnightHacks/forge/pull/592).
+
+User approved a sponsor-focused UX/UI redesign. Scope: KH IX hacker printing page and Blade organizer queue. Logo and sponsor URL already exist in the repo; description verified against the official site. No new sponsor service promises, material guarantees or pickup location are invented.
+
+- [x] Inspect existing workflow, repo design contract, sponsor assets and official site.
+- [x] Implement sponsor identity, focused submission, active/history separation and compact searchable queue.
+- [x] Verify desktop/mobile screenshots and representative workflows with local sample data.
+- [x] Run formatting, lint, types, React analysis and relevant tests; record results.
+
+Local preview uses the pre-existing temporary fixture server. It does not validate production auth, storage, database persistence or notification delivery. No deployment or commit requested.
+
+### Refinement validation
+
+- Both `pnpm --filter=@forge/2026 typecheck` and `pnpm --filter=@forge/blade typecheck` pass. Stale workspace declaration builds and old map route types initially blocked checks; dependency builds and Next type generation resolved them without source changes.
+- Scoped ESLint passes for the printing workspace, detail dialog, hacker page and new submission component, with no warnings. The existing dashboard shell still has its pre-existing size warnings.
+- Prettier checks on edited code/styles and the feature bundle pass; `git diff --check` passes.
+- `pnpm analyze:react:changed` reports 0 failures; explicit strict analysis of the new, untracked submission component also passes.
+- KH IX tests: 16/16 pass. Blade printing format tests: 3/3 pass.
+- Actual UI inspected at 1600×900 and 320×800. Both job collections stay within a 574px scroll region with 60 synthetic records; no document overflow at 320px. Long description and contact-name recovery, mobile modal bounds and readable sponsor marks checked.
+- Local browser checks pass for unsupported-file guard, draft persistence across dismissal, submission from History returning to In progress, cancellation moving to History, filename search, empty search, required clarification note, status save and model download.
+- Preview fixtures restored after stress checks. Existing backend estimates, settings, status transitions, auth, storage and delivery implementations were not changed. No production database/notification validation, production build, commit or deployment performed for this visual refinement.
+
+## Organizer request counts — 2026-10-04
+
+Implemented locally on the existing task branch. Added a per-person total in Blade queue rows and job details, with the hackathon/all-status scope made explicit. Extended the existing API attendee aggregate; no extra query or migration. Added integration assertions for filter stability, cancellations, completed jobs, multiple files, other attendees and other events.
+
+Validation: API, Blade and KH IX typechecks pass. Scoped ESLint has no errors (existing integration-suite length warnings remain). Printing unit tests: 6 passed; database integration suite: 14 skipped because no loopback test database is configured and Docker is unavailable. Database-backed count correctness is not executed locally. React changed analysis: 0 failures. Browser sample-data checks confirm stable totals under search and status filters, matching detail text, and no document/dialog overflow at 320px. Desktop/mobile screenshots inspected. Local preview fixture now supplies the additive count. No commit or deployment.
+
+## Upload guardrails — 2026-10-04
+
+User requested a security review and code guardrails, selected STL + reference images, clarified no malware scanner, and authorized pushing the existing branch. The scoped review found four source-level issues: filename extension loss, pre-authentication SDK buffering, missing retained-file quotas and a staging-cap race. Implemented fixes address all four; independent read-only review also caught and resolved multi-file client concurrency and ASCII STL whitespace compatibility. No server-side file execution path was found.
+
+Implementation scope: validators printing policy/parser; API printing storage, quotas and authorization helper; SDK upload proxy; Blade upload route; KH IX submission form. Versioned validation metadata intentionally blocks downloads of legacy unvalidated files until re-upload. All status categories consume the 25-file/250-MiB per-attendee/event quota. Existing UI refinements and organizer request counts are included on the same branch as requested.
+
+Validation: root `pnpm format`, `pnpm lint`, and `pnpm typecheck` pass (existing size/complexity lint warnings remain). `pnpm analyze:react:changed` and strict analysis of the new form report zero failures. Validators: 338 passed; hacker SDK: 40 passed; printing API unit tests: 9 passed; Blade upload/printing format tests: 6 passed; KH IX: 16 passed. The original renamed script/HTML payloads are rejected by the printing policy; safe filename and legacy-download tests pass. Authentication tests verify no body read for missing/forged/unchecked sessions and upstream failures, plus successful refresh before buffering. Browser checks confirmed two overlapping selections produce maximum one active upload, both complete, and submission is enabled; screenshot inspected and fixture uploads removed afterward. Initial type/lint issues found during implementation were corrected and checks rerun.
+
+Database integration: 17 skipped, including quota/concurrency and organizer-count cases, because no loopback PostgreSQL database is configured. These database-backed fixes are implemented and typechecked but their runtime verification remains blocked; the configured nonlocal database is never used for tests. Storage tests mock MinIO; production bucket policy, live storage and downstream slicers were not tested. No antivirus guarantee, deployment or production configuration changes.
