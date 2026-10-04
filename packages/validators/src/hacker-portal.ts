@@ -16,6 +16,7 @@ import {
   projectInviteSchema,
 } from "./project-claims";
 import { nullableSocialProfileUrl } from "./social-profile";
+import { mapConfigurationSchema } from "./venue-map";
 
 export const HACKER_WITHDRAWAL_ACKNOWLEDGEMENT =
   "I understand that withdrawing is irreversible" as const;
@@ -523,6 +524,7 @@ export const hackerPortalV1InputSchemas = {
   getPublicHackathon: noInputSchema,
   getResume: noInputSchema,
   getSchedule: noInputSchema,
+  getMapConfiguration: noInputSchema,
   getSession: noInputSchema,
   removeResume: hackerRemoveResumeSchema,
   submitApplication: hackerApplicationSubmitSchema,
@@ -548,6 +550,7 @@ export interface HackerPortalV1OutputSchemaMap {
   getPublicHackathon: typeof publicHackathonDtoSchema;
   getResume: z.ZodNullable<typeof resumeDtoSchema>;
   getSchedule: typeof scheduleDtoSchema;
+  getMapConfiguration: typeof mapConfigurationSchema;
   getSession: typeof portalSessionDtoSchema;
   removeResume: typeof participantMutationResultDtoSchema;
   submitApplication: typeof participantMutationResultDtoSchema;
@@ -573,6 +576,7 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   getPublicHackathon: publicHackathonDtoSchema,
   getResume: resumeDtoSchema.nullable(),
   getSchedule: scheduleDtoSchema,
+  getMapConfiguration: mapConfigurationSchema,
   getSession: portalSessionDtoSchema,
   removeResume: participantMutationResultDtoSchema,
   submitApplication: participantMutationResultDtoSchema,

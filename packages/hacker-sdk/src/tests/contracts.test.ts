@@ -66,6 +66,7 @@ describe("Hacker participant v1 contract", () => {
       getPublicHackathon: "query",
       getResume: "query",
       getSchedule: "query",
+      getMapConfiguration: "query",
       getSession: "query",
       inviteProjectMember: "mutation",
       removeResume: "mutation",

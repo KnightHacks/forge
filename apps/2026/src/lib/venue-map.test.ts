@@ -40,7 +40,7 @@ describe("KHIX venue location parsing", () => {
     expect(parseVenueLocation(location)).toEqual(expected);
   });
 
-  it.each(["", "Location TBA", "Student Union", "HEC 101", "Online"])(
+  it.each(["", "Location TBA", "Student Union", "Online"])(
     "does not fabricate a venue location for %s",
     (location) => {
       expect(parseVenueLocation(location)).toBeNull();

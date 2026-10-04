@@ -24,6 +24,7 @@ import {
   getApplicationContext,
   getDashboard,
   getLeaderboard,
+  getMapConfiguration,
   getMyAttendance,
   getMyPoints,
   getPortalSession,
@@ -154,6 +155,10 @@ export const hackerParticipantV1Router: ReturnType<
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getResume)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getResume)
     .query(({ ctx }) => getResume(ctx)),
+  getMapConfiguration: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getMapConfiguration)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getMapConfiguration)
+    .query(({ ctx }) => getMapConfiguration(ctx)),
   getSchedule: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getSchedule)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getSchedule)

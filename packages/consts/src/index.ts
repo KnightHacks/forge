@@ -8,3 +8,5 @@ export * as PERMISSIONS from "./permissions";
 export * as TEAM from "./team";
 export * as ISSUE from "./issue";
 export * as CAREER from "./career";
+export * as VENUE_MAP from "./venue-map";
+export type { BuildingId, PermittedRoom } from "./venue-map";

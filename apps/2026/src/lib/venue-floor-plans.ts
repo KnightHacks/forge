@@ -9,10 +9,12 @@ export const INDOOR_BUILDING_IDS = [
   "eng1",
   "ucf-91",
   "student-union",
+  "hec",
 ] as const satisfies readonly IndoorBuildingId[];
 
 export interface VenueFloorRoom {
   id: string;
+  kind?: "bathroom";
   label: string;
   path: string;
   roomIds: string[];
@@ -41,9 +43,8 @@ export interface VenueFloorPlan {
   walkableAreas?: VenueWalkableArea[];
 }
 
-export type VenueFloorPlans = Record<
-  IndoorBuildingId,
-  Record<number, VenueFloorPlan>
+export type VenueFloorPlans = Partial<
+  Record<IndoorBuildingId, Record<number, VenueFloorPlan>>
 >;
 
 const venueFloorPlans: VenueFloorPlans = VENUE_FLOOR_PLANS;
@@ -64,7 +65,7 @@ const HIDDEN_ENG2_FIRST_FLOOR_ROOM_IDS = new Set([
 ]);
 
 export function getVenueFloorPlan(buildingId: IndoorBuildingId, floor: number) {
-  const floorPlan = venueFloorPlans[buildingId][floor];
+  const floorPlan = venueFloorPlans[buildingId]?.[floor];
 
   if (buildingId !== "ucf-91" || floor !== 1 || !floorPlan) {
     return floorPlan;
@@ -82,8 +83,22 @@ export function getVenueFloorPlan(buildingId: IndoorBuildingId, floor: number) {
 }
 
 export function getVenueFloors(buildingId: IndoorBuildingId) {
-  return Object.keys(VENUE_FLOOR_PLANS[buildingId])
+  return Object.keys(venueFloorPlans[buildingId] ?? {})
     .map(Number)
     .filter((floor) => buildingId !== "ucf-91" || floor <= 2)
     .sort((left, right) => left - right);
+}
+
+/** Search actual geometry; room numbers are not a reliable floor index. */
+export function findVenueRoom(
+  buildingId: IndoorBuildingId,
+  roomNumber: string,
+) {
+  const normalized = roomNumber.trim().toUpperCase();
+  for (const floor of getVenueFloors(buildingId)) {
+    const room = getVenueFloorPlan(buildingId, floor)?.rooms.find((candidate) =>
+      candidate.roomIds.includes(normalized),
+    );
+    if (room) return { floor, room };
+  }
 }

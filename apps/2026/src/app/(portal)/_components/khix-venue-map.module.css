@@ -30,21 +30,6 @@
   stroke: #eeff90 !important;
   stroke-width: 3;
 }
-.liveRoomBadge {
-  pointer-events: none;
-}
-.liveRoomBadge rect {
-  fill: #eeff90;
-  stroke: #07150f;
-  stroke-width: 1;
-}
-.floorRoom .liveRoomBadge text {
-  fill: #10200d;
-  stroke: none;
-  font:
-    900 9px Arial,
-    sans-serif;
-}
 
 .eventsSheet {
   position: absolute;
@@ -52,11 +37,9 @@
   bottom: 1.5rem;
   left: 1rem;
   width: min(360px, calc(100% - 2rem));
-  border: 1px solid #425449;
-  border-radius: 20px;
-  background: #12271e;
+  border-radius: 0.7rem;
   color: #fffdf4;
-  box-shadow: 0 8px 28px #0006;
+  font-family: var(--khix-body-font);
   overflow: hidden;
 }
 .sheetToggle {
@@ -155,16 +138,28 @@
   stroke-width: 4;
 }
 .closeSelection {
-  position: absolute;
-  z-index: 6;
-  bottom: 16rem;
-  right: 1rem;
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
   min-height: 44px;
-  padding: 8px 16px;
-  border-radius: 12px;
-  background: #12271e;
-  color: #fffdf4;
-  border: 1px solid #425449;
+  place-items: center;
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: rgb(255 253 244 / 0.72);
+  cursor: pointer;
+  transition:
+    background var(--khix-motion-fast),
+    color var(--khix-motion-fast);
+}
+.closeSelection:hover,
+.closeSelection:active {
+  background: rgb(153 199 109 / 0.16);
+  color: #e3ef8d;
+}
+.closeSelection svg {
+  width: 1rem;
+  height: 1rem;
 }
 .sheetToggle:focus-visible,
 .eventRow:focus-visible,
@@ -346,9 +341,12 @@
 .toolbar,
 .mapControls,
 .locationPicker,
+.eventsSheet,
 .selection,
 .locationMessage,
 .scheduleError,
+.policyError,
+.roomLegend,
 .mapHint,
 .mapAttribution {
   position: absolute;
@@ -510,16 +508,121 @@
   height: 1rem;
 }
 
-.eventMarker {
-  cursor: pointer;
-  outline: none;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: scale 150ms ease;
-}
-
 .floorRoom {
   outline: none;
+}
+
+/* Access state wins over event, hover and selection styling. */
+.floorRoom[data-state="idle"] > path,
+.floorRoom[data-state="upcoming"] > path {
+  fill: #46504b !important;
+  stroke: #a6b5ab !important;
+}
+.floorRoom[data-state="upcoming"] > path {
+  stroke: #9ce66b !important;
+  stroke-width: 2.5;
+}
+.floorRoom[data-state="live"] > path {
+  fill: #79bf45 !important;
+  stroke: #dcffb7 !important;
+}
+.floorRoom[data-state="bathroom"] > path {
+  fill: #285c86 !important;
+  stroke: #9dcdf1 !important;
+}
+.floorRoom[data-state="restricted"] > path {
+  fill: #663f40 !important;
+  stroke: #a87577 !important;
+  filter: none !important;
+}
+.floorRoom[data-state="restricted"] > text {
+  display: none;
+}
+.floorRoom[data-selected="true"] > path,
+.floorRoom[data-map-interactive="true"]:focus-visible > path {
+  stroke-width: 3;
+  stroke-dasharray: 6 3;
+}
+.roomLegend {
+  bottom: 10rem;
+  left: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  padding: 0.65rem 0.85rem;
+  border-radius: 999px;
+  color: rgb(255 253 244 / 0.8);
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.roomLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.roomLegend span::before {
+  content: "";
+  box-sizing: border-box;
+  width: 0.65rem;
+  height: 0.65rem;
+  flex: 0 0 auto;
+  border: 1px solid #a6b5ab;
+  border-radius: 0.18rem;
+  background: #46504b;
+}
+.roomLegend [data-state="bathroom"]::before {
+  background: #285c86;
+  border-color: #9dcdf1;
+}
+.roomLegend [data-state="restricted"]::before {
+  background: #663f40;
+  border-color: #a87577;
+}
+.roomLegend [data-state="live"]::before {
+  background: #79bf45;
+  border-color: #dcffb7;
+}
+.roomLegend [data-state="upcoming"]::before {
+  border: 2px solid #9ce66b;
+}
+.policyError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  top: 4.75rem;
+  left: 1rem;
+  max-width: min(28rem, calc(100% - 6rem));
+  margin: 0;
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  border-color: rgb(193 99 83 / 0.35);
+  color: #f3b6a8;
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.policyError button {
+  min-height: 44px;
+  border: 1px solid currentColor;
+  border-radius: 0.42rem;
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.policyError button:hover {
+  background: rgb(193 99 83 / 0.14);
+}
+.policyError button:focus-visible {
+  outline: 2px solid #eeff90;
+  outline-offset: 3px;
 }
 
 .indoorFloor {
@@ -646,47 +749,6 @@
   stroke-width: 3px;
 }
 
-.eventMarker:hover,
-.eventMarker:focus-visible,
-.eventMarker[data-selected="true"] {
-  scale: 1.25;
-}
-
-.eventMarker > circle:not(.liveRing, .markerCore) {
-  fill: #aaa1c7;
-  stroke: #fffdf4;
-  stroke-width: 2;
-}
-
-.eventMarker:focus-visible > circle:not(.liveRing, .markerCore) {
-  stroke: #e3ef8d;
-  stroke-width: 3.5;
-}
-
-.eventMarker[data-category="food"] > circle:not(.liveRing, .markerCore) {
-  fill: #eadb79;
-}
-
-.eventMarker[data-category="help"] > circle:not(.liveRing, .markerCore) {
-  fill: #69bd76;
-}
-
-.eventMarker[data-state="ended"] {
-  opacity: 0.4;
-}
-
-.markerCore {
-  fill: #07150f;
-}
-
-.liveRing {
-  fill: none;
-  stroke: #e3ef8d;
-  stroke-width: 2;
-  animation: markerPulse 1.7s ease-out infinite;
-}
-
-.markerLabel,
 .userMarker text,
 .indoorMarker text {
   paint-order: stroke;
@@ -782,59 +844,89 @@
   right: 1rem;
   bottom: 1rem;
   display: grid;
-  width: min(20rem, calc(100% - 2rem));
-  gap: 0.42rem;
+  width: min(24rem, calc(100% - 2rem));
+  gap: 0.85rem;
   border-radius: 0.7rem;
-  padding: 0.85rem;
+  padding: 1rem;
+  font-family: var(--khix-body-font);
+}
+
+.selectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.selectionHeader > div {
+  min-width: 0;
 }
 
 .selectionType {
+  display: block;
+  margin-top: 0.3rem;
   color: #a9cf79;
-  font-size: 0.55rem;
-  font-weight: 950;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1.4;
 }
 
 .selection h2 {
   margin: 0;
   color: #fffdf4;
-  font-size: 1rem;
-  line-height: 1.15;
+  font-family: var(--khix-display-font);
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
-.selection > p {
+.selectionBody {
+  display: grid;
+  gap: 1rem;
+  max-height: min(32dvh, 18rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #425449 transparent;
+  scrollbar-width: thin;
+}
+
+.selectionBody > p {
   margin: 0;
-  color: rgb(255 253 244 / 0.6);
-  font-size: 0.66rem;
-  line-height: 1.4;
+  color: rgb(255 253 244 / 0.72);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .selection dl {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
-  margin: 0.2rem 0 0;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.5fr);
+  gap: 0.75rem;
+  margin: 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgb(229 239 218 / 0.14);
 }
 
 .selection dt {
-  color: rgb(255 253 244 / 0.4);
-  font-size: 0.5rem;
-  font-weight: 900;
-  text-transform: uppercase;
+  color: rgb(255 253 244 / 0.64);
+  font-size: 0.6875rem;
+  font-weight: 650;
 }
 
 .selection dd {
-  margin: 0.12rem 0 0;
-  color: rgb(255 253 244 / 0.8);
-  font-size: 0.6rem;
+  margin: 0.3rem 0 0;
+  color: #fffdf4;
+  font-size: 0.8125rem;
   font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
 .locationMessage,
 .scheduleError {
-  bottom: 1rem;
+  bottom: 7.5rem;
   left: 1rem;
   max-width: min(28rem, calc(100% - 2rem));
   border-radius: 999px;
@@ -900,17 +992,6 @@
   border-radius: 1rem;
 }
 
-@keyframes markerPulse {
-  from {
-    opacity: 0.9;
-    scale: 0.65;
-  }
-  to {
-    opacity: 0;
-    scale: 1.45;
-  }
-}
-
 @keyframes floorReveal {
   from {
     opacity: 0;
@@ -935,24 +1016,6 @@
   .buildingCode {
     font-size: 12px;
     letter-spacing: 0;
-  }
-  .selection {
-    bottom: 6.5rem !important;
-    font-size: 14px;
-  }
-  .selection h2 {
-    font-size: 18px;
-  }
-  .selection > p,
-  .selection dd {
-    font-size: 14px;
-  }
-  .selection dt,
-  .selectionType {
-    font-size: 11px;
-  }
-  .closeSelection {
-    bottom: 28rem;
   }
   .experience {
     height: 100%;
@@ -1024,7 +1087,7 @@
   .locationPicker {
     top: auto;
     right: 0.7rem;
-    bottom: calc(4.65rem + env(safe-area-inset-bottom));
+    bottom: calc(6.5rem + env(safe-area-inset-bottom));
     left: 0.7rem;
     display: grid;
     grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
@@ -1057,17 +1120,28 @@
 
   .selection {
     right: 0.7rem;
-    bottom: calc(4.65rem + env(safe-area-inset-bottom));
+    bottom: calc(6.5rem + env(safe-area-inset-bottom));
     left: 0.7rem;
     width: auto;
-    max-height: min(45dvh, 22rem);
-    overflow-y: auto;
+    padding: 0.85rem;
+  }
+
+  .selectionBody {
+    max-height: min(30dvh, 16rem);
+  }
+
+  .selection dl {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
+  }
+
+  .selection dl > div:first-child {
+    grid-column: 1 / -1;
   }
 
   .locationMessage,
   .scheduleError {
     right: 0.7rem;
-    bottom: calc(4.65rem + env(safe-area-inset-bottom));
+    bottom: calc(6.5rem + env(safe-area-inset-bottom));
     left: 0.7rem;
     max-width: none;
   }
@@ -1081,6 +1155,21 @@
     text-align: center;
     transform: translateX(-50%);
     white-space: nowrap;
+  }
+
+  .roomLegend {
+    bottom: calc(10rem + env(safe-area-inset-bottom));
+    left: 0.7rem;
+    max-width: calc(100% - 1.4rem);
+    gap: 0.5rem 0.85rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.7rem;
+  }
+
+  .policyError {
+    right: 4.5rem;
+    left: 0.7rem;
+    max-width: none;
   }
 
   .mapAttribution {
@@ -1106,7 +1195,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liveRing,
   .indoorFloor,
   .loadingHeader,
   .loadingMap {

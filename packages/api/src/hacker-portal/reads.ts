@@ -1,9 +1,11 @@
+import type { MapConfiguration } from "@forge/validators";
 import { and, asc, eq, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
   Event,
   HackathonClass,
+  HackathonMapConfiguration,
   HackerAttendee,
   HackerEventAttendee,
   HackerProfile,
@@ -206,6 +208,19 @@ async function requireApplicationWithStatuses(
     );
   }
   return application;
+}
+
+/** Every authenticated map viewer receives only their portal's configuration. */
+export async function getMapConfiguration(
+  ctx: AuthenticatedPortalContext,
+): Promise<MapConfiguration> {
+  const configuration = await db.query.HackathonMapConfiguration.findFirst({
+    where: eq(HackathonMapConfiguration.hackathonId, ctx.session.hackathonId),
+  });
+  return {
+    restrictionsEnabled: configuration?.restrictionsEnabled ?? false,
+    rooms: configuration?.rooms ?? [],
+  };
 }
 
 export async function getSchedule(ctx: AuthenticatedPortalContext) {

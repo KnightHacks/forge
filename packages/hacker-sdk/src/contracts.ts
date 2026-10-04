@@ -126,6 +126,7 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   getPublicHackathon: "query",
   getResume: "query",
   getSchedule: "query",
+  getMapConfiguration: "query",
   getSession: "query",
   removeResume: "mutation",
   submitApplication: "mutation",
@@ -143,5 +144,8 @@ export const HACKER_PARTICIPANT_V1_SCHEMAS: {
   input: hackerPortalV1InputSchemas,
   output: hackerPortalV1OutputSchemas,
 } as const;
+
+export type HackerMapConfigurationDto =
+  HackerParticipantOutput<"getMapConfiguration">;
 
 export type HackerJudgingDto = HackerParticipantOutput<"getJudging">;

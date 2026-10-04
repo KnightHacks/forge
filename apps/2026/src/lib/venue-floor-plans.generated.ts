@@ -7968,6 +7968,7 @@ export const VENUE_FLOOR_PLANS = {
         },
         {
           id: "108",
+          kind: "bathroom",
           label: "108",
           path: "M320.3 180.4L336.6 172.3L352.9 172.3L363.8 180.4L363.8 229.3L295.8 229.3Z",
           roomIds: ["108"],
@@ -8403,6 +8404,7 @@ export const VENUE_FLOOR_PLANS = {
         },
         {
           id: "208",
+          kind: "bathroom",
           label: "208",
           path: "M308.7 181.5L364.5 181.5L364.5 229.3L308.7 229.3Z",
           roomIds: ["208"],
@@ -8411,6 +8413,7 @@ export const VENUE_FLOOR_PLANS = {
         },
         {
           id: "207",
+          kind: "bathroom",
           label: "207",
           path: "M308.7 229.3L364.5 229.3L364.5 277.1L308.7 277.1Z",
           roomIds: ["207"],

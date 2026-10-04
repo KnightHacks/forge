@@ -1,7 +1,7 @@
 import type { PortalScheduleEvent } from "./event-schedule";
 import { UCF_CAMPUS_BUILDINGS } from "./venue-campus.generated";
 
-export type VenueBuildingId = "ba1" | "ba2" | "eng1";
+export type VenueBuildingId = "ba1" | "ba2" | "eng1" | "hec";
 export type CampusBuildingId = string;
 export type MapEventCategory = "event" | "food" | "help";
 export type MapEventState = "ended" | "live" | "upcoming";
@@ -45,6 +45,11 @@ const locationPatterns: {
   buildingId: VenueBuildingId;
   pattern: RegExp;
 }[] = [
+  {
+    buildingId: "hec",
+    pattern:
+      /\b(?:HEC|(?:L3\s*HARRIS|HARRIS)(?:\s+ENGINEERING(?:\s+CENTER)?)?)\b/i,
+  },
   {
     buildingId: "ba2",
     pattern: /\b(?:BA\s*2|BUSINESS\s+ADMIN(?:ISTRATION)?\s*(?:II|2))\b/i,

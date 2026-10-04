@@ -163,6 +163,20 @@ export function useHackerResume(options: HackerSdkQueryOptions = {}) {
   });
 }
 
+/** Room policy is available before confirmation/check-in, just like the map. */
+export function useHackerMapConfiguration(options: HackerSdkQueryOptions = {}) {
+  const { client, portalKey } = useHackerSdkClient();
+  return useQuery({
+    enabled: options.enabled ?? true,
+    queryFn: () => client.getMapConfiguration(),
+    queryKey: [
+      ...hackerSdkQueryKeys.participant(portalKey),
+      "map-configuration",
+    ],
+    refetchInterval: 30_000,
+  });
+}
+
 export function useHackerSchedule(options: HackerSdkQueryOptions = {}) {
   const { client, portalKey } = useHackerSdkClient();
   const dashboard = useHackerDashboard();
