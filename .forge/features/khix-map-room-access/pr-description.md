@@ -1,4 +1,4 @@
-<!-- Local draft only. Suggested title: [#581] Add the KHIX venue map and configurable room access -->
+<!-- Draft PR title: [#581] Add the KHIX venue map and configurable room access -->
 <!-- Suggested labels: Blade, Hack Sites, API, Database, Feature. Assign the contributor before opening a PR. -->
 
 # Why
@@ -27,16 +27,20 @@ Closes: #581
   accessible X inside the event card. Remove repeated room LIVE badges and
   circular campus event markers, retaining building activity counts and event
   navigation.
+- Enable schedule visibility for confirmed participants as well as checked-in
+  participants, with matching SDK capability hints and policy tests. Retain the
+  existing gates for judging and other restricted dashboard features.
+- Include the earlier dashboard shell and route-layout work supporting the map,
+  keeping navigation and mobile scrolling coherent across dashboard pages.
 - Add validated and audited configuration writes, participant-scoped reads,
   SDK contracts, and development-backup classification. Scope is Blade, KHIX,
   and the shared packages those apps require.
 
-Database change: migration `0055_lowly_la_nuit.sql` adds
+Database change: migration `0058_smart_roulette.sql` adds
 `knight_hacks_hackathon_map_configuration`, keyed by hackathon with cascading
 deletion, restrictions disabled by default, an empty room list, and an update
-timestamp. The generated snapshot and journal entry are included in the working
-tree. Apply the additive migration with the API/schema rollout before the new
-frontends depend on it. This draft and the implementation remain uncommitted.
+timestamp. The generated snapshot and journal entry are included. Apply the additive migration with the API/schema rollout before the new
+frontends depend on it. This migration was regenerated after main added migrations 0055–0057; main’s migration history is preserved.
 
 # Screenshots
 
@@ -47,9 +51,8 @@ the original saved configuration was restored and the disposable upcoming event
 was removed afterward. External publishing and reminders were disabled for the
 fixtures. The ordinary dev server was restored after the fault test.
 
-Images are local repository assets; nothing has been uploaded to GitHub. Relative
-image paths work in this feature bundle. Upload the images or adjust their paths
-when a GitHub PR is eventually authorized. Empty screenshot padding was trimmed;
+Images are committed repository assets. The GitHub PR body links to the exact
+branch commit so all 13 screenshots render directly in the draft. Empty screenshot padding was trimmed;
 the mobile editor image is cropped to the relevant card.
 
 ## Blade room editor
@@ -120,21 +123,24 @@ retained its saved restricted-room appearance and displayed the retry overlay:
 
 # Test Plan
 
-Previously completed implementation validation is recorded in
-[status.md](status.md): API 995 tests, Blade 883, KHIX 57, validators 327, SDK 37,
-and database 157 passed. Repository formatting, lint, and typechecking passed;
-Blade and KHIX production builds passed. Migration generation and disposable
-fresh/upgrade database checks passed; migration 0055 was applied locally.
+Validation on the branch merged with main, October 4, 2026:
 
-The October 2 styling follow-up passed the full KHIX suite, both app typechecks,
-targeted editor tests, lint, formatting, and diff checks. Lint reported existing
-size warnings. `pnpm analyze:react:changed` encountered the sandbox's tsx IPC
-`listen EPERM`; the equivalent `node --import tsx scripts/analyze-react-changed.ts`
-passed with 14 files and zero failures.
+- Repository `pnpm format`, `pnpm lint`, and `pnpm typecheck`: passed. Lint
+  retains warnings, with no errors.
+- `pnpm analyze:react:changed`: passed, 29 files analyzed, zero failures.
+- Full affected suites: **2,482 tests passed** — API 1,017; Blade 885; KHIX 57;
+  validators 327; SDK 37; database 159.
+- Disposable database tests passed for fresh installation, the additive map
+  migration, defaults, persistence, participant scope, audit rollback, and
+  cascading deletion. Migration lineage tests preserve main's history.
+- `pnpm db:generate`: passed, producing `0058_smart_roulette.sql`, its snapshot,
+  and the journal entry. No migration was applied to production.
+- Blade and KHIX production builds: passed, including their shared dependencies.
+- All 13 screenshot references resolve to readable images. Formatting and
+  `git diff --check` passed. Earlier validation history is in [status.md](status.md).
 
-For this screenshot update, reviewed the 13 images above and verified the restored
-Blade configuration and KHIX map in the browser. No application code changed;
-automated implementation tests were not rerun. The separate mobile error/retry
+Screenshots were captured October 3; the local upcoming test event and restored
+configuration were verified again October 4. The separate mobile error/retry
 capture remains pending and is not claimed as completed by these screenshots.
 
 To reproduce: configure the three BA1 rooms in Blade, enable restrictions, create
@@ -149,9 +155,8 @@ presentation rather than physical access. No production deployment was performed
 
 ## Checklist
 
-- [ ] Database: No schema changes, OR I ran `pnpm db:generate` and committed the generated files in `packages/db/drizzle/`
+- [x] Database: No schema changes, OR I ran `pnpm db:generate` and committed the generated files in `packages/db/drizzle/`
 - [x] Environment Variables: No environment variables changed, OR I have contacted the Development Lead to modify them on Coolify BEFORE merging.
 
-The database checkbox stays unchecked until the generated migration artifacts are
-committed. Local testing used an approved process-only portal-origin override;
+Local testing used an approved process-only portal-origin override;
 no environment files or deployment settings changed.

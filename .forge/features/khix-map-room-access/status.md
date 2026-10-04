@@ -2,7 +2,7 @@
 
 ## Phase
 
-Implementation is ready for review; changes remain uncommitted. Original feature validation is complete.
+Implementation is committed; the isolated PR checkout has been reconciled and validated against current main. Original feature validation is complete.
 
 The October 2 styling follow-up is implemented and automated checks pass. Campus and live-event desktop/mobile verification is complete after the Mac was unlocked. The earlier mobile error/retry screenshot remains pending.
 
@@ -81,3 +81,12 @@ The October 2 styling follow-up is implemented and automated checks pass. Campus
 ## Follow-ups
 
 Verified HEC floor plans and remaining bathroom metadata.
+
+### October 4 GitHub draft preparation
+
+- Owner explicitly authorized creating the draft on GitHub. Committed the original feature and screenshots at `22b2b112`; preserved the running dev checkout on `blade/khix-map-room-access`.
+- Created isolated branch `blade/khix-map-room-access-pr` and merged current main `2ad38d14`. Preserved Map, Teams, and Merch navigation, all validator exports, and the main migration history. Regenerated the unpublished map migration as `0058_smart_roulette`, updating lineage and upgrade tests. No local development database migration was run during this merge.
+- Original-branch repository format, lint, typecheck, and React analysis passed before committing. The default staged lint hook ran out of Node heap; retrying with an 8 GiB heap passed without bypassing hooks.
+- The existing local test event is scheduled October 4, 2:33–2:48 PM America/New_York in BA1 145A. Verified the upcoming event and time in the real map; external sync remains disabled.
+
+- Reconciled branch validation passed: repository format, lint (warnings only), typecheck, and React analysis (29 files, zero failures); all 2,482 affected tests (API 1,017, Blade 885, KHIX 57, validators 327, SDK 37, DB 159); Blade/KHIX builds with dependencies (10 tasks). Fresh/upgrade map migration tests and canonical lineage passed. Main migration artifacts 0055–0057 remain byte-for-byte unchanged.

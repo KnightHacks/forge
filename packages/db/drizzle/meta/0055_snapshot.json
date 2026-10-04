@@ -1,5 +1,5 @@
 {
-  "id": "0d46850b-8fdc-42e5-a7be-1d4ff51ddada",
+  "id": "4fe0a336-be8c-4988-9dce-a9afd2ce442f",
   "prevId": "c6bad0ad-8fd6-4b18-b56e-9daf36856da7",
   "version": "7",
   "dialect": "postgresql",
@@ -5829,6 +5829,27 @@
           "primaryKey": false,
           "notNull": false
         },
+        "store_catalog_visible": {
+          "name": "store_catalog_visible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "store_open": {
+          "name": "store_open",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "store_location": {
+          "name": "store_location",
+          "type": "varchar(240)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "application_background_enabled": {
           "name": "application_background_enabled",
           "type": "boolean",
@@ -6608,56 +6629,6 @@
           "columnsFrom": ["project_inventory_locked_by_user_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.knight_hacks_hackathon_map_configuration": {
-      "name": "knight_hacks_hackathon_map_configuration",
-      "schema": "",
-      "columns": {
-        "hackathon_id": {
-          "name": "hackathon_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "restrictions_enabled": {
-          "name": "restrictions_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "rooms": {
-          "name": "rooms",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "knight_hacks_hackathon_map_configuration_hackathon_id_knight_hacks_hackathon_id_fk": {
-          "name": "knight_hacks_hackathon_map_configuration_hackathon_id_knight_hacks_hackathon_id_fk",
-          "tableFrom": "knight_hacks_hackathon_map_configuration",
-          "tableTo": "knight_hacks_hackathon",
-          "columnsFrom": ["hackathon_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -12379,6 +12350,353 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.knight_hacks_point_store_item": {
+      "name": "knight_hacks_point_store_item",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "hackathon_id": {
+          "name": "hackathon_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stock": {
+          "name": "stock",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sold_out": {
+          "name": "sold_out",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "archived": {
+          "name": "archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "image_object_name": {
+          "name": "image_object_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "point_store_item_hackathon_idx": {
+          "name": "point_store_item_hackathon_idx",
+          "columns": [
+            {
+              "expression": "hackathon_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "knight_hacks_point_store_item_hackathon_id_knight_hacks_hackathon_id_fk": {
+          "name": "knight_hacks_point_store_item_hackathon_id_knight_hacks_hackathon_id_fk",
+          "tableFrom": "knight_hacks_point_store_item",
+          "tableTo": "knight_hacks_hackathon",
+          "columnsFrom": ["hackathon_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "point_store_item_hackathon_unique": {
+          "name": "point_store_item_hackathon_unique",
+          "nullsNotDistinct": false,
+          "columns": ["id", "hackathon_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "point_store_item_price_check": {
+          "name": "point_store_item_price_check",
+          "value": "\"knight_hacks_point_store_item\".\"price\" BETWEEN 0 AND 1000000"
+        },
+        "point_store_item_stock_check": {
+          "name": "point_store_item_stock_check",
+          "value": "\"knight_hacks_point_store_item\".\"stock\" IS NULL OR \"knight_hacks_point_store_item\".\"stock\" BETWEEN 0 AND 1000000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.knight_hacks_point_store_purchase": {
+      "name": "knight_hacks_point_store_purchase",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "hackathon_id": {
+          "name": "hackathon_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attendee_id": {
+          "name": "attendee_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hacker_name": {
+          "name": "hacker_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_name": {
+          "name": "item_name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "name": "total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stock_tracked": {
+          "name": "stock_tracked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_name": {
+          "name": "actor_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "voided_at": {
+          "name": "voided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voided_by": {
+          "name": "voided_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voided_by_name": {
+          "name": "voided_by_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "void_reason": {
+          "name": "void_reason",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restocked": {
+          "name": "restocked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "point_store_purchase_history_idx": {
+          "name": "point_store_purchase_history_idx",
+          "columns": [
+            {
+              "expression": "hackathon_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "point_store_purchase_balance_idx": {
+          "name": "point_store_purchase_balance_idx",
+          "columns": [
+            {
+              "expression": "attendee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "hackathon_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"knight_hacks_point_store_purchase\".\"voided_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "knight_hacks_point_store_purchase_hackathon_id_knight_hacks_hackathon_id_fk": {
+          "name": "knight_hacks_point_store_purchase_hackathon_id_knight_hacks_hackathon_id_fk",
+          "tableFrom": "knight_hacks_point_store_purchase",
+          "tableTo": "knight_hacks_hackathon",
+          "columnsFrom": ["hackathon_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "knight_hacks_point_store_purchase_attendee_id_knight_hacks_hacker_attendee_id_fk": {
+          "name": "knight_hacks_point_store_purchase_attendee_id_knight_hacks_hacker_attendee_id_fk",
+          "tableFrom": "knight_hacks_point_store_purchase",
+          "tableTo": "knight_hacks_hacker_attendee",
+          "columnsFrom": ["attendee_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "knight_hacks_point_store_purchase_actor_id_auth_user_id_fk": {
+          "name": "knight_hacks_point_store_purchase_actor_id_auth_user_id_fk",
+          "tableFrom": "knight_hacks_point_store_purchase",
+          "tableTo": "auth_user",
+          "columnsFrom": ["actor_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "knight_hacks_point_store_purchase_voided_by_auth_user_id_fk": {
+          "name": "knight_hacks_point_store_purchase_voided_by_auth_user_id_fk",
+          "tableFrom": "knight_hacks_point_store_purchase",
+          "tableTo": "auth_user",
+          "columnsFrom": ["voided_by"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "point_store_purchase_item_fk": {
+          "name": "point_store_purchase_item_fk",
+          "tableFrom": "knight_hacks_point_store_purchase",
+          "tableTo": "knight_hacks_point_store_item",
+          "columnsFrom": ["item_id", "hackathon_id"],
+          "columnsTo": ["id", "hackathon_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "point_store_purchase_amount_check": {
+          "name": "point_store_purchase_amount_check",
+          "value": "\"knight_hacks_point_store_purchase\".\"unit_price\" BETWEEN 0 AND 1000000 AND \"knight_hacks_point_store_purchase\".\"quantity\" BETWEEN 1 AND 1000 AND \"knight_hacks_point_store_purchase\".\"total\" = \"knight_hacks_point_store_purchase\".\"unit_price\" * \"knight_hacks_point_store_purchase\".\"quantity\""
+        },
+        "point_store_purchase_void_check": {
+          "name": "point_store_purchase_void_check",
+          "value": "(\"knight_hacks_point_store_purchase\".\"voided_at\" IS NULL AND NOT \"knight_hacks_point_store_purchase\".\"restocked\") OR \"knight_hacks_point_store_purchase\".\"voided_at\" IS NOT NULL"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.knight_hacks_project": {

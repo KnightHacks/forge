@@ -5,7 +5,13 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Permissions, User } from "@forge/db/schemas/auth";
-import { FormResponse, Member } from "@forge/db/schemas/knight-hacks";
+import {
+  FormResponse,
+  Hacker,
+  HackerAttendee,
+  HackerTeamMember,
+  Member,
+} from "@forge/db/schemas/knight-hacks";
 import {
   MEMBER_SIGNUP_FORM_ID,
   memberSchema,
@@ -90,6 +96,22 @@ export const memberRouter = {
 
     try {
       auditEventId = await db.transaction(async (tx) => {
+        const [teamMembership] = await tx
+          .select({ id: HackerTeamMember.attendeeId })
+          .from(HackerTeamMember)
+          .innerJoin(
+            HackerAttendee,
+            eq(HackerAttendee.id, HackerTeamMember.attendeeId),
+          )
+          .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
+          .where(eq(Hacker.userId, userId))
+          .limit(1);
+        if (teamMembership)
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "Leave your hackathon teams and cancel pending join requests before deleting your account. If Teams is locked, ask an organizer to remove you.",
+          });
         const existingMember = await loadMemberAuditIdentity(userId, tx);
 
         const deletedResponses = await tx

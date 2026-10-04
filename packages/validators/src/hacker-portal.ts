@@ -4,6 +4,13 @@ import { FORMS } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
 import {
+  hackerTeamActionResultSchema,
+  hackerTeamActionSchema,
+  hackerTeamsDtoSchema,
+  hackerTeamSearchSchema,
+} from "./hacker-teams";
+import { pointStoreCatalogDtoSchema } from "./point-store";
+import {
   hackerJudgingDtoSchema,
   hackerJudgingReadSchema,
   projectClaimPreviewDtoSchema,
@@ -521,6 +528,9 @@ export const hackerPortalV1InputSchemas = {
   getLeaderboard: hackerLeaderboardInputSchema,
   getMyAttendance: noInputSchema,
   getMyPoints: noInputSchema,
+  getPointStore: noInputSchema,
+  getTeams: hackerTeamSearchSchema,
+  changeTeam: hackerTeamActionSchema,
   getPublicHackathon: noInputSchema,
   getResume: noInputSchema,
   getSchedule: noInputSchema,
@@ -535,6 +545,8 @@ export const hackerPortalV1InputSchemas = {
 } as const;
 
 export interface HackerPortalV1OutputSchemaMap {
+  getTeams: typeof hackerTeamsDtoSchema;
+  changeTeam: typeof hackerTeamActionResultSchema;
   searchJudgingProjects: typeof projectClaimSearchDtoSchema;
   inviteProjectMember: typeof projectInviteResultDtoSchema;
   claimProject: typeof projectClaimResultDtoSchema;
@@ -547,6 +559,7 @@ export interface HackerPortalV1OutputSchemaMap {
   getLeaderboard: typeof leaderboardDtoSchema;
   getMyAttendance: typeof attendanceDtoSchema;
   getMyPoints: typeof pointsDtoSchema;
+  getPointStore: typeof pointStoreCatalogDtoSchema;
   getPublicHackathon: typeof publicHackathonDtoSchema;
   getResume: z.ZodNullable<typeof resumeDtoSchema>;
   getSchedule: typeof scheduleDtoSchema;
@@ -573,6 +586,9 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   getLeaderboard: leaderboardDtoSchema,
   getMyAttendance: attendanceDtoSchema,
   getMyPoints: pointsDtoSchema,
+  getPointStore: pointStoreCatalogDtoSchema,
+  getTeams: hackerTeamsDtoSchema,
+  changeTeam: hackerTeamActionResultSchema,
   getPublicHackathon: publicHackathonDtoSchema,
   getResume: resumeDtoSchema.nullable(),
   getSchedule: scheduleDtoSchema,

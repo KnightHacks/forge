@@ -1,19 +1,28 @@
 import type { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "discord.js";
 
-// All possible cases
 const cases = [
   ["0", "👊"],
   ["2", "✌️"],
   ["5", "🤚"],
 ];
 
-// Scenarios that Player 1 wins
 const win = new Set(["0,2", "2,5", "5,0"]);
 
 export const data = new SlashCommandBuilder()
   .setName("rock")
   .setDescription("Rock, paper, scissors.")
+  .addStringOption((option) =>
+    option
+      .setName("player1-choice")
+      .setDescription("Your move.")
+      .setRequired(true)
+      .addChoices(
+        { name: "👊 | Rock", value: "0" },
+        { name: "✌️ | Scissors", value: "2" },
+        { name: "🤚 | Paper", value: "5" },
+      ),
+  )
   .addStringOption((option) =>
     option.setName("player2").setDescription("Your opponent").setRequired(true),
   );
@@ -23,26 +32,29 @@ export async function execute(interaction: CommandInteraction) {
     throw new Error("Interaction is of the wrong type");
   }
 
-  const p1 = Math.floor(Math.random() * 3);
   const p2 = Math.floor(Math.random() * 3);
   const player1Info = interaction.user.id;
-  const player2Info = interaction.options.getString("player2", true);
-
-  // Do not start the game if the input does not mention a user (@user)
-  if (!player2Info.includes("@")) {
+  const player2Info = interaction.options.getString("player2");
+  if (!player2Info?.includes("@")) {
     return interaction.reply("Please specify a user and try again.");
   }
-
-  const player1Case = cases[p1];
+  const player1ChoiceStr = interaction.options.getString("player1-choice");
+  if (!player1ChoiceStr) {
+    throw new Error("No hand found.");
+  }
+  const player1Choice = parseInt(player1ChoiceStr, 10);
+  const player1Case = cases.find(([v]) => v === String(player1Choice));
   const player2Case = cases[p2];
-  if (!player1Case || !player2Case) {
+
+  if (!player1Case || !player2Case?.[0]) {
     throw new Error("No hand found.");
   }
 
   let playResponse: string;
-  if (p1 === p2) {
+  const player2CaseVal = player2Case[0];
+  if (player1Choice === parseInt(player2CaseVal, 10)) {
     playResponse = "Tied";
-  } else if (win.has(`${player1Case[0]},${player2Case[0]}`)) {
+  } else if (win.has(`${player1Case[0]},${player2CaseVal}`)) {
     playResponse = `<@${player1Info}> wins!`;
   } else {
     playResponse = `${player2Info} wins!`;

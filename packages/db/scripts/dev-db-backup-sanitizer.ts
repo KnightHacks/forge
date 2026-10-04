@@ -63,6 +63,8 @@ export const TABLES_TO_KEEP = [
   // Reusable room-location catalog contains configuration, not judging records.
   "knight_hacks_judging_building",
   "knight_hacks_member",
+  // Organizer-managed catalog; object references are cleared below.
+  "knight_hacks_point_store_item",
   "knight_hacks_sponsor",
   // Officer-authored issue-tree configuration. This is unrelated to the email
   // template catalog despite the older table's generic name.
@@ -82,6 +84,9 @@ export const TABLES_TO_DROP = [
   // Records of who did what, tied to real people. Not developer data.
   "audit_event",
   "audit_subject",
+  "knight_hacks_point_store_purchase",
+  "knight_hacks_hacker_team",
+  "knight_hacks_hacker_team_member",
   // Live credentials. A backup that carries these hands out logins.
   "auth_session",
   "auth_verification",
@@ -247,6 +252,9 @@ SET payments_enabled = FALSE;
 
 UPDATE knight_hacks_company
 SET logo_object_name = NULL;
+
+UPDATE knight_hacks_point_store_item
+SET image_object_name = NULL;
 
 UPDATE knight_hacks_alumni_bulletin_post
 SET image_object_name = NULL,

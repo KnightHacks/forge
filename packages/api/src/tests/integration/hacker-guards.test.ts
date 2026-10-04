@@ -305,6 +305,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       .set({
         checkedInAt: null,
         checkedInBy: null,
+        isVip: false,
         lastStatusSendId: null,
         status: "pending",
       })
@@ -749,6 +750,100 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
       await expect(
         client.select().from(knightHacks.EmailSend),
       ).resolves.toEqual([]);
+    });
+
+    it.each(["single", "bulk"] as const)(
+      "removes revoked team owners through %s status changes",
+      async (mode) => {
+        await client
+          .update(knightHacks.HackerAttendee)
+          .set({ status: "confirmed" })
+          .where(
+            inArray(knightHacks.HackerAttendee.id, [
+              PLAIN_ATTENDEE,
+              SECOND_ATTENDEE,
+            ]),
+          );
+        const [team] = await client
+          .insert(knightHacks.HackerTeam)
+          .values({ hackathonId: READY_HACKATHON, name: "Status departure" })
+          .returning();
+        if (!team) throw new Error("Missing team fixture");
+        await client.insert(knightHacks.HackerTeamMember).values([
+          {
+            attendeeId: PLAIN_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "owner",
+          },
+          {
+            attendeeId: SECOND_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "member",
+          },
+        ]);
+        if (mode === "single")
+          await caller.hacker.setStatus({
+            attendeeId: PLAIN_ATTENDEE,
+            status: "denied",
+          });
+        else
+          await caller.hacker.confirmBulk({
+            attendeeIds: [PLAIN_ATTENDEE],
+            hackathonId: READY_HACKATHON,
+            status: "denied",
+          });
+        expect(
+          await client
+            .select()
+            .from(knightHacks.HackerTeamMember)
+            .where(eq(knightHacks.HackerTeamMember.teamId, team.id)),
+        ).toMatchObject([{ attendeeId: SECOND_ATTENDEE, role: "owner" }]);
+        await caller.hacker.setStatus({
+          attendeeId: SECOND_ATTENDEE,
+          status: "denied",
+        });
+        expect(
+          await client
+            .select()
+            .from(knightHacks.HackerTeam)
+            .where(eq(knightHacks.HackerTeam.id, team.id)),
+        ).toEqual([]);
+      },
+    );
+
+    it("requires the allocation-aware check-in flow for team members", async () => {
+      const [team] = await client
+        .insert(knightHacks.HackerTeam)
+        .values({ hackathonId: READY_HACKATHON, name: "Bulk guard" })
+        .returning();
+      if (!team) throw new Error("Missing team fixture");
+      await client.insert(knightHacks.HackerTeamMember).values({
+        attendeeId: PLAIN_ATTENDEE,
+        hackathonId: READY_HACKATHON,
+        teamId: team.id,
+        role: "owner",
+      });
+      const input = {
+        attendeeIds: [PLAIN_ATTENDEE],
+        hackathonId: READY_HACKATHON,
+        status: "checkedin" as const,
+      };
+      await expect(caller.hacker.previewBulk(input)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+      await expect(caller.hacker.confirmBulk(input)).rejects.toMatchObject({
+        code: "BAD_REQUEST",
+      });
+      const [attendee] = await client
+        .select()
+        .from(knightHacks.HackerAttendee)
+        .where(eq(knightHacks.HackerAttendee.id, PLAIN_ATTENDEE));
+      expect(attendee?.checkedInAt).toBeNull();
+      await client
+        .delete(knightHacks.HackerTeam)
+        .where(eq(knightHacks.HackerTeam.id, team.id));
     });
 
     it("confirmBulk refuses on an unconfigured hackathon", async () => {
@@ -1233,6 +1328,59 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
   });
 
   describe("correcting an application", () => {
+    it("lets editors toggle VIP for one hackathon and denies read-only callers", async () => {
+      const otherAttendee = "60000000-0000-4000-8000-0000000000ff";
+      await client.insert(knightHacks.HackerAttendee).values({
+        id: otherAttendee,
+        hackerId: PLAIN_HACKER,
+        hackathonId: UNREADY_HACKATHON,
+        status: "pending",
+      });
+      try {
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring("READ_HACKERS") })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        await expect(
+          caller.hacker.updateProfile({
+            attendeeId: PLAIN_ATTENDEE,
+            isVip: true,
+          }),
+        ).rejects.toMatchObject({ code: "FORBIDDEN" });
+        await client
+          .update(auth.Roles)
+          .set({ permissions: permissionBitstring("EDIT_HACKERS") })
+          .where(eq(auth.Roles.id, OFFICER_ROLE));
+        const before = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
+        await caller.hacker.updateProfile({
+          attendeeId: PLAIN_ATTENDEE,
+          isVip: true,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: PLAIN_ATTENDEE }),
+        ).resolves.toMatchObject({
+          isVip: true,
+          points: before.points,
+          status: before.status,
+          email: before.email,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: otherAttendee }),
+        ).resolves.toMatchObject({ isVip: false });
+        await caller.hacker.updateProfile({
+          attendeeId: PLAIN_ATTENDEE,
+          isVip: false,
+        });
+        await expect(
+          caller.hacker.get({ attendeeId: PLAIN_ATTENDEE }),
+        ).resolves.toMatchObject({ isVip: false });
+      } finally {
+        await client
+          .delete(knightHacks.HackerAttendee)
+          .where(eq(knightHacks.HackerAttendee.id, otherAttendee));
+      }
+    });
+
     it("writes only the fields that were sent", async () => {
       const before = await caller.hacker.get({ attendeeId: PLAIN_ATTENDEE });
 
@@ -1892,12 +2040,41 @@ describe.skipIf(!canRunDatabaseTests())("hacker management guards", () => {
           userId,
         });
 
+        const [team] = await client
+          .insert(knightHacks.HackerTeam)
+          .values({ hackathonId: READY_HACKATHON, name: "Deletion succession" })
+          .returning();
+        if (!team) throw new Error("Missing team fixture");
+        await client.insert(knightHacks.HackerTeamMember).values([
+          {
+            attendeeId,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "owner",
+          },
+          {
+            attendeeId: SECOND_ATTENDEE,
+            hackathonId: READY_HACKATHON,
+            teamId: team.id,
+            role: "member",
+          },
+        ]);
         await expect(
           caller.hacker.deleteApplication({
             attendeeId,
             confirmed: true,
           }),
         ).resolves.toEqual({ deleted: true });
+        const remaining = await client
+          .select()
+          .from(knightHacks.HackerTeamMember)
+          .where(eq(knightHacks.HackerTeamMember.teamId, team.id));
+        expect(remaining).toMatchObject([
+          { attendeeId: SECOND_ATTENDEE, role: "owner" },
+        ]);
+        await client
+          .delete(knightHacks.HackerTeam)
+          .where(eq(knightHacks.HackerTeam.id, team.id));
 
         const [application, legacy, profile, revision, command] =
           await Promise.all([

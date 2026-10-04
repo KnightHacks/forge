@@ -31,9 +31,11 @@ import {
   QrCode,
   ScrollText,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Trophy,
   UserRound,
+  UsersRound,
   X,
 } from "lucide-react";
 
@@ -1116,6 +1118,8 @@ export function KhixDashboardShell({
   sessionUser,
 }: {
   activeItem?:
+    | "teams"
+    | "merch"
     | "judging"
     | "events"
     | "journey"
@@ -1543,6 +1547,40 @@ export function KhixDashboardShell({
                   <span className={styles.railLinkLabel}>Lore</span>
                 </span>
               </Link>
+              {journeyUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "teams" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/teams"
+                  onClick={closeMobileMenu}
+                  aria-current={activeItem === "teams" ? "page" : undefined}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <UsersRound className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Teams</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="Teams locked until confirmation"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <UsersRound className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Teams <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               {eventsUnlocked ? (
                 <Link
                   aria-current={activeItem === "events" ? "page" : undefined}
@@ -1634,6 +1672,39 @@ export function KhixDashboardShell({
                   <span className={styles.railLinkLabel}>Map</span>
                 </span>
               </Link>
+              {eventsUnlocked ? (
+                <Link
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "merch" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/merch"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <ShoppingBag className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Merch Store</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label="Merch Store locked until check-in"
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <ShoppingBag className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Merch Store <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               {journeyUnlocked ? (
                 <Link
                   aria-current={activeItem === "journey" ? "page" : undefined}
@@ -1747,7 +1818,8 @@ export function KhixDashboardShell({
             styles.main,
             activeItem === "status" && styles.statusMain,
             activeItem === "events" && styles.eventsMain,
-            activeItem === "journey" && styles.journeyMain,
+            (activeItem === "journey" || activeItem === "merch") &&
+              styles.journeyMain,
             activeItem === "lore" && styles.loreMain,
             activeItem === "map" && styles.mapMain,
             activeItem === "profile" && styles.profileMain,
