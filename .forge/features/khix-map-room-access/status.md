@@ -66,8 +66,8 @@ The October 2 styling follow-up is implemented and automated checks pass. Campus
 ## Links
 
 - Issue: https://github.com/KnightHacks/forge/issues/581
-- PR: none.
-- Local PR draft: [pr-description.md](pr-description.md), with 13 captioned screenshots captured October 3. Nothing uploaded or created on GitHub.
+- PR: [Draft #594](https://github.com/KnightHacks/forge/pull/594).
+- PR description source: [pr-description.md](pr-description.md), with 13 captioned screenshots captured October 3. GitHub body pins the images to validated commit `8106fb2d`.
 
 ### October 3 screenshot handoff
 
@@ -90,3 +90,5 @@ Verified HEC floor plans and remaining bathroom metadata.
 - The existing local test event is scheduled October 4, 2:33–2:48 PM America/New_York in BA1 145A. Verified the upcoming event and time in the real map; external sync remains disabled.
 
 - Reconciled branch validation passed: repository format, lint (warnings only), typecheck, and React analysis (29 files, zero failures); all 2,482 affected tests (API 1,017, Blade 885, KHIX 57, validators 327, SDK 37, DB 159); Blade/KHIX builds with dependencies (10 tasks). Fresh/upgrade map migration tests and canonical lineage passed. Main migration artifacts 0055–0057 remain byte-for-byte unchanged.
+
+- Published draft [#594](https://github.com/KnightHacks/forge/pull/594) from `blade/khix-map-room-access-pr`, assigned to `myr124` with Blade, Hack Sites, API, Database, Feature, and Major labels. GitHub reports it mergeable; CI is pending. Primary local checkout remains on `blade/khix-map-room-access`, preserving the running test instance.
