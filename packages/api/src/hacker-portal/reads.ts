@@ -36,7 +36,7 @@ import {
 } from "./data";
 import { portalFailure } from "./trpc";
 
-type AuthenticatedPortalContext = HackerPortalContext & {
+export type AuthenticatedPortalContext = HackerPortalContext & {
   client: NonNullable<HackerPortalContext["client"]>;
   session: NonNullable<HackerPortalContext["session"]>;
 };
@@ -193,7 +193,7 @@ export async function getDashboard(ctx: AuthenticatedPortalContext) {
   };
 }
 
-async function requireApplicationWithStatuses(
+export async function requireApplicationWithStatuses(
   ctx: AuthenticatedPortalContext,
   statuses: readonly string[],
 ) {

@@ -156,6 +156,10 @@ export function canAccessEmailPortal(permissions: EffectivePermissions) {
   return permissions.IS_OFFICER === true || permissions.EMAIL_PORTAL === true;
 }
 
+export function canAccessPrintingQueue(permissions: EffectivePermissions) {
+  return permissions.IS_OFFICER === true || permissions.PRINTING_QUEUE === true;
+}
+
 export function getAdminNavigationAccess(permissions: EffectivePermissions) {
   return {
     alumni: canAccessAlumniAdmin(permissions),
@@ -176,6 +180,7 @@ export function getAdminNavigationAccess(permissions: EffectivePermissions) {
     issues: canAccessIssues(permissions),
     logs: canAccessAdminLogs(permissions),
     members: canAccessMemberAdmin(permissions),
+    printing: canAccessPrintingQueue(permissions),
     projectAdmin: canAccessProjectAdmin(permissions),
     judgeProjects: canAccessJudgeProjects(permissions),
     judging: canAccessProjectAdmin(permissions),

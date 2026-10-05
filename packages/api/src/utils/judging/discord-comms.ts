@@ -145,7 +145,7 @@ function neutralizeMentions(value: string) {
     .replace(/@here/gi, "@​here");
 }
 
-function escapeMarkdown(value: string) {
+export function escapeMarkdown(value: string) {
   return neutralizeMentions(value).replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
 }
 

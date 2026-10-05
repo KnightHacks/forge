@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { FORMS } from "@forge/consts";
+import { FORMS, PRINTING } from "@forge/consts";
 
 import { ianaTimeZoneSchema } from "./hackathons";
 import {
@@ -10,6 +10,7 @@ import {
   hackerTeamSearchSchema,
 } from "./hacker-teams";
 import { pointStoreCatalogDtoSchema } from "./point-store";
+import { printJobDescriptionSchema, printJobStatusSchema } from "./printing";
 import {
   hackerJudgingDtoSchema,
   hackerJudgingReadSchema,
@@ -412,6 +413,81 @@ export const checkInPassDtoSchema = z
   })
   .strict();
 
+export const hackerSubmitPrintJobSchema = z
+  .object({
+    description: printJobDescriptionSchema,
+    fileIds: z
+      .array(z.string().uuid())
+      .min(1, "Attach at least one file.")
+      .max(PRINTING.MAX_PRINT_JOB_FILES)
+      .refine((ids) => new Set(ids).size === ids.length, {
+        message: "Each file can be attached once.",
+      }),
+    idempotencyKey: participantIdempotencyKeySchema,
+  })
+  .strict();
+
+export const hackerCancelPrintJobSchema = z
+  .object({
+    idempotencyKey: participantIdempotencyKeySchema,
+    jobId: z.string().uuid(),
+  })
+  .strict();
+
+export const hackerRemoveStagedPrintFileSchema = z
+  .object({ fileId: z.string().uuid() })
+  .strict();
+
+export const stagedPrintFileDtoSchema = z
+  .object({
+    fileId: z.string().uuid(),
+    fileName: z.string(),
+    size: z.number().int().min(1),
+  })
+  .strict();
+
+export const removedStagedPrintFileDtoSchema = z
+  .object({ fileId: z.string().uuid() })
+  .strict();
+
+export const printJobDtoSchema = z
+  .object({
+    createdAt: isoDateTimeSchema,
+    description: z.string(),
+    /** Null unless the job is received or printing. */
+    estimatedReadyAt: nullableIsoDateTimeSchema,
+    files: z.array(
+      z
+        .object({
+          fileName: z.string(),
+          id: z.string().uuid(),
+          size: z.number().int().min(1),
+        })
+        .strict(),
+    ),
+    id: z.string().uuid(),
+    /** Place in the active queue, counting this job; null when not active. */
+    position: z.number().int().min(1).nullable(),
+    status: printJobStatusSchema,
+    statusChangedAt: isoDateTimeSchema,
+    statusNote: z.string().nullable(),
+  })
+  .strict();
+
+export const printJobsDtoSchema = z
+  .object({
+    jobs: z.array(printJobDtoSchema),
+    queue: z
+      .object({
+        /** Minutes until a job submitted now would be ready. */
+        estimatedWaitMinutes: z.number().int().min(0),
+        printMinutes: z.number().int().min(1),
+        waitingCount: z.number().int().min(0),
+      })
+      .strict(),
+  })
+  .strict();
+
 export const scheduleEventDtoSchema = z
   .object({
     description: z.string(),
@@ -500,7 +576,10 @@ export const participantDomainErrorSchema = z
       "FORBIDDEN",
       "FORBIDDEN_STATUS",
       "INVALID_AGREEMENT",
+      "INVALID_PRINT_FILE",
       "INVALID_RESUME",
+      "PRINT_FILE_UNAVAILABLE",
+      "PRINT_JOB_NOT_CANCELLABLE",
       "SESSION_EXPIRED",
       "STALE_PROFILE_REVISION",
       "UNAUTHENTICATED",
@@ -520,6 +599,7 @@ export const hackerPortalV1InputSchemas = {
   claimProject: projectClaimSelectSchema,
   getProjectClaim: projectClaimTokenSchema,
   getJudging: hackerJudgingReadSchema,
+  cancelPrintJob: hackerCancelPrintJobSchema,
   confirmAttendance: hackerConfirmAttendanceSchema,
   getApplicationContext: noInputSchema,
   getCheckInPass: hackerIssueCheckInPassSchema,
@@ -534,8 +614,11 @@ export const hackerPortalV1InputSchemas = {
   getResume: noInputSchema,
   getSchedule: noInputSchema,
   getSession: noInputSchema,
+  listPrintJobs: noInputSchema,
   removeResume: hackerRemoveResumeSchema,
+  removeStagedPrintFile: hackerRemoveStagedPrintFileSchema,
   submitApplication: hackerApplicationSubmitSchema,
+  submitPrintJob: hackerSubmitPrintJobSchema,
   updateApplication: hackerApplicationUpdateSchema,
   updateParticipant: hackerParticipantUpdateSchema,
   updateProfile: hackerProfileUpdateSchema,
@@ -550,6 +633,7 @@ export interface HackerPortalV1OutputSchemaMap {
   claimProject: typeof projectClaimResultDtoSchema;
   getProjectClaim: typeof projectClaimPreviewDtoSchema;
   getJudging: typeof hackerJudgingDtoSchema;
+  cancelPrintJob: typeof printJobDtoSchema;
   confirmAttendance: typeof participantMutationResultDtoSchema;
   getApplicationContext: typeof applicationContextDtoSchema;
   getCheckInPass: typeof checkInPassDtoSchema;
@@ -562,8 +646,11 @@ export interface HackerPortalV1OutputSchemaMap {
   getResume: z.ZodNullable<typeof resumeDtoSchema>;
   getSchedule: typeof scheduleDtoSchema;
   getSession: typeof portalSessionDtoSchema;
+  listPrintJobs: typeof printJobsDtoSchema;
   removeResume: typeof participantMutationResultDtoSchema;
+  removeStagedPrintFile: typeof removedStagedPrintFileDtoSchema;
   submitApplication: typeof participantMutationResultDtoSchema;
+  submitPrintJob: typeof printJobDtoSchema;
   updateApplication: typeof participantMutationResultDtoSchema;
   updateParticipant: typeof participantMutationResultDtoSchema;
   updateProfile: typeof participantMutationResultDtoSchema;
@@ -576,6 +663,7 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   claimProject: projectClaimResultDtoSchema,
   getProjectClaim: projectClaimPreviewDtoSchema,
   getJudging: hackerJudgingDtoSchema,
+  cancelPrintJob: printJobDtoSchema,
   confirmAttendance: participantMutationResultDtoSchema,
   getApplicationContext: applicationContextDtoSchema,
   getCheckInPass: checkInPassDtoSchema,
@@ -590,8 +678,11 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   getResume: resumeDtoSchema.nullable(),
   getSchedule: scheduleDtoSchema,
   getSession: portalSessionDtoSchema,
+  listPrintJobs: printJobsDtoSchema,
   removeResume: participantMutationResultDtoSchema,
+  removeStagedPrintFile: removedStagedPrintFileDtoSchema,
   submitApplication: participantMutationResultDtoSchema,
+  submitPrintJob: printJobDtoSchema,
   updateApplication: participantMutationResultDtoSchema,
   updateParticipant: participantMutationResultDtoSchema,
   updateProfile: participantMutationResultDtoSchema,

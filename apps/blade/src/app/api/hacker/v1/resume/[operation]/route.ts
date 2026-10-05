@@ -1,19 +1,16 @@
 import { Readable } from "node:stream";
 
+import { openResumeDownload, uploadResume } from "@forge/api/hacker-portal";
+
 import {
-  createHackerPortalContext,
-  HackerPortalDomainError,
-  openResumeDownload,
-  uploadResume,
-} from "@forge/api/hacker-portal";
+  authenticatedContext,
+  errorResponse,
+  participantDomainError,
+  readBoundedFormData,
+} from "../../participant-upload";
 
 function participantError(error: unknown, requestId: string) {
-  const cause =
-    error instanceof Error && error.cause instanceof HackerPortalDomainError
-      ? error.cause
-      : error instanceof HackerPortalDomainError
-        ? error
-        : null;
+  const cause = participantDomainError(error);
   if (!cause) {
     return errorResponse(
       "INVALID_RESUME",
@@ -31,62 +28,6 @@ function participantError(error: unknown, requestId: string) {
           ? 403
           : 400;
   return errorResponse(cause.code, cause.message, status, requestId);
-}
-
-function errorResponse(
-  code: string,
-  message: string,
-  status: number,
-  requestId?: string,
-) {
-  return Response.json(
-    {
-      error: {
-        code,
-        message,
-        requestId: requestId ?? crypto.randomUUID(),
-        retryable: false,
-      },
-    },
-    {
-      headers: { "cache-control": "private, no-store" },
-      status,
-    },
-  );
-}
-
-async function authenticatedContext(request: Request) {
-  const context = await createHackerPortalContext({ headers: request.headers });
-  if (!context.client?.enabled || !context.session) return null;
-  return {
-    ...context,
-    client: context.client,
-    session: context.session,
-  };
-}
-
-async function readBoundedFormData(request: Request, maxBytes: number) {
-  if (!request.body) throw new Error("Resume upload body is missing.");
-  let received = 0;
-  const boundedBody = request.body.pipeThrough(
-    new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, controller) {
-        received += chunk.byteLength;
-        if (received > maxBytes) {
-          controller.error(new Error("Resume upload exceeds the byte limit."));
-          return;
-        }
-        controller.enqueue(chunk);
-      },
-    }),
-  );
-  const init: RequestInit & { duplex?: "half" } = {
-    body: boundedBody,
-    headers: request.headers,
-    method: "POST",
-    duplex: "half",
-  };
-  return new Request(request.url, init).formData();
 }
 
 export async function GET(

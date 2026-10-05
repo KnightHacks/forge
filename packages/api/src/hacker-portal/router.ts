@@ -25,6 +25,12 @@ import {
   withdrawApplication,
 } from "./mutations";
 import {
+  cancelPrintJob,
+  listPrintJobs,
+  removeStagedPrintFile,
+  submitPrintJob,
+} from "./printing";
+import {
   getApplicationContext,
   getDashboard,
   getLeaderboard,
@@ -139,6 +145,10 @@ export const hackerParticipantV1Router: ReturnType<
         ),
       ),
     ),
+  cancelPrintJob: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.cancelPrintJob)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.cancelPrintJob)
+    .mutation(({ ctx, input }) => cancelPrintJob(ctx, input)),
   confirmAttendance: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.confirmAttendance)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.confirmAttendance)
@@ -187,14 +197,26 @@ export const hackerParticipantV1Router: ReturnType<
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getSession)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getSession)
     .query(({ ctx }) => getPortalSession(ctx)),
+  listPrintJobs: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.listPrintJobs)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.listPrintJobs)
+    .query(({ ctx }) => listPrintJobs(ctx)),
   removeResume: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.removeResume)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.removeResume)
     .mutation(({ ctx, input }) => removeResume(ctx, input)),
+  removeStagedPrintFile: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.removeStagedPrintFile)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.removeStagedPrintFile)
+    .mutation(({ ctx, input }) => removeStagedPrintFile(ctx, input)),
   submitApplication: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.submitApplication)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.submitApplication)
     .mutation(({ ctx, input }) => submitApplication(ctx, input)),
+  submitPrintJob: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.submitPrintJob)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.submitPrintJob)
+    .mutation(({ ctx, input }) => submitPrintJob(ctx, input)),
   updateApplication: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.updateApplication)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.updateApplication)

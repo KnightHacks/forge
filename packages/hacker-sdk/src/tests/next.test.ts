@@ -400,6 +400,213 @@ describe("Hacker SDK Next adapter", () => {
     expect(requestFetch).not.toHaveBeenCalled();
   });
 
+  it("forwards print file uploads to Blade's printing route only", async () => {
+    const requestFetch = vi.fn<typeof fetch>((_url, init) =>
+      Promise.resolve(
+        init?.method === "HEAD"
+          ? new Response(null, { status: 204 })
+          : Response.json({ fileId: "x" }),
+      ),
+    );
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      fetch: requestFetch,
+    });
+    const body = new FormData();
+    body.set("file", new Blob(["solid part"]), "part.stl");
+    const upload = new Request(
+      "https://khx.knighthacks.org/api/hacker-sdk/printing/upload",
+      {
+        body,
+        headers: {
+          cookie: `${TEST_COOKIE_NAMES.access}=access-token`,
+          origin: "https://khx.knighthacks.org",
+        },
+        method: "POST",
+      },
+    );
+
+    expect((await handler(upload)).status).toBe(200);
+    const [target, init] = requestFetch.mock.calls[1] ?? [];
+    expect(target).toEqual(
+      new URL("https://blade.knighthacks.org/api/hacker/v1/printing/upload"),
+    );
+    expect(new Headers(init?.headers).get("authorization")).toBe(
+      "Bearer access-token",
+    );
+
+    const unknown = await handler(
+      new Request(
+        "https://khx.knighthacks.org/api/hacker-sdk/printing/download",
+      ),
+    );
+    expect(unknown.status).toBe(404);
+  });
+
+  it("forwards a print file larger than the resume cap", async () => {
+    const requestFetch = vi.fn<typeof fetch>((_url, init) =>
+      Promise.resolve(
+        init?.method === "HEAD"
+          ? new Response(null, { status: 204 })
+          : Response.json({ fileId: "x" }),
+      ),
+    );
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      fetch: requestFetch,
+    });
+    // 10 MB: over the 5.2 MB resume cap and the 1 MB tRPC cap, well under 51 MB.
+    const body = new FormData();
+    body.set("file", new Blob([new Uint8Array(10 * 1024 * 1024)]), "big.stl");
+
+    const response = await handler(
+      new Request(
+        "https://khx.knighthacks.org/api/hacker-sdk/printing/upload",
+        {
+          body,
+          headers: {
+            origin: "https://khx.knighthacks.org",
+            cookie: `${TEST_COOKIE_NAMES.access}=access-token`,
+          },
+          method: "POST",
+        },
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(requestFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("refreshes and authorizes printing before reading any upload bytes", async () => {
+    const request = new Request(
+      "https://khx.knighthacks.org/api/hacker-sdk/printing/upload",
+      {
+        method: "POST",
+        body: "bytes",
+        headers: {
+          origin: "https://khx.knighthacks.org",
+          "content-type": "multipart/form-data; boundary=x",
+          cookie: `${TEST_COOKIE_NAMES.access}=expired; ${TEST_COOKIE_NAMES.refresh}=printing-refresh`,
+        },
+      },
+    );
+    if (!request.body) throw new Error("Expected body");
+    const read = vi.spyOn(request.body, "getReader");
+    const requestFetch = vi.fn<typeof fetch>((url, init) => {
+      if (init?.method === "HEAD") {
+        expect(read).not.toHaveBeenCalled();
+        return Promise.resolve(
+          new Response(null, {
+            status:
+              new Headers(init.headers).get("authorization") === "Bearer fresh"
+                ? 204
+                : 401,
+          }),
+        );
+      }
+      if (
+        (url instanceof Request ? url.url : url.toString()).endsWith(
+          "auth/refresh",
+        )
+      ) {
+        expect(read).not.toHaveBeenCalled();
+        return Promise.resolve(
+          Response.json({ accessToken: "fresh", refreshToken: "rotated" }),
+        );
+      }
+      expect(read).toHaveBeenCalledOnce();
+      expect(new Headers(init?.headers).get("authorization")).toBe(
+        "Bearer fresh",
+      );
+      return Promise.resolve(Response.json({ fileId: "ok" }));
+    });
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      fetch: requestFetch,
+    });
+    const response = await handler(request);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toContain("fresh");
+    expect(requestFetch).toHaveBeenCalledTimes(4);
+  });
+
+  it.each(["missing", "forged", "unchecked", "unavailable"])(
+    "does not read a printing body for %s authorization",
+    async (scenario) => {
+      const requestFetch = vi.fn<typeof fetch>(() =>
+        Promise.resolve(
+          new Response(null, {
+            status:
+              scenario === "unchecked"
+                ? 403
+                : scenario === "unavailable"
+                  ? 503
+                  : 401,
+          }),
+        ),
+      );
+      const handler = createHackerSdkNextHandler({
+        bladeOrigin: "https://blade.knighthacks.org",
+        clientId: TEST_CLIENT_ID,
+        fetch: requestFetch,
+      });
+      const request = new Request(
+        "https://khx.knighthacks.org/api/hacker-sdk/printing/upload",
+        {
+          method: "POST",
+          body: "untrusted bytes",
+          headers: {
+            origin: "https://khx.knighthacks.org",
+            "content-type": "multipart/form-data; boundary=x",
+            ...(scenario === "missing"
+              ? {}
+              : { cookie: `${TEST_COOKIE_NAMES.access}=forged` }),
+          },
+        },
+      );
+      if (!request.body) throw new Error("Expected request body");
+      const read = vi.spyOn(request.body, "getReader");
+      expect((await handler(request)).status).toBe(
+        scenario === "unchecked" ? 403 : scenario === "unavailable" ? 503 : 401,
+      );
+      expect(read).not.toHaveBeenCalled();
+      for (const [, init] of requestFetch.mock.calls) {
+        expect(init?.method).toBe("HEAD");
+        expect(init?.body).toBeUndefined();
+      }
+    },
+  );
+
+  it("caps print file uploads at 50MB plus framing", async () => {
+    const requestFetch = vi.fn<typeof fetch>();
+    const handler = createHackerSdkNextHandler({
+      bladeOrigin: "https://blade.knighthacks.org",
+      clientId: TEST_CLIENT_ID,
+      fetch: requestFetch,
+    });
+
+    const response = await handler(
+      new Request(
+        "https://khx.knighthacks.org/api/hacker-sdk/printing/upload",
+        {
+          body: "x",
+          headers: {
+            "content-length": String(52 * 1024 * 1024),
+            "content-type": "multipart/form-data; boundary=x",
+            origin: "https://khx.knighthacks.org",
+          },
+          method: "POST",
+        },
+      ),
+    );
+
+    expect(response.status).toBe(413);
+    expect(requestFetch).not.toHaveBeenCalled();
+  });
+
   it("TC-AUTH-009 rejects cross-origin mutations before forwarding credentials", async () => {
     const requestFetch = vi.fn<typeof fetch>();
     const handler = createHackerSdkNextHandler({

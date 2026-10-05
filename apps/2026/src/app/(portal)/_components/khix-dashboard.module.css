@@ -6309,3 +6309,19 @@
     transition: none;
   }
 }
+
+/* Printing uses a quiet workspace so model details and status stay readable. */
+.printingMain {
+  background-image: none;
+}
+.printingMain .mainCanvas::before {
+  opacity: 0.06;
+}
+.printingMain .portalMagic {
+  display: none;
+}
+.printingMain .mainCanvas {
+  align-content: start;
+  grid-template-rows: auto;
+  padding-top: 1rem;
+}

@@ -156,4 +156,5 @@ export const sendEmail = async ({
 export * from "./provider";
 export * from "./templates";
 
+export { printJobStatusEmail } from "./print-job";
 export { projectClaimEmail } from "./project-claim";

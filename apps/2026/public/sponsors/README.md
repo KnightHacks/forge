@@ -14,3 +14,5 @@ marks remain the property of their respective owners.
 | `figma.svg`                  | [Figma trademark guidelines](https://www.figma.com/using-the-figma-brand/)                                                                                                                                                                                                              | Official Figma logo; retain unchanged and use according to Figma's brand guidelines.                                                                                                                        |
 
 Sources retrieved September 12, 2026.
+
+`shinies.svg`: existing Forge asset from `apps/2025/public/sponsorSectionSvgs/shinies.svg`, copied unchanged for the printing workshop. Sponsor: [Shinies Props](https://www.shinies.co/).

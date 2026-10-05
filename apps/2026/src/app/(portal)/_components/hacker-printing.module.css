@@ -1,0 +1,581 @@
+.page,
+.workshopDialog {
+  --print-surface: #251b30;
+  --print-inset: #1c1326;
+  --print-text: #f5f1f8;
+  --print-muted: #bbb1c9;
+  --print-line: #ffffff17;
+  --print-accent: #d2d383;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--print-text);
+  overflow-wrap: anywhere;
+}
+.page {
+  width: min(100%, 70rem);
+  padding: 1rem 0 2rem;
+}
+.sponsor {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 1.5rem 0 2rem;
+  border-bottom: 1px solid var(--print-line);
+}
+.sponsorIdentity {
+  display: grid;
+  gap: 0.8rem;
+  flex-shrink: 0;
+}
+.eyebrow {
+  color: var(--print-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sponsorLogo {
+  width: 13rem;
+  height: auto;
+}
+.sponsorAbout {
+  display: grid;
+  gap: 0.45rem;
+  max-width: 32rem;
+  padding-left: 2.5rem;
+  border-left: 1px solid var(--print-line);
+}
+.sponsorAbout p {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.sponsorAbout > span {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--print-muted);
+}
+.sponsorLinks {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.25rem;
+}
+.sponsorAbout a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  min-height: 44px;
+  color: var(--print-accent);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.sponsorAbout a svg {
+  transition: transform 160ms ease;
+}
+.sponsorAbout a:hover svg {
+  transform: translate(2px, -2px);
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 2rem 0 1.5rem;
+}
+.header h1 {
+  font-family: var(--khix-display-font, Georgia, serif);
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.15;
+  margin: 0.5rem 0 0.65rem;
+}
+.header p:last-child {
+  color: var(--print-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 36rem;
+}
+.primaryButton {
+  display: inline-flex;
+  min-height: 46px;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  padding-inline: 1.25rem;
+  border-radius: 0.5rem;
+  background: var(--print-accent);
+  color: #222318;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  box-shadow: none;
+  transition:
+    background 160ms,
+    transform 160ms;
+}
+.primaryButton:hover {
+  background: #e5e6a6;
+  transform: translateY(-1px);
+}
+.primaryButton:disabled {
+  opacity: 0.45;
+  transform: none;
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 1rem 1.25rem;
+  background: var(--print-surface);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+.noticeIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--print-accent);
+}
+.noticeDivider {
+  margin: 0 0.75rem;
+  color: var(--print-muted);
+}
+.hint {
+  color: var(--print-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+.jobs {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.jobsHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.jobs h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.tabs {
+  height: auto;
+  background: var(--print-inset);
+  padding: 0.25rem;
+}
+.tabs button {
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  color: var(--print-muted);
+  font-family: inherit;
+  gap: 0.65rem;
+}
+.tabs button[data-state="active"] {
+  background: var(--print-surface);
+  color: var(--print-text);
+}
+.tabs button span {
+  font-variant-numeric: tabular-nums;
+  color: var(--print-accent);
+}
+.jobScroll {
+  max-height: 36rem;
+  overflow-y: auto;
+  border: 1px solid var(--print-line);
+  border-radius: 0.65rem;
+  scrollbar-gutter: stable;
+  background: var(--print-inset);
+}
+.jobList {
+  display: grid;
+}
+.job {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  border-bottom: 1px solid var(--print-line);
+  background: transparent;
+}
+.job:last-child {
+  border-bottom: 0;
+}
+.ticket {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.15rem;
+  padding-top: 1.35rem;
+  color: var(--print-muted);
+}
+.ticketLabel {
+  font-size: 0.75rem;
+}
+.ticketNumber {
+  font-size: 1.75rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--print-accent);
+}
+.jobBody {
+  display: grid;
+  min-width: 0;
+  gap: 0.7rem;
+  padding: 1.25rem 1.25rem 1rem 0;
+}
+.jobTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.submitted {
+  font-size: 0.8125rem;
+  color: var(--print-muted);
+}
+.description {
+  max-height: 8rem;
+  overflow-y: auto;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.job[data-status="printing"] .status {
+  color: var(--print-accent);
+}
+.job[data-status="ready_for_pickup"] .status {
+  color: #a3ddae;
+}
+.job[data-status="needs_clarification"] .status {
+  color: #ffcf94;
+}
+.job[data-status="picked_up"] .status,
+.job[data-status="cancelled"] .status {
+  color: var(--print-muted);
+}
+.callout {
+  padding: 0.8rem 1rem;
+  border-left: 2px solid #ffcf94;
+  background: #ffcf940a;
+  color: #ffddb2;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.note {
+  color: var(--print-muted);
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+.estimate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  font-size: 0.875rem;
+  color: var(--print-accent);
+}
+.jobFooter {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.files {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--print-muted);
+  font-size: 0.8125rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.files svg {
+  flex-shrink: 0;
+}
+.cancel {
+  min-height: 44px;
+  color: var(--print-muted);
+  font-family: inherit;
+}
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  padding: 3rem 1.5rem;
+  background: var(--print-inset);
+  border: 1px solid var(--print-line);
+  border-radius: 0.65rem;
+  text-align: center;
+}
+.empty > svg {
+  color: var(--print-accent);
+  margin-bottom: 0.4rem;
+}
+.empty h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.empty p {
+  max-width: 26rem;
+  font-size: 0.9375rem;
+  color: var(--print-muted);
+  line-height: 1.65;
+}
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--print-muted);
+  margin-top: 1.5rem;
+}
+.workshopDialog {
+  width: calc(100vw - 2rem);
+  max-width: 36rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: var(--print-inset);
+  border: 1px solid var(--print-line);
+  border-radius: 0.8rem;
+}
+.workshopDialog :global([data-slot="dialog-title"]) {
+  font-family: inherit;
+}
+.workshopDialog h2 {
+  font-size: 1.35rem;
+  line-height: 1.35;
+  padding-right: 1.5rem;
+}
+.workshopDialog :global([data-slot="dialog-description"]) {
+  color: var(--print-muted);
+  line-height: 1.65;
+}
+.workshopDialog > button {
+  min-width: 44px;
+  min-height: 44px;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+.panel {
+  display: grid;
+  gap: 1.15rem;
+  padding-top: 0.5rem;
+}
+.formStep {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--print-accent);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.formStep span {
+  color: var(--print-text);
+  font-weight: 600;
+}
+.field {
+  display: grid;
+  gap: 0.65rem;
+}
+.field label {
+  font-size: 0.875rem;
+}
+.textarea {
+  min-height: 7rem;
+  background: var(--print-surface);
+  border: 1px solid var(--print-line);
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.6;
+  color: var(--print-text);
+}
+.textarea::placeholder {
+  color: var(--print-muted);
+}
+.fileList {
+  display: grid;
+  gap: 0.5rem;
+}
+.file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.8rem;
+  background: var(--print-surface);
+  border: 1px solid var(--print-line);
+  border-radius: 0.5rem;
+}
+.fileText {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.2rem;
+}
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+.fileMeta {
+  color: var(--print-muted);
+  font-size: 0.8125rem;
+}
+.fileState {
+  flex-shrink: 0;
+}
+.file[data-state="uploaded"] .fileState {
+  color: #a3ddae;
+}
+.file[data-state="failed"] .fileState,
+.file[data-state="failed"] .fileMeta,
+.fileWarning {
+  color: #ffb1ac;
+}
+.fileWarning {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.fileRemove {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 0.4rem;
+}
+.fileRemove:hover:not(:disabled) {
+  background: #ffffff0d;
+}
+.fileRemove:disabled {
+  opacity: 0.4;
+}
+.picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 74px;
+  padding: 1rem;
+  border: 1px dashed #bbb1c966;
+  background: var(--print-surface);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.picker:hover {
+  border-color: var(--print-accent);
+  background: #30263b;
+}
+.picker[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.page :focus-visible,
+.workshopDialog :focus-visible,
+.picker:focus-within {
+  outline: 2px solid var(--print-accent);
+  outline-offset: 3px;
+}
+.skeleton {
+  min-height: 15rem;
+  border-radius: 0.65rem;
+  background: var(--print-surface);
+}
+@media (max-width: 40rem) {
+  .page {
+    padding-top: 0;
+  }
+  .sponsor {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 1.5rem;
+  }
+  .sponsorLogo {
+    width: 10rem;
+  }
+  .sponsorAbout {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1.5rem 0;
+    gap: 1rem;
+  }
+  .header > button {
+    width: 100%;
+  }
+  .notice {
+    padding: 1rem;
+  }
+  .noticeDivider {
+    display: block;
+    height: 0;
+    visibility: hidden;
+  }
+  .jobsHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .job {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+  }
+  .jobBody {
+    padding-right: 0.75rem;
+  }
+  .jobTop {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .ticketNumber {
+    font-size: 1.4rem;
+  }
+  .workshopDialog {
+    padding: 1.2rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page *,
+  .workshopDialog * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.workshopDialog > :first-child {
+  text-align: left;
+  padding-right: 1.5rem;
+}

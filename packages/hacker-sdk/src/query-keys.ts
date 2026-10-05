@@ -32,6 +32,9 @@ export const hackerSdkQueryKeys = {
   points(portalKey: string) {
     return [...this.participant(portalKey), "points"] as const;
   },
+  printJobs(portalKey: string) {
+    return [...this.participant(portalKey), "print-jobs"] as const;
+  },
   leaderboard(portalKey: string, scope: string) {
     return [...this.participant(portalKey), "leaderboard", scope] as const;
   },
