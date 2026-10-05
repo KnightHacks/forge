@@ -285,8 +285,8 @@ describe("requested event-room coverage", () => {
     });
   });
 
-  it("accounts for all 43 roster rooms and reports only the four unplaced HEC rooms", () => {
-    expect(KHIX_EVENT_ROOMS).toHaveLength(43);
+  it("accounts for all 46 roster rooms and reports only the four unplaced HEC rooms", () => {
+    expect(KHIX_EVENT_ROOMS).toHaveLength(46);
     expect(
       KHIX_EVENT_ROOMS.filter(
         (room) => !findVenueRoom(room.buildingId, room.roomNumber),

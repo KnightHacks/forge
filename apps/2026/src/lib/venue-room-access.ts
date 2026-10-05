@@ -36,6 +36,8 @@ export function getRoomPresentation(
     return { state: "bathroom", label: "Bathroom", name: null };
   if (
     (room.roomIds.length === 0 && !room.reviewId) ||
+    (room.roomIds.length === 0 &&
+      /^(?:STAIRS?|LIFTS?|ELEVATORS?)$/i.test(room.label)) ||
     room.roomIds.some(isWayfindingLabel)
   ) {
     return {

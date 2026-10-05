@@ -69,7 +69,7 @@ describe("room presentation", () => {
   it("marks unverified room envelopes unavailable instead of treating them as hallways", () => {
     expect(
       getRoomPresentation(
-        { ...room, roomIds: [], reviewId: "HEC-1-U01", label: "Office" },
+        { ...room, roomIds: [], reviewId: "HEC-1-U01", label: "Lecture hall" },
         "hec",
         open,
         [],
@@ -81,6 +81,20 @@ describe("room presentation", () => {
       name: null,
     });
   });
+  it.each(["STAIR", "LIFT"])(
+    "keeps verified %s envelopes usable even without official room numbers",
+    (label) => {
+      expect(
+        getRoomPresentation(
+          { ...room, roomIds: [], reviewId: "ENG2-1-U01", label },
+          "ucf-91",
+          restricted,
+          [],
+          now,
+        ),
+      ).toEqual({ state: "circulation", label, name: null });
+    },
+  );
   it("retains shared room numbers but ignores activity in unbooked aliases", () => {
     const shared = { ...room, roomIds: ["110", "101"] };
     const events = activity().map((event) => ({
@@ -265,6 +279,22 @@ describe("floor navigation and bathroom evidence", () => {
 });
 
 describe("event-roster aliases preserve room access", () => {
+  it.each([
+    ["ba1", "107", 1],
+    ["ba1", "239", 2],
+    ["hec", "101", 1],
+  ] as const)(
+    "includes confirmed room %s %s on floor %i",
+    (buildingId, number, floor) => {
+      const match = findVenueRoom(buildingId, number);
+      expect(match?.floor).toBe(floor);
+      expect(match).toBeDefined();
+      if (!match) return;
+      expect(
+        getRoomPresentation(match.room, buildingId, open, [], now),
+      ).toMatchObject({ state: "idle", label: number });
+    },
+  );
   it("includes the added ENG2 103 without opening ENG1 103", () => {
     const addedRoom = findVenueRoom("ucf-91", "0103");
     expect(addedRoom?.floor).toBe(1);

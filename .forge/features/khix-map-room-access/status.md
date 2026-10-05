@@ -176,3 +176,10 @@ Verified HEC floor plans and remaining bathroom metadata.
 - All 2,960 tests passed across 29 tasks; all 21 production build tasks passed using nonsecret CI example settings and an isolated PostgreSQL 16 instance. Fresh and repeated migrations passed; generation produced no migration diff. Initial concurrent Blade UI timeouts and one native judging solver timeout cleared on the final run with workspace concurrency 1 and two Vitest workers; no checks or assertions were weakened.
 - Supplied screenshots, source drawings and standalone floor previews were reviewed. The browser URL policy still blocks fresh live desktop/mobile verification; no new application screenshot or manual interaction pass is claimed. HEC 103/110/111/125 remain the only unplaced requested rooms.
 - No deployment or main push is authorized by this release step; delivery remains PR #594 on `blade/khix-map-room-access-pr`.
+
+## Confirmation-document reconciliation — October 5
+
+- Parsed all explicit room references from the owner's pasted confirmation document and compared them with the app directory: 46 unique rooms, zero missing and zero extra. Added BA1 107, BA1 239 and HEC 101; ENG2 102/103 were already present. Booking hours, capacities and operational action items remain outside map coverage scope. The original attachment is not committed.
+- All three additions use existing source geometry. Final coverage is 42 mapped rooms plus HEC 103/110/111/125 as explicit building-level fallbacks. Preserved verified numbers on striped/unavailable rooms.
+- Corrected source-labelled stair/lift envelopes so a temporary authoring ID does not make them unavailable; unverified lecture-room envelopes remain unavailable. Added regression coverage.
+- Combined final state (including main's landing-page fix at `63d09901`) passed repository format/lint/typecheck, all 2,968 tests (186 KHIX), and all 21 production build tasks. React analysis passed with zero failures. Existing lint/workspace warnings and the live-browser policy limitation remain as recorded above.

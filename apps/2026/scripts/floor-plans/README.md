@@ -42,8 +42,8 @@ temporary preview exports remain outside the runtime bundle.
   the existing Student Union Starbucks source anchor. It stays a point marker;
   the partially masked source food-court polygon is not used as an invented
   room outline. The original review artifact remains unchanged.
-- `venue-room-directory.ts` records the 43 unique rooms requested for the event,
-  without booking hours or permission flags. Thirty-nine resolve to mapped
+- `venue-room-directory.ts` records the 46 unique rooms requested for the event,
+  without booking hours or permission flags. Forty-two resolve to mapped
   geometry; HEC 103, 110, 111 and 125 remain building-level fallbacks. Leading
   zeros, named Student Union rooms and whole-ballroom aliases resolve locally.
   The KHIX view highlights only this roster; other rooms retain striped
