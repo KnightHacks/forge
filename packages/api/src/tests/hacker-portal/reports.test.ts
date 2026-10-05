@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type * as ParticipantCommands from "../../hacker-portal/commands";
 import type { HackerPortalContext } from "../../hacker-portal/trpc";
 import { reportIssue } from "../../hacker-portal/reports";
 
@@ -11,16 +10,13 @@ const mocks = vi.hoisted(() => ({
   event: vi.fn(),
   user: vi.fn(),
   recent: vi.fn(),
+  updated: vi.fn(),
+  transactionCommitted: false,
 }));
 vi.mock("@forge/utils/discord", () => ({ api: { post: mocks.post } }));
 vi.mock("../../hacker-portal/data", () => ({
   loadParticipantApplication: mocks.application,
   requirePortalHackathon: mocks.event,
-}));
-vi.mock("../../hacker-portal/commands", async (original) => ({
-  ...(await original<typeof ParticipantCommands>()),
-  runParticipantCommand: async ({ work }: { work: () => Promise<object> }) =>
-    work(),
 }));
 vi.mock("@forge/db/client", () => ({
   db: {
@@ -29,13 +25,25 @@ vi.mock("@forge/db/client", () => ({
       Hackathon: { findFirst: mocks.settings },
     },
     transaction: async (work: (tx: object) => Promise<object>) => {
-      const query = {
-        from: () => query,
-        where: () => query,
+      const selectQuery = {
+        from: () => selectQuery,
+        where: () => selectQuery,
         limit: mocks.recent,
       };
-      return work({ execute: vi.fn(), select: () => query });
+      const insertQuery = {
+        values: () => insertQuery,
+        onConflictDoNothing: () => insertQuery,
+        returning: () => Promise.resolve([{ id: "report-command" }]),
+      };
+      const result = await work({
+        execute: vi.fn(),
+        insert: () => insertQuery,
+        select: () => selectQuery,
+      });
+      mocks.transactionCommitted = true;
+      return result;
     },
+    update: () => ({ set: () => ({ where: mocks.updated }) }),
   },
 }));
 
@@ -76,9 +84,15 @@ describe("hacker issue reports", () => {
       issueReportsRoleId: "345678901234567890",
     });
     mocks.recent.mockResolvedValue([]);
+    mocks.updated.mockResolvedValue([]);
+    mocks.transactionCommitted = false;
     mocks.post.mockResolvedValue({ id: "message" });
   });
   it("delivers the report with server-derived event/reporter and suppresses mentions", async () => {
+    mocks.post.mockImplementationOnce(() => {
+      expect(mocks.transactionCommitted).toBe(true);
+      return Promise.resolve({ id: "message" });
+    });
     await expect(reportIssue(context, input)).resolves.toEqual({
       submitted: true,
     });
@@ -125,7 +139,7 @@ describe("hacker issue reports", () => {
     mocks.application.mockResolvedValueOnce(null);
     await expect(reportIssue(context, input)).rejects.toThrow("Apply");
     mocks.recent.mockResolvedValue(
-      Array.from({ length: 5 }, (_, id) => ({ id })),
+      Array.from({ length: 6 }, (_, id) => ({ id })),
     );
     await expect(reportIssue(context, input)).rejects.toThrow("five reports");
     expect(mocks.post).not.toHaveBeenCalled();
