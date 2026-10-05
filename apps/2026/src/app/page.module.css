@@ -6,6 +6,7 @@
 }
 
 .sectionStack {
+  --khix-waterfall-faq-overlap: clamp(6rem, 10vw, 12rem);
   --khix-about-overlap: clamp(2rem, 7svh, 4.75rem);
   --khix-foreground-join: 65vw;
   --khix-front-top: calc(
@@ -83,7 +84,7 @@
   width: 100vw;
   height: 40.7vw;
   min-height: 24rem;
-  margin-top: clamp(-12rem, -10vw, -6rem);
+  margin-top: calc(var(--khix-waterfall-faq-overlap) * -1);
   margin-bottom: clamp(-19rem, -16vw, -6rem);
   pointer-events: none;
   background-image: var(--faq-separator-image, none);
@@ -98,10 +99,13 @@
 }
 
 @media (max-width: 820px) {
+  .sectionStack {
+    --khix-waterfall-faq-overlap: 3rem;
+  }
+
   .waterfallFaqSeparator {
     height: 40.7vw;
     min-height: 0;
-    margin-top: -3rem;
   }
 }
 
