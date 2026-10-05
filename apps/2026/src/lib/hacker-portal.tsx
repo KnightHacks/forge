@@ -341,7 +341,13 @@ export function usePortalConfig() {
   return config;
 }
 
-export function PortalAuthBoundary({ children }: { children: ReactNode }) {
+export function PortalAuthBoundary({
+  children,
+  loadingFallback,
+}: {
+  children: ReactNode;
+  loadingFallback: ReactNode;
+}) {
   const pathname = usePathname();
   const session = useHackerSession();
   const { client } = useHackerSdkClient();
@@ -376,13 +382,7 @@ export function PortalAuthBoundary({ children }: { children: ReactNode }) {
   }
 
   if (!session.data?.authenticated) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#07150f] px-4 text-white">
-        <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#d7ff76]">
-          Opening secure hacker sign-in…
-        </p>
-      </main>
-    );
+    return loadingFallback;
   }
 
   return children;
@@ -533,6 +533,21 @@ export function useHackerApplicationFlow({
   };
 }
 
+export function usePortalIssueReport() {
+  const config = usePortalConfig();
+  return useMutation({
+    mutationFn: async (_description: string) => {
+      await navigator.clipboard.writeText(_description).catch(() => undefined);
+      window.open(
+        config.copy.supportChannelUrl,
+        "_blank",
+        "noopener,noreferrer",
+      );
+      return { submitted: true as const };
+    },
+  });
+}
+
 export function useHackerDashboardFlow(
   data: {
     attendance?: boolean;
@@ -573,18 +588,7 @@ export function useHackerDashboardFlow(
         idempotencyKey: checkInPassKey.acquire("issue"),
       });
       checkInPassKey.release();
-      return QRCode.toDataURL(pass.payload, { margin: 1, width: 320 });
-    },
-  });
-  const reportIssueMutation = useMutation({
-    mutationFn: async (_description: string) => {
-      await navigator.clipboard.writeText(_description).catch(() => undefined);
-      window.open(
-        config.copy.supportChannelUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
-      return { submitted: true as const };
+      return QRCode.toDataURL(pass.payload, { margin: 4, width: 640 });
     },
   });
   const application = dashboardQuery.data?.application ?? null;
@@ -645,8 +649,6 @@ export function useHackerDashboardFlow(
     pointsQuery,
     qrCode: qrMutation.data,
     qrMutation,
-    reportIssue: reportIssueMutation.mutateAsync,
-    reportIssueMutation,
     resumeUrl: dashboardQuery.data?.resume
       ? client.resumeDownloadPath
       : undefined,
@@ -671,7 +673,6 @@ export function useHackerDashboardFlow(
 }
 
 export function useHackerProfileFlow() {
-  const config = usePortalConfig();
   const dashboardQuery = useHackerDashboard();
   const applicationQuery = useHackerApplication();
   const updateParticipantMutation = useUpdateHackerParticipant();
@@ -704,16 +705,6 @@ export function useHackerProfileFlow() {
     participant,
     dashboardQuery,
     profileSchema: portalFormSchema,
-    reportIssue: async (_description: string) => {
-      await navigator.clipboard.writeText(_description).catch(() => undefined);
-      window.open(
-        config.copy.supportChannelUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
-      return { submitted: true as const };
-    },
-    reportIssueMutation: { isPending: false },
     removeResume: async () => {
       await removeResumeMutation.mutateAsync({
         idempotencyKey: removeResumeKey.acquire("remove"),
@@ -753,6 +744,50 @@ export function useHackerProfileFlow() {
       return client.resumeDownloadPath;
     },
     uploadMutation,
+  };
+}
+
+/** Resume actions reuse the SDK's upload validation and cache invalidation. */
+export function useHackerResumeFlow() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const clock = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(clock);
+  }, []);
+  const resumeQuery = useHackerResume();
+  const dashboardQuery = useHackerDashboard();
+  const hackathonQuery = usePublicHackathon();
+  const uploadMutation = useUploadHackerResume();
+  const resumeKey = useIdempotencyLease("dashboard-resume");
+  const { client } = useHackerSdkClient();
+  const status = dashboardQuery.data?.application?.status;
+  const endDate = hackathonQuery.data?.endDate;
+
+  return {
+    resumeQuery,
+    downloadUrl: client.resumeDownloadPath,
+    eligibilityLoading: dashboardQuery.isPending || hackathonQuery.isPending,
+    eligibilityError: dashboardQuery.isError || hackathonQuery.isError,
+    retryEligibility: () =>
+      Promise.all([dashboardQuery.refetch(), hackathonQuery.refetch()]),
+    editable: Boolean(
+      endDate &&
+      now < Date.parse(endDate) &&
+      status &&
+      ["pending", "waitlisted", "accepted", "confirmed", "checkedin"].includes(
+        status,
+      ),
+    ),
+    uploading: uploadMutation.isPending,
+    uploadResume: async (file: File) => {
+      const fingerprint = await resumeFingerprint(file);
+      await uploadMutation.mutateAsync({
+        file,
+        fileName: file.name,
+        idempotencyKey: resumeKey.acquire(fingerprint),
+      });
+      resumeKey.release();
+    },
   };
 }
 

@@ -29,7 +29,7 @@ import {
   formatReadyAt,
 } from "~/lib/print-jobs";
 import styles from "./hacker-printing.module.css";
-import { KhixDashboardShell, StatusStage } from "./khix-dashboard";
+import { StatusStage } from "./khix-dashboard";
 import dashboardStyles from "./khix-dashboard.module.css";
 import { NewPrintJobForm } from "./new-print-job-form";
 
@@ -38,55 +38,45 @@ export function HackerPrinting() {
 
   if (dashboardQuery.isPending) {
     return (
-      <KhixDashboardShell activeItem="printing">
-        <section className={styles.page} aria-busy="true">
-          <div className={styles.skeleton} />
-        </section>
-      </KhixDashboardShell>
+      <section className={styles.page} aria-busy="true">
+        <div className={styles.skeleton} />
+      </section>
     );
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <KhixDashboardShell activeItem="printing">
-        <StatusStage
-          action={
-            <Button asChild className={dashboardStyles.primaryButton}>
-              <Link href="/dashboard/printing">Try again</Link>
-            </Button>
-          }
-          body="Refresh the page or try again in a moment."
-          greeting="Knight Hacks IX"
-          headline="Could not load 3D printing."
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={dashboardStyles.primaryButton}>
+            <Link href="/dashboard/printing">Try again</Link>
+          </Button>
+        }
+        body="Refresh the page or try again in a moment."
+        greeting="Knight Hacks IX"
+        headline="Could not load 3D printing."
+      />
     );
   }
 
   if (dashboard.participant?.status !== "checkedin") {
     return (
-      <KhixDashboardShell activeItem="printing">
-        <StatusStage
-          action={
-            <Button asChild className={dashboardStyles.primaryButton}>
-              <Link href="/dashboard">Back to dashboard</Link>
-            </Button>
-          }
-          body="Send files to the on-site 3D printer once you arrive and check in."
-          greeting="3D printing unlocks at check-in"
-          headline="Check in to start printing."
-          statusClassName={dashboardStyles.statusPending}
-          statusLabel="Locked"
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={dashboardStyles.primaryButton}>
+            <Link href="/dashboard">Back to dashboard</Link>
+          </Button>
+        }
+        body="Send files to the on-site 3D printer once you arrive and check in."
+        greeting="3D printing unlocks at check-in"
+        headline="Check in to start printing."
+        statusClassName={dashboardStyles.statusPending}
+        statusLabel="Locked"
+      />
     );
   }
 
-  return (
-    <KhixDashboardShell activeItem="printing">
-      <PrintingWorkshop timeZone={dashboard.hackathon.timezone} />
-    </KhixDashboardShell>
-  );
+  return <PrintingWorkshop timeZone={dashboard.hackathon.timezone} />;
 }
 
 function PrintingWorkshop({ timeZone }: { timeZone: string }) {
@@ -105,7 +95,18 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
   const visibleJobs = view === "active" ? active : history;
 
   return (
-    <section aria-labelledby="khix-printing-title" className={styles.page}>
+    <section
+      aria-labelledby="khix-printing-title"
+      className={`${styles.page} ${dashboardStyles.pageReveal}`}
+    >
+      <header className={styles.header}>
+        <div>
+          <h1 id="khix-printing-title">3D Printing</h1>
+          <p>Send your model, track its progress and collect your print.</p>
+        </div>
+        <NewPrintJobForm flow={flow} onSubmitted={() => setView("active")} />
+      </header>
+
       <aside aria-label="Our printing sponsor" className={styles.sponsor}>
         <div className={styles.sponsorIdentity}>
           <span className={styles.eyebrow}>Sponsor</span>
@@ -138,14 +139,6 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
           </div>
         </div>
       </aside>
-
-      <header className={styles.header}>
-        <div>
-          <h1 id="khix-printing-title">3D Printing</h1>
-          <p>Send your model, track its progress and collect your print.</p>
-        </div>
-        <NewPrintJobForm flow={flow} onSubmitted={() => setView("active")} />
-      </header>
 
       <aside aria-label="How printing works" className={styles.notice}>
         <Clock3 aria-hidden="true" className={styles.noticeIcon} />
@@ -360,7 +353,9 @@ function PrintJobCard({
       </div>
 
       <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
-        <DialogContent className={styles.workshopDialog}>
+        <DialogContent
+          className={`${dashboardStyles.theme} ${styles.workshopDialog}`}
+        >
           <DialogHeader>
             <DialogTitle>Cancel this print job?</DialogTitle>
             <DialogDescription>

@@ -1,0 +1,247 @@
+.stage {
+  display: grid;
+  width: min(60rem, 100%);
+  min-width: 0;
+  align-self: start;
+  justify-self: center;
+  justify-items: center;
+  gap: 1rem;
+  color: var(--khix-ink);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem 1rem;
+  min-width: 0;
+}
+
+.greeting {
+  margin: 0;
+  color: var(--khix-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--khix-panel-border);
+  border-radius: 999px;
+  background: var(--khix-panel-inset);
+  color: var(--khix-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.headline {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--khix-ink);
+  font-family: var(--khix-display-font);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.04;
+  text-shadow: var(--khix-heading-glow);
+  text-wrap: balance;
+}
+
+.headlineLine {
+  display: block;
+}
+
+.copy {
+  width: min(48ch, 100%);
+  margin: 0;
+  color: var(--khix-muted);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(32rem, 100%);
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.stage .actions > :is(a, button) {
+  flex: 1 1 13rem;
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.timing {
+  display: grid;
+  width: min(32rem, 100%);
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--khix-panel-border);
+}
+
+.eventDetails {
+  margin: 0;
+  color: var(--khix-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-wrap: balance;
+}
+
+.countdownPanel {
+  min-width: 0;
+  width: 100%;
+}
+
+.countdownEyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--khix-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.countdownGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.4rem, 1.4vw, 0.65rem);
+  min-width: 0;
+}
+
+.countdownUnit {
+  display: grid;
+  min-width: 0;
+  min-height: 4.5rem;
+  align-content: center;
+  gap: 0.2rem;
+  padding: 0.65rem 0.35rem;
+  border: 1px solid var(--khix-panel-border);
+  border-radius: 0.75rem;
+  background: var(--khix-panel-surface);
+}
+
+.countdownValue {
+  color: var(--khix-ink);
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.countdownLabel {
+  color: var(--khix-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.countdownComplete {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--khix-panel-border);
+  border-radius: var(--khix-panel-radius);
+  background: var(--khix-panel-surface);
+}
+
+.countdownCompleteLabel {
+  color: var(--khix-accent);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.countdownCompleteCopy {
+  color: var(--khix-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--khix-panel-border);
+  border-radius: 0.75rem;
+  background: var(--khix-panel-inset);
+  color: var(--khix-ink);
+  overflow-wrap: anywhere;
+}
+
+.agreement > :first-child {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.agreement > div {
+  min-width: 0;
+}
+
+.agreement p {
+  color: var(--khix-muted);
+  line-height: 1.65;
+}
+
+.agreement a {
+  color: var(--khix-accent);
+  text-underline-offset: 0.2em;
+}
+
+.agreement :focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}
+
+.resources {
+  width: min(32rem, 100%);
+  min-width: 0;
+  justify-self: center;
+}
+
+.resource {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--khix-panel-border);
+  color: var(--khix-ink);
+  text-decoration: none;
+}
+
+.resourceTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.resourceCopy {
+  color: var(--khix-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.resourceMeta {
+  color: var(--khix-accent);
+  font-size: 0.75rem;
+}
+
+.resource:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}

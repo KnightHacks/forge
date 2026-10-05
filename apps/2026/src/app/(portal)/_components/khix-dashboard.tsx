@@ -9,17 +9,17 @@ import type {
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   AlertCircle,
+  BookMarked,
   BookOpen,
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Copy,
   ExternalLink,
   FileText,
   Home,
-  LifeBuoy,
   Loader2,
   LockKeyhole,
   LogOut,
@@ -31,7 +31,6 @@ import {
   ScrollText,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Trophy,
   UserRound,
   UsersRound,
@@ -47,7 +46,12 @@ import type {
 } from "@forge/hacker-sdk";
 import { FORMS } from "@forge/consts";
 import { normalizeSocialProfileUrl } from "@forge/hacker-sdk";
-import { useHackerDashboard, useHackerJudging } from "@forge/hacker-sdk/react";
+import {
+  useHackerDashboard,
+  useHackerJudging,
+  useHackerSession,
+  useHackerTeams,
+} from "@forge/hacker-sdk/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@forge/ui/avatar";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
@@ -96,6 +100,7 @@ import {
   getHackerLifecycleState,
   useHackerDashboardFlow,
   useHackerProfileFlow,
+  usePortalIssueReport,
   usePortalSignOut,
 } from "~/lib/hacker-portal";
 import { persistBeforeOptionalResumeUpload } from "~/lib/portal-actions";
@@ -104,7 +109,10 @@ import {
   buildDisplayedAgreementInputs,
   requiredAgreementsAccepted,
 } from "~/lib/portal-agreements";
+import statusStyles from "./application-status.module.css";
 import { CustomSchoolField } from "./custom-school-field";
+import { HackerAdmissionPass } from "./hacker-admission-pass";
+import { HackerResumeControls } from "./hacker-resume-controls";
 import styles from "./khix-dashboard.module.css";
 
 const profileDateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -129,13 +137,8 @@ const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
   String(index + 1),
 );
 type MobileDrawerState = "closed" | "opening" | "open" | "closing";
-const applicationLinks: Record<"mentor" | "volunteer", string> = {
-  mentor: "https://forms.gle/CThgMyhCHZzdwYPq6",
-  volunteer: "https://forms.gle/9RutfLQt7mt89mC5A",
-};
-
 const statusScenes: Record<
-  HackerStatus,
+  ReturnType<typeof getHackerLifecycleState>,
   {
     body: string;
     headline: string;
@@ -143,13 +146,43 @@ const statusScenes: Record<
     statusClassName: string | undefined;
   }
 > = {
+  "application-before-open": {
+    body: "Applications are not open yet. Check back here when they open.",
+    headline: "Your next adventure is coming.",
+    label: "Opening soon",
+    statusClassName: styles.statusPending,
+  },
+  "application-open": {
+    body: "Apply to spend a weekend building, learning, and meeting other hackers.",
+    headline: "Your journey starts here.",
+    label: "Applications open",
+    statusClassName: styles.statusPending,
+  },
+  "application-closed": {
+    body: "The application window for Knight Hacks IX has ended. Follow our community for future events.",
+    headline: "Applications are closed.",
+    label: "Applications closed",
+    statusClassName: styles.statusWithdrawn,
+  },
   accepted: {
-    body: "Congratulations, you've been accepted into Knight Hacks IX! Read the terms, then agree and confirm.",
-    headline: "You're in!\nConfirm your spot!",
+    body: "We’d love to have you at Knight Hacks IX. Review the agreements and confirm your seat.",
+    headline: "You’re in!\nMake it official.",
     label: "Accepted",
     statusClassName: styles.statusAccepted,
   },
-  checkedin: {
+  "accepted-at-capacity": {
+    body: "All available seats are currently confirmed. Your application is still accepted; check back in case a seat opens.",
+    headline: "The forest is full for now.",
+    label: "Accepted · At capacity",
+    statusClassName: styles.statusWaitlisted,
+  },
+  "accepted-confirmation-closed": {
+    body: "Your application was accepted, but the confirmation window has ended. Contact the organizers if you need help.",
+    headline: "Confirmation has closed.",
+    label: "Accepted · Confirmation closed",
+    statusClassName: styles.statusWithdrawn,
+  },
+  "checked-in": {
     body: "Thank you for coming!! We hope you have an awesome experience!",
     headline: "You're checked in!",
     label: "Checked in",
@@ -162,8 +195,8 @@ const statusScenes: Record<
     statusClassName: styles.statusConfirmed,
   },
   denied: {
-    body: "We could not offer you a seat this time. Thank you for applying.",
-    headline: "Application update is ready.",
+    body: "Thank you for applying to Knight Hacks IX. We hope you’ll join us at a future event.",
+    headline: "We couldn’t offer you a seat this time.",
     label: "Not selected",
     statusClassName: styles.statusDenied,
   },
@@ -368,8 +401,8 @@ interface KhixDashboardProps {
 }
 
 export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
+  const teams = useHackerTeams();
   const {
-    config,
     confirmationAgreements,
     confirmAttendance,
     confirmMutation,
@@ -378,102 +411,66 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     loadQRCode,
     qrCode,
     qrMutation,
-    reportIssue,
-    reportIssueMutation,
     resumeQuery,
     resumeUrl,
     withdrawAttendance,
     withdrawMutation,
   } = useHackerDashboardFlow({ resume: true });
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
-
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
-    />
-  );
 
   if (dashboardQuery.isPending) {
-    return (
-      <KhixDashboardShell
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <DashboardSkeleton />
-      </KhixDashboardShell>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <KhixDashboardShell
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/dashboard">Try again</Link>
-            </Button>
-          }
-          body="Refresh the page or try again in a moment."
-          headline="Could not load your dashboard."
-          greeting="Knight Hacks IX"
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard">Try again</Link>
+          </Button>
+        }
+        body="Refresh the page or try again in a moment."
+        headline="Could not load your dashboard."
+        greeting="Knight Hacks IX"
+      />
     );
   }
 
   const { hackathon, participant } = dashboard;
   const fallbackName = getDisplayName(sessionUser?.name ?? sessionUser?.email);
+  const lifecycleState = getHackerLifecycleState({
+    applicationDeadline: hackathon.applicationDeadline,
+    applicationOpen: hackathon.applicationOpen,
+    confirmationCapacity: hackathon.confirmationCapacity,
+    confirmationDeadline: hackathon.confirmationDeadline,
+    confirmedCount: dashboard.confirmedCount,
+    startDate: hackathon.startDate,
+    status: participant?.status ?? null,
+  });
+  const scene = statusScenes[lifecycleState];
 
   if (!participant) {
     return (
-      <KhixDashboardShell
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
+      <>
         <StatusStage
           action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/apply">Application portal</Link>
-            </Button>
+            <ApplicationEntryAction
+              open={lifecycleState === "application-open"}
+            />
           }
-          body="Do not miss your chance."
+          body={scene.body}
           countdown={
             <EventCountdown
               endDate={hackathon.endDate}
               startDate={hackathon.startDate}
             />
           }
-          headline="Looks like you haven't applied yet."
+          headline={scene.headline}
           greeting={`Hi, ${fallbackName}!`}
+          statusLabel={scene.label}
+          statusClassName={scene.statusClassName}
         />
-        <ToolDock
-          guideUrl={config.guideUrl}
-          supportUrl={config.copy.supportChannelUrl}
-        />
-      </KhixDashboardShell>
+      </>
     );
   }
 
@@ -483,16 +480,6 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     .join(" ");
   const greetingName =
     fullName.length > 0 ? getDisplayName(fullName) : fallbackName;
-  const scene = statusScenes[participant.status];
-  const lifecycleState = getHackerLifecycleState({
-    applicationDeadline: hackathon.applicationDeadline,
-    applicationOpen: hackathon.applicationOpen,
-    confirmationCapacity: hackathon.confirmationCapacity,
-    confirmationDeadline: hackathon.confirmationDeadline,
-    confirmedCount: dashboard.confirmedCount,
-    startDate: hackathon.startDate,
-    status: participant.status,
-  });
   const confirmationClosed = lifecycleState === "accepted-confirmation-closed";
   const atCapacity = lifecycleState === "accepted-at-capacity";
   const actionPending = confirmMutation.isPending || withdrawMutation.isPending;
@@ -523,11 +510,43 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
     }
   };
 
+  if (qrAvailable) {
+    return (
+      <HackerAdmissionPass
+        resume={<HackerResumeControls />}
+        avatarUrl={sessionUser ? getDiscordAvatarUrl(sessionUser) : null}
+        checkedIn={participant.status === "checkedin"}
+        className={participant.className}
+        fullName={fullName || fallbackName}
+        loadQRCode={loadQRCode}
+        qrCode={qrCode}
+        qrError={
+          qrMutation.error
+            ? getToastErrorMessage(
+                qrMutation.error,
+                "Could not load your QR code.",
+              )
+            : null
+        }
+        qrLoading={qrMutation.isPending}
+        teamName={teams.data?.ownTeam?.name ?? null}
+        teamState={
+          teams.isPending ? "loading" : teams.isError ? "error" : "ready"
+        }
+        withdrawal={
+          participant.status === "confirmed" ? (
+            <WithdrawalDialog
+              disabled={actionPending}
+              onWithdraw={handleWithdraw}
+            />
+          ) : null
+        }
+      />
+    );
+  }
+
   return (
-    <KhixDashboardShell
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
+    <>
       <StatusStage
         action={
           <StatusAction
@@ -535,7 +554,6 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
             atCapacity={atCapacity}
             confirmationClosed={confirmationClosed}
             agreements={confirmationAgreements}
-            guideUrl={config.guideUrl}
             loadQRCode={loadQRCode}
             onConfirm={handleConfirm}
             onWithdraw={handleWithdraw}
@@ -557,7 +575,6 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
         countdown={
           <EventCountdown
             endDate={hackathon.endDate}
-            showLabel={participant.status !== "accepted"}
             startDate={hackathon.startDate}
           />
         }
@@ -569,7 +586,11 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
 
       <ToolDock
         resumeMeta={
-          resumeUrl ? "Open" : resumeQuery.isPending ? "Checking" : "Locked"
+          resumeUrl
+            ? "Open"
+            : resumeQuery.isPending
+              ? "Checking"
+              : "Not uploaded"
         }
         resumeText={
           resumeUrl
@@ -579,166 +600,75 @@ export function KhixDashboard({ sessionUser }: KhixDashboardProps) {
               : "No resume attached yet."
         }
         resumeUrl={resumeUrl}
-        qrAvailable={qrAvailable}
-        qrCode={qrCode}
-        qrErrorMessage={
-          qrMutation.error
-            ? getToastErrorMessage(
-                qrMutation.error,
-                "Could not load your QR code.",
-              )
-            : null
-        }
-        qrLoading={qrMutation.isPending}
-        loadQRCode={loadQRCode}
-        hideApplications={participant.status === "checkedin"}
-        guideUrl={config.guideUrl}
-        supportUrl={config.copy.supportChannelUrl}
       />
-    </KhixDashboardShell>
+    </>
   );
 }
 
-export function KhixLore({ sessionUser }: KhixDashboardProps) {
-  const { reportIssue, reportIssueMutation } = useHackerDashboardFlow();
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
-
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
-    />
-  );
-
-  return (
-    <KhixDashboardShell
-      activeItem="lore"
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
-      <LoreExperience />
-    </KhixDashboardShell>
+function ApplicationEntryAction({ open }: { open: boolean }) {
+  return open ? (
+    <Button asChild className={styles.primaryButton}>
+      <Link href="/apply">Start application</Link>
+    </Button>
+  ) : (
+    <Button asChild className={styles.ghostButton}>
+      <a
+        href="https://discord.knighthacks.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Join our Discord <ExternalLink className="size-4" />
+      </a>
+    </Button>
   );
 }
 
-export function KhixEvents({ sessionUser }: KhixDashboardProps) {
-  const {
-    dashboard,
-    dashboardQuery,
-    reportIssue,
-    reportIssueMutation,
-    schedule,
-    scheduleQuery,
-  } = useHackerDashboardFlow({ schedule: true });
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
+export function KhixLore() {
+  return <LoreExperience />;
+}
 
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
-    />
-  );
+export function KhixEvents() {
+  const { dashboard, dashboardQuery, schedule, scheduleQuery } =
+    useHackerDashboardFlow({ schedule: true });
 
   if (dashboardQuery.isPending) {
-    return (
-      <KhixDashboardShell
-        activeItem="events"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <ScheduleSkeleton />
-      </KhixDashboardShell>
-    );
+    return <ScheduleSkeleton />;
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <KhixDashboardShell
-        activeItem="events"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/dashboard/events">Try again</Link>
-            </Button>
-          }
-          body="Refresh the page or try again in a moment."
-          headline="Could not load the event schedule."
-          greeting="Knight Hacks IX"
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard/events">Try again</Link>
+          </Button>
+        }
+        body="Refresh the page or try again in a moment."
+        headline="Could not load the event schedule."
+        greeting="Knight Hacks IX"
+      />
     );
   }
 
   if (dashboard.participant?.status !== "checkedin") {
     return (
-      <KhixDashboardShell
-        activeItem="events"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/dashboard">Back to dashboard</Link>
-            </Button>
-          }
-          body="The full schedule appears here once you arrive and check in."
-          headline="The forest is still keeping its secrets."
-          greeting="Events unlock at check-in"
-          statusLabel="Locked"
-          statusClassName={styles.statusPending}
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard">Back to dashboard</Link>
+          </Button>
+        }
+        body="The full schedule appears here once you arrive and check in."
+        headline="The forest is still keeping its secrets."
+        greeting="Events unlock at check-in"
+        statusLabel="Locked"
+        statusClassName={styles.statusPending}
+      />
     );
   }
 
   return (
-    <KhixDashboardShell
-      activeItem="events"
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
+    <>
       {scheduleQuery.isPending ? <ScheduleSkeleton /> : null}
       {scheduleQuery.isError ? (
         <ScheduleState
@@ -770,11 +700,11 @@ export function KhixEvents({ sessionUser }: KhixDashboardProps) {
           timeZone={dashboard.hackathon.timezone}
         />
       ) : null}
-    </KhixDashboardShell>
+    </>
   );
 }
 
-export function KhixJourney({ sessionUser }: KhixDashboardProps) {
+export function KhixJourney() {
   const {
     attendance,
     attendanceQuery,
@@ -782,56 +712,18 @@ export function KhixJourney({ sessionUser }: KhixDashboardProps) {
     classLeaderboardQuery,
     dashboard,
     dashboardQuery,
-    isMinorAtHackStart,
     overallLeaderboard,
     overallLeaderboardQuery,
     points,
     pointsQuery,
-    reportIssue,
-    reportIssueMutation,
   } = useHackerDashboardFlow({
     attendance: true,
     leaderboards: true,
     points: true,
   });
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
-
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
-    />
-  );
 
   if (dashboardQuery.isPending) {
-    return (
-      <KhixDashboardShell
-        activeItem="journey"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <JourneySkeleton />
-      </KhixDashboardShell>
-    );
+    return <JourneySkeleton />;
   }
 
   const participant = dashboard?.participant;
@@ -840,44 +732,32 @@ export function KhixJourney({ sessionUser }: KhixDashboardProps) {
 
   if (dashboardQuery.isError || !dashboard || !participant) {
     return (
-      <KhixDashboardShell
-        activeItem="journey"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <ScheduleState
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/dashboard/journey">Try again</Link>
-            </Button>
-          }
-          copy="Refresh the page or try again in a moment."
-          title="Your hack details could not be loaded."
-        />
-      </KhixDashboardShell>
+      <ScheduleState
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard/journey">Try again</Link>
+          </Button>
+        }
+        copy="Refresh the page or try again in a moment."
+        title="Your hack details could not be loaded."
+      />
     );
   }
 
   if (!journeyUnlocked) {
     return (
-      <KhixDashboardShell
-        activeItem="journey"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/dashboard">Back to dashboard</Link>
-            </Button>
-          }
-          body="Class assignments, points, attendance, and the leaderboard appear after your seat is confirmed."
-          headline="Your journey has not started yet."
-          greeting="The path is still forming"
-          statusLabel="Locked"
-          statusClassName={styles.statusPending}
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/dashboard">Back to dashboard</Link>
+          </Button>
+        }
+        body="Class assignments, points, attendance, and the leaderboard appear after your seat is confirmed."
+        headline="Your journey has not started yet."
+        greeting="The path is still forming"
+        statusLabel="Locked"
+        statusClassName={styles.statusPending}
+      />
     );
   }
 
@@ -891,36 +771,29 @@ export function KhixJourney({ sessionUser }: KhixDashboardProps) {
   };
 
   return (
-    <KhixDashboardShell
-      activeItem="journey"
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
-      <HackerJourneySummary
-        attendance={attendance}
-        attendanceError={attendanceQuery.isError}
-        attendancePending={attendanceQuery.isPending}
-        classLeaderboard={classLeaderboard}
-        classLeaderboardError={classLeaderboardQuery.isError}
-        classLeaderboardPending={classLeaderboardQuery.isPending}
-        isMinorAtHackStart={isMinorAtHackStart}
-        onRetry={() => void retryJourneyData()}
-        overallLeaderboard={overallLeaderboard}
-        overallLeaderboardError={overallLeaderboardQuery.isError}
-        overallLeaderboardPending={overallLeaderboardQuery.isPending}
-        participant={participant}
-        points={points}
-        pointsError={pointsQuery.isError}
-        pointsPending={pointsQuery.isPending}
-        retrying={
-          attendanceQuery.isFetching ||
-          classLeaderboardQuery.isFetching ||
-          overallLeaderboardQuery.isFetching ||
-          pointsQuery.isFetching
-        }
-        timeZone={dashboard.hackathon.timezone}
-      />
-    </KhixDashboardShell>
+    <HackerJourneySummary
+      attendance={attendance}
+      attendanceError={attendanceQuery.isError}
+      attendancePending={attendanceQuery.isPending}
+      classLeaderboard={classLeaderboard}
+      classLeaderboardError={classLeaderboardQuery.isError}
+      classLeaderboardPending={classLeaderboardQuery.isPending}
+      onRetry={() => void retryJourneyData()}
+      overallLeaderboard={overallLeaderboard}
+      overallLeaderboardError={overallLeaderboardQuery.isError}
+      overallLeaderboardPending={overallLeaderboardQuery.isPending}
+      participant={participant}
+      points={points}
+      pointsError={pointsQuery.isError}
+      pointsPending={pointsQuery.isPending}
+      retrying={
+        attendanceQuery.isFetching ||
+        classLeaderboardQuery.isFetching ||
+        overallLeaderboardQuery.isFetching ||
+        pointsQuery.isFetching
+      }
+      timeZone={dashboard.hackathon.timezone}
+    />
   );
 }
 
@@ -934,67 +807,24 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
     profileSchema,
     removeResume,
     removeResumeMutation,
-    reportIssue,
-    reportIssueMutation,
     updateMutation,
     updateProfile,
     uploadMutation,
     uploadResume,
   } = useHackerProfileFlow();
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
   const dashboard = dashboardQuery.data;
 
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
-    />
-  );
-
   if (dashboardQuery.isPending) {
-    return (
-      <KhixDashboardShell
-        activeItem="profile"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <ProfileSkeleton />
-      </KhixDashboardShell>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <KhixDashboardShell
-        activeItem="profile"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          body="Refresh the page or try again in a moment."
-          headline="Could not load your profile."
-          greeting="Knight Hacks IX"
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        body="Refresh the page or try again in a moment."
+        headline="Could not load your profile."
+        greeting="Knight Hacks IX"
+      />
     );
   }
 
@@ -1004,121 +834,76 @@ export function KhixProfile({ sessionUser }: KhixDashboardProps) {
     );
 
     return (
-      <KhixDashboardShell
-        activeItem="profile"
-        navAction={reportIssueNavAction}
-        sessionUser={sessionUser}
-      >
-        <StatusStage
-          action={
-            <Button asChild className={styles.primaryButton}>
-              <Link href="/apply">Application portal</Link>
-            </Button>
-          }
-          body="Your profile appears here after you submit an application."
-          headline="No profile yet."
-          greeting={`Hi, ${fallbackName}!`}
-        />
-      </KhixDashboardShell>
+      <StatusStage
+        action={
+          <Button asChild className={styles.primaryButton}>
+            <Link href="/apply">Application portal</Link>
+          </Button>
+        }
+        body="Your profile appears here after you submit an application."
+        headline="No profile yet."
+        greeting={`Hi, ${fallbackName}!`}
+      />
     );
   }
 
   return (
-    <KhixDashboardShell
-      activeItem="profile"
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
-      <ProfileSection
-        agreementAcceptances={agreementAcceptances}
-        agreements={applicationAgreements}
-        editable={editable}
-        participant={participant}
-        profileSchema={profileSchema}
-        removeResume={removeResume}
-        removingResume={removeResumeMutation.isPending}
-        saving={
-          updateMutation.isPending ||
-          uploadMutation.isPending ||
-          removeResumeMutation.isPending
-        }
-        updateProfile={updateProfile}
-        uploadResume={uploadResume}
-      />
-    </KhixDashboardShell>
-  );
-}
-
-export function KhixDashboardNotFound({ sessionUser }: KhixDashboardProps) {
-  const { reportIssue, reportIssueMutation } = useHackerDashboardFlow();
-  const [issue, setIssue] = useState("");
-  const [issueOpen, setIssueOpen] = useState(false);
-
-  const handleIssueReport = async () => {
-    const trimmedIssue = issue.trim();
-    if (!trimmedIssue) return;
-
-    try {
-      await reportIssue(trimmedIssue);
-      setIssue("");
-      setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
-    } catch (error) {
-      toast.error(getToastErrorMessage(error, "Could not report the issue."));
-    }
-  };
-
-  const reportIssueNavAction = (
-    <ReportIssueNavAction
-      issue={issue}
-      isOpen={issueOpen}
-      isPending={reportIssueMutation.isPending}
-      onChange={setIssue}
-      onOpenChange={setIssueOpen}
-      onReport={handleIssueReport}
+    <ProfileSection
+      agreementAcceptances={agreementAcceptances}
+      agreements={applicationAgreements}
+      editable={editable}
+      participant={participant}
+      profileSchema={profileSchema}
+      removeResume={removeResume}
+      removingResume={removeResumeMutation.isPending}
+      saving={
+        updateMutation.isPending ||
+        uploadMutation.isPending ||
+        removeResumeMutation.isPending
+      }
+      updateProfile={updateProfile}
+      uploadResume={uploadResume}
     />
   );
+}
 
+export function KhixDashboardNotFound() {
   return (
-    <KhixDashboardShell
-      navAction={reportIssueNavAction}
-      sessionUser={sessionUser}
-    >
-      <StatusStage
-        action={
-          <Button asChild className={styles.primaryButton}>
-            <Link href="/dashboard">Back to dashboard</Link>
-          </Button>
-        }
-        body="That dashboard path is not available. Head back to your status page."
-        headline={"404\nPortal not found."}
-        statusLabel="Not found"
-        statusClassName={styles.statusPending}
-      />
-    </KhixDashboardShell>
+    <StatusStage
+      action={
+        <Button asChild className={styles.primaryButton}>
+          <Link href="/dashboard">Back to dashboard</Link>
+        </Button>
+      }
+      body="That dashboard path is not available. Head back to your status page."
+      headline={"404\nPortal not found."}
+      statusLabel="Not found"
+      statusClassName={styles.statusPending}
+    />
   );
 }
 
-export function KhixDashboardShell({
-  activeItem = "status",
-  children,
-  navAction,
-  sessionUser,
-}: {
-  activeItem?:
-    | "teams"
-    | "merch"
-    | "judging"
-    | "events"
-    | "journey"
-    | "lore"
-    | "printing"
-    | "profile"
-    | "status";
-  children: ReactNode;
-  navAction?: ReactNode;
-  sessionUser?: KhixSessionUser;
-}) {
+const dashboardTabs = {
+  "/dashboard": "status",
+  "/dashboard/guide": "guide",
+  "/dashboard/lore": "lore",
+  "/dashboard/teams": "teams",
+  "/dashboard/events": "events",
+  "/dashboard/judging": "judging",
+  "/dashboard/merch": "merch",
+  "/dashboard/journey": "journey",
+  "/dashboard/printing": "printing",
+  "/dashboard/profile": "profile",
+} as const;
+
+export function KhixDashboardShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const activeItem = Object.entries(dashboardTabs).find(
+    ([path]) => path === pathname,
+  )?.[1];
+  const session = useHackerSession();
+  const mainRef = useRef<HTMLDivElement>(null);
+  const previousPathRef = useRef(pathname);
   const dashboardQuery = useHackerDashboard();
   const judgingQuery = useHackerJudging();
   const logout = usePortalSignOut();
@@ -1210,6 +995,32 @@ export function KhixDashboardShell({
 
   useEffect(() => {
     return clearDrawerTimers;
+  }, [clearDrawerTimers]);
+
+  useEffect(() => {
+    if (previousPathRef.current === pathname) return;
+    previousPathRef.current = pathname;
+    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    mainRef.current?.focus({ preventScroll: true });
+  }, [pathname]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", closeMobileMenu);
+    return () => window.removeEventListener("popstate", closeMobileMenu);
+  }, [closeMobileMenu]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 701px)");
+    const resetDrawer = () => {
+      if (!desktop.matches) return;
+      clearDrawerTimers();
+      drawerGestureRef.current = null;
+      drawerSuppressClickRef.current = false;
+      setDrawerDragOffset(0);
+      setMobileMenuState("closed");
+    };
+    desktop.addEventListener("change", resetDrawer);
+    return () => desktop.removeEventListener("change", resetDrawer);
   }, [clearDrawerTimers]);
 
   useEffect(() => {
@@ -1408,13 +1219,18 @@ export function KhixDashboardShell({
               </button>
             </div>
 
-            <nav id="khix-dashboard-nav" className={styles.railNav}>
+            <nav
+              id="khix-dashboard-nav"
+              className={styles.railNav}
+              aria-label="Dashboard tabs"
+            >
               <Link
                 className={joinClasses(
                   styles.railLink,
                   activeItem === "status" && styles.railLinkActive,
                 )}
                 href={statusHref}
+                aria-current={activeItem === "status" ? "page" : undefined}
                 onClick={closeMobileMenu}
               >
                 <span className={styles.railIcon} aria-hidden="true">
@@ -1427,9 +1243,24 @@ export function KhixDashboardShell({
               <Link
                 className={joinClasses(
                   styles.railLink,
+                  activeItem === "guide" && styles.railLinkActive,
+                )}
+                href="/dashboard/guide"
+                aria-current={activeItem === "guide" ? "page" : undefined}
+                onClick={closeMobileMenu}
+              >
+                <span className={styles.railIcon} aria-hidden="true">
+                  <BookMarked className="size-4" />
+                </span>
+                <span className={styles.railLinkLabel}>Hacker’s Guide</span>
+              </Link>
+              <Link
+                className={joinClasses(
+                  styles.railLink,
                   activeItem === "lore" && styles.railLinkActive,
                 )}
                 href={loreHref}
+                aria-current={activeItem === "lore" ? "page" : undefined}
                 onClick={closeMobileMenu}
               >
                 <span className={styles.railIcon} aria-hidden="true">
@@ -1480,6 +1311,7 @@ export function KhixDashboardShell({
                     activeItem === "events" && styles.railLinkActive,
                   )}
                   href="/dashboard/events"
+                  aria-current={activeItem === "events" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1521,6 +1353,7 @@ export function KhixDashboardShell({
                     activeItem === "judging" && styles.railLinkActive,
                   )}
                   href="/dashboard/judging"
+                  aria-current={activeItem === "judging" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1554,6 +1387,7 @@ export function KhixDashboardShell({
                     activeItem === "merch" && styles.railLinkActive,
                   )}
                   href="/dashboard/merch"
+                  aria-current={activeItem === "merch" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1587,6 +1421,7 @@ export function KhixDashboardShell({
                     activeItem === "journey" && styles.railLinkActive,
                   )}
                   href="/dashboard/journey"
+                  aria-current={activeItem === "journey" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1625,6 +1460,7 @@ export function KhixDashboardShell({
                     activeItem === "printing" && styles.railLinkActive,
                   )}
                   href="/dashboard/printing"
+                  aria-current={activeItem === "printing" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1662,6 +1498,7 @@ export function KhixDashboardShell({
                   activeItem === "profile" && styles.railLinkActive,
                 )}
                 href="/dashboard/profile"
+                aria-current={activeItem === "profile" ? "page" : undefined}
                 onClick={closeMobileMenu}
               >
                 <span className={styles.railIcon} aria-hidden="true">
@@ -1671,11 +1508,16 @@ export function KhixDashboardShell({
                   <span className={styles.railLinkLabel}>Profile</span>
                 </span>
               </Link>
-              {navAction}
+              <ReportIssueNavAction />
             </nav>
 
             <div className={styles.navFooter}>
-              {sessionUser ? <SignedInNavCard user={sessionUser} /> : null}
+              <SignedInNavCard
+                user={{
+                  name: session.data?.displayName,
+                  image: session.data?.avatarUrl,
+                }}
+              />
               <Link
                 href="/"
                 className={styles.siteReturnLink}
@@ -1705,6 +1547,7 @@ export function KhixDashboardShell({
 
         <div
           id="khix-dashboard-main"
+          ref={mainRef}
           className={joinClasses(
             styles.main,
             activeItem === "status" && styles.statusMain,
@@ -1714,10 +1557,26 @@ export function KhixDashboardShell({
             activeItem === "lore" && styles.loreMain,
             activeItem === "profile" && styles.profileMain,
             activeItem === "printing" && styles.printingMain,
+            activeItem === "guide" && styles.guideMain,
+            activeItem === "status" &&
+              ["confirmed", "checkedin"].includes(
+                dashboardQuery.data?.application?.status ?? "",
+              ) &&
+              styles.admissionMain,
           )}
           tabIndex={-1}
         >
           <div className={styles.mainCanvas}>
+            <span
+              className={styles.workspaceBotanicals}
+              data-page={activeItem}
+              aria-hidden="true"
+            >
+              <span className={styles.workspaceCanopy} />
+              <span className={styles.workspaceCanopyCompanion} />
+              <span className={styles.workspaceGround} />
+              <span className={styles.workspaceGroundCompanion} />
+            </span>
             <span className={styles.portalMagic} aria-hidden="true">
               <span className={styles.portalCanopyGlow} />
               <span className={styles.portalFireflies}>
@@ -1753,7 +1612,6 @@ function HackerJourneySummary({
   classLeaderboard,
   classLeaderboardError,
   classLeaderboardPending,
-  isMinorAtHackStart,
   onRetry,
   overallLeaderboard,
   overallLeaderboardError,
@@ -1771,7 +1629,6 @@ function HackerJourneySummary({
   classLeaderboard: HackerLeaderboardDto | undefined;
   classLeaderboardError: boolean;
   classLeaderboardPending: boolean;
-  isMinorAtHackStart: boolean | null;
   onRetry: () => void;
   overallLeaderboard: HackerLeaderboardDto | undefined;
   overallLeaderboardError: boolean;
@@ -1792,41 +1649,25 @@ function HackerJourneySummary({
 
   return (
     <section
-      className={styles.journeyExperience}
+      className={joinClasses(styles.journeyExperience, styles.journeyOverview)}
       aria-labelledby="khix-journey-title"
     >
       <header className={styles.journeyHero}>
-        <p className={styles.journeyEyebrow}>Your Knight Hacks IX journey</p>
         <h1 id="khix-journey-title" className={styles.journeyTitle}>
-          The path you&apos;re making
+          My Hack
         </h1>
         <p className={styles.journeyIntro}>
-          Your assignment, progress, and place among the adventurers—all sourced
-          live from Blade.
+          Your class, points, and event history.
         </p>
       </header>
-
-      {isMinorAtHackStart === true ? (
-        <div className={styles.journeyMinorNotice} role="alert">
-          <ShieldCheck className="size-5" aria-hidden="true" />
-          <div>
-            <strong>Under 18 at hackathon start</strong>
-            <span>
-              Keep any required guardian or identification documents ready for
-              arrival.
-            </span>
-          </div>
-        </div>
-      ) : null}
 
       {hasDataError ? (
         <div className={styles.journeyDataNotice} role="alert">
           <AlertCircle className="size-5" aria-hidden="true" />
           <div>
-            <strong>Some live journey details are unavailable.</strong>
+            <strong>Some progress is unavailable.</strong>
             <span>
-              We have not replaced missing data with zeroes. Try Blade again to
-              load the current totals.
+              Try again to load your latest points, attendance, and rankings.
             </span>
           </div>
           <Button
@@ -1846,10 +1687,6 @@ function HackerJourneySummary({
         <JourneyStat
           label="Class"
           value={participant.className ?? "Assignment pending"}
-        />
-        <JourneyStat
-          label="Access"
-          value={participant.isVip ? "VIP hacker" : "Hacker"}
         />
         <JourneyStat
           label="Points"
@@ -1887,16 +1724,6 @@ function HackerJourneySummary({
                   : "Not ranked yet"
           }
         />
-        <JourneyStat
-          label="Age at event"
-          value={
-            isMinorAtHackStart == null
-              ? "Not available"
-              : isMinorAtHackStart
-                ? "Under 18"
-                : "18 or older"
-          }
-        />
       </dl>
 
       <div className={styles.journeyColumns}>
@@ -1932,10 +1759,8 @@ function HackerJourneySummary({
         >
           <div className={styles.journeyPanelHeading}>
             <div>
-              <p className={styles.journeyPanelEyebrow}>Attendance</p>
-              <h2 id="attendance-title">Places you&apos;ve visited</h2>
+              <h2 id="attendance-title">Events visited</h2>
             </div>
-            <Sparkles className="size-5" aria-hidden="true" />
           </div>
           {attendanceError ? (
             <JourneyDataError
@@ -2011,10 +1836,8 @@ function LeaderboardPanel({
     <section className={styles.journeyPanel}>
       <div className={styles.journeyPanelHeading}>
         <div>
-          <p className={styles.journeyPanelEyebrow}>Live standings</p>
           <h2>{title}</h2>
         </div>
-        <Trophy className="size-5" aria-hidden="true" />
       </div>
       {error ? (
         <JourneyDataError
@@ -2115,7 +1938,6 @@ function ScheduleExperience({
       aria-labelledby="khix-events-title"
     >
       <header className={styles.scheduleHero}>
-        <p className={styles.scheduleEyebrow}>Your path through the forest</p>
         <h1 id="khix-events-title" className={styles.schedulePageTitle}>
           Event schedule
         </h1>
@@ -2206,7 +2028,6 @@ function ScheduleState({
   return (
     <section className={styles.scheduleState} aria-live="polite">
       <CalendarDays className={styles.scheduleStateIcon} aria-hidden="true" />
-      <p className={styles.scheduleEyebrow}>Knight Hacks IX events</p>
       <h1>{title}</h1>
       <p>{copy}</p>
       {action ? (
@@ -2264,29 +2085,31 @@ function SignedInNavCard({ user }: { user: KhixSessionUser }) {
   );
 }
 
-function ReportIssueNavAction({
-  issue,
-  isOpen,
-  isPending,
-  onChange,
-  onOpenChange,
-  onReport,
-}: {
-  issue: string;
-  isOpen: boolean;
-  isPending: boolean;
-  onChange: (issue: string) => void;
-  onOpenChange: (isOpen: boolean) => void;
-  onReport: () => Promise<void>;
-}) {
+function ReportIssueNavAction() {
+  const reportIssueMutation = usePortalIssueReport();
+  const [issue, setIssue] = useState("");
+  const [issueOpen, setIssueOpen] = useState(false);
+  const handleIssueReport = async () => {
+    const trimmedIssue = issue.trim();
+    if (!trimmedIssue) return;
+
+    try {
+      await reportIssueMutation.mutateAsync(trimmedIssue);
+      setIssue("");
+      setIssueOpen(false);
+      toast.success("Discord support opened; your note is ready to paste.");
+    } catch (error) {
+      toast.error(getToastErrorMessage(error, "Could not report the issue."));
+    }
+  };
   return (
     <IssueDialog
       issue={issue}
-      isOpen={isOpen}
-      isPending={isPending}
-      onChange={onChange}
-      onOpenChange={onOpenChange}
-      onReport={onReport}
+      isOpen={issueOpen}
+      isPending={reportIssueMutation.isPending}
+      onChange={setIssue}
+      onOpenChange={setIssueOpen}
+      onReport={handleIssueReport}
       trigger={
         <button
           type="button"
@@ -2568,25 +2391,7 @@ function LoreExperience() {
         className={styles.loreTeamThanks}
         aria-labelledby="khix-lore-team-title"
       >
-        <div className={styles.loreTeamPhotos}>
-          <figure>
-            <Image
-              src="https://assets.knighthacks.org/khix/lore-team-full.webp"
-              alt="Knight Hacks organizers gathered by the lake."
-              fill
-              sizes="(max-width: 700px) 100vw, 42vw"
-            />
-          </figure>
-          <figure>
-            <Image
-              src="https://assets.knighthacks.org/khix/lore-team-organizers.webp"
-              alt="Knight Hacks design team gathered by the lake."
-              fill
-              sizes="(max-width: 700px) 100vw, 42vw"
-            />
-          </figure>
-        </div>
-        <div className={styles.loreTeamCopy}>
+        <header className={styles.loreTeamCopy}>
           <p className={joinClasses(styles.loreChapter, styles.loreTeamKicker)}>
             <span>For the people behind Knight Hacks IX</span>
             <span className={styles.loreHeart} aria-hidden="true" />
@@ -2607,6 +2412,20 @@ function LoreExperience() {
             Knight Hacks IX exists because you kept showing up for the version
             of the event you knew it could become.
           </p>
+        </header>
+        <div className={styles.loreTeamPhotos}>
+          <figure>
+            <Image
+              src="https://assets.knighthacks.org/khix/lore-team-full.webp"
+              alt="Knight Hacks organizers gathered by the lake."
+              width={1600}
+              height={1067}
+              sizes="(max-width: 700px) 100vw, (max-width: 1400px) 75vw, 1024px"
+            />
+            <figcaption>The Knight Hacks IX team</figcaption>
+          </figure>
+        </div>
+        <div className={styles.loreTeamCopy}>
           <p>
             And to the design team: thank you for bringing our event to life.
             Knight Hacks has always cared about being an experience before it is
@@ -2621,6 +2440,20 @@ function LoreExperience() {
             are nothing without you as a team, and every part of Knight Hacks IX
             is stronger because of what you made.
           </p>
+        </div>
+        <div className={styles.loreTeamPhotos}>
+          <figure>
+            <Image
+              src="https://assets.knighthacks.org/khix/lore-team-organizers.webp"
+              alt="Knight Hacks design team gathered by the lake."
+              width={1600}
+              height={1067}
+              sizes="(max-width: 700px) 100vw, (max-width: 1400px) 75vw, 1024px"
+            />
+            <figcaption>The design team</figcaption>
+          </figure>
+        </div>
+        <div className={styles.loreTeamCopy}>
           <p>
             And to every other team that contributed: thank you for carrying
             your piece of this event with so much care. Outreach, sponsorship,
@@ -3654,31 +3487,34 @@ function EventCountdown({
   if (countdown?.isComplete) {
     const completeCopy =
       countdown.label === "Knight Hacks IX has wrapped"
-        ? "Thanks for spending the weekend with us."
-        : "The grove is open. Come find us.";
+        ? "This year’s event has ended."
+        : "Knight Hacks IX is happening now.";
 
     return (
-      <div className={styles.countdownComplete} aria-live="polite">
-        <span className={styles.countdownBloom} aria-hidden="true" />
-        <span className={styles.countdownCompleteLabel}>{countdown.label}</span>
-        <span className={styles.countdownCompleteCopy}>{completeCopy}</span>
+      <div className={statusStyles.countdownComplete} aria-live="polite">
+        <span className={statusStyles.countdownCompleteLabel}>
+          {countdown.label}
+        </span>
+        <span className={statusStyles.countdownCompleteCopy}>
+          {completeCopy}
+        </span>
       </div>
     );
   }
 
   return (
     <div
-      className={styles.countdownPanel}
+      className={statusStyles.countdownPanel}
       aria-label={countdownAccessibleLabel}
       aria-live="polite"
       role="timer"
     >
       {showLabel ? (
-        <p className={styles.countdownEyebrow}>
+        <p className={statusStyles.countdownEyebrow}>
           {countdown?.label ?? "Knight Hacks IX starts in"}
         </p>
       ) : null}
-      <div className={styles.countdownGrid} aria-hidden="true">
+      <div className={statusStyles.countdownGrid} aria-hidden="true">
         <CountdownUnit label="days" value={countdown?.days} />
         <CountdownUnit label="hrs" value={countdown?.hours} />
         <CountdownUnit label="min" value={countdown?.minutes} />
@@ -3696,11 +3532,11 @@ function CountdownUnit({
   value: number | undefined;
 }) {
   return (
-    <span className={styles.countdownUnit}>
-      <span className={styles.countdownValue}>
+    <span className={statusStyles.countdownUnit}>
+      <span className={statusStyles.countdownValue}>
         {value == null ? "--" : String(value).padStart(2, "0")}
       </span>
-      <span className={styles.countdownLabel}>{label}</span>
+      <span className={statusStyles.countdownLabel}>{label}</span>
     </span>
   );
 }
@@ -3722,49 +3558,33 @@ export function StatusStage({
   statusClassName?: string;
   statusLabel?: string;
 }) {
-  const isAcceptedStatus = statusClassName === styles.statusAccepted;
-  const isAttendanceStatus =
-    statusClassName === styles.statusConfirmed ||
-    statusClassName === styles.statusCheckedin;
-
   return (
     <section
       id="application-status"
-      className={joinClasses(
-        styles.statusStage,
-        isAcceptedStatus && styles.acceptedStatusStage,
-        isAttendanceStatus && styles.attendanceStatusStage,
-      )}
+      className={`${statusStyles.stage} ${styles.pageReveal}`}
       aria-labelledby="khix-dashboard-title"
     >
-      {greeting ? <p className={styles.greeting}>{greeting}</p> : null}
-      <h1 id="khix-dashboard-title" className={styles.headline}>
+      <div className={statusStyles.meta}>
+        {greeting ? <p className={statusStyles.greeting}>{greeting}</p> : null}
+        {statusLabel ? (
+          <span className={joinClasses(statusStyles.label, statusClassName)}>
+            {statusLabel}
+          </span>
+        ) : null}
+      </div>
+      <h1 id="khix-dashboard-title" className={statusStyles.headline}>
         {headline.split("\n").map((line) => (
-          <span key={line} className={styles.headlineLine}>
+          <span key={line} className={statusStyles.headlineLine}>
             {line}
           </span>
         ))}
       </h1>
-      <p className={styles.subcopy}>{body}</p>
+      <p className={statusStyles.copy}>{body}</p>
+      {action ? <div className={statusStyles.actions}>{action}</div> : null}
       {countdown ? (
-        <>
-          <div className={styles.countdownSlot}>{countdown}</div>
-          <p className={styles.eventDetails}>{KHIX_EVENT_DETAILS}</p>
-        </>
-      ) : null}
-      {statusLabel ? (
-        <span className={joinClasses(styles.statusPill, statusClassName)}>
-          {statusLabel}
-        </span>
-      ) : null}
-      {action ? (
-        <div
-          className={joinClasses(
-            styles.actionRow,
-            isAcceptedStatus && styles.acceptedActionRow,
-          )}
-        >
-          {action}
+        <div className={statusStyles.timing}>
+          {countdown}
+          <p className={statusStyles.eventDetails}>{KHIX_EVENT_DETAILS}</p>
         </div>
       ) : null}
     </section>
@@ -3776,7 +3596,6 @@ function StatusAction({
   agreements,
   atCapacity,
   confirmationClosed,
-  guideUrl,
   loadQRCode,
   onConfirm,
   onWithdraw,
@@ -3790,7 +3609,6 @@ function StatusAction({
   agreements: HackerAgreementDefinitionDto[];
   atCapacity: boolean;
   confirmationClosed: boolean;
-  guideUrl: string;
   loadQRCode: () => Promise<unknown>;
   onConfirm: (agreements: HackerAgreementAcceptanceInput[]) => Promise<void>;
   onWithdraw: () => Promise<void>;
@@ -3828,30 +3646,31 @@ function StatusAction({
               ) : (
                 <CheckCircle2 className="size-4" />
               )}
-              {confirmationClosed || atCapacity
+              {confirmationClosed
                 ? "Confirmation closed"
-                : "Review and confirm"}
+                : atCapacity
+                  ? "No seats available"
+                  : "Review and confirm"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+          <DialogContent className={joinClasses(styles.dialog, "sm:max-w-xl")}>
             <DialogHeader>
-              <DialogTitle>Confirm your Knight Hacks IX seat</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className={styles.dialogTitle}>
+                Confirm your seat
+              </DialogTitle>
+              <DialogDescription className={styles.dialogCopy}>
                 Review each current agreement. Required items must be accepted
                 before your seat can be confirmed.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               {agreements.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No additional confirmation agreements are configured.
+                <p className={styles.dialogCopy}>
+                  You’re ready to confirm your attendance at Knight Hacks IX.
                 </p>
               ) : null}
               {agreements.map((definition) => (
-                <div
-                  key={definition.id}
-                  className="flex items-start gap-3 rounded-lg border p-4"
-                >
+                <div key={definition.id} className={statusStyles.agreement}>
                   <Checkbox
                     aria-labelledby={`confirmation-agreement-${definition.id}`}
                     checked={agreementChoices[definition.id] === true}
@@ -3868,18 +3687,18 @@ function StatusAction({
                       id={`confirmation-agreement-${definition.id}`}
                     >
                       {definition.title}{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span className="text-xs font-normal text-[var(--khix-muted)]">
                         {definition.required ? "Required" : "Optional"}
                       </span>
                     </div>
                     {definition.content ? (
-                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                      <p className="whitespace-pre-wrap text-sm text-[var(--khix-muted)]">
                         {definition.content}
                       </p>
                     ) : null}
                     {definition.contentUrl ? (
                       <a
-                        className="inline-flex items-center gap-1 text-sm font-medium underline"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-[var(--khix-accent)] underline"
                         href={definition.contentUrl}
                         rel="noopener noreferrer"
                         target="_blank"
@@ -3894,6 +3713,7 @@ function StatusAction({
             </div>
             <DialogFooter>
               <Button
+                className={styles.primaryButton}
                 disabled={actionPending || !requiredAccepted}
                 onClick={() => {
                   void onConfirm(
@@ -3912,6 +3732,17 @@ function StatusAction({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {confirmationClosed || atCapacity ? (
+          <Button asChild className={styles.ghostButton}>
+            <a
+              href="https://discord.knighthacks.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Contact organizers <ExternalLink className="size-4" />
+            </a>
+          </Button>
+        ) : null}
       </>
     );
   }
@@ -3955,9 +3786,9 @@ function StatusAction({
         </a>
       </Button>
       <Button asChild variant="outline" className={styles.ghostButton}>
-        <a href={guideUrl} target="_blank" rel="noopener noreferrer">
-          Hackers guide <ExternalLink className="size-4" />
-        </a>
+        <Link href="/dashboard/guide">
+          Hacker’s Guide <BookMarked className="size-4" />
+        </Link>
       </Button>
     </>
   );
@@ -4241,75 +4072,20 @@ function RemoveResumeDialog({
 }
 
 function ToolDock({
-  guideUrl,
-  hideApplications = false,
-  loadQRCode,
-  qrAvailable,
-  qrCode,
-  qrErrorMessage,
-  qrLoading,
-  resumeMeta = "Locked",
+  resumeMeta = "Not uploaded",
   resumeText = "No resume attached yet.",
   resumeUrl,
-  supportUrl,
 }: {
-  guideUrl: string;
-  hideApplications?: boolean;
-  loadQRCode?: () => Promise<unknown>;
-  qrAvailable?: boolean;
-  qrCode?: string;
-  qrErrorMessage?: string | null;
-  qrLoading?: boolean;
   resumeMeta?: string;
   resumeText?: string;
   resumeUrl?: string | null;
-  supportUrl: string;
 }) {
   return (
     <section
       id="dashboard-links"
-      className={joinClasses(
-        styles.toolDock,
-        hideApplications && styles.toolDockFourUp,
-      )}
+      className={statusStyles.resources}
       aria-label="Dashboard links"
     >
-      <ActionTile
-        description="Rules, arrival notes, and everything you need to prepare."
-        href={guideUrl}
-        icon={<BookOpen className="size-4" />}
-        label="Hackers guide"
-        meta="Open"
-        external
-      />
-      {!hideApplications && (
-        <>
-          <ApplicationDialog
-            description="Apply to help run Knight Hacks IX."
-            href={applicationLinks.volunteer}
-            icon={<FileText className="size-4" />}
-            label="Volunteer application"
-            openLabel="Open volunteer form"
-            warning="Volunteers help run Knight Hacks IX. If you apply and are selected as a volunteer, you will not be able to participate as a hacker."
-          />
-          <ApplicationDialog
-            description="Apply to support hacker teams during Knight Hacks IX."
-            href={applicationLinks.mentor}
-            icon={<UserRound className="size-4" />}
-            label="Mentor application"
-            openLabel="Open mentor form"
-            warning="Mentors support teams during Knight Hacks IX. If you apply and are selected as a mentor, you will not be able to participate as a hacker."
-          />
-        </>
-      )}
-      <ActionTile
-        description="Organizer updates and support."
-        href={supportUrl}
-        icon={<LifeBuoy className="size-4" />}
-        label="Discord"
-        meta="Join"
-        external
-      />
       <ActionTile
         description={resumeText}
         href={resumeUrl ?? undefined}
@@ -4319,107 +4095,7 @@ function ToolDock({
         external={Boolean(resumeUrl)}
         disabled={!resumeUrl}
       />
-      {loadQRCode ? (
-        <QrDialog
-          available={Boolean(qrAvailable)}
-          errorMessage={qrErrorMessage ?? null}
-          isLoading={Boolean(qrLoading)}
-          loadQRCode={loadQRCode}
-          qrCode={qrCode}
-          triggerClassName={styles.toolButton}
-          triggerContent={
-            <>
-              <span className={styles.toolTitle}>
-                <QrCode className="size-4" />
-                Check-in QR
-              </span>
-              <span className={styles.toolCopy}>Opens after confirmation.</span>
-              <span className={styles.toolMeta}>
-                {qrAvailable ? "Open" : "Locked"}
-              </span>
-            </>
-          }
-        />
-      ) : (
-        <div className={styles.toolDisabled} aria-disabled="true">
-          <span className={styles.toolTitle}>
-            <LockKeyhole className="size-4" />
-            Check-in QR
-          </span>
-          <span className={styles.toolCopy}>Available after confirmation.</span>
-          <span className={styles.toolMeta}>Locked</span>
-        </div>
-      )}
     </section>
-  );
-}
-
-async function copyApplicationUrl(href: string, label: string) {
-  try {
-    await navigator.clipboard.writeText(href);
-    toast.success(`${label} URL copied.`);
-  } catch {
-    toast.error(`Could not copy the ${label.toLowerCase()} URL.`);
-  }
-}
-
-function ApplicationDialog({
-  description,
-  href,
-  icon,
-  label,
-  openLabel,
-  warning,
-}: {
-  description: string;
-  href: string;
-  icon: ReactNode;
-  label: string;
-  openLabel: string;
-  warning: string;
-}) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button className={styles.toolButton} type="button">
-          <span className={styles.toolTitle}>
-            {icon}
-            {label}
-          </span>
-          <span className={styles.toolCopy}>{description}</span>
-          <span className={styles.toolMeta}>Apply</span>
-        </button>
-      </DialogTrigger>
-      <DialogContent className={styles.dialog}>
-        <DialogHeader>
-          <DialogTitle className={styles.dialogTitle}>
-            Heads up before you apply
-          </DialogTitle>
-          <DialogDescription className={styles.dialogCopy}>
-            {warning}
-          </DialogDescription>
-        </DialogHeader>
-        <div className={styles.dialogUrlBox} aria-label={`${label} URL`}>
-          <code>{href}</code>
-        </div>
-        <DialogFooter className={styles.dialogActionRow}>
-          <Button
-            className={styles.ghostButton}
-            onClick={() => void copyApplicationUrl(href, label)}
-            type="button"
-          >
-            <Copy className="size-4" />
-            Copy URL
-          </Button>
-          <Button asChild className={styles.primaryButton}>
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-4" />
-              {openLabel}
-            </a>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -4442,18 +4118,18 @@ function ActionTile({
 }) {
   const content = (
     <>
-      <span className={styles.toolTitle}>
+      <span className={statusStyles.resourceTitle}>
         {icon}
         {label}
       </span>
-      <span className={styles.toolCopy}>{description}</span>
-      <span className={styles.toolMeta}>{meta}</span>
+      <span className={statusStyles.resourceCopy}>{description}</span>
+      <span className={statusStyles.resourceMeta}>{meta}</span>
     </>
   );
 
   if (disabled || !href) {
     return (
-      <div className={styles.toolDisabled} aria-disabled="true">
+      <div className={statusStyles.resource} aria-disabled="true">
         {content}
       </div>
     );
@@ -4465,7 +4141,7 @@ function ActionTile({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={styles.toolLink}
+        className={statusStyles.resource}
       >
         {content}
       </a>
@@ -4473,7 +4149,7 @@ function ActionTile({
   }
 
   return (
-    <Link href={href} className={styles.toolLink}>
+    <Link href={href} className={statusStyles.resource}>
       {content}
     </Link>
   );
@@ -4663,12 +4339,7 @@ function DashboardSkeleton() {
         </div>
       </section>
       <section className={styles.toolDock} aria-hidden="true">
-        {[0, 1, 2, 3].map((item) => (
-          <div
-            key={item}
-            className={joinClasses(styles.skeleton, styles.toolDisabled)}
-          />
-        ))}
+        <div className={joinClasses(styles.skeleton, styles.toolDisabled)} />
       </section>
     </>
   );

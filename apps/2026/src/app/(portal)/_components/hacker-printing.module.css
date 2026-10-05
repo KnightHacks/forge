@@ -1,31 +1,32 @@
 .page,
 .workshopDialog {
-  --print-surface: #251b30;
-  --print-inset: #1c1326;
-  --print-text: #f5f1f8;
-  --print-muted: #bbb1c9;
-  --print-line: #ffffff17;
-  --print-accent: #d2d383;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  --print-surface: var(--khix-panel-surface);
+  --print-inset: var(--khix-panel-inset);
+  --print-text: var(--khix-ink);
+  --print-muted: var(--khix-muted);
+  --print-line: var(--khix-panel-border);
+  --print-accent: var(--khix-accent);
+  font-family: var(--khix-body-font);
   color: var(--print-text);
   overflow-wrap: anywhere;
 }
 .page {
-  width: min(100%, 70rem);
-  padding: 1rem 0 2rem;
+  container: khix-printing / inline-size;
+  display: grid;
+  width: min(100%, var(--khix-content-width));
+  min-width: 0;
+  justify-self: center;
+  align-content: start;
+  gap: clamp(1.5rem, 2.6vw, 2rem);
+  padding: 0 0 2rem;
 }
 .sponsor {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
   align-items: center;
-  gap: 2.5rem;
-  padding: 1.5rem 0 2rem;
-  border-bottom: 1px solid var(--print-line);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  padding: clamp(1.25rem, 2.5vw, 2rem) 0;
+  border-block: 1px solid var(--print-line);
 }
 .sponsorIdentity {
   display: grid;
@@ -41,14 +42,13 @@
 }
 .sponsorLogo {
   width: 13rem;
+  max-width: 100%;
   height: auto;
 }
 .sponsorAbout {
   display: grid;
   gap: 0.45rem;
-  max-width: 32rem;
-  padding-left: 2.5rem;
-  border-left: 1px solid var(--print-line);
+  min-width: 0;
 }
 .sponsorAbout p {
   font-size: 1rem;
@@ -62,7 +62,7 @@
 .sponsorLinks {
   display: flex;
   flex-wrap: wrap;
-  column-gap: 1.25rem;
+  gap: 0.25rem 1.25rem;
 }
 .sponsorAbout a {
   display: inline-flex;
@@ -86,13 +86,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 2rem 0 1.5rem;
+}
+.header > div {
+  min-width: 0;
 }
 .header h1 {
   font-family: var(--khix-display-font, Georgia, serif);
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.15;
-  margin: 0.5rem 0 0.65rem;
+  font-size: var(--khix-page-title-size);
+  line-height: 0.98;
+  margin: 0 0 0.65rem;
+  font-weight: 400;
+  text-shadow: var(--khix-heading-glow);
 }
 .header p:last-child {
   color: var(--print-muted);
@@ -106,9 +110,9 @@
   flex-shrink: 0;
   gap: 0.5rem;
   padding-inline: 1.25rem;
-  border-radius: 0.5rem;
-  background: var(--print-accent);
-  color: #222318;
+  border-radius: var(--khix-button-radius);
+  background: var(--khix-primary-background);
+  color: var(--khix-primary-ink);
   font-family: inherit;
   font-size: 0.9375rem;
   font-weight: 650;
@@ -118,7 +122,7 @@
     transform 160ms;
 }
 .primaryButton:hover {
-  background: #e5e6a6;
+  background: var(--khix-primary-hover);
   transform: translateY(-1px);
 }
 .primaryButton:disabled {
@@ -129,9 +133,6 @@
   display: flex;
   align-items: flex-start;
   gap: 0.8rem;
-  padding: 1rem 1.25rem;
-  background: var(--print-surface);
-  border-radius: 0.5rem;
   font-size: 0.9375rem;
   line-height: 1.65;
 }
@@ -153,8 +154,7 @@
 }
 .jobs {
   display: grid;
-  gap: 1rem;
-  margin-top: 2rem;
+  min-width: 0;
 }
 .jobsHeading {
   display: flex;
@@ -162,26 +162,36 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding-bottom: 1rem;
 }
 .jobs h2 {
-  font-size: 1.2rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  font-family: var(--khix-display-font);
+  text-shadow: var(--khix-section-glow);
 }
 .tabs {
   height: auto;
-  background: var(--print-inset);
-  padding: 0.25rem;
+  background: transparent;
+  padding: 0;
+  gap: 1rem;
+  border-radius: 0;
 }
 .tabs button {
   min-height: 44px;
-  padding: 0.5rem 0.9rem;
+  padding: 0.5rem 0.2rem;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   color: var(--print-muted);
   font-family: inherit;
   gap: 0.65rem;
 }
 .tabs button[data-state="active"] {
-  background: var(--print-surface);
+  border-bottom-color: var(--print-accent);
+  background: transparent;
   color: var(--print-text);
+  box-shadow: none;
 }
 .tabs button span {
   font-variant-numeric: tabular-nums;
@@ -190,17 +200,21 @@
 .jobScroll {
   max-height: 36rem;
   overflow-y: auto;
-  border: 1px solid var(--print-line);
-  border-radius: 0.65rem;
+  border-top: 1px solid var(--print-line);
+  overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
-  background: var(--print-inset);
 }
 .jobList {
   display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .job {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: clamp(1.25rem, 2.5vw, 2rem) 0;
   border-bottom: 1px solid var(--print-line);
   background: transparent;
 }
@@ -213,7 +227,7 @@
   justify-content: flex-start;
   align-items: center;
   gap: 0.15rem;
-  padding-top: 1.35rem;
+  padding-top: 0.15rem;
   color: var(--print-muted);
 }
 .ticketLabel {
@@ -228,8 +242,7 @@
 .jobBody {
   display: grid;
   min-width: 0;
-  gap: 0.7rem;
-  padding: 1.25rem 1.25rem 1rem 0;
+  gap: 0.85rem;
 }
 .jobTop {
   display: flex;
@@ -322,13 +335,11 @@
 }
 .empty {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 0.8rem;
-  padding: 3rem 1.5rem;
-  background: var(--print-inset);
-  border: 1px solid var(--print-line);
-  border-radius: 0.65rem;
-  text-align: center;
+  padding: 1.75rem 0;
+  border-top: 1px solid var(--print-line);
+  text-align: left;
 }
 .empty > svg {
   color: var(--print-accent);
@@ -351,7 +362,7 @@
   gap: 0.5rem;
   font-size: 0.8125rem;
   color: var(--print-muted);
-  margin-top: 1.5rem;
+  margin: 0;
 }
 .workshopDialog {
   width: calc(100vw - 2rem);
@@ -364,7 +375,10 @@
   border-radius: 0.8rem;
 }
 .workshopDialog :global([data-slot="dialog-title"]) {
-  font-family: inherit;
+  font-family: var(--khix-display-font);
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  text-shadow: var(--khix-section-glow);
 }
 .workshopDialog h2 {
   font-size: 1.35rem;
@@ -510,35 +524,24 @@
   border-radius: 0.65rem;
   background: var(--print-surface);
 }
-@media (max-width: 40rem) {
-  .page {
-    padding-top: 0;
-  }
+@container khix-printing (max-width: 36rem) {
   .sponsor {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
-    padding-top: 0.5rem;
-    padding-bottom: 1.5rem;
   }
   .sponsorLogo {
     width: 10rem;
   }
   .sponsorAbout {
-    border-left: 0;
-    padding-left: 0;
+    padding: 0;
   }
   .header {
     align-items: flex-start;
     flex-direction: column;
-    padding: 1.5rem 0;
     gap: 1rem;
   }
   .header > button {
     width: 100%;
-  }
-  .notice {
-    padding: 1rem;
   }
   .noticeDivider {
     display: block;
@@ -550,11 +553,17 @@
     flex-direction: column;
     gap: 0.75rem;
   }
-  .job {
-    grid-template-columns: 2.75rem minmax(0, 1fr);
+  .jobsHeading > div,
+  .tabs {
+    width: 100%;
   }
-  .jobBody {
-    padding-right: 0.75rem;
+  .tabs button {
+    padding-inline: 0.2rem;
+    gap: 0.4rem;
+  }
+  .job {
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+    gap: 0.75rem;
   }
   .jobTop {
     align-items: flex-start;
@@ -563,6 +572,8 @@
   .ticketNumber {
     font-size: 1.4rem;
   }
+}
+@media (max-width: 40rem) {
   .workshopDialog {
     padding: 1.2rem;
   }

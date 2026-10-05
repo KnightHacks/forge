@@ -10,7 +10,6 @@ import type {
 import {
   useChangeHackerTeam,
   useHackerDashboard,
-  useHackerSession,
   useHackerTeams,
 } from "@forge/hacker-sdk/react";
 import { Button } from "@forge/ui/button";
@@ -27,7 +26,6 @@ import { Label } from "@forge/ui/label";
 import { Switch } from "@forge/ui/switch";
 import { toast } from "@forge/ui/toast";
 
-import { KhixDashboardShell } from "./khix-dashboard";
 import styles from "./khix-dashboard.module.css";
 
 type HackerTeamAction = HackerParticipantInput<"changeTeam">;
@@ -37,51 +35,47 @@ const preferenceCopy =
   "Your class sets your turn for food and events like the career fair. Choose together to eat and attend as a team, or separate to stagger your turns so someone can keep working. Pick what suits how your team works and socializes.";
 
 export function KhixTeams() {
-  const session = useHackerSession();
   const dashboard = useHackerDashboard();
   const unlocked = ["confirmed", "checkedin"].includes(
     dashboard.data?.application?.status ?? "",
   );
   return (
-    <KhixDashboardShell
-      activeItem="teams"
-      sessionUser={{ name: session.data?.displayName }}
+    <section
+      className={`${styles.journeyExperience} ${styles.teamsExperience}`}
+      aria-labelledby="teams-title"
     >
-      <section
-        className={styles.journeyExperience}
-        aria-labelledby="teams-title"
-      >
-        <header className={styles.journeyHero}>
-          <p className={styles.journeyEyebrow}>Knight Hacks IX</p>
-          <h1 id="teams-title" className={styles.journeyTitle}>
-            Find your people.
-          </h1>
-          <p className={styles.journeyIntro}>
-            Build a team of up to four. Pick how you explore the hackathon
-            together.
+      <header className={styles.journeyHero}>
+        <h1 id="teams-title" className={styles.journeyTitle}>
+          Teams
+        </h1>
+        <p className={styles.journeyIntro}>
+          Find a team or create one with up to four hackers.
+        </p>
+      </header>
+      {dashboard.isPending ? (
+        <p role="status">Loading teams…</p>
+      ) : dashboard.isError ? (
+        <div role="alert" className={styles.teamSection}>
+          <p>Could not check your confirmation.</p>
+          <Button
+            className={`${styles.ghostButton} mt-3`}
+            onClick={() => void dashboard.refetch()}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : !unlocked ? (
+        <div className={styles.teamSection}>
+          <LockKeyhole className="mb-3 size-6" aria-hidden="true" />
+          <h2 className={styles.teamHeading}>Unlocks after confirmation</h2>
+          <p className={styles.teamCopy}>
+            Confirm your attendance from the dashboard to create or join a team.
           </p>
-        </header>
-        {dashboard.isPending ? (
-          <p role="status">Loading teams…</p>
-        ) : dashboard.isError ? (
-          <div role="alert">
-            <p>Could not check your confirmation.</p>
-            <Button onClick={() => void dashboard.refetch()}>Try again</Button>
-          </div>
-        ) : !unlocked ? (
-          <div className={styles.journeyPanel}>
-            <LockKeyhole className="mb-3 size-6" aria-hidden="true" />
-            <h2 className="text-xl">Unlocks after confirmation</h2>
-            <p className={styles.journeyIntro}>
-              Confirm your attendance from the dashboard to create or join a
-              team.
-            </p>
-          </div>
-        ) : (
-          <TeamsContent />
-        )}
-      </section>
-    </KhixDashboardShell>
+        </div>
+      ) : (
+        <TeamsContent />
+      )}
+    </section>
   );
 }
 
@@ -118,9 +112,14 @@ function TeamsContent() {
   if (teams.isPending) return <p role="status">Loading teams…</p>;
   if (teams.isError)
     return (
-      <div role="alert" className={styles.journeyPanel}>
+      <div role="alert" className={styles.teamSection}>
         <p>{teams.error.message}</p>
-        <Button onClick={() => void teams.refetch()}>Try again</Button>
+        <Button
+          className={`${styles.ghostButton} mt-3`}
+          onClick={() => void teams.refetch()}
+        >
+          Try again
+        </Button>
       </div>
     );
   const { ownTeam, pendingTeam, attendeeId, canJoin } = teams.data;
@@ -130,19 +129,15 @@ function TeamsContent() {
   return (
     <>
       {ownTeam ? (
-        <section className={styles.journeyPanel} aria-label="Your team">
+        <section className={styles.teamSection} aria-label="Your team">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className={styles.journeyEyebrow}>
-                Your team · {ownTeam.members.length}/4
-              </p>
-              <h2 className="break-words text-2xl font-semibold">
-                {ownTeam.name}
-              </h2>
+            <div className="min-w-0 flex-[1_1_16rem]">
+              <h2 className={styles.teamHeading}>{ownTeam.name}</h2>
             </div>
             {owner && (
               <Button
-                className={styles.ghostButton}
+                variant="ghost"
+                className={styles.teamTextButton}
                 disabled={change.isPending}
                 onClick={() => setEditor(ownTeam)}
               >
@@ -150,20 +145,19 @@ function TeamsContent() {
               </Button>
             )}
           </div>
-          <div className="my-5 grid gap-3 sm:grid-cols-2">
+          <div className={styles.teamRoster}>
             {ownTeam.members.map((member) => (
-              <div
-                key={member.attendeeId}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 p-3"
-              >
-                <div className="min-w-0">
+              <div key={member.attendeeId} className={styles.teamMember}>
+                <div className="min-w-0 flex-[1_1_8rem]">
                   <p className="flex items-center gap-2 font-semibold">
-                    <span className="break-words">{member.name}</span>
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
+                      {member.name}
+                    </span>
                     {member.owner && (
                       <Crown className="size-4 shrink-0" aria-label="Owner" />
                     )}
                   </p>
-                  <p className="mt-1 text-sm opacity-75">
+                  <p className="mt-1 text-sm text-[var(--khix-muted)]">
                     {member.checkedIn
                       ? (member.className ?? "Checked in")
                       : "Not checked in"}
@@ -173,7 +167,7 @@ function TeamsContent() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="min-h-11 shrink-0"
+                    className={styles.teamTextButton}
                     disabled={change.isPending}
                     onClick={() =>
                       setConfirm({
@@ -192,19 +186,18 @@ function TeamsContent() {
                 )}
               </div>
             ))}
-            {Array.from({ length: 4 - ownTeam.members.length }, (_, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-lg border border-dashed border-white/15 p-3 text-sm opacity-60"
-              >
-                <UsersRound className="size-4" aria-hidden="true" />
-                {ownTeam.frozen ? "Membership locked" : "Open seat"}
-              </div>
-            ))}
           </div>
-          <div className="border-t border-white/10 pt-4">
+          {ownTeam.members.length < 4 && (
+            <p className={styles.teamOpenSeat}>
+              <UsersRound className="size-4" aria-hidden="true" />
+              {ownTeam.frozen
+                ? "Membership locked"
+                : `${4 - ownTeam.members.length} open ${ownTeam.members.length === 3 ? "seat" : "seats"}`}
+            </p>
+          )}
+          <div className="pt-4">
             <div className="flex items-center gap-2">
-              <p className="font-semibold">
+              <p className="min-w-0 font-semibold [overflow-wrap:anywhere]">
                 {ownTeam.together ? "Together" : "Separate"}
                 {ownTeam.className ? ` · ${ownTeam.className}` : ""}
               </p>
@@ -213,34 +206,37 @@ function TeamsContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-11 shrink-0"
+                    className="size-11 shrink-0 text-[var(--khix-muted)] hover:bg-white/5 hover:text-[var(--khix-ink)]"
                     aria-label="About class preferences"
                   >
                     <Info className="size-4" aria-hidden="true" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-h-[calc(100svh-2rem)] w-[calc(100vw-2rem)]">
+                <DialogContent className={styles.dialog}>
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className={styles.dialogTitle}>
                       How do you like to spend the hackathon?
                     </DialogTitle>
-                    <DialogDescription>{preferenceCopy}</DialogDescription>
+                    <DialogDescription className={styles.dialogCopy}>
+                      {preferenceCopy}
+                    </DialogDescription>
                   </DialogHeader>
-                  <p className="text-sm text-muted-foreground">
+                  <p className={styles.dialogCopy}>
                     Separate classes spread your team across the available
                     turns. Some turns may still overlap.
                   </p>
                 </DialogContent>
               </Dialog>
             </div>
-            <p className={`${styles.journeyIntro} mt-2`}>
+            <p className={styles.teamCopy}>
               {ownTeam.frozen
                 ? "Check-in has started. New joins and class preferences are locked."
                 : "Your first teammate's check-in locks membership and this preference."}
             </p>
           </div>
           <Button
-            className={`${styles.ghostButton} mt-4`}
+            variant="ghost"
+            className={`${styles.teamTextButton} mt-3`}
             disabled={change.isPending}
             onClick={() =>
               setConfirm({
@@ -257,17 +253,19 @@ function TeamsContent() {
             Leave team
           </Button>
           {owner && ownTeam.requests.length > 0 && (
-            <div className="mt-5 border-t border-white/10 pt-4">
+            <div className="mt-5 border-t border-[var(--khix-panel-border)] pt-4">
               <h3 className="font-semibold">
                 Join requests · {ownTeam.requests.length}
               </h3>
-              <div className="mt-3 max-h-72 divide-y divide-white/10 overflow-y-auto">
+              <div className="mt-3 max-h-72 divide-y divide-[var(--khix-panel-border)] overflow-y-auto">
                 {ownTeam.requests.map((request) => (
                   <div
                     key={request.attendeeId}
                     className="flex flex-wrap items-center justify-between gap-3 py-3"
                   >
-                    <span className="min-w-0 break-words">{request.name}</span>
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
+                      {request.name}
+                    </span>
                     <div className="flex gap-2">
                       <Button
                         className={styles.primaryButton}
@@ -288,7 +286,8 @@ function TeamsContent() {
                         Accept
                       </Button>
                       <Button
-                        className={styles.ghostButton}
+                        variant="ghost"
+                        className={styles.teamTextButton}
                         disabled={change.isPending}
                         onClick={() =>
                           run({
@@ -309,15 +308,15 @@ function TeamsContent() {
           )}
         </section>
       ) : pendingTeam ? (
-        <section className={styles.journeyPanel}>
-          <p className={styles.journeyEyebrow}>Request sent</p>
-          <h2 className="break-words text-xl">{pendingTeam.name}</h2>
-          <p className={`${styles.journeyIntro} my-3`}>
+        <section className={styles.teamSection}>
+          <h2 className={styles.teamHeading}>{pendingTeam.name}</h2>
+          <p className={styles.teamCopy}>
             Waiting for the owner. Your place is confirmed only when they
             accept.
           </p>
           <Button
-            className={styles.ghostButton}
+            variant="ghost"
+            className={`${styles.teamTextButton} mt-3`}
             disabled={change.isPending}
             onClick={() => run({ action: "cancel" })}
           >
@@ -326,11 +325,11 @@ function TeamsContent() {
         </section>
       ) : (
         <section
-          className={`${styles.journeyPanel} flex flex-wrap items-center justify-between gap-4`}
+          className={`${styles.teamSection} flex flex-wrap items-center justify-between gap-4`}
         >
-          <div>
-            <h2 className="text-xl font-semibold">Your team starts here</h2>
-            <p className={`${styles.journeyIntro} mt-2`}>
+          <div className="min-w-0 flex-[1_1_20rem]">
+            <h2 className={styles.teamHeading}>Your team starts here</h2>
+            <p className={styles.teamCopy}>
               {canJoin
                 ? "Create your own, or find friends in the directory below."
                 : "You have checked in. You can browse teams, but joining and creating are closed."}
@@ -346,14 +345,16 @@ function TeamsContent() {
           )}
         </section>
       )}
-      <section className={styles.journeyPanel} aria-label="Team directory">
+      <section className={styles.teamSection} aria-label="Team directory">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
-          <h2 className="text-xl font-semibold">Team directory</h2>
+          <h2 className={styles.teamHeading}>Team directory</h2>
           <div className="w-full sm:max-w-xs">
-            <Label htmlFor="team-search">Search by person or team name</Label>
+            <Label htmlFor="team-search" className={styles.profileFormLabel}>
+              Search by person or team name
+            </Label>
             <Input
               id="team-search"
-              className="mt-2 min-h-11 bg-black/20"
+              className={`${styles.profileInput} mt-2 min-h-11`}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               maxLength={100}
@@ -361,27 +362,27 @@ function TeamsContent() {
           </div>
         </div>
         {teams.data.teams.length === 0 ? (
-          <p className="py-8 text-center opacity-75">
+          <p className="py-8 text-center text-[var(--khix-muted)]">
             No teams found. Try another name or start your own.
           </p>
         ) : (
-          <div className="divide-y divide-white/10">
+          <div className="divide-y divide-[var(--khix-panel-border)]">
             {teams.data.teams.map((team) => (
               <article
                 key={team.id}
                 className="flex flex-wrap items-center justify-between gap-4 py-4"
               >
-                <div className="min-w-0 flex-1">
-                  <h3 className="break-words text-lg font-semibold">
+                <div className="min-w-0 flex-[1_1_16rem]">
+                  <h3 className="text-lg font-semibold [overflow-wrap:anywhere]">
                     {team.name}{" "}
-                    <span className="whitespace-nowrap text-sm font-normal opacity-70">
+                    <span className="whitespace-nowrap text-sm font-normal text-[var(--khix-muted)]">
                       {team.members.length}/4
                     </span>
                   </h3>
-                  <p className="mt-1 break-words text-sm opacity-80">
+                  <p className="mt-1 text-sm text-[var(--khix-muted)] [overflow-wrap:anywhere]">
                     {team.members.map((m) => m.name).join(" · ")}
                   </p>
-                  <p className="mt-2 text-xs opacity-65">
+                  <p className="mt-2 text-xs text-[var(--khix-muted)]">
                     {team.frozen
                       ? "Locked after check-in"
                       : team.members.length === 4
@@ -390,15 +391,20 @@ function TeamsContent() {
                   </p>
                 </div>
                 {team.id === ownTeam?.id ? (
-                  <span className="text-sm font-semibold">Your team</span>
+                  <span className="text-sm font-semibold text-[var(--khix-accent)]">
+                    Your team
+                  </span>
                 ) : team.id === pendingTeam?.id ? (
-                  <span className="text-sm">Requested</span>
+                  <span className="text-sm text-[var(--khix-accent)]">
+                    Requested
+                  </span>
                 ) : (
                   !ownTeam &&
                   !pendingTeam &&
                   canJoin && (
                     <Button
-                      className={styles.ghostButton}
+                      variant="ghost"
+                      className={styles.teamTextButton}
                       disabled={
                         change.isPending ||
                         team.frozen ||
@@ -419,14 +425,18 @@ function TeamsContent() {
         <div className="mt-4 flex items-center justify-between gap-2">
           <Button
             variant="ghost"
+            className={styles.teamTextButton}
             disabled={search.page === 0}
             onClick={() => setSearch({ ...search, page: search.page - 1 })}
           >
             Previous
           </Button>
-          <span className="text-sm">Page {search.page + 1}</span>
+          <span className="text-sm text-[var(--khix-muted)]">
+            Page {search.page + 1}
+          </span>
           <Button
             variant="ghost"
+            className={styles.teamTextButton}
             disabled={!teams.data.hasMore}
             onClick={() => setSearch({ ...search, page: search.page + 1 })}
           >
@@ -453,14 +463,19 @@ function TeamsContent() {
           if (!open && !change.isPending) setConfirm(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className={styles.dialog}>
           <DialogHeader>
-            <DialogTitle>{confirm?.title}</DialogTitle>
-            <DialogDescription>{confirm?.copy}</DialogDescription>
+            <DialogTitle className={styles.dialogTitle}>
+              {confirm?.title}
+            </DialogTitle>
+            <DialogDescription className={styles.dialogCopy}>
+              {confirm?.copy}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2">
+          <div className={styles.dialogActionRow}>
             <Button
               variant="outline"
+              className={styles.ghostButton}
               disabled={change.isPending}
               onClick={() => setConfirm(null)}
             >
@@ -468,6 +483,7 @@ function TeamsContent() {
             </Button>
             <Button
               variant="destructive"
+              className={`${styles.primaryButton} ${styles.withdrawHoldButton}`}
               disabled={change.isPending}
               onClick={() => {
                 if (confirm) run(confirm.input);
@@ -501,12 +517,12 @@ function TeamEditor({
         if (!open && !busy) close();
       }}
     >
-      <DialogContent>
+      <DialogContent className={styles.dialog}>
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className={styles.dialogTitle}>
             {team ? "Team settings" : "Create your team"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={styles.dialogCopy}>
             Up to four hackers, including you. Each hacker can belong to one
             team.
           </DialogDescription>
@@ -525,30 +541,36 @@ function TeamEditor({
           }}
         >
           <div>
-            <Label htmlFor="team-name">Team name</Label>
+            <Label htmlFor="team-name" className={styles.profileFormLabel}>
+              Team name
+            </Label>
             <Input
               id="team-name"
               name="name"
               defaultValue={team?.name ?? ""}
               maxLength={64}
               required
-              className="mt-2 min-h-11"
+              className={`${styles.profileInput} mt-2 min-h-11`}
             />
           </div>
           {team && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-4">
-                <Label htmlFor="team-together">
+                <Label
+                  htmlFor="team-together"
+                  className={styles.profileFormLabel}
+                >
                   Assign us to the same class
                 </Label>
                 <Switch
                   id="team-together"
+                  className={styles.teamSwitch}
                   checked={together}
                   onCheckedChange={setTogether}
                   disabled={team.frozen || busy}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">{preferenceCopy}</p>
+              <p className={styles.dialogCopy}>{preferenceCopy}</p>
               {team.frozen && (
                 <p className="text-sm">
                   Locked because a teammate has checked in.
@@ -556,16 +578,21 @@ function TeamEditor({
               )}
             </div>
           )}
-          <div className="flex justify-end gap-2">
+          <div className={styles.dialogActionRow}>
             <Button
               type="button"
               variant="outline"
+              className={styles.ghostButton}
               disabled={busy}
               onClick={close}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={busy}>
+            <Button
+              type="submit"
+              className={styles.primaryButton}
+              disabled={busy}
+            >
               {busy ? "Saving…" : team ? "Save team" : "Create team"}
             </Button>
           </div>

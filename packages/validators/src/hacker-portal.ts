@@ -305,6 +305,7 @@ export const publicHackathonDtoSchema = z
 export const portalSessionDtoSchema = z
   .object({
     authenticated: z.boolean(),
+    avatarUrl: z.string().url().nullable().optional(),
     displayName: z.string().nullable(),
     expiresAt: nullableIsoDateTimeSchema,
   })

@@ -1,0 +1,187 @@
+.live {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5cqw, 5rem);
+  margin-top: clamp(2rem, 4cqw, 3.5rem);
+  padding-top: clamp(1.5rem, 3cqw, 2.5rem);
+  border-top: 1px solid var(--khix-panel-border);
+  color: var(--khix-ink);
+  font-family: var(--khix-body-font);
+}
+
+.live section {
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.heading h2 {
+  margin: 0;
+  font: 600 clamp(1.25rem, 2.3cqw, 1.75rem)/1.2 var(--khix-display-font);
+  text-shadow: var(--khix-section-glow);
+}
+
+.live a,
+.live button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.live a:hover,
+.live button:hover {
+  color: var(--khix-accent);
+}
+
+.live a:focus-visible,
+.live button:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}
+
+.scheduleLink {
+  font-size: 0.85rem;
+}
+
+.message {
+  margin: 0;
+  color: var(--khix-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.message p {
+  margin: 0;
+}
+
+.message button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.events {
+  display: grid;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event + .event {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--khix-panel-border);
+}
+
+.event h3 {
+  margin: 0.4rem 0;
+  font: 500 clamp(1.15rem, 1.9cqw, 1.5rem)/1.3 var(--khix-display-font);
+  overflow-wrap: anywhere;
+}
+
+.time,
+.location {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.time {
+  color: var(--khix-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.liveDot {
+  width: 0.4rem;
+  height: 0.4rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentcolor;
+  box-shadow: 0 0 10px currentcolor;
+}
+
+.location {
+  color: var(--khix-muted);
+}
+
+.location svg {
+  flex-shrink: 0;
+}
+
+.contacts {
+  margin: 0;
+}
+
+.contacts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  padding: 0.45rem 0;
+}
+
+.contacts dt {
+  font-size: 0.95rem;
+}
+
+.contacts dt span {
+  display: block;
+  color: var(--khix-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.contacts dd {
+  margin: 0;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.phoneButton {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.contactLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin: 0.35rem 0 0;
+  color: var(--khix-muted);
+  font-size: 0.7rem;
+}
+
+@media (max-width: 850px) {
+  .live {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .contacts dt span {
+    max-width: 12rem;
+  }
+}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { PortalAuthBoundary, PortalSessionControl } from "~/lib/hacker-portal";
+import { PortalLoadingScreen } from "./_components/portal-loading-screen";
 
 export const metadata: Metadata = {
   robots: {
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <PortalAuthBoundary>{children}</PortalAuthBoundary>
+      <PortalAuthBoundary loadingFallback={<PortalLoadingScreen />}>
+        <PortalLoadingScreen revealing />
+        {children}
+      </PortalAuthBoundary>
       <PortalSessionControl />
     </>
   );

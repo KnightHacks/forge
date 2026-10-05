@@ -1,0 +1,134 @@
+.trigger {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 0.8rem;
+  border: 0;
+  padding: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.code {
+  position: relative;
+  isolation: isolate;
+}
+
+.code > img {
+  position: relative;
+  z-index: 1;
+}
+
+.glow,
+.hint {
+  display: none;
+}
+
+.dialog {
+  width: min(calc(100vw - 1rem), calc(100dvh - 8rem), 31rem);
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  gap: 0;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 1rem;
+  background: #fff;
+  color: #251c2b;
+  box-shadow: 0 1.5rem 6rem rgb(0 0 0 / 0.4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.title {
+  font: 500 1rem/1.4 var(--khix-body-font);
+  letter-spacing: 0;
+}
+
+.close {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f3eff8;
+  color: inherit;
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid #795d9e;
+  outline-offset: 2px;
+}
+
+.expandedCode {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+@media (max-width: 850px) {
+  .glow {
+    position: absolute;
+    inset: -0.55rem;
+    display: block;
+    overflow: hidden;
+    border-radius: 0.7rem;
+    background: color-mix(in srgb, var(--khix-accent) 30%, transparent);
+    box-shadow: 0 0 1rem rgb(216 197 242 / 0.25);
+    pointer-events: none;
+  }
+
+  .glow::before,
+  .glow::after {
+    position: absolute;
+    content: "";
+  }
+
+  .glow::before {
+    inset: -50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 65%,
+      var(--khix-accent) 85%,
+      #fffaf0 90%,
+      transparent 95%
+    );
+  }
+
+  /* Keep the glow outside the static white QR quiet zone. */
+  .glow::after {
+    inset: 2px;
+    border-radius: 0.6rem;
+    background: #fff;
+  }
+
+  .hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--khix-accent);
+    font: 400 0.75rem/1.4 var(--khix-body-font);
+  }
+}
+
+@media (max-width: 850px) and (prefers-reduced-motion: no-preference) {
+  .glow::before {
+    animation: orbit 6s linear infinite;
+  }
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}

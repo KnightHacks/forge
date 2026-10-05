@@ -21,6 +21,7 @@ import { toast } from "@forge/ui/toast";
 import type { useHackerPrintingFlow } from "~/lib/hacker-portal";
 import { formatFileSize } from "~/lib/print-jobs";
 import styles from "./hacker-printing.module.css";
+import dashboardStyles from "./khix-dashboard.module.css";
 
 interface PickedFile {
   error?: string;
@@ -136,7 +137,9 @@ export function NewPrintJobForm({
           New print
         </Button>
       </DialogTrigger>
-      <DialogContent className={styles.workshopDialog}>
+      <DialogContent
+        className={`${dashboardStyles.theme} ${styles.workshopDialog}`}
+      >
         <DialogHeader>
           <p className={styles.eyebrow}>Shinies × Knight Hacks IX</p>
           <DialogTitle>Request a 3D print</DialogTitle>
