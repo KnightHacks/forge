@@ -543,3 +543,7 @@ See `status.md`.
 - Missing/forged sessions, failed check-in and upstream failures cause no SDK body read. Refresh succeeds before the first read and forwards refreshed credentials/cookies. Blade HEAD has no body parsing; POST checks authorization before parsing.
 - Database regressions: cancelled/submitted files count toward byte quota; submitted tiny files count toward file quota; another attendee has independent capacity; concurrent uploads never exceed staging capacity. These require the disposable loopback PostgreSQL test database.
 - Browser regression: a multi-file selection sends uploads sequentially and remains submittable after successful uploads. Local preview validates presentation/ordering only, not real database/storage authorization.
+
+## CI teardown regression
+
+When `Pool.end()` resolves before its connections emit `end`, the printing suite must wait for every observed connection to close before dropping its disposable database. Cover multiple connections, previously closed connections, an unused pool, and shutdown failures; failure must propagate instead of proceeding to database deletion.

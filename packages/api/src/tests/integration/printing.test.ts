@@ -23,6 +23,7 @@ import {
 } from "@forge/db/testing";
 
 import type * as PrintingParticipantModule from "../../hacker-portal/printing";
+import { trackTestPoolShutdown } from "../support/close-test-pool";
 import { permissionBitstring } from "../support/permissions";
 
 type DatabaseClient = typeof db;
@@ -76,6 +77,7 @@ async function rejectsWithCode(promise: Promise<unknown>, code: string) {
 describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
   let disposable: DisposableDatabase | undefined;
   let client: DatabaseClient;
+  let closePool: (() => Promise<void>) | undefined;
   let auth: AuthSchemas;
   let knightHacks: KnightHacksSchemas;
   let printing: PrintingModule;
@@ -206,6 +208,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     // eslint-disable-next-line no-restricted-properties
     process.env.DATABASE_URL = disposable.url;
     ({ db: client } = await import("@forge/db/client"));
+    closePool = trackTestPoolShutdown(client.$client);
     auth = await import("@forge/db/schemas/auth");
     knightHacks = await import("@forge/db/schemas/knight-hacks");
     printing = await import("../../hacker-portal/printing");
@@ -235,7 +238,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
   }, 30_000);
 
   afterAll(async () => {
-    await client.$client.end().catch(() => undefined);
+    await closePool?.();
     await disposable?.drop();
   }, 30_000);
 
