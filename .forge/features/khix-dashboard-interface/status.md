@@ -46,3 +46,9 @@ Current phase: Complete
 - PRs:
 - Issues:
 - Discord/thread context: User request in Codex task on 2026-08-26.
+
+## Dashboard avatar placeholder — October 5 follow-up
+
+- Replaced the admission pass's initials fallback with the owner's supplied knight image, kept unchanged as a local public asset. Missing or failed profile photos (including the local preview) show the image in the existing circular avatar; a loaded real profile photo retains priority.
+- Kept the existing avatar size and responsive layout. Next Image serves the placeholder at the appropriate display size. No session, profile upload, or shared avatar behavior changed.
+- Validation: repository format, lint (warnings only), and all 33 typecheck tasks passed. React analysis passed for 18 changed files with zero failures. The copied asset matches the supplied image byte-for-byte. The supplied screenshots were reviewed; fresh browser verification remains blocked by the previously documented URL-policy rejection.

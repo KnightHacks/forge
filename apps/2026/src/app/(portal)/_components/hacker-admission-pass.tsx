@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 
@@ -58,12 +59,6 @@ export function HackerAdmissionPass({
     return () => window.clearTimeout(request);
   }, [loadQRCode, qrCode]);
 
-  const initials = fullName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("");
   const teamLabel =
     teamState === "loading"
       ? "Loading…"
@@ -91,7 +86,13 @@ export function HackerAdmissionPass({
                 />
               ) : null}
               <AvatarFallback className={styles.avatarFallback}>
-                {initials}
+                <Image
+                  src="/dashboard/knight-avatar-placeholder.png"
+                  alt="Knight Hacks placeholder avatar"
+                  fill
+                  sizes="(max-width: 850px) 44px, 104px"
+                  className={styles.avatarImage}
+                />
               </AvatarFallback>
             </Avatar>
             <div className={styles.identityText}>
