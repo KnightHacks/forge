@@ -183,3 +183,9 @@ Verified HEC floor plans and remaining bathroom metadata.
 - All three additions use existing source geometry. Final coverage is 42 mapped rooms plus HEC 103/110/111/125 as explicit building-level fallbacks. Preserved verified numbers on striped/unavailable rooms.
 - Corrected source-labelled stair/lift envelopes so a temporary authoring ID does not make them unavailable; unverified lecture-room envelopes remain unavailable. Added regression coverage.
 - Combined final state (including main's landing-page fix at `63d09901`) passed repository format/lint/typecheck, all 2,968 tests (186 KHIX), and all 21 production build tasks. React analysis passed with zero failures. Existing lint/workspace warnings and the live-browser policy limitation remain as recorded above.
+
+## BA1 Atrium — October 5 follow-up
+
+- Owner confirmed the first-floor atrium shown in their screenshot as event space. Added BA1 Atrium using the existing source 128 anchor, retaining its number and open-area marker rather than inventing a room boundary. The directory now has 47 locations: 46 confirmed rooms plus the atrium.
+- Named lookup and event-location parsing resolve BA1 Atrium to the first floor. Source-defined BA1 floor 1 hallways 101/102 and stair core 127 retain numbers and circulation styling without unavailable hatching; nearby rooms remain restricted. Organizer restrictions can still narrow access to the atrium.
+- Validation: all 192 KHIX tests passed; repository format, lint (warnings only), and all 33 typecheck tasks passed. Rebuilt native floor data; only the nine BA1 first-floor circulation entries changed, with architectural SVGs unchanged. Browser verification remains blocked by the previously documented URL-policy rejection; source floor drawings and the owner's screenshot were inspected.

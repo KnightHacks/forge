@@ -1,4 +1,18 @@
 {
+  "ba1-floor-1.svg": {
+    "101": {
+      "kind": "circulation",
+      "source": "Repeated 101 source anchors follow the east first-floor hallway alongside the atrium confirmed by the event owner on 2026-10-05. Preserve numbers and keep circulation unhatched."
+    },
+    "102": {
+      "kind": "circulation",
+      "source": "Repeated 102 source anchors follow the west first-floor hallway alongside the confirmed atrium. Preserve numbers and keep circulation unhatched."
+    },
+    "127": {
+      "kind": "circulation",
+      "source": "The native first-floor plan shows the central stair core at 127, inside the atrium. Preserve its geometry and number without unavailable-room hatching."
+    }
+  },
   "su-floor-2.svg": {
     "U01*": {
       "roomNumber": "232",

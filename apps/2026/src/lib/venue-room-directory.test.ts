@@ -52,13 +52,13 @@ describe("venue room identities", () => {
     expect(resolveRoomNumber("student-union", "0218a")).toBe("218A");
   });
 
-  it("keeps the 46 event identities unique across all six buildings", () => {
-    expect(KHIX_EVENT_ROOMS).toHaveLength(46);
+  it("keeps the 47 event locations unique across all six buildings", () => {
+    expect(KHIX_EVENT_ROOMS).toHaveLength(47);
     expect(
       new Set(
         KHIX_EVENT_ROOMS.map((room) => `${room.buildingId}:${room.roomNumber}`),
       ).size,
-    ).toBe(46);
+    ).toBe(47);
     expect(
       Object.fromEntries(
         ["student-union", "ba1", "ba2", "eng1", "ucf-91", "hec"].map(
@@ -71,7 +71,7 @@ describe("venue room identities", () => {
       ),
     ).toEqual({
       "student-union": 10,
-      ba1: 17,
+      ba1: 18,
       ba2: 3,
       eng1: 3,
       "ucf-91": 6,

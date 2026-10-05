@@ -42,10 +42,13 @@ temporary preview exports remain outside the runtime bundle.
   the existing Student Union Starbucks source anchor. It stays a point marker;
   the partially masked source food-court polygon is not used as an invented
   room outline. The original review artifact remains unchanged.
-- `venue-room-directory.ts` records the 46 unique rooms requested for the event,
-  without booking hours or permission flags. Forty-two resolve to mapped
+- The first-floor BA1 atrium keeps its source anchor 128 and is named BA1 Atrium.
+  The source-defined 101/102 hallways and 127 stair core retain their numbers
+  with circulation metadata, keeping them free of unavailable-room hatching.
+- `venue-room-directory.ts` records the 46 confirmed rooms plus BA1 Atrium (source number 128),
+  without booking hours or permission flags. Forty-three resolve to mapped
   geometry; HEC 103, 110, 111 and 125 remain building-level fallbacks. Leading
-  zeros, named Student Union rooms and whole-ballroom aliases resolve locally.
+  zeros, BA1 Atrium, named Student Union rooms and whole-ballroom aliases resolve locally.
   The KHIX view highlights only this roster; other rooms retain striped
   outlines and their verified room numbers. Organizer restrictions can narrow the roster further. Known
   bathrooms and circulation remain identifiable.

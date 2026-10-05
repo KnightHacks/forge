@@ -73,8 +73,9 @@ def native(file, public, overrides):
         override = overrides.get(label)
         x = float(el.get("x"))
         y = float(el.get("y")) - float(el.get("font-size")) * .34
-        entries.append(dict(text=override["roomNumber"] if override else label,
-                            x=x, y=y, marker=bool(override)))
+        entries.append(dict(text=override.get("roomNumber", label) if override else label,
+                            x=x, y=y, marker=bool(override and override.get("roomNumber")),
+                            kind=override.get("kind") if override else None))
     root.remove(label_group)
 
     # Discover only enclosed regions with exactly one room ID. Merged/open
@@ -116,6 +117,8 @@ def native(file, public, overrides):
         x, y = entry["x"] * scale + dx, entry["y"] * scale + dy
         points = None if entry["marker"] else envelopes.get(i)
         room = dict(id=f"{label}-{ids[label]}", label=label, roomIds=[label], x=round(x, 2), y=round(y, 2))
+        if entry["kind"]:
+            room["kind"] = entry["kind"]
         if points:
             room["path"] = path([(px * scale + dx, py * scale + dy) for px, py in points])
         else:

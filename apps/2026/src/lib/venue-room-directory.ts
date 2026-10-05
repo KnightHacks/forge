@@ -77,6 +77,7 @@ export const KHIX_EVENT_ROOMS: readonly VenueRoomDirectoryEntry[] = [
   { buildingId: "ba1", roomNumber: "121", floor: 1 },
   { buildingId: "ba1", roomNumber: "122", floor: 1 },
   { buildingId: "ba1", roomNumber: "126", floor: 1 },
+  { buildingId: "ba1", roomNumber: "128", name: "BA1 Atrium", floor: 1 },
   { buildingId: "ba1", roomNumber: "146", floor: 1 },
   { buildingId: "ba1", roomNumber: "209", floor: 2 },
   { buildingId: "ba1", roomNumber: "212", floor: 2 },
@@ -136,6 +137,13 @@ export function resolveRoomNumber(
 ): string {
   const normalized = normalizeRoomNumber(input);
   const number = normalized.replace(/^(\d+)\s+([A-Z]+)$/, "$1$2");
+  if (
+    buildingId === "ba1" &&
+    ["ATRIUM", "BA1ATRIUM", "BUSINESSADMINISTRATIONIATRIUM"].includes(
+      roomNameKey(normalized),
+    )
+  )
+    return "128";
   if (buildingId !== "student-union") return number;
   if (number === "218" || number === "316") return `${number}ABCD`;
   return STUDENT_UNION_NAME_ALIASES.get(roomNameKey(normalized)) ?? number;
@@ -169,7 +177,6 @@ export function getVenueRoomName(
   buildingId: BuildingId,
   roomIds: readonly string[],
 ): string | undefined {
-  if (buildingId !== "student-union") return undefined;
   return KHIX_EVENT_ROOMS.find(
     (room) =>
       room.buildingId === buildingId &&

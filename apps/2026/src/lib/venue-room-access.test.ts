@@ -45,6 +45,49 @@ function activity(start = now, end = new Date(now.getTime() + 3600_000)) {
 }
 
 describe("room presentation", () => {
+  it("identifies BA1 Atrium at its source anchor and uses it for event activity", () => {
+    const atrium = findVenueRoom("ba1", "BA1 Atrium");
+    expect(atrium?.floor).toBe(1);
+    if (!atrium) throw new Error("BA1 Atrium is missing");
+    expect(findVenueRoom("ba1", "atrium")?.room.id).toBe(atrium.room.id);
+    expect(atrium.room).toMatchObject({ geometry: "marker", roomIds: ["128"] });
+    expect(getRoomPresentation(atrium.room, "ba1", open, [], now)).toEqual({
+      state: "idle",
+      label: "128",
+      name: "BA1 Atrium",
+    });
+    const events = activity().map((event) => ({
+      ...event,
+      venueLocation: { buildingId: "ba1" as const, floor: 1, room: "Atrium" },
+    }));
+    expect(
+      getRoomPresentation(atrium.room, "ba1", open, events, now).state,
+    ).toBe("live");
+    expect(
+      getRoomPresentation(atrium.room, "ba1", restricted, events, now).state,
+    ).toBe("restricted");
+    expect(findVenueRoom("ba2", "Atrium")).toBeUndefined();
+  });
+  it("keeps BA1 atrium hallways and stairs unhatched without opening neighboring rooms", () => {
+    const floor = getVenueFloorPlan("ba1", 1);
+    const circulation =
+      floor?.rooms.filter((entry) => entry.kind === "circulation") ?? [];
+    expect(new Set(circulation.flatMap((entry) => entry.roomIds))).toEqual(
+      new Set(["101", "102", "127"]),
+    );
+    for (const entry of circulation) {
+      expect(getRoomPresentation(entry, "ba1", restricted, [], now)).toEqual({
+        state: "circulation",
+        label: entry.label,
+        name: null,
+      });
+    }
+    const neighbor = findVenueRoom("ba1", "123");
+    if (!neighbor) throw new Error("BA1 neighbor is missing");
+    expect(getRoomPresentation(neighbor.room, "ba1", open, [], now).state).toBe(
+      "restricted",
+    );
+  });
   it.each([false, true])(
     "never promotes rooms outside the event roster, with restrictions %s",
     (restrictionsEnabled) => {

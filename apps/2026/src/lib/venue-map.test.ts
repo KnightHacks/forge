@@ -33,6 +33,12 @@ describe("KHIX venue location parsing", () => {
     ["Engineering I, Room 101", { buildingId: "eng1", floor: 1, room: "101" }],
     ["BA1 239", { buildingId: "ba1", floor: 2, room: "239" }],
     ["BA1 0126", { buildingId: "ba1", floor: 1, room: "126" }],
+    ["BA1 Atrium", { buildingId: "ba1", floor: 1, room: "128" }],
+    [
+      "Business Administration I Atrium",
+      { buildingId: "ba1", floor: 1, room: "128" },
+    ],
+    ["BA2 Atrium", { buildingId: "ba2", floor: null, room: null }],
     ["Engineering II 0302", { buildingId: "ucf-91", floor: 3, room: "302" }],
     ["ENG2 0205", { buildingId: "ucf-91", floor: 2, room: "205" }],
     ["HEC 0111", { buildingId: "hec", floor: 1, room: "111" }],

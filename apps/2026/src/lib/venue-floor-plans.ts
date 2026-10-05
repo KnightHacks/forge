@@ -19,7 +19,7 @@ export interface VenueFloorRoom {
   geometry?: "marker";
   /** Authoring reference only; never an official room lookup alias. */
   reviewId?: string;
-  kind?: "bathroom";
+  kind?: "bathroom" | "circulation";
   label: string;
   path: string;
   roomIds: string[];
