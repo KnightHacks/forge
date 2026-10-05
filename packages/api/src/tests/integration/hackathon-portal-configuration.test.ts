@@ -105,9 +105,14 @@ describe.skipIf(!canRunDatabaseTests())(
         issueReportsChannelId: "234567890123456789",
         issueReportsRoleId: "345678901234567890",
       };
-      await expect(
-        caller.hackathon.getIssueReporting({ id: HACKATHON_ID }),
-      ).resolves.toEqual({
+      const readSettings = async (id: string) => {
+        const { hackathon } = await caller.hackathon.get({ id });
+        return {
+          issueReportsChannelId: hackathon.issueReportsChannelId,
+          issueReportsRoleId: hackathon.issueReportsRoleId,
+        };
+      };
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual({
         issueReportsChannelId: null,
         issueReportsRoleId: null,
       });
@@ -115,12 +120,8 @@ describe.skipIf(!canRunDatabaseTests())(
         hackathonId: HACKATHON_ID,
         ...settings,
       });
-      await expect(
-        caller.hackathon.getIssueReporting({ id: HACKATHON_ID }),
-      ).resolves.toEqual(settings);
-      await expect(
-        caller.hackathon.getIssueReporting({ id: OTHER_HACKATHON_ID }),
-      ).resolves.toEqual({
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual(settings);
+      await expect(readSettings(OTHER_HACKATHON_ID)).resolves.toEqual({
         issueReportsChannelId: null,
         issueReportsRoleId: null,
       });
@@ -134,9 +135,7 @@ describe.skipIf(!canRunDatabaseTests())(
         issueReportsChannelId: "",
         issueReportsRoleId: "",
       });
-      await expect(
-        caller.hackathon.getIssueReporting({ id: HACKATHON_ID }),
-      ).resolves.toEqual({
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual({
         issueReportsChannelId: null,
         issueReportsRoleId: null,
       });
@@ -148,9 +147,6 @@ describe.skipIf(!canRunDatabaseTests())(
         .insert(auth.User)
         .values({ id: userId, discordUserId: "report-non-officer" });
       const nonOfficer = await officerCaller(userId);
-      await expect(
-        nonOfficer.hackathon.getIssueReporting({ id: HACKATHON_ID }),
-      ).rejects.toMatchObject({ code: "FORBIDDEN" });
       await expect(
         nonOfficer.hackathon.updateIssueReporting({
           hackathonId: HACKATHON_ID,

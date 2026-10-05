@@ -242,19 +242,6 @@
 .status svg {
   flex-shrink: 0;
 }
-.challenges {
-  margin-top: 0.85rem;
-  font-size: 0.9rem;
-}
-.challenges p {
-  color: var(--khix-muted);
-  margin-bottom: 0.4rem;
-}
-.challenges ul {
-  padding-left: 1rem;
-  list-style: disc;
-  line-height: 1.7;
-}
 .warning {
   display: flex;
   gap: 0.8rem;
@@ -276,19 +263,6 @@
 .feedback + .feedback {
   border-top: 1px solid var(--khix-panel-border);
   padding-top: 1.25rem;
-}
-.feedback dl > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.6rem 0;
-  border-bottom: 1px solid var(--khix-panel-border);
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-.feedback dd {
-  white-space: nowrap;
-  color: var(--khix-accent);
 }
 .response {
   margin-top: 1rem;

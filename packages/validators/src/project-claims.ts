@@ -133,14 +133,6 @@ export const hackerJudgingDtoSchema = z
         .object({
           challengeId: id,
           challenge: z.string(),
-          ratings: z.array(
-            z
-              .object({
-                label: z.string(),
-                value: z.number().int().min(1).max(5),
-              })
-              .strict(),
-          ),
           responses: z.array(
             z.object({ label: z.string(), value: z.string() }).strict(),
           ),

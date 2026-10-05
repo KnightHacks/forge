@@ -238,7 +238,12 @@ export function HackathonDetail({
         onSaved={refresh}
       />
 
-      <IssueReportingSection hackathonId={hackathon.id} />
+      <IssueReportingSection
+        detail={detail}
+        isRefreshing={isRefreshing}
+        key={`issue-reporting:${hackathon.id}:${hackathon.issueReportsChannelId ?? "none"}:${hackathon.issueReportsRoleId ?? "none"}`}
+        onSaved={refresh}
+      />
 
       <MapConfigurationSection
         detail={detail}

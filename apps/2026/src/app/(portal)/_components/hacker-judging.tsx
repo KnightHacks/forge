@@ -348,16 +348,6 @@ export function HackerJudging({ token }: { token: string | null }) {
                                 <MapPin size={18} />
                                 {appointment.room}
                               </p>
-                              {!!appointment.children.length && (
-                                <div className={styles.challenges}>
-                                  <p>Prepare for</p>
-                                  <ul>
-                                    {appointment.children.map((child) => (
-                                      <li key={child}>{child}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
                               {appointment.status === "complete" &&
                                 !data.emergency && (
                                   <JudgingFeedback
@@ -403,16 +393,6 @@ export function HackerJudging({ token }: { token: string | null }) {
                                 {entry.rooms.join(" / ") ||
                                   "Ask an organizer for the room"}
                               </p>
-                              {!!entry.children.length && (
-                                <div className={styles.challenges}>
-                                  <p>Prepare for</p>
-                                  <ul>
-                                    {entry.children.map((child) => (
-                                      <li key={child}>{child}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
                               {entry.judged && !data.emergency && (
                                 <JudgingFeedback
                                   feedback={data.feedback.filter(
@@ -522,6 +502,10 @@ function JudgingFeedback({
   feedback: HackerJudgingDto["feedback"];
   challenge: string;
 }) {
+  const writtenFeedback = feedback.filter(
+    (evaluation) => evaluation.responses.length > 0,
+  );
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -535,26 +519,19 @@ function JudgingFeedback({
             {challenge} feedback
           </DialogTitle>
           <DialogDescription className={styles.dialogCopy}>
-            Completed rubric scores and written feedback. Judge identities are
-            private.
+            Written feedback from your judges. Judge identities are private.
           </DialogDescription>
         </DialogHeader>
-        {!feedback.length && <p>Completed feedback is not available yet.</p>}
-        {feedback.map((evaluation, index) => (
+        {!writtenFeedback.length && (
+          <p>Written feedback is not available yet.</p>
+        )}
+        {writtenFeedback.map((evaluation, index) => (
           <section
             className={styles.feedback}
             key={index}
             aria-label={`Evaluation ${index + 1}`}
           >
-            {feedback.length > 1 && <h3>Evaluation {index + 1}</h3>}
-            <dl>
-              {evaluation.ratings.map((rating) => (
-                <div key={rating.label}>
-                  <dt>{rating.label}</dt>
-                  <dd>{rating.value} / 5</dd>
-                </div>
-              ))}
-            </dl>
+            {writtenFeedback.length > 1 && <h3>Evaluation {index + 1}</h3>}
             {evaluation.responses.map((response) => (
               <div className={styles.response} key={response.label}>
                 <h3>{response.label}</h3>

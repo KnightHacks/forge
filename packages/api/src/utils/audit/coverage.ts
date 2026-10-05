@@ -246,7 +246,6 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "forms.listResponses",
   "forms.sectionProvisioning",
   "hackathon.get",
-  "hackathon.getIssueReporting",
   "hackathon.list",
   "hackathon-event.getCheckInAttempt",
   "hackathon-event.getDiscordConfig",

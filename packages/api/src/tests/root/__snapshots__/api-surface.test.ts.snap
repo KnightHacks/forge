@@ -149,7 +149,6 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "hackathon.createAgreement",
   "hackathon.createClass",
   "hackathon.get",
-  "hackathon.getIssueReporting",
   "hackathon.list",
   "hackathon.remove",
   "hackathon.removeClass",

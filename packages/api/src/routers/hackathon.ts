@@ -80,6 +80,8 @@ const HACKATHON_COLUMNS = {
   displayName: true,
   endDate: true,
   id: true,
+  issueReportsChannelId: true,
+  issueReportsRoleId: true,
   startDate: true,
   theme: true,
   timezone: true,
@@ -277,21 +279,6 @@ function assertDateWindow(input: {
 }
 
 export const hackathonRouter = createTRPCRouter({
-  getIssueReporting: permProcedure
-    .input(hackathonIdSchema)
-    .query(async ({ ctx, input }) => {
-      assertCanManagePlatformConfig(ctx.session.permissions);
-      const row = await db.query.Hackathon.findFirst({
-        columns: { issueReportsChannelId: true, issueReportsRoleId: true },
-        where: eq(Hackathon.id, input.id),
-      });
-      if (!row)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Hackathon not found.",
-        });
-      return row;
-    }),
   updateIssueReporting: permProcedure
     .input(hackathonIssueReportingSchema)
     .mutation(async ({ ctx, input }) => {

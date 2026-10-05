@@ -98,19 +98,6 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
   ],
   ["list", (caller) => caller.list()],
   ["get", (caller) => caller.get({ id: HACKATHON_ID })],
-  [
-    "getIssueReporting",
-    (caller) => caller.getIssueReporting({ id: HACKATHON_ID }),
-  ],
-  [
-    "updateIssueReporting",
-    (caller) =>
-      caller.updateIssueReporting({
-        hackathonId: HACKATHON_ID,
-        issueReportsChannelId: "234567890123456789",
-        issueReportsRoleId: null,
-      }),
-  ],
   ["create", (caller) => caller.create(WINDOW)],
   ["update", (caller) => caller.update({ ...WINDOW, id: HACKATHON_ID })],
   ["remove", (caller) => caller.remove({ id: HACKATHON_ID })],
@@ -188,6 +175,15 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
       }),
   ],
   ["removeClass", (caller) => caller.removeClass({ id: CLASS_ID })],
+  [
+    "updateIssueReporting",
+    (caller) =>
+      caller.updateIssueReporting({
+        hackathonId: HACKATHON_ID,
+        issueReportsChannelId: "234567890123456789",
+        issueReportsRoleId: null,
+      }),
+  ],
 ];
 
 describe("hackathon configuration access policy", () => {

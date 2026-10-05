@@ -15,7 +15,6 @@ import {
   ProjectChallenge,
   ProjectClaimLink,
   ProjectEvaluation,
-  ProjectEvaluationRating,
   ProjectEvaluationResponse,
   ProjectMember,
   ProjectToChallenge,
@@ -244,42 +243,24 @@ export async function hackerJudging(
       );
   if (eligible.length) {
     const ids = eligible.map((evaluation) => evaluation.id);
-    const [ratings, responses] = await Promise.all([
-      db
-        .select({
-          evaluationId: ProjectEvaluationRating.evaluationId,
-          label: JudgingRubricItem.label,
-          value: ProjectEvaluationRating.value,
-        })
-        .from(ProjectEvaluationRating)
-        .innerJoin(
-          JudgingRubricItem,
-          eq(JudgingRubricItem.id, ProjectEvaluationRating.rubricItemId),
-        )
-        .where(inArray(ProjectEvaluationRating.evaluationId, ids))
-        .orderBy(asc(JudgingRubricItem.displayOrder)),
-      db
-        .select({
-          evaluationId: ProjectEvaluationResponse.evaluationId,
-          label: JudgingRubricItem.label,
-          value: ProjectEvaluationResponse.value,
-        })
-        .from(ProjectEvaluationResponse)
-        .innerJoin(
-          JudgingRubricItem,
-          eq(JudgingRubricItem.id, ProjectEvaluationResponse.rubricItemId),
-        )
-        .where(inArray(ProjectEvaluationResponse.evaluationId, ids))
-        .orderBy(asc(JudgingRubricItem.displayOrder)),
-    ]);
+    const responses = await db
+      .select({
+        evaluationId: ProjectEvaluationResponse.evaluationId,
+        label: JudgingRubricItem.label,
+        value: ProjectEvaluationResponse.value,
+      })
+      .from(ProjectEvaluationResponse)
+      .innerJoin(
+        JudgingRubricItem,
+        eq(JudgingRubricItem.id, ProjectEvaluationResponse.rubricItemId),
+      )
+      .where(inArray(ProjectEvaluationResponse.evaluationId, ids))
+      .orderBy(asc(JudgingRubricItem.displayOrder));
     output.feedback = eligible.map((evaluation) => ({
       challengeId: evaluation.challengeId,
       challenge:
         challenges.find((challenge) => challenge.id === evaluation.challengeId)
           ?.label ?? "Judging",
-      ratings: ratings
-        .filter((rating) => rating.evaluationId === evaluation.id)
-        .map(({ label, value }) => ({ label, value })),
       responses: responses
         .filter((response) => response.evaluationId === evaluation.id)
         .map(({ label, value }) => ({ label, value })),

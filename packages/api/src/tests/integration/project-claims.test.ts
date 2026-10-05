@@ -417,7 +417,7 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       memberId: required(second.members[0]),
     });
   });
-  it("TC-004/015: completed authenticated feedback is anonymous and disappears in emergency mode", async () => {
+  it("TC-004/015: exposes only anonymous written feedback and hides it in emergency mode", async () => {
     await seedClaim();
     await client
       .update(schema.HackathonJudgingConfiguration)
@@ -511,12 +511,13 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       {
         challengeId,
         challenge: "General",
-        ratings: [{ label: "Technical execution", value: 4 }],
         responses: [{ label: "Feedback", value: "Great demo" }],
       },
     ]);
     expect(JSON.stringify(own)).not.toContain(judgeId);
     expect(JSON.stringify(own)).not.toContain("Never reveal");
+    expect(JSON.stringify(own)).not.toContain("Technical execution");
+    expect(JSON.stringify(own)).not.toContain('"ratings"');
     await client
       .update(schema.HackathonJudgingConfiguration)
       .set({ hackerScheduleEmergency: true })

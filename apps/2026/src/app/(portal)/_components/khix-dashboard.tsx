@@ -4401,17 +4401,17 @@ function IssueDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className={styles.dialog}>
         <DialogHeader>
-          <DialogTitle className={styles.dialogTitle}>
-            Report an issue
-          </DialogTitle>
+          <DialogTitle className={styles.dialogTitle}>Need help?</DialogTitle>
           <DialogDescription className={styles.dialogCopy}>
-            Tell the organizer team what is happening and where you are.
+            Tell us what happened, what you need help with, and where we can
+            find you. An organizer will come help.
           </DialogDescription>
         </DialogHeader>
         <Textarea
-          aria-label="Issue details"
+          aria-label="What do you need help with?"
           className={styles.issueTextarea}
           maxLength={2000}
+          placeholder="Example: Our team needs help with Wi-Fi near room 101."
           value={issue}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -4426,7 +4426,7 @@ function IssueDialog({
             type="button"
           >
             {isPending && <Loader2 className="size-4 animate-spin" />}
-            Send report
+            Send to organizers
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -7,24 +7,10 @@ import { IssueReportingSection } from "~/app/_components/admin/hackathon/issue-r
 
 const mocks = vi.hoisted(() => ({
   mutate: vi.fn(),
-  invalidate: vi.fn(),
-  refetch: vi.fn(),
-  error: false,
 }));
 vi.mock("~/trpc/react", () => ({
   api: {
-    useUtils: () => ({
-      hackathon: { getIssueReporting: { invalidate: mocks.invalidate } },
-    }),
     hackathon: {
-      getIssueReporting: {
-        useQuery: () => ({
-          data: { issueReportsChannelId: null, issueReportsRoleId: null },
-          isPending: false,
-          isError: mocks.error,
-          refetch: mocks.refetch,
-        }),
-      },
       updateIssueReporting: {
         useMutation: () => ({ isPending: false, mutate: mocks.mutate }),
       },
@@ -38,11 +24,26 @@ vi.mock("@forge/ui/toast", () => ({
 describe("hackathon issue reporting settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.error = false;
   });
+
+  const renderSection = () =>
+    render(
+      <IssueReportingSection
+        detail={{
+          hackathon: {
+            id: "event",
+            issueReportsChannelId: null,
+            issueReportsRoleId: null,
+          },
+        }}
+        isRefreshing={false}
+        onSaved={vi.fn()}
+      />,
+    );
+
   it("lets officers configure a channel and role for this hackathon", async () => {
     const user = userEvent.setup();
-    render(<IssueReportingSection hackathonId="event" />);
+    renderSection();
     const save = screen.getByRole("button", {
       name: "Save reporting settings",
     });
@@ -64,7 +65,7 @@ describe("hackathon issue reporting settings", () => {
   });
   it("blocks invalid IDs and permits reports without a ping role", async () => {
     const user = userEvent.setup();
-    render(<IssueReportingSection hackathonId="event" />);
+    renderSection();
     const channel = screen.getByLabelText("Discord channel ID");
     await user.type(channel, "bad-id");
     expect(
@@ -81,13 +82,5 @@ describe("hackathon issue reporting settings", () => {
       issueReportsChannelId: "234567890123456789",
       issueReportsRoleId: null,
     });
-  });
-  it("shows retry when the settings cannot be loaded", async () => {
-    mocks.error = true;
-    render(<IssueReportingSection hackathonId="event" />);
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Try again" }));
-    expect(mocks.refetch).toHaveBeenCalled();
   });
 });

@@ -1,5 +1,9 @@
 # Status
 
+Review follow-up: the participant dialog now explains that a useful report includes what happened, what help is needed, and the hacker's location, without adding another field. Blade now passes reporting settings through the existing server-loaded hackathon detail instead of issuing a second client query. API audit, access, and surface coverage were updated for the remaining mutation.
+
+Judging dry-run follow-up: KHIX no longer shows the child-rubric "Prepare for" lists or numeric rubric ratings to hackers. The feedback dialog keeps only free-response comments. Merch pricing remains an organizer decision based on the final points table and is intentionally outside this code change.
+
 Reporting-first branch: 2026/hacker-issue-reporting-config, updated with main commit 6be7b956. The user corrected the requested order: reporting first, judging privacy second. The privacy draft is preserved separately and will be replayed atop the updated reporting branch.
 
 Implemented per-hackathon channel/ping-role configuration on Blade's Hackathons detail, officer-only read/write APIs, audited settings, generated nullable-column migration 0060_early_meteorite, and authenticated report submission with rate limiting, idempotency and restricted mentions. No global channel setting remains.

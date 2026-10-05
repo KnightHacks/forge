@@ -19,12 +19,20 @@ import { toast } from "@forge/ui/toast";
 import { api } from "~/trpc/react";
 
 export function IssueReportingSection({
-  hackathonId,
+  detail,
+  isRefreshing,
+  onSaved,
 }: {
-  hackathonId: string;
+  detail: {
+    hackathon: Pick<
+      RouterOutputs["hackathon"]["get"]["hackathon"],
+      "id" | "issueReportsChannelId" | "issueReportsRoleId"
+    >;
+  };
+  isRefreshing: boolean;
+  onSaved: () => void;
 }) {
-  const query = api.hackathon.getIssueReporting.useQuery({ id: hackathonId });
-  const utils = api.useUtils();
+  const { hackathon } = detail;
   return (
     <Card>
       <CardHeader>
@@ -38,35 +46,12 @@ export function IssueReportingSection({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {query.isPending ? (
-          <p className="text-sm text-muted-foreground">
-            Loading reporting settings…
-          </p>
-        ) : query.isError ? (
-          <div className="grid gap-3" role="alert">
-            <p className="text-sm text-destructive">
-              Could not load reporting settings.
-            </p>
-            <Button
-              className="min-h-11 w-fit"
-              onClick={() => void query.refetch()}
-              variant="outline"
-            >
-              Try again
-            </Button>
-          </div>
-        ) : (
-          <IssueReportingEditor
-            key={`${hackathonId}:${query.data.issueReportsChannelId}:${query.data.issueReportsRoleId}`}
-            hackathonId={hackathonId}
-            settings={query.data}
-            onSaved={() =>
-              void utils.hackathon.getIssueReporting.invalidate({
-                id: hackathonId,
-              })
-            }
-          />
-        )}
+        <IssueReportingEditor
+          hackathonId={hackathon.id}
+          isRefreshing={isRefreshing}
+          settings={hackathon}
+          onSaved={onSaved}
+        />
       </CardContent>
     </Card>
   );
@@ -74,11 +59,16 @@ export function IssueReportingSection({
 
 function IssueReportingEditor({
   hackathonId,
+  isRefreshing,
   settings,
   onSaved,
 }: {
   hackathonId: string;
-  settings: RouterOutputs["hackathon"]["getIssueReporting"];
+  isRefreshing: boolean;
+  settings: Pick<
+    RouterOutputs["hackathon"]["get"]["hackathon"],
+    "issueReportsChannelId" | "issueReportsRoleId"
+  >;
   onSaved: () => void;
 }) {
   const [channel, setChannel] = useState(settings.issueReportsChannelId ?? "");
@@ -96,6 +86,7 @@ function IssueReportingEditor({
   const unchanged =
     channel.trim() === (settings.issueReportsChannelId ?? "") &&
     role.trim() === (settings.issueReportsRoleId ?? "");
+  const busy = save.isPending || isRefreshing;
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -106,7 +97,7 @@ function IssueReportingEditor({
             className="h-11 bg-background/70 font-mono"
             inputMode="numeric"
             maxLength={64}
-            disabled={save.isPending}
+            disabled={busy}
             value={channel}
             onChange={(event) => setChannel(event.target.value)}
             placeholder="Channel ID"
@@ -123,7 +114,7 @@ function IssueReportingEditor({
             className="h-11 bg-background/70 font-mono"
             inputMode="numeric"
             maxLength={64}
-            disabled={save.isPending}
+            disabled={busy}
             value={role}
             onChange={(event) => setRole(event.target.value)}
             placeholder="Role ID"
@@ -146,7 +137,7 @@ function IssueReportingEditor({
       )}
       <Button
         className="min-h-11 w-fit gap-2"
-        disabled={save.isPending || !valid || unchanged}
+        disabled={busy || !valid || unchanged}
         onClick={() =>
           save.mutate({
             hackathonId,
