@@ -103,14 +103,6 @@ export async function reportIssue(
         .limit(1);
       if (!existing)
         throw new Error("Participant command conflict row was not found.");
-      if (existing.payloadHash !== payloadHash) {
-        portalFailure(
-          "CONFLICT",
-          "This idempotency key was already used with different input.",
-          { trpcCode: "CONFLICT" },
-        );
-      }
-      if (existing.state === "completed") return { delivered: true as const };
       if (existing.expiresAt <= now) {
         await tx
           .delete(HackerParticipantCommand)
@@ -125,6 +117,14 @@ export async function reportIssue(
           .values(commandValues)
           .returning({ id: HackerParticipantCommand.id });
       } else {
+        if (existing.payloadHash !== payloadHash) {
+          portalFailure(
+            "CONFLICT",
+            "This idempotency key was already used with different input.",
+            { trpcCode: "CONFLICT" },
+          );
+        }
+        if (existing.state === "completed") return { delivered: true as const };
         command = { id: existing.id };
       }
     }
