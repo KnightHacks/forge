@@ -99,18 +99,22 @@
   z-index: 0;
   background-position: center top;
   background-repeat: no-repeat;
-  background-size: 100% auto;
+  background-size: 100% 100%;
 }
 
 .rocksTop {
   top: var(--waterfall-artwork-top);
-  height: calc(var(--waterfall-width) * 2.0854167);
+  /* Keep the artwork joined as sponsor and team content grows. */
+  height: calc((100% - var(--waterfall-artwork-top)) * 0.5005);
   background-image: url("https://assets.knighthacks.org/rocks-waterfall-top-desktop.webp");
 }
 
 .rocksBottom {
-  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.08125);
-  height: calc(var(--waterfall-width) * 2.0854167);
+  top: calc(
+    var(--waterfall-artwork-top) + (100% - var(--waterfall-artwork-top)) *
+      0.4995
+  );
+  height: calc((100% - var(--waterfall-artwork-top)) * 0.5005);
   background-image: url("https://assets.knighthacks.org/rocks-waterfall-bottom-desktop.webp");
 }
 
@@ -120,25 +124,30 @@
   z-index: 1;
   background-position: center top;
   background-repeat: no-repeat;
-  background-size: 100% auto;
+  background-size: 100% 100%;
   transform: translateX(var(--waterfall-stream-offset-x));
 }
 
 .waterfallOne {
   top: var(--waterfall-artwork-top);
-  height: calc(var(--waterfall-width) * 1.3916667);
+  height: calc((100% - var(--waterfall-artwork-top)) * 0.334);
   background-image: url("https://assets.knighthacks.org/waterfall-animated-one-desktop.webp");
 }
 
 .waterfallTwo {
-  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 1.3861111);
-  height: calc(var(--waterfall-width) * 1.3944444);
+  top: calc(
+    var(--waterfall-artwork-top) + (100% - var(--waterfall-artwork-top)) *
+      0.3326667
+  );
+  height: calc((100% - var(--waterfall-artwork-top)) * 0.3346667);
   background-image: url("https://assets.knighthacks.org/waterfall-animated-two-desktop.webp");
 }
 
 .waterfallThree {
-  top: calc(var(--waterfall-artwork-top) + var(--waterfall-width) * 2.775);
-  height: calc(var(--waterfall-width) * 1.3916667);
+  top: calc(
+    var(--waterfall-artwork-top) + (100% - var(--waterfall-artwork-top)) * 0.666
+  );
+  height: calc((100% - var(--waterfall-artwork-top)) * 0.334);
   background-image: url("https://assets.knighthacks.org/waterfall-animated-three-desktop.webp");
 }
 
@@ -148,7 +157,7 @@
   background-image: inherit;
   background-position: center top;
   background-repeat: no-repeat;
-  background-size: 100% auto;
+  background-size: 100% 100%;
   content: "";
   transform: translateX(calc(var(--waterfall-stream-offset-x) * -1));
   -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000000 76%);
@@ -241,6 +250,9 @@
   width: min(100%, 58rem);
   min-height: var(--waterfall-height);
   margin: 0 auto;
+  padding-bottom: calc(
+    var(--khix-waterfall-faq-overlap, 3rem) + clamp(2rem, 4vw, 4rem)
+  );
 }
 
 .sponsorPanel {
