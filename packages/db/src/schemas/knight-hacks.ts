@@ -186,9 +186,21 @@ export const Hackathon = createTable(
     generalHackerDiscordRoleId: t.varchar({ length: 20 }),
     /** Destination for this hackathon's event reminders. */
     eventAnnouncementChannelId: t.varchar({ length: 20 }),
+    /** Private organizer destination for hacker issue reports. NULL disables delivery. */
+    issueReportsChannelId: t.varchar({ length: 20 }),
+    /** Only this role may be pinged by the report bot. NULL sends without a ping. */
+    issueReportsRoleId: t.varchar({ length: 20 }),
   }),
   (t) => ({
     uniqueName: unique("knight_hacks_hackathon_name_unique").on(t.name),
+    validIssueReportsChannelId: check(
+      "knight_hacks_hackathon_issue_reports_channel_id_check",
+      sql`${t.issueReportsChannelId} IS NULL OR ${t.issueReportsChannelId} ~ '^[0-9]{17,20}$'`,
+    ),
+    validIssueReportsRoleId: check(
+      "knight_hacks_hackathon_issue_reports_role_id_check",
+      sql`${t.issueReportsRoleId} IS NULL OR ${t.issueReportsRoleId} ~ '^[0-9]{17,20}$'`,
+    ),
     validAnnouncementChannelId: check(
       "knight_hacks_hackathon_event_announcement_channel_id_check",
       sql`${t.eventAnnouncementChannelId} IS NULL OR ${t.eventAnnouncementChannelId} ~ '^[0-9]{17,20}$'`,

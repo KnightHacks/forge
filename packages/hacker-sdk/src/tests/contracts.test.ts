@@ -75,6 +75,7 @@ describe("Hacker participant v1 contract", () => {
       listPrintJobs: "query",
       removeResume: "mutation",
       removeStagedPrintFile: "mutation",
+      reportIssue: "mutation",
       searchJudgingProjects: "query",
       submitApplication: "mutation",
       submitPrintJob: "mutation",

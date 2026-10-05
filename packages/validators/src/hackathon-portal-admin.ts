@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+import { discordSnowflakeSchema } from "./discord-archive";
+
+const optionalReportDiscordId = z
+  .string()
+  .trim()
+  .nullable()
+  .transform((value) => (value === "" ? null : value))
+  .pipe(discordSnowflakeSchema.nullable());
+
+export const hackathonIssueReportingSchema = z
+  .object({
+    hackathonId: z.string().uuid(),
+    issueReportsChannelId: optionalReportDiscordId,
+    issueReportsRoleId: optionalReportDiscordId,
+  })
+  .strict();
+
 export const productionPortalOriginSchema = z
   .string()
   .trim()

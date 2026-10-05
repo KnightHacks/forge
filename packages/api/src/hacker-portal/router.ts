@@ -41,6 +41,7 @@ import {
   getPublicHackathon,
   getSchedule,
 } from "./reads";
+import { reportIssue } from "./reports";
 import { getResume, removeResume } from "./resume";
 import {
   createHackerPortalRouter,
@@ -73,6 +74,10 @@ async function judgingRequest<T>(request: () => Promise<T>): Promise<T> {
 export const hackerParticipantV1Router: ReturnType<
   typeof createHackerPortalRouter
 > = createHackerPortalRouter({
+  reportIssue: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.reportIssue)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.reportIssue)
+    .mutation(({ ctx, input }) => reportIssue(ctx, input)),
   getTeams: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.getTeams)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.getTeams)

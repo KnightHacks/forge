@@ -2097,7 +2097,7 @@ function ReportIssueNavAction() {
       await reportIssueMutation.mutateAsync(trimmedIssue);
       setIssue("");
       setIssueOpen(false);
-      toast.success("Discord support opened; your note is ready to paste.");
+      toast.success("Your report was sent to the organizer team.");
     } catch (error) {
       toast.error(getToastErrorMessage(error, "Could not report the issue."));
     }

@@ -414,6 +414,13 @@
       "when": 1790905156682,
       "tag": "0058_fresh_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791225616710,
+      "tag": "0059_melted_squadron_sinister",
+      "breakpoints": true
     }
   ]
 }

@@ -811,6 +811,24 @@ Do not display raw tRPC, storage, mail, Discord, database, or provider errors.
 
 ## React hook reference
 
+### Issue reports
+
+Call `client.reportIssue({ description, idempotencyKey })` to deliver a report
+to organizers. Retain the key when retrying the same draft. Only show success
+after the request resolves; configuration and delivery failures return an error.
+Applicants can submit descriptions up to 2000 characters, five times per ten
+minutes. Reports include the server-derived event, name and Discord user ID.
+
+In Blade, open **Hackathons**, select the event, and use **Hacker issue reports**
+to set its Discord channel ID and optional role to ping. Copy IDs using Discord
+Developer Mode. An empty channel disables reporting; an empty role sends without
+a ping. The bot needs View Channel, Send Messages and Embed Links in the private
+organizer channel, plus permission to mention the selected role. Only that role
+is allowed to ping; hacker-written mentions cannot notify other roles or users.
+
+Apply the committed database migration before deploying these APIs. New fields
+default to null; no reports are routed until an officer saves a destination.
+
 ### Read hooks
 
 | Hook                           | Result                                                                                       |
