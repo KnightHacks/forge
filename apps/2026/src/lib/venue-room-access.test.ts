@@ -1,0 +1,405 @@
+import { describe, expect, it } from "vitest";
+
+import type { HackerMapConfigurationDto as MapConfiguration } from "@forge/hacker-sdk";
+
+import {
+  findVenueRoom,
+  getVenueFloorPlan,
+  getVenueFloors,
+} from "./venue-floor-plans";
+import { parseVenueLocation, plotScheduleEvents } from "./venue-map";
+import { getRoomPresentation, isWayfindingLabel } from "./venue-room-access";
+
+const now = new Date("2026-10-01T12:00:00Z");
+const room = {
+  id: "110",
+  label: "110",
+  roomIds: ["110"],
+  x: 10,
+  y: 10,
+  path: "",
+};
+const open: MapConfiguration = { restrictionsEnabled: false, rooms: [] };
+const restricted: MapConfiguration = { restrictionsEnabled: true, rooms: [] };
+const permitted: MapConfiguration = {
+  restrictionsEnabled: true,
+  rooms: [{ buildingId: "ba1", roomNumber: "110", name: "Help desk" }],
+};
+function activity(start = now, end = new Date(now.getTime() + 3600_000)) {
+  return plotScheduleEvents(
+    [
+      {
+        id: "event",
+        location: "BA1 110",
+        name: "Workshop",
+        description: "",
+        tag: "",
+        points: 0,
+        purpose: "event",
+        startDateTime: start,
+        endDateTime: end,
+      },
+    ],
+    now,
+  );
+}
+
+describe("room presentation", () => {
+  it("identifies BA1 Atrium at its source anchor and uses it for event activity", () => {
+    const atrium = findVenueRoom("ba1", "BA1 Atrium");
+    expect(atrium?.floor).toBe(1);
+    if (!atrium) throw new Error("BA1 Atrium is missing");
+    expect(findVenueRoom("ba1", "atrium")?.room.id).toBe(atrium.room.id);
+    expect(atrium.room).toMatchObject({ geometry: "marker", roomIds: ["128"] });
+    expect(getRoomPresentation(atrium.room, "ba1", open, [], now)).toEqual({
+      state: "idle",
+      label: "128",
+      name: "BA1 Atrium",
+    });
+    const events = activity().map((event) => ({
+      ...event,
+      venueLocation: { buildingId: "ba1" as const, floor: 1, room: "Atrium" },
+    }));
+    expect(
+      getRoomPresentation(atrium.room, "ba1", open, events, now).state,
+    ).toBe("live");
+    expect(
+      getRoomPresentation(atrium.room, "ba1", restricted, events, now).state,
+    ).toBe("restricted");
+    expect(findVenueRoom("ba2", "Atrium")).toBeUndefined();
+  });
+  it("keeps BA1 atrium hallways and stairs unhatched without opening neighboring rooms", () => {
+    const floor = getVenueFloorPlan("ba1", 1);
+    const circulation =
+      floor?.rooms.filter((entry) => entry.kind === "circulation") ?? [];
+    expect(new Set(circulation.flatMap((entry) => entry.roomIds))).toEqual(
+      new Set(["101", "102", "127"]),
+    );
+    for (const entry of circulation) {
+      expect(getRoomPresentation(entry, "ba1", restricted, [], now)).toEqual({
+        state: "circulation",
+        label: entry.label,
+        name: null,
+      });
+    }
+    const neighbor = findVenueRoom("ba1", "123");
+    if (!neighbor) throw new Error("BA1 neighbor is missing");
+    expect(getRoomPresentation(neighbor.room, "ba1", open, [], now).state).toBe(
+      "restricted",
+    );
+  });
+  it.each([false, true])(
+    "never promotes rooms outside the event roster, with restrictions %s",
+    (restrictionsEnabled) => {
+      const unbooked = { ...room, roomIds: ["101"], label: "101" };
+      const configuration: MapConfiguration = {
+        restrictionsEnabled,
+        rooms: [{ buildingId: "ba1", roomNumber: "101", name: "Old room" }],
+      };
+      const events = activity().map((event) => ({
+        ...event,
+        venueLocation: { ...event.venueLocation, room: "101" },
+      }));
+      expect(
+        getRoomPresentation(unbooked, "ba1", configuration, events, now),
+      ).toEqual({
+        state: "restricted",
+        label: "101",
+        name: null,
+      });
+    },
+  );
+  it("marks unverified room envelopes unavailable instead of treating them as hallways", () => {
+    expect(
+      getRoomPresentation(
+        { ...room, roomIds: [], reviewId: "HEC-1-U01", label: "Lecture hall" },
+        "hec",
+        open,
+        [],
+        now,
+      ),
+    ).toEqual({
+      state: "restricted",
+      label: null,
+      name: null,
+    });
+  });
+  it.each(["STAIR", "LIFT"])(
+    "keeps verified %s envelopes usable even without official room numbers",
+    (label) => {
+      expect(
+        getRoomPresentation(
+          { ...room, roomIds: [], reviewId: "ENG2-1-U01", label },
+          "ucf-91",
+          restricted,
+          [],
+          now,
+        ),
+      ).toEqual({ state: "circulation", label, name: null });
+    },
+  );
+  it("retains shared room numbers but ignores activity in unbooked aliases", () => {
+    const shared = { ...room, roomIds: ["110", "101"] };
+    const events = activity().map((event) => ({
+      ...event,
+      venueLocation: { ...event.venueLocation, room: "101" },
+    }));
+    expect(getRoomPresentation(shared, "ba1", open, events, now)).toMatchObject(
+      {
+        state: "idle",
+        label: "110 / 101",
+      },
+    );
+  });
+  it("distinguishes wayfinding from room numbers, review IDs and room names", () => {
+    for (const label of [
+      "MAIN HALL",
+      "STAIR",
+      "LIFT",
+      "MEN",
+      "WOMEN",
+      "ENGINEERING ATRIUM · CHECK-IN",
+    ])
+      expect(isWayfindingLabel(label)).toBe(true);
+    for (const label of ["381G", "U01*", "Administration", "Ginsburg Lounge"])
+      expect(isWayfindingLabel(label)).toBe(false);
+  });
+  it("preserves unlabelled structural geometry without inventing room access", () => {
+    expect(
+      getRoomPresentation(
+        { ...room, label: "", roomIds: [] },
+        "ba1",
+        restricted,
+        [],
+        now,
+      ),
+    ).toEqual({ state: "circulation", label: null, name: null });
+  });
+  it("defaults event rooms to gray and retains numbers when unavailable", () => {
+    expect(getRoomPresentation(room, "ba1", open, [], now)).toMatchObject({
+      state: "idle",
+      label: "110",
+    });
+    expect(
+      getRoomPresentation(room, "ba1", restricted, activity(), now),
+    ).toEqual({ state: "restricted", label: "110", name: null });
+    expect(getRoomPresentation(room, "ba1", permitted, [], now)).toMatchObject({
+      state: "idle",
+      name: "Help desk",
+    });
+  });
+  it("bathroom metadata wins over restriction and activity", () => {
+    expect(
+      getRoomPresentation(
+        { ...room, kind: "bathroom" },
+        "ba1",
+        restricted,
+        activity(),
+        now,
+      ).state,
+    ).toBe("bathroom");
+  });
+  it("shows both source numbers for shared rooms even with organizer restrictions", () => {
+    const sharedRoom = { ...room, label: "119/121", roomIds: ["119", "121"] };
+    expect(getRoomPresentation(sharedRoom, "ba1", open, [], now).label).toBe(
+      "119 / 121",
+    );
+    expect(
+      getRoomPresentation(
+        sharedRoom,
+        "ba1",
+        {
+          restrictionsEnabled: true,
+          rooms: [{ buildingId: "ba1", roomNumber: "121", name: "Workshop" }],
+        },
+        [],
+        now,
+      ).label,
+    ).toBe("119 / 121");
+  });
+  it("uses the inclusive hour boundary, ignores ended activity, and prioritizes live", () => {
+    expect(
+      getRoomPresentation(
+        room,
+        "ba1",
+        permitted,
+        activity(new Date(now.getTime() + 3600_000)),
+        now,
+      ).state,
+    ).toBe("upcoming");
+    expect(
+      getRoomPresentation(
+        room,
+        "ba1",
+        permitted,
+        activity(new Date(now.getTime() + 3600_001)),
+        now,
+      ).state,
+    ).toBe("idle");
+    expect(
+      getRoomPresentation(
+        room,
+        "ba1",
+        permitted,
+        activity(new Date(now.getTime() - 3600_000), now),
+        now,
+      ).state,
+    ).toBe("idle");
+    const events = [
+      ...activity(new Date(now.getTime() + 1800_000)),
+      ...activity(),
+    ];
+    expect(getRoomPresentation(room, "ba1", permitted, events, now).state).toBe(
+      "live",
+    );
+    expect(
+      getRoomPresentation(room, "ba1", permitted, [...events].reverse(), now)
+        .state,
+    ).toBe("live");
+  });
+  it("preserves all verified numbers on a combined room shape", () => {
+    expect(
+      getRoomPresentation(
+        { ...room, roomIds: ["102", "110"] },
+        "ba1",
+        permitted,
+        [],
+        now,
+      ).label,
+    ).toBe("102 / 110");
+  });
+  it("keeps stairs and elevators usable with restrictions", () => {
+    expect(
+      getRoomPresentation(
+        { ...room, id: "STAIRS", roomIds: ["STAIRS"] },
+        "ba1",
+        restricted,
+        [],
+        now,
+      ).state,
+    ).toBe("circulation");
+  });
+});
+
+describe("floor navigation and bathroom evidence", () => {
+  it("finds mapped rooms across supported floors without assuming a floor from their number", () => {
+    expect(findVenueRoom("ucf-91", " 207 ")).toMatchObject({
+      floor: 2,
+      room: { id: "207" },
+    });
+    expect(findVenueRoom("hec", "101")?.floor).toBe(1);
+    expect(getVenueFloors("hec")).toEqual([1]);
+    expect(getVenueFloorPlan("hec", 2)).toBeUndefined();
+  });
+  it("classifies only bathrooms supported by existing ENG2 labels", () => {
+    expect(
+      getVenueFloorPlan("ucf-91", 1)?.rooms.find(
+        (candidate) => candidate.id === "108",
+      )?.kind,
+    ).toBe("bathroom");
+    expect(
+      getVenueFloorPlan("ucf-91", 2)
+        ?.rooms.filter((candidate) => candidate.kind === "bathroom")
+        .map((candidate) => candidate.id),
+    ).toEqual(["208", "207"]);
+    expect(
+      getVenueFloorPlan("ucf-91", 1)?.rooms.find(
+        (candidate) => candidate.id === "107",
+      )?.kind,
+    ).toBeUndefined();
+  });
+  it.each([
+    "HEC 101",
+    "L3Harris Engineering Center 101",
+    "Harris Engineering Center 101",
+  ])("recognizes %s", (location) => {
+    expect(parseVenueLocation(location)).toEqual({
+      buildingId: "hec",
+      floor: 1,
+      room: "101",
+    });
+  });
+});
+
+describe("event-roster aliases preserve room access", () => {
+  it.each([
+    ["ba1", "107", 1],
+    ["ba1", "239", 2],
+    ["hec", "101", 1],
+  ] as const)(
+    "includes confirmed room %s %s on floor %i",
+    (buildingId, number, floor) => {
+      const match = findVenueRoom(buildingId, number);
+      expect(match?.floor).toBe(floor);
+      expect(match).toBeDefined();
+      if (!match) return;
+      expect(
+        getRoomPresentation(match.room, buildingId, open, [], now),
+      ).toMatchObject({ state: "idle", label: number });
+    },
+  );
+  it("includes the added ENG2 103 without opening ENG1 103", () => {
+    const addedRoom = findVenueRoom("ucf-91", "0103");
+    expect(addedRoom?.floor).toBe(1);
+    expect(addedRoom).toBeDefined();
+    if (!addedRoom) return;
+    expect(
+      getRoomPresentation(addedRoom.room, "ucf-91", open, [], now),
+    ).toMatchObject({ state: "idle", label: "103" });
+    expect(
+      getRoomPresentation(addedRoom.room, "eng1", open, [], now),
+    ).toMatchObject({ state: "restricted", label: "103" });
+  });
+  it("matches padded organizer room numbers without changing their displayed number", () => {
+    const config: MapConfiguration = {
+      restrictionsEnabled: true,
+      rooms: [{ buildingId: "ba1", roomNumber: "0110", name: null }],
+    };
+    expect(getRoomPresentation(room, "ba1", config, [], now)).toMatchObject({
+      state: "idle",
+      label: "110",
+    });
+  });
+
+  it("allows all ballroom sections only when the whole ballroom was permitted", () => {
+    const section = (number: string) => ({
+      ...room,
+      roomIds: [number],
+      label: number,
+    });
+    const whole: MapConfiguration = {
+      restrictionsEnabled: true,
+      rooms: [
+        { buildingId: "student-union", roomNumber: "218ABCD", name: null },
+      ],
+    };
+    for (const number of ["218", "218A", "218B", "218C", "218D"]) {
+      expect(
+        getRoomPresentation(section(number), "student-union", whole, [], now),
+      ).toMatchObject({ state: "idle", label: number });
+    }
+    const partial: MapConfiguration = {
+      restrictionsEnabled: true,
+      rooms: [{ buildingId: "student-union", roomNumber: "218A", name: null }],
+    };
+    expect(
+      getRoomPresentation(section("218A"), "student-union", partial, [], now)
+        .state,
+    ).toBe("idle");
+    for (const number of ["218", "218B", "218C", "218D"]) {
+      expect(
+        getRoomPresentation(section(number), "student-union", partial, [], now),
+      ).toEqual({ state: "restricted", label: number, name: null });
+    }
+  });
+
+  it("shows official SU names while restrictions still hide unavailable room names", () => {
+    const garden = { ...room, roomIds: ["221"], label: "221" };
+    expect(
+      getRoomPresentation(garden, "student-union", open, [], now).name,
+    ).toBe("Garden Key Meeting Room");
+    expect(
+      getRoomPresentation(garden, "student-union", restricted, [], now).name,
+    ).toBeNull();
+  });
+});

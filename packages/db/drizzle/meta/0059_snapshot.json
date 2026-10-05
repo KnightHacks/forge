@@ -1,5 +1,5 @@
 {
-  "id": "054594fb-0938-47b5-8a6b-f349c05dcb2e",
+  "id": "0a8a810d-3a8e-4412-9d93-4c33303744e0",
   "prevId": "39a79c37-c270-43f3-9dae-c30eaf57e853",
   "version": "7",
   "dialect": "postgresql",
@@ -5926,18 +5926,6 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false
-        },
-        "issue_reports_channel_id": {
-          "name": "issue_reports_channel_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "issue_reports_role_id": {
-          "name": "issue_reports_role_id",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -5952,14 +5940,6 @@
       },
       "policies": {},
       "checkConstraints": {
-        "knight_hacks_hackathon_issue_reports_channel_id_check": {
-          "name": "knight_hacks_hackathon_issue_reports_channel_id_check",
-          "value": "\"knight_hacks_hackathon\".\"issue_reports_channel_id\" IS NULL OR \"knight_hacks_hackathon\".\"issue_reports_channel_id\" ~ '^[0-9]{17,20}$'"
-        },
-        "knight_hacks_hackathon_issue_reports_role_id_check": {
-          "name": "knight_hacks_hackathon_issue_reports_role_id_check",
-          "value": "\"knight_hacks_hackathon\".\"issue_reports_role_id\" IS NULL OR \"knight_hacks_hackathon\".\"issue_reports_role_id\" ~ '^[0-9]{17,20}$'"
-        },
         "knight_hacks_hackathon_event_announcement_channel_id_check": {
           "name": "knight_hacks_hackathon_event_announcement_channel_id_check",
           "value": "\"knight_hacks_hackathon\".\"event_announcement_channel_id\" IS NULL OR \"knight_hacks_hackathon\".\"event_announcement_channel_id\" ~ '^[0-9]{17,20}$'"
@@ -6649,6 +6629,56 @@
           "columnsFrom": ["project_inventory_locked_by_user_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.knight_hacks_hackathon_map_configuration": {
+      "name": "knight_hacks_hackathon_map_configuration",
+      "schema": "",
+      "columns": {
+        "hackathon_id": {
+          "name": "hackathon_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "restrictions_enabled": {
+          "name": "restrictions_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "rooms": {
+          "name": "rooms",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "knight_hacks_hackathon_map_configuration_hackathon_id_knight_hacks_hackathon_id_fk": {
+          "name": "knight_hacks_hackathon_map_configuration_hackathon_id_knight_hacks_hackathon_id_fk",
+          "tableFrom": "knight_hacks_hackathon_map_configuration",
+          "tableTo": "knight_hacks_hackathon",
+          "columnsFrom": ["hackathon_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

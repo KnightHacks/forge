@@ -75,6 +75,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "hackathon.removeClass",
   "hackathon.setStatusEmail",
   "hackathon.upsertPortalClient",
+  "hackathon.saveMapConfiguration",
   "hackathon.update",
   "hackathon.updateClass",
   "hackathon-event.checkInHacker",

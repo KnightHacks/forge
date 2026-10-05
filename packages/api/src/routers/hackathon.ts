@@ -9,6 +9,7 @@ import {
   Hackathon,
   HackathonAgreementDefinition,
   HackathonClass,
+  HackathonMapConfiguration,
   HackathonPortalAuthorizationCode,
   HackathonPortalClient,
   HackathonPortalSession,
@@ -35,6 +36,7 @@ import {
   hackathonStatusEmailClearSchema,
   hackathonStatusEmailSetSchema,
   hackathonUpdateSchema,
+  saveMapConfigurationSchema,
 } from "@forge/validators";
 
 import type { AuditChangeInput } from "../utils/audit/service";
@@ -392,8 +394,8 @@ export const hackathonRouter = createTRPCRouter({
     assertCanManagePlatformConfig(ctx.session.permissions);
     const hackathon = await requireHackathon(input.id);
 
-    const [statusEmails, classes, portalClient, agreements] = await Promise.all(
-      [
+    const [statusEmails, classes, portalClient, agreements, mapConfiguration] =
+      await Promise.all([
         db
           .select({
             status: HackathonStatusEmail.status,
@@ -464,8 +466,10 @@ export const hackathonRouter = createTRPCRouter({
             asc(HackathonAgreementDefinition.key),
             desc(HackathonAgreementDefinition.createdAt),
           ),
-      ],
-    );
+        db.query.HackathonMapConfiguration.findFirst({
+          where: eq(HackathonMapConfiguration.hackathonId, hackathon.id),
+        }),
+      ]);
 
     // Reads zero until check-in exists to assign anyone. The screen says so
     // rather than implying the split is live.
@@ -505,11 +509,72 @@ export const hackathonRouter = createTRPCRouter({
       hackathon,
       isConfigured: isConfigured(statusEmails.length),
       portalClient: portalClient ?? null,
+      mapConfiguration: mapConfiguration ?? {
+        restrictionsEnabled: false,
+        rooms: [],
+        updatedAt: null,
+      },
       agreements,
       sendingStatuses: HACKATHON_SENDING_STATUSES,
       statusEmails,
     };
   }),
+
+  /** Saves the complete room list and toggle as one officer-controlled operation. */
+  saveMapConfiguration: permProcedure
+    .input(saveMapConfigurationSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        // Serialize saves against hackathon deletion and other map saves.
+        const [hackathon] = await tx
+          .select({ id: Hackathon.id, displayName: Hackathon.displayName })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!hackathon)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        const values = { ...input, updatedAt: new Date() };
+        const [saved] = await tx
+          .insert(HackathonMapConfiguration)
+          .values(values)
+          .onConflictDoUpdate({
+            target: HackathonMapConfiguration.hackathonId,
+            set: values,
+          })
+          .returning();
+        if (!saved)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Could not save map room access.",
+          });
+        await createAdminAuditEvent(
+          {
+            actionKey: "hackathon.map_configuration_updated",
+            actor: auditActor,
+            metadata: {
+              restrictionsEnabled: saved.restrictionsEnabled,
+              roomCount: saved.rooms.length,
+            },
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathon.id,
+                targetLabel: hackathon.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return saved;
+      });
+    }),
 
   /** Officer-only. Creates or updates the one public portal registration for a hackathon. */
   upsertPortalClient: permProcedure

@@ -500,6 +500,11 @@ export const AUDIT_ACTION_CATALOG = {
       "issueReportsRoleId",
     ],
   ),
+  "hackathon.map_configuration_updated": policy(
+    "hackathons",
+    "Updated map room access",
+    ["restrictionsEnabled", "roomCount"],
+  ),
   "hackathon.deleted": policy("hackathons", "Deleted hackathon"),
   "project.inventory_imported": policy(
     "hackathons",

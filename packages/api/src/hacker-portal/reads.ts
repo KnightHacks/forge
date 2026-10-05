@@ -1,14 +1,17 @@
+import type { MapConfiguration } from "@forge/validators";
 import { and, asc, eq, isNull } from "@forge/db";
 import { db } from "@forge/db/client";
 import { User } from "@forge/db/schemas/auth";
 import {
   Event,
   HackathonClass,
+  HackathonMapConfiguration,
   HackerAttendee,
   HackerEventAttendee,
   HackerProfile,
   HackerProfileRevision,
 } from "@forge/db/schemas/knight-hacks";
+import { getHackerMapAccess } from "@forge/hacker-sdk";
 
 import type { HackerPortalContext } from "./trpc";
 import {
@@ -232,8 +235,37 @@ export async function requireApplicationWithStatuses(
   return application;
 }
 
+/** Enforce participant eligibility before reading the portal's configuration. */
+export async function getMapConfiguration(
+  ctx: AuthenticatedPortalContext,
+): Promise<MapConfiguration> {
+  const application = await requireApplicationWithStatuses(ctx, [
+    "confirmed",
+    "checkedin",
+  ]);
+  const hackathon = await requirePortalHackathon(ctx.session.hackathonId);
+  if (
+    getHackerMapAccess({
+      startsAt: hackathon.startDate,
+      status: application.status,
+      timeZone: hackathon.timezone,
+    }) !== "available"
+  ) {
+    portalFailure("FORBIDDEN", "The map opens on the first day of the event.", {
+      trpcCode: "FORBIDDEN",
+    });
+  }
+  const configuration = await db.query.HackathonMapConfiguration.findFirst({
+    where: eq(HackathonMapConfiguration.hackathonId, ctx.session.hackathonId),
+  });
+  return {
+    restrictionsEnabled: configuration?.restrictionsEnabled ?? false,
+    rooms: configuration?.rooms ?? [],
+  };
+}
+
 export async function getSchedule(ctx: AuthenticatedPortalContext) {
-  await requireApplicationWithStatuses(ctx, ["checkedin"]);
+  await requireApplicationWithStatuses(ctx, ["confirmed", "checkedin"]);
   const events = await db
     .select({
       description: Event.description,

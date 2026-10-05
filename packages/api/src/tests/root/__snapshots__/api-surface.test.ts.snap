@@ -152,6 +152,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "hackathon.list",
   "hackathon.remove",
   "hackathon.removeClass",
+  "hackathon.saveMapConfiguration",
   "hackathon.setStatusEmail",
   "hackathon.update",
   "hackathon.updateClass",

@@ -14,6 +14,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
+import type { PermittedRoom } from "@forge/consts";
 import { CAREER, EVENTS, FORMS, GUILD, ISSUE, PRINTING } from "@forge/consts";
 
 import { Roles, Session, User } from "./auth";
@@ -218,6 +219,23 @@ export const Hackathon = createTable(
 
 export type InsertHackathon = typeof Hackathon.$inferInsert;
 export type SelectHackathon = typeof Hackathon.$inferSelect;
+
+/** Organizer-controlled room presentation, independent of judging inventory. */
+export const HackathonMapConfiguration = createTable(
+  "hackathon_map_configuration",
+  (t) => ({
+    hackathonId: t
+      .uuid()
+      .primaryKey()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    restrictionsEnabled: t.boolean().notNull().default(false),
+    rooms: t.jsonb().$type<PermittedRoom[]>().notNull().default([]),
+    updatedAt: t
+      .timestamp({ mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  }),
+);
 
 /**
  * A hackathon's own hacker groupings, replacing the six theme-specific names

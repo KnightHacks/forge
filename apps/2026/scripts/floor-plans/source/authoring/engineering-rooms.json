@@ -1,0 +1,8266 @@
+[
+  {
+    "building": "ENG1",
+    "floor": 1,
+    "width": 720,
+    "height": 936,
+    "rooms": [
+      {
+        "label": "107F",
+        "points": [
+          [79, 113],
+          [135, 113],
+          [135, 191],
+          [79, 191]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107E",
+        "points": [
+          [135, 113],
+          [207, 113],
+          [207, 158],
+          [135, 158]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107J",
+        "points": [
+          [207, 113],
+          [247, 113],
+          [247, 158],
+          [207, 158]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107D",
+        "points": [
+          [247, 113],
+          [302, 113],
+          [302, 158],
+          [247, 158]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107C",
+        "points": [
+          [247, 158],
+          [302, 158],
+          [302, 193],
+          [247, 193]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107B",
+        "points": [
+          [247, 193],
+          [302, 193],
+          [302, 237],
+          [247, 237]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107A",
+        "points": [
+          [247, 237],
+          [302, 237],
+          [302, 282],
+          [247, 282]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107G",
+        "points": [
+          [79, 191],
+          [135, 191],
+          [135, 237],
+          [79, 237]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107H",
+        "points": [
+          [79, 237],
+          [135, 237],
+          [135, 282],
+          [79, 282]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "108",
+        "points": [
+          [79, 282],
+          [212, 282],
+          [212, 327],
+          [79, 327]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "108",
+        "label_status": "source-number"
+      },
+      {
+        "label": "108A",
+        "points": [
+          [79, 327],
+          [156, 327],
+          [156, 373],
+          [79, 373]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "108A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "109",
+        "points": [
+          [156, 327],
+          [212, 327],
+          [212, 373],
+          [156, 373]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "109",
+        "label_status": "source-number"
+      },
+      {
+        "label": "110",
+        "points": [
+          [156, 373],
+          [212, 373],
+          [212, 407],
+          [156, 407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "110",
+        "label_status": "source-number"
+      },
+      {
+        "label": "111",
+        "points": [
+          [156, 407],
+          [212, 407],
+          [212, 438],
+          [156, 438]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "111",
+        "label_status": "source-number"
+      },
+      {
+        "label": "112",
+        "points": [
+          [156, 438],
+          [212, 438],
+          [212, 473],
+          [156, 473]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "112",
+        "label_status": "source-number"
+      },
+      {
+        "label": "113",
+        "points": [
+          [156, 473],
+          [212, 473],
+          [212, 506],
+          [156, 506]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "113",
+        "label_status": "source-number"
+      },
+      {
+        "label": "114",
+        "points": [
+          [156, 506],
+          [212, 506],
+          [212, 540],
+          [156, 540]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "114",
+        "label_status": "source-number"
+      },
+      {
+        "label": "115",
+        "points": [
+          [156, 540],
+          [212, 540],
+          [212, 573],
+          [156, 573]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "115",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116",
+        "points": [
+          [156, 573],
+          [212, 573],
+          [212, 608],
+          [156, 608]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116",
+        "label_status": "source-number"
+      },
+      {
+        "label": "117",
+        "points": [
+          [156, 608],
+          [212, 608],
+          [212, 643],
+          [156, 643]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "117",
+        "label_status": "source-number"
+      },
+      {
+        "label": "118",
+        "points": [
+          [156, 643],
+          [212, 643],
+          [212, 678],
+          [156, 678]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "118",
+        "label_status": "source-number"
+      },
+      {
+        "label": "119/120",
+        "points": [
+          [156, 678],
+          [212, 678],
+          [212, 743],
+          [156, 743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "119/120",
+        "label_status": "source-number"
+      },
+      {
+        "label": "157C",
+        "points": [
+          [244, 325],
+          [268, 325],
+          [268, 397],
+          [244, 397]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "157C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "157B",
+        "points": [
+          [268, 325],
+          [290, 325],
+          [290, 397],
+          [268, 397]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "157B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "157A",
+        "points": [
+          [290, 325],
+          [312, 325],
+          [312, 397],
+          [290, 397]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "157A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "157",
+        "points": [
+          [244, 397],
+          [312, 397],
+          [312, 528],
+          [244, 528]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "157",
+        "label_status": "source-number"
+      },
+      {
+        "label": "159",
+        "points": [
+          [244, 528],
+          [312, 528],
+          [312, 618],
+          [244, 618]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "159",
+        "label_status": "source-number"
+      },
+      {
+        "label": "163",
+        "points": [
+          [244, 618],
+          [312, 618],
+          [312, 649],
+          [244, 649]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "163",
+        "label_status": "source-number"
+      },
+      {
+        "label": "163A",
+        "points": [
+          [244, 649],
+          [270, 649],
+          [270, 681],
+          [244, 681]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "163A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "163D",
+        "points": [
+          [270, 649],
+          [312, 649],
+          [312, 681],
+          [270, 681]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "163D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "163B",
+        "points": [
+          [244, 681],
+          [274, 681],
+          [274, 709],
+          [244, 709]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "163B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "163C",
+        "points": [
+          [274, 681],
+          [312, 681],
+          [312, 709],
+          [274, 709]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "163C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "176",
+        "points": [
+          [319, 325],
+          [377, 325],
+          [377, 371],
+          [319, 371]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "176",
+        "label_status": "source-number"
+      },
+      {
+        "label": "174",
+        "points": [
+          [319, 371],
+          [377, 371],
+          [377, 455],
+          [319, 455]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "174",
+        "label_status": "source-number"
+      },
+      {
+        "label": "172",
+        "points": [
+          [319, 455],
+          [377, 455],
+          [377, 495],
+          [319, 495]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "172",
+        "label_status": "source-number"
+      },
+      {
+        "label": "171",
+        "points": [
+          [319, 495],
+          [377, 495],
+          [377, 539],
+          [319, 539]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "171",
+        "label_status": "source-number"
+      },
+      {
+        "label": "168",
+        "points": [
+          [319, 539],
+          [377, 539],
+          [377, 709],
+          [319, 709]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "168",
+        "label_status": "source-number"
+      },
+      {
+        "label": "153",
+        "points": [
+          [400, 373],
+          [458, 373],
+          [458, 406],
+          [400, 406]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "153",
+        "label_status": "source-number"
+      },
+      {
+        "label": "152",
+        "points": [
+          [400, 406],
+          [458, 406],
+          [458, 440],
+          [400, 440]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "152",
+        "label_status": "source-number"
+      },
+      {
+        "label": "151",
+        "points": [
+          [400, 440],
+          [458, 440],
+          [458, 475],
+          [400, 475]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "151",
+        "label_status": "source-number"
+      },
+      {
+        "label": "150",
+        "points": [
+          [400, 475],
+          [458, 475],
+          [458, 508],
+          [400, 508]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "150",
+        "label_status": "source-number"
+      },
+      {
+        "label": "149",
+        "points": [
+          [400, 508],
+          [458, 508],
+          [458, 543],
+          [400, 543]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "149",
+        "label_status": "source-number"
+      },
+      {
+        "label": "148",
+        "points": [
+          [400, 543],
+          [458, 543],
+          [458, 577],
+          [400, 577]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "148",
+        "label_status": "source-number"
+      },
+      {
+        "label": "147",
+        "points": [
+          [400, 577],
+          [458, 577],
+          [458, 611],
+          [400, 611]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "147",
+        "label_status": "source-number"
+      },
+      {
+        "label": "146",
+        "points": [
+          [400, 611],
+          [458, 611],
+          [458, 645],
+          [400, 645]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "146",
+        "label_status": "source-number"
+      },
+      {
+        "label": "145",
+        "points": [
+          [400, 645],
+          [458, 645],
+          [458, 679],
+          [400, 679]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "145",
+        "label_status": "source-number"
+      },
+      {
+        "label": "144",
+        "points": [
+          [400, 679],
+          [458, 679],
+          [458, 713],
+          [400, 713]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "144",
+        "label_status": "source-number"
+      },
+      {
+        "label": "122",
+        "points": [
+          [166, 788],
+          [223, 788],
+          [223, 868],
+          [166, 868]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "122",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-1-U01",
+        "points": [
+          [166, 868],
+          [223, 868],
+          [223, 913],
+          [166, 913]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-1-U02",
+        "points": [
+          [244, 768],
+          [278, 768],
+          [278, 800],
+          [244, 800]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-1-U03",
+        "points": [
+          [278, 768],
+          [312, 768],
+          [312, 800],
+          [278, 800]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "127",
+        "points": [
+          [244, 800],
+          [312, 800],
+          [312, 861],
+          [244, 861]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "127",
+        "label_status": "source-number"
+      },
+      {
+        "label": "124",
+        "points": [
+          [244, 861],
+          [312, 861],
+          [312, 913],
+          [244, 913]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "124",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-1-U04",
+        "points": [
+          [223, 861],
+          [244, 861],
+          [244, 913],
+          [223, 913]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "CLEAN",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "131",
+        "points": [
+          [319, 768],
+          [338, 768],
+          [338, 802],
+          [319, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "131",
+        "label_status": "source-number"
+      },
+      {
+        "label": "132",
+        "points": [
+          [338, 768],
+          [354, 768],
+          [354, 802],
+          [338, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "132",
+        "label_status": "source-number"
+      },
+      {
+        "label": "133",
+        "points": [
+          [354, 768],
+          [377, 768],
+          [377, 802],
+          [354, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "133",
+        "label_status": "source-number"
+      },
+      {
+        "label": "136A",
+        "points": [
+          [319, 802],
+          [377, 802],
+          [377, 823],
+          [319, 823]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "136A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "136",
+        "points": [
+          [319, 823],
+          [377, 823],
+          [377, 913],
+          [319, 913]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "136",
+        "label_status": "source-number"
+      },
+      {
+        "label": "142",
+        "points": [
+          [400, 768],
+          [458, 768],
+          [458, 802],
+          [400, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "142",
+        "label_status": "source-number"
+      },
+      {
+        "label": "141",
+        "points": [
+          [400, 802],
+          [458, 802],
+          [458, 825],
+          [400, 825]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "141",
+        "label_status": "source-number"
+      },
+      {
+        "label": "140",
+        "points": [
+          [400, 825],
+          [458, 825],
+          [458, 848],
+          [400, 848]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "140",
+        "label_status": "source-number"
+      },
+      {
+        "label": "139",
+        "points": [
+          [400, 848],
+          [458, 848],
+          [458, 870],
+          [400, 870]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "139",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-1-U05",
+        "points": [
+          [400, 870],
+          [458, 870],
+          [458, 913],
+          [400, 913]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U05*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "189A",
+        "points": [
+          [366, 67],
+          [412, 67],
+          [412, 102],
+          [366, 102]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "189A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "187",
+        "points": [
+          [366, 102],
+          [460, 102],
+          [460, 159],
+          [366, 159]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "187",
+        "label_status": "source-number"
+      },
+      {
+        "label": "188",
+        "points": [
+          [493, 68],
+          [603, 68],
+          [603, 159],
+          [493, 159]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "188",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-1-U06",
+        "points": [
+          [493, 159],
+          [603, 159],
+          [603, 194],
+          [493, 194]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U06*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "183",
+        "points": [
+          [493, 194],
+          [603, 194],
+          [603, 224],
+          [567, 224],
+          [567, 260],
+          [524, 260],
+          [524, 231],
+          [493, 231]
+        ],
+        "at": [550, 213],
+        "kind": "room",
+        "review": false,
+        "source_label": "183",
+        "label_status": "source-number"
+      },
+      {
+        "label": "184",
+        "points": [
+          [493, 231],
+          [524, 231],
+          [524, 260],
+          [493, 260]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "184",
+        "label_status": "source-number"
+      },
+      {
+        "label": "183A",
+        "points": [
+          [567, 224],
+          [603, 224],
+          [603, 260],
+          [567, 260]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "183A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "180B",
+        "points": [
+          [493, 282],
+          [603, 282],
+          [603, 328],
+          [493, 328]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "180B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-1-U07",
+        "points": [
+          [493, 328],
+          [603, 328],
+          [603, 373],
+          [493, 373]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "ELECTRICAL",
+        "display_label": "U07*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-1-U08",
+        "points": [
+          [303, 136],
+          [336, 136],
+          [336, 228],
+          [303, 228]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U08*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-1-U09",
+        "points": [
+          [402, 260],
+          [458, 260],
+          [458, 295],
+          [402, 295]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U09*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-1-U10",
+        "points": [
+          [132, 744],
+          [190, 744],
+          [190, 766],
+          [132, 766]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U10*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "107",
+        "points": [],
+        "at": [192, 214],
+        "kind": "label",
+        "review": false,
+        "source_label": "107",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "Electrical-room perimeter and 157A/B/C partitions are faint; verify against the source. 119/120 is one shared source room."
+    ]
+  },
+  {
+    "building": "ENG1",
+    "floor": 2,
+    "width": 1376,
+    "height": 1788,
+    "rooms": [
+      {
+        "label": "207E",
+        "points": [
+          [65, 143],
+          [180, 143],
+          [180, 234],
+          [65, 234]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207D",
+        "points": [
+          [180, 143],
+          [363, 143],
+          [363, 234],
+          [180, 234]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207C",
+        "points": [
+          [363, 143],
+          [497, 143],
+          [497, 234],
+          [363, 234]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207B",
+        "points": [
+          [497, 143],
+          [654, 143],
+          [654, 234],
+          [497, 234]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207F",
+        "points": [
+          [65, 234],
+          [180, 234],
+          [180, 394],
+          [65, 394]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207G",
+        "points": [
+          [65, 394],
+          [180, 394],
+          [180, 484],
+          [65, 484]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207A",
+        "points": [
+          [544, 234],
+          [654, 234],
+          [654, 391],
+          [544, 391]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207I",
+        "points": [
+          [225, 302],
+          [316, 302],
+          [316, 391],
+          [225, 391]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207I",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207J",
+        "points": [
+          [316, 302],
+          [408, 302],
+          [408, 391],
+          [316, 391]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207K",
+        "points": [
+          [408, 302],
+          [500, 302],
+          [500, 391],
+          [408, 391]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207H",
+        "points": [
+          [225, 391],
+          [408, 391],
+          [408, 484],
+          [225, 484]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "208A",
+        "points": [
+          [65, 484],
+          [408, 484],
+          [408, 575],
+          [65, 575]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "208A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "208",
+        "points": [
+          [65, 575],
+          [387, 575],
+          [387, 668],
+          [65, 668]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "208",
+        "label_status": "source-number"
+      },
+      {
+        "label": "209",
+        "points": [
+          [387, 575],
+          [502, 575],
+          [502, 668],
+          [387, 668]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "209",
+        "label_status": "source-number"
+      },
+      {
+        "label": "210",
+        "points": [
+          [387, 668],
+          [502, 668],
+          [502, 733],
+          [387, 733]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "210",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211",
+        "points": [
+          [387, 733],
+          [502, 733],
+          [502, 803],
+          [387, 803]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211",
+        "label_status": "source-number"
+      },
+      {
+        "label": "212",
+        "points": [
+          [387, 803],
+          [502, 803],
+          [502, 870],
+          [387, 870]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "212",
+        "label_status": "source-number"
+      },
+      {
+        "label": "213",
+        "points": [
+          [387, 870],
+          [502, 870],
+          [502, 938],
+          [387, 938]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "213",
+        "label_status": "source-number"
+      },
+      {
+        "label": "214",
+        "points": [
+          [387, 938],
+          [502, 938],
+          [502, 1008],
+          [387, 1008]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "214",
+        "label_status": "source-number"
+      },
+      {
+        "label": "215",
+        "points": [
+          [387, 1008],
+          [502, 1008],
+          [502, 1076],
+          [387, 1076]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "215",
+        "label_status": "source-number"
+      },
+      {
+        "label": "216",
+        "points": [
+          [387, 1076],
+          [502, 1076],
+          [502, 1144],
+          [387, 1144]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "216",
+        "label_status": "source-number"
+      },
+      {
+        "label": "217",
+        "points": [
+          [387, 1144],
+          [502, 1144],
+          [502, 1213],
+          [387, 1213]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "217",
+        "label_status": "source-number"
+      },
+      {
+        "label": "218",
+        "points": [
+          [387, 1213],
+          [502, 1213],
+          [502, 1283],
+          [387, 1283]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "218",
+        "label_status": "source-number"
+      },
+      {
+        "label": "219/220",
+        "points": [
+          [387, 1283],
+          [502, 1283],
+          [502, 1421],
+          [387, 1421]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "219/220",
+        "label_status": "source-number"
+      },
+      {
+        "label": "257",
+        "points": [
+          [548, 574],
+          [680, 574],
+          [680, 797],
+          [548, 797]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "257",
+        "label_status": "source-number"
+      },
+      {
+        "label": "257A",
+        "points": [
+          [548, 797],
+          [614, 797],
+          [614, 842],
+          [548, 842]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "257A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "257B",
+        "points": [
+          [614, 797],
+          [680, 797],
+          [680, 842],
+          [614, 842]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "257B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "260",
+        "points": [
+          [548, 842],
+          [680, 842],
+          [680, 1065],
+          [548, 1065]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "260",
+        "label_status": "source-number"
+      },
+      {
+        "label": "263B",
+        "points": [
+          [548, 1065],
+          [614, 1065],
+          [614, 1112],
+          [548, 1112]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "263B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "263A",
+        "points": [
+          [614, 1065],
+          [680, 1065],
+          [680, 1112],
+          [614, 1112]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "263A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "263",
+        "points": [
+          [548, 1112],
+          [680, 1112],
+          [680, 1236],
+          [548, 1236]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "263",
+        "label_status": "source-number"
+      },
+      {
+        "label": "265",
+        "points": [
+          [548, 1236],
+          [680, 1236],
+          [680, 1353],
+          [548, 1353]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "265",
+        "label_status": "source-number"
+      },
+      {
+        "label": "274",
+        "points": [
+          [697, 574],
+          [815, 574],
+          [815, 806],
+          [697, 806]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "274",
+        "label_status": "source-number"
+      },
+      {
+        "label": "274B",
+        "points": [
+          [697, 806],
+          [756, 806],
+          [756, 858],
+          [697, 858]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "274B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "274A",
+        "points": [
+          [756, 806],
+          [815, 806],
+          [815, 858],
+          [756, 858]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "274A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "270",
+        "points": [
+          [697, 858],
+          [815, 858],
+          [815, 1040],
+          [697, 1040]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "270",
+        "label_status": "source-number"
+      },
+      {
+        "label": "270B",
+        "points": [
+          [697, 1040],
+          [756, 1040],
+          [756, 1098],
+          [697, 1098]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "270B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "270A",
+        "points": [
+          [756, 1040],
+          [815, 1040],
+          [815, 1098],
+          [756, 1098]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "270A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "267",
+        "points": [
+          [697, 1098],
+          [815, 1098],
+          [815, 1273],
+          [758, 1273],
+          [758, 1353],
+          [697, 1353]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "267",
+        "label_status": "source-number"
+      },
+      {
+        "label": "267A",
+        "points": [
+          [758, 1273],
+          [815, 1273],
+          [815, 1353],
+          [758, 1353]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "267A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "253",
+        "points": [
+          [859, 664],
+          [975, 664],
+          [975, 732],
+          [859, 732]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "253",
+        "label_status": "source-number"
+      },
+      {
+        "label": "252",
+        "points": [
+          [859, 732],
+          [975, 732],
+          [975, 801],
+          [859, 801]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "252",
+        "label_status": "source-number"
+      },
+      {
+        "label": "251",
+        "points": [
+          [859, 801],
+          [975, 801],
+          [975, 869],
+          [859, 869]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "251",
+        "label_status": "source-number"
+      },
+      {
+        "label": "250",
+        "points": [
+          [859, 869],
+          [975, 869],
+          [975, 937],
+          [859, 937]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "250",
+        "label_status": "source-number"
+      },
+      {
+        "label": "249",
+        "points": [
+          [859, 937],
+          [975, 937],
+          [975, 1006],
+          [859, 1006]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "249",
+        "label_status": "source-number"
+      },
+      {
+        "label": "248",
+        "points": [
+          [859, 1006],
+          [975, 1006],
+          [975, 1074],
+          [859, 1074]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "248",
+        "label_status": "source-number"
+      },
+      {
+        "label": "247",
+        "points": [
+          [859, 1074],
+          [975, 1074],
+          [975, 1143],
+          [859, 1143]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "247",
+        "label_status": "source-number"
+      },
+      {
+        "label": "246",
+        "points": [
+          [859, 1143],
+          [975, 1143],
+          [975, 1214],
+          [859, 1214]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "246",
+        "label_status": "source-number"
+      },
+      {
+        "label": "245",
+        "points": [
+          [859, 1214],
+          [975, 1214],
+          [975, 1282],
+          [859, 1282]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "245",
+        "label_status": "source-number"
+      },
+      {
+        "label": "244",
+        "points": [
+          [859, 1282],
+          [975, 1282],
+          [975, 1352],
+          [859, 1352]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "244",
+        "label_status": "source-number"
+      },
+      {
+        "label": "289A",
+        "points": [
+          [788, 66],
+          [880, 66],
+          [880, 116],
+          [788, 116]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "289A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "287",
+        "points": [
+          [788, 116],
+          [988, 116],
+          [988, 162],
+          [788, 162]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "287",
+        "label_status": "source-number"
+      },
+      {
+        "label": "286",
+        "points": [
+          [788, 162],
+          [948, 162],
+          [948, 229],
+          [788, 229]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "286",
+        "label_status": "source-number"
+      },
+      {
+        "label": "288",
+        "points": [
+          [1037, 66],
+          [1308, 66],
+          [1308, 138],
+          [1037, 138]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "288",
+        "label_status": "source-number"
+      },
+      {
+        "label": "289",
+        "points": [
+          [1037, 138],
+          [1222, 138],
+          [1222, 229],
+          [1037, 229]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "289",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-2-U01",
+        "points": [
+          [1222, 138],
+          [1308, 138],
+          [1308, 229],
+          [1222, 229]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U02",
+        "points": [
+          [1037, 229],
+          [1308, 229],
+          [1308, 297],
+          [1037, 297]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "281H",
+        "points": [
+          [1037, 297],
+          [1130, 297],
+          [1130, 367],
+          [1037, 367]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281F",
+        "points": [
+          [1222, 297],
+          [1308, 297],
+          [1308, 367],
+          [1222, 367]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281E",
+        "points": [
+          [1222, 367],
+          [1308, 367],
+          [1308, 436],
+          [1222, 436]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281D",
+        "points": [
+          [1222, 436],
+          [1308, 436],
+          [1308, 504],
+          [1222, 504]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281C",
+        "points": [
+          [1222, 504],
+          [1308, 504],
+          [1308, 572],
+          [1222, 572]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281B",
+        "points": [
+          [1037, 504],
+          [1222, 504],
+          [1222, 572],
+          [1037, 572]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "281",
+        "points": [
+          [1130, 297],
+          [1222, 297],
+          [1222, 504],
+          [1037, 504],
+          [1037, 367],
+          [1130, 367]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "281",
+        "label_status": "source-number"
+      },
+      {
+        "label": "VOID",
+        "points": [
+          [721, 229],
+          [970, 229],
+          [970, 411],
+          [721, 411]
+        ],
+        "at": null,
+        "kind": "void",
+        "review": false,
+        "source_label": "VOID",
+        "label_status": "non-room"
+      },
+      {
+        "label": "ENG1-2-U03",
+        "points": [
+          [859, 436],
+          [972, 436],
+          [972, 505],
+          [859, 505]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U04",
+        "points": [
+          [654, 185],
+          [721, 185],
+          [721, 368],
+          [654, 368]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U05",
+        "points": [
+          [859, 574],
+          [917, 574],
+          [917, 664],
+          [859, 664]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U05*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U06",
+        "points": [
+          [917, 574],
+          [975, 574],
+          [975, 664],
+          [917, 664]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U06*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U07",
+        "points": [
+          [975, 574],
+          [1039, 574],
+          [1039, 664],
+          [975, 664]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "SERVICE",
+        "display_label": "U07*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "222",
+        "points": [
+          [391, 1512],
+          [507, 1512],
+          [507, 1672],
+          [391, 1672]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "222",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-2-U08",
+        "points": [
+          [391, 1672],
+          [507, 1672],
+          [507, 1765],
+          [391, 1765]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U08*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "223A",
+        "points": [
+          [507, 1655],
+          [551, 1655],
+          [551, 1743],
+          [507, 1743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "223A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-2-U09",
+        "points": [
+          [551, 1443],
+          [616, 1443],
+          [616, 1511],
+          [551, 1511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U09*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U10",
+        "points": [
+          [616, 1443],
+          [684, 1443],
+          [684, 1511],
+          [616, 1511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U10*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "231",
+        "points": [
+          [684, 1443],
+          [729, 1443],
+          [729, 1511],
+          [684, 1511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "231",
+        "label_status": "source-number"
+      },
+      {
+        "label": "232",
+        "points": [
+          [729, 1443],
+          [774, 1443],
+          [774, 1511],
+          [729, 1511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "232",
+        "label_status": "source-number"
+      },
+      {
+        "label": "233",
+        "points": [
+          [774, 1443],
+          [819, 1443],
+          [819, 1511],
+          [774, 1511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "233",
+        "label_status": "source-number"
+      },
+      {
+        "label": "228",
+        "points": [
+          [551, 1511],
+          [684, 1511],
+          [684, 1558],
+          [551, 1558]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "228",
+        "label_status": "source-number"
+      },
+      {
+        "label": "227",
+        "points": [
+          [551, 1558],
+          [684, 1558],
+          [684, 1641],
+          [551, 1641]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "227",
+        "label_status": "source-number"
+      },
+      {
+        "label": "224",
+        "points": [
+          [551, 1641],
+          [684, 1641],
+          [684, 1743],
+          [551, 1743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "224",
+        "label_status": "source-number"
+      },
+      {
+        "label": "234",
+        "points": [
+          [684, 1511],
+          [819, 1511],
+          [819, 1627],
+          [684, 1627]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "234",
+        "label_status": "source-number"
+      },
+      {
+        "label": "237",
+        "points": [
+          [684, 1627],
+          [819, 1627],
+          [819, 1707],
+          [684, 1707]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "237",
+        "label_status": "source-number"
+      },
+      {
+        "label": "237B",
+        "points": [
+          [684, 1707],
+          [751, 1707],
+          [751, 1743],
+          [684, 1743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "237B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "237A",
+        "points": [
+          [751, 1707],
+          [819, 1707],
+          [819, 1743],
+          [751, 1743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "237A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "238A",
+        "points": [
+          [819, 1648],
+          [862, 1648],
+          [862, 1743],
+          [819, 1743]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "238A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "242",
+        "points": [
+          [862, 1421],
+          [977, 1421],
+          [977, 1467],
+          [862, 1467]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "242",
+        "label_status": "source-number"
+      },
+      {
+        "label": "241",
+        "points": [
+          [862, 1467],
+          [977, 1467],
+          [977, 1512],
+          [862, 1512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "241",
+        "label_status": "source-number"
+      },
+      {
+        "label": "240",
+        "points": [
+          [862, 1512],
+          [977, 1512],
+          [977, 1558],
+          [862, 1558]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "240",
+        "label_status": "source-number"
+      },
+      {
+        "label": "239",
+        "points": [
+          [862, 1558],
+          [977, 1558],
+          [977, 1603],
+          [862, 1603]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "239",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-2-U11",
+        "points": [
+          [862, 1603],
+          [977, 1603],
+          [977, 1743],
+          [862, 1743]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U11*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-2-U12",
+        "points": [
+          [323, 1421],
+          [438, 1421],
+          [438, 1467],
+          [323, 1467]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U12*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "207",
+        "points": [],
+        "at": [420, 430],
+        "kind": "label",
+        "review": false,
+        "source_label": "207",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "The 281 suite and small lab subdivisions are approximate traces. Source 219/220 is shared."
+    ]
+  },
+  {
+    "building": "ENG1",
+    "floor": 3,
+    "width": 1376,
+    "height": 1788,
+    "rooms": [
+      {
+        "label": "307E",
+        "points": [
+          [73, 166],
+          [221, 166],
+          [221, 255],
+          [73, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307D",
+        "points": [
+          [221, 166],
+          [365, 166],
+          [365, 255],
+          [221, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307C",
+        "points": [
+          [365, 166],
+          [501, 166],
+          [501, 255],
+          [365, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307B",
+        "points": [
+          [501, 166],
+          [659, 166],
+          [659, 255],
+          [501, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307F",
+        "points": [
+          [73, 255],
+          [182, 255],
+          [182, 415],
+          [73, 415]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307G",
+        "points": [
+          [73, 415],
+          [182, 415],
+          [182, 505],
+          [73, 505]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307A",
+        "points": [
+          [547, 255],
+          [659, 255],
+          [659, 365],
+          [547, 365]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307N",
+        "points": [
+          [547, 365],
+          [659, 365],
+          [659, 415],
+          [596, 415],
+          [547, 390]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307N",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307J",
+        "points": [
+          [254, 333],
+          [355, 333],
+          [355, 505],
+          [254, 505]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307K",
+        "points": [
+          [355, 333],
+          [457, 333],
+          [457, 505],
+          [355, 505]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "308A",
+        "points": [
+          [73, 505],
+          [388, 505],
+          [388, 596],
+          [73, 596]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "308A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "308",
+        "points": [
+          [73, 596],
+          [388, 596],
+          [388, 688],
+          [73, 688]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "308",
+        "label_status": "source-number"
+      },
+      {
+        "label": "309",
+        "points": [
+          [388, 596],
+          [501, 596],
+          [501, 688],
+          [388, 688]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "309",
+        "label_status": "source-number"
+      },
+      {
+        "label": "310",
+        "points": [
+          [388, 688],
+          [501, 688],
+          [501, 756],
+          [388, 756]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "310",
+        "label_status": "source-number"
+      },
+      {
+        "label": "311",
+        "points": [
+          [388, 756],
+          [501, 756],
+          [501, 825],
+          [388, 825]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "311",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312",
+        "points": [
+          [388, 825],
+          [501, 825],
+          [501, 893],
+          [388, 893]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312",
+        "label_status": "source-number"
+      },
+      {
+        "label": "313",
+        "points": [
+          [388, 893],
+          [501, 893],
+          [501, 961],
+          [388, 961]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "313",
+        "label_status": "source-number"
+      },
+      {
+        "label": "314",
+        "points": [
+          [388, 961],
+          [501, 961],
+          [501, 1029],
+          [388, 1029]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "314",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315",
+        "points": [
+          [388, 1029],
+          [501, 1029],
+          [501, 1097],
+          [388, 1097]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315",
+        "label_status": "source-number"
+      },
+      {
+        "label": "316",
+        "points": [
+          [388, 1097],
+          [501, 1097],
+          [501, 1166],
+          [388, 1166]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "316",
+        "label_status": "source-number"
+      },
+      {
+        "label": "317",
+        "points": [
+          [388, 1166],
+          [501, 1166],
+          [501, 1235],
+          [388, 1235]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "317",
+        "label_status": "source-number"
+      },
+      {
+        "label": "318",
+        "points": [
+          [388, 1235],
+          [501, 1235],
+          [501, 1304],
+          [388, 1304]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "318",
+        "label_status": "source-number"
+      },
+      {
+        "label": "319",
+        "points": [
+          [388, 1304],
+          [501, 1304],
+          [501, 1372],
+          [388, 1372]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "319",
+        "label_status": "source-number"
+      },
+      {
+        "label": "320",
+        "points": [
+          [388, 1372],
+          [501, 1372],
+          [501, 1441],
+          [388, 1441]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "320",
+        "label_status": "source-number"
+      },
+      {
+        "label": "356",
+        "points": [
+          [548, 596],
+          [681, 596],
+          [681, 729],
+          [622, 729],
+          [622, 802],
+          [548, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "356",
+        "label_status": "source-number"
+      },
+      {
+        "label": "356A",
+        "points": [
+          [622, 729],
+          [681, 729],
+          [681, 802],
+          [622, 802]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "356A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "358",
+        "points": [
+          [548, 802],
+          [681, 802],
+          [681, 961],
+          [548, 961]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "358",
+        "label_status": "source-number"
+      },
+      {
+        "label": "361",
+        "points": [
+          [548, 961],
+          [681, 961],
+          [681, 1099],
+          [548, 1099]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "361",
+        "label_status": "source-number"
+      },
+      {
+        "label": "361A",
+        "points": [
+          [548, 1099],
+          [681, 1099],
+          [681, 1237],
+          [548, 1237]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "361A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "364",
+        "points": [
+          [548, 1237],
+          [681, 1237],
+          [681, 1373],
+          [548, 1373]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "364",
+        "label_status": "source-number"
+      },
+      {
+        "label": "375",
+        "points": [
+          [702, 596],
+          [814, 596],
+          [814, 780],
+          [702, 780]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "375",
+        "label_status": "source-number"
+      },
+      {
+        "label": "373",
+        "points": [
+          [702, 780],
+          [814, 780],
+          [814, 940],
+          [702, 940]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "373",
+        "label_status": "source-number"
+      },
+      {
+        "label": "370",
+        "points": [
+          [702, 940],
+          [814, 940],
+          [814, 1067],
+          [702, 1067]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "370",
+        "label_status": "source-number"
+      },
+      {
+        "label": "368",
+        "points": [
+          [702, 1067],
+          [814, 1067],
+          [814, 1224],
+          [702, 1224]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "368",
+        "label_status": "source-number"
+      },
+      {
+        "label": "367",
+        "points": [
+          [702, 1224],
+          [814, 1224],
+          [814, 1373],
+          [702, 1373]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "367",
+        "label_status": "source-number"
+      },
+      {
+        "label": "353",
+        "points": [
+          [859, 689],
+          [973, 689],
+          [973, 757],
+          [859, 757]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "353",
+        "label_status": "source-number"
+      },
+      {
+        "label": "352",
+        "points": [
+          [859, 757],
+          [973, 757],
+          [973, 826],
+          [859, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "352",
+        "label_status": "source-number"
+      },
+      {
+        "label": "351",
+        "points": [
+          [859, 826],
+          [973, 826],
+          [973, 894],
+          [859, 894]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "351",
+        "label_status": "source-number"
+      },
+      {
+        "label": "350",
+        "points": [
+          [859, 894],
+          [973, 894],
+          [973, 962],
+          [859, 962]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "350",
+        "label_status": "source-number"
+      },
+      {
+        "label": "349",
+        "points": [
+          [859, 962],
+          [973, 962],
+          [973, 1031],
+          [859, 1031]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "349",
+        "label_status": "source-number"
+      },
+      {
+        "label": "348",
+        "points": [
+          [859, 1031],
+          [973, 1031],
+          [973, 1100],
+          [859, 1100]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "348",
+        "label_status": "source-number"
+      },
+      {
+        "label": "347",
+        "points": [
+          [859, 1100],
+          [973, 1100],
+          [973, 1169],
+          [859, 1169]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "347",
+        "label_status": "source-number"
+      },
+      {
+        "label": "346",
+        "points": [
+          [859, 1169],
+          [973, 1169],
+          [973, 1237],
+          [859, 1237]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "346",
+        "label_status": "source-number"
+      },
+      {
+        "label": "345",
+        "points": [
+          [859, 1237],
+          [973, 1237],
+          [973, 1305],
+          [859, 1305]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "345",
+        "label_status": "source-number"
+      },
+      {
+        "label": "344",
+        "points": [
+          [859, 1305],
+          [973, 1305],
+          [973, 1374],
+          [859, 1374]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "344",
+        "label_status": "source-number"
+      },
+      {
+        "label": "386A",
+        "points": [
+          [792, 75],
+          [974, 75],
+          [974, 175],
+          [792, 175]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "386A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "386",
+        "points": [
+          [792, 175],
+          [884, 175],
+          [884, 255],
+          [792, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "386",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U01",
+        "points": [
+          [884, 175],
+          [974, 175],
+          [974, 255],
+          [884, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "FEEDS",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "387",
+        "points": [
+          [974, 75],
+          [1043, 75],
+          [1043, 197],
+          [974, 197]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "387",
+        "label_status": "source-number"
+      },
+      {
+        "label": "388",
+        "points": [
+          [1043, 75],
+          [1312, 75],
+          [1312, 255],
+          [1043, 255]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "388",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U02",
+        "points": [
+          [1043, 255],
+          [1312, 255],
+          [1312, 301],
+          [1043, 301]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "384",
+        "points": [
+          [726, 255],
+          [974, 255],
+          [974, 438],
+          [726, 438]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "384",
+        "label_status": "source-number"
+      },
+      {
+        "label": "383",
+        "points": [
+          [726, 438],
+          [826, 438],
+          [826, 529],
+          [726, 529]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "383",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U03",
+        "points": [
+          [859, 460],
+          [974, 460],
+          [974, 529],
+          [859, 529]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "381H",
+        "points": [
+          [1043, 301],
+          [1132, 301],
+          [1132, 371],
+          [1043, 371]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381F",
+        "points": [
+          [1223, 301],
+          [1312, 301],
+          [1312, 394],
+          [1223, 394]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381E",
+        "points": [
+          [1223, 394],
+          [1312, 394],
+          [1312, 487],
+          [1223, 487]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381D",
+        "points": [
+          [1223, 487],
+          [1312, 487],
+          [1312, 576],
+          [1223, 576]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381I",
+        "points": [
+          [1154, 438],
+          [1223, 438],
+          [1223, 539],
+          [1154, 539]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381I",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381A",
+        "points": [
+          [1043, 597],
+          [1132, 597],
+          [1132, 668],
+          [1043, 668]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381B",
+        "points": [
+          [1132, 597],
+          [1198, 597],
+          [1198, 668],
+          [1132, 668]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381C",
+        "points": [
+          [1198, 597],
+          [1312, 597],
+          [1312, 668],
+          [1198, 668]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "381C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381",
+        "points": [
+          [1132, 301],
+          [1223, 301],
+          [1223, 438],
+          [1154, 438],
+          [1154, 539],
+          [1223, 539],
+          [1223, 576],
+          [1198, 576],
+          [1198, 597],
+          [1043, 597],
+          [1043, 371],
+          [1132, 371]
+        ],
+        "at": [1100, 480],
+        "kind": "room",
+        "review": true,
+        "source_label": "381",
+        "label_status": "source-number"
+      },
+      {
+        "label": "381G",
+        "points": [],
+        "at": [1172, 332],
+        "kind": "label",
+        "review": true,
+        "source_label": "381G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U04",
+        "points": [
+          [859, 644],
+          [973, 644],
+          [973, 689],
+          [859, 689]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "380B",
+        "points": [
+          [973, 644],
+          [1008, 644],
+          [1008, 689],
+          [973, 689]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "380B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "380C",
+        "points": [
+          [1008, 644],
+          [1043, 644],
+          [1043, 689],
+          [1008, 689]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "380C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U05",
+        "points": [
+          [659, 212],
+          [726, 212],
+          [726, 392],
+          [659, 392]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U05*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "322",
+        "points": [
+          [388, 1533],
+          [501, 1533],
+          [501, 1693],
+          [388, 1693]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "322",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U06",
+        "points": [
+          [388, 1693],
+          [501, 1693],
+          [501, 1780],
+          [388, 1780]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U06*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "323A",
+        "points": [
+          [501, 1673],
+          [548, 1673],
+          [548, 1763],
+          [501, 1763]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "323A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U07",
+        "points": [
+          [548, 1466],
+          [614, 1466],
+          [614, 1533],
+          [548, 1533]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U07*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-3-U08",
+        "points": [
+          [614, 1466],
+          [681, 1466],
+          [681, 1533],
+          [614, 1533]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U08*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "331",
+        "points": [
+          [681, 1466],
+          [726, 1466],
+          [726, 1533],
+          [681, 1533]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "331",
+        "label_status": "source-number"
+      },
+      {
+        "label": "332",
+        "points": [
+          [726, 1466],
+          [770, 1466],
+          [770, 1533],
+          [726, 1533]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "332",
+        "label_status": "source-number"
+      },
+      {
+        "label": "333",
+        "points": [
+          [770, 1466],
+          [814, 1466],
+          [814, 1533],
+          [770, 1533]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "333",
+        "label_status": "source-number"
+      },
+      {
+        "label": "328",
+        "points": [
+          [548, 1533],
+          [681, 1533],
+          [681, 1565],
+          [548, 1565]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "328",
+        "label_status": "source-number"
+      },
+      {
+        "label": "327",
+        "points": [
+          [548, 1565],
+          [681, 1565],
+          [681, 1649],
+          [548, 1649]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "327",
+        "label_status": "source-number"
+      },
+      {
+        "label": "324",
+        "points": [
+          [548, 1649],
+          [681, 1649],
+          [681, 1763],
+          [548, 1763]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "324",
+        "label_status": "source-number"
+      },
+      {
+        "label": "334",
+        "points": [
+          [681, 1533],
+          [814, 1533],
+          [814, 1649],
+          [681, 1649]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "334",
+        "label_status": "source-number"
+      },
+      {
+        "label": "337",
+        "points": [
+          [681, 1649],
+          [814, 1649],
+          [814, 1742],
+          [681, 1742]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "337",
+        "label_status": "source-number"
+      },
+      {
+        "label": "337A",
+        "points": [
+          [681, 1742],
+          [814, 1742],
+          [814, 1763],
+          [681, 1763]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "337A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "338A",
+        "points": [
+          [814, 1643],
+          [859, 1643],
+          [859, 1763],
+          [814, 1763]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "338A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "342",
+        "points": [
+          [859, 1444],
+          [974, 1444],
+          [974, 1489],
+          [859, 1489]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "342",
+        "label_status": "source-number"
+      },
+      {
+        "label": "341",
+        "points": [
+          [859, 1489],
+          [974, 1489],
+          [974, 1535],
+          [859, 1535]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "341",
+        "label_status": "source-number"
+      },
+      {
+        "label": "340",
+        "points": [
+          [859, 1535],
+          [974, 1535],
+          [974, 1582],
+          [859, 1582]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "340",
+        "label_status": "source-number"
+      },
+      {
+        "label": "339",
+        "points": [
+          [859, 1582],
+          [974, 1582],
+          [974, 1627],
+          [859, 1627]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "339",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-3-U09",
+        "points": [
+          [859, 1627],
+          [974, 1627],
+          [974, 1763],
+          [859, 1763]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U09*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-3-U10",
+        "points": [
+          [319, 1441],
+          [434, 1441],
+          [434, 1488],
+          [319, 1488]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U10*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "307",
+        "points": [],
+        "at": [478, 553],
+        "kind": "label",
+        "review": false,
+        "source_label": "307",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "Source dated September 10, 2008. 381 suite storage partitions and 381G location need review; 381G has no invented enclosure."
+    ]
+  },
+  {
+    "building": "ENG1",
+    "floor": 4,
+    "width": 1376,
+    "height": 1788,
+    "rooms": [
+      {
+        "label": "407E",
+        "points": [
+          [221, 61],
+          [373, 61],
+          [373, 151],
+          [221, 151]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407D",
+        "points": [
+          [373, 61],
+          [521, 61],
+          [521, 151],
+          [373, 151]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407C",
+        "points": [
+          [521, 61],
+          [658, 61],
+          [658, 151],
+          [521, 151]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407B",
+        "points": [
+          [658, 61],
+          [800, 61],
+          [800, 151],
+          [658, 151]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407F",
+        "points": [
+          [221, 151],
+          [338, 151],
+          [338, 316],
+          [221, 316]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407G",
+        "points": [
+          [221, 316],
+          [338, 316],
+          [338, 396],
+          [221, 396]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407I",
+        "points": [
+          [384, 218],
+          [474, 218],
+          [474, 309],
+          [384, 309]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407I",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407J",
+        "points": [
+          [474, 218],
+          [564, 218],
+          [564, 309],
+          [474, 309]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407K",
+        "points": [
+          [564, 218],
+          [653, 218],
+          [653, 309],
+          [564, 309]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407H",
+        "points": [
+          [384, 309],
+          [564, 309],
+          [564, 396],
+          [384, 396]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407A",
+        "points": [
+          [696, 151],
+          [800, 151],
+          [800, 310],
+          [696, 310]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "407A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "408A",
+        "points": [
+          [221, 396],
+          [540, 396],
+          [540, 486],
+          [221, 486]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "408A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "408",
+        "points": [
+          [221, 486],
+          [540, 486],
+          [540, 584],
+          [221, 584]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "408",
+        "label_status": "source-number"
+      },
+      {
+        "label": "409",
+        "points": [
+          [540, 486],
+          [653, 486],
+          [653, 584],
+          [540, 584]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "409",
+        "label_status": "source-number"
+      },
+      {
+        "label": "410",
+        "points": [
+          [540, 584],
+          [653, 584],
+          [653, 644],
+          [540, 644]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "410",
+        "label_status": "source-number"
+      },
+      {
+        "label": "411",
+        "points": [
+          [540, 644],
+          [653, 644],
+          [653, 711],
+          [540, 711]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "411",
+        "label_status": "source-number"
+      },
+      {
+        "label": "412",
+        "points": [
+          [540, 711],
+          [653, 711],
+          [653, 778],
+          [540, 778]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "412",
+        "label_status": "source-number"
+      },
+      {
+        "label": "413",
+        "points": [
+          [540, 778],
+          [653, 778],
+          [653, 845],
+          [540, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "413",
+        "label_status": "source-number"
+      },
+      {
+        "label": "414",
+        "points": [
+          [540, 845],
+          [653, 845],
+          [653, 911],
+          [540, 911]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "414",
+        "label_status": "source-number"
+      },
+      {
+        "label": "415",
+        "points": [
+          [540, 911],
+          [653, 911],
+          [653, 980],
+          [540, 980]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "415",
+        "label_status": "source-number"
+      },
+      {
+        "label": "416",
+        "points": [
+          [540, 980],
+          [653, 980],
+          [653, 1047],
+          [540, 1047]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "416",
+        "label_status": "source-number"
+      },
+      {
+        "label": "417",
+        "points": [
+          [540, 1047],
+          [653, 1047],
+          [653, 1115],
+          [540, 1115]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "417",
+        "label_status": "source-number"
+      },
+      {
+        "label": "418",
+        "points": [
+          [540, 1115],
+          [653, 1115],
+          [653, 1181],
+          [540, 1181]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "418",
+        "label_status": "source-number"
+      },
+      {
+        "label": "419",
+        "points": [
+          [540, 1181],
+          [653, 1181],
+          [653, 1243],
+          [540, 1243]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "419",
+        "label_status": "source-number"
+      },
+      {
+        "label": "420",
+        "points": [
+          [540, 1243],
+          [653, 1243],
+          [653, 1317],
+          [540, 1317]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "420",
+        "label_status": "source-number"
+      },
+      {
+        "label": "456",
+        "points": [
+          [694, 487],
+          [824, 487],
+          [824, 716],
+          [694, 716]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "456",
+        "label_status": "source-number"
+      },
+      {
+        "label": "456A",
+        "points": [
+          [694, 716],
+          [824, 716],
+          [824, 794],
+          [694, 794]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "456A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "461A",
+        "points": [
+          [694, 794],
+          [824, 794],
+          [824, 874],
+          [694, 874]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "461A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "461",
+        "points": [
+          [694, 874],
+          [824, 874],
+          [824, 1087],
+          [694, 1087]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "461",
+        "label_status": "source-number"
+      },
+      {
+        "label": "465",
+        "points": [
+          [694, 1087],
+          [824, 1087],
+          [824, 1250],
+          [694, 1250]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "465",
+        "label_status": "source-number"
+      },
+      {
+        "label": "474",
+        "points": [
+          [855, 487],
+          [959, 487],
+          [959, 717],
+          [855, 717]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "474",
+        "label_status": "source-number"
+      },
+      {
+        "label": "471",
+        "points": [
+          [855, 717],
+          [959, 717],
+          [959, 914],
+          [855, 914]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "471",
+        "label_status": "source-number"
+      },
+      {
+        "label": "468",
+        "points": [
+          [855, 914],
+          [959, 914],
+          [959, 1087],
+          [855, 1087]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "468",
+        "label_status": "source-number"
+      },
+      {
+        "label": "467",
+        "points": [
+          [855, 1087],
+          [959, 1087],
+          [959, 1250],
+          [855, 1250]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "467",
+        "label_status": "source-number"
+      },
+      {
+        "label": "453",
+        "points": [
+          [1003, 579],
+          [1115, 579],
+          [1115, 645],
+          [1003, 645]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "453",
+        "label_status": "source-number"
+      },
+      {
+        "label": "452",
+        "points": [
+          [1003, 645],
+          [1115, 645],
+          [1115, 712],
+          [1003, 712]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "452",
+        "label_status": "source-number"
+      },
+      {
+        "label": "451",
+        "points": [
+          [1003, 712],
+          [1115, 712],
+          [1115, 779],
+          [1003, 779]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "451",
+        "label_status": "source-number"
+      },
+      {
+        "label": "450",
+        "points": [
+          [1003, 779],
+          [1115, 779],
+          [1115, 846],
+          [1003, 846]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "450",
+        "label_status": "source-number"
+      },
+      {
+        "label": "449",
+        "points": [
+          [1003, 846],
+          [1115, 846],
+          [1115, 914],
+          [1003, 914]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "449",
+        "label_status": "source-number"
+      },
+      {
+        "label": "448",
+        "points": [
+          [1003, 914],
+          [1115, 914],
+          [1115, 982],
+          [1003, 982]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "448",
+        "label_status": "source-number"
+      },
+      {
+        "label": "447",
+        "points": [
+          [1003, 982],
+          [1115, 982],
+          [1115, 1049],
+          [1003, 1049]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "447",
+        "label_status": "source-number"
+      },
+      {
+        "label": "446",
+        "points": [
+          [1003, 1049],
+          [1115, 1049],
+          [1115, 1117],
+          [1003, 1117]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "446",
+        "label_status": "source-number"
+      },
+      {
+        "label": "445",
+        "points": [
+          [1003, 1117],
+          [1115, 1117],
+          [1115, 1185],
+          [1003, 1185]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "445",
+        "label_status": "source-number"
+      },
+      {
+        "label": "444",
+        "points": [
+          [1003, 1185],
+          [1115, 1185],
+          [1115, 1251],
+          [1003, 1251]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "444",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-4-U01",
+        "points": [
+          [1003, 534],
+          [1115, 534],
+          [1115, 579],
+          [1003, 579]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-4-U02",
+        "points": [
+          [1115, 534],
+          [1181, 534],
+          [1181, 579],
+          [1115, 579]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-4-U03",
+        "points": [
+          [1004, 355],
+          [1116, 355],
+          [1116, 422],
+          [1004, 422]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-4-U04",
+        "points": [
+          [804, 107],
+          [872, 107],
+          [872, 286],
+          [804, 286]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "422",
+        "points": [
+          [538, 1406],
+          [650, 1406],
+          [650, 1564],
+          [538, 1564]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "422",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-4-U05",
+        "points": [
+          [538, 1564],
+          [650, 1564],
+          [650, 1654],
+          [538, 1654]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U05*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "423A",
+        "points": [
+          [650, 1545],
+          [694, 1545],
+          [694, 1633],
+          [650, 1633]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "423A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-4-U06",
+        "points": [
+          [694, 1340],
+          [754, 1340],
+          [754, 1407],
+          [694, 1407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U06*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-4-U07",
+        "points": [
+          [754, 1340],
+          [824, 1340],
+          [824, 1407],
+          [754, 1407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "WC",
+        "display_label": "U07*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "431",
+        "points": [
+          [824, 1340],
+          [868, 1340],
+          [868, 1407],
+          [824, 1407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "431",
+        "label_status": "source-number"
+      },
+      {
+        "label": "432",
+        "points": [
+          [868, 1340],
+          [912, 1340],
+          [912, 1407],
+          [868, 1407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "432",
+        "label_status": "source-number"
+      },
+      {
+        "label": "433",
+        "points": [
+          [912, 1340],
+          [956, 1340],
+          [956, 1407],
+          [912, 1407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "433",
+        "label_status": "source-number"
+      },
+      {
+        "label": "424",
+        "points": [
+          [694, 1407],
+          [824, 1407],
+          [824, 1430],
+          [694, 1430]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "424",
+        "label_status": "source-number"
+      },
+      {
+        "label": "427",
+        "points": [
+          [694, 1430],
+          [824, 1430],
+          [824, 1521],
+          [694, 1521]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "427",
+        "label_status": "source-number"
+      },
+      {
+        "label": "428",
+        "points": [
+          [694, 1521],
+          [824, 1521],
+          [824, 1633],
+          [694, 1633]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "428",
+        "label_status": "source-number"
+      },
+      {
+        "label": "435",
+        "points": [
+          [824, 1407],
+          [956, 1407],
+          [956, 1521],
+          [824, 1521]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "435",
+        "label_status": "source-number"
+      },
+      {
+        "label": "436",
+        "points": [
+          [824, 1521],
+          [956, 1521],
+          [956, 1633],
+          [824, 1633]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "436",
+        "label_status": "source-number"
+      },
+      {
+        "label": "438A",
+        "points": [
+          [956, 1525],
+          [1000, 1525],
+          [1000, 1633],
+          [956, 1633]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "438A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442",
+        "points": [
+          [1000, 1318],
+          [1113, 1318],
+          [1113, 1364],
+          [1000, 1364]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "442",
+        "label_status": "source-number"
+      },
+      {
+        "label": "441",
+        "points": [
+          [1000, 1364],
+          [1113, 1364],
+          [1113, 1410],
+          [1000, 1410]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "441",
+        "label_status": "source-number"
+      },
+      {
+        "label": "440",
+        "points": [
+          [1000, 1410],
+          [1113, 1410],
+          [1113, 1455],
+          [1000, 1455]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "440",
+        "label_status": "source-number"
+      },
+      {
+        "label": "439",
+        "points": [
+          [1000, 1455],
+          [1113, 1455],
+          [1113, 1500],
+          [1000, 1500]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "439",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG1-4-U08",
+        "points": [
+          [1000, 1500],
+          [1113, 1500],
+          [1113, 1633],
+          [1000, 1633]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U08*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG1-4-U09",
+        "points": [
+          [471, 1317],
+          [585, 1317],
+          [585, 1361],
+          [471, 1361]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U09*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "407",
+        "points": [],
+        "at": [596, 435],
+        "kind": "label",
+        "review": false,
+        "source_label": "407",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "Small service rooms retain the IDs printed in the source. Door recesses and swing arcs are omitted from room envelopes."
+    ]
+  },
+  {
+    "building": "ENG2",
+    "floor": 1,
+    "width": 1788,
+    "height": 1376,
+    "rooms": [
+      {
+        "label": "180",
+        "points": [
+          [465, 65],
+          [745, 65],
+          [745, 263],
+          [465, 263]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "180",
+        "label_status": "source-number"
+      },
+      {
+        "label": "181",
+        "points": [
+          [745, 65],
+          [940, 65],
+          [940, 263],
+          [745, 263]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "181",
+        "label_status": "source-number"
+      },
+      {
+        "label": "182",
+        "points": [
+          [940, 65],
+          [1170, 65],
+          [1170, 263],
+          [940, 263]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "182",
+        "label_status": "source-number"
+      },
+      {
+        "label": "183",
+        "points": [
+          [1170, 65],
+          [1455, 65],
+          [1455, 263],
+          [1170, 263]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "183",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-1-U01",
+        "points": [
+          [1455, 35],
+          [1590, 35],
+          [1590, 265],
+          [1455, 265]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG2-1-U02",
+        "points": [
+          [165, 154],
+          [202, 90],
+          [272, 65],
+          [342, 92],
+          [375, 153],
+          [375, 234],
+          [310, 289],
+          [225, 281],
+          [174, 236]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "108",
+        "points": [
+          [435, 322],
+          [595, 322],
+          [595, 428],
+          [435, 428]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "108",
+        "label_status": "source-number"
+      },
+      {
+        "label": "107",
+        "points": [
+          [435, 428],
+          [595, 428],
+          [595, 520],
+          [435, 520]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "107",
+        "label_status": "source-number"
+      },
+      {
+        "label": "106",
+        "points": [
+          [400, 510],
+          [435, 510],
+          [435, 610],
+          [400, 610]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "106",
+        "label_status": "source-number"
+      },
+      {
+        "label": "104",
+        "points": [
+          [435, 520],
+          [595, 520],
+          [595, 695],
+          [505, 695],
+          [505, 744],
+          [380, 744],
+          [400, 610],
+          [435, 610]
+        ],
+        "at": [504, 622],
+        "kind": "room",
+        "review": false,
+        "source_label": "104",
+        "label_status": "source-number"
+      },
+      {
+        "label": "100J",
+        "points": [
+          [505, 695],
+          [595, 695],
+          [595, 754],
+          [505, 754]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "100J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "100H",
+        "points": [
+          [505, 754],
+          [595, 754],
+          [595, 826],
+          [505, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "100H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "110",
+        "points": [
+          [595, 322],
+          [772, 322],
+          [772, 735],
+          [595, 735]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "110",
+        "label_status": "source-number"
+      },
+      {
+        "label": "110A",
+        "points": [
+          [595, 735],
+          [688, 735],
+          [688, 826],
+          [595, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "110A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "111D",
+        "points": [
+          [688, 735],
+          [772, 735],
+          [772, 826],
+          [688, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "111D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "111A",
+        "points": [
+          [820, 322],
+          [940, 322],
+          [940, 444],
+          [820, 444]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "111A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "111B",
+        "points": [
+          [820, 444],
+          [940, 444],
+          [940, 511],
+          [820, 511]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "111B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "111C",
+        "points": [
+          [772, 511],
+          [940, 511],
+          [940, 826],
+          [772, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "111C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "112",
+        "points": [
+          [940, 322],
+          [1148, 322],
+          [1148, 520],
+          [940, 520]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "112",
+        "label_status": "source-number"
+      },
+      {
+        "label": "113",
+        "points": [
+          [1148, 322],
+          [1258, 322],
+          [1258, 494],
+          [1148, 494]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "113",
+        "label_status": "source-number"
+      },
+      {
+        "label": "114",
+        "points": [
+          [1258, 322],
+          [1455, 322],
+          [1455, 520],
+          [1258, 520]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "114",
+        "label_status": "source-number"
+      },
+      {
+        "label": "101A",
+        "points": [
+          [1455, 322],
+          [1588, 322],
+          [1588, 520],
+          [1528, 520],
+          [1528, 453],
+          [1455, 453]
+        ],
+        "at": [1527, 389],
+        "kind": "room",
+        "review": false,
+        "source_label": "101A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "101B",
+        "points": [
+          [1455, 453],
+          [1528, 453],
+          [1528, 520],
+          [1455, 520]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "101B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "101",
+        "points": [
+          [940, 520],
+          [1588, 520],
+          [1588, 695],
+          [1455, 826],
+          [940, 826]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "101",
+        "label_status": "source-number"
+      },
+      {
+        "label": "105",
+        "points": [
+          [125, 352],
+          [365, 410],
+          [320, 650],
+          [80, 606]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "105",
+        "label_status": "source-number"
+      },
+      {
+        "label": "103",
+        "points": [
+          [80, 606],
+          [320, 650],
+          [280, 899],
+          [22, 883]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "103",
+        "label_status": "source-number"
+      },
+      {
+        "label": "102A",
+        "points": [
+          [80, 893],
+          [270, 940],
+          [266, 970],
+          [170, 990],
+          [35, 1183],
+          [15, 1180]
+        ],
+        "at": [112, 1031],
+        "kind": "room",
+        "review": false,
+        "source_label": "102A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "102",
+        "points": [
+          [170, 990],
+          [266, 970],
+          [565, 1098],
+          [535, 1180],
+          [480, 1240],
+          [400, 1280],
+          [305, 1310],
+          [195, 1318],
+          [95, 1298],
+          [2, 1246],
+          [35, 1183]
+        ],
+        "at": [309, 1150],
+        "kind": "room",
+        "review": false,
+        "source_label": "102",
+        "label_status": "source-number"
+      },
+      {
+        "label": "100K",
+        "points": [
+          [280, 899],
+          [319, 910],
+          [303, 971],
+          [270, 970]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "100K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "100F",
+        "points": [
+          [319, 910],
+          [350, 916],
+          [339, 975],
+          [303, 971]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "100F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "100E",
+        "points": [
+          [350, 916],
+          [385, 934],
+          [370, 988],
+          [339, 975]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "100E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-1-U03",
+        "points": [
+          [380, 744],
+          [440, 744],
+          [440, 826],
+          [380, 826]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG2-1-U04",
+        "points": [
+          [440, 744],
+          [505, 744],
+          [505, 826],
+          [440, 826]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "116B",
+        "points": [
+          [1136, 970],
+          [1194, 970],
+          [1194, 1028],
+          [1136, 1028]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116A",
+        "points": [
+          [1194, 970],
+          [1255, 970],
+          [1255, 1028],
+          [1194, 1028]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116E",
+        "points": [
+          [1136, 1028],
+          [1194, 1028],
+          [1194, 1081],
+          [1136, 1081]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116D",
+        "points": [
+          [1136, 1081],
+          [1194, 1081],
+          [1194, 1145],
+          [1136, 1145]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116C",
+        "points": [
+          [1194, 1028],
+          [1255, 1028],
+          [1255, 1145],
+          [1194, 1145]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116F",
+        "points": [
+          [1136, 1145],
+          [1255, 1145],
+          [1255, 1225],
+          [1136, 1225]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "116F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "190",
+        "points": [
+          [1136, 1225],
+          [1210, 1225],
+          [1210, 1300],
+          [1136, 1300]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "190",
+        "label_status": "source-number"
+      },
+      {
+        "label": "191",
+        "points": [
+          [1210, 1225],
+          [1255, 1225],
+          [1255, 1300],
+          [1210, 1300]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "191",
+        "label_status": "source-number"
+      },
+      {
+        "label": "116",
+        "points": [
+          [1255, 970],
+          [1434, 970],
+          [1434, 1300],
+          [1255, 1300],
+          [1255, 1200],
+          [1290, 1200],
+          [1290, 1080],
+          [1255, 1080]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "116",
+        "label_status": "source-number"
+      },
+      {
+        "label": "117A",
+        "points": [
+          [1474, 970],
+          [1646, 970],
+          [1646, 1054],
+          [1474, 1054]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "117A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "117B",
+        "points": [
+          [1474, 1054],
+          [1570, 1054],
+          [1570, 1110],
+          [1474, 1110]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "117B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "117C",
+        "points": [
+          [1570, 1054],
+          [1646, 1054],
+          [1646, 1110],
+          [1570, 1110]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "117C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "117D",
+        "points": [
+          [1434, 1110],
+          [1598, 1110],
+          [1598, 1300],
+          [1434, 1300]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "117D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "194",
+        "points": [
+          [1598, 1110],
+          [1646, 1110],
+          [1646, 1175],
+          [1598, 1175]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "194",
+        "label_status": "source-number"
+      },
+      {
+        "label": "193",
+        "points": [
+          [1598, 1175],
+          [1646, 1175],
+          [1646, 1220],
+          [1598, 1220]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "193",
+        "label_status": "source-number"
+      },
+      {
+        "label": "192",
+        "points": [
+          [1598, 1220],
+          [1646, 1220],
+          [1646, 1300],
+          [1598, 1300]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "192",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "100E/F/K vestibules and the 116 laboratory nooks have faint partitions. Lower lab wing is separate in the source; no connecting corridor was invented."
+    ]
+  },
+  {
+    "building": "ENG2",
+    "floor": 2,
+    "width": 1788,
+    "height": 1376,
+    "rooms": [
+      {
+        "label": "211F",
+        "points": [
+          [480, 57],
+          [637, 57],
+          [637, 141],
+          [480, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211G",
+        "points": [
+          [637, 57],
+          [737, 57],
+          [737, 141],
+          [637, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211H",
+        "points": [
+          [737, 57],
+          [883, 57],
+          [883, 141],
+          [737, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211J",
+        "points": [
+          [883, 57],
+          [945, 57],
+          [945, 141],
+          [883, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211K",
+        "points": [
+          [945, 57],
+          [1006, 57],
+          [1006, 141],
+          [945, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211L",
+        "points": [
+          [1006, 57],
+          [1118, 57],
+          [1118, 141],
+          [1006, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211L",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211P",
+        "points": [
+          [1131, 57],
+          [1248, 57],
+          [1248, 249],
+          [1131, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211P",
+        "label_status": "source-number"
+      },
+      {
+        "label": "225",
+        "points": [
+          [1248, 57],
+          [1347, 57],
+          [1347, 141],
+          [1248, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "225",
+        "label_status": "source-number"
+      },
+      {
+        "label": "226",
+        "points": [
+          [1347, 57],
+          [1447, 57],
+          [1447, 141],
+          [1347, 141]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "226",
+        "label_status": "source-number"
+      },
+      {
+        "label": "224",
+        "points": [
+          [1248, 141],
+          [1325, 141],
+          [1325, 168],
+          [1248, 168]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "224",
+        "label_status": "source-number"
+      },
+      {
+        "label": "227",
+        "points": [
+          [1382, 141],
+          [1447, 141],
+          [1447, 168],
+          [1382, 168]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "227",
+        "label_status": "source-number"
+      },
+      {
+        "label": "223",
+        "points": [
+          [1248, 168],
+          [1325, 168],
+          [1325, 249],
+          [1248, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "223",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211E",
+        "points": [
+          [384, 151],
+          [478, 151],
+          [478, 249],
+          [384, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211D",
+        "points": [
+          [478, 194],
+          [565, 194],
+          [565, 249],
+          [478, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211C",
+        "points": [
+          [608, 186],
+          [731, 186],
+          [731, 249],
+          [608, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211B",
+        "points": [
+          [731, 186],
+          [846, 186],
+          [846, 249],
+          [731, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211A",
+        "points": [
+          [846, 186],
+          [939, 186],
+          [939, 249],
+          [846, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211M",
+        "points": [
+          [990, 194],
+          [1065, 194],
+          [1065, 249],
+          [990, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211M",
+        "label_status": "source-number"
+      },
+      {
+        "label": "211N",
+        "points": [
+          [1065, 194],
+          [1131, 194],
+          [1131, 249],
+          [1065, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "211N",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-2-U01",
+        "points": [
+          [1447, 27],
+          [1567, 27],
+          [1567, 247],
+          [1447, 247]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "229",
+        "points": [
+          [1567, 154],
+          [1627, 154],
+          [1627, 247],
+          [1567, 247]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "229",
+        "label_status": "source-number"
+      },
+      {
+        "label": "237",
+        "points": [
+          [1627, 81],
+          [1727, 81],
+          [1727, 301],
+          [1627, 301]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "237",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-2-U02",
+        "points": [
+          [185, 138],
+          [235, 73],
+          [302, 62],
+          [352, 82],
+          [384, 135],
+          [384, 229],
+          [330, 272],
+          [239, 271],
+          [185, 229]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "209",
+        "points": [
+          [149, 273],
+          [384, 273],
+          [398, 390],
+          [141, 336]
+        ],
+        "at": [282, 319],
+        "kind": "room",
+        "review": false,
+        "source_label": "209",
+        "label_status": "source-number"
+      },
+      {
+        "label": "205",
+        "points": [
+          [141, 336],
+          [398, 390],
+          [326, 622],
+          [96, 572]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "205",
+        "label_status": "source-number"
+      },
+      {
+        "label": "203",
+        "points": [
+          [96, 572],
+          [326, 622],
+          [268, 898],
+          [32, 851]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "203",
+        "label_status": "source-number"
+      },
+      {
+        "label": "208",
+        "points": [
+          [454, 305],
+          [604, 305],
+          [604, 405],
+          [454, 405]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "208",
+        "label_status": "source-number"
+      },
+      {
+        "label": "207",
+        "points": [
+          [454, 405],
+          [604, 405],
+          [604, 501],
+          [454, 501]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "207",
+        "label_status": "source-number"
+      },
+      {
+        "label": "206",
+        "points": [
+          [414, 501],
+          [483, 501],
+          [483, 581],
+          [414, 581]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "206",
+        "label_status": "source-number"
+      },
+      {
+        "label": "204",
+        "points": [
+          [483, 501],
+          [604, 501],
+          [604, 666],
+          [509, 666],
+          [509, 714],
+          [450, 714],
+          [450, 738],
+          [379, 738],
+          [414, 581],
+          [483, 581]
+        ],
+        "at": [522, 609],
+        "kind": "room",
+        "review": false,
+        "source_label": "204",
+        "label_status": "source-number"
+      },
+      {
+        "label": "200H",
+        "points": [
+          [509, 666],
+          [604, 666],
+          [604, 725],
+          [509, 725]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "200H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "200G",
+        "points": [
+          [509, 725],
+          [604, 725],
+          [604, 795],
+          [509, 795]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "200G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-2-U03",
+        "points": [
+          [379, 738],
+          [450, 738],
+          [450, 795],
+          [379, 795]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG2-2-U04",
+        "points": [
+          [450, 714],
+          [509, 714],
+          [509, 795],
+          [450, 795]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "201B",
+        "points": [
+          [604, 305],
+          [725, 305],
+          [725, 408],
+          [604, 408]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201A",
+        "points": [
+          [604, 408],
+          [725, 408],
+          [725, 483],
+          [604, 483]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201C",
+        "points": [
+          [765, 305],
+          [836, 305],
+          [836, 407],
+          [765, 407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201D",
+        "points": [
+          [765, 407],
+          [836, 407],
+          [836, 483],
+          [765, 483]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201F",
+        "points": [
+          [836, 305],
+          [918, 305],
+          [918, 407],
+          [836, 407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201E",
+        "points": [
+          [836, 407],
+          [918, 407],
+          [918, 483],
+          [836, 483]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201H",
+        "points": [
+          [918, 305],
+          [1107, 305],
+          [1107, 483],
+          [918, 483]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "201H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "201",
+        "points": [
+          [604, 483],
+          [1107, 483],
+          [1107, 795],
+          [604, 795]
+        ],
+        "at": [846, 618],
+        "kind": "room",
+        "review": false,
+        "source_label": "201",
+        "label_status": "source-number"
+      },
+      {
+        "label": "213",
+        "points": [
+          [1107, 305],
+          [1182, 305],
+          [1182, 477],
+          [1107, 477]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "213",
+        "label_status": "source-number"
+      },
+      {
+        "label": "215",
+        "points": [
+          [1107, 477],
+          [1182, 477],
+          [1182, 555],
+          [1107, 555]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "215",
+        "label_status": "source-number"
+      },
+      {
+        "label": "218",
+        "points": [
+          [1107, 555],
+          [1182, 555],
+          [1182, 673],
+          [1107, 673]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "218",
+        "label_status": "source-number"
+      },
+      {
+        "label": "221",
+        "points": [
+          [1107, 673],
+          [1182, 673],
+          [1182, 795],
+          [1107, 795]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "221",
+        "label_status": "source-number"
+      },
+      {
+        "label": "212",
+        "points": [
+          [1219, 305],
+          [1342, 305],
+          [1342, 377],
+          [1219, 377]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "212",
+        "label_status": "source-number"
+      },
+      {
+        "label": "214",
+        "points": [
+          [1219, 377],
+          [1342, 377],
+          [1342, 443],
+          [1219, 443]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "214",
+        "label_status": "source-number"
+      },
+      {
+        "label": "216",
+        "points": [
+          [1219, 443],
+          [1342, 443],
+          [1342, 515],
+          [1219, 515]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "216",
+        "label_status": "source-number"
+      },
+      {
+        "label": "217",
+        "points": [
+          [1219, 515],
+          [1342, 515],
+          [1342, 585],
+          [1219, 585]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "217",
+        "label_status": "source-number"
+      },
+      {
+        "label": "219",
+        "points": [
+          [1219, 585],
+          [1342, 585],
+          [1342, 660],
+          [1219, 660]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "219",
+        "label_status": "source-number"
+      },
+      {
+        "label": "220",
+        "points": [
+          [1219, 660],
+          [1342, 660],
+          [1342, 725],
+          [1219, 725]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "220",
+        "label_status": "source-number"
+      },
+      {
+        "label": "222",
+        "points": [
+          [1219, 725],
+          [1342, 725],
+          [1342, 795],
+          [1219, 795]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "222",
+        "label_status": "source-number"
+      },
+      {
+        "label": "228",
+        "points": [
+          [1342, 305],
+          [1422, 305],
+          [1422, 386],
+          [1342, 386]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "228",
+        "label_status": "source-number"
+      },
+      {
+        "label": "232",
+        "points": [
+          [1342, 386],
+          [1422, 386],
+          [1422, 502],
+          [1342, 502]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "232",
+        "label_status": "source-number"
+      },
+      {
+        "label": "233",
+        "points": [
+          [1342, 502],
+          [1422, 502],
+          [1422, 620],
+          [1342, 620]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "233",
+        "label_status": "source-number"
+      },
+      {
+        "label": "235",
+        "points": [
+          [1342, 620],
+          [1422, 620],
+          [1422, 779],
+          [1342, 779]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "235",
+        "label_status": "source-number"
+      },
+      {
+        "label": "230A",
+        "points": [
+          [1475, 305],
+          [1558, 305],
+          [1558, 386],
+          [1475, 386]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "230A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "230",
+        "points": [
+          [1558, 305],
+          [1627, 305],
+          [1627, 386],
+          [1558, 386]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "230",
+        "label_status": "source-number"
+      },
+      {
+        "label": "231",
+        "points": [
+          [1475, 386],
+          [1627, 386],
+          [1627, 516],
+          [1475, 516]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "231",
+        "label_status": "source-number"
+      },
+      {
+        "label": "234",
+        "points": [
+          [1475, 516],
+          [1558, 516],
+          [1558, 582],
+          [1475, 582]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "234",
+        "label_status": "source-number"
+      },
+      {
+        "label": "236",
+        "points": [
+          [1475, 582],
+          [1627, 582],
+          [1627, 609],
+          [1484, 761],
+          [1454, 781],
+          [1475, 701]
+        ],
+        "at": [1535, 647],
+        "kind": "room",
+        "review": false,
+        "source_label": "236",
+        "label_status": "source-number"
+      },
+      {
+        "label": "238",
+        "points": [
+          [1627, 305],
+          [1727, 305],
+          [1727, 507],
+          [1627, 507]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "238",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202Q",
+        "points": [
+          [94, 866],
+          [180, 885],
+          [164, 950],
+          [79, 932]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202Q",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202N",
+        "points": [
+          [79, 932],
+          [164, 950],
+          [147, 1020],
+          [62, 998]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202N",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202K",
+        "points": [
+          [62, 998],
+          [147, 1020],
+          [129, 1114],
+          [41, 1093]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202J",
+        "points": [
+          [41, 1093],
+          [129, 1114],
+          [115, 1183],
+          [128, 1292],
+          [59, 1280],
+          [18, 1254],
+          [28, 1162]
+        ],
+        "at": [80, 1200],
+        "kind": "room",
+        "review": false,
+        "source_label": "202J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202H",
+        "points": [
+          [150, 1184],
+          [226, 1195],
+          [224, 1299],
+          [128, 1292]
+        ],
+        "at": [179, 1240],
+        "kind": "room",
+        "review": false,
+        "source_label": "202H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202G",
+        "points": [
+          [226, 1195],
+          [317, 1186],
+          [350, 1290],
+          [275, 1302],
+          [224, 1299]
+        ],
+        "at": [271, 1240],
+        "kind": "room",
+        "review": false,
+        "source_label": "202G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202D",
+        "points": [
+          [317, 1186],
+          [371, 1150],
+          [415, 1211],
+          [350, 1290]
+        ],
+        "at": [359, 1220],
+        "kind": "room",
+        "review": false,
+        "source_label": "202D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202C",
+        "points": [
+          [371, 1150],
+          [425, 1129],
+          [477, 1191],
+          [415, 1211]
+        ],
+        "at": [421, 1175],
+        "kind": "room",
+        "review": false,
+        "source_label": "202C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202A",
+        "points": [
+          [455, 939],
+          [628, 978],
+          [595, 1074],
+          [542, 1168],
+          [477, 1191],
+          [425, 1129]
+        ],
+        "at": [527, 1048],
+        "kind": "room",
+        "review": false,
+        "source_label": "202A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202P",
+        "points": [
+          [211, 930],
+          [279, 946],
+          [267, 1014],
+          [196, 997]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202P",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202M",
+        "points": [
+          [196, 997],
+          [267, 1014],
+          [249, 1068],
+          [183, 1053]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202M",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202L",
+        "points": [
+          [183, 1053],
+          [249, 1068],
+          [238, 1111],
+          [174, 1104]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202L",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202F",
+        "points": [
+          [249, 1068],
+          [320, 1085],
+          [308, 1140],
+          [238, 1111]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202E",
+        "points": [
+          [320, 1085],
+          [370, 1082],
+          [371, 1150],
+          [308, 1140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "202E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "202B",
+        "points": [
+          [279, 946],
+          [447, 986],
+          [425, 1129],
+          [371, 1150],
+          [370, 1082],
+          [320, 1085],
+          [267, 1068]
+        ],
+        "at": [349, 1016],
+        "kind": "room",
+        "review": false,
+        "source_label": "202B",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "Office fan 202 and CECE suite 211 are traced from dotted partitions. Department common areas remain open and unnumbered. Phone extensions were excluded."
+    ]
+  },
+  {
+    "building": "ENG2",
+    "floor": 3,
+    "width": 1788,
+    "height": 1376,
+    "rooms": [
+      {
+        "label": "312D",
+        "points": [
+          [452, 62],
+          [604, 62],
+          [604, 140],
+          [452, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312E",
+        "points": [
+          [604, 62],
+          [733, 62],
+          [733, 140],
+          [604, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312F",
+        "points": [
+          [733, 62],
+          [827, 62],
+          [827, 140],
+          [733, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312G",
+        "points": [
+          [827, 62],
+          [887, 62],
+          [887, 140],
+          [827, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312H",
+        "points": [
+          [887, 62],
+          [966, 62],
+          [966, 140],
+          [887, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312K",
+        "points": [
+          [966, 62],
+          [1070, 62],
+          [1070, 140],
+          [966, 140]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312L",
+        "points": [
+          [1087, 62],
+          [1199, 62],
+          [1199, 249],
+          [1087, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312L",
+        "label_status": "source-number"
+      },
+      {
+        "label": "318",
+        "points": [
+          [1199, 62],
+          [1297, 62],
+          [1297, 139],
+          [1199, 139]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "318",
+        "label_status": "source-number"
+      },
+      {
+        "label": "319",
+        "points": [
+          [1297, 62],
+          [1395, 62],
+          [1395, 128],
+          [1297, 128]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "319",
+        "label_status": "source-number"
+      },
+      {
+        "label": "317",
+        "points": [
+          [1199, 139],
+          [1277, 139],
+          [1277, 170],
+          [1199, 170]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "317",
+        "label_status": "source-number"
+      },
+      {
+        "label": "316",
+        "points": [
+          [1199, 170],
+          [1277, 170],
+          [1277, 249],
+          [1199, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "316",
+        "label_status": "source-number"
+      },
+      {
+        "label": "320",
+        "points": [
+          [1329, 128],
+          [1395, 128],
+          [1395, 249],
+          [1329, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "320",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312C",
+        "points": [
+          [356, 152],
+          [496, 152],
+          [496, 249],
+          [356, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312B",
+        "points": [
+          [496, 178],
+          [611, 178],
+          [611, 249],
+          [496, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "312A",
+        "points": [
+          [611, 178],
+          [751, 178],
+          [751, 249],
+          [611, 249]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "312A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-3-U01",
+        "points": [
+          [1395, 34],
+          [1511, 34],
+          [1511, 247],
+          [1395, 247]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "327",
+        "points": [
+          [1511, 88],
+          [1570, 88],
+          [1570, 300],
+          [1511, 300]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "327",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-3-U02",
+        "points": [
+          [166, 143],
+          [208, 84],
+          [271, 66],
+          [326, 91],
+          [354, 145],
+          [354, 228],
+          [302, 271],
+          [222, 269],
+          [166, 219]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "308",
+        "points": [
+          [126, 272],
+          [354, 272],
+          [375, 390],
+          [126, 333]
+        ],
+        "at": [252, 316],
+        "kind": "room",
+        "review": false,
+        "source_label": "308",
+        "label_status": "source-number"
+      },
+      {
+        "label": "304",
+        "points": [
+          [126, 333],
+          [375, 390],
+          [299, 622],
+          [70, 570]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "304",
+        "label_status": "source-number"
+      },
+      {
+        "label": "302",
+        "points": [
+          [70, 570],
+          [316, 648],
+          [255, 841],
+          [209, 899],
+          [14, 860]
+        ],
+        "at": [178, 725],
+        "kind": "room",
+        "review": false,
+        "source_label": "302",
+        "label_status": "source-number"
+      },
+      {
+        "label": "307",
+        "points": [
+          [428, 302],
+          [574, 302],
+          [574, 401],
+          [428, 401]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "307",
+        "label_status": "source-number"
+      },
+      {
+        "label": "306",
+        "points": [
+          [428, 401],
+          [574, 401],
+          [574, 494],
+          [428, 494]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "306",
+        "label_status": "source-number"
+      },
+      {
+        "label": "305",
+        "points": [
+          [388, 494],
+          [456, 494],
+          [456, 570],
+          [388, 570]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "305",
+        "label_status": "source-number"
+      },
+      {
+        "label": "303",
+        "points": [
+          [456, 494],
+          [574, 494],
+          [574, 653],
+          [483, 653],
+          [483, 702],
+          [425, 702],
+          [425, 723],
+          [356, 723],
+          [388, 570],
+          [456, 570]
+        ],
+        "at": [505, 593],
+        "kind": "room",
+        "review": false,
+        "source_label": "303",
+        "label_status": "source-number"
+      },
+      {
+        "label": "300H",
+        "points": [
+          [483, 653],
+          [574, 653],
+          [574, 712],
+          [483, 712]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "300H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "300G",
+        "points": [
+          [483, 712],
+          [574, 712],
+          [574, 781],
+          [483, 781]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "300G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-3-U03",
+        "points": [
+          [356, 723],
+          [425, 723],
+          [425, 781],
+          [356, 781]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG2-3-U04",
+        "points": [
+          [425, 702],
+          [483, 702],
+          [483, 781],
+          [425, 781]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "310",
+        "points": [
+          [574, 302],
+          [715, 302],
+          [715, 512],
+          [574, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "310",
+        "label_status": "source-number"
+      },
+      {
+        "label": "311",
+        "points": [
+          [715, 302],
+          [847, 302],
+          [847, 512],
+          [715, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "311",
+        "label_status": "source-number"
+      },
+      {
+        "label": "313",
+        "points": [
+          [847, 302],
+          [1020, 302],
+          [1020, 512],
+          [847, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "313",
+        "label_status": "source-number"
+      },
+      {
+        "label": "314",
+        "points": [
+          [1020, 302],
+          [1161, 302],
+          [1161, 458],
+          [1114, 458],
+          [1114, 512],
+          [1020, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "314",
+        "label_status": "source-number"
+      },
+      {
+        "label": "314A",
+        "points": [
+          [1114, 458],
+          [1161, 458],
+          [1161, 512],
+          [1114, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "314A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315",
+        "points": [
+          [1161, 302],
+          [1245, 302],
+          [1245, 512],
+          [1161, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315A",
+        "points": [
+          [1245, 302],
+          [1318, 302],
+          [1318, 355],
+          [1245, 355]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315B",
+        "points": [
+          [1245, 355],
+          [1318, 355],
+          [1318, 407],
+          [1245, 407]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315C",
+        "points": [
+          [1245, 407],
+          [1318, 407],
+          [1318, 459],
+          [1245, 459]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "315D",
+        "points": [
+          [1245, 459],
+          [1318, 459],
+          [1318, 512],
+          [1245, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "315D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "321",
+        "points": [
+          [1318, 302],
+          [1514, 302],
+          [1514, 512],
+          [1318, 512]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "321",
+        "label_status": "source-number"
+      },
+      {
+        "label": "326",
+        "points": [
+          [574, 615],
+          [657, 615],
+          [657, 551],
+          [819, 551],
+          [819, 781],
+          [574, 781]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "326",
+        "label_status": "source-number"
+      },
+      {
+        "label": "326A",
+        "points": [
+          [574, 551],
+          [657, 551],
+          [657, 615],
+          [574, 615]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "326A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "325B",
+        "points": [
+          [819, 551],
+          [910, 551],
+          [910, 653],
+          [819, 653]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "325B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "325A",
+        "points": [
+          [819, 653],
+          [895, 653],
+          [895, 781],
+          [819, 781]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "325A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "325",
+        "points": [
+          [910, 551],
+          [1063, 551],
+          [1063, 781],
+          [895, 781],
+          [895, 653],
+          [910, 653]
+        ],
+        "at": [983, 700],
+        "kind": "room",
+        "review": false,
+        "source_label": "325",
+        "label_status": "source-number"
+      },
+      {
+        "label": "324",
+        "points": [
+          [1063, 551],
+          [1276, 551],
+          [1276, 781],
+          [1146, 781],
+          [1146, 697],
+          [1063, 697]
+        ],
+        "at": [1170, 620],
+        "kind": "room",
+        "review": false,
+        "source_label": "324",
+        "label_status": "source-number"
+      },
+      {
+        "label": "324A",
+        "points": [
+          [1063, 697],
+          [1146, 697],
+          [1146, 781],
+          [1063, 781]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": true,
+        "source_label": "324A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "323",
+        "points": [
+          [1276, 551],
+          [1445, 551],
+          [1445, 653],
+          [1514, 625],
+          [1365, 781],
+          [1276, 781]
+        ],
+        "at": [1358, 662],
+        "kind": "room",
+        "review": false,
+        "source_label": "323",
+        "label_status": "source-number"
+      },
+      {
+        "label": "323A",
+        "points": [
+          [1445, 551],
+          [1514, 551],
+          [1514, 625],
+          [1445, 653]
+        ],
+        "at": [1478, 580],
+        "kind": "room",
+        "review": false,
+        "source_label": "323A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301L",
+        "points": [
+          [211, 897],
+          [342, 924],
+          [328, 957],
+          [210, 952]
+        ],
+        "at": [267, 924],
+        "kind": "room",
+        "review": false,
+        "source_label": "301L",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301K",
+        "points": [
+          [210, 952],
+          [302, 966],
+          [305, 999],
+          [218, 1054],
+          [207, 1010]
+        ],
+        "at": [257, 992],
+        "kind": "room",
+        "review": false,
+        "source_label": "301K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301J",
+        "points": [
+          [218, 1054],
+          [305, 1054],
+          [309, 1100],
+          [224, 1121]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "301J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301H",
+        "points": [
+          [224, 1121],
+          [309, 1100],
+          [328, 1158],
+          [258, 1203]
+        ],
+        "at": [270, 1150],
+        "kind": "room",
+        "review": false,
+        "source_label": "301H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301G",
+        "points": [
+          [258, 1203],
+          [328, 1158],
+          [359, 1158],
+          [390, 1216],
+          [315, 1262],
+          [270, 1250]
+        ],
+        "at": [319, 1216],
+        "kind": "room",
+        "review": false,
+        "source_label": "301G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301E",
+        "points": [
+          [359, 1158],
+          [425, 1121],
+          [463, 1160],
+          [390, 1216]
+        ],
+        "at": [415, 1170],
+        "kind": "room",
+        "review": false,
+        "source_label": "301E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301D",
+        "points": [
+          [425, 1121],
+          [478, 1044],
+          [537, 1068],
+          [490, 1134],
+          [463, 1160]
+        ],
+        "at": [482, 1100],
+        "kind": "room",
+        "review": false,
+        "source_label": "301D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301C",
+        "points": [
+          [498, 960],
+          [561, 977],
+          [537, 1068],
+          [478, 1044]
+        ],
+        "at": [522, 1008],
+        "kind": "room",
+        "review": false,
+        "source_label": "301C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301A",
+        "points": [
+          [342, 924],
+          [498, 960],
+          [478, 1044],
+          [367, 1010],
+          [360, 1038],
+          [305, 1038],
+          [328, 957]
+        ],
+        "at": [410, 975],
+        "kind": "room",
+        "review": false,
+        "source_label": "301A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "301B",
+        "points": [
+          [305, 1038],
+          [360, 1038],
+          [367, 1010],
+          [478, 1044],
+          [425, 1121],
+          [359, 1158],
+          [328, 1158],
+          [309, 1100],
+          [305, 1054]
+        ],
+        "at": [382, 1070],
+        "kind": "room",
+        "review": false,
+        "source_label": "301B",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "324A partition and office-fan boundaries are faint. Curved perimeter is approximated from the scan. No extra suffixes are inferred."
+    ]
+  },
+  {
+    "building": "ENG2",
+    "floor": 4,
+    "width": 1788,
+    "height": 1376,
+    "rooms": [
+      {
+        "label": "415",
+        "points": [
+          [365, 176],
+          [455, 176],
+          [455, 276],
+          [365, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "415",
+        "label_status": "source-number"
+      },
+      {
+        "label": "416",
+        "points": [
+          [455, 176],
+          [526, 176],
+          [526, 276],
+          [455, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "416",
+        "label_status": "source-number"
+      },
+      {
+        "label": "417",
+        "points": [
+          [526, 176],
+          [597, 176],
+          [597, 276],
+          [526, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "417",
+        "label_status": "source-number"
+      },
+      {
+        "label": "419",
+        "points": [
+          [597, 176],
+          [675, 176],
+          [675, 276],
+          [597, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "419",
+        "label_status": "source-number"
+      },
+      {
+        "label": "420",
+        "points": [
+          [675, 176],
+          [747, 176],
+          [747, 276],
+          [675, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "420",
+        "label_status": "source-number"
+      },
+      {
+        "label": "421",
+        "points": [
+          [747, 176],
+          [820, 176],
+          [820, 276],
+          [747, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "421",
+        "label_status": "source-number"
+      },
+      {
+        "label": "422",
+        "points": [
+          [820, 176],
+          [890, 176],
+          [890, 276],
+          [820, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "422",
+        "label_status": "source-number"
+      },
+      {
+        "label": "424",
+        "points": [
+          [890, 176],
+          [966, 176],
+          [966, 276],
+          [890, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "424",
+        "label_status": "source-number"
+      },
+      {
+        "label": "425",
+        "points": [
+          [966, 176],
+          [1034, 176],
+          [1034, 276],
+          [966, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "425",
+        "label_status": "source-number"
+      },
+      {
+        "label": "427",
+        "points": [
+          [1034, 176],
+          [1109, 176],
+          [1109, 276],
+          [1034, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "427",
+        "label_status": "source-number"
+      },
+      {
+        "label": "428",
+        "points": [
+          [1109, 176],
+          [1181, 176],
+          [1181, 276],
+          [1109, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "428",
+        "label_status": "source-number"
+      },
+      {
+        "label": "429",
+        "points": [
+          [1181, 176],
+          [1254, 176],
+          [1254, 276],
+          [1181, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "429",
+        "label_status": "source-number"
+      },
+      {
+        "label": "430",
+        "points": [
+          [1254, 176],
+          [1326, 176],
+          [1326, 276],
+          [1254, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "430",
+        "label_status": "source-number"
+      },
+      {
+        "label": "432",
+        "points": [
+          [1326, 176],
+          [1398, 176],
+          [1398, 276],
+          [1326, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "432",
+        "label_status": "source-number"
+      },
+      {
+        "label": "434",
+        "points": [
+          [1398, 176],
+          [1476, 176],
+          [1476, 276],
+          [1398, 276]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "434",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-4-U01",
+        "points": [
+          [1476, 13],
+          [1601, 13],
+          [1601, 273],
+          [1476, 273]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U01*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "441",
+        "points": [
+          [1601, 176],
+          [1664, 176],
+          [1664, 327],
+          [1601, 327]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "441",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-4-U02",
+        "points": [
+          [157, 155],
+          [207, 96],
+          [270, 82],
+          [328, 104],
+          [365, 160],
+          [365, 250],
+          [310, 300],
+          [230, 298],
+          [162, 240]
+        ],
+        "at": null,
+        "kind": "stairs",
+        "review": false,
+        "source_label": "STAIR",
+        "display_label": "U02*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "411",
+        "points": [
+          [211, 301],
+          [310, 318],
+          [315, 375],
+          [195, 359]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "411",
+        "label_status": "source-number"
+      },
+      {
+        "label": "410",
+        "points": [
+          [195, 359],
+          [315, 375],
+          [301, 451],
+          [182, 427]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "410",
+        "label_status": "source-number"
+      },
+      {
+        "label": "409",
+        "points": [
+          [182, 427],
+          [301, 451],
+          [283, 526],
+          [166, 501]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "409",
+        "label_status": "source-number"
+      },
+      {
+        "label": "408",
+        "points": [
+          [166, 501],
+          [283, 526],
+          [268, 589],
+          [155, 562]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "408",
+        "label_status": "source-number"
+      },
+      {
+        "label": "406",
+        "points": [
+          [155, 562],
+          [268, 589],
+          [247, 663],
+          [140, 636]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "406",
+        "label_status": "source-number"
+      },
+      {
+        "label": "405",
+        "points": [
+          [140, 636],
+          [247, 663],
+          [242, 730],
+          [122, 704]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "405",
+        "label_status": "source-number"
+      },
+      {
+        "label": "404",
+        "points": [
+          [122, 704],
+          [242, 730],
+          [224, 800],
+          [108, 774]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "404",
+        "label_status": "source-number"
+      },
+      {
+        "label": "403",
+        "points": [
+          [108, 774],
+          [224, 800],
+          [204, 866],
+          [94, 838]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "403",
+        "label_status": "source-number"
+      },
+      {
+        "label": "402",
+        "points": [
+          [94, 838],
+          [204, 866],
+          [196, 941],
+          [84, 922]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "402",
+        "label_status": "source-number"
+      },
+      {
+        "label": "413",
+        "points": [
+          [443, 332],
+          [594, 332],
+          [594, 439],
+          [443, 439]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "413",
+        "label_status": "source-number"
+      },
+      {
+        "label": "412",
+        "points": [
+          [443, 439],
+          [594, 439],
+          [594, 537],
+          [443, 537]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "412",
+        "label_status": "source-number"
+      },
+      {
+        "label": "407",
+        "points": [
+          [344, 515],
+          [443, 537],
+          [594, 537],
+          [594, 709],
+          [495, 709],
+          [495, 759],
+          [431, 759],
+          [431, 784],
+          [361, 784],
+          [361, 759],
+          [292, 759]
+        ],
+        "at": [446, 616],
+        "kind": "room",
+        "review": false,
+        "source_label": "407",
+        "label_status": "source-number"
+      },
+      {
+        "label": "401",
+        "points": [
+          [292, 759],
+          [361, 759],
+          [361, 845],
+          [274, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "401",
+        "label_status": "source-number"
+      },
+      {
+        "label": "400H",
+        "points": [
+          [495, 709],
+          [594, 709],
+          [594, 771],
+          [495, 771]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "400H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "400G",
+        "points": [
+          [495, 771],
+          [594, 771],
+          [594, 845],
+          [495, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "400G",
+        "label_status": "source-number"
+      },
+      {
+        "label": "ENG2-4-U03",
+        "points": [
+          [361, 784],
+          [431, 784],
+          [431, 845],
+          [361, 845]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U03*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "ENG2-4-U04",
+        "points": [
+          [431, 759],
+          [495, 759],
+          [495, 845],
+          [431, 845]
+        ],
+        "at": null,
+        "kind": "lift",
+        "review": false,
+        "source_label": "LIFT",
+        "display_label": "U04*",
+        "label_status": "temporary-review-id"
+      },
+      {
+        "label": "418",
+        "points": [
+          [594, 332],
+          [887, 332],
+          [887, 557],
+          [594, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "418",
+        "label_status": "source-number"
+      },
+      {
+        "label": "423",
+        "points": [
+          [887, 332],
+          [1013, 332],
+          [1013, 557],
+          [887, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "423",
+        "label_status": "source-number"
+      },
+      {
+        "label": "426",
+        "points": [
+          [1013, 332],
+          [1205, 332],
+          [1205, 557],
+          [1098, 557],
+          [1098, 449],
+          [1013, 449]
+        ],
+        "at": [1150, 400],
+        "kind": "room",
+        "review": false,
+        "source_label": "426",
+        "label_status": "source-number"
+      },
+      {
+        "label": "426A",
+        "points": [
+          [1013, 449],
+          [1098, 449],
+          [1098, 557],
+          [1013, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "426A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "431",
+        "points": [
+          [1205, 332],
+          [1346, 332],
+          [1346, 501],
+          [1205, 501]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "431",
+        "label_status": "source-number"
+      },
+      {
+        "label": "426B",
+        "points": [
+          [1205, 501],
+          [1346, 501],
+          [1346, 557],
+          [1205, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "426B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "433",
+        "points": [
+          [1346, 332],
+          [1464, 332],
+          [1464, 557],
+          [1346, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "433",
+        "label_status": "source-number"
+      },
+      {
+        "label": "435",
+        "points": [
+          [1464, 332],
+          [1601, 332],
+          [1601, 443],
+          [1464, 443]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "435",
+        "label_status": "source-number"
+      },
+      {
+        "label": "436",
+        "points": [
+          [1464, 443],
+          [1601, 443],
+          [1601, 557],
+          [1464, 557]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "436",
+        "label_status": "source-number"
+      },
+      {
+        "label": "440",
+        "points": [
+          [594, 599],
+          [744, 599],
+          [744, 845],
+          [594, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "440",
+        "label_status": "source-number"
+      },
+      {
+        "label": "439",
+        "points": [
+          [744, 599],
+          [891, 599],
+          [891, 845],
+          [744, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "439",
+        "label_status": "source-number"
+      },
+      {
+        "label": "438",
+        "points": [
+          [891, 599],
+          [1340, 599],
+          [1340, 845],
+          [891, 845]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "438",
+        "label_status": "source-number"
+      },
+      {
+        "label": "437",
+        "points": [
+          [1340, 599],
+          [1601, 599],
+          [1601, 618],
+          [1382, 845],
+          [1340, 845]
+        ],
+        "at": [1437, 690],
+        "kind": "room",
+        "review": false,
+        "source_label": "437",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442J",
+        "points": [
+          [198, 941],
+          [277, 959],
+          [280, 1004],
+          [210, 1002]
+        ],
+        "at": [237, 973],
+        "kind": "room",
+        "review": false,
+        "source_label": "442J",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442H",
+        "points": [
+          [210, 1002],
+          [280, 1004],
+          [290, 1065],
+          [219, 1066]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "442H",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442F",
+        "points": [
+          [219, 1066],
+          [290, 1065],
+          [296, 1129],
+          [226, 1131]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "442F",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442D",
+        "points": [
+          [226, 1131],
+          [296, 1129],
+          [300, 1183],
+          [233, 1190]
+        ],
+        "at": null,
+        "kind": "room",
+        "review": false,
+        "source_label": "442D",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442E",
+        "points": [
+          [233, 1190],
+          [300, 1183],
+          [321, 1190],
+          [355, 1230],
+          [240, 1260]
+        ],
+        "at": [285, 1220],
+        "kind": "room",
+        "review": false,
+        "source_label": "442E",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442K",
+        "points": [
+          [320, 975],
+          [416, 995],
+          [402, 1050],
+          [372, 1096],
+          [328, 1082]
+        ],
+        "at": [361, 1030],
+        "kind": "room",
+        "review": false,
+        "source_label": "442K",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442A",
+        "points": [
+          [443, 999],
+          [498, 1011],
+          [474, 1089],
+          [423, 1058]
+        ],
+        "at": [460, 1043],
+        "kind": "room",
+        "review": false,
+        "source_label": "442A",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442B",
+        "points": [
+          [423, 1058],
+          [474, 1089],
+          [451, 1126],
+          [414, 1164],
+          [384, 1132],
+          [401, 1092]
+        ],
+        "at": [432, 1111],
+        "kind": "room",
+        "review": false,
+        "source_label": "442B",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442C",
+        "points": [
+          [335, 1160],
+          [384, 1132],
+          [414, 1164],
+          [355, 1213]
+        ],
+        "at": [374, 1171],
+        "kind": "room",
+        "review": false,
+        "source_label": "442C",
+        "label_status": "source-number"
+      },
+      {
+        "label": "442G",
+        "points": [
+          [298, 1083],
+          [328, 1082],
+          [372, 1096],
+          [401, 1092],
+          [384, 1132],
+          [335, 1160],
+          [300, 1161]
+        ],
+        "at": [346, 1119],
+        "kind": "room",
+        "review": false,
+        "source_label": "442G",
+        "label_status": "source-number"
+      }
+    ],
+    "notes": [
+      "The 442 suite includes curved walls, simplified into short straight segments. Office IDs are retained; personnel names and phone extensions are omitted."
+    ]
+  }
+]

@@ -5,6 +5,7 @@ import { HackerSdkError } from "../errors";
 import { hackerSdkQueryKeys } from "../query-keys";
 import {
   canLoadCheckedInParticipantData,
+  canLoadParticipantSchedule,
   createSdkQueryClient,
   hackerSdkRetryDelay,
   invalidateHackerParticipantQueries,
@@ -12,6 +13,16 @@ import {
 } from "../react";
 
 describe("Hacker SDK React behavior", () => {
+  it.each([
+    ["confirmed", true],
+    ["checkedin", true],
+    ["accepted", false],
+    ["pending", false],
+    ["waitlisted", false],
+    [undefined, false],
+  ])("schedule access for %s is %s", (status, allowed) => {
+    expect(canLoadParticipantSchedule(status)).toBe(allowed);
+  });
   it("gates private event data until check-in", () => {
     expect(canLoadCheckedInParticipantData("confirmed")).toBe(false);
     expect(canLoadCheckedInParticipantData("checkedin")).toBe(true);

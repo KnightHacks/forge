@@ -62,9 +62,7 @@
 }
 
 .avatarFallback {
-  background: color-mix(in srgb, var(--hacker-class-accent) 32%, #f8f6ef);
-  color: #251c2b;
-  font: 600 1.4rem/1 var(--khix-display-font);
+  background: #226da5;
 }
 
 .identity h1 {
@@ -230,10 +228,6 @@
     height: clamp(3.5rem, 8cqw, 6.5rem);
   }
 
-  .avatarFallback {
-    font-size: clamp(1.4rem, 3.2cqw, 2.6rem);
-  }
-
   .identity h1 {
     font-size: clamp(1.6rem, 4cqw, 3.5rem);
   }
@@ -288,10 +282,6 @@
   .avatar {
     width: 2.75rem;
     height: 2.75rem;
-  }
-
-  .avatarFallback {
-    font-size: 1.15rem;
   }
 
   .identity h1 {
