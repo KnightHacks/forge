@@ -656,11 +656,7 @@
 }
 
 .navUserAvatarFallback {
-  background: rgb(255 252 244 / 0.94);
-  color: #190925;
-  font-size: 0.76rem;
-  font-weight: 850;
-  letter-spacing: 0;
+  background: #226da5;
 }
 
 .navUserText {

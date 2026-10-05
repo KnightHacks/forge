@@ -335,19 +335,6 @@ function getSessionUserEmail(user: KhixSessionUser) {
   return email;
 }
 
-function getSessionUserInitials(user: KhixSessionUser) {
-  const emailName = getSessionUserDisplayName(user).split("@")[0];
-  const source = emailName != null && emailName.length > 0 ? emailName : "KH";
-  const parts = source.split(/[\s._-]+/).filter(Boolean);
-  const letters =
-    parts.length > 1
-      ? [parts[0]?.[0], parts[1]?.[0]]
-      : Array.from(parts[0] ?? source).slice(0, 2);
-
-  const initials = letters.join("").toLocaleUpperCase("en-US");
-  return initials.length > 0 ? initials : "KH";
-}
-
 function getDiscordAvatarUrl(user: KhixSessionUser) {
   const avatarHash = user.image?.trim();
   if (!avatarHash) return null;
@@ -2222,7 +2209,13 @@ function SignedInNavCard({ user }: { user: KhixSessionUser }) {
           />
         ) : null}
         <AvatarFallback className={styles.navUserAvatarFallback}>
-          {getSessionUserInitials(user)}
+          <Image
+            src="/dashboard/knight-avatar-placeholder.png"
+            alt=""
+            fill
+            sizes="32px"
+            className={styles.navUserAvatarImage}
+          />
         </AvatarFallback>
       </Avatar>
       <span className={styles.navUserText}>

@@ -52,3 +52,8 @@ Current phase: Complete
 - Replaced the admission pass's initials fallback with the owner's supplied knight image, kept unchanged as a local public asset. Missing or failed profile photos (including the local preview) show the image in the existing circular avatar; a loaded real profile photo retains priority.
 - Kept the existing avatar size and responsive layout. Next Image serves the placeholder at the appropriate display size. No session, profile upload, or shared avatar behavior changed.
 - Validation: repository format, lint (warnings only), and all 33 typecheck tasks passed. React analysis passed for 18 changed files with zero failures. The copied asset matches the supplied image byte-for-byte. The supplied screenshots were reviewed; fresh browser verification remains blocked by the previously documented URL-policy rejection.
+
+## Sidebar avatar fallback — October 5 follow-up
+
+- Applied the same supplied knight image to the signed-in navigation card's missing/failed-photo fallback. Desktop and mobile navigation share this card. Kept the 32px avatar and existing photo-loading behavior, and removed its unused initials helper and text-only fallback styles.
+- Validation: repository formatting, lint (warnings only), all 33 typecheck tasks, and React analysis (18 changed files, zero failures) passed. The supplied sidebar screenshot was reviewed; fresh browser verification remains blocked by the previously documented URL-policy rejection.
