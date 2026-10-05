@@ -54,7 +54,7 @@ describe("hacker portal participant policy", () => {
       canEdit: true,
       canGetPass: true,
       canViewLeaderboard: true,
-      canViewSchedule: false,
+      canViewSchedule: true,
       canWithdraw: true,
     });
     expect(

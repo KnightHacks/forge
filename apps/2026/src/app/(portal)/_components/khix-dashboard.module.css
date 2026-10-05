@@ -118,8 +118,41 @@
   overflow: hidden;
   background-color: var(--khix-near-black-violet);
   color: var(--khix-ink);
+  color-scheme: dark;
   font-family: var(--khix-body-font);
   isolation: isolate;
+  -webkit-tap-highlight-color: rgb(216 197 242 / 0.16);
+}
+
+.dashboard
+  :where(
+    a[href],
+    button:not(:disabled),
+    input:not(:disabled),
+    textarea:not(:disabled),
+    select:not(:disabled),
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ) {
+  touch-action: manipulation;
+}
+
+.dashboard
+  :where(
+    a[href],
+    button:not(:disabled),
+    input:not(:disabled),
+    textarea:not(:disabled),
+    select:not(:disabled),
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}
+
+.dashboard :where(h1[id], h2[id], h3[id], section[id]) {
+  scroll-margin-top: calc(5rem + env(safe-area-inset-top));
 }
 
 .statusDashboard {
@@ -146,9 +179,8 @@
   transition: transform 180ms ease;
 }
 
-.skipLink:focus {
+.skipLink:focus-visible {
   transform: translateY(0);
-  outline: none;
 }
 
 .chrome {
@@ -186,7 +218,7 @@
   min-height: 100%;
   grid-template-rows: auto minmax(1rem, 1fr) auto;
   align-items: start;
-  gap: clamp(1rem, 2.4vh, 1.6rem);
+  gap: clamp(0.6rem, 1.5vh, 0.9rem);
   border: 1px solid rgb(162 153 194 / 0.12);
   border-width: 0 1px 0 0;
   border-radius: 0;
@@ -364,7 +396,7 @@
 
 .railLogoLink {
   display: inline-flex;
-  width: min(8.25rem, 100%);
+  width: min(7rem, 100%);
   align-items: center;
   border-radius: 0.45rem;
 }
@@ -383,18 +415,18 @@
 
 .siteReturnLink {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: 1.6rem minmax(0, 1fr);
   width: 100%;
-  min-height: 3rem;
+  min-height: 2.5rem;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
   border: 1px solid var(--khix-nav-button-edge);
   border-radius: 0.5rem;
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
   color: var(--khix-muted);
-  padding: 0.45rem 0.6rem;
-  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.82rem;
   font-weight: 820;
   line-height: 1.15;
   text-align: left;
@@ -421,17 +453,17 @@
   display: grid;
   width: 100%;
   align-self: start;
-  gap: 0.38rem;
+  gap: 0.15rem;
 }
 
 .railLink {
   position: relative;
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: 1.6rem minmax(0, 1fr);
   width: 100%;
-  min-height: 3rem;
+  min-height: 2.5rem;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
   overflow: hidden;
   border: 1px solid var(--khix-nav-button-edge);
   border-radius: 0.5rem;
@@ -439,8 +471,8 @@
   box-shadow: var(--khix-nav-button-shadow);
   color: var(--khix-muted);
   font-family: inherit;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.82rem;
   font-weight: 820;
   text-align: left;
   text-decoration: none;
@@ -531,7 +563,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  width: 2rem;
+  width: 1.6rem;
   aspect-ratio: 1;
   place-items: center;
   color: var(--khix-muted);
@@ -587,21 +619,21 @@
   grid-row: 3;
   width: 100%;
   align-self: end;
-  gap: 0.66rem;
+  gap: 0.3rem;
   margin: auto 0 0;
 }
 
 .navUserCard {
   display: grid;
   min-width: 0;
-  grid-template-columns: 2.45rem minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr);
   align-items: center;
-  gap: 0.72rem;
+  gap: 0.5rem;
   border: 1px solid transparent;
   border-radius: 0.58rem;
   background: transparent;
   box-shadow: none;
-  padding: 0.62rem;
+  padding: 0.4rem 0.5rem;
 }
 
 .navFooter .siteReturnLink {
@@ -609,8 +641,8 @@
 }
 
 .navUserAvatar {
-  width: 2.45rem;
-  height: 2.45rem;
+  width: 2rem;
+  height: 2rem;
   border: 1px solid rgb(255 252 244 / 0.46);
   background: rgb(255 252 244 / 0.94);
   color: #190925;
@@ -624,11 +656,7 @@
 }
 
 .navUserAvatarFallback {
-  background: rgb(255 252 244 / 0.94);
-  color: #190925;
-  font-size: 0.76rem;
-  font-weight: 850;
-  letter-spacing: 0;
+  background: #226da5;
 }
 
 .navUserText {
@@ -804,19 +832,19 @@
 
 .logoutButton {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  min-height: 3rem;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  min-height: 2.5rem;
   width: 100%;
   align-items: center;
   justify-content: stretch;
-  gap: 0.7rem;
+  gap: 0.5rem;
   border: 1px solid var(--khix-nav-button-edge);
   border-radius: 0.5rem;
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
   color: var(--khix-muted);
-  padding: 0.45rem 0.6rem;
-  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.82rem;
   font-weight: 820;
   line-height: 1.15;
   text-align: left;
@@ -1282,17 +1310,20 @@
   }
 }
 
-.chrome:has(.guideMain) {
+.chrome:has(.guideMain),
+.chrome:has(.mapMain) {
   height: 100dvh;
 }
 
-.main.guideMain {
+.main.guideMain,
+.main.mapMain {
   height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
-.main.guideMain .mainCanvas {
+.main.guideMain .mainCanvas,
+.main.mapMain .mainCanvas {
   height: 100%;
   min-height: 0;
   grid-template-rows: minmax(0, 1fr);
@@ -2171,8 +2202,18 @@
 }
 
 .eventsMain .portalMagic,
+.mapMain .portalMagic,
 .profileMain .portalMagic,
 .loreMain .portalMagic {
+  display: none;
+}
+
+.mapMain .mainCanvas {
+  display: block;
+}
+
+.mapMain .mainCanvas::before,
+.mapMain .workspaceBotanicals {
   display: none;
 }
 
@@ -4172,6 +4213,10 @@ button.teamTextButton:disabled {
   min-width: 0;
 }
 
+.profileFormField:focus-within .profileFormLabel {
+  color: rgb(255 252 244 / 0.96);
+}
+
 .profileFormLabel {
   color: var(--khix-ink);
   font-size: 0.76rem;
@@ -4386,10 +4431,17 @@ button.teamTextButton:disabled {
 }
 
 .profileCheckbox {
+  position: relative;
   flex: 0 0 auto;
   border-color: var(--khix-panel-border);
   background: rgb(25 9 37 / 0.42);
   color: var(--khix-ink);
+}
+
+.profileCheckbox::before {
+  position: absolute;
+  inset: -0.75rem;
+  content: "";
 }
 
 .profileConsentList {
@@ -4399,9 +4451,10 @@ button.teamTextButton:disabled {
 
 .profileConsent {
   display: grid;
+  min-height: 2.75rem;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.58rem;
-  align-items: flex-start;
+  align-items: center;
   border: 0;
   border-top: 1px solid rgb(162 153 194 / 0.12);
   border-radius: 0;
@@ -5426,7 +5479,7 @@ button.teamTextButton:disabled {
   }
 
   .railNav {
-    gap: 0.55rem;
+    gap: 0.15rem;
   }
 
   .navFooter {
@@ -5788,6 +5841,7 @@ button.teamTextButton:disabled {
 
   .portalNavInner[data-mobile-dragging="true"] {
     transition: none;
+    user-select: none;
   }
 
   .railBrand {
@@ -5805,7 +5859,8 @@ button.teamTextButton:disabled {
 
   .mobileMenuButton {
     display: grid;
-    width: 2.65rem;
+    width: 2.75rem;
+    min-height: 2.75rem;
     aspect-ratio: 1;
     place-items: center;
     border: 1px solid transparent;
@@ -5834,7 +5889,7 @@ button.teamTextButton:disabled {
     grid-column: 1 / -1;
     grid-template-columns: 2rem minmax(0, 1fr);
     width: 100%;
-    min-height: 2.95rem;
+    min-height: 2.75rem;
     margin-top: 0.1rem;
     border: 1px solid transparent;
     border-radius: 0.54rem;
@@ -5849,7 +5904,7 @@ button.teamTextButton:disabled {
     min-height: 0;
     align-content: start;
     align-self: stretch;
-    gap: 0.42rem;
+    gap: 0.1rem;
     margin-top: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -5861,7 +5916,7 @@ button.teamTextButton:disabled {
     width: 100%;
     flex: none;
     min-width: 0;
-    min-height: 2.95rem;
+    min-height: 2.75rem;
     grid-template-columns: 2rem minmax(0, 1fr);
     justify-content: stretch;
     padding: 0.42rem 0.58rem;
@@ -5886,7 +5941,7 @@ button.teamTextButton:disabled {
 
   .logoutButton {
     width: 100%;
-    min-height: 2.95rem;
+    min-height: 2.75rem;
     padding: 0.42rem 0.58rem;
     font-size: 0.82rem;
     white-space: nowrap;
@@ -6364,6 +6419,25 @@ button.teamTextButton:disabled {
     line-height: 1.18;
   }
 
+  .primaryButton,
+  .ghostButton,
+  .toolLink,
+  .toolButton,
+  .issueButton,
+  .profileRemoveResume,
+  .profileSelectTrigger,
+  .profileComboboxTrigger,
+  .profileAllergyTrigger,
+  .profileAllergyOption {
+    min-height: 2.75rem;
+  }
+
+  .profileInput,
+  .profileTextarea,
+  .issueTextarea {
+    font-size: 1rem;
+  }
+
   .profileOptional {
     color: rgb(162 153 194 / 0.62);
     font-size: 0.68rem;
@@ -6514,17 +6588,17 @@ button.teamTextButton:disabled {
   }
 
   .siteReturnLink {
-    min-height: 2.72rem;
+    min-height: 2.75rem;
     padding: 0.42rem 0.54rem;
     font-size: 0.76rem;
   }
 
   .railNav {
-    gap: 0.36rem;
+    gap: 0.1rem;
   }
 
   .railLink {
-    min-height: 2.72rem;
+    min-height: 2.75rem;
     font-size: 0.76rem;
   }
 
@@ -6533,7 +6607,7 @@ button.teamTextButton:disabled {
   }
 
   .logoutButton {
-    min-height: 2.72rem;
+    min-height: 2.75rem;
     padding: 0.42rem 0.54rem;
     font-size: 0.76rem;
   }

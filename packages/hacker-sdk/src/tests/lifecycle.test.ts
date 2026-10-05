@@ -48,7 +48,7 @@ describe("Hacker SDK lifecycle helpers", () => {
     ).toBe("accepted-confirmation-closed");
   });
 
-  it("keeps schedule checked-in-only while leaderboard and QR include confirmed", () => {
+  it("opens schedule, leaderboard and QR for confirmed participants", () => {
     expect(
       getHackerCapabilityHints({
         confirmationClosesAt: dates.confirmationClosesAt,
@@ -59,7 +59,7 @@ describe("Hacker SDK lifecycle helpers", () => {
     ).toMatchObject({
       canGetCheckInPass: true,
       canViewLeaderboard: true,
-      canViewSchedule: false,
+      canViewSchedule: true,
       canWithdraw: true,
     });
     expect(

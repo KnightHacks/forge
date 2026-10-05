@@ -23,6 +23,7 @@ import {
   Loader2,
   LockKeyhole,
   LogOut,
+  Map as MapIcon,
   MapPin,
   Menu,
   Play,
@@ -109,6 +110,7 @@ import {
   buildDisplayedAgreementInputs,
   requiredAgreementsAccepted,
 } from "~/lib/portal-agreements";
+import { useMapAccess } from "~/lib/use-map-access";
 import statusStyles from "./application-status.module.css";
 import { CustomSchoolField } from "./custom-school-field";
 import { HackerAdmissionPass } from "./hacker-admission-pass";
@@ -131,6 +133,14 @@ interface CountdownState {
 
 const WITHDRAW_HOLD_READY_MS = 1100;
 const MOBILE_DRAWER_TRANSITION_MS = 280;
+const MOBILE_DRAWER_FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 const KHIX_EVENT_DETAILS =
   "October 9 - 11, 2026 at University of Central Florida";
 const PORTAL_FIREFLY_IDS = Array.from({ length: 24 }, (_, index) =>
@@ -325,19 +335,6 @@ function getSessionUserEmail(user: KhixSessionUser) {
   return email;
 }
 
-function getSessionUserInitials(user: KhixSessionUser) {
-  const emailName = getSessionUserDisplayName(user).split("@")[0];
-  const source = emailName != null && emailName.length > 0 ? emailName : "KH";
-  const parts = source.split(/[\s._-]+/).filter(Boolean);
-  const letters =
-    parts.length > 1
-      ? [parts[0]?.[0], parts[1]?.[0]]
-      : Array.from(parts[0] ?? source).slice(0, 2);
-
-  const initials = letters.join("").toLocaleUpperCase("en-US");
-  return initials.length > 0 ? initials : "KH";
-}
-
 function getDiscordAvatarUrl(user: KhixSessionUser) {
   const avatarHash = user.image?.trim();
   if (!avatarHash) return null;
@@ -389,7 +386,7 @@ function getAllergies(value?: string | null) {
   );
 }
 
-interface KhixSessionUser {
+export interface KhixSessionUser {
   discordUserId?: string | null;
   email?: string | null;
   image?: string | null;
@@ -650,7 +647,10 @@ export function KhixEvents() {
     );
   }
 
-  if (dashboard.participant?.status !== "checkedin") {
+  if (
+    dashboard.participant?.status !== "confirmed" &&
+    dashboard.participant?.status !== "checkedin"
+  ) {
     return (
       <StatusStage
         action={
@@ -658,9 +658,9 @@ export function KhixEvents() {
             <Link href="/dashboard">Back to dashboard</Link>
           </Button>
         }
-        body="The full schedule appears here once you arrive and check in."
+        body="Confirm your attendance to view the schedule and plan your arrival."
         headline="The forest is still keeping its secrets."
-        greeting="Events unlock at check-in"
+        greeting="Events unlock after confirmation"
         statusLabel="Locked"
         statusClassName={styles.statusPending}
       />
@@ -889,6 +889,7 @@ const dashboardTabs = {
   "/dashboard/lore": "lore",
   "/dashboard/teams": "teams",
   "/dashboard/events": "events",
+  "/dashboard/map": "map",
   "/dashboard/judging": "judging",
   "/dashboard/merch": "merch",
   "/dashboard/journey": "journey",
@@ -906,10 +907,15 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
   const previousPathRef = useRef(pathname);
   const dashboardQuery = useHackerDashboard();
   const judgingQuery = useHackerJudging();
+  const mapAccess = useMapAccess();
   const logout = usePortalSignOut();
   const [mobileMenuState, setMobileMenuState] =
     useState<MobileDrawerState>("closed");
   const [drawerDragOffset, setDrawerDragOffset] = useState(0);
+  const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
+  const mobileDrawerCloseRef = useRef<HTMLButtonElement>(null);
+  const drawerRestoreFocusRef = useRef(false);
   const drawerCloseTimeoutRef = useRef<number | null>(null);
   const drawerOpenFrameRef = useRef<number | null>(null);
   const drawerSuppressClickRef = useRef(false);
@@ -924,7 +930,9 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
   const loreHref = "/dashboard/lore";
   const statusHref = "/dashboard";
   const eventsUnlocked =
+    dashboardQuery.data?.application?.status === "confirmed" ||
     dashboardQuery.data?.application?.status === "checkedin";
+  const checkedIn = dashboardQuery.data?.application?.status === "checkedin";
   const journeyUnlocked =
     dashboardQuery.data?.application?.status === "confirmed" ||
     dashboardQuery.data?.application?.status === "checkedin";
@@ -967,6 +975,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
 
   const openMobileMenu = useCallback(() => {
     clearDrawerTimers();
+    drawerRestoreFocusRef.current = false;
     drawerGestureRef.current = null;
     drawerSuppressClickRef.current = false;
     setDrawerDragOffset(0);
@@ -981,6 +990,8 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
   }, [clearDrawerTimers]);
 
   const closeMobileMenu = useCallback(() => {
+    if (!mobileMenuMounted) return;
+
     clearDrawerTimers();
     drawerGestureRef.current = null;
     drawerSuppressClickRef.current = false;
@@ -989,9 +1000,10 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
 
     drawerCloseTimeoutRef.current = window.setTimeout(() => {
       drawerCloseTimeoutRef.current = null;
+      drawerRestoreFocusRef.current = true;
       setMobileMenuState("closed");
     }, MOBILE_DRAWER_TRANSITION_MS);
-  }, [clearDrawerTimers]);
+  }, [clearDrawerTimers, mobileMenuMounted]);
 
   useEffect(() => {
     return clearDrawerTimers;
@@ -1028,9 +1040,41 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
 
     const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobileMenu();
+        return;
+      }
 
-      closeMobileMenu();
+      if (event.key !== "Tab") return;
+
+      const focusableElements = Array.from(
+        mobileDrawerRef.current?.querySelectorAll<HTMLElement>(
+          MOBILE_DRAWER_FOCUSABLE_SELECTOR,
+        ) ?? [],
+      ).filter(
+        (element) =>
+          !element.hasAttribute("disabled") &&
+          element.getAttribute("aria-hidden") !== "true" &&
+          element.getClientRects().length > 0,
+      );
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements.at(-1);
+      if (!firstElement || !lastElement) return;
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     };
 
     document.body.style.overflow = "hidden";
@@ -1041,6 +1085,32 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [closeMobileMenu, mobileMenuMounted]);
+
+  useEffect(() => {
+    if (mobileMenuState === "open") {
+      const focusDelay = window.matchMedia("(prefers-reduced-motion: reduce)")
+        .matches
+        ? 0
+        : MOBILE_DRAWER_TRANSITION_MS + 40;
+      const focusTimer = window.setTimeout(() => {
+        mobileDrawerCloseRef.current?.focus({ preventScroll: true });
+      }, focusDelay);
+
+      return () => window.clearTimeout(focusTimer);
+    }
+
+    if (
+      mobileMenuState === "closed" &&
+      drawerRestoreFocusRef.current === true
+    ) {
+      drawerRestoreFocusRef.current = false;
+      const focusFrame = window.requestAnimationFrame(() => {
+        mobileMenuTriggerRef.current?.focus({ preventScroll: true });
+      });
+
+      return () => window.cancelAnimationFrame(focusFrame);
+    }
+  }, [mobileMenuState]);
 
   const releaseDrawerPointerCapture = (
     element: HTMLDivElement,
@@ -1135,12 +1205,21 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
         activeItem === "status" && styles.statusDashboard,
       )}
     >
-      <a href="#khix-dashboard-main" className={styles.skipLink}>
+      <a
+        href="#khix-dashboard-main"
+        className={styles.skipLink}
+        aria-hidden={mobileMenuMounted ? true : undefined}
+        tabIndex={mobileMenuMounted ? -1 : undefined}
+      >
         Skip to dashboard
       </a>
       <div className={styles.chrome}>
         <aside className={styles.portalNav} aria-label="Dashboard navigation">
-          <div className={styles.mobileTopBar}>
+          <div
+            className={styles.mobileTopBar}
+            aria-hidden={mobileMenuMounted ? true : undefined}
+            inert={mobileMenuMounted ? true : undefined}
+          >
             <Link href="/" className={styles.mobileLogoLink} draggable={false}>
               <Image
                 src="https://assets.knighthacks.org/khix/khlogo.svg"
@@ -1153,6 +1232,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               />
             </Link>
             <button
+              ref={mobileMenuTriggerRef}
               type="button"
               className={styles.mobileMenuButton}
               aria-controls="khix-dashboard-drawer"
@@ -1168,16 +1248,29 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               type="button"
               className={styles.mobileDrawerScrim}
               data-mobile-menu={mobileMenuState}
-              aria-label="Close dashboard menu"
+              aria-hidden="true"
               onClick={closeMobileMenu}
+              tabIndex={-1}
             />
           ) : null}
           <div
+            ref={mobileDrawerRef}
             id="khix-dashboard-drawer"
+            aria-label={mobileMenuMounted ? "Dashboard menu" : undefined}
+            aria-modal={mobileMenuMounted ? true : undefined}
             className={styles.portalNavInner}
             data-mobile-dragging={drawerDragOffset !== 0 ? "true" : undefined}
             data-mobile-menu={mobileMenuState}
             onPointerCancel={handleDrawerPointerEnd}
+            onTransitionEnd={(event) => {
+              if (
+                event.currentTarget === event.target &&
+                event.propertyName === "transform" &&
+                mobileMenuState === "open"
+              ) {
+                mobileDrawerCloseRef.current?.focus({ preventScroll: true });
+              }
+            }}
             onClickCapture={(event) => {
               if (!drawerSuppressClickRef.current) return;
 
@@ -1188,6 +1281,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
             onPointerDown={handleDrawerPointerDown}
             onPointerMove={handleDrawerPointerMove}
             onPointerUp={handleDrawerPointerEnd}
+            role={mobileMenuMounted ? "dialog" : undefined}
             style={drawerStyle}
           >
             <div className={styles.railBrand}>
@@ -1207,16 +1301,19 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                   priority
                 />
               </Link>
-              <button
-                type="button"
-                className={styles.mobileMenuButton}
-                aria-controls="khix-dashboard-drawer"
-                aria-expanded={mobileMenuExpanded}
-                aria-label="Close dashboard menu"
-                onClick={closeMobileMenu}
-              >
-                <X className="size-5" />
-              </button>
+              {mobileMenuMounted ? (
+                <button
+                  ref={mobileDrawerCloseRef}
+                  type="button"
+                  className={styles.mobileMenuButton}
+                  aria-controls="khix-dashboard-drawer"
+                  aria-expanded={mobileMenuExpanded}
+                  aria-label="Close dashboard menu"
+                  onClick={closeMobileMenu}
+                >
+                  <X className="size-5" />
+                </button>
+              ) : null}
             </div>
 
             <nav
@@ -1225,12 +1322,12 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               aria-label="Dashboard tabs"
             >
               <Link
+                aria-current={activeItem === "status" ? "page" : undefined}
                 className={joinClasses(
                   styles.railLink,
                   activeItem === "status" && styles.railLinkActive,
                 )}
                 href={statusHref}
-                aria-current={activeItem === "status" ? "page" : undefined}
                 onClick={closeMobileMenu}
               >
                 <span className={styles.railIcon} aria-hidden="true">
@@ -1254,6 +1351,41 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                 </span>
                 <span className={styles.railLinkLabel}>Hacker’s Guide</span>
               </Link>
+              {mapAccess.available ? (
+                <Link
+                  aria-current={activeItem === "map" ? "page" : undefined}
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "map" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/map"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <MapIcon className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Map</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label={`Map locked. ${mapAccess.reason}`}
+                  title={mapAccess.reason}
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <MapIcon className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Map <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               <Link
                 className={joinClasses(
                   styles.railLink,
@@ -1306,12 +1438,12 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               )}
               {eventsUnlocked ? (
                 <Link
+                  aria-current={activeItem === "events" ? "page" : undefined}
                   className={joinClasses(
                     styles.railLink,
                     activeItem === "events" && styles.railLinkActive,
                   )}
                   href="/dashboard/events"
-                  aria-current={activeItem === "events" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1329,7 +1461,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                     styles.railButton,
                     styles.railLinkLocked,
                   )}
-                  aria-label="Events page locked until check-in"
+                  aria-label="Events page locked until confirmation"
                   disabled
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1343,7 +1475,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                   </span>
                 </button>
               )}
-              {eventsUnlocked &&
+              {dashboardQuery.data?.application?.status === "checkedin" &&
               (judgingQuery.data?.claimsOpen ||
                 (judgingQuery.data?.published &&
                   judgingQuery.data.emergency)) ? (
@@ -1380,7 +1512,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                   </span>
                 </button>
               )}
-              {eventsUnlocked ? (
+              {checkedIn ? (
                 <Link
                   className={joinClasses(
                     styles.railLink,
@@ -1416,12 +1548,12 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               )}
               {journeyUnlocked ? (
                 <Link
+                  aria-current={activeItem === "journey" ? "page" : undefined}
                   className={joinClasses(
                     styles.railLink,
                     activeItem === "journey" && styles.railLinkActive,
                   )}
                   href="/dashboard/journey"
-                  aria-current={activeItem === "journey" ? "page" : undefined}
                   onClick={closeMobileMenu}
                 >
                   <span className={styles.railIcon} aria-hidden="true">
@@ -1453,7 +1585,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                   </span>
                 </button>
               )}
-              {eventsUnlocked ? (
+              {checkedIn ? (
                 <Link
                   className={joinClasses(
                     styles.railLink,
@@ -1493,12 +1625,12 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                 </button>
               )}
               <Link
+                aria-current={activeItem === "profile" ? "page" : undefined}
                 className={joinClasses(
                   styles.railLink,
                   activeItem === "profile" && styles.railLinkActive,
                 )}
                 href="/dashboard/profile"
-                aria-current={activeItem === "profile" ? "page" : undefined}
                 onClick={closeMobileMenu}
               >
                 <span className={styles.railIcon} aria-hidden="true">
@@ -1555,6 +1687,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
             (activeItem === "journey" || activeItem === "merch") &&
               styles.journeyMain,
             activeItem === "lore" && styles.loreMain,
+            activeItem === "map" && styles.mapMain,
             activeItem === "profile" && styles.profileMain,
             activeItem === "printing" && styles.printingMain,
             activeItem === "guide" && styles.guideMain,
@@ -1564,6 +1697,8 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
               ) &&
               styles.admissionMain,
           )}
+          inert={mobileMenuMounted ? true : undefined}
+          aria-hidden={mobileMenuMounted ? true : undefined}
           tabIndex={-1}
         >
           <div className={styles.mainCanvas}>
@@ -2074,7 +2209,13 @@ function SignedInNavCard({ user }: { user: KhixSessionUser }) {
           />
         ) : null}
         <AvatarFallback className={styles.navUserAvatarFallback}>
-          {getSessionUserInitials(user)}
+          <Image
+            src="/dashboard/knight-avatar-placeholder.png"
+            alt=""
+            fill
+            sizes="32px"
+            className={styles.navUserAvatarImage}
+          />
         </AvatarFallback>
       </Avatar>
       <span className={styles.navUserText}>

@@ -50,6 +50,7 @@ export const TABLES_TO_KEEP = [
   // back empty — the same failure `knight_hacks_discord_config` had.
   "knight_hacks_hackathon_class",
   "knight_hacks_hackathon_event_publication",
+  "knight_hacks_hackathon_map_configuration",
   "knight_hacks_hackathon_portal_client",
   "knight_hacks_hackathon_sponsor",
   "knight_hacks_hackathon_status_email",

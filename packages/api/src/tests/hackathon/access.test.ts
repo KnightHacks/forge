@@ -87,6 +87,15 @@ const WINDOW = {
 
 /** Every procedure the router exposes, with input its schema accepts. */
 const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
+  [
+    "saveMapConfiguration",
+    (caller) =>
+      caller.saveMapConfiguration({
+        hackathonId: HACKATHON_ID,
+        restrictionsEnabled: true,
+        rooms: [],
+      }),
+  ],
   ["list", (caller) => caller.list()],
   ["get", (caller) => caller.get({ id: HACKATHON_ID })],
   ["create", (caller) => caller.create(WINDOW)],

@@ -47,6 +47,7 @@ import { ClassSection } from "./class-section";
 import { HackathonDiscordEventConfig } from "./hackathon-discord-event-config";
 import { HackathonFormDialog } from "./hackathon-form-dialog";
 import { formatHackathonDateTime } from "./hackathon-formatting";
+import { MapConfigurationSection } from "./map-configuration-section";
 import { PortalConfigurationSection } from "./portal-configuration-section";
 import { StatusEmailSection } from "./status-email-section";
 
@@ -233,6 +234,13 @@ export function HackathonDetail({
         detail={detail}
         isRefreshing={isRefreshing}
         key={`${detail.portalClient?.id ?? "unprovisioned"}:${detail.portalClient?.updatedAt.toString() ?? "new"}`}
+        onSaved={refresh}
+      />
+
+      <MapConfigurationSection
+        detail={detail}
+        isRefreshing={isRefreshing}
+        key={`map:${detail.hackathon.id}:${detail.mapConfiguration.updatedAt?.toString() ?? "new"}`}
         onSaved={refresh}
       />
 

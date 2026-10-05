@@ -1,0 +1,16 @@
+{
+  "sourcePdfSha256": {
+    "BA1_FLOOR_PLAN.pdf": "bbf99acbe47e4421d6e53387312f6570578cfd190a6c9195e321c46039f43758",
+    "BA2_FLOOR_PLAN.pdf": "97d5f505858d38df3e49c7de03822c264b203cdc6dcbce297f363a660572077e",
+    "ENG1_FLOOR_PLAN.pdf": "b7c38fe13818049ef36acb0bed6621022291e6f9450c17d5366dff25aa13d896",
+    "ENG2_FLOOR_PLAN.pdf": "a04ec1e28ebf0ea1a07a799a2d35f656547432966cde831a7ffab45e3bba7960",
+    "SU-MAP-2.pdf": "ca511ab17574ad2ed2100ca1f214e6571f9c008cda5d6a6e2deb26c5a72f29b9",
+    "HEC_floor_plan.pdf": "02f793651af74cd612ad20da9835044d5da3ed64f6af1d21db2b58296ee01680"
+  },
+  "notes": [
+    "These are cleaned review drawings, not current construction or routing plans.",
+    "Engineering plans are historical: most dated December 2012; ENG1 floor 3 dated September 2008.",
+    "Room envelopes close across doorways and simplify some faint or curved partitions.",
+    "HEC is first floor only. Unverified numbers are excluded from official map aliases."
+  ]
+}

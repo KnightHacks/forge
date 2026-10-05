@@ -75,6 +75,7 @@ Notes:
 - `Hackathon.name` is the unique slug/lookup key used in routes and API inputs; `Hackathon.displayName` is the human-facing label for dashboards, admin UI, emails, selectors, and logs.
 - Do not use `Hackathon.name` and `Hackathon.displayName` interchangeably: use `name` for stable identifiers and `displayName` for user-facing copy.
 - Hackathon date semantics vary by query: "current" can mean applications open, not ended, or future-start depending on the router.
+- `HackathonMapConfiguration` (`knight_hacks_hackathon_map_configuration`) stores one officer-managed map room list and independent restriction toggle per hackathon. Missing configuration means unrestricted presentation. Room numbers are trimmed and uppercased; building/room pairs are unique within the list. Deletion cascades with the hackathon. This configuration changes map presentation only and survives development backups.
 - `Hacker.dateCreated`/`timeCreated` describe profile creation; per-hackathon application timing lives on `HackerAttendee.timeApplied`/`timeConfirmed`.
 - `HackerAttendee.status` is the application/attendance state; keep values aligned with `FORMS.HACKATHON_APPLICATION_STATES`.
 - `HackerAttendee.class` is a nullable game/team class assigned during check-in, not original application profile data.
