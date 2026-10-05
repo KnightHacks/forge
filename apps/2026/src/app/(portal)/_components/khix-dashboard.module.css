@@ -1,4 +1,12 @@
-.dashboard {
+.dashboard,
+.dialog,
+.profileSelectContent,
+.profilePopoverContent,
+.theme {
+  --khix-workspace-background:
+    url("/dashboard/botanicals/grain.svg"),
+    linear-gradient(110deg, #291044 0%, #132333 48%, #063c31 100%);
+
   --khix-plum-shadow: #270c26;
   --khix-near-black-violet: #190925;
   --khix-forest-blue: #153a61;
@@ -11,13 +19,34 @@
   --khix-bark-brown: #733027;
   --khix-lavender: #a299c2;
   --khix-blue-gray-green: #2e4962;
-  --khix-ink: var(--khix-sunlight-green);
-  --khix-muted: rgb(162 153 194 / 0.78);
-  --khix-dim: rgb(162 153 194 / 0.5);
-  --khix-acid: var(--khix-sunlight-green);
+  --khix-ink: rgb(255 252 244 / 0.96);
+  --khix-accent: #d8c5f2;
+  --khix-primary-background: #d8c5f2;
+  --khix-primary-hover: #e7d8fa;
+  --khix-primary-ink: #23152f;
+  --khix-heading-glow:
+    0 0 0.52rem rgb(210 211 131 / 0.28), 0 0 2.4rem rgb(93 171 103 / 0.24),
+    0 1.1rem 4rem rgb(7 15 11 / 0.86);
+  --khix-section-glow:
+    0 0 1rem rgb(210 211 131 / 0.16), 0 0.8rem 2.4rem rgb(7 15 11 / 0.68);
+  --khix-panel-surface: rgb(30 20 42 / 0.9);
+  --khix-panel-inset: rgb(19 13 29 / 0.66);
+  --khix-panel-border: rgb(255 252 244 / 0.14);
+  --khix-panel-shadow:
+    inset 0 1px rgb(255 252 244 / 0.06), 0 1.5rem 4rem rgb(7 15 11 / 0.24);
+  --khix-panel-radius: 1rem;
+  --khix-panel-padding: clamp(1rem, 2.2vw, 1.75rem);
+  --khix-content-width: 72rem;
+  --khix-page-gutter: clamp(1.25rem, 3vw, 3rem);
+  --khix-page-top: clamp(8.5rem, 16dvh, 12rem);
+  --khix-page-title-size: clamp(2.6rem, 4.5vw, 4.2rem);
+  --khix-section-title-size: clamp(1.65rem, 2.6vw, 2.3rem);
+  --khix-muted: rgb(255 252 244 / 0.72);
+  --khix-dim: rgb(255 252 244 / 0.52);
+  --khix-acid: var(--khix-accent);
   --khix-green: var(--khix-leaf-green);
-  --khix-cyan: var(--khix-moss-green);
-  --khix-gold: var(--khix-sunlight-green);
+  --khix-cyan: var(--khix-accent);
+  --khix-gold: var(--khix-accent);
   --khix-rose: var(--khix-bark-brown);
   --khix-bg: var(--khix-near-black-violet);
   --khix-button-radius: 0.66rem;
@@ -76,7 +105,9 @@
   --khix-motion-fast: 160ms;
   --khix-motion-standard: 220ms;
   --khix-motion-page: 680ms;
+}
 
+.dashboard {
   position: relative;
   width: 100%;
   max-width: 100vw;
@@ -90,7 +121,7 @@
   color-scheme: dark;
   font-family: var(--khix-body-font);
   isolation: isolate;
-  -webkit-tap-highlight-color: rgb(210 211 131 / 0.16);
+  -webkit-tap-highlight-color: rgb(216 197 242 / 0.16);
 }
 
 .dashboard
@@ -116,7 +147,7 @@
     [role="button"],
     [tabindex]:not([tabindex="-1"])
   ):focus-visible {
-  outline: 2px solid rgb(227 239 141 / 0.95);
+  outline: 2px solid var(--khix-accent);
   outline-offset: 3px;
 }
 
@@ -393,7 +424,7 @@
   border-radius: 0.5rem;
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
-  color: rgb(210 211 131 / 0.84);
+  color: var(--khix-muted);
   padding: 0.45rem 0.6rem;
   font-size: 0.9rem;
   font-weight: 820;
@@ -438,7 +469,7 @@
   border-radius: 0.5rem;
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
-  color: rgb(210 211 131 / 0.82);
+  color: var(--khix-muted);
   font-family: inherit;
   padding: 0.45rem 0.6rem;
   font-size: 0.9rem;
@@ -462,11 +493,7 @@
   z-index: 1;
   width: 0.1rem;
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgb(210 211 131 / 0.8),
-    rgb(93 171 103 / 0.62)
-  );
+  background: var(--khix-accent);
   content: "";
   opacity: 0;
   transition: opacity 180ms ease;
@@ -539,7 +566,7 @@
   width: 2rem;
   aspect-ratio: 1;
   place-items: center;
-  color: rgb(210 211 131 / 0.78);
+  color: var(--khix-muted);
   transition:
     color 180ms ease,
     transform 180ms ease;
@@ -819,7 +846,7 @@
   border-radius: 0.5rem;
   background: var(--khix-nav-button-surface);
   box-shadow: var(--khix-nav-button-shadow);
-  color: rgb(210 211 131 / 0.84);
+  color: var(--khix-muted);
   padding: 0.45rem 0.6rem;
   font-size: 0.9rem;
   font-weight: 820;
@@ -898,24 +925,27 @@
 }
 
 .statusMain {
-  overflow: hidden;
-  overscroll-behavior: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-gutter: auto;
+  background:
+    radial-gradient(ellipse at 8% 12%, rgb(148 72 162 / 0.46), transparent 58%),
+    radial-gradient(
+      ellipse at 94% 86%,
+      rgb(28 153 145 / 0.43),
+      transparent 58%
+    ),
+    radial-gradient(ellipse at 60% 0%, rgb(95 102 194 / 0.25), transparent 50%),
+    linear-gradient(135deg, #351541 0%, #202340 48%, #103e43 100%);
 }
 
 .statusMain::before {
-  position: absolute;
-  z-index: 0;
-  inset: -8%;
-  background-image: var(--khix-dashboard-background-image);
-  background-position: right center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  content: "";
-  filter: blur(clamp(4rem, 7vw, 7rem)) saturate(0.82);
-  opacity: 0.18;
-  pointer-events: none;
-  transform: scale(1.08);
+  display: none;
+}
+
+.statusMain .mainCanvas::before {
+  display: none;
 }
 
 .statusMain .mainCanvas {
@@ -925,8 +955,396 @@
 
 .journeyMain .mainCanvas {
   align-content: start;
-  padding-top: clamp(6.5rem, 11vw, 9rem);
-  padding-bottom: 5rem;
+}
+
+.main:not(.statusMain) {
+  scrollbar-gutter: auto;
+  background: var(--khix-workspace-background);
+}
+
+.main:not(.statusMain)::after,
+.main:not(.statusMain) .mainCanvas::before,
+.main:not(.statusMain) .portalMagic {
+  display: none;
+}
+
+/* A continuous edge composition: hanging canopy and layered corner undergrowth. */
+.mainCanvas > .workspaceBotanicals {
+  --scenery-tree: url("/dashboard/botanicals/bare-branch.svg");
+  --scenery-terrain: url("/dashboard/botanicals/rock-face.svg");
+  --scenery-height: 165%;
+  --scenery-right: -10rem;
+  --scenery-opacity: 0.55;
+  --scenery-reflection: 1;
+  --canopy-image: url("/dashboard/botanicals/vine.svg");
+  --canopy-ratio: 93 / 289;
+  --canopy-width: clamp(6rem, 8vw, 8rem);
+  --canopy-offset: 0rem;
+  --canopy-companion-offset: 4rem;
+  --canopy-companion-width: 4rem;
+  --foliage-width: clamp(16rem, 24vw, 25rem);
+  --foliage-secondary-width: clamp(10rem, 16vw, 17rem);
+  --foliage-lift: -4rem;
+
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Landscape scale is independent of the foreground plants. The scene stays
+   behind the working area as long pages scroll; roots and rock bases bleed out. */
+.workspaceBotanicals::before {
+  position: sticky;
+  z-index: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100dvh;
+  background-image: var(--scenery-tree), var(--scenery-terrain);
+  background-repeat: no-repeat;
+  background-size:
+    auto var(--scenery-height),
+    70% auto;
+  background-position:
+    right calc(var(--scenery-right) - 3rem) bottom -16rem,
+    left -17rem bottom -25rem;
+  opacity: var(--scenery-opacity);
+  transform: scaleX(var(--scenery-reflection));
+  content: "";
+}
+
+.workspaceBotanicals span,
+.workspaceGround::before,
+.workspaceGround::after,
+.workspaceGroundCompanion::before,
+.workspaceGroundCompanion::after {
+  position: absolute;
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.main:not(.statusMain) .mainCanvas {
+  grid-template-rows: auto;
+  align-content: start;
+  padding: var(--khix-page-top) var(--khix-page-gutter) 3rem;
+}
+
+.workspaceCanopy,
+.workspaceCanopyCompanion {
+  top: -3rem;
+  background-image: var(--canopy-image);
+  aspect-ratio: var(--canopy-ratio);
+}
+
+.workspaceCanopy {
+  right: var(--canopy-offset);
+  width: var(--canopy-width);
+  opacity: 0.8;
+}
+
+.workspaceCanopyCompanion {
+  top: -4rem;
+  right: var(--canopy-companion-offset);
+  width: var(--canopy-companion-width);
+  opacity: 0.42;
+}
+
+/* The sprigs share a root outside the canvas. Dark rear leaves add depth,
+   while a smaller foreground fan conceals the joins at the bottom edge. */
+.workspaceGround,
+.workspaceGroundCompanion {
+  bottom: var(--foliage-lift);
+  width: var(--foliage-width);
+  aspect-ratio: 403 / 340;
+  background-image: url("/dashboard/botanicals/leaves.svg");
+  transform-origin: 72% 85%;
+}
+
+.workspaceGround {
+  right: -3.5rem;
+  transform: rotate(-12deg);
+}
+
+.workspaceGround::before,
+.workspaceGroundCompanion::before {
+  z-index: -1;
+  right: 12%;
+  bottom: 5%;
+  width: 82%;
+  aspect-ratio: 403 / 340;
+  background-image: url("/dashboard/botanicals/leaves.svg");
+  filter: brightness(0.5) saturate(0.75);
+  transform: rotate(-38deg);
+  transform-origin: 75% 85%;
+  content: "";
+}
+
+.workspaceGround::after,
+.workspaceGroundCompanion::after {
+  right: 40%;
+  bottom: -4%;
+  width: 68%;
+  aspect-ratio: 343 / 261;
+  background-image: url("/dashboard/botanicals/fan-leaf.svg");
+  filter: brightness(0.72);
+  transform: rotate(14deg);
+  content: "";
+}
+
+.workspaceGroundCompanion {
+  left: -3rem;
+  width: var(--foliage-secondary-width);
+  bottom: -3.5rem;
+  filter: brightness(0.58) saturate(0.7);
+  transform: scaleX(-1) rotate(-8deg);
+}
+
+/* Each route varies the silhouette and canopy rhythm within the same border. */
+.workspaceBotanicals[data-page="guide"] {
+  --scenery-tree: url("/dashboard/botanicals/forest-trunk.svg");
+  --scenery-height: 150%;
+  --canopy-image: url("/dashboard/botanicals/long-vine.svg");
+  --canopy-ratio: 147 / 771;
+  --canopy-width: 4rem;
+  --canopy-companion-width: 2rem;
+  --canopy-companion-offset: 3.5rem;
+  --foliage-width: clamp(14rem, 20vw, 20rem);
+  --foliage-secondary-width: clamp(9rem, 13vw, 13rem);
+}
+
+.workspaceBotanicals[data-page="lore"] {
+  --scenery-height: 180%;
+  --scenery-right: -6rem;
+  --scenery-opacity: 0.66;
+  --canopy-offset: 1.5rem;
+  --canopy-companion-offset: 6rem;
+  --foliage-width: clamp(18rem, 27vw, 28rem);
+  --foliage-secondary-width: clamp(12rem, 19vw, 20rem);
+}
+
+.workspaceBotanicals[data-page="teams"] {
+  --canopy-companion-width: 5rem;
+  --canopy-companion-offset: 5rem;
+  --foliage-secondary-width: clamp(13rem, 20vw, 21rem);
+}
+
+.workspaceBotanicals[data-page="events"] {
+  --scenery-tree: url("/dashboard/botanicals/green-branch.svg");
+  --scenery-right: -14rem;
+  --foliage-width: clamp(17rem, 26vw, 27rem);
+  --canopy-companion-offset: 6rem;
+}
+
+/* The pass sits in a clearing between distant trunks and close foliage. */
+.workspaceBotanicals[data-page="status"] {
+  --scenery-tree: url("/dashboard/botanicals/forest-trunk.svg");
+  --scenery-right: -16rem;
+  --scenery-height: 155%;
+  --scenery-opacity: 0.65;
+  --scenery-reflection: -1;
+  --canopy-image: url("/dashboard/botanicals/long-vine.svg");
+  --canopy-ratio: 147 / 771;
+  --canopy-width: clamp(5rem, 8vw, 8rem);
+  --canopy-offset: 1.5rem;
+  --canopy-companion-width: 3.5rem;
+  --foliage-width: clamp(15rem, 25vw, 28rem);
+  --foliage-secondary-width: clamp(11rem, 20vw, 22rem);
+}
+
+.workspaceBotanicals[data-page="status"]::after {
+  position: absolute;
+  inset: 0;
+  background: url("/dashboard/botanicals/green-branch.svg") right -8rem
+    bottom -12rem / auto max(170%, 85rem) no-repeat;
+  opacity: 0.28;
+  content: "";
+}
+
+.workspaceBotanicals[data-page="status"] .workspaceCanopyCompanion {
+  top: -6rem;
+  right: auto;
+  left: 12%;
+  opacity: 0.55;
+}
+
+.workspaceBotanicals[data-page="status"] .workspaceGround {
+  z-index: 1;
+  filter: drop-shadow(0 0 1.5rem rgb(65 203 161 / 0.12));
+}
+
+.workspaceBotanicals[data-page="status"] .workspaceGroundCompanion {
+  z-index: 1;
+  background-image: url("/dashboard/botanicals/fan-leaf.svg");
+}
+
+.workspaceBotanicals[data-page="judging"] {
+  --scenery-tree: url("/dashboard/botanicals/forest-trunk.svg");
+  --scenery-reflection: -1;
+  --canopy-image: url("/dashboard/botanicals/long-vine.svg");
+  --canopy-ratio: 147 / 771;
+  --canopy-width: 4.5rem;
+  --canopy-companion-width: 2.5rem;
+  --foliage-secondary-width: clamp(12rem, 19vw, 20rem);
+}
+
+.workspaceBotanicals[data-page="merch"] {
+  --scenery-tree: url("/dashboard/botanicals/green-branch.svg");
+  --scenery-terrain: none;
+  --scenery-height: 155%;
+  --scenery-right: -19rem;
+  --scenery-opacity: 0.42;
+  --canopy-image: url("/dashboard/botanicals/long-vine.svg");
+  --canopy-ratio: 147 / 771;
+  --canopy-width: 4rem;
+  --canopy-companion-width: 3rem;
+  --canopy-companion-offset: 5rem;
+  --foliage-width: clamp(16rem, 23vw, 24rem);
+}
+
+.workspaceBotanicals[data-page="journey"] {
+  --scenery-tree: url("/dashboard/botanicals/green-branch.svg");
+  --scenery-height: 180%;
+  --scenery-right: -8rem;
+  --canopy-companion-width: 5rem;
+  --foliage-secondary-width: clamp(14rem, 22vw, 23rem);
+}
+
+.workspaceBotanicals[data-page="printing"] {
+  --scenery-reflection: -1;
+  --scenery-opacity: 0.4;
+  --canopy-width: clamp(5rem, 7vw, 7rem);
+  --canopy-companion-offset: 4.5rem;
+  --foliage-width: clamp(15rem, 22vw, 23rem);
+}
+
+.workspaceBotanicals[data-page="profile"] {
+  --scenery-tree: url("/dashboard/botanicals/forest-trunk.svg");
+  --scenery-opacity: 0.4;
+  --canopy-offset: 1rem;
+  --canopy-companion-offset: 5rem;
+  --foliage-secondary-width: clamp(12rem, 19vw, 20rem);
+}
+
+.workspaceBotanicals[data-page="guide"] .workspaceGround,
+.workspaceBotanicals[data-page="judging"] .workspaceGround,
+.workspaceBotanicals[data-page="profile"] .workspaceGround {
+  background-image: url("/dashboard/botanicals/fan-leaf.svg");
+  aspect-ratio: 343 / 261;
+  transform: rotate(-22deg);
+}
+
+.workspaceBotanicals[data-page="lore"] .workspaceGroundCompanion,
+.workspaceBotanicals[data-page="journey"] .workspaceGroundCompanion {
+  background-image: url("/dashboard/botanicals/fan-leaf.svg");
+  aspect-ratio: 343 / 261;
+}
+
+.statusMain .mainCanvas::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: url("/dashboard/botanicals/grain.svg");
+  content: "";
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .mainCanvas > .workspaceBotanicals {
+    --canopy-width: 4.5rem;
+    --canopy-offset: -0.75rem;
+    --foliage-width: 17rem;
+    --foliage-secondary-width: 11rem;
+  }
+
+  .workspaceBotanicals::before {
+    background-size:
+      auto 145%,
+      120% auto;
+    background-position:
+      right -15rem bottom -13rem,
+      left -12rem bottom -12rem;
+    opacity: 0.3;
+  }
+
+  .workspaceBotanicals .workspaceCanopy {
+    top: -2.5rem;
+  }
+
+  .workspaceBotanicals[data-page="guide"],
+  .workspaceBotanicals[data-page="merch"],
+  .workspaceBotanicals[data-page="judging"] {
+    --canopy-width: 2.75rem;
+  }
+
+  .workspaceBotanicals .workspaceCanopyCompanion {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainCanvas > .workspaceBotanicals {
+    --foliage-width: 13rem;
+    --foliage-secondary-width: 8rem;
+    --foliage-lift: -3.25rem;
+  }
+
+  .workspaceGround {
+    right: -3rem;
+  }
+
+  .workspaceGroundCompanion {
+    left: -2.5rem;
+    bottom: -2.5rem;
+  }
+
+  .workspaceBotanicals[data-page="status"]::after {
+    background-position: right -12rem bottom -8rem;
+    opacity: 0.18;
+  }
+
+  .workspaceBotanicals[data-page="status"] .workspaceCanopy {
+    top: -5rem;
+    right: -1rem;
+    width: 3.5rem;
+  }
+}
+
+.chrome:has(.guideMain) {
+  height: 100dvh;
+}
+
+.main.guideMain {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main.guideMain .mainCanvas {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+}
+
+.guidePage {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+}
+
+.guideFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--khix-panel-surface);
 }
 
 .mainCanvas::before,
@@ -1758,17 +2176,10 @@
   align-items: start;
   justify-items: center;
   gap: clamp(1rem, 2.4vh, 1.8rem);
-  padding: clamp(8.5rem, 16dvh, 12rem) clamp(1rem, 3.6vw, 4rem)
-    clamp(1.4rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 3.5rem);
 }
 
 .loreMain {
   overflow-x: hidden;
-}
-
-.eventsMain .mainCanvas,
-.profileMain .mainCanvas {
-  padding-top: clamp(6rem, 12dvh, 8.25rem);
 }
 
 .eventsMain .mainCanvas::before,
@@ -1800,8 +2211,6 @@
 
 .mapMain .mainCanvas {
   display: block;
-  min-height: 100dvh;
-  padding: clamp(4.7rem, 9dvh, 6rem) 0 0;
 }
 
 .mapMain .mainCanvas::before {
@@ -1860,10 +2269,7 @@
   letter-spacing: 0;
   line-height: 0.84;
   text-wrap: balance;
-  text-shadow:
-    0 0 0.52rem rgb(210 211 131 / 0.28),
-    0 0 2.4rem rgb(93 171 103 / 0.24),
-    0 1.1rem 4rem rgb(7 15 11 / 0.86);
+  text-shadow: var(--khix-heading-glow);
 }
 
 .loreIntroCopy {
@@ -2019,22 +2425,19 @@
 
 .loreChapterSpread > *,
 .lorePictureBeat > *,
-.loreMerchMoment > *,
-.loreTeamThanks > * {
+.loreMerchMoment > * {
   animation: khixDashboardContentRise 620ms var(--khix-ease-out) backwards;
 }
 
 .loreChapterSpread > :nth-child(1),
 .lorePictureBeat > :nth-child(1),
-.loreMerchMoment > :nth-child(1),
-.loreTeamThanks > :nth-child(1) {
+.loreMerchMoment > :nth-child(1) {
   animation-delay: 560ms;
 }
 
 .loreChapterSpread > :nth-child(2),
 .lorePictureBeat > :nth-child(2),
-.loreMerchMoment > :nth-child(2),
-.loreTeamThanks > :nth-child(2) {
+.loreMerchMoment > :nth-child(2) {
   animation-delay: 640ms;
 }
 
@@ -2070,9 +2473,7 @@
   letter-spacing: 0;
   line-height: 0.94;
   text-wrap: balance;
-  text-shadow:
-    0 0 1rem rgb(210 211 131 / 0.16),
-    0 0.8rem 2.4rem rgb(7 15 11 / 0.68);
+  text-shadow: var(--khix-section-glow);
 }
 
 .loreChapterCopy p:not(.loreChapter),
@@ -2314,54 +2715,82 @@
 
 .loreTeamThanks {
   position: relative;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.62fr);
-  padding: clamp(0.7rem, 2.5dvh, 1.8rem) 0 clamp(1rem, 4dvh, 3rem);
-}
-
-.loreTeamThanks::before {
-  position: absolute;
-  right: min(8vw, 6rem);
-  bottom: min(3vw, 2rem);
-  width: clamp(10rem, 24vw, 22rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: rgb(93 171 103 / 0.1);
-  filter: blur(3.4rem);
-  pointer-events: none;
-  content: "";
+  container-type: inline-size;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  padding: clamp(1rem, 3vw, 2rem) 0;
 }
 
 .loreTeamPhotos {
-  position: relative;
   display: grid;
-  align-content: center;
-  gap: clamp(0.7rem, 1.2vw, 1rem);
+  gap: 2rem;
+  width: 100%;
 }
 
 .loreTeamPhotos figure {
   width: 100%;
-  aspect-ratio: 16 / 10.25;
   margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 
-.loreTeamCopy {
-  position: relative;
-  align-content: center;
-  max-width: 31rem;
-  justify-self: end;
-  padding-top: 1.6rem;
+.loreTeamPhotos img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.loreTeamPhotos figcaption {
+  margin-top: 0.65rem;
+  color: rgb(255 252 244 / 0.65);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.loreTeamThanks .loreTeamCopy {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  justify-self: start;
+  gap: 1.25rem clamp(2rem, 4vw, 4rem);
+  padding: 0;
+}
+
+.loreTeamCopy > .loreTeamKicker,
+.loreTeamCopy > h2 {
+  grid-column: 1 / -1;
 }
 
 .loreTeamCopy h2 {
-  max-width: 11ch;
-  margin-top: 0.2rem;
-  text-shadow:
-    0 0 1.1rem rgb(210 211 131 / 0.2),
-    0 0.8rem 2.4rem rgb(7 15 11 / 0.72);
+  max-width: none;
+  margin: 0 0 0.4rem;
 }
 
 .loreTeamCopy p:not(.loreChapter) {
-  max-width: 34rem;
+  max-width: none;
+}
+
+.loreTeamCopy .loreSignature {
+  margin-top: 0.35rem;
+  align-self: end;
+  justify-self: end;
+  color: rgb(210 211 131 / 0.95);
+}
+
+@container (max-width: 42rem) {
+  .loreTeamThanks .loreTeamCopy {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .loreTeamCopy .loreSignature {
+    justify-self: start;
+  }
 }
 
 .loreSignature {
@@ -2708,17 +3137,17 @@
   --khix-action-mote-far: rgb(93 171 103 / 0.28);
 
   display: inline-flex;
-  min-height: 3.35rem;
+  min-height: 2.75rem;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
   border-radius: var(--khix-button-radius);
-  padding: 0 1.7rem;
-  font-size: clamp(0.95rem, 1vw, 1.08rem);
-  font-weight: 920;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.9375rem;
+  font-weight: 650;
   letter-spacing: 0;
   text-shadow: 0 1px 0 rgb(25 9 37 / 0.34);
-  white-space: nowrap;
+  white-space: normal;
   transition:
     background 220ms ease,
     border-color 220ms ease,
@@ -2790,50 +3219,30 @@
 
 .primaryButton {
   --khix-button-mote-opacity: 0.6;
-  --khix-action-bg:
-    radial-gradient(
-      circle at 50% -48%,
-      rgb(222 226 154 / 0.2),
-      transparent 62%
-    ),
-    linear-gradient(
-      180deg,
-      rgb(61 128 106 / 0.58),
-      rgb(39 72 70 / 0.74) 58%,
-      rgb(25 31 42 / 0.78)
-    );
-  --khix-action-bg-hover:
-    radial-gradient(
-      circle at 50% -45%,
-      rgb(230 229 154 / 0.26),
-      transparent 64%
-    ),
-    linear-gradient(
-      180deg,
-      rgb(69 140 112 / 0.64),
-      rgb(43 84 76 / 0.78) 58%,
-      rgb(25 34 43 / 0.82)
-    );
-  --khix-action-edge: rgb(210 211 131 / 0.14);
-  --khix-action-edge-hover: rgb(230 229 154 / 0.24);
-  --khix-action-glow: rgb(93 171 103 / 0.16);
-  --khix-action-mote-mid: rgb(230 229 154 / 0.5);
-  --khix-action-mote-far: rgb(93 171 103 / 0.34);
+  --khix-action-bg: var(--khix-primary-background);
+  --khix-action-bg-hover: var(--khix-primary-hover);
+  --khix-action-edge: transparent;
+  --khix-action-edge-hover: transparent;
+  --khix-action-glow: rgb(216 197 242 / 0.18);
+  --khix-action-mote-mid: rgb(216 197 242 / 0.42);
+  --khix-action-mote-far: rgb(216 197 242 / 0.24);
 
   border: 1px solid var(--khix-action-edge);
-  background: var(--khix-action-bg), rgb(25 9 37 / 0.76);
+  background: var(--khix-action-bg);
   color: var(--khix-action-color-hover);
   box-shadow:
     inset 0 1px rgb(255 252 244 / 0.1),
     inset 0 -0.65rem 1.35rem rgb(25 9 37 / 0.1),
     0 0.55rem 1.15rem rgb(25 9 37 / 0.18);
+  --khix-action-color-hover: var(--khix-primary-ink);
+  text-shadow: none;
 }
 
 .primaryButton:hover:not(:disabled),
 .ghostButton:hover:not(:disabled),
 .issueButton:hover:not(:disabled) {
   border-color: var(--khix-action-edge-hover);
-  background: var(--khix-action-bg-hover), rgb(25 9 37 / 0.8);
+  background: var(--khix-action-bg-hover);
   box-shadow:
     inset 0 1px rgb(255 252 244 / 0.14),
     inset 0 -0.65rem 1.25rem rgb(25 9 37 / 0.08),
@@ -3064,10 +3473,10 @@
 
 .journeyExperience {
   display: grid;
-  width: min(70rem, 100%);
+  width: min(var(--khix-content-width), 100%);
   gap: clamp(1rem, 2vw, 1.5rem);
   align-self: start;
-  color: rgb(255 252 244 / 0.94);
+  color: var(--khix-ink);
 }
 
 .journeyHero {
@@ -3079,7 +3488,7 @@
 .journeyEyebrow,
 .journeyPanelEyebrow {
   margin: 0;
-  color: rgb(210 211 131 / 0.86);
+  color: var(--khix-accent);
   font-size: 0.72rem;
   font-weight: 850;
   letter-spacing: 0.16em;
@@ -3088,50 +3497,21 @@
 
 .journeyTitle {
   margin: 0;
-  color: rgb(255 252 244 / 0.98);
+  color: var(--khix-ink);
   font-family: var(--khix-display-font);
-  font-size: clamp(2.4rem, 5vw, 4.8rem);
-  font-weight: 500;
-  line-height: 0.95;
+  font-size: var(--khix-page-title-size);
+  font-weight: 400;
+  line-height: 0.98;
+  text-shadow: var(--khix-heading-glow);
+  overflow-wrap: anywhere;
 }
 
 .journeyIntro {
   max-width: 42rem;
   margin: 0;
-  color: rgb(255 252 244 / 0.7);
+  color: var(--khix-muted);
   font-size: clamp(0.92rem, 1.2vw, 1.05rem);
   line-height: 1.65;
-}
-
-.journeyMinorNotice {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-  border: 1px solid rgb(248 187 82 / 0.48);
-  border-radius: 1rem;
-  background: rgb(96 48 26 / 0.54);
-  padding: 1rem 1.15rem;
-  color: rgb(255 241 206 / 0.96);
-}
-
-.journeyMinorNotice svg {
-  flex: none;
-  margin-top: 0.08rem;
-}
-
-.journeyMinorNotice div {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.journeyMinorNotice strong {
-  font-size: 0.95rem;
-}
-
-.journeyMinorNotice span {
-  color: rgb(255 241 206 / 0.76);
-  font-size: 0.82rem;
-  line-height: 1.45;
 }
 
 .journeyDataNotice {
@@ -3177,44 +3557,59 @@
 
 .journeyStats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 1rem 1.5rem;
   margin: 0;
+  border-block: 1px solid var(--khix-panel-border);
+  padding: 1.25rem 0;
 }
 
-.journeyStat,
 .journeyPanel {
-  border: 1px solid rgb(210 211 131 / 0.2);
-  border-radius: 1rem;
-  background:
-    linear-gradient(145deg, rgb(71 80 67 / 0.42), rgb(25 9 37 / 0.72)),
-    rgb(25 9 37 / 0.7);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  border: 1px solid var(--khix-panel-border);
+  border-radius: var(--khix-panel-radius);
+  background: var(--khix-panel-surface);
+  box-shadow: var(--khix-panel-shadow);
   backdrop-filter: blur(18px);
+  padding: var(--khix-panel-padding);
 }
 
 .journeyStat {
   display: grid;
-  min-height: 6.2rem;
+  min-width: 0;
   align-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 0.5rem;
 }
 
 .journeyStat dt {
-  color: rgb(255 252 244 / 0.58);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+  color: var(--khix-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .journeyStat dd {
   margin: 0;
   color: rgb(255 252 244 / 0.96);
   font-family: var(--khix-display-font);
-  font-size: clamp(1.15rem, 2vw, 1.5rem);
-  line-height: 1.05;
+  font-size: clamp(1.4rem, 2.7vw, 2rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.journeyOverview {
+  row-gap: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.journeyOverview .journeyPanel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.journeyOverview .journeyColumns {
+  gap: clamp(1.5rem, 4vw, 3rem);
 }
 
 .journeyColumns {
@@ -3234,7 +3629,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
-  color: rgb(210 211 131 / 0.9);
+  color: var(--khix-accent);
 }
 
 .journeyPanelHeading div {
@@ -3246,14 +3641,134 @@
   margin: 0;
   color: rgb(255 252 244 / 0.95);
   font-family: var(--khix-display-font);
-  font-size: clamp(1.3rem, 2.2vw, 1.85rem);
-  font-weight: 500;
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  line-height: 1.1;
+  text-shadow: var(--khix-section-glow);
+}
+
+.teamsExperience {
+  row-gap: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.teamSection {
+  min-width: 0;
+  border-top: 1px solid var(--khix-panel-border);
+  padding-top: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.teamHeading {
+  margin: 0;
+  color: var(--khix-ink);
+  font-family: var(--khix-display-font);
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-shadow: var(--khix-section-glow);
+}
+
+.teamCopy {
+  max-width: 42rem;
+  margin: 0.5rem 0 0;
+  color: var(--khix-muted);
+  font-size: clamp(0.92rem, 1.2vw, 1.05rem);
+  line-height: 1.65;
+}
+
+.teamRoster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(1.5rem, 3vw, 3rem);
+  margin-top: 0.75rem;
+}
+
+.teamMember {
+  display: flex;
+  min-width: 0;
+  min-height: 5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--khix-panel-border);
+  padding: 1rem 0;
+  color: var(--khix-ink);
+}
+
+.teamOpenSeat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.85rem 0 0;
+  color: var(--khix-muted);
+  font-size: 0.875rem;
+}
+
+.teamOpenSeat svg {
+  flex-shrink: 0;
+}
+
+button.teamTextButton {
+  min-height: 2.75rem;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  padding: 0.45rem 0.15rem;
+  color: var(--khix-ink);
+  box-shadow: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--khix-ink) 30%, transparent);
+  text-underline-offset: 0.25rem;
+}
+
+button.teamTextButton:hover:not(:disabled) {
+  background: transparent;
+  color: var(--khix-accent);
+  text-decoration-color: currentColor;
+}
+
+button.teamTextButton:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}
+
+button.teamTextButton:disabled {
+  color: var(--khix-dim);
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .teamRoster {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.teamSwitch[data-state="checked"] {
+  background: var(--khix-accent);
+}
+
+.teamSwitch[data-state="unchecked"] {
+  border-color: var(--khix-panel-border);
+  background: var(--khix-panel-inset);
+}
+
+.teamSwitch > span {
+  background: var(--khix-ink);
+}
+
+.teamSwitch:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
 }
 
 .leaderboardList,
 .attendanceList {
   display: grid;
-  gap: 0.35rem;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3264,9 +3779,8 @@
   display: grid;
   align-items: center;
   gap: 0.75rem;
-  border-radius: 0.75rem;
-  background: rgb(255 255 255 / 0.035);
-  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid var(--khix-panel-border);
+  padding: 0.85rem 0.5rem;
   color: rgb(255 252 244 / 0.7);
   font-size: 0.82rem;
 }
@@ -3276,8 +3790,8 @@
 }
 
 .leaderboardList li[data-current="true"] {
-  outline: 1px solid rgb(145 181 97 / 0.58);
-  background: rgb(93 171 103 / 0.13);
+  box-shadow: inset 2px 0 var(--khix-accent);
+  background: color-mix(in srgb, var(--khix-accent) 10%, transparent);
 }
 
 .leaderboardList strong,
@@ -3289,7 +3803,7 @@
 }
 
 .leaderboardRank {
-  color: rgb(210 211 131 / 0.9);
+  color: var(--khix-accent);
   font-weight: 850;
 }
 
@@ -3309,7 +3823,7 @@
 }
 
 .attendancePoints {
-  color: rgb(210 211 131 / 0.92);
+  color: var(--khix-accent);
   font-weight: 850;
 }
 
@@ -3365,28 +3879,18 @@
     grid-column: 1 / -1;
     width: 100%;
   }
-
-  .journeyMain .mainCanvas {
-    padding-top: 6.5rem;
-  }
 }
 
 .toolDock {
   display: grid;
   min-width: 0;
   max-width: 100%;
-  grid-template-columns: repeat(3, minmax(9.75rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.7rem;
   align-self: end;
   margin: clamp(1rem, 2vh, 2rem) auto 0;
-  width: min(42rem, 100%);
+  width: min(22rem, 100%);
   padding-bottom: clamp(0.4rem, 2vh, 1rem);
-}
-
-.toolDockFourUp {
-  grid-template-columns: repeat(4, minmax(8.5rem, 1fr));
-  margin-top: clamp(1.35rem, 2.8vh, 2.1rem);
-  width: min(58rem, 100%);
 }
 
 .toolDock > * {
@@ -3545,15 +4049,6 @@
 
 .profileEditor {
   min-width: 0;
-  border: 1px solid rgb(162 153 194 / 0.16);
-  border-radius: 0.5rem;
-  background:
-    linear-gradient(180deg, rgb(39 12 38 / 0.72), rgb(25 9 37 / 0.62)),
-    rgb(25 9 37 / 0.66);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.06),
-    0 1rem 2.8rem rgb(25 9 37 / 0.24);
-  backdrop-filter: blur(16px);
 }
 
 .profileSummaryCard {
@@ -3583,10 +4078,7 @@
   overflow-wrap: normal;
   text-wrap: nowrap;
   white-space: nowrap;
-  text-shadow:
-    0 0 0.5rem rgb(210 211 131 / 0.34),
-    0 0 1.35rem rgb(145 181 97 / 0.22),
-    0 0.8rem 2.4rem rgb(7 15 11 / 0.58);
+  text-shadow: var(--khix-heading-glow);
 }
 
 .profileSummaryNameLong {
@@ -3643,7 +4135,7 @@
   min-width: 0;
   counter-reset: profileBlock;
   gap: 0;
-  padding: 0 clamp(0.85rem, 1.6vw, 1.1rem) clamp(0.85rem, 1.6vw, 1.1rem);
+  padding: 0 0 var(--khix-panel-padding);
 }
 
 .profileFormBlock {
@@ -3681,7 +4173,7 @@
 
 .profileFormBlockHeader::before {
   width: fit-content;
-  color: rgb(210 211 131 / 0.82);
+  color: var(--khix-accent);
   content: counter(profileBlock, decimal-leading-zero);
   font-size: 0.58rem;
   font-weight: 950;
@@ -3726,18 +4218,18 @@
 }
 
 .profileFormLabel {
-  color: rgb(210 211 131 / 0.9);
+  color: var(--khix-ink);
   font-size: 0.76rem;
   font-weight: 820;
   line-height: 1.25;
 }
 
 .profileRequired {
-  color: rgb(210 211 131 / 0.98);
+  color: var(--khix-accent);
 }
 
 .profileOptional {
-  color: rgb(162 153 194 / 0.55);
+  color: var(--khix-muted);
   font-style: italic;
   font-weight: 650;
 }
@@ -3747,13 +4239,13 @@
 .profileSelectTrigger,
 .profileComboboxTrigger {
   width: 100%;
-  border: 1px solid rgb(145 181 97 / 0.16) !important;
-  border-radius: 0.42rem !important;
-  background: rgb(25 9 37 / 0.58) !important;
+  border: 1px solid var(--khix-panel-border) !important;
+  border-radius: var(--khix-button-radius) !important;
+  background: var(--khix-panel-inset) !important;
   color: var(--khix-ink) !important;
-  box-shadow: inset 0 1px rgb(210 211 131 / 0.06);
+  box-shadow: none;
   font-size: 0.86rem;
-  font-weight: 620;
+  font-weight: 500;
 }
 
 .profileSelectTrigger,
@@ -3795,7 +4287,7 @@
 .profileInput,
 .profileSelectTrigger,
 .profileComboboxTrigger {
-  min-height: 2.55rem;
+  min-height: 2.75rem;
 }
 
 .profileTextarea {
@@ -3805,24 +4297,24 @@
 
 .profileInput::placeholder,
 .profileTextarea::placeholder {
-  color: rgb(162 153 194 / 0.42);
+  color: var(--khix-muted);
 }
 
 .profileInput:focus,
 .profileTextarea:focus,
 .profileSelectTrigger:focus,
 .profileComboboxTrigger:focus {
-  border-color: rgb(145 181 97 / 0.72) !important;
-  outline: 2px solid rgb(145 181 97 / 0.36) !important;
+  border-color: var(--khix-accent) !important;
+  outline: 2px solid color-mix(in srgb, var(--khix-accent) 45%, transparent) !important;
   outline-offset: 2px;
 }
 
 .profileSelectContent,
 .profilePopoverContent {
-  border: 1px solid rgb(145 181 97 / 0.24);
+  border: 1px solid var(--khix-panel-border);
   border-radius: 0.5rem;
-  background: var(--khix-near-black-violet, #190925);
-  color: var(--khix-ink, #d2d383);
+  background: #1e142a;
+  color: var(--khix-ink);
   box-shadow: 0 1.5rem 4rem rgb(25 9 37 / 0.48);
 }
 
@@ -3891,7 +4383,7 @@
 }
 
 .profileAllergyBadge {
-  border: 1px solid rgb(145 181 97 / 0.28);
+  border: 1px solid var(--khix-panel-border);
   background: rgb(93 171 103 / 0.16);
   color: var(--khix-ink);
   font-size: 0.58rem;
@@ -3931,7 +4423,7 @@
 }
 
 .profileAllergyOption:hover {
-  border-color: rgb(145 181 97 / 0.26);
+  border-color: var(--khix-panel-border);
   background: rgb(93 171 103 / 0.12);
   box-shadow: inset 0 1px rgb(255 252 244 / 0.06);
   color: rgb(255 252 244 / 0.96);
@@ -3941,7 +4433,7 @@
 .profileCheckbox {
   position: relative;
   flex: 0 0 auto;
-  border-color: rgb(145 181 97 / 0.56) !important;
+  border-color: var(--khix-panel-border);
   background: rgb(25 9 37 / 0.42);
   color: var(--khix-ink);
 }
@@ -3988,7 +4480,7 @@
 }
 
 .profileInlineLink {
-  color: rgb(210 211 131 / 0.96);
+  color: var(--khix-accent);
   font-weight: 900;
   text-decoration: underline;
   text-underline-offset: 0.18em;
@@ -4002,15 +4494,7 @@
   z-index: 5;
   display: flex;
   justify-content: flex-end;
-  border: 0;
-  border-bottom: 1px solid rgb(162 153 194 / 0.14);
-  border-radius: 0.5rem 0.5rem 0 0;
-  background:
-    linear-gradient(180deg, rgb(25 9 37 / 0.94), rgb(25 9 37 / 0.82)),
-    rgb(25 9 37 / 0.9);
-  box-shadow: inset 0 1px rgb(255 252 244 / 0.06);
-  padding: 0.68rem 0.78rem;
-  backdrop-filter: blur(16px);
+  padding: 0 0 1.5rem;
 }
 
 .profileSubmitButton {
@@ -4041,7 +4525,7 @@
   width: min(35rem, calc(100vw - 2rem));
   max-height: min(34rem, 78vh);
   overflow: auto;
-  border: 1px solid rgb(145 181 97 / 0.22);
+  border: 1px solid var(--khix-panel-border);
   border-radius: 0.5rem;
   background: rgb(25 9 37 / 0.84);
   box-shadow:
@@ -4081,14 +4565,118 @@
   line-height: 1.5;
 }
 
+.merchNotice {
+  display: grid;
+  min-width: 0;
+  justify-items: start;
+  gap: 0.6rem;
+}
+
+.merchNotice h2 {
+  margin: 0;
+  color: var(--khix-ink);
+  font-family: var(--khix-display-font);
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  line-height: 1.1;
+  text-shadow: var(--khix-section-glow);
+}
+
+.merchNotice p {
+  margin: 0;
+}
+
+.merchStatus {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+}
+
+.merchCatalog {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid var(--khix-panel-border);
+}
+
+.merchItem {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr) minmax(8rem, 10rem);
+  align-items: start;
+  gap: 1rem clamp(1rem, 2.5vw, 2rem);
+  border-bottom: 1px solid var(--khix-panel-border);
+  padding: 1.25rem 0;
+}
+
+.merchImage {
+  position: relative;
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  color: var(--khix-dim);
+}
+
+.merchDetails {
+  min-width: 0;
+}
+
+.merchItemHeading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.merchItemHeading h2 {
+  min-width: 0;
+  margin: 0;
+  color: var(--khix-ink);
+  font-family: var(--khix-display-font);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 500;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-shadow: var(--khix-section-glow);
+}
+
+.merchPrice {
+  color: var(--khix-accent);
+  font-size: 0.9rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.merchAvailability {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  padding-top: 0.2rem;
+  color: var(--khix-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.merchAvailability p {
+  margin: 0;
+}
+
+.merchAvailability[data-status="more-points"] {
+  color: var(--khix-accent);
+}
+
+.merchAvailability[data-status="sold-out"] {
+  color: var(--khix-ink);
+}
+
 .scheduleExperience {
   position: relative;
   display: grid;
-  width: min(68rem, 100%);
+  width: min(var(--khix-content-width), 100%);
   align-content: start;
-  gap: clamp(1.5rem, 3vw, 2.4rem);
+  gap: clamp(1.25rem, 2.4vw, 2rem);
   padding-bottom: clamp(1.5rem, 4vh, 3rem);
-  animation: khixDashboardStageSettle 720ms var(--khix-ease-soft) 100ms both;
 }
 
 .scheduleHero {
@@ -4099,7 +4687,7 @@
 
 .scheduleEyebrow {
   margin: 0;
-  color: rgb(145 181 97 / 0.9);
+  color: var(--khix-accent);
   font-size: 0.76rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -4108,21 +4696,20 @@
 
 .schedulePageTitle {
   margin: 0;
-  color: rgb(255 252 244 / 0.98);
+  color: var(--khix-ink);
   font-family: var(--khix-display-font);
-  font-size: clamp(3.25rem, 6.5vw, 6rem);
+  font-size: var(--khix-page-title-size);
   font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 0.84;
-  text-shadow:
-    0 0 1rem rgb(210 211 131 / 0.18),
-    0 1rem 3rem rgb(7 15 11 / 0.72);
+  letter-spacing: 0;
+  line-height: 0.98;
+  text-wrap: balance;
+  text-shadow: var(--khix-heading-glow);
 }
 
 .scheduleIntro {
   max-width: 44rem;
   margin: 0.35rem 0 0;
-  color: rgb(255 252 244 / 0.72);
+  color: var(--khix-muted);
   font-size: clamp(0.96rem, 1.4vw, 1.12rem);
   font-weight: 560;
   line-height: 1.55;
@@ -4131,20 +4718,11 @@
 
 .scheduleDays {
   display: grid;
-  gap: 1rem;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
 }
 
 .scheduleDay {
-  overflow: hidden;
-  border: 1px solid rgb(145 181 97 / 0.18);
-  border-radius: 0.62rem;
-  background:
-    linear-gradient(145deg, rgb(39 12 38 / 0.72), rgb(25 9 37 / 0.84)),
-    rgb(25 9 37 / 0.8);
-  box-shadow:
-    inset 0 1px rgb(255 252 244 / 0.06),
-    0 1rem 3rem rgb(7 15 11 / 0.22);
-  backdrop-filter: blur(14px);
+  min-width: 0;
 }
 
 .scheduleDayHeader {
@@ -4152,29 +4730,29 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 1px solid rgb(162 153 194 / 0.14);
-  background: rgb(21 58 97 / 0.18);
-  padding: 0.78rem 1rem;
+  border-bottom: 1px solid var(--khix-panel-border);
+  padding: 0 0 1rem;
 }
 
 .scheduleDayHeader h2 {
   margin: 0;
-  color: rgb(255 252 244 / 0.94);
+  color: var(--khix-ink);
   font-family: var(--khix-display-font);
-  font-size: 1.38rem;
-  font-weight: 600;
-  line-height: 1.05;
+  font-size: var(--khix-section-title-size);
+  font-weight: 500;
+  line-height: 1.1;
+  text-shadow: var(--khix-section-glow);
 }
 
 .scheduleDayNumber {
-  color: rgb(210 211 131 / 0.7);
+  color: var(--khix-accent);
   font-size: 0.68rem;
   font-weight: 950;
   letter-spacing: 0.12em;
 }
 
 .scheduleDayCount {
-  color: rgb(162 153 194 / 0.66);
+  color: var(--khix-muted);
   font-size: 0.7rem;
   font-weight: 800;
   white-space: nowrap;
@@ -4189,11 +4767,11 @@
 
 .scheduleItem {
   display: grid;
-  grid-template-columns: minmax(8.5rem, 0.34fr) minmax(12rem, 1fr) auto;
+  grid-template-columns: minmax(8.5rem, 0.3fr) minmax(0, 1fr) minmax(0, 11rem);
   align-items: start;
   gap: clamp(0.8rem, 2.2vw, 1.4rem);
-  padding: 1rem;
-  border-bottom: 1px solid rgb(162 153 194 / 0.1);
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--khix-panel-border);
 }
 
 .scheduleItem:last-child {
@@ -4204,15 +4782,15 @@
   display: flex;
   align-items: center;
   gap: 0.42rem;
-  color: var(--khix-gold);
-  font-size: 0.76rem;
-  font-weight: 900;
-  line-height: 1.35;
+  color: var(--khix-muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+  line-height: 1.4;
 }
 
 .scheduleTime svg {
   flex: 0 0 auto;
-  color: rgb(145 181 97 / 0.86);
+  color: var(--khix-accent);
 }
 
 .scheduleEventDetails {
@@ -4221,19 +4799,20 @@
 
 .scheduleTitle {
   margin: 0;
-  color: rgb(255 252 244 / 0.94);
-  font-size: 1rem;
-  font-weight: 900;
-  line-height: 1.24;
+  color: var(--khix-ink);
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
 .scheduleCopy {
   margin: 0.25rem 0 0;
-  color: rgb(255 252 244 / 0.62);
-  font-size: 0.8rem;
+  color: var(--khix-muted);
+  font-size: 0.875rem;
   font-weight: 550;
-  line-height: 1.45;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -4242,64 +4821,63 @@
   align-items: center;
   gap: 0.35rem;
   margin: 0.48rem 0 0;
-  color: rgb(162 153 194 / 0.78);
-  font-size: 0.76rem;
-  font-weight: 850;
-  line-height: 1.35;
+  color: var(--khix-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .scheduleLocation svg {
   flex: 0 0 auto;
-  color: rgb(145 181 97 / 0.78);
+  color: var(--khix-accent);
 }
 
 .scheduleMeta {
   display: flex;
-  max-width: 12rem;
+  min-width: 0;
+  max-width: 11rem;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
-  gap: 0.38rem;
+  gap: 0.5rem 0.85rem;
 }
 
 .schedulePurpose,
 .scheduleTag,
 .schedulePoints {
+  max-width: 100%;
   height: fit-content;
-  border-radius: 999px;
-  padding: 0.28rem 0.5rem;
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  line-height: 1.1;
-  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .schedulePurpose {
-  border: 1px solid rgb(210 211 131 / 0.32);
-  background: rgb(210 211 131 / 0.08);
-  color: rgb(255 252 244 / 0.9);
+  border: 1px solid rgb(216 197 242 / 0.3);
+  border-radius: 999px;
+  background: rgb(216 197 242 / 0.1);
+  padding: 0.22rem 0.5rem;
+  color: var(--khix-accent);
 }
 
 .scheduleTag {
-  border: 1px solid rgb(145 181 97 / 0.3);
-  background: rgb(93 171 103 / 0.08);
-  color: var(--khix-cyan);
+  color: var(--khix-muted);
 }
 
 .schedulePoints {
-  border: 1px solid rgb(162 153 194 / 0.2);
-  background: rgb(21 58 97 / 0.16);
-  color: rgb(162 153 194 / 0.86);
+  color: var(--khix-accent);
 }
 
 .scheduleState {
   display: grid;
-  width: min(38rem, 100%);
-  align-self: center;
+  width: min(var(--khix-content-width), 100%);
+  align-self: start;
   justify-items: center;
   gap: 0.7rem;
   margin: auto;
-  padding: clamp(2rem, 6vw, 4rem) 1rem;
+  padding: 0;
   text-align: center;
 }
 
@@ -4307,24 +4885,25 @@
   width: 2.4rem;
   height: 2.4rem;
   margin-bottom: 0.3rem;
-  color: rgb(145 181 97 / 0.78);
-  filter: drop-shadow(0 0 1rem rgb(93 171 103 / 0.3));
+  color: var(--khix-accent);
+  filter: drop-shadow(0 0 1rem rgb(216 197 242 / 0.24));
 }
 
 .scheduleState h1 {
   margin: 0;
-  color: rgb(255 252 244 / 0.96);
+  color: var(--khix-ink);
   font-family: var(--khix-display-font);
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: var(--khix-page-title-size);
   font-weight: 400;
-  line-height: 0.94;
+  line-height: 0.98;
   text-wrap: balance;
+  text-shadow: var(--khix-heading-glow);
 }
 
 .scheduleState > p:last-of-type {
   max-width: 34rem;
   margin: 0;
-  color: rgb(255 252 244 / 0.68);
+  color: var(--khix-muted);
   font-size: 0.92rem;
   line-height: 1.55;
   text-wrap: pretty;
@@ -4335,7 +4914,7 @@
 }
 
 .scheduleSkeleton {
-  width: min(68rem, 100%);
+  width: min(var(--khix-content-width), 100%);
 }
 
 .scheduleSkeletonHero,
@@ -4343,7 +4922,7 @@
 .scheduleSkeletonRow {
   position: relative;
   overflow: hidden;
-  background: rgb(162 153 194 / 0.12);
+  background: rgb(255 252 244 / 0.08);
 }
 
 .scheduleSkeletonHero::after,
@@ -4354,7 +4933,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(162 153 194 / 0.12),
+    rgb(255 252 244 / 0.1),
     transparent
   );
   content: "";
@@ -4369,54 +4948,48 @@
 
 .scheduleSkeletonDay {
   display: grid;
-  overflow: hidden;
-  border: 1px solid rgb(145 181 97 / 0.16);
-  border-radius: 0.62rem;
+  min-width: 0;
 }
 
 .scheduleSkeletonHeading {
   height: 3.3rem;
-  border-bottom: 1px solid rgb(162 153 194 / 0.12);
+  border-bottom: 1px solid rgb(255 252 244 / 0.1);
 }
 
 .scheduleSkeletonRow {
   height: 5.8rem;
-  margin: 0 1rem;
-  border-bottom: 1px solid rgb(162 153 194 / 0.12);
+  border-bottom: 1px solid rgb(255 252 244 / 0.1);
   background: transparent;
 }
 
 .dialog {
   /* Dialogs are portalled outside `.dashboard`, so their theme tokens must
      travel with the dialog instead of relying on ancestor inheritance. */
-  --khix-ink: #d2d383;
-  --khix-muted: rgb(162 153 194 / 0.78);
-  --khix-dim: rgb(162 153 194 / 0.5);
-  --khix-acid: #d2d383;
-  --khix-green: #5dab67;
-  --khix-cyan: #91b561;
-  --khix-gold: #d2d383;
-  --khix-rose: #733027;
   --khix-dialog-rail-offset: clamp(12.75rem, 17vw, 15.75rem);
-  --khix-button-radius: 0.66rem;
 
   left: calc(50% + (var(--khix-dialog-rail-offset) / 2)) !important;
+  width: calc(100vw - var(--khix-dialog-rail-offset) - 2rem);
   max-height: min(90vh, 46rem);
-  border-color: rgb(145 181 97 / 0.22);
-  border-radius: 0.5rem;
-  background: #190925;
+  border-color: var(--khix-panel-border);
+  border-radius: var(--khix-panel-radius);
+  background: #1e142a;
   color: var(--khix-ink);
   box-shadow: 0 2rem 6rem rgb(39 12 38 / 0.55);
+  padding: var(--khix-panel-padding);
+  overflow-y: auto;
 }
 
 .dialogTitle {
+  padding-inline-end: 1.5rem;
   color: var(--khix-ink);
-  font-size: 1.35rem;
-  font-weight: 950;
+  font-size: var(--khix-section-title-size);
+  font-weight: 400;
+  font-family: var(--khix-display-font);
+  text-shadow: var(--khix-section-glow);
 }
 
 .dialogCopy {
-  color: rgb(162 153 194 / 0.64);
+  color: var(--khix-muted);
   font-weight: 550;
   line-height: 1.6;
 }
@@ -4424,11 +4997,9 @@
 .dialogUrlBox {
   display: block;
   min-width: 0;
-  border: 1px solid rgb(145 181 97 / 0.16);
+  border: 1px solid var(--khix-panel-border);
   border-radius: 0.5rem;
-  background:
-    linear-gradient(135deg, rgb(210 211 131 / 0.06), transparent 65%),
-    rgb(25 9 37 / 0.54);
+  background: var(--khix-panel-inset);
   color: rgb(255 252 244 / 0.86);
   padding: 0.78rem 0.9rem;
   box-shadow: inset 0 1px rgb(255 252 244 / 0.05);
@@ -4543,6 +5114,53 @@
 
   to {
     transform: translateX(100%);
+  }
+}
+
+/* Reuse Lore's entrance on page sections, without moving individual controls
+   or replaying it when a query updates. No retained transforms after entry. */
+@media (prefers-reduced-motion: no-preference) {
+  :is(
+      .pageReveal,
+      .journeyExperience,
+      .profileFormShell,
+      .scheduleHero,
+      .scheduleDays,
+      .guidePage
+    )
+    > *,
+  .scheduleState {
+    animation: khixDashboardContentRise 660ms var(--khix-ease-out) 80ms
+      backwards;
+  }
+
+  :is(
+      .pageReveal,
+      .journeyExperience,
+      .profileFormShell,
+      .scheduleHero,
+      .scheduleDays
+    )
+    > :nth-child(2) {
+    animation-delay: 160ms;
+  }
+
+  :is(
+      .pageReveal,
+      .journeyExperience,
+      .profileFormShell,
+      .scheduleHero,
+      .scheduleDays
+    )
+    > :nth-child(n + 3) {
+    animation-delay: 240ms;
+  }
+
+  .scheduleDays > *,
+  .guideFrame,
+  .journeyExperience > .journeyPanel,
+  .profileEditor {
+    animation-name: khixDashboardToolWake;
   }
 }
 
@@ -4784,8 +5402,7 @@
   .loreChapterSpread,
   .loreProcessIntro,
   .lorePictureBeat,
-  .loreMerchMoment,
-  .loreTeamThanks {
+  .loreMerchMoment {
     animation: khixDashboardContentRise linear both;
     animation-range: entry 8% cover 34%;
     animation-timeline: view();
@@ -4794,8 +5411,7 @@
   .loreChapterSpread > *,
   .loreProcessIntro > *,
   .lorePictureBeat > *,
-  .loreMerchMoment > *,
-  .loreTeamThanks > * {
+  .loreMerchMoment > * {
     animation: none;
   }
 }
@@ -4843,6 +5459,10 @@
 }
 
 @media (max-width: 1020px) {
+  .dashboard {
+    --khix-page-top: clamp(6rem, 14dvh, 9rem);
+  }
+
   .dialog {
     --khix-dialog-rail-offset: clamp(10.75rem, 20vw, 13rem);
   }
@@ -4875,19 +5495,8 @@
   .mainCanvas {
     padding: 1rem 1rem 1rem clamp(1rem, 2.6vw, 1.8rem);
   }
-
-  .statusMain .mainCanvas,
-  .eventsMain .mainCanvas,
-  .mapMain .mainCanvas,
-  .profileMain .mainCanvas,
-  .loreMain .mainCanvas {
+  .statusMain .mainCanvas {
     padding-top: clamp(6rem, 14dvh, 9rem);
-  }
-
-  .eventsMain .mainCanvas,
-  .mapMain .mainCanvas,
-  .profileMain .mainCanvas {
-    padding-top: clamp(3.6rem, 8dvh, 5.25rem);
   }
 
   .loreExperience {
@@ -4903,7 +5512,7 @@
   }
 
   .toolDock {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     padding-bottom: 0;
   }
 
@@ -4944,14 +5553,44 @@
     grid-column: 2;
     max-width: 42rem;
   }
+
+  .merchItem {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+
+  .merchImage {
+    grid-row: span 2;
+  }
+
+  .merchAvailability {
+    grid-column: 2;
+    padding-top: 0;
+  }
+
+  .scheduleItem {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 9rem);
+  }
+
+  .scheduleTime {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 700px) {
+  .dashboard {
+    --khix-page-gutter: max(
+      1rem,
+      env(safe-area-inset-left),
+      env(safe-area-inset-right)
+    );
+    --khix-page-top: calc(var(--khix-mobile-page-top-padding) + 0.25rem);
+  }
+
   .dialog {
     --khix-dialog-rail-offset: 0rem;
 
     left: 50% !important;
-    width: min(calc(100vw - 1.5rem), 32rem);
+    width: min(calc(100% - 2rem), 32rem);
   }
 
   .dialogActionRow {
@@ -5262,8 +5901,15 @@
   .railNav {
     display: grid;
     width: 100%;
+    min-height: 0;
+    align-content: start;
+    align-self: stretch;
     gap: 0.42rem;
     margin-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: rgb(162 153 194 / 0.28) transparent;
+    scrollbar-width: thin;
   }
 
   .railLink {
@@ -5311,13 +5957,6 @@
     scrollbar-gutter: auto;
   }
 
-  .mapMain {
-    height: calc(100dvh - 4.35rem);
-    min-height: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-
   .mainCanvas {
     min-height: calc(100dvh - 4.35rem);
     grid-template-rows: auto;
@@ -5330,32 +5969,14 @@
       max(1.1rem, env(safe-area-inset-left));
   }
 
-  .mapMain .mainCanvas {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    padding: 0;
-  }
-
   .statusMain {
     height: auto;
     min-height: calc(100dvh - 4.35rem);
     overflow: visible;
     overscroll-behavior: auto;
   }
-
-  .statusMain .mainCanvas,
-  .eventsMain .mainCanvas,
-  .profileMain .mainCanvas,
-  .loreMain .mainCanvas {
+  .statusMain .mainCanvas {
     padding-top: var(--khix-mobile-page-top-padding);
-  }
-
-  .profileMain .mainCanvas {
-    padding: var(--khix-mobile-page-top-padding)
-      max(0.85rem, env(safe-area-inset-right))
-      calc(1rem + env(safe-area-inset-bottom))
-      max(0.85rem, env(safe-area-inset-left));
   }
 
   .loreExperience {
@@ -5367,7 +5988,6 @@
 
   .loreHero {
     gap: clamp(1.25rem, 3.4dvh, 1.9rem);
-    padding-top: 0.25rem;
   }
 
   .lorePrelude {
@@ -5463,7 +6083,7 @@
   }
 
   .loreTeamPhotos {
-    gap: 0.6rem;
+    gap: 1.5rem;
   }
 
   .statusStage {
@@ -5642,16 +6262,12 @@
   }
 
   .toolDock {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    width: min(22rem, 100%);
     gap: 0.55rem;
     align-self: end;
     margin-top: clamp(2.25rem, 8dvh, 4.75rem);
     padding-bottom: 0;
-  }
-
-  .toolDockFourUp {
-    margin-top: clamp(2.25rem, 8dvh, 4.75rem);
   }
 
   .toolLink,
@@ -5716,13 +6332,7 @@
   .profileSummaryList div,
   .profileSummaryList div:first-child {
     gap: 0.2rem;
-    border: 1px solid rgb(162 153 194 / 0.12);
-    border-radius: 0.48rem;
-    background:
-      linear-gradient(135deg, rgb(255 252 244 / 0.04), transparent 46%),
-      rgb(25 9 37 / 0.28);
-    box-shadow: inset 0 1px rgb(255 252 244 / 0.04);
-    padding: 0.52rem 0.58rem;
+    padding: 0.75rem 0;
   }
 
   .profileSummaryList div:last-child {
@@ -5767,14 +6377,6 @@
   .profileFormBlock {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.7rem;
-    border: 1px solid rgb(162 153 194 / 0.14);
-    border-radius: 0.62rem;
-    background:
-      linear-gradient(180deg, rgb(39 12 38 / 0.72), rgb(25 9 37 / 0.58)),
-      rgb(25 9 37 / 0.7);
-    box-shadow:
-      inset 0 1px rgb(255 252 244 / 0.06),
-      0 0.85rem 2rem rgb(25 9 37 / 0.2);
   }
 
   .profileFormBlockHeader {
@@ -5796,7 +6398,7 @@
   }
 
   .profileFormBlock {
-    padding: 0.86rem;
+    padding: 1.25rem 0;
   }
 
   .profileFormBlock:first-child {
@@ -5878,10 +6480,15 @@
     margin-top: 1rem;
   }
 
+  .merchItem {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+  }
+
   .scheduleItem {
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.55rem;
-    padding: 0.9rem;
+    gap: 0.65rem;
+    padding: 1rem 0;
   }
 
   .scheduleExperience {
@@ -5893,14 +6500,10 @@
     gap: 0.42rem;
   }
 
-  .schedulePageTitle {
-    font-size: clamp(3rem, 14vw, 4.4rem);
-  }
-
   .scheduleDayHeader {
     grid-template-columns: auto minmax(0, 1fr);
     gap: 0.55rem;
-    padding: 0.72rem 0.85rem;
+    padding-bottom: 0.9rem;
   }
 
   .scheduleDayCount {
@@ -5908,7 +6511,7 @@
   }
 
   .scheduleTime {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
   }
 
   .scheduleMeta {
@@ -5923,7 +6526,6 @@
 
   .scheduleSkeletonRow {
     height: 7.5rem;
-    margin: 0 0.85rem;
   }
 }
 
@@ -5953,20 +6555,6 @@
     padding-left: max(1rem, env(safe-area-inset-left));
   }
 
-  .profileMain .mainCanvas {
-    padding-right: max(0.7rem, env(safe-area-inset-right));
-    padding-left: max(0.7rem, env(safe-area-inset-left));
-  }
-
-  .eventsMain .mainCanvas {
-    padding-right: max(0.7rem, env(safe-area-inset-right));
-    padding-left: max(0.7rem, env(safe-area-inset-left));
-  }
-
-  .scheduleDayHeader h2 {
-    font-size: 1.18rem;
-  }
-
   .profileSection {
     padding-bottom: calc(5.2rem + env(safe-area-inset-bottom));
   }
@@ -5981,11 +6569,11 @@
 
   .profileSummaryList div,
   .profileSummaryList div:first-child {
-    padding: 0.48rem 0.52rem;
+    padding: 0.75rem 0;
   }
 
   .profileFormBlock {
-    padding: 0.78rem;
+    padding: 1.25rem 0;
   }
 
   .profileActions {
@@ -6216,9 +6804,8 @@
     font-size: clamp(0.78rem, min(1vw, 1.9dvh), 0.92rem);
   }
 
-  .statusMain .toolDock,
-  .statusMain .toolDockFourUp {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .statusMain .toolDock {
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(0.4rem, 0.8dvh, 0.6rem);
     margin-top: clamp(0.35rem, 1dvh, 0.65rem);
     padding-bottom: 0;
@@ -6270,9 +6857,8 @@
     min-height: 2.8rem;
   }
 
-  .statusMain .toolDock,
-  .statusMain .toolDockFourUp {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .statusMain .toolDock {
+    grid-template-columns: minmax(0, 1fr);
     gap: clamp(0.34rem, 1dvh, 0.5rem);
     margin-top: clamp(0.6rem, 1.6dvh, 0.9rem);
   }
@@ -6305,8 +6891,7 @@
     margin-top: 0.45rem;
   }
 
-  .statusMain .toolDock,
-  .statusMain .toolDockFourUp {
+  .statusMain .toolDock {
     margin-top: 0.4rem;
   }
 
@@ -6362,6 +6947,10 @@
   .loreTeamThanks > *,
   .loreHeart,
   .countdownBloom,
+  .scheduleExperience,
+  .scheduleSkeletonHero::after,
+  .scheduleSkeletonHeading::after,
+  .scheduleSkeletonRow::after,
   .skeleton::after {
     animation: none;
   }
@@ -6399,5 +6988,41 @@
   .acceptedConfirmButton::before,
   .acceptedTermsButton::before {
     transition: none;
+  }
+}
+
+.printingMain .mainCanvas {
+  align-content: start;
+  grid-template-rows: auto;
+}
+
+/* Status pages keep the same breathing room as Lore and scroll naturally
+   instead of shrinking text and controls to fit a short viewport. */
+.statusMain:not(.admissionMain) .mainCanvas {
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+  padding: var(--khix-page-top) var(--khix-page-gutter) 3rem;
+}
+
+/* The admission ticket needs its own scrollable canvas on short screens. */
+.statusMain.admissionMain {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.statusMain.admissionMain .mainCanvas {
+  grid-template-rows: 1fr;
+  padding: var(--khix-page-top) var(--khix-page-gutter) 3rem;
+}
+
+@media (max-width: 700px) {
+  .statusMain.admissionMain .mainCanvas {
+    padding-block: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .statusMain.admissionMain {
+    overflow: visible;
+    overscroll-behavior: auto;
   }
 }

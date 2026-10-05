@@ -11,6 +11,7 @@ import {
   ListTodo,
   Mail,
   PanelsTopLeft,
+  Printer,
   QrCode,
   ScanLine,
   ScrollText,
@@ -55,6 +56,7 @@ export interface AdminNavigationAccess {
   issues?: boolean;
   logs?: boolean;
   members?: boolean;
+  printing?: boolean;
   projectAdmin?: boolean;
   judging?: boolean;
   judgeProjects?: boolean;
@@ -227,6 +229,14 @@ export const adminNavigationItems = [
     label: "Hackathon Check-in",
   },
   {
+    access: "printing",
+    group: "Hackathon",
+    href: "/admin/printing",
+    icon: Printer,
+    id: "printing",
+    label: "Printing Queue",
+  },
+  {
     access: "judgeProjects",
     group: "Hackathon",
     href: "/judge/projects",
@@ -305,6 +315,7 @@ export function isAdminNavigationActive(id: string, pathname: string) {
   if (id === "hackers") return pathname.startsWith("/admin/hackers");
   if (id === "teams") return pathname.startsWith("/admin/teams");
   if (id === "pointStore") return pathname.startsWith("/admin/point-store");
+  if (id === "printing") return pathname.startsWith("/admin/printing");
   if (id === "issues") return pathname.startsWith("/admin/issues");
   if (id === "eventCheckIn") return pathname.startsWith("/admin/check-in");
   if (id === "companies") return pathname.startsWith("/admin/companies");

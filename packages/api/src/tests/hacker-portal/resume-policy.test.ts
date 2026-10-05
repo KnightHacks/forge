@@ -7,25 +7,53 @@ import {
 } from "../../hacker-portal/resume-policy";
 
 describe("hacker resume policy", () => {
-  it("locks exactly at the database event-start boundary", () => {
-    const startDate = new Date("2026-10-02T16:00:00Z");
+  it("allows changes during the event and locks exactly at its end", () => {
+    const endDate = new Date("2026-10-04T16:00:00Z");
     expect(
       canEditResumeAt({
-        now: new Date("2026-10-02T15:59:59.999Z"),
-        startDate,
+        now: new Date("2026-10-04T15:59:59.999Z"),
+        endDate,
         status: "confirmed",
       }),
     ).toBe(true);
     expect(
-      canEditResumeAt({ now: startDate, startDate, status: "confirmed" }),
+      canEditResumeAt({ now: endDate, endDate, status: "confirmed" }),
     ).toBe(false);
     expect(
       canEditResumeAt({
-        now: new Date("2026-10-01T16:00:00Z"),
-        startDate,
+        now: new Date("2026-10-03T16:00:00Z"),
+        endDate,
         status: "checkedin",
       }),
     ).toBe(true);
+  });
+
+  it.each([null, "denied", "withdrawn", "unknown"])(
+    "keeps an ineligible application (%s) locked during the event",
+    (status) => {
+      expect(
+        canEditResumeAt({
+          now: new Date("2026-10-03T16:00:00Z"),
+          endDate: new Date("2026-10-04T16:00:00Z"),
+          status,
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it("rejects changes after the event and with an invalid deadline", () => {
+    for (const endDate of [
+      new Date("2026-10-04T16:00:00Z"),
+      new Date("invalid"),
+    ]) {
+      expect(
+        canEditResumeAt({
+          now: new Date("2026-10-04T16:00:00.001Z"),
+          endDate,
+          status: "checkedin",
+        }),
+      ).toBe(false);
+    }
   });
 
   it("binds upload idempotency to bytes and safe metadata", () => {

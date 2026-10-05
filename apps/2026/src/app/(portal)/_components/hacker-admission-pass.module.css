@@ -1,0 +1,353 @@
+.experience {
+  --hacker-class-accent: var(--khix-sunlight-green);
+
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+  align-self: start;
+  color: #fffaf0;
+}
+
+/* Class accents follow the six illustrated Knight Hacks IX badges. */
+.experience[data-hacker-class="petalborn"] {
+  --hacker-class-accent: #b9dfbd;
+}
+
+.experience[data-hacker-class="dryad"] {
+  --hacker-class-accent: #95b95e;
+}
+
+.experience[data-hacker-class="whisperseed"] {
+  --hacker-class-accent: #97d4d3;
+}
+
+.experience[data-hacker-class="chomper"] {
+  --hacker-class-accent: #e492c1;
+}
+
+.experience[data-hacker-class="spora"] {
+  --hacker-class-accent: #b5a4df;
+}
+
+.experience[data-hacker-class="collosus"] {
+  --hacker-class-accent: #83d5df;
+}
+
+.pass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 13rem;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.details {
+  min-width: 0;
+}
+
+.identity {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.avatar {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.avatarImage {
+  object-fit: cover;
+}
+
+.avatarFallback {
+  background: color-mix(in srgb, var(--hacker-class-accent) 32%, #f8f6ef);
+  color: #251c2b;
+  font: 600 1.4rem/1 var(--khix-display-font);
+}
+
+.identity h1 {
+  margin: 0;
+  font: 600 clamp(1.35rem, 2.4vw, 2rem)/1.15 var(--khix-display-font);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+  text-shadow: var(--khix-section-glow);
+}
+
+.identityText {
+  min-width: 0;
+}
+
+.identityStatus {
+  margin: 0.35rem 0 0;
+  color: var(--khix-accent);
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.memberships {
+  display: grid;
+  gap: 0.25rem;
+  margin: 1.25rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--khix-panel-border);
+}
+
+.membership {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.membership dt {
+  color: #c1b8ce;
+  font: 400 0.75rem/1.4 var(--khix-body-font);
+}
+
+.membership dd {
+  margin: 0;
+  font: 500 1rem/1.35 var(--khix-body-font);
+  overflow-wrap: anywhere;
+}
+
+.membership .className {
+  color: var(--hacker-class-accent);
+}
+
+.teamLink {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+  transition: color 160ms;
+}
+
+.teamLink svg {
+  flex-shrink: 0;
+  color: var(--khix-accent);
+  transition: transform 160ms;
+}
+
+.teamLink:hover {
+  color: var(--khix-accent);
+}
+
+.teamLink:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.qrSection {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 0.75rem;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--khix-panel-border);
+}
+
+.qr {
+  display: grid;
+  width: min(100%, 13rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0.35rem solid #fff;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #251c2b;
+}
+
+.qr > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.qrState {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  text-align: center;
+  font: 400 0.8rem/1.4 var(--khix-body-font);
+}
+
+.qrState button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--khix-accent);
+  color: #251c2b;
+}
+
+.withdrawal {
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+.withdrawal button {
+  min-height: 2.75rem;
+  padding: 0.4rem;
+  border: 0;
+  background: transparent;
+  color: #eee5d2;
+  font: 400 0.75rem/1.4 var(--khix-body-font);
+}
+
+.experience a:focus-visible,
+.experience button:focus-visible {
+  outline: 3px solid var(--khix-accent);
+  outline-offset: 4px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 851px) {
+  .pass {
+    grid-template-columns: minmax(0, 1fr) 34%;
+    gap: clamp(1.25rem, 3cqw, 3rem);
+  }
+
+  .identity {
+    grid-template-columns: clamp(3.5rem, 8cqw, 6.5rem) minmax(0, 1fr);
+    gap: clamp(1rem, 2cqw, 2rem);
+  }
+
+  .avatar {
+    width: clamp(3.5rem, 8cqw, 6.5rem);
+    height: clamp(3.5rem, 8cqw, 6.5rem);
+  }
+
+  .avatarFallback {
+    font-size: clamp(1.4rem, 3.2cqw, 2.6rem);
+  }
+
+  .identity h1 {
+    font-size: clamp(1.6rem, 4cqw, 3.5rem);
+  }
+
+  .memberships {
+    gap: clamp(0.25rem, 0.7cqw, 0.75rem);
+    margin-top: clamp(1.25rem, 3cqw, 2.75rem);
+    padding-top: clamp(0.75rem, 1.5cqw, 1.5rem);
+  }
+
+  .membership {
+    grid-template-columns: clamp(2.5rem, 5cqw, 4.5rem) minmax(0, 1fr);
+  }
+
+  .membership dt {
+    font-size: clamp(0.8rem, 1.5cqw, 1.15rem);
+  }
+
+  .membership dd {
+    font-size: clamp(1rem, 2cqw, 1.5rem);
+  }
+
+  .qrSection {
+    padding-left: clamp(1.25rem, 3cqw, 3rem);
+  }
+
+  .qr {
+    width: 100%;
+  }
+}
+
+@media (max-width: 850px) {
+  .experience {
+    max-width: 23rem;
+    align-self: center;
+    justify-self: center;
+  }
+
+  .pass {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .identity {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 0.6rem;
+    text-align: center;
+  }
+
+  .avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .avatarFallback {
+    font-size: 1.15rem;
+  }
+
+  .identity h1 {
+    font-size: 1.3rem;
+  }
+
+  .memberships {
+    margin-top: 0.5rem;
+    justify-items: center;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .resume {
+    justify-self: center;
+  }
+
+  .membership {
+    grid-template-columns: auto minmax(0, auto);
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .membership dd {
+    font-size: 0.9rem;
+  }
+
+  .qrSection {
+    padding: 0;
+    border: 0;
+  }
+
+  .qr {
+    width: min(100%, 11rem);
+  }
+}
+
+@media (max-width: 850px) and (max-height: 650px) {
+  .qr {
+    width: min(100%, 10rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .teamLink,
+  .teamLink svg {
+    transition: none;
+  }
+}

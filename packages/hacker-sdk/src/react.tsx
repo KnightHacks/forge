@@ -16,10 +16,12 @@ import type {
   HackerParticipantClientConfig,
 } from "./client";
 import type {
+  CancelPrintJobInput,
   ConfirmAttendanceInput,
   HackerLeaderboardScopeInput,
   IssueHackerCheckInPassInput,
   SubmitApplicationInput,
+  SubmitPrintJobInput,
   UpdateHackerApplicationInput,
   UpdateHackerParticipantInput,
   UpdateHackerProfileInput,
@@ -410,5 +412,55 @@ export function useChangeHackerTeam() {
   return useParticipantMutation(
     (input: import("./contracts").HackerParticipantInput<"changeTeam">) =>
       client.changeTeam(input),
+  );
+}
+
+export function useHackerPrintJobs(options: HackerSdkQueryOptions = {}) {
+  const { client, portalKey } = useHackerSdkClient();
+  const dashboard = useHackerDashboard();
+  return useQuery({
+    enabled:
+      (options.enabled ?? true) &&
+      canLoadCheckedInParticipantData(dashboard.data?.application?.status),
+    queryFn: () => client.listPrintJobs(),
+    queryKey: hackerSdkQueryKeys.printJobs(portalKey),
+  });
+}
+
+/**
+ * Stages one file. Not retried: a retry would stage a second copy. Staging
+ * changes no query, so nothing is invalidated.
+ */
+export function useUploadPrintFile() {
+  const { client } = useHackerSdkClient();
+  return useMutation({
+    mutationFn: (input: { file: Blob; fileName: string }) =>
+      client.uploadPrintFile(input.file, input),
+    retry: false,
+  });
+}
+
+/** Drops a staged file the hacker removed from the form. */
+export function useRemoveStagedPrintFile() {
+  const { client } = useHackerSdkClient();
+  return useMutation({
+    mutationFn: (input: { fileId: string }) =>
+      client.removeStagedPrintFile(input),
+    retry: shouldRetryHackerSdkRequest,
+    retryDelay: hackerSdkRetryDelay,
+  });
+}
+
+export function useSubmitPrintJob() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: SubmitPrintJobInput) =>
+    client.submitPrintJob(input),
+  );
+}
+
+export function useCancelPrintJob() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: CancelPrintJobInput) =>
+    client.cancelPrintJob(input),
   );
 }

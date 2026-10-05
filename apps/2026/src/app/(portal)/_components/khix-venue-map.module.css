@@ -1,9 +1,10 @@
 .experience {
-  font-family: Arial, sans-serif;
+  font-family: var(--khix-body-font);
   position: relative;
   z-index: 1;
   width: 100%;
-  height: calc(100dvh - clamp(4.7rem, 9dvh, 6rem));
+  height: calc(100dvh - var(--khix-page-top) - 3rem);
+  border-radius: var(--khix-panel-radius);
   min-height: 32rem;
   overflow: hidden;
   background: #07150f;
@@ -68,10 +69,10 @@
 }
 .sheetAction {
   font-size: 12px;
-  color: #c3db92;
+  color: var(--khix-accent);
 }
 .eventCount {
-  color: #c3db92;
+  color: var(--khix-accent);
   margin-left: 6px;
 }
 .eventList {
@@ -103,7 +104,7 @@
   color: #becbc2;
 }
 .eventRow .eventTime {
-  color: #dce98a;
+  color: var(--khix-accent);
   font-size: 11px;
   font-weight: 700;
 }
@@ -118,13 +119,13 @@
 .eventRow:hover,
 .eventRow:focus-visible,
 .eventRow[aria-pressed="true"] {
-  background: #263e2f;
+  background: rgb(216 197 242 / 0.12);
 }
 .eventRow:active {
-  background: #385137;
+  background: rgb(216 197 242 / 0.2);
 }
 .eventRow .eventAction {
-  color: #e3ef8d;
+  color: var(--khix-accent);
   font-size: 14px;
   font-weight: 700;
 }
@@ -154,8 +155,8 @@
 }
 .closeSelection:hover,
 .closeSelection:active {
-  background: rgb(153 199 109 / 0.16);
-  color: #e3ef8d;
+  background: rgb(216 197 242 / 0.16);
+  color: var(--khix-accent);
 }
 .closeSelection svg {
   width: 1rem;
@@ -164,7 +165,7 @@
 .sheetToggle:focus-visible,
 .eventRow:focus-visible,
 .closeSelection:focus-visible {
-  outline: 2px solid #dce98a;
+  outline: 2px solid var(--khix-accent);
   outline-offset: -3px;
 }
 
@@ -351,8 +352,8 @@
 .mapAttribution {
   position: absolute;
   z-index: 4;
-  border: 1px solid rgb(229 239 218 / 0.14);
-  background: rgb(6 20 14 / 0.9);
+  border: 1px solid var(--khix-panel-border);
+  background: var(--khix-panel-surface);
   box-shadow: 0 1rem 2.8rem rgb(0 0 0 / 0.28);
   backdrop-filter: blur(18px);
 }
@@ -423,8 +424,8 @@
 .backButton:hover,
 .floorTabs button:hover,
 .floorTabs button[data-active="true"] {
-  background: rgb(153 199 109 / 0.16);
-  color: #e3ef8d;
+  background: rgb(216 197 242 / 0.16);
+  color: var(--khix-accent);
 }
 
 .backButton svg {
@@ -453,8 +454,8 @@
 
 .filterButton:hover,
 .filterButton[data-active="true"] {
-  background: rgb(153 199 109 / 0.15);
-  color: #e3ef8d;
+  background: rgb(216 197 242 / 0.15);
+  color: var(--khix-accent);
 }
 
 .filterButton svg,
@@ -489,17 +490,17 @@
 
 .mapControls button:hover,
 .mapControls button[data-active="true"] {
-  background: rgb(153 199 109 / 0.15);
-  color: #e3ef8d;
+  background: rgb(216 197 242 / 0.15);
+  color: var(--khix-accent);
 }
 
 .backButton:focus-visible,
 .floorTabs button:focus-visible,
 .filterButton:focus-visible,
 .mapControls button:focus-visible {
-  background: rgb(153 199 109 / 0.16);
-  color: #e3ef8d;
-  outline: 2px solid #e3ef8d;
+  background: rgb(216 197 242 / 0.16);
+  color: var(--khix-accent);
+  outline: 2px solid var(--khix-accent);
   outline-offset: 2px;
 }
 
@@ -621,7 +622,7 @@
   background: rgb(193 99 83 / 0.14);
 }
 .policyError button:focus-visible {
-  outline: 2px solid #eeff90;
+  outline: 2px solid var(--khix-accent);
   outline-offset: 3px;
 }
 
@@ -805,7 +806,7 @@
 .locationPicker select {
   min-width: 0;
   min-height: 2.35rem;
-  border: 1px solid rgb(229 239 218 / 0.14);
+  border: 1px solid var(--khix-panel-border);
   border-radius: 0.42rem;
   background: rgb(255 255 255 / 0.05);
   padding: 0.45rem 0.58rem;
@@ -836,8 +837,8 @@
 
 .setSpotButton {
   border: 0;
-  background: #dce98a;
-  color: #07150f;
+  background: var(--khix-primary-background);
+  color: var(--khix-primary-ink);
 }
 
 .selection {
@@ -865,7 +866,7 @@
 .selectionType {
   display: block;
   margin-top: 0.3rem;
-  color: #a9cf79;
+  color: var(--khix-accent);
   font-size: 0.75rem;
   font-weight: 750;
   line-height: 1.4;
@@ -905,7 +906,7 @@
   gap: 0.75rem;
   margin: 0;
   padding-top: 0.85rem;
-  border-top: 1px solid rgb(229 239 218 / 0.14);
+  border-top: 1px solid var(--khix-panel-border);
 }
 
 .selection dt {
@@ -967,7 +968,7 @@
 }
 
 .eyebrow {
-  color: #a9cf79 !important;
+  color: var(--khix-accent) !important;
   font-size: 0.62rem;
   font-weight: 950;
   letter-spacing: 0.12em;
@@ -1018,8 +1019,8 @@
     letter-spacing: 0;
   }
   .experience {
-    height: 100%;
-    min-height: 0;
+    height: calc(100dvh - 4.35rem - var(--khix-page-top) - 3rem);
+    min-height: 32rem;
   }
 
   .mapFrame {

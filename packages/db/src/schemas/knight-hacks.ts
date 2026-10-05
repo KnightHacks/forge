@@ -15,7 +15,7 @@ import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
 import type { PermittedRoom } from "@forge/consts";
-import { CAREER, EVENTS, FORMS, GUILD, ISSUE } from "@forge/consts";
+import { CAREER, EVENTS, FORMS, GUILD, ISSUE, PRINTING } from "@forge/consts";
 
 import { Roles, Session, User } from "./auth";
 
@@ -4248,3 +4248,204 @@ export const HackerTeamMember = createTable(
     }).onDelete("no action"),
   }),
 );
+
+/**
+ * Quoted status list for the check constraint, built from the same tuple the
+ * API and validators use so the database cannot drift from them. Adding a
+ * status still needs `pnpm db:generate`, which rewrites the constraint.
+ */
+const PRINT_JOB_STATUS_SQL_LIST = sql.raw(
+  PRINTING.PRINT_JOB_STATUSES.map((status) => `'${status}'`).join(", "),
+);
+
+/**
+ * A hacker's 3D print request for one hackathon's on-site printer.
+ *
+ * The job belongs to a `HackerAttendee` rather than a `Hacker` so it is scoped
+ * to the hackathon the hacker checked in to; the composite key makes that
+ * attendee row prove it belongs to the same hackathon.
+ */
+export const PrintJob = createTable(
+  "print_job",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    hackerAttendeeId: t.uuid().notNull(),
+    description: t.varchar({ length: 2000 }).notNull(),
+    status: t
+      .text({ enum: PRINTING.PRINT_JOB_STATUSES })
+      .notNull()
+      .default("received"),
+    /** Organizer-written text shown to the hacker with the current status. */
+    statusNote: t.varchar({ length: 500 }),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    statusChangedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** NULL for the initial `received` status and for hacker cancellations. */
+    statusChangedByUserId: t
+      .uuid()
+      .references(() => User.id, { onDelete: "set null" }),
+    /**
+     * Organizer-set ready time that replaces the computed estimate. Cleared
+     * when the job leaves the active statuses.
+     */
+    estimatedReadyAt: t.timestamp({ withTimezone: true }),
+  }),
+  (table) => ({
+    attendeeScopeFk: foreignKey({
+      columns: [table.hackerAttendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_print_job_attendee_scope_fk",
+    }).onDelete("cascade"),
+    /** Target for `PrintJobFile`'s composite key; see that table. */
+    scopedIdentity: unique("knight_hacks_print_job_scoped_identity_unique").on(
+      table.id,
+      table.hackathonId,
+      table.hackerAttendeeId,
+    ),
+    /** The Blade queue: one hackathon, filtered by status, oldest first. */
+    queueLookup: index("knight_hacks_print_job_queue_idx").on(
+      table.hackathonId,
+      table.status,
+      table.createdAt,
+    ),
+    /** The hacker's own list and the per-hacker cancel count. */
+    attendeeLookup: index("knight_hacks_print_job_attendee_idx").on(
+      table.hackerAttendeeId,
+      table.createdAt,
+    ),
+    statusChangedByLookup: index(
+      "knight_hacks_print_job_status_changed_by_idx",
+    ).on(table.statusChangedByUserId),
+    statusCheck: check(
+      "knight_hacks_print_job_status_check",
+      sql`${table.status} IN (${PRINT_JOB_STATUS_SQL_LIST})`,
+    ),
+    descriptionNotBlank: check(
+      "knight_hacks_print_job_description_not_blank_check",
+      sql`${table.description} ~ '[^[:space:]]'`,
+    ),
+    /**
+     * `needs_clarification` asks the hacker to act, so it must say what is
+     * needed. The API enforces this too; the database refuses it regardless.
+     * The explicit `IS NOT NULL` matters: `NULL ~ '...'` is NULL, and a CHECK
+     * that evaluates to NULL passes.
+     */
+    clarificationNeedsNote: check(
+      "knight_hacks_print_job_clarification_note_check",
+      sql`${table.status} <> 'needs_clarification' OR (${table.statusNote} IS NOT NULL AND ${table.statusNote} ~ '[^[:space:]]')`,
+    ),
+  }),
+);
+
+export type InsertPrintJob = typeof PrintJob.$inferInsert;
+export type SelectPrintJob = typeof PrintJob.$inferSelect;
+
+/**
+ * One uploaded file. Files are uploaded before the job exists, one request per
+ * file, so a row starts "staged" with a NULL `printJobId` and is claimed when
+ * the hacker submits. Unclaimed rows older than a day are abandoned uploads.
+ */
+export const PrintJobFile = createTable(
+  "print_job_file",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    printJobId: t.uuid(),
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    hackerAttendeeId: t.uuid().notNull(),
+    /** MinIO object key. Never sent to the hacker portal. */
+    objectName: t.varchar({ length: 512 }).notNull(),
+    fileName: t.varchar({ length: 255 }).notNull(),
+    contentType: t.varchar({ length: 100 }).notNull(),
+    size: t.integer().notNull(),
+    createdAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    attendeeScopeFk: foreignKey({
+      columns: [table.hackerAttendeeId, table.hackathonId],
+      foreignColumns: [HackerAttendee.id, HackerAttendee.hackathonId],
+      name: "knight_hacks_print_job_file_attendee_scope_fk",
+    }).onDelete("cascade"),
+    /**
+     * A file can only be claimed by a job owned by the same hacker at the same
+     * hackathon. Postgres skips a composite key while any column is NULL, so
+     * staged files with no job pass until they are claimed.
+     */
+    jobScopeFk: foreignKey({
+      columns: [table.printJobId, table.hackathonId, table.hackerAttendeeId],
+      foreignColumns: [
+        PrintJob.id,
+        PrintJob.hackathonId,
+        PrintJob.hackerAttendeeId,
+      ],
+      name: "knight_hacks_print_job_file_job_scope_fk",
+    }).onDelete("cascade"),
+    objectNameUnique: unique("knight_hacks_print_job_file_object_unique").on(
+      table.objectName,
+    ),
+    jobLookup: index("knight_hacks_print_job_file_job_idx").on(
+      table.printJobId,
+    ),
+    attendeeLookup: index("knight_hacks_print_job_file_attendee_idx").on(
+      table.hackerAttendeeId,
+    ),
+    /** Serves the abandoned-upload cleanup without scanning claimed files. */
+    stagedLookup: index("knight_hacks_print_job_file_staged_idx")
+      .on(table.createdAt)
+      .where(sql`${table.printJobId} IS NULL`),
+    positiveSize: check(
+      "knight_hacks_print_job_file_size_check",
+      sql`${table.size} > 0`,
+    ),
+  }),
+);
+
+export type InsertPrintJobFile = typeof PrintJobFile.$inferInsert;
+export type SelectPrintJobFile = typeof PrintJobFile.$inferSelect;
+
+/**
+ * Per-hackathon printing settings. A missing row and a NULL channel both mean
+ * no Discord notices; jobs still work. A missing row means the default
+ * estimate settings.
+ */
+export const PrintingConfiguration = createTable(
+  "printing_configuration",
+  (t) => ({
+    hackathonId: t
+      .uuid()
+      .notNull()
+      .primaryKey()
+      .references(() => Hackathon.id, { onDelete: "cascade" }),
+    /** Organizer-only channel that receives new-job notices. */
+    discordChannelId: t.varchar({ length: 20 }),
+    /** Minutes one print is assumed to take, for ready-time estimates. */
+    printMinutes: t.integer().notNull().default(PRINTING.DEFAULT_PRINT_MINUTES),
+    /** Printers working the queue at once, for ready-time estimates. */
+    printerCount: t.integer().notNull().default(PRINTING.DEFAULT_PRINTER_COUNT),
+    updatedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    printMinutesRange: check(
+      "knight_hacks_printing_configuration_print_minutes_check",
+      sql`${table.printMinutes} BETWEEN ${sql.raw(String(PRINTING.MIN_PRINT_MINUTES))} AND ${sql.raw(String(PRINTING.MAX_PRINT_MINUTES))}`,
+    ),
+    printerCountRange: check(
+      "knight_hacks_printing_configuration_printer_count_check",
+      sql`${table.printerCount} BETWEEN ${sql.raw(String(PRINTING.MIN_PRINTER_COUNT))} AND ${sql.raw(String(PRINTING.MAX_PRINTER_COUNT))}`,
+    ),
+    validDiscordChannelId: check(
+      "knight_hacks_printing_configuration_channel_id_check",
+      sql`${table.discordChannelId} IS NULL OR ${table.discordChannelId} ~ '^[0-9]{17,20}$'`,
+    ),
+  }),
+);
+
+export type InsertPrintingConfiguration =
+  typeof PrintingConfiguration.$inferInsert;
+export type SelectPrintingConfiguration =
+  typeof PrintingConfiguration.$inferSelect;

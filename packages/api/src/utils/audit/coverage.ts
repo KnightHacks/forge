@@ -157,6 +157,10 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "projects.dropAll",
   "projects.restore",
   "projects.update",
+  "printing.getFileDownloadUrl",
+  "printing.setChannel",
+  "printing.setEstimateSettings",
+  "printing.setEstimatedReadyAt",
   "roles.batchAssign",
   "roles.createLink",
   "roles.syncRole",
@@ -176,6 +180,8 @@ export const HYBRID_ADMIN_PROCEDURES = [
   "forms.finalizeUpload",
   "forms.getAttachmentDownload",
   "forms.getLegacyAttachmentDownload",
+  // Saving the same status and note again changes nothing and writes no event.
+  "printing.updateStatus",
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
@@ -279,6 +285,10 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "member-admin.getAdminMember",
   "member-admin.getAdminMembers",
   "member-admin.getDuesPaymentConfiguration",
+  "printing.getConfiguration",
+  "printing.list",
+  "printing.listHackathons",
+  "printing.listDiscordChannels",
   "projects.listAdmin",
   "projects.listAdminHackathons",
   "roles.getRole",

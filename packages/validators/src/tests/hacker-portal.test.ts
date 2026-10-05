@@ -18,6 +18,32 @@ import {
 import { projectClaimSettingsSchema } from "../project-claims";
 
 describe("Hacker Portal validators", () => {
+  it("accepts session responses with an optional profile photo", () => {
+    const session = {
+      authenticated: true,
+      displayName: "Hacker",
+      expiresAt: null,
+    };
+    const schema = hackerPortalV1OutputSchemas.getSession;
+    expect(schema.safeParse(session).success).toBe(true);
+    expect(schema.safeParse({ ...session, avatarUrl: null }).success).toBe(
+      true,
+    );
+    expect(
+      schema.safeParse({
+        ...session,
+        avatarUrl: "https://cdn.discordapp.com/avatars/123/avatar.png",
+      }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({ ...session, avatarUrl: "not-a-url" }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ ...session, accessToken: "must-not-be-exposed" })
+        .success,
+    ).toBe(false);
+  });
+
   it("accepts a trimmed custom school without weakening the school field", () => {
     expect(hackerSchoolSchema.parse("  North Lake Technical Academy  ")).toBe(
       "North Lake Technical Academy",
@@ -144,6 +170,7 @@ describe("Hacker Portal validators", () => {
 
   it("TC-SDK-001 publishes schemas for every participant v1 procedure", () => {
     const keys = [
+      "cancelPrintJob",
       "changeTeam",
       "claimProject",
       "confirmAttendance",
@@ -163,9 +190,12 @@ describe("Hacker Portal validators", () => {
       "getSession",
       "getTeams",
       "inviteProjectMember",
+      "listPrintJobs",
       "removeResume",
+      "removeStagedPrintFile",
       "searchJudgingProjects",
       "submitApplication",
+      "submitPrintJob",
       "updateApplication",
       "updateParticipant",
       "updateProfile",

@@ -20,6 +20,7 @@ export * from "./discord-archive";
 export * from "./platform-config";
 export * from "./hackers";
 export * from "./hacker-portal";
+export * from "./printing";
 export * from "./hackathon-portal-admin";
 export * from "./projects";
 export * from "./judging";

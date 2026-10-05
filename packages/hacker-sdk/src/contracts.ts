@@ -11,6 +11,7 @@ import type {
   hackerApplicationDtoSchema,
   hackerApplicationSubmitSchema,
   hackerApplicationUpdateSchema,
+  hackerCancelPrintJobSchema,
   hackerConfirmAttendanceSchema,
   hackerIssueCheckInPassSchema,
   hackerLeaderboardInputSchema,
@@ -19,14 +20,19 @@ import type {
   hackerProfileFieldsSchema,
   hackerProfileUpdateSchema,
   hackerRemoveResumeSchema,
+  hackerRemoveStagedPrintFileSchema,
+  hackerSubmitPrintJobSchema,
   hackerWithdrawApplicationSchema,
   leaderboardDtoSchema,
   participantMutationResultDtoSchema,
   pointsDtoSchema,
   portalSessionDtoSchema,
+  printJobDtoSchema,
+  printJobsDtoSchema,
   publicHackathonDtoSchema,
   resumeDtoSchema,
   scheduleDtoSchema,
+  stagedPrintFileDtoSchema,
 } from "@forge/validators";
 import {
   hackerPortalV1InputSchemas,
@@ -87,6 +93,16 @@ export type IssueHackerCheckInPassInput = z.input<
 export type HackerLeaderboardDto = z.output<typeof leaderboardDtoSchema>;
 export type HackerResumeDto = z.output<typeof resumeDtoSchema>;
 export type RemoveHackerResumeInput = z.input<typeof hackerRemoveResumeSchema>;
+export type HackerPrintJobDto = z.output<typeof printJobDtoSchema>;
+export type HackerPrintJobsDto = z.output<typeof printJobsDtoSchema>;
+export type HackerStagedPrintFileDto = z.output<
+  typeof stagedPrintFileDtoSchema
+>;
+export type SubmitPrintJobInput = z.input<typeof hackerSubmitPrintJobSchema>;
+export type CancelPrintJobInput = z.input<typeof hackerCancelPrintJobSchema>;
+export type RemoveStagedPrintFileInput = z.input<
+  typeof hackerRemoveStagedPrintFileSchema
+>;
 
 type InputSchemaMap = typeof hackerPortalV1InputSchemas;
 type OutputSchemaMap = typeof hackerPortalV1OutputSchemas;
@@ -116,6 +132,7 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   claimProject: "mutation",
   inviteProjectMember: "mutation",
   searchJudgingProjects: "query",
+  cancelPrintJob: "mutation",
   confirmAttendance: "mutation",
   getApplicationContext: "query",
   getCheckInPass: "mutation",
@@ -131,8 +148,11 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   getSchedule: "query",
   getMapConfiguration: "query",
   getSession: "query",
+  listPrintJobs: "query",
   removeResume: "mutation",
+  removeStagedPrintFile: "mutation",
   submitApplication: "mutation",
+  submitPrintJob: "mutation",
   updateApplication: "mutation",
   updateParticipant: "mutation",
   updateProfile: "mutation",

@@ -83,7 +83,7 @@ async function mutateResumeReference({
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0];
 }) {
   const [hackathon] = await tx
-    .select({ databaseNow: sql<Date>`now()`, startDate: Hackathon.startDate })
+    .select({ databaseNow: sql<Date>`now()`, endDate: Hackathon.endDate })
     .from(Hackathon)
     .where(eq(Hackathon.id, ctx.session.hackathonId))
     .for("update")
@@ -104,7 +104,7 @@ async function mutateResumeReference({
   if (
     !canEditResumeAt({
       now,
-      startDate: hackathon.startDate,
+      endDate: hackathon.endDate,
       status: application.status,
     })
   ) {
@@ -154,16 +154,17 @@ async function mutateResumeReference({
           futureApplications.map((row) => row.attendeeId),
         ),
       );
-    await tx
-      .update(Hacker)
-      .set({ resumeUrl: objectName })
-      .where(
-        inArray(
-          Hacker.id,
-          futureApplications.map((row) => row.hackerId),
-        ),
-      );
   }
+  // Organizer downloads use the legacy hacker record. Keep this event's
+  // résumé current without rewriting its frozen application snapshot.
+  const hackerIds = new Set([
+    application.hackerId,
+    ...futureApplications.map((row) => row.hackerId),
+  ]);
+  await tx
+    .update(Hacker)
+    .set({ resumeUrl: objectName })
+    .where(inArray(Hacker.id, [...hackerIds]));
   return { application, current, profile };
 }
 

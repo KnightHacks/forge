@@ -1,0 +1,146 @@
+.resume {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(255 250 240 / 0.12);
+  font: 400 0.8rem/1.4 var(--font-geist-sans);
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.file h2,
+.file p {
+  margin: 0;
+}
+
+.file h2 {
+  font-size: 0.9rem;
+}
+
+.file p {
+  color: var(--khix-muted);
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.actions a,
+.actions button,
+.mobile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.5rem;
+  border: 0;
+  background: none;
+  color: #fffaf0;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.actions a:hover,
+.actions button:enabled:hover,
+.mobile:hover {
+  color: var(--khix-accent);
+}
+
+.actions a:focus-visible,
+.actions button:focus-visible,
+.mobile:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: 3px;
+}
+
+.mobile {
+  display: none;
+}
+
+.dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  border-color: var(--khix-panel-border);
+  background: #1e142a;
+  color: var(--khix-ink);
+  font-family: var(--font-geist-sans);
+  overflow-wrap: anywhere;
+  border-radius: var(--khix-panel-radius);
+}
+
+.dialog p,
+.hint {
+  color: var(--khix-muted);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 851px) {
+  .resume {
+    margin-top: clamp(1rem, 2cqw, 2rem);
+    padding-top: clamp(1rem, 2cqw, 2rem);
+    font-size: clamp(0.8rem, 1.35cqw, 1rem);
+  }
+
+  .file h2 {
+    font-size: clamp(0.9rem, 1.6cqw, 1.2rem);
+  }
+
+  .file p {
+    font-size: clamp(0.7rem, 1.25cqw, 0.95rem);
+  }
+}
+
+@media (max-width: 850px) {
+  .resume {
+    margin-top: 0;
+    padding-top: 0;
+    border: 0;
+  }
+
+  .desktop {
+    display: none;
+  }
+  .mobile {
+    display: inline-flex;
+    font-size: 0.7rem;
+  }
+
+  .mobile svg:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

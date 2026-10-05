@@ -7,6 +7,7 @@ import {
   canAccessDiscordArchive,
   canAccessHackathonAdmin,
   canAccessHackerAdmin,
+  canAccessPrintingQueue,
   canEditCompanyAdmin,
   canEditHackerAdmin,
   getAdminNavigationAccess,
@@ -40,6 +41,18 @@ describe("dedicated admin access", () => {
     expect(canAccessHackerAdmin(permissions())).toBe(false);
     expect(canAccessHackerAdmin(permissions("IS_OFFICER"))).toBe(true);
     expect(canEditHackerAdmin(permissions("IS_OFFICER"))).toBe(true);
+  });
+
+  it("[TC-NEG-002/003] gates the printing queue on PRINTING_QUEUE or officer", () => {
+    expect(canAccessPrintingQueue(permissions("PRINTING_QUEUE"))).toBe(true);
+    expect(canAccessPrintingQueue(permissions("IS_OFFICER"))).toBe(true);
+    expect(canAccessPrintingQueue(permissions("READ_HACKERS"))).toBe(false);
+    expect(
+      getAdminNavigationAccess(permissions("PRINTING_QUEUE")).printing,
+    ).toBe(true);
+    expect(getAdminNavigationAccess(permissions("EDIT_HACKERS")).printing).toBe(
+      false,
+    );
   });
 
   it("separates company access from member access", () => {

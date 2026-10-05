@@ -6,5 +6,12 @@ import { KhixDashboard } from "../_components/khix-dashboard";
 
 export default function DashboardPage() {
   const session = useHackerSession();
-  return <KhixDashboard sessionUser={{ name: session.data?.displayName }} />;
+  return (
+    <KhixDashboard
+      sessionUser={{
+        name: session.data?.displayName,
+        image: session.data?.avatarUrl,
+      }}
+    />
+  );
 }

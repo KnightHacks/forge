@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { KhixDashboardShell } from "../_components/khix-dashboard";
+
 export const metadata: Metadata = {
   title: {
     default: "Dashboard | Knight Hacks IX",
@@ -9,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <KhixDashboardShell>{children}</KhixDashboardShell>;
 }

@@ -24,6 +24,7 @@ import {
   pointStoreItems,
   pointStoreSettings,
 } from "../utils/point-store/queries";
+import { getProfilePictureDownloadUrlForUser } from "../utils/profile-picture/storage";
 import {
   agreementAcceptanceDto,
   agreementDto,
@@ -38,7 +39,7 @@ import {
 } from "./data";
 import { portalFailure } from "./trpc";
 
-type AuthenticatedPortalContext = HackerPortalContext & {
+export type AuthenticatedPortalContext = HackerPortalContext & {
   client: NonNullable<HackerPortalContext["client"]>;
   session: NonNullable<HackerPortalContext["session"]>;
 };
@@ -68,13 +69,31 @@ export async function getPortalSession(ctx: HackerPortalContext) {
   if (!ctx.session) {
     return { authenticated: false, displayName: null, expiresAt: null };
   }
-  const [user] = await db
-    .select({ name: User.name })
-    .from(User)
-    .where(eq(User.id, ctx.session.userId))
-    .limit(1);
+  const [[user], profilePicture] = await Promise.all([
+    db
+      .select({
+        name: User.name,
+        image: User.image,
+        discordUserId: User.discordUserId,
+      })
+      .from(User)
+      .where(eq(User.id, ctx.session.userId))
+      .limit(1),
+    // Reuse Blade's owner-checked, signed photo URL. An unavailable photo
+    // must not prevent the participant from loading their session.
+    getProfilePictureDownloadUrlForUser(ctx.session.userId).catch(() => ({
+      url: null,
+    })),
+  ]);
   return {
     authenticated: true,
+    avatarUrl:
+      profilePicture.url ??
+      (user?.image
+        ? /^https:\/\//i.test(user.image)
+          ? user.image
+          : `https://cdn.discordapp.com/avatars/${encodeURIComponent(user.discordUserId)}/${encodeURIComponent(user.image)}.${user.image.startsWith("a_") ? "gif" : "png"}`
+        : null),
     displayName: user?.name ?? null,
     expiresAt: null,
   };
@@ -195,7 +214,7 @@ export async function getDashboard(ctx: AuthenticatedPortalContext) {
   };
 }
 
-async function requireApplicationWithStatuses(
+export async function requireApplicationWithStatuses(
   ctx: AuthenticatedPortalContext,
   statuses: readonly string[],
 ) {

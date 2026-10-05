@@ -37,7 +37,6 @@ import { Label } from "@forge/ui/label";
 import { toast } from "@forge/ui/toast";
 
 import styles from "./hacker-judging.module.css";
-import { KhixDashboardShell } from "./khix-dashboard";
 import dashboardStyles from "./khix-dashboard.module.css";
 
 const statusLabels = {
@@ -148,377 +147,371 @@ export function HackerJudging({ token }: { token: string | null }) {
   )
     redirect("/dashboard");
   return (
-    <KhixDashboardShell activeItem="judging">
-      <section className={styles.page}>
-        <header className={styles.header}>
-          <h1>Judging</h1>
-          <p>Know where to go and what to present.</p>
-        </header>
-        {dashboard.error ? (
-          <div className={styles.panel} role="alert">
-            <p>{dashboard.error.message}</p>
-            <Button
-              className={styles.action}
-              onClick={() => void dashboard.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : dashboard.isPending ? (
-          <div className={styles.panel}>Loading your hacker profile…</div>
-        ) : (
-          <>
-            {token && !data?.emergency && (
-              <section className={styles.panel} aria-label="Claim your project">
-                <h2>{claim.data?.title ?? "Claim your project"}</h2>
-                <p>
-                  Select your name to link this project to your hacker profile.
-                </p>
-                {claim.isPending && <p>Loading team members…</p>}
-                {claim.error && <p role="alert">{claim.error.message}</p>}
-                <div className={styles.members}>
-                  {claim.data?.members.map((member) => (
-                    <button
-                      type="button"
-                      key={member.id}
-                      disabled={!member.available || selectMember.isPending}
-                      onClick={() => void claimMember(member.id)}
-                    >
-                      <Users size={18} />
-                      <span>{member.name}</span>
-                      <small>
-                        {member.claimed
-                          ? "Claimed"
-                          : member.available
-                            ? "This is me →"
-                            : "Invited teammate"}
-                      </small>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-            {judging.isPending && (
-              <div className={styles.panel}>
-                Loading your judging itinerary…
+    <section className={`${styles.page} ${dashboardStyles.pageReveal}`}>
+      <header className={styles.header}>
+        <h1>Judging</h1>
+        <p>Know where to go and what to present.</p>
+      </header>
+      {dashboard.error ? (
+        <div className={styles.panel} role="alert">
+          <p>{dashboard.error.message}</p>
+          <Button
+            className={styles.action}
+            onClick={() => void dashboard.refetch()}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : dashboard.isPending ? (
+        <div className={styles.panel}>Loading your hacker profile…</div>
+      ) : (
+        <>
+          {token && !data?.emergency && (
+            <section className={styles.panel} aria-label="Claim your project">
+              <h2>{claim.data?.title ?? "Claim your project"}</h2>
+              <p>
+                Select your name to link this project to your hacker profile.
+              </p>
+              {claim.isPending && <p>Loading team members…</p>}
+              {claim.error && <p role="alert">{claim.error.message}</p>}
+              <div className={styles.members}>
+                {claim.data?.members.map((member) => (
+                  <button
+                    type="button"
+                    key={member.id}
+                    disabled={!member.available || selectMember.isPending}
+                    onClick={() => void claimMember(member.id)}
+                  >
+                    <Users size={18} />
+                    <span>{member.name}</span>
+                    <small>
+                      {member.claimed
+                        ? "Claimed"
+                        : member.available
+                          ? "This is me →"
+                          : "Invited teammate"}
+                    </small>
+                  </button>
+                ))}
               </div>
-            )}
-            {(access.error ?? judging.error) && (
-              <div className={styles.panel} role="alert">
-                <p>{(access.error ?? judging.error)?.message}</p>
-                <Button
-                  className={styles.action}
-                  onClick={() => {
-                    void access.refetch();
-                    void judging.refetch();
-                  }}
-                >
-                  Retry
-                </Button>
-              </div>
-            )}
-            {data && (
-              <>
-                {!data.published && (
-                  <section className={styles.panel}>
-                    <Clock />
-                    <h2>Your schedule is being prepared</h2>
-                    <p>
-                      {data.project
-                        ? "Your project is claimed. Times and rooms will appear here when organizers open the schedule."
-                        : "Use the link sent to your Devpost email to claim your project. Organizers will publish times and rooms here."}
-                    </p>
-                  </section>
-                )}
-                {data.published && data.emergency && (
-                  <section className={styles.panel}>
-                    <Label
-                      htmlFor="project-search"
-                      className={styles.searchLabel}
-                    >
-                      Find your project
-                    </Label>
-                    <div className={styles.search}>
-                      <Search size={18} />
-                      <Input
-                        id="project-search"
-                        value={search}
-                        onChange={(event) => {
-                          setSearch(event.target.value);
-                          setProjectId(undefined);
-                        }}
-                        placeholder="Search project names"
-                      />
-                    </div>
-                    <Label htmlFor="project-select">Project</Label>
-                    <select
-                      id="project-select"
-                      className={styles.select}
-                      value={projectId ?? ""}
-                      onChange={(event) =>
-                        setProjectId(event.target.value || undefined)
-                      }
-                    >
-                      <option value="">Select your project</option>
-                      {searchResults.data?.map((project) => (
-                        <option key={project.id} value={project.id}>
-                          {project.title}
-                        </option>
-                      ))}
-                    </select>
-                    {searchResults.error && (
-                      <p role="alert">{searchResults.error.message}</p>
-                    )}
-                    <p className={styles.muted}>
-                      Choose your team's project to see its itinerary. Results
-                      are unavailable in this mode.
-                    </p>
-                  </section>
-                )}
-                {data.published &&
-                  !data.emergency &&
-                  !data.project &&
-                  !token && (
-                    <section className={styles.panel}>
-                      <Users />
-                      <h2>Claim your project first</h2>
-                      <p>
-                        Open the claim link sent to your Devpost email. If it
-                        hasn't arrived, ask an organizer for your link.
-                      </p>
-                    </section>
+            </section>
+          )}
+          {judging.isPending && (
+            <div className={styles.panel}>Loading your judging itinerary…</div>
+          )}
+          {(access.error ?? judging.error) && (
+            <div className={styles.panel} role="alert">
+              <p>{(access.error ?? judging.error)?.message}</p>
+              <Button
+                className={styles.action}
+                onClick={() => {
+                  void access.refetch();
+                  void judging.refetch();
+                }}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+          {data && (
+            <>
+              {!data.published && (
+                <section className={styles.panel}>
+                  <Clock />
+                  <h2>Your schedule is being prepared</h2>
+                  <p>
+                    {data.project
+                      ? "Your project is claimed. Times and rooms will appear here when organizers open the schedule."
+                      : "Use the link sent to your Devpost email to claim your project. Organizers will publish times and rooms here."}
+                  </p>
+                </section>
+              )}
+              {data.published && data.emergency && (
+                <section className={styles.panel}>
+                  <Label
+                    htmlFor="project-search"
+                    className={styles.searchLabel}
+                  >
+                    Find your project
+                  </Label>
+                  <div className={styles.search}>
+                    <Search size={18} />
+                    <Input
+                      className={styles.input}
+                      id="project-search"
+                      value={search}
+                      onChange={(event) => {
+                        setSearch(event.target.value);
+                        setProjectId(undefined);
+                      }}
+                      placeholder="Search project names"
+                    />
+                  </div>
+                  <Label htmlFor="project-select">Project</Label>
+                  <select
+                    id="project-select"
+                    className={styles.select}
+                    value={projectId ?? ""}
+                    onChange={(event) =>
+                      setProjectId(event.target.value || undefined)
+                    }
+                  >
+                    <option value="">Select your project</option>
+                    {searchResults.data?.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                  {searchResults.error && (
+                    <p role="alert">{searchResults.error.message}</p>
                   )}
-                {data.project && (
-                  <>
-                    <section className={styles.team}>
-                      <div>
-                        <h2>{data.project.title}</h2>
-                        {!data.emergency && (
-                          <p>
-                            {data.project.members
-                              .map((member) => member.name)
-                              .join(" · ")}
-                          </p>
-                        )}
-                      </div>
+                  <p className={styles.muted}>
+                    Choose your team's project to see its itinerary. Results are
+                    unavailable in this mode.
+                  </p>
+                </section>
+              )}
+              {data.published && !data.emergency && !data.project && !token && (
+                <section className={styles.panel}>
+                  <Users />
+                  <h2>Claim your project first</h2>
+                  <p>
+                    Open the claim link sent to your Devpost email. If it hasn't
+                    arrived, ask an organizer for your link.
+                  </p>
+                </section>
+              )}
+              {data.project && (
+                <>
+                  <section className={styles.team}>
+                    <div>
+                      <h2>{data.project.title}</h2>
                       {!data.emergency && (
-                        <Button
-                          className={styles.action}
-                          variant="outline"
-                          onClick={() => setInviteOpen(true)}
-                          disabled={!data.project.canInvite}
-                        >
-                          <UserPlus className="mr-2 size-4" />
-                          {data.project.canInvite
-                            ? "Invite hacker"
-                            : "Team full · 4/4"}
-                        </Button>
+                        <p>
+                          {data.project.members
+                            .map((member) => member.name)
+                            .join(" · ")}
+                        </p>
                       )}
-                    </section>
-                    {!!missed.length && (
-                      <div className={styles.warning} role="alert">
-                        <AlertTriangle size={20} />
-                        <p>{missedMessage}</p>
-                      </div>
+                    </div>
+                    {!data.emergency && (
+                      <Button
+                        className={styles.action}
+                        variant="outline"
+                        onClick={() => setInviteOpen(true)}
+                        disabled={!data.project.canInvite}
+                      >
+                        <UserPlus className="mr-2 size-4" />
+                        {data.project.canInvite
+                          ? "Invite hacker"
+                          : "Team full · 4/4"}
+                      </Button>
                     )}
-                    {data.published && (
-                      <>
-                        <div className={styles.itinerary}>
-                          {data.appointments.map((appointment) => (
-                            <article
-                              key={appointment.id}
-                              className={styles.appointment}
-                              data-status={appointment.status}
-                            >
-                              <div className={styles.time}>
-                                <Clock size={16} />
-                                <strong>
+                  </section>
+                  {!!missed.length && (
+                    <div className={styles.warning} role="alert">
+                      <AlertTriangle size={20} />
+                      <p>{missedMessage}</p>
+                    </div>
+                  )}
+                  {data.published && (
+                    <>
+                      <div className={styles.itinerary}>
+                        {data.appointments.map((appointment) => (
+                          <article
+                            key={appointment.id}
+                            className={styles.appointment}
+                            data-status={appointment.status}
+                          >
+                            <div className={styles.time}>
+                              <Clock size={18} aria-hidden="true" />
+                              <div className={styles.timeRange}>
+                                <time dateTime={appointment.startsAt}>
                                   {formatTime(appointment.startsAt)}
-                                </strong>
-                                <span>to {formatTime(appointment.endsAt)}</span>
+                                </time>
+                                <span className={styles.timeSeparator}>to</span>
+                                <time dateTime={appointment.endsAt}>
+                                  {formatTime(appointment.endsAt)}
+                                </time>
                               </div>
-                              <div className={styles.destination}>
-                                <div className={styles.status}>
-                                  {appointment.status === "complete" && (
-                                    <Check size={14} />
-                                  )}{" "}
-                                  {statusLabels[appointment.status]}
+                            </div>
+                            <div className={styles.destination}>
+                              <div className={styles.status}>
+                                {appointment.status === "complete" && (
+                                  <Check size={14} />
+                                )}{" "}
+                                {statusLabels[appointment.status]}
+                              </div>
+                              <h3>{appointment.challenge}</h3>
+                              <p className={styles.room}>
+                                <MapPin size={18} />
+                                {appointment.room}
+                              </p>
+                              {!!appointment.children.length && (
+                                <div className={styles.challenges}>
+                                  <p>Prepare for</p>
+                                  <ul>
+                                    {appointment.children.map((child) => (
+                                      <li key={child}>{child}</li>
+                                    ))}
+                                  </ul>
                                 </div>
-                                <h3>{appointment.challenge}</h3>
-                                <p className={styles.room}>
-                                  <MapPin size={18} />
-                                  {appointment.room}
-                                </p>
-                                {!!appointment.children.length && (
-                                  <div className={styles.challenges}>
-                                    <p>Prepare for</p>
-                                    <ul>
-                                      {appointment.children.map((child) => (
-                                        <li key={child}>{child}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                {appointment.status === "complete" &&
-                                  !data.emergency && (
-                                    <JudgingFeedback
-                                      feedback={data.feedback.filter(
-                                        (entry) =>
-                                          entry.challengeId ===
-                                          appointment.challengeId,
-                                      )}
-                                      challenge={appointment.challenge}
-                                    />
-                                  )}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                        {!data.appointments.length && (
-                          <p className={styles.muted}>
-                            No scheduled appointments are available for this
-                            project yet.
-                          </p>
-                        )}
-                        <div className={styles.itinerary}>
-                          {data.unscheduled.map((entry) => (
-                            <article
-                              className={styles.appointment}
-                              key={entry.challengeId}
-                              data-status={entry.judged ? "complete" : "future"}
-                            >
-                              <div className={styles.time}>
-                                <Clock size={16} />
-                                <strong>
-                                  When you have time - unscheduled
-                                </strong>
-                              </div>
-                              <div className={styles.destination}>
-                                {entry.judged && (
-                                  <div className={styles.status}>
-                                    <Check size={14} /> Judged
-                                  </div>
-                                )}
-                                <h3>{entry.challenge}</h3>
-                                <p className={styles.room}>
-                                  <MapPin size={18} />
-                                  {entry.rooms.join(" / ") ||
-                                    "Ask an organizer for the room"}
-                                </p>
-                                {!!entry.children.length && (
-                                  <div className={styles.challenges}>
-                                    <p>Prepare for</p>
-                                    <ul>
-                                      {entry.children.map((child) => (
-                                        <li key={child}>{child}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                                {entry.judged && !data.emergency && (
+                              )}
+                              {appointment.status === "complete" &&
+                                !data.emergency && (
                                   <JudgingFeedback
                                     feedback={data.feedback.filter(
-                                      (evaluation) =>
-                                        evaluation.challengeId ===
-                                        entry.challengeId,
+                                      (entry) =>
+                                        entry.challengeId ===
+                                        appointment.challengeId,
                                     )}
-                                    challenge={entry.challenge}
+                                    challenge={appointment.challenge}
                                   />
                                 )}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      {!data.appointments.length && (
                         <p className={styles.muted}>
-                          Times shown in {data.timezone}. Updates every two
-                          minutes.
+                          No scheduled appointments are available for this
+                          project yet.
                         </p>
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </>
-        )}
-        <Dialog
-          open={!!warningKey && !acknowledged.includes(warningKey)}
-          onOpenChange={(open) => {
-            if (!open) setAcknowledged((previous) => [...previous, warningKey]);
-          }}
-        >
-          <DialogContent
-            className={`${dashboardStyles.dialog} ${styles.dialog}`}
-          >
-            <DialogHeader>
-              <DialogTitle className={styles.dialogTitle}>
-                Missed judging appointment
-              </DialogTitle>
-              <DialogDescription className={styles.dialogCopy}>
-                {missedMessage}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="gap-2 sm:space-x-0">
-              <Button
-                className={styles.action}
-                onClick={() =>
-                  setAcknowledged((previous) => [...previous, warningKey])
-                }
-              >
-                I understand
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Dialog
-          open={inviteOpen}
-          onOpenChange={(open) => {
-            if (!invite.isPending) setInviteOpen(open);
-          }}
-        >
-          <DialogContent
-            className={`${dashboardStyles.dialog} ${styles.dialog}`}
-          >
-            <DialogHeader>
-              <DialogTitle className={styles.dialogTitle}>
-                Invite a teammate
-              </DialogTitle>
-              <DialogDescription className={styles.dialogCopy}>
-                Use the email on their hacker profile. They must be checked in
-                to this event. The invitation reserves one of your team's four
-                places.
-              </DialogDescription>
-            </DialogHeader>
-            <Label htmlFor="invite-email">Hacker email</Label>
-            <Input
-              className={styles.input}
-              id="invite-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="teammate@example.com"
-            />
-            <DialogFooter className="gap-2 sm:space-x-0">
-              <Button
-                className={styles.action}
-                variant="outline"
-                disabled={invite.isPending}
-                onClick={() => setInviteOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className={styles.action}
-                disabled={!email || invite.isPending}
-                onClick={() => void sendInvite()}
-              >
-                {invite.isPending ? "Sending…" : "Send invitation"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </section>
-    </KhixDashboardShell>
+                      )}
+                      <div className={styles.itinerary}>
+                        {data.unscheduled.map((entry) => (
+                          <article
+                            className={styles.appointment}
+                            key={entry.challengeId}
+                            data-status={entry.judged ? "complete" : "future"}
+                          >
+                            <div className={styles.time}>
+                              <Clock size={16} />
+                              <strong>Unscheduled</strong>
+                              <span>Visit when ready</span>
+                            </div>
+                            <div className={styles.destination}>
+                              {entry.judged && (
+                                <div className={styles.status}>
+                                  <Check size={14} /> Judged
+                                </div>
+                              )}
+                              <h3>{entry.challenge}</h3>
+                              <p className={styles.room}>
+                                <MapPin size={18} />
+                                {entry.rooms.join(" / ") ||
+                                  "Ask an organizer for the room"}
+                              </p>
+                              {!!entry.children.length && (
+                                <div className={styles.challenges}>
+                                  <p>Prepare for</p>
+                                  <ul>
+                                    {entry.children.map((child) => (
+                                      <li key={child}>{child}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {entry.judged && !data.emergency && (
+                                <JudgingFeedback
+                                  feedback={data.feedback.filter(
+                                    (evaluation) =>
+                                      evaluation.challengeId ===
+                                      entry.challengeId,
+                                  )}
+                                  challenge={entry.challenge}
+                                />
+                              )}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      <p className={styles.muted}>
+                        Times shown in {data.timezone}. Updates every two
+                        minutes.
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </>
+      )}
+      <Dialog
+        open={!!warningKey && !acknowledged.includes(warningKey)}
+        onOpenChange={(open) => {
+          if (!open) setAcknowledged((previous) => [...previous, warningKey]);
+        }}
+      >
+        <DialogContent className={`${dashboardStyles.dialog} ${styles.dialog}`}>
+          <DialogHeader>
+            <DialogTitle className={styles.dialogTitle}>
+              Missed judging appointment
+            </DialogTitle>
+            <DialogDescription className={styles.dialogCopy}>
+              {missedMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button
+              className={styles.action}
+              onClick={() =>
+                setAcknowledged((previous) => [...previous, warningKey])
+              }
+            >
+              I understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={inviteOpen}
+        onOpenChange={(open) => {
+          if (!invite.isPending) setInviteOpen(open);
+        }}
+      >
+        <DialogContent className={`${dashboardStyles.dialog} ${styles.dialog}`}>
+          <DialogHeader>
+            <DialogTitle className={styles.dialogTitle}>
+              Invite a teammate
+            </DialogTitle>
+            <DialogDescription className={styles.dialogCopy}>
+              Use the email on their hacker profile. They must be checked in to
+              this event. The invitation reserves one of your team's four
+              places.
+            </DialogDescription>
+          </DialogHeader>
+          <Label htmlFor="invite-email">Hacker email</Label>
+          <Input
+            className={styles.input}
+            id="invite-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="teammate@example.com"
+          />
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button
+              className={styles.action}
+              variant="outline"
+              disabled={invite.isPending}
+              onClick={() => setInviteOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className={styles.action}
+              disabled={!email || invite.isPending}
+              onClick={() => void sendInvite()}
+            >
+              {invite.isPending ? "Sending…" : "Send invitation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
 

@@ -18,11 +18,11 @@ export function isStaleResumeUploadCommand(startedAt: Date, now: Date) {
 
 export function canEditResumeAt(input: {
   now: Date;
-  startDate: Date;
+  endDate: Date;
   status: string | null;
 }) {
   return (
-    input.now < input.startDate &&
+    input.now < input.endDate &&
     input.status !== null &&
     RESUME_EDITABLE_STATUSES.has(input.status)
   );

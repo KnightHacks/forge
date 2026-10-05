@@ -129,8 +129,8 @@ describe.runIf(canRunDatabaseTests())("hackathon map configuration", () => {
     await disposable.client.query(
       "DROP TABLE knight_hacks_hackathon_map_configuration",
     );
-    const migration = (await readMigrations()).find((file) =>
-      file.name.startsWith("0058_"),
+    const migration = (await readMigrations()).find(
+      (file) => file.name === "0059_needy_menace.sql",
     );
     if (!migration) throw new Error("Map migration missing");
     await applyMigration(disposable.client, migration);

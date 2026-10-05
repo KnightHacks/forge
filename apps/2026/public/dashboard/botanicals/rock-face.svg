@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 622 679">
+  <g transform="translate(35.8911 36.0702)">
+    <linearGradient
+      id="SVGID_1_"
+      gradientUnits="userSpaceOnUse"
+      x1="0.5"
+      y1="303.3835"
+      x2="549.6985"
+      y2="303.3835"
+    >
+      <stop offset="0" style="stop-color: #032744" />
+      <stop offset="1" style="stop-color: #000000" />
+    </linearGradient>
+    <polygon
+      fill="url(#SVGID_1_)"
+      points="274.8302,20.6714 294.2151,130.7774 298.092,247.8621 359.6497,265.3941 429.0543,323.2313   543.5719,477.0781 549.6985,595.9427 317.1805,606.2669 33.4482,524.5046 0.5,363.2017 33.5632,197.1498 183.8248,0.5 "
+    />
+  </g>
+</svg>

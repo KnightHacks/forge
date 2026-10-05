@@ -78,6 +78,14 @@ describe("hackathon admin navigation", () => {
     ).toBe(false);
   });
 
+  it("highlights the printing queue on its own route only", () => {
+    expect(isAdminNavigationActive("printing", "/admin/printing")).toBe(true);
+    expect(
+      isAdminNavigationActive("printing", "/admin/printing?status=received"),
+    ).toBe(true);
+    expect(isAdminNavigationActive("printing", "/admin/hackers")).toBe(false);
+  });
+
   it("highlights the judge workspace and merged project command center", () => {
     expect(isAdminNavigationActive("judgeProjects", "/judge/projects")).toBe(
       true,

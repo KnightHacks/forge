@@ -20,7 +20,6 @@ import type { HackerMapConfigurationDto as MapConfiguration } from "@forge/hacke
 import { useHackerMapConfiguration } from "@forge/hacker-sdk/react";
 import { Button } from "@forge/ui/button";
 
-import type { KhixSessionUser } from "./khix-dashboard";
 import type { IndoorBuildingId } from "~/lib/venue-floor-plans";
 import type {
   CampusBuildingId,
@@ -47,7 +46,6 @@ import {
   projectCampusCoordinates,
 } from "~/lib/venue-map";
 import { getRoomPresentation } from "~/lib/venue-room-access";
-import { KhixDashboardShell } from "./khix-dashboard";
 import styles from "./khix-venue-map.module.css";
 
 const CAMPUS_MAP_HEIGHT = 700;
@@ -226,11 +224,7 @@ const INDOOR_BUILDINGS = CAMPUS_BUILDINGS.filter(
   } => isIndoorBuildingId(building.id),
 );
 
-export function KhixVenueMap({
-  sessionUser,
-}: {
-  sessionUser?: KhixSessionUser;
-}) {
+export function KhixVenueMap() {
   const { dashboard, dashboardQuery, schedule, scheduleQuery } =
     useHackerDashboardFlow({ schedule: true });
   const mapConfigurationQuery = useHackerMapConfiguration();
@@ -838,29 +832,29 @@ export function KhixVenueMap({
 
   if (dashboardQuery.isPending) {
     return (
-      <KhixDashboardShell activeItem="map" sessionUser={sessionUser}>
+      <>
         <h1 className={styles.srOnly}>Knight Hacks IX venue map</h1>
         <MapLoadingState />
-      </KhixDashboardShell>
+      </>
     );
   }
 
   if (dashboardQuery.isError || !dashboard) {
     return (
-      <KhixDashboardShell activeItem="map" sessionUser={sessionUser}>
+      <>
         <h1 className={styles.srOnly}>Knight Hacks IX venue map</h1>
         <MapMessageState
           action={() => void dashboardQuery.refetch()}
           copy="Refresh the dashboard connection and try once more."
           title="The venue map could not load."
         />
-      </KhixDashboardShell>
+      </>
     );
   }
 
   if (!mapConfigurationQuery.data) {
     return (
-      <KhixDashboardShell activeItem="map" sessionUser={sessionUser}>
+      <>
         <h1 className={styles.srOnly}>Knight Hacks IX venue map</h1>
         {mapConfigurationQuery.isError ? (
           <div role="alert" className={styles.experience}>
@@ -874,12 +868,12 @@ export function KhixVenueMap({
         ) : (
           <MapLoadingState />
         )}
-      </KhixDashboardShell>
+      </>
     );
   }
 
   return (
-    <KhixDashboardShell activeItem="map" sessionUser={sessionUser}>
+    <>
       <h1 className={styles.srOnly}>Knight Hacks IX venue map</h1>
       <section className={styles.experience} aria-label="Knight Hacks IX map">
         <div className={styles.mapFrame}>
@@ -1365,7 +1359,7 @@ export function KhixVenueMap({
           ) : null}
         </div>
       </section>
-    </KhixDashboardShell>
+    </>
   );
 }
 

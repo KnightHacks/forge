@@ -92,3 +92,13 @@ Verified HEC floor plans and remaining bathroom metadata.
 - Reconciled branch validation passed: repository format, lint (warnings only), typecheck, and React analysis (29 files, zero failures); all 2,482 affected tests (API 1,017, Blade 885, KHIX 57, validators 327, SDK 37, DB 159); Blade/KHIX builds with dependencies (10 tasks). Fresh/upgrade map migration tests and canonical lineage passed. Main migration artifacts 0055–0057 remain byte-for-byte unchanged.
 
 - Published draft [#594](https://github.com/KnightHacks/forge/pull/594) from `blade/khix-map-room-access-pr`, assigned to `myr124` with Blade, Hack Sites, API, Database, Feature, and Major labels. GitHub reports it mergeable; CI is pending. Primary local checkout remains on `blade/khix-map-room-access`, preserving the running test instance.
+
+### October 5 alignment with the new dashboard
+
+- Checked out the existing PR branch `blade/khix-map-room-access-pr` and merged main `f273c21e`, preserving the PR's history. This update stays local so the owner can continue coding before pushing to PR #594.
+- Kept main's persistent dashboard shell and added Map to its route/navigation selection. Removed the map's duplicate shell, retained its page metadata, and passed the loading fallback through the PR's auth boundary split.
+- Map uses the shared page gutters, top spacing, typography, lilac interaction accent, and plum overlay surfaces. Room access/activity colors retain their distinct meanings. The Hacker's Guide remains the only page with no padding.
+- Preserved the PR's keyboard focus trap and mobile drawer behavior. Confirmed hackers retain schedule access; Merch, Judging, and 3D Printing retain their check-in gates.
+- Preserved main's production migration `0058_fresh_zombie` and its snapshot byte-for-byte. Regenerated the unpublished map migration as `0059_needy_menace`, with linear metadata and updated lineage/upgrade tests. No production or existing development database was migrated.
+- Validation: repository format, lint, typecheck, and React analysis passed (40 files, zero React failures). Fresh PostgreSQL 16 migration and repeat application passed; regeneration produced no schema changes. All 2,825 tests (29 tasks) and all 21 production build tasks passed. Workspace lint passed with the existing missing `apps/khix/package.json` warning.
+- Browser verification is blocked: the computer-use browser URL policy rejected access to the existing localhost preview tab. No new screenshots are claimed. At the owner's subsequent request, the sample-data preview was restored on port 3007, backed by the local Next.js server on 3008. Hosted Blade does not yet expose this PR's map method; the temporary preview fixtures are outside the repository.

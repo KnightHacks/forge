@@ -1,0 +1,37 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+
+.logo {
+  width: clamp(10rem, 22vw, 18rem);
+  max-width: 65vw;
+  height: auto;
+}
+
+.revealing {
+  pointer-events: none;
+  animation: portalReveal 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms forwards;
+}
+
+@keyframes portalReveal {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealing {
+    display: none;
+    animation: none;
+  }
+}
