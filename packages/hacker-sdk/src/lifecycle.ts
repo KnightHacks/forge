@@ -38,6 +38,44 @@ function toDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
+/** Map access opens at midnight on the event's first local calendar day. */
+export function getHackerMapAccess({
+  now = new Date(),
+  startsAt,
+  status,
+  timeZone,
+}: {
+  now?: Date;
+  startsAt: Date | string;
+  status: HackerApplicationStatus | null;
+  timeZone: string;
+}): "available" | "locked-date" | "locked-status" {
+  if (status !== "confirmed" && status !== "checkedin") {
+    return "locked-status";
+  }
+
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone,
+      year: "numeric",
+    });
+    const dateKey = (date: Date) => {
+      const parts = Object.fromEntries(
+        formatter.formatToParts(date).map(({ type, value }) => [type, value]),
+      );
+      return `${parts.year}-${parts.month}-${parts.day}`;
+    };
+    return dateKey(now) >= dateKey(toDate(startsAt))
+      ? "available"
+      : "locked-date";
+  } catch {
+    // Missing/invalid event timing must never unlock the map.
+    return "locked-date";
+  }
+}
+
 export function getHackerLifecycleState(
   input: HackerLifecycleInput,
 ): HackerLifecycleState {

@@ -32,6 +32,21 @@ describe("KHIX venue location parsing", () => {
     ["ENG1 224", { buildingId: "eng1", floor: 2, room: "224" }],
     ["Engineering I, Room 101", { buildingId: "eng1", floor: 1, room: "101" }],
     ["BA1 239", { buildingId: "ba1", floor: 2, room: "239" }],
+    ["BA1 0126", { buildingId: "ba1", floor: 1, room: "126" }],
+    ["Engineering II 0302", { buildingId: "ucf-91", floor: 3, room: "302" }],
+    ["ENG2 0205", { buildingId: "ucf-91", floor: 2, room: "205" }],
+    ["HEC 0111", { buildingId: "hec", floor: 1, room: "111" }],
+    [
+      "Student Union 218ABCD / Key West",
+      { buildingId: "student-union", floor: 2, room: "218ABCD" },
+    ],
+    ["SU 0316ABCD", { buildingId: "student-union", floor: 3, room: "316ABCD" }],
+    [
+      "Student Union Cape Florida Ballroom",
+      { buildingId: "student-union", floor: 3, room: "316ABCD" },
+    ],
+    ["Garden Key", { buildingId: "student-union", floor: 2, room: "221" }],
+    ["Student Union", { buildingId: "student-union", floor: null, room: null }],
     [
       "Business Administration II 101A",
       { buildingId: "ba2", floor: 1, room: "101A" },
@@ -40,7 +55,7 @@ describe("KHIX venue location parsing", () => {
     expect(parseVenueLocation(location)).toEqual(expected);
   });
 
-  it.each(["", "Location TBA", "Student Union", "Online"])(
+  it.each(["", "Location TBA", "Online", "218ABCD"])(
     "does not fabricate a venue location for %s",
     (location) => {
       expect(parseVenueLocation(location)).toBeNull();
@@ -81,7 +96,7 @@ describe("KHIX map event metadata", () => {
     );
     expect(
       plotScheduleEvents(
-        [scheduled, event({ id: "other", location: "Student Union" })],
+        [scheduled, event({ id: "other", location: "Online" })],
         new Date("2026-10-10T14:30:00-04:00"),
       ),
     ).toHaveLength(1);

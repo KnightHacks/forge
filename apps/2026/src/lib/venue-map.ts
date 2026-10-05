@@ -1,7 +1,11 @@
+import type { BuildingId } from "@forge/consts";
+import { VENUE_MAP } from "@forge/consts";
+
 import type { PortalScheduleEvent } from "./event-schedule";
 import { UCF_CAMPUS_BUILDINGS } from "./venue-campus.generated";
+import { KHIX_EVENT_ROOMS, resolveRoomNumber } from "./venue-room-directory";
 
-export type VenueBuildingId = "ba1" | "ba2" | "eng1" | "hec";
+export type VenueBuildingId = BuildingId;
 export type CampusBuildingId = string;
 export type MapEventCategory = "event" | "food" | "help";
 export type MapEventState = "ended" | "live" | "upcoming";
@@ -38,13 +42,21 @@ export const CAMPUS_BUILDINGS: CampusBuilding[] = UCF_CAMPUS_BUILDINGS;
 
 export const VENUE_BUILDINGS = CAMPUS_BUILDINGS.filter(
   (building): building is CampusBuilding & { id: VenueBuildingId } =>
-    building.kind === "venue",
+    VENUE_MAP.BUILDINGS.some((venue) => venue.id === building.id),
 );
 
 const locationPatterns: {
   buildingId: VenueBuildingId;
   pattern: RegExp;
 }[] = [
+  {
+    buildingId: "student-union",
+    pattern: /\b(?:STUDENT\s+UNION|SU)\b/i,
+  },
+  {
+    buildingId: "ucf-91",
+    pattern: /\b(?:ENG(?:INEERING)?\s*2|ENGINEERING\s+II)\b/i,
+  },
   {
     buildingId: "hec",
     pattern:
@@ -64,7 +76,7 @@ const locationPatterns: {
   },
 ];
 
-const roomPattern = /(?:\bROOM\s*|\bRM\s*|#\s*)?\b([1-4]\d{2}[A-Z]?)\b/i;
+const roomPattern = /(?:\bROOM\s*|\bRM\s*|#\s*)?\b0*([1-4]\d{2}[A-Z]{0,4})\b/i;
 
 export function parseVenueLocation(
   location: string,
@@ -75,13 +87,32 @@ export function parseVenueLocation(
   const building = locationPatterns.find(({ pattern }) =>
     pattern.test(normalized),
   );
-  if (!building) return null;
+  const namedUnionRoom = resolveRoomNumber("student-union", normalized);
+  const unionRoomByName =
+    !/^\d/.test(normalized) &&
+    KHIX_EVENT_ROOMS.some(
+      (entry) =>
+        entry.buildingId === "student-union" &&
+        entry.roomNumber === namedUnionRoom,
+    );
+  const buildingId =
+    building?.buildingId ?? (unionRoomByName ? "student-union" : null);
+  if (!buildingId) return null;
 
-  const room = roomPattern.exec(normalized)?.[1]?.toUpperCase() ?? null;
+  const number = roomPattern.exec(normalized)?.[1];
+  const namedRoom = resolveRoomNumber(
+    buildingId,
+    building ? normalized.replace(building.pattern, "").trim() : normalized,
+  );
+  const room = number
+    ? resolveRoomNumber(buildingId, number)
+    : /^[1-4]\d{2}[A-Z]*$/.test(namedRoom)
+      ? namedRoom
+      : null;
   const floor = room ? Number(room.charAt(0)) : null;
 
   return {
-    buildingId: building.buildingId,
+    buildingId,
     floor: Number.isFinite(floor) ? floor : null,
     room,
   };

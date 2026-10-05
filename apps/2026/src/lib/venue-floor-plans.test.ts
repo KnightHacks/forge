@@ -1,10 +1,13 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  findVenueRoom,
   getVenueFloorPlan,
   getVenueFloors,
   INDOOR_BUILDING_IDS,
 } from "./venue-floor-plans";
+import { KHIX_EVENT_ROOMS } from "./venue-room-directory";
 
 describe("KHIX indoor floor plans", () => {
   it("places ENG2 check-in in the lower atrium between entrances, away from stairs", () => {
@@ -26,8 +29,9 @@ describe("KHIX indoor floor plans", () => {
     ["ba1", [1, 2, 3, 4]],
     ["ba2", [1, 2, 3]],
     ["eng1", [1, 2, 3, 4]],
-    ["ucf-91", [1, 2]],
+    ["ucf-91", [1, 2, 3]],
     ["student-union", [1, 2, 3]],
+    ["hec", [1]],
   ] as const)("provides every mapped floor for %s", (buildingId, floors) => {
     expect(getVenueFloors(buildingId)).toEqual(floors);
   });
@@ -84,6 +88,7 @@ describe("KHIX indoor floor plans", () => {
       "116A",
       "116B",
       "116C",
+      "116D",
       "116E",
       "116F",
       "117A",
@@ -91,6 +96,9 @@ describe("KHIX indoor floor plans", () => {
       "117C",
       "117D",
       "190",
+      "191",
+      "192",
+      "193",
       "194",
     ];
 
@@ -101,119 +109,110 @@ describe("KHIX indoor floor plans", () => {
     ).toBe(false);
   });
 
-  it("renders the Engineering II north labs as one connected room block", () => {
-    const northLabs = ["180", "181", "182", "183"].map((roomId) =>
-      getVenueFloorPlan("ucf-91", 1)?.rooms.find((room) => room.id === roomId),
+  it("keeps the rebuilt Engineering north labs adjacent and individually searchable", () => {
+    const labs = ["180", "181", "182", "183"].map(
+      (id) => findVenueRoom("ucf-91", id)?.room,
     );
-
-    expect(northLabs.every(Boolean)).toBe(true);
-    expect(northLabs.map((room) => room?.path)).toEqual([
-      "M255.1 50.0L423.5 50.0L423.5 156.0L255.1 156.0Z",
-      "M423.5 50.0L535.0 50.0L535.0 156.0L423.5 156.0Z",
-      "M535.0 50.0L646.4 50.0L646.4 156.0L535.0 156.0Z",
-      "M646.4 50.0L820.3 50.0L820.3 156.0L646.4 156.0Z",
-    ]);
+    expect(labs.every(Boolean)).toBe(true);
+    expect(new Set(labs.map((room) => room?.y)).size).toBe(1);
+    for (let i = 1; i < labs.length; i++) {
+      expect(labs[i]?.x).toBeGreaterThan(labs[i - 1]?.x ?? Infinity);
+    }
+    const westSuite = ["108", "107", "106", "104"].map(
+      (id) => findVenueRoom("ucf-91", id)?.room,
+    );
+    expect(westSuite.every(Boolean)).toBe(true);
+    expect(new Set(westSuite.map((room) => room?.path)).size).toBe(4);
+    const first = findVenueRoom("ucf-91", "105")?.room;
+    const second = findVenueRoom("ucf-91", "103")?.room;
+    expect(first?.y).toBeLessThan(second?.y ?? -Infinity);
   });
 
-  it("uses connected room edges for the Engineering II west service suite", () => {
-    const floor = getVenueFloorPlan("ucf-91", 1);
-    const roomPaths = new Map(
-      floor?.rooms.map((room) => [room.id, room.path] as const),
-    );
-
-    expect(
-      floor?.walkableAreas?.some((area) => area.id === "west-hall-wall"),
-    ).toBe(false);
-    expect(
-      ["108", "107", "106", "104", "ELEVATORS"].map((roomId) =>
-        roomPaths.get(roomId),
-      ),
-    ).toEqual([
-      "M320.3 180.4L336.6 172.3L352.9 172.3L363.8 180.4L363.8 229.3L295.8 229.3Z",
-      "M295.8 229.3L355.6 229.3L363.8 237.5L363.8 259.2L355.6 267.4L276.8 267.4Z",
-      "M276.8 267.4L309.4 267.4L309.4 316.3L264.8 316.3Z",
-      "M309.4 267.4L363.8 267.4L363.8 346.2L320.3 346.2L320.3 354.3L255.1 354.3L264.8 316.3L309.4 316.3Z",
-      "M255.1 354.3L320.3 354.3L320.3 414.1L255.1 414.1Z",
-    ]);
-  });
-
-  it("keeps room 105's corridor edge thin and connected to room 103", () => {
-    const floor = getVenueFloorPlan("ucf-91", 1);
-    const roomPaths = new Map(
-      floor?.rooms.map((room) => [room.id, room.path] as const),
-    );
-
-    expect(roomPaths.get("105")).toBe(
-      "M146.4 196.7L255.1 218.5L238.8 321.7L121.9 305.4Z",
-    );
-    expect(roomPaths.get("103")).toBe(
-      "M121.9 305.4L238.8 321.7L222.5 430.4L214.3 463.0L102.9 430.4Z",
-    );
-  });
-
-  it("joins the northwest stairs to the building and extends its exit", () => {
-    const floor = getVenueFloorPlan("ucf-91", 1);
-    const stairs = floor?.walkableAreas?.find(
-      (area) => area.id === "north-stairs-landing",
-    );
-    const circulation = floor?.walkableAreas?.find(
-      (area) => area.id === "venue-circulation",
-    );
-
-    expect(stairs).toMatchObject({
-      label: "← EXIT",
-      path: "M73.0 112.5L130.1 112.5L130.1 104.3L140.9 74.5L173.5 58.2L214.3 60.9L244.2 90.8L255.1 126.1L255.1 156.0L146.4 196.7L132.8 142.4L73.0 142.4Z",
-    });
-    expect(circulation?.path).toMatch(/^M255\.1 156\.0.*L146\.4 196\.7Z$/);
-  });
-
-  it("builds Engineering II floor 2 from connected manual geometry", () => {
+  it("retains the second-floor atrium, exits and individual suite rooms", () => {
     const floor = getVenueFloorPlan("ucf-91", 2);
-    const roomPaths = new Map(
-      floor?.rooms.map((room) => [room.id, room.path] as const),
-    );
-
-    expect(floor?.rooms).toHaveLength(75);
-    expect(
-      floor?.rooms.some(
-        (room) => room.id.includes("fallback") || room.label.includes(" / "),
-      ),
-    ).toBe(false);
-    expect(
-      ["211F", "211G", "211D", "211C", "201", "ELEVATORS"].map((roomId) =>
-        roomPaths.get(roomId),
-      ),
-    ).toEqual([
-      "M312.7 65.9L356.6 65.9L356.6 109.8L312.7 109.8Z",
-      "M356.6 65.9L404.4 65.9L404.4 109.8L356.6 109.8Z",
-      "M312.7 109.8L360.5 109.8L360.5 165.6L312.7 165.6Z",
-      "M360.5 109.8L424.3 109.8L424.3 165.6L360.5 165.6Z",
-      "M364.5 277.1L599.6 277.1L599.6 416.6L364.5 416.6Z",
-      "M268.9 340.9L332.6 340.9L332.6 412.6L268.9 412.6Z",
-    ]);
-    expect(floor?.walkableAreas).toEqual(
+    for (const id of ["211F", "211G", "211D", "211C", "201", "202Q", "202B"]) {
+      expect(findVenueRoom("ucf-91", id)?.floor).toBe(2);
+    }
+    expect(floor?.walkableAreas?.map((area) => area.id)).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: "main-hall", label: "MAIN HALL" }),
-        expect.objectContaining({
-          id: "northwest-stairs-exit",
-          label: "← EXIT",
-        }),
-        expect.objectContaining({ id: "east-stairs", label: "STAIRS" }),
-        expect.objectContaining({ id: "east-exit", label: "EXIT →" }),
-        expect.objectContaining({
-          id: "atrium-overlook",
-          label: "ATRIUM OVERLOOK",
-        }),
-        expect.objectContaining({
-          id: "atrium-bridge",
-          label: "BRIDGE · ATRIUM STAIRS",
-        }),
+        "main-hall",
+        "northwest-stairs-exit",
+        "east-exit",
+        "atrium-overlook",
+        "atrium-bridge",
       ]),
     );
   });
 
-  it("keeps the Engineering II atrium stair core fixed across floors", () => {
-    const stairPaths = getVenueFloors("ucf-91").map(
+  it("imports corrected Engineering suffixes and Student Union ballroom sections", () => {
+    for (const id of ["263A", "263B", "270A", "270B", "274A", "274B"]) {
+      expect(findVenueRoom("eng1", id)?.floor).toBe(2);
+    }
+    for (const id of ["140A", "140I", "218A", "218D", "316A", "316D"]) {
+      expect(findVenueRoom("student-union", id)).toBeDefined();
+    }
+    expect(findVenueRoom("ba2", "301-1")?.floor).toBe(3);
+    expect(findVenueRoom("ba2", "303M")?.floor).toBe(3);
+  });
+
+  it("keeps HEC as one first-floor outline without publishing inferred room numbers", () => {
+    const floor = getVenueFloorPlan("hec", 1);
+    expect(floor?.outlinePath?.match(/M/g)).toHaveLength(1);
+    expect(floor?.rooms).toHaveLength(45);
+    for (const id of ["101", "117", "118", "119"]) {
+      expect(findVenueRoom("hec", id)?.floor).toBe(1);
+    }
+    for (const id of ["125", "103", "104", "110", "111", "113", "HEC-1-U01"]) {
+      expect(findVenueRoom("hec", id)).toBeUndefined();
+    }
+    for (const room of floor?.rooms ?? []) {
+      if (room.reviewId) expect(room.roomIds).toEqual([]);
+    }
+  });
+
+  it("uses separate native wall assets and honest markers for open regions", () => {
+    for (const building of ["ba1", "ba2", "student-union"] as const) {
+      for (const n of getVenueFloors(building)) {
+        const floor = getVenueFloorPlan(building, n);
+        expect(floor?.structureImage?.href).toMatch(
+          /^\/maps\/floors\/[a-z0-9-]+\.svg$/,
+        );
+        expect(floor?.structureImage?.width).toBeGreaterThan(0);
+        expect(floor?.structureImage?.height).toBeGreaterThan(0);
+        const asset = floor?.structureImage;
+        if (!asset) throw new Error("Missing native wall asset");
+        const svg = readFileSync(
+          new URL(`../../public${asset.href}`, import.meta.url),
+          "utf8",
+        );
+        expect(svg).toContain("<svg");
+        expect(svg).toContain("<path");
+        // Labels and access-state colors belong to the app, not the image.
+        expect(svg).not.toMatch(/<(?:text|script|image|foreignObject)\b/);
+        expect(floor.rooms.every((room) => room.roomIds.length === 1)).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("gives every room a unique render key, finite anchor and nonempty geometry", () => {
+    for (const building of INDOOR_BUILDING_IDS) {
+      for (const n of getVenueFloors(building)) {
+        const rooms = getVenueFloorPlan(building, n)?.rooms ?? [];
+        expect(new Set(rooms.map((room) => room.id)).size).toBe(rooms.length);
+        for (const room of rooms) {
+          expect(Number.isFinite(room.x) && Number.isFinite(room.y)).toBe(true);
+          expect(room.path).not.toBe("");
+          expect(room.path).not.toMatch(/NaN|Infinity/);
+          expect(room.roomIds.some((id) => id.includes("-U"))).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("keeps the Engineering II atrium stair core fixed on its first two floors", () => {
+    const stairPaths = [1, 2].map(
       (floor) =>
         getVenueFloorPlan("ucf-91", floor)?.rooms.find(
           (room) => room.id === "STAIRS",
@@ -221,5 +220,77 @@ describe("KHIX indoor floor plans", () => {
     );
     expect(stairPaths.every(Boolean)).toBe(true);
     expect(new Set(stairPaths).size).toBe(1);
+  });
+
+  it("uses the third-floor source geometry and its verified bathroom labels", () => {
+    const floor = getVenueFloorPlan("ucf-91", 3);
+    expect(floor?.rooms).toHaveLength(59);
+    expect(
+      floor?.rooms
+        .filter((room) => room.kind === "bathroom")
+        .map((room) => room.id)
+        .sort(),
+    ).toEqual(["306", "307"]);
+    expect(findVenueRoom("ucf-91", "302")?.room.path).toContain(
+      "M112.20,287.20",
+    );
+  });
+});
+
+// The supplied HEC scan does not establish these four positions. Keep them in
+// room suggestions, but never assign an arbitrary room polygon to the number.
+const unplacedEventRooms = new Set([
+  "hec:103",
+  "hec:110",
+  "hec:111",
+  "hec:125",
+]);
+
+describe("requested event-room coverage", () => {
+  it.each(
+    KHIX_EVENT_ROOMS.filter(
+      (room) =>
+        !unplacedEventRooms.has(`${room.buildingId}:${room.roomNumber}`),
+    ),
+  )(
+    "maps $buildingId $roomNumber with optional leading zero",
+    ({ buildingId, roomNumber, floor, name }) => {
+      const match = findVenueRoom(buildingId, roomNumber);
+      expect(match?.floor).toBe(floor);
+      expect(match?.room.path).toBeTruthy();
+      expect(findVenueRoom(buildingId, `0${roomNumber}`)?.room.id).toBe(
+        match?.room.id,
+      );
+      if (name)
+        expect(findVenueRoom(buildingId, name)?.room.id).toBe(match?.room.id);
+    },
+  );
+
+  it("uses whole-ballroom anchors for combined reservations", () => {
+    expect(findVenueRoom("student-union", "218ABCD")?.room.roomIds).toEqual([
+      "218",
+    ]);
+    expect(
+      findVenueRoom("student-union", "Cape Florida")?.room.roomIds,
+    ).toEqual(["316"]);
+    expect(findVenueRoom("student-union", "218A")?.room.roomIds).toEqual([
+      "218A",
+    ]);
+  });
+
+  it("places the owner-provided Starbucks number at its existing source anchor", () => {
+    expect(findVenueRoom("student-union", "232")).toMatchObject({
+      floor: 2,
+      room: { geometry: "marker", x: 322.22, y: 337.78 },
+    });
+  });
+
+  it("accounts for all 43 roster rooms and reports only the four unplaced HEC rooms", () => {
+    expect(KHIX_EVENT_ROOMS).toHaveLength(43);
+    expect(
+      KHIX_EVENT_ROOMS.filter(
+        (room) => !findVenueRoom(room.buildingId, room.roomNumber),
+      ).map((room) => `${room.buildingId}:${room.roomNumber}`),
+    ).toEqual([...unplacedEventRooms]);
   });
 });

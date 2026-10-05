@@ -1,5 +1,6 @@
 import type { VenueBuildingId } from "./venue-map";
 import { VENUE_FLOOR_PLANS } from "./venue-floor-plans.generated";
+import { resolveRoomNumber, roomMatchesNumber } from "./venue-room-directory";
 
 export type IndoorBuildingId = VenueBuildingId | "student-union" | "ucf-91";
 
@@ -14,6 +15,10 @@ export const INDOOR_BUILDING_IDS = [
 
 export interface VenueFloorRoom {
   id: string;
+  /** Open/ambiguous native regions use a point, never an invented envelope. */
+  geometry?: "marker";
+  /** Authoring reference only; never an official room lookup alias. */
+  reviewId?: string;
   kind?: "bathroom";
   label: string;
   path: string;
@@ -37,6 +42,14 @@ export interface VenueWalkableArea {
 }
 
 export interface VenueFloorPlan {
+  outlinePath?: string;
+  structureImage?: {
+    href: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   labels?: VenueFloorLabel[];
   rooms: VenueFloorRoom[];
   structurePaths?: string[];
@@ -54,6 +67,7 @@ const HIDDEN_ENG2_FIRST_FLOOR_ROOM_IDS = new Set([
   "116A",
   "116B",
   "116C",
+  "116D",
   "116E",
   "116F",
   "117A",
@@ -61,6 +75,9 @@ const HIDDEN_ENG2_FIRST_FLOOR_ROOM_IDS = new Set([
   "117C",
   "117D",
   "190",
+  "191",
+  "192",
+  "193",
   "194",
 ]);
 
@@ -85,7 +102,7 @@ export function getVenueFloorPlan(buildingId: IndoorBuildingId, floor: number) {
 export function getVenueFloors(buildingId: IndoorBuildingId) {
   return Object.keys(venueFloorPlans[buildingId] ?? {})
     .map(Number)
-    .filter((floor) => buildingId !== "ucf-91" || floor <= 2)
+    .filter((floor) => buildingId !== "ucf-91" || floor <= 3)
     .sort((left, right) => left - right);
 }
 
@@ -94,11 +111,17 @@ export function findVenueRoom(
   buildingId: IndoorBuildingId,
   roomNumber: string,
 ) {
-  const normalized = roomNumber.trim().toUpperCase();
+  const normalized = resolveRoomNumber(buildingId, roomNumber);
   for (const floor of getVenueFloors(buildingId)) {
-    const room = getVenueFloorPlan(buildingId, floor)?.rooms.find((candidate) =>
-      candidate.roomIds.includes(normalized),
+    const matches = getVenueFloorPlan(buildingId, floor)?.rooms.filter(
+      (candidate) =>
+        roomMatchesNumber(buildingId, candidate.roomIds, normalized),
     );
+    // A combined ballroom uses its whole-room anchor, not an arbitrary section.
+    const room =
+      matches?.find((candidate) =>
+        candidate.roomIds.includes(normalized.replace(/ABCD$/, "")),
+      ) ?? matches?.[0];
     if (room) return { floor, room };
   }
 }

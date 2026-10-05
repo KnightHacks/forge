@@ -1,0 +1,91 @@
+{
+  "inputs": {
+    "room-label-overrides.json": "0cf46eaf2138af84f1e0c73b5a0926c2979a9a7a9a4ebd7dceca98ffd071d4d9",
+    "ba1-floor-1.svg": "6d9edc62445d2c57d24828487fc3b8cd65b2446b58c9a213d6571ba244268340",
+    "ba1-floor-2.svg": "5d5777e2bbfec431bc1748cc588bc2d218552b29053dbbc5b396e9e06c998577",
+    "ba1-floor-3.svg": "cfff453b4ab6306bf003f09d276e345e7e43dab6506f010ddbd3c866307ababa",
+    "ba1-floor-4.svg": "230c1f3c15ce293c63e69eaea3abb30dce8204413dfbd8aa0e23dbe502ab9911",
+    "ba2-floor-1.svg": "c99e5d89f63ce69d1147e326ff0c8b3f4b72e955d0172afbdefe43be86bbdefe",
+    "ba2-floor-2.svg": "61af8f2457205e39105a2f65090fee8d06669caa187f36299970f925d910052c",
+    "ba2-floor-3.svg": "7f60dd68d437a17e01d778c7aac7111a9179960686e75c96ab9e530a0fff6850",
+    "su-floor-1.svg": "17e7273e368021dc8487802a0975126be3240c2f983ae2944ea35b019ee8a2d0",
+    "su-floor-2.svg": "4b6531d7d0e666a5e16670a000211badf068d88e6086f0d77e9b3d0abab0ae6d",
+    "su-floor-3.svg": "0b0209877def6ed79d948364f7c7183a265b0c3e8b0849dfe4e64c408ac31225",
+    "engineering-rooms.json": "3731c3c11f27a9c49dbb4483db2105d48b6b525225dcf61b2a7c194a5fdf7354",
+    "hec-rooms.json": "d11407f57991830ea1bd7422a8494276acb12ec645f90941006388607c4f88f7"
+  },
+  "floors": {
+    "ba1-1": {
+      "rooms": 88,
+      "locationMarkers": 65
+    },
+    "ba1-2": {
+      "rooms": 93,
+      "locationMarkers": 40
+    },
+    "ba1-3": {
+      "rooms": 104,
+      "locationMarkers": 17
+    },
+    "ba1-4": {
+      "rooms": 103,
+      "locationMarkers": 19
+    },
+    "ba2-1": {
+      "rooms": 46,
+      "locationMarkers": 2
+    },
+    "ba2-2": {
+      "rooms": 59,
+      "locationMarkers": 1
+    },
+    "ba2-3": {
+      "rooms": 99,
+      "locationMarkers": 0
+    },
+    "eng1-1": {
+      "rooms": 76,
+      "locationMarkers": 0
+    },
+    "eng1-2": {
+      "rooms": 92,
+      "locationMarkers": 0
+    },
+    "eng1-3": {
+      "rooms": 88,
+      "locationMarkers": 0
+    },
+    "eng1-4": {
+      "rooms": 68,
+      "locationMarkers": 0
+    },
+    "ucf-91-1": {
+      "rooms": 50,
+      "locationMarkers": 0
+    },
+    "ucf-91-2": {
+      "rooms": 79,
+      "locationMarkers": 0
+    },
+    "ucf-91-3": {
+      "rooms": 59,
+      "locationMarkers": 0
+    },
+    "student-union-1": {
+      "rooms": 14,
+      "locationMarkers": 0
+    },
+    "student-union-2": {
+      "rooms": 17,
+      "locationMarkers": 6
+    },
+    "student-union-3": {
+      "rooms": 11,
+      "locationMarkers": 5
+    },
+    "hec-1": {
+      "rooms": 45,
+      "locationMarkers": 0
+    }
+  }
+}

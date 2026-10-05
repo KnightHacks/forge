@@ -4,15 +4,12 @@ import type { KeyboardEvent, PointerEvent } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
-  Clock3,
-  LifeBuoy,
   LocateFixed,
   MapPinned,
   Minus,
   Navigation,
   Plus,
   RotateCcw,
-  Utensils,
   X,
 } from "lucide-react";
 
@@ -23,12 +20,11 @@ import { Button } from "@forge/ui/button";
 import type { IndoorBuildingId } from "~/lib/venue-floor-plans";
 import type {
   CampusBuildingId,
-  MapEventCategory,
   MapPoint,
   PlottedScheduleEvent,
 } from "~/lib/venue-map";
-import { formatScheduleTimeRange } from "~/lib/event-schedule";
 import { useHackerDashboardFlow } from "~/lib/hacker-portal";
+import { useMapAccess } from "~/lib/use-map-access";
 import {
   UCF_CAMPUS_ROADS,
   UCF_CAMPUS_WALKWAYS,
@@ -45,7 +41,18 @@ import {
   plotScheduleEvents,
   projectCampusCoordinates,
 } from "~/lib/venue-map";
-import { getRoomPresentation } from "~/lib/venue-room-access";
+import { constrainIndoorView, fitMapBounds } from "~/lib/venue-map-camera";
+import {
+  getRoomPresentation,
+  isWayfindingLabel,
+} from "~/lib/venue-room-access";
+import {
+  isKhixEventRoom,
+  KHIX_EVENT_ROOMS,
+  resolveRoomNumber,
+  roomMatchesNumber,
+} from "~/lib/venue-room-directory";
+import { MapEventsDock } from "./khix-map-events";
 import styles from "./khix-venue-map.module.css";
 
 const CAMPUS_MAP_HEIGHT = 700;
@@ -55,6 +62,11 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 3.8;
 const FLOOR_ENTRY_ZOOM = 3.15;
 const SCHEDULE_REFRESH_MS = 30_000;
+const EVENT_PARKING = {
+  id: "ucf-83",
+  // Center the callout inside Garage C's footprint.
+  center: { x: 894, y: 316 },
+};
 const FLOOR_ROTATION: Record<IndoorBuildingId, number> = {
   ba1: 2,
   ba2: -26,
@@ -64,12 +76,6 @@ const FLOOR_ROTATION: Record<IndoorBuildingId, number> = {
   "ucf-91": 0,
 };
 
-function eventHasMappedRoom(event: PlottedScheduleEvent) {
-  return Boolean(
-    event.venueLocation.room &&
-    findVenueRoom(event.venueLocation.buildingId, event.venueLocation.room),
-  );
-}
 const LABELED_BUILDING_IDS = new Set<CampusBuildingId>([
   "ba1",
   "ba2",
@@ -77,9 +83,10 @@ const LABELED_BUILDING_IDS = new Set<CampusBuildingId>([
   "hec",
   "student-union",
   "ucf-91",
+  EVENT_PARKING.id,
 ]);
 
-type MapFilter = "all" | "food" | "help" | "live";
+type MapFilter = "live" | "upcoming";
 type MapView = typeof FULL_VIEW;
 
 interface IndoorSpot {
@@ -183,12 +190,6 @@ function distance(
   return Math.hypot(right.x - left.x, right.y - left.y);
 }
 
-function categoryLabel(category: MapEventCategory) {
-  if (category === "food") return "Food";
-  if (category === "help") return "Help";
-  return "Event";
-}
-
 function buildingLabel(buildingId: CampusBuildingId) {
   return (
     CAMPUS_BUILDINGS.find((building) => building.id === buildingId)?.label ??
@@ -205,9 +206,7 @@ function mapEventSort(left: PlottedScheduleEvent, right: PlottedScheduleEvent) {
 }
 
 function eventMatchesFilter(event: PlottedScheduleEvent, filter: MapFilter) {
-  if (filter === "all") return true;
-  if (filter === "live") return event.state === "live";
-  return event.category === filter;
+  return event.state === filter;
 }
 
 function isIndoorBuildingId(
@@ -225,16 +224,36 @@ const INDOOR_BUILDINGS = CAMPUS_BUILDINGS.filter(
 );
 
 export function KhixVenueMap() {
+  const access = useMapAccess();
+  if (access.isPending) return <MapLoadingState />;
+  if (access.isError) {
+    return (
+      <MapMessageState
+        action={() => void access.retry()}
+        copy="Refresh your dashboard connection and try again."
+        title="The map could not load."
+      />
+    );
+  }
+  if (!access.available) {
+    return <MapMessageState copy={access.reason} title="Map locked" />;
+  }
+  return <AvailableVenueMap />;
+}
+
+function AvailableVenueMap() {
   const { dashboard, dashboardQuery, schedule, scheduleQuery } =
     useHackerDashboardFlow({ schedule: true });
   const mapConfigurationQuery = useHackerMapConfiguration();
+  const mapReady =
+    dashboardQuery.isSuccess && Boolean(mapConfigurationQuery.data);
   const [focusedRoomId, setFocusedRoomId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 15000);
     return () => window.clearInterval(clock);
   }, []);
-  const [filter, setFilter] = useState<MapFilter>("all");
+  const [filter, setFilter] = useState<MapFilter>("live");
   const [eventsExpanded, setEventsExpanded] = useState(false);
   const dragged = useRef(false);
   const floorTransitionUntil = useRef(false);
@@ -262,6 +281,7 @@ export function KhixVenueMap() {
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [indoorBuildingId, setIndoorBuildingId] =
     useState<IndoorBuildingId>("eng1");
   const [indoorRoom, setIndoorRoom] = useState("");
@@ -275,6 +295,63 @@ export function KhixVenueMap() {
     () => undefined,
   );
   const mapRef = useRef<SVGSVGElement | null>(null);
+  const cameraAnimationFrame = useRef(0);
+  const cameraAdjusted = useRef(false);
+  const mapFrameRef = useRef<HTMLDivElement | null>(null);
+  const locationButtonRef = useRef<HTMLButtonElement | null>(null);
+  const locationPickerRef = useRef<HTMLFormElement | null>(null);
+  const legendRef = useRef<HTMLDetailsElement | null>(null);
+  const [mapLayout, setMapLayout] = useState({
+    width: 1000,
+    height: 700,
+    top: 72,
+    right: 64,
+    bottom: 136,
+    left: 16,
+  });
+
+  useLayoutEffect(() => {
+    const frame = mapFrameRef.current;
+    if (!frame) return;
+    const dock = frame.querySelector<HTMLElement>("[data-map-dock]");
+    const toolbar = frame.querySelector<HTMLElement>("[data-map-toolbar]");
+    const controls = frame.querySelector<HTMLElement>("[data-map-controls]");
+    if (!dock || !toolbar || !controls) return;
+    const measure = () => {
+      frame.style.setProperty("--map-dock-height", `${dock.offsetHeight}px`);
+      const bounds = frame.getBoundingClientRect();
+      if (!bounds.width || !bounds.height) return;
+      const mobile = window.matchMedia("(max-width: 720px)").matches;
+      const layout = {
+        width: bounds.width,
+        height: bounds.height,
+        top: toolbar.getBoundingClientRect().bottom - bounds.top + 8,
+        right: mobile ? 0 : controls.offsetWidth + 24,
+        bottom: mobile
+          ? bounds.bottom - controls.getBoundingClientRect().top + 8
+          : bounds.bottom - dock.getBoundingClientRect().top + 8,
+        left: 0,
+      };
+      setMapLayout((previous) =>
+        Object.entries(layout).every(
+          ([key, value]) => previous[key as keyof typeof previous] === value,
+        )
+          ? previous
+          : layout,
+      );
+    };
+    const observer = new ResizeObserver(measure);
+    [frame, dock, toolbar, controls].forEach((element) =>
+      observer.observe(element),
+    );
+    measure();
+    return () => observer.disconnect();
+  }, [mapReady]);
+
+  useEffect(() => {
+    if (showLocationPicker)
+      locationPickerRef.current?.querySelector("button")?.focus();
+  }, [showLocationPicker]);
 
   useLayoutEffect(() => {
     const map = mapRef.current;
@@ -296,19 +373,63 @@ export function KhixVenueMap() {
       const maxX = Math.max(...points.map((p) => p.x));
       const minY = Math.min(...points.map((p) => p.y));
       const maxY = Math.max(...points.map((p) => p.y));
-      const fitted = {
-        centerX: (minX + maxX) / 2,
-        centerY: (minY + maxY) / 2,
-        zoom: Math.min(
-          (canvasHeight * viewportAspect) / ((maxX - minX) * 1.18),
-          canvasHeight / ((maxY - minY) * 1.4),
-        ),
-      };
+      const fitted = fitMapBounds({
+        bounds: { x: minX, y: minY, width: maxX - minX, height: maxY - minY },
+        viewport: mapLayout,
+        insets: mapLayout,
+        canvasHeight,
+        padding: 12,
+      });
+      if (!fitted) return;
       setFittedFloorView(fitted);
-      if (!selectedEventId && !focusedRoomId) setView(fitted);
+      const room = focusedRoomId
+        ? getVenueFloorPlan(
+            activeFloor.buildingId,
+            activeFloor.floor,
+          )?.rooms.find((candidate) => candidate.id === focusedRoomId)
+        : null;
+      if (room && !cameraAdjusted.current) {
+        const focused = fitMapBounds({
+          bounds: {
+            x:
+              500 +
+              (room.x - 500) * Math.cos(angle) -
+              (room.y - 350) * Math.sin(angle),
+            y:
+              350 +
+              (room.x - 500) * Math.sin(angle) +
+              (room.y - 350) * Math.cos(angle),
+            width: 1,
+            height: 1,
+          },
+          viewport: mapLayout,
+          insets: mapLayout,
+          canvasHeight,
+          maxZoom: 2.35,
+        });
+        if (focused)
+          setView(
+            constrainIndoorView({
+              view: focused,
+              fittedView: fitted,
+              aspect: mapLayout.width / mapLayout.height,
+              canvasHeight,
+            }),
+          );
+      } else if (cameraAdjusted.current) {
+        setView((current) =>
+          constrainIndoorView({
+            view: current,
+            fittedView: fitted,
+            aspect: mapLayout.width / mapLayout.height,
+            canvasHeight,
+          }),
+        );
+      } else if (!selectedEventId) setView(fitted);
     };
     const observer = new ResizeObserver(measureFloor);
     observer.observe(floor);
+    measureFloor();
     return () => observer.disconnect();
   }, [
     activeFloor,
@@ -316,9 +437,10 @@ export function KhixVenueMap() {
     canvasHeight,
     selectedEventId,
     focusedRoomId,
+    mapLayout,
   ]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const target = viewBox(view, viewportAspect, canvasHeight)
@@ -347,11 +469,15 @@ export function KhixVenueMap() {
           )
           .join(" "),
       );
-      if (progress < 1) frame = requestAnimationFrame(animate);
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+        cameraAnimationFrame.current = frame;
+      }
     };
     frame = requestAnimationFrame(animate);
+    cameraAnimationFrame.current = frame;
     return () => cancelAnimationFrame(frame);
-  }, [view, viewportAspect, canvasHeight]);
+  }, [view, viewportAspect, canvasHeight, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -370,7 +496,7 @@ export function KhixVenueMap() {
     resize();
 
     return () => observer.disconnect();
-  }, [canvasHeight, dashboardQuery.isSuccess, activeFloor]);
+  }, [canvasHeight, mapReady, activeFloor]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -382,38 +508,7 @@ export function KhixVenueMap() {
     map.addEventListener("wheel", handleNativeWheel, { passive: false });
 
     return () => map.removeEventListener("wheel", handleNativeWheel);
-  }, [dashboardQuery.isSuccess]);
-
-  useEffect(() => {
-    const hydrateLocation = window.setTimeout(() => {
-      const stored = window.localStorage.getItem("khix-indoor-location");
-      if (!stored) return;
-
-      try {
-        const candidate = JSON.parse(stored) as Partial<IndoorSpot>;
-        if (
-          (candidate.buildingId === "eng1" ||
-            candidate.buildingId === "ba1" ||
-            candidate.buildingId === "ba2" ||
-            candidate.buildingId === "hec" ||
-            candidate.buildingId === "ucf-91" ||
-            candidate.buildingId === "student-union") &&
-          typeof candidate.room === "string"
-        ) {
-          setIndoorSpot({
-            buildingId: candidate.buildingId,
-            room: candidate.room,
-          });
-          setIndoorBuildingId(candidate.buildingId);
-          setIndoorRoom(candidate.room);
-        }
-      } catch {
-        window.localStorage.removeItem("khix-indoor-location");
-      }
-    }, 0);
-
-    return () => window.clearTimeout(hydrateLocation);
-  }, []);
+  }, [mapReady]);
 
   useEffect(() => {
     if (
@@ -434,12 +529,15 @@ export function KhixVenueMap() {
     () => plotScheduleEvents(schedule, now).sort(mapEventSort),
     [now, schedule],
   );
-  const filteredEvents = plottedEvents.filter(
-    (event) => event.state !== "ended" && eventMatchesFilter(event, filter),
+  const filteredEvents = plottedEvents.filter((event) =>
+    eventMatchesFilter(event, filter),
   );
   const selectedEvent =
     plottedEvents.find((event) => event.id === selectedEventId) ?? null;
   const leaveFloor = () => {
+    cameraAdjusted.current = false;
+    setShowLegend(false);
+    setShowLocationPicker(false);
     setActiveFloor(null);
     setFocusedRoomId(null);
     setLocationMessage(null);
@@ -448,21 +546,23 @@ export function KhixVenueMap() {
     setView(campusReturnView.current);
   };
 
+  const constrainCamera = (nextView: MapView) =>
+    activeFloor
+      ? constrainIndoorView({
+          view: nextView,
+          fittedView: fullView,
+          aspect: viewportAspect,
+          canvasHeight,
+        })
+      : constrainView(nextView, viewportAspect, canvasHeight);
+
   const updateZoom = (
     zoom: number,
     targetBuildingId?: IndoorBuildingId | null,
     anchor?: { clientX: number; clientY: number },
   ) => {
     if (floorTransitionUntil.current || pinchChangedFloor.current) return;
-    if (activeFloor && zoom < fullView.zoom * 0.96) {
-      floorTransitionUntil.current = true;
-      window.setTimeout(() => {
-        floorTransitionUntil.current = false;
-      }, 400);
-      pinchChangedFloor.current = gesture.current?.mode === "pinch";
-      leaveFloor();
-      return;
-    }
+    cameraAdjusted.current = true;
 
     const selectedVenueId = isIndoorBuildingId(selectedBuildingId)
       ? selectedBuildingId
@@ -479,6 +579,7 @@ export function KhixVenueMap() {
         zoom: Math.max(1, view.zoom / 1.8),
       };
       setFittedFloorView(null);
+      cameraAdjusted.current = false;
       floorTransitionUntil.current = true;
       window.setTimeout(() => {
         floorTransitionUntil.current = false;
@@ -498,18 +599,30 @@ export function KhixVenueMap() {
         MAX_ZOOM,
       );
       if (!anchor || !mapRef.current) {
-        return constrainView(
-          { ...current, zoom: nextZoom },
-          viewportAspect,
-          canvasHeight,
-        );
+        return constrainCamera({ ...current, zoom: nextZoom });
       }
 
       const bounds = mapRef.current.getBoundingClientRect();
       const xRatio = (anchor.clientX - bounds.left) / bounds.width;
       const yRatio = (anchor.clientY - bounds.top) / bounds.height;
+      // Anchor a pinch to its starting map position so moving both fingers
+      // also pans, without accumulating drift from the previous frame.
+      const pinch = gesture.current?.mode === "pinch" ? gesture.current : null;
+      const origin = pinch
+        ? {
+            centerX: pinch.originCenterX,
+            centerY: pinch.originCenterY,
+            zoom: pinch.originZoom,
+          }
+        : current;
+      const originXRatio = pinch
+        ? (pinch.startX - bounds.left) / bounds.width
+        : xRatio;
+      const originYRatio = pinch
+        ? (pinch.startY - bounds.top) / bounds.height
+        : yRatio;
       const currentDimensions = viewDimensions(
-        current,
+        origin,
         viewportAspect,
         canvasHeight,
       );
@@ -519,23 +632,19 @@ export function KhixVenueMap() {
         canvasHeight,
       );
       const anchorX =
-        current.centerX -
+        origin.centerX -
         currentDimensions.width / 2 +
-        xRatio * currentDimensions.width;
+        originXRatio * currentDimensions.width;
       const anchorY =
-        current.centerY -
+        origin.centerY -
         currentDimensions.height / 2 +
-        yRatio * currentDimensions.height;
+        originYRatio * currentDimensions.height;
 
-      return constrainView(
-        {
-          centerX: anchorX - (xRatio - 0.5) * nextDimensions.width,
-          centerY: anchorY - (yRatio - 0.5) * nextDimensions.height,
-          zoom: nextZoom,
-        },
-        viewportAspect,
-        canvasHeight,
-      );
+      return constrainCamera({
+        centerX: anchorX - (xRatio - 0.5) * nextDimensions.width,
+        centerY: anchorY - (yRatio - 0.5) * nextDimensions.height,
+        zoom: nextZoom,
+      });
     });
   };
 
@@ -544,19 +653,24 @@ export function KhixVenueMap() {
       (candidate) => candidate.id === buildingId,
     );
     if (!building) return;
+    const center =
+      buildingId === EVENT_PARKING.id ? EVENT_PARKING.center : building.center;
     setActiveFloor(null);
     setFocusedRoomId(null);
     setSelectedBuildingId(buildingId);
     setSelectedEventId(null);
     setView(
       constrainView(
-        { centerX: building.center.x, centerY: building.center.y, zoom: 2.2 },
+        { centerX: center.x, centerY: center.y, zoom: 2.2 },
         viewportAspect,
       ),
     );
   };
 
   const focusBuilding = (buildingId: CampusBuildingId) => {
+    cameraAdjusted.current = false;
+    setShowLegend(false);
+    setShowLocationPicker(false);
     setLocationMessage(null);
     const firstFloor = isIndoorBuildingId(buildingId)
       ? getVenueFloors(buildingId)[0]
@@ -573,13 +687,13 @@ export function KhixVenueMap() {
       return;
     }
     focusCampusBuilding(buildingId);
-    if (buildingId === "hec")
-      setLocationMessage("HEC · Indoor plan unavailable.");
   };
 
   const focusRoom = (buildingId: IndoorBuildingId, roomNumber: string) => {
+    if (!isKhixEventRoom(buildingId, roomNumber)) return false;
     const match = findVenueRoom(buildingId, roomNumber);
     if (!match) return false;
+    cameraAdjusted.current = false;
     if (!activeFloor) campusReturnView.current = view;
     const angle = (FLOOR_ROTATION[buildingId] * Math.PI) / 180;
     const { room, floor } = match;
@@ -609,14 +723,15 @@ export function KhixVenueMap() {
   };
 
   const focusEvent = (event: PlottedScheduleEvent) => {
+    setShowLegend(false);
+    setShowLocationPicker(false);
+    setEventsExpanded(false);
     setLocationMessage(null);
     if (
       !event.venueLocation.room ||
       !focusRoom(event.venueLocation.buildingId, event.venueLocation.room)
     ) {
       focusCampusBuilding(event.venueLocation.buildingId);
-      if (event.venueLocation.buildingId === "hec")
-        setLocationMessage("HEC · Indoor plan unavailable.");
     }
     setSelectedEventId(event.id);
   };
@@ -632,6 +747,21 @@ export function KhixVenueMap() {
 
   const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
     if (pointerPositions.current.size === 0) dragged.current = false;
+    cancelAnimationFrame(cameraAnimationFrame.current);
+    const [x, y, width, height] = (
+      event.currentTarget.getAttribute("viewBox") ?? ""
+    )
+      .split(" ")
+      .map(Number);
+    const renderedView =
+      x !== undefined && y !== undefined && width && height
+        ? {
+            centerX: x + width / 2,
+            centerY: y + height / 2,
+            zoom: canvasHeight / height,
+          }
+        : view;
+    setView(renderedView);
 
     const buildingId = (event.target as Element).closest<SVGGElement>(
       "[data-building-id]",
@@ -651,9 +781,9 @@ export function KhixVenueMap() {
     if (pointers.length === 1) {
       gesture.current = {
         mode: "pan",
-        originCenterX: view.centerX,
-        originCenterY: view.centerY,
-        originZoom: view.zoom,
+        originCenterX: renderedView.centerX,
+        originCenterY: renderedView.centerY,
+        originZoom: renderedView.zoom,
         startX: event.clientX,
         startY: event.clientY,
       };
@@ -663,9 +793,9 @@ export function KhixVenueMap() {
       gesture.current = {
         distance: distance(first, second),
         mode: "pinch",
-        originCenterX: view.centerX,
-        originCenterY: view.centerY,
-        originZoom: view.zoom,
+        originCenterX: renderedView.centerX,
+        originCenterY: renderedView.centerY,
+        originZoom: renderedView.zoom,
         startX: (first.x + second.x) / 2,
         startY: (first.y + second.y) / 2,
       };
@@ -709,6 +839,7 @@ export function KhixVenueMap() {
     }
 
     if (pointers.length !== 1 || activeGesture.mode !== "pan") return;
+    cameraAdjusted.current = true;
     const dimensions = viewDimensions(
       { ...view, zoom: activeGesture.originZoom },
       viewportAspect,
@@ -717,19 +848,15 @@ export function KhixVenueMap() {
     const scaleX = dimensions.width / rect.width;
     const scaleY = dimensions.height / rect.height;
     setView(
-      constrainView(
-        {
-          centerX:
-            activeGesture.originCenterX -
-            (event.clientX - activeGesture.startX) * scaleX,
-          centerY:
-            activeGesture.originCenterY -
-            (event.clientY - activeGesture.startY) * scaleY,
-          zoom: activeGesture.originZoom,
-        },
-        viewportAspect,
-        canvasHeight,
-      ),
+      constrainCamera({
+        centerX:
+          activeGesture.originCenterX -
+          (event.clientX - activeGesture.startX) * scaleX,
+        centerY:
+          activeGesture.originCenterY -
+          (event.clientY - activeGesture.startY) * scaleY,
+        zoom: activeGesture.originZoom,
+      }),
     );
   };
 
@@ -781,6 +908,13 @@ export function KhixVenueMap() {
   const locateUser = () => {
     setLocating(true);
     setLocationMessage(null);
+    if (!("geolocation" in navigator)) {
+      setLocating(false);
+      setLocationMessage(
+        "Location is unavailable. Choose a building and room instead.",
+      );
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const point = projectCampusCoordinates(
@@ -796,6 +930,12 @@ export function KhixVenueMap() {
         }
 
         setGpsPoint(point);
+        cameraAdjusted.current = false;
+        setActiveFloor(null);
+        setFocusedRoomId(null);
+        setSelectedEventId(null);
+        setShowLocationPicker(false);
+        locationButtonRef.current?.focus();
         setView(
           constrainView(
             { centerX: point.x, centerY: point.y, zoom: 2.2 },
@@ -819,14 +959,17 @@ export function KhixVenueMap() {
   const saveIndoorSpot = () => {
     const spot = {
       buildingId: indoorBuildingId,
-      room: indoorRoom.trim().toUpperCase().slice(0, 24),
+      room: resolveRoomNumber(indoorBuildingId, indoorRoom),
     } satisfies IndoorSpot;
-    setIndoorSpot(spot);
-    window.localStorage.setItem("khix-indoor-location", JSON.stringify(spot));
-    if (!spot.room || !focusRoom(spot.buildingId, spot.room))
-      focusBuilding(spot.buildingId);
+    const locatedRoom = spot.room && focusRoom(spot.buildingId, spot.room);
+    setIndoorSpot(locatedRoom ? spot : { ...spot, room: "" });
+    if (!locatedRoom) focusBuilding(spot.buildingId);
     setLocationMessage(
-      `Indoor spot set to ${buildingLabel(spot.buildingId)}${spot.room ? ` · ${spot.room}` : ""}.${spot.buildingId === "hec" ? " Indoor plan unavailable." : ""}`,
+      spot.room && !isKhixEventRoom(spot.buildingId, spot.room)
+        ? "That room isn’t part of Knight Hacks. Showing the building."
+        : spot.room && !locatedRoom
+          ? `${buildingLabel(spot.buildingId)} ${spot.room}: exact room location is not on this plan. Showing the building.`
+          : `Indoor spot set to ${buildingLabel(spot.buildingId)}${spot.room ? ` · ${spot.room}` : ""}.`,
     );
   };
 
@@ -876,8 +1019,25 @@ export function KhixVenueMap() {
     <>
       <h1 className={styles.srOnly}>Knight Hacks IX venue map</h1>
       <section className={styles.experience} aria-label="Knight Hacks IX map">
-        <div className={styles.mapFrame}>
-          <div className={styles.toolbar} aria-label="Map filters">
+        <div
+          ref={mapFrameRef}
+          className={styles.mapFrame}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape") return;
+            if (showLocationPicker) {
+              setShowLocationPicker(false);
+              locationButtonRef.current?.focus();
+            } else if (showLegend) {
+              setShowLegend(false);
+              legendRef.current?.querySelector("summary")?.focus();
+            }
+          }}
+        >
+          <div
+            className={styles.toolbar}
+            data-map-toolbar
+            aria-label="Building and floor"
+          >
             {activeFloor ? (
               <>
                 <button
@@ -888,19 +1048,34 @@ export function KhixVenueMap() {
                 >
                   <ArrowLeft aria-hidden="true" />
                 </button>
-                <span className={styles.floorTitle}>
-                  {buildingLabel(activeFloor.buildingId)}
+                <span
+                  className={styles.floorTitle}
+                  title={buildingLabel(activeFloor.buildingId)}
+                >
+                  {
+                    CAMPUS_BUILDINGS.find(
+                      (building) => building.id === activeFloor.buildingId,
+                    )?.abbreviation
+                  }
                 </span>
-                <div className={styles.floorTabs} aria-label="Building floor">
+                <div
+                  className={styles.floorTabs}
+                  role="group"
+                  aria-label="Building floor"
+                >
                   {getVenueFloors(activeFloor.buildingId).map((floor) => (
                     <button
                       key={floor}
                       aria-label={`Floor ${floor}`}
+                      aria-pressed={activeFloor.floor === floor}
                       data-active={
                         activeFloor.floor === floor ? "true" : undefined
                       }
                       onClick={() => {
+                        cameraAdjusted.current = false;
                         setFocusedRoomId(null);
+                        setFittedFloorView(null);
+                        setShowLegend(false);
                         setActiveFloor({ ...activeFloor, floor });
                         setSelectedEventId(null);
                         setView(
@@ -919,34 +1094,31 @@ export function KhixVenueMap() {
                 </div>
               </>
             ) : (
-              <div className={styles.filterGroup}>
-                {(
-                  [
-                    ["all", "All", MapPinned],
-                    ["live", "Live", Clock3],
-                    ["food", "Food", Utensils],
-                    ["help", "Help", LifeBuoy],
-                  ] as const
-                ).map(([value, label, Icon]) => (
-                  <button
-                    key={value}
-                    className={styles.filterButton}
-                    data-active={filter === value ? "true" : undefined}
-                    onClick={() => {
-                      setFilter(value);
-                      if (value !== "all") setEventsExpanded(true);
-                    }}
-                    type="button"
-                  >
-                    <Icon aria-hidden="true" />
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <label className={styles.campusPicker}>
+                <span className={styles.srOnly}>Choose a building</span>
+                <select
+                  value="campus"
+                  onChange={(event) => {
+                    if (isIndoorBuildingId(event.target.value))
+                      focusBuilding(event.target.value);
+                  }}
+                >
+                  <option value="campus">Campus · Choose a building</option>
+                  {INDOOR_BUILDINGS.map((building) => (
+                    <option key={building.id} value={building.id}>
+                      {building.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             )}
           </div>
 
-          <div className={styles.mapControls} aria-label="Map controls">
+          <div
+            className={styles.mapControls}
+            data-map-controls
+            aria-label="Map controls"
+          >
             <button
               aria-label="Zoom in"
               onClick={() => updateZoom(view.zoom * 1.28)}
@@ -963,17 +1135,28 @@ export function KhixVenueMap() {
             </button>
             <button
               aria-label="Reset map view"
-              onClick={() => setView(fullView)}
+              onClick={() => {
+                cameraAdjusted.current = false;
+                setFocusedRoomId(null);
+                setSelectedEventId(null);
+                setView(fullView);
+              }}
               type="button"
             >
               <RotateCcw aria-hidden="true" />
             </button>
             <button
+              ref={locationButtonRef}
               aria-label="Set my location"
+              aria-expanded={showLocationPicker}
+              aria-controls="map-location-picker"
               data-active={showLocationPicker ? "true" : undefined}
               onClick={() => {
                 setLocationMessage(null);
                 setShowLocationPicker((current) => !current);
+                setShowLegend(false);
+                setEventsExpanded(false);
+                setSelectedEventId(null);
               }}
               type="button"
             >
@@ -990,7 +1173,7 @@ export function KhixVenueMap() {
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerEnd}
             preserveAspectRatio="xMidYMid meet"
-            role="img"
+            role="group"
             onClickCapture={(event) => {
               if (dragged.current) {
                 event.preventDefault();
@@ -999,11 +1182,21 @@ export function KhixVenueMap() {
             }}
           >
             <defs>
-              <linearGradient id="khix-map-ground" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#071b14" />
-                <stop offset="0.52" stopColor="#0b2119" />
-                <stop offset="1" stopColor="#160f24" />
-              </linearGradient>
+              <pattern
+                id="khix-map-unavailable"
+                width="10"
+                height="10"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(35)"
+              >
+                <rect width="10" height="10" fill="#25212a" />
+                <path
+                  d="M0 0V10"
+                  stroke="#8d7b8a"
+                  strokeOpacity="0.55"
+                  strokeWidth="2"
+                />
+              </pattern>
               <radialGradient id="khix-map-glade">
                 <stop offset="0" stopColor="#779c55" stopOpacity="0.18" />
                 <stop offset="1" stopColor="#779c55" stopOpacity="0" />
@@ -1026,11 +1219,6 @@ export function KhixVenueMap() {
                 </feMerge>
               </filter>
             </defs>
-            <rect
-              width="1000"
-              height={canvasHeight}
-              fill="url(#khix-map-ground)"
-            />
             {activeFloor ? (
               <IndoorFloorMap
                 activeFloor={activeFloor}
@@ -1070,6 +1258,7 @@ export function KhixVenueMap() {
                 </g>
                 {CAMPUS_BUILDINGS.map((building) => {
                   const isDestination = LABELED_BUILDING_IDS.has(building.id);
+                  const isEventParking = building.id === EVENT_PARKING.id;
                   const liveCount = plottedEvents.filter(
                     (event) =>
                       event.state === "live" &&
@@ -1080,10 +1269,17 @@ export function KhixVenueMap() {
                     <g
                       key={building.id}
                       aria-hidden={isDestination ? undefined : "true"}
-                      aria-label={isDestination ? building.label : undefined}
+                      aria-label={
+                        isEventParking
+                          ? "Garage C — Park here"
+                          : isDestination
+                            ? building.label
+                            : undefined
+                      }
                       className={styles.building}
                       data-building-id={building.id}
                       data-kind={building.kind}
+                      data-event-parking={isEventParking ? "true" : undefined}
                       data-live={liveCount > 0 ? "true" : undefined}
                       data-landmark-glow={
                         building.id === "student-union" ||
@@ -1115,7 +1311,21 @@ export function KhixVenueMap() {
                       tabIndex={isDestination ? 0 : undefined}
                     >
                       <path d={building.path} />
-                      {isDestination ? (
+                      {isEventParking ? (
+                        <g
+                          className={styles.parkingCallout}
+                          transform={`translate(${EVENT_PARKING.center.x} ${EVENT_PARKING.center.y})`}
+                          aria-hidden="true"
+                        >
+                          <text className={styles.parkingName} y="-10">
+                            Garage C
+                          </text>
+                          <text className={styles.parkingAction} y="9">
+                            PARK HERE!!!
+                          </text>
+                          <path d="M0 20v14m-6-6 6 6 6-6" />
+                        </g>
+                      ) : isDestination ? (
                         <>
                           <text
                             x={building.center.x}
@@ -1171,19 +1381,36 @@ export function KhixVenueMap() {
           {!locationMessage && !selectedEvent ? (
             <p className={styles.mapHint} aria-live="polite">
               {activeFloor
-                ? "Drag · scroll or pinch to zoom back to campus"
+                ? "Drag to explore · Pinch to zoom · Back for campus"
                 : "Drag · scroll or pinch to zoom into a KHIX building"}
             </p>
           ) : null}
 
           {activeFloor ? (
-            <div className={styles.roomLegend} aria-label="Room status legend">
-              <span data-state="bathroom">Bathroom</span>
-              <span data-state="restricted">Restricted</span>
-              <span data-state="idle">Permitted</span>
-              <span data-state="live">Live</span>
-              <span data-state="upcoming">Within 1 hour</span>
-            </div>
+            <details
+              ref={legendRef}
+              className={styles.roomLegend}
+              open={showLegend}
+              onToggle={(event) => {
+                const open = event.currentTarget.open;
+                setShowLegend(open);
+                if (open) {
+                  setShowLocationPicker(false);
+                  setSelectedEventId(null);
+                  setEventsExpanded(false);
+                  setLocationMessage(null);
+                }
+              }}
+            >
+              <summary className={styles.legendToggle}>Map key</summary>
+              <div className={styles.legendItems}>
+                <span data-state="bathroom">Bathroom</span>
+                <span data-state="restricted">Unavailable</span>
+                <span data-state="idle">Event room</span>
+                <span data-state="live">Live</span>
+                <span data-state="upcoming">Within 1 hour</span>
+              </div>
+            </details>
           ) : null}
           {mapConfigurationQuery.isError ? (
             <p role="alert" className={styles.policyError}>
@@ -1203,7 +1430,32 @@ export function KhixVenueMap() {
           </p>
 
           {showLocationPicker ? (
-            <div className={styles.locationPicker}>
+            <form
+              ref={locationPickerRef}
+              id="map-location-picker"
+              className={styles.locationPicker}
+              aria-label="Set your location"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveIndoorSpot();
+                setShowLocationPicker(false);
+                locationButtonRef.current?.focus();
+              }}
+            >
+              <div className={styles.locationHeader}>
+                <h2>Your location</h2>
+                <button
+                  className={styles.locationClose}
+                  aria-label="Close location settings"
+                  type="button"
+                  onClick={() => {
+                    setShowLocationPicker(false);
+                    locationButtonRef.current?.focus();
+                  }}
+                >
+                  <X aria-hidden="true" />
+                </button>
+              </div>
               <Button
                 className={styles.locationButton}
                 disabled={locating}
@@ -1212,150 +1464,90 @@ export function KhixVenueMap() {
                 variant="outline"
               >
                 <LocateFixed aria-hidden="true" />
-                {locating ? "Locating…" : "Locate me"}
+                {locating ? "Locating…" : "Use device location"}
               </Button>
-              <label aria-label="Building">
-                <select
-                  onChange={(event) =>
-                    setIndoorBuildingId(event.target.value as IndoorBuildingId)
-                  }
-                  value={indoorBuildingId}
-                >
-                  {INDOOR_BUILDINGS.map((building) => (
-                    <option key={building.id} value={building.id}>
-                      {building.abbreviation}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label aria-label="Room or area">
-                <input
-                  maxLength={24}
-                  onChange={(event) => setIndoorRoom(event.target.value)}
-                  placeholder="e.g. 224 or Atrium"
-                  value={indoorRoom}
-                />
-              </label>
-              <Button
-                className={styles.setSpotButton}
-                onClick={() => {
-                  saveIndoorSpot();
-                  setShowLocationPicker(false);
-                }}
-                type="button"
-              >
+              <div className={styles.locationFields}>
+                <label>
+                  Building
+                  <select
+                    onChange={(event) => {
+                      if (isIndoorBuildingId(event.target.value))
+                        setIndoorBuildingId(event.target.value);
+                    }}
+                    value={indoorBuildingId}
+                  >
+                    {INDOOR_BUILDINGS.map((building) => (
+                      <option key={building.id} value={building.id}>
+                        {building.abbreviation}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Room (optional)
+                  <input
+                    maxLength={60}
+                    list="map-room-options"
+                    onChange={(event) => setIndoorRoom(event.target.value)}
+                    placeholder="224 or Atrium"
+                    value={indoorRoom}
+                    autoComplete="off"
+                  />
+                  <datalist id="map-room-options">
+                    {KHIX_EVENT_ROOMS.filter(
+                      (room) => room.buildingId === indoorBuildingId,
+                    ).map((room) => (
+                      <option key={room.roomNumber} value={room.roomNumber}>
+                        {room.name}
+                      </option>
+                    ))}
+                  </datalist>
+                </label>
+              </div>
+              <Button className={styles.setSpotButton} type="submit">
                 <Navigation aria-hidden="true" />
                 Set my spot
               </Button>
-            </div>
+              {locationMessage ? <p role="status">{locationMessage}</p> : null}
+            </form>
           ) : null}
 
-          <section
-            className={styles.eventsSheet}
-            data-expanded={eventsExpanded}
-            aria-label="Venue events"
-          >
-            <button
-              className={styles.sheetToggle}
-              type="button"
-              aria-expanded={eventsExpanded}
-              aria-controls="map-event-list"
-              onClick={() => setEventsExpanded(!eventsExpanded)}
-            >
-              <span className={styles.sheetHandle} />
-              <span>
-                Happening now{" "}
-                <span className={styles.eventCount}>
-                  {scheduleQuery.isSuccess
-                    ? plottedEvents.filter((event) => event.state === "live")
-                        .length
-                    : "—"}
-                </span>
-              </span>
-              <span className={styles.sheetAction}>
-                {eventsExpanded ? "Collapse" : "Explore events"}
-              </span>
-            </button>
-            {eventsExpanded && (
-              <div id="map-event-list" className={styles.eventList}>
-                {dashboard.participant?.status !== "confirmed" &&
-                dashboard.participant?.status !== "checkedin" ? (
-                  <p>Confirm your attendance to view the schedule.</p>
-                ) : scheduleQuery.isPending ? (
-                  <p>Loading schedule…</p>
-                ) : scheduleQuery.isError ? (
-                  <button
-                    type="button"
-                    onClick={() => void scheduleQuery.refetch()}
-                  >
-                    Schedule unavailable · Retry
-                  </button>
-                ) : filteredEvents.filter((event) => event.state !== "ended")
-                    .length === 0 ? (
-                  <p>
-                    No {filter === "live" ? "live" : "upcoming"} events right
-                    now.
-                  </p>
-                ) : (
-                  filteredEvents
-                    .filter((event) => event.state !== "ended")
-                    .map((event) => (
-                      <button
-                        className={styles.eventRow}
-                        aria-label={`${event.name}, ${event.location}. ${eventHasMappedRoom(event) ? "Show room" : "Show building; room not mapped"}`}
-                        aria-pressed={event.id === selectedEventId}
-                        key={event.id}
-                        type="button"
-                        onClick={() => {
-                          focusEvent(event);
-                          setEventsExpanded(false);
-                        }}
-                      >
-                        <span className={styles.eventTime}>
-                          {event.state === "live"
-                            ? "LIVE"
-                            : formatScheduleTimeRange(
-                                event.startDateTime,
-                                event.endDateTime,
-                                dashboard.hackathon.timezone,
-                              )}
-                        </span>
-                        <strong>{event.name}</strong>
-                        <span>{event.location}</span>
-                        <span className={styles.eventAction}>
-                          {eventHasMappedRoom(event)
-                            ? "Show room →"
-                            : "Show building → · Room not mapped"}
-                        </span>
-                      </button>
-                    ))
-                )}
-              </div>
-            )}
-          </section>
+          <MapEventsDock
+            events={filteredEvents}
+            filter={filter}
+            onFilterChange={(value) => {
+              setFilter(value);
+              setSelectedEventId(null);
+            }}
+            expanded={eventsExpanded}
+            onExpandedChange={(expanded) => {
+              setEventsExpanded(expanded);
+              setShowLocationPicker(false);
+              setShowLegend(false);
+              setLocationMessage(null);
+            }}
+            selectedEvent={selectedEvent}
+            onCloseEvent={() => setSelectedEventId(null)}
+            onSelectEvent={focusEvent}
+            scheduleState={
+              scheduleQuery.isPending
+                ? "pending"
+                : scheduleQuery.isError
+                  ? "error"
+                  : "ready"
+            }
+            canViewSchedule={
+              dashboard.participant?.status === "confirmed" ||
+              dashboard.participant?.status === "checkedin"
+            }
+            onRetry={() => void scheduleQuery.refetch()}
+            timeZone={dashboard.hackathon.timezone}
+          />
 
-          {selectedEvent ? (
-            <MapSelection
-              event={selectedEvent}
-              timeZone={dashboard.hackathon.timezone}
-              onClose={() => setSelectedEventId(null)}
-            />
-          ) : null}
-
-          {locationMessage ? (
+          {locationMessage && !showLocationPicker ? (
             <p className={styles.locationMessage} aria-live="polite">
               {locationMessage}
             </p>
-          ) : null}
-
-          {scheduleQuery.isError && !eventsExpanded ? (
-            <button
-              className={styles.scheduleError}
-              onClick={() => void scheduleQuery.refetch()}
-              type="button"
-            >
-              Schedule unavailable · retry
-            </button>
           ) : null}
         </div>
       </section>
@@ -1401,34 +1593,91 @@ function IndoorFloorMap({
   selectedEventId: string | null;
   spot: IndoorSpot | null;
 }) {
-  const floorPlan = getVenueFloorPlan(
-    activeFloor.buildingId,
-    activeFloor.floor,
-  );
-  if (!floorPlan) return null;
+  const floorModel = useMemo(() => {
+    const floorPlan = getVenueFloorPlan(
+      activeFloor.buildingId,
+      activeFloor.floor,
+    );
+    if (!floorPlan) return null;
 
-  const floorEvents = events.filter(
-    (event) =>
-      event.venueLocation.buildingId === activeFloor.buildingId &&
-      event.venueLocation.room &&
-      findVenueRoom(activeFloor.buildingId, event.venueLocation.room)?.floor ===
-        activeFloor.floor,
-  );
-  const floorRotation = FLOOR_ROTATION[activeFloor.buildingId];
-  const normalizedSpotRoom = spot?.room.trim().toUpperCase() ?? "";
-  const spotRoom =
+    const floorEvents = events.filter(
+      (event) =>
+        event.venueLocation.buildingId === activeFloor.buildingId &&
+        event.venueLocation.room &&
+        findVenueRoom(activeFloor.buildingId, event.venueLocation.room)
+          ?.floor === activeFloor.floor,
+    );
+    const floorRotation = FLOOR_ROTATION[activeFloor.buildingId];
+
+    const rooms = floorPlan.rooms.map((room) => ({
+      room,
+      presentation: getRoomPresentation(
+        room,
+        activeFloor.buildingId,
+        configuration,
+        floorEvents,
+        now,
+      ),
+    }));
+    const labelAngle = (floorRotation * Math.PI) / 180;
+    const labelPositions = rooms
+      .filter(
+        ({ presentation }) =>
+          presentation.label && presentation.state !== "bathroom",
+      )
+      .map(({ room }) => ({
+        id: room.id,
+        x: room.x * Math.cos(labelAngle) - room.y * Math.sin(labelAngle),
+        y: room.x * Math.sin(labelAngle) + room.y * Math.cos(labelAngle),
+      }));
+    // Condense tightly packed numbers horizontally while keeping their readable
+    // height. Compare upright label positions after the building rotation.
+    const labelWidths = new Map(
+      labelPositions.map((label) => [
+        label.id,
+        Math.max(
+          12,
+          Math.min(
+            ...labelPositions
+              .filter(
+                (other) =>
+                  other.id !== label.id && Math.abs(other.y - label.y) < 14,
+              )
+              .map((other) => Math.abs(other.x - label.x) * 0.88),
+          ),
+        ),
+      ]),
+    );
+
+    return { floorPlan, floorEvents, floorRotation, rooms, labelWidths };
+  }, [activeFloor.buildingId, activeFloor.floor, configuration, events, now]);
+  if (!floorModel) return null;
+  const { floorPlan, floorEvents, floorRotation, rooms, labelWidths } =
+    floorModel;
+  const spotMatch =
     spot?.buildingId === activeFloor.buildingId
-      ? floorPlan.rooms.find((room) =>
-          room.roomIds.includes(normalizedSpotRoom),
-        )
+      ? findVenueRoom(spot.buildingId, spot.room)
       : null;
-
+  const spotRoom =
+    spotMatch?.floor === activeFloor.floor ? spotMatch.room : null;
   return (
     <g
       className={styles.indoorFloor}
       data-floor-geometry="true"
+      data-native-walls={floorPlan.structureImage ? "true" : undefined}
       transform={`rotate(${floorRotation} 500 350)`}
     >
+      {floorPlan.outlinePath ? (
+        <path
+          className={styles.floorOutline}
+          d={floorPlan.outlinePath}
+          vectorEffect="non-scaling-stroke"
+          aria-hidden="true"
+        />
+      ) : null}
+      {floorPlan.structureImage ? (
+        <image {...floorPlan.structureImage} aria-hidden="true" />
+      ) : null}
       {floorPlan.structurePaths ? (
         <g className={styles.floorStructure} aria-hidden="true">
           {floorPlan.structurePaths.map((path, index) => (
@@ -1449,7 +1698,11 @@ function IndoorFloorMap({
                   : undefined
               }
             >
-              <path d={area.path} vectorEffect="non-scaling-stroke" />
+              <path
+                d={area.path}
+                fillRule="evenodd"
+                vectorEffect="non-scaling-stroke"
+              />
               <text
                 x={area.x}
                 y={area.y}
@@ -1461,14 +1714,7 @@ function IndoorFloorMap({
           ))}
         </g>
       ) : null}
-      {floorPlan.rooms.map((room) => {
-        const presentation = getRoomPresentation(
-          room,
-          activeFloor.buildingId,
-          configuration,
-          floorEvents,
-          now,
-        );
+      {rooms.map(({ room, presentation }) => {
         const roomEvent = [...floorEvents]
           .filter((event) => event.state !== "ended")
           .sort(
@@ -1480,7 +1726,15 @@ function IndoorFloorMap({
           .find(
             (event) =>
               event.venueLocation.room &&
-              room.roomIds.includes(event.venueLocation.room),
+              isKhixEventRoom(
+                activeFloor.buildingId,
+                event.venueLocation.room,
+              ) &&
+              roomMatchesNumber(
+                activeFloor.buildingId,
+                room.roomIds,
+                event.venueLocation.room,
+              ),
           );
         const interactive =
           Boolean(roomEvent) &&
@@ -1498,12 +1752,15 @@ function IndoorFloorMap({
             }
             className={styles.floorRoom}
             data-room-id={room.id}
+            data-geometry={room.geometry}
             data-state={presentation.state}
-            data-event={roomEvent ? "true" : undefined}
+            data-event={interactive ? "true" : undefined}
             data-live={presentation.state === "live" ? "true" : undefined}
             data-map-interactive={interactive ? "true" : undefined}
             data-selected={
-              roomEvent?.id === selectedEventId ? "true" : undefined
+              interactive && roomEvent?.id === selectedEventId
+                ? "true"
+                : undefined
             }
             filter={
               presentation.state === "live" ? "url(#khix-map-glow)" : undefined
@@ -1531,56 +1788,79 @@ function IndoorFloorMap({
             <path d={room.path} vectorEffect="non-scaling-stroke" />
             <title>
               {presentation.state === "restricted"
-                ? "Restricted room"
+                ? `${presentation.label ? `Room ${presentation.label} · ` : ""}Not available for Knight Hacks`
                 : `${presentation.label ?? "Room"}${presentation.name ? ` · ${presentation.name}` : ""} · ${presentation.state === "upcoming" ? "Activity within 1 hour" : presentation.state}`}
             </title>
-            {presentation.label && presentation.state !== "bathroom" ? (
-              <text
-                x={room.x}
-                y={room.y}
-                transform={`rotate(${-floorRotation} ${room.x} ${room.y})`}
-              >
-                {presentation.label.slice(0, 18)}
-                {presentation.name ? (
-                  <tspan x={room.x} dy="11">
-                    {presentation.name.length > 20
-                      ? `${presentation.name.slice(0, 19)}…`
-                      : presentation.name}
-                  </tspan>
-                ) : null}
-              </text>
-            ) : null}
           </g>
         );
       })}
       {floorPlan.labels ? (
         <g className={styles.floorLabels} aria-hidden="true">
-          {floorPlan.labels.map((label) => (
-            <text
-              key={`${label.text}-${label.x}-${label.y}`}
-              x={label.x}
-              y={label.y}
-              transform={`rotate(${-floorRotation} ${label.x} ${label.y})`}
-              data-check-in={
-                label.text.includes("CHECK-IN") ? "true" : undefined
-              }
-            >
-              {label.text.includes("CHECK-IN") ? (
-                <>
-                  <tspan x={label.x} dy="-4">
-                    CHECK-IN
-                  </tspan>
-                  <tspan x={label.x} dy="13">
-                    Engineering Atrium
-                  </tspan>
-                </>
-              ) : (
-                label.text
-              )}
-            </text>
-          ))}
+          {floorPlan.labels
+            .filter(
+              (label) =>
+                isWayfindingLabel(label.text) ||
+                /^\d{3}[A-Z]?$/.test(label.text),
+            )
+            .map((label) => (
+              <text
+                key={`${label.text}-${label.x}-${label.y}`}
+                x={label.x}
+                y={label.y}
+                transform={`rotate(${-floorRotation} ${label.x} ${label.y})`}
+                data-check-in={
+                  label.text.includes("CHECK-IN") ? "true" : undefined
+                }
+              >
+                {label.text.includes("CHECK-IN") ? (
+                  <>
+                    <tspan x={label.x} dy="-4">
+                      CHECK-IN
+                    </tspan>
+                    <tspan x={label.x} dy="13">
+                      Engineering Atrium
+                    </tspan>
+                  </>
+                ) : (
+                  label.text
+                )}
+              </text>
+            ))}
         </g>
       ) : null}
+      <g className={styles.floorRoomLabels} aria-hidden="true">
+        {rooms.map(({ room, presentation }) =>
+          presentation.label && presentation.state !== "bathroom" ? (
+            <text
+              key={room.id}
+              x={room.x}
+              y={room.y}
+              data-state={presentation.state}
+              data-room-number={
+                room.roomIds.some((id) => /^\d/.test(id)) ? "true" : undefined
+              }
+              transform={`rotate(${-floorRotation} ${room.x} ${room.y})`}
+              textLength={
+                !presentation.name &&
+                presentation.label.length * 7 >
+                  (labelWidths.get(room.id) ?? Infinity)
+                  ? labelWidths.get(room.id)
+                  : undefined
+              }
+              lengthAdjust="spacingAndGlyphs"
+            >
+              {presentation.label.slice(0, 18)}
+              {presentation.name ? (
+                <tspan x={room.x} dy="14">
+                  {presentation.name.length > 20
+                    ? `${presentation.name.slice(0, 19)}…`
+                    : presentation.name}
+                </tspan>
+              ) : null}
+            </text>
+          ) : null,
+        )}
+      </g>
       {spotRoom ? (
         <g
           className={styles.floorUserMarker}
@@ -1598,67 +1878,10 @@ function IndoorFloorMap({
 }
 
 function eventRoomLabel(event: PlottedScheduleEvent) {
-  return `${event.venueLocation.buildingId.toUpperCase()} ${event.venueLocation.room ?? ""}`.trim();
-}
-
-function MapSelection({
-  event,
-  timeZone,
-  onClose,
-}: {
-  event: PlottedScheduleEvent;
-  timeZone: string;
-  onClose: () => void;
-}) {
-  return (
-    <section className={styles.selection} aria-live="polite">
-      <div className={styles.selectionHeader}>
-        <div>
-          <h2>{event.name}</h2>
-          <span className={styles.selectionType}>
-            {event.state === "live"
-              ? "Live now"
-              : categoryLabel(event.category)}
-          </span>
-        </div>
-        <button
-          className={styles.closeSelection}
-          type="button"
-          aria-label="Close event"
-          title="Close event"
-          onClick={onClose}
-        >
-          <X aria-hidden="true" />
-        </button>
-      </div>
-      <div className={styles.selectionBody}>
-        {!eventHasMappedRoom(event) && (
-          <p>Room location is not mapped. Showing the building only.</p>
-        )}
-        <p>{event.description || "No additional event details."}</p>
-        <dl>
-          <div>
-            <dt>When</dt>
-            <dd>
-              {formatScheduleTimeRange(
-                event.startDateTime,
-                event.endDateTime,
-                timeZone,
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt>Where</dt>
-            <dd>{event.location || "Location TBA"}</dd>
-          </div>
-          <div>
-            <dt>Floor</dt>
-            <dd>{event.venueLocation.floor ?? "Check room signage"}</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
+  const building = CAMPUS_BUILDINGS.find(
+    (entry) => entry.id === event.venueLocation.buildingId,
   );
+  return `${building?.abbreviation ?? event.venueLocation.buildingId} ${event.venueLocation.room ?? ""}`.trim();
 }
 
 function MapMessageState({

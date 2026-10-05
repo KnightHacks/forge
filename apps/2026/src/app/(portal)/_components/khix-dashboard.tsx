@@ -110,6 +110,7 @@ import {
   buildDisplayedAgreementInputs,
   requiredAgreementsAccepted,
 } from "~/lib/portal-agreements";
+import { useMapAccess } from "~/lib/use-map-access";
 import statusStyles from "./application-status.module.css";
 import { CustomSchoolField } from "./custom-school-field";
 import { HackerAdmissionPass } from "./hacker-admission-pass";
@@ -919,6 +920,7 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
   const previousPathRef = useRef(pathname);
   const dashboardQuery = useHackerDashboard();
   const judgingQuery = useHackerJudging();
+  const mapAccess = useMapAccess();
   const logout = usePortalSignOut();
   const [mobileMenuState, setMobileMenuState] =
     useState<MobileDrawerState>("closed");
@@ -1362,6 +1364,41 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                 </span>
                 <span className={styles.railLinkLabel}>Hacker’s Guide</span>
               </Link>
+              {mapAccess.available ? (
+                <Link
+                  aria-current={activeItem === "map" ? "page" : undefined}
+                  className={joinClasses(
+                    styles.railLink,
+                    activeItem === "map" && styles.railLinkActive,
+                  )}
+                  href="/dashboard/map"
+                  onClick={closeMobileMenu}
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <MapIcon className="size-4" />
+                  </span>
+                  <span className={styles.railLinkLabel}>Map</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={joinClasses(
+                    styles.railLink,
+                    styles.railButton,
+                    styles.railLinkLocked,
+                  )}
+                  aria-label={`Map locked. ${mapAccess.reason}`}
+                  title={mapAccess.reason}
+                  disabled
+                >
+                  <span className={styles.railIcon} aria-hidden="true">
+                    <MapIcon className="size-4" />
+                  </span>
+                  <span className={styles.railLockedLabel}>
+                    Map <LockKeyhole className={styles.railLockIcon} />
+                  </span>
+                </button>
+              )}
               <Link
                 className={joinClasses(
                   styles.railLink,
@@ -1488,22 +1525,6 @@ export function KhixDashboardShell({ children }: { children: ReactNode }) {
                   </span>
                 </button>
               )}
-              <Link
-                aria-current={activeItem === "map" ? "page" : undefined}
-                className={joinClasses(
-                  styles.railLink,
-                  activeItem === "map" && styles.railLinkActive,
-                )}
-                href="/dashboard/map"
-                onClick={closeMobileMenu}
-              >
-                <span className={styles.railIcon} aria-hidden="true">
-                  <MapIcon className="size-4" />
-                </span>
-                <span className={styles.railLinkText}>
-                  <span className={styles.railLinkLabel}>Map</span>
-                </span>
-              </Link>
               {checkedIn ? (
                 <Link
                   className={joinClasses(

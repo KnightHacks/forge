@@ -11,6 +11,7 @@ import {
   HackerProfile,
   HackerProfileRevision,
 } from "@forge/db/schemas/knight-hacks";
+import { getHackerMapAccess } from "@forge/hacker-sdk";
 
 import type { HackerPortalContext } from "./trpc";
 import {
@@ -234,10 +235,26 @@ export async function requireApplicationWithStatuses(
   return application;
 }
 
-/** Every authenticated map viewer receives only their portal's configuration. */
+/** Enforce participant eligibility before reading the portal's configuration. */
 export async function getMapConfiguration(
   ctx: AuthenticatedPortalContext,
 ): Promise<MapConfiguration> {
+  const application = await requireApplicationWithStatuses(ctx, [
+    "confirmed",
+    "checkedin",
+  ]);
+  const hackathon = await requirePortalHackathon(ctx.session.hackathonId);
+  if (
+    getHackerMapAccess({
+      startsAt: hackathon.startDate,
+      status: application.status,
+      timeZone: hackathon.timezone,
+    }) !== "available"
+  ) {
+    portalFailure("FORBIDDEN", "The map opens on the first day of the event.", {
+      trpcCode: "FORBIDDEN",
+    });
+  }
   const configuration = await db.query.HackathonMapConfiguration.findFirst({
     where: eq(HackathonMapConfiguration.hackathonId, ctx.session.hackathonId),
   });

@@ -2,6 +2,12 @@ import type { HackerMapConfigurationDto as MapConfiguration } from "@forge/hacke
 
 import type { IndoorBuildingId, VenueFloorRoom } from "./venue-floor-plans";
 import type { PlottedScheduleEvent } from "./venue-map";
+import {
+  getVenueRoomName,
+  isKhixEventRoom,
+  normalizeRoomNumber,
+  roomMatchesNumber,
+} from "./venue-room-directory";
 
 export type RoomState =
   | "bathroom"
@@ -10,6 +16,13 @@ export type RoomState =
   | "idle"
   | "live"
   | "upcoming";
+
+/** Keep useful navigation labels without advertising unbooked spaces. */
+export function isWayfindingLabel(label: string) {
+  return /\b(?:STAIRS?|LIFTS?|ELEVATORS?|EXIT|HALL|ATRIUM|CHECK-IN|WC|MEN|WOMEN|BATHROOMS?|RESTROOMS?)\b/i.test(
+    label,
+  );
+}
 
 /** Access and bathroom metadata outrank activity, independent of selection. */
 export function getRoomPresentation(
@@ -22,10 +35,8 @@ export function getRoomPresentation(
   if (room.kind === "bathroom")
     return { state: "bathroom", label: "Bathroom", name: null };
   if (
-    room.roomIds.length === 0 ||
-    room.roomIds.some((id) =>
-      /\b(?:STAIRS|ELEVATORS?|EXIT|HALL|ATRIUM)\b/i.test(id),
-    )
+    (room.roomIds.length === 0 && !room.reviewId) ||
+    room.roomIds.some(isWayfindingLabel)
   ) {
     return {
       state: "circulation",
@@ -33,21 +44,23 @@ export function getRoomPresentation(
       name: null,
     };
   }
+  const eventRoomIds = room.roomIds.filter((id) =>
+    isKhixEventRoom(buildingId, id),
+  );
+  const label = room.roomIds.map(normalizeRoomNumber).join(" / ") || null;
+  if (!eventRoomIds.length) return { state: "restricted", label, name: null };
   const permittedRooms = configuration.rooms.filter(
     (entry) =>
       entry.buildingId === buildingId &&
-      room.roomIds.includes(entry.roomNumber),
+      roomMatchesNumber(buildingId, eventRoomIds, entry.roomNumber),
   );
   if (configuration.restrictionsEnabled && !permittedRooms.length)
-    return { state: "restricted", label: null, name: null };
-  const label = configuration.restrictionsEnabled
-    ? permittedRooms.map((entry) => entry.roomNumber).join(" / ")
-    : (room.roomIds.find((id) => /^\d/.test(id)) ?? room.roomIds[0] ?? null);
+    return { state: "restricted", label, name: null };
   const activity = events.filter(
     (event) =>
       event.venueLocation.buildingId === buildingId &&
       event.venueLocation.room &&
-      room.roomIds.includes(event.venueLocation.room),
+      roomMatchesNumber(buildingId, eventRoomIds, event.venueLocation.room),
   );
   const state = activity.some((event) => event.state === "live")
     ? "live"
@@ -61,6 +74,11 @@ export function getRoomPresentation(
   return {
     state,
     label,
-    name: permittedRooms.find((entry) => entry.name)?.name ?? null,
+    name:
+      permittedRooms.find((entry) => entry.name)?.name ??
+      (buildingId === "student-union" &&
+      room.roomIds.every((id) => /^(218|316)[A-D]$/.test(id))
+        ? null
+        : (getVenueRoomName(buildingId, room.roomIds) ?? null)),
   };
 }

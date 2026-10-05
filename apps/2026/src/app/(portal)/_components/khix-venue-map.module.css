@@ -3,9 +3,8 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  height: calc(100dvh - var(--khix-page-top) - 3rem);
-  border-radius: var(--khix-panel-radius);
-  min-height: 32rem;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: #07150f;
 }
@@ -31,104 +30,6 @@
   stroke: #eeff90 !important;
   stroke-width: 3;
 }
-
-.eventsSheet {
-  position: absolute;
-  z-index: 5;
-  bottom: 1.5rem;
-  left: 1rem;
-  width: min(360px, calc(100% - 2rem));
-  border-radius: 0.7rem;
-  color: #fffdf4;
-  font-family: var(--khix-body-font);
-  overflow: hidden;
-}
-.sheetToggle {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 76px;
-  padding: 12px 18px 16px;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.sheetHandle {
-  width: 36px;
-  height: 4px;
-  margin: 0 calc(50% - 18px) 4px;
-  border-radius: 4px;
-  background: #7f9386;
-}
-.sheetAction {
-  font-size: 12px;
-  color: var(--khix-accent);
-}
-.eventCount {
-  color: var(--khix-accent);
-  margin-left: 6px;
-}
-.eventList {
-  max-height: 34dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0 18px 18px;
-}
-.eventList > p {
-  color: #becbc2;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.eventRow {
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  min-height: 80px;
-  padding: 16px 0;
-  border: 0;
-  border-top: 1px solid #425449;
-  background: transparent;
-  text-align: left;
-  color: #fffdf4;
-  cursor: pointer;
-}
-.eventRow > span {
-  font-size: 13px;
-  color: #becbc2;
-}
-.eventRow .eventTime {
-  color: var(--khix-accent);
-  font-size: 11px;
-  font-weight: 700;
-}
-.eventRow strong {
-  overflow-wrap: anywhere;
-}
-.eventRow {
-  padding-inline: 10px;
-  border-radius: 10px;
-  transition: background 140ms ease;
-}
-.eventRow:hover,
-.eventRow:focus-visible,
-.eventRow[aria-pressed="true"] {
-  background: rgb(216 197 242 / 0.12);
-}
-.eventRow:active {
-  background: rgb(216 197 242 / 0.2);
-}
-.eventRow .eventAction {
-  color: var(--khix-accent);
-  font-size: 14px;
-  font-weight: 700;
-}
 .floorRoom[data-selected="true"] > path {
   stroke: #fffbd3;
   stroke-width: 4;
@@ -137,36 +38,6 @@
 .floorRoom[data-event="true"]:focus-visible > path {
   stroke: #fffbd3;
   stroke-width: 4;
-}
-.closeSelection {
-  display: grid;
-  flex: 0 0 auto;
-  width: 44px;
-  min-height: 44px;
-  place-items: center;
-  border: 0;
-  border-radius: 0.65rem;
-  background: transparent;
-  color: rgb(255 253 244 / 0.72);
-  cursor: pointer;
-  transition:
-    background var(--khix-motion-fast),
-    color var(--khix-motion-fast);
-}
-.closeSelection:hover,
-.closeSelection:active {
-  background: rgb(216 197 242 / 0.16);
-  color: var(--khix-accent);
-}
-.closeSelection svg {
-  width: 1rem;
-  height: 1rem;
-}
-.sheetToggle:focus-visible,
-.eventRow:focus-visible,
-.closeSelection:focus-visible {
-  outline: 2px solid var(--khix-accent);
-  outline-offset: -3px;
 }
 
 .srOnly {
@@ -180,14 +51,19 @@
 }
 
 .mapFrame {
+  --map-floating-bottom: calc(
+    var(--map-dock-height, 64px) + 1.5rem + env(safe-area-inset-bottom, 0px) +
+      10px
+  );
+
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 32rem;
+  min-height: 0;
   overflow: hidden;
   background:
     radial-gradient(circle at 75% 24%, rgb(121 95 157 / 0.12), transparent 28%),
-    #07150f;
+    linear-gradient(135deg, #071b14, #0b2119 52%, #160f24);
 }
 
 .mapFrame::after {
@@ -314,6 +190,50 @@
   stroke-width: 5;
 }
 
+.building[data-event-parking="true"] > path:first-child {
+  fill: rgb(216 197 242 / 0.18);
+  stroke: var(--khix-accent);
+  stroke-dasharray: none;
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 8px rgb(216 197 242 / 0.3));
+}
+
+.building[data-event-parking="true"]:focus-visible > path:first-child {
+  stroke-width: 5;
+}
+
+.parkingCallout {
+  pointer-events: none;
+}
+
+.parkingCallout text {
+  fill: var(--khix-ink);
+  stroke: #190925;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+  text-anchor: middle;
+  font-family: Arial, sans-serif;
+  font-weight: 900;
+}
+
+.parkingName {
+  font-size: 12px;
+}
+
+.parkingCallout .parkingAction {
+  fill: var(--khix-accent);
+  font-size: 12.5px;
+}
+
+.parkingCallout > path {
+  fill: none;
+  stroke: var(--khix-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
 .buildingCode,
 .buildingName {
   pointer-events: none;
@@ -342,10 +262,7 @@
 .toolbar,
 .mapControls,
 .locationPicker,
-.eventsSheet,
-.selection,
 .locationMessage,
-.scheduleError,
 .policyError,
 .roomLegend,
 .mapHint,
@@ -359,7 +276,7 @@
 }
 
 .mapHint {
-  bottom: 7.5rem;
+  bottom: calc(var(--map-floating-bottom) + 54px);
   left: 1rem;
   margin: 0;
   border-radius: 999px;
@@ -368,6 +285,11 @@
   font-size: 0.62rem;
   font-weight: 750;
   pointer-events: none;
+}
+
+.mapFrame:has(.roomLegend[open]) .mapHint,
+.mapFrame:has(.roomLegend[open]) .locationMessage {
+  display: none;
 }
 
 .mapAttribution {
@@ -402,16 +324,34 @@
   white-space: nowrap;
 }
 
-.filterGroup {
+.campusPicker {
   display: flex;
-  gap: 0.18rem;
+  min-width: 0;
+  align-items: center;
+  color: #fffdf4;
+}
+
+.campusPicker select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  padding: 0 0.7rem;
+  color: inherit;
+  color-scheme: dark;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
 }
 
 .backButton,
 .floorTabs button {
   display: grid;
-  min-width: 2.1rem;
-  min-height: 2.1rem;
+  min-width: 44px;
+  min-height: 44px;
   place-items: center;
   border: 0;
   border-radius: 999px;
@@ -419,6 +359,38 @@
   color: rgb(255 253 244 / 0.72);
   font-size: 0.68rem;
   font-weight: 900;
+}
+
+/* The map has compact utility controls instead of the dashboard's decorative
+   button corners. Keep their hit areas, focus and pressed states self-contained. */
+.backButton,
+.floorTabs button,
+.mapControls button,
+.locationClose,
+.locationButton,
+.setSpotButton {
+  margin: 0;
+  box-shadow: none;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.backButton::before,
+.backButton::after,
+.floorTabs button::before,
+.floorTabs button::after,
+.mapControls button::before,
+.mapControls button::after,
+.locationClose::before,
+.locationClose::after,
+.locationButton::before,
+.locationButton::after,
+.setSpotButton::before,
+.setSpotButton::after {
+  display: none;
+  content: none;
 }
 
 .backButton:hover,
@@ -438,27 +410,6 @@
   gap: 0.15rem;
 }
 
-.filterButton {
-  display: inline-flex;
-  min-height: 2.1rem;
-  align-items: center;
-  gap: 0.32rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  padding: 0.4rem 0.62rem;
-  color: rgb(255 253 244 / 0.56);
-  font-size: 0.65rem;
-  font-weight: 850;
-}
-
-.filterButton:hover,
-.filterButton[data-active="true"] {
-  background: rgb(216 197 242 / 0.15);
-  color: var(--khix-accent);
-}
-
-.filterButton svg,
 .locationButton svg,
 .setSpotButton svg {
   width: 0.85rem;
@@ -475,13 +426,17 @@
 
 .mapControls button {
   display: grid;
-  width: 2.55rem;
-  height: 2.55rem;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 0;
   border-bottom: 1px solid rgb(229 239 218 / 0.1);
   background: transparent;
   color: rgb(255 253 244 / 0.72);
+  padding: 0;
+  transition:
+    background var(--khix-motion-fast),
+    color var(--khix-motion-fast);
 }
 
 .mapControls button:last-child {
@@ -496,12 +451,11 @@
 
 .backButton:focus-visible,
 .floorTabs button:focus-visible,
-.filterButton:focus-visible,
 .mapControls button:focus-visible {
   background: rgb(216 197 242 / 0.16);
   color: var(--khix-accent);
   outline: 2px solid var(--khix-accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 
 .mapControls svg {
@@ -532,12 +486,9 @@
   stroke: #9dcdf1 !important;
 }
 .floorRoom[data-state="restricted"] > path {
-  fill: #663f40 !important;
-  stroke: #a87577 !important;
+  fill: url(#khix-map-unavailable) !important;
+  stroke: #796e79 !important;
   filter: none !important;
-}
-.floorRoom[data-state="restricted"] > text {
-  display: none;
 }
 .floorRoom[data-selected="true"] > path,
 .floorRoom[data-map-interactive="true"]:focus-visible > path {
@@ -545,28 +496,91 @@
   stroke-dasharray: 6 3;
 }
 .roomLegend {
-  bottom: 10rem;
+  bottom: var(--map-floating-bottom);
   left: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
   width: fit-content;
   max-width: calc(100% - 2rem);
-  padding: 0.65rem 0.85rem;
-  border-radius: 999px;
+  border-radius: 0.7rem;
   color: rgb(255 253 244 / 0.8);
-  font-size: 0.68rem;
+  font-size: 13px;
   font-weight: 750;
   line-height: 1.4;
-  pointer-events: none;
 }
-.roomLegend span {
+
+.legendToggle {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: inherit;
+  padding: 0 14px;
+  color: #fffdf4;
+  list-style: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background var(--khix-motion-fast),
+    color var(--khix-motion-fast);
+}
+
+.legendToggle::-webkit-details-marker {
+  display: none;
+}
+
+.legendToggle::after {
+  width: 6px;
+  height: 6px;
+  border-top: 1.5px solid currentColor;
+  border-left: 1.5px solid currentColor;
+  content: "";
+  transform: translateY(2px) rotate(45deg);
+  transition: transform var(--khix-motion-fast);
+}
+
+.roomLegend[open] .legendToggle::after {
+  transform: translateY(-1px) rotate(225deg);
+}
+
+.legendToggle:hover,
+.roomLegend[open] .legendToggle {
+  background: rgb(216 197 242 / 0.15);
+  color: var(--khix-accent);
+}
+
+.legendItems {
+  box-sizing: border-box;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 288px;
+  max-width: calc(100vw - 24px);
+  max-height: min(240px, calc(100dvh - var(--map-dock-height, 64px) - 200px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 14px 18px;
+  border: 1px solid var(--khix-panel-border);
+  border-radius: 14px;
+  background: var(--khix-panel-surface);
+  padding: 16px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.roomLegend:not([open]) .legendItems {
+  display: none;
+}
+
+.legendItems span {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   white-space: nowrap;
 }
-.roomLegend span::before {
+.legendItems span::before {
   content: "";
   box-sizing: border-box;
   width: 0.65rem;
@@ -581,8 +595,8 @@
   border-color: #9dcdf1;
 }
 .roomLegend [data-state="restricted"]::before {
-  background: #663f40;
-  border-color: #a87577;
+  background: repeating-linear-gradient(125deg, #25212a 0 3px, #8d7b8a 3px 4px);
+  border-color: #8d7b8a;
 }
 .roomLegend [data-state="live"]::before {
   background: #79bf45;
@@ -635,6 +649,36 @@
   opacity: 0.66;
 }
 
+.floorOutline {
+  fill: #182921;
+  stroke: #718478;
+  stroke-width: 1.2;
+}
+
+/* Native wall drawings provide the visible boundaries. Room envelopes are
+   hit areas and activity highlights, so they do not double up the walls. */
+.indoorFloor[data-native-walls="true"] .floorRoom > path {
+  fill-opacity: 0.35;
+  stroke-opacity: 0.55;
+}
+
+.indoorFloor[data-native-walls="true"]
+  .floorRoom[data-state="restricted"]
+  > path {
+  fill-opacity: 0.75;
+}
+
+.indoorFloor[data-native-walls="true"] .floorRoom[data-event="true"] > path {
+  fill-opacity: 0.65;
+  stroke-opacity: 1;
+}
+
+.indoorFloor[data-native-walls="true"]
+  .floorRoom[data-geometry="marker"]
+  > path {
+  fill-opacity: 0.85;
+}
+
 .floorWalkableAreas path {
   fill: #30432f;
   stroke: rgb(220 238 158 / 0.42);
@@ -675,16 +719,34 @@
     filter 150ms ease;
 }
 
-.floorRoom text {
+.floorRoomLabels {
   pointer-events: none;
-  fill: rgb(231 238 222 / 0.58);
+}
+
+.floorRoomLabels text {
+  fill: #fffdf4;
   font-family: Arial, sans-serif;
-  font-size: 7px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 900;
   paint-order: stroke;
   stroke: #0a1812;
-  stroke-width: 0.85px;
+  stroke-width: 2px;
+  stroke-linejoin: round;
   text-anchor: middle;
+}
+
+.floorRoomLabels text[data-room-number="true"] {
+  font-size: 12px;
+}
+
+.floorRoomLabels text[data-state="restricted"] {
+  fill: #d6c7d7;
+  stroke: #211927;
+}
+
+.floorRoomLabels tspan {
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .floorLabels text {
@@ -789,47 +851,128 @@
 }
 
 .locationPicker {
+  box-sizing: border-box;
   top: 1rem;
   right: 4.3rem;
-  display: flex;
+  z-index: 6;
+  display: grid;
+  width: 340px;
+  max-height: calc(100% - 2rem);
   max-width: calc(100% - 5.3rem);
-  gap: 0.4rem;
-  border-radius: 0.65rem;
-  padding: 0.42rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 12px;
+  border-radius: 14px;
+  padding: 12px;
+  color: #fffdf4;
+}
+
+.locationHeader {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.locationPicker .locationHeader h2 {
+  margin: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  text-shadow: none;
+}
+
+.locationPicker > p {
+  margin: 0;
+  color: rgb(255 253 244 / 0.72);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-shadow: none;
+  overflow-wrap: anywhere;
+}
+
+.locationClose {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0;
+  color: rgb(255 253 244 / 0.72);
+}
+
+.locationClose svg {
+  width: 18px;
+  height: 18px;
+}
+
+.locationClose:hover {
+  background: rgb(216 197 242 / 0.15);
+  color: var(--khix-accent);
+}
+
+.locationFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
 }
 
 .locationPicker label {
-  display: contents;
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: rgb(255 253 244 / 0.72);
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .locationPicker input,
 .locationPicker select {
   min-width: 0;
-  min-height: 2.35rem;
+  width: 100%;
+  min-height: 44px;
   border: 1px solid var(--khix-panel-border);
   border-radius: 0.42rem;
   background: rgb(255 255 255 / 0.05);
   padding: 0.45rem 0.58rem;
   color: #fffdf4;
-  font-size: 0.68rem;
+  color-scheme: dark;
+  font-size: 16px;
   font-weight: 750;
 }
 
 .locationPicker input {
-  width: 9rem;
+  width: 100%;
 }
 
 .locationButton,
 .setSpotButton {
-  min-height: 2.35rem;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   border-radius: 0.42rem;
-  font-size: 0.65rem;
+  padding: 8px 12px;
+  font-size: 14px;
   font-weight: 900;
   white-space: nowrap;
 }
 
 .locationButton {
+  border: 1px solid;
   border-color: rgb(229 239 218 / 0.18);
   background: transparent;
   color: #fffdf4;
@@ -841,105 +984,36 @@
   color: var(--khix-primary-ink);
 }
 
-.selection {
-  right: 1rem;
-  bottom: 1rem;
-  display: grid;
-  width: min(24rem, calc(100% - 2rem));
-  gap: 0.85rem;
-  border-radius: 0.7rem;
-  padding: 1rem;
-  font-family: var(--khix-body-font);
+.locationButton:disabled,
+.setSpotButton:disabled,
+.mapControls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.selectionHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+.legendToggle:focus-visible,
+.campusPicker select:focus-visible,
+.locationClose:focus-visible,
+.locationPicker input:focus-visible,
+.locationPicker select:focus-visible,
+.locationButton:focus-visible,
+.setSpotButton:focus-visible {
+  outline: 2px solid var(--khix-accent);
+  outline-offset: -3px;
 }
 
-.selectionHeader > div {
-  min-width: 0;
-}
-
-.selectionType {
-  display: block;
-  margin-top: 0.3rem;
-  color: var(--khix-accent);
-  font-size: 0.75rem;
-  font-weight: 750;
-  line-height: 1.4;
-}
-
-.selection h2 {
-  margin: 0;
-  color: #fffdf4;
-  font-family: var(--khix-display-font);
-  font-size: 1.6rem;
-  font-weight: 600;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-}
-
-.selectionBody {
-  display: grid;
-  gap: 1rem;
-  max-height: min(32dvh, 18rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: #425449 transparent;
-  scrollbar-width: thin;
-}
-
-.selectionBody > p {
-  margin: 0;
-  color: rgb(255 253 244 / 0.72);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.selection dl {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.5fr);
-  gap: 0.75rem;
-  margin: 0;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--khix-panel-border);
-}
-
-.selection dt {
-  color: rgb(255 253 244 / 0.64);
-  font-size: 0.6875rem;
-  font-weight: 650;
-}
-
-.selection dd {
-  margin: 0.3rem 0 0;
-  color: #fffdf4;
-  font-size: 0.8125rem;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.locationMessage,
-.scheduleError {
-  bottom: 7.5rem;
+.locationMessage {
+  bottom: calc(var(--map-floating-bottom) + 54px);
   left: 1rem;
   max-width: min(28rem, calc(100% - 2rem));
-  border-radius: 999px;
+  margin: 0;
+  border-radius: 12px;
   padding: 0.55rem 0.75rem;
   color: rgb(255 253 244 / 0.7);
-  font-size: 0.62rem;
-  font-weight: 750;
-}
-
-.scheduleError {
-  border-color: rgb(193 99 83 / 0.35);
-  color: #f3b6a8;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .messageState,
@@ -947,10 +1021,11 @@
   display: grid;
   width: 100%;
   height: 100%;
-  min-height: 32rem;
+  min-height: 0;
   place-content: center;
   justify-items: center;
   gap: 0.7rem;
+  padding: 1.5rem;
   background: #07150f;
   color: #fffdf4;
   text-align: center;
@@ -1006,10 +1081,11 @@
 }
 
 @media (max-width: 720px) {
-  .eventsSheet {
-    bottom: max(10px, env(safe-area-inset-bottom));
-    left: 10px;
-    width: calc(100% - 20px);
+  .mapFrame {
+    --map-floating-bottom: calc(
+      var(--map-dock-height, 64px) + max(10px, env(safe-area-inset-bottom)) +
+        10px
+    );
   }
   .buildingName {
     display: none;
@@ -1018,62 +1094,79 @@
     font-size: 12px;
     letter-spacing: 0;
   }
-  .experience {
-    height: calc(100dvh - 4.35rem - var(--khix-page-top) - 3rem);
-    min-height: 32rem;
-  }
-
-  .mapFrame {
-    min-height: 0;
-  }
-
   .toolbar {
-    top: max(0.65rem, env(safe-area-inset-top));
-    right: 0.65rem;
-    left: 0.65rem;
+    top: 10px;
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
+    box-sizing: border-box;
+    height: 56px;
     max-width: none;
-    gap: 0.2rem;
-    overflow-x: auto;
-    padding: 0.24rem;
-    scrollbar-width: none;
+    gap: 4px;
+    border-radius: 16px;
+    padding: 5px;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 0.18);
   }
 
   .floorTitle {
-    display: none;
+    display: block;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    padding: 0 4px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+  }
+
+  .campusPicker {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .campusPicker select {
+    font-size: 16px;
   }
 
   .backButton,
   .floorTabs button {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    font-size: 0.78rem;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    border-radius: 11px;
+    padding: 0;
+    font-size: 14px;
+  }
+
+  .backButton svg {
+    width: 20px;
+    height: 20px;
   }
 
   .floorTabs {
-    gap: 0.08rem;
-  }
-
-  .filterButton {
-    min-height: 2.75rem;
-    min-width: max-content;
-    padding-inline: 0.72rem;
-    font-size: 0.72rem;
+    min-width: 0;
+    flex: 0 0 auto;
+    gap: 0;
+    margin-left: auto;
   }
 
   .mapControls {
-    top: 5rem;
-    right: 0.65rem;
-    bottom: auto;
-    grid-template-columns: 1fr;
+    top: auto;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: var(--map-floating-bottom);
+    grid-template-columns: repeat(4, 44px);
     border-radius: 14px;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 0.18);
     transform: none;
   }
 
   .mapControls button {
-    width: 3rem;
-    height: 3rem;
-    border-right: 1px solid rgb(229 239 218 / 0.1);
+    width: 44px;
+    height: 44px;
+    border-right: 1px solid var(--khix-panel-border);
     border-bottom: 0;
+    border-radius: 0;
   }
 
   .mapControls button:last-child {
@@ -1081,107 +1174,81 @@
   }
 
   .mapControls svg {
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 20px;
+    height: 20px;
   }
 
   .locationPicker {
     top: auto;
-    right: 0.7rem;
-    bottom: calc(6.5rem + env(safe-area-inset-bottom));
-    left: 0.7rem;
-    display: grid;
-    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
-    max-width: none;
-    gap: 0.5rem;
-    padding: 0.6rem;
-  }
-
-  .locationPicker input {
-    width: 100%;
-  }
-
-  .locationPicker input,
-  .locationPicker select {
-    font-size: 1rem;
-  }
-
-  .locationButton,
-  .setSpotButton {
-    min-height: 2.75rem;
-  }
-
-  .locationButton {
-    grid-column: 1;
-  }
-
-  .setSpotButton {
-    grid-column: 2;
-  }
-
-  .selection {
-    right: 0.7rem;
-    bottom: calc(6.5rem + env(safe-area-inset-bottom));
-    left: 0.7rem;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(var(--map-floating-bottom) + 56px);
+    left: max(12px, env(safe-area-inset-left));
     width: auto;
-    padding: 0.85rem;
-  }
-
-  .selectionBody {
-    max-height: min(30dvh, 16rem);
-  }
-
-  .selection dl {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
-  }
-
-  .selection dl > div:first-child {
-    grid-column: 1 / -1;
-  }
-
-  .locationMessage,
-  .scheduleError {
-    right: 0.7rem;
-    bottom: calc(6.5rem + env(safe-area-inset-bottom));
-    left: 0.7rem;
+    max-height: calc(100% - var(--map-floating-bottom) - 132px);
     max-width: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .locationFields {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .locationMessage {
+    right: 12px;
+    bottom: calc(var(--map-floating-bottom) + 56px);
+    left: 12px;
+    max-width: none;
+    margin: 0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.45;
   }
 
   .mapHint {
-    bottom: calc(6.5rem + env(safe-area-inset-bottom));
-    left: 50%;
-    max-width: calc(100% - 2rem);
-    padding: 0.42rem 0.66rem;
-    font-size: 0.58rem;
-    text-align: center;
-    transform: translateX(-50%);
-    white-space: nowrap;
+    display: none;
   }
 
   .roomLegend {
-    bottom: calc(10rem + env(safe-area-inset-bottom));
-    left: 0.7rem;
-    max-width: calc(100% - 1.4rem);
-    gap: 0.5rem 0.85rem;
-    padding: 0.65rem 0.75rem;
-    border-radius: 0.7rem;
+    bottom: var(--map-floating-bottom);
+    left: max(12px, env(safe-area-inset-left));
+    max-width: calc(100% - 212px);
+    border-radius: 14px;
+    padding: 0;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 0.18);
+  }
+
+  .legendToggle {
+    box-sizing: border-box;
+    height: 44px;
+    padding-inline: 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .legendItems {
+    bottom: calc(100% + 10px);
+    max-height: calc(100dvh - var(--map-dock-height, 64px) - 244px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .policyError {
-    right: 4.5rem;
-    left: 0.7rem;
+    top: 76px;
+    right: 12px;
+    left: 12px;
     max-width: none;
+    padding: 10px 12px;
+    font-size: 12px;
   }
 
   .mapAttribution {
-    right: 0.4rem;
-    bottom: 0.08rem;
-    font-size: 0.4rem;
-  }
-
-  .floorRoom text {
-    font-size: 7px;
-    stroke-width: 0.85px;
+    right: 12px;
+    bottom: 1px;
+    font-size: 8px;
   }
 
   .floorLabels text,
@@ -1200,5 +1267,11 @@
   .loadingHeader,
   .loadingMap {
     animation: none;
+  }
+
+  .mapControls button,
+  .legendToggle,
+  .legendToggle::after {
+    transition: none;
   }
 }

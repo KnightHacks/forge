@@ -66,7 +66,7 @@ The October 2 styling follow-up is implemented and automated checks pass. Campus
 ## Links
 
 - Issue: https://github.com/KnightHacks/forge/issues/581
-- PR: [Draft #594](https://github.com/KnightHacks/forge/pull/594).
+- PR: [#594](https://github.com/KnightHacks/forge/pull/594).
 - PR description source: [pr-description.md](pr-description.md), with 13 captioned screenshots captured October 3. GitHub body pins the images to validated commit `8106fb2d`.
 
 ### October 3 screenshot handoff
@@ -102,3 +102,77 @@ Verified HEC floor plans and remaining bathroom metadata.
 - Preserved main's production migration `0058_fresh_zombie` and its snapshot byte-for-byte. Regenerated the unpublished map migration as `0059_needy_menace`, with linear metadata and updated lineage/upgrade tests. No production or existing development database was migrated.
 - Validation: repository format, lint, typecheck, and React analysis passed (40 files, zero React failures). Fresh PostgreSQL 16 migration and repeat application passed; regeneration produced no schema changes. All 2,825 tests (29 tasks) and all 21 production build tasks passed. Workspace lint passed with the existing missing `apps/khix/package.json` warning.
 - Browser verification is blocked: the computer-use browser URL policy rejected access to the existing localhost preview tab. No new screenshots are claimed. At the owner's subsequent request, the sample-data preview was restored on port 3007, backed by the local Next.js server on 3008. Hosted Blade does not yet expose this PR's map method; the temporary preview fixtures are outside the repository.
+
+### October 5 full-area map follow-up
+
+- Owner requested Map fill the dashboard like the embedded Hacker's Guide. Map now shares that route's fixed-height, zero-padding content container, with no rounded outer frame or surrounding botanicals. The shared grid reserves the sidebar on desktop and menu bar on mobile.
+- Removed the map's viewport subtraction and minimum canvas height so it fills the actual available content area, including loading/error states. Kept its accessible heading out of layout flow and preserved the controls' internal spacing and room colors.
+- Validation: targeted CSS/document Prettier and diff checks passed. Screenshot verification remains blocked by the browser URL-policy rejection noted above. This follow-up is left uncommitted on the existing PR branch for the owner's continued work.
+
+### October 5 Garage C parking callout
+
+- Owner identified Garage C as the parking destination. Labeled the existing `ucf-83` footprint with “Garage C” and “PARK HERE!!!”, a downward arrow, and a lilac outline matching the dashboard accent.
+- Both lines remain visible at every campus zoom and mobile size. The garage is keyboard/click accessible and focuses its footprint; other parking areas keep their existing treatment. No fees, permits, or availability claims were added.
+- Validation: KHIX typecheck and all 62 tests passed; targeted ESLint passed with the three existing component/file-size warnings; React analysis passed (16 files, zero failures); formatting and diff checks passed. Browser screenshot verification remains blocked as noted above. Changes remain local and uncommitted.
+
+### October 5 explicit current-location selection
+
+- Removed automatic restoration and persistence of the indoor location. An old saved browser value no longer creates a “You” marker when opening the map. GPS and indoor marker state both start empty; only an explicit successful “Locate me” or “Set my spot” action places the user.
+- Validation: KHIX typecheck and all 62 tests passed; targeted ESLint passed with existing size warnings; React analysis passed (16 files, zero failures); formatting and diff checks passed. Screenshot verification remains blocked as noted above. Changes remain uncommitted on the PR branch.
+
+### October 5 live and upcoming event filters
+
+- Replaced All/Live/Food/Help with only Live now and Upcoming, defaulting to Live now. Each selection opens the matching event list and updates its heading, count, and empty state. Upcoming stays ordered by start time; ended events appear in neither list.
+- Added accessible pressed states and cleared the prior selected event when changing filters. Existing indoor room access/activity coloring remains independent of the list filter.
+- Validation: KHIX typecheck and all 62 tests passed; targeted ESLint passed with existing size warnings; React analysis passed (16 files, zero failures); formatting and diff checks passed. Browser verification remains blocked as noted above. Changes remain local and uncommitted.
+
+## Map availability and compact navigation — October 5 follow-up
+
+- Map now appears directly below Hacker’s Guide in the shared desktop/mobile navigation. A disabled entry with a lock icon explains when it opens.
+- Confirmed and checked-in participants unlock it on the hackathon’s first local calendar day: Friday, October 9 at midnight America/New_York for KHIX. All other statuses remain locked. The route does not mount map content or request room configuration until eligible, and the participant API independently checks stored status and server time.
+- The shared SDK lifecycle helper keeps navigation, route, and API date/status rules aligned. No schema, dependencies, environment files, or organizer permissions changed. The existing local sample preview now uses the actual October 9 start date.
+- Navigation labels, row spacing, logo, and footer are smaller. Desktop rows are 40px; mobile targets remain at least 44px, with scrolling retained for short screens.
+- Validation: all 33 workspace typecheck tasks passed; the final hook change also passed KHIX typecheck. SDK tests: 57 passed; KHIX tests: 62 passed; API map integration and participant tests: 44 passed against a disposable loopback PostgreSQL database. React analysis: 16 files, 15 components, zero failures. Targeted lint initially exceeded Node’s heap; the 8GB rerun found one unnecessary optional chain, now fixed and rechecked. Remaining diagnostics are size/type-import warnings. Formatting and diff checks passed.
+- Visual verification remains blocked by the browser policy refusal documented above. No new screenshots are claimed. Changes remain local and uncommitted on the maps PR branch; local preview remains running.
+
+## Continuous map background — October 5 follow-up
+
+- Fixed the hard rectangular gradient edge exposed when zooming out or panning beyond the campus canvas. The existing forest/plum ground gradient now fills the map container; the bounded SVG ground rectangle is removed. Campus and indoor geometry, camera movement, and overlays are unchanged.
+- Validation: KHIX typecheck passed; targeted ESLint passed with three existing size warnings; React analysis passed (16 files, zero failures); formatting and diff checks passed. The supplied screenshot established the visual defect; fresh browser verification remains blocked as documented above. Changes remain local and uncommitted.
+
+## Mobile map cleanup — October 5 follow-up
+
+- Implemented: owner requested several agents improve the crowded mobile map. Work is scoped to KHIX map controls, event presentation, and camera behavior on the existing PR branch.
+- Visual direction: keep the forest canvas dominant, with a compact building/floor bar, one bottom event drawer, and a small utility row. The room key and location form open on demand; event details replace the event list in the same drawer. Preserve room access colors and the larger room numbers.
+- Use measured overlay space when fitting floor plans. Touch gestures remain direct; explicit camera changes and drawer opening use short transitions with reduced-motion support. Pinching out stops at the building overview; Back returns to campus.
+- Three agents own control CSS, the event drawer, and camera math/tests separately; the main agent integrates and audits behavior. Planned checks: KHIX tests, typecheck, lint, production build, React analysis, formatting, and diff review. Fresh browser screenshots remain blocked by the previously documented URL-policy refusal; the supplied mobile screenshot is the visual baseline.
+- Integration audit fixed map initialization when configuration arrives after the dashboard, touch interruption of camera animation, preservation of manual pan/zoom across drawer resizing, and room focus near map edges. Static CSS audit found zero missing/unused map classes; desktop and mobile controls retain 44px targets. Mobile-only passive hints and decorative control corners are removed.
+
+## Requested room coverage — October 5 follow-up
+
+- Owner supplied a three-day room roster and clarified coverage/names only, excluding booking-hour presentation. Three agents independently audited SU/Business, Engineering, and HEC against the source plans and primary UCF references.
+- Added an app-local directory of all 42 unique rooms, with location suggestions and Student Union names. Leading-zero numbers and named/combined ballroom aliases now work across lookup, schedule plotting, room activity, and presentation. A single ballroom section does not permit adjacent sections; organizer configuration remains the source of room access.
+- Imported verified ENG2 floor 3, including 302 and source-labelled bathrooms 306/307. All previous floors and ten native wall assets remained byte-identical in the Engineering import, and two Engineering rebuilds were deterministic. The map now has 18 floors, with HEC limited to its continuous first floor.
+- SU 232 uses the owner's supplied number at the existing source-defined Starbucks anchor. The importer records this override explicitly and retains a point marker because the original food-court boundary is ambiguous. It removes the redundant source Starbucks caption; the app supplies the room name.
+- Coverage result: 38 requested rooms have mapped source positions. HEC 103, 110, 111 and 125 are listed and suggested but lack verified coordinates in the supplied scan. They show a clear building-level fallback and never create an inaccurate indoor position marker. HEC 125's inferred lecture-hall polygon is still not published as an official lookup alias. Importer README links the corroborating UCF room-name/identity sources.
+- Final validation: all 171 KHIX tests passed, app typecheck passed, app lint passed with existing warnings, app formatting passed, production build passed using the same local nonsecret portal placeholders, React analysis passed (16 tracked changed files plus a separate check of the new drawer), and diff checks passed. Inspected regenerated ENG2 floor 3 and SU floor 2 geometry previews; these are standalone drawings, not browser screenshots. Browser visual verification remains blocked by the prior URL-policy refusal.
+- All changes remain local and uncommitted on `blade/khix-map-room-access-pr` for the owner's continued work on PR #594. Completing exact HEC placement requires a numbered first-floor source or authoritative position confirmation for the four remaining rooms.
+
+## Booked-room presentation — October 5 follow-up
+
+- Owner requested showing only the supplied room roster and marking other rooms as unavailable. The 42-room directory now bounds KHIX labels/activity, with organizer restrictions able to narrow it further. No booking hours, database updates or shared editor behavior changes.
+- Retained unbooked outlines under muted diagonal stripes and changed the key to Unavailable / Event room. Known bathrooms and wayfinding remain visible; source captions for unbooked spaces and temporary IDs are hidden. Manual lookup and event navigation for an unbooked number show the building instead of advertising an indoor destination.
+- Fixed a related selection leak: unavailable rooms cannot receive event/selected attributes or event-detail interactions. Shared envelopes expose only booked aliases and ignore activity attached to their unbooked aliases.
+- Initial targeted validation: all 176 KHIX tests passed. Full repository checks and branch push are in progress at the owner's request; fresh browser screenshots remain blocked by the existing URL policy.
+- Owner immediately clarified that room numbers must remain. All verified room numbers now stay visible, including on striped/unavailable rooms and shared outlines; only availability/activity is limited by the roster. Unavailable numbers use a muted but readable treatment. Numeric source captions remain too; no unverified HEC placements or official numbers were invented.
+
+- Added ENG2 103 after the owner confirmed the building. It uses the existing verified first-floor polygon. The final roster contains 43 rooms, with 39 mapped positions and the same four unplaced HEC numbers. A regression check keeps ENG1 103 unavailable.
+
+## October 5 release validation
+
+- Owner authorized the full check pass, commit and push to the existing maps PR branch. Final roster: 43 identities including ENG2 103; all verified room numbers stay visible, and unavailable rooms receive diagonal stripes.
+- Bundled the reviewed SVG/JSON inputs under the app importer so map regeneration is reproducible without local review exports. Source PDFs, scratch previews and local fixtures remain uncommitted. Two consecutive rebuilds reproduced all 12 generated outputs.
+- Repository format, lint, workspace lint and all 33 typecheck tasks passed. Lint has warnings only; workspace lint reports the existing missing `apps/khix/package.json`. React analysis passed for 17 changed files with zero failures.
+- All 2,960 tests passed across 29 tasks; all 21 production build tasks passed using nonsecret CI example settings and an isolated PostgreSQL 16 instance. Fresh and repeated migrations passed; generation produced no migration diff. Initial concurrent Blade UI timeouts and one native judging solver timeout cleared on the final run with workspace concurrency 1 and two Vitest workers; no checks or assertions were weakened.
+- Supplied screenshots, source drawings and standalone floor previews were reviewed. The browser URL policy still blocks fresh live desktop/mobile verification; no new application screenshot or manual interaction pass is claimed. HEC 103/110/111/125 remain the only unplaced requested rooms.
+- No deployment or main push is authorized by this release step; delivery remains PR #594 on `blade/khix-map-room-access-pr`.
