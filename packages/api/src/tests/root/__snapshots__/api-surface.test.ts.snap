@@ -156,6 +156,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "hackathon.setStatusEmail",
   "hackathon.update",
   "hackathon.updateClass",
+  "hackathon.updateIssueReporting",
   "hackathon.upsertPortalClient",
   "hackathonEvent.archiveTag",
   "hackathonEvent.checkInHacker",

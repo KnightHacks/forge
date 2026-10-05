@@ -175,6 +175,15 @@ const PROCEDURES: [string, (caller: Caller) => Promise<unknown>][] = [
       }),
   ],
   ["removeClass", (caller) => caller.removeClass({ id: CLASS_ID })],
+  [
+    "updateIssueReporting",
+    (caller) =>
+      caller.updateIssueReporting({
+        hackathonId: HACKATHON_ID,
+        issueReportsChannelId: "234567890123456789",
+        issueReportsRoleId: null,
+      }),
+  ],
 ];
 
 describe("hackathon configuration access policy", () => {

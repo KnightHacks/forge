@@ -127,6 +127,7 @@ export type HackerParticipantV1Contract = {
 };
 
 export const HACKER_PARTICIPANT_V1_PROCEDURES = {
+  reportIssue: "mutation",
   getJudging: "query",
   getProjectClaim: "query",
   claimProject: "mutation",

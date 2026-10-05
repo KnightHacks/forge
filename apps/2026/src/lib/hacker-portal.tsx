@@ -559,16 +559,21 @@ export function useHackerApplicationFlow({
 }
 
 export function usePortalIssueReport() {
-  const config = usePortalConfig();
+  const { client } = useHackerSdkClient();
+  const pendingReport = useRef<{ description: string; key: string } | null>(
+    null,
+  );
   return useMutation({
-    mutationFn: async (_description: string) => {
-      await navigator.clipboard.writeText(_description).catch(() => undefined);
-      window.open(
-        config.copy.supportChannelUrl,
-        "_blank",
-        "noopener,noreferrer",
-      );
-      return { submitted: true as const };
+    mutationFn: async (description: string) => {
+      if (pendingReport.current?.description !== description) {
+        pendingReport.current = { description, key: crypto.randomUUID() };
+      }
+      const result = await client.reportIssue({
+        description,
+        idempotencyKey: pendingReport.current.key,
+      });
+      pendingReport.current = null;
+      return result;
     },
   });
 }

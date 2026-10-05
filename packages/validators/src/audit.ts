@@ -496,6 +496,8 @@ export const AUDIT_ACTION_CATALOG = {
       "timezone",
       "eventAnnouncementChannelId",
       "generalHackerDiscordRoleId",
+      "issueReportsChannelId",
+      "issueReportsRoleId",
     ],
   ),
   "hackathon.map_configuration_updated": policy(

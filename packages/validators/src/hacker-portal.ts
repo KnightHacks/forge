@@ -595,7 +595,20 @@ export const participantDomainErrorSchema = z
 
 const noInputSchema = z.undefined();
 
+export const hackerReportIssueSchema = z
+  .object({
+    description: z.string().trim().min(1).max(2000),
+    idempotencyKey: z.string().trim().min(1).max(128),
+  })
+  .strict();
+export const hackerIssueReportResultSchema = z
+  .object({
+    submitted: z.literal(true),
+  })
+  .strict();
+
 export const hackerPortalV1InputSchemas = {
+  reportIssue: hackerReportIssueSchema,
   searchJudgingProjects: projectClaimSearchSchema,
   inviteProjectMember: projectInviteSchema,
   claimProject: projectClaimSelectSchema,
@@ -629,6 +642,7 @@ export const hackerPortalV1InputSchemas = {
 } as const;
 
 export interface HackerPortalV1OutputSchemaMap {
+  reportIssue: typeof hackerIssueReportResultSchema;
   getTeams: typeof hackerTeamsDtoSchema;
   changeTeam: typeof hackerTeamActionResultSchema;
   searchJudgingProjects: typeof projectClaimSearchDtoSchema;
@@ -662,6 +676,7 @@ export interface HackerPortalV1OutputSchemaMap {
 }
 
 export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
+  reportIssue: hackerIssueReportResultSchema,
   searchJudgingProjects: projectClaimSearchDtoSchema,
   inviteProjectMember: projectInviteResultDtoSchema,
   claimProject: projectClaimResultDtoSchema,

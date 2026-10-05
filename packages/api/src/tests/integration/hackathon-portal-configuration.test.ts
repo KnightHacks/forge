@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import type { Session } from "@forge/auth/server";
 import type { DisposableDatabase } from "@forge/db/testing";
-import { and, eq, isNull } from "@forge/db";
+import { and, desc, eq, isNull } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -30,7 +30,7 @@ describe.skipIf(!canRunDatabaseTests())(
     let knightHacks: KnightHacksSchemas;
     let caller: Awaited<ReturnType<typeof officerCaller>>;
 
-    async function officerCaller() {
+    async function officerCaller(userId = OFFICER_USER) {
       const trpc = await import("../../trpc");
       const { hackathonRouter } = await import("../../routers/hackathon");
       return trpc.createCallerFactory(
@@ -39,7 +39,7 @@ describe.skipIf(!canRunDatabaseTests())(
         headers: new Headers(),
         session: {
           session: { id: "portal-config", userAgent: "vitest" },
-          user: { id: OFFICER_USER, name: "Portal Officer" },
+          user: { id: userId, name: "Portal Officer" },
         } as unknown as Session,
         source: "hackathon-portal-config-integration",
       });
@@ -99,6 +99,62 @@ describe.skipIf(!canRunDatabaseTests())(
       await client.$client.end().catch(() => undefined);
       await disposable?.drop();
     }, 30_000);
+
+    it("saves, reads and clears issue routing only for the selected hackathon", async () => {
+      const settings = {
+        issueReportsChannelId: "234567890123456789",
+        issueReportsRoleId: "345678901234567890",
+      };
+      const readSettings = async (id: string) => {
+        const { hackathon } = await caller.hackathon.get({ id });
+        return {
+          issueReportsChannelId: hackathon.issueReportsChannelId,
+          issueReportsRoleId: hackathon.issueReportsRoleId,
+        };
+      };
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual({
+        issueReportsChannelId: null,
+        issueReportsRoleId: null,
+      });
+      await caller.hackathon.updateIssueReporting({
+        hackathonId: HACKATHON_ID,
+        ...settings,
+      });
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual(settings);
+      await expect(readSettings(OTHER_HACKATHON_ID)).resolves.toEqual({
+        issueReportsChannelId: null,
+        issueReportsRoleId: null,
+      });
+      const [event] = await client
+        .select()
+        .from(audit.AdminAuditEvent)
+        .where(eq(audit.AdminAuditEvent.actionKey, "hackathon.updated"));
+      expect(JSON.stringify(event)).toContain("issueReportsChannelId");
+      await caller.hackathon.updateIssueReporting({
+        hackathonId: HACKATHON_ID,
+        issueReportsChannelId: "",
+        issueReportsRoleId: "",
+      });
+      await expect(readSettings(HACKATHON_ID)).resolves.toEqual({
+        issueReportsChannelId: null,
+        issueReportsRoleId: null,
+      });
+    });
+
+    it("denies non-officers access to report routing", async () => {
+      const userId = "10000000-0000-4000-8000-0000000000e2";
+      await client
+        .insert(auth.User)
+        .values({ id: userId, discordUserId: "report-non-officer" });
+      const nonOfficer = await officerCaller(userId);
+      await expect(
+        nonOfficer.hackathon.updateIssueReporting({
+          hackathonId: HACKATHON_ID,
+          issueReportsChannelId: "234567890123456789",
+          issueReportsRoleId: null,
+        }),
+      ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    });
 
     it("provisions exactly one client and preserves its generated client ID", async () => {
       const created = await caller.hackathon.upsertPortalClient({
@@ -273,7 +329,8 @@ describe.skipIf(!canRunDatabaseTests())(
       const [event] = await client
         .select({ changes: audit.AdminAuditEvent.changes })
         .from(audit.AdminAuditEvent)
-        .where(eq(audit.AdminAuditEvent.actionKey, "hackathon.updated"));
+        .where(eq(audit.AdminAuditEvent.actionKey, "hackathon.updated"))
+        .orderBy(desc(audit.AdminAuditEvent.occurredAt));
       expect(event?.changes).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

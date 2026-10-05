@@ -1,0 +1,4 @@
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "issue_reports_channel_id" varchar(20);--> statement-breakpoint
+ALTER TABLE "knight_hacks_hackathon" ADD COLUMN "issue_reports_role_id" varchar(20);--> statement-breakpoint
+ALTER TABLE "knight_hacks_hackathon" ADD CONSTRAINT "knight_hacks_hackathon_issue_reports_channel_id_check" CHECK ("knight_hacks_hackathon"."issue_reports_channel_id" IS NULL OR "knight_hacks_hackathon"."issue_reports_channel_id" ~ '^[0-9]{17,20}$');--> statement-breakpoint
+ALTER TABLE "knight_hacks_hackathon" ADD CONSTRAINT "knight_hacks_hackathon_issue_reports_role_id_check" CHECK ("knight_hacks_hackathon"."issue_reports_role_id" IS NULL OR "knight_hacks_hackathon"."issue_reports_role_id" ~ '^[0-9]{17,20}$');

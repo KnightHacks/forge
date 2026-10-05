@@ -31,6 +31,7 @@ import {
   hackathonClassUpdateSchema,
   hackathonCreateSchema,
   hackathonIdSchema,
+  hackathonIssueReportingSchema,
   hackathonPortalClientUpsertSchema,
   hackathonStatusEmailClearSchema,
   hackathonStatusEmailSetSchema,
@@ -79,6 +80,8 @@ const HACKATHON_COLUMNS = {
   displayName: true,
   endDate: true,
   id: true,
+  issueReportsChannelId: true,
+  issueReportsRoleId: true,
   startDate: true,
   theme: true,
   timezone: true,
@@ -276,6 +279,55 @@ function assertDateWindow(input: {
 }
 
 export const hackathonRouter = createTRPCRouter({
+  updateIssueReporting: permProcedure
+    .input(hackathonIssueReportingSchema)
+    .mutation(async ({ ctx, input }) => {
+      assertCanManagePlatformConfig(ctx.session.permissions);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const [before] = await tx
+          .select({
+            id: Hackathon.id,
+            displayName: Hackathon.displayName,
+            issueReportsChannelId: Hackathon.issueReportsChannelId,
+            issueReportsRoleId: Hackathon.issueReportsRoleId,
+          })
+          .from(Hackathon)
+          .where(eq(Hackathon.id, input.hackathonId))
+          .for("update")
+          .limit(1);
+        if (!before)
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Hackathon not found.",
+          });
+        const { hackathonId, ...settings } = input;
+        await tx
+          .update(Hackathon)
+          .set(settings)
+          .where(eq(Hackathon.id, hackathonId));
+        await createAdminAuditEvent(
+          {
+            actionKey: "hackathon.updated",
+            actor,
+            changes: diffChanges(before, { ...before, ...settings }, [
+              "issueReportsChannelId",
+              "issueReportsRoleId",
+            ]),
+            subjects: [
+              {
+                relation: "primary",
+                targetId: hackathonId,
+                targetLabel: before.displayName,
+                targetType: "hackathon",
+              },
+            ],
+          },
+          tx,
+        );
+        return settings;
+      });
+    }),
   /** Officer-only. Every hackathon, newest first, with whether its mail is complete. */
   list: permProcedure.query(async ({ ctx }) => {
     assertCanManagePlatformConfig(ctx.session.permissions);

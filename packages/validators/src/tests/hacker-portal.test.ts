@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   hackathonAgreementDefinitionCreateSchema,
+  hackathonIssueReportingSchema,
   productionPortalOriginSchema,
 } from "../hackathon-portal-admin";
 import {
@@ -18,6 +19,51 @@ import {
 import { projectClaimSettingsSchema } from "../project-claims";
 
 describe("Hacker Portal validators", () => {
+  it("validates nullable per-hackathon channel and ping role IDs", () => {
+    const base = {
+      hackathonId: "50000000-0000-4000-8000-000000000001",
+      issueReportsChannelId: " 234567890123456789 ",
+      issueReportsRoleId: "",
+    };
+    expect(hackathonIssueReportingSchema.parse(base)).toMatchObject({
+      issueReportsChannelId: "234567890123456789",
+      issueReportsRoleId: null,
+    });
+    expect(
+      hackathonIssueReportingSchema.safeParse({
+        ...base,
+        issueReportsRoleId: "<@&345678901234567890>",
+      }).success,
+    ).toBe(false);
+    expect(
+      hackathonIssueReportingSchema.safeParse({
+        ...base,
+        issueReportsChannelId: "https://discord.com/channels/1/2",
+      }).success,
+    ).toBe(false);
+  });
+  it("validates report text without accepting a caller-selected destination", () => {
+    const schema = hackerPortalV1InputSchemas.reportIssue;
+    expect(
+      schema.parse({ description: "  Help  ", idempotencyKey: "one" })
+        .description,
+    ).toBe("Help");
+    expect(
+      schema.safeParse({ description: "  ", idempotencyKey: "one" }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({ description: "x".repeat(2001), idempotencyKey: "one" })
+        .success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        description: "Help",
+        idempotencyKey: "one",
+        channelId: "123",
+        roleId: "456",
+      }).success,
+    ).toBe(false);
+  });
   it("accepts session responses with an optional profile photo", () => {
     const session = {
       authenticated: true,
@@ -193,6 +239,7 @@ describe("Hacker Portal validators", () => {
       "listPrintJobs",
       "removeResume",
       "removeStagedPrintFile",
+      "reportIssue",
       "searchJudgingProjects",
       "submitApplication",
       "submitPrintJob",
