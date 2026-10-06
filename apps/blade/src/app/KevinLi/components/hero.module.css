@@ -1,0 +1,83 @@
+.cloudDrift {
+  animation: cloud-drift 10s ease-in-out infinite;
+}
+
+@keyframes cloud-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(1.5%, -1.5%);
+  }
+}
+
+.hint {
+  animation: hint-nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes hint-nudge {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-1%, -4%);
+  }
+}
+
+/* Blade's global `a { color: inherit }` is unlayered, so it outranks
+   Tailwind color utilities on links. */
+.link {
+  color: #214e92;
+  transition: color 150ms ease-out;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: #f54e96;
+}
+
+/* Paper grain over the whole hero, so the flat colors share the cloud's
+   painted texture. */
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.24 0 0 0 0 0.2 0 0 0 0 0.16 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  opacity: 0.32;
+}
+
+/* Leaf branches rock from their stems, out of step with each other. */
+.swayLeft,
+.swayRight {
+  animation: leaf-sway 6s ease-in-out infinite;
+}
+
+.swayLeft {
+  transform-origin: 0% 100%;
+}
+
+.swayRight {
+  transform-origin: 100% 100%;
+  animation-duration: 7s;
+  animation-delay: -2.5s;
+  animation-direction: reverse;
+}
+
+@keyframes leaf-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cloudDrift,
+  .hint,
+  .swayLeft,
+  .swayRight {
+    animation: none;
+  }
+}
