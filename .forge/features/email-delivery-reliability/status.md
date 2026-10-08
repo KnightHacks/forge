@@ -1,6 +1,6 @@
 # Email Delivery Reliability Status
 
-Current phase: Local CI checks passed; preparing draft PR for hosted CI. Broader E2E failures documented.
+Current phase: Local checks passed; draft PR #599 runs hosted CI. Broader E2E failures documented.
 
 ## Decisions
 
@@ -47,7 +47,7 @@ Current phase: Local CI checks passed; preparing draft PR for hosted CI. Broader
 
 ## Limitations and rollout
 
-Changes remain on the user-requested `emailfix` branch. A draft PR is being prepared to run hosted CI; no deployment or merge has occurred. Deploy API/Blade and cron together so all subscriber writers participate in the same lock. Production SMTP settings and historical sends were not changed. A live test to one mailbox does not establish deliverability across other mailbox providers or resolve Gmail's historical temporary errors. Bounce processing remains disabled in the inspected provider configuration, so zero reported bounces is not independent delivery confirmation.
+Changes remain on the user-requested `emailfix` branch. [Draft PR #599](https://github.com/KnightHacks/forge/pull/599) runs hosted CI; no deployment or merge has occurred. Deploy API/Blade and cron together so all subscriber writers participate in the same lock. Production SMTP settings and historical sends were not changed. A live test to one mailbox does not establish deliverability across other mailbox providers or resolve Gmail's historical temporary errors. Bounce processing remains disabled in the inspected provider configuration, so zero reported bounces is not independent delivery confirmation.
 
 ## Wrapper regression and latest verification
 
@@ -58,10 +58,10 @@ Changes remain on the user-requested `emailfix` branch. A draft PR is being prep
 - Initial exhaustive checks exhausted local disk, interrupting tests/builds and leaving Docker storage read-only. Removed regenerable caches, restarted Docker, preserved the existing `forge-db-1`, and recreated only the disposable verification database. Frozen-lockfile install, migration generation, fresh migration, repeated migration, and all 13 Dockerfile static checks passed. No dependency or migration changes were needed.
 - Full Blade browser run: 63 passed, 19 failed, 31 did not run. The corrected email fixture subsequently passed its complete create/publish/schedule/cancel flow on the disposable database. Preserved full-run failures under `output/emailfix-verification/blade-full/`. Other failures include resume storage prerequisites, stale UI expectations, responsive flows, and eight visual baselines. The 2026 and Club E2E commands also incorrectly discover Vitest files because they have no Playwright configuration. Guild had three passing tests and one failure because its team-filter test requires seeded team profiles. These unrelated E2E problems remain out of scope; do not call the entire repository green.
 - Four archive Docker images built and all 19 corresponding E2E tests passed. Other legacy E2E scripts complete with no tests. All 13 Dockerfiles passed static BuildKit checks; a full build of every deployment image was not performed.
-- Hosted CI is pending the draft PR. Local checks do not establish hosted CI/CD success; the production-snapshot upgrade smoke and production migration/deployment jobs have not yet run. Logs and command results are local in `output/emailfix-verification/`.
+- Hosted CI, including the production-snapshot upgrade smoke, is tracked in [PR #599 checks](https://github.com/KnightHacks/forge/pull/599/checks). The production migration/deployment job is gated to main and has not been run by this task. Logs and command results are local in `output/emailfix-verification/`.
 
 ## Links
 
-[Issue #598](https://github.com/KnightHacks/forge/issues/598). Draft PR is being prepared for the explicitly requested hosted CI checks.
+[Issue #598](https://github.com/KnightHacks/forge/issues/598). [Draft PR #599](https://github.com/KnightHacks/forge/pull/599) runs the explicitly requested hosted CI checks.
 
 Research references: [Listmonk campaign API](https://listmonk.app/docs/apis/campaigns/), [Listmonk v6 campaign counters](https://github.com/knadh/listmonk/blob/v6.0.0/internal/manager/manager.go), [Google SMTP error reference](https://knowledge.workspace.google.com/admin/support/troubleshooting/about-smtp-error-messages), and [Google Workspace sending limits](https://knowledge.workspace.google.com/admin/gmail/gmail-sending-limits-in-google-workspace). The counter anomaly's exact cause remains unconfirmed; no provider upgrade was performed.
