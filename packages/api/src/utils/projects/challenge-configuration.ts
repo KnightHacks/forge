@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
+import type { ChallengeMode } from "@forge/consts";
 import { and, eq, inArray, sql } from "@forge/db";
 import {
   JudgingSchedule,
@@ -58,6 +59,13 @@ export interface ChallengeConfiguration {
   isGroup: boolean;
   isGeneral: boolean;
   isScheduled: boolean;
+}
+
+export function challengeModeFlags(mode: ChallengeMode) {
+  return {
+    isScheduled: mode === "scheduled",
+    isRemote: mode === "remote",
+  };
 }
 
 export function validateChallengeGrouping(
@@ -177,6 +185,12 @@ export const challengeSelection = {
   isMlhImportDefault: sql<boolean>`coalesce(${ProjectChallenge.importLabelMatch} = 'MLH', false)`,
   isGeneral: ProjectChallenge.isGeneral,
   isScheduled: ProjectChallenge.isScheduled,
+};
+
+export const challengeConfigurationSelection = {
+  ...challengeSelection,
+  isRemote: ProjectChallenge.isRemote,
+  judgingMode: sql<ChallengeMode>`CASE WHEN ${ProjectChallenge.isScheduled} THEN 'scheduled' WHEN ${ProjectChallenge.isRemote} THEN 'remote' ELSE 'unscheduled' END`,
 };
 
 /** Prefer an every-project scope, then a stable standalone scope when none exists. */

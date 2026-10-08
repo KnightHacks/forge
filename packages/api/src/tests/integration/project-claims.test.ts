@@ -417,6 +417,40 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       memberId: required(second.members[0]),
     });
   });
+  it("shows unscheduled challenges but omits remote challenges", async () => {
+    await seedClaim();
+    await client
+      .update(schema.HackathonJudgingConfiguration)
+      .set({ hackerSchedulePublished: true })
+      .where(eq(schema.HackathonJudgingConfiguration.hackathonId, event));
+    const unscheduledId = randomUUID();
+    const remoteId = randomUUID();
+    await client.insert(schema.ProjectChallenge).values([
+      {
+        id: unscheduledId,
+        hackathonId: event,
+        label: "Walk-up sponsor",
+        isScheduled: false,
+      },
+      {
+        id: remoteId,
+        hackathonId: event,
+        label: "Remote sponsor",
+        isScheduled: false,
+        isRemote: true,
+      },
+    ]);
+    await client.insert(schema.ProjectToChallenge).values([
+      { projectId: project, challengeId: unscheduledId, hackathonId: event },
+      { projectId: project, challengeId: remoteId, hackathonId: event },
+    ]);
+
+    const itinerary = await reads.hackerJudging(required(users[0]), event);
+    expect(
+      itinerary.unscheduled.map((challenge) => challenge.challenge),
+    ).toEqual(["Walk-up sponsor"]);
+    expect(JSON.stringify(itinerary)).not.toContain("Remote sponsor");
+  });
   it("TC-004/015: exposes only anonymous written feedback and hides it in emergency mode", async () => {
     await seedClaim();
     await client

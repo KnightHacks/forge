@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_project_challenge" ADD COLUMN "is_remote" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_project_challenge" ADD CONSTRAINT "project_challenge_mode_check" CHECK (NOT ("knight_hacks_project_challenge"."is_scheduled" AND "knight_hacks_project_challenge"."is_remote"));

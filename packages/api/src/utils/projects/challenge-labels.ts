@@ -8,12 +8,14 @@ export const defaultJudgingChallenges = [
     label: "General",
     isGeneral: true,
     isScheduled: true,
+    isRemote: false,
     importLabelMatch: null,
   },
   {
     label: "MLH Challenges",
     isGeneral: false,
     isScheduled: false,
+    isRemote: false,
     importLabelMatch: "MLH",
   },
 ];

@@ -24,7 +24,8 @@ import { lockScheduleHackathon } from "../utils/judging-schedule/source";
 import { assertCanManageProjects } from "../utils/projects/access";
 import {
   assertChallengeSetupEditable,
-  challengeSelection,
+  challengeConfigurationSelection,
+  challengeModeFlags,
   rebuildParentMemberships,
   validateChallengeGrouping,
 } from "../utils/projects/challenge-configuration";
@@ -60,12 +61,12 @@ export const projectChallengesRouter = {
             hackathonId: input.hackathonId,
             label: input.label,
             isGeneral: input.isGeneral,
-            isScheduled: input.isScheduled,
+            ...challengeModeFlags(input.judgingMode),
             isGroup: true,
             importLabelMatch: input.isMlhImportDefault ? "MLH" : null,
           })
           .onConflictDoNothing()
-          .returning(challengeSelection);
+          .returning(challengeConfigurationSelection);
         if (!group)
           throw new TRPCError({
             code: "CONFLICT",
@@ -81,7 +82,7 @@ export const projectChallengesRouter = {
               isMlhImportDefault: group.isMlhImportDefault,
               label: group.label,
               isGeneral: group.isGeneral,
-              isScheduled: group.isScheduled,
+              judgingMode: group.judgingMode,
             },
             subjects: [
               {
@@ -114,6 +115,7 @@ export const projectChallengesRouter = {
             label: true,
             isGeneral: true,
             isScheduled: true,
+            isRemote: true,
             importLabelMatch: true,
           },
           where: and(
@@ -163,7 +165,7 @@ export const projectChallengesRouter = {
                   : null,
             label: input.label,
             isGeneral: input.isGeneral,
-            isScheduled: input.isScheduled,
+            ...challengeModeFlags(input.judgingMode),
           })
           .where(
             and(
@@ -172,7 +174,7 @@ export const projectChallengesRouter = {
               eq(ProjectChallenge.isGroup, true),
             ),
           )
-          .returning(challengeSelection);
+          .returning(challengeConfigurationSelection);
         if (!group)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -187,14 +189,20 @@ export const projectChallengesRouter = {
               [
                 "label",
                 "isGeneral",
-                "isScheduled",
+                "judgingMode",
                 "isMlhImportDefault",
               ] as const
             ).flatMap((field) => {
               const before =
                 field === "isMlhImportDefault"
                   ? previous.importLabelMatch === "MLH"
-                  : previous[field];
+                  : field === "judgingMode"
+                    ? previous.isScheduled
+                      ? "scheduled"
+                      : previous.isRemote
+                        ? "remote"
+                        : "unscheduled"
+                    : previous[field];
               const after = group[field];
               return before === after ? [] : [{ field, before, after }];
             }),
@@ -203,7 +211,7 @@ export const projectChallengesRouter = {
               isMlhImportDefault: group.isMlhImportDefault,
               label: group.label,
               isGeneral: group.isGeneral,
-              isScheduled: group.isScheduled,
+              judgingMode: group.judgingMode,
             },
             subjects: [
               {
@@ -301,7 +309,7 @@ export const projectChallengesRouter = {
           columns: { displayName: true },
         });
         const challenges = await tx
-          .select(challengeSelection)
+          .select(challengeConfigurationSelection)
           .from(ProjectChallenge)
           .where(eq(ProjectChallenge.hackathonId, input.hackathonId));
         const previous = challenges.find(
@@ -333,9 +341,12 @@ export const projectChallengesRouter = {
         }
         const [challenge] = await tx
           .update(ProjectChallenge)
-          .set({ parentId: input.parentId, isScheduled: input.isScheduled })
+          .set({
+            parentId: input.parentId,
+            ...challengeModeFlags(input.judgingMode),
+          })
           .where(eq(ProjectChallenge.id, input.challengeId))
-          .returning(challengeSelection);
+          .returning(challengeConfigurationSelection);
         if (!challenge || !previous)
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -346,7 +357,7 @@ export const projectChallengesRouter = {
           {
             actionKey: "judging.challenge.updated",
             actor,
-            changes: (["parentId", "isScheduled"] as const).flatMap((field) =>
+            changes: (["parentId", "judgingMode"] as const).flatMap((field) =>
               previous[field] === challenge[field]
                 ? []
                 : [{ field, before: previous[field], after: challenge[field] }],
@@ -355,7 +366,7 @@ export const projectChallengesRouter = {
               challengeId: challenge.id,
               label: challenge.label,
               parentId: input.parentId,
-              isScheduled: input.isScheduled,
+              judgingMode: input.judgingMode,
             },
             subjects: [
               {

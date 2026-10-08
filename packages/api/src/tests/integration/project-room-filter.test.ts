@@ -228,7 +228,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         hackathonId,
         challengeId: generalId,
         parentId: null,
-        isScheduled: false,
+        judgingMode: "unscheduled",
       }),
     ).rejects.toThrow(/Use group settings/);
 
@@ -237,7 +237,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         hackathonId,
         challengeId: generalId,
         parentId: firstTimeId,
-        isScheduled: true,
+        judgingMode: "scheduled",
       }),
     ).rejects.toThrow(/judging group/);
     await expect(
@@ -245,28 +245,28 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         hackathonId,
         challengeId: firstTimeId,
         parentId: firstTimeId,
-        isScheduled: true,
+        judgingMode: "scheduled",
       }),
     ).rejects.toThrow(/judging group/);
     const updatedChild = await member.projects.updateChallenge({
       hackathonId,
       challengeId: firstTimeId,
       parentId: generalId,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     expect(updatedChild).not.toHaveProperty("tagColor");
     await member.projects.updateChallenge({
       hackathonId,
       challengeId: mlhOptInId,
       parentId: mlhId,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     await expect(
       member.projects.updateChallenge({
         hackathonId,
         challengeId: mlhId,
         parentId: firstTimeId,
-        isScheduled: false,
+        judgingMode: "unscheduled",
       }),
     ).rejects.toThrow(/judging group/);
     const customParent = { id: randomUUID() };
@@ -281,7 +281,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId,
       challengeId: firstTimeId,
       parentId: customParent.id,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     const underCustom = await member.projects.listJudge({
       ...listInput,
@@ -292,7 +292,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId,
       challengeId: firstTimeId,
       parentId: null,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     const ungrouped = await member.projects.listJudge({
       ...listInput,
@@ -303,7 +303,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId,
       challengeId: firstTimeId,
       parentId: generalId,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     const ratingId = randomUUID();
     await member.judging.saveRubric({
@@ -386,7 +386,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         hackathonId,
         challengeId: firstTimeId,
         parentId: null,
-        isScheduled: true,
+        judgingMode: "scheduled",
       }),
     ).rejects.toThrow(/saved schedule locks/);
     await expect(
@@ -675,14 +675,14 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
         groupId: first.id,
         label: "Invented prize",
         isGeneral: false,
-        isScheduled: true,
+        judgingMode: "scheduled",
       }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
     const extra = await member.projects.createGroup({
       hackathonId: eventId,
       label: "Community",
       isGeneral: true,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     expect(extra).not.toHaveProperty("tagColor");
     expect(
@@ -709,7 +709,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       groupId: extra.id,
       label: "Optional community",
       isGeneral: false,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     expect(updatedGroup).not.toHaveProperty("tagColor");
     expect(
@@ -722,13 +722,17 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       groupId: mlh.id,
       label: "Partner fair",
       isGeneral: false,
+      judgingMode: "remote",
+    });
+    expect(await challenge("Partner fair", true)).toMatchObject({
       isScheduled: false,
+      isRemote: true,
     });
     await member.projects.updateChallenge({
       hackathonId: eventId,
       challengeId: toolA.id,
       parentId: null,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     await runImport(["MLH - Tool A", "Best tool B (MLH)", "First time"]);
     const auditEvents = await database.select().from(AdminAuditEvent);
@@ -756,6 +760,17 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
     expect(
       auditEvents.find(
         (event) =>
+          event.actionKey === "judging.group.updated" &&
+          event.metadata.groupId === mlh.id,
+      )?.changes,
+    ).toContainEqual({
+      field: "judgingMode",
+      before: "unscheduled",
+      after: "remote",
+    });
+    expect(
+      auditEvents.find(
+        (event) =>
           event.actionKey === "judging.challenge.updated" &&
           event.metadata.challengeId === toolA.id,
       )?.changes,
@@ -767,7 +782,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       groupId: extra.id,
       label: "Optional community",
       isGeneral: false,
-      isScheduled: false,
+      judgingMode: "unscheduled",
       isMlhImportDefault: true,
     });
     await runImport([
@@ -784,7 +799,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId: eventId,
       challengeId: first.id,
       parentId: general.id,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     await member.projects.deleteGroup({
       hackathonId: eventId,
@@ -828,7 +843,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId: eventId,
       label: "First time",
       isGeneral: false,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     await runImport(["First time"]);
     const importedWithGroupName = await challenge("First time", false);
@@ -869,7 +884,7 @@ describe.runIf(canRunDatabaseTests())("judge project room filter", () => {
       hackathonId: eventId,
       label: "Custom sponsor fair",
       isGeneral: true,
-      isScheduled: false,
+      judgingMode: "unscheduled",
       isMlhImportDefault: true,
     });
     await member.projects.dropAll({

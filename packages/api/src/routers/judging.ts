@@ -103,7 +103,7 @@ import { assertCanManageProjects } from "../utils/projects/access";
 import {
   assertChallengeSetupEditable,
   assertJudgingSetupEditable,
-  challengeSelection,
+  challengeConfigurationSelection,
   rebuildParentMemberships,
 } from "../utils/projects/challenge-configuration";
 import { initializeJudgingGroups } from "../utils/projects/initialize-judging-groups";
@@ -1149,7 +1149,7 @@ export const judgingRouter = createTRPCRouter({
         .where(eq(JudgingRoom.hackathonId, input.hackathonId))
         .orderBy(asc(JudgingRoom.displayOrder), asc(JudgingRoom.name));
       const challenges = await db
-        .select(challengeSelection)
+        .select(challengeConfigurationSelection)
         .from(ProjectChallenge)
         .where(eq(ProjectChallenge.hackathonId, input.hackathonId))
         .orderBy(
@@ -1525,7 +1525,7 @@ export const judgingRouter = createTRPCRouter({
           );
         await tx
           .update(ProjectChallenge)
-          .set({ isScheduled: true, parentId: null })
+          .set({ isScheduled: true, isRemote: false, parentId: null })
           .where(
             and(
               eq(ProjectChallenge.hackathonId, hackathon.id),

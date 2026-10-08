@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  judgingChallengeModeSchema,
   judgingGroupCreateSchema,
   judgingGroupUpdateSchema,
   projectMemberInputSchema,
@@ -14,7 +15,7 @@ describe("project validation", () => {
         groupId: "00000000-0000-4000-8000-000000000002",
         label: "General",
         isGeneral: true,
-        isScheduled: true,
+        judgingMode: "scheduled",
       };
       expect(schema.parse(input)).not.toHaveProperty("tagColor");
       for (const tagColor of ["#7c3aed", "purple", null]) {
@@ -23,6 +24,11 @@ describe("project validation", () => {
         );
       }
     }
+  });
+  it("accepts only the three judging challenge modes", () => {
+    for (const mode of ["scheduled", "unscheduled", "remote"])
+      expect(judgingChallengeModeSchema.parse(mode)).toBe(mode);
+    expect(judgingChallengeModeSchema.safeParse("hidden").success).toBe(false);
   });
   it("requires a valid email for every editable team member", () => {
     expect(
