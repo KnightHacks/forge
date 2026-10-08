@@ -1911,7 +1911,7 @@ export const hackathonEventRouter = {
               isNull(Event.deletionIntentAt),
             ),
           )
-          .orderBy(desc(Event.start_datetime), asc(Event.id)),
+          .orderBy(asc(Event.start_datetime), asc(Event.id)),
         db
           .select({
             color: HackathonClass.color,

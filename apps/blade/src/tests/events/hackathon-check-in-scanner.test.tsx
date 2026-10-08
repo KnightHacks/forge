@@ -28,6 +28,26 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 
+vi.mock("@forge/ui/use-media-query", () => ({
+  useMediaQuery: () => true,
+}));
+
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    disconnect() {
+      return undefined;
+    }
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+  },
+);
+Element.prototype.scrollIntoView = vi.fn();
+
 vi.mock("@yudiel/react-qr-scanner", () => ({
   Scanner: ({
     onScan,
@@ -162,6 +182,14 @@ async function select(name: string, value: string) {
   });
 }
 
+async function selectEvent(name: RegExp) {
+  await act(async () => {
+    fireEvent.click(screen.getByRole("combobox", { name: "Event" }));
+    fireEvent.click(await screen.findByRole("option", { name }));
+    await Promise.resolve();
+  });
+}
+
 describe("HackathonCheckInWorkspace pending selection", () => {
   const hackathonId = "00000000-0000-4000-8000-000000000101";
   const eventId = "00000000-0000-4000-8000-000000000202";
@@ -176,9 +204,9 @@ describe("HackathonCheckInWorkspace pending selection", () => {
     mocks.checkIn.mockResolvedValue({ outcome: "checked_in" });
     render(workspace);
     fireEvent.click(screen.getByRole("button", { name: "Open scanner" }));
-    await select("Event", eventId);
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue(
-      eventId,
+    await selectEvent(/Second check-in/);
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Second check-in",
     );
     expect(screen.getByRole("progressbar")).toBeVisible();
     act(() => mocks.onScan?.([{ rawValue: "user:pending-selection" }]));
@@ -190,8 +218,8 @@ describe("HackathonCheckInWorkspace pending selection", () => {
       await response.promise;
     });
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue(
-      eventId,
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Second check-in",
     );
     fireEvent.click(screen.getByRole("button", { name: "Open scanner" }));
     await act(async () => {
@@ -211,7 +239,9 @@ describe("HackathonCheckInWorkspace pending selection", () => {
     expect(screen.getByRole("combobox", { name: "Hackathon" })).toHaveValue(
       nextHackathon,
     );
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Search events",
+    );
     expect(screen.getByRole("combobox", { name: "Event" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Open scanner" })).toBeDisabled();
     expect(mocks.replace).toHaveBeenCalledWith(
@@ -232,16 +262,16 @@ describe("HackathonCheckInWorkspace pending selection", () => {
   it("restores URL values after cancellation and subsequent history changes", async () => {
     const response = holdNavigation();
     const view = render(workspace);
-    await select("Event", eventId);
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue(
-      eventId,
+    await selectEvent(/Second check-in/);
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Second check-in",
     );
     await act(async () => {
       response.resolve();
       await response.promise;
     });
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue(
-      "00000000-0000-4000-8000-000000000201",
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Primary check-in",
     );
     mocks.search = `hackathon=${hackathonId}&event=${eventId}`;
     view.rerender(
@@ -249,8 +279,8 @@ describe("HackathonCheckInWorkspace pending selection", () => {
         <HackathonCheckInWorkspace />
       </NavigationProvider>,
     );
-    expect(screen.getByRole("combobox", { name: "Event" })).toHaveValue(
-      eventId,
+    expect(screen.getByRole("combobox", { name: "Event" })).toHaveTextContent(
+      "Second check-in",
     );
   });
 });
