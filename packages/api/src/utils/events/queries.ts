@@ -592,7 +592,7 @@ export async function queryCheckInEventChoices({
       .select(choiceColumns)
       .from(Event)
       .where(and(common, gte(Event.end_datetime, now)))
-      .orderBy(desc(Event.start_datetime), asc(Event.id)),
+      .orderBy(asc(Event.start_datetime), asc(Event.id)),
     db
       .select(choiceColumns)
       .from(Event)
@@ -603,12 +603,12 @@ export async function queryCheckInEventChoices({
           sql`${Event.end_datetime} < ${now}`,
         ),
       )
-      .orderBy(desc(Event.start_datetime), asc(Event.id)),
+      .orderBy(asc(Event.start_datetime), asc(Event.id)),
     db
       .select(choiceColumns)
       .from(Event)
       .where(and(common, sql`${Event.end_datetime} < ${sevenDaysAgo}`))
-      .orderBy(desc(Event.start_datetime), asc(Event.id)),
+      .orderBy(asc(Event.start_datetime), asc(Event.id)),
   ]);
   const serialize = (choices: typeof current) =>
     choices.map((choice) => ({
