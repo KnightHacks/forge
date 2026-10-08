@@ -2,6 +2,8 @@
 
 Phase: implemented and locally validated. User selected manual admin review and retry. Existing `emailfix` branch retained.
 
+Review: [PR #607](https://github.com/KnightHacks/forge/pull/607), linked to [issue #606](https://github.com/KnightHacks/forge/issues/606). The PR also includes the separately requested GPK partner logo in the 2026 app. Local checks are complete; hosted CI is pending and deployment is not performed.
+
 Read-only investigation: October 1 waitlist campaign 2454 has 252/324 sends. Retained provider logs contain one start, one finish, and exactly 72 unique explicit SMTP 421 4.3.0 rejections. No live resend or subscription change. Zero bounces is not inbox confirmation. Recipient identifiers and production data are not included in committed artifacts.
 
 Implemented: provider evidence adapter; API investigation and atomic selected retry; searchable, paginated Queue tab; manual recipient selection and confirmation; retry history; corrected hacker warning. Unknown outcomes and permanent rejections cannot authorize retries. The worker retains its suppression checks. No dependencies, migrations, or new environment variables.
