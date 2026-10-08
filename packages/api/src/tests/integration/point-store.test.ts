@@ -191,7 +191,7 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
       quantity: 1,
       unitPrice: options.price ?? 30,
     };
-    return { hackathonId, attendeeId, item, purchase, context };
+    return { hackathonId, attendeeId, item, participant, purchase, context };
   }
   beforeAll(async () => {
     disposable = await provisionDisposableDatabase("forge_point_store");
@@ -204,7 +204,7 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
     auth = await import("@forge/db/schemas/auth");
     reads = await import("../../hacker-portal/reads");
     user = await makeUser("Store Organizer");
-    await grant(user.id, "EDIT_HACKERS");
+    await grant(user.id, "HACKATHON_MERCH_STORE");
     caller = await makeCaller(sessionFor(user));
   }, 120_000);
   afterAll(async () => {
@@ -213,9 +213,9 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
     vi.unstubAllEnvs();
   }, 30_000);
 
-  it("requires Edit Hackers on every organizer entry point", async () => {
+  it("requires Hackathon Merch Store on every organizer entry point", async () => {
     const f = await fixture();
-    for (const key of ["READ_HACKERS", "IS_OFFICER"] as const) {
+    for (const key of ["READ_HACKERS", "EDIT_HACKERS", "IS_OFFICER"] as const) {
       const person = await makeUser(key);
       await grant(person.id, key);
       const denied = await makeCaller(sessionFor(person));
@@ -267,6 +267,32 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
     await expect((await makeCaller(null)).hackathons()).rejects.toMatchObject({
       code: "UNAUTHORIZED",
     });
+  });
+
+  it("searches checked-in hackers by Discord username, school, and major", async () => {
+    const f = await fixture();
+
+    for (const query of [
+      f.participant.id,
+      "Central Florida",
+      "Computer Science",
+    ]) {
+      const matches = await caller.searchHackers({
+        hackathonId: f.hackathonId,
+        query,
+      });
+      expect(matches).toEqual([
+        {
+          discordUser: f.participant.id,
+          email: f.participant.email,
+          firstName: "Ada",
+          id: f.attendeeId,
+          lastName: "Hacker",
+          major: "Computer Science",
+          school: "University of Central Florida",
+        },
+      ]);
+    }
   });
 
   it("spends separately, retries safely, snapshots history, and voids once", async () => {

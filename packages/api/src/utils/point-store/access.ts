@@ -1,12 +1,11 @@
 import { TRPCError } from "@trpc/server";
 
-import { requireHackerEdit } from "../hacker/access";
+import type { permissions } from "@forge/utils";
 
-export function requirePointStoreEdit(
-  ctx: Parameters<typeof requireHackerEdit>[0],
-) {
-  requireHackerEdit(ctx);
+type PermissionContext = Parameters<typeof permissions.controlPerms.or>[1];
+
+export function requirePointStoreEdit(ctx: PermissionContext) {
   // Store access requires this specific grant, including for officers.
-  if (!ctx.session.permissions.EDIT_HACKERS)
+  if (!ctx.session.permissions.HACKATHON_MERCH_STORE)
     throw new TRPCError({ code: "FORBIDDEN" });
 }

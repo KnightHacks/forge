@@ -7,6 +7,7 @@ import {
   canAccessDiscordArchive,
   canAccessHackathonAdmin,
   canAccessHackerAdmin,
+  canAccessPointStore,
   canAccessPrintingQueue,
   canEditCompanyAdmin,
   canEditHackerAdmin,
@@ -53,6 +54,17 @@ describe("dedicated admin access", () => {
     expect(getAdminNavigationAccess(permissions("EDIT_HACKERS")).printing).toBe(
       false,
     );
+  });
+
+  it("gates the point store on its dedicated permission", () => {
+    expect(canAccessPointStore(permissions("HACKATHON_MERCH_STORE"))).toBe(
+      true,
+    );
+    expect(canAccessPointStore(permissions("EDIT_HACKERS"))).toBe(false);
+    expect(canAccessPointStore(permissions("IS_OFFICER"))).toBe(false);
+    expect(
+      getAdminNavigationAccess(permissions("HACKATHON_MERCH_STORE")).pointStore,
+    ).toBe(true);
   });
 
   it("separates company access from member access", () => {
