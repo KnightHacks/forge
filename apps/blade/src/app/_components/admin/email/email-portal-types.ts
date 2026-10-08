@@ -1,4 +1,4 @@
-export type EmailPortalTab = "compose" | "sends" | "templates";
+export type EmailPortalTab = "compose" | "sends" | "templates" | "queue";
 export type CampaignAudienceMode = "all" | "development_review" | "disabled";
 
 export interface EmailPortalTemplate {

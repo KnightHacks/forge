@@ -35,6 +35,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "email.duplicateTemplate",
   "email.previewSend",
   "email.publishTemplate",
+  "email.retryRecipients",
   "email.retrySend",
   "email.saveTemplateDraft",
   "email.sendTest",
@@ -220,7 +221,11 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "discord-config.list",
   "email.getSend",
   "email.getTemplate",
+  // Reads delivery evidence and caches the review in EmailSendEvent; the
+  // actual retry decision is audited by email.retryRecipients.
+  "email.investigateSend",
   "email.listAudienceOptions",
+  "email.listRecoveryQueue",
   "email.listSends",
   "email.listTemplates",
   "email.previewTemplate",

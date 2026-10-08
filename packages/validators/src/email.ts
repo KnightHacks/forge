@@ -173,6 +173,29 @@ export const emailTemplatePreviewSchema = z
 
 export const emailSendIdSchema = z.object({ sendId: uuidSchema }).strict();
 
+export const emailRecoveryQueueSchema = z
+  .object({
+    query: z.string().trim().max(200).default(""),
+    offset: z.number().int().min(0).max(100_000).default(0),
+    limit: z.number().int().min(1).max(50).default(25),
+  })
+  .strict();
+
+export const emailRetryRecipientsSchema = z
+  .object({
+    sendId: uuidSchema,
+    investigationId: uuidSchema,
+    recipientIds: z
+      .array(uuidSchema)
+      .min(1)
+      .max(500)
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "Choose each recipient once.",
+      ),
+  })
+  .strict();
+
 export const emailRoleAudienceSchema = z
   .object({
     emailAudienceEnabled: z.boolean(),

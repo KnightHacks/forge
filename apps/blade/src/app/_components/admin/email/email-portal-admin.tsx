@@ -14,6 +14,7 @@ import type {
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { EmailPortalWorkspace } from "./email-portal-workspace";
+import { EmailRecoveryQueue } from "./email-recovery-queue";
 
 export function EmailPortalAdmin({
   audienceOptions,
@@ -101,6 +102,7 @@ export function EmailPortalAdmin({
       isPreviewing={previewSend.isPending}
       isTesting={sendTest.isPending}
       preview={preview}
+      queue={<EmailRecoveryQueue />}
       sends={sends}
       templates={templates}
       onArchiveTemplate={async (templateId) => {

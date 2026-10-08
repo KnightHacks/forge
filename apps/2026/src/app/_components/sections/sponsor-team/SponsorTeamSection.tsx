@@ -182,6 +182,11 @@ const PARTNERS = [
     websiteUrl: "https://www.instagram.com/gamedevknights/",
   },
   {
+    name: "Graphics Programming Knights",
+    logoSrc: "/partners/gpk-ucf.svg",
+    websiteUrl: "https://linktr.ee/GPKnights",
+  },
+  {
     name: "Girls Who Code",
     logoSrc: "https://assets.knighthacks.org/khix/partner-gwc.svg",
     websiteUrl: "https://www.instagram.com/girlswhocodeucf/",

@@ -1,0 +1,3 @@
+# Email recovery queue
+
+Admins need one searchable, paginated queue for campaigns needing attention, with a recipient review before any retry. They chose manual retries. Show confirmed temporary rejections, permanent rejections, unknown outcomes, excluded recipients, and recipients already handed to a retry separately. Never infer individual inbox delivery from campaign totals. Preserve each message and frozen personalization; retry only explicitly selected, verified temporary failures. Respect current audience eligibility and unsubscribes. Show the resulting retry in history. No live resend is authorized by implementation work.

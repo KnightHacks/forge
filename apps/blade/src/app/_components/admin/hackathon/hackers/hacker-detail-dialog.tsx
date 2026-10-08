@@ -380,12 +380,19 @@ export function HackerDetailDialog({
               <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                 <p className="flex items-center gap-2 font-medium text-destructive">
                   <MailWarning className="size-4" aria-hidden="true" />
-                  Their last email never arrived
+                  Their last email needs a delivery review
                 </p>
                 <p className="mt-1 text-sm text-destructive/90">
-                  {hacker.sendError ?? "Delivery failed."} Reach them another
-                  way — contact details below.
+                  {hacker.sendError ?? "Delivery is not confirmed."} Campaign
+                  totals do not identify this person’s delivery outcome. Review
+                  recipients in the Emails queue before retrying.
                 </p>
+                <a
+                  className="mt-2 inline-block text-sm underline"
+                  href="/admin/email?tab=queue"
+                >
+                  Open email queue
+                </a>
               </div>
             ) : null}
 

@@ -1,4 +1,5 @@
 import { campaignHtmlWithFooter } from "./campaign-content";
+import { parseCampaignFailures } from "./campaign-failures";
 
 export const DIRECTORS_TEST_RECIPIENT = "directors@knighthacks.org";
 
@@ -84,6 +85,18 @@ export interface EmailCampaignStatus {
 }
 
 export interface EmailProviderGateway {
+  inspectCampaignFailures(
+    campaignId: number,
+    sendId: string,
+  ): Promise<{
+    complete: boolean;
+    fingerprint: string;
+    failures: {
+      email: string;
+      smtpCode: number | null;
+      subscriberId: number;
+    }[];
+  }>;
   createCampaign(input: CampaignContent): Promise<EmailCampaignResult>;
   reconcileCampaign(campaignId: number): Promise<EmailCampaignStatus>;
   lookupSubscriberStates(emails: string[]): Promise<
@@ -178,6 +191,13 @@ function fakeGateway(): EmailProviderGateway {
   const campaigns = new Map<number, FakeCampaign>();
   let nextId = 1;
   return {
+    inspectCampaignFailures() {
+      return Promise.resolve({
+        complete: false,
+        fingerprint: "fake",
+        failures: [],
+      });
+    },
     createCampaign(input) {
       const listId = nextId++;
       const campaignId = nextId++;
@@ -230,6 +250,9 @@ function fakeGateway(): EmailProviderGateway {
 
 function disabledGateway(): EmailProviderGateway {
   return {
+    inspectCampaignFailures() {
+      return Promise.reject(disabledError());
+    },
     createCampaign() {
       return Promise.reject(disabledError());
     },
@@ -269,6 +292,11 @@ function testGateway(
   ) =>
     config.allowDevelopmentCampaigns && audienceScope === "development_review";
   return {
+    inspectCampaignFailures(campaignId, sendId) {
+      return config.allowDevelopmentCampaigns
+        ? campaignGateway.inspectCampaignFailures(campaignId, sendId)
+        : Promise.reject(testDeliveryOnlyError());
+    },
     createCampaign(input) {
       return permitsDevelopmentCampaign(input.audienceScope)
         ? campaignGateway.createCampaign(input)
@@ -773,6 +801,74 @@ function productionGateway(
         sentCount: typeof data.sent === "number" ? data.sent : 0,
         status: data.status,
         totalCount: typeof data.to_send === "number" ? data.to_send : 0,
+      };
+    },
+    async inspectCampaignFailures(campaignId, sendId) {
+      const client = getTransport();
+      const response = await safeRequest(client, {
+        method: "GET",
+        path: `/api/campaigns/${campaignId}`,
+      });
+      const campaign = record(response.data);
+      if (
+        campaign?.name !== `forge-send:${sendId}` ||
+        campaign.id !== campaignId ||
+        typeof campaign.sent !== "number" ||
+        typeof campaign.to_send !== "number"
+      ) {
+        throw providerFailure("EMAIL_PROVIDER_INVALID_RESPONSE");
+      }
+      const fingerprint = JSON.stringify([
+        campaignId,
+        campaign.started_at,
+        campaign.status,
+        campaign.sent,
+        campaign.to_send,
+        campaign.bounces ?? 0,
+      ]);
+      if (campaign.status !== "finished") {
+        return { complete: false, fingerprint, failures: [] };
+      }
+      const logs = await safeRequest(client, {
+        method: "GET",
+        path: "/api/logs",
+      });
+      const parsed = parseCampaignFailures(logs.data, campaign.name);
+      const failures: {
+        email: string;
+        smtpCode: number | null;
+        subscriberId: number;
+      }[] = [];
+      for (let offset = 0; offset < parsed.failures.length; offset += 100) {
+        const batch = parsed.failures.slice(offset, offset + 100);
+        const query = `subscribers.id IN (${batch.map((item) => item.subscriberId).join(",")})`;
+        const subscribers = subscriberResults(
+          (
+            await safeRequest(client, {
+              method: "GET",
+              path: `/api/subscribers?per_page=all&query=${encodeURIComponent(query)}`,
+            })
+          ).data,
+        );
+        for (const failure of batch) {
+          const subscriber = subscribers.find(
+            (item) => item.id === failure.subscriberId,
+          );
+          if (subscriber)
+            failures.push({
+              ...failure,
+              email: subscriber.email.trim().toLowerCase(),
+            });
+        }
+      }
+      return {
+        complete:
+          parsed.completeRun &&
+          failures.length === parsed.failures.length &&
+          campaign.sent + failures.length === campaign.to_send &&
+          (campaign.bounces ?? 0) === 0,
+        fingerprint,
+        failures,
       };
     },
     lookupSubscriberStates,
