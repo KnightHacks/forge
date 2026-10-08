@@ -142,6 +142,7 @@ export async function hackerJudging(
         label: ProjectChallenge.label,
         parentId: ProjectChallenge.parentId,
         isScheduled: ProjectChallenge.isScheduled,
+        isRemote: ProjectChallenge.isRemote,
       })
       .from(ProjectToChallenge)
       .innerJoin(
@@ -204,26 +205,38 @@ export async function hackerJudging(
     challenges
       .filter((child) => child.parentId === challengeId)
       .map((child) => child.label);
-  output.appointments = appointments.map((appointment) => ({
-    id: appointment.id,
-    challengeId: appointment.challengeId,
-    challenge:
-      challenges.find((challenge) => challenge.id === appointment.challengeId)
-        ?.label ?? "Judging",
-    children: children(appointment.challengeId),
-    room: roomLabel(rooms.find((room) => room.id === appointment.roomId)),
-    startsAt: appointment.startsAt.toISOString(),
-    endsAt: appointment.endsAt.toISOString(),
-    status: appointmentStatus(
-      appointment,
-      evaluations.filter(
-        (evaluation) => evaluation.challengeId === appointment.challengeId,
+  const hackerVisibleChallengeIds = new Set(
+    challenges
+      .filter((challenge) => !challenge.parentId && !challenge.isRemote)
+      .map((challenge) => challenge.id),
+  );
+  output.appointments = appointments
+    .filter((appointment) =>
+      hackerVisibleChallengeIds.has(appointment.challengeId),
+    )
+    .map((appointment) => ({
+      id: appointment.id,
+      challengeId: appointment.challengeId,
+      challenge:
+        challenges.find((challenge) => challenge.id === appointment.challengeId)
+          ?.label ?? "Judging",
+      children: children(appointment.challengeId),
+      room: roomLabel(rooms.find((room) => room.id === appointment.roomId)),
+      startsAt: appointment.startsAt.toISOString(),
+      endsAt: appointment.endsAt.toISOString(),
+      status: appointmentStatus(
+        appointment,
+        evaluations.filter(
+          (evaluation) => evaluation.challengeId === appointment.challengeId,
+        ),
+        now,
       ),
-      now,
-    ),
-  }));
+    }));
   output.unscheduled = challenges
-    .filter((challenge) => !challenge.parentId && !challenge.isScheduled)
+    .filter(
+      (challenge) =>
+        !challenge.parentId && !challenge.isScheduled && !challenge.isRemote,
+    )
     .map((challenge) => ({
       challengeId: challenge.id,
       challenge: challenge.label,

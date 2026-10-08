@@ -2305,6 +2305,7 @@ export const ProjectChallenge = createTable(
     importLabelMatch: t.varchar("import_label_prefix", { length: 255 }),
     isGeneral: t.boolean().notNull().default(false),
     isScheduled: t.boolean().notNull().default(true),
+    isRemote: t.boolean().notNull().default(false),
     createdAt: t
       .timestamp({ mode: "date", withTimezone: true })
       .notNull()
@@ -2335,6 +2336,10 @@ export const ProjectChallenge = createTable(
     notSelf: check(
       "project_challenge_not_self",
       sql`${table.parentId} IS NULL OR ${table.parentId} <> ${table.id}`,
+    ),
+    modeCheck: check(
+      "project_challenge_mode_check",
+      sql`NOT (${table.isScheduled} AND ${table.isRemote})`,
     ),
   }),
 );

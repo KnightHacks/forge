@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { JUDGING } from "@forge/consts";
+
 const httpUrlSchema = z
   .string()
   .trim()
@@ -17,11 +19,13 @@ export const projectHackathonIdSchema = z.object({
   hackathonId: z.string().uuid(),
 });
 
+export const judgingChallengeModeSchema = z.enum(JUDGING.CHALLENGE_MODES);
+
 export const judgingGroupCreateSchema = projectHackathonIdSchema.extend({
   isMlhImportDefault: z.boolean().default(false),
   label: z.string().trim().min(1).max(255),
   isGeneral: z.boolean(),
-  isScheduled: z.boolean(),
+  judgingMode: judgingChallengeModeSchema,
 });
 export const judgingGroupUpdateSchema = judgingGroupCreateSchema.extend({
   isMlhImportDefault: z.boolean().optional(),
@@ -34,7 +38,7 @@ export const judgingGroupDeleteSchema = projectHackathonIdSchema.extend({
 export const projectChallengeUpdateSchema = projectHackathonIdSchema.extend({
   challengeId: z.string().uuid(),
   parentId: z.string().uuid().nullable(),
-  isScheduled: z.boolean(),
+  judgingMode: judgingChallengeModeSchema,
 });
 
 export const projectDropAllInputSchema = projectHackathonIdSchema.extend({

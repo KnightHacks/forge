@@ -428,6 +428,13 @@
       "when": 1791228675901,
       "tag": "0060_early_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1791473519514,
+      "tag": "0061_tidy_the_hood",
+      "breakpoints": true
     }
   ]
 }

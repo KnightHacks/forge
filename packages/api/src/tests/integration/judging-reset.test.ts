@@ -608,6 +608,7 @@ describe.runIf(canRunDatabaseTests())("judging reset operations", () => {
       id: setupChallengeId,
       isGroup: false,
       isScheduled: false,
+      isRemote: true,
       label: "Imported sponsor challenge",
       parentId: setupGroupId,
     });
@@ -660,11 +661,14 @@ describe.runIf(canRunDatabaseTests())("judging reset operations", () => {
       client
         .select({
           isScheduled: schema.ProjectChallenge.isScheduled,
+          isRemote: schema.ProjectChallenge.isRemote,
           parentId: schema.ProjectChallenge.parentId,
         })
         .from(schema.ProjectChallenge)
         .where(eq(schema.ProjectChallenge.id, setupChallengeId)),
-    ).resolves.toEqual([{ isScheduled: true, parentId: null }]);
+    ).resolves.toEqual([
+      { isScheduled: true, isRemote: false, parentId: null },
+    ]);
     const generalGroup = await client.query.ProjectChallenge.findFirst({
       columns: { id: true },
       where: (challenge, { and, eq }) =>

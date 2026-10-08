@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import type { ChallengeMode } from "@forge/consts";
+import { JUDGING } from "@forge/consts";
 import { Badge } from "@forge/ui/badge";
 import { Button } from "@forge/ui/button";
 import { Input } from "@forge/ui/input";
@@ -18,7 +20,55 @@ interface GroupValues {
   isMlhImportDefault: boolean;
   label: string;
   isGeneral: boolean;
-  isScheduled: boolean;
+  judgingMode: ChallengeMode;
+}
+
+const challengeModeLabels: Record<ChallengeMode, string> = {
+  scheduled: "Scheduled",
+  unscheduled: "Unscheduled",
+  remote: "Remote",
+};
+
+function isChallengeMode(value: string): value is ChallengeMode {
+  return JUDGING.CHALLENGE_MODES.some((mode) => mode === value);
+}
+
+function JudgingModeSelect({
+  label,
+  name,
+  value,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  name?: string;
+  value: ChallengeMode;
+  disabled: boolean;
+  onChange?: (mode: ChallengeMode) => void;
+}) {
+  return (
+    <label className="min-w-0 space-y-1 sm:w-44">
+      <span className="text-xs text-muted-foreground">Judging mode</span>
+      <select
+        aria-label={label}
+        className="h-11 w-full rounded-md border border-input bg-background px-2 text-sm"
+        name={name}
+        defaultValue={onChange ? undefined : value}
+        value={onChange ? value : undefined}
+        disabled={disabled}
+        onChange={(event) => {
+          if (isChallengeMode(event.target.value))
+            onChange?.(event.target.value);
+        }}
+      >
+        {JUDGING.CHALLENGE_MODES.map((mode) => (
+          <option key={mode} value={mode}>
+            {challengeModeLabels[mode]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 function GroupForm({
@@ -47,7 +97,12 @@ function GroupForm({
           label: typeof label === "string" ? label : "",
           isGeneral: values.has("everyProject"),
           isMlhImportDefault: values.has("mlhDefault"),
-          isScheduled: values.has("scheduled"),
+          judgingMode:
+            values.get("judgingMode") === "remote"
+              ? "remote"
+              : values.get("judgingMode") === "unscheduled"
+                ? "unscheduled"
+                : "scheduled",
         })
           .then(() => {
             if (!group) form.reset();
@@ -77,15 +132,16 @@ function GroupForm({
         />
         Assigned to all projects
       </label>
-      <label className="flex min-h-11 items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          name="scheduled"
-          defaultChecked={group?.isScheduled ?? true}
-          disabled={disabled}
-        />
-        On hacker schedule
-      </label>
+      <JudgingModeSelect
+        label={
+          group
+            ? `Judging mode for ${group.label}`
+            : "Judging mode for new group"
+        }
+        name="judgingMode"
+        value={group?.judgingMode ?? "scheduled"}
+        disabled={disabled}
+      />
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input
           type="checkbox"
@@ -170,6 +226,11 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
         Groups share one evaluation and appointment across their challenges. You
         can rename or remove the starter groups, or create your own.
       </p>
+      <p className="mt-1 text-sm leading-6 text-muted-foreground">
+        Scheduled creates hacker appointments. Unscheduled shows a walk-up
+        location. Remote stays off the hacker itinerary and is judged without an
+        appointment.
+      </p>
       {locked ? (
         <p className="mt-2 text-sm text-muted-foreground">
           Setup is locked after a schedule is saved or feedback starts.
@@ -178,7 +239,7 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
       <div className="mt-4 space-y-3" aria-label="Judging groups">
         {groups.map((group) => (
           <GroupForm
-            key={`${group.id}:${group.label}:${group.isGeneral}:${group.isScheduled}:${group.isMlhImportDefault}`}
+            key={`${group.id}:${group.label}:${group.isGeneral}:${group.judgingMode}:${group.isMlhImportDefault}`}
             group={group}
             disabled={disabled}
             onSave={(values) =>
@@ -289,7 +350,7 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
                           hackathonId: data.hackathon.id,
                           challengeId: challenge.id,
                           parentId: event.target.value || null,
-                          isScheduled: challenge.isScheduled,
+                          judgingMode: challenge.judgingMode,
                         }),
                       "Challenge updated.",
                     ).catch(() => undefined)
@@ -303,32 +364,28 @@ export function ChallengeConfigurationPanel({ data }: { data: Data }) {
                   ))}
                 </select>
               </label>
-              <label className="flex min-h-11 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  aria-label={`Schedule ${challenge.label}`}
-                  checked={
-                    challenge.parentId
-                      ? (groups.find((group) => group.id === challenge.parentId)
-                          ?.isScheduled ?? true)
-                      : challenge.isScheduled
-                  }
-                  disabled={disabled || !!challenge.parentId}
-                  onChange={(event) =>
-                    void change(
-                      () =>
-                        update.mutateAsync({
-                          hackathonId: data.hackathon.id,
-                          challengeId: challenge.id,
-                          parentId: challenge.parentId,
-                          isScheduled: event.target.checked,
-                        }),
-                      "Challenge updated.",
-                    ).catch(() => undefined)
-                  }
-                />
-                On hacker schedule
-              </label>
+              <JudgingModeSelect
+                label={`Judging mode for ${challenge.label}`}
+                value={
+                  challenge.parentId
+                    ? (groups.find((group) => group.id === challenge.parentId)
+                        ?.judgingMode ?? "scheduled")
+                    : challenge.judgingMode
+                }
+                disabled={disabled || !!challenge.parentId}
+                onChange={(judgingMode) =>
+                  void change(
+                    () =>
+                      update.mutateAsync({
+                        hackathonId: data.hackathon.id,
+                        challengeId: challenge.id,
+                        parentId: challenge.parentId,
+                        judgingMode,
+                      }),
+                    "Challenge updated.",
+                  ).catch(() => undefined)
+                }
+              />
             </div>
           ))
         ) : (

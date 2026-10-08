@@ -75,7 +75,13 @@ describe.runIf(canRunDatabaseTests())(
       await client.insert(schema.ProjectChallenge).values([
         { id: general, hackathonId, isGeneral: true, label: "General" },
         { id: sponsor, hackathonId, label: "Sponsor" },
-        { id: mlh, hackathonId, isScheduled: false, label: "MLH Challenges" },
+        {
+          id: mlh,
+          hackathonId,
+          isScheduled: false,
+          isRemote: true,
+          label: "Remote sponsor challenge",
+        },
       ]);
       for (const [index, id] of projectIds.entries()) {
         await client.insert(schema.Project).values({
@@ -642,8 +648,15 @@ describe.runIf(canRunDatabaseTests())(
         ).appointments.find((appointment) => appointment.id === current.id)
           ?.status,
       ).toBe("complete");
-      // MLH judging is untimed in its room and contributes one overall mean.
-      await admin.judging.saveEvaluation({
+      // Remote judging is untimed in its room and contributes one overall mean.
+      await judge.judging.joinRoom({ roomId: mlhRoom.id });
+      expect(
+        await judge.judging.getEvaluationEditor({
+          ...editorInput,
+          challengeId: mlh,
+        }),
+      ).toMatchObject({ canEdit: true, deadlineAt: null, timed: false });
+      await judge.judging.saveEvaluation({
         ...editorInput,
         challengeId: mlh,
         ratings: [{ itemId: ratingId, value: 3 }],

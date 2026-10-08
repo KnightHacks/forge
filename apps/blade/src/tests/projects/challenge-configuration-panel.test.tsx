@@ -74,6 +74,8 @@ const data = {
       isGroup: true,
       isMlhImportDefault: false,
       isScheduled: true,
+      isRemote: false,
+      judgingMode: "scheduled",
     },
     {
       id: "00000000-0000-4000-8000-000000000003",
@@ -83,6 +85,8 @@ const data = {
       isGroup: false,
       isMlhImportDefault: false,
       isScheduled: true,
+      isRemote: false,
+      judgingMode: "scheduled",
     },
   ],
   setupLocked: false,
@@ -152,7 +156,7 @@ describe("organizer challenge setup", () => {
       hackathonId: data.hackathon.id,
       challengeId: firstTime.id,
       parentId: general.id,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     expect(mocks.refresh).toHaveBeenCalled();
   });
@@ -175,11 +179,54 @@ describe("organizer challenge setup", () => {
       label: "Community awards",
       isMlhImportDefault: false,
       isGeneral: false,
-      isScheduled: true,
+      judgingMode: "scheduled",
     });
     expect(
       screen.queryByRole("textbox", { name: "New judging group" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("configures a standalone challenge for remote judging", async () => {
+    const user = userEvent.setup();
+    render(<ChallengeConfigurationPanel data={data} />);
+    await user.selectOptions(
+      screen.getByRole("combobox", {
+        name: "Judging mode for First-time hacker",
+      }),
+      "remote",
+    );
+    expect(mocks.update).toHaveBeenCalledWith({
+      hackathonId: data.hackathon.id,
+      challengeId: data.challenges[1]?.id,
+      parentId: null,
+      judgingMode: "remote",
+    });
+  });
+
+  it("shows an inherited remote mode as read-only", () => {
+    const [group, challenge] = data.challenges;
+    if (!group || !challenge) throw new Error("Missing challenge fixtures");
+    render(
+      <ChallengeConfigurationPanel
+        data={{
+          ...data,
+          challenges: [
+            {
+              ...group,
+              isScheduled: false,
+              isRemote: true,
+              judgingMode: "remote",
+            },
+            { ...challenge, parentId: group.id },
+          ],
+        }}
+      />,
+    );
+    const mode = screen.getByRole("combobox", {
+      name: "Judging mode for First-time hacker",
+    });
+    expect(mode).toHaveValue("remote");
+    expect(mode).toBeDisabled();
   });
 
   it("keeps saved setup readable and prevents editing every setup control", () => {
