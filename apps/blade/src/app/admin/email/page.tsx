@@ -18,7 +18,9 @@ export const metadata: Metadata = {
 
 function parseTab(value: string | string[] | undefined): EmailPortalTab {
   const tab = Array.isArray(value) ? value[0] : value;
-  return tab === "templates" || tab === "sends" ? tab : "compose";
+  return tab === "templates" || tab === "sends" || tab === "queue"
+    ? tab
+    : "compose";
 }
 
 export default async function EmailPortalPage({

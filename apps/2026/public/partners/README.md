@@ -1,5 +1,9 @@
 # Partner logo sources
 
+- `gpk-ucf.svg`: Graphics Programming Knights. Original SVG supplied by the
+  organizer as `gpklogomarm(1).svg` on October 8, 2026, retained without artwork
+  changes. Organization: <https://linktr.ee/GPKnights>, as linked from the club's
+  [official profile](https://www.linkedin.com/company/graphics-programming-knights).
 - `acm-ucf.svg`: ACM & ACM-W at UCF. Derived from the existing
   `apps/2025/public/partnersSection/acm.svg`. The original vector wordmark,
   diamond, and infinity silhouette are retained; the raster clipped inside the

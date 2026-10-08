@@ -1,6 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import {
@@ -453,6 +454,7 @@ export function EmailPortalWorkspace({
   onSaveTemplate,
   onSendTest,
   preview,
+  queue,
   sends,
   templates,
 }: {
@@ -483,6 +485,7 @@ export function EmailPortalWorkspace({
   onSaveTemplate?: (input: TemplateEditorSeed) => Promise<void> | void;
   onSendTest?: (content: EmailSendContent) => Promise<void> | void;
   preview: EmailPortalPreview | null;
+  queue?: ReactNode;
   sends: EmailPortalSend[];
   templates: EmailPortalTemplate[];
 }) {
@@ -588,6 +591,7 @@ export function EmailPortalWorkspace({
     { icon: Send, id: "compose", label: "Compose" },
     { icon: Sparkles, id: "templates", label: "Templates" },
     { icon: Clock3, id: "sends", label: "Sends" },
+    { icon: CircleAlert, id: "queue", label: "Queue" },
   ];
 
   return (
@@ -605,7 +609,7 @@ export function EmailPortalWorkspace({
         <div
           role="tablist"
           aria-label="Email portal sections"
-          className="flex gap-1 overflow-x-auto border-b border-border/70 bg-background/40 px-3 pt-2 sm:px-5"
+          className="grid grid-cols-4 gap-1 border-b border-border/70 bg-background/40 px-2 pt-2 sm:flex sm:px-5"
         >
           {tabs.map((item) => {
             const Icon = item.icon;
@@ -617,19 +621,29 @@ export function EmailPortalWorkspace({
                 aria-controls={`email-${item.id}-panel`}
                 aria-selected={tab === item.id}
                 className={cn(
-                  "flex h-11 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors",
+                  "flex h-11 min-w-0 items-center justify-center gap-2 border-b-2 px-1 text-xs font-medium transition-colors sm:px-3 sm:text-sm",
                   tab === item.id
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setActiveTab(item.id)}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="hidden h-4 w-4 sm:block" />
                 {item.label}
               </button>
             );
           })}
         </div>
+
+        {tab === "queue" && (
+          <section
+            id="email-queue-panel"
+            role="tabpanel"
+            className="p-4 sm:p-6"
+          >
+            {queue}
+          </section>
+        )}
 
         {tab === "templates" && (
           <section
