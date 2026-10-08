@@ -39,6 +39,14 @@ describe("admin layout gate", () => {
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 
+  it("lets a merch-store-only organizer into admin", async () => {
+    grant("HACKATHON_MERCH_STORE");
+    const { default: AdminLayout } = await import("~/app/admin/layout");
+
+    await expect(AdminLayout({ children: null })).resolves.toBeTruthy();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
   it("still sends members with no admin permission to their dashboard", async () => {
     grant();
     const { default: AdminLayout } = await import("~/app/admin/layout");

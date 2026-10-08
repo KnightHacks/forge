@@ -238,11 +238,11 @@ function Checkout({
                 isDisabled={purchase.isPending}
                 isLoading={hackers.isFetching}
                 buttonPlaceholder="Find a checked-in hacker"
-                inputPlaceholder="Search name or email"
+                inputPlaceholder="Name, email, Discord, school, or major"
                 emptyMessage={
                   query
                     ? "No checked-in hackers found."
-                    : "Type a name or email."
+                    : "Type a name, email, Discord username, school, or major."
                 }
                 getItemValue={(entry) => entry.id}
                 getItemLabel={(entry) => `${entry.firstName} ${entry.lastName}`}
@@ -250,7 +250,10 @@ function Checkout({
                   <span className="min-w-0 break-words">
                     {entry.firstName} {entry.lastName}
                     <span className="block text-xs text-muted-foreground">
-                      {entry.email}
+                      {entry.email} · @{entry.discordUser}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {entry.school} · {entry.major}
                     </span>
                   </span>
                 )}
