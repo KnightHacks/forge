@@ -1,9 +1,12 @@
+import { campaignHtmlWithFooter } from "./campaign-content";
+
 export const DIRECTORS_TEST_RECIPIENT = "directors@knighthacks.org";
 
 const RAW_CONTENT_TEMPLATE_BODY = "{{ Safe .Tx.Data.body }}";
 const RAW_CONTENT_TEMPLATE_NAME = "Forge raw-content transactional wrapper";
 const PLAIN_CAMPAIGN_TEMPLATE_BODY = '{{ template "content" . }}';
 const PLAIN_CAMPAIGN_TEMPLATE_NAME = "Forge plain-text campaign wrapper";
+const HTML_CAMPAIGN_TEMPLATE_NAME = "Forge raw-content campaign wrapper";
 
 export type EmailDeliveryMode = "disabled" | "fake" | "production" | "test";
 
@@ -16,6 +19,12 @@ export interface EmailHttpRequest {
 export type EmailHttpTransport = (
   request: EmailHttpRequest,
 ) => Promise<{ data: unknown }>;
+
+/** The caller must serialize subscriber writes across all worker processes. */
+export type EmailRecipientLock = (
+  email: string,
+  operation: () => Promise<void>,
+) => Promise<void>;
 
 export interface CampaignContent {
   audienceScope?: "development_review";
@@ -251,6 +260,7 @@ function testGateway(
     allowDevelopmentCampaigns: boolean;
     campaignTemplateId?: number;
     fromEmail?: string;
+    withRecipientLock?: EmailRecipientLock;
   },
 ): EmailProviderGateway {
   const campaignGateway = productionGateway(transport, config);
@@ -399,11 +409,11 @@ function rawContentTemplateId(value: unknown): number | undefined {
   return undefined;
 }
 
-function plainCampaignTemplateId(value: unknown): number | undefined {
+function campaignTemplateId(value: unknown, name: string): number | undefined {
   for (const result of responseRows(value)) {
     const candidate = record(result);
     if (
-      candidate?.name === PLAIN_CAMPAIGN_TEMPLATE_NAME &&
+      candidate?.name === name &&
       candidate.type === "campaign" &&
       typeof candidate.id === "number"
     ) {
@@ -411,36 +421,6 @@ function plainCampaignTemplateId(value: unknown): number | undefined {
     }
   }
   return undefined;
-}
-
-function defaultCampaignTemplateId(value: unknown): number | undefined {
-  for (const result of responseRows(value)) {
-    const candidate = record(result);
-    if (
-      candidate?.type === "campaign" &&
-      candidate.is_default === true &&
-      typeof candidate.id === "number"
-    ) {
-      return candidate.id;
-    }
-  }
-  return undefined;
-}
-
-async function resolveCampaignTemplateId(
-  client: EmailHttpTransport,
-  configuredId: number | undefined,
-) {
-  if (configuredId) return configuredId;
-  const response = await safeRequest(client, {
-    method: "GET",
-    path: "/api/templates?per_page=all",
-  });
-  const templateId = defaultCampaignTemplateId(response.data);
-  if (!templateId) {
-    throw providerFailure("EMAIL_PROVIDER_INVALID_RESPONSE");
-  }
-  return templateId;
 }
 
 async function ensureRawContentTemplate(client: EmailHttpTransport) {
@@ -478,13 +458,16 @@ async function ensureRawContentTemplate(client: EmailHttpTransport) {
   return adoptedId;
 }
 
-async function ensurePlainCampaignTemplate(client: EmailHttpTransport) {
+async function ensureCampaignTemplate(
+  client: EmailHttpTransport,
+  name: string,
+) {
   const findExisting = async () => {
     const response = await safeRequest(client, {
       method: "GET",
       path: "/api/templates?per_page=all",
     });
-    return plainCampaignTemplateId(response.data);
+    return campaignTemplateId(response.data, name);
   };
   const existingId = await findExisting();
   if (existingId) return existingId;
@@ -492,14 +475,14 @@ async function ensurePlainCampaignTemplate(client: EmailHttpTransport) {
     const created = await safeRequest(client, {
       body: {
         body: PLAIN_CAMPAIGN_TEMPLATE_BODY,
-        name: PLAIN_CAMPAIGN_TEMPLATE_NAME,
+        name,
         type: "campaign",
       },
       method: "POST",
       path: "/api/templates",
     });
     const createdId =
-      plainCampaignTemplateId(created.data) ??
+      campaignTemplateId(created.data, name) ??
       (typeof record(created.data)?.id === "number"
         ? (record(created.data)?.id as number)
         : undefined);
@@ -562,9 +545,19 @@ function productionGateway(
   config: {
     campaignTemplateId?: number;
     fromEmail?: string;
+    withRecipientLock?: EmailRecipientLock;
   },
 ): EmailProviderGateway {
   const getTransport = () => transportOrFail(transport);
+  const requireRecipientLock = () => {
+    if (!config.withRecipientLock) {
+      throw new EmailProviderError(
+        "EMAIL_DELIVERY_POLICY_REQUIRED",
+        "Campaign preparation requires a shared subscriber lock.",
+      );
+    }
+    return config.withRecipientLock;
+  };
   const lookupSubscriberStates = async (emails: string[]) => {
     if (emails.length === 0) return [];
     const results: {
@@ -593,6 +586,7 @@ function productionGateway(
   };
   return {
     async createCampaign(input) {
+      const withRecipientLock = requireRecipientLock();
       const client = getTransport();
       const tag = `forge-send:${input.sendId}`;
       let listId: number | undefined;
@@ -698,18 +692,29 @@ function productionGateway(
         }
       };
       for (let index = 0; index < input.recipientSnapshot.length; index += 20) {
-        await Promise.all(
-          input.recipientSnapshot.slice(index, index + 20).map(syncRecipient),
+        const synced = await Promise.allSettled(
+          input.recipientSnapshot
+            .slice(index, index + 20)
+            .map((email) =>
+              withRecipientLock(email, () => syncRecipient(email)),
+            ),
         );
+        const failed = synced.find((result) => result.status === "rejected");
+        if (failed?.status === "rejected") throw failed.reason;
       }
 
       const hasHtmlBody = input.html.trim().length > 0;
       const templateId = hasHtmlBody
-        ? await resolveCampaignTemplateId(client, config.campaignTemplateId)
-        : await ensurePlainCampaignTemplate(client);
+        ? (config.campaignTemplateId ??
+          (await ensureCampaignTemplate(client, HTML_CAMPAIGN_TEMPLATE_NAME)))
+        : await ensureCampaignTemplate(client, PLAIN_CAMPAIGN_TEMPLATE_NAME);
       const body = {
         ...(hasHtmlBody ? { altbody: input.text } : {}),
-        body: hasHtmlBody ? input.html : input.text,
+        body: hasHtmlBody
+          ? config.campaignTemplateId
+            ? input.html
+            : campaignHtmlWithFooter(input.html)
+          : input.text,
         content_type: hasHtmlBody ? "html" : "plain",
         from_email: config.fromEmail,
         lists: [listId],
@@ -764,8 +769,7 @@ function productionGateway(
         throw providerFailure("EMAIL_PROVIDER_INVALID_RESPONSE");
       }
       return {
-        bounceCount:
-          typeof data.bounce_count === "number" ? data.bounce_count : 0,
+        bounceCount: typeof data.bounces === "number" ? data.bounces : 0,
         sentCount: typeof data.sent === "number" ? data.sent : 0,
         status: data.status,
         totalCount: typeof data.to_send === "number" ? data.to_send : 0,
@@ -773,27 +777,32 @@ function productionGateway(
     },
     lookupSubscriberStates,
     async removeRecipientNamespace(sendId, emails) {
-      for (const subscriber of await findSubscribersByEmails(
-        getTransport(),
-        emails,
-      )) {
-        const forge = record(subscriber.attribs.forge) ?? {};
-        if (!(sendId in forge)) continue;
-        const remainingForge = { ...forge };
-        delete remainingForge[sendId];
-        await safeRequest(getTransport(), {
-          body: {
-            attribs: {
-              ...subscriber.attribs,
-              forge: remainingForge,
+      const withRecipientLock = requireRecipientLock();
+      for (const email of emails) {
+        await withRecipientLock(email, async () => {
+          // Read inside the lock: an earlier snapshot could erase another send.
+          const [subscriber] = await findSubscribersByEmails(getTransport(), [
+            email,
+          ]);
+          if (!subscriber) return;
+          const forge = record(subscriber.attribs.forge) ?? {};
+          if (!(sendId in forge)) return;
+          const remainingForge = { ...forge };
+          delete remainingForge[sendId];
+          await safeRequest(getTransport(), {
+            body: {
+              attribs: {
+                ...subscriber.attribs,
+                forge: remainingForge,
+              },
+              email: subscriber.email,
+              lists: subscriberListIds(subscriber),
+              name: subscriber.name,
+              status: subscriber.status,
             },
-            email: subscriber.email,
-            lists: subscriberListIds(subscriber),
-            name: subscriber.name,
-            status: subscriber.status,
-          },
-          method: "PUT",
-          path: `/api/subscribers/${subscriber.id}`,
+            method: "PUT",
+            path: `/api/subscribers/${subscriber.id}`,
+          });
         });
       }
     },
@@ -836,12 +845,14 @@ export function createEmailProviderGateway({
   fromEmail,
   mode,
   transport,
+  withRecipientLock,
 }: {
   allowDevelopmentCampaigns?: boolean;
   campaignTemplateId?: number;
   fromEmail?: string;
   mode: EmailDeliveryMode | undefined;
   transport?: EmailHttpTransport;
+  withRecipientLock?: EmailRecipientLock;
 }): EmailProviderGateway {
   if (!mode) {
     throw new EmailProviderError(
@@ -856,7 +867,12 @@ export function createEmailProviderGateway({
       allowDevelopmentCampaigns,
       campaignTemplateId,
       fromEmail,
+      withRecipientLock,
     });
   }
-  return productionGateway(transport, { campaignTemplateId, fromEmail });
+  return productionGateway(transport, {
+    campaignTemplateId,
+    fromEmail,
+    withRecipientLock,
+  });
 }

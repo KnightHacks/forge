@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { usePortalConfig } from "~/lib/hacker-portal";
 import styles from "./Hero.module.css";
 
 interface HeroApplyButtonProps {
@@ -16,6 +17,7 @@ export function HeroApplyButton({
   className,
   cursorReactive = false,
 }: HeroApplyButtonProps) {
+  const config = usePortalConfig();
   const cursorIdleTimerRef = useRef<number | null>(null);
 
   useEffect(
@@ -80,9 +82,8 @@ export function HeroApplyButton({
 
   return (
     <Link
-      href="/apply"
+      href={config.routes.dashboard}
       className={[styles.heroApplyButton, className].filter(Boolean).join(" ")}
-      aria-label="Apply to Knight Hacks IX"
       data-cursor-active={cursorReactive ? "false" : undefined}
       data-cursor-idle={cursorReactive ? "false" : undefined}
       onPointerEnter={cursorReactive ? updateCursorGlow : undefined}
@@ -90,7 +91,7 @@ export function HeroApplyButton({
       onPointerLeave={cursorReactive ? handlePointerLeave : undefined}
       onPointerCancel={cursorReactive ? handlePointerLeave : undefined}
     >
-      <span>Apply</span>
+      <span>Log into Dashboard</span>
     </Link>
   );
 }

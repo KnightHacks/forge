@@ -22,6 +22,28 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 describe("Email Portal workspace", () => {
+  it("offers Retry only for failures before provider delivery may have started", () => {
+    const render = (providerMayHaveStarted: boolean) =>
+      renderToStaticMarkup(
+        createElement(EmailPortalWorkspace, {
+          audienceOptions: [],
+          initialTab: "sends",
+          preview: null,
+          templates: [],
+          sends: [
+            {
+              id: "synthetic",
+              subject: "Synthetic failure",
+              status: "failed",
+              providerMayHaveStarted,
+              safeError: "Synthetic failure",
+            },
+          ],
+        }),
+      );
+    expect(render(false)).toContain("Retry");
+    expect(render(true)).not.toContain("Retry");
+  });
   it("TC-021 makes the exact unique count primary in confirmation", () => {
     const html = renderToStaticMarkup(
       createElement(EmailPortalWorkspace, {

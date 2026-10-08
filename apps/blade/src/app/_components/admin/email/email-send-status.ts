@@ -12,7 +12,7 @@ export function statusClass(status: string) {
   if (status === "scheduled") {
     return "border-violet-500/30 bg-violet-500/10 text-violet-300";
   }
-  if (status.includes("failure")) {
+  if (status === "failed" || status.includes("failure")) {
     return "border-destructive/30 bg-destructive/10 text-destructive";
   }
   return "border-white/10 bg-background/60 text-muted-foreground";

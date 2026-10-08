@@ -43,12 +43,11 @@ describe("statusClass", () => {
       "border-destructive/30 bg-destructive/10 text-destructive";
     expect(statusClass("retryable_failure")).toBe(destructive);
     expect(statusClass("permanent_failure")).toBe(destructive);
+    expect(statusClass("failed")).toBe(destructive);
   });
 
   it("falls back to the neutral palette for anything else", () => {
     const neutral = "border-white/10 bg-background/60 text-muted-foreground";
-    // `failed` deliberately does not contain "failure".
-    expect(statusClass("failed")).toBe(neutral);
     expect(statusClass("draft")).toBe(neutral);
     expect(statusClass("queued")).toBe(neutral);
     expect(statusClass("")).toBe(neutral);

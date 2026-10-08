@@ -1405,18 +1405,19 @@ export function EmailPortalWorkspace({
                             Cancel
                           </Button>
                         )}
-                        {(send.status === "retryable_failure" ||
-                          send.status === "failed" ||
-                          (send.status === "queued" && send.safeError)) && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onRetrySend?.(send.id)}
-                          >
-                            <RefreshCw className="h-4 w-4" /> Retry
-                          </Button>
-                        )}
+                        {!send.providerMayHaveStarted &&
+                          (send.status === "retryable_failure" ||
+                            send.status === "failed" ||
+                            (send.status === "queued" && send.safeError)) && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onRetrySend?.(send.id)}
+                            >
+                              <RefreshCw className="h-4 w-4" /> Retry
+                            </Button>
+                          )}
                         <Button
                           type="button"
                           size="icon"

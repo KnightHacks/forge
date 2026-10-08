@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createEmailProviderGateway } from "../provider";
 
 describe("production Listmonk campaign gateway", () => {
-  it("discovers the default campaign template when no ID is configured", async () => {
+  it("uses the Forge wrapper instead of nesting HTML in the default white card", async () => {
     const transport = vi
       .fn()
       .mockResolvedValueOnce({ data: { id: 81 } })
@@ -18,11 +18,17 @@ describe("production Listmonk campaign gateway", () => {
               name: "Default campaign",
               type: "campaign",
             },
+            {
+              id: 25,
+              name: "Forge raw-content campaign wrapper",
+              type: "campaign",
+            },
           ],
         },
       })
       .mockResolvedValueOnce({ data: { id: 83 } });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       mode: "production",
       transport,
     });
@@ -43,7 +49,51 @@ describe("production Listmonk campaign gateway", () => {
     expect(transport).toHaveBeenNthCalledWith(
       4,
       expect.objectContaining({
-        body: expect.objectContaining({ template_id: 1 }),
+        body: expect.objectContaining({
+          template_id: 25,
+          body: expect.stringContaining("{{ UnsubscribeURL }}"),
+          altbody: "Hello",
+        }),
+        method: "POST",
+        path: "/api/campaigns",
+      }),
+    );
+  });
+
+  it("creates an unstyled Forge wrapper without replacing the provider default", async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce({ data: { id: 81 } })
+      .mockResolvedValueOnce({ data: { id: 82 } })
+      .mockResolvedValueOnce({ data: { results: [] } })
+      .mockResolvedValueOnce({ data: { id: 25 } })
+      .mockResolvedValueOnce({ data: { id: 83 } });
+    const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
+      mode: "production",
+      transport,
+    });
+
+    await gateway.createCampaign({
+      html: '<html><body style="background:#071522">Hello</body></html>',
+      recipientSnapshot: ["ada@example.test"],
+      sendId: "unstyled-campaign",
+      subject: "Unstyled campaign",
+      text: "Hello",
+    });
+    expect(transport).toHaveBeenNthCalledWith(4, {
+      body: {
+        body: '{{ template "content" . }}',
+        name: "Forge raw-content campaign wrapper",
+        type: "campaign",
+      },
+      method: "POST",
+      path: "/api/templates",
+    });
+    expect(transport).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        body: expect.objectContaining({ template_id: 25 }),
         method: "POST",
         path: "/api/campaigns",
       }),
@@ -74,6 +124,7 @@ describe("production Listmonk campaign gateway", () => {
       },
     });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 1,
       mode: "production",
       transport,
@@ -105,6 +156,7 @@ describe("production Listmonk campaign gateway", () => {
       })
       .mockResolvedValueOnce({ data: true });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       mode: "production",
       transport,
     });
@@ -139,6 +191,7 @@ describe("production Listmonk campaign gateway", () => {
       .mockResolvedValueOnce({ data: { id: 92 } })
       .mockResolvedValueOnce({ data: { id: 93, status: "draft" } });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 7,
       fromEmail: "Knight Hacks <hello@knighthacks.org>",
       mode: "production",
@@ -233,6 +286,7 @@ describe("production Listmonk campaign gateway", () => {
       .mockResolvedValueOnce({ data: true })
       .mockResolvedValueOnce({ data: { id: 93 } });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 7,
       mode: "production",
       transport,
@@ -309,6 +363,7 @@ describe("production Listmonk campaign gateway", () => {
       })
       .mockResolvedValueOnce({ data: true });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       mode: "production",
       transport,
     });
@@ -349,6 +404,7 @@ describe("production Listmonk campaign gateway", () => {
       .mockResolvedValueOnce({ data: { id: 102 } })
       .mockResolvedValueOnce({ data: { id: 103, status: "draft" } });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 1,
       mode: "production",
       transport,
@@ -382,6 +438,7 @@ describe("production Listmonk campaign gateway", () => {
         data: { results: [{ id: 203, name: "forge-send:retry" }] },
       });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 1,
       mode: "production",
       transport,
@@ -415,6 +472,7 @@ describe("production Listmonk campaign gateway", () => {
       .mockResolvedValueOnce({ data: { id: 304 } })
       .mockResolvedValueOnce({ data: { id: 303 } });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       campaignTemplateId: 1,
       mode: "production",
       transport,
@@ -464,6 +522,7 @@ describe("production Listmonk campaign gateway", () => {
     async (_name, reply) => {
       const transport = vi.fn().mockResolvedValue(reply);
       const gateway = createEmailProviderGateway({
+        withRecipientLock: (_email, operation) => operation(),
         campaignTemplateId: 1,
         mode: "production",
         transport,

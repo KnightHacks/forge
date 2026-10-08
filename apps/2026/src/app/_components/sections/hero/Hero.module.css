@@ -418,7 +418,7 @@
 
   width: clamp(15rem, 18vw, 20rem);
   min-height: clamp(3.25rem, calc(var(--khix-viewport-unit) * 6.4), 4rem);
-  padding-inline: clamp(2rem, 4vw, 3rem);
+  padding-inline: 1rem;
   font-size: clamp(1.05rem, 1.25vw, 1.2rem);
 }
 
@@ -577,7 +577,7 @@
   .titleApplyButton {
     width: clamp(13rem, 22vw, 17rem);
     min-height: clamp(3rem, calc(var(--khix-viewport-unit) * 6), 3.75rem);
-    padding-inline: clamp(1.75rem, 4vw, 2.5rem);
+    padding-inline: 1rem;
     font-size: clamp(1rem, 1.4vw, 1.1rem);
   }
 }
@@ -747,8 +747,8 @@
     --khix-title-glow-opacity: 0.7;
     --khix-mobile-title-top: clamp(
       8.5rem,
-      calc(var(--khix-viewport-unit) * 16),
-      10rem
+      calc(var(--khix-viewport-unit) * 19),
+      11rem
     );
 
     top: var(--khix-mobile-title-top);
@@ -785,19 +785,19 @@
 
   .mobileHeroApplyButton {
     position: absolute;
-    top: 72svh;
+    top: calc(var(--khix-hero-height) - 8rem - 10svh);
     right: 0;
     left: 0;
     z-index: 30;
     display: inline-flex;
-    width: min(calc(var(--khix-viewport-width-unit) * 68), 18rem);
-    min-height: clamp(3rem, calc(var(--khix-viewport-unit) * 6), 3.35rem);
+    width: min(calc(var(--khix-viewport-width-unit) * 82), 20rem);
+    min-height: 3.5rem;
     margin-inline: auto;
-    padding-inline: clamp(
-      1.5rem,
-      calc(var(--khix-viewport-width-unit) * 6),
-      2.25rem
-    );
+    padding: 0.75rem 1rem;
+    color: #fff;
+    border-color: rgb(224 245 206 / 0.75);
+    background: #16372b;
+    text-shadow: none;
     font-size: clamp(1rem, calc(var(--khix-viewport-width-unit) * 4.2), 1.1rem);
   }
 }

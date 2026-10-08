@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { describe, expect, it, vi } from "vitest";
 
-import { resolveEmailDeliveryPolicy } from "../index";
+import {
+  getDefaultEmailProviderGateway,
+  resolveEmailDeliveryPolicy,
+} from "../index";
 import {
   createEmailProviderGateway,
   DIRECTORS_TEST_RECIPIENT,
@@ -14,6 +17,19 @@ const content = {
 };
 
 describe("email delivery mode boundary", () => {
+  it("shares fake campaign state between locked preparation and reconciliation", async () => {
+    const locked = getDefaultEmailProviderGateway((_email, operation) =>
+      operation(),
+    );
+    const campaign = await locked.createCampaign({
+      ...content,
+      recipientSnapshot: ["person@example.test"],
+      sendId: "fake-lock-regression",
+    });
+    await expect(
+      getDefaultEmailProviderGateway().reconcileCampaign(campaign.campaignId),
+    ).resolves.toMatchObject({ sentCount: 1, status: "completed" });
+  });
   it("derives production, development review, and fake policies only from NODE_ENV", () => {
     expect(resolveEmailDeliveryPolicy("production")).toEqual({
       allowDevelopmentCampaigns: false,
@@ -40,6 +56,7 @@ describe("email delivery mode boundary", () => {
   it("TC-030 rejects every disabled mutation before transport", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       mode: "disabled",
       transport,
     });
@@ -99,6 +116,7 @@ describe("email delivery mode boundary", () => {
       return Promise.resolve({ data: true });
     });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       fromEmail: "Knight Hacks <hello@knighthacks.org>",
       mode: "test",
       transport,
@@ -132,6 +150,7 @@ describe("email delivery mode boundary", () => {
     async (_name, recipients) => {
       const transport = vi.fn();
       const gateway = createEmailProviderGateway({
+        withRecipientLock: (_email, operation) => operation(),
         mode: "test",
         transport,
       });
@@ -155,6 +174,7 @@ describe("email delivery mode boundary", () => {
       .mockResolvedValueOnce({ data: { id: 203 } })
       .mockResolvedValueOnce({ data: true });
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       allowDevelopmentCampaigns: true,
       campaignTemplateId: 1,
       mode: "test",
@@ -185,6 +205,7 @@ describe("email delivery mode boundary", () => {
   it("rejects an unscoped campaign even when team review is enabled", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       allowDevelopmentCampaigns: true,
       mode: "test",
       transport,
@@ -203,6 +224,7 @@ describe("email delivery mode boundary", () => {
   it("TC-NEG-008 rejects a direct recipient-bearing test request", async () => {
     const transport = vi.fn();
     const gateway = createEmailProviderGateway({
+      withRecipientLock: (_email, operation) => operation(),
       mode: "test",
       transport,
     });
@@ -219,6 +241,7 @@ describe("email delivery mode boundary", () => {
   it("TC-NEG-009 requires an explicit delivery mode", () => {
     expect(() =>
       createEmailProviderGateway({
+        withRecipientLock: (_email, operation) => operation(),
         mode: undefined,
         transport: vi.fn(),
       }),

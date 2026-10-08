@@ -18,7 +18,9 @@ const MEMBER_USER_ID = "00000000-0000-4000-8000-000000000862";
 const MEMBER_ID = "00000000-0000-4000-8000-000000000863";
 const ADMIN_ROLE_ID = "00000000-0000-4000-8000-000000000864";
 const TEAM_ROLE_ID = "00000000-0000-4000-8000-000000000865";
-const FIXTURE_USER_IDS = [ADMIN_ID, MEMBER_USER_ID];
+const INCLUDED_USER_ID = "00000000-0000-4000-8000-000000000866";
+const INCLUDED_MEMBER_ID = "00000000-0000-4000-8000-000000000867";
+const FIXTURE_USER_IDS = [ADMIN_ID, MEMBER_USER_ID, INCLUDED_USER_ID];
 const FIXTURE_ROLE_IDS = [ADMIN_ROLE_ID, TEAM_ROLE_ID];
 
 function permissionBitstring(...keys: PERMISSIONS.PermissionKey[]) {
@@ -62,7 +64,9 @@ async function cleanupFixtures() {
       .where(inArray(EmailTemplate.id, templateIds));
   }
 
-  await db.delete(Member).where(eq(Member.id, MEMBER_ID));
+  await db
+    .delete(Member)
+    .where(inArray(Member.id, [MEMBER_ID, INCLUDED_MEMBER_ID]));
   await db
     .delete(Permissions)
     .where(inArray(Permissions.userId, FIXTURE_USER_IDS));
@@ -86,6 +90,12 @@ test.describe("Email Portal critical flow", () => {
         id: MEMBER_USER_ID,
         name: "Email Portal Recipient",
       },
+      {
+        discordUserId: "email-portal-included-e2e",
+        email: "email-portal-included@example.test",
+        id: INCLUDED_USER_ID,
+        name: "Email Portal Included",
+      },
     ]);
     await db.insert(Roles).values([
       {
@@ -105,8 +115,9 @@ test.describe("Email Portal critical flow", () => {
     await db.insert(Permissions).values([
       { roleId: ADMIN_ROLE_ID, userId: ADMIN_ID },
       { roleId: TEAM_ROLE_ID, userId: MEMBER_USER_ID },
+      { roleId: TEAM_ROLE_ID, userId: INCLUDED_USER_ID },
     ]);
-    await db.insert(Member).values({
+    const member = {
       age: 24,
       dateCreated: "2026-07-25",
       discordUser: "email-portal-recipient-e2e",
@@ -125,7 +136,21 @@ test.describe("Email Portal critical flow", () => {
       shirtSize: "M",
       timeCreated: "12:00:00",
       userId: MEMBER_USER_ID,
-    });
+    } satisfies typeof Member.$inferInsert;
+    // The flow deselects one recipient. Seed another so a fresh database still
+    // has someone to schedule instead of depending on unrelated local members.
+    await db.insert(Member).values([
+      member,
+      {
+        ...member,
+        discordUser: "email-portal-included-e2e",
+        email: "email-portal-included@example.test",
+        id: INCLUDED_MEMBER_ID,
+        lastName: "Included",
+        phoneNumber: "407-555-0867",
+        userId: INCLUDED_USER_ID,
+      },
+    ]);
   });
 
   test.afterAll(async () => {

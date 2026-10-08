@@ -23,6 +23,7 @@ export interface EmailPortalSend {
   finalRecipientCount?: number;
   id: string;
   nextRetryAt?: Date | string | null;
+  providerMayHaveStarted?: boolean;
   recipientCount?: number;
   safeError?: string | null;
   scheduledFor?: Date | string | null;

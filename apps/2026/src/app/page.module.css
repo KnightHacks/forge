@@ -129,6 +129,12 @@
   }
 }
 
+@media (max-width: 700px) {
+  .sectionStack {
+    --khix-foreground-join: calc(152vw + 18svh);
+  }
+}
+
 @media (max-width: 360px) {
   .speakersSection {
     --pond-atmosphere-height: calc(100svh + 52rem);
