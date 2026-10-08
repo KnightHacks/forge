@@ -297,4 +297,59 @@ describe.runIf(canRunDatabaseTests())("email delivery with PostgreSQL", () => {
     );
     expect(result?.rows[0]?.acquired).toBe(true);
   });
+
+  it("leaves database connections available while concurrent recipient writes wait on the provider", async () => {
+    let enter: () => void = () => {
+      throw new Error("Entry gate was not initialized");
+    };
+    const entered = new Promise<void>((resolve) => {
+      enter = resolve;
+    });
+    let release: () => void = () => {
+      throw new Error("Release gate was not initialized");
+    };
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let active = 0;
+    let peak = 0;
+    let completed = 0;
+
+    // Separate batches represent overlapping campaigns and retention cleanup.
+    const batches = Array.from({ length: 3 }, (_, batch) =>
+      Promise.all(
+        Array.from({ length: 20 }, (_, recipient) =>
+          lock(`batch-${batch}-${recipient}@example.test`, async () => {
+            active += 1;
+            peak = Math.max(peak, active);
+            if (active === 4) enter();
+            try {
+              await released;
+              completed += 1;
+            } finally {
+              active -= 1;
+            }
+          }),
+        ),
+      ),
+    );
+    const finished = Promise.all(batches);
+
+    try {
+      await entered;
+      expect(client.$client.waitingCount).toBe(0);
+      expect(client.$client.totalCount - client.$client.idleCount).toBe(4);
+      // A query using the same pool completes before any provider call releases.
+      const result = await client.$client.query<{ available: number }>(
+        "select 1 as available",
+      );
+      expect(result.rows[0]?.available).toBe(1);
+      expect(completed).toBe(0);
+    } finally {
+      release();
+      await finished;
+    }
+    expect(completed).toBe(60);
+    expect(peak).toBe(4);
+  });
 });

@@ -1,6 +1,6 @@
 # Email Delivery Reliability Status
 
-Current phase: Local checks passed; draft PR #599 runs hosted CI. Broader E2E failures documented.
+Current phase: Recipient-lock capacity fix validated locally; hosted checks tracked in PR #599. Broader E2E failures remain documented.
 
 ## Decisions
 
@@ -11,6 +11,7 @@ Current phase: Local checks passed; draft PR #599 runs hosted CI. Broader E2E fa
 - The larger live test exposed one provider over-count. Flag excessive send counts for investigation without claiming duplicate inbox delivery.
 - The user's screenshot matches live campaign 2704, which selected Listmonk's default template 1. That template adds a white card, gray background, and 30px gutters around an already complete Forge HTML document. Default Forge HTML campaigns now use a dedicated content-only wrapper; missing unsubscribe/browser-view links and tracking stay inside the document. Explicit custom provider wrappers remain supported.
 - The email E2E test previously deselected its only seeded member, leaving an empty audience on a fresh database. Add a second synthetic member so the schedule/cancel test is self-contained.
+- PR review confirmed that overlapping campaigns could exhaust the process's ten-connection database pool while awaiting Listmonk. Add one shared four-slot FIFO limiter inside `withEmailRecipientLock`, before transaction acquisition. Keep advisory locks and provider behavior intact; release capacity on every transaction outcome.
 
 ## Tasks
 
@@ -47,7 +48,7 @@ Current phase: Local checks passed; draft PR #599 runs hosted CI. Broader E2E fa
 
 ## Limitations and rollout
 
-Changes remain on the user-requested `emailfix` branch. [Draft PR #599](https://github.com/KnightHacks/forge/pull/599) runs hosted CI; no deployment or merge has occurred. Deploy API/Blade and cron together so all subscriber writers participate in the same lock. Production SMTP settings and historical sends were not changed. A live test to one mailbox does not establish deliverability across other mailbox providers or resolve Gmail's historical temporary errors. Bounce processing remains disabled in the inspected provider configuration, so zero reported bounces is not independent delivery confirmation.
+Changes remain on the user-requested `emailfix` branch. [PR #599](https://github.com/KnightHacks/forge/pull/599) runs hosted CI; no deployment or merge has occurred. Deploy API/Blade and cron together so all subscriber writers participate in the same lock. Production SMTP settings and historical sends were not changed. A live test to one mailbox does not establish deliverability across other mailbox providers or resolve Gmail's historical temporary errors. Bounce processing remains disabled in the inspected provider configuration, so zero reported bounces is not independent delivery confirmation.
 
 ## Wrapper regression and latest verification
 
@@ -60,8 +61,14 @@ Changes remain on the user-requested `emailfix` branch. [Draft PR #599](https://
 - Four archive Docker images built and all 19 corresponding E2E tests passed. Other legacy E2E scripts complete with no tests. All 13 Dockerfiles passed static BuildKit checks; a full build of every deployment image was not performed.
 - Hosted CI, including the production-snapshot upgrade smoke, is tracked in [PR #599 checks](https://github.com/KnightHacks/forge/pull/599/checks). The production migration/deployment job is gated to main and has not been run by this task. Logs and command results are local in `output/emailfix-verification/`.
 
+## Recipient-lock capacity review
+
+- Reproduced the review before the fix: 60 concurrent writes caused 50 calls to wait in the database pool; the unit test observed all 12 callers acquire transactions immediately.
+- Added six regression cases: real PostgreSQL headroom under three overlapping 20-recipient batches, aggregate FIFO capacity, and capacity recovery after checkout, advisory-lock, provider, and commit errors. All 43 API email tests passed with the limiter.
+- Previous commit `f59d0908` passed all hosted CI jobs, including build, tests, typecheck, lint, format, migration checks, fresh migration, database tests, production-snapshot upgrade smoke, and CodeQL. Production migration was correctly skipped for the PR. For this follow-up, root format, lint, typecheck (33 tasks), React analysis, all API/Blade/cron tests, and the full production build passed. New hosted results are tracked in PR #599 checks.
+
 ## Links
 
-[Issue #598](https://github.com/KnightHacks/forge/issues/598). [Draft PR #599](https://github.com/KnightHacks/forge/pull/599) runs the explicitly requested hosted CI checks.
+[Issue #598](https://github.com/KnightHacks/forge/issues/598). [PR #599](https://github.com/KnightHacks/forge/pull/599) runs the explicitly requested hosted CI checks.
 
 Research references: [Listmonk campaign API](https://listmonk.app/docs/apis/campaigns/), [Listmonk v6 campaign counters](https://github.com/knadh/listmonk/blob/v6.0.0/internal/manager/manager.go), [Google SMTP error reference](https://knowledge.workspace.google.com/admin/support/troubleshooting/about-smtp-error-messages), and [Google Workspace sending limits](https://knowledge.workspace.google.com/admin/gmail/gmail-sending-limits-in-google-workspace). The counter anomaly's exact cause remains unconfirmed; no provider upgrade was performed.
