@@ -8,6 +8,8 @@ export * as PERMISSIONS from "./permissions";
 export * as PRINTING from "./printing";
 export * as TEAM from "./team";
 export * as ISSUE from "./issue";
+export * as JUDGING from "./judging";
+export type { ChallengeMode } from "./judging";
 export * as CAREER from "./career";
 export * as VENUE_MAP from "./venue-map";
 export type { BuildingId, PermittedRoom } from "./venue-map";

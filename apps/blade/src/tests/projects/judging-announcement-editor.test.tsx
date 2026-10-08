@@ -177,6 +177,8 @@ describe("judging room and announcement editors", () => {
       isMlhImportDefault: false,
       isGeneral: true,
       isScheduled: true,
+      isRemote: false,
+      judgingMode: "scheduled" as const,
     };
     const initialData = {
       ...data,
@@ -329,6 +331,8 @@ describe("judging room and announcement editors", () => {
           isMlhImportDefault: false,
           isGeneral: false,
           isScheduled: true,
+          isRemote: false,
+          judgingMode: "scheduled" as const,
         },
       ],
       configuration: {
@@ -419,6 +423,8 @@ describe("judging launch checklist", () => {
           isGroup: true,
           isMlhImportDefault: false,
           isScheduled: true,
+          isRemote: false,
+          judgingMode: "scheduled" as const,
           label: "General",
           parentId: null,
         },

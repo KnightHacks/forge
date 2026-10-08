@@ -607,14 +607,14 @@ export const AUDIT_ACTION_CATALOG = {
     "groupId",
     "label",
     "isGeneral",
-    "isScheduled",
+    "judgingMode",
     "isMlhImportDefault",
   ]),
   "judging.group.updated": policy(
     "hackathons",
     "Updated judging group",
-    ["groupId", "label", "isGeneral", "isScheduled", "isMlhImportDefault"],
-    ["label", "isGeneral", "isScheduled", "isMlhImportDefault"],
+    ["groupId", "label", "isGeneral", "judgingMode", "isMlhImportDefault"],
+    ["label", "isGeneral", "judgingMode", "isMlhImportDefault"],
   ),
   "judging.group.deleted": policy("hackathons", "Deleted judging group", [
     "groupId",
@@ -623,8 +623,8 @@ export const AUDIT_ACTION_CATALOG = {
   "judging.challenge.updated": policy(
     "hackathons",
     "Updated judging challenge",
-    ["challengeId", "label", "parentId", "isScheduled"],
-    ["parentId", "isScheduled"],
+    ["challengeId", "label", "parentId", "judgingMode"],
+    ["parentId", "judgingMode"],
   ),
   "judging.room.created": policy("hackathons", "Created judging room", [
     "challengeId",
