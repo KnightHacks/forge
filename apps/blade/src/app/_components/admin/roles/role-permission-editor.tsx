@@ -27,7 +27,13 @@ const permissionGroups = [
     label: "Alumni",
   },
   {
-    keys: ["READ_HACKERS", "EDIT_HACKERS", "READ_HACK_DATA", "PRINTING_QUEUE"],
+    keys: [
+      "READ_HACKERS",
+      "EDIT_HACKERS",
+      "READ_HACK_DATA",
+      "PRINTING_QUEUE",
+      "HACKATHON_MERCH_STORE",
+    ],
     label: "Hackers",
   },
   {

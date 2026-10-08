@@ -65,10 +65,13 @@ export const pointStoreRouter = {
       const search = `%${input.query.replace(/[\\%_]/g, "\\$&")}%`;
       return db
         .select({
+          discordUser: Hacker.discordUser,
           id: HackerAttendee.id,
           firstName: Hacker.firstName,
           lastName: Hacker.lastName,
           email: Hacker.email,
+          major: Hacker.major,
+          school: Hacker.school,
         })
         .from(HackerAttendee)
         .innerJoin(Hacker, eq(Hacker.id, HackerAttendee.hackerId))
@@ -82,6 +85,9 @@ export const pointStoreRouter = {
                 search,
               ),
               ilike(Hacker.email, search),
+              ilike(Hacker.discordUser, search),
+              ilike(Hacker.school, search),
+              ilike(Hacker.major, search),
             ),
           ),
         )

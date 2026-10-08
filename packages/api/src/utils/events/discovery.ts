@@ -507,17 +507,17 @@ export function listCheckInEvents(
     else groups.older.push(choice);
   }
   const byId = new Map(events.map((event) => [event.id, event]));
-  const newestFirst = (left: { id: string }, right: { id: string }) => {
+  const earliestFirst = (left: { id: string }, right: { id: string }) => {
     const leftEvent = byId.get(left.id);
     const rightEvent = byId.get(right.id);
     if (!leftEvent || !rightEvent) return left.id.localeCompare(right.id);
     return (
-      rightEvent.startAt.getTime() - leftEvent.startAt.getTime() ||
+      leftEvent.startAt.getTime() - rightEvent.startAt.getTime() ||
       left.id.localeCompare(right.id)
     );
   };
-  groups.current.sort(newestFirst);
-  groups.recent.sort(newestFirst);
-  groups.older.sort(newestFirst);
+  groups.current.sort(earliestFirst);
+  groups.recent.sort(earliestFirst);
+  groups.older.sort(earliestFirst);
   return groups;
 }

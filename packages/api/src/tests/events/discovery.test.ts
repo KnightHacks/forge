@@ -596,11 +596,11 @@ describe("event discovery policy", () => {
           expect.objectContaining({ id: current.id, title: "Current" }),
         ],
         older: [
-          expect.objectContaining({ id: old.id, title: "Old but published" }),
           expect.objectContaining({
             id: legacy.id,
             title: "Legacy searchable",
           }),
+          expect.objectContaining({ id: old.id, title: "Old but published" }),
         ],
         recent: [expect.objectContaining({ id: recent.id, title: "Recent" })],
       }),
@@ -613,7 +613,7 @@ describe("event discovery policy", () => {
     );
   });
 
-  it("orders upcoming check-in choices by latest start first", () => {
+  it("orders check-in choices by earliest start first", () => {
     const upcoming = eventRecord({
       id: "00000000-0000-4000-8000-000000000129",
       name: "Upcoming",
@@ -630,6 +630,6 @@ describe("event discovery policy", () => {
         now: NOW,
         olderSearch: "",
       }).current.map(({ id }) => id),
-    ).toEqual([upcoming.id, ongoing.id]);
+    ).toEqual([ongoing.id, upcoming.id]);
   });
 });
