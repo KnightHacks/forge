@@ -44,7 +44,7 @@ export default function Hero() {
         <h1 id="khix-hero-title" className="sr-only">
           Knight Hacks IX
         </h1>
-        <div className={styles.art} data-hero-art aria-hidden="true">
+        <div className={styles.art} data-hero-art>
           {viewport === "desktop" ? (
             <div className={styles.desktopHeroLayers}>
               {HERO_LAYERS.map((layer, index) => (

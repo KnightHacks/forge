@@ -4,6 +4,7 @@ import type {
   EmailDeliveryMode,
   EmailHttpRequest,
   EmailHttpTransport,
+  EmailRecipientLock,
 } from "./provider";
 import { env } from "./env";
 import { createEmailProviderGateway } from "./provider";
@@ -43,10 +44,7 @@ export const listmonkHttpTransport: EmailHttpTransport = async (
       "Content-Type": "application/json",
     },
     method: request.method,
-    signal:
-      request.path === "/api/tx" || request.path.startsWith("/api/templates")
-        ? AbortSignal.timeout(10_000)
-        : undefined,
+    signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) {
     let providerMessage: string | undefined;
@@ -94,18 +92,26 @@ export function resolveEmailDeliveryPolicy(
       : { allowDevelopmentCampaigns: true, mode: "test" };
 }
 
-export function getDefaultEmailProviderGateway() {
+export function getDefaultEmailProviderGateway(
+  withRecipientLock?: EmailRecipientLock,
+) {
   const policy = resolveEmailDeliveryPolicy(
     env.NODE_ENV,
     env.BLADE_E2E_AUTH === "true",
   );
-  defaultGateway ??= createEmailProviderGateway({
+  const options = {
     allowDevelopmentCampaigns: policy.allowDevelopmentCampaigns,
     campaignTemplateId: env.LISTMONK_CAMPAIGN_TEMPLATE_ID,
     fromEmail: env.LISTMONK_FROM_EMAIL,
     mode: policy.mode,
     transport: policy.mode === "fake" ? undefined : listmonkHttpTransport,
-  });
+    withRecipientLock,
+  };
+  // Locks belong to the caller's database, never to process-local gateway state.
+  if (withRecipientLock && policy.mode !== "fake") {
+    return createEmailProviderGateway(options);
+  }
+  defaultGateway ??= createEmailProviderGateway(options);
   return defaultGateway;
 }
 

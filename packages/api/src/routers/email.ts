@@ -239,10 +239,7 @@ export const emailRouter = {
       if (!stored) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Send not found." });
       }
-      if (
-        stored.listmonkCampaignId &&
-        (stored.status === "running" || stored.status === "scheduled")
-      ) {
+      if (stored.listmonkCampaignId) {
         try {
           await reconcileEmailSend(stored.id);
         } catch {
@@ -370,7 +367,12 @@ export const emailRouter = {
       const reconcilable = sends.filter(
         (send) =>
           send.listmonkCampaignId &&
-          (send.status === "running" || send.status === "scheduled"),
+          (send.status === "running" ||
+            send.status === "scheduled" ||
+            send.status === "queued" ||
+            send.status === "failed" ||
+            (send.status === "completed" &&
+              send.providerSentCount !== send.finalRecipientCount)),
       );
       if (reconcilable.length === 0) return sends;
       await Promise.allSettled(

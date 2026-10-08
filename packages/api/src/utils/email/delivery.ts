@@ -1,3 +1,4 @@
+import type { EmailCampaignResult } from "@forge/email";
 import type { EmailAudienceDefinition } from "@forge/validators";
 import { and, eq, inArray, isNotNull, isNull, lte, or, sql } from "@forge/db";
 import { db } from "@forge/db/client";
@@ -20,6 +21,7 @@ import {
   isDevelopmentReviewAudienceDefinition,
   normalizeRecipientEmail,
 } from "./audience";
+import { withEmailRecipientLock } from "./recipient-lock";
 
 export type EmailSendStatus = typeof EmailSend.$inferSelect.status;
 type CampaignAudienceScope = "development_review" | undefined;
@@ -142,17 +144,18 @@ export async function processEmailSend(sendId: string) {
     )
     .returning();
   if (!claimed) return null;
-  let recipients = await db
-    .select()
-    .from(EmailSendRecipient)
-    .where(
-      and(
-        eq(EmailSendRecipient.sendId, sendId),
-        isNull(EmailSendRecipient.exclusionReason),
-      ),
-    );
-  const gateway = getDefaultEmailProviderGateway();
+  const gateway = getDefaultEmailProviderGateway(withEmailRecipientLock);
+  let preparedCampaign: EmailCampaignResult | undefined;
   try {
+    let recipients = await db
+      .select()
+      .from(EmailSendRecipient)
+      .where(
+        and(
+          eq(EmailSendRecipient.sendId, sendId),
+          isNull(EmailSendRecipient.exclusionReason),
+        ),
+      );
     const audienceScope = campaignAudienceScope(claimed.audienceDefinition);
     if (developmentCampaignReviewEnabled()) {
       await assertCurrentDevelopmentAudienceRecipients(
@@ -264,6 +267,7 @@ export async function processEmailSend(sendId: string) {
       subject: compileSubjectForProvider(claimed.subject, sendId),
       text: claimed.compiledText,
     });
+    preparedCampaign = campaign;
     await db
       .update(EmailSend)
       .set({
@@ -311,6 +315,28 @@ export async function processEmailSend(sendId: string) {
     await reconcileEmailSend(sendId);
     return { campaignId: campaign.campaignId, status: nextStatus };
   } catch (error) {
+    if (preparedCampaign) {
+      // Once a campaign exists, every error belongs to reconciliation. Returning
+      // it to preparation strands it (or risks sending the audience twice).
+      await db
+        .update(EmailSend)
+        .set({
+          listmonkCampaignId: preparedCampaign.campaignId,
+          listmonkListId: preparedCampaign.listId,
+          providerMayHaveStarted: true,
+          nextRetryAt: null,
+          retryLeaseExpiresAt: null,
+          safeError:
+            "Provider delivery needs reconciliation. This campaign will not be resent.",
+          status: "running",
+          terminalAt: null,
+        })
+        .where(eq(EmailSend.id, sendId));
+      return {
+        campaignId: preparedCampaign.campaignId,
+        status: "running" as const,
+      };
+    }
     if (
       error instanceof EmailProviderError &&
       error.code === "TEST_DELIVERY_ONLY"
@@ -385,7 +411,7 @@ export async function reconcileEmailSend(sendId: string) {
   );
   if (
     state.status === "draft" &&
-    send.status === "running" &&
+    ["running", "queued", "syncing"].includes(send.status) &&
     send.providerMayHaveStarted
   ) {
     await getDefaultEmailProviderGateway().setCampaignStatus(
@@ -393,36 +419,49 @@ export async function reconcileEmailSend(sendId: string) {
       "running",
       audienceScope,
     );
+    state.status = "running";
   }
+  const expectedCount = Math.max(send.finalRecipientCount, state.totalCount);
+  const missingCount = Math.max(0, expectedCount - state.sentCount);
+  const finished = state.status === "finished" || state.status === "completed";
+  const overcounted = finished && state.sentCount > expectedCount;
+  const incomplete = finished && (missingCount > 0 || state.bounceCount > 0);
+  const paused = state.status === "paused";
   const status: EmailSendStatus =
-    state.status === "finished" || state.status === "completed"
-      ? "completed"
-      : state.status === "running"
-        ? "running"
-        : state.status === "scheduled"
-          ? "scheduled"
-          : state.status === "cancelled"
-            ? "cancelled"
-            : state.status === "failed"
-              ? "failed"
-              : send.status;
-  if (
-    status === send.status &&
-    state.sentCount === send.providerSentCount &&
-    state.bounceCount === send.providerBounceCount
-  ) {
-    return send;
-  }
+    incomplete || overcounted || paused
+      ? "failed"
+      : state.status === "finished" || state.status === "completed"
+        ? "completed"
+        : state.status === "running"
+          ? "running"
+          : state.status === "scheduled"
+            ? "scheduled"
+            : state.status === "cancelled"
+              ? "cancelled"
+              : state.status === "failed"
+                ? "failed"
+                : send.status;
+  const safeError = paused
+    ? "The provider paused this campaign. Review its delivery errors before resuming it in Listmonk."
+    : overcounted
+      ? `Provider reported ${state.sentCount} sends; expected ${expectedCount}. Verify the delivery counts and check for duplicates before sending again.`
+      : incomplete
+        ? `Provider finished with ${state.sentCount} of ${expectedCount} messages sent and ${state.bounceCount} reported bounces. Investigate the missing recipients before sending again.`
+        : state.status === "failed"
+          ? "The provider reported a delivery failure. Review the campaign before sending again."
+          : null;
+  const terminal =
+    finished || state.status === "cancelled" || state.status === "failed";
   const [updated] = await db
     .update(EmailSend)
     .set({
       providerBounceCount: state.bounceCount,
       providerSentCount: state.sentCount,
+      nextRetryAt: null,
+      safeError,
       status,
-      terminalAt:
-        status === "completed" || status === "cancelled" || status === "failed"
-          ? new Date()
-          : null,
+      terminalAt: terminal ? (send.terminalAt ?? new Date()) : null,
+      updatedAt: new Date(),
     })
     .where(eq(EmailSend.id, sendId))
     .returning();
@@ -490,10 +529,18 @@ export async function runEmailDeliveryCycle() {
       .from(EmailSend)
       .where(
         and(
-          inArray(EmailSend.status, ["scheduled", "running"]),
+          or(
+            inArray(EmailSend.status, ["queued", "scheduled", "running"]),
+            and(eq(EmailSend.status, "failed"), isNull(EmailSend.terminalAt)),
+            and(
+              eq(EmailSend.status, "completed"),
+              sql`${EmailSend.providerSentCount} <> ${EmailSend.finalRecipientCount}`,
+            ),
+          ),
           isNotNull(EmailSend.listmonkCampaignId),
         ),
       )
+      .orderBy(EmailSend.updatedAt)
       .limit(100),
   ]);
   const prepared = await Promise.allSettled(
@@ -522,7 +569,9 @@ export async function runEmailDeliveryCycle() {
       .from(EmailSendRecipient)
       .where(eq(EmailSendRecipient.sendId, expired.id));
     try {
-      await getDefaultEmailProviderGateway().removeRecipientNamespace(
+      await getDefaultEmailProviderGateway(
+        withEmailRecipientLock,
+      ).removeRecipientNamespace(
         expired.id,
         recipients.map(({ normalizedEmail }) => normalizedEmail),
       );
