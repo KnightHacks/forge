@@ -28,6 +28,7 @@ import { Button } from "@forge/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@forge/ui/card";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
+import { ResponsiveComboBox } from "@forge/ui/responsive-combo-box";
 import { Skeleton } from "@forge/ui/skeleton";
 import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@forge/ui/tabs";
@@ -537,33 +538,50 @@ export function HackathonCheckInWorkspace() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="hackathon-check-in-event">Event</Label>
-                <select
-                  aria-busy={selectionPending}
-                  className="h-11 min-w-0 rounded-md border border-input bg-background/70 px-3 pr-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  disabled={
+                <ResponsiveComboBox
+                  ariaLabel="Event"
+                  buttonPlaceholder={
+                    eventData.data?.events.length
+                      ? "Search events"
+                      : "No events available"
+                  }
+                  emptyMessage="No events found."
+                  getItemLabel={(event) =>
+                    `${event.purpose === "primary_check_in" ? "Primary · " : ""}${event.name}`
+                  }
+                  getItemSearchValue={(event) =>
+                    `${event.name} ${formatClubDateTime(event.startDateTime)}`
+                  }
+                  getItemValue={(event) => event.id}
+                  inputPlaceholder="Search events"
+                  isDisabled={
                     checkIn.isPending ||
                     resultOpen ||
                     eventData.isPending ||
                     selection.hackathonId !== selectedHackathon?.id
                   }
-                  id="hackathon-check-in-event"
-                  onChange={(event) => {
+                  items={eventData.data?.events ?? []}
+                  onValueChange={(eventId) => {
                     if (selection.hackathonId)
-                      replaceSelection(
-                        selection.hackathonId,
-                        event.target.value,
-                      );
+                      replaceSelection(selection.hackathonId, eventId);
                   }}
+                  renderItem={(event) => (
+                    <span className="min-w-0">
+                      <span className="block truncate">
+                        {event.purpose === "primary_check_in"
+                          ? "Primary · "
+                          : ""}
+                        {event.name}
+                      </span>
+                      <span className="block truncate text-sm text-muted-foreground">
+                        {formatClubDateTime(event.startDateTime)}
+                      </span>
+                    </span>
+                  )}
+                  triggerClassName="min-h-11 bg-background/70"
+                  triggerId="hackathon-check-in-event"
                   value={selection.eventId}
-                >
-                  <option value="">Select an event</option>
-                  {eventData.data?.events.map((event) => (
-                    <option key={event.id} value={event.id}>
-                      {event.purpose === "primary_check_in" ? "Primary · " : ""}
-                      {event.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
