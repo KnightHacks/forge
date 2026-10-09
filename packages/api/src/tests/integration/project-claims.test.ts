@@ -462,7 +462,9 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
       guestId = randomUUID(),
       incompleteJudge = randomUUID();
     const ratingId = randomUUID(),
-      responseId = randomUUID();
+      responseId = randomUUID(),
+      privateResponseId = randomUUID(),
+      optionalResponseId = randomUUID();
     await client.insert(schema.ProjectChallenge).values({
       id: challengeId,
       hackathonId: event,
@@ -515,6 +517,24 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
         memberVisibilityPolicy: "public",
         guestVisibilityPolicy: "public",
       },
+      {
+        id: privateResponseId,
+        hackathonId: event,
+        kind: "short_response",
+        label: "Private organizer note",
+        displayOrder: 2,
+        memberVisibilityPolicy: "private",
+        guestVisibilityPolicy: "private",
+      },
+      {
+        id: optionalResponseId,
+        hackathonId: event,
+        kind: "short_response",
+        label: "Optional feedback",
+        displayOrder: 3,
+        memberVisibilityPolicy: "public_optional",
+        guestVisibilityPolicy: "public_optional",
+      },
     ]);
     for (const [index, id] of [judgeId, guestId, incompleteJudge].entries()) {
       const evaluationId = randomUUID();
@@ -532,13 +552,29 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
         rubricItemId: ratingId,
         value: 4,
       });
-      await client.insert(schema.ProjectEvaluationResponse).values({
-        evaluationId,
-        hackathonId: event,
-        rubricItemId: responseId,
-        value: index === 0 ? "Great demo" : "Excluded feedback",
-        isPublic: true,
-      });
+      await client.insert(schema.ProjectEvaluationResponse).values([
+        {
+          evaluationId,
+          hackathonId: event,
+          rubricItemId: responseId,
+          value: index === 0 ? "Great demo" : "Excluded feedback",
+          isPublic: true,
+        },
+        {
+          evaluationId,
+          hackathonId: event,
+          rubricItemId: privateResponseId,
+          value: "PRIVATE TEST NOTE",
+          isPublic: false,
+        },
+        {
+          evaluationId,
+          hackathonId: event,
+          rubricItemId: optionalResponseId,
+          value: "Optional note not shared with hackers",
+          isPublic: false,
+        },
+      ]);
     }
     const own = await reads.hackerJudging(required(users[0]), event);
     expect(own.feedback).toEqual([
@@ -552,6 +588,8 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     expect(JSON.stringify(own)).not.toContain("Never reveal");
     expect(JSON.stringify(own)).not.toContain("Technical execution");
     expect(JSON.stringify(own)).not.toContain('"ratings"');
+    expect(JSON.stringify(own)).not.toContain("PRIVATE TEST NOTE");
+    expect(JSON.stringify(own)).not.toContain("Optional note not shared");
     await client
       .update(schema.HackathonJudgingConfiguration)
       .set({ hackerScheduleEmergency: true })

@@ -267,7 +267,12 @@ export async function hackerJudging(
         JudgingRubricItem,
         eq(JudgingRubricItem.id, ProjectEvaluationResponse.rubricItemId),
       )
-      .where(inArray(ProjectEvaluationResponse.evaluationId, ids))
+      .where(
+        and(
+          inArray(ProjectEvaluationResponse.evaluationId, ids),
+          eq(ProjectEvaluationResponse.isPublic, true),
+        ),
+      )
       .orderBy(asc(JudgingRubricItem.displayOrder));
     output.feedback = eligible.map((evaluation) => ({
       challengeId: evaluation.challengeId,
