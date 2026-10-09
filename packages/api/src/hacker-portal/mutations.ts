@@ -17,6 +17,7 @@ import {
   Hacker,
   HackerAttendee,
   HackerCheckInPass,
+  HackerParticipantCommand,
   HackerProfile,
 } from "@forge/db/schemas/knight-hacks";
 
@@ -804,6 +805,15 @@ export async function withdrawApplication(
           .where(eq(HackerAttendee.id, application.attendeeId));
         await removeHackerTeamMember(tx, application.attendeeId);
         await revokeActivePasses(tx, application.attendeeId, now);
+        await tx
+          .delete(HackerParticipantCommand)
+          .where(
+            and(
+              eq(HackerParticipantCommand.userId, ctx.session.userId),
+              eq(HackerParticipantCommand.hackathonId, hackathon.id),
+              eq(HackerParticipantCommand.operation, "issue_check_in_pass"),
+            ),
+          );
         await createAdminAuditEvent(
           {
             actionKey: "hacker.application_withdrawn",

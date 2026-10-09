@@ -242,9 +242,12 @@ export async function performHackathonEventCheckIn({
       input.source === "scanner"
         ? parseOpaqueHackerCheckInPass(input.qrPayload)
         : null;
-    const [opaquePass] = opaquePayload
+    const [matchedOpaquePass] = opaquePayload
       ? await tx
-          .select({ attendeeId: HackerCheckInPass.attendeeId })
+          .select({
+            attendeeId: HackerCheckInPass.attendeeId,
+            revokedAt: HackerCheckInPass.revokedAt,
+          })
           .from(HackerCheckInPass)
           .where(
             and(
@@ -253,7 +256,6 @@ export async function performHackathonEventCheckIn({
                 HackerCheckInPass.tokenHash,
                 hashOpaqueHackerCheckInPass(opaquePayload),
               ),
-              isNull(HackerCheckInPass.revokedAt),
               or(
                 isNull(HackerCheckInPass.expiresAt),
                 gt(HackerCheckInPass.expiresAt, now),
@@ -262,6 +264,30 @@ export async function performHackathonEventCheckIn({
           )
           .limit(1)
       : [];
+    const [activeOpaquePass] =
+      matchedOpaquePass?.revokedAt === null
+        ? [matchedOpaquePass]
+        : matchedOpaquePass
+          ? await tx
+              .select({ attendeeId: HackerCheckInPass.attendeeId })
+              .from(HackerCheckInPass)
+              .where(
+                and(
+                  eq(
+                    HackerCheckInPass.attendeeId,
+                    matchedOpaquePass.attendeeId,
+                  ),
+                  eq(HackerCheckInPass.hackathonId, input.hackathonId),
+                  isNull(HackerCheckInPass.revokedAt),
+                  or(
+                    isNull(HackerCheckInPass.expiresAt),
+                    gt(HackerCheckInPass.expiresAt, now),
+                  ),
+                ),
+              )
+              .limit(1)
+          : [];
+    const opaquePass = activeOpaquePass ? matchedOpaquePass : null;
     const resolveBy =
       input.source === "manual"
         ? eq(HackerAttendee.id, input.attendeeId)

@@ -611,13 +611,11 @@ export function useHackerDashboardFlow(
   const { client } = useHackerSdkClient();
   const confirmKey = useIdempotencyLease("confirm");
   const withdrawKey = useIdempotencyLease("withdraw");
-  const checkInPassKey = useIdempotencyLease("check-in-pass");
   const qrMutation = useMutation({
     mutationFn: async () => {
       const pass = await issuePassMutation.mutateAsync({
-        idempotencyKey: checkInPassKey.acquire("issue"),
+        idempotencyKey: "check-in-pass:v1",
       });
-      checkInPassKey.release();
       return QRCode.toDataURL(pass.payload, { margin: 4, width: 640 });
     },
   });

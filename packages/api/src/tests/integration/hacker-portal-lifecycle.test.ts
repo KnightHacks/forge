@@ -887,7 +887,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       "FORBIDDEN_STATUS",
     );
 
-    const [application, pass] = await Promise.all([
+    const [application, pass, passCommands] = await Promise.all([
       client
         .select({
           lastStatusSendId: knightHacks.HackerAttendee.lastStatusSendId,
@@ -899,10 +899,24 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
         .select({ revokedAt: knightHacks.HackerCheckInPass.revokedAt })
         .from(knightHacks.HackerCheckInPass)
         .where(eq(knightHacks.HackerCheckInPass.hackathonId, hackathon.id)),
+      client
+        .select({ id: knightHacks.HackerParticipantCommand.id })
+        .from(knightHacks.HackerParticipantCommand)
+        .where(
+          and(
+            eq(knightHacks.HackerParticipantCommand.userId, userId),
+            eq(knightHacks.HackerParticipantCommand.hackathonId, hackathon.id),
+            eq(
+              knightHacks.HackerParticipantCommand.operation,
+              "issue_check_in_pass",
+            ),
+          ),
+        ),
     ]);
     expect(application[0]?.status).toBe("withdrawn");
     expect(typeof application[0]?.lastStatusSendId).toBe("string");
     expect(pass[0]?.revokedAt).toBeInstanceOf(Date);
+    expect(passCommands).toEqual([]);
   });
 
   it("replays a QR pass without storing plaintext and expires its command record", async () => {
