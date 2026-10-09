@@ -201,6 +201,8 @@ export async function resolveWritableJudge(
   input: { challengeId?: string; hackathonId?: string },
 ) {
   if (principal.kind === "guest") {
+    // Room-link changes lock the hackathon before revoking guest sessions.
+    const hackathonId = await lockWritableHackathonId(tx);
     const [access] = await tx
       .select({
         challengeId: JudgingRoom.challengeId,
@@ -227,7 +229,7 @@ export async function resolveWritableJudge(
       .for("update", { of: GuestJudgeSession })
       .limit(1);
     if (!access?.judgeId) throw new TRPCError({ code: "UNAUTHORIZED" });
-    if ((await lockWritableHackathonId(tx)) !== access.hackathonId)
+    if (hackathonId !== access.hackathonId)
       throw new TRPCError({ code: "FORBIDDEN" });
     return {
       challengeId: access.challengeId,
