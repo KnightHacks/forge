@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import type { db } from "@forge/db/client";
@@ -208,6 +209,7 @@ describe.skipIf(!canRunDatabaseTests())("hackathon event check-in core", () => {
     await client.delete(knightHacks.HackerDiscordRoleGrant);
     await client.delete(knightHacks.HackerCheckInAttempt);
     await client.delete(knightHacks.HackerEventAttendee);
+    await client.delete(knightHacks.HackerCheckInPass);
     await client.update(knightHacks.HackerAttendee).set({
       checkedInAt: null,
       checkedInBy: null,
@@ -253,6 +255,125 @@ describe.skipIf(!canRunDatabaseTests())("hackathon event check-in core", () => {
     hackathonId: HACKATHON_ID,
     qrPayload: `user:${personIds(person).userId}`,
     source: "scanner" as const,
+  });
+
+  it("accepts current and older QRs while the attendee has an active pass", async () => {
+    const ids = personIds(people.base);
+    const olderPayload = `fhp1.${"a".repeat(43)}`;
+    const currentPayload = `fhp1.${"b".repeat(43)}`;
+    const tokenHash = (payload: string) =>
+      createHash("sha256").update(payload).digest("hex");
+    await client.insert(knightHacks.HackerCheckInPass).values([
+      {
+        attendeeId: ids.attendeeId,
+        hackathonId: HACKATHON_ID,
+        revokedAt: NOW,
+        tokenHash: tokenHash(olderPayload),
+      },
+      {
+        attendeeId: ids.attendeeId,
+        hackathonId: HACKATHON_ID,
+        tokenHash: tokenHash(currentPayload),
+      },
+    ]);
+
+    const current = await checkIn({
+      actor,
+      input: {
+        ...scannerInput(PRIMARY_EVENT_ID, people.base, false),
+        qrPayload: currentPayload,
+      },
+      now: NOW,
+    });
+    expect(current.result).toMatchObject({
+      name: "Hacker1 Fixture",
+      status: "checked_in",
+    });
+
+    const older = await checkIn({
+      actor,
+      input: {
+        ...scannerInput(PRIMARY_EVENT_ID, people.base, false),
+        qrPayload: olderPayload,
+      },
+      now: NOW,
+    });
+    expect(older.result).toMatchObject({
+      name: "Hacker1 Fixture",
+      status: "already_checked_in",
+    });
+
+    await client
+      .update(knightHacks.HackerCheckInPass)
+      .set({ revokedAt: LATER })
+      .where(eq(knightHacks.HackerCheckInPass.attendeeId, ids.attendeeId));
+    const rejected = await checkIn({
+      actor,
+      input: {
+        ...scannerInput(PRIMARY_EVENT_ID, people.base, false),
+        qrPayload: olderPayload,
+      },
+      now: LATER,
+    });
+    expect(rejected.result).toEqual({ status: "invalid_qr" });
+  });
+
+  it("rejects expired current and older QRs", async () => {
+    const expiredCurrent = `fhp1.${"c".repeat(43)}`;
+    const expiredOlder = `fhp1.${"d".repeat(43)}`;
+    const replacement = `fhp1.${"e".repeat(43)}`;
+    const olderWithExpiredReplacement = `fhp1.${"f".repeat(43)}`;
+    const expiredReplacement = `fhp1.${"g".repeat(43)}`;
+    const tokenHash = (payload: string) =>
+      createHash("sha256").update(payload).digest("hex");
+    await client.insert(knightHacks.HackerCheckInPass).values([
+      {
+        attendeeId: personIds(people.regular).attendeeId,
+        expiresAt: NOW,
+        hackathonId: HACKATHON_ID,
+        tokenHash: tokenHash(expiredCurrent),
+      },
+      {
+        attendeeId: personIds(people.vip).attendeeId,
+        expiresAt: NOW,
+        hackathonId: HACKATHON_ID,
+        revokedAt: NOW,
+        tokenHash: tokenHash(expiredOlder),
+      },
+      {
+        attendeeId: personIds(people.vip).attendeeId,
+        hackathonId: HACKATHON_ID,
+        tokenHash: tokenHash(replacement),
+      },
+      {
+        attendeeId: personIds(people.allocation).attendeeId,
+        hackathonId: HACKATHON_ID,
+        revokedAt: NOW,
+        tokenHash: tokenHash(olderWithExpiredReplacement),
+      },
+      {
+        attendeeId: personIds(people.allocation).attendeeId,
+        expiresAt: NOW,
+        hackathonId: HACKATHON_ID,
+        tokenHash: tokenHash(expiredReplacement),
+      },
+    ]);
+
+    for (const [person, qrPayload] of [
+      [people.regular, expiredCurrent],
+      [people.vip, expiredOlder],
+      [people.allocation, olderWithExpiredReplacement],
+    ] as const) {
+      const result = await checkIn({
+        actor,
+        input: {
+          ...scannerInput(PRIMARY_EVENT_ID, person, false),
+          qrPayload,
+        },
+        now: NOW,
+      });
+      expect(result.result).toEqual({ status: "invalid_qr" });
+    }
   });
 
   it("does not make ordinary event scans wait for team allocation", async () => {
