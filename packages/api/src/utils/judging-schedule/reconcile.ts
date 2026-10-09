@@ -78,10 +78,13 @@ export async function reconcileExpiredDraftsWithDb(
     if (judge.kind === "guest" && !guest) continue;
     const actor =
       judge.kind === "member" && judge.userId
-        ? await captureAdminAuditActor({
-            id: judge.userId,
-            name: judge.displayName,
-          })
+        ? await captureAdminAuditActor(
+            {
+              id: judge.userId,
+              name: judge.displayName,
+            },
+            tx,
+          )
         : {
             id: guest?.id ?? judge.id,
             name: judge.displayName,
