@@ -804,7 +804,9 @@ export async function withdrawApplication(
           .set({ lastStatusSendId: sendId, status: "withdrawn" })
           .where(eq(HackerAttendee.id, application.attendeeId));
         await removeHackerTeamMember(tx, application.attendeeId);
-        await revokeActivePasses(tx, application.attendeeId, now);
+        await tx
+          .delete(HackerCheckInPass)
+          .where(eq(HackerCheckInPass.attendeeId, application.attendeeId));
         await tx
           .delete(HackerParticipantCommand)
           .where(

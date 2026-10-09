@@ -844,7 +844,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     );
   });
 
-  it("[TC-LIFE-004/005] makes withdrawal terminal and revokes the active pass", async () => {
+  it("[TC-LIFE-004/005] makes withdrawal terminal and deletes issued passes", async () => {
     const hackathon = await seedHackathon();
     if (!hackathon.applicationAgreementId)
       throw new Error("Application agreement was not seeded.");
@@ -896,7 +896,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
         .from(knightHacks.HackerAttendee)
         .where(eq(knightHacks.HackerAttendee.hackathonId, hackathon.id)),
       client
-        .select({ revokedAt: knightHacks.HackerCheckInPass.revokedAt })
+        .select({ id: knightHacks.HackerCheckInPass.id })
         .from(knightHacks.HackerCheckInPass)
         .where(eq(knightHacks.HackerCheckInPass.hackathonId, hackathon.id)),
       client
@@ -915,7 +915,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     ]);
     expect(application[0]?.status).toBe("withdrawn");
     expect(typeof application[0]?.lastStatusSendId).toBe("string");
-    expect(pass[0]?.revokedAt).toBeInstanceOf(Date);
+    expect(pass).toEqual([]);
     expect(passCommands).toEqual([]);
   });
 
