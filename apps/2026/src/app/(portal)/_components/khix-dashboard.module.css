@@ -2017,6 +2017,20 @@
   animation: khixDashboardWispSpriteGlow 8.4s ease-in-out infinite;
 }
 
+/* Moving fireflies still trigger filter work on static glows. Keep the
+   gradients and sprites without filters, and let fireflies provide motion. */
+.portalMagic::before,
+.portalMagic::after,
+.portalCanopyGlow,
+.portalCanopyGlow::before,
+.portalCanopyGlow::after,
+.portalWisp,
+.portalWisp::before,
+.portalWisp::after {
+  animation: none;
+  filter: none;
+}
+
 .portalWisp[data-wisp="one"] {
   --wisp-left: 4%;
   --wisp-top: 18%;
