@@ -160,6 +160,31 @@
   font-size: 0.875rem;
   line-height: 1.65;
 }
+.guidelines {
+  display: grid;
+  gap: 1rem;
+  padding-block: 1rem;
+  border-block: 1px solid var(--print-line);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+.filaments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin-block: 0.5rem;
+  padding-left: 1.1rem;
+  list-style: disc;
+  color: var(--print-muted);
+  font-size: 0.875rem;
+}
+.queueCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin-block: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
 .jobs {
   display: grid;
   min-width: 0;

@@ -183,7 +183,8 @@ export const HYBRID_ADMIN_PROCEDURES = [
   "forms.finalizeUpload",
   "forms.getAttachmentDownload",
   "forms.getLegacyAttachmentDownload",
-  // Saving the same status and note again changes nothing and writes no event.
+  // Saving unchanged print details writes no event.
+  "printing.updateCategory",
   "printing.updateStatus",
 ] as const;
 

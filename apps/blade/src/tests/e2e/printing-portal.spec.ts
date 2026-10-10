@@ -1,6 +1,6 @@
 import { expect, test } from "playwright/test";
 
-import type { PRINTING } from "@forge/consts";
+import { PRINTING } from "@forge/consts";
 
 const portalUrl = "http://localhost:3007";
 const id = "00000000-0000-4000-8000-000000000001";
@@ -13,7 +13,7 @@ const queuedPrintJob = {
   status: "received",
   statusNote: null,
   estimatedReadyAt: "2099-01-01T12:00:00.000Z",
-  position: 1,
+  position: 11,
   files: [],
 };
 const profile = {
@@ -56,6 +56,8 @@ test.describe("printing portal availability", () => {
       let isOpen = false;
       let hasExistingJob = false;
       let category: PRINTING.PrintJobCategory | null = null;
+      let jobStatus: PRINTING.PrintJobStatus = "received";
+      let organizerReadyAt: string | null = null;
       let submits = 0;
       let uploads = 0;
       await page.setViewportSize({ width, height: 1000 });
@@ -119,12 +121,27 @@ test.describe("printing portal availability", () => {
               break;
             case "listPrintJobs":
               data = {
-                jobs: hasExistingJob ? [{ ...queuedPrintJob, category }] : [],
+                jobs: hasExistingJob
+                  ? [
+                      {
+                        ...queuedPrintJob,
+                        category,
+                        status: jobStatus,
+                        organizerReadyAt,
+                      },
+                    ]
+                  : [],
                 queue: {
+                  categoryCounts: {
+                    project: category === "project" ? 11 : 10,
+                    personal: 5,
+                    uncategorized: category === null && hasExistingJob ? 1 : 0,
+                  },
+                  onHoldCount: 2,
                   isOpen,
                   estimatedWaitMinutes: 60,
                   printMinutes: 60,
-                  waitingCount: hasExistingJob ? 1 : 0,
+                  waitingCount: hasExistingJob ? 16 : 15,
                 },
               };
               break;
@@ -175,6 +192,17 @@ test.describe("printing portal availability", () => {
         "Print times vary depending on the model.",
       );
       await expect(availability).not.toContainText("Each print takes");
+      await expect(availability).toContainText("10 hackathon projects");
+      await expect(availability).toContainText("5 personal prints");
+      await expect(availability).toContainText("take priority");
+      await expect(page.getByLabel("Print guidelines")).toContainText(
+        "limited to 60 minutes",
+      );
+      for (const filament of PRINTING.KHIX_FILAMENTS) {
+        await expect(page.getByLabel("Print guidelines")).toContainText(
+          filament,
+        );
+      }
       await expect(
         page.getByText(
           "Choose New print to send your model to the Shinies team.",
@@ -207,7 +235,7 @@ test.describe("printing portal availability", () => {
       await expect(availability).not.toContainText("Printing opens soon");
       await expect(availability).not.toContainText("A new print:");
       await expect(
-        page.getByText("Next in line", { exact: true }),
+        page.getByText("Overall queue #11", { exact: true }),
       ).toBeVisible();
       await expect(page.getByText(/Ready around|any minute now/)).toHaveCount(
         0,
@@ -218,6 +246,9 @@ test.describe("printing portal availability", () => {
         fullPage: true,
       });
       await newPrint.click();
+      await expect(
+        page.getByRole("dialog").getByLabel("Print guidelines"),
+      ).toContainText("Oversized requests may be cancelled");
       await page.getByLabel("What should we print?").fill("A small bracket");
       await page.locator('input[type="file"]').setInputFiles({
         name: "part.stl",
@@ -254,6 +285,22 @@ test.describe("printing portal availability", () => {
       expect(submits).toBe(0);
       isOpen = true;
       await expect(submit).toBeEnabled({ timeout: 25_000 });
+      await page.getByRole("button", { name: "Close", exact: true }).click();
+      jobStatus = "printing";
+      organizerReadyAt = new Date(Date.now() + 90 * 60_000).toISOString();
+      await page.reload();
+      await expect(page.getByRole("timer")).toContainText("1h");
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("hacker-running-timer.png"),
+        fullPage: true,
+      });
+      organizerReadyAt = new Date(Date.now() - 60_000).toISOString();
+      await page.reload();
+      await expect(page.getByRole("timer")).toContainText(
+        "Estimated time elapsed",
+      );
+      await expect(page.getByText("Printing", { exact: true })).toBeVisible();
     });
   }
 });

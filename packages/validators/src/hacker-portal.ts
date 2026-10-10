@@ -497,6 +497,17 @@ export const printJobsDtoSchema = z
     queue: z
       .object({
         isOpen: z.boolean().default(false),
+        /** Null means an older server has not supplied the breakdown yet. */
+        categoryCounts: z
+          .object({
+            project: z.number().int().min(0),
+            personal: z.number().int().min(0),
+            uncategorized: z.number().int().min(0),
+          })
+          .strict()
+          .nullable()
+          .default(null),
+        onHoldCount: z.number().int().min(0).nullable().default(null),
         /** Minutes until a job submitted now would be ready. */
         estimatedWaitMinutes: z.number().int().min(0),
         printMinutes: z.number().int().min(1),

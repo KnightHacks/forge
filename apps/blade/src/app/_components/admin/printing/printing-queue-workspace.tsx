@@ -15,6 +15,7 @@ import {
 import type { RouterOutputs } from "@forge/api";
 import { PRINTING } from "@forge/consts";
 import { cn } from "@forge/ui";
+import { Countdown } from "@forge/ui/countdown";
 import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
@@ -143,6 +144,28 @@ export function PrintingQueueWorkspace({
         aria-label="Print jobs"
         className={cn(panelClassName, "min-w-0 space-y-4 p-3 sm:p-5")}
       >
+        <div aria-label="Queue order" className="space-y-2 text-sm">
+          <p className="flex flex-wrap gap-x-5 gap-y-1 font-medium tabular-nums">
+            <span>{queue.categoryCounts.project} hackathon projects</span>
+            <span>{queue.categoryCounts.personal} personal prints</span>
+            {queue.categoryCounts.uncategorized > 0 ? (
+              <span className="text-muted-foreground">
+                {queue.categoryCounts.uncategorized} awaiting category
+              </span>
+            ) : null}
+          </p>
+          <p className="text-muted-foreground">
+            Hackathon projects take priority over personal prints. Running
+            prints finish first; waiting jobs are oldest first within each
+            category. Numbers show the overall queue position.
+          </p>
+          {queue.onHoldCount > 0 ? (
+            <p className="text-muted-foreground">
+              {queue.onHoldCount} on hold for clarification — excluded from
+              queue positions.
+            </p>
+          ) : null}
+        </div>
         <div className="flex flex-col gap-4 border-b border-border pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
@@ -253,6 +276,11 @@ export function PrintingQueueWorkspace({
             if (!open) setOpenJobId(null);
           }}
           timezone={selected.timezone}
+          sessionLimitMinutes={
+            selected.displayName === "Knight Hacks IX"
+              ? PRINTING.KHIX_SESSION_LIMIT_MINUTES
+              : undefined
+          }
         />
       ) : null}
     </main>
@@ -314,7 +342,9 @@ function PrintQueueRow({
       >
         <span
           aria-label={
-            job.estimate ? `Position ${job.estimate.position}` : undefined
+            job.estimate
+              ? `Overall queue position ${job.estimate.position}`
+              : undefined
           }
           className={cn(
             "w-8 shrink-0 text-center font-mono text-xl font-medium sm:w-10",
@@ -363,10 +393,19 @@ function PrintQueueRow({
             </span>
             {job.estimate?.overridden ? (
               <span className="text-foreground">
-                Ready ~
+                Estimated finish ~
                 {formatPrintTime(job.estimate.estimatedReadyAt, timezone)}
-                {" (set)"}
               </span>
+            ) : null}
+            {job.status === "printing" && job.estimate?.overridden ? (
+              <Countdown
+                endsAt={job.estimate.estimatedReadyAt}
+                expiredText="Estimated time elapsed — check the printer"
+                className="font-mono tabular-nums text-foreground"
+              />
+            ) : null}
+            {job.status === "needs_clarification" ? (
+              <span>On hold · no queue position</span>
             ) : null}
           </span>
         </span>

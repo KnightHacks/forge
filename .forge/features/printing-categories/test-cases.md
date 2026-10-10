@@ -8,3 +8,8 @@
 - Every organizer status and note change reaches the email gateway with current status, description, category, and IX design. No-op saves send nothing. Discord failure does not block email or committed status. Provider failure is reported.
 - Reminder targets only editable uncategorized requests, groups multiple jobs into one email, skips missing contacts/portal, and cannot send twice on repeat/concurrent calls. Failed/ambiguous delivery remains visible without automatic retries.
 - Desktop and 320px mobile: required new category, visible legacy prompt, saved category while closed, project priority copy; no fixed print-time claims. Preview email HTML/text for escaped content and correct links/artwork.
+
+- Duration accepts whole minutes 1–600, including a 90-minute estimate; zero, fractions, and durations over 600 fail. The organizer UI requests hours/minutes when starting Printing and persists a server-calculated finish; category priority and permission checks remain intact.
+- Repeated status/duration saves are no-ops. Editing a note preserves start/finish; changing duration preserves the original start and sends one update. Leaving Printing clears the timer. Expiry does not change status.
+- Mixed project/personal/uncategorized jobs expose correct overall ranks and category totals, with running prints first. Held jobs have no rank and appear in the on-hold count. Both dashboards label each number unambiguously.
+- Both dashboards show the running timer and honest expired-estimate copy. KHIX dashboard and new-request form display all eight filaments and the one-hour maximum. No datetime-local control remains in the organizer workflow.

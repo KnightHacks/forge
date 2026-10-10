@@ -53,10 +53,11 @@ export async function loadQueueEstimates(
   executor: WriteDb = db,
   now = new Date(),
 ) {
-  const [settings, activeJobs] = await Promise.all([
+  const [settings, openJobs] = await Promise.all([
     loadEstimateSettings(hackathonId, executor),
     executor
       .select({
+        category: PrintJob.category,
         estimatedReadyAt: PrintJob.estimatedReadyAt,
         id: PrintJob.id,
         status: PrintJob.status,
@@ -66,12 +67,20 @@ export async function loadQueueEstimates(
       .where(
         and(
           eq(PrintJob.hackathonId, hackathonId),
-          inArray(PrintJob.status, [...PRINTING.PRINT_JOB_ACTIVE_STATUSES]),
+          inArray(PrintJob.status, [...PRINTING.PRINT_JOB_OPEN_STATUSES]),
         ),
       )
       .orderBy(...printQueueOrder()),
   ]);
+  const activeJobs = openJobs.filter((job) =>
+    isActivePrintJobStatus(job.status),
+  );
+  const categoryCounts = { project: 0, personal: 0, uncategorized: 0 };
+  for (const job of activeJobs)
+    categoryCounts[job.category ?? "uncategorized"]++;
   return {
+    categoryCounts,
+    onHoldCount: openJobs.length - activeJobs.length,
     estimates: estimateReadyTimes(activeJobs, settings, now),
     settings,
     waitingCount: activeJobs.length,

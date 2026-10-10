@@ -8,6 +8,7 @@ import { ArrowUpRight, Box, Clock3, Paperclip, Printer } from "lucide-react";
 import type { HackerPrintJobDto } from "@forge/hacker-sdk";
 import { PRINTING } from "@forge/consts";
 import { Button } from "@forge/ui/button";
+import { Countdown } from "@forge/ui/countdown";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ import { StatusStage } from "./khix-dashboard";
 import dashboardStyles from "./khix-dashboard.module.css";
 import { NewPrintJobForm } from "./new-print-job-form";
 import { PrintCategoryEditor } from "./print-category-choices";
+import { PrintingGuidelines } from "./printing-guidelines";
 
 export function HackerPrinting() {
   const { dashboard, dashboardQuery } = useHackerDashboardFlow();
@@ -138,12 +140,32 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
               "Checking the print queue…"
             )}
           </p>
+          {queue?.categoryCounts ? (
+            <div aria-label="Queue breakdown" className={styles.queueCounts}>
+              <strong>{queue.categoryCounts.project} hackathon projects</strong>
+              <span>{queue.categoryCounts.personal} personal prints</span>
+              {queue.categoryCounts.uncategorized > 0 ? (
+                <span>
+                  {queue.categoryCounts.uncategorized} awaiting category
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {queue?.onHoldCount ? (
+            <p className={styles.hint}>
+              {queue.onHoldCount} on hold for clarification, outside the queue.
+            </p>
+          ) : null}
           <p className={styles.hint}>
-            Hackathon project prints have priority. Print times vary depending
-            on the model.
+            Hackathon projects take priority. Running prints finish first; each
+            category is oldest first. Your number is your overall place in line.
+            New projects may move personal prints back. Print times vary
+            depending on the model.
           </p>
         </div>
       </aside>
+
+      <PrintingGuidelines />
 
       <aside aria-label="Our printing sponsor" className={styles.sponsor}>
         <div className={styles.sponsorIdentity}>
@@ -320,7 +342,7 @@ function PrintJobCard({
 
         {job.organizerReadyAt ? (
           <p className={styles.hint}>
-            Organizer estimate:{" "}
+            Estimated finish:{" "}
             {new Intl.DateTimeFormat("en-US", {
               hour: "numeric",
               minute: "2-digit",
@@ -329,11 +351,21 @@ function PrintJobCard({
             . Timing may change.
           </p>
         ) : null}
+        {job.status === "printing" && job.organizerReadyAt ? (
+          <p className={styles.queuePosition}>
+            <Countdown
+              endsAt={job.organizerReadyAt}
+              expiredText="Estimated time elapsed — waiting for an organizer update."
+            />
+          </p>
+        ) : null}
         <PrintCategoryEditor job={job} flow={flow} editable={cancellable} />
 
         {job.status === "needs_clarification" ? (
           <p className={styles.callout} role="note">
-            <strong>Waiting on your reply.</strong> {job.statusNote}
+            <strong>On hold — no queue position.</strong> {job.statusNote}{" "}
+            Contact the Shinies team so an organizer can return your print to
+            the queue.
           </p>
         ) : job.statusNote ? (
           <p className={styles.note}>
@@ -343,6 +375,8 @@ function PrintJobCard({
 
         {job.status === "received" && job.position !== null ? (
           <p className={styles.queuePosition}>
+            <strong>Overall queue #{job.position}</strong>
+            {" · "}
             {job.position - 1 === 0
               ? "Next in line"
               : `${job.position - 1} ${job.position - 1 === 1 ? "job" : "jobs"} ahead of yours`}
