@@ -1,0 +1,4 @@
+ALTER TABLE "knight_hacks_printing_configuration" ADD COLUMN "submissions_enabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_printing_configuration" ADD COLUMN "submissions_open_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "knight_hacks_printing_configuration" ADD COLUMN "submissions_close_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "knight_hacks_printing_configuration" ADD CONSTRAINT "knight_hacks_printing_configuration_window_check" CHECK ("knight_hacks_printing_configuration"."submissions_open_at" IS NULL OR "knight_hacks_printing_configuration"."submissions_close_at" IS NULL OR "knight_hacks_printing_configuration"."submissions_open_at" < "knight_hacks_printing_configuration"."submissions_close_at");

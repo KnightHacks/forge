@@ -889,6 +889,12 @@ export const AUDIT_ACTION_CATALOG = {
     [],
     ["printMinutes", "printerCount"],
   ),
+  "printing.submissions.updated": policy(
+    "hackathons",
+    "Updated 3D printing submission hours",
+    [],
+    ["submissionsEnabled", "submissionsOpenAt", "submissionsCloseAt"],
+  ),
   "hacker.check_in_pass_issued": policy(
     "hackathons",
     "Issued hacker check-in pass",

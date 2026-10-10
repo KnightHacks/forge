@@ -79,6 +79,59 @@ export function HackerPrinting() {
   return <PrintingWorkshop timeZone={dashboard.hackathon.timezone} />;
 }
 
+function formatSubmissionTime(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    timeZone,
+  }).format(new Date(value));
+}
+
+function PrintingClosedCopy({
+  submissions,
+  timeZone,
+}: {
+  submissions:
+    | {
+        closeAt: string | null;
+        enabled: boolean;
+        isOpen: boolean;
+        openAt: string | null;
+      }
+    | undefined;
+  timeZone: string;
+}) {
+  if (!submissions) return <>Checking whether printing is on-site…</>;
+  if (!submissions.enabled) {
+    return (
+      <>
+        Printing is closed right now. Organizers will reopen submissions when
+        the printers are on-site.
+      </>
+    );
+  }
+  if (submissions.openAt) {
+    return (
+      <>Printing opens {formatSubmissionTime(submissions.openAt, timeZone)}.</>
+    );
+  }
+  if (submissions.closeAt) {
+    return (
+      <>
+        Printing closed {formatSubmissionTime(submissions.closeAt, timeZone)}.
+      </>
+    );
+  }
+  return (
+    <>
+      Printing is closed right now. Check back when organizers reopen
+      submissions.
+    </>
+  );
+}
+
 function PrintingWorkshop({ timeZone }: { timeZone: string }) {
   const flow = useHackerPrintingFlow();
   const queue = flow.jobsQuery.data?.queue;
@@ -104,7 +157,11 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
           <h1 id="khix-printing-title">3D Printing</h1>
           <p>Send your model, track its progress and collect your print.</p>
         </div>
-        <NewPrintJobForm flow={flow} onSubmitted={() => setView("active")} />
+        <NewPrintJobForm
+          disabled={!queue?.submissions.isOpen}
+          flow={flow}
+          onSubmitted={() => setView("active")}
+        />
       </header>
 
       <aside aria-label="Our printing sponsor" className={styles.sponsor}>
@@ -158,8 +215,17 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
             )}
           </p>
           <p className={styles.hint}>
-            Each print takes {formatPrintTime(queue?.printMinutes ?? 60)}. First
-            come, first served; ready times may change.
+            {queue?.submissions.isOpen ? (
+              <>
+                Each print takes {formatPrintTime(queue.printMinutes)}. First
+                come, first served; ready times may change.
+              </>
+            ) : (
+              <PrintingClosedCopy
+                submissions={queue?.submissions}
+                timeZone={timeZone}
+              />
+            )}
           </p>
         </div>
       </aside>

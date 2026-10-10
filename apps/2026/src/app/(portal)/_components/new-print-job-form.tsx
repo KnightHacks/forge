@@ -37,9 +37,11 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 export function NewPrintJobForm({
+  disabled,
   flow,
   onSubmitted,
 }: {
+  disabled: boolean;
   flow: ReturnType<typeof useHackerPrintingFlow>;
   onSubmitted: () => void;
 }) {
@@ -56,6 +58,7 @@ export function NewPrintJobForm({
   // file then would race the submit that already holds the list.
   const submitting = flow.submitMutation.isPending;
   const canSubmit =
+    !disabled &&
     description.trim() !== "" &&
     uploadedIds.length > 0 &&
     !uploading &&
@@ -69,6 +72,10 @@ export function NewPrintJobForm({
   }
 
   function addFiles(list: FileList) {
+    if (disabled) {
+      toast.error("Printing is not accepting new requests right now.");
+      return;
+    }
     const room = PRINTING.MAX_PRINT_JOB_FILES - files.length;
     const picked = Array.from(list).slice(0, Math.max(room, 0));
     if (list.length > picked.length) {
@@ -106,6 +113,10 @@ export function NewPrintJobForm({
 
   async function submit() {
     try {
+      if (disabled) {
+        toast.error("Printing is not accepting new requests right now.");
+        return;
+      }
       const job = await flow.submit({
         description: description.trim(),
         fileIds: uploadedIds,
@@ -132,7 +143,7 @@ export function NewPrintJobForm({
       }}
     >
       <DialogTrigger asChild>
-        <Button className={styles.primaryButton}>
+        <Button className={styles.primaryButton} disabled={disabled}>
           <Plus aria-hidden="true" size={18} />
           New print
         </Button>
@@ -196,13 +207,16 @@ export function NewPrintJobForm({
               </p>
             ) : null}
             {files.length < PRINTING.MAX_PRINT_JOB_FILES ? (
-              <label aria-disabled={submitting} className={styles.picker}>
+              <label
+                aria-disabled={submitting || disabled}
+                className={styles.picker}
+              >
                 <FileUp aria-hidden="true" className="size-4" />
                 Add files
                 <input
                   accept={uploadAccept(PRINT_FILE_UPLOAD_POLICY)}
                   className="sr-only"
-                  disabled={submitting}
+                  disabled={submitting || disabled}
                   multiple
                   onChange={(event) => {
                     if (event.target.files) addFiles(event.target.files);

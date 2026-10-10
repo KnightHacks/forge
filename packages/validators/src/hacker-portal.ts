@@ -484,6 +484,14 @@ export const printJobsDtoSchema = z
         /** Minutes until a job submitted now would be ready. */
         estimatedWaitMinutes: z.number().int().min(0),
         printMinutes: z.number().int().min(1),
+        submissions: z
+          .object({
+            closeAt: nullableIsoDateTimeSchema,
+            enabled: z.boolean(),
+            isOpen: z.boolean(),
+            openAt: nullableIsoDateTimeSchema,
+          })
+          .strict(),
         waitingCount: z.number().int().min(0),
       })
       .strict(),
@@ -581,6 +589,7 @@ export const participantDomainErrorSchema = z
       "INVALID_PRINT_FILE",
       "INVALID_RESUME",
       "PRINT_FILE_UNAVAILABLE",
+      "PRINTING_CLOSED",
       "PRINT_JOB_NOT_CANCELLABLE",
       "SESSION_EXPIRED",
       "STALE_PROFILE_REVISION",

@@ -18,6 +18,7 @@ import {
   printingSetChannelInputSchema,
   printingSetEstimatedReadyAtInputSchema,
   printingSetEstimateSettingsInputSchema,
+  printingSetSubmissionWindowInputSchema,
   printingUpdateStatusInputSchema,
 } from "@forge/validators";
 
@@ -36,6 +37,7 @@ import {
   isActivePrintJobStatus,
   loadEstimateSettings,
   loadQueueEstimates,
+  resolvePrintSubmissionWindow,
 } from "../utils/printing/queue";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
@@ -89,7 +91,12 @@ async function upsertConfiguration(
   values: Partial<
     Pick<
       typeof PrintingConfiguration.$inferInsert,
-      "discordChannelId" | "printMinutes" | "printerCount"
+      | "discordChannelId"
+      | "printMinutes"
+      | "printerCount"
+      | "submissionsCloseAt"
+      | "submissionsEnabled"
+      | "submissionsOpenAt"
     >
   >,
 ) {
@@ -400,13 +407,19 @@ export const printingRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       requirePrintingQueue(ctx);
       const [row] = await db
-        .select({ channelId: PrintingConfiguration.discordChannelId })
+        .select({
+          channelId: PrintingConfiguration.discordChannelId,
+          submissionsCloseAt: PrintingConfiguration.submissionsCloseAt,
+          submissionsEnabled: PrintingConfiguration.submissionsEnabled,
+          submissionsOpenAt: PrintingConfiguration.submissionsOpenAt,
+        })
         .from(PrintingConfiguration)
         .where(eq(PrintingConfiguration.hackathonId, input.hackathonId))
         .limit(1);
       return {
         channelId: row?.channelId ?? null,
         ...(await loadEstimateSettings(input.hackathonId)),
+        submissions: resolvePrintSubmissionWindow(row ?? null),
       };
     }),
 
@@ -455,6 +468,56 @@ export const printingRouter = createTRPCRouter({
           tx,
         );
         return { channelId: row.discordChannelId };
+      });
+    }),
+
+  /** Enables/disables hacker print submissions with optional open and close times. */
+  setSubmissionWindow: permProcedure
+    .input(printingSetSubmissionWindowInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      requirePrintingQueue(ctx);
+      await requireHackathon(input.hackathonId);
+      const auditActor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const before = await lockConfiguration(tx, input.hackathonId);
+        const row = await upsertConfiguration(tx, input.hackathonId, {
+          submissionsCloseAt: input.closeAt,
+          submissionsEnabled: input.enabled,
+          submissionsOpenAt: input.openAt,
+        });
+        await createAdminAuditEvent(
+          {
+            actionKey: "printing.submissions.updated",
+            actor: auditActor,
+            changes: [
+              {
+                after: row.submissionsEnabled,
+                before: before?.submissionsEnabled ?? false,
+                field: "submissionsEnabled",
+              },
+              {
+                after: row.submissionsOpenAt?.toISOString() ?? null,
+                before: before?.submissionsOpenAt?.toISOString() ?? null,
+                field: "submissionsOpenAt",
+              },
+              {
+                after: row.submissionsCloseAt?.toISOString() ?? null,
+                before: before?.submissionsCloseAt?.toISOString() ?? null,
+                field: "submissionsCloseAt",
+              },
+            ].filter((change) => change.before !== change.after),
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.hackathonId,
+                targetLabel: "3D printing configuration",
+                targetType: "printing_configuration",
+              },
+            ],
+          },
+          tx,
+        );
+        return resolvePrintSubmissionWindow(row);
       });
     }),
 
