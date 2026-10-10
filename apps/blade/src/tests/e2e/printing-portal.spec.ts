@@ -1,5 +1,7 @@
 import { expect, test } from "playwright/test";
 
+import type { PRINTING } from "@forge/consts";
+
 const portalUrl = "http://localhost:3007";
 const id = "00000000-0000-4000-8000-000000000001";
 const date = "2026-10-10T12:00:00.000Z";
@@ -53,6 +55,7 @@ test.describe("printing portal availability", () => {
     }, testInfo) => {
       let isOpen = false;
       let hasExistingJob = false;
+      let category: PRINTING.PrintJobCategory | null = null;
       let submits = 0;
       let uploads = 0;
       await page.setViewportSize({ width, height: 1000 });
@@ -116,7 +119,7 @@ test.describe("printing portal availability", () => {
               break;
             case "listPrintJobs":
               data = {
-                jobs: hasExistingJob ? [queuedPrintJob] : [],
+                jobs: hasExistingJob ? [{ ...queuedPrintJob, category }] : [],
                 queue: {
                   isOpen,
                   estimatedWaitMinutes: 60,
@@ -137,6 +140,10 @@ test.describe("printing portal availability", () => {
                 unscheduled: [],
                 feedback: [],
               };
+              break;
+            case "updatePrintJobCategory":
+              category = "project";
+              data = { ...queuedPrintJob, category };
               break;
             case "submitPrintJob":
               submits++;
@@ -180,6 +187,20 @@ test.describe("printing portal availability", () => {
         fullPage: true,
       });
       hasExistingJob = true;
+      await page.reload();
+      await expect(
+        page.getByText("Choose a category for this print.", { exact: true }),
+      ).toBeVisible();
+      await page
+        .getByRole("radio", { name: "Hackathon project", exact: true })
+        .check();
+      await page
+        .getByRole("button", { name: "Save category", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "Change category" }),
+      ).toBeVisible();
+      await expect(newPrint).toBeDisabled();
       isOpen = true;
       await expect(newPrint).toBeEnabled({ timeout: 25_000 });
       await expect(availability).toContainText("Printing is open");
@@ -204,6 +225,11 @@ test.describe("printing portal availability", () => {
         buffer: Buffer.from("solid part\nendsolid part"),
       });
       const submit = page.getByRole("button", { name: "Send to the printer" });
+      await expect(submit).toBeDisabled();
+      await page
+        .getByRole("dialog")
+        .getByRole("radio", { name: "Personal print", exact: true })
+        .check();
       await expect(submit).toBeEnabled();
       isOpen = false;
       await expect(submit).toBeDisabled({ timeout: 25_000 });
@@ -221,6 +247,9 @@ test.describe("printing portal availability", () => {
         path: testInfo.outputPath("hacker-printing-draft-paused.png"),
         fullPage: true,
       });
+      await expect(
+        page.getByRole("radio", { name: "Personal print", exact: true }),
+      ).toBeChecked();
       expect(uploads).toBe(1);
       expect(submits).toBe(0);
       isOpen = true;

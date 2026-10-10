@@ -245,6 +245,7 @@ describe("Hacker Portal validators", () => {
       "submitPrintJob",
       "updateApplication",
       "updateParticipant",
+      "updatePrintJobCategory",
       "updateProfile",
       "withdrawApplication",
     ];

@@ -1,56 +1,93 @@
-function escapeHtml(value: string) {
-  return value.replace(
-    /[&<>"']/g,
-    (char) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
-      ] ?? char,
-  );
-}
+import { compileCodeEmailTemplate } from "./templates";
 
-/**
- * Sent to a hacker when an organizer changes their 3D print job's status.
- * `readyAt` is already formatted in the hackathon's time zone; `portalUrl` is
- * the printing page, or null when the hackathon has no portal.
- */
-export function printJobStatusEmail(input: {
+interface PrintEmailInput {
   hackathonName: string;
   headline: string;
   name: string;
-  note: string | null;
   portalUrl: string | null;
-  readyAt: string | null;
-  statusLabel: string;
-}) {
-  const hackathonName = escapeHtml(input.hackathonName);
-  const headline = escapeHtml(input.headline);
-  const name = escapeHtml(input.name);
-  const statusLabel = escapeHtml(input.statusLabel);
-  const subject = `${input.hackathonName} 3D printing: ${input.statusLabel}`;
+}
 
-  const text = [
-    `Hi ${input.name},`,
-    "",
-    `${input.headline} Your 3D print job is now: ${input.statusLabel}.`,
-    input.note ? `\nNote from the organizers: ${input.note}` : null,
-    input.readyAt ? `\nEstimated ready: about ${input.readyAt}` : null,
-    input.portalUrl ? `\nTrack your print: ${input.portalUrl}` : null,
-    "",
-    "Knight Hacks",
-  ]
-    .filter((line) => line !== null)
-    .join("\n");
+// Use string literals inside JSX expressions: the safe compiler escapes their
+// rendered values, so a hacker's text cannot become TSX or HTML.
+function literal(value: string) {
+  return `{${JSON.stringify(value)}}`;
+}
 
-  const note = input.note
-    ? `<div style="background:#f4f1fa;border-left:4px solid #7143b8;padding:18px 20px;margin:24px 0"><div style="font-size:11px;color:#62556e;letter-spacing:1px">NOTE FROM THE ORGANIZERS</div><div style="font-size:16px;line-height:1.6;margin-top:8px;overflow-wrap:anywhere">${escapeHtml(input.note)}</div></div>`
-    : "";
-  const readyAt = input.readyAt
-    ? `<p style="font-size:16px;line-height:1.6">Estimated ready: <strong>about ${escapeHtml(input.readyAt)}</strong>. Estimates move as the queue moves.</p>`
-    : "";
-  const button = input.portalUrl
-    ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="border-radius:8px;background:#6535a4"><a href="${escapeHtml(input.portalUrl)}" style="display:inline-block;padding:16px 24px;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none">Track your print &rarr;</a></td></tr></table>`
-    : "";
+/** React Email layout adapted from the existing IX arrival template. */
+function renderPrintEmail(
+  input: PrintEmailInput,
+  content: string,
+  action: string,
+) {
+  const isIx = input.hackathonName === "Knight Hacks IX";
+  const source = `import { Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text } from "@react-email/components";
+export default (
+  <Html><Head /><Preview style={{ display: "none", maxHeight: 0, overflow: "hidden" }}>${literal(input.headline)}</Preview>
+    <Body style={{ backgroundColor: "#071522", color: "#d7ead6", fontSize: 16, lineHeight: "26px", fontFamily: "Palatino Linotype, Book Antiqua, Palatino, Georgia, serif", margin: 0, padding: 0 }}>
+      <Container style={{ backgroundColor: "#071522", margin: "0 auto", maxWidth: 660, width: "100%" }}>
+        ${isIx ? '<Img alt="Knight Hacks IX at UCF, October 9-11, 2026" src="https://assets.knighthacks.org/khix/og-image.webp" width="660" style={{ display: "block", height: "auto", maxWidth: 660, width: "100%" }} />' : ""}
+        <Section style={{ borderTop: "8px solid #8f63ff", padding: "28px 22px" }}>
+          <Text style={{ color: "#eaff8f", margin: "0 0 12px" }}>${literal(input.hackathonName + " · 3D printing")}</Text>
+          <Heading style={{ color: "#fff8d6", fontSize: 26, lineHeight: "32px", margin: "0 0 20px" }}>${literal(input.headline)}</Heading>
+          <Text style={{ color: "#d7ead6" }}>${literal(`Hi ${input.name},`)}</Text>
+          ${content}
+          ${input.portalUrl ? `<Button href=${literal(input.portalUrl)} style={{ display: "inline-block", backgroundColor: "#f4e878", color: "#071522", fontWeight: 700, padding: "14px 22px", borderRadius: 6, textDecoration: "none" }}>${literal(action)}</Button>` : ""}
+          <Text style={{ color: "#d7ead6", margin: "24px 0 0" }}>The Knight Hacks Team</Text>
+        </Section>
+      </Container>
+    </Body>
+  </Html>
+);`;
+  const result = compileCodeEmailTemplate({ source, sample: {} });
+  return {
+    html: result.html,
+    text:
+      result.text +
+      (input.portalUrl ? `\n\n${action}: ${input.portalUrl}` : ""),
+  };
+}
 
-  const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="UTF-8"></head><body style="margin:0;background:#f2f0f7;font-family:Arial,Helvetica,sans-serif;color:#241b38"><div style="display:none;max-height:0;overflow:hidden">Your 3D print job is now: ${statusLabel}.</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden"><tr><td style="background:#241b38;padding:28px 32px;color:#ffffff"><div style="font-size:12px;font-weight:bold;letter-spacing:2px;color:#d8c58a">KNIGHT HACKS</div><div style="font-size:16px;margin-top:10px">${hackathonName} 3D printing</div></td></tr><tr><td style="padding:32px"><h1 style="font-size:30px;line-height:1.15;margin:0 0 24px">${headline}</h1><p style="font-size:16px;line-height:1.6">Hi ${name},<br>Your 3D print job is now: <strong>${statusLabel}</strong>.</p>${note}${readyAt}${button}</td></tr></table><p style="font-size:12px;color:#756b80;line-height:1.5">Knight Hacks</p></td></tr></table></body></html>`;
-  return { html, subject, text };
+export function printJobStatusEmail(
+  input: PrintEmailInput & {
+    categoryLabel: string;
+    description: string;
+    note: string | null;
+    readyAt: string | null;
+    statusLabel: string;
+  },
+) {
+  const content = `
+    <Text style={{ color: "#fff8d6", fontWeight: 700 }}>${literal(`Your print is now: ${input.statusLabel}.`)}</Text>
+    <Section style={{ backgroundColor: "#0a1a29", borderLeft: "4px solid #8f63ff", padding: "16px 18px", margin: "20px 0" }}>
+      <Text style={{ color: "#fff8d6", margin: 0, overflowWrap: "anywhere" }}>${literal(input.description)}</Text>
+      <Text style={{ color: "#eaff8f", margin: "8px 0 0" }}>${literal(`Category: ${input.categoryLabel}`)}</Text>
+    </Section>
+    ${input.note ? `<Text style={{ color: "#fff8d6", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>${literal(`Note from the organizers: ${input.note}`)}</Text>` : ""}
+    ${input.readyAt ? `<Text style={{ color: "#d7ead6" }}>${literal(`Organizer estimate: ${input.readyAt}. Print times vary depending on the model.`)}</Text>` : ""}
+  `;
+  const rendered = renderPrintEmail(input, content, "Track your print");
+  return {
+    ...rendered,
+    subject: `${input.hackathonName} 3D printing: ${input.statusLabel}`,
+  };
+}
+
+export function printJobCategoryReminderEmail(
+  input: Omit<PrintEmailInput, "headline"> & { jobCount: number },
+) {
+  const headline = "Choose a category for your prints";
+  const content = `
+    <Text style={{ color: "#d7ead6" }}>${literal(`You have ${input.jobCount} waiting print ${input.jobCount === 1 ? "request that needs" : "requests that need"} a category.`)}</Text>
+    <Text style={{ color: "#fff8d6" }}>Open your printing dashboard and choose Hackathon project or Personal print for each request.</Text>
+    <Text style={{ color: "#eaff8f", fontWeight: 700 }}>Parts for hackathon projects have priority over personal prints.</Text>
+    <Text style={{ color: "#d7ead6" }}>Your requests are still saved, and you can choose a category even while new submissions are closed. We’ll email you when your print status changes. Print times vary depending on the model.</Text>
+  `;
+  return {
+    ...renderPrintEmail(
+      { ...input, headline },
+      content,
+      "Choose print categories",
+    ),
+    subject: `${input.hackathonName}: choose your print categories`,
+  };
 }

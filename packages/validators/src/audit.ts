@@ -855,6 +855,12 @@ export const AUDIT_ACTION_CATALOG = {
   "printing.job.submitted": policy("hackathons", "Submitted 3D print job", [
     "fileCount",
   ]),
+  "printing.job.category_updated": policy(
+    "hackathons",
+    "Updated 3D print job category",
+    [],
+    ["category"],
+  ),
   "printing.job.cancelled": policy(
     "hackathons",
     "Cancelled 3D print job",

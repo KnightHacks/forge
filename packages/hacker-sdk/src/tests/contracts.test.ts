@@ -53,6 +53,7 @@ describe("Hacker participant v1 contract", () => {
 
   it("exposes only the narrow participant procedure manifest", () => {
     expect(HACKER_PARTICIPANT_V1_PROCEDURES).toEqual({
+      updatePrintJobCategory: "mutation",
       cancelPrintJob: "mutation",
       changeTeam: "mutation",
       claimProject: "mutation",

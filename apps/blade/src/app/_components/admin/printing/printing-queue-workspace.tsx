@@ -71,6 +71,9 @@ export function PrintingQueueWorkspace({
       job.submitter.name,
       job.submitter.email,
       job.description,
+      job.category
+        ? PRINTING.PRINT_JOB_CATEGORY_LABELS[job.category]
+        : "Uncategorized",
       ...job.files.map((file) => file.fileName),
     ].some((value) =>
       value?.toLowerCase().includes(search.trim().toLowerCase()),
@@ -151,7 +154,6 @@ export function PrintingQueueWorkspace({
             </span>
             <span className="inline-flex items-center gap-2">
               <Clock3 aria-hidden="true" className="size-4" />
-              {queue.settings.printMinutes} min / print ·{" "}
               {queue.settings.printerCount}{" "}
               {queue.settings.printerCount === 1 ? "printer" : "printers"}
             </span>
@@ -233,7 +235,7 @@ export function PrintingQueueWorkspace({
         <p className="flex flex-wrap justify-between gap-2 text-sm text-muted-foreground">
           <span>
             {matchingJobs.length} {matchingJobs.length === 1 ? "job" : "jobs"}{" "}
-            in this view · oldest first
+            in this view · projects first, then oldest first
           </span>
           <span>
             {configuration.channelId
@@ -330,6 +332,17 @@ function PrintQueueRow({
             </span>
             <PrintStatusPill status={job.status} />
             <span
+              className={
+                job.category === "project"
+                  ? "rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-sm font-medium text-foreground"
+                  : "text-sm text-muted-foreground"
+              }
+            >
+              {job.category
+                ? PRINTING.PRINT_JOB_CATEGORY_LABELS[job.category]
+                : "Uncategorized"}
+            </span>
+            <span
               className="text-sm tabular-nums text-muted-foreground"
               title="Total requests by this person at this hackathon, including completed and cancelled jobs"
             >
@@ -348,11 +361,11 @@ function PrintQueueRow({
               <Paperclip aria-hidden="true" className="size-3.5" />
               {job.files.length} {job.files.length === 1 ? "file" : "files"}
             </span>
-            {job.estimate ? (
+            {job.estimate?.overridden ? (
               <span className="text-foreground">
                 Ready ~
                 {formatPrintTime(job.estimate.estimatedReadyAt, timezone)}
-                {job.estimate.overridden ? " (set)" : ""}
+                {" (set)"}
               </span>
             ) : null}
           </span>

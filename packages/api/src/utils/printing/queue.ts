@@ -1,5 +1,5 @@
 import { PRINTING } from "@forge/consts";
-import { and, asc, eq, inArray } from "@forge/db";
+import { and, asc, eq, inArray, sql } from "@forge/db";
 import { db } from "@forge/db/client";
 import {
   PrintingConfiguration,
@@ -9,6 +9,16 @@ import {
 import type { WriteDb } from "../db";
 import type { PrintEstimateSettings } from "./estimate";
 import { estimateReadyTimes, estimateWaitMinutes } from "./estimate";
+
+/** Never interrupt a running print; projects lead the remaining waiting jobs. */
+export function printQueueOrder() {
+  return [
+    sql`case when ${PrintJob.status} = 'printing' then 0 else 1 end`,
+    sql`case when ${PrintJob.category} = 'project' then 0 else 1 end`,
+    asc(PrintJob.createdAt),
+    asc(PrintJob.id),
+  ];
+}
 
 /** The hackathon's estimate settings, or the defaults when it has no row. */
 export async function loadEstimateSettings(
@@ -59,7 +69,7 @@ export async function loadQueueEstimates(
           inArray(PrintJob.status, [...PRINTING.PRINT_JOB_ACTIVE_STATUSES]),
         ),
       )
-      .orderBy(asc(PrintJob.createdAt), asc(PrintJob.id)),
+      .orderBy(...printQueueOrder()),
   ]);
   return {
     estimates: estimateReadyTimes(activeJobs, settings, now),

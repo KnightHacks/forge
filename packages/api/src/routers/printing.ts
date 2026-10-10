@@ -19,6 +19,7 @@ import {
   printingSetChannelInputSchema,
   printingSetEstimatedReadyAtInputSchema,
   printingSetEstimateSettingsInputSchema,
+  printingUpdateCategoryInputSchema,
   printingUpdateStatusInputSchema,
 } from "@forge/validators";
 
@@ -37,6 +38,7 @@ import {
   isActivePrintJobStatus,
   loadEstimateSettings,
   loadQueueEstimates,
+  printQueueOrder,
 } from "../utils/printing/queue";
 import { resolveRoleDiscordGateway } from "../utils/roles/discord-gateway";
 
@@ -139,13 +141,14 @@ export const printingRouter = createTRPCRouter({
       );
   }),
 
-  /** One hackathon's queue, oldest first, with contact info and per-status counts. */
+  /** One hackathon's queue, project priority then oldest first, with contact info and per-status counts. */
   list: permProcedure
     .input(printingListInputSchema)
     .query(async ({ ctx, input }) => {
       requirePrintingQueue(ctx);
       const jobs = await db
         .select({
+          category: PrintJob.category,
           createdAt: PrintJob.createdAt,
           description: PrintJob.description,
           discordUser: HackerProfile.discordUser,
@@ -176,7 +179,7 @@ export const printingRouter = createTRPCRouter({
                 : undefined,
           ),
         )
-        .orderBy(asc(PrintJob.createdAt), asc(PrintJob.id));
+        .orderBy(...printQueueOrder());
 
       const jobIds = jobs.map((job) => job.id);
       const [files, statusCounts, attendeeCounts, queue] = await Promise.all([
@@ -228,6 +231,7 @@ export const printingRouter = createTRPCRouter({
           return {
             cancelCount:
               countsByAttendee.get(job.hackerAttendeeId)?.cancelCount ?? 0,
+            category: job.category,
             createdAt: job.createdAt,
             description: job.description,
             estimate: estimate
@@ -357,13 +361,63 @@ export const printingRouter = createTRPCRouter({
       return { ...result, delivery };
     }),
 
-  /** Sets or clears an exact ready time. Sends no notification. */
+  updateCategory: permProcedure
+    .input(printingUpdateCategoryInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      requirePrintingQueue(ctx);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      const changed = await db.transaction(async (tx) => {
+        const job = await lockPrintJob(tx, input.jobId);
+        if (
+          !(
+            PRINTING.HACKER_CANCELLABLE_PRINT_JOB_STATUSES as readonly string[]
+          ).includes(job.status)
+        ) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: "Only waiting print requests can change category.",
+          });
+        }
+        if (job.category === input.category) return false;
+        await tx
+          .update(PrintJob)
+          .set({ category: input.category })
+          .where(eq(PrintJob.id, job.id));
+        await createAdminAuditEvent(
+          {
+            actionKey: "printing.job.category_updated",
+            actor,
+            changes: [
+              {
+                before: job.category,
+                after: input.category,
+                field: "category",
+              },
+            ],
+            subjects: [printJobSubject(job.id)],
+          },
+          tx,
+        );
+        return true;
+      });
+      return {
+        changed,
+        delivery: changed
+          ? await notifyPrintJobStatus(
+              input.jobId,
+              "Your print category was updated.",
+            )
+          : { discord: "skipped" as const, email: "skipped" as const },
+      };
+    }),
+
+  /** Sets or clears an organizer estimate and notifies the hacker. */
   setEstimatedReadyAt: permProcedure
     .input(printingSetEstimatedReadyAtInputSchema)
     .mutation(async ({ ctx, input }) => {
       requirePrintingQueue(ctx);
       const auditActor = await captureAdminAuditActor(ctx.session.user);
-      return db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         const job = await lockPrintJob(tx, input.jobId);
         if (!isActivePrintJobStatus(job.status)) {
           throw new TRPCError({
@@ -371,6 +425,10 @@ export const printingRouter = createTRPCRouter({
             message: "Only received or printing jobs have a ready time.",
           });
         }
+        if (
+          job.estimatedReadyAt?.getTime() === input.estimatedReadyAt?.getTime()
+        )
+          return { changed: false, job: jobView(job) };
         const [updated] = await tx
           .update(PrintJob)
           .set({ estimatedReadyAt: input.estimatedReadyAt })
@@ -392,8 +450,15 @@ export const printingRouter = createTRPCRouter({
           },
           tx,
         );
-        return jobView(updated);
+        return { changed: true, job: jobView(updated) };
       });
+      const delivery = result.changed
+        ? await notifyPrintJobStatus(
+            input.jobId,
+            "Your print timing was updated.",
+          )
+        : { discord: "skipped" as const, email: "skipped" as const };
+      return { ...result.job, delivery };
     }),
 
   getConfiguration: permProcedure

@@ -15,6 +15,7 @@ import type { db } from "@forge/db/client";
 import type * as AuthSchemaModule from "@forge/db/schemas/auth";
 import type * as KnightHacksSchemaModule from "@forge/db/schemas/knight-hacks";
 import type { DisposableDatabase } from "@forge/db/testing";
+import type * as EmailModule from "@forge/email";
 import type * as DiscordModule from "@forge/utils/discord";
 import { eq, sql } from "@forge/db";
 import {
@@ -39,6 +40,12 @@ vi.mock("../../minio/minio-client", () => ({
     putObject: vi.fn().mockResolvedValue(undefined),
     removeObjects: vi.fn().mockResolvedValue(undefined),
   },
+}));
+
+const emailSend = vi.hoisted(() => vi.fn<typeof EmailModule.sendEmail>());
+vi.mock("@forge/email", async (importOriginal) => ({
+  ...(await importOriginal<typeof EmailModule>()),
+  sendEmail: emailSend,
 }));
 
 const discordPost = vi.hoisted(() => vi.fn());
@@ -170,6 +177,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
 
   async function submit(ctx: PortalContext, fileIds: string[]) {
     return printing.submitPrintJob(ctx, {
+      category: "personal",
       description: "A small bracket, PLA, any color",
       fileIds,
       idempotencyKey: randomUUID(),
@@ -217,6 +225,8 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
   }, 120_000);
 
   beforeEach(async () => {
+    emailSend.mockReset();
+    emailSend.mockResolvedValue({ success: true });
     discordPost.mockReset();
     discordPost.mockResolvedValue({ id: "dm-channel" });
     await client.execute(
@@ -279,6 +289,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     const hacker = await seedHacker("pause", "checkedin");
     const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
     const input = {
+      category: "personal" as const,
       description: "Bracket",
       fileIds: [await stageFile(hacker.attendeeId)],
       idempotencyKey: randomUUID(),
@@ -379,6 +390,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
   it("[TC-003] replays a submit with the same idempotency key", async () => {
     const hacker = await seedHacker("ed", "checkedin");
     const input = {
+      category: "personal" as const,
       description: "Phone stand",
       fileIds: [await stageFile(hacker.attendeeId)],
       idempotencyKey: randomUUID(),
@@ -609,7 +621,8 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
   it("[TC-002/010/NEG-010] posts one channel notice that pings only queue roles", async () => {
     const hacker = await seedHacker("jo", "checkedin");
     await submit(hacker.ctx, [await stageFile(hacker.attendeeId)]);
-    expect(discordPost).not.toHaveBeenCalled();
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    discordPost.mockClear();
 
     await client.insert(auth.Roles).values([
       {
@@ -630,6 +643,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       })
       .where(eq(knightHacks.PrintingConfiguration.hackathonId, hackathonId));
     const input = {
+      category: "personal" as const,
       description: "Keychain",
       fileIds: [await stageFile(hacker.attendeeId)],
       idempotencyKey: randomUUID(),
@@ -637,8 +651,14 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     await printing.submitPrintJob(hacker.ctx, input);
     await printing.submitPrintJob(hacker.ctx, input);
 
-    expect(discordPost).toHaveBeenCalledTimes(1);
-    const [route, request] = discordCall(0);
+    const channelCalls = discordPost.mock.calls.filter(
+      ([route]) => route === Routes.channelMessages("333333333333333333"),
+    );
+    expect(channelCalls).toHaveLength(1);
+    const index = discordPost.mock.calls.findIndex(
+      ([route]) => route === Routes.channelMessages("333333333333333333"),
+    );
+    const [route, request] = discordCall(index);
     expect(route).toBe(Routes.channelMessages("333333333333333333"));
     expect(request.body.allowed_mentions).toEqual({
       parse: [],
@@ -850,5 +870,221 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     await expect(submit(hacker.ctx, uploaded.slice(1))).resolves.toMatchObject({
       status: "received",
     });
+  });
+  it("prioritizes projects without interrupting printing, with consistent positions", async () => {
+    const hacker = await seedHacker("priority", "checkedin");
+    const personal = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+    ]);
+    const legacy = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+    ]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ category: null })
+      .where(eq(knightHacks.PrintJob.id, legacy.id));
+    const project = await printing.submitPrintJob(hacker.ctx, {
+      category: "project",
+      description: "Robot part",
+      fileIds: [await stageFile(hacker.attendeeId)],
+      idempotencyKey: randomUUID(),
+    });
+    const running = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+    ]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ status: "printing" })
+      .where(eq(knightHacks.PrintJob.id, running.id));
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    const queue = await caller.printing.list({ hackathonId, status: "active" });
+    expect(queue.jobs.map((job) => job.id)).toEqual([
+      running.id,
+      project.id,
+      personal.id,
+      legacy.id,
+    ]);
+    expect(queue.jobs.map((job) => job.estimate?.position)).toEqual([
+      1, 2, 3, 4,
+    ]);
+    const own = await printing.listPrintJobs(hacker.ctx);
+    expect(own.jobs.find((job) => job.id === project.id)?.position).toBe(2);
+  });
+
+  it("lets owners classify while closed, preserves timestamps, and sends once per change", async () => {
+    const owner = await seedHacker("owner-category", "checkedin");
+    const other = await seedHacker("other-category", "checkedin");
+    const job = await submit(owner.ctx, [await stageFile(owner.attendeeId)]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ category: null })
+      .where(eq(knightHacks.PrintJob.id, job.id));
+    await client
+      .update(knightHacks.PrintingConfiguration)
+      .set({ isOpen: false })
+      .where(eq(knightHacks.PrintingConfiguration.hackathonId, hackathonId));
+    const input = {
+      category: "project" as const,
+      jobId: job.id,
+      idempotencyKey: randomUUID(),
+    };
+    await rejectsWithCode(
+      printing.updatePrintJobCategory(other.ctx, input),
+      "FORBIDDEN",
+    );
+    emailSend.mockClear();
+    const updated = await printing.updatePrintJobCategory(owner.ctx, input);
+    expect(updated).toMatchObject({
+      category: "project",
+      status: "received",
+      createdAt: job.createdAt,
+      statusChangedAt: job.statusChangedAt,
+      files: job.files,
+    });
+    await printing.updatePrintJobCategory(owner.ctx, input);
+    await printing.updatePrintJobCategory(owner.ctx, {
+      ...input,
+      idempotencyKey: randomUUID(),
+    });
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    expect(emailSend.mock.lastCall?.[0].text).toContain(
+      "Category: Hackathon project",
+    );
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ status: "printing" })
+      .where(eq(knightHacks.PrintJob.id, job.id));
+    await expect(
+      printing.updatePrintJobCategory(owner.ctx, {
+        ...input,
+        category: "personal",
+        idempotencyKey: randomUUID(),
+      }),
+    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+    const noPermission = await bladeCaller(permissionBitstring("READ_HACKERS"));
+    await expect(
+      noPermission.printing.updateCategory({
+        jobId: job.id,
+        category: "project",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("emails submissions, cancellations, every status, and note edits with no automatic estimates", async () => {
+    const hacker = await seedHacker("email-status", "checkedin");
+    await client
+      .update(knightHacks.Hackathon)
+      .set({ displayName: "Knight Hacks IX" })
+      .where(eq(knightHacks.Hackathon.id, hackathonId));
+    const job = await submit(hacker.ctx, [await stageFile(hacker.attendeeId)]);
+    expect(emailSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Knight Hacks IX 3D printing: Received",
+      }),
+    );
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    for (const status of [
+      "printing",
+      "needs_clarification",
+      "ready_for_pickup",
+      "picked_up",
+      "cancelled",
+      "received",
+    ] as const) {
+      emailSend.mockClear();
+      const result = await caller.printing.updateStatus({
+        jobId: job.id,
+        status,
+        note: "A note about your print",
+      });
+      expect(result.delivery.email).toBe("delivered");
+      expect(emailSend).toHaveBeenCalledTimes(1);
+      expect(emailSend.mock.lastCall?.[0].html).toContain(
+        "/khix/og-image.webp",
+      );
+      expect(emailSend.mock.lastCall?.[0].text).toContain(
+        "A note about your print",
+      );
+      expect(emailSend.mock.calls[0]?.[0].text).not.toMatch(
+        /Organizer estimate|1 hour|60 min/,
+      );
+    }
+    emailSend.mockRejectedValueOnce(new Error("Provider unavailable"));
+    const failure = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "received",
+      note: "Changed note",
+    });
+    expect(failure).toMatchObject({
+      job: { statusNote: "Changed note" },
+      delivery: { email: "failed" },
+    });
+    emailSend.mockClear();
+    const input = { jobId: job.id, idempotencyKey: randomUUID() };
+    await printing.cancelPrintJob(hacker.ctx, input);
+    await printing.cancelPrintJob(hacker.ctx, input);
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    expect(emailSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Knight Hacks IX 3D printing: Cancelled",
+      }),
+    );
+  });
+
+  it("sends one reminder per recipient and never repeats concurrent or failed attempts", async () => {
+    const hacker = await seedHacker("reminder", "checkedin");
+    const jobs = await Promise.all([
+      stageFile(hacker.attendeeId),
+      stageFile(hacker.attendeeId),
+    ]);
+    const first = await submit(hacker.ctx, [jobs[0]]);
+    const second = await submit(hacker.ctx, [jobs[1]]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ category: null })
+      .where(eq(knightHacks.PrintJob.hackerAttendeeId, hacker.attendeeId));
+    await client.insert(knightHacks.HackathonPortalClient).values({
+      hackathonId,
+      clientId: `reminder-${hackathonId}`,
+      name: "Reminder test",
+      productionOrigin: "https://khix.knighthacks.org",
+    });
+    const { listPrintCategoryReminderRecipients, sendPrintCategoryReminders } =
+      await import("../../utils/printing/category-reminders");
+    expect(await listPrintCategoryReminderRecipients(hackathonId)).toHaveLength(
+      1,
+    );
+    emailSend.mockClear();
+    await Promise.all([
+      sendPrintCategoryReminders(hackathonId),
+      sendPrintCategoryReminders(hackathonId),
+    ]);
+    await sendPrintCategoryReminders(hackathonId);
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    expect(emailSend.mock.lastCall?.[0].text).toContain(
+      "2 waiting print requests",
+    );
+    const rows = await client
+      .select()
+      .from(knightHacks.PrintJob)
+      .where(eq(knightHacks.PrintJob.hackerAttendeeId, hacker.attendeeId));
+    expect(rows.map((row) => row.id).sort()).toEqual(
+      [first.id, second.id].sort(),
+    );
+    expect(rows.every((row) => row.categoryReminderSentAt !== null)).toBe(true);
+    const failed = await submit(hacker.ctx, [
+      await stageFile(hacker.attendeeId),
+    ]);
+    await client
+      .update(knightHacks.PrintJob)
+      .set({ category: null })
+      .where(eq(knightHacks.PrintJob.id, failed.id));
+    emailSend.mockRejectedValueOnce(new Error("Timeout"));
+    expect(await sendPrintCategoryReminders(hackathonId)).toMatchObject({
+      failed: 1,
+    });
+    expect(await listPrintCategoryReminderRecipients(hackathonId)).toHaveLength(
+      0,
+    );
   });
 });

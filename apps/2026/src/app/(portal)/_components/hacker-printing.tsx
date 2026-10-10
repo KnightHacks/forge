@@ -27,6 +27,7 @@ import styles from "./hacker-printing.module.css";
 import { StatusStage } from "./khix-dashboard";
 import dashboardStyles from "./khix-dashboard.module.css";
 import { NewPrintJobForm } from "./new-print-job-form";
+import { PrintCategoryEditor } from "./print-category-choices";
 
 export function HackerPrinting() {
   const { dashboard, dashboardQuery } = useHackerDashboardFlow();
@@ -138,7 +139,8 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
             )}
           </p>
           <p className={styles.hint}>
-            Print times vary depending on the model.
+            Hackathon project prints have priority. Print times vary depending
+            on the model.
           </p>
         </div>
       </aside>
@@ -315,6 +317,19 @@ function PrintJobCard({
         >
           {job.description}
         </p>
+
+        {job.organizerReadyAt ? (
+          <p className={styles.hint}>
+            Organizer estimate:{" "}
+            {new Intl.DateTimeFormat("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              timeZone,
+            }).format(new Date(job.organizerReadyAt))}
+            . Timing may change.
+          </p>
+        ) : null}
+        <PrintCategoryEditor job={job} flow={flow} editable={cancellable} />
 
         {job.status === "needs_clarification" ? (
           <p className={styles.callout} role="note">

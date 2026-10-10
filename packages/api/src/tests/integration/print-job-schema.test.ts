@@ -175,6 +175,9 @@ describe.skipIf(!canRunDatabaseTests())("print job schema", () => {
   it("creates a job as received with no note", async () => {
     const job = await insertJob();
 
+    expect(job.category).toBeNull();
+    expect(job.categoryReminderAttemptedAt).toBeNull();
+    expect(job.categoryReminderSentAt).toBeNull();
     expect(job.status).toBe("received");
     expect(job.statusNote).toBeNull();
     expect(job.statusChangedByUserId).toBeNull();
@@ -185,6 +188,15 @@ describe.skipIf(!canRunDatabaseTests())("print job schema", () => {
       client.execute(
         sql`INSERT INTO ${schema.PrintJob} (hackathon_id, hacker_attendee_id, description, status)
             VALUES (${hackathon}, ${attendee}, 'Bracket', 'lost')`,
+      ),
+      CHECK_VIOLATION,
+    );
+  });
+
+  it("rejects an unknown print category in SQL", async () => {
+    await rejectsWith(
+      client.execute(
+        sql`INSERT INTO ${schema.PrintJob} (hackathon_id, hacker_attendee_id, description, category) VALUES (${hackathon}, ${attendee}, 'Bracket', 'misc')`,
       ),
       CHECK_VIOLATION,
     );

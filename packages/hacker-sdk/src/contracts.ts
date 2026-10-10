@@ -22,6 +22,7 @@ import type {
   hackerRemoveResumeSchema,
   hackerRemoveStagedPrintFileSchema,
   hackerSubmitPrintJobSchema,
+  hackerUpdatePrintJobCategorySchema,
   hackerWithdrawApplicationSchema,
   leaderboardDtoSchema,
   participantMutationResultDtoSchema,
@@ -99,6 +100,9 @@ export type HackerStagedPrintFileDto = z.output<
   typeof stagedPrintFileDtoSchema
 >;
 export type SubmitPrintJobInput = z.input<typeof hackerSubmitPrintJobSchema>;
+export type UpdatePrintJobCategoryInput = z.input<
+  typeof hackerUpdatePrintJobCategorySchema
+>;
 export type CancelPrintJobInput = z.input<typeof hackerCancelPrintJobSchema>;
 export type RemoveStagedPrintFileInput = z.input<
   typeof hackerRemoveStagedPrintFileSchema
@@ -133,6 +137,7 @@ export const HACKER_PARTICIPANT_V1_PROCEDURES = {
   claimProject: "mutation",
   inviteProjectMember: "mutation",
   searchJudgingProjects: "query",
+  updatePrintJobCategory: "mutation",
   cancelPrintJob: "mutation",
   confirmAttendance: "mutation",
   getApplicationContext: "query",

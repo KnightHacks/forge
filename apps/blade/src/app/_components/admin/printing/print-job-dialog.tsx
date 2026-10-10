@@ -27,12 +27,12 @@ import { toast } from "@forge/ui/toast";
 
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
+import { PrintCategoryForm } from "./print-category-form";
 import {
   deliverySummary,
   formatFileSize,
   formatPrintDateTime,
   formatPrintTime,
-  formatReadyIn,
   toDateTimeLocalValue,
 } from "./print-queue-format";
 import { PrintStatusPill } from "./print-status-pill";
@@ -108,7 +108,7 @@ export function PrintJobDialog({
           <DialogDescription>
             Submitted {formatPrintDateTime(job.createdAt, timezone)}
             {job.estimate
-              ? ` · #${job.estimate.position} in the queue · ready ~${formatPrintTime(job.estimate.estimatedReadyAt, timezone)} (${formatReadyIn(job.estimate.estimatedReadyAt, new Date())})`
+              ? ` · #${job.estimate.position} in the queue${job.estimate.overridden ? ` · organizer estimate ${formatPrintTime(job.estimate.estimatedReadyAt, timezone)}` : ""}`
               : ""}
           </DialogDescription>
           <p className="text-sm text-muted-foreground">
@@ -168,6 +168,7 @@ export function PrintJobDialog({
           </section>
 
           <ContactSection job={job} />
+          <PrintCategoryForm job={job} onDone={finish} />
 
           <form
             className="grid gap-3"
@@ -240,7 +241,7 @@ export function PrintJobDialog({
   );
 }
 
-/** Organizer-set ready time. Sends no notification, so it is its own form. */
+/** Organizer-set ready time, independent of the status form. */
 function ReadyTimeForm({
   disabled,
   job,
@@ -260,11 +261,15 @@ function ReadyTimeForm({
   const setEstimatedReadyAt = api.printing.setEstimatedReadyAt.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: (result) => {
-      toast.success(
-        result.estimatedReadyAt
-          ? `Ready time set to ${formatPrintTime(result.estimatedReadyAt, timezone)}.`
-          : "Ready time cleared. The queue estimate is back.",
-      );
+      const summary = deliverySummary(result.delivery);
+      if (!summary.ok)
+        toast.error("Timing saved.", { description: summary.description });
+      else
+        toast.success(
+          result.estimatedReadyAt
+            ? `Ready time set to ${formatPrintTime(result.estimatedReadyAt, timezone)}.`
+            : "Ready time cleared. The queue estimate is back.",
+        );
       onDone();
     },
   });
@@ -284,8 +289,8 @@ function ReadyTimeForm({
       <div className="grid gap-1">
         <Label htmlFor="print-job-ready-at">Exact ready time</Label>
         <p className="text-sm text-muted-foreground">
-          Replaces the queue estimate for this job only. The hacker sees it on
-          their page; no message is sent.
+          Replaces the queue estimate for this job only and sends the hacker an
+          update.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">

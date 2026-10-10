@@ -19,6 +19,8 @@ import type {
   HackerApplicationStatus,
   HackerProfileDto,
   PublicHackathonDto,
+  SubmitPrintJobInput,
+  UpdatePrintJobCategoryInput,
 } from "@forge/hacker-sdk";
 import { WITHDRAWAL_ACKNOWLEDGEMENT } from "@forge/hacker-sdk";
 import {
@@ -43,6 +45,7 @@ import {
   useSubmitHackerApplication,
   useSubmitPrintJob,
   useUpdateHackerParticipant,
+  useUpdatePrintJobCategory,
   useUploadHackerResume,
   useUploadPrintFile,
   useWithdrawHackerApplication,
@@ -832,6 +835,8 @@ export function useHackerPrintingFlow() {
   const removeMutation = useRemoveStagedPrintFile();
   const submitMutation = useSubmitPrintJob();
   const cancelMutation = useCancelPrintJob();
+  const categoryMutation = useUpdatePrintJobCategory();
+  const categoryKey = useIdempotencyLease("print-category");
   const submitKey = useIdempotencyLease("print-submit");
   const cancelKey = useIdempotencyLease("print-cancel");
 
@@ -845,9 +850,20 @@ export function useHackerPrintingFlow() {
       return job;
     },
     cancelMutation,
+    categoryMutation,
+    updateCategory: async (
+      input: Omit<UpdatePrintJobCategoryInput, "idempotencyKey">,
+    ) => {
+      const job = await categoryMutation.mutateAsync({
+        ...input,
+        idempotencyKey: categoryKey.acquire(input),
+      });
+      categoryKey.release();
+      return job;
+    },
     jobsQuery,
     removeFile: (fileId: string) => removeMutation.mutateAsync({ fileId }),
-    submit: async (input: { description: string; fileIds: string[] }) => {
+    submit: async (input: Omit<SubmitPrintJobInput, "idempotencyKey">) => {
       const job = await submitMutation.mutateAsync({
         ...input,
         idempotencyKey: submitKey.acquire(input),

@@ -10,7 +10,11 @@ import {
   hackerTeamSearchSchema,
 } from "./hacker-teams";
 import { pointStoreCatalogDtoSchema } from "./point-store";
-import { printJobDescriptionSchema, printJobStatusSchema } from "./printing";
+import {
+  printJobCategorySchema,
+  printJobDescriptionSchema,
+  printJobStatusSchema,
+} from "./printing";
 import {
   hackerJudgingDtoSchema,
   hackerJudgingReadSchema,
@@ -417,6 +421,7 @@ export const checkInPassDtoSchema = z
 
 export const hackerSubmitPrintJobSchema = z
   .object({
+    category: printJobCategorySchema,
     description: printJobDescriptionSchema,
     fileIds: z
       .array(z.string().uuid())
@@ -425,6 +430,14 @@ export const hackerSubmitPrintJobSchema = z
       .refine((ids) => new Set(ids).size === ids.length, {
         message: "Each file can be attached once.",
       }),
+    idempotencyKey: participantIdempotencyKeySchema,
+  })
+  .strict();
+
+export const hackerUpdatePrintJobCategorySchema = z
+  .object({
+    category: printJobCategorySchema,
+    jobId: z.string().uuid(),
     idempotencyKey: participantIdempotencyKeySchema,
   })
   .strict();
@@ -454,10 +467,12 @@ export const removedStagedPrintFileDtoSchema = z
 
 export const printJobDtoSchema = z
   .object({
+    category: printJobCategorySchema.nullable().default(null),
     createdAt: isoDateTimeSchema,
     description: z.string(),
     /** Null unless the job is received or printing. */
     estimatedReadyAt: nullableIsoDateTimeSchema,
+    organizerReadyAt: nullableIsoDateTimeSchema.default(null),
     files: z.array(
       z
         .object({
@@ -616,6 +631,7 @@ export const hackerPortalV1InputSchemas = {
   claimProject: projectClaimSelectSchema,
   getProjectClaim: projectClaimTokenSchema,
   getJudging: hackerJudgingReadSchema,
+  updatePrintJobCategory: hackerUpdatePrintJobCategorySchema,
   cancelPrintJob: hackerCancelPrintJobSchema,
   confirmAttendance: hackerConfirmAttendanceSchema,
   getApplicationContext: noInputSchema,
@@ -652,6 +668,7 @@ export interface HackerPortalV1OutputSchemaMap {
   claimProject: typeof projectClaimResultDtoSchema;
   getProjectClaim: typeof projectClaimPreviewDtoSchema;
   getJudging: typeof hackerJudgingDtoSchema;
+  updatePrintJobCategory: typeof printJobDtoSchema;
   cancelPrintJob: typeof printJobDtoSchema;
   confirmAttendance: typeof participantMutationResultDtoSchema;
   getApplicationContext: typeof applicationContextDtoSchema;
@@ -684,6 +701,7 @@ export const hackerPortalV1OutputSchemas: HackerPortalV1OutputSchemaMap = {
   claimProject: projectClaimResultDtoSchema,
   getProjectClaim: projectClaimPreviewDtoSchema,
   getJudging: hackerJudgingDtoSchema,
+  updatePrintJobCategory: printJobDtoSchema,
   cancelPrintJob: printJobDtoSchema,
   confirmAttendance: participantMutationResultDtoSchema,
   getApplicationContext: applicationContextDtoSchema,

@@ -42,6 +42,7 @@ describe("printing inputs", () => {
   it("[TC-NEG-005] accepts 1 to 5 distinct files and a real description", () => {
     const submit = (fileIds: string[], description = "Bracket") =>
       hackerSubmitPrintJobSchema.safeParse({
+        category: "project",
         description,
         fileIds,
         idempotencyKey: "key",
@@ -80,4 +81,21 @@ describe("printing inputs", () => {
     expect(override(hours(-1))).toBe(false);
     expect(override(hours(24 * 8))).toBe(false);
   });
+});
+
+it("requires a category on all new requests", () => {
+  const input = {
+    description: "Bracket",
+    fileIds: [fileId(1)],
+    idempotencyKey: "key",
+  };
+  expect(hackerSubmitPrintJobSchema.safeParse(input).success).toBe(false);
+  expect(
+    hackerSubmitPrintJobSchema.safeParse({ ...input, category: "other" })
+      .success,
+  ).toBe(false);
+  expect(
+    hackerSubmitPrintJobSchema.safeParse({ ...input, category: "personal" })
+      .success,
+  ).toBe(true);
 });

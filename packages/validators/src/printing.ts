@@ -8,6 +8,14 @@ const DAY_MS = 24 * 60 * 60 * 1_000;
 /** How far ahead an organizer may promise a print. */
 export const MAX_PRINT_ESTIMATE_OVERRIDE_DAYS = 7;
 
+export const printJobCategorySchema = z.enum(PRINTING.PRINT_JOB_CATEGORIES);
+export const printingUpdateCategoryInputSchema = z
+  .object({
+    jobId: uuidSchema,
+    category: printJobCategorySchema,
+  })
+  .strict();
+
 export const printJobStatusSchema = z.enum(PRINTING.PRINT_JOB_STATUSES);
 
 export const printJobDescriptionSchema = z

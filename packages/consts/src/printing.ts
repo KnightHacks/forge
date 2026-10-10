@@ -12,6 +12,13 @@ export const PRINT_JOB_STATUSES = [
   "cancelled",
 ] as const;
 
+export const PRINT_JOB_CATEGORIES = ["project", "personal"] as const;
+export type PrintJobCategory = (typeof PRINT_JOB_CATEGORIES)[number];
+export const PRINT_JOB_CATEGORY_LABELS = {
+  project: "Hackathon project",
+  personal: "Personal print",
+} as const satisfies Record<PrintJobCategory, string>;
+
 export type PrintJobStatus = (typeof PRINT_JOB_STATUSES)[number];
 
 export const PRINT_JOB_STATUS_LABELS = {

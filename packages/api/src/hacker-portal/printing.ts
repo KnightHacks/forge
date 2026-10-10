@@ -38,7 +38,10 @@ import {
   putPrintFileObject,
   removePrintFileObjects,
 } from "../utils/printing/files";
-import { notifyNewPrintJob } from "../utils/printing/notifications";
+import {
+  notifyNewPrintJob,
+  notifyPrintJobStatus,
+} from "../utils/printing/notifications";
 import { loadQueueEstimates } from "../utils/printing/queue";
 import { runParticipantCommand } from "./commands";
 import { requireApplicationWithStatuses } from "./reads";
@@ -79,6 +82,7 @@ export async function requirePrintUploadAccess(
 
 type PrintJobRow = Pick<
   typeof PrintJob.$inferSelect,
+  | "category"
   | "createdAt"
   | "description"
   | "id"
@@ -100,9 +104,13 @@ function printJobDto(
   estimate: PrintJobEstimate | undefined,
 ): HackerPrintJobDto {
   return {
+    category: job.category,
     createdAt: job.createdAt.toISOString(),
     description: job.description,
     estimatedReadyAt: estimate?.estimatedReadyAt.toISOString() ?? null,
+    organizerReadyAt: estimate?.overridden
+      ? estimate.estimatedReadyAt.toISOString()
+      : null,
     files: files
       .filter((file) => file.printJobId === job.id)
       .map((file) => ({
@@ -288,6 +296,7 @@ export async function listPrintJobs(
   const application = await requirePrintAccess(ctx);
   const jobs = await db
     .select({
+      category: PrintJob.category,
       createdAt: PrintJob.createdAt,
       description: PrintJob.description,
       id: PrintJob.id,
@@ -325,7 +334,12 @@ export async function listPrintJobs(
 
 export async function submitPrintJob(
   ctx: AuthenticatedPortalContext,
-  input: { description: string; fileIds: string[]; idempotencyKey: string },
+  input: {
+    category: PRINTING.PrintJobCategory;
+    description: string;
+    fileIds: string[];
+    idempotencyKey: string;
+  },
 ): Promise<HackerPrintJobDto> {
   const application = await requirePrintAccess(ctx);
   // Set only when this request created the job, so a replayed submit does not
@@ -347,6 +361,7 @@ export async function submitPrintJob(
         const [job] = await tx
           .insert(PrintJob)
           .values({
+            category: input.category,
             description: input.description,
             hackathonId: ctx.session.hackathonId,
             hackerAttendeeId: application.attendeeId,
@@ -405,7 +420,11 @@ export async function submitPrintJob(
     }),
   );
   // After the commit; never throws. The hacker does not see channel delivery.
-  if (created.jobId) await notifyNewPrintJob(created.jobId);
+  if (created.jobId)
+    await Promise.all([
+      notifyNewPrintJob(created.jobId),
+      notifyPrintJobStatus(created.jobId),
+    ]);
   return result;
 }
 
@@ -414,7 +433,8 @@ export async function cancelPrintJob(
   input: { idempotencyKey: string; jobId: string },
 ): Promise<HackerPrintJobDto> {
   const application = await requirePrintAccess(ctx);
-  return db.transaction((tx) =>
+  const changed = { value: false };
+  const result = await db.transaction((tx) =>
     runParticipantCommand({
       hackathonId: ctx.session.hackathonId,
       idempotencyKey: input.idempotencyKey,
@@ -483,9 +503,105 @@ export async function cancelPrintJob(
           },
           tx,
         );
+        changed.value = true;
         const files = await loadJobFiles([cancelled.id], tx);
         return printJobDto(cancelled, files, undefined);
       },
     }),
   );
+  if (changed.value) await notifyPrintJobStatus(input.jobId);
+  return result;
+}
+
+/** Owners may classify waiting requests even while new submissions are closed. */
+export async function updatePrintJobCategory(
+  ctx: AuthenticatedPortalContext,
+  input: {
+    category: PRINTING.PrintJobCategory;
+    idempotencyKey: string;
+    jobId: string;
+  },
+): Promise<HackerPrintJobDto> {
+  const application = await requirePrintAccess(ctx);
+  const changed = { value: false };
+  const result = await db.transaction((tx) =>
+    runParticipantCommand({
+      hackathonId: ctx.session.hackathonId,
+      idempotencyKey: input.idempotencyKey,
+      input,
+      operation: "update_print_job_category",
+      tx,
+      userId: ctx.session.userId,
+      work: async () => {
+        const [job] = await tx
+          .select()
+          .from(PrintJob)
+          .where(
+            and(
+              eq(PrintJob.id, input.jobId),
+              eq(PrintJob.hackathonId, ctx.session.hackathonId),
+              eq(PrintJob.hackerAttendeeId, application.attendeeId),
+            ),
+          )
+          .for("update")
+          .limit(1);
+        if (!job)
+          portalFailure("FORBIDDEN", "This print job was not found.", {
+            trpcCode: "NOT_FOUND",
+          });
+        if (
+          !(
+            PRINTING.HACKER_CANCELLABLE_PRINT_JOB_STATUSES as readonly string[]
+          ).includes(job.status)
+        ) {
+          portalFailure(
+            "VALIDATION_ERROR",
+            "The category can only change before printing starts. Ask an organizer.",
+            { trpcCode: "PRECONDITION_FAILED" },
+          );
+        }
+        if (job.category !== input.category) {
+          await tx
+            .update(PrintJob)
+            .set({ category: input.category })
+            .where(eq(PrintJob.id, job.id));
+          await createAdminAuditEvent(
+            {
+              actionKey: "printing.job.category_updated",
+              actor: { id: ctx.session.userId },
+              changes: [
+                {
+                  before: job.category,
+                  after: input.category,
+                  field: "category",
+                },
+              ],
+              subjects: [
+                {
+                  relation: "primary",
+                  targetId: job.id,
+                  targetLabel: "3D print job",
+                  targetType: "print_job",
+                },
+              ],
+            },
+            tx,
+          );
+          changed.value = true;
+        }
+        const [files, queue] = await Promise.all([
+          loadJobFiles([job.id], tx),
+          loadQueueEstimates(ctx.session.hackathonId, tx),
+        ]);
+        return printJobDto(
+          { ...job, category: input.category },
+          files,
+          queue.estimates.get(job.id),
+        );
+      },
+    }),
+  );
+  if (changed.value)
+    await notifyPrintJobStatus(input.jobId, "Your print category was updated.");
+  return result;
 }

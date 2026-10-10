@@ -22,6 +22,7 @@ import type { useHackerPrintingFlow } from "~/lib/hacker-portal";
 import { formatFileSize } from "~/lib/print-jobs";
 import styles from "./hacker-printing.module.css";
 import dashboardStyles from "./khix-dashboard.module.css";
+import { PrintCategoryChoices } from "./print-category-choices";
 
 interface PickedFile {
   error?: string;
@@ -44,6 +45,9 @@ export function NewPrintJobForm({
   onSubmitted: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<PRINTING.PrintJobCategory | null>(
+    null,
+  );
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<PickedFile[]>([]);
   const uploadQueue = useRef<Promise<void>>(Promise.resolve());
@@ -59,6 +63,7 @@ export function NewPrintJobForm({
     flow.jobsQuery.data?.queue.isOpen === true && !flow.jobsQuery.isError;
   const canSubmit =
     isOpen &&
+    category !== null &&
     description.trim() !== "" &&
     uploadedIds.length > 0 &&
     !uploading &&
@@ -112,10 +117,12 @@ export function NewPrintJobForm({
     if (!canSubmit) return;
     try {
       const job = await flow.submit({
+        category,
         description: description.trim(),
         fileIds: uploadedIds,
       });
       setDescription("");
+      setCategory(null);
       setFiles([]);
       setOpen(false);
       onSubmitted();
@@ -170,6 +177,12 @@ export function NewPrintJobForm({
           <p className={styles.formStep}>
             01 <span>Tell us about your print</span>
           </p>
+          <PrintCategoryChoices
+            value={category}
+            onChange={setCategory}
+            disabled={submitting}
+            name="new-print-category"
+          />
           <div className={styles.field}>
             <Label htmlFor="khix-print-description">
               What should we print?

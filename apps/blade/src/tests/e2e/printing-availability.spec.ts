@@ -8,8 +8,12 @@ import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import {
   Hackathon,
   PrintingConfiguration,
+  PrintJob,
 } from "@forge/db/schemas/knight-hacks";
 
+import { seedPrintingCategories } from "./printing-category-fixture";
+
+let uncategorizedId: string;
 const adminId = randomUUID();
 const roleId = randomUUID();
 const hackathonId = randomUUID();
@@ -48,6 +52,7 @@ test.beforeAll(async () => {
     applicationDeadline: new Date("2026-09-01"),
     confirmationDeadline: new Date("2026-10-01"),
   });
+  uncategorizedId = await seedPrintingCategories(hackathonId, adminId);
 });
 
 test.afterAll(async () => {
@@ -62,12 +67,42 @@ for (const width of [1440, 320]) {
     page,
   }, testInfo) => {
     await db
+      .update(PrintJob)
+      .set({ category: null })
+      .where(eq(PrintJob.id, uncategorizedId));
+    await db
       .delete(PrintingConfiguration)
       .where(eq(PrintingConfiguration.hackathonId, hackathonId));
     await page.setViewportSize({ width, height: 900 });
     await page.goto(
       `/api/e2e/signin?userId=${adminId}&callbackURL=${encodeURIComponent(`/admin/printing?hackathon=${hackathonId}`)}`,
     );
+    const first = page
+      .getByRole("list", { name: "Queue results" })
+      .getByRole("button")
+      .first();
+    await expect(first).toContainText("Hackathon project");
+    await page
+      .getByRole("button")
+      .filter({ hasText: "Legacy model needing a category" })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText(
+      "Hackathon projects take priority",
+    );
+    await page.getByLabel("Print category", { exact: true }).click();
+    await page
+      .getByRole("option", { name: "Hackathon project", exact: true })
+      .click();
+    await page.screenshot({
+      path: testInfo.outputPath("printing-category-dialog.png"),
+      animations: "disabled",
+      fullPage: true,
+    });
+    await page
+      .getByRole("button", { name: "Save category and notify" })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(first).toContainText("Legacy model needing a category");
     const control = page.getByRole("switch", { name: "Accept new print jobs" });
     await expect(control).not.toBeChecked();
     await control.click();

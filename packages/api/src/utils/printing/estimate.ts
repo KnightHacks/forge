@@ -23,7 +23,7 @@ const MINUTE_MS = 60 * 1_000;
 
 /**
  * Ready-time estimates for one hackathon's active queue. `activeJobs` must be
- * the `received` and `printing` jobs, oldest first.
+ * the `received` and `printing` jobs in priority order from `printQueueOrder`.
  *
  * - `printing`: started (`statusChangedAt`) plus one print time.
  * - `received`: now plus one print time per round of printers ahead of it.

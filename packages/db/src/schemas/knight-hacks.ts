@@ -4292,6 +4292,11 @@ export const PrintJob = createTable(
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     hackerAttendeeId: t.uuid().notNull(),
     description: t.varchar({ length: 2000 }).notNull(),
+    /** Null until a legacy request is classified by its owner or an organizer. */
+    category: t.text({ enum: PRINTING.PRINT_JOB_CATEGORIES }),
+    /** Claimed before sending so a repeated reminder command cannot resend. */
+    categoryReminderAttemptedAt: t.timestamp({ withTimezone: true }),
+    categoryReminderSentAt: t.timestamp({ withTimezone: true }),
     status: t
       .text({ enum: PRINTING.PRINT_JOB_STATUSES })
       .notNull()
@@ -4336,6 +4341,10 @@ export const PrintJob = createTable(
     statusChangedByLookup: index(
       "knight_hacks_print_job_status_changed_by_idx",
     ).on(table.statusChangedByUserId),
+    categoryCheck: check(
+      "knight_hacks_print_job_category_check",
+      sql`${table.category} IS NULL OR ${table.category} IN ('project', 'personal')`,
+    ),
     statusCheck: check(
       "knight_hacks_print_job_status_check",
       sql`${table.status} IN (${PRINT_JOB_STATUS_SQL_LIST})`,

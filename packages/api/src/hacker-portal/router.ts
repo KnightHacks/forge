@@ -29,6 +29,7 @@ import {
   listPrintJobs,
   removeStagedPrintFile,
   submitPrintJob,
+  updatePrintJobCategory,
 } from "./printing";
 import {
   getApplicationContext,
@@ -151,6 +152,10 @@ export const hackerParticipantV1Router: ReturnType<
         ),
       ),
     ),
+  updatePrintJobCategory: participantProcedure
+    .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.updatePrintJobCategory)
+    .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.updatePrintJobCategory)
+    .mutation(({ ctx, input }) => updatePrintJobCategory(ctx, input)),
   cancelPrintJob: participantProcedure
     .input(HACKER_PARTICIPANT_V1_SCHEMAS.input.cancelPrintJob)
     .output(HACKER_PARTICIPANT_V1_SCHEMAS.output.cancelPrintJob)

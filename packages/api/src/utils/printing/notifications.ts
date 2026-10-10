@@ -20,7 +20,7 @@ import * as discord from "@forge/utils/discord";
 import { env } from "../../env";
 import { escapeMarkdown } from "../judging/discord-comms";
 import { roleHasPermission } from "../roles/management";
-import { isActivePrintJobStatus, loadQueueEstimates } from "./queue";
+import { isActivePrintJobStatus } from "./queue";
 
 export type PrintDeliveryStatus =
   | "delivered"
@@ -179,9 +179,10 @@ export async function notifyNewPrintJob(
  */
 export async function notifyPrintJobStatus(
   jobId: string,
+  headline?: string,
 ): Promise<PrintNotificationDelivery> {
   try {
-    return await deliverPrintJobStatus(jobId);
+    return await deliverPrintJobStatus(jobId, headline);
   } catch (error) {
     logger.warn(
       "Unable to prepare print job status notices; continuing:",
@@ -193,9 +194,12 @@ export async function notifyPrintJobStatus(
 
 async function deliverPrintJobStatus(
   jobId: string,
+  headline?: string,
 ): Promise<PrintNotificationDelivery> {
   const [job] = await db
     .select({
+      category: PrintJob.category,
+      description: PrintJob.description,
       discordUserId: User.discordUserId,
       email: HackerProfile.email,
       estimatedReadyAt: PrintJob.estimatedReadyAt,
@@ -221,8 +225,7 @@ async function deliverPrintJobStatus(
   if (!job) return { discord: "skipped", email: "skipped" };
 
   const estimatedReadyAt = isActivePrintJobStatus(job.status)
-    ? ((await loadQueueEstimates(job.hackathonId)).estimates.get(jobId)
-        ?.estimatedReadyAt ?? null)
+    ? job.estimatedReadyAt
     : null;
   const portalUrl = job.portalOrigin
     ? `${job.portalOrigin}/dashboard/printing`
@@ -255,7 +258,11 @@ async function deliverPrintJobStatus(
         to: job.email,
         ...printJobStatusEmail({
           hackathonName: job.hackathonName || "Knight Hacks",
-          headline: STATUS_HEADLINES[job.status],
+          headline: headline ?? STATUS_HEADLINES[job.status],
+          categoryLabel: job.category
+            ? PRINTING.PRINT_JOB_CATEGORY_LABELS[job.category]
+            : "Not categorized yet",
+          description: job.description,
           name: job.firstName ?? "there",
           note: job.statusNote,
           portalUrl,

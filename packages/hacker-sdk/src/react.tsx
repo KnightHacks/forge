@@ -25,6 +25,7 @@ import type {
   UpdateHackerApplicationInput,
   UpdateHackerParticipantInput,
   UpdateHackerProfileInput,
+  UpdatePrintJobCategoryInput,
   WithdrawApplicationInput,
 } from "./contracts";
 import { createHackerParticipantClient } from "./client";
@@ -456,6 +457,13 @@ export function useSubmitPrintJob() {
   const { client } = useHackerSdkClient();
   return useParticipantMutation((input: SubmitPrintJobInput) =>
     client.submitPrintJob(input),
+  );
+}
+
+export function useUpdatePrintJobCategory() {
+  const { client } = useHackerSdkClient();
+  return useParticipantMutation((input: UpdatePrintJobCategoryInput) =>
+    client.updatePrintJobCategory(input),
   );
 }
 
