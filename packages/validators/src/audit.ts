@@ -871,7 +871,7 @@ export const AUDIT_ACTION_CATALOG = {
     "hackathons",
     "Updated 3D print job status",
     [],
-    ["status", "statusNote"],
+    ["status", "statusNote", "estimatedReadyAt"],
   ),
   "printing.job.estimate_updated": policy(
     "hackathons",

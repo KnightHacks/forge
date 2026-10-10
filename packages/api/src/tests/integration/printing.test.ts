@@ -345,6 +345,8 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     const list = await printing.listPrintJobs(hacker.ctx);
     expect(list.jobs.map((job) => job.id)).toEqual([second.id, first.id]);
     expect(list.queue).toEqual({
+      categoryCounts: { project: 0, personal: 2, uncategorized: 0 },
+      onHoldCount: 0,
       isOpen: true,
       estimatedWaitMinutes: 180,
       printMinutes: 60,
@@ -597,6 +599,8 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       printerCount: 2,
     });
     expect((await printing.listPrintJobs(hacker.ctx)).queue).toEqual({
+      categoryCounts: { project: 0, personal: 0, uncategorized: 0 },
+      onHoldCount: 0,
       isOpen: true,
       estimatedWaitMinutes: 45,
       printMinutes: 45,
@@ -747,6 +751,71 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       .from(knightHacks.PrintJob)
       .where(eq(knightHacks.PrintJob.id, job.id));
     expect(stored?.status).toBe("received");
+  });
+
+  it("starts a duration timer, preserves its start, and notifies once per change", async () => {
+    const hacker = await seedHacker("duration", "checkedin");
+    const job = await submit(hacker.ctx, [await stageFile(hacker.attendeeId)]);
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    emailSend.mockClear();
+    const started = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "printing",
+      durationMinutes: 90,
+    });
+    const start = started.job.statusChangedAt;
+    expect(started.job.estimatedReadyAt?.getTime()).toBe(
+      start.getTime() + 90 * 60_000,
+    );
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    expect(emailSend.mock.lastCall?.[0].text).toContain("Organizer estimate:");
+    const own = await printing.listPrintJobs(hacker.ctx);
+    expect(own.jobs[0]?.organizerReadyAt).toBe(
+      started.job.estimatedReadyAt?.toISOString(),
+    );
+
+    emailSend.mockClear();
+    const replay = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "printing",
+      durationMinutes: 90,
+    });
+    expect(replay.changed).toBe(false);
+    expect(emailSend).not.toHaveBeenCalled();
+    const note = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "printing",
+      note: "Using black PLA",
+    });
+    expect(note.job.statusChangedAt).toEqual(start);
+    expect(note.job.estimatedReadyAt).toEqual(started.job.estimatedReadyAt);
+
+    emailSend.mockClear();
+    const adjusted = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "printing",
+      note: "Using black PLA",
+      durationMinutes: 45,
+    });
+    expect(adjusted.job.statusChangedAt).toEqual(start);
+    expect(adjusted.job.estimatedReadyAt?.getTime()).toBe(
+      start.getTime() + 45 * 60_000,
+    );
+    expect(emailSend).toHaveBeenCalledTimes(1);
+    const held = await caller.printing.updateStatus({
+      jobId: job.id,
+      status: "needs_clarification",
+      note: "Confirm the size",
+    });
+    expect(held.job.estimatedReadyAt).toBeNull();
+    const queue = await printing.listPrintJobs(hacker.ctx);
+    expect(queue.jobs[0]?.position).toBeNull();
+    expect(queue.queue.onHoldCount).toBe(1);
+    expect(queue.queue.categoryCounts).toEqual({
+      project: 0,
+      personal: 0,
+      uncategorized: 0,
+    });
   });
 
   it("keeps the print start time when only the note changes", async () => {
@@ -909,6 +978,12 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     ]);
     const own = await printing.listPrintJobs(hacker.ctx);
     expect(own.jobs.find((job) => job.id === project.id)?.position).toBe(2);
+    expect(own.queue.categoryCounts).toEqual({
+      project: 1,
+      personal: 2,
+      uncategorized: 1,
+    });
+    expect(queue.categoryCounts).toEqual(own.queue.categoryCounts);
   });
 
   it("lets owners classify while closed, preserves timestamps, and sends once per change", async () => {

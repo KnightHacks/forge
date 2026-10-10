@@ -23,6 +23,7 @@ import { formatFileSize } from "~/lib/print-jobs";
 import styles from "./hacker-printing.module.css";
 import dashboardStyles from "./khix-dashboard.module.css";
 import { PrintCategoryChoices } from "./print-category-choices";
+import { PrintingGuidelines } from "./printing-guidelines";
 
 interface PickedFile {
   error?: string;
@@ -128,7 +129,7 @@ export function NewPrintJobForm({
       onSubmitted();
       toast.success(
         job.position
-          ? `Print job sent. You are #${job.position} in line.`
+          ? `Print job sent. Your overall queue position is #${job.position}. Projects have priority.`
           : "Print job sent.",
       );
     } catch (error) {
@@ -174,6 +175,7 @@ export function NewPrintJobForm({
               printing reopens.
             </p>
           ) : null}
+          <PrintingGuidelines />
           <p className={styles.formStep}>
             01 <span>Tell us about your print</span>
           </p>
@@ -192,7 +194,7 @@ export function NewPrintJobForm({
               id="khix-print-description"
               maxLength={PRINTING.MAX_PRINT_JOB_DESCRIPTION_LENGTH}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Material, color, size, and anything the organizers should know."
+              placeholder="Your preferred available filament, model size, and anything the organizers should know."
               required
               rows={4}
               value={description}

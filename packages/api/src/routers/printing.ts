@@ -225,6 +225,8 @@ export const printingRouter = createTRPCRouter({
       ) as Record<PRINTING.PrintJobStatus, number>;
 
       return {
+        categoryCounts: queue.categoryCounts,
+        onHoldCount: queue.onHoldCount,
         counts,
         jobs: jobs.map((job) => {
           const estimate = queue.estimates.get(job.id);
@@ -301,8 +303,8 @@ export const printingRouter = createTRPCRouter({
     }),
 
   /**
-   * Organizers may set any status. Leaving the active statuses clears the
-   * ready-time override. Saving the same status and note is a no-op.
+   * A duration starts with Printing and later edits use the original start.
+   * Leaving Printing clears its timer; unchanged saves never restart it.
    */
   updateStatus: permProcedure
     .input(printingUpdateStatusInputSchema)
@@ -312,22 +314,38 @@ export const printingRouter = createTRPCRouter({
       const note = input.note ?? null;
       const result = await db.transaction(async (tx) => {
         const job = await lockPrintJob(tx, input.jobId);
-        if (job.status === input.status && job.statusNote === note) {
+        const statusChangedAt =
+          job.status === input.status ? job.statusChangedAt : new Date();
+        let estimatedReadyAt =
+          job.status === input.status && isActivePrintJobStatus(input.status)
+            ? job.estimatedReadyAt
+            : null;
+        if (
+          input.status === "printing" &&
+          input.durationMinutes !== undefined
+        ) {
+          estimatedReadyAt = new Date(
+            statusChangedAt.getTime() + input.durationMinutes * 60_000,
+          );
+        }
+        if (
+          job.status === input.status &&
+          job.statusNote === note &&
+          job.estimatedReadyAt?.getTime() === estimatedReadyAt?.getTime()
+        ) {
           return { changed: false as const, job: jobView(job) };
         }
         const [updated] = await tx
           .update(PrintJob)
           .set({
-            estimatedReadyAt: isActivePrintJobStatus(input.status)
-              ? job.estimatedReadyAt
-              : null,
+            estimatedReadyAt,
             status: input.status,
             // A note-only edit keeps the original change time: for a printing
             // job that time is when printing started, which drives its ETA.
             ...(job.status === input.status
               ? {}
               : {
-                  statusChangedAt: new Date(),
+                  statusChangedAt,
                   statusChangedByUserId: ctx.session.user.id,
                 }),
             statusNote: note,
@@ -345,6 +363,11 @@ export const printingRouter = createTRPCRouter({
                 after: updated.statusNote,
                 before: job.statusNote,
                 field: "statusNote",
+              },
+              {
+                after: updated.estimatedReadyAt?.toISOString() ?? null,
+                before: job.estimatedReadyAt?.toISOString() ?? null,
+                field: "estimatedReadyAt",
               },
             ].filter((change) => change.before !== change.after),
             subjects: [printJobSubject(job.id)],

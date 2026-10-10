@@ -47,12 +47,6 @@ export function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** `<input type="datetime-local">` value in the browser's own time zone. */
-export function toDateTimeLocalValue(date: Date) {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
 /** Toast copy for a status change, naming any notice that did not go out. */
 export function deliverySummary(delivery: {
   discord: DeliveryStatus;

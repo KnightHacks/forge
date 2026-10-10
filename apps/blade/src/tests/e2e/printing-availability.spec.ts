@@ -44,7 +44,7 @@ test.beforeAll(async () => {
   await db.insert(Hackathon).values({
     id: hackathonId,
     name: "printing-availability-e2e",
-    displayName: "Printing availability test",
+    displayName: "Knight Hacks IX",
     theme: "Printing",
     startDate: new Date("2026-10-09"),
     endDate: new Date("2026-10-12"),
@@ -68,7 +68,12 @@ for (const width of [1440, 320]) {
   }, testInfo) => {
     await db
       .update(PrintJob)
-      .set({ category: null })
+      .set({
+        category: null,
+        status: "received",
+        statusNote: null,
+        estimatedReadyAt: null,
+      })
       .where(eq(PrintJob.id, uncategorizedId));
     await db
       .delete(PrintingConfiguration)
@@ -103,6 +108,46 @@ for (const width of [1440, 320]) {
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(first).toContainText("Legacy model needing a category");
+    await expect(page.getByLabel("Queue order")).toContainText(
+      "20 hackathon projects",
+    );
+    await first.click();
+    await page
+      .getByRole("combobox", { name: "New status", exact: true })
+      .click();
+    await page.getByRole("option", { name: "Printing", exact: true }).click();
+    const startPrinting = page.getByRole("button", {
+      name: "Start printing and notify",
+    });
+    await expect(startPrinting).toBeDisabled();
+    await page.getByLabel("Hours", { exact: true }).fill("1");
+    await page.getByLabel("Minutes", { exact: true }).fill("30");
+    await expect(page.getByRole("dialog")).toContainText(
+      "exceeds the 60-minute session limit",
+    );
+    await expect(page.locator('input[type="datetime-local"]')).toHaveCount(0);
+    await page.screenshot({
+      path: testInfo.outputPath("printing-duration-form.png"),
+      fullPage: false,
+      animations: "disabled",
+    });
+    await startPrinting.click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(first.getByRole("timer")).toContainText("remaining");
+    await page.reload();
+    await expect(first.getByRole("timer")).toContainText("remaining");
+    await first.click();
+    await expect(page.getByLabel("Hours", { exact: true })).toHaveValue("1");
+    await expect(page.getByLabel("Minutes", { exact: true })).toHaveValue("30");
+    await expect(page.getByLabel("Print timer")).toContainText(
+      "Estimated finish",
+    );
+    await page.screenshot({
+      path: testInfo.outputPath("printing-running-timer.png"),
+      fullPage: false,
+      animations: "disabled",
+    });
+    await page.getByRole("button", { name: "Close", exact: true }).click();
     const control = page.getByRole("switch", { name: "Accept new print jobs" });
     await expect(control).not.toBeChecked();
     await control.click();

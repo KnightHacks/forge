@@ -52,8 +52,22 @@ export const printingUpdateStatusInputSchema = z
     jobId: uuidSchema,
     note: printJobNoteSchema.nullish(),
     status: printJobStatusSchema,
+    durationMinutes: z
+      .number()
+      .int()
+      .min(1)
+      .max(PRINTING.MAX_PRINT_MINUTES)
+      .optional(),
   })
   .strict()
+  .refine(
+    (input) =>
+      input.durationMinutes === undefined || input.status === "printing",
+    {
+      message: "A print timer can only be set while printing.",
+      path: ["durationMinutes"],
+    },
+  )
   .refine(
     (input) =>
       !(

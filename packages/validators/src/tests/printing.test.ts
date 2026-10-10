@@ -13,6 +13,29 @@ const fileId = (index: number) =>
   `00000000-0000-4000-8000-${index.toString().padStart(12, "0")}`;
 
 describe("printing inputs", () => {
+  it("accepts realistic durations and limits them to printing updates", () => {
+    const input = { jobId: JOB_ID, status: "printing" };
+    for (const durationMinutes of [1, 60, 90, 600]) {
+      expect(
+        printingUpdateStatusInputSchema.safeParse({ ...input, durationMinutes })
+          .success,
+      ).toBe(true);
+    }
+    for (const durationMinutes of [0, -1, 1.5, 601, Number.NaN]) {
+      expect(
+        printingUpdateStatusInputSchema.safeParse({ ...input, durationMinutes })
+          .success,
+      ).toBe(false);
+    }
+    expect(
+      printingUpdateStatusInputSchema.safeParse({
+        ...input,
+        status: "received",
+        durationMinutes: 30,
+      }).success,
+    ).toBe(false);
+  });
+
   it("[TC-NEG-014] requires a note only for needs_clarification", () => {
     for (const note of [undefined, null, "", "   "]) {
       expect(

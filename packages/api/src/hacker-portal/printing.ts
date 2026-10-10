@@ -324,6 +324,8 @@ export async function listPrintJobs(
       printJobDto(job, files, queue.estimates.get(job.id)),
     ),
     queue: {
+      categoryCounts: queue.categoryCounts,
+      onHoldCount: queue.onHoldCount,
       isOpen: queue.settings.isOpen,
       estimatedWaitMinutes: queue.waitMinutes,
       printMinutes: queue.settings.printMinutes,

@@ -62,6 +62,19 @@ export const MAX_PRINT_JOB_FILES = 5;
 export const MAX_PRINT_JOB_DESCRIPTION_LENGTH = 2000;
 export const MAX_PRINT_JOB_NOTE_LENGTH = 500;
 
+/** Shinies' inventory and fair-use policy for the current Knight Hacks IX event. */
+export const KHIX_SESSION_LIMIT_MINUTES = 60;
+export const KHIX_FILAMENTS = [
+  "Black PLA",
+  "Black PETG",
+  "White PLA",
+  "Transparent PETG",
+  "Pink PLA",
+  "Brown PLA",
+  "Silver silk PLA",
+  "Gold silk PLA",
+] as const;
+
 /** Estimate settings used when a hackathon has no printing configuration row. */
 export const DEFAULT_PRINT_MINUTES = 60;
 export const MIN_PRINT_MINUTES = 5;

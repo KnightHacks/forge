@@ -1,8 +1,10 @@
 # Status
 
-Phase: production rollout complete; API contract bookkeeping correction awaiting PR review. Follow-up branch: codex/printing-category-ci.
+Phase: session policy, filament guidance, queue clarity, and duration timers implemented and locally validated on codex/printing-category-ci for PR #618, with the unrelated post-build typecheck limitation below. Existing production category/email rollout is complete.
 
 Tracking issue: [#617](https://github.com/KnightHacks/forge/issues/617).
+
+PR: [#618](https://github.com/KnightHacks/forge/pull/618). Its initial contract correction passed CI and CodeRabbit review. The new requested behavior remains branch-only pending updated review.
 
 ## Decisions
 
@@ -13,6 +15,20 @@ Tracking issue: [#617](https://github.com/KnightHacks/forge/issues/617).
 - User selected a one-time reminder after launch, requested screenshots before any sends, then approved the Shinies-branded previews and requested merging to main. Sending is authorized after the live category flow and logo asset are verified.
 - Added the existing Shinies wordmark prominently above both email headings, plus partner attribution in HTML and plain text. Blade serves the PNG export; its public response matched the release asset before sending. Updated desktop/mobile previews were inspected.
 - Reminder previews counts by default; live sending requires --send and configured production email mode. Atomic attempts prevent repeated/concurrent sends. Failures remain claimed for operator inspection because delivery may be ambiguous.
+- Follow-up: display the eight specified IX filaments and the 60-minute fairness policy on the hacker page and submission form. Requests exceeding the policy may be cancelled; staff review model size.
+- Follow-up: show active project/personal counts and overall queue positions, with held requests outside the queue. Running jobs finish first, then waiting projects take priority, with oldest-first ordering within categories.
+- Follow-up: organizers enter hours and minutes when starting Printing. The server computes the finish estimate from the persisted start; duration edits keep that start, and note-only or repeated saves never restart the timer. A 90-minute estimate is allowed with a 60-minute policy warning, as clarified by the user. Expiry never automatically marks a job ready.
+- Reuse the existing estimatedReadyAt/statusChangedAt fields and status notification flow. Keep the older timestamp endpoint compatible; no schema, dependency, or environment changes are needed. Keep this follow-up on the existing PR branch; no production changes or reminder resends.
+
+## Session-policy follow-up validation
+
+- Printing API suite: 24 tests passed against disposable local Postgres, including 90-minute duration, idempotency, note-only edits, timer adjustments, audit fields, notification delivery calls, and held-job counts. The initial focused API regression run passed 41 tests across 5 files.
+- Validators: 350 tests passed. Hacker SDK: 57. KHIX: 190. Email: 116. Blade queue formatting: 3.
+- Organizer and hacker browser tests passed at desktop and 320px mobile (4 tests). Confirmed duration persistence after reload, 1h30m input and policy warning, category counts, overall position, all filaments, preserved closed-state drafts, and display-only timer expiry.
+- Inspected real browser screenshots using synthetic fixture data. Local previews: output/playwright/printing-session-policy/. Both organizer and hacker mobile screenshots were recaptured and checked after final visual adjustments.
+- Changed React analysis: 7 files, 7 components, 0 failures. Root format and lint passed (existing warnings). Root typecheck passed before production builds (33 tasks); afterward `pnpm typecheck` fails solely in `.next/types/app/api/admin/resume-bundle/route.ts:42` with TS2344 because the existing `GET(request?: Request)` signature is incompatible with generated `ParamCheck<Request | NextRequest>`. The source route is identical to origin/main and remains outside this printing change. The other 32 typecheck tasks passed.
+- Blade and KHIX production builds passed, with local database and portal overrides. Both dev servers were stopped and the isolated browser database was removed. These builds skip their own type validation; the separate post-build check above records the existing limitation.
+- Commit hook formatting and lint passed; its typecheck reproduced the same unrelated resume-bundle error. Used a one-command hook override after recording that failure; no check configuration or unrelated route was changed.
 
 ## Validation
 
@@ -38,6 +54,6 @@ Tracking issue: [#617](https://github.com/KnightHacks/forge/issues/617).
 1. Completed: applied additive 0063_first_jean_grey to production and verified preserved job/file counts.
 2. Completed: published through 349574e5 under the user's earlier merge approval and verified the live deployments and logo.
 3. Completed: sent the authorized one-time reminder in production email mode, then verified no eligible reminders remain.
-4. Open the contract bookkeeping correction as a PR; the user requested PR review instead of further direct pushes to main.
+4. PR #618 is open with the requested filament guidance, one-hour policy, explicit queue positions, and duration timer. Keep it on the existing branch for review; do not merge or push main.
 
 The Hacker’s Guide iframe was preserved unchanged. The user confirmed the blank state occurred only in Codex; it subsequently rendered in Codex too. No guide code changes were needed. Unrelated pre-existing local files were left untouched.

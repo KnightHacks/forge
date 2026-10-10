@@ -6,6 +6,7 @@ import { Download, Mail, MessageCircle, Phone } from "lucide-react";
 import type { RouterOutputs } from "@forge/api";
 import { PRINTING } from "@forge/consts";
 import { Button } from "@forge/ui/button";
+import { Countdown } from "@forge/ui/countdown";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@forge/ui/dialog";
-import { Input } from "@forge/ui/input";
 import { Label } from "@forge/ui/label";
 import {
   Select,
@@ -28,12 +28,12 @@ import { toast } from "@forge/ui/toast";
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
 import { api } from "~/trpc/react";
 import { PrintCategoryForm } from "./print-category-form";
+import { PrintDurationFields } from "./print-duration-fields";
 import {
   deliverySummary,
   formatFileSize,
   formatPrintDateTime,
   formatPrintTime,
-  toDateTimeLocalValue,
 } from "./print-queue-format";
 import { PrintStatusPill } from "./print-status-pill";
 
@@ -46,7 +46,9 @@ export function PrintJobDialog({
   job,
   onOpenChange,
   timezone,
+  sessionLimitMinutes,
 }: {
+  sessionLimitMinutes?: number;
   job: PrintJob;
   onOpenChange: (open: boolean) => void;
   timezone: string;
@@ -55,6 +57,29 @@ export function PrintJobDialog({
   const [isRefreshing, startTransition] = useTransition();
   const [status, setStatus] = useState<PrintJobStatus>(job.status);
   const [note, setNote] = useState(job.statusNote ?? "");
+  const savedDuration =
+    job.status === "printing" && job.estimate?.overridden
+      ? Math.round(
+          (job.estimate.estimatedReadyAt.getTime() -
+            job.statusChangedAt.getTime()) /
+            60_000,
+        )
+      : 0;
+  const [hours, setHours] = useState(
+    savedDuration > 0 ? String(Math.floor(savedDuration / 60)) : "",
+  );
+  const [minutes, setMinutes] = useState(
+    savedDuration > 0 ? String(savedDuration % 60) : "",
+  );
+  const durationMinutes = Number(hours) * 60 + Number(minutes);
+  const durationValid =
+    Number.isInteger(Number(hours)) &&
+    Number(hours) >= 0 &&
+    Number.isInteger(Number(minutes)) &&
+    Number(minutes) >= 0 &&
+    Number(minutes) < 60 &&
+    durationMinutes >= 1 &&
+    durationMinutes <= PRINTING.MAX_PRINT_MINUTES;
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(
     null,
   );
@@ -62,9 +87,6 @@ export function PrintJobDialog({
   const noteRequired = (
     PRINTING.NOTE_REQUIRED_PRINT_JOB_STATUSES as readonly string[]
   ).includes(status);
-  const isActive = (
-    PRINTING.PRINT_JOB_ACTIVE_STATUSES as readonly string[]
-  ).includes(job.status);
 
   function finish() {
     onOpenChange(false);
@@ -107,9 +129,7 @@ export function PrintJobDialog({
           </div>
           <DialogDescription>
             Submitted {formatPrintDateTime(job.createdAt, timezone)}
-            {job.estimate
-              ? ` · #${job.estimate.position} in the queue${job.estimate.overridden ? ` · organizer estimate ${formatPrintTime(job.estimate.estimatedReadyAt, timezone)}` : ""}`
-              : ""}
+            {job.estimate ? ` · Overall queue #${job.estimate.position}` : ""}
           </DialogDescription>
           <p className="text-sm text-muted-foreground">
             <span className="font-medium tabular-nums text-foreground">
@@ -170,11 +190,34 @@ export function PrintJobDialog({
           <ContactSection job={job} />
           <PrintCategoryForm job={job} onDone={finish} />
 
+          {job.status === "printing" && job.estimate?.overridden ? (
+            <section
+              aria-label="Print timer"
+              className={`${insetClassName} grid gap-1`}
+            >
+              <Countdown
+                endsAt={job.estimate.estimatedReadyAt}
+                expiredText="Estimated time elapsed — check the printer."
+                className="font-mono text-lg tabular-nums"
+              />
+              <p className="text-sm text-muted-foreground">
+                Estimated finish{" "}
+                {formatPrintTime(job.estimate.estimatedReadyAt, timezone)}. Mark
+                ready only when the print is finished.
+              </p>
+            </section>
+          ) : null}
+
           <form
             className="grid gap-3"
             onSubmit={(event) => {
               event.preventDefault();
-              updateStatus.mutate({ jobId: job.id, note, status });
+              updateStatus.mutate({
+                jobId: job.id,
+                note,
+                status,
+                ...(status === "printing" ? { durationMinutes } : {}),
+              });
             }}
           >
             <h3 className="text-base font-semibold">Update progress</h3>
@@ -199,6 +242,17 @@ export function PrintJobDialog({
                 ))}
               </SelectContent>
             </Select>
+            {status === "printing" ? (
+              <PrintDurationFields
+                hours={hours}
+                minutes={minutes}
+                onHoursChange={setHours}
+                onMinutesChange={setMinutes}
+                disabled={busy}
+                sessionLimitMinutes={sessionLimitMinutes}
+                alreadyPrinting={job.status === "printing"}
+              />
+            ) : null}
             <div className="grid gap-2">
               <Label htmlFor="print-job-note">
                 Note for the hacker
@@ -220,114 +274,23 @@ export function PrintJobDialog({
             </div>
             <Button
               className="min-h-11 justify-self-start"
-              disabled={busy || (noteRequired && note.trim() === "")}
+              disabled={
+                busy ||
+                (noteRequired && note.trim() === "") ||
+                (status === "printing" && !durationValid)
+              }
               type="submit"
             >
-              {updateStatus.isPending ? "Saving..." : "Save and notify hacker"}
+              {updateStatus.isPending
+                ? "Saving..."
+                : status === "printing" && job.status !== "printing"
+                  ? "Start printing and notify"
+                  : "Save and notify hacker"}
             </Button>
           </form>
-
-          {isActive ? (
-            <ReadyTimeForm
-              disabled={busy}
-              job={job}
-              onDone={finish}
-              timezone={timezone}
-            />
-          ) : null}
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/** Organizer-set ready time, independent of the status form. */
-function ReadyTimeForm({
-  disabled,
-  job,
-  onDone,
-  timezone,
-}: {
-  disabled: boolean;
-  job: PrintJob;
-  onDone: () => void;
-  timezone: string;
-}) {
-  const [readyAt, setReadyAt] = useState(
-    job.estimate?.overridden
-      ? toDateTimeLocalValue(job.estimate.estimatedReadyAt)
-      : "",
-  );
-  const setEstimatedReadyAt = api.printing.setEstimatedReadyAt.useMutation({
-    onError: (error) => toast.error(error.message),
-    onSuccess: (result) => {
-      const summary = deliverySummary(result.delivery);
-      if (!summary.ok)
-        toast.error("Timing saved.", { description: summary.description });
-      else
-        toast.success(
-          result.estimatedReadyAt
-            ? `Ready time set to ${formatPrintTime(result.estimatedReadyAt, timezone)}.`
-            : "Ready time cleared. The queue estimate is back.",
-        );
-      onDone();
-    },
-  });
-  const busy = disabled || setEstimatedReadyAt.isPending;
-
-  return (
-    <form
-      className="grid gap-3 rounded-md border border-white/10 bg-background/60 p-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        setEstimatedReadyAt.mutate({
-          estimatedReadyAt: new Date(readyAt),
-          jobId: job.id,
-        });
-      }}
-    >
-      <div className="grid gap-1">
-        <Label htmlFor="print-job-ready-at">Exact ready time</Label>
-        <p className="text-sm text-muted-foreground">
-          Replaces the queue estimate for this job only and sends the hacker an
-          update.
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Input
-          className="min-h-11 w-full sm:w-64"
-          id="print-job-ready-at"
-          onChange={(event) => setReadyAt(event.target.value)}
-          required
-          type="datetime-local"
-          value={readyAt}
-        />
-        <Button
-          className="min-h-11"
-          disabled={busy || readyAt === ""}
-          type="submit"
-          variant="outline"
-        >
-          Set time
-        </Button>
-        {job.estimate?.overridden ? (
-          <Button
-            className="min-h-11"
-            disabled={busy}
-            onClick={() =>
-              setEstimatedReadyAt.mutate({
-                estimatedReadyAt: null,
-                jobId: job.id,
-              })
-            }
-            type="button"
-            variant="ghost"
-          >
-            Use queue estimate
-          </Button>
-        ) : null}
-      </div>
-    </form>
   );
 }
 
