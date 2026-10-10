@@ -23,6 +23,16 @@ KH IX surfaces. Excluded: real Discord and Listmonk delivery in automated tests
 
 ## Test cases
 
+### Variable print times — 2026-10-10
+
+- In both closed and open states, the hacker page says "Print times vary
+  depending on the model." It never says "Each print takes" or shows a
+  calculated wait for a new print.
+- Even when the API returns a future `estimatedReadyAt`, a received job shows
+  its queue position without a clock time or calculated duration. Verify with
+  desktop and 320px browser fixtures. These expectations supersede the older
+  hacker estimate-copy cases below; organizer calculations are out of scope.
+
 ### Closed availability visibility — 2026-10-10
 
 - At desktop and 320px widths, a checked-in hacker sees "Printing opens soon"

@@ -340,3 +340,24 @@ Phase: implemented and validated on `khix/printing-opens-soon`; publishing throu
 - Root `pnpm format`, `pnpm lint`, and `pnpm typecheck` pass (existing warnings
   remain); `pnpm analyze:react:changed` reports zero failures. Final scoped
   test-file lint, feature-document formatting, and `git diff --check` pass.
+
+## Variable print duration correction — 2026-10-10
+
+Phase: implemented and validated on `khix/variable-print-times`; publishing through the user-requested direct-main workflow.
+
+- User corrected the fixed one-hour claim: duration depends on the individual
+  print. The hacker view now says "Print times vary depending on the model."
+- Remove automatic queue-wait and job-ready predictions from KH IX, preserve
+  queue positions/status tracking, and remove unused duration formatters and
+  their obsolete tests. API, organizer controls, and notification behavior are
+  outside this presentation correction.
+- Extend the existing browser fixture with an estimated job and verify that
+  queue position remains visible while calculated timing text is absent, both
+  closed and open.
+- Validation: 190 KH IX tests and both desktop/320px portal browser tests pass.
+  Root format, lint, and typecheck pass (existing lint warnings remain); React
+  changed analysis reports zero failures. Desktop/mobile screenshots were
+  inspected, including open-state queue position with no ready-time prediction.
+  Local artifacts: `output/playwright/variable-print-times/`.
+- The two removed unit tests asserted the deleted duration formatters' old
+  behavior; browser checks now cover the corrected user-facing behavior.

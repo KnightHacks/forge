@@ -3,6 +3,17 @@ import { expect, test } from "playwright/test";
 const portalUrl = "http://localhost:3007";
 const id = "00000000-0000-4000-8000-000000000001";
 const date = "2026-10-10T12:00:00.000Z";
+const queuedPrintJob = {
+  id,
+  createdAt: date,
+  statusChangedAt: date,
+  description: "A model with a variable print duration",
+  status: "received",
+  statusNote: null,
+  estimatedReadyAt: "2099-01-01T12:00:00.000Z",
+  position: 1,
+  files: [],
+};
 const profile = {
   discordUser: "ada-printer",
   country: "United States of America",
@@ -41,6 +52,7 @@ test.describe("printing portal availability", () => {
       page,
     }, testInfo) => {
       let isOpen = false;
+      let hasExistingJob = false;
       let submits = 0;
       let uploads = 0;
       await page.setViewportSize({ width, height: 1000 });
@@ -104,12 +116,12 @@ test.describe("printing portal availability", () => {
               break;
             case "listPrintJobs":
               data = {
-                jobs: [],
+                jobs: hasExistingJob ? [queuedPrintJob] : [],
                 queue: {
                   isOpen,
                   estimatedWaitMinutes: 60,
                   printMinutes: 60,
-                  waitingCount: 0,
+                  waitingCount: hasExistingJob ? 1 : 0,
                 },
               };
               break;
@@ -152,6 +164,10 @@ test.describe("printing portal availability", () => {
         "New requests are currently closed. Please check back soon.",
       );
       await expect(availability).toBeInViewport({ ratio: 1 });
+      await expect(availability).toContainText(
+        "Print times vary depending on the model.",
+      );
+      await expect(availability).not.toContainText("Each print takes");
       await expect(
         page.getByText(
           "Choose New print to send your model to the Shinies team.",
@@ -163,10 +179,23 @@ test.describe("printing portal availability", () => {
         path: testInfo.outputPath("hacker-printing-closed.png"),
         fullPage: true,
       });
+      hasExistingJob = true;
       isOpen = true;
       await expect(newPrint).toBeEnabled({ timeout: 25_000 });
       await expect(availability).toContainText("Printing is open");
       await expect(availability).not.toContainText("Printing opens soon");
+      await expect(availability).not.toContainText("A new print:");
+      await expect(
+        page.getByText("Next in line", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(/Ready around|any minute now/)).toHaveCount(
+        0,
+      );
+      await page.screenshot({
+        animations: "disabled",
+        path: testInfo.outputPath("hacker-printing-open.png"),
+        fullPage: true,
+      });
       await newPrint.click();
       await page.getByLabel("What should we print?").fill("A small bracket");
       await page.locator('input[type="file"]').setInputFiles({

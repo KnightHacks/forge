@@ -23,11 +23,6 @@ import {
   useHackerDashboardFlow,
   useHackerPrintingFlow,
 } from "~/lib/hacker-portal";
-import {
-  formatDuration,
-  formatPrintTime,
-  formatReadyAt,
-} from "~/lib/print-jobs";
 import styles from "./hacker-printing.module.css";
 import { StatusStage } from "./khix-dashboard";
 import dashboardStyles from "./khix-dashboard.module.css";
@@ -134,27 +129,16 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
           ) : null}
           <p>
             {queue ? (
-              <>
-                <strong>
-                  {queue.waitingCount}{" "}
-                  {queue.waitingCount === 1 ? "job" : "jobs"} in the queue
-                </strong>
-                {queue.isOpen ? (
-                  <>
-                    <span className={styles.noticeDivider}>·</span>A new print:{" "}
-                    <strong>
-                      {formatDuration(queue.estimatedWaitMinutes)}
-                    </strong>
-                  </>
-                ) : null}
-              </>
+              <strong>
+                {queue.waitingCount} {queue.waitingCount === 1 ? "job" : "jobs"}{" "}
+                in the queue
+              </strong>
             ) : (
               "Checking the print queue…"
             )}
           </p>
           <p className={styles.hint}>
-            Each print takes {formatPrintTime(queue?.printMinutes ?? 60)}. First
-            come, first served; ready times may change.
+            Print times vary depending on the model.
           </p>
         </div>
       </aside>
@@ -342,23 +326,11 @@ function PrintJobCard({
           </p>
         ) : null}
 
-        {job.estimatedReadyAt ? (
-          <p className={styles.estimate}>
-            {job.status === "received" && job.position !== null ? (
-              <span>
-                {job.position - 1 === 0
-                  ? "Next in line"
-                  : `${job.position - 1} ${job.position - 1 === 1 ? "job" : "jobs"} ahead of yours`}
-              </span>
-            ) : null}
-            <span>
-              Ready{" "}
-              {formatReadyAt(
-                new Date(job.estimatedReadyAt),
-                new Date(),
-                timeZone,
-              )}
-            </span>
+        {job.status === "received" && job.position !== null ? (
+          <p className={styles.queuePosition}>
+            {job.position - 1 === 0
+              ? "Next in line"
+              : `${job.position - 1} ${job.position - 1 === 1 ? "job" : "jobs"} ahead of yours`}
           </p>
         ) : null}
 

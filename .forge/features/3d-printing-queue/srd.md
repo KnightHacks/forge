@@ -315,6 +315,11 @@ Would this require a developer change next year?
 
 ## React and frontend constraints
 
+- KH IX printing shows no fixed-duration, queue-wait, or job-ready estimates.
+  Keep queue positions independent of `estimatedReadyAt`. The API DTO and
+  organizer estimate configuration remain compatible; this correction changes
+  the hacker presentation and removes its now-unused time-formatting helpers.
+
 - Closed availability is a prominent, token-styled notice immediately below the
   KH IX printing header and before sponsor content. Use the existing query's
   `queue.isOpen` value; loading/errors remain distinct from confirmed closure.

@@ -16,9 +16,9 @@ Organizers who run the printer should see one queue in submission order, open
 each job's description and files, reach the submitter when something needs
 checking, and move the job through printing to pickup.
 
-Hackers also need to know roughly when a print will be ready, so they can plan
-their time instead of waiting at the printer table. A print takes about an
-hour, so the page shows how many jobs are ahead and an estimated ready time.
+Hackers can follow their position and status instead of waiting at the printer
+table. Print times depend on the model; the hacker page must not promise a
+fixed duration or show automatic wait/ready times derived from one.
 
 ### Closed availability message — 2026-10-10
 
@@ -60,10 +60,9 @@ A rejected file names the reason, such as "too large" or "file type not
 accepted". Submitting shows a success message, clears the form, and adds the job
 to the list.
 
-Above the form, a disclaimer says each print takes about the configured print
-time (for example "about 1 hour"), that jobs are printed in the order they are
-submitted, and that ready times are estimates. It also shows how many jobs are
-waiting now and the estimated wait for a job submitted now.
+Above the form, the notice says "Print times vary depending on the model." It
+shows how many jobs are waiting, without a fixed print duration or calculated
+wait time.
 
 **Your print jobs.** Newest first. Each job shows its description, file names,
 submitted time, and a status pill. A job marked `Needs clarification` shows the
@@ -71,12 +70,10 @@ organizer's note. A job that is `Received` or `Needs clarification` has a
 `Cancel` action with a confirmation step. The list has loading, empty, and
 error states.
 
-A `Received` job shows how many jobs are ahead of it. A `Received` or
-`Printing` job shows its estimated ready time as a clock time and a rough
-duration ("around 3:40 PM, about 2 hr"). The estimate moves as the queue moves
-and updates whenever the page loads or the hacker returns to it. A
-`Needs clarification` job shows "Waiting on your reply" instead of an estimate.
-`Ready for pickup`, `Picked up`, and `Cancelled` jobs show no estimate.
+A `Received` job shows how many jobs are ahead of it. Hacker job cards show
+statuses and organizer notes, without calculated ready times or durations.
+A `Needs clarification` job shows "Waiting on your reply" and the organizer's
+note.
 
 ### Ready-time estimates
 

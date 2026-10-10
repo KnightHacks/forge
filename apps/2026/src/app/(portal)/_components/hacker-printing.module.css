@@ -155,10 +155,6 @@
   margin-top: 3px;
   color: var(--print-accent);
 }
-.noticeDivider {
-  margin: 0 0.75rem;
-  color: var(--print-muted);
-}
 .hint {
   color: var(--print-muted);
   font-size: 0.875rem;
@@ -314,10 +310,7 @@
   font-size: 0.875rem;
   line-height: 1.7;
 }
-.estimate {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.5rem;
+.queuePosition {
   font-size: 0.875rem;
   color: var(--print-accent);
 }
@@ -554,11 +547,6 @@
   }
   .header > button {
     width: 100%;
-  }
-  .noticeDivider {
-    display: block;
-    height: 0;
-    visibility: hidden;
   }
   .jobsHeading {
     align-items: flex-start;
