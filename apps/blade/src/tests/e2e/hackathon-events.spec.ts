@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test } from "playwright/test";
 
 import { PERMISSIONS } from "@forge/consts";
@@ -177,6 +178,67 @@ test.describe("Hackathon event and check-in critical flow", () => {
   });
 
   test.afterAll(cleanupFixtures);
+
+  for (const width of [1440, 320]) {
+    test(`browses all check-in events at ${width}px`, async ({
+      page,
+    }, testInfo) => {
+      const events = Array.from({ length: 60 }, (_, index) => ({
+        description: "Check-in picker regression fixture",
+        discordSyncState: "disabled" as const,
+        end_datetime: new Date("2027-08-06T21:00:00.000Z"),
+        googleSyncState: "disabled" as const,
+        hackathonId: HACKATHON_ID,
+        id: randomUUID(),
+        location: "Workshop room",
+        name: `Workshop ${String(index + 1).padStart(2, "0")}`,
+        points: 10,
+        start_datetime: new Date(Date.UTC(2027, 7, 6, 12, index)),
+        tag: "Workshop",
+      }));
+      const finalEvent = events.at(-1);
+      if (!finalEvent) throw new Error("Missing event fixture");
+      finalEvent.name = "Workshop 60 · IEEE: Embedded Systems II";
+      await db.insert(Event).values(events);
+      try {
+        await page.setViewportSize({ height: 900, width });
+        await page.goto(
+          `/api/e2e/signin?userId=${ADMIN_ID}&callbackURL=${encodeURIComponent(`/admin/hackathon-check-in?hackathon=${HACKATHON_ID}`)}`,
+        );
+        const trigger = page.getByRole("combobox", {
+          name: "Event",
+          exact: true,
+        });
+        await trigger.click();
+        const list = page.getByRole("listbox");
+        const last = page.getByRole("option", { name: /Workshop 60/ });
+        await list.hover();
+        await page.mouse.wheel(0, 10_000);
+        await expect(last).toBeInViewport();
+        await page.screenshot({
+          path: testInfo.outputPath("event-picker.png"),
+        });
+        await last.click();
+        await expect(trigger).toContainText(finalEvent.name);
+        await expect(page).toHaveURL(new RegExp(`event=${finalEvent.id}`));
+
+        await trigger.click();
+        const search = page.getByPlaceholder("Search events");
+        await search.fill("Workshop");
+        await search.press("End");
+        await expect(last).toHaveAttribute("aria-selected", "true");
+        await search.press("Enter");
+        await expect(trigger).toContainText(finalEvent.name);
+      } finally {
+        await db.delete(Event).where(
+          inArray(
+            Event.id,
+            events.map(({ id }) => id),
+          ),
+        );
+      }
+    });
+  }
 
   test("keeps linked hack tag identity after rename and an unrelated event edit", async ({
     page,

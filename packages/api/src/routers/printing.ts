@@ -15,6 +15,7 @@ import {
   printingFileDownloadInputSchema,
   printingHackathonInputSchema,
   printingListInputSchema,
+  printingSetAvailabilityInputSchema,
   printingSetChannelInputSchema,
   printingSetEstimatedReadyAtInputSchema,
   printingSetEstimateSettingsInputSchema,
@@ -89,7 +90,7 @@ async function upsertConfiguration(
   values: Partial<
     Pick<
       typeof PrintingConfiguration.$inferInsert,
-      "discordChannelId" | "printMinutes" | "printerCount"
+      "discordChannelId" | "isOpen" | "printMinutes" | "printerCount"
     >
   >,
 ) {
@@ -408,6 +409,44 @@ export const printingRouter = createTRPCRouter({
         channelId: row?.channelId ?? null,
         ...(await loadEstimateSettings(input.hackathonId)),
       };
+    }),
+
+  /** Open or close new submissions without changing existing jobs. */
+  setAvailability: permProcedure
+    .input(printingSetAvailabilityInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      requirePrintingQueue(ctx);
+      await requireHackathon(input.hackathonId);
+      const actor = await captureAdminAuditActor(ctx.session.user);
+      return db.transaction(async (tx) => {
+        const before = await lockConfiguration(tx, input.hackathonId);
+        const row = await upsertConfiguration(tx, input.hackathonId, {
+          isOpen: input.isOpen,
+        });
+        await createAdminAuditEvent(
+          {
+            actionKey: "printing.availability.updated",
+            actor,
+            changes: [
+              {
+                after: row.isOpen,
+                before: before?.isOpen ?? false,
+                field: "isOpen",
+              },
+            ],
+            subjects: [
+              {
+                relation: "primary",
+                targetId: input.hackathonId,
+                targetLabel: "3D printing configuration",
+                targetType: "printing_configuration",
+              },
+            ],
+          },
+          tx,
+        );
+        return { isOpen: row.isOpen };
+      });
     }),
 
   /** Guild text channels the bot can post in. */

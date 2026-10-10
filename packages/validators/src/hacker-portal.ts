@@ -481,6 +481,7 @@ export const printJobsDtoSchema = z
     jobs: z.array(printJobDtoSchema),
     queue: z
       .object({
+        isOpen: z.boolean().default(false),
         /** Minutes until a job submitted now would be ready. */
         estimatedWaitMinutes: z.number().int().min(0),
         printMinutes: z.number().int().min(1),
@@ -582,6 +583,7 @@ export const participantDomainErrorSchema = z
       "INVALID_RESUME",
       "PRINT_FILE_UNAVAILABLE",
       "PRINT_JOB_NOT_CANCELLABLE",
+      "PRINTING_CLOSED",
       "SESSION_EXPIRED",
       "STALE_PROFILE_REVISION",
       "UNAUTHENTICATED",

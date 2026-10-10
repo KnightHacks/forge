@@ -561,6 +561,7 @@ export function HackathonCheckInWorkspace() {
                     selection.hackathonId !== selectedHackathon?.id
                   }
                   items={eventData.data?.events ?? []}
+                  maxResults={eventData.data?.events.length}
                   onValueChange={(eventId) => {
                     if (selection.hackathonId)
                       replaceSelection(selection.hackathonId, eventId);

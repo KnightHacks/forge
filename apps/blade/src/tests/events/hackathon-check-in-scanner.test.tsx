@@ -119,6 +119,14 @@ vi.mock("~/trpc/react", () => ({
                 ready: true,
                 startDateTime: "2026-08-06T20:00:00.000Z",
               },
+              ...Array.from({ length: 60 }, (_, index) => ({
+                id: `00000000-0000-4000-8000-${String(300 + index).padStart(12, "0")}`,
+                name: `Workshop ${index + 1}`,
+                points: 10,
+                purpose: "event",
+                ready: true,
+                startDateTime: "2026-08-07T20:00:00.000Z",
+              })),
             ],
           },
           isPending: false,
@@ -197,6 +205,27 @@ describe("HackathonCheckInWorkspace pending selection", () => {
     <NavigationProvider>
       <HackathonCheckInWorkspace />
     </NavigationProvider>
+  );
+
+  it.each(["", "Workshop"])(
+    "selects an event beyond the first twenty choices with search %j",
+    async (query) => {
+      render(workspace);
+      fireEvent.click(screen.getByRole("combobox", { name: "Event" }));
+      if (query) {
+        fireEvent.change(screen.getByPlaceholderText("Search events"), {
+          target: { value: query },
+        });
+      }
+      fireEvent.click(
+        await screen.findByRole("option", { name: /Workshop 60/ }),
+      );
+
+      expect(mocks.replace).toHaveBeenCalledWith(
+        expect.stringContaining("event=00000000-0000-4000-8000-000000000359"),
+        undefined,
+      );
+    },
   );
 
   it("shows the event immediately and defers scans until that event commits", async () => {

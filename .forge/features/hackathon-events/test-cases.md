@@ -877,6 +877,15 @@ Expected observations:
 - No hack event appears or mutates through Club code.
 - Existing Club Event tests and reminder cadence remain unchanged.
 
+### TC-REG-002: Browse the complete check-in event picker
+
+- Load at least 60 events for one hackathon and open the check-in event picker.
+- Without entering a search, scroll to and select the final event. Verify the
+  selected event and URL identify that event.
+- Search for a term matching more than 20 events and select the final match.
+- Verify desktop popover and mobile drawer scrolling, plus keyboard selection.
+- Existing combo-box consumers retain their default result limit.
+
 ## Open questions
 
 - None. Adversarial review findings are incorporated before this document is

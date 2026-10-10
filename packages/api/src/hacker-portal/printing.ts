@@ -18,7 +18,11 @@ import {
   sum,
 } from "@forge/db";
 import { db } from "@forge/db/client";
-import { PrintJob, PrintJobFile } from "@forge/db/schemas/knight-hacks";
+import {
+  PrintingConfiguration,
+  PrintJob,
+  PrintJobFile,
+} from "@forge/db/schemas/knight-hacks";
 import {
   checkUploadContent,
   PRINT_FILE_UPLOAD_POLICY,
@@ -41,8 +45,36 @@ import { requireApplicationWithStatuses } from "./reads";
 import { portalFailure } from "./trpc";
 
 /** Every printing action requires whole-hack check-in. */
-export function requirePrintUploadAccess(ctx: AuthenticatedPortalContext) {
+function requirePrintAccess(ctx: AuthenticatedPortalContext) {
   return requireApplicationWithStatuses(ctx, ["checkedin"]);
+}
+
+async function requirePrintingOpen(
+  hackathonId: string,
+  executor: WriteDb = db,
+) {
+  const [configuration] = await executor
+    .select({ isOpen: PrintingConfiguration.isOpen })
+    .from(PrintingConfiguration)
+    .where(eq(PrintingConfiguration.hackathonId, hackathonId))
+    // During submit, hold this through the commit so closing cannot race a new job.
+    .for("share");
+  if (!configuration?.isOpen) {
+    portalFailure(
+      "PRINTING_CLOSED",
+      "Printing is currently closed. Please check back when the printer is on site.",
+      { trpcCode: "PRECONDITION_FAILED" },
+    );
+  }
+}
+
+/** Reject closed queues before the upload route reads file bytes. */
+export async function requirePrintUploadAccess(
+  ctx: AuthenticatedPortalContext,
+) {
+  const application = await requirePrintAccess(ctx);
+  await requirePrintingOpen(ctx.session.hackathonId);
+  return application;
 }
 
 type PrintJobRow = Pick<
@@ -234,7 +266,7 @@ export async function removeStagedPrintFile(
   ctx: AuthenticatedPortalContext,
   input: { fileId: string },
 ) {
-  const application = await requirePrintUploadAccess(ctx);
+  const application = await requirePrintAccess(ctx);
   const removed = await db
     .delete(PrintJobFile)
     .where(
@@ -253,7 +285,7 @@ export async function removeStagedPrintFile(
 export async function listPrintJobs(
   ctx: AuthenticatedPortalContext,
 ): Promise<HackerPrintJobsDto> {
-  const application = await requirePrintUploadAccess(ctx);
+  const application = await requirePrintAccess(ctx);
   const jobs = await db
     .select({
       createdAt: PrintJob.createdAt,
@@ -283,6 +315,7 @@ export async function listPrintJobs(
       printJobDto(job, files, queue.estimates.get(job.id)),
     ),
     queue: {
+      isOpen: queue.settings.isOpen,
       estimatedWaitMinutes: queue.waitMinutes,
       printMinutes: queue.settings.printMinutes,
       waitingCount: queue.waitingCount,
@@ -294,7 +327,7 @@ export async function submitPrintJob(
   ctx: AuthenticatedPortalContext,
   input: { description: string; fileIds: string[]; idempotencyKey: string },
 ): Promise<HackerPrintJobDto> {
-  const application = await requirePrintUploadAccess(ctx);
+  const application = await requirePrintAccess(ctx);
   // Set only when this request created the job, so a replayed submit does not
   // post a second channel notice.
   const created: { jobId: string | null } = { jobId: null };
@@ -309,6 +342,8 @@ export async function submitPrintJob(
       tx,
       userId: ctx.session.userId,
       work: async () => {
+        // A successful idempotent replay still returns its original job after closing.
+        await requirePrintingOpen(ctx.session.hackathonId, tx);
         const [job] = await tx
           .insert(PrintJob)
           .values({
@@ -378,7 +413,7 @@ export async function cancelPrintJob(
   ctx: AuthenticatedPortalContext,
   input: { idempotencyKey: string; jobId: string },
 ): Promise<HackerPrintJobDto> {
-  const application = await requirePrintUploadAccess(ctx);
+  const application = await requirePrintAccess(ctx);
   return db.transaction((tx) =>
     runParticipantCommand({
       hackathonId: ctx.session.hackathonId,

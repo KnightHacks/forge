@@ -235,12 +235,88 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       theme: "Printing",
       timezone: "America/New_York",
     });
+    await client
+      .insert(knightHacks.PrintingConfiguration)
+      .values({ hackathonId, isOpen: true });
   }, 30_000);
 
   afterAll(async () => {
     await closePool?.();
     await disposable?.drop();
   }, 30_000);
+
+  it("starts closed and only queue admins can open submissions", async () => {
+    await client.delete(knightHacks.PrintingConfiguration);
+    const hacker = await seedHacker("closed", "checkedin");
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    const unauthorized = await bladeCaller(permissionBitstring());
+    expect(
+      (await caller.printing.getConfiguration({ hackathonId })).isOpen,
+    ).toBe(false);
+    expect((await printing.listPrintJobs(hacker.ctx)).queue.isOpen).toBe(false);
+    await rejectsWithCode(
+      submit(hacker.ctx, [await stageFile(hacker.attendeeId)]),
+      "PRINTING_CLOSED",
+    );
+    await expect(
+      unauthorized.printing.setAvailability({ hackathonId, isOpen: true }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await caller.printing.setAvailability({ hackathonId, isOpen: true });
+    expect(
+      (await caller.printing.getConfiguration({ hackathonId })).isOpen,
+    ).toBe(true);
+    await expect(
+      submit(hacker.ctx, [await stageFile(hacker.attendeeId)]),
+    ).resolves.toMatchObject({ status: "received" });
+    const { AdminAuditEvent } = await import("@forge/db/schemas/audit");
+    const audits = await client
+      .select({ action: AdminAuditEvent.actionKey })
+      .from(AdminAuditEvent);
+    expect(audits).toContainEqual({ action: "printing.availability.updated" });
+  });
+
+  it("blocks stale submissions and uploads after closing, preserves jobs and replays, and reopens", async () => {
+    const hacker = await seedHacker("pause", "checkedin");
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    const input = {
+      description: "Bracket",
+      fileIds: [await stageFile(hacker.attendeeId)],
+      idempotencyKey: randomUUID(),
+    };
+    const job = await printing.submitPrintJob(hacker.ctx, input);
+    const pendingFile = await stageFile(hacker.attendeeId);
+    const removableFile = await stageFile(hacker.attendeeId);
+    await caller.printing.setAvailability({ hackathonId, isOpen: false });
+    expect((await printing.listPrintJobs(hacker.ctx)).queue.isOpen).toBe(false);
+    await rejectsWithCode(submit(hacker.ctx, [pendingFile]), "PRINTING_CLOSED");
+    await rejectsWithCode(
+      printing.requirePrintUploadAccess(hacker.ctx),
+      "PRINTING_CLOSED",
+    );
+    await rejectsWithCode(
+      printing.uploadPrintFile(hacker.ctx, {
+        bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+        fileName: "reference.png",
+        contentType: "image/png",
+      }),
+      "PRINTING_CLOSED",
+    );
+    await expect(
+      printing.submitPrintJob(hacker.ctx, input),
+    ).resolves.toMatchObject({ id: job.id });
+    expect((await printing.listPrintJobs(hacker.ctx)).jobs).toHaveLength(1);
+    await printing.removeStagedPrintFile(hacker.ctx, { fileId: removableFile });
+    await expect(
+      printing.cancelPrintJob(hacker.ctx, {
+        jobId: job.id,
+        idempotencyKey: randomUUID(),
+      }),
+    ).resolves.toMatchObject({ status: "cancelled" });
+    await caller.printing.setAvailability({ hackathonId, isOpen: true });
+    await expect(submit(hacker.ctx, [pendingFile])).resolves.toMatchObject({
+      status: "received",
+    });
+  });
 
   it("[TC-002/012] submits a job with staged files and estimates its place", async () => {
     const hacker = await seedHacker("ada", "checkedin");
@@ -258,6 +334,7 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     const list = await printing.listPrintJobs(hacker.ctx);
     expect(list.jobs.map((job) => job.id)).toEqual([second.id, first.id]);
     expect(list.queue).toEqual({
+      isOpen: true,
       estimatedWaitMinutes: 180,
       printMinutes: 60,
       waitingCount: 2,
@@ -392,6 +469,9 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       theme: "Printing",
       timezone: "America/New_York",
     });
+    await client
+      .insert(knightHacks.PrintingConfiguration)
+      .values({ hackathonId: otherHackathonId, isOpen: true });
     hackathonId = otherHackathonId;
     const otherAttendee = await seedHacker("elsewhere", "checkedin");
     await submit(otherAttendee.ctx, [
@@ -498,8 +578,14 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     });
     await expect(
       caller.printing.getConfiguration({ hackathonId }),
-    ).resolves.toEqual({ channelId: null, printMinutes: 45, printerCount: 2 });
+    ).resolves.toEqual({
+      channelId: null,
+      isOpen: true,
+      printMinutes: 45,
+      printerCount: 2,
+    });
     expect((await printing.listPrintJobs(hacker.ctx)).queue).toEqual({
+      isOpen: true,
       estimatedWaitMinutes: 45,
       printMinutes: 45,
       waitingCount: 0,
@@ -537,10 +623,12 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
         permissions: permissionBitstring("IS_OFFICER"),
       },
     ]);
-    await client.insert(knightHacks.PrintingConfiguration).values({
-      discordChannelId: "333333333333333333",
-      hackathonId,
-    });
+    await client
+      .update(knightHacks.PrintingConfiguration)
+      .set({
+        discordChannelId: "333333333333333333",
+      })
+      .where(eq(knightHacks.PrintingConfiguration.hackathonId, hackathonId));
     const input = {
       description: "Keychain",
       fileIds: [await stageFile(hacker.attendeeId)],

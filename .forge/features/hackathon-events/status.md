@@ -1,10 +1,19 @@
 # Hackathon Events Status
 
-Current phase: Complete / owner-approved for Reforge main
+Current phase: Check-in event picker regression fixed and validated
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
 ## Decision log
+
+- 2026-10-10: The reported missing event is available through check-in search.
+  `listCheckInEvents` returns all events, but `ResponsiveComboBox` truncates
+  both browsing and search to 20 choices. Two regression cases with 62 events
+  fail when selecting the last workshop, with and without a search query.
+  Add an optional result limit to the shared picker and let Hack Event Check-in
+  display its complete event list. Preserve the default for other consumers.
+  Validation: 11 check-in unit tests and desktop/mobile scroll and keyboard
+  browser checks pass. Shared UI build, React analysis, format, lint, and types pass.
 
 - 2026-08-05: Created `reforge/hackathon-events` from Reforge main commit
   `976fa0b1d`, after hacker management landed.

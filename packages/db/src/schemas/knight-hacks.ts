@@ -4427,8 +4427,7 @@ export type SelectPrintJobFile = typeof PrintJobFile.$inferSelect;
 
 /**
  * Per-hackathon printing settings. A missing row and a NULL channel both mean
- * no Discord notices; jobs still work. A missing row means the default
- * estimate settings.
+ * no Discord notices. Printing starts closed until an organizer opens it.
  */
 export const PrintingConfiguration = createTable(
   "printing_configuration",
@@ -4440,6 +4439,8 @@ export const PrintingConfiguration = createTable(
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     /** Organizer-only channel that receives new-job notices. */
     discordChannelId: t.varchar({ length: 20 }),
+    /** Staff explicitly open submissions while the printer is on site. */
+    isOpen: t.boolean().notNull().default(false),
     /** Minutes one print is assumed to take, for ready-time estimates. */
     printMinutes: t.integer().notNull().default(PRINTING.DEFAULT_PRINT_MINUTES),
     /** Printers working the queue at once, for ready-time estimates. */

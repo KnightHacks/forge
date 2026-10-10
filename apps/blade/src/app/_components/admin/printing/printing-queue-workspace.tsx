@@ -16,6 +16,7 @@ import type { RouterOutputs } from "@forge/api";
 import { PRINTING } from "@forge/consts";
 import { cn } from "@forge/ui";
 import { Input } from "@forge/ui/input";
+import { Label } from "@forge/ui/label";
 import {
   Select,
   SelectContent,
@@ -23,13 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@forge/ui/select";
+import { Switch } from "@forge/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@forge/ui/tabs";
+import { toast } from "@forge/ui/toast";
 
 import {
   AdminPageHeader,
   adminPageLayoutClassName,
 } from "~/app/_components/shared/admin-page";
 import { useNavigationRouter as useRouter } from "~/app/_components/shared/route-transition-link";
+import { api } from "~/trpc/react";
 import { PrintJobDialog } from "./print-job-dialog";
 import { formatPrintDateTime, formatPrintTime } from "./print-queue-format";
 import { PrintStatusPill } from "./print-status-pill";
@@ -118,6 +122,10 @@ export function PrintingQueueWorkspace({
             <PrintingSettingsDialog
               configuration={configuration}
               hackathonId={selected.id}
+            />
+            <PrintingAvailabilitySwitch
+              hackathonId={selected.id}
+              isOpen={configuration.isOpen}
             />
           </>
         }
@@ -246,6 +254,43 @@ export function PrintingQueueWorkspace({
         />
       ) : null}
     </main>
+  );
+}
+
+function PrintingAvailabilitySwitch({
+  hackathonId,
+  isOpen,
+}: {
+  hackathonId: string;
+  isOpen: boolean;
+}) {
+  const router = useRouter();
+  const [refreshing, startTransition] = useTransition();
+  const availability = api.printing.setAvailability.useMutation();
+  return (
+    <Label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-border px-3">
+      <Switch
+        aria-label="Accept new print jobs"
+        checked={isOpen}
+        disabled={availability.isPending || refreshing}
+        onCheckedChange={async (next) => {
+          try {
+            await availability.mutateAsync({ hackathonId, isOpen: next });
+            toast.success(
+              next ? "Printing is open." : "Printing is closed to new jobs.",
+            );
+            startTransition(() => router.refresh());
+          } catch (error) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Printing availability could not be saved.",
+            );
+          }
+        }}
+      />
+      Printing {isOpen ? "open" : "closed"}
+    </Label>
   );
 }
 

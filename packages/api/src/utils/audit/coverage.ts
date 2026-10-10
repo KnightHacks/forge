@@ -160,6 +160,7 @@ export const AUDITED_ADMIN_PROCEDURES = [
   "projects.restore",
   "projects.update",
   "printing.getFileDownloadUrl",
+  "printing.setAvailability",
   "printing.setChannel",
   "printing.setEstimateSettings",
   "printing.setEstimatedReadyAt",
