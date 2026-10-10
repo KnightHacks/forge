@@ -67,6 +67,25 @@ export const printingSetChannelInputSchema = z
   })
   .strict();
 
+export const printingSetSubmissionWindowInputSchema = z
+  .object({
+    closeAt: z.date().nullable(),
+    enabled: z.boolean(),
+    hackathonId: uuidSchema,
+    openAt: z.date().nullable(),
+  })
+  .strict()
+  .refine(
+    (input) =>
+      input.openAt === null ||
+      input.closeAt === null ||
+      input.openAt.getTime() < input.closeAt.getTime(),
+    {
+      message: "Open time must be before close time.",
+      path: ["closeAt"],
+    },
+  );
+
 export const printingSetEstimateSettingsInputSchema = z
   .object({
     hackathonId: uuidSchema,

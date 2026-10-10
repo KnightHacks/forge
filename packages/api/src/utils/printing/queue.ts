@@ -10,6 +10,34 @@ import type { WriteDb } from "../db";
 import type { PrintEstimateSettings } from "./estimate";
 import { estimateReadyTimes, estimateWaitMinutes } from "./estimate";
 
+export interface PrintSubmissionWindow {
+  closeAt: Date | null;
+  enabled: boolean;
+  isOpen: boolean;
+  openAt: Date | null;
+}
+
+export function resolvePrintSubmissionWindow(
+  row: Pick<
+    typeof PrintingConfiguration.$inferSelect,
+    "submissionsCloseAt" | "submissionsEnabled" | "submissionsOpenAt"
+  > | null,
+  now = new Date(),
+): PrintSubmissionWindow {
+  const enabled = row?.submissionsEnabled ?? false;
+  const openAt = row?.submissionsOpenAt ?? null;
+  const closeAt = row?.submissionsCloseAt ?? null;
+  return {
+    closeAt,
+    enabled,
+    isOpen:
+      enabled &&
+      (openAt === null || openAt.getTime() <= now.getTime()) &&
+      (closeAt === null || closeAt.getTime() > now.getTime()),
+    openAt,
+  };
+}
+
 /** The hackathon's estimate settings, or the defaults when it has no row. */
 export async function loadEstimateSettings(
   hackathonId: string,
@@ -29,6 +57,23 @@ export async function loadEstimateSettings(
       printerCount: PRINTING.DEFAULT_PRINTER_COUNT,
     }
   );
+}
+
+export async function loadSubmissionWindow(
+  hackathonId: string,
+  executor: WriteDb = db,
+  now = new Date(),
+): Promise<PrintSubmissionWindow> {
+  const [row] = await executor
+    .select({
+      submissionsCloseAt: PrintingConfiguration.submissionsCloseAt,
+      submissionsEnabled: PrintingConfiguration.submissionsEnabled,
+      submissionsOpenAt: PrintingConfiguration.submissionsOpenAt,
+    })
+    .from(PrintingConfiguration)
+    .where(eq(PrintingConfiguration.hackathonId, hackathonId))
+    .limit(1);
+  return resolvePrintSubmissionWindow(row ?? null, now);
 }
 
 /**

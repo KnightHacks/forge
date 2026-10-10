@@ -147,6 +147,18 @@ export function PrintingQueueWorkspace({
               {queue.settings.printerCount}{" "}
               {queue.settings.printerCount === 1 ? "printer" : "printers"}
             </span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+                configuration.submissions.isOpen
+                  ? "border-[hsl(var(--chart-2)/0.35)] bg-[hsl(var(--chart-2)/0.08)] text-[hsl(var(--chart-2))]"
+                  : "border-destructive/40 bg-destructive/10 text-destructive dark:text-red-300",
+              )}
+            >
+              {configuration.submissions.isOpen
+                ? "Submissions open"
+                : "Submissions closed"}
+            </span>
           </div>
           <div className="relative w-full lg:w-72">
             <Search

@@ -235,12 +235,99 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       theme: "Printing",
       timezone: "America/New_York",
     });
+    await client.insert(knightHacks.PrintingConfiguration).values({
+      hackathonId,
+      submissionsEnabled: true,
+    });
   }, 30_000);
 
   afterAll(async () => {
     await closePool?.();
     await disposable?.drop();
   }, 30_000);
+
+  it("defaults missing printing configuration to closed submissions", async () => {
+    await client
+      .delete(knightHacks.PrintingConfiguration)
+      .where(eq(knightHacks.PrintingConfiguration.hackathonId, hackathonId));
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+
+    await expect(
+      caller.printing.getConfiguration({ hackathonId }),
+    ).resolves.toMatchObject({
+      channelId: null,
+      submissions: {
+        closeAt: null,
+        enabled: false,
+        isOpen: false,
+        openAt: null,
+      },
+    });
+    const hacker = await seedHacker("closed", "checkedin");
+    await rejectsWithCode(
+      printing.uploadPrintFile(hacker.ctx, {
+        bytes: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+        contentType: "image/png",
+        fileName: "reference.png",
+      }),
+      "PRINTING_CLOSED",
+    );
+    await rejectsWithCode(
+      submit(hacker.ctx, [await stageFile(hacker.attendeeId)]),
+      "PRINTING_CLOSED",
+    );
+  });
+
+  it("lets admins configure flexible submission hours", async () => {
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    const openAt = new Date(Date.now() - 30 * 60_000);
+    const closeAt = new Date(Date.now() + 90 * 60_000);
+
+    await caller.printing.setSubmissionWindow({
+      closeAt,
+      enabled: true,
+      hackathonId,
+      openAt,
+    });
+
+    await expect(
+      caller.printing.getConfiguration({ hackathonId }),
+    ).resolves.toMatchObject({
+      submissions: {
+        closeAt,
+        enabled: true,
+        isOpen: true,
+        openAt,
+      },
+    });
+  });
+
+  it("closes submissions outside the configured window", async () => {
+    const caller = await bladeCaller(permissionBitstring("PRINTING_QUEUE"));
+    await caller.printing.setSubmissionWindow({
+      closeAt: new Date(Date.now() + 120 * 60_000),
+      enabled: true,
+      hackathonId,
+      openAt: new Date(Date.now() + 60 * 60_000),
+    });
+    const hacker = await seedHacker("future", "checkedin");
+
+    await rejectsWithCode(
+      submit(hacker.ctx, [await stageFile(hacker.attendeeId)]),
+      "PRINTING_CLOSED",
+    );
+
+    await caller.printing.setSubmissionWindow({
+      closeAt: new Date(Date.now() - 60 * 60_000),
+      enabled: true,
+      hackathonId,
+      openAt: new Date(Date.now() - 120 * 60_000),
+    });
+    await rejectsWithCode(
+      submit(hacker.ctx, [await stageFile(hacker.attendeeId)]),
+      "PRINTING_CLOSED",
+    );
+  });
 
   it("[TC-002/012] submits a job with staged files and estimates its place", async () => {
     const hacker = await seedHacker("ada", "checkedin");
@@ -257,9 +344,10 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
 
     const list = await printing.listPrintJobs(hacker.ctx);
     expect(list.jobs.map((job) => job.id)).toEqual([second.id, first.id]);
-    expect(list.queue).toEqual({
+    expect(list.queue).toMatchObject({
       estimatedWaitMinutes: 180,
       printMinutes: 60,
+      submissions: { enabled: true, isOpen: true },
       waitingCount: 2,
     });
     const minutesAway =
@@ -392,6 +480,10 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
       theme: "Printing",
       timezone: "America/New_York",
     });
+    await client.insert(knightHacks.PrintingConfiguration).values({
+      hackathonId: otherHackathonId,
+      submissionsEnabled: true,
+    });
     hackathonId = otherHackathonId;
     const otherAttendee = await seedHacker("elsewhere", "checkedin");
     await submit(otherAttendee.ctx, [
@@ -498,10 +590,16 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
     });
     await expect(
       caller.printing.getConfiguration({ hackathonId }),
-    ).resolves.toEqual({ channelId: null, printMinutes: 45, printerCount: 2 });
-    expect((await printing.listPrintJobs(hacker.ctx)).queue).toEqual({
+    ).resolves.toMatchObject({
+      channelId: null,
+      printMinutes: 45,
+      printerCount: 2,
+      submissions: { enabled: true, isOpen: true },
+    });
+    expect((await printing.listPrintJobs(hacker.ctx)).queue).toMatchObject({
       estimatedWaitMinutes: 45,
       printMinutes: 45,
+      submissions: { enabled: true, isOpen: true },
       waitingCount: 0,
     });
 
@@ -537,10 +635,10 @@ describe.skipIf(!canRunDatabaseTests())("3D printing queue", () => {
         permissions: permissionBitstring("IS_OFFICER"),
       },
     ]);
-    await client.insert(knightHacks.PrintingConfiguration).values({
-      discordChannelId: "333333333333333333",
-      hackathonId,
-    });
+    await client
+      .update(knightHacks.PrintingConfiguration)
+      .set({ discordChannelId: "333333333333333333" })
+      .where(eq(knightHacks.PrintingConfiguration.hackathonId, hackathonId));
     const input = {
       description: "Keychain",
       fileIds: [await stageFile(hacker.attendeeId)],

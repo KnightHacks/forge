@@ -4427,8 +4427,8 @@ export type SelectPrintJobFile = typeof PrintJobFile.$inferSelect;
 
 /**
  * Per-hackathon printing settings. A missing row and a NULL channel both mean
- * no Discord notices; jobs still work. A missing row means the default
- * estimate settings.
+ * no Discord notices. A missing row means default estimate settings and closed
+ * hacker submissions until an admin explicitly opens them.
  */
 export const PrintingConfiguration = createTable(
   "printing_configuration",
@@ -4440,6 +4440,12 @@ export const PrintingConfiguration = createTable(
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     /** Organizer-only channel that receives new-job notices. */
     discordChannelId: t.varchar({ length: 20 }),
+    /** Admin-controlled gate for creating new hacker print requests. */
+    submissionsEnabled: t.boolean().notNull().default(false),
+    /** Optional time when hacker submissions start being accepted. */
+    submissionsOpenAt: t.timestamp({ withTimezone: true }),
+    /** Optional time when hacker submissions stop being accepted. */
+    submissionsCloseAt: t.timestamp({ withTimezone: true }),
     /** Minutes one print is assumed to take, for ready-time estimates. */
     printMinutes: t.integer().notNull().default(PRINTING.DEFAULT_PRINT_MINUTES),
     /** Printers working the queue at once, for ready-time estimates. */
@@ -4458,6 +4464,10 @@ export const PrintingConfiguration = createTable(
     validDiscordChannelId: check(
       "knight_hacks_printing_configuration_channel_id_check",
       sql`${table.discordChannelId} IS NULL OR ${table.discordChannelId} ~ '^[0-9]{17,20}$'`,
+    ),
+    validSubmissionWindow: check(
+      "knight_hacks_printing_configuration_window_check",
+      sql`${table.submissionsOpenAt} IS NULL OR ${table.submissionsCloseAt} IS NULL OR ${table.submissionsOpenAt} < ${table.submissionsCloseAt}`,
     ),
   }),
 );

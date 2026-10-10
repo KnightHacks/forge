@@ -35,7 +35,10 @@ import {
   removePrintFileObjects,
 } from "../utils/printing/files";
 import { notifyNewPrintJob } from "../utils/printing/notifications";
-import { loadQueueEstimates } from "../utils/printing/queue";
+import {
+  loadQueueEstimates,
+  loadSubmissionWindow,
+} from "../utils/printing/queue";
 import { runParticipantCommand } from "./commands";
 import { requireApplicationWithStatuses } from "./reads";
 import { portalFailure } from "./trpc";
@@ -43,6 +46,21 @@ import { portalFailure } from "./trpc";
 /** Every printing action requires whole-hack check-in. */
 export function requirePrintUploadAccess(ctx: AuthenticatedPortalContext) {
   return requireApplicationWithStatuses(ctx, ["checkedin"]);
+}
+
+async function requirePrintingSubmissionsOpen(
+  hackathonId: string,
+  executor: WriteDb = db,
+) {
+  const window = await loadSubmissionWindow(hackathonId, executor);
+  if (!window.isOpen) {
+    portalFailure(
+      "PRINTING_CLOSED",
+      "3D printing is not accepting new requests right now. Please check back when printing is on-site.",
+      { trpcCode: "PRECONDITION_FAILED" },
+    );
+  }
+  return window;
 }
 
 type PrintJobRow = Pick<
@@ -150,6 +168,7 @@ export async function uploadPrintFile(
   input: { bytes: Uint8Array; contentType: string; fileName: string },
 ): Promise<HackerStagedPrintFileDto> {
   const application = await requirePrintUploadAccess(ctx);
+  await requirePrintingSubmissionsOpen(ctx.session.hackathonId);
   const check = checkUploadContent(PRINT_FILE_UPLOAD_POLICY, input);
   if (!check.ok) {
     portalFailure("INVALID_PRINT_FILE", check.message, {
@@ -271,12 +290,13 @@ export async function listPrintJobs(
       ),
     )
     .orderBy(desc(PrintJob.createdAt), desc(PrintJob.id));
-  const [files, queue] = await Promise.all([
+  const [files, queue, submissions] = await Promise.all([
     loadJobFiles(
       jobs.map((job) => job.id),
       db,
     ),
     loadQueueEstimates(ctx.session.hackathonId),
+    loadSubmissionWindow(ctx.session.hackathonId),
   ]);
   return {
     jobs: jobs.map((job) =>
@@ -285,6 +305,12 @@ export async function listPrintJobs(
     queue: {
       estimatedWaitMinutes: queue.waitMinutes,
       printMinutes: queue.settings.printMinutes,
+      submissions: {
+        closeAt: submissions.closeAt?.toISOString() ?? null,
+        enabled: submissions.enabled,
+        isOpen: submissions.isOpen,
+        openAt: submissions.openAt?.toISOString() ?? null,
+      },
       waitingCount: queue.waitingCount,
     },
   };
@@ -309,6 +335,7 @@ export async function submitPrintJob(
       tx,
       userId: ctx.session.userId,
       work: async () => {
+        await requirePrintingSubmissionsOpen(ctx.session.hackathonId, tx);
         const [job] = await tx
           .insert(PrintJob)
           .values({
