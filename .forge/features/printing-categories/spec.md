@@ -6,6 +6,6 @@ Checked-in hackers can categorize their own received or needs-clarification requ
 
 Submissions, category changes, cancellations, organizer status/note changes, and manual timing changes all send updates. Replayed and unchanged saves do not send again. The dashboard shows saved status/category/notes and only explicit organizer timing.
 
-Status emails use the existing Knight Hacks IX arrival email artwork, navy/purple palette, serif typography, and yellow action button. Include status, description, category, organizer note, and tracker link. Do not promise automatic print times. Keep non-IX emails event-neutral.
+Status and reminder emails use the existing Knight Hacks IX arrival email artwork, navy/purple palette, serif typography, and yellow action button. Prominently display the Shinies wordmark above the message heading and name Shinies as the printing partner in text, including the plain-text email. Include status, description, category, organizer note, and tracker link. Do not promise automatic print times. Keep non-IX emails event-neutral.
 
 The user selected sending one reminder after launch, not an organizer send button. Send one email per recipient with eligible uncategorized requests, linking to the category editor. Exclude printing, completed, cancelled, and categorized requests. Never reset status or submission time.

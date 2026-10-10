@@ -9,6 +9,7 @@ Phase: implementation and local validation complete; ready for template review. 
 - Reused the IX arrival email design and safe React Email compiler; no new dependencies. Every submit, category change, cancellation, organizer status/note change, and manual timing change sends an update. No-op saves and participant replays do not send twice.
 - Removed automatic equal-duration estimates from hacker notices and organizer summaries. Explicit organizer estimates remain available and are shown on the hacker dashboard.
 - User selected a one-time reminder after launch, then explicitly requested screenshots before any sends. Email previews supplied in chat. Live sending and deployment are on hold for template review. No production migration, deployment, or email sends have run.
+- Added the existing Shinies wordmark prominently above both email headings, plus partner attribution in HTML and plain text. A PNG export will be served by Blade; verify that asset is publicly available after deployment and before any send. Updated desktop/mobile previews were inspected; live sending remains on hold.
 - Reminder previews counts by default; live sending requires --send and configured production email mode. Atomic attempts prevent repeated/concurrent sends. Failures remain claimed for operator inspection because delivery may be ambiguous.
 
 ## Validation
@@ -21,6 +22,7 @@ Phase: implementation and local validation complete; ready for template review. 
 - Email previews rendered and inspected at desktop/mobile sizes using example data: output/printing-emails/. UI screenshots: output/printing-categories/ (local-only).
 - Local base database migration command failed on a pre-existing missing conflict index; browser tests used a fresh isolated disposable database instead. No existing local data was deleted.
 - Final root format, lint, typecheck, and changed React analysis passed after visual adjustments. Lint retains repository size/hook warnings, with no errors.
+- Shinies branding revision: reran all 116 email tests and root format/lint/typecheck successfully. Inspected both desktop email previews and the cancellation email at 320px; the local previews load the PNG from disk until Blade is deployed.
 - Stopped both local development servers and removed the isolated browser-test database. Production application builds and live deployment verification remain part of the pending rollout.
 
 ## Rollout pending template review

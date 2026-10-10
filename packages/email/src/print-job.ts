@@ -20,14 +20,15 @@ function renderPrintEmail(
   action: string,
 ) {
   const isIx = input.hackathonName === "Knight Hacks IX";
-  const source = `import { Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text } from "@react-email/components";
+  const source = `import { Body, Button, Container, Head, Heading, Html, Img, Link, Preview, Section, Text } from "@react-email/components";
 export default (
   <Html><Head /><Preview style={{ display: "none", maxHeight: 0, overflow: "hidden" }}>${literal(input.headline)}</Preview>
     <Body style={{ backgroundColor: "#071522", color: "#d7ead6", fontSize: 16, lineHeight: "26px", fontFamily: "Palatino Linotype, Book Antiqua, Palatino, Georgia, serif", margin: 0, padding: 0 }}>
       <Container style={{ backgroundColor: "#071522", margin: "0 auto", maxWidth: 660, width: "100%" }}>
         ${isIx ? '<Img alt="Knight Hacks IX at UCF, October 9-11, 2026" src="https://assets.knighthacks.org/khix/og-image.webp" width="660" style={{ display: "block", height: "auto", maxWidth: 660, width: "100%" }} />' : ""}
         <Section style={{ borderTop: "8px solid #8f63ff", padding: "28px 22px" }}>
-          <Text style={{ color: "#eaff8f", margin: "0 0 12px" }}>${literal(input.hackathonName + " · 3D printing")}</Text>
+          <Text style={{ color: "#eaff8f", margin: "0 0 12px" }}>${literal(input.hackathonName + (isIx ? " · 3D printing with Shinies" : " · 3D printing"))}</Text>
+          ${isIx ? '<Link href="https://www.shinies.co/" style={{ display: "inline-block", margin: "0 0 24px" }}><Img alt="Shinies Props" src="https://blade.knighthacks.org/sponsors/shinies-email.png" width="240" style={{ display: "block", height: "auto", maxWidth: "100%", width: 240 }} /></Link>' : ""}
           <Heading style={{ color: "#fff8d6", fontSize: 26, lineHeight: "32px", margin: "0 0 20px" }}>${literal(input.headline)}</Heading>
           <Text style={{ color: "#d7ead6" }}>${literal(`Hi ${input.name},`)}</Text>
           ${content}
