@@ -196,9 +196,15 @@ export async function uploadPrintFile(
     hackathonId: ctx.session.hackathonId,
     hackerAttendeeId: application.attendeeId,
   });
-  const storageAttempt = { started: false };
   let pruned: string[] = [];
   try {
+    // Slow storage must not hold a database connection. Quotas and staging
+    // remain atomic below; a rejected upload is removed by the catch block.
+    await putPrintFileObject({
+      bytes: input.bytes,
+      contentType: check.type.mimeType,
+      objectName,
+    });
     await db.transaction(async (tx) => {
       // A database lock works across server instances; fail fast on overlap.
       const lock = await tx.execute<{ acquired: boolean }>(
@@ -237,12 +243,6 @@ export async function uploadPrintFile(
           { trpcCode: "TOO_MANY_REQUESTS" },
         );
       }
-      storageAttempt.started = true;
-      await putPrintFileObject({
-        bytes: input.bytes,
-        contentType: check.type.mimeType,
-        objectName,
-      });
       await tx.insert(PrintJobFile).values({
         contentType: check.type.mimeType,
         fileName,
@@ -254,7 +254,7 @@ export async function uploadPrintFile(
       });
     });
   } catch (error) {
-    if (storageAttempt.started) await removePrintFileObjects([objectName]);
+    await removePrintFileObjects([objectName]);
     throw error;
   }
   await removePrintFileObjects(pruned);
