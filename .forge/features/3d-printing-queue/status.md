@@ -314,3 +314,29 @@ Phase: production restored and repository fix validated on `blade/fix-printing-r
 - The authenticated live page now renders the printing queue with 20 active jobs and 24 total. Submissions remain closed by the migration's intended default; an organizer can open printing with the existing switch. The restored-page screenshot is local only and excludes participant rows.
 - The full database suite passes: 159 tests in 30 files. Root `pnpm format`, `pnpm lint`, and `pnpm typecheck` pass (existing lint warnings remain). Scoped formatting and `git diff --check` also pass. React analysis is not applicable because no React files changed.
 - The user explicitly requested a force push to `main`. Commit only the lineage test fix and this status update, then publish with an explicit force-with-lease against the inspected remote main commit. No PR is required for this requested direct push.
+
+## Hacker printing opens-soon notice — 2026-10-10
+
+Phase: implemented and validated on `khix/printing-opens-soon`; publishing through the user-requested direct-main workflow.
+
+- User requested an evident closed state telling hackers printing will open soon
+  and to check back. The previous notice sat below sponsor content while the
+  empty state still invited a new request.
+- Move the availability notice above the sponsor, emphasize confirmed closure
+  with existing dashboard tokens, and show "Printing opens soon" plus "New
+  requests are currently closed. Please check back soon." Existing print
+  tracking stays available. Update the empty-state instruction while closed.
+- Runtime scope: KH IX printing component and its CSS module. Update the existing
+  portal browser test hosted in Blade's test harness. No Blade runtime, shared
+  API, schema, permission, upload, or polling changes.
+- Validation: 192 KH IX tests and both portal browser tests pass. At 1440px and
+  320px, the full notice is in the initial viewport, New print is disabled while
+  closed, reopening restores the open message and action, and closing an open
+  draft preserves it while disabling upload/submission. Mock SDK responses were
+  used; the tests do not change production availability.
+- Settled desktop/mobile screenshots were inspected, including text wrapping
+  and the removed empty-state invitation. Local artifacts:
+  `output/playwright/printing-opens-soon/{desktop,mobile}.png`.
+- Root `pnpm format`, `pnpm lint`, and `pnpm typecheck` pass (existing warnings
+  remain); `pnpm analyze:react:changed` reports zero failures. Final scoped
+  test-file lint, feature-document formatting, and `git diff --check` pass.

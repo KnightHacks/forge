@@ -20,6 +20,15 @@ Hackers also need to know roughly when a print will be ready, so they can plan
 their time instead of waiting at the printer table. A print takes about an
 hour, so the page shows how many jobs are ahead and an estimated ready time.
 
+### Closed availability message — 2026-10-10
+
+When organizers close new requests, the hacker printing page prominently says
+"Printing opens soon" and "New requests are currently closed. Please check back
+soon." Show this above the sponsor section, keep existing print tracking
+available, and avoid inviting hackers to create a request in the empty state.
+The notice follows the existing open/closed control and promises no specific
+opening time.
+
 ## Users and actors
 
 - **Checked-in hacker:** a participant whose application for the current

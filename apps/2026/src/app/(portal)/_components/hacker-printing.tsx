@@ -82,6 +82,7 @@ export function HackerPrinting() {
 function PrintingWorkshop({ timeZone }: { timeZone: string }) {
   const flow = useHackerPrintingFlow();
   const queue = flow.jobsQuery.data?.queue;
+  const isClosed = queue?.isOpen === false && !flow.jobsQuery.isError;
   const [view, setView] = useState("active");
   const jobs = [...(flow.jobsQuery.data?.jobs ?? [])].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -102,10 +103,61 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
       <header className={styles.header}>
         <div>
           <h1 id="khix-printing-title">3D Printing</h1>
-          <p>Send your model, track its progress and collect your print.</p>
+          <p>Track your 3D print requests, from model to pickup.</p>
         </div>
         <NewPrintJobForm flow={flow} onSubmitted={() => setView("active")} />
       </header>
+
+      <aside
+        aria-label="Printing availability"
+        className={styles.notice}
+        data-closed={isClosed}
+      >
+        <Clock3 aria-hidden="true" className={styles.noticeIcon} />
+        <div>
+          <p role="status">
+            <strong>
+              {flow.jobsQuery.isError
+                ? "Printing availability could not be loaded."
+                : queue
+                  ? queue.isOpen
+                    ? "Printing is open"
+                    : "Printing opens soon"
+                  : "Checking printing availability…"}
+            </strong>
+          </p>
+          {isClosed ? (
+            <p>
+              New requests are currently closed. Please check back soon. You can
+              still track your existing prints below.
+            </p>
+          ) : null}
+          <p>
+            {queue ? (
+              <>
+                <strong>
+                  {queue.waitingCount}{" "}
+                  {queue.waitingCount === 1 ? "job" : "jobs"} in the queue
+                </strong>
+                {queue.isOpen ? (
+                  <>
+                    <span className={styles.noticeDivider}>·</span>A new print:{" "}
+                    <strong>
+                      {formatDuration(queue.estimatedWaitMinutes)}
+                    </strong>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              "Checking the print queue…"
+            )}
+          </p>
+          <p className={styles.hint}>
+            Each print takes {formatPrintTime(queue?.printMinutes ?? 60)}. First
+            come, first served; ready times may change.
+          </p>
+        </div>
+      </aside>
 
       <aside aria-label="Our printing sponsor" className={styles.sponsor}>
         <div className={styles.sponsorIdentity}>
@@ -137,53 +189,6 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
               <ArrowUpRight aria-hidden="true" size={16} />
             </a>
           </div>
-        </div>
-      </aside>
-
-      <aside aria-label="How printing works" className={styles.notice}>
-        <Clock3 aria-hidden="true" className={styles.noticeIcon} />
-        <div>
-          <p role="status">
-            <strong>
-              {flow.jobsQuery.isError
-                ? "Printing availability could not be loaded."
-                : queue
-                  ? queue.isOpen
-                    ? "Printing is open"
-                    : "Printing is currently closed"
-                  : "Checking printing availability…"}
-            </strong>
-          </p>
-          {queue && !queue.isOpen ? (
-            <p className={styles.hint}>
-              New requests are paused until the printer is on site. You can
-              still track your existing prints here.
-            </p>
-          ) : null}
-          <p>
-            {queue ? (
-              <>
-                <strong>
-                  {queue.waitingCount}{" "}
-                  {queue.waitingCount === 1 ? "job" : "jobs"} in the queue
-                </strong>
-                {queue.isOpen ? (
-                  <>
-                    <span className={styles.noticeDivider}>·</span>A new print:{" "}
-                    <strong>
-                      {formatDuration(queue.estimatedWaitMinutes)}
-                    </strong>
-                  </>
-                ) : null}
-              </>
-            ) : (
-              "Checking the print queue…"
-            )}
-          </p>
-          <p className={styles.hint}>
-            Each print takes {formatPrintTime(queue?.printMinutes ?? 60)}. First
-            come, first served; ready times may change.
-          </p>
         </div>
       </aside>
 
@@ -223,12 +228,16 @@ function PrintingWorkshop({ timeZone }: { timeZone: string }) {
             <Box aria-hidden="true" size={32} />
             <h3>
               {view === "active"
-                ? "Room for your next idea."
+                ? isClosed
+                  ? "No prints in progress."
+                  : "Room for your next idea."
                 : "Your finished prints live here."}
             </h3>
             <p>
               {view === "active"
-                ? "Choose New print to send your model to the Shinies team."
+                ? isClosed
+                  ? "Your requests will appear here once printing opens."
+                  : "Choose New print to send your model to the Shinies team."
                 : "Picked-up and cancelled requests stay here for reference."}
             </p>
           </div>

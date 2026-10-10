@@ -143,15 +143,30 @@ test.describe("printing portal availability", () => {
         exact: true,
       });
       await expect(
-        page.getByText("Printing is currently closed", { exact: true }),
+        page.getByText("Printing opens soon", { exact: true }),
       ).toBeVisible();
+      const availability = page.getByRole("complementary", {
+        name: "Printing availability",
+      });
+      await expect(availability).toContainText(
+        "New requests are currently closed. Please check back soon.",
+      );
+      await expect(availability).toBeInViewport({ ratio: 1 });
+      await expect(
+        page.getByText(
+          "Choose New print to send your model to the Shinies team.",
+        ),
+      ).toHaveCount(0);
       await expect(newPrint).toBeDisabled();
       await page.screenshot({
+        animations: "disabled",
         path: testInfo.outputPath("hacker-printing-closed.png"),
         fullPage: true,
       });
       isOpen = true;
       await expect(newPrint).toBeEnabled({ timeout: 25_000 });
+      await expect(availability).toContainText("Printing is open");
+      await expect(availability).not.toContainText("Printing opens soon");
       await newPrint.click();
       await page.getByLabel("What should we print?").fill("A small bracket");
       await page.locator('input[type="file"]').setInputFiles({
@@ -173,6 +188,7 @@ test.describe("printing portal availability", () => {
         "A small bracket",
       );
       await page.screenshot({
+        animations: "disabled",
         path: testInfo.outputPath("hacker-printing-draft-paused.png"),
         fullPage: true,
       });

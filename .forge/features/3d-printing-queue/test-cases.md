@@ -23,6 +23,17 @@ KH IX surfaces. Excluded: real Discord and Listmonk delivery in automated tests
 
 ## Test cases
 
+### Closed availability visibility — 2026-10-10
+
+- At desktop and 320px widths, a checked-in hacker sees "Printing opens soon"
+  and "New requests are currently closed. Please check back soon." in the
+  initial viewport, above sponsor content. New print remains disabled.
+- The empty active collection does not instruct the hacker to choose New print.
+- When the availability query changes to open, the notice says "Printing is
+  open", removes the opens-soon message, and enables New print.
+- Closing while a draft is open still disables submission and file selection
+  while preserving the draft, as covered by the existing portal browser test.
+
 ### TC-001: Tab unlocks at check-in
 
 Setup:

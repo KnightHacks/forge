@@ -136,6 +136,18 @@
   font-size: 0.9375rem;
   line-height: 1.65;
 }
+.notice[data-closed="true"] {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--print-accent);
+  border-radius: 0 var(--khix-button-radius) var(--khix-button-radius) 0;
+  background: var(--print-surface);
+}
+.notice[data-closed="true"] [role="status"] {
+  margin-bottom: 0.35rem;
+  color: var(--print-accent);
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
 .noticeIcon {
   width: 20px;
   height: 20px;

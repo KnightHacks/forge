@@ -315,6 +315,12 @@ Would this require a developer change next year?
 
 ## React and frontend constraints
 
+- Closed availability is a prominent, token-styled notice immediately below the
+  KH IX printing header and before sponsor content. Use the existing query's
+  `queue.isOpen` value; loading/errors remain distinct from confirmed closure.
+  Update empty-state copy to match closure. This is presentation only, with no
+  API, permission, upload, schema, or polling changes.
+
 - The Blade page is a server component. It gates access, reads the list,
   counts, configuration, and hackathons, and passes them as props. No
   `"use client"` on the page.
