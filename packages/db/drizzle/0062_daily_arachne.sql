@@ -1,0 +1,1 @@
+ALTER TABLE "knight_hacks_printing_configuration" ADD COLUMN "is_open" boolean DEFAULT false NOT NULL;

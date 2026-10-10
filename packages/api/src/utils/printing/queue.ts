@@ -14,9 +14,10 @@ import { estimateReadyTimes, estimateWaitMinutes } from "./estimate";
 export async function loadEstimateSettings(
   hackathonId: string,
   executor: WriteDb = db,
-): Promise<PrintEstimateSettings> {
+): Promise<PrintEstimateSettings & { isOpen: boolean }> {
   const [row] = await executor
     .select({
+      isOpen: PrintingConfiguration.isOpen,
       printMinutes: PrintingConfiguration.printMinutes,
       printerCount: PrintingConfiguration.printerCount,
     })
@@ -25,6 +26,7 @@ export async function loadEstimateSettings(
     .limit(1);
   return (
     row ?? {
+      isOpen: false,
       printMinutes: PRINTING.DEFAULT_PRINT_MINUTES,
       printerCount: PRINTING.DEFAULT_PRINTER_COUNT,
     }

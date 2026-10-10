@@ -55,7 +55,10 @@ export function NewPrintJobForm({
   // While a job is being sent the file list is frozen: adding or removing a
   // file then would race the submit that already holds the list.
   const submitting = flow.submitMutation.isPending;
+  const isOpen =
+    flow.jobsQuery.data?.queue.isOpen === true && !flow.jobsQuery.isError;
   const canSubmit =
+    isOpen &&
     description.trim() !== "" &&
     uploadedIds.length > 0 &&
     !uploading &&
@@ -69,6 +72,7 @@ export function NewPrintJobForm({
   }
 
   function addFiles(list: FileList) {
+    if (!isOpen || submitting) return;
     const room = PRINTING.MAX_PRINT_JOB_FILES - files.length;
     const picked = Array.from(list).slice(0, Math.max(room, 0));
     if (list.length > picked.length) {
@@ -105,6 +109,7 @@ export function NewPrintJobForm({
   }
 
   async function submit() {
+    if (!canSubmit) return;
     try {
       const job = await flow.submit({
         description: description.trim(),
@@ -132,7 +137,7 @@ export function NewPrintJobForm({
       }}
     >
       <DialogTrigger asChild>
-        <Button className={styles.primaryButton}>
+        <Button className={styles.primaryButton} disabled={!isOpen}>
           <Plus aria-hidden="true" size={18} />
           New print
         </Button>
@@ -156,6 +161,12 @@ export function NewPrintJobForm({
             void submit();
           }}
         >
+          {!isOpen ? (
+            <p className={styles.fileWarning} role="alert">
+              Printing is currently unavailable. You can send this request when
+              printing reopens.
+            </p>
+          ) : null}
           <p className={styles.formStep}>
             01 <span>Tell us about your print</span>
           </p>
@@ -196,13 +207,16 @@ export function NewPrintJobForm({
               </p>
             ) : null}
             {files.length < PRINTING.MAX_PRINT_JOB_FILES ? (
-              <label aria-disabled={submitting} className={styles.picker}>
+              <label
+                aria-disabled={submitting || !isOpen}
+                className={styles.picker}
+              >
                 <FileUp aria-hidden="true" className="size-4" />
                 Add files
                 <input
                   accept={uploadAccept(PRINT_FILE_UPLOAD_POLICY)}
                   className="sr-only"
-                  disabled={submitting}
+                  disabled={submitting || !isOpen}
                   multiple
                   onChange={(event) => {
                     if (event.target.files) addFiles(event.target.files);

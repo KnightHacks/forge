@@ -292,7 +292,11 @@ describe.skipIf(!canRunDatabaseTests())("print job schema", () => {
       .insert(schema.PrintingConfiguration)
       .values({ hackathonId: hackathon })
       .returning();
-    expect(config).toMatchObject({ printMinutes: 60, printerCount: 1 });
+    expect(config).toMatchObject({
+      isOpen: false,
+      printMinutes: 60,
+      printerCount: 1,
+    });
 
     for (const values of [
       { printMinutes: 4 },

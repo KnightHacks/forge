@@ -424,6 +424,7 @@ export function useHackerPrintJobs(options: HackerSdkQueryOptions = {}) {
       canLoadCheckedInParticipantData(dashboard.data?.application?.status),
     queryFn: () => client.listPrintJobs(),
     queryKey: hackerSdkQueryKeys.printJobs(portalKey),
+    refetchInterval: 15_000,
   });
 }
 

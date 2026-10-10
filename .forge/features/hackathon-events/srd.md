@@ -537,6 +537,11 @@ Would this require a developer change next year?
 
 ## React / frontend constraints
 
+- Hack Event Check-in passes its event count as `ResponsiveComboBox.maxResults`
+  so every loaded event remains reachable by scrolling or searching. The
+  optional prop defaults to 20 for existing consumers; popover and drawer
+  retain their bounded scroll areas. No API or persisted-data changes are needed.
+
 - Add separate server-first pages `/admin/hackathon-events` and
   `/admin/hackathon-check-in`, each with independent auth, permission redirects,
   loading/error boundaries, metadata, and client roots.

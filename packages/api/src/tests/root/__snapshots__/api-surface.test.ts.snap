@@ -330,6 +330,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "printing.list",
   "printing.listDiscordChannels",
   "printing.listHackathons",
+  "printing.setAvailability",
   "printing.setChannel",
   "printing.setEstimateSettings",
   "printing.setEstimatedReadyAt",

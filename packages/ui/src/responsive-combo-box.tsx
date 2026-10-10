@@ -39,6 +39,8 @@ interface ResponsiveComboBoxProps<T> {
   inputPlaceholder?: string;
   isDisabled?: boolean;
   isLoading?: boolean;
+  /** Defaults to 20; use the item count to allow browsing the complete list. */
+  maxResults?: number;
   triggerClassName?: string;
   triggerId?: string;
   value?: string | null;
@@ -165,6 +167,7 @@ export function ResponsiveComboBox<T>({
   inputPlaceholder = "Filter items...",
   isDisabled,
   isLoading = false,
+  maxResults = MAX_SEARCH_RESULTS,
   triggerClassName,
   triggerId,
   value,
@@ -234,6 +237,7 @@ export function ResponsiveComboBox<T>({
             filterItems={filterItems}
             inputPlaceholder={inputPlaceholder}
             isLoading={isLoading}
+            maxResults={maxResults}
           />
         </PopoverContent>
       </Popover>
@@ -276,6 +280,7 @@ export function ResponsiveComboBox<T>({
             filterItems={filterItems}
             inputPlaceholder={inputPlaceholder}
             isLoading={isLoading}
+            maxResults={maxResults}
           />
         </div>
       </DrawerContent>
@@ -295,6 +300,7 @@ function ItemList<T>({
   filterItems,
   inputPlaceholder,
   isLoading,
+  maxResults,
 }: {
   items: readonly T[];
   setOpen: (open: boolean) => void;
@@ -307,6 +313,7 @@ function ItemList<T>({
   filterItems: boolean;
   inputPlaceholder: string;
   isLoading: boolean;
+  maxResults: number;
 }) {
   const [inputValue, setInputValue] = React.useState("");
 
@@ -314,7 +321,7 @@ function ItemList<T>({
     const normalizedInputValue = inputValue.trim();
 
     if (!filterItems || !normalizedInputValue) {
-      return items.slice(0, MAX_SEARCH_RESULTS);
+      return items.slice(0, maxResults);
     }
 
     return items
@@ -333,9 +340,9 @@ function ItemList<T>({
         } => result.score !== null,
       )
       .sort((a, b) => a.score - b.score || a.index - b.index)
-      .slice(0, MAX_SEARCH_RESULTS)
+      .slice(0, maxResults)
       .map((result) => result.item);
-  }, [filterItems, getItemSearchValue, inputValue, items]);
+  }, [filterItems, getItemSearchValue, inputValue, items, maxResults]);
 
   return (
     <Command shouldFilter={false}>

@@ -67,6 +67,10 @@ export const printingSetChannelInputSchema = z
   })
   .strict();
 
+export const printingSetAvailabilityInputSchema = z
+  .object({ hackathonId: uuidSchema, isOpen: z.boolean() })
+  .strict();
+
 export const printingSetEstimateSettingsInputSchema = z
   .object({
     hackathonId: uuidSchema,
