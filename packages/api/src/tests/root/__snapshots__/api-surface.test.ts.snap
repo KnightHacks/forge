@@ -334,6 +334,7 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "printing.setChannel",
   "printing.setEstimateSettings",
   "printing.setEstimatedReadyAt",
+  "printing.updateCategory",
   "printing.updateStatus",
   "profilePicture.getProfilePicture",
   "profilePicture.saveMemberProfilePicture",
