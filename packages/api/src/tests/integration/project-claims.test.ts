@@ -451,6 +451,106 @@ describe.skipIf(!canRunDatabaseTests())("project claims", () => {
     ).toEqual(["Walk-up sponsor"]);
     expect(JSON.stringify(itinerary)).not.toContain("Remote sponsor");
   });
+  it("shows linked incomplete evaluations as attended before the appointment time", async () => {
+    await seedClaim();
+    await client
+      .update(schema.HackathonJudgingConfiguration)
+      .set({ hackerSchedulePublished: true })
+      .where(eq(schema.HackathonJudgingConfiguration.hackathonId, event));
+    const parentChallengeId = randomUUID();
+    const childChallengeId = randomUUID();
+    const roomId = randomUUID();
+    const scheduleId = randomUUID();
+    const appointmentId = randomUUID();
+    const evaluationId = randomUUID();
+    await client.insert(schema.ProjectChallenge).values([
+      {
+        id: parentChallengeId,
+        hackathonId: event,
+        label: "NVIDIA",
+        isScheduled: true,
+      },
+      {
+        id: childChallengeId,
+        hackathonId: event,
+        label: "Autonomous driving",
+        parentId: parentChallengeId,
+        isScheduled: true,
+      },
+    ]);
+    await client.insert(schema.ProjectToChallenge).values([
+      {
+        projectId: project,
+        challengeId: parentChallengeId,
+        hackathonId: event,
+      },
+      {
+        projectId: project,
+        challengeId: childChallengeId,
+        hackathonId: event,
+      },
+    ]);
+    await client.insert(schema.JudgingRoom).values({
+      id: roomId,
+      hackathonId: event,
+      challengeId: parentChallengeId,
+      name: "NVIDIA room",
+    });
+    await client.insert(schema.JudgingSchedule).values({
+      id: scheduleId,
+      hackathonId: event,
+      startsAt: new Date("2098-01-01T13:00:00Z"),
+      endsAt: new Date("2098-01-01T14:00:00Z"),
+      setupMinutes: 5,
+      judgingMinutes: 10,
+      teardownMinutes: 5,
+      sameBuildingBreakMinutes: 5,
+      differentBuildingBreakMinutes: 5,
+      savedByUserId: required(users[0]),
+    });
+    await client.insert(schema.JudgingAppointment).values({
+      id: appointmentId,
+      scheduleId,
+      hackathonId: event,
+      projectId: project,
+      challengeId: parentChallengeId,
+      roomId,
+      startsAt: new Date("2098-01-01T13:00:00Z"),
+      deadlineAt: new Date("2098-01-01T13:10:00Z"),
+      endsAt: new Date("2098-01-01T13:15:00Z"),
+    });
+    const judgeId = randomUUID();
+    await client.insert(schema.Judge).values({
+      id: judgeId,
+      hackathonId: event,
+      kind: "member",
+      userId: required(users[3]),
+      displayName: "Incomplete judge",
+    });
+    await client.insert(schema.ProjectEvaluation).values({
+      id: evaluationId,
+      appointmentId,
+      hackathonId: event,
+      projectId: project,
+      challengeId: childChallengeId,
+      judgeId,
+      isComplete: false,
+    });
+
+    expect(
+      (await reads.hackerJudging(required(users[0]), event)).appointments[0]
+        ?.status,
+    ).toBe("incomplete");
+
+    await client
+      .update(schema.ProjectEvaluation)
+      .set({ appointmentId: null, challengeId: parentChallengeId })
+      .where(eq(schema.ProjectEvaluation.id, evaluationId));
+    expect(
+      (await reads.hackerJudging(required(users[0]), event)).appointments[0]
+        ?.status,
+    ).toBe("incomplete");
+  });
   it("TC-004/015: exposes only anonymous written feedback and hides it in emergency mode", async () => {
     await seedClaim();
     await client

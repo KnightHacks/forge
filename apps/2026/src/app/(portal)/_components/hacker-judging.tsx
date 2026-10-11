@@ -42,7 +42,7 @@ import dashboardStyles from "./khix-dashboard.module.css";
 const statusLabels = {
   future: "Upcoming",
   pending: "In progress",
-  incomplete: "Feedback pending",
+  incomplete: "Judged: Feedback Pending",
   missed: "Missed appointment",
   complete: "Judged",
 };
@@ -338,7 +338,8 @@ export function HackerJudging({ token }: { token: string | null }) {
                             </div>
                             <div className={styles.destination}>
                               <div className={styles.status}>
-                                {appointment.status === "complete" && (
+                                {(appointment.status === "complete" ||
+                                  appointment.status === "incomplete") && (
                                   <Check size={14} />
                                 )}{" "}
                                 {statusLabels[appointment.status]}

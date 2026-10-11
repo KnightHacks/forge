@@ -27,6 +27,17 @@ export function appointmentStatus(
   return "future" as const;
 }
 
+export function evaluationsForAppointment<
+  T extends { appointmentId: string | null; challengeId: string },
+>(appointment: { id: string; challengeId: string }, evaluations: T[]) {
+  return evaluations.filter(
+    (evaluation) =>
+      evaluation.appointmentId === appointment.id ||
+      (!evaluation.appointmentId &&
+        evaluation.challengeId === appointment.challengeId),
+  );
+}
+
 export async function readSavedSchedule(
   tx: WriteDb,
   hackathonId: string,

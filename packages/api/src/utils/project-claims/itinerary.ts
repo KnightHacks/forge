@@ -20,7 +20,10 @@ import {
   ProjectToChallenge,
 } from "@forge/db/schemas/knight-hacks";
 
-import { appointmentStatus } from "../judging-schedule/appointments";
+import {
+  appointmentStatus,
+  evaluationsForAppointment,
+} from "../judging-schedule/appointments";
 import { reconcileExpiredJudgingDrafts } from "../judging-schedule/reconcile";
 import {
   claimMemberDto,
@@ -183,6 +186,7 @@ export async function hackerJudging(
     db
       .select({
         id: ProjectEvaluation.id,
+        appointmentId: ProjectEvaluation.appointmentId,
         challengeId: ProjectEvaluation.challengeId,
         isComplete: ProjectEvaluation.isComplete,
         kind: Judge.kind,
@@ -226,9 +230,7 @@ export async function hackerJudging(
       endsAt: appointment.endsAt.toISOString(),
       status: appointmentStatus(
         appointment,
-        evaluations.filter(
-          (evaluation) => evaluation.challengeId === appointment.challengeId,
-        ),
+        evaluationsForAppointment(appointment, evaluations),
         now,
       ),
     }));
