@@ -441,9 +441,8 @@ export function JudgeProjectWorkspace({
                 {scheduleQuery.data?.scheduleExists &&
                 !scheduleQuery.data.untimed ? (
                   <p className="mb-3 text-sm text-muted-foreground">
-                    Judge opens only for the project currently booked in your
-                    room, before its scoring deadline. Past submissions can be
-                    edited during downtime.
+                    Judge projects during their appointment, or return to past
+                    appointments in your room.
                   </p>
                 ) : null}
                 <ProjectDirectory
@@ -461,20 +460,15 @@ export function JudgeProjectWorkspace({
                       !scheduleQuery.data.untimed &&
                       !(
                         scheduleQuery.data.currentAppointment?.projectId ===
-                          project.id &&
-                        scheduleQuery.data.currentAppointment.deadlineAt >
-                          scheduleNow
-                      );
-                    const editLocked =
-                      !!scheduleQuery.data &&
-                      submitted &&
-                      scheduleQuery.data.editLockedEvaluationIds.some((id) =>
-                        submissions.some(
-                          (submission) =>
-                            submission.id === id &&
-                            submission.projectId === project.id &&
-                            submission.challengeId === workspace.challengeId,
-                        ),
+                          project.id ||
+                        scheduleQuery.data.appointments.some(
+                          (appointment) =>
+                            appointment.projectId === project.id &&
+                            appointment.challengeId === workspace.challengeId &&
+                            appointment.roomId ===
+                              scheduleQuery.data.activeRoomId &&
+                            appointment.endsAt <= scheduleNow,
+                        )
                       );
                     const disabledReason = readOnly
                       ? "Historical events are read-only."
@@ -482,13 +476,11 @@ export function JudgeProjectWorkspace({
                         ? "Judging is not open."
                         : scheduleUnavailable
                           ? "Checking your room schedule."
-                          : editLocked
-                            ? "Wait until downtime to edit this submission."
-                            : appointmentMismatch
-                              ? scheduleQuery.data.activeRoomId
-                                ? "This project is not in your room's current time slot."
-                                : "Choose a judging room before scoring scheduled projects."
-                              : null;
+                          : appointmentMismatch
+                            ? scheduleQuery.data.activeRoomId
+                              ? "This project is not in your room's current time slot."
+                              : "Choose a judging room before scoring scheduled projects."
+                            : null;
                     return (
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
@@ -641,9 +633,6 @@ export function JudgeProjectWorkspace({
                   <TabsContent className="mt-4" value="submissions">
                     <JudgeSubmissions
                       submissions={submissions}
-                      lockedEvaluationIds={
-                        scheduleQuery.data?.editLockedEvaluationIds
-                      }
                       workspace={workspace}
                     />
                   </TabsContent>

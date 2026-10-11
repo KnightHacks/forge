@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { RouterOutputs } from "@forge/api";
 
@@ -13,6 +13,9 @@ import { ProjectDirectory } from "~/app/_components/projects/project-directory";
 
 const navigation = vi.hoisted(() => ({
   announcementData: [] as RouterOutputs["judging"]["listAnnouncements"],
+  scheduleData: undefined as
+    | RouterOutputs["judging"]["listJudgeSchedule"]
+    | undefined,
   refresh: vi.fn(),
   replace: vi.fn(),
   setAnnouncements: vi.fn(),
@@ -60,15 +63,17 @@ vi.mock("~/trpc/react", () => ({
     judging: {
       listJudgeSchedule: {
         useQuery: () => ({
-          data: {
-            serverNow: new Date("2026-09-07T16:00:00Z"),
-            scheduleExists: false,
-            activeRoomId: null,
-            untimed: true,
-            currentAppointment: null,
-            appointments: [],
-            editLockedEvaluationIds: [],
-          },
+          data:
+            navigation.scheduleData ??
+            ({
+              serverNow: new Date("2026-09-07T16:00:00Z"),
+              scheduleExists: false,
+              activeRoomId: null,
+              untimed: true,
+              currentAppointment: null,
+              appointments: [],
+              editLockedEvaluationIds: [],
+            } satisfies RouterOutputs["judging"]["listJudgeSchedule"]),
         }),
       },
       getEvaluationEditor: {
@@ -180,6 +185,10 @@ const adminProject = {
   ],
   universities: ["University of Central Florida"],
 } satisfies AdminProject;
+
+afterEach(() => {
+  navigation.scheduleData = undefined;
+});
 
 describe("judge project privacy", () => {
   it.each([false, true])(
@@ -506,6 +515,119 @@ describe("judge project directory", () => {
     expect(
       screen.getByRole("option", { name: "Knight Hacks VIII" }),
     ).toBeInTheDocument();
+  });
+
+  it("allows past room appointments while keeping future appointments locked", () => {
+    const roomId = "00000000-0000-4000-8000-000000000006";
+    const futureProject = {
+      ...judgeProject,
+      id: "00000000-0000-4000-8000-000000000003",
+      title: "Future Forge",
+    } satisfies JudgeProject;
+    navigation.scheduleData = {
+      serverNow: new Date("2026-09-07T16:00:00Z"),
+      scheduleExists: true,
+      activeRoomId: roomId,
+      untimed: false,
+      currentAppointment: null,
+      appointments: [
+        {
+          id: "past-appointment",
+          projectId: judgeProject.id,
+          challengeId: "challenge-1",
+          roomId,
+          startsAt: new Date("2026-09-07T15:40:00Z"),
+          deadlineAt: new Date("2026-09-07T15:48:00Z"),
+          endsAt: new Date("2026-09-07T15:50:00Z"),
+          roomName: "Sponsor suite A",
+          buildingName: "BA1",
+        },
+        {
+          id: "future-appointment",
+          projectId: futureProject.id,
+          challengeId: "challenge-1",
+          roomId,
+          startsAt: new Date("2026-09-07T16:10:00Z"),
+          deadlineAt: new Date("2026-09-07T16:18:00Z"),
+          endsAt: new Date("2026-09-07T16:20:00Z"),
+          roomName: "Sponsor suite A",
+          buildingName: "BA1",
+        },
+      ],
+      editLockedEvaluationIds: [],
+    };
+    render(
+      <JudgeProjectWorkspace
+        data={{
+          challenges: judgeProject.challenges,
+          hackathon: {
+            displayName: "Knight Hacks IX",
+            endDate: new Date("2026-10-01T00:00:00.000Z"),
+            id: judgeProject.hackathonId,
+            startDate: new Date("2026-09-01T00:00:00.000Z"),
+            timezone: "America/New_York",
+          },
+          page: 1,
+          pageSize: 25,
+          projects: [judgeProject, futureProject],
+          totalCount: 2,
+        }}
+        hackathons={[]}
+        input={{
+          challengeIds: [],
+          direction: "asc",
+          page: 1,
+          pageSize: 25,
+          query: "",
+          sort: "title",
+        }}
+        isOfficer={false}
+        judgingContext={{
+          activeRoomId: roomId,
+          announcements: [],
+          displayName: "Morgan Judge",
+          discordUserId: "123456789012345678",
+          hackathon: {
+            displayName: "Knight Hacks IX",
+            id: judgeProject.hackathonId,
+          },
+          isOfficer: false,
+          kind: "member",
+          rooms: [
+            {
+              challengeId: "challenge-1",
+              challengeLabel: "General",
+              id: roomId,
+              name: "Sponsor suite A",
+              buildingId: null,
+              buildingName: "BA1",
+            },
+          ],
+          userId: "00000000-0000-4000-8000-000000000007",
+        }}
+        workspace={{
+          challengeId: "challenge-1",
+          displayAllResults: false,
+          hackathonId: judgeProject.hackathonId,
+          principalKind: "member",
+          rubric: [],
+          state: "open",
+        }}
+      />,
+    );
+
+    expect(
+      within(screen.getByRole("row", { name: /Signal Forge/ })).getByRole(
+        "button",
+        { name: "Judge" },
+      ),
+    ).toBeEnabled();
+    expect(
+      within(screen.getByRole("row", { name: /Future Forge/ })).getByRole(
+        "button",
+        { name: "Judge" },
+      ),
+    ).toBeDisabled();
   });
 
   it("offers child filters within a fixed guest parent scope", () => {
@@ -1102,7 +1224,7 @@ describe("evaluation feedback visibility", () => {
     ).toBeInTheDocument();
   });
 
-  it("locks every submission edit control during a booking and restores it during downtime", () => {
+  it("keeps submission edit controls available while judging is open", () => {
     const submission = {
       id: "evaluation-1",
       challengeId: "challenge-1",
@@ -1128,30 +1250,15 @@ describe("evaluation feedback visibility", () => {
       rubric: [],
       displayAllResults: false,
     } satisfies RouterOutputs["judging"]["getWorkspace"];
-    const { rerender } = render(
-      <JudgeSubmissions
-        submissions={[submission]}
-        workspace={workspace}
-        lockedEvaluationIds={[submission.id]}
-      />,
+    render(
+      <JudgeSubmissions submissions={[submission]} workspace={workspace} />,
     );
     const editControls = screen.getAllByRole("button", {
       name: "Edit",
     });
     expect(editControls).toHaveLength(2);
-    for (const button of editControls) expect(button).toBeDisabled();
-    expect(screen.getAllByText("Wait until downtime to edit")).toHaveLength(2);
-    rerender(
-      <JudgeSubmissions
-        submissions={[submission]}
-        workspace={workspace}
-        lockedEvaluationIds={[]}
-      />,
-    );
-    for (const button of screen.getAllByRole("button", {
-      name: "Edit",
-    }))
-      expect(button).toBeEnabled();
+    for (const button of editControls) expect(button).toBeEnabled();
+    expect(screen.queryByText("Wait until downtime to edit")).toBeNull();
   });
 
   it("prefills and edits a saved guest evaluation", async () => {

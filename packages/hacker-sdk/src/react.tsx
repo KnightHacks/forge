@@ -340,7 +340,7 @@ export function useHackerJudging(projectId?: string) {
     enabled: canLoadCheckedInParticipantData(
       dashboard.data?.application?.status,
     ),
-    refetchInterval: 120_000,
+    refetchInterval: 30_000,
     staleTime: 0,
     gcTime: 0,
   });

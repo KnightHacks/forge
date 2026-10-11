@@ -9,7 +9,6 @@ import {
   JudgingRoomPresence,
   JudgingSchedule,
   ProjectChallenge,
-  ProjectEvaluation,
 } from "@forge/db/schemas/knight-hacks";
 import { judgingScheduleReadSchema } from "@forge/validators";
 
@@ -89,30 +88,6 @@ export const judgingScheduleViewRouter = {
       const current = busy.find(
         (appointment) => appointment.roomId === presence?.roomId,
       );
-      const own = scope.judgeId
-        ? await db
-            .select({
-              id: ProjectEvaluation.id,
-              appointmentId: ProjectEvaluation.appointmentId,
-              autoSubmittedAt: ProjectEvaluation.autoSubmittedAt,
-            })
-            .from(ProjectEvaluation)
-            .where(eq(ProjectEvaluation.judgeId, scope.judgeId))
-        : [];
-      const editLockedEvaluationIds = own
-        .filter(
-          (evaluation) =>
-            current !== undefined ||
-            (evaluation.autoSubmittedAt &&
-              busy.some(
-                (appointment) =>
-                  appointment.roomId ===
-                  appointments.find(
-                    (origin) => origin.id === evaluation.appointmentId,
-                  )?.roomId,
-              )),
-        )
-        .map((evaluation) => evaluation.id);
       return {
         serverNow,
         scheduleExists: !!schedule,
@@ -126,7 +101,9 @@ export const judgingScheduleViewRouter = {
             ? appointment.challengeId === scope.challengeId
             : parentFilters.includes(appointment.challengeId),
         ),
-        editLockedEvaluationIds,
+        // Keep the response compatible with Blade tabs opened before this
+        // restriction was removed.
+        editLockedEvaluationIds: [] as string[],
       };
     }),
 } satisfies TRPCRouterRecord;

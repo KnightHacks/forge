@@ -611,20 +611,32 @@ describe.runIf(canRunDatabaseTests())(
         ),
       ).toBe(true);
       const laterSponsorStartsAt = current.endsAt;
+      const laterSponsorEndsAt = new Date(
+        laterSponsorStartsAt.getTime() + 10 * 60_000,
+      );
       await client
         .update(schema.JudgingAppointment)
         .set({
           startsAt: laterSponsorStartsAt,
           deadlineAt: new Date(laterSponsorStartsAt.getTime() + 8 * 60_000),
-          endsAt: new Date(laterSponsorStartsAt.getTime() + 10 * 60_000),
+          endsAt: laterSponsorEndsAt,
         })
         .where(eq(schema.JudgingAppointment.id, otherAppointment.id));
+      const pastInput = {
+        ...editorInput,
+        projectId: otherAppointment.projectId,
+      };
+      await judge.judging.joinRoom({ roomId: sponsorRoom.id });
+      vi.setSystemTime(new Date(laterSponsorStartsAt.getTime() - 1));
+      expect(await judge.judging.getEvaluationEditor(pastInput)).toMatchObject({
+        canEdit: false,
+      });
       vi.setSystemTime(new Date(current.deadlineAt.getTime() - 1));
       expect(
         await admin.judging.getEvaluationEditor(editorInput),
       ).toMatchObject({
         canEdit: true,
-        lockAt: current.deadlineAt,
+        lockAt: null,
       });
       await expect(
         admin.judging.saveEvaluationDraft({
@@ -638,8 +650,8 @@ describe.runIf(canRunDatabaseTests())(
       expect(
         await admin.judging.getEvaluationEditor(editorInput),
       ).toMatchObject({
-        canEdit: false,
-        lockAt: current.endsAt,
+        canEdit: true,
+        lockAt: null,
       });
       await expect(
         admin.judging.dropSchedule({ hackathonId }),
@@ -650,14 +662,11 @@ describe.runIf(canRunDatabaseTests())(
         projectIds: [current.projectId],
       });
       expect(beforeCompletion[0]?.overall?.count).toBe(0);
-      await expect(
-        admin.judging.saveEvaluation({ ...editorInput, ...completeAnswers }),
-      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-      // The original room's teardown remains binding after switching to a gap.
+      // Submitted evaluations remain editable through teardown and room changes.
       await admin.judging.joinRoom({ roomId: mlhRoom.id });
       expect(
         await admin.judging.getEvaluationEditor(editorInput),
-      ).toMatchObject({ canEdit: false });
+      ).toMatchObject({ canEdit: true });
       vi.setSystemTime(current.endsAt);
       expect(
         await admin.judging.getEvaluationEditor(editorInput),
@@ -683,6 +692,27 @@ describe.runIf(canRunDatabaseTests())(
         ).appointments.find((appointment) => appointment.id === current.id)
           ?.status,
       ).toBe("complete");
+      // A judge can start during teardown and after an appointment has ended.
+      vi.setSystemTime(new Date(laterSponsorStartsAt.getTime() + 8 * 60_000));
+      expect(await judge.judging.getEvaluationEditor(pastInput)).toMatchObject({
+        appointmentId: otherAppointment.id,
+        canEdit: true,
+        deadlineAt: null,
+        timed: false,
+      });
+      vi.setSystemTime(laterSponsorEndsAt);
+      expect(await judge.judging.getEvaluationEditor(pastInput)).toMatchObject({
+        appointmentId: otherAppointment.id,
+        canEdit: true,
+        deadlineAt: null,
+        timed: false,
+      });
+      await expect(
+        judge.judging.saveEvaluation({
+          ...pastInput,
+          ...completeAnswers,
+        }),
+      ).resolves.toMatchObject({ isComplete: true, score: 5 });
       // Remote judging is untimed in its room and contributes one overall mean.
       await judge.judging.joinRoom({ roomId: mlhRoom.id });
       expect(

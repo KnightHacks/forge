@@ -42,7 +42,7 @@ import dashboardStyles from "./khix-dashboard.module.css";
 const statusLabels = {
   future: "Upcoming",
   pending: "In progress",
-  incomplete: "Incomplete",
+  incomplete: "Feedback pending",
   missed: "Missed appointment",
   complete: "Judged",
 };
@@ -408,8 +408,8 @@ export function HackerJudging({ token }: { token: string | null }) {
                         ))}
                       </div>
                       <p className={styles.muted}>
-                        Times shown in {data.timezone}. Updates every two
-                        minutes.
+                        Times shown in {data.timezone}. Updates every 30
+                        seconds.
                       </p>
                     </>
                   )}

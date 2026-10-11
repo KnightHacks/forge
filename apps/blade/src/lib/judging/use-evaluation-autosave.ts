@@ -22,6 +22,7 @@ export function useEvaluationAutosave(
   const failures = useRef(0);
   const retryAfter = useRef(0);
   const lastSaved = useRef<string | null>(null);
+  const evaluationId = useRef(editor.evaluationId);
   const [state, setState] = useState<{
     status: "saved" | "saving" | "error";
     message: string;
@@ -32,6 +33,24 @@ export function useEvaluationAutosave(
       : "Progress saves as you type",
   });
   const serialized = JSON.stringify(input);
+  useEffect(() => {
+    if (evaluationId.current === editor.evaluationId) return;
+    evaluationId.current = editor.evaluationId;
+    queue.current = queue.current
+      .catch(() => undefined)
+      .then(() => {
+        revision.current = editor.draft?.revision ?? 0;
+        failures.current = 0;
+        retryAfter.current = 0;
+        lastSaved.current = null;
+        setState({
+          status: "saved",
+          message: editor.draft
+            ? "Saved progress restored"
+            : "Progress saves as you type",
+        });
+      });
+  }, [editor.draft, editor.evaluationId]);
   const persist = useCallback(
     async (automatic = false) => {
       const operation = queue.current

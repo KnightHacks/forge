@@ -23,11 +23,9 @@ type Submission = RouterOutputs["judging"]["listMySubmissions"][number];
 export function JudgeSubmissions({
   submissions,
   workspace,
-  lockedEvaluationIds = [],
 }: {
   submissions: Submission[];
   workspace: Workspace;
-  lockedEvaluationIds?: string[];
 }) {
   const [feedback, setFeedback] = useState<Submission | null>(null);
   const [editing, setEditing] = useState<Submission | null>(null);
@@ -94,11 +92,6 @@ export function JudgeSubmissions({
                   </td>
                   <td className="px-4 py-4 text-muted-foreground">
                     {formatClubDateTime(submission.updatedAt)}
-                    {lockedEvaluationIds.includes(submission.id) ? (
-                      <span className="block text-xs text-amber-200">
-                        Wait until downtime to edit
-                      </span>
-                    ) : null}
                     {submission.revision > 1 ? (
                       <span className="block text-xs">
                         Revision {submission.revision}
@@ -117,7 +110,6 @@ export function JudgeSubmissions({
                       </Button>
                       <Button
                         disabled={
-                          lockedEvaluationIds.includes(submission.id) ||
                           workspace.state !== "open" ||
                           !submission.projectAvailable
                         }
@@ -163,11 +155,6 @@ export function JudgeSubmissions({
                 Updated {formatClubDateTime(submission.updatedAt)} · Revision{" "}
                 {submission.revision}
               </p>
-              {lockedEvaluationIds.includes(submission.id) ? (
-                <p className="text-xs text-amber-200">
-                  Wait until downtime to edit
-                </p>
-              ) : null}
               {!submission.projectAvailable ? (
                 <Badge variant="outline">Project unavailable</Badge>
               ) : null}
@@ -183,9 +170,7 @@ export function JudgeSubmissions({
                 <Button
                   className="min-h-11"
                   disabled={
-                    lockedEvaluationIds.includes(submission.id) ||
-                    workspace.state !== "open" ||
-                    !submission.projectAvailable
+                    workspace.state !== "open" || !submission.projectAvailable
                   }
                   onClick={() => setEditing(submission)}
                   size="sm"

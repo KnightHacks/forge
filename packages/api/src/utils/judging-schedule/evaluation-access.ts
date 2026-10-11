@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
-import { and, eq, gt, isNull, lte } from "@forge/db";
+import { and, desc, eq, gt, isNull, lte } from "@forge/db";
 import {
   JudgingAppointment,
   JudgingRoom,
@@ -81,28 +81,24 @@ export async function evaluationTimingAccess(
         ),
       })
     : undefined;
-  // Submitted evaluations follow their original appointment even if the judge
-  // subsequently changes or leaves rooms.
-  const origin = existing?.appointmentId
+  const past = presence
     ? await tx.query.JudgingAppointment.findFirst({
-        where: eq(JudgingAppointment.id, existing.appointmentId),
+        where: and(
+          eq(JudgingAppointment.scheduleId, schedule.id),
+          eq(JudgingAppointment.roomId, presence.roomId),
+          eq(JudgingAppointment.projectId, input.projectId),
+          eq(JudgingAppointment.challengeId, input.challengeId),
+          lte(JudgingAppointment.endsAt, now),
+        ),
+        orderBy: desc(JudgingAppointment.endsAt),
       })
     : undefined;
   if (existing) {
-    if (origin && now >= origin.deadlineAt && now < origin.endsAt)
-      return {
-        ...base,
-        canEdit: false,
-        reason: "Wait until teardown ends to edit this submission.",
-        timed: false,
-        lockAt: origin.endsAt,
-      };
     return {
       ...base,
       canEdit: true,
       reason: null,
       timed: false,
-      lockAt: origin && now < origin.deadlineAt ? origin.deadlineAt : null,
     };
   }
   // Unscheduled challenges remain untimed, but a judge cannot evade their currently occupied
@@ -116,34 +112,34 @@ export async function evaluationTimingAccess(
       reason: "Join the assigned room to evaluate this project.",
       timed: true,
     };
-  if (
-    current?.projectId !== input.projectId ||
-    current.challengeId !== input.challengeId
-  )
+  const active =
+    current?.projectId === input.projectId &&
+    current.challengeId === input.challengeId
+      ? current
+      : undefined;
+  if (!active && !past)
     return {
       ...base,
       canEdit: false,
       reason:
-        "This project can be evaluated only during its appointment in your room.",
+        "This project can be evaluated during or after its appointment in your room.",
       timed: true,
     };
-  if (now >= current.deadlineAt)
+  if (!active)
     return {
       ...base,
-      appointmentId: current.id,
-      deadlineAt: current.deadlineAt,
-      canEdit: false,
-      reason:
-        "Judging time has ended. Please leave the remaining time for teardown.",
-      timed: true,
+      appointmentId: past?.id ?? null,
+      canEdit: true,
+      reason: null,
+      timed: false,
     };
   return {
     ...base,
-    appointmentId: current.id,
-    deadlineAt: current.deadlineAt,
+    appointmentId: active.id,
+    deadlineAt: now < active.deadlineAt ? active.deadlineAt : null,
     canEdit: true,
     reason: null,
-    timed: true,
+    timed: now < active.deadlineAt,
   };
 }
 
