@@ -199,14 +199,18 @@ function EvaluationEditor({
   const activeProject = project;
   const now = useJudgingClock(editor.serverNow);
   const [deadline] = useState(editor.deadlineAt);
+  const [closeAt] = useState(editor.canEdit ? editor.lockAt : null);
   const expiryHandled = useRef(false);
   const seconds = deadline
     ? Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / 1000))
     : null;
   const expired = deadline !== null && seconds === 0;
-  const gapEnded = !deadline && editor.lockAt !== null && now >= editor.lockAt;
+  const teardownStarted = !deadline && closeAt !== null && now >= closeAt;
   const editable =
-    editor.canEdit && workspace.state === "open" && !expired && !gapEnded;
+    editor.canEdit &&
+    workspace.state === "open" &&
+    !expired &&
+    !teardownStarted;
   const answers = useMemo(
     () => ({
       challengeId: workspace.challengeId,
@@ -238,20 +242,20 @@ function EvaluationEditor({
   const autosave = useEvaluationAutosave(answers, editor, editable);
   const utils = api.useUtils();
   useEffect(() => {
-    if ((!expired && !gapEnded) || expiryHandled.current) return;
+    if ((!expired && !teardownStarted) || expiryHandled.current) return;
     expiryHandled.current = true;
     void utils.judging.getEvaluationEditor
       .invalidate()
       .then(() => utils.judging.listMySubmissions.invalidate())
       .catch(() => undefined);
     router.refresh();
-    if (gapEnded) {
+    if (teardownStarted) {
       toast.message(
-        "Your room's next booking has started. Finish this submission during downtime.",
+        "Teardown has started. You can edit this again when it ends.",
       );
       onOpenChange(false);
     }
-  }, [expired, gapEnded, onOpenChange, router, utils]);
+  }, [expired, onOpenChange, router, teardownStarted, utils]);
   async function close(nextOpen: boolean) {
     if (!nextOpen && editable) {
       try {

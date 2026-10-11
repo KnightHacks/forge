@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
-import { and, asc, eq, gt, isNull, lte, or } from "@forge/db";
+import { and, eq, gt, isNull, lte } from "@forge/db";
 import {
   JudgingAppointment,
   JudgingRoom,
@@ -81,65 +81,28 @@ export async function evaluationTimingAccess(
         ),
       })
     : undefined;
-  // Complete and incomplete auto-submissions retain the original appointment's
-  // room restriction even if the judge subsequently changes or leaves rooms.
+  // Submitted evaluations follow their original appointment even if the judge
+  // subsequently changes or leaves rooms.
   const origin = existing?.appointmentId
     ? await tx.query.JudgingAppointment.findFirst({
         where: eq(JudgingAppointment.id, existing.appointmentId),
       })
     : undefined;
-  const protectedRoomIds = [
-    ...new Set(
-      [
-        presence?.roomId,
-        existing?.autoSubmittedAt ? origin?.roomId : undefined,
-      ].filter((id): id is string => !!id),
-    ),
-  ];
   if (existing) {
-    const occupied = protectedRoomIds.length
-      ? await tx.query.JudgingAppointment.findFirst({
-          where: and(
-            eq(JudgingAppointment.scheduleId, schedule.id),
-            or(
-              ...protectedRoomIds.map((id) =>
-                eq(JudgingAppointment.roomId, id),
-              ),
-            ),
-            lte(JudgingAppointment.startsAt, now),
-            gt(JudgingAppointment.endsAt, now),
-          ),
-        })
-      : undefined;
-    if (occupied)
+    if (origin && now >= origin.deadlineAt && now < origin.endsAt)
       return {
         ...base,
         canEdit: false,
-        reason:
-          "Wait until downtime to edit a submission. Setup and teardown are part of the booking.",
+        reason: "Wait until teardown ends to edit this submission.",
         timed: false,
-        lockAt: occupied.endsAt,
+        lockAt: origin.endsAt,
       };
-    const next = protectedRoomIds.length
-      ? await tx.query.JudgingAppointment.findFirst({
-          where: and(
-            eq(JudgingAppointment.scheduleId, schedule.id),
-            or(
-              ...protectedRoomIds.map((id) =>
-                eq(JudgingAppointment.roomId, id),
-              ),
-            ),
-            gt(JudgingAppointment.startsAt, now),
-          ),
-          orderBy: asc(JudgingAppointment.startsAt),
-        })
-      : undefined;
     return {
       ...base,
       canEdit: true,
       reason: null,
       timed: false,
-      lockAt: next?.startsAt ?? null,
+      lockAt: origin && now < origin.deadlineAt ? origin.deadlineAt : null,
     };
   }
   // Unscheduled challenges remain untimed, but a judge cannot evade their currently occupied

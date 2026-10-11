@@ -610,6 +610,37 @@ describe.runIf(canRunDatabaseTests())(
           (appointment) => appointment.status === "missed",
         ),
       ).toBe(true);
+      const laterSponsorStartsAt = current.endsAt;
+      await client
+        .update(schema.JudgingAppointment)
+        .set({
+          startsAt: laterSponsorStartsAt,
+          deadlineAt: new Date(laterSponsorStartsAt.getTime() + 8 * 60_000),
+          endsAt: new Date(laterSponsorStartsAt.getTime() + 10 * 60_000),
+        })
+        .where(eq(schema.JudgingAppointment.id, otherAppointment.id));
+      vi.setSystemTime(new Date(current.deadlineAt.getTime() - 1));
+      expect(
+        await admin.judging.getEvaluationEditor(editorInput),
+      ).toMatchObject({
+        canEdit: true,
+        lockAt: current.deadlineAt,
+      });
+      await expect(
+        admin.judging.saveEvaluationDraft({
+          ...editorInput,
+          expectedDraftRevision: 0,
+          expectedRevision: 1,
+          ...completeAnswers,
+        }),
+      ).resolves.toMatchObject({ deadlineAt: null, revision: 1 });
+      vi.setSystemTime(current.deadlineAt);
+      expect(
+        await admin.judging.getEvaluationEditor(editorInput),
+      ).toMatchObject({
+        canEdit: false,
+        lockAt: current.endsAt,
+      });
       await expect(
         admin.judging.dropSchedule({ hackathonId }),
       ).rejects.toMatchObject({ code: "CONFLICT" });
@@ -630,7 +661,11 @@ describe.runIf(canRunDatabaseTests())(
       vi.setSystemTime(current.endsAt);
       expect(
         await admin.judging.getEvaluationEditor(editorInput),
-      ).toMatchObject({ canEdit: true });
+      ).toMatchObject({ canEdit: true, lockAt: null });
+      vi.setSystemTime(laterSponsorStartsAt);
+      expect(
+        await admin.judging.getEvaluationEditor(editorInput),
+      ).toMatchObject({ canEdit: true, lockAt: null });
       const completed = await admin.judging.saveEvaluation({
         ...editorInput,
         expectedRevision: 1,
