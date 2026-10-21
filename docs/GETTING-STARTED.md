@@ -12,7 +12,7 @@ This guide will help you set up Forge locally and make your first contribution.
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js LTS](https://nodejs.org/en/download/) (v20.16.0 or higher)
+- [Node.js LTS](https://nodejs.org/en/download/) (v24.22.1 or a newer 24.x release; use `.nvmrc` to match CI)
 - [pnpm](https://pnpm.io/installation) (v9.6.0 or higher)
 - [Docker Desktop](https://docs.docker.com/get-docker/)
 - A POSIX/Unix terminal (Linux, macOS, or WSL for Windows users)
@@ -266,7 +266,7 @@ If a port is already in use, stop the conflicting process or change the port in 
 Make sure you're using the correct versions:
 
 ```bash
-node --version  # Should be >= 20.16.0
+node --version  # Should match .nvmrc (v24.22.1), or a newer 24.x release
 pnpm --version  # Should be >= 9.6.0
 ```
 
