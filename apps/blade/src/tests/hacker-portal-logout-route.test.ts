@@ -28,6 +28,7 @@ describe("GET /api/hacker/v1/auth/logout", () => {
     vi.clearAllMocks();
     mocks.findClient.mockResolvedValue({
       enabled: true,
+      clientKind: "hackathon",
       origin: "https://2026.knighthacks.org",
     });
     const headers = new Headers();
@@ -68,6 +69,7 @@ describe("GET /api/hacker/v1/auth/logout", () => {
   it("allows an existing disabled client to finish logging out", async () => {
     mocks.findClient.mockResolvedValue({
       enabled: false,
+      clientKind: "hackathon",
       origin: "https://2026.knighthacks.org",
     });
 
@@ -104,4 +106,37 @@ describe("GET /api/hacker/v1/auth/logout", () => {
     expect(response.status).toBe(400);
     expect(mocks.signOutSession).not.toHaveBeenCalled();
   });
+});
+
+describe("Projects redirects", () => {
+  it.each([true, false])(
+    "validates Projects before side effects (valid=%s)",
+    async (valid) => {
+      vi.clearAllMocks();
+      mocks.findClient.mockResolvedValue({
+        clientKind: "projects",
+        enabled: true,
+        origin: "https://projects.knighthacks.org",
+      });
+      const headers = new Headers({
+        "set-cookie": "better-auth.session_token=; Path=/; Max-Age=0",
+      });
+      mocks.signOutSession.mockResolvedValue(
+        new Response(null, { headers, status: 204 }),
+      );
+      const url = new URL(
+        "https://blade.knighthacks.org/api/hacker/v1/auth/logout",
+      );
+      url.search = new URLSearchParams({
+        client_id: "projects",
+        return_to: valid
+          ? "https://projects.knighthacks.org/"
+          : "https://projects.knighthacks.org/api/projects-auth/callback",
+      }).toString();
+      const response = await GET(new Request(url));
+      expect(response.status).toBe(valid ? 307 : 400);
+      expect(mocks.signOutSession).toHaveBeenCalledTimes(valid ? 1 : 0);
+      if (valid) expect(response.headers.getSetCookie()).toHaveLength(1);
+    },
+  );
 });

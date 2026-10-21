@@ -77,6 +77,7 @@ describe.runIf(canRunDatabaseTests())("hackathon map configuration", () => {
     const clientRecordId = randomUUID();
     return router.createCaller({
       client: {
+        clientKind: "hackathon",
         clientId: "test-client",
         enabled: true,
         hackathonId: id,
@@ -87,6 +88,7 @@ describe.runIf(canRunDatabaseTests())("hackathon map configuration", () => {
       requestId: randomUUID(),
       session: authenticated
         ? {
+            clientKind: "hackathon",
             betterAuthSessionId: "map-test",
             clientRecordId,
             hackathonId: id,

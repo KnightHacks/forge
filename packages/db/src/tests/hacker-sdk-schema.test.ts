@@ -1,4 +1,5 @@
 import { getTableColumns } from "drizzle-orm";
+import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -171,4 +172,43 @@ describe("Hacker SDK additive storage", () => {
       expect.arrayContaining(["confirmationCapacity", "timezone"]),
     );
   });
+});
+
+it("defaults existing portal records to event scope while allowing constrained Projects scope", () => {
+  for (const table of [
+    HackathonPortalClient,
+    HackathonPortalAuthorizationCode,
+    HackathonPortalSession,
+  ]) {
+    const columns = getTableColumns(table);
+    expect(columns.clientKind.notNull).toBe(true);
+    expect(columns.clientKind.default).toBe("hackathon");
+    expect(columns.hackathonId.notNull).toBe(false);
+  }
+});
+
+it("keeps both kind and event foreign keys for portal codes and sessions", () => {
+  for (const table of [
+    HackathonPortalAuthorizationCode,
+    HackathonPortalSession,
+  ]) {
+    const keys = getTableConfig(table).foreignKeys;
+    for (const scope of ["clientKind", "hackathonId"]) {
+      const key = keys.find((candidate) =>
+        candidate
+          .reference()
+          .columns.map((column) => column.name)
+          .includes(scope),
+      );
+      expect(key?.onDelete).toBe("cascade");
+      expect(key?.reference().foreignTable).toBe(HackathonPortalClient);
+      expect(key?.reference().columns.map((column) => column.name)).toEqual([
+        "portalClientId",
+        scope,
+      ]);
+      expect(
+        key?.reference().foreignColumns.map((column) => column.name),
+      ).toEqual(["id", scope]);
+    }
+  }
 });

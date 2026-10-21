@@ -8,12 +8,13 @@ import {
   HackathonPortalSessionCredential,
 } from "@forge/db/schemas/knight-hacks";
 
-import type { PortalSessionRecord, PortalSessionStore } from "./portal-session";
+import type { PortalScope, PortalSessionStore } from "./portal-session";
 import { isAllowedPortalCallback } from "./portal-auth";
 import { PORTAL_CONCURRENT_REFRESH_GRACE_MS } from "./portal-session";
 
 const sessionColumns = {
   id: HackathonPortalSession.id,
+  clientKind: HackathonPortalSession.clientKind,
   clientRecordId: HackathonPortalSession.portalClientId,
   hackathonId: HackathonPortalSession.hackathonId,
   userId: HackathonPortalSession.userId,
@@ -21,10 +22,24 @@ const sessionColumns = {
   refreshExpiresAt: HackathonPortalSession.refreshExpiresAt,
 } as const;
 
+function validatedScope(row: {
+  clientKind: string;
+  hackathonId: string | null;
+}): PortalScope {
+  if (row.clientKind === "hackathon" && row.hackathonId !== null) {
+    return { clientKind: "hackathon", hackathonId: row.hackathonId };
+  }
+  if (row.clientKind === "projects" && row.hackathonId === null) {
+    return { clientKind: "projects", hackathonId: null };
+  }
+  throw new Error("Invalid portal client scope.");
+}
+
 export const databasePortalSessionStore: PortalSessionStore = {
   async findClient(clientId) {
     const [client] = await db
       .select({
+        clientKind: HackathonPortalClient.clientKind,
         id: HackathonPortalClient.id,
         clientId: HackathonPortalClient.clientId,
         hackathonId: HackathonPortalClient.hackathonId,
@@ -34,7 +49,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
       .from(HackathonPortalClient)
       .where(eq(HackathonPortalClient.clientId, clientId))
       .limit(1);
-    return client ?? null;
+    return client ? { ...client, ...validatedScope(client) } : null;
   },
 
   async issueAuthorizationCode(input) {
@@ -43,6 +58,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
         .select({
           enabled: HackathonPortalClient.enabled,
           hackathonId: HackathonPortalClient.hackathonId,
+          clientKind: HackathonPortalClient.clientKind,
           id: HackathonPortalClient.id,
           origin: HackathonPortalClient.productionOrigin,
         })
@@ -56,6 +72,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
           callbackURL: input.redirectUri,
           environment: input.environment,
           registeredOrigin: client.origin,
+          clientKind: validatedScope(client).clientKind,
         })
       ) {
         return "invalid_callback" as const;
@@ -65,6 +82,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
         codeChallenge: input.pkceChallenge,
         codeHash: input.tokenHash,
         expiresAt: input.expiresAt,
+        clientKind: client.clientKind,
         hackathonId: client.hackathonId,
         portalClientId: client.id,
         redirectUri: input.redirectUri,
@@ -80,6 +98,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
         .select({
           enabled: HackathonPortalClient.enabled,
           hackathonId: HackathonPortalClient.hackathonId,
+          clientKind: HackathonPortalClient.clientKind,
           id: HackathonPortalClient.id,
           origin: HackathonPortalClient.productionOrigin,
         })
@@ -93,6 +112,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
           callbackURL: input.redirectUri,
           environment: input.environment,
           registeredOrigin: client.origin,
+          clientKind: validatedScope(client).clientKind,
         })
       ) {
         return { status: "invalid_callback" } as const;
@@ -104,10 +124,13 @@ export const databasePortalSessionStore: PortalSessionStore = {
           and(
             eq(HackathonPortalAuthorizationCode.codeHash, input.tokenHash),
             eq(HackathonPortalAuthorizationCode.portalClientId, client.id),
-            eq(
-              HackathonPortalAuthorizationCode.hackathonId,
-              client.hackathonId,
-            ),
+            eq(HackathonPortalAuthorizationCode.clientKind, client.clientKind),
+            client.hackathonId === null
+              ? isNull(HackathonPortalAuthorizationCode.hackathonId)
+              : eq(
+                  HackathonPortalAuthorizationCode.hackathonId,
+                  client.hackathonId,
+                ),
             eq(HackathonPortalAuthorizationCode.redirectUri, input.redirectUri),
             eq(
               HackathonPortalAuthorizationCode.codeChallenge,
@@ -123,6 +146,21 @@ export const databasePortalSessionStore: PortalSessionStore = {
           userId: HackathonPortalAuthorizationCode.userId,
         });
       if (!authorization) return { status: "invalid_grant" } as const;
+      if (client.clientKind === "projects") {
+        const [parent] = await tx
+          .select({ id: Session.id })
+          .from(Session)
+          .where(
+            and(
+              eq(Session.id, authorization.betterAuthSessionId),
+              eq(Session.userId, authorization.userId),
+              gt(Session.expires, input.now),
+            ),
+          )
+          .for("share")
+          .limit(1);
+        if (!parent) return { status: "invalid_grant" } as const;
+      }
       const [session] = await tx
         .insert(HackathonPortalSession)
         .values({
@@ -131,6 +169,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
           refreshTokenHash: input.refreshTokenHash,
           refreshExpiresAt: input.refreshTokenExpiresAt,
           betterAuthSessionId: authorization.betterAuthSessionId,
+          clientKind: client.clientKind,
           hackathonId: client.hackathonId,
           portalClientId: client.id,
           userId: authorization.userId,
@@ -152,7 +191,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
         },
       ]);
       return {
-        session: session as PortalSessionRecord,
+        session: { ...session, ...validatedScope(session) },
         status: "created",
       } as const;
     });
@@ -172,7 +211,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
         ),
       )
       .returning(sessionColumns);
-    return (session as PortalSessionRecord | undefined) ?? null;
+    return session ? { ...session, ...validatedScope(session) } : null;
   },
 
   async rotateRefreshToken(input) {
@@ -182,7 +221,6 @@ export const databasePortalSessionStore: PortalSessionStore = {
           currentRefreshTokenHash: HackathonPortalSession.refreshTokenHash,
           refreshExpiresAt: HackathonPortalSession.refreshExpiresAt,
           revokedAt: HackathonPortalSession.revokedAt,
-          rotatedAt: HackathonPortalSessionCredential.rotatedAt,
           sessionId: HackathonPortalSession.id,
         })
         .from(HackathonPortalSessionCredential)
@@ -213,9 +251,28 @@ export const databasePortalSessionStore: PortalSessionStore = {
         return { status: "invalid" } as const;
       }
       if (credential.currentRefreshTokenHash !== input.refreshTokenHash) {
+        // The joined read can retain an old credential snapshot while waiting
+        // for the session lock. Read rotation state again after acquiring it.
+        const [history] = await tx
+          .select({ rotatedAt: HackathonPortalSessionCredential.rotatedAt })
+          .from(HackathonPortalSessionCredential)
+          .where(
+            and(
+              eq(
+                HackathonPortalSessionCredential.portalSessionId,
+                credential.sessionId,
+              ),
+              eq(
+                HackathonPortalSessionCredential.tokenHash,
+                input.refreshTokenHash,
+              ),
+              eq(HackathonPortalSessionCredential.tokenKind, "refresh"),
+            ),
+          )
+          .limit(1);
         if (
-          credential.rotatedAt &&
-          input.now.getTime() - credential.rotatedAt.getTime() <=
+          history?.rotatedAt &&
+          input.now.getTime() - history.rotatedAt.getTime() <=
             PORTAL_CONCURRENT_REFRESH_GRACE_MS
         ) {
           return { status: "concurrent_replay" } as const;
@@ -280,7 +337,7 @@ export const databasePortalSessionStore: PortalSessionStore = {
       ]);
       return {
         refreshExpiresAt: session.refreshExpiresAt,
-        session: session as PortalSessionRecord,
+        session: { ...session, ...validatedScope(session) },
         status: "rotated",
       } as const;
     });

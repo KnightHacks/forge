@@ -449,6 +449,13 @@
       "when": 1791641041552,
       "tag": "0063_first_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1792559987609,
+      "tag": "0064_white_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

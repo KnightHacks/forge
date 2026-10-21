@@ -26,11 +26,21 @@ function isLoopback(hostname: string) {
   );
 }
 
-export function isAllowedPortalCallback(input: {
+interface PortalRedirectPolicy {
+  clientKind: "hackathon" | "projects";
   callbackURL: string;
   environment: "development" | "production" | "test";
   registeredOrigin: string;
-}) {
+}
+
+export function isAllowedPortalCallback(input: PortalRedirectPolicy) {
+  if (input.clientKind === "projects") {
+    return (
+      input.registeredOrigin === "https://projects.knighthacks.org" &&
+      input.callbackURL ===
+        "https://projects.knighthacks.org/api/projects-auth/callback"
+    );
+  }
   try {
     const callback = new URL(input.callbackURL);
     const registered = new URL(input.registeredOrigin);
@@ -63,4 +73,14 @@ export function sanitizePortalReturnPath(returnPath?: string | null) {
   } catch {
     return "/";
   }
+}
+
+export function isAllowedPortalLogoutReturn(input: PortalRedirectPolicy) {
+  if (input.clientKind === "projects") {
+    return (
+      input.registeredOrigin === "https://projects.knighthacks.org" &&
+      input.callbackURL === "https://projects.knighthacks.org/"
+    );
+  }
+  return isAllowedPortalCallback(input);
 }

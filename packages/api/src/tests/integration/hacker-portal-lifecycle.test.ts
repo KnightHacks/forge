@@ -154,6 +154,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
     const clientRecordId = randomUUID();
     const context = {
       client: {
+        clientKind: "hackathon" as const,
         clientId: `client-${hackathonId}`,
         enabled: true,
         hackathonId,
@@ -163,6 +164,7 @@ describe.skipIf(!canRunDatabaseTests())("hacker portal lifecycle", () => {
       headers: new Headers(),
       requestId: randomUUID(),
       session: {
+        clientKind: "hackathon" as const,
         betterAuthSessionId: `better-auth-${userId}`,
         clientRecordId,
         hackathonId,

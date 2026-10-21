@@ -167,6 +167,7 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
     });
     const context = {
       client: {
+        clientKind: "hackathon" as const,
         clientId: `client-${hackathonId}`,
         enabled: true,
         hackathonId,
@@ -176,6 +177,7 @@ describe.skipIf(!canRunDatabaseTests())("point store", () => {
       headers: new Headers(),
       requestId: randomUUID(),
       session: {
+        clientKind: "hackathon" as const,
         betterAuthSessionId: randomUUID(),
         clientRecordId: randomUUID(),
         hackathonId,

@@ -632,9 +632,9 @@ export const HackathonPortalClient = createTable(
   "hackathon_portal_client",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
+    clientKind: t.varchar({ length: 16 }).notNull().default("hackathon"),
     hackathonId: t
       .uuid()
-      .notNull()
       .references(() => Hackathon.id, { onDelete: "cascade" }),
     clientId: t.varchar({ length: 128 }).notNull(),
     name: t.varchar({ length: 120 }).notNull(),
@@ -652,6 +652,18 @@ export const HackathonPortalClient = createTable(
     createdBy: t.uuid().references(() => User.id, { onDelete: "set null" }),
   }),
   (table) => ({
+    clientScope: check(
+      "portal_client_kind_scope_check",
+      sql`(${table.clientKind} = 'hackathon' AND ${table.hackathonId} IS NOT NULL) OR (${table.clientKind} = 'projects' AND ${table.hackathonId} IS NULL)`,
+    ),
+    kindIdentity: unique("portal_client_id_kind_unique").on(
+      table.id,
+      table.clientKind,
+    ),
+    projectsRegistration: check(
+      "portal_client_projects_registration_check",
+      sql`(${table.clientKind} = 'hackathon' AND ${table.clientId} <> 'projects') OR (${table.clientKind} = 'projects' AND ${table.clientId} = 'projects' AND ${table.productionOrigin} = 'https://projects.knighthacks.org')`,
+    ),
     clientIdUnique: unique(
       "knight_hacks_hackathon_portal_client_client_id_unique",
     ).on(table.clientId),
@@ -681,8 +693,9 @@ export const HackathonPortalAuthorizationCode = createTable(
   "hackathon_portal_authorization_code",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
+    clientKind: t.varchar({ length: 16 }).notNull().default("hackathon"),
     portalClientId: t.uuid().notNull(),
-    hackathonId: t.uuid().notNull(),
+    hackathonId: t.uuid(),
     userId: t
       .uuid()
       .notNull()
@@ -703,6 +716,18 @@ export const HackathonPortalAuthorizationCode = createTable(
       .defaultNow(),
   }),
   (table) => ({
+    clientScope: check(
+      "portal_authorization_code_kind_scope_check",
+      sql`(${table.clientKind} = 'hackathon' AND ${table.hackathonId} IS NOT NULL) OR (${table.clientKind} = 'projects' AND ${table.hackathonId} IS NULL)`,
+    ),
+    kindClientReference: foreignKey({
+      columns: [table.portalClientId, table.clientKind],
+      foreignColumns: [
+        HackathonPortalClient.id,
+        HackathonPortalClient.clientKind,
+      ],
+      name: "portal_authorization_code_client_kind_fk",
+    }).onDelete("cascade"),
     codeHashUnique: unique(
       "knight_hacks_hackathon_portal_authorization_code_hash_unique",
     ).on(table.codeHash),
@@ -741,8 +766,9 @@ export const HackathonPortalSession = createTable(
   "hackathon_portal_session",
   (t) => ({
     id: t.uuid().notNull().primaryKey().defaultRandom(),
+    clientKind: t.varchar({ length: 16 }).notNull().default("hackathon"),
     portalClientId: t.uuid().notNull(),
-    hackathonId: t.uuid().notNull(),
+    hackathonId: t.uuid(),
     userId: t
       .uuid()
       .notNull()
@@ -773,6 +799,18 @@ export const HackathonPortalSession = createTable(
       .$onUpdate(() => new Date()),
   }),
   (table) => ({
+    clientScope: check(
+      "portal_session_kind_scope_check",
+      sql`(${table.clientKind} = 'hackathon' AND ${table.hackathonId} IS NOT NULL) OR (${table.clientKind} = 'projects' AND ${table.hackathonId} IS NULL)`,
+    ),
+    kindClientReference: foreignKey({
+      columns: [table.portalClientId, table.clientKind],
+      foreignColumns: [
+        HackathonPortalClient.id,
+        HackathonPortalClient.clientKind,
+      ],
+      name: "portal_session_client_kind_fk",
+    }).onDelete("cascade"),
     accessHashUnique: unique(
       "knight_hacks_hackathon_portal_session_access_hash_unique",
     ).on(table.accessTokenHash),

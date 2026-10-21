@@ -15,10 +15,10 @@ import {
 import { nodeEnv } from "../env";
 
 export interface HackerPortalContext {
-  client: PortalClientRecord | null;
+  client: Extract<PortalClientRecord, { clientKind: "hackathon" }> | null;
   headers: Headers;
   requestId: string;
-  session: PortalSessionRecord | null;
+  session: Extract<PortalSessionRecord, { clientKind: "hackathon" }> | null;
 }
 
 const portalSessions = createPortalSessionService({
@@ -35,14 +35,24 @@ function bearerToken(headers: Headers) {
 export async function createHackerPortalContext(input: { headers: Headers }) {
   const requestId = input.headers.get("x-request-id") ?? randomUUID();
   const clientId = input.headers.get("x-forge-portal-client") ?? "";
-  const client = clientId
+  const registeredClient = clientId
     ? await databasePortalSessionStore.findClient(clientId)
     : null;
+  const client =
+    registeredClient?.clientKind === "hackathon" ? registeredClient : null;
   const token = bearerToken(input.headers);
-  let session: PortalSessionRecord | null = null;
+  let session: Extract<
+    PortalSessionRecord,
+    { clientKind: "hackathon" }
+  > | null = null;
   if (client?.enabled && token) {
     try {
-      session = await portalSessions.authenticate(token, clientId);
+      const authenticated = await portalSessions.authenticate(token, clientId);
+      if (
+        authenticated.clientKind === "hackathon" &&
+        authenticated.hackathonId === client.hackathonId
+      )
+        session = authenticated;
     } catch (error) {
       if (!(error instanceof PortalAuthError)) throw error;
     }

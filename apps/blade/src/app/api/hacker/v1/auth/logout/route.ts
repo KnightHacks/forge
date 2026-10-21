@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   databasePortalSessionStore,
-  isAllowedPortalCallback,
+  isAllowedPortalLogoutReturn,
   PortalAuthError,
 } from "@forge/auth/server";
 import { portalLogoutRequestSchema } from "@forge/validators";
@@ -29,11 +29,12 @@ export async function GET(request: Request) {
     );
     if (!client) throw new PortalAuthError("INVALID_CLIENT");
     if (
-      !isAllowedPortalCallback({
+      !isAllowedPortalLogoutReturn({
         callbackURL: parsed.data.returnTo,
         environment:
           env.NODE_ENV === "development" ? "development" : "production",
         registeredOrigin: client.origin,
+        clientKind: client.clientKind,
       })
     ) {
       throw new PortalAuthError("INVALID_CALLBACK");

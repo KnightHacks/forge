@@ -49,6 +49,7 @@ vi.mock("@forge/db/client", () => ({
 
 const context: HackerPortalContext = {
   client: {
+    clientKind: "hackathon",
     id: "portal",
     clientId: "public-client",
     hackathonId: "event",
@@ -56,6 +57,7 @@ const context: HackerPortalContext = {
     enabled: true,
   },
   session: {
+    clientKind: "hackathon",
     id: "session",
     clientRecordId: "portal",
     betterAuthSessionId: "blade-session",

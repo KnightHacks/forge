@@ -18,6 +18,7 @@ vi.mock("../../utils/profile-picture/storage", () => ({
 
 const context: AuthenticatedPortalContext = {
   client: {
+    clientKind: "hackathon",
     id: "client-record",
     clientId: "khix",
     hackathonId: "hackathon-1",
@@ -25,6 +26,7 @@ const context: AuthenticatedPortalContext = {
     enabled: true,
   },
   session: {
+    clientKind: "hackathon",
     id: "portal-session",
     clientRecordId: "client-record",
     hackathonId: "hackathon-1",

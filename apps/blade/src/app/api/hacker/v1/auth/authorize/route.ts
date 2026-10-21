@@ -37,6 +37,7 @@ export async function GET(request: Request) {
         environment:
           env.NODE_ENV === "development" ? "development" : "production",
         registeredOrigin: client.origin,
+        clientKind: client.clientKind,
       })
     ) {
       throw new PortalAuthError("INVALID_CALLBACK");

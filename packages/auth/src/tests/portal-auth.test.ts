@@ -6,6 +6,7 @@ import {
   createPortalToken,
   hashPortalToken,
   isAllowedPortalCallback,
+  isAllowedPortalLogoutReturn,
   sanitizePortalReturnPath,
 } from "../portal-auth";
 
@@ -34,6 +35,7 @@ describe("hacker portal auth primitives", () => {
       callbackURL: "https://khix.knighthacks.org/api/hacker-sdk/callback",
       environment: "production" as const,
       registeredOrigin: "https://khix.knighthacks.org",
+      clientKind: "hackathon" as const,
     };
 
     expect(isAllowedPortalCallback(input)).toBe(true);
@@ -74,6 +76,7 @@ describe("hacker portal auth primitives", () => {
           callbackURL,
           environment: "development",
           registeredOrigin: "https://khix.knighthacks.org",
+          clientKind: "hackathon" as const,
         }),
       ).toBe(true);
     }
@@ -83,6 +86,7 @@ describe("hacker portal auth primitives", () => {
         callbackURL: "http://192.168.1.20:3007/callback",
         environment: "development",
         registeredOrigin: "https://khix.knighthacks.org",
+        clientKind: "hackathon" as const,
       }),
     ).toBe(false);
   });
@@ -96,4 +100,57 @@ describe("hacker portal auth primitives", () => {
     expect(sanitizePortalReturnPath("https://evil.test/path")).toBe("/");
     expect(sanitizePortalReturnPath("/\\evil.test")).toBe("/");
   });
+});
+
+describe("Projects redirect policy", () => {
+  const origin = "https://projects.knighthacks.org";
+  const callback = `${origin}/api/projects-auth/callback`;
+  it.each(["production", "development", "test"] as const)(
+    "requires exact redirects in %s",
+    (environment) => {
+      const policy = {
+        clientKind: "projects" as const,
+        environment,
+        registeredOrigin: origin,
+      };
+      expect(
+        isAllowedPortalCallback({ ...policy, callbackURL: callback }),
+      ).toBe(true);
+      expect(
+        isAllowedPortalLogoutReturn({ ...policy, callbackURL: `${origin}/` }),
+      ).toBe(true);
+      for (const callbackURL of [
+        origin,
+        `${origin}/`,
+        `${callback}?`,
+        `${callback}#`,
+        `${callback}?next=/`,
+        `${callback}#fragment`,
+        `${callback}/`,
+        `${origin}/api/hacker-sdk/callback`,
+        "https://user:pass@projects.knighthacks.org/api/projects-auth/callback",
+        "http://localhost:3007/api/projects-auth/callback",
+      ]) {
+        expect(isAllowedPortalCallback({ ...policy, callbackURL })).toBe(false);
+      }
+      for (const callbackURL of [
+        origin,
+        callback,
+        `${origin}/?`,
+        `${origin}/#`,
+        "http://localhost:3007/",
+      ]) {
+        expect(isAllowedPortalLogoutReturn({ ...policy, callbackURL })).toBe(
+          false,
+        );
+      }
+      expect(
+        isAllowedPortalCallback({
+          ...policy,
+          registeredOrigin: "https://other.knighthacks.org",
+          callbackURL: callback,
+        }),
+      ).toBe(false);
+    },
+  );
 });

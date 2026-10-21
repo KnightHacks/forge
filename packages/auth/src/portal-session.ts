@@ -10,21 +10,23 @@ export const PORTAL_ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;
 export const PORTAL_REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const PORTAL_CONCURRENT_REFRESH_GRACE_MS = 10 * 1000;
 
-export interface PortalClientRecord {
+export type PortalScope =
+  | { clientKind: "hackathon"; hackathonId: string }
+  | { clientKind: "projects"; hackathonId: null };
+
+export type PortalClientRecord = PortalScope & {
   id: string;
   clientId: string;
-  hackathonId: string;
   origin: string;
   enabled: boolean;
-}
+};
 
-export interface PortalSessionRecord {
+export type PortalSessionRecord = PortalScope & {
   id: string;
   clientRecordId: string;
-  hackathonId: string;
   userId: string;
   betterAuthSessionId: string;
-}
+};
 
 export type PortalRefreshRotationResult =
   | { status: "concurrent_replay" }
@@ -148,6 +150,7 @@ export function createPortalSessionService(input: {
           callbackURL: request.redirectUri,
           environment: input.environment,
           registeredOrigin: client.origin,
+          clientKind: client.clientKind,
         })
       ) {
         throw new PortalAuthError("INVALID_CALLBACK");
@@ -188,6 +191,7 @@ export function createPortalSessionService(input: {
           callbackURL: request.redirectUri,
           environment: input.environment,
           registeredOrigin: client.origin,
+          clientKind: client.clientKind,
         })
       ) {
         throw new PortalAuthError("INVALID_CALLBACK");
