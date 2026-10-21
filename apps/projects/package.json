@@ -1,0 +1,41 @@
+{
+  "name": "@forge/projects",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.1",
+  "scripts": {
+    "build": "NODE_ENV=production next build",
+    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "dev": "next dev --port 3008",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "start": "NODE_ENV=production next start --port 3008",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test --pass-with-no-tests"
+  },
+  "dependencies": {
+    "@forge/ui": "workspace:*",
+    "geist": "^1.7.0",
+    "lucide-react": "^0.575.0",
+    "next": "^16.2.11",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@forge/eslint-config": "workspace:*",
+    "@forge/tailwind-config": "workspace:*",
+    "@forge/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^25.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "catalog:",
+    "playwright": "^1.61.1",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.56.1"
+  },
+  "prettier": "@forge/prettier-config"
+}
