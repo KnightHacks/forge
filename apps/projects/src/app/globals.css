@@ -180,27 +180,6 @@ input {
   background: rgb(189 155 255 / 10%);
 }
 
-.fixture-notice {
-  display: flex;
-  min-height: 2.2rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  background: rgb(213 236 130 / 8%);
-  color: #e7efcf;
-  padding: 0.45rem 1rem;
-  text-align: center;
-  font-size: 0.7rem;
-  line-height: 1.45;
-}
-
-.fixture-notice strong {
-  color: var(--lime);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .eyebrow {
   display: flex;
   align-items: center;
@@ -309,25 +288,6 @@ input {
   transform: translateY(-2px);
   border-color: rgb(255 255 255 / 35%);
   background: rgb(255 255 255 / 5%);
-}
-
-.hero-note {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 2.5rem;
-  color: hsl(var(--muted-foreground));
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.hero-note::before {
-  width: 1.6rem;
-  height: 1px;
-  background: rgb(255 255 255 / 25%);
-  content: "";
 }
 
 .hero-art-frame {
@@ -1280,13 +1240,6 @@ input {
     padding-inline: 0.7rem;
   }
 
-  .fixture-notice {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.1rem;
-    font-size: 0.65rem;
-  }
-
   .hero-title {
     font-size: clamp(3.25rem, 16vw, 4.4rem);
   }
@@ -1441,14 +1394,6 @@ body {
   color: var(--club-plum-deep);
 }
 
-.fixture-notice {
-  border-block: 1px solid rgb(255 182 43 / 15%);
-  background: rgb(255 182 43 / 7%);
-  color: #f4e9d8;
-  font-weight: 600;
-}
-
-.fixture-notice strong,
 .eyebrow,
 .fixture-tag {
   color: var(--club-gold);
@@ -1495,9 +1440,14 @@ body {
     55% auto;
 }
 
+.hero-grid {
+  column-gap: clamp(3.5rem, 8vw, 7rem);
+  grid-template-columns: minmax(0, 1.06fr) minmax(19rem, 0.9fr);
+}
+
 .hero-title {
-  max-width: 12ch;
-  font-size: clamp(3.15rem, 7.3vw, 7.1rem);
+  max-width: 13ch;
+  font-size: clamp(2.9rem, 5.7vw, 5.5rem);
   line-height: 0.94;
 }
 
@@ -1547,7 +1497,7 @@ body {
 }
 
 .hero-art-frame {
-  transform: rotate(0.7deg);
+  transform: translateY(0.75rem) rotate(0.7deg);
 }
 
 .hero-art-frame::before {
@@ -1768,6 +1718,17 @@ body {
   color: var(--club-gold);
 }
 
+@media (max-width: 640px) {
+  .hero-grid {
+    row-gap: 3rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-art-frame {
+    transform: rotate(0.7deg);
+  }
+}
+
 @media (max-width: 400px) {
   .brand-wordmark {
     width: 5.2rem;
@@ -1807,6 +1768,10 @@ body {
     );
     background-position: center;
     background-size: cover;
+  }
+
+  .hero-title {
+    font-size: clamp(2.65rem, 13vw, 3.35rem);
   }
 
   .principle-list {

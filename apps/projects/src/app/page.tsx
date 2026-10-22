@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowRight, Compass, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowRight, Sparkles } from "lucide-react";
 
 import { Button } from "@forge/ui/button";
 
-import { allTechnologies, featuredProjects } from "~/content/projects";
+import { featuredProjects } from "~/content/projects";
 import { ProjectArtwork } from "./_components/project-artwork";
 import { ProjectCard } from "./_components/project-card";
 import { SiteFooter } from "./_components/site-footer";
@@ -41,9 +41,6 @@ export default function HomePage() {
                   <ArrowDownRight aria-hidden="true" size={15} />
                 </a>
               </div>
-              <p className="hero-note">
-                Ideas, systems, and lessons from the build
-              </p>
             </div>
 
             {featured ? (
@@ -91,39 +88,6 @@ export default function HomePage() {
               {stories.map((project) => (
                 <ProjectCard key={project.slug} project={project} />
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="section-dark" aria-labelledby="technology-title">
-          <div className="tech-discovery container">
-            <div>
-              <p className="eyebrow">Follow a thread</p>
-              <h2
-                className="display-serif section-heading"
-                id="technology-title"
-              >
-                Ideas have a stack.
-              </h2>
-              <p className="section-deck">
-                Browse by the tools and techniques that shaped each build.
-              </p>
-            </div>
-            <div
-              className="tech-cloud"
-              aria-label="Explore fixture technologies"
-            >
-              {allTechnologies.slice(0, 9).map((technology) => (
-                <Link
-                  href={`/archive?technology=${encodeURIComponent(technology)}`}
-                  key={technology}
-                >
-                  {technology}
-                </Link>
-              ))}
-              <Link href="/archive">
-                <Compass aria-hidden="true" size={14} /> All technologies
-              </Link>
             </div>
           </div>
         </section>

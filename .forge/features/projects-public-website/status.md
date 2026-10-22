@@ -9,6 +9,8 @@ Current phase: P2 public frontend implemented and locally verified.
 - 2026-10-21: Use visibly illustrative, unnamed fixture content and local SVG art; avoid real-project/winner claims, remote images, and new dependencies.
 - 2026-10-21: Use the existing Knight Hacks logo asset and shared Forge button primitive; keep the public app static, with client-side archive filtering over replaceable fixtures.
 - 2026-10-21: Align the public app with Club's visual identity: local gold wordmark/sigil and hero poster, Montserrat display/body typography, plum/purple backgrounds, gold and rose accents, and bold high-contrast controls.
+- 2026-10-22: Remove the global illustrative-preview banner; retain fixture labels on individual cards and case studies.
+- 2026-10-22: Replace stack-specific archive filters with broad project areas. Added fictional ML/computer-vision and robotics case-study fixtures so those areas return useful results; technology stacks remain case-study metadata.
 
 ## Open questions
 
@@ -29,12 +31,12 @@ Current phase: P2 public frontend implemented and locally verified.
 - `pnpm --filter @forge/projects format`: passed.
 - `pnpm --filter @forge/projects lint`: passed with no warnings.
 - `pnpm --filter @forge/projects typecheck`: passed.
-- `pnpm --filter @forge/projects exec playwright test`: passed, 5/5 Chromium tests. Covers home-to-archive-to-case-study navigation, repository link, technology filter/search/empty/reset, technology discovery deep link, keyboard skip-link/focus, 320px horizontal overflow across all page types, and branded not-found navigation.
+- `pnpm --filter @forge/projects exec playwright test`: passed, 5/5 Chromium tests after removing the banner and before switching to broad area filters. Covered banner absence with card fixture labeling, home-to-archive-to-case-study navigation, repository link, technology filter/search/empty/reset, technology discovery deep link, keyboard skip-link/focus, 320px horizontal overflow across all page types, and branded not-found navigation. Not rerun after the latest filter and fixture edits, per the user's instruction to defer tests.
 - `pnpm analyze:react:changed`: passed; analyzed 10 changed app files and 5 components, 0 failures.
-- `pnpm --filter @forge/projects build`: passed; home and not-found are static, archive is dynamic for query-string filters, and all 4 case studies are statically generated.
+- `pnpm --filter @forge/projects build`: passed before the latest filter and fixture edits; at that point home and not-found were static, archive was dynamic for query-string filters, and all 4 case studies were statically generated. Not rerun after the latest edits.
 - `pnpm format`: passed across the repository.
 - `pnpm lint` and `pnpm typecheck`: attempted across the full workspace; unrelated package processes hit Node's 2 GB heap limit under Turbo parallelism. App-scoped lint and typecheck passed. Workspace lint output included warnings in unchanged legacy packages; no warnings were reported for `@forge/projects`.
-- Rendered Club-styled desktop home and 320px archive/case-study screenshots inspected locally: `/tmp/projects-home-club-style-desktop.png`, `/tmp/projects-archive-club-style-320.png`, `/tmp/projects-case-club-style-320.png`. Confirmed the official wordmark loads and pages have no horizontal overflow at 320px.
+- Rendered Club-styled desktop home and 320px archive/case-study screenshots inspected locally: `/tmp/projects-home-without-preview-banner.png`, `/tmp/projects-archive-club-style-320.png`, `/tmp/projects-case-club-style-320.png`. Confirmed the official wordmark loads and pages have no horizontal overflow at 320px.
 
 ## Links
 

@@ -8,41 +8,41 @@ import { ProjectCard } from "./project-card";
 
 export function ArchiveBrowser({
   projects,
-  technologies,
-  initialTechnology,
+  areas,
+  initialArea,
 }: {
   projects: ProjectFixture[];
-  technologies: string[];
-  initialTechnology?: string;
+  areas: string[];
+  initialArea?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [technology, setTechnology] = useState(() =>
-    initialTechnology && technologies.includes(initialTechnology)
-      ? initialTechnology
+  const [area, setArea] = useState(() =>
+    initialArea && areas.includes(initialArea)
+      ? initialArea
       : "",
   );
   const filteredProjects = useMemo(() => {
     const search = query.trim().toLocaleLowerCase();
     return projects.filter((project) => {
-      const matchesTechnology =
-        !technology || project.technologies.includes(technology);
+      const matchesArea = !area || project.areas.includes(area);
       const searchable = [
         project.title,
         project.category,
         project.summary,
         project.dek,
+        ...project.areas,
         ...project.technologies,
       ]
         .join(" ")
         .toLocaleLowerCase();
-      return matchesTechnology && (!search || searchable.includes(search));
+      return matchesArea && (!search || searchable.includes(search));
     });
-  }, [projects, query, technology]);
-  const hasFilters = Boolean(query.trim() || technology);
+  }, [projects, query, area]);
+  const hasFilters = Boolean(query.trim() || area);
 
   function clearFilters() {
     setQuery("");
-    setTechnology("");
+    setArea("");
   }
 
   return (
@@ -58,40 +58,40 @@ export function ArchiveBrowser({
               className="archive-search"
               id="project-search"
               type="search"
-              placeholder="Try “offline”, “Rust”, or “learning”"
+              placeholder="Try “offline”, “ML”, or “games”"
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
             />
           </div>
         </div>
         <div>
-          <p className="filter-heading" id="technology-filter-label">
+          <p className="filter-heading" id="area-filter-label">
             <SlidersHorizontal
               aria-hidden="true"
               className="inline-block align-[-3px]"
               size={14}
             />{" "}
-            Filter by technology
+            Explore project areas
           </p>
           <div
-            aria-labelledby="technology-filter-label"
+            aria-labelledby="area-filter-label"
             className="filter-row"
             role="group"
           >
             <button
-              aria-pressed={!technology}
+              aria-pressed={!area}
               className="tech-chip"
-              onClick={() => setTechnology("")}
+              onClick={() => setArea("")}
               type="button"
             >
-              All technologies
+              All areas
             </button>
-            {technologies.map((item) => (
+            {areas.map((item) => (
               <button
                 key={item}
-                aria-pressed={technology === item}
+                aria-pressed={area === item}
                 className="tech-chip"
-                onClick={() => setTechnology(technology === item ? "" : item)}
+                onClick={() => setArea(area === item ? "" : item)}
                 type="button"
               >
                 {item}
@@ -105,7 +105,7 @@ export function ArchiveBrowser({
         <p aria-live="polite" aria-atomic="true">
           Showing {filteredProjects.length} of {projects.length} illustrative{" "}
           {projects.length === 1 ? "project" : "projects"}
-          {technology ? ` · ${technology}` : ""}
+          {area ? ` · ${area}` : ""}
         </p>
         {hasFilters ? (
           <button className="clear-button" onClick={clearFilters} type="button">

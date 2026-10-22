@@ -7,7 +7,8 @@ test("home leads into the archive and a technical case study", async ({
   await expect(
     page.getByRole("heading", { name: "Make something worth taking apart." }),
   ).toBeVisible();
-  await expect(page.getByText("Illustrative preview")).toBeVisible();
+  await expect(page.getByText("Illustrative preview")).toHaveCount(0);
+  await expect(page.getByText("Fixture").first()).toBeVisible();
 
   await page.getByRole("link", { name: /Explore the archive/ }).click();
   await expect(page).toHaveURL(/\/archive$/);
@@ -31,18 +32,20 @@ test("home leads into the archive and a technical case study", async ({
   );
 });
 
-test("archive search, technology filters, empty state, and clear action work", async ({
+test("archive area filters, search, empty state, and clear action work", async ({
   page,
 }) => {
   await page.goto("/archive");
   await expect(
-    page.getByText("Showing 4 of 4 illustrative projects"),
+    page.getByText("Showing 6 of 6 illustrative projects"),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "MapLibre" }).click();
-  await expect(page.getByRole("link", { name: /Signal Garden/ })).toBeVisible();
+  await page.getByRole("button", { name: "CV" }).click();
+  await expect(page.getByRole("link", { name: /Canopy Count/ })).toBeVisible();
   await expect(
-    page.getByText("Showing 1 of 4 illustrative projects · MapLibre"),
+    page.getByText(
+      "Showing 1 of 6 illustrative projects · CV",
+    ),
   ).toBeVisible();
 
   await page
@@ -54,20 +57,20 @@ test("archive search, technology filters, empty state, and clear action work", a
 
   await page.getByRole("button", { name: "Clear search and filters" }).click();
   await expect(
-    page.getByText("Showing 4 of 4 illustrative projects"),
+    page.getByText("Showing 6 of 6 illustrative projects"),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: /Relay Room/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Rover Relay/ })).toBeVisible();
 });
 
-test("technology discovery link opens a prefiltered archive", async ({
+test("area discovery link opens a prefiltered archive", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Rust" }).click();
-  await expect(page).toHaveURL(/technology=Rust/);
-  await expect(page.getByRole("link", { name: /Relay Room/ })).toBeVisible();
+  await page.getByRole("link", { name: "ML" }).click();
+  await expect(page).toHaveURL(/area=ML/);
+  await expect(page.getByRole("link", { name: /Canopy Count/ })).toBeVisible();
   await expect(
-    page.getByText("Showing 1 of 4 illustrative projects · Rust"),
+    page.getByText("Showing 1 of 6 illustrative projects · ML"),
   ).toBeVisible();
 });
 

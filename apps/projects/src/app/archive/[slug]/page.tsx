@@ -150,6 +150,14 @@ export default async function ProjectCaseStudyPage({
               <p className="aside-body">{project.provenance}</p>
             </section>
             <section className="aside-panel">
+              <h2 className="aside-heading">Project areas</h2>
+              <div className="tag-list">
+                {project.areas.map((area) => (
+                  <span key={area}>{area}</span>
+                ))}
+              </div>
+            </section>
+            <section className="aside-panel">
               <h2 className="aside-heading">Technologies</h2>
               <div className="tag-list">
                 {project.technologies.map((technology) => (

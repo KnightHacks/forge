@@ -1,4 +1,10 @@
-export type ProjectArtworkKind = "signal" | "relay" | "margin" | "chord";
+export type ProjectArtworkKind =
+  | "signal"
+  | "relay"
+  | "margin"
+  | "chord"
+  | "canopy"
+  | "rover";
 
 export interface ArchitectureNode {
   label: string;
@@ -22,6 +28,7 @@ export interface ProjectFixture {
   slug: string;
   title: string;
   category: string;
+  areas: string[];
   dek: string;
   summary: string;
   technologies: string[];
@@ -42,6 +49,7 @@ export const projectFixtures: ProjectFixture[] = [
     slug: "signal-garden",
     title: "Signal Garden",
     category: "Civic technology",
+    areas: ["Web"],
     dek: "A neighborhood flood map designed to keep working when the network doesn’t.",
     summary:
       "An offline-first reporting flow pairs small, verified observations with a map that still opens on a weak signal.",
@@ -137,6 +145,7 @@ async function submitWhenOnline(report: PendingReport) {
     slug: "relay-room",
     title: "Relay Room",
     category: "Developer tools",
+    areas: ["Systems", "Web"],
     dek: "A local-first incident notebook for teams that need a shared timeline without a wall of chat.",
     summary:
       "A small event log turns scattered notes into a searchable incident timeline, with explicit ownership and a calm handoff.",
@@ -201,6 +210,7 @@ async function submitWhenOnline(report: PendingReport) {
     slug: "margin-notes",
     title: "Margin Notes",
     category: "Learning tools",
+    areas: ["Web"],
     dek: "A reading companion that helps a study group compare questions without copying the page.",
     summary:
       "Readers attach private prompts to a chapter outline, then share only the question that starts a useful discussion.",
@@ -249,10 +259,11 @@ async function submitWhenOnline(report: PendingReport) {
   {
     slug: "chord-lab",
     title: "Chord Lab",
-    category: "Creative computing",
-    dek: "A browser instrument that turns simple timing patterns into a shared, accessible sound sketch.",
+    category: "Games",
+    areas: ["Games", "Web"],
+    dek: "A browser rhythm game that turns timing patterns into an accessible sound challenge.",
     summary:
-      "A Web Audio experiment explores how people can shape rhythm with sound, text, and keyboard controls together.",
+      "Players shape a rhythm through sound, text, and keyboard controls in a small browser game.",
     technologies: ["Web Audio", "React", "Canvas", "Keyboard UX"],
     artwork: "chord",
     readMinutes: 5,
@@ -262,13 +273,13 @@ async function submitWhenOnline(report: PendingReport) {
     demoUrl: "https://example.com/chord-lab-demo",
     repositoryUrl: "https://example.com/chord-lab-repository",
     introduction:
-      "Chord Lab is an illustrative browser instrument for exploring timing patterns. Its central engineering question is how to make a visual rhythm sketch work for people who listen, watch, or navigate without a pointer.",
+      "Chord Lab is an illustrative browser rhythm game about building and replaying short patterns. Its central engineering question is how to make timing legible for people who listen, watch, or navigate without a pointer.",
     sections: [
       {
         id: "problem",
         title: "Make timing legible in more than one way",
         paragraphs: [
-          "A sequencer can look intuitive while hiding its timing model behind color and position. This concept gives every step a text label, announces playback changes, and keeps the same order in the keyboard interaction as in the visual grid.",
+          "A rhythm game can look intuitive while hiding its timing model behind color and position. This concept gives every step a text label, announces playback changes, and keeps the same order in the keyboard interaction as in the visual grid.",
         ],
       },
       {
@@ -305,7 +316,114 @@ function scheduleStep(step: Step, audioTime: number) {
         id: "lessons",
         title: "Keep the experiment honest",
         paragraphs: [
-          "Browser timing varies with device load and audio output. The interface avoids claiming studio-grade synchronization and exposes tempo as an explicit control. A future version would need user testing with assistive technology and more careful audio session handling before it could promise a complete instrument experience.",
+          "Browser timing varies with device load and audio output. The interface avoids claiming studio-grade synchronization and exposes tempo as an explicit control. A future version would need user testing with assistive technology and more careful audio session handling before it could promise a complete game experience.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "canopy-count",
+    title: "Canopy Count",
+    category: "ML & computer vision",
+    areas: ["ML", "CV", "Web"],
+    dek: "A field-mapping tool that estimates tree cover from aerial images and shows where its model is uncertain.",
+    summary:
+      "A browser review queue pairs on-device image segmentation with human checks for a neighborhood tree-cover map.",
+    technologies: ["ONNX Runtime", "WebGPU", "TypeScript", "GeoJSON"],
+    artwork: "canopy",
+    readMinutes: 7,
+    teamLabel: "Illustrative team · contributor names intentionally omitted",
+    provenance:
+      "Fictional case-study fixture created to demonstrate ML and computer-vision project topics. It is not an actual Knight Hacks submission or award record.",
+    demoUrl: "https://example.com/canopy-count-demo",
+    repositoryUrl: "https://example.com/canopy-count-repository",
+    introduction:
+      "Canopy Count explores a narrow use for machine learning: helping a volunteer spot likely tree cover in aerial imagery, while keeping the uncertain cases visible for review. The model proposes a mask; a person decides whether that mask is useful enough to publish.",
+    sections: [
+      {
+        id: "problem",
+        title: "Make uncertainty part of the map",
+        paragraphs: [
+          "A coverage map can look authoritative even when its source image is old, blurry, or partly blocked. Canopy Count treats each prediction as a suggestion attached to its source tile and confidence band, rather than as a ground-truth label.",
+          "The browser lets a reviewer compare the image, predicted mask, and previous accepted outline. Low-confidence or out-of-distribution tiles go straight to manual review instead of being silently colored as complete data.",
+        ],
+      },
+      {
+        id: "architecture",
+        title: "Run the model beside the review tools",
+        paragraphs: [
+          "A quantized segmentation model runs locally through WebGPU when available, with a slower CPU path as a fallback. The interface stores only the current tile and draft edits in browser memory; accepted geometry is serialized as GeoJSON after the reviewer confirms it.",
+        ],
+        architecture: [
+          { label: "Image tile", detail: "Source + date" },
+          { label: "Model", detail: "Local mask proposal" },
+          { label: "Review", detail: "Accept or edit" },
+          { label: "GeoJSON", detail: "Confirmed outline" },
+        ],
+        bullets: [
+          "The source image stays visible beside the prediction.",
+          "Low-confidence tiles remain unclassified until a person reviews them.",
+          "Each accepted outline keeps a link to its image date and model version.",
+        ],
+      },
+      {
+        id: "tradeoffs",
+        title: "Keep the human review in the loop",
+        paragraphs: [
+          "Local inference reduces upload requirements and keeps the map usable in the field, but device performance varies. A future deployment would need representative imagery, bias evaluation across neighborhoods, and a clear process for correcting accepted outlines before any public map could rely on these predictions.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "rover-relay",
+    title: "Rover Relay",
+    category: "Robotics",
+    areas: ["Robotics", "Systems", "Web"],
+    dek: "A small rover control room that keeps telemetry and operator intent legible when packets arrive late.",
+    summary:
+      "A robotics dashboard separates route planning, safety checks, and delayed telemetry into clear operator states.",
+    technologies: ["ROS 2", "Python", "WebSockets", "Gazebo"],
+    artwork: "rover",
+    readMinutes: 6,
+    teamLabel: "Illustrative team · contributor names intentionally omitted",
+    provenance:
+      "Fictional case-study fixture created to demonstrate a robotics project topic. It does not describe a real Knight Hacks team, robot, or competition result.",
+    demoUrl: "https://example.com/rover-relay-demo",
+    repositoryUrl: "https://example.com/rover-relay-repository",
+    introduction:
+      "Rover Relay is a fictional control-room concept for a small research rover. It focuses on the software boundary between a route request and the robot’s current state, especially when telemetry is delayed or a safety check rejects a command.",
+    sections: [
+      {
+        id: "problem",
+        title: "Show the difference between sent and done",
+        paragraphs: [
+          "A browser can deliver a command without proving that a robot received it, accepted it, or completed it. Rover Relay gives each route request an explicit lifecycle and keeps the latest telemetry timestamp beside the rover state, so a stale position cannot look live.",
+        ],
+      },
+      {
+        id: "architecture",
+        title: "Keep planning outside the motion controller",
+        paragraphs: [
+          "The web client submits a bounded waypoint plan to a gateway. A ROS 2 node checks that plan against the current operating limits before forwarding motion goals. Gazebo simulations exercise delayed messages and rejected paths without connecting the browser to a physical motor controller.",
+        ],
+        architecture: [
+          { label: "Operator", detail: "Waypoint editor" },
+          { label: "Gateway", detail: "Command + status" },
+          { label: "Safety node", detail: "Bounds + checks" },
+          { label: "ROS 2", detail: "Simulation target" },
+        ],
+        bullets: [
+          "Commands expire if they are not acknowledged promptly.",
+          "The interface marks stale telemetry instead of extrapolating a position.",
+          "Simulation and hardware transports stay behind the same bounded command interface.",
+        ],
+      },
+      {
+        id: "tradeoffs",
+        title: "Prefer a visible pause to a clever recovery",
+        paragraphs: [
+          "Automatic retries can turn a delayed command into unexpected movement. This concept pauses the route and asks the operator to inspect the latest state before continuing. Real robotics work would need hardware-in-the-loop validation, emergency-stop integration, and a formal safety review before any physical deployment.",
         ],
       },
     ],
@@ -316,8 +434,8 @@ export const featuredProjects = projectFixtures.filter(
   (project) => project.featured,
 );
 
-export const allTechnologies = Array.from(
-  new Set(projectFixtures.flatMap((project) => project.technologies)),
+export const allAreas = Array.from(
+  new Set(projectFixtures.flatMap((project) => project.areas)),
 ).sort((first, second) => first.localeCompare(second));
 
 export function findProject(slug: string) {

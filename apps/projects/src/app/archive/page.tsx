@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { allTechnologies, projectFixtures } from "~/content/projects";
+import { allAreas, projectFixtures } from "~/content/projects";
 import { ArchiveBrowser } from "../_components/archive-browser";
 import { SiteFooter } from "../_components/site-footer";
 import { SiteHeader } from "../_components/site-header";
@@ -8,15 +8,15 @@ import { SiteHeader } from "../_components/site-header";
 export const metadata: Metadata = {
   title: "Project archive",
   description:
-    "Search illustrative Knight Hacks Projects case studies by topic and technology.",
+    "Explore illustrative Knight Hacks Projects case studies by project area.",
 };
 
 export default async function ArchivePage({
   searchParams,
 }: {
-  searchParams: Promise<{ technology?: string }>;
+  searchParams: Promise<{ area?: string }>;
 }) {
-  const { technology } = await searchParams;
+  const { area } = await searchParams;
 
   return (
     <div className="site-shell">
@@ -35,9 +35,9 @@ export default async function ArchivePage({
         </section>
         <section className="archive-section container" aria-label="Projects">
           <ArchiveBrowser
-            initialTechnology={technology}
+            initialArea={area}
             projects={projectFixtures}
-            technologies={allTechnologies}
+            areas={allAreas}
           />
         </section>
       </main>

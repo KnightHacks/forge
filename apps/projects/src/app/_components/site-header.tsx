@@ -47,17 +47,6 @@ export function SiteHeader({ active }: { active?: "home" | "archive" }) {
           </nav>
         </div>
       </header>
-      <div
-        className="fixture-notice"
-        role="note"
-        aria-label="Fixture content notice"
-      >
-        <strong>Illustrative preview</strong>
-        <span>
-          Every project and team shown here is a fictional fixture, not a real
-          submission or award.
-        </span>
-      </div>
     </>
   );
 }
