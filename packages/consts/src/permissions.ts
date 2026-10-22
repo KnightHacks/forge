@@ -155,6 +155,16 @@ export const PERMISSION_DATA = {
     name: "Hackathon Merch Store",
     desc: "Allows managing the hackathon merch catalog and recording hacker purchases.",
   },
+  REVIEW_CASE_STUDIES_TECHNICAL: {
+    idx: 30,
+    name: "Technical Case Study Review",
+    desc: "Allows technical review of submitted Projects case studies.",
+  },
+  REVIEW_CASE_STUDIES_EDITORIAL: {
+    idx: 31,
+    name: "Editorial Case Study Review",
+    desc: "Allows editorial review and publication of Projects case studies.",
+  },
 } as const satisfies Record<string, PermissionDataObj>;
 
 export const PERMISSIONS = Object.fromEntries(

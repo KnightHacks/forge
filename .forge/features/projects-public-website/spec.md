@@ -4,7 +4,7 @@ Status: P2 implementation in progress.
 
 ## User-facing purpose
 
-Projects is a permanent Knight Hacks archive where visitors can explore community project ideas and read how example systems were designed and built. This first public slice demonstrates the archive experience with clearly labeled illustrative fixtures.
+Projects is a curated technical publication for exceptional work from the broader Knight Hacks community, wherever it was built. Members may submit their own Knight Hacks, other-hackathon or independent projects for selection by Knight Hacks reviewers. This first public slice demonstrates the reading experience with clearly labeled illustrative fixtures; it does not accept or publish submissions.
 
 ## Users / actors
 
@@ -15,7 +15,7 @@ Projects is a permanent Knight Hacks archive where visitors can explore communit
 
 - A branded editorial homepage with featured stories and technology discovery.
 - A searchable, technology-filterable project archive.
-- Long-form technical case studies with team/provenance labels, diagrams, code, related stories, and demo/repository links.
+- Long-form technical case studies with team/provenance labels, diagrams, code, related stories, and demo/repository links. Event participation and awards are optional context, never eligibility signals.
 - A clear notice that current content is illustrative and does not describe real submissions, awards, or contributors.
 
 ## Scope
@@ -28,7 +28,7 @@ Projects is a permanent Knight Hacks archive where visitors can explore communit
 
 ### Out of scope
 
-- Authentication, authoring, consent, review, publication APIs, database changes, media uploads, infrastructure, or deployment.
+- Authentication, authoring, consent, editorial selection, claim verification, publication APIs, database changes, imports/synchronization, media uploads, infrastructure, or deployment.
 - Production project claims, winner/award labels, or named contributor attribution.
 
 ## Acceptance criteria
@@ -42,4 +42,4 @@ Projects is a permanent Knight Hacks archive where visitors can explore communit
 
 ## Open questions
 
-- Which real case studies, approved contributor attribution, and source links should replace fixtures in a later publishing slice?
+- Which reviewed case studies, consented contributors and verified claims will replace fixtures in a later publishing slice?

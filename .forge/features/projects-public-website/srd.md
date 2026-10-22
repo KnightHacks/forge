@@ -4,7 +4,7 @@ Status: P2 public fixture implementation.
 
 ## Technical purpose
 
-Build the public, read-only Projects experience in a new Forge Next.js app. All content is local fixture data and can later be replaced by a published case-study API projection.
+Build the public, read-only Projects experience in a new Forge Next.js app. All content is local fixture data and can later be replaced by a published-only case-study API projection. The later publication domain accepts creator submissions from Knight Hacks events, other hackathons and independent work; it does not use judging inventory as its source.
 
 ## Relevant principles
 
@@ -32,7 +32,7 @@ Every route is public. No identity, session, authorization, or private draft beh
 
 ## Data / migration / compatibility
 
-No persistence or migration. Fixture records are shaped as public case-study content, not source-event data.
+No persistence or migration. Fixture records are shaped as public case-study content, not source-event data. Optional event provenance and verified affiliation/award claims belong to the later case-study domain; P2 performs no import or synchronization.
 
 ## React / frontend constraints
 

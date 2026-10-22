@@ -44,6 +44,12 @@ describe("effective permissions", () => {
     expect(result.EDIT_MEMBERS).toBe(false);
   });
 
+  it("defaults new case-study reviewer capabilities to denied for existing roles", () => {
+    const result = mergePermissionBitstrings(["1".repeat(30)]);
+    expect(result.REVIEW_CASE_STUDIES_TECHNICAL).toBe(false);
+    expect(result.REVIEW_CASE_STUDIES_EDITORIAL).toBe(false);
+  });
+
   it("lets officers override checks and uses forbidden for missing access", () => {
     const officer = {
       session: {

@@ -23,6 +23,7 @@ export * from "./hacker-portal";
 export * from "./printing";
 export * from "./hackathon-portal-admin";
 export * from "./projects";
+export * from "./case-studies";
 export * from "./judging";
 export * from "./judging-schedule";
 

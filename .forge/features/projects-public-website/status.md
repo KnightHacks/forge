@@ -11,6 +11,7 @@ Current phase: P2 public frontend implemented and locally verified.
 - 2026-10-21: Align the public app with Club's visual identity: local gold wordmark/sigil and hero poster, Montserrat display/body typography, plum/purple backgrounds, gold and rose accents, and bold high-contrast controls.
 - 2026-10-22: Remove the global illustrative-preview banner; retain fixture labels on individual cards and case studies.
 - 2026-10-22: Replace stack-specific archive filters with broad project areas. Added fictional ML/computer-vision and robotics case-study fixtures so those areas return useful results; technology stacks remain case-study metadata.
+- 2026-10-22: Clarified the future publication domain: selected technical work may come from Knight Hacks, other hackathons or independent projects. Event/award details are optional and reviewed; P2 remains an illustrative public UI with no submission, import or synchronization behavior.
 
 ## Open questions
 
