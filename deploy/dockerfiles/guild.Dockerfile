@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-bookworm-slim AS tools
+FROM node:24.22.1-bookworm-slim AS tools
 RUN npm install --global pnpm@9.12.1 turbo@2.8.11
 WORKDIR /app
 
@@ -39,7 +39,7 @@ RUN test -n "${FORGE_BUILD_PLACEHOLDER}" \
     && test -n "${NEXT_PUBLIC_TRPC_URL}" \
     && pnpm --filter @forge/guild build
 
-FROM node:24-bookworm-slim AS runner
+FROM node:24.22.1-bookworm-slim AS runner
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*

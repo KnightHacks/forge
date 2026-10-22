@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-bookworm-slim AS tools
+FROM node:24.22.1-bookworm-slim AS tools
 RUN npm install --global pnpm@9.12.1 turbo@2.8.11
 WORKDIR /app
 
