@@ -20,6 +20,9 @@ export const CS_FLOWCHART_24_25_URL =
 export const CS_FLOWCHART_25_26_URL =
   "https://blade.knighthacks.org/flowcharts/bs-cs-25-26.png";
 
+export const CS_FLOWCHART_26_27_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cs-26-27.png";
+
 export const IT_FLOWCHART_23_24_URL =
   "https://blade.knighthacks.org/flowcharts/bs-it-23-24.png";
 
@@ -29,6 +32,9 @@ export const IT_FLOWCHART_24_25_URL =
 export const IT_FLOWCHART_25_26_URL =
   "https://blade.knighthacks.org/flowcharts/bs-it-25-26.png";
 
+export const IT_FLOWCHART_26_27_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-it-26-27.png";
+
 export const CPE_FLOWCHART_23_24_URL =
   "https://blade.knighthacks.org/flowcharts/bs-cpe-23-24.png";
 
@@ -37,6 +43,9 @@ export const CPE_FLOWCHART_24_25_URL =
 
 export const CPE_FLOWCHART_25_26_URL =
   "https://blade.knighthacks.org/flowcharts/bs-cpe-25-26.png";
+
+export const CPE_FLOWCHART_26_27_URL =
+  "https://blade.knighthacks.org/flowcharts/bs-cpe-26-27.png";
 
 export const DS_FLOWCHART_24_25_URL =
   "https://blade.knighthacks.org/flowcharts/bs-ds-24-25.png";
@@ -49,13 +58,15 @@ export const TK_JOKE_URL =
 export const TK_KNIGHTHACKS_LINKTREE_URL = "https://linktr.ee/knighthacks";
 
 export const LINKS = [
-  "• [**Sign up for KnightHacks IX!**](https://2026.knighthacks.org/)",
   "• [**Be a member and pay your dues here!**](https://blade.knighthacks.org/)",
   "• [**Check out our events calendar!**](https://calendar.google.com/calendar/u/0/r?cid=Y18wYjlkZjJiMDA2MmE1ZDcxMWZjMTYwNjBmZjMyODZlZjQwNGIxNzRiZmFmYzRjYmRkNGUzMDA5ZTkxNTM2ZTk0QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20)",
   "• [**Follow us on LinkedIn!**](https://www.linkedin.com/company/knight-hacks/posts/?feedView=all)",
   "• [**Follow us on Instagram!**](https://www.instagram.com/knighthacks)",
   "[*For more links...*](https://linktr.ee/knighthacks)",
 ];
+
+// Temporarily comment the Knight Hacks hackathon link
+// "• [**Sign up for KnightHacks IX!**](https://2026.knighthacks.org/)",
 
 export const CHAT_RESPONSES = [
   "Hey there! Ready to tackle some code?",
