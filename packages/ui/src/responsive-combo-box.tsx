@@ -214,14 +214,15 @@ export function ResponsiveComboBox<T>({
             aria-expanded={open}
             aria-haspopup="listbox"
             variant="outline"
-            className={cn("w-full justify-start font-normal", triggerClassName)}
+            className={cn(
+              "w-full min-w-0 justify-start font-normal",
+              triggerClassName,
+            )}
             disabled={isDisabled}
           >
-            {selectedItem ? (
-              <>{getItemLabel(selectedItem)}</>
-            ) : (
-              <>{buttonPlaceholder}</>
-            )}
+            <span className="truncate">
+              {selectedItem ? getItemLabel(selectedItem) : buttonPlaceholder}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
@@ -255,14 +256,15 @@ export function ResponsiveComboBox<T>({
           aria-expanded={open}
           aria-haspopup="listbox"
           variant="outline"
-          className={cn("w-full justify-start font-normal", triggerClassName)}
+          className={cn(
+            "w-full min-w-0 justify-start font-normal",
+            triggerClassName,
+          )}
           disabled={isDisabled}
         >
-          {selectedItem ? (
-            <>{getItemLabel(selectedItem)}</>
-          ) : (
-            <>{buttonPlaceholder}</>
-          )}
+          <span className="truncate">
+            {selectedItem ? getItemLabel(selectedItem) : buttonPlaceholder}
+          </span>
         </Button>
       </DrawerTrigger>
       <DrawerContent>
