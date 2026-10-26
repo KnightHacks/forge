@@ -470,7 +470,7 @@ export function MemberSignupForm({
                           </div>
                         </div>
                       )}
-                      <div className="grid gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
+                      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
                         {visibleFields.map((fieldConfig) => (
                           <FormField
                             key={fieldConfig.name}

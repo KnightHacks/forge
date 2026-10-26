@@ -235,7 +235,7 @@ function EventsOverview({
           information are still available.
         </p>
       ) : (
-        <div className="mt-3 grid gap-4">
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-4">
           <section aria-labelledby="dashboard-upcoming-events">
             <h3
               id="dashboard-upcoming-events"
@@ -243,7 +243,7 @@ function EventsOverview({
             >
               Up next
             </h3>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
               {upcoming.length === 0 ? (
                 <p className="rounded-md border border-dashed border-white/10 p-3 text-sm text-muted-foreground">
                   No upcoming events right now.
@@ -304,7 +304,7 @@ function EventsOverview({
               <History className="h-3.5 w-3.5" aria-hidden="true" />
               Recently attended
             </h3>
-            <div className="grid gap-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
               {recent.length === 0 ? (
                 <p className="rounded-md border border-dashed border-white/10 p-3 text-sm text-muted-foreground">
                   Your attendance history is empty.
