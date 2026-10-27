@@ -1,10 +1,10 @@
 # Stevin Dev Team Application Status
 
-Current phase: Batch 3 review. Page and dropdown motion are implemented locally; playable Lenny has not started.
+Current phase: Follow-up review. The earlier forest portfolio's Lenny animation controller and original walking frames have been adapted to the Blade page locally; Stevin can review the interaction before any further Git or application submission steps.
 
 ## Goal
 
-Create a public, one-page Dev Team application at Blade's `/stevin-george` route. Preserve the approved Figma direction: peach background, centered name and short introduction, Resume on the left, Portfolio on the right, a tree between them, original Lenny peeking from the grass, and a simpler mobile view. Stop before committing, pushing, opening a pull request, or submitting the application.
+Create a public, one-page Dev Team application at Blade's `/stevin-george` route. Preserve the approved Figma direction: peach background, centered name and short introduction, Resume on the left, Portfolio on the right, a tree between them, original Lenny peeking from the grass, and a simpler mobile view. Stop before any further commit, push, pull request, or application submission.
 
 ## Reviewable batches
 
@@ -21,9 +21,12 @@ Each batch ends with a local preview and a pause for Stevin to edit the design o
 - 2026-10-26: Forked `KnightHacks/forge` to `StevScripts/forge`, cloned it locally, and created branch `stevin/dev-team-application`.
 - 2026-10-26: Opened the Forge checkout in VS Code. The application is scoped to `apps/blade`; no other app or shared package changes are planned.
 - 2026-10-26: Exported the original tree, Lenny, grass, chevron, and handwritten pointer assets from the approved Figma file into `apps/blade/public/dev-team/stevin-george/`.
-- 2026-10-26: Batch 1 added the public `/stevin-george` page, desktop/mobile layout, page metadata, and scoped styles. The exported original Figma artwork is in use. No commits, push, PR, or application submission has been made.
+- 2026-10-26: Batch 1 added the public `/stevin-george` page, desktop/mobile layout, page metadata, and scoped styles. The exported original Figma artwork is in use. At this point no commit, push, PR, or application submission had been made.
 - 2026-10-26: Batch 2 added semantic Resume and Portfolio buttons with an exclusive open state, keyboard access, focus styles, and accurate links. Portfolio features greghouse, using the screenshot and contribution details from Stevin's existing portfolio. The published resume PDF is linked directly. The simpler stacked layout now covers tablet widths to keep the project readable and clear of the tree. No contacts section was added.
 - 2026-10-26: Batch 3 added a staged page entrance, tree and Lenny entrance, restrained Lenny/pointer idle movement, dropdown expansion and collapse, chevron rotation, project reveal, and hover/press feedback. Closed panels remain in the DOM but are inert and hidden from assistive technology. Reduced-motion users receive the final state without timed effects.
+- 2026-10-26: Batch 4 made the original Lenny art a desktop-only playable character. Clicking him starts a hop; arrow keys or A/D move, Space/Up jumps, clicking again jumps, and Escape exits. Branch-shaped landing zones lead to the Resume and Portfolio lines; landing on either line opens its dropdown. The direct dropdown buttons remain available throughout play. The asset pixels were not edited.
+- 2026-10-26: Batch 5 compared the live page with Figma desktop and mobile views, aligned the active chevrons and Resume PDF arrow, enlarged mobile link tap targets, and stopped mobile from fetching the hidden tree and Lenny images. Branch HEAD is `03b5b250 DevAppLayout`, which was already present when this review began. No commit, push, PR, or submission was made during Batch 5.
+- 2026-10-26: Follow-up replaced the custom Lenny motion with the earlier forest portfolio's `walk.ts` movement and 16 original Knight Hacks walk frames from `/Users/stevin/Documents/ChatGPT/KH Forge/forge/apps/blade`. The movement equations and distance-based frame timing are preserved; player dimensions and platform geometry fit the current one-page scene. The original Figma `lenny.png` remains the resting peek. No commit, push, PR, or submission was made during this follow-up.
 
 ## Content to review
 
@@ -40,6 +43,10 @@ Each batch ends with a local preview and a pause for Stevin to edit the design o
 - Local previews returned HTTP 200 at 1440px, 390px, and 320px; visible artwork loaded and no horizontal overflow was observed.
 - Batch 2 live previews confirmed both dropdowns, a keyboard Enter activation, correct project URL, no page errors, and no horizontal overflow at 1440px, 390px, and 320px. Intermediate widths were visually checked and adapted to a stacked layout.
 - Batch 3 live previews confirmed a smooth intermediate dropdown height, final open/closed heights, keyboard section switching, no runtime errors, and no horizontal overflow at desktop and mobile widths. Reduced-motion previews reached the final state immediately.
+- Batch 4 live playtests reached the lower, middle, and upper branches, then both Resume and Portfolio lines. Landing opened the correct dropdown. Escape reset the game; direct dropdown controls still worked while playing; Lenny stayed hidden on mobile. TypeScript, targeted ESLint, and Prettier checks passed.
+- Batch 5 screenshots compared desktop home/open states and 390px/320px mobile open states with Figma. Browser checks at 1440px, 768px, 390px, and 320px found no page errors or horizontal overflow; all visible artwork loaded, direct dropdowns stayed mutually exclusive with keyboard activation, and mobile portfolio links measured at least 44px high. Desktop tree and Lenny images loaded; mobile made no requests for those hidden images after lazy loading was restored.
+- Batch 5 checks passed: Blade TypeScript, targeted ESLint, Prettier, `pnpm analyze:react:changed` (zero failures), and `git diff --check`. Repo-wide commit gates are reserved for the later commit step.
+- Follow-up browser checks loaded all 16 original walk frames after activation, observed movement and facing changes with ArrowLeft, and observed a Space jump. Repeated jumps reached the lower, middle, and upper branches; landing on Resume and Portfolio opened their dropdowns. Escape returned to the resting Lenny image. At 390px and 320px, Lenny remained hidden, no walk frames were requested, and there were no page errors or horizontal overflow. All copied frame files match the earlier portfolio byte-for-byte; `lenny-walk.ts` differs from the earlier `walk.ts` only in scene/player dimensions and an explanatory comment. Blade TypeScript, targeted ESLint, Prettier, React change analysis, and `git diff --check` passed.
 - Local preview PNGs are in the parent DevTeamPR staging folder under `assets/`; they are not part of the Forge change.
 - Forge's normal dev script expects a local `.env`; the local preview server uses temporary process values for required public variables. No `.env` file was added.
 
