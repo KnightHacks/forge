@@ -104,6 +104,45 @@ export const caseStudyDraftInputSchema = z
   })
   .strict();
 
+export const caseStudyCreateInputSchema = z
+  .object({ slug: caseStudySlugSchema })
+  .strict();
+
+export const caseStudyIdInputSchema = z
+  .object({ caseStudyId: z.uuid() })
+  .strict();
+
+export const caseStudyInvitationTokenSchema = z
+  .object({ token: z.string().min(32).max(256) })
+  .strict();
+
+export const caseStudyInvitationIdSchema = z
+  .object({ invitationId: z.uuid() })
+  .strict();
+
+export const caseStudyInvitationConfirmationSchema = z
+  .object({
+    invitationId: z.uuid(),
+    attribution: caseStudyAttributionSchema,
+  })
+  .strict();
+
+export const caseStudyContributorEditSchema = z
+  .object({
+    caseStudyId: z.uuid(),
+    contributorUserId: z.uuid(),
+    canEdit: z.boolean(),
+  })
+  .strict();
+
+export const caseStudyContributorInputSchema = z
+  .object({ caseStudyId: z.uuid(), contributorUserId: z.uuid() })
+  .strict();
+
+export const caseStudyTransferOfferSchema = z
+  .object({ caseStudyId: z.uuid(), targetUserId: z.uuid() })
+  .strict();
+
 export const caseStudySubmissionSchema = z
   .object({
     caseStudyId: z.uuid(),

@@ -33,6 +33,10 @@
       "types": "./src/hacker-portal/index.ts",
       "default": "./src/hacker-portal/index.ts"
     },
+    "./case-studies": {
+      "types": "./src/case-studies/index.ts",
+      "default": "./src/case-studies/index.ts"
+    },
     "./projects/challenge-labels": "./src/utils/projects/challenge-labels.ts",
     "./utils": {
       "types": "./src/utils/index.ts",

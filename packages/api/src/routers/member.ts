@@ -19,6 +19,7 @@ import {
   updateGuildPreferencesSchema,
 } from "@forge/validators";
 
+import { cleanupProjectsForDeletedAccount } from "../case-studies/account-deletion";
 import { protectedProcedure } from "../trpc";
 import {
   loadMemberAuditIdentity,
@@ -148,6 +149,7 @@ export const memberRouter = {
 
         await tx.delete(Member).where(eq(Member.userId, userId));
         await tx.delete(Permissions).where(eq(Permissions.userId, userId));
+        await cleanupProjectsForDeletedAccount(tx, userId);
 
         const [deletedUser] = await tx
           .delete(User)

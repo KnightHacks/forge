@@ -16,6 +16,7 @@ import { memberSignupFormConfig } from "../../utils/member/onboarding";
 import { AUDIT_EVENT_ID, createAuditRecorder } from "../support/audit-recorder";
 
 const mocks = vi.hoisted(() => ({
+  cleanupProjectsForDeletedAccount: vi.fn(),
   db: {
     // `appendAdminAuditResults` runs after the transaction commits, against the
     // top-level client rather than `tx`, so the storage-cleanup results it
@@ -29,6 +30,10 @@ const mocks = vi.hoisted(() => ({
   normalizeResumeObjectNameForPersistence: vi.fn(),
   removeProfilePictureObjectsForUser: vi.fn(),
   removeUnreferencedResumeObjectsForUser: vi.fn(),
+}));
+
+vi.mock("../../case-studies/account-deletion", () => ({
+  cleanupProjectsForDeletedAccount: mocks.cleanupProjectsForDeletedAccount,
 }));
 
 vi.mock("@forge/db/client", () => ({
@@ -506,6 +511,10 @@ describe("member.deleteMember", () => {
     expect(transaction.delete).toHaveBeenNthCalledWith(2, Member);
     expect(transaction.delete).toHaveBeenNthCalledWith(3, Permissions);
     expect(transaction.delete).toHaveBeenNthCalledWith(4, User);
+    expect(mocks.cleanupProjectsForDeletedAccount).toHaveBeenCalledWith(
+      expect.anything(),
+      userId,
+    );
     expect(mocks.removeProfilePictureObjectsForUser).toHaveBeenCalledWith(
       userId,
     );
