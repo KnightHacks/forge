@@ -10,7 +10,9 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
   position: relative;
-  min-height: 900px;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background: var(--paper);
   color: var(--ink);
@@ -20,7 +22,16 @@
 
 .content {
   width: min(calc(100% - 144px), 1296px);
+  flex: 1;
   margin-inline: auto;
+}
+
+@media (min-width: 1241px) {
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 }
 
 .intro {
