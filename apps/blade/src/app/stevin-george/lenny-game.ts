@@ -18,7 +18,7 @@ interface GameOptions {
   active: boolean;
   sceneRef: RefObject<HTMLDivElement | null>;
   lennyRef: RefObject<HTMLButtonElement | null>;
-  framesRef: RefObject<HTMLSpanElement | null>;
+  spriteRef: RefObject<HTMLSpanElement | null>;
   jumpRequestRef: RefObject<boolean>;
   onLand: (section: LandingSection | null) => void;
   onExit: () => void;
@@ -27,6 +27,8 @@ interface GameOptions {
 const LEFT = new Set(["ArrowLeft", "KeyA"]);
 const RIGHT = new Set(["ArrowRight", "KeyD"]);
 const JUMP = new Set(["Space", "ArrowUp", "KeyW"]);
+const SPRITE_COLUMNS = 4;
+const SPRITE_FRAMES = 16;
 
 function getPlatforms(sceneWidth: number): Platform[] {
   const treeLeft = sceneWidth / 2 - 168;
@@ -73,7 +75,7 @@ export function useLennyGame({
   active,
   sceneRef,
   lennyRef,
-  framesRef,
+  spriteRef,
   jumpRequestRef,
   onLand,
   onExit,
@@ -83,11 +85,11 @@ export function useLennyGame({
 
     const scene = sceneRef.current;
     const lenny = lennyRef.current;
-    const frames = framesRef.current;
-    if (!scene || !lenny || !frames) return;
+    const sprite = spriteRef.current;
+    if (!scene || !lenny || !sprite) return;
     const sceneElement = scene;
     const lennyElement = lenny;
-    const framesElement = frames;
+    const spriteElement = sprite;
 
     const desktop = window.matchMedia("(min-width: 1241px)");
     if (!desktop.matches) {
@@ -95,7 +97,9 @@ export function useLennyGame({
       return;
     }
 
-    const images = Array.from(framesElement.querySelectorAll("img"));
+    const atlasImage = spriteElement.querySelector("img");
+    if (!atlasImage) return;
+    const atlasImageElement = atlasImage;
     let sceneWidth = sceneElement.clientWidth;
     let baseLeft = sceneWidth / 2 + 110;
     let platforms = getPlatforms(sceneWidth);
@@ -115,12 +119,12 @@ export function useLennyGame({
 
     function render() {
       lennyElement.style.transform = `translate3d(${walker.x - PLAYER.width / 2 - baseLeft}px, ${WORLD.ground - PLAYER.height - walker.y - 320}px, 0)`;
-      framesElement.style.transform = `scaleX(${walker.facing})`;
-      const frame = Math.floor(walker.phase) % images.length;
+      spriteElement.style.transform = `scaleX(${walker.facing})`;
+      const frame = Math.floor(walker.phase) % SPRITE_FRAMES;
       if (frame !== activeFrame) {
-        images.forEach((image, index) => {
-          image.style.opacity = index === frame ? "1" : "0";
-        });
+        const column = frame % SPRITE_COLUMNS;
+        const row = Math.floor(frame / SPRITE_COLUMNS);
+        atlasImageElement.style.transform = `translate3d(${-column * PLAYER.width}px, ${-row * PLAYER.height}px, 0)`;
         activeFrame = frame;
       }
       lennyElement.dataset.surface = surface ?? "air";
@@ -271,12 +275,12 @@ export function useLennyGame({
       window.removeEventListener("blur", clearInput);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       lennyElement.style.removeProperty("transform");
-      framesElement.style.removeProperty("transform");
+      spriteElement.style.removeProperty("transform");
       delete lennyElement.dataset.surface;
       delete lennyElement.dataset.x;
       delete lennyElement.dataset.y;
       delete lennyElement.dataset.frame;
       jumpRequestRef.current = false;
     };
-  }, [active, sceneRef, lennyRef, framesRef, jumpRequestRef, onLand, onExit]);
+  }, [active, sceneRef, lennyRef, spriteRef, jumpRequestRef, onLand, onExit]);
 }

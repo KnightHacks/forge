@@ -8,11 +8,6 @@ import { useLennyGame } from "./lenny-game";
 import styles from "./stevin-george.module.css";
 
 const assetRoot = "/dev-team/stevin-george";
-const lennyFrames = Array.from(
-  { length: 16 },
-  (_, index) =>
-    `${assetRoot}/lenny-frames/frame-${String(index + 1).padStart(2, "0")}.webp`,
-);
 
 type Section = LandingSection;
 
@@ -72,10 +67,11 @@ function PortfolioContent() {
 export function ApplicationScene() {
   const [openSection, setOpenSection] = useState<Section | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [spriteReady, setSpriteReady] = useState(false);
   const [landedSection, setLandedSection] = useState<Section | null>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const lennyRef = useRef<HTMLButtonElement>(null);
-  const framesRef = useRef<HTMLSpanElement>(null);
+  const spriteRef = useRef<HTMLSpanElement>(null);
   const jumpRequestRef = useRef(false);
 
   const onLand = useCallback((section: Section | null) => {
@@ -85,6 +81,7 @@ export function ApplicationScene() {
 
   const onExit = useCallback(() => {
     setPlaying(false);
+    setSpriteReady(false);
     setLandedSection(null);
   }, []);
 
@@ -92,7 +89,7 @@ export function ApplicationScene() {
     active: playing,
     sceneRef,
     lennyRef,
-    framesRef,
+    spriteRef,
     jumpRequestRef,
     onLand,
     onExit,
@@ -215,38 +212,36 @@ export function ApplicationScene() {
         aria-label={playing ? "Jump with Lenny" : "Play with Lenny"}
         aria-pressed={playing}
         data-active={playing}
+        data-sprite-ready={spriteReady}
         onClick={() => {
           if (playing) jumpRequestRef.current = true;
           else {
             jumpRequestRef.current = true;
+            setSpriteReady(false);
             setPlaying(true);
           }
         }}
       >
-        {playing ? (
-          <span className={styles.lennyFrames} ref={framesRef}>
-            {lennyFrames.map((src, index) => (
-              <Image
-                key={src}
-                src={src}
-                alt=""
-                width={230}
-                height={298}
-                loading="eager"
-                unoptimized
-                draggable={false}
-                style={{ opacity: index === 9 ? 1 : 0 }}
-              />
-            ))}
+        <Image
+          className={styles.lennyRest}
+          src={`${assetRoot}/lenny.png`}
+          alt=""
+          width={102}
+          height={155}
+        />
+        {playing && (
+          <span className={styles.lennySprite} ref={spriteRef}>
+            <Image
+              src={`${assetRoot}/lenny-walk-sheet.webp`}
+              alt=""
+              width={984}
+              height={1272}
+              loading="eager"
+              unoptimized
+              draggable={false}
+              onLoad={() => setSpriteReady(true)}
+            />
           </span>
-        ) : (
-          <Image
-            className={styles.lennyRest}
-            src={`${assetRoot}/lenny.png`}
-            alt=""
-            width={102}
-            height={155}
-          />
         )}
       </button>
 

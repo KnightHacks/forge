@@ -391,39 +391,70 @@
 }
 
 .lenny:focus-visible {
-  outline: 3px solid var(--terracotta);
-  outline-offset: 5px;
-  border-radius: 22px;
+  outline: none;
+}
+
+.lenny:focus-visible::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 32px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--leaf);
+  transform: translateX(-50%);
 }
 
 .lenny[data-active="true"] {
-  width: 82px;
-  height: 106px;
+  width: 112px;
+  height: 145px;
   animation: none;
   will-change: transform;
 }
 
 .lennyRest {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  animation: lennyIdle 4s 1.7s ease-in-out infinite;
-}
-
-.lennyFrames {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.lennyFrames img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: opacity 24ms linear;
+  animation: lennyIdle 4s 1.7s ease-in-out infinite;
+  transition: opacity 80ms linear;
+}
+
+.lenny[data-active="true"] .lennyRest {
+  animation: none;
+}
+
+.lennySprite {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 80ms linear;
+}
+
+.lenny[data-sprite-ready="true"] .lennyRest {
+  opacity: 0;
+}
+
+.lenny[data-sprite-ready="true"] .lennySprite {
+  opacity: 1;
+}
+
+.lennySprite img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Four atlas cells across and down, displayed at 112 × 145px per cell. */
+  width: 400%;
+  height: 400%;
+  max-width: none;
+  object-fit: fill;
 }
 
 .gameHint {
