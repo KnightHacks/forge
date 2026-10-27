@@ -1,8 +1,8 @@
 # Knight Hacks Projects Archive Spec
 
-Status: Product scope clarified for P3.1 planning; schema and authorization implementation require approval.
+Status: P3.2 authoring and consent foundation implemented; editorial publication and Projects UI integration remain.
 
-This file owns product intent. [Status](status.md) separates confirmed requirements from recommendations awaiting approval.
+This file owns product intent. [Status](status.md) records implementation and remaining approval gates.
 
 ## User-facing purpose
 
@@ -20,7 +20,7 @@ Projects is a curated technical publication showcasing exceptional work from the
 - C8: Reuse Forge infrastructure; no additional backend services or expansion of Blade's operational footprint.
 - C9: Claimed awards and affiliations must be checked during editorial review before publication.
 
-P1 implemented the delegated authentication backend. G2 covers two distinct reviewers; G3 covers attribution-snapshot consent and revocation. These recommendations still need approval. See [status.md](status.md).
+P1 implemented delegated authentication, P3.1 persistence and P3.2 authoring/consent. G2's reviewer separation and G3's publication checks remain for the editorial API. See [status.md](status.md).
 
 ## Users / actors
 
@@ -44,9 +44,9 @@ Sign in using Blade, return to Projects, create a draft, save and preview privat
 
 Submit a fixed revision for technical review, then editorial review. Optional event, Devpost and award claims are supplied by the creator and do not confer eligibility or publication. Requested changes or editing after submission create a new revision; the reviewed version remains in private history. Editing a published article leaves the live version unchanged until another revision passes review. Authors can withdraw their publication.
 
-Under the proposed G4 eligibility rule, the submitting author declares their connection to Knight Hacks. Blade sign-in confirms which account submitted the work; it does not establish community membership. A current Member profile is optional. Editors check the declaration against existing records or supporting evidence before publication. Coauthors control their public attribution through consent and do not each need Knight Hacks membership.
+Under the approved G4 eligibility rule, the submitting author declares their connection to Knight Hacks. Blade sign-in confirms which account submitted the work; it does not establish community membership. A current Member profile is optional. Editors check the declaration against existing records or supporting evidence before publication. Coauthors control their public attribution through consent and do not each need Knight Hacks membership.
 
-### Coauthor journey: proposed G3
+### Coauthor journey: G3
 
 An invited person signs in through Blade, inspects the proposed public attribution and affirmatively accepts or declines. A new Blade account is sufficient; no historical event check-in is required. For an invitation not initially bound to an account, the author confirms the recipient account association before publication. Possessing a shared link alone is not historical identity proof.
 
@@ -56,9 +56,9 @@ Pending, declined or revoked attribution never appears publicly. Recommend block
 
 Coauthors revoke consent from their Projects workspace. Recommend suspending affected publication immediately until a reviewed replacement removes the identity, or consent is restored and publication explicitly reauthorized. Already downloaded or independently cached third-party copies cannot be recalled.
 
-### Reviewer journey: proposed G2
+### Reviewer journey: G2
 
-Open a permission-specific queue and inspect an immutable revision. Approve, request changes with feedback, or reject. Under proposed G4, editorial review records who checked the submitting author's Knight Hacks connection and the result. It also checks claimed event affiliations and awards against evidence before approval. No author/coauthor may approve their submission, including elevated accounts. Recommend different people for technical and editorial approval. An editorial reviewer publishes only when both approvals and required consents are valid. Missing conditions remain visible as actionable blockers.
+Open a permission-specific queue and inspect an immutable revision. Approve, request changes with feedback, or reject. Under G4, editorial review records who checked the submitting author's Knight Hacks connection and the result. It also checks claimed event affiliations and awards against evidence before approval. No author/coauthor may approve their submission, including elevated accounts. Different people complete technical and editorial approval. An editorial reviewer publishes only when both approvals and required consents are valid. Missing conditions remain visible as actionable blockers.
 
 ## Scope
 
@@ -69,7 +69,7 @@ Open a permission-specific queue and inspect an immutable revision. Approve, req
 ### Out of scope
 
 - Native uploads, outbound email, new identity providers, additional backend services, media proxies, scheduled publication workers, notifications, comments, ratings, Devpost or event imports/synchronization, judging changes, search infrastructure or a configurable workflow engine.
-- This documentation task authorizes no implementation.
+- Reviewer/publication API, Projects workspace UI and release remain separate slices.
 
 ## Vocabulary
 

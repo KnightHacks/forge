@@ -8,6 +8,7 @@ import {
   provisionDisposableDatabase,
 } from "@forge/db/testing";
 
+import { trackTestPoolShutdown } from "../support/close-test-pool";
 import { permissionBitstring } from "../support/permissions";
 
 type DatabaseClient = typeof import("@forge/db/client").db;
@@ -25,6 +26,7 @@ describe.skipIf(!canRunDatabaseTests())(
   () => {
     let disposable: DisposableDatabase | undefined;
     let client: DatabaseClient;
+    let closePool: (() => Promise<void>) | undefined;
     let audit: AuditSchemas;
     let auth: AuthSchemas;
     let knightHacks: KnightHacksSchemas;
@@ -51,6 +53,7 @@ describe.skipIf(!canRunDatabaseTests())(
       process.env.DATABASE_URL = disposable.url;
 
       ({ db: client } = await import("@forge/db/client"));
+      closePool = trackTestPoolShutdown(client.$client);
       audit = await import("@forge/db/schemas/audit");
       auth = await import("@forge/db/schemas/auth");
       knightHacks = await import("@forge/db/schemas/knight-hacks");
@@ -96,7 +99,7 @@ describe.skipIf(!canRunDatabaseTests())(
     }, 120_000);
 
     afterAll(async () => {
-      await client.$client.end().catch(() => undefined);
+      await closePool?.();
       await disposable?.drop();
     }, 30_000);
 

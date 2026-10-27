@@ -1,14 +1,14 @@
 # Knight Hacks Projects Archive SRD
 
-Status: P3.1 persistence and validator foundation authorized; later API and release decisions remain pending.
+Status: P3.1 persistence and P3.2 authoring/consent API implemented; editorial/public API, UI and release remain.
 
-P3.1 implements the persistence and validator contracts below. API workflow and publication behavior remain planned. [Status](status.md) owns the approval ledger and validation evidence.
+P3.1 implements the persistence and validator contracts below. P3.2 implements authoring, consent and account-deletion cleanup. Editorial review and publication remain planned. [Status](status.md) owns the approval ledger and validation evidence.
 
 ## Technical purpose
 
 Add a curated technical publication for Knight Hacks community work through existing Forge packages. A creator may submit their own Knight Hacks, other-hackathon or independent project without an event, Devpost, award, Member or Hacker record. Submission creates a review candidate, never a public article. All product screens belong to `apps/projects`. Reuse Blade's existing identity/API hosting without new operational screens, workers, queues, media handling or another backend service.
 
-P1 added delegated Projects credentials to the existing auth boundary. P3 may plan a narrow, restricted API transport in the existing Blade runtime, subject to G4 authorization approval. It must add no Blade authoring screens or operational service.
+P1 added delegated Projects credentials to the existing auth boundary. P3.2 added a narrow, restricted API transport in the existing Blade runtime. It adds no Blade authoring screens or operational service.
 
 ## Relevant principles
 
@@ -43,10 +43,10 @@ P1 added delegated Projects credentials to the existing auth boundary. P3 may pl
 | Public             | Bounded published list/detail and publication-safe metadata                                                                                                                                                                  |
 | Author             | With a verified Blade identity, declare a Knight Hacks connection; create/edit own draft, submit, inspect own history, manage invitations, withdraw own publication. Editorial verification gates publication, not drafting. |
 | Coauthor           | Inspect own attribution, accept/decline/revoke; no separate membership check and no editing rights by consent alone                                                                                                          |
-| Technical reviewer | Review under proposed `REVIEW_CASE_STUDIES_TECHNICAL` capability                                                                                                                                                             |
-| Editorial reviewer | Verify claimed affiliations and awards, record editorial decisions, explicitly publish/suspend under proposed `REVIEW_CASE_STUDIES_EDITORIAL` capability                                                                     |
+| Technical reviewer | Review under `REVIEW_CASE_STUDIES_TECHNICAL` capability                                                                                                                                                                      |
+| Editorial reviewer | Verify claimed affiliations and awards, record editorial decisions, explicitly publish/suspend under `REVIEW_CASE_STUDIES_EDITORIAL` capability                                                                              |
 
-Capability names are proposed. Use existing configurable roles and explicit resolver checks. No implicit officer/judge authority. All authors/coauthors are excluded from approval, including elevated accounts. Retain contributor history so removing an author from the current display cannot enable self-approval. Under G2, approval actors must differ. Publication also rejects an author acting as publisher.
+Both capabilities are defined and default denied; grants are still pending. Use existing configurable roles and explicit resolver checks. No implicit officer/judge authority. All authors/coauthors are excluded from approval, including elevated accounts. Retain contributor history so removing an author from the current display cannot enable self-approval. Under G2, approval actors must differ. Publication also rejects an author acting as publisher.
 
 ## Architecture / data flow
 
@@ -87,7 +87,7 @@ Create a separate `caseStudies` domain, preserving `projects`. Register platform
 - Consent: `createInvitation`, `inspectInvitation`, `acceptConsent`, `declineConsent`, `confirmContributor`, `revokeConsent`.
 - Review: `listReviewQueue`, `getReviewRevision`, `recordDecision`, `publish`, `suspend`.
 
-Names are proposed. Use shared typed contracts and standard `TRPCError` failures for unauthorized, forbidden, invalid and stale/conflicting requests. Private lookups must not disclose existence to unrelated accounts. Explain non-obvious contracts in schema/procedure descriptions. Under proposed G4, Blade identity permits drafting/submission after an author declaration; editorial verification of community eligibility gates publication. A Member/Hacker/event row is neither required nor sufficient on its own, and coauthor attribution consent has no membership predicate.
+The public/review names above remain proposed; P3.2 author/consent procedure names are implemented in `packages/api/src/case-studies/router.ts`. Use shared typed contracts and standard `TRPCError` failures for unauthorized, forbidden, invalid and stale/conflicting requests. Private lookups must not disclose existence to unrelated accounts. Explain non-obvious contracts in schema/procedure descriptions. Under approved G4, Blade identity permits drafting/submission after an author declaration; editorial verification of community eligibility gates publication. A Member/Hacker/event row is neither required nor sufficient on its own, and coauthor attribution consent has no membership predicate.
 
 Public projections include only current published content, verified claims and applicable consented attribution. Never serialize raw rows, unverified affiliation/award claims, contacts, invitations, review notes or unpublished versions. Use the same policy for HTML, RSC payloads, metadata, sitemap and APIs. Start without persistent publication caching: each public request checks current visibility. Client navigation revalidates rather than retaining indefinite publication caches. Already delivered content cannot be recalled.
 
@@ -99,7 +99,7 @@ External images require alt text, stable layout and broken-image fallback. No up
 
 ## Data / migration / compatibility
 
-The eight logical entities below have P3.1 schemas and migration. Their authoring, review and publication workflows remain for later API slices.
+The eight logical entities below have P3.1 schemas and migration. P3.2 implements authoring and consent; review and publication remain for a later API slice.
 
 | Entity                 | Minimum contract                                                                                                                                                                                                                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -140,7 +140,7 @@ Invitations expire after 14 days, and redemption/revocation clears their token h
 
 ### Migration and rollback
 
-Use existing PostgreSQL/Drizzle. No migration is generated in Phase 0. Changes should be additive and preserve event-client constraints, permission indices and judging inventory. Validate fresh DB and sanitized upgrades, client relationships and existing claims/imports before merge. Never use production for development validation.
+Use existing PostgreSQL/Drizzle. P3.1 generated additive migration `0065_parallel_blacklash.sql`; it preserves event-client constraints, permission indices and judging inventory. Fresh DB and pre-P3 upgrade paths were checked on isolated PostgreSQL. Recheck client relationships and existing claims/imports before release. Never use production for development validation.
 
 Deploy compatible protocol support before provisioning a Projects client; enable publishing only after security/consent checks pass. Rollback disables the client/public reads and restores the prior compatible app version, retaining content/audit data. Do not drop populated tables or rewrite historical migrations. Demonstrate schema backward compatibility before release.
 
@@ -168,4 +168,4 @@ Reuse UI primitives and document a restrained technical-archive direction: reada
 
 ## Open questions
 
-G2-G3 and G4's schema, authorization, deletion/retention and reviewer-grant choices remain pending. Media origins and deployment details need G5 approval. This document does not authorize those changes.
+G2-G4 were approved for persistence and author/consent work. Reviewer grants, media origins, client provisioning and deployment still need decisions. Editorial/publication API and Projects UI integration remain unimplemented; publication remains disabled.

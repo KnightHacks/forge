@@ -5,13 +5,16 @@ import {
   CPE_FLOWCHART_23_24_URL,
   CPE_FLOWCHART_24_25_URL,
   CPE_FLOWCHART_25_26_URL,
+  CPE_FLOWCHART_26_27_URL,
   CS_FLOWCHART_23_24_URL,
   CS_FLOWCHART_24_25_URL,
   CS_FLOWCHART_25_26_URL,
+  CS_FLOWCHART_26_27_URL,
   DS_FLOWCHART_24_25_URL,
   IT_FLOWCHART_23_24_URL,
   IT_FLOWCHART_24_25_URL,
   IT_FLOWCHART_25_26_URL,
+  IT_FLOWCHART_26_27_URL,
 } from "../consts";
 
 export const data = new SlashCommandBuilder()
@@ -62,6 +65,10 @@ export const data = new SlashCommandBuilder()
           name: "2025-2026",
           value: "25-26",
         },
+        {
+          name: "2026-2027",
+          value: "26-27",
+        },
       ),
   );
 
@@ -85,16 +92,19 @@ export async function execute(interaction: CommandInteraction) {
       "23-24": CS_FLOWCHART_23_24_URL,
       "24-25": CS_FLOWCHART_24_25_URL,
       "25-26": CS_FLOWCHART_25_26_URL,
+      "26-27": CS_FLOWCHART_26_27_URL,
     },
     "Information Technology": {
       "23-24": IT_FLOWCHART_23_24_URL,
       "24-25": IT_FLOWCHART_24_25_URL,
       "25-26": IT_FLOWCHART_25_26_URL,
+      "26-27": IT_FLOWCHART_26_27_URL,
     },
     "Computer Engineering": {
       "23-24": CPE_FLOWCHART_23_24_URL,
       "24-25": CPE_FLOWCHART_24_25_URL,
       "25-26": CPE_FLOWCHART_25_26_URL,
+      "26-27": CPE_FLOWCHART_26_27_URL,
     },
     "Data Science": {
       "24-25": DS_FLOWCHART_24_25_URL,

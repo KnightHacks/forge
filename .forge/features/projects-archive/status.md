@@ -1,8 +1,8 @@
 # Knight Hacks Projects Archive Status
 
-Current phase: P3.1 persistence and validator implementation. Publication remains disabled; authoring and review APIs have not started.
+Current phase: P3.2 authoring and consent API integrated on `projects`. P3.3 editorial/public API and Projects UI integration remain; publication is disabled.
 
-Branch/worktree: `projects-case-study-domain` at `/home/kwaii/forge-projects-p3`, based on `projects-public-site`. This bundle carries the earlier Phase 0 proposal into P3.1; P1 and P2 worktrees remain separate.
+Working checkout: `/home/kwaii/forge` on `projects`. P1, P2, P3.1 and P3.2 share one linear Projects history, with current `origin/main` merged into the same branch.
 
 ## Decision log
 
@@ -17,32 +17,41 @@ Branch/worktree: `projects-case-study-domain` at `/home/kwaii/forge-projects-p3`
 - 2026-10-22: Account-deletion review found that self-service `member.deleteMember` deletes `auth_user`, while admin member deletion retains it. Replacing the proposed restrictive case-study user foreign keys with fail-closed `SET NULL`/`CASCADE` behavior and minimal UUID audit snapshots is recommended. G2-G4 are recommended for approval, not approved.
 - 2026-10-22: User explicitly authorized the P3.1 eight-table persistence, additive migration, contracts and reviewer capability definitions, including G2-G4 rules in this slice. This does not authorize API workflows, capability grants, provisioning, publication or release. The account-deletion cleanup remains a prerequisite for public publication.
 - 2026-10-22: Implemented revision attribution snapshots as paired UUID and hash arrays rather than arbitrary JSON, preserving the approved subject/hash-only retention model. PostgreSQL checks enforce equal counts and canonical hashes. Evidence-basis and publication reasons use fixed codes to avoid free-form personal data in permanent decisions.
+- 2026-10-27: Consolidated P1, P2, P3.1 and P3.2 on `projects`; restored three P2 files to the repository's formatting standard and merged current `main` without file conflicts. The earlier untracked Phase 0 bundle is preserved in a named local Git stash.
+
+## Consolidation audit (2026-10-27)
+
+- P1 delegated authentication, P2 public fixture site, P3.1 persistence/validators and P3.2 author/consent API are in the single `projects` branch. The Projects public pages still render fixtures; they are not connected to case-study publication data.
+- P3.2 exposes only authenticated author, contributor, invitation, consent and transfer procedures through the restricted Blade-hosted Projects transport. There are no reviewer/publication procedures or public case-study queries yet. Publication remains disabled and reviewer capability bits are default denied.
+- The branch includes the four newer `main` commits through `51155748` (Node 24 baseline and unrelated upstream improvements). The three P2 formatting fixes are isolated in `096485e3`; the P3.2 API is in `15ac421f`. The prior Phase 0 documents are preserved locally in the named stash `projects phase 0 documents before consolidation`.
+- On the combined tree, `pnpm format` passed 25/25 tasks. Serial repository lint passed 32/32 with warnings, typecheck passed 34/34 after installing the existing lockfile into this checkout, and `pnpm analyze:react:changed` analyzed 14 files with zero failures. A parallel lint attempt was killed by container memory pressure; an initial typecheck lacked the P2 workspace install. Both were resolved without source or dependency changes. No new application tests or database migrations were run for consolidation; P3.1/P3.2 test evidence is recorded below.
+- Next slice: revision-specific technical and editorial review, eligibility/claim verification, transactional publication and published-only projections. Then replace P2 fixtures and add Projects author/reviewer UI. G5 client provisioning, media origins/CSP and release approval remain open; no client was provisioned and no publication or deployment was enabled.
 
 ## Open questions
 
-G2-G4 are approved for the P3.1 foundation. Their API enforcement and account-deletion cleanup remain later work. G5 release and media-origin decisions remain open. P1 completed the backend portion of G1; Projects browser integration and client registration remain later work.
+G2-G4 are approved for the foundation. P3.2 enforces author ownership, contributor consent and account-deletion cleanup; revision-specific reviewer/publication enforcement remains for P3.3. G5 client provisioning, media origins/CSP and release decisions remain open. P1 completed the backend portion of G1; Projects browser integration remains later work.
 
 ## Approval ledger
 
-| Gate | Recommendation / requested decision                                                                                                                                                                  | State                                                                              | Blocks                                                          |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| G1   | Use existing delegated auth for a non-event Projects client, with Projects-local UI and no new service.                                                                                              | P1 backend implemented; browser integration and client provisioning remain pending | Protected Projects transport and release                        |
-| G2   | Require different non-author accounts for technical and editorial review; editorial capability can explicitly publish only after all gates pass.                                                     | Approved for P3.1 definitions; enforcement waits for API slice                     | Review/publication implementation                               |
-| G3   | Consent binds case-study attribution snapshot/policy; unchanged attribution may retain consent. Revocation suspends affected publication until a reviewed replacement or explicit valid restoration. | Approved for P3.1 persistence; enforcement waits for API slice                     | Consent/publication implementation                              |
-| G4   | Eight tables, generated migration, immutable-row guards with one-way privacy redaction, account-deletion semantics, retention and indices 30/31.                                                     | Approved for P3.1; no grants or account-deletion API cleanup yet                   | Publication remains disabled until cleanup and API verification |
-| G5   | Approve app dependencies/runtime configuration, media origins/CSP, client registry/callbacks and eventual deployment/domain configuration.                                                           | Pending; no dependencies/config/deployment changed                                 | App setup and release as applicable                             |
+| Gate | Recommendation / requested decision                                                                                                                                                                  | State                                                                                                     | Blocks                                             |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| G1   | Use existing delegated auth for a non-event Projects client, with Projects-local UI and no new service.                                                                                              | P1 backend and P3.2 restricted transport implemented; browser integration and client provisioning pending | Projects browser integration and release           |
+| G2   | Require different non-author accounts for technical and editorial review; editorial capability can explicitly publish only after all gates pass.                                                     | Permission definitions approved and implemented; reviewer enforcement pending                             | P3.3 review/publication implementation             |
+| G3   | Consent binds case-study attribution snapshot/policy; unchanged attribution may retain consent. Revocation suspends affected publication until a reviewed replacement or explicit valid restoration. | P3.2 consent/revocation implemented; publication checks pending                                           | P3.3 public projection and publication gate        |
+| G4   | Eight tables, generated migration, immutable-row guards with one-way privacy redaction, account-deletion semantics, retention and indices 30/31.                                                     | P3.1 persistence and P3.2 account cleanup implemented; grants/public checks pending                       | P3.3 publication and later permission provisioning |
+| G5   | Approve app dependencies/runtime configuration, media origins/CSP, client registry/callbacks and eventual deployment/domain configuration.                                                           | Pending; no dependencies/config/deployment changed                                                        | App setup and release as applicable                |
 
-Confirmed requirements C1-C9 in [spec.md](spec.md) are settled. The P3.1 schema, migration, validators and capability definitions are authorized by the implementation request. Protected APIs, capability grants, client provisioning and release still need their applicable decisions and checks.
+Confirmed requirements C1-C9 in [spec.md](spec.md) are settled. P3.1 persistence and P3.2 author/consent operations were explicitly authorized and implemented. Capability grants, client provisioning, publication and release require their remaining decisions and checks.
 
-## P3.1 implementation proposal
+## Approved P3.1 architecture (historical plan)
 
 - Add standalone case-study, draft, revision, contributor, invitation, consent-decision, review-decision and publication-event tables under `@forge/db`. Use account IDs for ownership and consent. Revisions hold optional event provenance, award/affiliation claims, evidence URLs, external project links and technology tags. No foreign key, trigger or job connects them to `knight_hacks_project` or Devpost inventory.
-- Keep a stable unique slug on the case study, compare-and-swap draft version, immutable submitted revision and event decisions with narrow one-way privacy redaction, and a same-case-study published-revision pointer. Owner deletion withdraws an untransferred study without blocking Blade account deletion. These DDL and lifecycle choices require G4 approval.
-- Append `REVIEW_CASE_STUDIES_TECHNICAL` at permission index 30 and `REVIEW_CASE_STUDIES_EDITORIAL` at 31. Existing roles receive neither capability by default. Check the bits directly without officer/judge bypass. Assignment and authorization behavior require G2/G4 approval.
+- Keep a stable unique slug on the case study, compare-and-swap draft version, immutable submitted revision and event decisions with narrow one-way privacy redaction, and a same-case-study published-revision pointer. Owner deletion withdraws an untransferred study without blocking Blade account deletion. These DDL and lifecycle choices were approved for P3.1/P3.2.
+- Append `REVIEW_CASE_STUDIES_TECHNICAL` at permission index 30 and `REVIEW_CASE_STUDIES_EDITORIAL` at 31. Existing roles receive neither capability by default. P3.3 must check the bits directly without officer/judge bypass; grants remain a separate decision.
 - Add Zod contracts for structured technical content, bounded tags and text, optional provenance/claims, HTTPS external links, media alt text and bounded public queries. Editorial approval applies to the exact revision and verifies displayed claims. Public output includes only published content and verified claims.
-- First implementation slice after approval: schema, migration, validators and focused DB/contract tests. Author/consent API follows; review/publication API follows that. A later Projects UI slice replaces P2 fixtures. No P3.1 UI edit or import path is planned.
+- P3.1 implemented schema, migration, validators and focused DB/contract tests. P3.2 added the author/consent API. Review/publication API and Projects UI fixture replacement follow.
 
-### G2-G4 approval packet: proposed, not approved
+### G2-G4 approval packet (historical; approved for P3.1/P3.2)
 
 | Table                          | Key fields and constraints                                                                                                                                                                                                                                                                                                                        |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +72,7 @@ Deletion and retention proposal: account deletion must keep Blade's existing suc
 
 Planned P3.1 files: `packages/db/src/schemas/case-studies.ts`, `packages/db/src/schemas/relations.ts`, one generated migration and its Drizzle metadata under `packages/db/drizzle/`, `packages/validators/src/case-studies.ts` and its export, `packages/consts/src/permissions.ts`, `docs/DATABASE-USAGE.md`, plus focused DB/validator tests. Later API slices own `packages/api/src/routers/case-studies.ts`, a restricted Projects tRPC context/export, a narrow Blade transport route and API tests. `apps/projects` fixture replacement remains a later slice.
 
-Remaining human decisions: explicitly approve G2-G4, including the revised per-table delete actions, one-way redaction exception, narrow `member.deleteMember` cleanup, transfer acceptance and suspension until a new reviewed revision, the manual privacy cleanup needed after exceptional direct database deletion, and who may receive the two reviewer capabilities. G5 client provisioning, media origins and deployment remain separate. Editorial verification performs no automated lookup or import.
+Remaining human decisions: who may receive the two reviewer capabilities, G5 client provisioning, approved media origins/CSP and deployment. P3.3 must implement the already-approved revision-specific reviewer, consent and eligibility publication checks. Exceptional direct database deletion still requires manual private-content cleanup. Editorial verification performs no automated lookup or import.
 
 ## P3.1 implementation prompt after approval
 
@@ -86,7 +95,7 @@ No PR or issue has been created. Each future PR must have the required issue ref
 | P8: Projects review workspace and complete slice | P7; `apps/projects`                                                       | Bounded stage queues, immutable revision detail and decisions, publish/withdraw/suspend. Full TC-001 and revocation journey; no Blade editorial dashboard.                                              | G2/G3                                             |
 | P9: Release preparation                          | P8; existing deployment infrastructure only                               | Approved container/client/origin configuration, staging verification, migration order and previous-version rollback. No new auxiliary service.                                                          | G5 and explicit deployment authorization          |
 
-Split an oversized PR further rather than bundling unrelated refactors. P3.1 is the recommended next implementation slice once G2/G3/G4 decisions are recorded; P1 and P2 code remains untouched.
+This table is the original dependency plan. P1, P2, P3.1 and the author/consent API (P4, delivered as P3.2) are implemented. Review/public API is the next slice, followed by Projects UI integration and release preparation.
 
 ## First end-to-end vertical slice
 
@@ -154,7 +163,7 @@ Acceptance: TC-001 and TC-008 pass together with ownership, self-review, stale-r
 - Repo-wide `pnpm format` passed 24/25 tasks. Only the three pre-existing P2 UI files (`archive-browser.tsx`, `project-artwork.tsx`, `projects.spec.ts`) failed. All changed files passed a direct Prettier check and `git diff --check`; those P2 files were left untouched.
 - Remaining limits: no browser UI, reviewer/public procedures, publication activation, client provisioning or release validation in this slice. Exceptional direct SQL account deletion still needs manual privacy cleanup; the future public read contract must check live ownership and current consent. Local API integration tests exercise the Projects cleanup and subsequent `auth_user` deletion; `member.deleteMember` also has a focused transaction-order regression test, though the complete Blade self-service route was not run end to end in a browser.
 
-**P3.2 verdict: READY for review.** Publication remains disabled. The P2 formatting failure and G5 decisions are separate follow-up gates.
+**P3.2 verdict: READY for review.** Publication remains disabled. The P2 formatting issue was resolved during branch consolidation; G5 decisions remain open.
 
 ## Links
 
