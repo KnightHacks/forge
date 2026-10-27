@@ -193,11 +193,22 @@ const illustrations: Record<ProjectArtworkKind, ReactNode> = {
         stroke="#ffb62b"
         strokeOpacity=".7"
       />
-      <path d="M448 73h82M448 94h48" stroke="#f8f7f3" strokeOpacity=".65" strokeWidth="4" strokeLinecap="round" />
+      <path
+        d="M448 73h82M448 94h48"
+        stroke="#f8f7f3"
+        strokeOpacity=".65"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
       <circle cx="612" cy="84" r="13" fill="#ffb62b" />
       <circle cx="613" cy="84" r="5" fill="#140316" />
       <path d="m541 190 25-24 25 24-25 24-25-24Z" fill="#f74f83" />
-      <path d="m566 166 47-36" stroke="#f74f83" strokeWidth="2" strokeDasharray="5 6" />
+      <path
+        d="m566 166 47-36"
+        stroke="#f74f83"
+        strokeWidth="2"
+        strokeDasharray="5 6"
+      />
     </svg>
   ),
   rover: (
@@ -215,12 +226,45 @@ const illustrations: Record<ProjectArtworkKind, ReactNode> = {
       />
       <circle cx="90" cy="320" r="12" fill="#f74f83" />
       <circle cx="624" cy="83" r="15" fill="#d5ec82" />
-      <rect x="296" y="207" width="148" height="76" rx="9" fill="#59168b" stroke="#fff" strokeWidth="3" />
-      <path d="m326 207 18-39h52l18 39" fill="#311037" stroke="#fff" strokeWidth="3" />
+      <rect
+        x="296"
+        y="207"
+        width="148"
+        height="76"
+        rx="9"
+        fill="#59168b"
+        stroke="#fff"
+        strokeWidth="3"
+      />
+      <path
+        d="m326 207 18-39h52l18 39"
+        fill="#311037"
+        stroke="#fff"
+        strokeWidth="3"
+      />
       <rect x="341" y="180" width="32" height="18" rx="4" fill="#86d7e8" />
-      <circle cx="322" cy="291" r="23" fill="#09010d" stroke="#ffb62b" strokeWidth="5" />
-      <circle cx="418" cy="291" r="23" fill="#09010d" stroke="#ffb62b" strokeWidth="5" />
-      <path d="m356 207 16-32 18 32M372 175v-22" stroke="#ffb62b" strokeWidth="4" strokeLinecap="round" />
+      <circle
+        cx="322"
+        cy="291"
+        r="23"
+        fill="#09010d"
+        stroke="#ffb62b"
+        strokeWidth="5"
+      />
+      <circle
+        cx="418"
+        cy="291"
+        r="23"
+        fill="#09010d"
+        stroke="#ffb62b"
+        strokeWidth="5"
+      />
+      <path
+        d="m356 207 16-32 18 32M372 175v-22"
+        stroke="#ffb62b"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
       <circle cx="372" cy="149" r="7" fill="#f74f83" />
     </svg>
   ),

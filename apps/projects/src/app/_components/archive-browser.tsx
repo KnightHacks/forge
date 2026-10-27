@@ -17,9 +17,7 @@ export function ArchiveBrowser({
 }) {
   const [query, setQuery] = useState("");
   const [area, setArea] = useState(() =>
-    initialArea && areas.includes(initialArea)
-      ? initialArea
-      : "",
+    initialArea && areas.includes(initialArea) ? initialArea : "",
   );
   const filteredProjects = useMemo(() => {
     const search = query.trim().toLocaleLowerCase();

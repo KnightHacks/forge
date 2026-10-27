@@ -43,9 +43,7 @@ test("archive area filters, search, empty state, and clear action work", async (
   await page.getByRole("button", { name: "CV" }).click();
   await expect(page.getByRole("link", { name: /Canopy Count/ })).toBeVisible();
   await expect(
-    page.getByText(
-      "Showing 1 of 6 illustrative projects · CV",
-    ),
+    page.getByText("Showing 1 of 6 illustrative projects · CV"),
   ).toBeVisible();
 
   await page
@@ -62,9 +60,7 @@ test("archive area filters, search, empty state, and clear action work", async (
   await expect(page.getByRole("link", { name: /Rover Relay/ })).toBeVisible();
 });
 
-test("area discovery link opens a prefiltered archive", async ({
-  page,
-}) => {
+test("area discovery link opens a prefiltered archive", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "ML" }).click();
   await expect(page).toHaveURL(/area=ML/);
