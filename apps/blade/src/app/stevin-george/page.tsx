@@ -25,8 +25,7 @@ const handwrittenFont = Caveat({
 
 export const metadata: Metadata = {
   title: "Stevin George | Knight Hacks Dev Team",
-  description:
-    "Stevin George is a junior computer science student at UCF building playful, interactive experiences.",
+  description: "Knight Hacks Developer Team Application",
   alternates: { canonical: "/stevin-george" },
 };
 
@@ -35,13 +34,6 @@ export default function StevinGeorgePage() {
     <main
       className={`${styles.page} ${displayFont.variable} ${bodyFont.variable} ${handwrittenFont.variable}`}
     >
-      <header className={styles.header}>
-        <div className={styles.brandMark} aria-label="Stevin George">
-          SG
-        </div>
-        <p className={styles.headerLabel}>UCF&nbsp; / &nbsp;COMPUTER SCIENCE</p>
-      </header>
-
       <div className={styles.content}>
         <section className={styles.intro} aria-labelledby="stevin-name">
           <h1 id="stevin-name" className={styles.name}>
@@ -50,8 +42,7 @@ export default function StevinGeorgePage() {
           </h1>
           <span className={styles.introRule} aria-hidden="true" />
           <p className={styles.description}>
-            Junior computer science student at UCF building playful, interactive
-            experiences.
+            Knight Hacks Developer Team Application
           </p>
         </section>
 

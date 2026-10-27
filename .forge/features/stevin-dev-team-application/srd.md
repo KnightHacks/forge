@@ -14,7 +14,7 @@ The public `/stevin-george` route lives only in `apps/blade`. The server page ow
 
 The two upper headings are buttons with exclusive `aria-expanded` panels. Hidden panels are inert and hidden from assistive technology. The lower headings contain ordinary external anchors. The existing desktop game uses the original Lenny sprite sheet and reads the rendered heading bounds for its four landing platforms. Resume and Portfolio landings open their panels; GitHub and LinkedIn landings update the visual state and hint. Enter on a social landing opens its link, while landing itself never opens a tab. Direct links continue to work independently of the game.
 
-The desktop scene is taller to fit roughly 300px preview cards, with the lower links, tree, Lenny, and grass moved down together. The tree and Lenny are hidden at tablet and mobile widths. The mobile layout stacks all four rows and shows the full resume page inside its preview. Existing reduced-motion behavior applies to the new transitions.
+The desktop scene stays 640px tall. An open Resume or Portfolio panel expands the first grid row to fit its roughly 300px preview card and moves only the lower links; the tree, resting Lenny, and grass keep fixed coordinates. The tree displays at 420×525px, with its lower roots covered by the grass; the resting Lenny displays at 150×227px. The playable sprite displays at 168×217px, with matching collision and atlas-cell dimensions. Lenny's platform bounds are refreshed during the row transition so he remains on a moving heading. The tree and Lenny are hidden at tablet and mobile widths. The mobile layout stacks all four rows and shows the full resume page inside its preview. Existing reduced-motion behavior applies to the new transitions.
 
 ## Verification
 

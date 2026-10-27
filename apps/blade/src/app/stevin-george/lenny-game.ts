@@ -31,11 +31,26 @@ const RIGHT = new Set(["ArrowRight", "KeyD"]);
 const JUMP = new Set(["Space", "ArrowUp", "KeyW"]);
 const SPRITE_COLUMNS = 4;
 const SPRITE_FRAMES = 16;
+const EXPANDED_WORLD = { height: 640, ground: 580 };
+
+function groundForHeight(height: number) {
+  const progress = Math.max(
+    0,
+    Math.min(
+      1,
+      (height - WORLD.height) / (EXPANDED_WORLD.height - WORLD.height),
+    ),
+  );
+  return WORLD.ground + progress * (EXPANDED_WORLD.ground - WORLD.ground);
+}
 
 function getPlatforms(scene: HTMLDivElement): Platform[] {
-  const sceneWidth = scene.clientWidth;
   const sceneBounds = scene.getBoundingClientRect();
-  const treeLeft = sceneWidth / 2 - 168;
+  const tree = scene.querySelector<HTMLElement>("[data-tree]");
+  const treeWidth = tree?.clientWidth ?? 420;
+  const treeHeight = tree?.clientHeight ?? 525;
+  const treeLeft = scene.clientWidth / 2 - treeWidth / 2;
+  const treeTop = tree?.offsetTop ?? 10;
   const branch = (
     id: string,
     left: number,
@@ -43,9 +58,9 @@ function getPlatforms(scene: HTMLDivElement): Platform[] {
     height: number,
   ): Platform => ({
     id,
-    left: treeLeft + left * 336,
-    right: treeLeft + right * 336,
-    y: 146 + height * 420,
+    left: treeLeft + left * treeWidth,
+    right: treeLeft + right * treeWidth,
+    y: treeTop + height * treeHeight,
   });
   const destinations = Array.from(
     scene.querySelectorAll<HTMLElement>("[data-platform]"),
@@ -121,7 +136,9 @@ export function useLennyGame({
     if (!atlasImage) return;
     const atlasImageElement = atlasImage;
     let sceneWidth = sceneElement.clientWidth;
-    let baseLeft = sceneWidth / 2 + 110;
+    let sceneHeight = sceneElement.clientHeight;
+    let ground = groundForHeight(sceneHeight);
+    let baseLeft = sceneWidth / 2 + 122;
     let platforms = getPlatforms(sceneElement);
     let walker: Walker = createWalker(baseLeft + PLAYER.width / 2);
     let surface: string | null = "ground";
@@ -138,7 +155,7 @@ export function useLennyGame({
     }
 
     function render() {
-      lennyElement.style.transform = `translate3d(${walker.x - PLAYER.width / 2 - baseLeft}px, ${WORLD.ground - PLAYER.height - walker.y - 520}px, 0)`;
+      lennyElement.style.transform = `translate3d(${walker.x - PLAYER.width / 2 - baseLeft}px, ${ground - PLAYER.height - walker.y - lennyElement.offsetTop}px, 0)`;
       spriteElement.style.transform = `scaleX(${walker.facing})`;
       const frame = Math.floor(walker.phase) % SPRITE_FRAMES;
       if (frame !== activeFrame) {
@@ -153,7 +170,25 @@ export function useLennyGame({
       lennyElement.dataset.frame = String(frame + 1);
     }
 
+    function syncSceneLayout() {
+      const nextHeight = sceneElement.clientHeight;
+      const previousGround = ground;
+      sceneHeight = nextHeight;
+      ground = groundForHeight(nextHeight);
+      // The link rows move inside a fixed-height scene when a panel opens.
+      platforms = getPlatforms(sceneElement);
+
+      if (walker.grounded && surface !== "ground") {
+        const support = platforms.find((item) => item.id === surface);
+        if (support) walker.y = ground - support.y;
+      } else if (!walker.grounded && ground !== previousGround) {
+        // Keep an airborne Lenny at the same screen height if the ground moves.
+        walker.y += ground - previousGround;
+      }
+    }
+
     function tick(time: number) {
+      syncSceneLayout();
       let remaining = previousTime
         ? Math.min((time - previousTime) / 1000, 0.05)
         : 0;
@@ -172,7 +207,7 @@ export function useLennyGame({
           support: (x) => {
             if (!current.grounded || surface === "ground") return 0;
             return heldSurface && overlapsPlatform(x, heldSurface)
-              ? WORLD.ground - heldSurface.y
+              ? ground - heldSurface.y
               : undefined;
           },
         };
@@ -182,7 +217,7 @@ export function useLennyGame({
 
         if (!next.grounded && next.vy <= 0) {
           const platform = platforms.find((item) => {
-            const height = WORLD.ground - item.y;
+            const height = ground - item.y;
             return (
               current.y >= height &&
               next.y <= height &&
@@ -190,7 +225,7 @@ export function useLennyGame({
             );
           });
           if (platform) {
-            next.y = WORLD.ground - platform.y;
+            next.y = ground - platform.y;
             next.vy = 0;
             next.grounded = true;
             surface = platform.id;
@@ -199,8 +234,7 @@ export function useLennyGame({
 
         if (next.grounded && surface !== "ground") {
           const platform = platforms.find((item) => item.id === surface);
-          if (!platform || next.y !== WORLD.ground - platform.y)
-            surface = "ground";
+          if (!platform || next.y !== ground - platform.y) surface = "ground";
         } else if (next.grounded) {
           surface = "ground";
         } else {
@@ -268,7 +302,8 @@ export function useLennyGame({
         return;
       }
       sceneWidth = sceneElement.clientWidth;
-      baseLeft = sceneWidth / 2 + 110;
+      baseLeft = sceneWidth / 2 + 122;
+      syncSceneLayout();
       platforms = getPlatforms(sceneElement);
       walker.x = Math.min(walker.x, sceneWidth - PLAYER.width / 2);
       render();

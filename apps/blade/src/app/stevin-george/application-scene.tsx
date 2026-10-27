@@ -221,7 +221,11 @@ export function ApplicationScene() {
   }
 
   return (
-    <div className={styles.scene} ref={sceneRef}>
+    <div
+      className={styles.scene}
+      ref={sceneRef}
+      data-expanded={openSection !== null}
+    >
       <div className={styles.sections}>
         <PreviewSection
           section="resume"
@@ -257,8 +261,9 @@ export function ApplicationScene() {
       <Image
         src={`${assetRoot}/tree.png`}
         alt=""
-        width={336}
-        height={420}
+        data-tree=""
+        width={420}
+        height={525}
         className={styles.tree}
       />
 
@@ -283,8 +288,8 @@ export function ApplicationScene() {
           className={styles.lennyRest}
           src={`${assetRoot}/lenny.png`}
           alt=""
-          width={102}
-          height={155}
+          width={150}
+          height={227}
         />
         {playing && (
           <span className={styles.lennySprite} ref={spriteRef}>
@@ -304,12 +309,14 @@ export function ApplicationScene() {
 
       {playing && (
         <p className={styles.gameHint} role="status">
-          <span>← → or A D to move · Space or ↑ to jump</span>
-          <span>
-            {landedDestination === "github" || landedDestination === "linkedin"
-              ? `Press Enter to visit ${landedDestination === "github" ? "GitHub" : "LinkedIn"} · Esc to exit`
-              : "Land on a heading to open it · Esc to exit"}
-          </span>
+          <span>← → move · Space jump · Esc exit</span>
+          {(landedDestination === "github" ||
+            landedDestination === "linkedin") && (
+            <span>
+              · Enter opens{" "}
+              {landedDestination === "github" ? "GitHub" : "LinkedIn"}
+            </span>
+          )}
         </p>
       )}
 
