@@ -4,14 +4,15 @@ import { useEffect } from "react";
 import type { Terrain, Walker } from "./lenny-walk";
 import { createWalker, PLAYER, stepWalker, WORLD } from "./lenny-walk";
 
-export type LandingSection = "resume" | "portfolio";
+export type LandingDestination = "resume" | "portfolio" | "github" | "linkedin";
+export type ExternalDestination = "github" | "linkedin";
 
 interface Platform {
   id: string;
   left: number;
   right: number;
   y: number;
-  section?: LandingSection;
+  destination?: LandingDestination;
 }
 
 interface GameOptions {
@@ -20,7 +21,8 @@ interface GameOptions {
   lennyRef: RefObject<HTMLButtonElement | null>;
   spriteRef: RefObject<HTMLSpanElement | null>;
   jumpRequestRef: RefObject<boolean>;
-  onLand: (section: LandingSection | null) => void;
+  onLand: (destination: LandingDestination | null) => void;
+  onVisit: (destination: ExternalDestination) => void;
   onExit: () => void;
 }
 
@@ -30,7 +32,9 @@ const JUMP = new Set(["Space", "ArrowUp", "KeyW"]);
 const SPRITE_COLUMNS = 4;
 const SPRITE_FRAMES = 16;
 
-function getPlatforms(sceneWidth: number): Platform[] {
+function getPlatforms(scene: HTMLDivElement): Platform[] {
+  const sceneWidth = scene.clientWidth;
+  const sceneBounds = scene.getBoundingClientRect();
   const treeLeft = sceneWidth / 2 - 168;
   const branch = (
     id: string,
@@ -41,19 +45,25 @@ function getPlatforms(sceneWidth: number): Platform[] {
     id,
     left: treeLeft + left * 336,
     right: treeLeft + right * 336,
-    y: 26 + height * 420,
+    y: 146 + height * 420,
   });
-  const sectionWidth = Math.min(440, sceneWidth * 0.35);
+  const destinations = Array.from(
+    scene.querySelectorAll<HTMLElement>("[data-platform]"),
+    (row): Platform => {
+      const bounds = row.getBoundingClientRect();
+      const destination = row.dataset.platform as LandingDestination;
+      return {
+        id: destination,
+        left: bounds.left - sceneBounds.left,
+        right: bounds.right - sceneBounds.left,
+        y: bounds.bottom - sceneBounds.top,
+        destination,
+      };
+    },
+  );
 
   const platforms: Platform[] = [
-    { id: "resume", left: 0, right: sectionWidth, y: 82, section: "resume" },
-    {
-      id: "portfolio",
-      left: sceneWidth - sectionWidth,
-      right: sceneWidth,
-      y: 82,
-      section: "portfolio",
-    },
+    ...destinations,
     branch("upper-left", 0.12, 0.48, 0.17),
     branch("upper-right", 0.53, 0.92, 0.2),
     branch("middle-left", 0.12, 0.53, 0.45),
@@ -70,6 +80,15 @@ function overlapsPlatform(x: number, platform: Platform) {
   );
 }
 
+function canUseGameKeys(event: KeyboardEvent, lenny: HTMLButtonElement) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return false;
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || target === lenny) return true;
+  return !target.closest(
+    "a, button, input, textarea, select, [contenteditable]",
+  );
+}
+
 /** Runs the earlier forest controller against this page's tree and section platforms. */
 export function useLennyGame({
   active,
@@ -78,6 +97,7 @@ export function useLennyGame({
   spriteRef,
   jumpRequestRef,
   onLand,
+  onVisit,
   onExit,
 }: GameOptions) {
   useEffect(() => {
@@ -102,23 +122,23 @@ export function useLennyGame({
     const atlasImageElement = atlasImage;
     let sceneWidth = sceneElement.clientWidth;
     let baseLeft = sceneWidth / 2 + 110;
-    let platforms = getPlatforms(sceneWidth);
+    let platforms = getPlatforms(sceneElement);
     let walker: Walker = createWalker(baseLeft + PLAYER.width / 2);
     let surface: string | null = "ground";
-    let landingSection: LandingSection | null = null;
+    let landingDestination: LandingDestination | null = null;
     let activeFrame = -1;
     let previousTime = 0;
     let animationId = 0;
     const keys = new Set<string>();
 
-    function setLanding(next: LandingSection | null) {
-      if (landingSection === next) return;
-      landingSection = next;
+    function setLanding(next: LandingDestination | null) {
+      if (landingDestination === next) return;
+      landingDestination = next;
       onLand(next);
     }
 
     function render() {
-      lennyElement.style.transform = `translate3d(${walker.x - PLAYER.width / 2 - baseLeft}px, ${WORLD.ground - PLAYER.height - walker.y - 320}px, 0)`;
+      lennyElement.style.transform = `translate3d(${walker.x - PLAYER.width / 2 - baseLeft}px, ${WORLD.ground - PLAYER.height - walker.y - 520}px, 0)`;
       spriteElement.style.transform = `scaleX(${walker.facing})`;
       const frame = Math.floor(walker.phase) % SPRITE_FRAMES;
       if (frame !== activeFrame) {
@@ -189,22 +209,13 @@ export function useLennyGame({
 
         walker = next;
         setLanding(
-          platforms.find((item) => item.id === surface)?.section ?? null,
+          platforms.find((item) => item.id === surface)?.destination ?? null,
         );
         remaining -= dt;
       }
 
       render();
       animationId = window.requestAnimationFrame(tick);
-    }
-
-    function canUseGameKeys(event: KeyboardEvent) {
-      const target = event.target;
-      if (!(target instanceof HTMLElement) || target === lennyElement)
-        return true;
-      return !target.closest(
-        "a, button, input, textarea, select, [contenteditable]",
-      );
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -214,12 +225,16 @@ export function useLennyGame({
         return;
       }
       if (
-        !canUseGameKeys(event) ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.metaKey
-      )
+        event.code === "Enter" &&
+        (landingDestination === "github" ||
+          landingDestination === "linkedin") &&
+        canUseGameKeys(event, lennyElement)
+      ) {
+        event.preventDefault();
+        onVisit(landingDestination);
         return;
+      }
+      if (!canUseGameKeys(event, lennyElement)) return;
 
       if (LEFT.has(event.code) || RIGHT.has(event.code)) {
         keys.add(event.code);
@@ -254,7 +269,7 @@ export function useLennyGame({
       }
       sceneWidth = sceneElement.clientWidth;
       baseLeft = sceneWidth / 2 + 110;
-      platforms = getPlatforms(sceneWidth);
+      platforms = getPlatforms(sceneElement);
       walker.x = Math.min(walker.x, sceneWidth - PLAYER.width / 2);
       render();
     }
@@ -282,5 +297,14 @@ export function useLennyGame({
       delete lennyElement.dataset.frame;
       jumpRequestRef.current = false;
     };
-  }, [active, sceneRef, lennyRef, spriteRef, jumpRequestRef, onLand, onExit]);
+  }, [
+    active,
+    sceneRef,
+    lennyRef,
+    spriteRef,
+    jumpRequestRef,
+    onLand,
+    onVisit,
+    onExit,
+  ]);
 }

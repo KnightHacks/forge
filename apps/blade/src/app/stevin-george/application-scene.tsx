@@ -3,64 +3,178 @@
 import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 
-import type { LandingSection } from "./lenny-game";
+import type { ExternalDestination, LandingDestination } from "./lenny-game";
 import { useLennyGame } from "./lenny-game";
 import styles from "./stevin-george.module.css";
 
 const assetRoot = "/dev-team/stevin-george";
+const resumeUrl = `${assetRoot}/stevin-george-resume.pdf`;
+const portfolioUrl = "https://stevin.dev";
+const externalLinks = {
+  github: "https://github.com/StevScripts",
+  linkedin: "https://www.linkedin.com/in/georgestevin/",
+} as const;
 
-type Section = LandingSection;
+type Section = "resume" | "portfolio";
 
-const links = [
-  { label: "Full portfolio", href: "https://stevin.dev" },
-  { label: "GitHub", href: "https://github.com/StevScripts" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/georgestevin/" },
-];
+function ResumeContent() {
+  return (
+    <a
+      className={styles.resumePreview}
+      href={resumeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span className={styles.resumeThumb}>
+        <Image
+          src={`${assetRoot}/stevin-george-resume-preview.jpg`}
+          alt="Preview of Stevin George's current resume"
+          width={850}
+          height={1100}
+          sizes="(max-width: 700px) 300px, 205px"
+        />
+      </span>
+      <span className={styles.resumePreviewCopy}>
+        <span className={styles.previewEyebrow}>CURRENT RESUME</span>
+        <span className={styles.previewTitle}>Experience &amp; projects</span>
+        <span className={styles.previewAction}>Open PDF ↗</span>
+      </span>
+    </a>
+  );
+}
 
 function PortfolioContent() {
   return (
-    <>
-      <p className={styles.eyebrow}>SELECTED WORK</p>
-      <div className={styles.project}>
-        <a
-          className={styles.projectImageLink}
-          href="https://devpost.com/software/greghouse"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View greghouse on Devpost"
+    <a
+      className={styles.portfolioPreview}
+      href={portfolioUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Visit Stevin George's portfolio website"
+    >
+      <span className={styles.browserBar} aria-hidden="true">
+        <span className={styles.browserDots}>● ● ●</span>
+        <span>stevin.dev</span>
+        <span>↗</span>
+      </span>
+      <Image
+        src={`${assetRoot}/portfolio-preview.jpg`}
+        alt="Current screenshot of Stevin George's portfolio website"
+        width={1280}
+        height={800}
+        sizes="(max-width: 700px) calc(100vw - 48px), 440px"
+      />
+      <span className={styles.browserFooter}>
+        <span>Explore the full portfolio</span>
+        <span aria-hidden="true">↗</span>
+      </span>
+    </a>
+  );
+}
+
+function PreviewSection({
+  section,
+  number,
+  label,
+  open,
+  landed,
+  onToggle,
+}: {
+  section: Section;
+  number: string;
+  label: string;
+  open: boolean;
+  landed: boolean;
+  onToggle: (section: Section) => void;
+}) {
+  const headingId = `${section}-heading`;
+  const panelId = `${section}-panel`;
+
+  return (
+    <section
+      className={styles.section}
+      aria-labelledby={headingId}
+      data-open={open}
+      data-landed={landed}
+    >
+      <h2
+        id={headingId}
+        className={styles.sectionHeading}
+        data-platform={section}
+      >
+        <button
+          className={styles.sectionRow}
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => onToggle(section)}
         >
-          <Image
-            src={`${assetRoot}/greghouse.webp`}
-            alt="A plant sensor beside the greghouse multiplayer garden"
-            width={960}
-            height={737}
-            sizes="(max-width: 700px) calc(100vw - 48px), 176px"
-          />
-        </a>
-        <div className={styles.projectCopy}>
-          <h3>greghouse</h3>
-          <p>
-            I built the multiplayer app&apos;s foundation and helped connect a
-            real plant sensor to a shared virtual garden.
-          </p>
-          <a
-            className={styles.projectLink}
-            href="https://devpost.com/software/greghouse"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            View project <span aria-hidden="true">↗</span>
-          </a>
+          <span className={styles.sectionNumber}>{number}</span>
+          <span className={styles.sectionTitle}>{label}</span>
+          <span className={styles.chevronCircle} aria-hidden="true">
+            <Image
+              src={`${assetRoot}/chevron.svg`}
+              alt=""
+              width={24}
+              height={24}
+            />
+          </span>
+        </button>
+      </h2>
+      <div
+        id={panelId}
+        className={
+          section === "resume" ? styles.resumePanel : styles.portfolioPanel
+        }
+        role="region"
+        aria-labelledby={headingId}
+        aria-hidden={!open}
+        inert={!open}
+      >
+        <div className={styles.panelViewport}>
+          <div className={styles.panelContent}>
+            {section === "resume" ? <ResumeContent /> : <PortfolioContent />}
+          </div>
         </div>
       </div>
-      <nav className={styles.profileLinks} aria-label="Portfolio links">
-        {links.map(({ label, href }) => (
-          <a key={href} href={href} target="_blank" rel="noopener noreferrer">
-            {label} <span aria-hidden="true">↗</span>
-          </a>
-        ))}
-      </nav>
-    </>
+      <span className={styles.landingEdge} aria-hidden="true" />
+    </section>
+  );
+}
+
+function SocialLink({
+  destination,
+  number,
+  label,
+  landed,
+}: {
+  destination: ExternalDestination;
+  number: string;
+  label: string;
+  landed: boolean;
+}) {
+  return (
+    <section
+      className={`${styles.section} ${styles.linkSection}`}
+      data-landed={landed}
+    >
+      <h2 className={styles.sectionHeading} data-platform={destination}>
+        <a
+          className={`${styles.sectionRow} ${styles.destinationLink}`}
+          href={externalLinks[destination]}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Visit ${label} in a new tab`}
+        >
+          <span className={styles.sectionNumber}>{number}</span>
+          <span className={styles.sectionTitle}>{label}</span>
+          <span className={styles.linkCircle} aria-hidden="true">
+            ↗
+          </span>
+        </a>
+      </h2>
+      <span className={styles.landingEdge} aria-hidden="true" />
+    </section>
   );
 }
 
@@ -68,21 +182,27 @@ export function ApplicationScene() {
   const [openSection, setOpenSection] = useState<Section | null>(null);
   const [playing, setPlaying] = useState(false);
   const [spriteReady, setSpriteReady] = useState(false);
-  const [landedSection, setLandedSection] = useState<Section | null>(null);
+  const [landedDestination, setLandedDestination] =
+    useState<LandingDestination | null>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const lennyRef = useRef<HTMLButtonElement>(null);
   const spriteRef = useRef<HTMLSpanElement>(null);
   const jumpRequestRef = useRef(false);
 
-  const onLand = useCallback((section: Section | null) => {
-    setLandedSection(section);
-    if (section) setOpenSection(section);
+  const onLand = useCallback((destination: LandingDestination | null) => {
+    setLandedDestination(destination);
+    if (destination === "resume" || destination === "portfolio")
+      setOpenSection(destination);
+  }, []);
+
+  const onVisit = useCallback((destination: ExternalDestination) => {
+    window.open(externalLinks[destination], "_blank", "noopener,noreferrer");
   }, []);
 
   const onExit = useCallback(() => {
     setPlaying(false);
     setSpriteReady(false);
-    setLandedSection(null);
+    setLandedDestination(null);
   }, []);
 
   useLennyGame({
@@ -92,6 +212,7 @@ export function ApplicationScene() {
     spriteRef,
     jumpRequestRef,
     onLand,
+    onVisit,
     onExit,
   });
 
@@ -102,99 +223,35 @@ export function ApplicationScene() {
   return (
     <div className={styles.scene} ref={sceneRef}>
       <div className={styles.sections}>
-        <section
-          className={styles.section}
-          aria-labelledby="resume-heading"
-          data-open={openSection === "resume"}
-          data-landed={landedSection === "resume"}
-        >
-          <h2 id="resume-heading" className={styles.sectionHeading}>
-            <button
-              className={styles.sectionRow}
-              type="button"
-              aria-expanded={openSection === "resume"}
-              aria-controls="resume-panel"
-              onClick={() => toggleSection("resume")}
-            >
-              <span className={styles.sectionNumber}>01</span>
-              <span className={styles.sectionTitle}>Resume</span>
-              <span className={styles.chevronCircle} aria-hidden="true">
-                <Image
-                  src={`${assetRoot}/chevron.svg`}
-                  alt=""
-                  width={24}
-                  height={24}
-                />
-              </span>
-            </button>
-          </h2>
-          <div
-            id="resume-panel"
-            className={styles.resumePanel}
-            role="region"
-            aria-labelledby="resume-heading"
-            aria-hidden={openSection !== "resume"}
-            inert={openSection !== "resume"}
-          >
-            <div className={styles.panelViewport}>
-              <div className={styles.panelContent}>
-                <a
-                  className={styles.resumeLink}
-                  href="https://stevin.dev/Stevins_s_Resume.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span>View resume PDF</span>
-                  <span aria-hidden="true">↗</span>
-                </a>
-              </div>
-            </div>
-          </div>
-          <span className={styles.landingEdge} aria-hidden="true" />
-        </section>
+        <PreviewSection
+          section="resume"
+          number="01"
+          label="Resume"
+          open={openSection === "resume"}
+          landed={landedDestination === "resume"}
+          onToggle={toggleSection}
+        />
+        <PreviewSection
+          section="portfolio"
+          number="02"
+          label="Portfolio"
+          open={openSection === "portfolio"}
+          landed={landedDestination === "portfolio"}
+          onToggle={toggleSection}
+        />
 
-        <section
-          className={styles.section}
-          aria-labelledby="portfolio-heading"
-          data-open={openSection === "portfolio"}
-          data-landed={landedSection === "portfolio"}
-        >
-          <h2 id="portfolio-heading" className={styles.sectionHeading}>
-            <button
-              className={styles.sectionRow}
-              type="button"
-              aria-expanded={openSection === "portfolio"}
-              aria-controls="portfolio-panel"
-              onClick={() => toggleSection("portfolio")}
-            >
-              <span className={styles.sectionNumber}>02</span>
-              <span className={styles.sectionTitle}>Portfolio</span>
-              <span className={styles.chevronCircle} aria-hidden="true">
-                <Image
-                  src={`${assetRoot}/chevron.svg`}
-                  alt=""
-                  width={24}
-                  height={24}
-                />
-              </span>
-            </button>
-          </h2>
-          <div
-            id="portfolio-panel"
-            className={styles.portfolioPanel}
-            role="region"
-            aria-labelledby="portfolio-heading"
-            aria-hidden={openSection !== "portfolio"}
-            inert={openSection !== "portfolio"}
-          >
-            <div className={styles.panelViewport}>
-              <div className={styles.panelContent}>
-                <PortfolioContent />
-              </div>
-            </div>
-          </div>
-          <span className={styles.landingEdge} aria-hidden="true" />
-        </section>
+        <SocialLink
+          destination="github"
+          number="03"
+          label="GitHub"
+          landed={landedDestination === "github"}
+        />
+        <SocialLink
+          destination="linkedin"
+          number="04"
+          label="LinkedIn"
+          landed={landedDestination === "linkedin"}
+        />
       </div>
 
       <Image
@@ -248,7 +305,11 @@ export function ApplicationScene() {
       {playing && (
         <p className={styles.gameHint} role="status">
           <span>← → or A D to move · Space or ↑ to jump</span>
-          <span>Land on a heading to open it · Esc to exit</span>
+          <span>
+            {landedDestination === "github" || landedDestination === "linkedin"
+              ? `Press Enter to visit ${landedDestination === "github" ? "GitHub" : "LinkedIn"} · Esc to exit`
+              : "Land on a heading to open it · Esc to exit"}
+          </span>
         </p>
       )}
 

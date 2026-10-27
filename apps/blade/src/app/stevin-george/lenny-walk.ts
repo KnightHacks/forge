@@ -1,6 +1,6 @@
 // Movement and frame timing from the earlier forest portfolio's walk.ts.
 // Only the stage and display dimensions change for this one-page layout.
-export const WORLD = { width: 1296, height: 452, ground: 420 };
+export const WORLD = { width: 1296, height: 640, ground: 580 };
 export const PLAYER = { width: 112, height: 145 };
 
 export interface Walker {
