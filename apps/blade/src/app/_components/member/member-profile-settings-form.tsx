@@ -722,7 +722,7 @@ function MemberProfileSettingsEditor({
                   </CardHeader>
                   <CardContent className="space-y-4 px-4 py-4 md:space-y-5 md:px-6">
                     {section === "Guild" && <UploadSettings member={member} />}
-                    <div className="grid gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
+                    <div className="grid grid-cols-[minmax(0,1fr)] gap-x-4 gap-y-4 md:grid-cols-2 md:gap-y-5">
                       {fields.map((fieldConfig) => (
                         <FormField
                           key={fieldConfig.name}
