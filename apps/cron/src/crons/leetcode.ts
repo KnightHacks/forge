@@ -2,6 +2,7 @@ import type { APIThreadChannel } from "discord-api-types/v10";
 import { Routes, ThreadAutoArchiveDuration } from "discord-api-types/v10";
 import { WebhookClient } from "discord.js";
 
+import { logger } from "@forge/utils";
 import * as discord from "@forge/utils/discord";
 
 import { env } from "../env";
@@ -12,7 +13,27 @@ const LEETCODE_WEBHOOK = new WebhookClient({
   url: env.DISCORD_WEBHOOK_LEETCODE,
 });
 
-const LEETCODE_API_URL = "https://alfa-leetcode-api.onrender.com/daily";
+// LeetCode's own site uses this endpoint; it needs no key for public problem data.
+// We previously went through alfa-leetcode-api, a shared wrapper that rate limits
+// all of its users together and returned 429s at noon.
+const LEETCODE_URL = "https://leetcode.com";
+const LEETCODE_GRAPHQL_URL = `${LEETCODE_URL}/graphql`;
+const DAILY_QUERY = `query {
+  activeDailyCodingChallengeQuestion {
+    date
+    link
+    question {
+      questionFrontendId
+      title
+      difficulty
+      likes
+      dislikes
+      topicTags { name slug }
+    }
+  }
+}`;
+// Delays before the 2nd and 3rd attempts.
+const RETRY_DELAYS_MS = [30_000, 120_000];
 const LEETCODE_ICON_URL =
   "https://assets.leetcode.com/static_assets/public/images/LeetCode_logo_rvs.png";
 
@@ -49,7 +70,8 @@ export const leetcode = new CronBuilder({
 }).addCron(
   "0 12 * * *", // noon every day
   async () => {
-    const problem = await fetchData();
+    // Only the fetch is retried; retrying the webhook send could double-post.
+    const problem = await fetchDailyWithRetry();
 
     const date = problem.date.split("-");
     const dateString = date[1] + "/" + date[2] + "/" + date[0];
@@ -114,28 +136,109 @@ export const leetcode = new CronBuilder({
   },
 );
 
-interface DailyProblemProps {
+interface TopicTag {
+  name: string;
+  slug: string;
+}
+
+interface DailyProblem {
   questionLink: string;
   questionTitle: string;
   difficulty: string;
-  question: string;
-  topicTags: {
-    name: string;
-    slug: string;
-  }[];
+  topicTags: TopicTag[];
   date: string;
   likes: number;
   dislikes: number;
-  questionFrontendId: number;
-  data: string;
+  questionFrontendId: string;
 }
 
-const fetchData = async (): Promise<DailyProblemProps> => {
-  const res = await fetch(LEETCODE_API_URL);
+interface DailyQueryResponse {
+  data?: {
+    activeDailyCodingChallengeQuestion?: {
+      date: string;
+      link: string;
+      question: {
+        questionFrontendId: string;
+        title: string;
+        difficulty: string;
+        likes: number;
+        dislikes: number;
+        topicTags: TopicTag[];
+      };
+    } | null;
+  } | null;
+  errors?: { message: string }[];
+}
 
-  if (!res.ok) throw new Error(`Leetcode API -> ${res.status}`);
+class LeetcodeFetchError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+  }
+}
 
-  return (await res.json()) as DailyProblemProps;
+const fetchDailyWithRetry = async (): Promise<DailyProblem> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fetchDaily();
+    } catch (error) {
+      const delay = RETRY_DELAYS_MS[attempt - 1];
+      // Unknown errors are network failures from fetch itself, which are worth retrying.
+      const retryable =
+        !(error instanceof LeetcodeFetchError) || error.retryable;
+      if (!retryable || delay === undefined) throw error;
+
+      logger.warn(
+        `attempt ${attempt} failed, retrying in ${delay / 1000}s:`,
+        error,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+};
+
+const fetchDaily = async (): Promise<DailyProblem> => {
+  const res = await fetch(LEETCODE_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Referer: LEETCODE_URL,
+      // Identify ourselves; anonymous requests are likelier to hit Cloudflare bot checks.
+      "User-Agent":
+        "KnightHacksForgeCron/1.0 (+https://github.com/KnightHacks/forge)",
+    },
+    body: JSON.stringify({ query: DAILY_QUERY }),
+  });
+
+  if (!res.ok) {
+    throw new LeetcodeFetchError(
+      `Leetcode API -> ${res.status}`,
+      res.status === 429 || res.status >= 500,
+    );
+  }
+
+  const body = (await res.json()) as DailyQueryResponse;
+  const daily = body.data?.activeDailyCodingChallengeQuestion;
+  if (!daily) {
+    const messages = body.errors?.map((e) => e.message).join("; ");
+    throw new LeetcodeFetchError(
+      `Leetcode API -> no daily question${messages ? `: ${messages}` : ""}`,
+      false,
+    );
+  }
+
+  return {
+    questionLink: `${LEETCODE_URL}${daily.link}`,
+    questionTitle: daily.question.title,
+    difficulty: daily.question.difficulty,
+    topicTags: daily.question.topicTags,
+    date: daily.date,
+    likes: daily.question.likes,
+    dislikes: daily.question.dislikes,
+    questionFrontendId: daily.question.questionFrontendId,
+  };
 };
 
 const randInt = (max: number) => {
