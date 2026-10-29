@@ -155,16 +155,53 @@ describe("LeetCode daily cron", () => {
 
   it("does not retry a missing daily question", async () => {
     fetchMock.mockResolvedValueOnce(
-      json(200, {
-        data: { activeDailyCodingChallengeQuestion: null },
-        errors: [{ message: "Daily unavailable" }],
-      }),
+      json(200, { data: { activeDailyCodingChallengeQuestion: null } }),
     );
     await expect(runDaily()).rejects.toThrow(
-      "Leetcode API -> no daily question: Daily unavailable",
+      "Leetcode API -> no daily question",
     );
 
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it("does not post a partial result with GraphQL errors", async () => {
+    fetchMock.mockResolvedValueOnce(
+      json(200, { ...daily, errors: [{ message: "likes unavailable" }] }),
+    );
+    await expect(runDaily()).rejects.toThrow(
+      "Leetcode API -> GraphQL errors: likes unavailable",
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("does not retry a non-JSON 200 response", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response("<!DOCTYPE html><title>Just a moment...</title>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+    await expect(runDaily()).rejects.toThrow(
+      "Leetcode API -> invalid JSON (content-type: text/html)",
+    );
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("times out each attempt and retries", async () => {
+    fetchMock
+      .mockRejectedValueOnce(
+        new DOMException("The operation was aborted", "TimeoutError"),
+      )
+      .mockResolvedValueOnce(json(200, daily));
+    await runDaily();
+
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledTimes(2);
   });
 });

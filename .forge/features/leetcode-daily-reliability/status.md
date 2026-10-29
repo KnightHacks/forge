@@ -1,7 +1,7 @@
 # LeetCode Daily Reliability Status
 
 Current phase: Implemented, validated, and committed on
-`cron/leetcode-graphql-daily`; issue #630 opened. Not pushed; no PR yet.
+`cron/leetcode-graphql-daily`; issue #630 opened. PR #631 open.
 
 ## Decisions
 
@@ -15,6 +15,8 @@ Current phase: Implemented, validated, and committed on
 - CodeRabbit's #630 plan matched the design. Took its `User-Agent` header; kept
   3 attempts (30s, 2min) and the global-fetch/fake-timer tests over injected
   `fetch`/`sleep`.
+- PR #631 CodeRabbit review: fixed all three findings (15s per-attempt
+  timeout, non-JSON 200 fails fast, GraphQL `errors` fail even with data).
 - Missed 2026-10-28 post is not reposted by this change.
 
 ## Progress
@@ -23,12 +25,13 @@ Current phase: Implemented, validated, and committed on
 - [x] Switch to GraphQL with retry in `apps/cron/src/crons/leetcode.ts`.
 - [x] Add `apps/cron/src/tests/leetcode.test.ts`.
 - [x] Issue: https://github.com/KnightHacks/forge/issues/630
-- [ ] PR, review, and merge.
+- [x] PR: https://github.com/KnightHacks/forge/pull/631
+- [ ] Review and merge.
 - [ ] First noon run after deploy logs `finished` with no error (Cloudflare check).
 
 ## Validation
 
-- `pnpm --filter=@forge/cron test` 59/59, `pnpm lint` 31/31, `pnpm typecheck`
+- `pnpm --filter=@forge/cron test` 62/62, `pnpm lint` 31/31, `pnpm typecheck`
   33/33. Prettier passes on changed files; repo-wide `pnpm format` fails locally
   only on CRLF checkout (`core.autocrlf=true`).
 - Old (`main`, alfa) and new (GraphQL) code run live with Discord stubbed: all

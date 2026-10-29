@@ -34,6 +34,7 @@ const DAILY_QUERY = `query {
 }`;
 // Delays before the 2nd and 3rd attempts.
 const RETRY_DELAYS_MS = [30_000, 120_000];
+const FETCH_TIMEOUT_MS = 15_000;
 const LEETCODE_ICON_URL =
   "https://assets.leetcode.com/static_assets/public/images/LeetCode_logo_rvs.png";
 
@@ -185,7 +186,7 @@ const fetchDailyWithRetry = async (): Promise<DailyProblem> => {
       return await fetchDaily();
     } catch (error) {
       const delay = RETRY_DELAYS_MS[attempt - 1];
-      // Unknown errors are network failures from fetch itself, which are worth retrying.
+      // Unknown errors come from fetch itself (network failure or timeout), which are worth retrying.
       const retryable =
         !(error instanceof LeetcodeFetchError) || error.retryable;
       if (!retryable || delay === undefined) throw error;
@@ -202,6 +203,8 @@ const fetchDailyWithRetry = async (): Promise<DailyProblem> => {
 const fetchDaily = async (): Promise<DailyProblem> => {
   const res = await fetch(LEETCODE_GRAPHQL_URL, {
     method: "POST",
+    // A stalled connection would otherwise hold up the retry for Node's ~5min default.
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     headers: {
       "Content-Type": "application/json",
       Referer: LEETCODE_URL,
@@ -219,14 +222,30 @@ const fetchDaily = async (): Promise<DailyProblem> => {
     );
   }
 
-  const body = (await res.json()) as DailyQueryResponse;
-  const daily = body.data?.activeDailyCodingChallengeQuestion;
-  if (!daily) {
-    const messages = body.errors?.map((e) => e.message).join("; ");
+  // Read the body outside the parse so a timeout here is still retried.
+  const text = await res.text();
+  let body: DailyQueryResponse;
+  try {
+    body = JSON.parse(text) as DailyQueryResponse;
+  } catch {
+    // e.g. a Cloudflare challenge page served with a 200.
     throw new LeetcodeFetchError(
-      `Leetcode API -> no daily question${messages ? `: ${messages}` : ""}`,
+      `Leetcode API -> invalid JSON (content-type: ${res.headers.get("content-type")})`,
       false,
     );
+  }
+
+  // Partial GraphQL results null out the failed fields, so any error fails the run.
+  if (body.errors?.length) {
+    throw new LeetcodeFetchError(
+      `Leetcode API -> GraphQL errors: ${body.errors.map((e) => e.message).join("; ")}`,
+      false,
+    );
+  }
+
+  const daily = body.data?.activeDailyCodingChallengeQuestion;
+  if (!daily) {
+    throw new LeetcodeFetchError("Leetcode API -> no daily question", false);
   }
 
   return {

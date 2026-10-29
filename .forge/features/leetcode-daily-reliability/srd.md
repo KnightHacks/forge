@@ -21,10 +21,12 @@ and swallows errors without retrying, so one failed fetch skipped the day.
   (`KnightHacksForgeCron/1.0`) to reduce the chance of Cloudflare bot checks.
 - Map the nested response to the shape the embed already uses. The `link` is
   relative, so prefix `https://leetcode.com`.
-- Retry only the fetch: 3 attempts, waiting 30s and then 2min. Retry network
-  errors, 429, and 5xx. Fail fast on other 4xx and on GraphQL `errors` or a
-  missing daily question. Webhook sends and thread creation are never retried,
-  so a run cannot double-post.
+- Retry only the fetch: 3 attempts, waiting 30s and then 2min. Each attempt
+  times out after 15s. Retry network errors, timeouts, 429, and 5xx. Fail fast
+  on other 4xx, a non-JSON body (e.g. a Cloudflare page served with 200), any
+  GraphQL `errors` (partial results null out fields), or a missing daily
+  question. Webhook sends and thread creation are never retried, so a run
+  cannot double-post.
 - Keep the retry local to `leetcode.ts`. It has a single consumer, and the
   existing retries in `@forge/api` are DB-backed and job-specific.
 - No env, dependency, schema, tRPC, permission, or tk changes.
