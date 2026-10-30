@@ -13,6 +13,7 @@ import {
 } from "../job-board";
 
 const jobId = "00000000-0000-4000-8000-000000000001";
+const applicationId = "00000000-0000-4000-8000-000000000002";
 
 describe("job board constants", () => {
   it("defines every category in display order", () => {
@@ -45,6 +46,7 @@ describe("job search input", () => {
       jobSearchInputSchema.parse({
         category: "swe",
         includeInactive: "true",
+        limit: "10",
         page: "3",
         postedWithin: "week",
         query: "  backend ",
@@ -55,6 +57,7 @@ describe("job search input", () => {
     ).toMatchObject({
       category: "swe",
       includeInactive: true,
+      limit: 10,
       page: 3,
       postedWithin: "week",
       query: "backend",
@@ -64,8 +67,22 @@ describe("job search input", () => {
     });
   });
 
-  it("drops a blank query", () => {
-    expect(jobSearchInputSchema.parse({ query: "   " }).query).toBeUndefined();
+  it("treats cleared params as missing", () => {
+    expect(
+      jobSearchInputSchema.parse({
+        company: "",
+        includeInactive: "",
+        page: "",
+        query: "   ",
+        track: "",
+      }),
+    ).toEqual(jobSearchInputSchema.parse({}));
+  });
+
+  it("ignores params it doesn't own", () => {
+    expect(jobSearchInputSchema.parse({ utm_source: "discord" })).toEqual(
+      jobSearchInputSchema.parse({}),
+    );
   });
 
   it.each([
@@ -73,7 +90,6 @@ describe("job search input", () => {
     [{ limit: String(JOB_BOARD.JOB_SEARCH_MAX_LIMIT + 1) }],
     [{ state: "Florida" }],
     [{ company: "Google Inc." }],
-    [{ unknown: "value" }],
   ])("rejects %o", (input) => {
     expect(jobSearchInputSchema.safeParse(input).success).toBe(false);
   });
@@ -127,6 +143,13 @@ describe("alert targets", () => {
         track: "internship",
       }).success,
     ).toBe(false);
+    expect(
+      alertPreferenceCreateInputSchema.safeParse({
+        kind: "location",
+        target: { kind: "option", value: "google" },
+        track: "internship",
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -161,6 +184,58 @@ describe("application input", () => {
     expect(result.error?.issues[0]?.path).toEqual(["round"]);
   });
 
+  it("clears a round when leaving interviewing", () => {
+    expect(
+      applicationSaveInputSchema.safeParse({
+        jobId,
+        round: null,
+        stage: "offer",
+      }).success,
+    ).toBe(true);
+    expect(
+      applicationUpdateInputSchema.safeParse({
+        applicationId,
+        round: null,
+        stage: "offer",
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each([0, -1, 2.5])("rejects round %s", (round) => {
+    expect(
+      applicationSaveInputSchema.safeParse({
+        jobId,
+        round,
+        stage: "interviewing",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("caps rounds at the maximum", () => {
+    const base = { jobId, stage: "interviewing" as const };
+    expect(
+      applicationSaveInputSchema.safeParse({
+        ...base,
+        round: JOB_BOARD.MAX_APPLICATION_ROUND,
+      }).success,
+    ).toBe(true);
+    expect(
+      applicationSaveInputSchema.safeParse({
+        ...base,
+        round: JOB_BOARD.MAX_APPLICATION_ROUND + 1,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("keeps notes that have text", () => {
+    expect(
+      applicationSaveInputSchema.parse({
+        jobId,
+        privateNotes: "Recruiter: Sam",
+      }).privateNotes,
+    ).toBe("Recruiter: Sam");
+  });
+
   it("stores blank notes as null", () => {
     expect(
       applicationSaveInputSchema.parse({ jobId, privateNotes: "  " })
@@ -180,16 +255,22 @@ describe("application input", () => {
   it("leaves round checks to the API when an update omits the stage", () => {
     expect(
       applicationUpdateInputSchema.safeParse({
-        applicationId: jobId,
+        applicationId,
         round: 3,
       }).success,
     ).toBe(true);
     expect(
       applicationUpdateInputSchema.safeParse({
-        applicationId: jobId,
+        applicationId,
         round: 3,
         stage: "offer",
       }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an update that changes nothing", () => {
+    expect(
+      applicationUpdateInputSchema.safeParse({ applicationId }).success,
     ).toBe(false);
   });
 });

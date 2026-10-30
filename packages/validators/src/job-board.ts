@@ -19,12 +19,15 @@ export function stageAllowsRound(stage: JOB_BOARD.ApplicationStage) {
   return ROUND_STAGES.includes(stage);
 }
 
-/** Grouping key for a company label, shared by jobs and custom alert targets. */
+/**
+ * Grouping key for a company label, shared by jobs and custom alert targets.
+ * A custom company name becomes a key, so both share one length limit.
+ */
 export const companyKeySchema = z
   .string()
   .trim()
   .min(1)
-  .max(120)
+  .max(JOB_BOARD.MAX_ALERT_CUSTOM_VALUE_LENGTH)
   .refine(
     (value) => value === normalizeCompanyName(value),
     "Use a normalized company key.",
@@ -58,7 +61,11 @@ export const companyTargetSchema = z.discriminatedUnion("kind", [
 /** A U.S. city chosen from search, U.S. remote, or a custom value from Other. */
 export const locationTargetSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("option"), value: usCityKeySchema }).strict(),
-  z.object({ kind: z.literal("remote_us") }).strict(),
+  z
+    .object({
+      kind: z.literal("remote_us" satisfies JOB_BOARD.JobLocationKind),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("other"),
@@ -75,36 +82,43 @@ const limitSchema = z.coerce
   .max(JOB_BOARD.JOB_SEARCH_MAX_LIMIT)
   .default(JOB_BOARD.JOB_SEARCH_DEFAULT_LIMIT);
 
+/** Treats a cleared search param (`?company=`) the same as a missing one. */
+function searchParam<T extends z.ZodType>(schema: T) {
+  return z.preprocess(
+    (value) =>
+      typeof value === "string" && value.trim() === "" ? undefined : value,
+    schema,
+  );
+}
+
 /**
  * Explore filters. Blade keeps these in the URL, so every field accepts the
- * string form a search param arrives in.
+ * string form a search param arrives in. Unknown params are dropped instead of
+ * rejected, because the URL can carry params this schema doesn't own.
  */
-export const jobSearchInputSchema = z
-  .object({
-    category: jobCategorySchema.optional(),
-    cityKey: usCityKeySchema.optional(),
-    company: companyKeySchema.optional(),
-    includeInactive: z.stringbool().or(z.boolean()).default(false),
-    limit: limitSchema,
-    page: pageSchema,
-    postedWithin: z.enum(JOB_BOARD.JOB_POSTED_WITHIN).optional(),
-    query: z
-      .string()
-      .trim()
-      .max(JOB_BOARD.JOB_SEARCH_MAX_QUERY_LENGTH)
-      .transform((value) => (value.length > 0 ? value : undefined))
-      .optional(),
-    remoteUs: z.stringbool().or(z.boolean()).default(false),
-    sort: z.enum(JOB_BOARD.JOB_SORTS).default("newest"),
-    state: z
+export const jobSearchInputSchema = z.object({
+  category: searchParam(jobCategorySchema.optional()),
+  cityKey: searchParam(usCityKeySchema.optional()),
+  company: searchParam(companyKeySchema.optional()),
+  includeInactive: searchParam(z.stringbool().or(z.boolean()).default(false)),
+  limit: searchParam(limitSchema),
+  page: searchParam(pageSchema),
+  postedWithin: searchParam(z.enum(JOB_BOARD.JOB_POSTED_WITHIN).optional()),
+  query: searchParam(
+    z.string().trim().max(JOB_BOARD.JOB_SEARCH_MAX_QUERY_LENGTH).optional(),
+  ),
+  remoteUs: searchParam(z.stringbool().or(z.boolean()).default(false)),
+  sort: searchParam(z.enum(JOB_BOARD.JOB_SORTS).default("newest")),
+  state: searchParam(
+    z
       .string()
       .trim()
       .toUpperCase()
       .regex(/^[A-Z]{2}$/, "Use a two-letter state code.")
       .optional(),
-    track: jobTrackSchema.optional(),
-  })
-  .strict();
+  ),
+  track: searchParam(jobTrackSchema.optional()),
+});
 
 export const jobIdInputSchema = z.object({ jobId: z.string().uuid() }).strict();
 
@@ -166,6 +180,18 @@ export const applicationUpdateInputSchema = z
   })
   .strict()
   .superRefine((input, context) => {
+    const changesSomething =
+      input.privateNotes !== undefined ||
+      input.round !== undefined ||
+      input.stage !== undefined ||
+      input.visibility !== undefined;
+    if (!changesSomething) {
+      context.addIssue({
+        code: "custom",
+        message: "Change at least one field.",
+        path: [],
+      });
+    }
     if (
       input.stage !== undefined &&
       input.round != null &&
@@ -199,21 +225,26 @@ export const peopleInProcessInputSchema = z
   })
   .strict();
 
+// Keyed by ALERT_TARGET_KINDS so renaming or adding a kind in consts fails
+// typecheck here instead of drifting from the database enum.
+const ALERT_TARGET_SCHEMAS = {
+  company: companyTargetSchema,
+  location: locationTargetSchema,
+} satisfies Record<JOB_BOARD.AlertTargetKind, z.ZodType>;
+
+function alertPreferenceOption<K extends JOB_BOARD.AlertTargetKind>(kind: K) {
+  return z
+    .object({
+      kind: z.literal(kind),
+      target: ALERT_TARGET_SCHEMAS[kind],
+      track: jobTrackSchema,
+    })
+    .strict();
+}
+
 const alertPreferenceFields = z.discriminatedUnion("kind", [
-  z
-    .object({
-      kind: z.literal("company"),
-      target: companyTargetSchema,
-      track: jobTrackSchema,
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("location"),
-      target: locationTargetSchema,
-      track: jobTrackSchema,
-    })
-    .strict(),
+  alertPreferenceOption("company"),
+  alertPreferenceOption("location"),
 ]);
 
 export const alertPreferenceCreateInputSchema = alertPreferenceFields;

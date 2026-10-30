@@ -160,7 +160,7 @@ export const APPLICATION_ROUND_STAGES = [
   "interviewing",
 ] as const satisfies readonly ApplicationStage[];
 
-export const MAX_APPLICATION_ROUND = 20;
+export const MAX_APPLICATION_ROUND = 10;
 
 export const APPLICATION_VISIBILITIES = ["community", "private"] as const;
 
