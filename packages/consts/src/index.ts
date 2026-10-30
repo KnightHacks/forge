@@ -11,5 +11,6 @@ export * as ISSUE from "./issue";
 export * as JUDGING from "./judging";
 export type { ChallengeMode } from "./judging";
 export * as CAREER from "./career";
+export * as JOB_BOARD from "./job-board";
 export * as VENUE_MAP from "./venue-map";
 export type { BuildingId, PermittedRoom } from "./venue-map";
