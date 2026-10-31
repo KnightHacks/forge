@@ -74,7 +74,7 @@ function EventRow({ event }: { event: PublicClubEvent }) {
         </h3>
         <MarkdownContent
           compact
-          className="mt-2 line-clamp-2 max-w-[21rem] text-sm leading-5 text-[var(--club-muted)] [&_a]:text-[var(--club-gold)]"
+          className="mx-auto mt-2 line-clamp-2 max-w-[21rem] text-sm leading-5 text-[var(--club-muted)] [&_a]:text-[var(--club-gold)]"
         >
           {event.description}
         </MarkdownContent>
