@@ -21,11 +21,11 @@ Action: Follow the featured case-study link and use the project breadcrumb to re
 
 Expected observations: Both pages load, links use local routes, and the case study shows its technical sections, diagram/code where present, fixture provenance, and related links.
 
-### TC-002: Search and technology filters
+### TC-002: Search and project-area filters
 
 Setup: Open the archive with several fixture projects.
 
-Action: Search a known project/technology; select a technology; combine the filter with a query that has no matches; clear filters.
+Action: Search a known project or technology; select a project area; open a direct `?area=` link; combine the filter with a query that has no matches; clear filters.
 
 Expected observations: Matching cards update, result counts are announced, filters combine, empty state is readable, and reset restores all fixtures.
 

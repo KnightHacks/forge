@@ -13,6 +13,7 @@ export * from "./analytics";
 export * from "./issues";
 export * from "./guild";
 export * from "./career";
+export * from "./job-board";
 export * from "./audit";
 export * from "./email";
 export * from "./alumni";

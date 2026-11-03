@@ -1,6 +1,6 @@
 # Projects Public Website Status
 
-Current phase: P2 public frontend implemented and locally verified.
+Current phase: P2 public frontend implemented and locally verified; release pending.
 
 ## Decision log
 
@@ -12,6 +12,7 @@ Current phase: P2 public frontend implemented and locally verified.
 - 2026-10-22: Remove the global illustrative-preview banner; retain fixture labels on individual cards and case studies.
 - 2026-10-22: Replace stack-specific archive filters with broad project areas. Added fictional ML/computer-vision and robotics case-study fixtures so those areas return useful results; technology stacks remain case-study metadata.
 - 2026-10-22: Clarified the future publication domain: selected technical work may come from Knight Hacks, other hackathons or independent projects. Event/award details are optional and reviewed; P2 remains an illustrative public UI with no submission, import or synchronization behavior.
+- 2026-11-02: Audited the consolidated branch against Forge guidance. Updated the spec, SRD and test cases to reflect project-area filters and the archive's direct area links. The homepage no longer has an area-discovery link; the browser test now checks the supported archive deep link. Added the required app test and React analysis scripts using existing workspace tools. The package-level changed-file script runs from the repo root because the shared analyzer otherwise reports zero files from an app directory.
 
 ## Open questions
 
@@ -38,8 +39,10 @@ Current phase: P2 public frontend implemented and locally verified.
 - `pnpm format`: passed across the repository.
 - `pnpm lint` and `pnpm typecheck`: attempted across the full workspace; unrelated package processes hit Node's 2 GB heap limit under Turbo parallelism. App-scoped lint and typecheck passed. Workspace lint output included warnings in unchanged legacy packages; no warnings were reported for `@forge/projects`.
 - Rendered Club-styled desktop home and 320px archive/case-study screenshots inspected locally: `/tmp/projects-home-without-preview-banner.png`, `/tmp/projects-archive-club-style-320.png`, `/tmp/projects-case-club-style-320.png`. Confirmed the official wordmark loads and pages have no horizontal overflow at 320px.
+- 2026-11-02 audit: the first `pnpm --filter @forge/projects test:e2e` run failed 1/5 because its homepage `ML` link had been removed with the area-filter change. After correcting the stale test to open `/archive?area=ML` and adding the TC-001 breadcrumb assertion, the suite passed 5/5. The corrections moved from the temporary audit branch onto `projects`, where they passed the browser suite again after merging current `origin/main`. The Projects production build and React analysis of 10 app files also passed. Root format, serial lint and serial typecheck passed on the combined tree; lint emitted warnings but no errors.
+- Current desktop home and 320px archive/detail screenshots were inspected at `/tmp/projects-audit-{home-desktop,archive-mobile,case-mobile}.png`. The old screenshot paths above no longer exist locally. A development-only archive hydration warning mentioned an inline caret style that Projects does not set; a production archive render produced no browser console or page errors and was captured at `/tmp/projects-audit-archive-production-320.png`. The `next start` command served the built page but warned that standalone deployments should invoke the generated server directly.
 
 ## Links
 
 - PRs: none created. This P2 work targets the existing non-production GitHub `projects` branch; `main`, deployment, authentication, API, database, and infrastructure are outside this update.
-- Issues: none supplied.
+- Issue: [#663 Projects archive foundation and public fixture site](https://github.com/KnightHacks/forge/issues/663).

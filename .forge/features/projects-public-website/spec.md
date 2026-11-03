@@ -1,6 +1,6 @@
 # Projects Public Website Spec
 
-Status: P2 implementation in progress.
+Status: P2 public fixture implementation complete; release pending.
 
 ## User-facing purpose
 
@@ -8,13 +8,13 @@ Projects is a curated technical publication for exceptional work from the broade
 
 ## Users / actors
 
-- Visitors discover projects, browse technologies, and read technical case studies.
+- Visitors discover projects, browse project areas, and read technical case studies.
 - Future authors and reviewers are outside this public-only slice.
 
 ## User-visible interface
 
-- A branded editorial homepage with featured stories and technology discovery.
-- A searchable, technology-filterable project archive.
+- A branded editorial homepage with featured stories and a link to the archive.
+- A searchable project archive with project-area filters.
 - Long-form technical case studies with team/provenance labels, diagrams, code, related stories, and demo/repository links. Event participation and awards are optional context, never eligibility signals.
 - A clear notice that current content is illustrative and does not describe real submissions, awards, or contributors.
 
@@ -35,7 +35,7 @@ Projects is a curated technical publication for exceptional work from the broade
 
 - The home, archive, and detail pages form a complete working public experience.
 - Search matches project titles, summaries, technology names, and categories.
-- Technology filters combine with search and provide a useful empty state and reset action.
+- Project-area filters combine with search and provide a useful empty state and reset action.
 - Every fixture is visibly identified as illustrative and has no invented team attribution, award, or real project links.
 - Case studies support substantial technical prose, architecture diagrams, code samples, challenges, tradeoffs, lessons, and related discovery.
 - Pages remain usable with keyboard navigation and at 320px viewport width.

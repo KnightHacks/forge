@@ -1,15 +1,19 @@
-import { createHash } from "node:crypto";
-import type { APIEmbed, APIMessage } from "discord-api-types/v10";
+import { createHash, randomBytes } from "node:crypto";
+import type { APIChannel, APIEmbed, APIMessage } from "discord-api-types/v10";
 import { Routes } from "discord-api-types/v10";
 
 import * as discord from "@forge/utils/discord";
 
 import { env, nodeEnv } from "../../env";
+import { replaceIssueImageMarkdown } from "./images";
 
 const DISCORD_MESSAGE_LIMIT = 2_000;
 const DISCORD_THREAD_NAME_LIMIT = 100;
 const DISCORD_EMBED_DESCRIPTION_LIMIT = 3_800;
 const DISCORD_EMBED_TOTAL_LIMIT = 6_000;
+// The edit sync runs before issues.update responds; cap it so a slow or
+// rate-limited Discord cannot hold the save open.
+const ISSUE_THREAD_SYNC_TIMEOUT_MS = 5_000;
 
 export interface IssueCreationThreadTarget {
   assigneeDiscordUserIds: readonly string[];
@@ -28,6 +32,11 @@ export interface IssueCreationThreadTarget {
   teamName: string;
   url: string;
 }
+
+export type IssueStarterTarget = Omit<
+  IssueCreationThreadTarget,
+  "channelId" | "links" | "teamDiscordRoleId"
+>;
 
 export interface IssueCreationThreadMessage {
   allowedMentions: {
@@ -62,6 +71,17 @@ export interface IssueCreationThreadGateway {
   }): Promise<void>;
 }
 
+export interface IssueThreadEditGateway {
+  editStarterMessage(input: {
+    allowedMentions: { parse: readonly string[] };
+    channelId: string;
+    embed: APIEmbed;
+    messageId: string;
+  }): Promise<void>;
+  findStarterChannelId(threadId: string): Promise<string>;
+  sendThreadMessage: IssueCreationThreadGateway["sendThreadMessage"];
+}
+
 function deliveryNonce(issueId: string, part: string) {
   return createHash("sha256")
     .update(`issue-thread:${issueId}:${part}`)
@@ -79,6 +99,18 @@ function neutralizeMentions(value: string) {
 
 function escapeMarkdown(value: string) {
   return neutralizeMentions(value).replace(/([\\`*_[\]{}()~|>])/g, "\\$1");
+}
+
+// Discord cannot load private Blade images, so each one becomes a link to the
+// issue, where Blade renders it for viewers with access.
+function discordDescription(target: IssueStarterTarget) {
+  return neutralizeMentions(
+    replaceIssueImageMarkdown(target.description, (alt) =>
+      alt
+        ? `[🖼 Image: ${escapeMarkdown(alt)}](${target.url})`
+        : `[🖼 Image](${target.url})`,
+    ),
+  );
 }
 
 function singleLine(value: string) {
@@ -132,7 +164,7 @@ function dueValue(dueAt: Date | null) {
   return dueAt ? `<t:${Math.floor(dueAt.getTime() / 1_000)}:F>` : "Not set";
 }
 
-function issueFields(target: IssueCreationThreadTarget): APIEmbed["fields"] {
+function issueFields(target: IssueStarterTarget): APIEmbed["fields"] {
   return [
     {
       inline: true,
@@ -165,7 +197,7 @@ function issueFields(target: IssueCreationThreadTarget): APIEmbed["fields"] {
 }
 
 function descriptionMessages(target: IssueCreationThreadTarget) {
-  const chunks = splitText(neutralizeMentions(target.description));
+  const chunks = splitText(discordDescription(target));
   const color = embedColor(target.teamColor);
   return chunks.slice(1).map((chunk, index) =>
     embedMessage(target.id, `description-${index + 1}`, {
@@ -212,19 +244,35 @@ function audienceMessage(target: IssueCreationThreadTarget) {
   } satisfies IssueCreationThreadMessage;
 }
 
-function starterMessage(target: IssueCreationThreadTarget) {
+function starterEmbed(
+  target: IssueStarterTarget,
+  { linkOverflow }: { linkOverflow: boolean },
+): APIEmbed {
   const color = embedColor(target.teamColor);
-  const [firstDescription = "No description provided."] = splitText(
-    neutralizeMentions(target.description),
-  );
-  return embedMessage(target.id, "starter", {
+  const [firstDescription = "No description provided.", ...overflow] =
+    splitText(discordDescription(target));
+  // Edits cannot reach the original "Description continued" messages, so the
+  // edited starter points readers at Blade for the rest of the text.
+  const description =
+    linkOverflow && overflow.length > 0
+      ? `${firstDescription}\n\n[Full description in Blade](${target.url})`
+      : firstDescription;
+  return {
     ...(color !== undefined && { color }),
-    description: firstDescription,
+    description,
     fields: issueFields(target),
     footer: { text: "A discussion thread is attached to this message." },
     title: threadName(target.name),
     url: target.url,
-  });
+  };
+}
+
+function starterMessage(target: IssueCreationThreadTarget) {
+  return embedMessage(
+    target.id,
+    "starter",
+    starterEmbed(target, { linkOverflow: false }),
+  );
 }
 
 function embedTextLength(embed: APIEmbed) {
@@ -330,29 +378,150 @@ export function createLiveIssueCreationThreadGateway(): IssueCreationThreadGatew
         }
       }
     },
-    async sendThreadMessage({ message, threadId }) {
-      await discord.api.post(Routes.channelMessages(threadId), {
-        body: {
-          allowed_mentions: message.allowedMentions,
-          content: message.content,
-          embeds: message.embeds,
-          enforce_nonce: true,
-          nonce: message.nonce,
-        },
-      });
-    },
+    sendThreadMessage: postThreadMessage,
   };
+}
+
+async function postThreadMessage(
+  {
+    message,
+    threadId,
+  }: {
+    message: IssueCreationThreadMessage;
+    threadId: string;
+  },
+  signal?: AbortSignal,
+) {
+  await discord.api.post(Routes.channelMessages(threadId), {
+    body: {
+      allowed_mentions: message.allowedMentions,
+      content: message.content,
+      embeds: message.embeds,
+      enforce_nonce: true,
+      nonce: message.nonce,
+    },
+    signal,
+  });
+}
+
+function issueDiscordThreadsEnabled() {
+  return (
+    nodeEnv === "production" || env.ISSUE_DISCORD_THREADS_ENABLED === "true"
+  );
 }
 
 export async function deliverLiveIssueCreationThread(
   target: IssueCreationThreadTarget,
 ) {
-  const enabled =
-    nodeEnv === "production" || env.ISSUE_DISCORD_THREADS_ENABLED === "true";
-  if (!enabled) return { status: "suppressed" as const };
+  if (!issueDiscordThreadsEnabled()) return { status: "suppressed" as const };
   const delivery = await deliverIssueCreationThread(
     target,
     createLiveIssueCreationThreadGateway(),
   );
   return { ...delivery, status: "delivered" as const };
+}
+
+function addedAssigneeMessage(
+  before: IssueStarterTarget,
+  after: IssueStarterTarget,
+): IssueCreationThreadMessage | null {
+  const previous = new Set(before.assigneeDiscordUserIds);
+  const added = [...new Set(after.assigneeDiscordUserIds)]
+    .filter((id) => !previous.has(id))
+    .sort();
+  if (added.length === 0) return null;
+  return {
+    allowedMentions: { parse: [], users: added },
+    content: `cc: ${added.map((id) => `<@${id}>`).join(" ")}`,
+    embeds: [],
+    // Each assignment is a new event, so the nonce must not collide with an
+    // earlier add of the same person.
+    nonce: randomBytes(12).toString("hex"),
+  };
+}
+
+export async function syncIssueThread(
+  {
+    after,
+    before,
+    threadId,
+  }: {
+    after: IssueStarterTarget;
+    before: IssueStarterTarget;
+    threadId: string;
+  },
+  gateway: IssueThreadEditGateway,
+) {
+  const embed = starterEmbed(after, { linkOverflow: true });
+  // Both sides use the same renderer, so equal JSON means Discord already
+  // shows this content and no request is needed.
+  const embedChanged =
+    JSON.stringify(embed) !==
+    JSON.stringify(starterEmbed(before, { linkOverflow: true }));
+  const assigneeMessage = addedAssigneeMessage(before, after);
+  if (!embedChanged && !assigneeMessage) {
+    return { status: "unchanged" as const };
+  }
+  const editEmbed = async () => {
+    // The starter message ID doubles as the thread ID; the thread's parent is
+    // the channel that holds the starter, even if the team channel changed.
+    const channelId = await gateway.findStarterChannelId(threadId);
+    await gateway.editStarterMessage({
+      allowedMentions: { parse: [] },
+      channelId,
+      embed,
+      messageId: threadId,
+    });
+  };
+  // The embed edit and the ping are independent: a deleted starter message
+  // must not stop newly added assignees from hearing about the issue.
+  const results = await Promise.allSettled([
+    ...(embedChanged ? [editEmbed()] : []),
+    // Only people added by this edit are pinged; existing assignees are not.
+    ...(assigneeMessage
+      ? [gateway.sendThreadMessage({ message: assigneeMessage, threadId })]
+      : []),
+  ]);
+  const failure = results.find(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+  if (failure) throw failure.reason;
+  return { status: "updated" as const };
+}
+
+export function createLiveIssueThreadEditGateway(
+  signal?: AbortSignal,
+): IssueThreadEditGateway {
+  return {
+    async editStarterMessage({ allowedMentions, channelId, embed, messageId }) {
+      await discord.api.patch(Routes.channelMessage(channelId, messageId), {
+        body: { allowed_mentions: allowedMentions, embeds: [embed] },
+        signal,
+      });
+    },
+    async findStarterChannelId(threadId) {
+      const thread = (await discord.api.get(Routes.channel(threadId), {
+        signal,
+      })) as APIChannel;
+      if (!("parent_id" in thread) || !thread.parent_id) {
+        throw new Error(`Discord thread ${threadId} has no parent channel.`);
+      }
+      return thread.parent_id;
+    },
+    sendThreadMessage: (input) => postThreadMessage(input, signal),
+  };
+}
+
+export async function syncLiveIssueThread(input: {
+  after: IssueStarterTarget;
+  before: IssueStarterTarget;
+  threadId: string;
+}) {
+  if (!issueDiscordThreadsEnabled()) return { status: "suppressed" as const };
+  return syncIssueThread(
+    input,
+    createLiveIssueThreadEditGateway(
+      AbortSignal.timeout(ISSUE_THREAD_SYNC_TIMEOUT_MS),
+    ),
+  );
 }

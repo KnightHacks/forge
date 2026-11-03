@@ -21,6 +21,15 @@ export function issueImageReferences(markdown: string) {
   }));
 }
 
+export function replaceIssueImageMarkdown(
+  markdown: string,
+  replacement: (alt: string) => string,
+) {
+  return markdown.replace(MANAGED_ISSUE_IMAGE, (_match, alt: string) =>
+    replacement(alt.trim()),
+  );
+}
+
 export function issueImageIds(markdown: string) {
   return [
     ...new Set(

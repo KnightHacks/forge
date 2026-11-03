@@ -20,7 +20,7 @@ Every route is public. No identity, session, authorization, or private draft beh
 
 - `apps/projects/src/content/projects.ts` owns illustrative fixture content.
 - Server components render the home, archive shell, and static case-study routes.
-- A bounded client component filters the same fixtures by search text and one technology selection.
+- A bounded client component filters the same fixtures by search text and one project-area selection; an `area` query parameter opens the archive prefiltered.
 - No tRPC, API, DB, auth, upload, remote image, or external content fetch is used.
 - Fixture cover art is local SVG rendered by an app component.
 
@@ -44,7 +44,7 @@ No persistence or migration. Fixture records are shaped as public case-study con
 
 ## Testing / verification strategy
 
-- App Playwright tests cover homepage/archive/detail navigation, search and technology filters, empty/reset states, and 320px overflow.
+- App Playwright tests cover homepage/archive/detail navigation, search and project-area filters, direct area links, empty/reset states, and 320px overflow.
 - Run Projects build, typecheck, lint, format, React analyzer, and focused browser tests. Run broader root checks when feasible.
 
 ## Open questions

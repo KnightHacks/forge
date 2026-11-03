@@ -5,12 +5,17 @@
   "type": "module",
   "packageManager": "pnpm@9.12.1",
   "scripts": {
+    "analyze:react": "tsx ../../scripts/analyze-react.ts src",
+    "analyze:react:changed": "cd ../.. && pnpm analyze:react:changed",
     "build": "NODE_ENV=production next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "next dev --port 3008",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "NODE_ENV=production next start --port 3008",
+    "test": "pnpm test:e2e",
+    "test:watch": "playwright test --ui",
+    "e2e": "pnpm test:e2e",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test --pass-with-no-tests"
   },

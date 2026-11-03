@@ -30,6 +30,11 @@ test("home leads into the archive and a technical case study", async ({
     "href",
     "https://example.com/signal-garden-repository",
   );
+  await page
+    .getByRole("navigation", { name: "Breadcrumb" })
+    .getByRole("link", { name: "Archive" })
+    .click();
+  await expect(page).toHaveURL(/\/archive$/);
 });
 
 test("archive area filters, search, empty state, and clear action work", async ({
@@ -60,9 +65,8 @@ test("archive area filters, search, empty state, and clear action work", async (
   await expect(page.getByRole("link", { name: /Rover Relay/ })).toBeVisible();
 });
 
-test("area discovery link opens a prefiltered archive", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("link", { name: "ML" }).click();
+test("area deep link opens a prefiltered archive", async ({ page }) => {
+  await page.goto("/archive?area=ML");
   await expect(page).toHaveURL(/area=ML/);
   await expect(page.getByRole("link", { name: /Canopy Count/ })).toBeVisible();
   await expect(

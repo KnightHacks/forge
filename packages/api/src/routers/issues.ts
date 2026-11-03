@@ -30,6 +30,7 @@ import {
   Member,
   Template,
 } from "@forge/db/schemas/knight-hacks";
+import { logger } from "@forge/utils";
 import {
   issueCreateSchema,
   issueIdSchema,
@@ -58,7 +59,10 @@ import {
   getIssueImageDownloadUrl,
   syncIssueImageReferences,
 } from "../utils/issues/attachments";
-import { deliverLiveIssueCreationThread } from "../utils/issues/creation-thread";
+import {
+  deliverLiveIssueCreationThread,
+  syncLiveIssueThread,
+} from "../utils/issues/creation-thread";
 import { issueImageIds } from "../utils/issues/images";
 import {
   canonicalIssueCreationHash,
@@ -155,30 +159,38 @@ async function issueRecord(id: string) {
   });
 }
 
+function issueThreadTarget(
+  record: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+) {
+  return {
+    assigneeDiscordUserIds: record.userAssignments.map(
+      ({ user }) => user.discordUserId,
+    ),
+    channelId: record.team.issueReminderChannel,
+    description: record.description,
+    dueAt: record.dueAt,
+    eventId: record.event,
+    id: record.id,
+    links: record.links ?? [],
+    name: record.name,
+    parentId: record.parent,
+    priority: record.priority,
+    status: record.status,
+    teamColor: record.team.teamHexcodeColor,
+    teamDiscordRoleId: record.team.discordRoleId,
+    teamName: record.team.name,
+    url: `${env.BLADE_URL.replace(/\/$/, "")}/admin/issues/${record.id}`,
+  };
+}
+
 async function deliverCreationThread(
   record: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
 ) {
   if (record.discordThreadId) return;
   try {
-    const delivery = await deliverLiveIssueCreationThread({
-      assigneeDiscordUserIds: record.userAssignments.map(
-        ({ user }) => user.discordUserId,
-      ),
-      channelId: record.team.issueReminderChannel,
-      description: record.description,
-      dueAt: record.dueAt,
-      eventId: record.event,
-      id: record.id,
-      links: record.links ?? [],
-      name: record.name,
-      parentId: record.parent,
-      priority: record.priority,
-      status: record.status,
-      teamColor: record.team.teamHexcodeColor,
-      teamDiscordRoleId: record.team.discordRoleId,
-      teamName: record.team.name,
-      url: `${env.BLADE_URL.replace(/\/$/, "")}/admin/issues/${record.id}`,
-    });
+    const delivery = await deliverLiveIssueCreationThread(
+      issueThreadTarget(record),
+    );
     if (delivery.status === "delivered") {
       await db
         .update(Issue)
@@ -191,6 +203,27 @@ async function deliverCreationThread(
       code: "INTERNAL_SERVER_ERROR",
       message:
         "The issue was saved, but its Discord thread could not be created. Retry issue creation to finish delivery.",
+    });
+  }
+}
+
+async function syncCreationThread(
+  before: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+  after: NonNullable<Awaited<ReturnType<typeof issueRecord>>>,
+) {
+  if (!after.discordThreadId) return;
+  // The edit is already committed; a Discord outage or a deleted thread must
+  // not turn a successful save into an error.
+  try {
+    await syncLiveIssueThread({
+      after: issueThreadTarget(after),
+      before: issueThreadTarget(before),
+      threadId: after.discordThreadId,
+    });
+  } catch (cause) {
+    logger.warn("Issue Discord thread sync failed.", {
+      cause,
+      issueId: after.id,
     });
   }
 }
@@ -1171,6 +1204,7 @@ export const issuesRouter = {
       });
       const updated = await issueRecord(input.id);
       if (!updated) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await syncCreationThread(current, updated);
       return issueDto(updated, roles);
     }),
 
