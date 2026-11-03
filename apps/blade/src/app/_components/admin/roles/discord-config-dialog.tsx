@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, Loader2, Save } from "lucide-react";
 
 import type { RouterOutputs } from "@forge/api";
+import { DISCORD } from "@forge/consts";
 import { Button } from "@forge/ui/button";
 import {
   Dialog,
@@ -35,7 +36,7 @@ function seed(row: DiscordConfigRow): DiscordConfigDraft {
     // coerces it back on the way in.
     developmentId: row.developmentId ?? "",
     label: row.label,
-    productionId: row.productionId,
+    productionId: row.productionId ?? "",
   };
 }
 
@@ -65,7 +66,13 @@ export function DiscordConfigDialog({
   // `label` and `description` are `notNull` with no fallback behind them, so
   // blank is a mistake rather than a meaning. Disabling Save here means schema
   // rejection is not the first feedback an officer gets.
-  const complete = draft.label.trim() !== "" && draft.description.trim() !== "";
+  const optionalDestination = DISCORD.OPTIONAL_CONFIG_KEYS.some(
+    (key) => key === row.key,
+  );
+  const complete =
+    draft.label.trim() !== "" &&
+    draft.description.trim() !== "" &&
+    (optionalDestination || draft.productionId.trim() !== "");
   // Only a snowflake change repoints anything. Relabelling the guild row
   // changes nothing any consumer resolves, so it saves like every other row.
   const repointsGuild =
@@ -105,12 +112,26 @@ export function DiscordConfigDialog({
           <div className="grid gap-2">
             <Label htmlFor="discord-config-production">Production ID</Label>
             <Input
+              aria-describedby={
+                optionalDestination
+                  ? "discord-config-production-help"
+                  : undefined
+              }
               className="h-11"
               id="discord-config-production"
               inputMode="numeric"
               onChange={(event) => update({ productionId: event.target.value })}
+              required={!optionalDestination}
               value={draft.productionId}
             />
+            {optionalDestination && (
+              <p
+                className="text-sm leading-5 text-muted-foreground"
+                id="discord-config-production-help"
+              >
+                Leave empty to disable Discord failure alerts in production.
+              </p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="discord-config-development">Development ID</Label>
@@ -125,6 +146,8 @@ export function DiscordConfigDialog({
             />
             <p className="text-sm leading-5 text-muted-foreground">
               Leave this empty to reuse the production ID outside production.
+              {optionalDestination &&
+                " If both IDs are empty, no failure-alert destination is configured."}
             </p>
           </div>
         </div>

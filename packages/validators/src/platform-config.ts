@@ -10,7 +10,7 @@ import { roleUuidSchema } from "./role-management";
 // `knight_hacks_discord_config` rows and a Blade role's `knight_hacks_club_team_role`
 // classification.
 //
-// Three of the columns these write are nullable, and `NULL` means something
+// Some columns these write are nullable, and `NULL` means something
 // specific in each of them. A cleared `<Input>` yields `""`, so the coercion has
 // to happen here — the client binds `value={draft.field ?? ""}` and sends it raw.
 //
@@ -76,8 +76,8 @@ export const discordConfigUpdateSchema = z
       .max(1_000)
       // The column is `text`; 1000 is an abuse bound rather than a schema mirror.
       .describe("What this setting controls and what breaks when it is wrong."),
-    productionId: configSnowflakeSchema.describe(
-      "Discord snowflake used when NODE_ENV is production.",
+    productionId: optionalConfigSnowflakeSchema.describe(
+      "Production Discord snowflake. Only the optional Career failure channel may be empty.",
     ),
     developmentId: optionalConfigSnowflakeSchema.describe(
       "Discord snowflake used outside production. Empty means reuse the production one.",
@@ -91,7 +91,19 @@ export const discordConfigUpdateSchema = z
         "Confirms the officer accepts repointing every Discord consumer at another server.",
       ),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => {
+    if (
+      input.productionId === null &&
+      !DISCORD.OPTIONAL_CONFIG_KEYS.some((key) => key === input.key)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A production Discord ID is required for this setting.",
+        path: ["productionId"],
+      });
+    }
+  });
 
 export const clubClassificationUpdateSchema = z
   .object({

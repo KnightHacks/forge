@@ -73,9 +73,8 @@ function UsageBadge({ row }: { row: DiscordConfigRow }) {
 }
 
 /**
- * The whole reason this column exists: ten of the fourteen keys are read by
- * nothing, and the `description` text reads identically for an inert row and a
- * live one. The badge carries the distinction, the list carries the stakes.
+ * Descriptions explain a setting even when nothing reads it yet. The badge
+ * distinguishes unused settings; the list identifies their active consumers.
  */
 function UsageDetail({ row }: { row: DiscordConfigRow }) {
   if (row.readBy.length === 0) {
@@ -96,10 +95,18 @@ function UsageDetail({ row }: { row: DiscordConfigRow }) {
   );
 }
 
-function SnowflakeValue({ value }: { value: string | null }) {
+function SnowflakeValue({
+  value,
+  reuseProduction = false,
+}: {
+  value: string | null;
+  reuseProduction?: boolean;
+}) {
   if (value === null) {
     return (
-      <span className="text-sm text-muted-foreground">Reuses production</span>
+      <span className="text-sm text-muted-foreground">
+        {reuseProduction ? "Reuses production" : "Not configured"}
+      </span>
     );
   }
   return <span className="font-mono text-sm">{value}</span>;
@@ -144,8 +151,8 @@ export function DiscordConfigSection({
   rows: DiscordConfigRow[];
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
-  // One mutation object is shared by all fourteen rows, so `isPending` would
-  // spin every one of them. The pending row is tracked by its own key.
+  // All rows share one mutation. Track the pending key so only the row being
+  // saved shows a loading indicator.
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const update = api.discordConfig.update.useMutation({
     onSuccess() {
@@ -221,7 +228,10 @@ export function DiscordConfigSection({
                         <SnowflakeValue value={row.productionId} />
                       </TableCell>
                       <TableCell className="align-top">
-                        <SnowflakeValue value={row.developmentId} />
+                        <SnowflakeValue
+                          value={row.developmentId}
+                          reuseProduction={row.productionId !== null}
+                        />
                       </TableCell>
                       <TableCell className="align-top">
                         <SnowflakeValue value={row.resolvedId} />
@@ -286,7 +296,10 @@ export function DiscordConfigSection({
                     <div className="flex min-w-0 justify-between gap-2">
                       <dt className="text-muted-foreground">Development ID</dt>
                       <dd className="min-w-0 truncate">
-                        <SnowflakeValue value={row.developmentId} />
+                        <SnowflakeValue
+                          value={row.developmentId}
+                          reuseProduction={row.productionId !== null}
+                        />
                       </dd>
                     </div>
                     <div className="flex min-w-0 justify-between gap-2">

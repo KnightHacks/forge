@@ -22,11 +22,11 @@ export const CONFIG_KINDS = ["channel", "guild", "role"] as const;
 export type ConfigKind = (typeof CONFIG_KINDS)[number];
 
 /**
- * Every setting the platform reads out of `knight_hacks_discord_config`.
+ * Every setting the platform supports in `knight_hacks_discord_config`.
  *
- * This is a contract, not organizational state: adding a key means adding code
- * that reads it, so it belongs in the codebase. The *values* behind the keys are
- * organizational state and belong to the table.
+ * This is a code contract. A key can be registered before its delivery consumer
+ * lands; CONFIG_KEY_CONSUMERS records whether anything reads it yet. The values
+ * behind the keys are organizational state and belong to the table.
  *
  * Keys are stable identifiers — renaming one is a breaking change that needs a
  * data migration, exactly like renaming a column.
@@ -35,6 +35,10 @@ export const CONFIG_KEYS = [
   "guild",
   "log_channel",
   "recruiting_channel",
+  // Career routing (#648); API and cron consumers land in #651, #653, and #654.
+  "career_internship_channel",
+  "career_new_grad_channel",
+  "career_source_health_channel",
   "officer_role",
   "admin_role",
   "volunteer_role",
@@ -46,14 +50,22 @@ export const CONFIG_KEYS = [
   "sponsorship_director_role",
   "workshops_director_role",
   "projects_mentorship_director_role",
+  "career_internship_digest_role",
+  "career_new_grad_digest_role",
 ] as const;
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number];
 
+/** Settings that can intentionally have no Discord destination. */
+export const OPTIONAL_CONFIG_KEYS = [
+  "career_source_health_channel",
+] as const satisfies readonly ConfigKey[];
+
+export type OptionalConfigKey = (typeof OPTIONAL_CONFIG_KEYS)[number];
+
 /**
  * What reads each setting, in officer-facing terms. An empty array means the
- * platform reads this key nowhere: the row exists because the constant it
- * replaced existed, not because anything resolves it.
+ * platform does not resolve this key yet.
  *
  * `satisfies Record<ConfigKey, ...>` is the point. Adding a key to
  * {@link CONFIG_KEYS} without answering "what reads it?" is a type error, which
@@ -73,6 +85,11 @@ export const CONFIG_KEY_CONSUMERS = {
   ],
   log_channel: ["Blade admin action log embeds"],
   recruiting_channel: ["Recruiting notifications posted by form callbacks"],
+  career_internship_channel: [],
+  career_new_grad_channel: [],
+  career_source_health_channel: [],
+  career_internship_digest_role: [],
+  career_new_grad_digest_role: [],
   alumni_role: ["Nightly alumni grant/revoke cron"],
   officer_role: [],
   admin_role: [],
