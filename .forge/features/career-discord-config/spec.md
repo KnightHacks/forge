@@ -1,6 +1,6 @@
 # Career Discord Configuration Spec
 
-Status: implemented and locally verified; user authorized PR submission.
+Status: implemented and locally verified; [PR #664](https://github.com/KnightHacks/forge/pull/664) opened.
 
 ## Product promise
 

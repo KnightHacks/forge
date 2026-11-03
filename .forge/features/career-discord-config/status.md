@@ -1,6 +1,6 @@
 # Career Discord Configuration Status
 
-Current phase: final submission checks passed; commit/push/PR creation authorized.
+Current phase: implementation submitted in PR #664; follow review and CI on GitHub.
 The user requested cleanup, final checks, commit, push and PR creation on
 2026-11-03. Earlier preparation phases intentionally stopped before publication.
 
@@ -9,7 +9,7 @@ The user requested cleanup, final checks, commit, push and PR creation on
 - Task checkout: KH Forge/forge, branch stevin/career-discord-config-648.
 - Base/current HEAD: b88d4de35ac47f7cb1555658741778a792351c90.
 - Upstream main fetched in Phase 6 and still matches that base. The implementation
-  remains a working-copy diff, including untracked new files.
+  is committed and pushed on the task branch.
 - The original stevin/dev-team-application checkout and running Blade/database
   were preserved. No private environment file, dependency, auth policy, CI
   workflow or production service was changed.
@@ -146,3 +146,21 @@ Career cron delivery is still owned by the downstream tickets.
 Upstream main was fetched and still matches the implementation base. The user
 has now authorized committing, pushing, creating the PR and uploading the six
 review screenshots. The publication result will be recorded after creation.
+
+## Publication — 2026-11-03
+
+[PR #664](https://github.com/KnightHacks/forge/pull/664) was opened from
+StevScripts:stevin/career-discord-config-648 into KnightHacks/forge main.
+Implementation commit: 8d39eabb. Assignee: StevScripts. Labels: Blade, API,
+Database, Feature and Major. The SQL, snapshots and journal are committed.
+The PR was created as a draft while the six screenshot attachments are added;
+its live page records the current readiness and CI state.
+
+The first commit attempt failed because root ESLint exceeded Node's default
+4 GB heap. Retrying with a command-scoped 8 GB heap passed every commit hook:
+formatting, staged lint and staged typecheck. No hook was skipped and no
+persistent environment or tooling configuration was changed.
+
+Merge coordination remains unchanged: confirm the five-key contract, agree on
+development routing, and deploy compatible code before migrations. Production
+has not been migrated and Career delivery remains outside this ticket.
