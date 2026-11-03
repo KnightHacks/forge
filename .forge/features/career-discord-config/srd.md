@@ -83,14 +83,12 @@ Existing guild-repoint confirmation, mutation feedback and officer gates remain.
 
 ## Migrations and rollout
 
-- 0064_career_discord_optional_channel: relax production_id NOT NULL and add
-  knight_hacks_discord_config_production_id_required_check.
-- 0065_career_discord_config_seed: registered custom seed for the five rows,
-  using ON CONFLICT (key) DO NOTHING to preserve officer edits.
-- 0066_career_discord_config_copy: shorten only the original seed descriptions,
-  preserving officer edits and all routing values. 0065 had already run locally.
-- All three include generated snapshots and journal entries. Historical 0026 SQL,
-  provenance fixture and locked migration hashes remain unchanged.
+- 0064_career_discord_config: relax production_id NOT NULL, add
+  knight_hacks_discord_config_production_id_required_check, then seed the five
+  rows with their final descriptions using ON CONFLICT (key) DO NOTHING to
+  preserve officer edits.
+- One generated snapshot and journal entry. Historical 0026 SQL, provenance
+  fixture and locked migration hashes remain unchanged.
 
 Deploy compatible code, drain old Blade instances, then apply the migrations.
 Old code cannot map new keys to consumer labels and cannot correctly present
@@ -131,5 +129,4 @@ Match the existing short purpose statements: channels for internship/new-grad
 posts and digests, roles pinged for each digest, and an optional channel for job
 source failure alerts. Remove repeated change warnings and officer-access
 explanations from row descriptions. Keep setup and rollout guidance in the
-editor/help and PR notes. The 0066 correction changes text only and adds no
-schema differences; its journal/snapshot registration follows the existing flow.
+editor/help and PR notes.

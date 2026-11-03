@@ -1,15 +1,15 @@
 # Career Discord Configuration Status
 
-Current phase: implementation submitted in PR #664; follow review and CI on GitHub.
-The user requested cleanup, final checks, commit, push and PR creation on
-2026-11-03. Earlier preparation phases intentionally stopped before publication.
+Current phase: migrations squashed into one on a local branch; not published.
+PR #664 was closed unmerged on 2026-11-03. Pushing, a new PR or reopening #664
+each need the user's explicit approval.
 
 ## Workspace and scope
 
-- Task checkout: KH Forge/forge, branch stevin/career-discord-config-648.
-- Base/current HEAD: b88d4de35ac47f7cb1555658741778a792351c90.
-- Upstream main fetched in Phase 6 and still matches that base. The implementation
-  is committed and pushed on the task branch.
+- Task checkout: KH Forge/forge, branch stevin/career-discord-config-648-squashed,
+  created from c49d8eac (stevin/career-discord-config-648, kept unchanged).
+- Base: b88d4de35ac47f7cb1555658741778a792351c90. Upstream main still matched it
+  on 2026-11-03.
 - The original stevin/dev-team-application checkout and running Blade/database
   were preserved. No private environment file, dependency, auth policy, CI
   workflow or production service was changed.
@@ -92,15 +92,15 @@ the generated migration files are committed.
 ## Operational follow-ups
 
 - Before merge: coordinate key names with downstream owners and have the
-  maintainer confirm code deployment/draining before applying 0064–0066. The
+  maintainer confirm code deployment/draining before applying 0064. The
   optional CI migration job has no code-deployment/drain dependency; production
   variable state and external deployment order remain unverified.
 - Before live development delivery: obtain safe development IDs or explicitly
   accept production fallback. Null development IDs retain that existing rule.
 - Before enabling Discord failure alerts: an officer enters the destination in
   Blade. Downstream workers must skip only that notification when null.
-- Publication/commit/push are now explicitly authorized by the user; final
-  checks and handoff are in progress.
+- Publication is not approved. Ask before pushing, opening or reopening a PR,
+  marking it ready or requesting review.
 
 ## Links
 
@@ -110,7 +110,7 @@ the generated migration files are committed.
 [#653](https://github.com/KnightHacks/forge/issues/653),
 [#654](https://github.com/KnightHacks/forge/issues/654).
 
-## Copy follow-up — 2026-11-03
+## Copy follow-up — 2026-11-03 (migrations superseded by the squash below)
 
 The user requested shorter Career descriptions matching the existing settings,
 using the humanizer skill. All five now state only their purpose in one short
@@ -147,7 +147,7 @@ Upstream main was fetched and still matches the implementation base. The user
 has now authorized committing, pushing, creating the PR and uploading the six
 review screenshots. The publication result will be recorded after creation.
 
-## Publication — 2026-11-03
+## Publication — 2026-11-03 (PR later closed unmerged)
 
 [PR #664](https://github.com/KnightHacks/forge/pull/664) was opened from
 StevScripts:stevin/career-discord-config-648 into KnightHacks/forge main.
@@ -164,3 +164,30 @@ persistent environment or tooling configuration was changed.
 Merge coordination remains unchanged: confirm the five-key contract, agree on
 development routing, and deploy compatible code before migrations. Production
 has not been migrated and Career delivery remains outside this ticket.
+
+## Migration squash — 2026-11-03
+
+The user approved squashing the three unreleased migrations into one to remove
+two redundant ~15k-line schema snapshots. Drizzle Kit 0.x writes a full snapshot
+for every migration, including data-only ones. The feature diff against base
+fell from 46,661 to 16,444 added lines.
+
+- 0064–0066 were replaced by `0064_career_discord_config`: the generated schema
+  change plus the five seed rows with their final descriptions. Its snapshot has
+  the same schema as the old 0066 snapshot.
+- The journal entry keeps the old 0064 timestamp (1793667755542). Drizzle 0.45
+  applies only migrations newer than the newest recorded one, and the local
+  database already records 0066 (1793717650323), so it skips the new file.
+  If upstream adds migrations before merge, regenerate after them and decide
+  how to mark the new file as applied locally.
+- Tests: the Career migration suite reads one file and replays only its INSERT;
+  the lineage test expects 65 entries ending at 0064.
+
+Checks: `pnpm db:generate` reported no schema changes. A fresh disposable
+database ran the real migrator twice with unchanged rows, 65 ledger entries, the
+required-ID check and optional set/clear; it was dropped. `pnpm db:migrate` on
+the local database left its 67 ledger rows and all 19 config rows unchanged.
+All 167 `@forge/db` tests and 50 `@forge/api` config tests passed on real
+PostgreSQL. `pnpm verify:precommit` passed (24 format, 31 lint, 33 typecheck
+tasks; command-scoped 8 GB heap). Full workspace tests and build were not rerun;
+no application code changed.

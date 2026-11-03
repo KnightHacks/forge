@@ -26,20 +26,17 @@ interface ConfigRow extends QueryResultRow {
   production_id: string | null;
 }
 
-async function careerMigrations() {
-  const migrations = await readMigrations();
-  const schema = migrations.find(({ name }) =>
-    name.startsWith("0064_career_discord_optional_channel"),
+async function careerMigration() {
+  const migration = (await readMigrations()).find(({ name }) =>
+    name.startsWith("0064_career_discord_config"),
   );
-  const seed = migrations.find(({ name }) =>
-    name.startsWith("0065_career_discord_config_seed"),
-  );
-  const copy = migrations.find(({ name }) =>
-    name.startsWith("0066_career_discord_config_copy"),
-  );
-  if (!schema || !seed || !copy)
-    throw new Error("Career config migrations are missing.");
-  return { schema, seed, copy };
+  if (!migration) throw new Error("Career config migration is missing.");
+  // Replays re-run only the seed; the schema statements are not repeatable.
+  const seed = migration.sql
+    .split("--> statement-breakpoint")
+    .find((statement) => statement.includes("INSERT INTO"));
+  if (!seed) throw new Error("Career config seed statement is missing.");
+  return { migration, seed: { name: migration.name, sql: seed } };
 }
 
 describe("Career Discord configuration storage contract", () => {
@@ -51,12 +48,14 @@ describe("Career Discord configuration storage contract", () => {
   });
 
   it("registers an additive schema migration and a non-destructive seed", async () => {
-    const { schema, seed } = await careerMigrations();
-    expect(schema.sql).toContain('ALTER COLUMN "production_id" DROP NOT NULL');
-    expect(schema.sql).toContain("career_source_health_channel");
-    expect(schema.sql).not.toMatch(/DROP (TABLE|COLUMN)/);
+    const { migration, seed } = await careerMigration();
+    expect(migration.sql).toContain(
+      'ALTER COLUMN "production_id" DROP NOT NULL',
+    );
+    expect(migration.sql).toContain("career_source_health_channel");
+    expect(migration.sql).not.toMatch(/DROP (TABLE|COLUMN)/);
+    expect(migration.sql).not.toMatch(/\b(UPDATE|DELETE|TRUNCATE)\b/i);
     expect(seed.sql).toContain('ON CONFLICT ("key") DO NOTHING');
-    expect(seed.sql).not.toMatch(/\b(UPDATE|DELETE|TRUNCATE)\b/i);
     for (const row of EXPECTED_CAREER_CONFIG) {
       expect(seed.sql).toContain(`'${row.key}'`);
       if (row.production !== null)
@@ -122,7 +121,7 @@ describe.runIf(canRunDatabaseTests())(
     });
 
     it("TC-648-002: upgrades the previous schema without changing existing officer edits", async () => {
-      const { schema, seed, copy } = await careerMigrations();
+      const { migration } = await careerMigration();
       await database.client.query("BEGIN");
       try {
         await database.client.query(
@@ -138,9 +137,7 @@ describe.runIf(canRunDatabaseTests())(
           "UPDATE knight_hacks_discord_config SET production_id = '999999999999999999' WHERE key = 'log_channel'",
         );
         const before = await rows();
-        await applyMigration(database.client, schema);
-        await applyMigration(database.client, seed);
-        await applyMigration(database.client, copy);
+        await applyMigration(database.client, migration);
         const after = await rows();
         expect(after.filter(({ key }) => !key.startsWith("career_"))).toEqual(
           before,
@@ -152,7 +149,7 @@ describe.runIf(canRunDatabaseTests())(
     });
 
     it("TC-648-002: seed replay preserves edited and cleared values and inserts missing rows", async () => {
-      const { seed, copy } = await careerMigrations();
+      const { seed } = await careerMigration();
       await database.client.query("BEGIN");
       try {
         await database.client.query(
@@ -162,10 +159,8 @@ describe.runIf(canRunDatabaseTests())(
           "DELETE FROM knight_hacks_discord_config WHERE key = 'career_new_grad_digest_role'",
         );
         await applyMigration(database.client, seed);
-        await applyMigration(database.client, copy);
         const once = await rows();
         await applyMigration(database.client, seed);
-        await applyMigration(database.client, copy);
         expect(await rows()).toEqual(once);
         expect(once).toHaveLength(DISCORD.CONFIG_KEYS.length);
         expect(

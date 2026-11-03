@@ -454,21 +454,7 @@
       "idx": 64,
       "version": "7",
       "when": 1793667755542,
-      "tag": "0064_career_discord_optional_channel",
-      "breakpoints": true
-    },
-    {
-      "idx": 65,
-      "version": "7",
-      "when": 1793667761267,
-      "tag": "0065_career_discord_config_seed",
-      "breakpoints": true
-    },
-    {
-      "idx": 66,
-      "version": "7",
-      "when": 1793717650323,
-      "tag": "0066_career_discord_config_copy",
+      "tag": "0064_career_discord_config",
       "breakpoints": true
     }
   ]
