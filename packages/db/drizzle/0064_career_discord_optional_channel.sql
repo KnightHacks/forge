@@ -1,0 +1,2 @@
+ALTER TABLE "knight_hacks_discord_config" ALTER COLUMN "production_id" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "knight_hacks_discord_config" ADD CONSTRAINT "knight_hacks_discord_config_production_id_required_check" CHECK ("knight_hacks_discord_config"."key" = 'career_source_health_channel' OR "knight_hacks_discord_config"."production_id" IS NOT NULL);

@@ -110,7 +110,13 @@ type DiscordRow = DiscordConfig["rows"][number];
 const SHARED_DESCRIPTION =
   "Discord snowflake used by the Knight Hacks platform.";
 
-const CHANNEL_KEYS = new Set(["log_channel", "recruiting_channel"]);
+const CHANNEL_KEYS = new Set([
+  "log_channel",
+  "recruiting_channel",
+  "career_internship_channel",
+  "career_new_grad_channel",
+  "career_source_health_channel",
+]);
 
 function kindOf(key: DISCORD.ConfigKey): DiscordRow["kind"] {
   if (key === "guild") return "guild";
@@ -225,12 +231,12 @@ function present<T>(value: T | null | undefined): T {
   return value;
 }
 
-function renderDiscordSection() {
+function renderDiscordSection(rows: DiscordRow[] = discordRows) {
   return render(
     <DiscordConfigSection
       environment="development"
       onSaved={vi.fn()}
-      rows={discordRows}
+      rows={rows}
     />,
   );
 }
@@ -239,6 +245,109 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.captured.club = null;
   mocks.captured.discord = null;
+});
+
+describe("TC-648-009: unconfigured Career failure destination", () => {
+  function failureRows(productionId: string | null = null) {
+    return discordRows
+      .filter(({ key }) => key === "career_source_health_channel")
+      .map((row) => ({
+        ...row,
+        developmentId: null,
+        productionId,
+        resolvedId: productionId,
+      }));
+  }
+
+  it("shows Not configured for unset values in desktop rows and mobile cards", () => {
+    const { container } = renderDiscordSection(failureRows());
+    const { cards, tables } = renderings(container);
+    for (const rendering of [first(tables), first(cards)]) {
+      expect(within(rendering).getAllByText("Not configured")).toHaveLength(3);
+      expect(within(rendering).queryByText("Reuses production")).toBeNull();
+    }
+  });
+
+  it("shows Reuses production only for a missing development ID with production configured", () => {
+    const { container } = renderDiscordSection(
+      failureRows("999999999999999999"),
+    );
+    const { cards, tables } = renderings(container);
+    for (const rendering of [first(tables), first(cards)]) {
+      expect(within(rendering).getAllByText("Reuses production")).toHaveLength(
+        1,
+      );
+      expect(within(rendering).getAllByText("999999999999999999")).toHaveLength(
+        2,
+      );
+    }
+  });
+
+  it.each([null, "999999999999999999"])(
+    "lets officers configure or clear a failure destination from %s",
+    async (original) => {
+      const user = userEvent.setup();
+      renderDiscordSection(failureRows(original));
+      await user.click(
+        first(
+          screen.getAllByRole("button", {
+            name: "Edit career source health channel",
+          }),
+        ),
+      );
+      const production = screen.getByLabelText("Production ID");
+      expect(production).toHaveValue(original ?? "");
+      expect(
+        screen.getByText(
+          "Leave empty to disable Discord failure alerts in production.",
+        ),
+      ).toBeInTheDocument();
+      const next = original === null ? "888888888888888888" : "";
+      await user.clear(production);
+      if (next) await user.type(production, next);
+      await user.click(screen.getByRole("button", { name: /save setting/i }));
+      expect(mocks.discordMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: "career_source_health_channel",
+          productionId: next,
+        }),
+      );
+    },
+  );
+
+  it("allows a label-only edit while the optional destination stays empty", async () => {
+    const user = userEvent.setup();
+    renderDiscordSection(failureRows());
+    await user.click(
+      first(
+        screen.getAllByRole("button", {
+          name: "Edit career source health channel",
+        }),
+      ),
+    );
+    await user.type(screen.getByLabelText("Label"), " updated");
+    await user.click(screen.getByRole("button", { name: /save setting/i }));
+    expect(mocks.discordMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ productionId: "" }),
+    );
+  });
+
+  it("keeps Save disabled when an officer clears a required channel", async () => {
+    const user = userEvent.setup();
+    renderDiscordSection();
+    await user.click(
+      first(
+        screen.getAllByRole("button", {
+          name: "Edit career internship channel",
+        }),
+      ),
+    );
+    await user.clear(screen.getByLabelText("Production ID"));
+    expect(
+      screen.getByRole("button", { name: /save setting/i }),
+    ).toBeDisabled();
+    expect(mocks.discordMutate).not.toHaveBeenCalled();
+  });
 });
 
 describe("TC-004: inert keys are structurally distinct from live keys", () => {
@@ -261,10 +370,15 @@ describe("TC-004: inert keys are structurally distinct from live keys", () => {
     }
 
     expect(DISCORD.INERT_CONFIG_KEYS).toEqual([
+      "career_internship_channel",
+      "career_new_grad_channel",
+      "career_source_health_channel",
       "officer_role",
       "admin_role",
       "volunteer_role",
       "vip_role",
+      "career_internship_digest_role",
+      "career_new_grad_digest_role",
     ]);
     expect([...DISCORD.LIVE_CONFIG_KEYS]).toEqual([
       "guild",
@@ -295,7 +409,7 @@ describe("TC-004: inert keys are structurally distinct from live keys", () => {
 });
 
 describe("TC-031: the three kind groups are labelled regions in both renderings", () => {
-  it("partitions fourteen rows across guild, channel and role in server order", () => {
+  it("TC-648-003: partitions settings, including Career, by kind in server order", () => {
     const { container } = renderDiscordSection();
     const { cards, tables } = renderings(container);
 
@@ -327,8 +441,11 @@ describe("TC-031: the three kind groups are labelled regions in both renderings"
       expect(edits(channels)).toEqual([
         "Edit log channel",
         "Edit recruiting channel",
+        "Edit career internship channel",
+        "Edit career new grad channel",
+        "Edit career source health channel",
       ]);
-      expect(edits(roleGroup)).toHaveLength(11);
+      expect(edits(roleGroup)).toHaveLength(13);
       // Declaration order, not alphabetical: `admin role` follows
       // `officer role`. A convenience sort on the client would flip these.
       expect(edits(roleGroup).slice(0, 3)).toEqual([
@@ -642,8 +759,9 @@ describe("TC-018: no create or delete affordance exists in the console", () => {
     );
     expect(names.length).toBeGreaterThan(30);
     for (const name of names) {
+      // "New grad" names an audience; a leading "New" labels a creation action.
       expect(name).not.toMatch(
-        /\b(add|create|new|delete|remove|unclassify|reset)\b/i,
+        /\b(add|create|delete|remove|unclassify|reset)\b|^\s*new\b/i,
       );
     }
     expect(container.querySelector("form")).toBeNull();

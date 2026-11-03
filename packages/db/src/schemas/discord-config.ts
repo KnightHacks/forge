@@ -17,6 +17,8 @@ const createTable = pgTableCreator((name) => `knight_hacks_${name}`);
  * `developmentId` is nullable and means "no separate development value" — the
  * resolver falls back to `productionId`, which is exactly what the old
  * `ALUMNI_ROLE = PROD_ALUMNI_ROLE` line did.
+ * Only `career_source_health_channel` may also omit `productionId`; null then
+ * means no Discord failure-alert destination has been configured.
  *
  * Read this through `@forge/utils/discord-config` rather than querying it
  * directly; that module caches the whole table and applies the fallback rule.
@@ -40,8 +42,8 @@ export const DiscordConfig = createTable(
     label: t.varchar({ length: 128 }).notNull(),
     /** What this controls and what breaks when it is wrong. */
     description: t.text().notNull(),
-    /** Snowflake used when `NODE_ENV === "production"`. */
-    productionId: t.varchar({ length: 20 }).notNull(),
+    /** Production snowflake. Only the optional Career failure channel may omit it. */
+    productionId: t.varchar({ length: 20 }),
     /** Snowflake used outside production. `NULL` reuses `productionId`. */
     developmentId: t.varchar({ length: 20 }),
     updatedAt: t
@@ -63,6 +65,10 @@ export const DiscordConfig = createTable(
       "knight_hacks_discord_config_production_id_check",
       sql`${table.productionId} ~ '^[0-9]{17,20}$'`,
     ),
+    requiredProductionId: check(
+      "knight_hacks_discord_config_production_id_required_check",
+      sql`${table.key} = 'career_source_health_channel' OR ${table.productionId} IS NOT NULL`,
+    ),
     validDevelopmentId: check(
       "knight_hacks_discord_config_development_id_check",
       sql`${table.developmentId} IS NULL OR ${table.developmentId} ~ '^[0-9]{17,20}$'`,
@@ -80,7 +86,7 @@ export type SelectDiscordConfig = typeof DiscordConfig.$inferSelect;
 export function resolveDiscordConfigId(
   row: Pick<SelectDiscordConfig, "developmentId" | "productionId">,
   isProduction: boolean,
-): string {
+): string | null {
   return isProduction
     ? row.productionId
     : (row.developmentId ?? row.productionId);

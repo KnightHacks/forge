@@ -153,6 +153,13 @@ Notes:
 
 - One row is one _setting_, not one value. `production_id` and `development_id` are the two environment values of the same setting, replacing the `PROD_`/`DEV_` constant pairs that fed an `IS_PROD` ternary.
 - `development_id` is nullable and means "reuse `production_id`", which is how `alumni_role` and the six `*_director_role` rows behave.
+- `production_id` is required except for `career_source_health_channel`. That
+  optional failure-alert destination starts with both IDs null, so an officer
+  can configure it later. The database enforces the exception by key; other
+  settings cannot omit their production ID. Low-level environment resolution
+  can return null; `getDiscordConfigId` remains strict and throws for an unset
+  destination. `getOptionalDiscordConfigId` accepts only optional keys and
+  returns null for an unset value; a missing row still throws a migration error.
 - `key` is a code contract enumerated by `DISCORD.CONFIG_KEYS`, not something an officer invents; renaming one needs a data migration. `kind`, `label`, and `description` exist so a future admin UI can present a row without the editor guessing.
 - Check constraints enforce that both ID columns are 17-20 digit snowflakes, so a pasted role mention or a trailing space fails at write time rather than as a Discord 404 inside a cron job.
 - The read path caches the whole table for 60 seconds per process. There is no admin UI yet, so writes happen in SQL; a writer inside the app must call `invalidateDiscordConfigCache()`, and other processes converge within the TTL.

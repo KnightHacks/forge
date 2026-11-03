@@ -7,6 +7,7 @@ import { DISCORD } from "@forge/consts";
 import type { DisposableDatabase } from "../testing";
 import { resolveDiscordConfigId } from "../schemas/discord-config";
 import { canRunDatabaseTests, provisionDisposableDatabase } from "../testing";
+import { EXPECTED_CAREER_CONFIG } from "./support/career-discord-config";
 
 const migrationsDirectory = new URL("../../drizzle/", import.meta.url);
 
@@ -123,7 +124,7 @@ interface DiscordConfigRow extends QueryResultRow {
   key: string;
   kind: string;
   label: string;
-  production_id: string;
+  production_id: string | null;
 }
 
 async function readDiscordConfigMigration() {
@@ -166,9 +167,11 @@ describe("Discord config migration contract", () => {
   });
 
   it("covers exactly the keys the platform knows how to read", () => {
-    expect([...EXPECTED_BACKFILL.map(({ key }) => key)].sort()).toEqual(
-      [...DISCORD.CONFIG_KEYS].sort(),
-    );
+    expect(
+      [...EXPECTED_BACKFILL, ...EXPECTED_CAREER_CONFIG]
+        .map(({ key }) => key)
+        .sort(),
+    ).toEqual([...DISCORD.CONFIG_KEYS].sort());
   });
 
   it("constrains kind to exactly the documented set", async () => {
@@ -228,7 +231,7 @@ describe.runIf(canRunDatabaseTests())(
          FROM "knight_hacks_discord_config" ORDER BY "key"`,
       );
 
-      expect(rows).toHaveLength(EXPECTED_BACKFILL.length);
+      expect(rows).toHaveLength(DISCORD.CONFIG_KEYS.length);
       for (const expected of EXPECTED_BACKFILL) {
         const row = rows.find(({ key }) => key === expected.key);
         expect(

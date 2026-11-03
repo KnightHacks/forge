@@ -33,10 +33,15 @@ function createCaller(session: Session | null = SESSION) {
   });
 }
 
-/** The fourteen rows migration 0025 seeds, with their real `kind` values. */
+/** Explicit kinds for supported settings, including the pending Career rows. */
 const KIND_BY_KEY: Record<DISCORD.ConfigKey, DISCORD.ConfigKind> = {
   admin_role: "role",
   alumni_role: "role",
+  career_internship_channel: "channel",
+  career_internship_digest_role: "role",
+  career_new_grad_channel: "channel",
+  career_new_grad_digest_role: "role",
+  career_source_health_channel: "channel",
   design_director_role: "role",
   development_director_role: "role",
   guild: "guild",
@@ -143,13 +148,60 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
 
     const result = await createCaller().list();
 
-    expect(result.rows.map((row) => row.key)).toEqual([...DISCORD.CONFIG_KEYS]);
+    // TC-648-003: the editor must include Career entries in their intended groups.
+    expect(result.rows.map((row) => row.key)).toEqual([
+      "guild",
+      "log_channel",
+      "recruiting_channel",
+      "career_internship_channel",
+      "career_new_grad_channel",
+      "career_source_health_channel",
+      "officer_role",
+      "admin_role",
+      "volunteer_role",
+      "alumni_role",
+      "vip_role",
+      "outreach_director_role",
+      "design_director_role",
+      "development_director_role",
+      "sponsorship_director_role",
+      "workshops_director_role",
+      "projects_mentorship_director_role",
+      "career_internship_digest_role",
+      "career_new_grad_digest_role",
+    ]);
     expect(result.rows.map((row) => row.kind)).toEqual([
       "guild",
-      "channel",
-      "channel",
-      ...Array.from({ length: 11 }, () => "role"),
+      ...Array.from({ length: 5 }, () => "channel"),
+      ...Array.from({ length: 13 }, () => "role"),
     ]);
+  });
+
+  it("keeps an unset failure channel visible and editable only by officers", async () => {
+    mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
+    mocks.configRows = [
+      configRow("career_source_health_channel", { productionId: null }),
+    ];
+    expect((await createCaller().list()).rows[0]).toMatchObject({
+      key: "career_source_health_channel",
+      productionId: null,
+      developmentId: null,
+      resolvedId: null,
+      readBy: [],
+    });
+    mocks.permissionRows = [
+      { permissions: permissionBitstring("CONFIGURE_ROLES") },
+    ];
+    await expect(
+      createCaller().update({
+        key: "career_source_health_channel",
+        productionId: "",
+        developmentId: "",
+        label: "Failure channel",
+        description: "Optional alerts",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(mocks.db.transaction).not.toHaveBeenCalled();
   });
 
   it("groups by the kind column rather than the key text", async () => {
@@ -163,11 +215,20 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
     const result = await createCaller().list();
     const kinds = result.rows.map((row) => row.kind);
 
-    expect(result.rows[3]?.key).toBe("vip_role");
-    expect(kinds.indexOf("role")).toBe(4);
+    expect(
+      result.rows.filter((row) => row.kind === "channel").map((row) => row.key),
+    ).toEqual([
+      "log_channel",
+      "recruiting_channel",
+      "career_internship_channel",
+      "career_new_grad_channel",
+      "career_source_health_channel",
+      "vip_role",
+    ]);
+    expect(result.rows[kinds.indexOf("role")]?.key).toBe("officer_role");
   });
 
-  it("marks exactly the four inert keys with an empty consumer list", async () => {
+  it("marks the Career and other unread keys with an empty consumer list", async () => {
     mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
 
     const result = await createCaller().list();
@@ -175,7 +236,17 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
       .filter((row) => row.readBy.length === 0)
       .map((row) => row.key);
 
-    expect(inert).toHaveLength(4);
+    expect(inert).toEqual([
+      "career_internship_channel",
+      "career_new_grad_channel",
+      "career_source_health_channel",
+      "officer_role",
+      "admin_role",
+      "volunteer_role",
+      "vip_role",
+      "career_internship_digest_role",
+      "career_new_grad_digest_role",
+    ]);
     expect(
       result.rows
         .filter((row) => row.readBy.length > 0)
