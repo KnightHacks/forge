@@ -95,6 +95,7 @@ function UsageDetail({ row }: { row: DiscordConfigRow }) {
   );
 }
 
+/** Shows an ID, or "Reuses production" / "Not configured" when it is empty. */
 function SnowflakeValue({
   value,
   reuseProduction = false,
@@ -141,6 +142,7 @@ function EditButton({
   );
 }
 
+/** Lists every Discord setting (table on desktop, cards on mobile) with its editor. */
 export function DiscordConfigSection({
   environment,
   onSaved,

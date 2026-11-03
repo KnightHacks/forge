@@ -28,6 +28,7 @@ export interface DiscordConfigDraft {
   productionId: string;
 }
 
+/** Copies a setting into editable draft fields; empty IDs become `""` for the inputs. */
 function seed(row: DiscordConfigRow): DiscordConfigDraft {
   return {
     description: row.description,
@@ -40,6 +41,7 @@ function seed(row: DiscordConfigRow): DiscordConfigDraft {
   };
 }
 
+/** Officer dialog for editing one setting's IDs, label and description. */
 export function DiscordConfigDialog({
   onCancel,
   onSave,

@@ -26,6 +26,7 @@ interface ConfigRow extends QueryResultRow {
   production_id: string | null;
 }
 
+/** Loads the Career migration and its seed statement for replay tests. */
 async function careerMigration() {
   const migration = (await readMigrations()).find(({ name }) =>
     name.startsWith("0064_career_discord_config"),
@@ -88,6 +89,7 @@ describe.runIf(canRunDatabaseTests())(
       await database.drop();
     });
 
+    /** Reads all Discord config rows, ordered by key. */
     async function rows() {
       return (
         await database.client.query<ConfigRow>(
