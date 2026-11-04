@@ -63,9 +63,10 @@ src/tests/job-board.test.ts`: 30 passed.
   named uniqueness/check constraints and search/delivery indexes are implemented.
 - Design and follow-up runtime/access contracts are in srd.md. No current app
   sends jobs, syncs digest roles, or accepts source settings through this change.
-- Migration is local and uncommitted; no production/shared database was migrated.
-- Root formatting and historical checksum remain checkout limitations. No commit
-  or push was made, and GitHub review in #633 is still outstanding.
+- Migration is committed and pushed in PR #666; no production/shared database was
+  migrated.
+- Root formatting and historical checksum remain checkout limitations. GitHub
+  review in #633 is still outstanding.
 
 ## Linux contribution review
 
@@ -145,7 +146,6 @@ migration and idempotent rerun; targeted formatting/lint, DB typecheck, and no
 Drizzle schema drift. The user additionally confirmed that root lint, root
 typecheck, DB tests, and db:generate ran after the squash. The local 0010 lineage
 check has a CRLF-only failure; the isolated LF lineage suite passed.
-User authorized committing and pushing this branch. PR text will be drafted for
-review only; posting requires an explicit request. Dev-lead schema approval is
-still outstanding. Optional follow-ups: delivery_track digest index coverage and
+Committed as one commit rebased onto main and opened as PR #666. Dev-lead schema
+approval is still outstanding. Optional follow-ups: delivery_track digest index coverage and
 an automated schema-drift regression test.
