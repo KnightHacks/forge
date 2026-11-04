@@ -1,6 +1,7 @@
 # Career Job Storage SRD
 
-Status: Implementing the design approved in the November 3 conversation.
+Status: Implementing the design agreed in the local November 3 conversation. The
+#633 GitHub design review is still outstanding.
 References: #647, parent #633, vocabulary #646 / PR #658.
 
 ## Ownership and access

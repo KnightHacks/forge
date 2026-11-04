@@ -217,6 +217,19 @@ Do not return raw application rows: private notes are always private, including
 when application visibility is community. No end-user row authorization is implied
 by these foreign keys.
 
+### Identifier fingerprints
+
+`Job.identityHash`, `JobSource.boardKeyHash` and `JobObservation.externalIdHash` are
+stored, database-generated SHA-256 hex fingerprints of the original UTF-8 keys.
+Unique constraints target the fingerprint, with provider/sourceId where applicable,
+so long URLs and provider identifiers do not exceed PostgreSQL B-tree limits.
+The original values remain intact. Future writers must use these columns as
+Drizzle conflict targets and verify the original key matches before updating a
+conflicting row; a mismatched key is an error, never permission to overwrite.
+Indexed lookups should compute the same SHA-256 fingerprint and compare the raw
+key as well. No ingestion/upsert service is implemented in this database-only work.
+Migration 0064 creates the fingerprint columns and their unique constraints directly.
+
 ## Undocumented columns
 
 If a task needs a table or column not explained here, inspect existing usage first. If the intended semantics are still not clear from code, ask a clarifying question before setting a new precedent.
@@ -230,16 +243,3 @@ Team mutations and check-in share the hackathon allocation advisory lock. The fi
 Organizer status changes away from confirmed/checked-in, application withdrawal, and deletion remove membership in the same transaction, promote a random remaining member if the owner leaves, and delete an empty team. Composite foreign keys keep attendees, teams, and the stored class within one hackathon. Both team tables are excluded from sanitized development backups.
 
 Legacy bulk status check-in rejects hackers with teams or pending requests; the Hackathon Check-in workspace performs their class assignment. The attendee membership foreign key uses `NO ACTION` so account cascades cannot silently orphan teams. Account deletion asks the user to leave teams/cancel requests first, with organizer removal available when their Teams page is locked.
-
-### Identifier fingerprints
-
-Job.identityHash, JobSource.boardKeyHash and JobObservation.externalIdHash are
-stored, database-generated SHA-256 hex fingerprints of the original UTF-8 keys.
-Unique constraints target the fingerprint, with provider/sourceId where applicable,
-so long URLs and provider identifiers do not exceed PostgreSQL B-tree limits.
-The original values remain intact. Future writers must use these columns as
-Drizzle conflict targets and verify the original key matches before updating a
-conflicting row; a mismatched key is an error, never permission to overwrite.
-Indexed lookups should compute the same SHA-256 fingerprint and compare the raw
-key as well. No ingestion/upsert service is implemented in this database-only work.
-Migration 0065 creates the fingerprint columns and their unique constraints directly.
