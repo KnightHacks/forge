@@ -8,6 +8,7 @@ import * as authSchema from "./schemas/auth";
 import * as clubTeamSchema from "./schemas/club-team";
 import * as discordSchema from "./schemas/discord";
 import * as discordConfigSchema from "./schemas/discord-config";
+import * as jobBoardSchema from "./schemas/job-board";
 import * as knightHacksSchema from "./schemas/knight-hacks";
 import * as relations from "./schemas/relations";
 
@@ -24,6 +25,7 @@ type KnightHacksSchema = typeof knightHacksSchema;
 type RelationsSchema = typeof relations;
 
 type DatabaseSchema = AuditSchema &
+  typeof jobBoardSchema &
   AuthSchema &
   ClubTeamSchema &
   DiscordSchema &
@@ -39,6 +41,7 @@ const schema = {
   ...clubTeamSchema,
   ...discordSchema,
   ...discordConfigSchema,
+  ...jobBoardSchema,
   ...knightHacksSchema,
   ...relations,
 };

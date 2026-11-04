@@ -54,6 +54,8 @@ vi.mock("~/app/_components/member/guild-preferences-dialog", () => ({
 }));
 
 const member: CurrentMember = {
+  jobInternshipDigestEnabled: false,
+  jobNewGradDigestEnabled: false,
   about:
     "My name is Dylan Vidal, and I am the Dev Lead of Knight Hacks. My messages are always open.",
   alumniConfirmedAt: null,

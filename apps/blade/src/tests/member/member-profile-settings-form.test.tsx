@@ -88,6 +88,8 @@ vi.mock("~/app/_components/member/member-resume-upload", () => ({
 }));
 
 const member: CurrentMember = {
+  jobInternshipDigestEnabled: false,
+  jobNewGradDigestEnabled: false,
   about: "I like building member tools.",
   alumniConfirmedAt: null,
   age: 24,
