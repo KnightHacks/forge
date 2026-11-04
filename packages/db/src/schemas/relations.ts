@@ -2,6 +2,14 @@ import { relations } from "drizzle-orm";
 
 import { Account, Permissions, Roles, Session, User } from "./auth";
 import {
+  Job,
+  JobAlertPreference,
+  JobApplication,
+  JobLocation,
+  JobObservation,
+  JobSource,
+} from "./job-board";
+import {
   AlumniBulletinPost,
   Company,
   Employment,
@@ -42,6 +50,51 @@ import {
   ProjectMember,
   ProjectToChallenge,
 } from "./knight-hacks";
+
+export const JobRelations = relations(Job, ({ one, many }) => ({
+  company: one(Company, { fields: [Job.companyId], references: [Company.id] }),
+  observations: many(JobObservation),
+  locations: many(JobLocation),
+  applications: many(JobApplication),
+}));
+
+export const JobSourceRelations = relations(JobSource, ({ one, many }) => ({
+  company: one(Company, {
+    fields: [JobSource.companyId],
+    references: [Company.id],
+  }),
+  observations: many(JobObservation),
+}));
+
+export const JobObservationRelations = relations(JobObservation, ({ one }) => ({
+  job: one(Job, { fields: [JobObservation.jobId], references: [Job.id] }),
+  source: one(JobSource, {
+    fields: [JobObservation.sourceId],
+    references: [JobSource.id],
+  }),
+}));
+
+export const JobLocationRelations = relations(JobLocation, ({ one }) => ({
+  job: one(Job, { fields: [JobLocation.jobId], references: [Job.id] }),
+}));
+
+export const JobApplicationRelations = relations(JobApplication, ({ one }) => ({
+  job: one(Job, { fields: [JobApplication.jobId], references: [Job.id] }),
+  member: one(Member, {
+    fields: [JobApplication.memberId],
+    references: [Member.id],
+  }),
+}));
+
+export const JobAlertPreferenceRelations = relations(
+  JobAlertPreference,
+  ({ one }) => ({
+    member: one(Member, {
+      fields: [JobAlertPreference.memberId],
+      references: [Member.id],
+    }),
+  }),
+);
 
 export const UserRelations = relations(User, ({ many, one }) => ({
   accounts: many(Account),
@@ -148,12 +201,16 @@ export const AccountRelations = relations(Account, ({ one }) => ({
 }));
 
 export const MemberRelations = relations(Member, ({ many, one }) => ({
+  jobApplications: many(JobApplication),
+  jobAlertPreferences: many(JobAlertPreference),
   user: one(User, { fields: [Member.userId], references: [User.id] }),
   eventAttendance: many(EventAttendee),
   employment: many(Employment),
 }));
 
 export const CompanyRelations = relations(Company, ({ many, one }) => ({
+  jobs: many(Job),
+  jobSources: many(JobSource),
   createdBy: one(User, {
     fields: [Company.createdByUserId],
     references: [User.id],

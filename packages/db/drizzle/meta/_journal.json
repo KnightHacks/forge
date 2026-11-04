@@ -456,6 +456,13 @@
       "when": 1793667755542,
       "tag": "0064_career_discord_config",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1794621918742,
+      "tag": "0065_career_job_storage",
+      "breakpoints": true
     }
   ]
 }

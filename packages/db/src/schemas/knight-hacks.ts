@@ -402,6 +402,8 @@ export const Member = createTable(
     company: t.varchar({ length: 255 }),
     currentCityKey: t.varchar({ length: 8 }),
     guildLocationVisible: t.boolean().notNull().default(true),
+    jobInternshipDigestEnabled: t.boolean().notNull().default(false),
+    jobNewGradDigestEnabled: t.boolean().notNull().default(false),
     points: t.integer().notNull().default(0),
     dateCreated: t.date().notNull().defaultNow(),
     timeCreated: t.time().notNull().defaultNow(),
