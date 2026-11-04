@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 import { DISCORD } from "@forge/consts";
 
 /**
- * `DISCORD.CONFIG_KEY_CONSUMERS` is hand-declared, and the console marks ten of
- * the fourteen rows as read by nothing on the strength of it. That claim decays:
+ * `DISCORD.CONFIG_KEY_CONSUMERS` is hand-declared, and the console uses it to
+ * label settings as in use or unused. That claim decays:
  * the first commit that resolves `vip_role`, or deletes the last
  * `recruiting_channel` call, turns an officer-facing badge into a lie with no
  * other signal. So the classification is re-derived from the source tree here
@@ -43,7 +43,8 @@ const excludedFile = new URL(
  * skipped. A scan that quietly ignored one would under-report the live set,
  * which is the direction that matters.
  */
-const CONFIG_ID_CALL = /getDiscordConfigId\(\s*(?:"([^"]*)"|'([^']*)')?/g;
+const CONFIG_ID_CALL =
+  /get(?:Optional)?DiscordConfigId\(\s*(?:"([^"]*)"|'([^']*)')?/g;
 const GUILD_HELPER_CALL = "getKnightHacksGuildId(";
 
 interface WorkspaceScan {
@@ -134,6 +135,12 @@ async function scanWorkspace(): Promise<WorkspaceScan> {
 const scan = await scanWorkspace();
 
 describe("Discord config consumer catalog", () => {
+  it("includes optional-reader calls and flags computed optional keys", () => {
+    const source = `getOptionalDiscordConfigId("career_source_health_channel"); getOptionalDiscordConfigId(key);`;
+    expect(
+      [...source.matchAll(CONFIG_ID_CALL)].map((match) => match[1] ?? match[2]),
+    ).toEqual(["career_source_health_channel", undefined]);
+  });
   it("finds the call sites it is supposed to compare against", () => {
     // Without this, a broken regex or a mis-resolved root would compare two
     // empty sets and pass while enforcing nothing.

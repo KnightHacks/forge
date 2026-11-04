@@ -10,6 +10,7 @@ vi.mock("@forge/db/client", () => ({
 
 const {
   getDiscordConfigId,
+  getOptionalDiscordConfigId,
   getKnightHacksGuildId,
   invalidateDiscordConfigCache,
 } = await import("../discord-config");
@@ -51,6 +52,75 @@ afterEach(() => {
 });
 
 describe("Discord config read path", () => {
+  it("returns null only for an unconfigured optional destination, not a missing row", async () => {
+    selectSpy.mockResolvedValue([
+      {
+        developmentId: null,
+        key: "career_source_health_channel",
+        productionId: null,
+      },
+    ]);
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBeNull();
+    await expect(
+      getDiscordConfigId("career_source_health_channel"),
+    ).rejects.toThrow(/not configured/);
+    expect(selectSpy).toHaveBeenCalledTimes(1);
+    invalidateDiscordConfigCache();
+    selectSpy.mockResolvedValue([]);
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).rejects.toThrow(/has no row/);
+  });
+
+  it("applies environment selection and production fallback to optional reads", async () => {
+    selectSpy.mockResolvedValue([
+      {
+        developmentId: "222222222222222222",
+        key: "career_source_health_channel",
+        productionId: "111111111111111111",
+      },
+    ]);
+    setNodeEnv("production");
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBe("111111111111111111");
+    setNodeEnv("development");
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBe("222222222222222222");
+    selectSpy.mockResolvedValue([
+      {
+        developmentId: null,
+        key: "career_source_health_channel",
+        productionId: "333333333333333333",
+      },
+    ]);
+    invalidateDiscordConfigCache();
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBe("333333333333333333");
+  });
+
+  it("keeps a development-only optional destination out of production", async () => {
+    selectSpy.mockResolvedValue([
+      {
+        developmentId: "222222222222222222",
+        key: "career_source_health_channel",
+        productionId: null,
+      },
+    ]);
+    setNodeEnv("production");
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBeNull();
+    setNodeEnv("development");
+    await expect(
+      getOptionalDiscordConfigId("career_source_health_channel"),
+    ).resolves.toBe("222222222222222222");
+  });
+
   it("serves the development ID outside production and the production ID inside it", async () => {
     setNodeEnv("development");
     await expect(getKnightHacksGuildId()).resolves.toBe("1151877367434850364");
@@ -147,5 +217,21 @@ describe("Discord config read path", () => {
     setNodeEnv("development");
     await expect(getKnightHacksGuildId()).resolves.toBe("1151877367434850364");
     expect(selectSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the strict reader from returning null for an unconfigured setting", async () => {
+    selectSpy.mockResolvedValue([
+      {
+        developmentId: null,
+        key: "career_source_health_channel",
+        productionId: null,
+      },
+    ]);
+
+    await expect(
+      getDiscordConfigId("career_source_health_channel"),
+    ).rejects.toThrow(
+      /Discord config "career_source_health_channel" is not configured/,
+    );
   });
 });
