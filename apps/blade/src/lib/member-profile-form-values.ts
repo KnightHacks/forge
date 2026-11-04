@@ -13,6 +13,8 @@ export type MemberProfileFormSource = Omit<
   | "currentCityKey"
   | "gender"
   | "guildLocationVisible"
+  | "jobInternshipDigestEnabled"
+  | "jobNewGradDigestEnabled"
   | "levelOfStudy"
   | "major"
   | "raceOrEthnicity"

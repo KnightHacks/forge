@@ -178,6 +178,51 @@ Notes:
 - There is no admin UI yet, so writes happen in SQL — the same state the Discord config table is in.
 - `auth_roles.event_feedback_excluded` is unrelated to these tables and remains the durable source for feedback eligibility. The role-name lists that used to seed it are gone; migration `0013` already wrote the column.
 
+## Career job storage
+
+The seven tables in `schemas/job-board.ts` support the Career integration (#647).
+They are storage contracts; ingestion, member APIs and Discord workers are separate
+follow-up work. Sources default disabled and jobs default to suppressed delivery.
+
+| Table                | Usage                                                                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Job`                | Canonical listing with a unique API-normalized identity key, optional existing Company link, original company label/grouping key, dates, active state and one primary Discord delivery receipt/claim. |
+| `JobSource`          | Supported adapter/board identity, officer-editable enablement, poll schedule, baseline and conditional-request/claim state.                                                                           |
+| `JobObservation`     | One upstream listing per source/external ID, pointing to a canonical job; not one row per poll.                                                                                                       |
+| `JobLocation`        | Multiple locations for a job, preserving original text even when unknown. Census city keys use `NN-NNNNN`; remote alone does not imply U.S. eligibility.                                              |
+| `JobAlertPreference` | Member-owned normalized company/location targets per track, retaining custom Other text.                                                                                                              |
+| `JobApplication`     | One member/job application, with stage, optional interview round, visibility and private notes. Inactive jobs retain history.                                                                         |
+| `JobDigest`          | Shared daily digest delivery per track/scheduled instant, with frozen window/destination and recovery state.                                                                                          |
+
+`Member.jobInternshipDigestEnabled` and `jobNewGradDigestEnabled` default false and
+represent desired digest-role subscriptions, not proof of Discord role assignment.
+Member records reference `User` for numeric Discord identity. `Member.discordUser`
+is a username and must not be used for mentions.
+
+Keep company moderation separate from ingestion: jobs may have no `companyId`;
+they always retain company label/key. Resolve Company merges in API reads. Never
+auto-approve scraped employers into Guild. Discord routing belongs in existing
+`DiscordConfig`, not an additional job configuration table.
+
+API workers must fence claim completion and reconcile uncertain Discord sends.
+Unique keys and receipt checks alone cannot guarantee exactly-once external sends.
+Do not return raw application rows: private notes are always private, including
+when application visibility is community. No end-user row authorization is implied
+by these foreign keys.
+
+### Identifier fingerprints
+
+`Job.identityHash`, `JobSource.boardKeyHash` and `JobObservation.externalIdHash` are
+stored, database-generated SHA-256 hex fingerprints of the original UTF-8 keys.
+Unique constraints target the fingerprint, with provider/sourceId where applicable,
+so long URLs and provider identifiers do not exceed PostgreSQL B-tree limits.
+The original values remain intact. Future writers must use these columns as
+Drizzle conflict targets and verify the original key matches before updating a
+conflicting row; a mismatched key is an error, never permission to overwrite.
+Indexed lookups should compute the same SHA-256 fingerprint and compare the raw
+key as well. No ingestion/upsert service is implemented in this database-only work.
+Migration 0064 creates the fingerprint columns and their unique constraints directly.
+
 ## Undocumented columns
 
 If a task needs a table or column not explained here, inspect existing usage first. If the intended semantics are still not clear from code, ask a clarifying question before setting a new precedent.
