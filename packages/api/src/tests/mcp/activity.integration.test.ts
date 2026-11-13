@@ -1,32 +1,49 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import type { Session } from "@forge/auth/server";
-import { eq, inArray, sql } from "@forge/db";
-import { db } from "@forge/db/client";
-import { env } from "@forge/db/env";
+import type { db as DatabaseClient } from "@forge/db/client";
+import type { DisposableDatabase } from "@forge/db/testing";
+import { eq, sql } from "@forge/db";
 import { Permissions, Roles, User } from "@forge/db/schemas/auth";
 import { McpActivity } from "@forge/db/schemas/mcp-activity";
-import { canRunDatabaseTests } from "@forge/db/testing";
+import {
+  canRunDatabaseTests,
+  provisionDisposableDatabase,
+} from "@forge/db/testing";
 
-import { mcpActivityRouter } from "../../routers/mcp-activity";
-import { createCallerFactory, createTRPCRouter } from "../../trpc";
-import { recordMcpActivity } from "../../utils/mcp/activity";
+import type * as McpActivityModule from "../../utils/mcp/activity";
 import { permissionBitstring } from "../support/permissions";
 
-const runLocally =
-  canRunDatabaseTests() &&
-  ["", "5432"].includes(new URL(env.DATABASE_URL).port);
+const runLocally = canRunDatabaseTests();
 const memberId = randomUUID();
 const otherId = randomUUID();
 const officerId = randomUUID();
 const roleId = randomUUID();
 const clientId = `mcp-637-test-${randomUUID()}`;
 const userIds = [memberId, otherId, officerId];
-const factory = createCallerFactory(
-  createTRPCRouter({ mcpActivity: mcpActivityRouter }),
-);
+let factory: Awaited<ReturnType<typeof createFactory>>;
+let db: typeof DatabaseClient;
+let recordMcpActivity: typeof McpActivityModule.recordMcpActivity;
+let disposable: DisposableDatabase | undefined;
+let clientReady = false;
 let fixturesReady = false;
+
+async function createFactory() {
+  const { mcpActivityRouter } = await import("../../routers/mcp-activity");
+  const { createCallerFactory, createTRPCRouter } = await import("../../trpc");
+  return createCallerFactory(
+    createTRPCRouter({ mcpActivity: mcpActivityRouter }),
+  );
+}
 
 function caller(userId: string) {
   const createdAt = new Date();
@@ -59,17 +76,22 @@ function caller(userId: string) {
   }).mcpActivity;
 }
 
-// These tests use only uniquely identified synthetic fixtures on loopback.
-// They neither apply migrations nor modify existing users, roles, or activity.
+// Migrate an isolated database before importing any module that captures the
+// singleton client. The configured loopback database may have no schema in CI.
 beforeAll(async () => {
   if (!runLocally) return;
-  const exists = await db.execute<{ present: boolean }>(
-    sql`select to_regclass('public.mcp_activity') is not null as present`,
+  disposable = await provisionDisposableDatabase("forge_mcp_activity");
+  vi.stubEnv("DATABASE_URL", disposable.url);
+  ({ db } = await import("@forge/db/client"));
+  clientReady = true;
+  ({ recordMcpActivity } = await import("../../utils/mcp/activity"));
+  factory = await createFactory();
+  const connected = await db.execute<{ name: string }>(
+    sql`select current_database() as name`,
   );
-  if (!exists.rows[0]?.present)
-    throw new Error(
-      "MCP integration tests require the committed migration to be applied locally first",
-    );
+  expect(connected.rows[0]?.name).toBe(
+    new URL(disposable.url).pathname.slice(1),
+  );
   await db.transaction(async (tx) => {
     await tx
       .insert(User)
@@ -85,7 +107,7 @@ beforeAll(async () => {
     await tx.insert(Permissions).values({ roleId, userId: officerId });
   });
   fixturesReady = true;
-});
+}, 120_000);
 
 afterEach(async () => {
   if (fixturesReady)
@@ -94,15 +116,13 @@ afterEach(async () => {
 
 afterAll(async () => {
   try {
-    if (fixturesReady)
-      await db.transaction(async (tx) => {
-        await tx.delete(McpActivity).where(eq(McpActivity.clientId, clientId));
-        await tx.delete(Permissions).where(eq(Permissions.roleId, roleId));
-        await tx.delete(Roles).where(eq(Roles.id, roleId));
-        await tx.delete(User).where(inArray(User.id, userIds));
-      });
+    if (clientReady) await db.$client.end();
   } finally {
-    await db.$client.end();
+    try {
+      await disposable?.drop();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   }
 });
 
