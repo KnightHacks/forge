@@ -9,6 +9,7 @@ import type {
 } from "@forge/validators";
 import { formDefinitionSchema } from "@forge/validators";
 
+import type { McpActionMeta } from "../mcp/access";
 import type { PermissionMap } from "../permissions";
 
 export const callbackRespondentValues = [
@@ -45,6 +46,12 @@ export interface FormCallbackRegistration<
 
 export interface ForgeTRPCMeta {
   formCallback?: FormCallbackRegistration;
+  /**
+   * Declares the procedure as an MCP action. `permProcedure` enforces
+   * `access` for every caller, so Blade and MCP share one action-level check.
+   * Resource-level checks stay in the resolver.
+   */
+  mcp?: McpActionMeta;
 }
 
 export interface FormCallbackDefinition<

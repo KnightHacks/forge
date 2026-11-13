@@ -6,6 +6,7 @@ import type { Session } from "@forge/auth/server";
 
 import type { ForgeTRPCMeta } from "./utils/forms/callbacks";
 import { resolveJudgeAccess } from "./utils/judging/principal";
+import { assertAccess } from "./utils/mcp/access";
 import { loadPermissionsForUser } from "./utils/permissions-db";
 
 export interface FormCallbackContext {
@@ -76,19 +77,25 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   });
 });
 
-export const permProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  const permissions = await loadPermissionsForUser(ctx.session.user.id);
+export const permProcedure = protectedProcedure.use(
+  async ({ ctx, meta, next }) => {
+    const permissions = await loadPermissionsForUser(ctx.session.user.id);
 
-  return next({
-    ctx: {
-      ...ctx,
-      session: {
-        ...ctx.session,
-        permissions,
+    // Opted-in procedures declare their action-level rule in meta; without
+    // `meta.mcp` the resolver still owns the whole permission check.
+    if (meta?.mcp) assertAccess(meta.mcp.access, permissions);
+
+    return next({
+      ctx: {
+        ...ctx,
+        session: {
+          ...ctx.session,
+          permissions,
+        },
       },
-    },
-  });
-});
+    });
+  },
+);
 
 export const judgeProcedure = t.procedure.use(async ({ ctx, next }) => {
   const judgePrincipal = await resolveJudgeAccess(ctx);
