@@ -10,6 +10,7 @@ import * as discordSchema from "./schemas/discord";
 import * as discordConfigSchema from "./schemas/discord-config";
 import * as jobBoardSchema from "./schemas/job-board";
 import * as knightHacksSchema from "./schemas/knight-hacks";
+import * as mcpActivitySchema from "./schemas/mcp-activity";
 import * as relations from "./schemas/relations";
 
 const pool = new Pool({
@@ -22,6 +23,7 @@ type ClubTeamSchema = typeof clubTeamSchema;
 type DiscordSchema = typeof discordSchema;
 type DiscordConfigSchema = typeof discordConfigSchema;
 type KnightHacksSchema = typeof knightHacksSchema;
+type McpActivitySchema = typeof mcpActivitySchema;
 type RelationsSchema = typeof relations;
 
 type DatabaseSchema = AuditSchema &
@@ -31,6 +33,7 @@ type DatabaseSchema = AuditSchema &
   DiscordSchema &
   DiscordConfigSchema &
   KnightHacksSchema &
+  McpActivitySchema &
   RelationsSchema;
 
 type ForgeDatabase = NodePgDatabase<DatabaseSchema> & { $client: Pool };
@@ -43,6 +46,7 @@ const schema = {
   ...discordConfigSchema,
   ...jobBoardSchema,
   ...knightHacksSchema,
+  ...mcpActivitySchema,
   ...relations,
 };
 

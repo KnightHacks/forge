@@ -296,6 +296,8 @@ exports[`client-facing API surface > exposes exactly the documented procedure pa
   "judging.setDisplayAllResults",
   "judging.setJudgingState",
   "judging.updateRoom",
+  "mcpActivity.list",
+  "mcpActivity.listMine",
   "member.createMember",
   "member.deleteMember",
   "member.getMember",

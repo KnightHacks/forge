@@ -189,6 +189,8 @@ export const HYBRID_ADMIN_PROCEDURES = [
 ] as const;
 
 export const EXCLUDED_ADMIN_PROCEDURES = [
+  // Read-only MCP activity inspection does not emit procedure audit events.
+  "mcp-activity.list",
   "hacker-team.hackathons",
   "hacker-team.list",
   "point-store.hackathons",
@@ -306,6 +308,12 @@ export const EXCLUDED_ADMIN_PROCEDURES = [
   "roles.listReminderChannels",
   "roles.listUsers",
   "roles.previewDiscordRole",
+] as const;
+
+// Protected self-service reads are outside the permission-procedure scanner.
+// List these explicitly so new MCP paths still carry a declared audit policy.
+export const EXCLUDED_SELF_SERVICE_PROCEDURES = [
+  "mcp-activity.listMine",
 ] as const;
 
 export type AdminAuditCoverageStatus = "audited" | "excluded" | "hybrid";

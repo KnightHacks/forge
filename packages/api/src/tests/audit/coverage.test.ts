@@ -5,6 +5,7 @@ import {
   ADMIN_AUDIT_PROCEDURE_COVERAGE,
   AUDITED_ADMIN_PROCEDURES,
   EXCLUDED_ADMIN_PROCEDURES,
+  EXCLUDED_SELF_SERVICE_PROCEDURES,
   HYBRID_ADMIN_PROCEDURES,
 } from "../../utils/audit/coverage";
 
@@ -36,8 +37,12 @@ async function listRouterFiles() {
     .sort();
 }
 
-function procedureBlock(source: string, procedure: string) {
-  const start = source.indexOf(`  ${procedure}: permProcedure`);
+function procedureBlock(
+  source: string,
+  procedure: string,
+  tier = "permProcedure",
+) {
+  const start = source.indexOf(`  ${procedure}: ${tier}`);
   if (start === -1) return null;
 
   const remainder = source.slice(start + 3);
@@ -146,6 +151,23 @@ async function discoverPermissionProcedures() {
 }
 
 describe("admin audit procedure coverage", () => {
+  it("keeps explicitly excluded self-service procedures read-only and protected", async () => {
+    for (const procedure of EXCLUDED_SELF_SERVICE_PROCEDURES) {
+      const separator = procedure.lastIndexOf(".");
+      const routerUrl = new URL(
+        `${procedure.slice(0, separator)}.ts`,
+        routersDirectory,
+      );
+      const block = procedureBlock(
+        await readSource(routerUrl),
+        procedure.slice(separator + 1),
+        "protectedProcedure",
+      );
+      expect(block, procedure).not.toBeNull();
+      expect(block, procedure).toContain(".query(");
+      expect(block, procedure).not.toContain(".mutation(");
+    }
+  });
   it("forces every permission-aware procedure to declare a policy", async () => {
     expect(await discoverPermissionProcedures()).toEqual(
       Object.keys(ADMIN_AUDIT_PROCEDURE_COVERAGE).sort(),

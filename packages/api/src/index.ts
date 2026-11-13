@@ -12,3 +12,5 @@ type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export { appRouter, createCaller, createTRPCContext };
 export type { AppRouter, RouterInputs, RouterOutputs };
+export { recordMcpActivity } from "./utils/mcp/activity";
+export type { RecordMcpActivityInput } from "./utils/mcp/activity";
