@@ -1,0 +1,124 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  fetchAndParseGitHubJobFeed,
+  GITHUB_JOB_FEEDS,
+  parseGitHubJobFeed,
+} from "../career-sources/github-feeds";
+
+const markdownFeed = GITHUB_JOB_FEEDS.find(
+  (feed) => feed.id === "simplify_internships",
+);
+const jsonFeed = GITHUB_JOB_FEEDS.find((feed) => feed.id === "intern_engine");
+
+if (!markdownFeed || !jsonFeed) {
+  throw new Error("Missing GitHub feed fixtures.");
+}
+
+describe("Career GitHub job feeds", () => {
+  it("TC-001 parses Markdown rows into raw observations", () => {
+    const jobs = parseGitHubJobFeed(
+      markdownFeed,
+      [
+        "| Company | Role | Location | Date Posted | Application |",
+        "| --- | --- | --- | --- | --- |",
+        "| Acme | Software Engineer Intern | Seattle, WA | 2026-10-01 | [Apply](https://jobs.example/acme/1) |",
+      ].join("\n"),
+    );
+
+    expect(jobs).toEqual([
+      {
+        applyUrl: "https://jobs.example/acme/1",
+        company: "Acme",
+        externalId: "https://jobs.example/acme/1",
+        locationTexts: ["Seattle, WA"],
+        postedDate: "2026-10-01",
+        sourceFields: {
+          Application: "[Apply](https://jobs.example/acme/1)",
+          Company: "Acme",
+          "Date Posted": "2026-10-01",
+          Location: "Seattle, WA",
+          Role: "Software Engineer Intern",
+        },
+        sourceId: "simplify_internships",
+        sourceUrl:
+          "https://github.com/SimplifyJobs/Summer2027-Internships/blob/dev/README.md",
+        title: "Software Engineer Intern",
+        track: "internship",
+      },
+    ]);
+  });
+
+  it("TC-002 parses JSON records and preserves source fields", () => {
+    const jobs = parseGitHubJobFeed(
+      jsonFeed,
+      JSON.stringify({
+        jobs: [
+          {
+            company_name: "Acme",
+            id: "job-42",
+            location: "Remote - United States",
+            posted_date: "2026-10-02",
+            title: "New Grad Engineer",
+            url: "https://jobs.example/acme/42",
+            work_type: "Full-time",
+          },
+        ],
+      }),
+    );
+
+    expect(jobs).toEqual([
+      {
+        applyUrl: "https://jobs.example/acme/42",
+        company: "Acme",
+        externalId: "job-42",
+        locationTexts: ["Remote - United States"],
+        postedDate: "2026-10-02",
+        sourceFields: {
+          company_name: "Acme",
+          id: "job-42",
+          location: "Remote - United States",
+          posted_date: "2026-10-02",
+          title: "New Grad Engineer",
+          url: "https://jobs.example/acme/42",
+          work_type: "Full-time",
+        },
+        sourceId: "intern_engine",
+        sourceUrl:
+          "https://github.com/zshah101/Automated-List-Of-Summer-2027-and-Fall-2026-Tech-Internships/blob/main/docs/api/jobs.json",
+        title: "New Grad Engineer",
+        track: "internship",
+      },
+    ]);
+  });
+
+  it("TC-NEG-001 surfaces HTTP failures", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("upstream unavailable", { status: 502 }));
+
+    await expect(
+      fetchAndParseGitHubJobFeed(markdownFeed, fetcher),
+    ).rejects.toThrow("HTTP 502");
+  });
+
+  it("TC-NEG-001 rejects malformed source payloads", () => {
+    expect(() => parseGitHubJobFeed(jsonFeed, "{")).toThrow();
+    expect(() => parseGitHubJobFeed(markdownFeed, "not a job table")).toThrow(
+      "no supported job table",
+    );
+  });
+
+  it("TC-NEG-002 rejects rows missing required fields", () => {
+    expect(() =>
+      parseGitHubJobFeed(
+        markdownFeed,
+        [
+          "| Company | Role | Location | Application |",
+          "| --- | --- | --- | --- |",
+          "| Acme | Software Engineer Intern | Seattle, WA | |",
+        ].join("\n"),
+      ),
+    ).toThrow("application URL");
+  });
+});
