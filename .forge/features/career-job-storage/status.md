@@ -7,6 +7,9 @@ Current phase: Rebased onto the merged Career Discord configuration; awaiting de
 - 2026-11-13: Regenerated the job storage migration as `0065_career_job_storage.sql`
   after `0064_career_discord_config`. The SQL body is unchanged; the journal,
   snapshot, lineage test, and migration references now use 0065.
+- Post-rebase checks: `pnpm db:generate` produced no new migration,
+  `pnpm verify:precommit` passed, and the 12 targeted migration and lineage
+  tests passed on disposable PostgreSQL 16.
 
 ## Decisions
 

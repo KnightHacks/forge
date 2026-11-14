@@ -228,7 +228,7 @@ Drizzle conflict targets and verify the original key matches before updating a
 conflicting row; a mismatched key is an error, never permission to overwrite.
 Indexed lookups should compute the same SHA-256 fingerprint and compare the raw
 key as well. No ingestion/upsert service is implemented in this database-only work.
-Migration 0064 creates the fingerprint columns and their unique constraints directly.
+Migration 0065 creates the fingerprint columns and their unique constraints directly.
 
 ## Undocumented columns
 
