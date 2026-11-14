@@ -3,7 +3,8 @@ import { JOB_BOARD } from "@forge/consts";
 type GitHubFeedFormat = "markdown" | "json";
 
 export interface GitHubJobFeed {
-  id: string;
+  boardKey: string;
+  label: string;
   repository: string;
   branch: string;
   path: string;
@@ -11,22 +12,33 @@ export interface GitHubJobFeed {
   format: GitHubFeedFormat;
 }
 
-export interface RawCareerJobObservation {
-  sourceId: string;
+export interface RawCareerJobListing {
   externalId: string;
   track: JOB_BOARD.JobTrack;
-  company: string;
+  companyLabel: string;
   title: string;
   applyUrl: string;
-  sourceUrl?: string;
-  postedDate?: string;
+  postedAt?: Date;
   locationTexts: string[];
-  sourceFields: Record<string, unknown>;
+  sourceUrl: string;
+  sourceData: Record<string, unknown>;
+}
+
+export interface CareerJobSourceSnapshot {
+  source: {
+    provider: "github";
+    boardKey: string;
+    label: string;
+  };
+  fetchedAt: Date;
+  complete: true;
+  listings: RawCareerJobListing[];
 }
 
 export const GITHUB_JOB_FEEDS = [
   {
-    id: "simplify_internships",
+    boardKey: "simplify_internships",
+    label: "Simplify internships",
     repository: "SimplifyJobs/Summer2027-Internships",
     branch: "dev",
     path: "README.md",
@@ -34,7 +46,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "simplify_new_grad",
+    boardKey: "simplify_new_grad",
+    label: "Simplify new grad",
     repository: "SimplifyJobs/New-Grad-Positions",
     branch: "dev",
     path: "README.md",
@@ -42,7 +55,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "simplify_offseason_internships",
+    boardKey: "simplify_offseason_internships",
+    label: "Simplify off-season internships",
     repository: "SimplifyJobs/Summer2027-Internships",
     branch: "dev",
     path: "README-Off-Season.md",
@@ -50,7 +64,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "speedy_internships",
+    boardKey: "speedy_internships",
+    label: "SpeedyApply internships",
     repository: "speedyapply/2027-SWE-College-Jobs",
     branch: "main",
     path: "README.md",
@@ -58,7 +73,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "speedy_new_grad",
+    boardKey: "speedy_new_grad",
+    label: "SpeedyApply new grad",
     repository: "speedyapply/2027-SWE-College-Jobs",
     branch: "main",
     path: "NEW_GRAD_USA.md",
@@ -66,7 +82,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "sndsh_internships",
+    boardKey: "sndsh_internships",
+    label: "Summer 2027 list",
     repository: "sndsh404/summer-2027-internships",
     branch: "main",
     path: "README.md",
@@ -74,7 +91,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "intern_engine",
+    boardKey: "intern_engine",
+    label: "Internship Engine JSON",
     repository:
       "zshah101/Automated-List-Of-Summer-2027-and-Fall-2026-Tech-Internships",
     branch: "main",
@@ -83,7 +101,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "json",
   },
   {
-    id: "intern_engine_readme",
+    boardKey: "intern_engine_readme",
+    label: "Internship Engine README",
     repository:
       "zshah101/Automated-List-Of-Summer-2027-and-Fall-2026-Tech-Internships",
     branch: "main",
@@ -92,7 +111,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "markdown",
   },
   {
-    id: "applyguy_internships",
+    boardKey: "applyguy_internships",
+    label: "ApplyGuy internships",
     repository: "ApplyGuy/2027-Internships",
     branch: "main",
     path: "data/internships.json",
@@ -100,7 +120,8 @@ export const GITHUB_JOB_FEEDS = [
     format: "json",
   },
   {
-    id: "applyguy_new_grad",
+    boardKey: "applyguy_new_grad",
+    label: "ApplyGuy new grad",
     repository: "ApplyGuy/2027-New-Grad-Jobs",
     branch: "main",
     path: "data/new-grad-jobs.json",
@@ -148,7 +169,7 @@ const JSON_FIELD_ALIASES = {
 export async function fetchAndParseGitHubJobFeed(
   feed: GitHubJobFeed,
   fetcher: typeof fetch = fetch,
-): Promise<RawCareerJobObservation[]> {
+): Promise<CareerJobSourceSnapshot> {
   const rawUrl = `https://raw.githubusercontent.com/${feed.repository}/${feed.branch}/${feed.path}`;
   const response = await fetcher(rawUrl, {
     headers: {
@@ -160,18 +181,30 @@ export async function fetchAndParseGitHubJobFeed(
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub feed ${feed.id} returned HTTP ${response.status}.`);
+    throw new Error(
+      `GitHub feed ${feed.boardKey} returned HTTP ${response.status}.`,
+    );
   }
 
-  return parseGitHubJobFeed(feed, await response.text());
+  const listings = parseGitHubJobFeed(feed, await response.text());
+  return {
+    source: {
+      provider: "github",
+      boardKey: feed.boardKey,
+      label: feed.label,
+    },
+    fetchedAt: new Date(),
+    complete: true,
+    listings,
+  };
 }
 
 export function parseGitHubJobFeed(
   feed: GitHubJobFeed,
   payload: string,
-): RawCareerJobObservation[] {
+): RawCareerJobListing[] {
   if (!JOB_BOARD.JOB_TRACKS.includes(feed.track)) {
-    throw new Error(`GitHub feed ${feed.id} has an unsupported track.`);
+    throw new Error(`GitHub feed ${feed.boardKey} has an unsupported track.`);
   }
 
   const sourceUrl = `https://github.com/${feed.repository}/blob/${feed.branch}/${feed.path}`;
@@ -185,9 +218,9 @@ function parseMarkdownFeed(
   feed: GitHubJobFeed,
   markdown: string,
   sourceUrl: string,
-): RawCareerJobObservation[] {
+): RawCareerJobListing[] {
   const lines = markdown.split(/\r?\n/);
-  const observations: RawCareerJobObservation[] = [];
+  const listings: RawCareerJobListing[] = [];
 
   for (let index = 0; index < lines.length - 1; index++) {
     const headerCells = splitTableRow(lines[index] ?? "");
@@ -218,7 +251,7 @@ function parseMarkdownFeed(
       if (cells.every((cell) => cell.trim().length === 0)) continue;
       if (cells.length !== headers.length) {
         throw new Error(
-          `GitHub feed ${feed.id} contains a malformed table row.`,
+          `GitHub feed ${feed.boardKey} contains a malformed table row.`,
         );
       }
 
@@ -228,28 +261,28 @@ function parseMarkdownFeed(
           cells[cellIndex] ?? "",
         ]),
       );
-      observations.push(
-        observationFromMarkdownRow(feed, headers, cells, rawFields, sourceUrl),
+      listings.push(
+        listingFromMarkdownRow(feed, headers, cells, rawFields, sourceUrl),
       );
     }
 
     index = rowIndex - 1;
   }
 
-  if (observations.length === 0 && !hasSupportedMarkdownTable(lines)) {
-    throw new Error(`GitHub feed ${feed.id} has no supported job table.`);
+  if (listings.length === 0 && !hasSupportedMarkdownTable(lines)) {
+    throw new Error(`GitHub feed ${feed.boardKey} has no supported job table.`);
   }
 
-  return observations;
+  return listings;
 }
 
-function observationFromMarkdownRow(
+function listingFromMarkdownRow(
   feed: GitHubJobFeed,
   headers: string[],
   cells: string[],
-  sourceFields: Record<string, unknown>,
+  sourceData: Record<string, unknown>,
   sourceUrl: string,
-): RawCareerJobObservation {
+): RawCareerJobListing {
   const rawCompany = findCell(headers, cells, COLUMN_ALIASES.company);
   const rawTitle = findCell(headers, cells, COLUMN_ALIASES.title);
   const rawApplyUrl = findCell(headers, cells, COLUMN_ALIASES.applyUrl);
@@ -257,35 +290,34 @@ function observationFromMarkdownRow(
   const rawPostedDate = findCell(headers, cells, COLUMN_ALIASES.postedDate);
   const rawExternalId = findCell(headers, cells, COLUMN_ALIASES.externalId);
 
-  const company = cleanMarkdownText(rawCompany);
+  const companyLabel = cleanMarkdownText(rawCompany);
   const title = cleanMarkdownText(rawTitle);
+  const postedAt = parsePostedAt(cleanMarkdownText(rawPostedDate));
   const applyUrl = safeHttpUrl(
     linkUrl(rawApplyUrl) ?? linkUrl(rawTitle) ?? cleanMarkdownText(rawApplyUrl),
   );
-  if (!company)
-    throw new Error(`GitHub feed ${feed.id} row is missing company.`);
-  if (!title) throw new Error(`GitHub feed ${feed.id} row is missing title.`);
+  if (!companyLabel) {
+    throw new Error(`GitHub feed ${feed.boardKey} row is missing company.`);
+  }
+  if (!title) {
+    throw new Error(`GitHub feed ${feed.boardKey} row is missing title.`);
+  }
   if (!applyUrl) {
     throw new Error(
-      `GitHub feed ${feed.id} row is missing an application URL.`,
+      `GitHub feed ${feed.boardKey} row is missing an application URL.`,
     );
   }
 
-  const location = cleanMarkdownText(rawLocation);
-
   return {
-    sourceId: feed.id,
     externalId: cleanMarkdownText(rawExternalId) || applyUrl,
     track: feed.track,
-    company,
+    companyLabel,
     title,
     applyUrl,
     sourceUrl,
-    ...(cleanMarkdownText(rawPostedDate)
-      ? { postedDate: cleanMarkdownText(rawPostedDate) }
-      : {}),
-    locationTexts: location ? [location] : [],
-    sourceFields,
+    ...(postedAt ? { postedAt } : {}),
+    locationTexts: rawLocation.trim() ? [rawLocation.trim()] : [],
+    sourceData,
   };
 }
 
@@ -293,47 +325,66 @@ function parseJsonFeed(
   feed: GitHubJobFeed,
   text: string,
   sourceUrl: string,
-): RawCareerJobObservation[] {
+): RawCareerJobListing[] {
   const payload: unknown = JSON.parse(text);
   const records = findJsonRecords(payload);
 
   return records.map((record) => {
-    const company = firstString(record, JSON_FIELD_ALIASES.company);
+    const companyLabel = firstString(record, JSON_FIELD_ALIASES.company);
     const title = firstString(record, JSON_FIELD_ALIASES.title);
     const applyUrl = safeHttpUrl(
       firstString(record, JSON_FIELD_ALIASES.applyUrl),
     );
-    if (!company) {
-      throw new Error(`GitHub feed ${feed.id} record is missing company.`);
+    if (!companyLabel) {
+      throw new Error(
+        `GitHub feed ${feed.boardKey} record is missing company.`,
+      );
     }
     if (!title) {
-      throw new Error(`GitHub feed ${feed.id} record is missing title.`);
+      throw new Error(`GitHub feed ${feed.boardKey} record is missing title.`);
     }
     if (!applyUrl) {
       throw new Error(
-        `GitHub feed ${feed.id} record is missing an application URL.`,
+        `GitHub feed ${feed.boardKey} record is missing an application URL.`,
       );
     }
 
     const postedDate = firstString(record, JSON_FIELD_ALIASES.postedDate);
+    const postedAt = parsePostedAt(postedDate);
     const locationTexts = rawLocationTexts(
       firstValue(record, JSON_FIELD_ALIASES.location),
     );
 
     return {
-      sourceId: feed.id,
       externalId:
         firstString(record, JSON_FIELD_ALIASES.externalId) || applyUrl,
       track: feed.track,
-      company,
+      companyLabel,
       title,
       applyUrl,
-      sourceUrl,
-      ...(postedDate ? { postedDate } : {}),
+      ...(postedAt ? { postedAt } : {}),
       locationTexts,
-      sourceFields: record,
+      sourceUrl,
+      sourceData: record,
     };
   });
+}
+
+function parsePostedAt(value: string): Date | undefined {
+  if (
+    !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(
+      value,
+    )
+  ) {
+    return undefined;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  if (value.length === 10 && parsed.toISOString().slice(0, 10) !== value) {
+    return undefined;
+  }
+  return parsed;
 }
 
 function findJsonRecords(value: unknown): Record<string, unknown>[] {

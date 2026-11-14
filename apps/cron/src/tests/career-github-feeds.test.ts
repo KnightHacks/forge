@@ -7,16 +7,18 @@ import {
 } from "../career-sources/github-feeds";
 
 const markdownFeed = GITHUB_JOB_FEEDS.find(
-  (feed) => feed.id === "simplify_internships",
+  (feed) => feed.boardKey === "simplify_internships",
 );
-const jsonFeed = GITHUB_JOB_FEEDS.find((feed) => feed.id === "intern_engine");
+const jsonFeed = GITHUB_JOB_FEEDS.find(
+  (feed) => feed.boardKey === "intern_engine",
+);
 
 if (!markdownFeed || !jsonFeed) {
   throw new Error("Missing GitHub feed fixtures.");
 }
 
 describe("Career GitHub job feeds", () => {
-  it("TC-001 parses Markdown rows into raw observations", () => {
+  it("TC-001 parses Markdown rows into schema-aligned listings", () => {
     const jobs = parseGitHubJobFeed(
       markdownFeed,
       [
@@ -29,18 +31,17 @@ describe("Career GitHub job feeds", () => {
     expect(jobs).toEqual([
       {
         applyUrl: "https://jobs.example/acme/1",
-        company: "Acme",
+        companyLabel: "Acme",
         externalId: "https://jobs.example/acme/1",
         locationTexts: ["Seattle, WA"],
-        postedDate: "2026-10-01",
-        sourceFields: {
+        postedAt: new Date("2026-10-01T00:00:00.000Z"),
+        sourceData: {
           Application: "[Apply](https://jobs.example/acme/1)",
           Company: "Acme",
           "Date Posted": "2026-10-01",
           Location: "Seattle, WA",
           Role: "Software Engineer Intern",
         },
-        sourceId: "simplify_internships",
         sourceUrl:
           "https://github.com/SimplifyJobs/Summer2027-Internships/blob/dev/README.md",
         title: "Software Engineer Intern",
@@ -70,11 +71,11 @@ describe("Career GitHub job feeds", () => {
     expect(jobs).toEqual([
       {
         applyUrl: "https://jobs.example/acme/42",
-        company: "Acme",
+        companyLabel: "Acme",
         externalId: "job-42",
         locationTexts: ["Remote - United States"],
-        postedDate: "2026-10-02",
-        sourceFields: {
+        postedAt: new Date("2026-10-02T00:00:00.000Z"),
+        sourceData: {
           company_name: "Acme",
           id: "job-42",
           location: "Remote - United States",
@@ -83,13 +84,42 @@ describe("Career GitHub job feeds", () => {
           url: "https://jobs.example/acme/42",
           work_type: "Full-time",
         },
-        sourceId: "intern_engine",
         sourceUrl:
           "https://github.com/zshah101/Automated-List-Of-Summer-2027-and-Fall-2026-Tech-Internships/blob/main/docs/api/jobs.json",
         title: "New Grad Engineer",
         track: "internship",
       },
     ]);
+  });
+
+  it("maps a successful fetch to a complete JobSource snapshot", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          "| Company | Role | Application |\n| --- | --- | --- |\n| Acme | Engineer | https://jobs.example/1 |",
+          { status: 200 },
+        ),
+      );
+
+    const snapshot = await fetchAndParseGitHubJobFeed(markdownFeed, fetcher);
+
+    expect(snapshot).toMatchObject({
+      source: {
+        provider: "github",
+        boardKey: "simplify_internships",
+        label: "Simplify internships",
+      },
+      complete: true,
+      listings: [
+        {
+          companyLabel: "Acme",
+          externalId: "https://jobs.example/1",
+          track: "internship",
+        },
+      ],
+    });
+    expect(snapshot.fetchedAt).toBeInstanceOf(Date);
   });
 
   it("TC-NEG-001 surfaces HTTP failures", async () => {

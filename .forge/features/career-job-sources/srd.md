@@ -25,20 +25,23 @@ serve a user request, require member authentication, or access member data.
 
 ## Architecture / data flow
 
-`apps/cron` owns source definitions, HTTP requests, and parsing. Each adapter
-returns a local provisional observation containing:
+`apps/cron` owns source definitions, HTTP requests, and parsing. Each GitHub
+adapter returns a complete source snapshot containing:
 
-- `sourceId` and `externalId`
-- `track`
-- raw company and title
-- application URL
-- optional source URL and source-provided posted date
-- original location text(s)
-- optional source-specific fields
+- A source identity with `provider` (`github`), stable `boardKey`, and label;
+  the API resolves this identity to the `JobSource.id` UUID.
+- Listings with source `externalId`, track, company label, title, apply URL,
+  optional parsed `postedAt`, original location text(s), source URL, and raw
+  source data.
 
-`@forge/api` will own normalization, classification, deduplication, and
-persistence in a later task. This slice does not schedule adapters, write to
-the database, or call API services.
+These fields align with `JobSource`, `Job`, and `JobObservation` in the merged
+`@forge/db` schema. The API still owns company/title/location normalization,
+classification, cross-source identity, source-row resolution, and persistence.
+The adapter marks a snapshot complete only after the entire response parses.
+It does not schedule polling, write to the database, or call API services.
+
+Posted date text and every unmodified source field remain in `sourceData`, even
+when the adapter cannot parse a source date into the schema's `postedAt` date.
 
 ## tRPC/API behavior
 
@@ -88,7 +91,7 @@ Run `pnpm --filter=@forge/cron test` and `pnpm --filter=@forge/cron typecheck`.
 
 ## Open questions
 
-- Coordinate the provisional observation shape with the owner of #649 before
-  connecting adapters to API ingestion.
+- Coordinate the source snapshot/listing contract with the owner of #649 before
+  connecting adapters to API ingestion or adding a shared validator.
 - Jobright and ATS/company API adapters remain to be implemented after the
   GitHub-feed adapter family.

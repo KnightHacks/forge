@@ -4,9 +4,10 @@ Status: Approved
 
 ## Scope
 
-Verify that Cron source adapters fetch and parse the current source families
-into complete raw observations. API normalization/deduplication, persistence,
-scheduling, and Discord delivery are tested in their owning tasks.
+Verify that Cron source adapters fetch and parse source responses into complete
+snapshots aligned with the merged `JobSource`, `Job`, and `JobObservation`
+schema. API normalization/deduplication, persistence, scheduling, and Discord
+delivery are tested in their owning tasks.
 
 ## Test placement plan
 
@@ -15,7 +16,7 @@ Run `pnpm --filter=@forge/cron test`.
 
 ## Test cases
 
-### TC-001: GitHub Markdown feeds map to raw observations
+### TC-001: GitHub Markdown feeds map to schema-aligned snapshots
 
 Setup:
 
@@ -28,11 +29,13 @@ Action:
 
 Expected observations:
 
-- The adapter returns an observation with source and stable external IDs,
-  configured track, raw company/title/apply URL, optional source URL/date,
-  original location text, and available source fields.
+- The adapter returns a complete snapshot with provider `github`, stable
+  `boardKey`, and label.
+- Each listing has a stable external ID, track, company label, title, apply URL,
+  optional parsed `postedAt`, source URL, source data, and original location
+  text.
 
-### TC-002: GitHub JSON feeds map to raw observations
+### TC-002: GitHub JSON feeds map to schema-aligned snapshots
 
 Setup:
 
@@ -44,8 +47,9 @@ Action:
 
 Expected observations:
 
-- Each valid record maps to the same raw observation contract as the Markdown
-  feeds, preserving source-provided date and location text.
+- Each valid record maps to the same listing contract as Markdown feeds,
+  preserving source-provided date text in `sourceData` and original location
+  text.
 
 ### TC-003: Other source families preserve the raw handoff
 
@@ -59,9 +63,8 @@ Action:
 
 Expected observations:
 
-- The adapter returns the source ID, stable external ID, track, raw company,
-  title, apply URL, optional source URL/date, original location text, and
-  optional source-specific fields.
+- The adapter returns a complete source snapshot, and each listing carries the
+  source-specific data required by `Job` and `JobObservation`.
 
 ## Negative / regression cases
 
@@ -91,7 +94,7 @@ Action:
 
 Expected observations:
 
-- The source fails explicitly; no incomplete observation is returned as a
+- The source fails explicitly; no incomplete snapshot or listing is returned as a
   successful result.
 
 ### TC-NEG-003: Adapters have no unrelated side effects
@@ -111,4 +114,4 @@ Expected observations:
 
 ## Open questions
 
-- The raw observation type is provisional pending coordination with #649.
+- The snapshot/listing validator contract is pending coordination with #649.

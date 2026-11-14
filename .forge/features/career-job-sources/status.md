@@ -15,11 +15,22 @@ Current phase: Implementation
 - 2026-11-13: Test source families for valid field mapping and explicit failure
   on HTTP, malformed-payload, and required-field errors; adapters have no API,
   DB, or Discord side effects.
+- 2026-11-14: Rebased onto `origin/main` at `98f3f9d3`, bringing in merged #647
+  and #648. GitHub feed output now uses `provider`/`boardKey` for `JobSource`
+  and listing fields aligned with `Job`/`JobObservation`.
+- 2026-11-14: Local Postgres 16 is running on port 5432 with a dedicated
+  worktree volume. The existing ignored root `.env` is linked into this
+  worktree; `pnpm db:migrate` applied 67 migrations and the merged JobSource,
+  Job, and JobObservation tables are present.
+- 2026-11-14: Reverted the temporary `.env.example` and Getting Started edits;
+  only the needed PostgreSQL 16/5432 Compose setup remains.
+- 2026-11-14: This checkpoint implements only GitHub Markdown/JSON feeds.
+  Jobright, direct ATS, and company API adapters are still required for #652.
 
 ## Open questions
 
-- Final approval of the Cron-to-API observation contract with the owner of
-  #649.
+- Final approval of the Cron-to-API source snapshot/listing contract with the
+  owner of #649.
 - Jobright, direct ATS, and company API adapter implementation and verification
   remain after the GitHub-feed slice.
 
@@ -27,7 +38,8 @@ Current phase: Implementation
 
 - [x] Confirm source-adapter-only scope and provisional handoff.
 - [x] Approve observable test cases.
-- [ ] Implement GitHub feed registry and Markdown/JSON parsing.
+- [x] Implement the GitHub feed registry and Markdown/JSON parsing against the
+      merged schema contract.
 - [ ] Implement Jobright, direct ATS, and company API adapters.
 - [ ] Coordinate the raw observation contract with #649.
 
@@ -37,6 +49,18 @@ Current phase: Implementation
   while the repo requests Node `^24.22.1`.
 - `pnpm forge:feature career-job-sources "Career job source adapters"`:
   completed.
+- `git rebase origin/main`: completed; branch now includes merged #647 and #648.
+- `pnpm db:migrate`: passed against local PostgreSQL 16 at port 5432; 67
+  migrations applied.
+- `pnpm --filter=@forge/db test -- src/tests/career-schema.test.ts src/tests/career-migration.test.ts`:
+  passed (7 tests).
+- Cron GitHub feed test, typecheck, and lint: passed after schema adaptation.
+- Full Cron tests: passed (68 tests); focused GitHub-feed tests: passed (6).
+- Scoped ESLint for the two changed Cron TypeScript files, with a 3 GB Node
+  heap cap: passed.
+- Repository-wide `pnpm verify:precommit` and default-heap ESLint were
+  interrupted by Node heap exhaustion; no further concurrent or repo-wide
+  checks will be run in this environment.
 
 ## Links
 
