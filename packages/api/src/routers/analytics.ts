@@ -15,6 +15,8 @@ import {
 } from "../resume-bundle.server";
 import { createTRPCRouter, permProcedure } from "../trpc";
 import {
+  clubAnalyticsReadAccess,
+  hackathonAnalyticsReadAccess,
   requireClubAnalyticsRead,
   requireHackathonAnalyticsIdentifiedRead,
   requireHackathonAnalyticsRead,
@@ -36,17 +38,25 @@ import {
 import { createAdminAuditEvent } from "../utils/audit/service";
 
 export const analyticsRouter = createTRPCRouter({
-  listTeamPerformanceOptions: permProcedure.query(({ ctx }) => {
-    requireClubAnalyticsRead(ctx);
-    return listTeamPerformanceOptions();
-  }),
+  listTeamPerformanceOptions: permProcedure
+    .meta({
+      mcp: {
+        access: clubAnalyticsReadAccess,
+        description:
+          "List the Club teams available to the team performance report, with member counts.",
+      },
+    })
+    .query(() => listTeamPerformanceOptions()),
 
   getTeamPerformanceReport: permProcedure
+    .meta({
+      mcp: {
+        access: clubAnalyticsReadAccess,
+        description: "Get the read-only Club team performance report.",
+      },
+    })
     .input(teamPerformanceReportInputSchema)
-    .query(({ ctx, input }) => {
-      requireClubAnalyticsRead(ctx);
-      return getTeamPerformanceReport(input);
-    }),
+    .query(({ input }) => getTeamPerformanceReport(input)),
 
   /** Validates resume objects on demand and returns only aggregate part plans. */
   previewResumeBundle: permProcedure
@@ -57,18 +67,27 @@ export const analyticsRouter = createTRPCRouter({
         : previewHackathonResumeBundle({ actor: ctx.session.user, ...input }),
     ),
   /** Lists explicit Hackathon IDs and deterministic active/past/future defaults. */
-  listHackathonOptions: permProcedure.query(({ ctx }) => {
-    requireHackathonAnalyticsRead(ctx);
-    return listHackathonAnalyticsOptions();
-  }),
+  listHackathonOptions: permProcedure
+    .meta({
+      mcp: {
+        access: hackathonAnalyticsReadAccess,
+        description:
+          "List the hackathons available to hackathon analytics, with the default selection.",
+      },
+    })
+    .query(() => listHackathonAnalyticsOptions()),
 
   /** Returns aggregate Hack analytics only; no person or operator identity. */
   getHackathonReport: permProcedure
+    .meta({
+      mcp: {
+        access: hackathonAnalyticsReadAccess,
+        description:
+          "Get aggregate analytics for one hackathon, without person or operator identity.",
+      },
+    })
     .input(hackathonAnalyticsReportInputSchema)
-    .query(({ ctx, input }) => {
-      requireHackathonAnalyticsRead(ctx);
-      return getHackathonAnalyticsReport(input);
-    }),
+    .query(({ input }) => getHackathonAnalyticsReport(input)),
 
   /** Returns the separately authorized identified points rows. */
   getHackathonIdentifiedRows: permProcedure
@@ -119,19 +138,27 @@ export const analyticsRouter = createTRPCRouter({
 
   /** Returns Discord aggregates plus matched Member-level counts, never message records or bodies. */
   getDiscordReport: permProcedure
+    .meta({
+      mcp: {
+        access: clubAnalyticsReadAccess,
+        description:
+          "Get Discord activity aggregates and matched Member counts, never message records or bodies.",
+      },
+    })
     .input(analyticsReportInputSchema)
-    .query(async ({ ctx, input }) => {
-      requireClubAnalyticsRead(ctx);
-      return getDiscordAnalyticsReport(input);
-    }),
+    .query(({ input }) => getDiscordAnalyticsReport(input)),
 
   /** Returns complete read-only Club analytics; source rows are never exposed. */
   getReport: permProcedure
+    .meta({
+      mcp: {
+        access: clubAnalyticsReadAccess,
+        description:
+          "Get the read-only Club analytics report; source rows are never exposed.",
+      },
+    })
     .input(analyticsReportInputSchema)
-    .query(async ({ ctx, input }) => {
-      requireClubAnalyticsRead(ctx);
-      return getClubAnalyticsReport(input);
-    }),
+    .query(({ input }) => getClubAnalyticsReport(input)),
 
   /** Returns an internal section CSV or a separately privacy-reduced sponsor CSV. */
   exportReport: permProcedure
