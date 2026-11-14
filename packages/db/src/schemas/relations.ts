@@ -5,6 +5,7 @@ import {
   Job,
   JobAlertPreference,
   JobApplication,
+  JobApplicationHistory,
   JobLocation,
   JobObservation,
   JobSource,
@@ -78,13 +79,27 @@ export const JobLocationRelations = relations(JobLocation, ({ one }) => ({
   job: one(Job, { fields: [JobLocation.jobId], references: [Job.id] }),
 }));
 
-export const JobApplicationRelations = relations(JobApplication, ({ one }) => ({
-  job: one(Job, { fields: [JobApplication.jobId], references: [Job.id] }),
-  member: one(Member, {
-    fields: [JobApplication.memberId],
-    references: [Member.id],
+export const JobApplicationRelations = relations(
+  JobApplication,
+  ({ one, many }) => ({
+    job: one(Job, { fields: [JobApplication.jobId], references: [Job.id] }),
+    member: one(Member, {
+      fields: [JobApplication.memberId],
+      references: [Member.id],
+    }),
+    history: many(JobApplicationHistory),
   }),
-}));
+);
+
+export const JobApplicationHistoryRelations = relations(
+  JobApplicationHistory,
+  ({ one }) => ({
+    application: one(JobApplication, {
+      fields: [JobApplicationHistory.applicationId],
+      references: [JobApplication.id],
+    }),
+  }),
+);
 
 export const JobAlertPreferenceRelations = relations(
   JobAlertPreference,

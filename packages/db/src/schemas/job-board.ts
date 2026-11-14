@@ -326,6 +326,7 @@ export const JobApplication = createTable(
       .references(() => Job.id, { onDelete: "restrict" }),
     stage: jobApplicationStageEnum().notNull().default("saved"),
     round: t.integer(),
+    interviewLabel: t.varchar({ length: 120 }),
     visibility: jobApplicationVisibilityEnum()
       .notNull()
       .default(JOB_BOARD.DEFAULT_APPLICATION_VISIBILITY),
@@ -350,6 +351,40 @@ export const JobApplication = createTable(
     round: check(
       "knight_hacks_job_application_round_check",
       sql`${table.round} IS NULL OR (${table.stage} = 'interviewing' AND ${table.round} BETWEEN 1 AND ${sql.raw(String(JOB_BOARD.MAX_APPLICATION_ROUND))})`,
+    ),
+    interviewLabel: check(
+      "knight_hacks_job_application_interview_label_check",
+      sql`${table.interviewLabel} IS NULL OR (${table.stage} = 'interviewing' AND ${table.interviewLabel} ~ '[^[:space:]]')`,
+    ),
+  }),
+);
+
+/** A dated stage/round snapshot; future application mutations write one per change. */
+export const JobApplicationHistory = createTable(
+  "job_application_history",
+  (t) => ({
+    id: t.uuid().primaryKey().defaultRandom(),
+    applicationId: t
+      .uuid()
+      .notNull()
+      .references(() => JobApplication.id, { onDelete: "cascade" }),
+    stage: jobApplicationStageEnum().notNull(),
+    round: t.integer(),
+    interviewLabel: t.varchar({ length: 120 }),
+    changedAt: t.timestamp({ withTimezone: true }).notNull().defaultNow(),
+  }),
+  (table) => ({
+    timeline: index("knight_hacks_job_application_history_timeline_idx").on(
+      table.applicationId,
+      table.changedAt,
+    ),
+    round: check(
+      "knight_hacks_job_application_history_round_check",
+      sql`${table.round} IS NULL OR (${table.stage} = 'interviewing' AND ${table.round} BETWEEN 1 AND ${sql.raw(String(JOB_BOARD.MAX_APPLICATION_ROUND))})`,
+    ),
+    interviewLabel: check(
+      "knight_hacks_job_application_history_interview_label_check",
+      sql`${table.interviewLabel} IS NULL OR (${table.stage} = 'interviewing' AND ${table.interviewLabel} ~ '[^[:space:]]')`,
     ),
   }),
 );
@@ -416,5 +451,9 @@ export type InsertJobAlertPreference = typeof JobAlertPreference.$inferInsert;
 export type SelectJobAlertPreference = typeof JobAlertPreference.$inferSelect;
 export type InsertJobApplication = typeof JobApplication.$inferInsert;
 export type SelectJobApplication = typeof JobApplication.$inferSelect;
+export type InsertJobApplicationHistory =
+  typeof JobApplicationHistory.$inferInsert;
+export type SelectJobApplicationHistory =
+  typeof JobApplicationHistory.$inferSelect;
 export type InsertJobDigest = typeof JobDigest.$inferInsert;
 export type SelectJobDigest = typeof JobDigest.$inferSelect;

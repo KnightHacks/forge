@@ -1,9 +1,10 @@
 # Career Job Storage Test Cases
 
-- TC01: Fresh migration creates seven tables; sources default disabled and jobs suppressed.
+- TC01: Fresh migration creates eight tables; sources default disabled and jobs suppressed.
 - TC02: Concurrent duplicate job and observation identities yield one successful insert; multiple sources may reference one job.
 - TC03: City/state/remote/unknown locations retain text. Reject malformed keys and contradictory shapes.
 - TC04: One application per member/job; enforce stage/round bounds. Inactivity preserves history and deletion cannot remove referenced jobs.
+- TC04a: Application history keeps dated stage, round and interview-label snapshots, rejects invalid rounds or labels, and cascades when the member is deleted.
 - TC05: Sent job/digest records require receipts; reject malformed IDs, unpaired leases and sending without a claim.
 - TC06: Duplicate digest schedule fails despite destination changes; reject reversed/future windows.
 - TC07: Alert identity is unique per member/track/kind/target; member deletion cascades personal records.

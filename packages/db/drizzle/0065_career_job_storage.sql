@@ -65,12 +65,25 @@ CREATE TABLE "knight_hacks_job_application" (
 	"job_id" uuid NOT NULL,
 	"stage" "job_application_stage" DEFAULT 'saved' NOT NULL,
 	"round" integer,
+	"interview_label" varchar(120),
 	"visibility" "job_application_visibility" DEFAULT 'community' NOT NULL,
 	"private_notes" varchar(2000),
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "knight_hacks_job_application_member_job_unique" UNIQUE("member_id","job_id"),
-	CONSTRAINT "knight_hacks_job_application_round_check" CHECK ("knight_hacks_job_application"."round" IS NULL OR ("knight_hacks_job_application"."stage" = 'interviewing' AND "knight_hacks_job_application"."round" BETWEEN 1 AND 10))
+	CONSTRAINT "knight_hacks_job_application_round_check" CHECK ("knight_hacks_job_application"."round" IS NULL OR ("knight_hacks_job_application"."stage" = 'interviewing' AND "knight_hacks_job_application"."round" BETWEEN 1 AND 10)),
+	CONSTRAINT "knight_hacks_job_application_interview_label_check" CHECK ("knight_hacks_job_application"."interview_label" IS NULL OR ("knight_hacks_job_application"."stage" = 'interviewing' AND "knight_hacks_job_application"."interview_label" ~ '[^[:space:]]'))
+);
+--> statement-breakpoint
+CREATE TABLE "knight_hacks_job_application_history" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"application_id" uuid NOT NULL,
+	"stage" "job_application_stage" NOT NULL,
+	"round" integer,
+	"interview_label" varchar(120),
+	"changed_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "knight_hacks_job_application_history_round_check" CHECK ("knight_hacks_job_application_history"."round" IS NULL OR ("knight_hacks_job_application_history"."stage" = 'interviewing' AND "knight_hacks_job_application_history"."round" BETWEEN 1 AND 10)),
+	CONSTRAINT "knight_hacks_job_application_history_interview_label_check" CHECK ("knight_hacks_job_application_history"."interview_label" IS NULL OR ("knight_hacks_job_application_history"."stage" = 'interviewing' AND "knight_hacks_job_application_history"."interview_label" ~ '[^[:space:]]'))
 );
 --> statement-breakpoint
 CREATE TABLE "knight_hacks_job_digest" (
@@ -154,6 +167,7 @@ ALTER TABLE "knight_hacks_job" ADD CONSTRAINT "knight_hacks_job_company_id_knigh
 ALTER TABLE "knight_hacks_job_alert_preference" ADD CONSTRAINT "knight_hacks_job_alert_preference_member_id_knight_hacks_member_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."knight_hacks_member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knight_hacks_job_application" ADD CONSTRAINT "knight_hacks_job_application_member_id_knight_hacks_member_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."knight_hacks_member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knight_hacks_job_application" ADD CONSTRAINT "knight_hacks_job_application_job_id_knight_hacks_job_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."knight_hacks_job"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "knight_hacks_job_application_history" ADD CONSTRAINT "knight_hacks_job_application_history_application_id_knight_hacks_job_application_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."knight_hacks_job_application"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knight_hacks_job_location" ADD CONSTRAINT "knight_hacks_job_location_job_id_knight_hacks_job_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."knight_hacks_job"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knight_hacks_job_observation" ADD CONSTRAINT "knight_hacks_job_observation_source_id_knight_hacks_job_source_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."knight_hacks_job_source"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "knight_hacks_job_observation" ADD CONSTRAINT "knight_hacks_job_observation_job_id_knight_hacks_job_id_fk" FOREIGN KEY ("job_id") REFERENCES "public"."knight_hacks_job"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
@@ -166,6 +180,7 @@ CREATE INDEX "knight_hacks_job_delivery_idx" ON "knight_hacks_job" USING btree (
 CREATE INDEX "knight_hacks_job_digest_idx" ON "knight_hacks_job" USING btree ("discord_channel_id","delivered_at");--> statement-breakpoint
 CREATE INDEX "knight_hacks_job_alert_matching_idx" ON "knight_hacks_job_alert_preference" USING btree ("kind","target_key","track");--> statement-breakpoint
 CREATE INDEX "knight_hacks_job_application_community_idx" ON "knight_hacks_job_application" USING btree ("job_id","visibility","stage");--> statement-breakpoint
+CREATE INDEX "knight_hacks_job_application_history_timeline_idx" ON "knight_hacks_job_application_history" USING btree ("application_id","changed_at");--> statement-breakpoint
 CREATE INDEX "knight_hacks_job_digest_pending_idx" ON "knight_hacks_job_digest" USING btree ("delivery_state","next_attempt_at");--> statement-breakpoint
 CREATE INDEX "knight_hacks_job_location_job_idx" ON "knight_hacks_job_location" USING btree ("job_id");--> statement-breakpoint
 CREATE INDEX "knight_hacks_job_location_city_idx" ON "knight_hacks_job_location" USING btree ("city_key","job_id");--> statement-breakpoint

@@ -6,7 +6,7 @@ References: #647, parent #633, vocabulary #646 / PR #658.
 
 ## Ownership and access
 
-Seven tables live in packages/db/src/schemas/job-board.ts, with relations registered
+Eight tables live in packages/db/src/schemas/job-board.ts, with relations registered
 in the existing client. Enums reuse JOB_BOARD. API owns matching, normalization,
 transactions and access; Cron orchestrates adapters/delivery; Blade owns interfaces.
 No API/Cron/UI behavior is implemented here. Career reads require sign-in and a
@@ -17,17 +17,18 @@ schema does not enforce end-user authorization.
 
 ## Tables
 
-| Table              | Identity and state                                                                                                                                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Job                | Unique identityKey; company label/key and optional Company FK; title/track/category/URL/description/compensation/arrangement; posted/first-seen/last-seen dates; active/inactive state; single Discord destination, frozen delivery track, receipt and retry/claim state |
-| JobSource          | Unique provider/boardKey; label, optional Company FK, enabled flag, polling interval/checkpoints, baseline completion, conditional-request validators and claim/error state                                                                                              |
-| JobObservation     | Unique source/external ID; Job FK; source URL/data, posted/first/last-seen dates and inactivity evidence                                                                                                                                                                 |
-| JobLocation        | Job FK; original text; city/state/remote_us/unknown kind; Census city key and state                                                                                                                                                                                      |
-| JobAlertPreference | Unique member/track/kind/targetKey; optional original custom value                                                                                                                                                                                                       |
-| JobApplication     | Unique member/job; stage/round/visibility/private notes; timestamps                                                                                                                                                                                                      |
-| JobDigest          | Unique track/scheduled instant; frozen window/destination; receipt and retry/claim state                                                                                                                                                                                 |
+| Table                 | Identity and state                                                                                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Job                   | Unique identityKey; company label/key and optional Company FK; title/track/category/URL/description/compensation/arrangement; posted/first-seen/last-seen dates; active/inactive state; single Discord destination, frozen delivery track, receipt and retry/claim state |
+| JobSource             | Unique provider/boardKey; label, optional Company FK, enabled flag, polling interval/checkpoints, baseline completion, conditional-request validators and claim/error state                                                                                              |
+| JobObservation        | Unique source/external ID; Job FK; source URL/data, posted/first/last-seen dates and inactivity evidence                                                                                                                                                                 |
+| JobLocation           | Job FK; original text; city/state/remote_us/unknown kind; Census city key and state                                                                                                                                                                                      |
+| JobAlertPreference    | Unique member/track/kind/targetKey; optional original custom value                                                                                                                                                                                                       |
+| JobApplication        | Unique member/job; stage/round/optional interview label/visibility/private notes; timestamps                                                                                                                                                                             |
+| JobApplicationHistory | Application FK; dated stage/round/optional interview label snapshot for each change                                                                                                                                                                                      |
+| JobDigest             | Unique track/scheduled instant; frozen window/destination; receipt and retry/claim state                                                                                                                                                                                 |
 
-Member gets two non-null, false-default digest opt-in booleans. All seven tables
+Member gets two non-null, false-default digest opt-in booleans. All eight tables
 count against the limit; no join-table exception. Reuse DiscordConfig for channel
 and role IDs in the later settings implementation, with no routing changes here.
 
@@ -56,6 +57,13 @@ custom location text. customValue preserves Other input. API normalization dedup
 semantically equivalent targets. Applications reference Member.id; deleting a member
 cascades preferences/applications. Jobs with applications cannot be deleted. Rounds
 are integers 1..10 only for interviewing. Notes are capped at 2000 characters.
+Application history uses the same stage enum and round constraint. An optional
+interview label on the current row and history can describe a round as behavioral,
+technical, or another format; it is only valid for `interviewing`. The future
+application mutation must write the current row and a history snapshot in one
+transaction, including the initial state and changes between interview rounds.
+Visibility and private notes do not go into history. Deleting a member cascades
+through applications to their history.
 
 ## Delivery contracts for follow-up work
 

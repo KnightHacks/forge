@@ -1,12 +1,25 @@
 # Career Job Storage Status
 
-Current phase: Rebased onto the merged Career Discord configuration; awaiting dev-lead schema approval and PR review.
+Current phase: Application history implemented and validated; awaiting dev-lead schema approval and PR review.
+
+## Application history
+
+- 2026-11-13: Dylan requested a dated timeline for application progress, including
+  applied to interview round 1 to round 2. Added an eighth table keyed to the
+  application and reused the existing stage enum and round constraint.
+- Dylan chose to keep the stage enum and add an optional interview label to the
+  current application and each history snapshot for details such as behavioral
+  or technical rounds.
+- The future application API must write a history row in the same transaction as
+  each current-state change. This storage PR has no application mutation yet.
+- After the addition, `pnpm db:generate` reports no drift and 13 targeted
+  migration and lineage tests pass on disposable PostgreSQL 16.
 
 ## Rebase after PR #665
 
 - 2026-11-13: Regenerated the job storage migration as `0065_career_job_storage.sql`
-  after `0064_career_discord_config`. The SQL body is unchanged; the journal,
-  snapshot, lineage test, and migration references now use 0065.
+  after `0064_career_discord_config`. At that rebase, the SQL body was unchanged;
+  the journal, snapshot, lineage test, and migration references moved to 0065.
 - Post-rebase checks: `pnpm db:generate` produced no new migration,
   `pnpm verify:precommit` passed, and the 12 targeted migration and lineage
   tests passed on disposable PostgreSQL 16.

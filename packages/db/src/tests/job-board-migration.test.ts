@@ -15,9 +15,9 @@ const migrationUrl = new URL(
 );
 
 describe("Career job migration scope", () => {
-  it("adds exactly seven tables and two false-default member preferences", async () => {
+  it("adds exactly eight tables and two false-default member preferences", async () => {
     const migration = await readFile(migrationUrl, "utf8");
-    expect(migration.match(/CREATE TABLE/g)).toHaveLength(7);
+    expect(migration.match(/CREATE TABLE/g)).toHaveLength(8);
     expect(migration).not.toMatch(
       /DROP |DELETE FROM|TRUNCATE|UPDATE "knight_hacks_company"/,
     );
@@ -81,7 +81,7 @@ describe.runIf(canRunDatabaseTests())(
       const client = database.client;
       await client.query("BEGIN");
       try {
-        await client.query(`DROP TABLE knight_hacks_job_application, knight_hacks_job_alert_preference,
+        await client.query(`DROP TABLE knight_hacks_job_application_history, knight_hacks_job_application, knight_hacks_job_alert_preference,
           knight_hacks_job_location, knight_hacks_job_observation, knight_hacks_job_digest,
           knight_hacks_job, knight_hacks_job_source;
           DROP TYPE job_track, job_category, job_location_kind, job_work_arrangement,
@@ -314,7 +314,7 @@ describe.runIf(canRunDatabaseTests())(
       ).rejects.toMatchObject({ code: "23514" });
     });
 
-    it("keeps application history and enforces one application and valid rounds", async () => {
+    it("keeps applications for inactive jobs and enforces valid rounds", async () => {
       const listing = await job();
       const insert = (stage: string, round: number | null) =>
         pool.query(
@@ -328,6 +328,18 @@ describe.runIf(canRunDatabaseTests())(
         code: "23514",
       });
       await insert("interviewing", 2);
+      await pool.query(
+        "UPDATE knight_hacks_job_application SET interview_label = 'Technical' WHERE job_id = $1",
+        [listing.id],
+      );
+      await expect(
+        pool.query(
+          "UPDATE knight_hacks_job_application SET stage = 'applied', round = NULL WHERE job_id = $1",
+          [listing.id],
+        ),
+      ).rejects.toMatchObject({
+        constraint: "knight_hacks_job_application_interview_label_check",
+      });
       await expect(insert("saved", null)).rejects.toMatchObject({
         code: "23505",
       });
@@ -346,6 +358,62 @@ describe.runIf(canRunDatabaseTests())(
         [listing.id],
       );
       expect(rows).toEqual([{ round: 2 }]);
+    });
+
+    it("records dated application stages and rounds and removes them with the member", async () => {
+      const listing = await job();
+      const application = await pool.query<{ id: string }>(
+        `INSERT INTO knight_hacks_job_application (member_id, job_id, stage, round, interview_label)
+         VALUES ($1, $2, 'interviewing', 2, 'Technical') RETURNING id`,
+        [memberId, listing.id],
+      );
+      const applicationId = application.rows[0]?.id;
+      if (!applicationId)
+        throw new Error("Application fixture was not inserted");
+
+      for (const [stage, round, interviewLabel, changedAt] of [
+        ["applied", null, null, "2026-11-01T12:00:00Z"],
+        ["interviewing", 1, "Behavioral", "2026-11-03T12:00:00Z"],
+        ["interviewing", 2, "Technical", "2026-11-05T12:00:00Z"],
+      ] as const) {
+        await pool.query(
+          `INSERT INTO knight_hacks_job_application_history (application_id, stage, round, interview_label, changed_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [applicationId, stage, round, interviewLabel, changedAt],
+        );
+      }
+      await expect(
+        pool.query(
+          `INSERT INTO knight_hacks_job_application_history (application_id, stage, round)
+           VALUES ($1, 'applied', 1)`,
+          [applicationId],
+        ),
+      ).rejects.toMatchObject({ code: "23514" });
+      await expect(
+        pool.query(
+          `INSERT INTO knight_hacks_job_application_history (application_id, stage, interview_label)
+           VALUES ($1, 'applied', 'Behavioral')`,
+          [applicationId],
+        ),
+      ).rejects.toMatchObject({
+        constraint:
+          "knight_hacks_job_application_history_interview_label_check",
+      });
+
+      const history = await pool.query<{
+        stage: string;
+        round: number | null;
+        interview_label: string | null;
+      }>(
+        `SELECT stage, round, interview_label FROM knight_hacks_job_application_history
+         WHERE application_id = $1 ORDER BY changed_at`,
+        [applicationId],
+      );
+      expect(history.rows).toEqual([
+        { stage: "applied", round: null, interview_label: null },
+        { stage: "interviewing", round: 1, interview_label: "Behavioral" },
+        { stage: "interviewing", round: 2, interview_label: "Technical" },
+      ]);
     });
 
     it("requires coherent job claims, destinations and receipts", async () => {
@@ -445,8 +513,12 @@ describe.runIf(canRunDatabaseTests())(
         "SELECT id FROM knight_hacks_job_application WHERE member_id = $1",
         [memberId],
       );
+      const history = await pool.query(
+        "SELECT id FROM knight_hacks_job_application_history",
+      );
       expect(preferences.rows).toHaveLength(0);
       expect(applications.rows).toHaveLength(0);
+      expect(history.rows).toHaveLength(0);
     });
   },
 );

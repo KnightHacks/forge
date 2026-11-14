@@ -1,5 +1,5 @@
 {
-  "id": "ba74d82e-71ae-4bba-ad52-015abb499b6b",
+  "id": "f3244bab-8478-4a2f-9653-d44e6f49e898",
   "prevId": "f7fbdc9c-7ef5-472c-93a4-a2398e67f6ad",
   "version": "7",
   "dialect": "postgresql",
@@ -2373,6 +2373,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "interview_label": {
+          "name": "interview_label",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "visibility": {
           "name": "visibility",
           "type": "job_application_visibility",
@@ -2464,6 +2470,103 @@
         "knight_hacks_job_application_round_check": {
           "name": "knight_hacks_job_application_round_check",
           "value": "\"knight_hacks_job_application\".\"round\" IS NULL OR (\"knight_hacks_job_application\".\"stage\" = 'interviewing' AND \"knight_hacks_job_application\".\"round\" BETWEEN 1 AND 10)"
+        },
+        "knight_hacks_job_application_interview_label_check": {
+          "name": "knight_hacks_job_application_interview_label_check",
+          "value": "\"knight_hacks_job_application\".\"interview_label\" IS NULL OR (\"knight_hacks_job_application\".\"stage\" = 'interviewing' AND \"knight_hacks_job_application\".\"interview_label\" ~ '[^[:space:]]')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.knight_hacks_job_application_history": {
+      "name": "knight_hacks_job_application_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "job_application_stage",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round": {
+          "name": "round",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interview_label": {
+          "name": "interview_label",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changed_at": {
+          "name": "changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "knight_hacks_job_application_history_timeline_idx": {
+          "name": "knight_hacks_job_application_history_timeline_idx",
+          "columns": [
+            {
+              "expression": "application_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "changed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "knight_hacks_job_application_history_application_id_knight_hacks_job_application_id_fk": {
+          "name": "knight_hacks_job_application_history_application_id_knight_hacks_job_application_id_fk",
+          "tableFrom": "knight_hacks_job_application_history",
+          "tableTo": "knight_hacks_job_application",
+          "columnsFrom": ["application_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "knight_hacks_job_application_history_round_check": {
+          "name": "knight_hacks_job_application_history_round_check",
+          "value": "\"knight_hacks_job_application_history\".\"round\" IS NULL OR (\"knight_hacks_job_application_history\".\"stage\" = 'interviewing' AND \"knight_hacks_job_application_history\".\"round\" BETWEEN 1 AND 10)"
+        },
+        "knight_hacks_job_application_history_interview_label_check": {
+          "name": "knight_hacks_job_application_history_interview_label_check",
+          "value": "\"knight_hacks_job_application_history\".\"interview_label\" IS NULL OR (\"knight_hacks_job_application_history\".\"stage\" = 'interviewing' AND \"knight_hacks_job_application_history\".\"interview_label\" ~ '[^[:space:]]')"
         }
       },
       "isRLSEnabled": false

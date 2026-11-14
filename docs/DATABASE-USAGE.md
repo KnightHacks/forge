@@ -187,19 +187,20 @@ Notes:
 
 ## Career job storage
 
-The seven tables in `schemas/job-board.ts` support the Career integration (#647).
+The eight tables in `schemas/job-board.ts` support the Career integration (#647).
 They are storage contracts; ingestion, member APIs and Discord workers are separate
 follow-up work. Sources default disabled and jobs default to suppressed delivery.
 
-| Table                | Usage                                                                                                                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Job`                | Canonical listing with a unique API-normalized identity key, optional existing Company link, original company label/grouping key, dates, active state and one primary Discord delivery receipt/claim. |
-| `JobSource`          | Supported adapter/board identity, officer-editable enablement, poll schedule, baseline and conditional-request/claim state.                                                                           |
-| `JobObservation`     | One upstream listing per source/external ID, pointing to a canonical job; not one row per poll.                                                                                                       |
-| `JobLocation`        | Multiple locations for a job, preserving original text even when unknown. Census city keys use `NN-NNNNN`; remote alone does not imply U.S. eligibility.                                              |
-| `JobAlertPreference` | Member-owned normalized company/location targets per track, retaining custom Other text.                                                                                                              |
-| `JobApplication`     | One member/job application, with stage, optional interview round, visibility and private notes. Inactive jobs retain history.                                                                         |
-| `JobDigest`          | Shared daily digest delivery per track/scheduled instant, with frozen window/destination and recovery state.                                                                                          |
+| Table                   | Usage                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Job`                   | Canonical listing with a unique API-normalized identity key, optional existing Company link, original company label/grouping key, dates, active state and one primary Discord delivery receipt/claim. |
+| `JobSource`             | Supported adapter/board identity, officer-editable enablement, poll schedule, baseline and conditional-request/claim state.                                                                           |
+| `JobObservation`        | One upstream listing per source/external ID, pointing to a canonical job; not one row per poll.                                                                                                       |
+| `JobLocation`           | Multiple locations for a job, preserving original text even when unknown. Census city keys use `NN-NNNNN`; remote alone does not imply U.S. eligibility.                                              |
+| `JobAlertPreference`    | Member-owned normalized company/location targets per track, retaining custom Other text.                                                                                                              |
+| `JobApplication`        | One member/job application, with stage, optional interview round and label, visibility and private notes. Inactive jobs retain history.                                                               |
+| `JobApplicationHistory` | Dated stage, round and optional interview-label snapshots for one application. A future API update must write the current state and history together.                                                 |
+| `JobDigest`             | Shared daily digest delivery per track/scheduled instant, with frozen window/destination and recovery state.                                                                                          |
 
 `Member.jobInternshipDigestEnabled` and `jobNewGradDigestEnabled` default false and
 represent desired digest-role subscriptions, not proof of Discord role assignment.
