@@ -18,12 +18,13 @@ Current phase: Implementation
 - 2026-11-14: Rebased onto `origin/main` at `98f3f9d3`, bringing in merged #647
   and #648. GitHub feed output now uses `provider`/`boardKey` for `JobSource`
   and listing fields aligned with `Job`/`JobObservation`.
-- 2026-11-14: Local Postgres 16 is running on port 5432 with a dedicated
-  worktree volume. The existing ignored root `.env` is linked into this
-  worktree; `pnpm db:migrate` applied 67 migrations and the merged JobSource,
-  Job, and JobObservation tables are present.
+- 2026-11-14: During local verification, PostgreSQL 16 on port 5432 accepted
+  the existing ignored root `.env`; `pnpm db:migrate` applied 67 migrations,
+  including the merged JobSource, Job, and JobObservation tables. The temporary
+  worktree-specific Compose image, port binding, and volume changes have since
+  been reverted.
 - 2026-11-14: Reverted the temporary `.env.example` and Getting Started edits;
-  only the needed PostgreSQL 16/5432 Compose setup remains.
+  Compose and setup docs now remain unchanged from upstream.
 - 2026-11-14: This checkpoint implements only GitHub Markdown/JSON feeds.
   Jobright, direct ATS, and company API adapters are still required for #652.
 

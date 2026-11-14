@@ -1,15 +1,10 @@
 services:
   db:
-    image: postgres:16
+    image: postgres
     restart: always
     ports:
-      - 127.0.0.1:5432:5432
-    volumes:
-      - forge-postgres16-data:/var/lib/postgresql/data
+      - 5432:5432
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: local
-
-volumes:
-  forge-postgres16-data:
