@@ -90,6 +90,7 @@ describe("client-facing API surface", () => {
       "hacker",
       "issues",
       "judging",
+      "mcpActivity",
       "member",
       "memberAdmin",
       "profilePicture",
@@ -99,5 +100,11 @@ describe("client-facing API surface", () => {
     ]) {
       expect(namespaces, expected).toContain(expected);
     }
+  });
+
+  it("exposes officer and self-service MCP activity reads", () => {
+    expect(
+      clientFacingSurface().filter((path) => path.startsWith("mcpActivity.")),
+    ).toEqual(["mcpActivity.list", "mcpActivity.listMine"]);
   });
 });

@@ -17,6 +17,7 @@ import { hackerRouter } from "./routers/hacker";
 import { hackerTeamRouter } from "./routers/hacker-team";
 import { issuesRouter } from "./routers/issues";
 import { judgingRouter } from "./routers/judging";
+import { mcpActivityRouter } from "./routers/mcp-activity";
 import { memberRouter } from "./routers/member";
 import { memberAdminRouter } from "./routers/member-admin";
 import { pointStoreRouter } from "./routers/point-store";
@@ -53,6 +54,7 @@ export interface AppRouterShape {
   health: typeof healthProcedure;
   issues: typeof issuesRouter;
   judging: typeof judgingRouter;
+  mcpActivity: typeof mcpActivityRouter;
   member: typeof memberRouter;
   memberAdmin: typeof memberAdminRouter;
   printing: typeof printingRouter;
@@ -89,6 +91,7 @@ const appRouterRecord: AppRouterRecord = {
   health: healthProcedure,
   issues: issuesRouter,
   judging: judgingRouter,
+  mcpActivity: mcpActivityRouter,
   member: memberRouter,
   memberAdmin: memberAdminRouter,
   printing: printingRouter,
