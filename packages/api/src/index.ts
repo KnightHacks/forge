@@ -14,3 +14,19 @@ export { appRouter, createCaller, createTRPCContext };
 export type { AppRouter, RouterInputs, RouterOutputs };
 export { recordMcpActivity } from "./utils/mcp/activity";
 export type { RecordMcpActivityInput } from "./utils/mcp/activity";
+
+export { buildActionCatalog, getActionCatalog } from "./utils/mcp/catalog";
+export type { ActionCatalog, McpAction } from "./utils/mcp/catalog";
+export {
+  callAction,
+  createActionGateway,
+  describeAction,
+  searchActions,
+} from "./utils/mcp/gateway";
+export type {
+  ActionGateway,
+  McpActionDescription,
+  McpActionSummary,
+  McpCallOptions,
+  McpToolCallEvent,
+} from "./utils/mcp/gateway";
