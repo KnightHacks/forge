@@ -110,9 +110,9 @@ async function guildIds() {
   const row = await backupDb.query.DiscordConfig.findFirst({
     where: eq(discordConfigSchema.DiscordConfig.key, "guild"),
   });
-  if (!row?.developmentId) {
+  if (!row?.developmentId || !row.productionId) {
     throw new Error(
-      'The "guild" row in knight_hacks_discord_config is missing or has no development_id. Seeding cannot map production Discord objects onto the development server without both.',
+      'The "guild" row in knight_hacks_discord_config is missing or has no production_id or development_id. Seeding cannot map production Discord objects onto the development server without both.',
     );
   }
   return { development: row.developmentId, production: row.productionId };

@@ -16,18 +16,15 @@ import {
 } from "@forge/db/schemas/discord-config";
 
 /**
- * The whole table is fourteen narrow rows, so it is cached as a unit rather than
+ * The whole table is a small set of narrow rows, cached as a unit rather than
  * per key: `role-sync` touches the guild ID once per user and the Discord bot
  * reads it on every interaction, and neither should pay for a round trip.
  *
  * Invalidation is time-based, matching `liveRoleDiscordGateway`'s role-count
- * cache. There is no admin UI yet — an officer changes these rows with SQL — so
- * there is no in-process mutation to hook, and a sixty-second staleness window
- * on a value that changes once a year is the right trade. When the Blade admin
- * UI lands, its mutation must call {@link invalidateDiscordConfigCache}, and
- * because `apps/cron`, `apps/tk`, and each Blade server instance hold separate
- * caches, that call only clears the process that served the request; the others
- * still converge within the TTL.
+ * cache. Blade's officer update calls {@link invalidateDiscordConfigCache}
+ * after committing. Because `apps/cron`, `apps/tk`, and each Blade server
+ * instance hold separate caches, that call only clears the process that served
+ * the request; the others still converge within the TTL.
  */
 const CACHE_TTL_MS = 60_000;
 
@@ -93,14 +90,13 @@ export function invalidateDiscordConfigCache(): void {
 /**
  * Resolves one setting to the Discord snowflake for the current environment.
  *
- * Throws when the row is missing. That is deliberate: these IDs used to be
- * compile-time constants, so the failure mode they never had was "silently
- * undefined". A missing row means the backfill did not run, and a Discord call
- * built from `undefined` would 404 somewhere far away from the cause.
+ * A missing row means the migration did not run and always throws. An explicit
+ * null value is an intentionally unconfigured destination; the public reader
+ * chooses whether to allow it or throw.
  */
-export async function getDiscordConfigId(
+async function readDiscordConfigId(
   key: DISCORD.ConfigKey,
-): Promise<string> {
+): Promise<string | null> {
   const { rows } = await readSnapshot();
   const row = rows.get(key);
   if (!row) {
@@ -109,6 +105,29 @@ export async function getDiscordConfigId(
     );
   }
   return resolveDiscordConfigId(row, isProduction());
+}
+
+/** Required reads always yield a snowflake or throw, including for optional keys. */
+export async function getDiscordConfigId(
+  key: DISCORD.ConfigKey,
+): Promise<string> {
+  const id = await readDiscordConfigId(key);
+  if (id === null) {
+    throw new Error(`Discord config "${key}" is not configured.`);
+  }
+  return id;
+}
+
+/**
+ * Explicitly permits an unconfigured destination. A missing row still throws:
+ * migration/setup errors must not silently disable alerts. Consumers should
+ * skip only the Discord send when this returns null, preserving ordinary work
+ * and error logging.
+ */
+export function getOptionalDiscordConfigId(
+  key: DISCORD.OptionalConfigKey,
+): Promise<string | null> {
+  return readDiscordConfigId(key);
 }
 
 /** Convenience for the hottest lookup in the codebase. */

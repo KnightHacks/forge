@@ -75,6 +75,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
   let audit: AuditSchemas;
   let console_: Awaited<ReturnType<typeof officerCaller>>;
   let getKnightHacksGuildId: typeof import("@forge/utils/discord-config").getKnightHacksGuildId;
+  let getOptionalDiscordConfigId: typeof import("@forge/utils/discord-config").getOptionalDiscordConfigId;
   let getVisiblePublicClubRoster: typeof import("../../utils/guild/club-roster").getVisiblePublicClubRoster;
 
   async function officerCaller() {
@@ -169,7 +170,8 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
     clubTeam = await import("@forge/db/schemas/club-team");
     discordConfig = await import("@forge/db/schemas/discord-config");
     audit = await import("@forge/db/schemas/audit");
-    ({ getKnightHacksGuildId } = await import("@forge/utils/discord-config"));
+    ({ getKnightHacksGuildId, getOptionalDiscordConfigId } =
+      await import("@forge/utils/discord-config"));
     ({ getVisiblePublicClubRoster } =
       await import("../../utils/guild/club-roster"));
     const knightHacks = await import("@forge/db/schemas/knight-hacks");
@@ -218,6 +220,77 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
   }, 30_000);
 
   describe("discordConfig.update", () => {
+    it("TC-648-009: persists, audits and immediately resolves setting and clearing failure alerts", async () => {
+      const key = "career_source_health_channel";
+      const before = await configRow(key);
+      expect(await getOptionalDiscordConfigId(key)).toBeNull();
+      const draft = {
+        key,
+        label: before.label,
+        description: before.description,
+        developmentId: "",
+      } as const;
+      const id = "990000000000000901";
+
+      const configured = await console_.discordConfig.update({
+        ...draft,
+        productionId: ` ${id} `,
+      });
+      expect(configured).toMatchObject({
+        productionId: id,
+        resolvedId: id,
+        readBy: [],
+      });
+      expect((await configRow(key)).productionId).toBe(id);
+      expect(
+        (await console_.discordConfig.list()).rows.find(
+          (row) => row.key === key,
+        )?.resolvedId,
+      ).toBe(id);
+      expect(await getOptionalDiscordConfigId(key)).toBe(id);
+      expect(
+        (await auditEventsFor("discord_config.updated")).at(-1),
+      ).toMatchObject({
+        changes: [{ before: null, after: id, field: "productionId" }],
+        metadata: { configKey: key, configKind: "channel", isInert: true },
+      });
+
+      const cleared = await console_.discordConfig.update({
+        ...draft,
+        productionId: "   ",
+      });
+      expect(cleared).toMatchObject({
+        productionId: null,
+        developmentId: null,
+        resolvedId: null,
+      });
+      expect((await configRow(key)).productionId).toBeNull();
+      expect(await getOptionalDiscordConfigId(key)).toBeNull();
+      expect(
+        (await auditEventsFor("discord_config.updated")).at(-1)?.changes,
+      ).toEqual([{ before: id, after: null, field: "productionId" }]);
+    });
+
+    it("TC-648-006: rejects clearing a required Career channel before writing", async () => {
+      const key = "career_internship_channel";
+      const before = await configRow(key);
+      const auditCount = (await auditEventsFor("discord_config.updated"))
+        .length;
+      await expect(
+        console_.discordConfig.update({
+          key,
+          label: before.label,
+          description: before.description,
+          developmentId: "",
+          productionId: "",
+        }),
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+      expect(await configRow(key)).toEqual(before);
+      expect(await auditEventsFor("discord_config.updated")).toHaveLength(
+        auditCount,
+      );
+    });
+
     it("TC-NEG-006: stores a cleared development snowflake as NULL", async () => {
       const before = await configRow("vip_role");
 
@@ -265,7 +338,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
         developmentId: before.developmentId ?? "",
         key: "admin_role",
         label: "Renamed admin role",
-        productionId: before.productionId,
+        productionId: before.productionId ?? "",
       });
 
       const [event] = await auditEventsFor("discord_config.updated").then(
@@ -308,7 +381,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
           developmentId: "990000000000000301",
           key: "guild",
           label: before.label,
-          productionId: before.productionId,
+          productionId: before.productionId ?? "",
         }),
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
 
@@ -329,7 +402,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
         developmentId: before.developmentId ?? "",
         key: "guild",
         label: "Knight Hacks server",
-        productionId: before.productionId,
+        productionId: before.productionId ?? "",
       });
 
       expect(updated.label).toBe("Knight Hacks server");
@@ -346,7 +419,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
         developmentId: "990000000000000401",
         key: "guild",
         label: before.label,
-        productionId: before.productionId,
+        productionId: before.productionId ?? "",
       });
 
       // No clock advance. The sixty-second TTL is not waited on.
@@ -424,12 +497,12 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
             developmentId: "",
             key: "volunteer_role",
             label: row.label,
-            productionId: row.productionId,
+            productionId: row.productionId ?? "",
           }),
         ).rejects.toMatchObject({ code: "NOT_FOUND" });
         expect(
           await client.select().from(discordConfig.DiscordConfig),
-        ).toHaveLength(13);
+        ).toHaveLength(DISCORD.CONFIG_KEYS.length - 1);
       } finally {
         await client.insert(discordConfig.DiscordConfig).values(row);
       }
@@ -455,7 +528,7 @@ describe.runIf(canRunDatabaseTests())("platform configuration console", () => {
             developmentId: before.developmentId ?? "",
             key: "officer_role",
             label: "Never committed",
-            productionId: before.productionId,
+            productionId: before.productionId ?? "",
           }),
         ).rejects.toThrow();
       } finally {

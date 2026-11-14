@@ -106,7 +106,7 @@ describe("canonical production migration lineage", () => {
       await readFile(new URL("_journal.json", metadataDirectory), "utf8"),
     ) as { entries: JournalEntry[] };
 
-    expect(journal.entries).toHaveLength(64);
+    expect(journal.entries).toHaveLength(65);
     expect(journal.entries[10]).toMatchObject({
       idx: 10,
       tag: "0010_wooden_supreme_intelligence",
@@ -117,8 +117,8 @@ describe("canonical production migration lineage", () => {
       tag: "0059_needy_menace",
     });
     expect(journal.entries.at(-1)).toMatchObject({
-      idx: 63,
-      tag: "0063_first_jean_grey",
+      idx: 64,
+      tag: "0064_career_discord_config",
     });
 
     for (const [position, entry] of journal.entries.entries()) {
