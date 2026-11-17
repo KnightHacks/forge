@@ -224,10 +224,20 @@ describe.runIf(canRunDatabaseTests())("job board router", () => {
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("shows community applications without notes and keeps private ones out of every view", async () => {
-    const hidden = await blake.saveApplication({
+  it("shows community applications without notes and keeps saved and private ones out of every view", async () => {
+    // A bookmark is community-visible by default but is not yet an application.
+    const bookmarked = await blake.saveApplication({
       jobId: openJobId,
       privateNotes: "Do not share",
+    });
+    const beforeApplying = await alex.listPeopleInProcess({});
+    expect(beforeApplying.people.map((person) => person.memberId)).toEqual([
+      ALEX.memberId,
+    ]);
+    expect(beforeApplying.total).toBe(1);
+
+    const hidden = await blake.updateApplication({
+      applicationId: bookmarked.id,
       stage: "applied",
       visibility: "private",
     });

@@ -59,12 +59,12 @@ No pages in this slice. It supplies:
 - Other members see a community application's name, picture, Discord username,
   stage, round and interview label, and never its notes.
 - A private application appears in no view except its owner's.
+- A `saved` application (bookmarked, not yet applied) appears in no view except
+  its owner's, whatever its visibility.
 - Each progress change adds one dated timeline entry; editing notes or
   visibility adds none.
 - A member can change or remove only their own applications.
 
 ## Open questions
 
-- Should a `saved` (bookmarked, not yet applied) application appear to other
-  members? #633 says stages are visible by default, so it currently does.
 - Location filters widen each other (a city or U.S. remote). Confirm with #655.

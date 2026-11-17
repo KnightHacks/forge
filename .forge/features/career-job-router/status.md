@@ -12,6 +12,8 @@ Current phase: PR 1 implemented, validated locally and opened as a draft PR.
   to the time of saving. Timeline entries are not editable.
 - 2026-11-16: Community views show name, profile picture, Discord username,
   stage, round and interview label.
+- 2026-11-16: Kevin decided `saved` applications are never shown to other
+  members; someone who has not applied is not in a process.
 - Implementation choices to confirm in review: no new officer procedure because
   `discordConfig.list` and `discordConfig.update` already cover the Career keys;
   a missing member profile is `FORBIDDEN`; location filters widen each other;
@@ -19,7 +21,6 @@ Current phase: PR 1 implemented, validated locally and opened as a draft PR.
 
 ## Open questions
 
-- Should `saved` applications be visible to other members?
 - Confirm location filter behavior with the #655 owner.
 
 ## Task list

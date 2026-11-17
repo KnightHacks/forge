@@ -1,5 +1,5 @@
 import type { SQL } from "@forge/db";
-import { and, asc, count, desc, eq } from "@forge/db";
+import { and, asc, count, desc, eq, ne } from "@forge/db";
 import { db } from "@forge/db/client";
 import { Job, JobApplication } from "@forge/db/schemas/job-board";
 import { Member } from "@forge/db/schemas/knight-hacks";
@@ -16,6 +16,9 @@ import { profilePictureStorageClient } from "../profile-picture/storage";
  * The visibility filter is applied here rather than by each caller, and
  * `privateNotes` is not selected at all, so a new community view cannot forget
  * either rule. Notes stay private even on a community-visible application.
+ *
+ * A `saved` application is a bookmark, not part of anyone's process, so it is
+ * never shown to other members whatever its visibility.
  */
 const communityColumns = {
   applicationId: JobApplication.id,
@@ -37,7 +40,11 @@ const communityColumns = {
 } as const;
 
 function communityWhere(filter: SQL | undefined) {
-  return and(eq(JobApplication.visibility, "community"), filter);
+  return and(
+    eq(JobApplication.visibility, "community"),
+    ne(JobApplication.stage, "saved"),
+    filter,
+  );
 }
 
 async function profilePictureUrl(reference: string | null, userId: string) {
