@@ -291,6 +291,9 @@ export const AUDIT_ACTION_CATALOG = {
     "deletedObjectCount",
     "filesCleaned",
   ]),
+  // Self-service, and deliberately without metadata: a member's application
+  // may be private, so the event does not say which job it was for.
+  "job_board.application.removed": policy("members", "Removed job application"),
   "member.profile_picture.replaced": policy(
     "members",
     "Replaced member profile picture",
