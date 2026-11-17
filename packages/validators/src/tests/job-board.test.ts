@@ -156,6 +156,7 @@ describe("alert targets", () => {
 describe("application input", () => {
   it("defaults to a saved, community-visible application", () => {
     expect(applicationSaveInputSchema.parse({ jobId })).toEqual({
+      interviewLabel: null,
       jobId,
       privateNotes: null,
       round: null,
@@ -182,6 +183,39 @@ describe("application input", () => {
     });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["round"]);
+  });
+
+  it("accepts an interview label only while interviewing", () => {
+    expect(
+      applicationSaveInputSchema.parse({
+        interviewLabel: " Behavioral ",
+        jobId,
+        stage: "interviewing",
+      }).interviewLabel,
+    ).toBe("Behavioral");
+    const result = applicationUpdateInputSchema.safeParse({
+      applicationId,
+      interviewLabel: "Behavioral",
+      stage: "applied",
+    });
+    expect(result.error?.issues[0]?.path).toEqual(["interviewLabel"]);
+  });
+
+  it("accepts a past stage date and rejects a future one", () => {
+    expect(
+      applicationSaveInputSchema.parse({
+        jobId,
+        occurredAt: "2026-10-22",
+        stage: "applied",
+      }).occurredAt,
+    ).toEqual(new Date("2026-10-22"));
+    expect(
+      applicationSaveInputSchema.safeParse({
+        jobId,
+        occurredAt: new Date(Date.now() + 86_400_000),
+        stage: "applied",
+      }).success,
+    ).toBe(false);
   });
 
   it("clears a round when leaving interviewing", () => {
