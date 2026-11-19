@@ -221,6 +221,20 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
     expect((await observations())[0]?.inactiveAt).not.toBeNull();
   });
 
+  it("does not let a stale snapshot replace newer details", async () => {
+    await run(snapshot([listing({ title: "Old Software Engineer Intern" })]));
+    const stale = new Date(clock + 30_000);
+    await run(snapshot([listing({ title: "New Software Engineer Intern" })]));
+    await ingest(
+      {
+        ...snapshot([listing({ title: "Stale Software Engineer Intern" })]),
+        fetchedAt: stale,
+      },
+      {},
+    );
+    expect((await jobs())[0]?.title).toBe("New Software Engineer Intern");
+  });
+
   it("keeps stored details when a sparser feed sees the job again", async () => {
     await run(
       board([

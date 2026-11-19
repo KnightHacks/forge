@@ -106,6 +106,10 @@ function atsKeys(url: URL): string[] {
   return [...new Set(keys)];
 }
 
+/** Query parameter names that carry a posting ID (`jobId`, `gh_jid`, `req`...). */
+const POSTING_ID_PARAM =
+  /(?:^|[_-])(?:j?id|req|requisition|posting)(?:$|[_-])|(?:job|req|posting)_?id$/i;
+
 /**
  * Whether a URL points at one posting rather than a careers landing page that
  * many listings share. A posting URL carries an ID: a digit in its last path
@@ -115,7 +119,9 @@ function identifiesPosting(url: URL) {
   const last = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
   return (
     /[0-9]/.test(last) ||
-    [...url.searchParams.values()].some((value) => /[0-9]/.test(value))
+    [...url.searchParams].some(
+      ([name, value]) => POSTING_ID_PARAM.test(name) && /[0-9]/.test(value),
+    )
   );
 }
 
@@ -132,7 +138,8 @@ export function identityKeys(input: {
 }): [string, ...string[]] {
   const url = new URL(input.applyUrl);
   const keys: [string, ...string[]] = [
-    `source:${input.provider}:${input.boardKey}:${input.externalId}`,
+    // JSON keeps the parts apart even when a board key or ID contains ":".
+    `source:${JSON.stringify([input.provider, input.boardKey, input.externalId])}`,
   ];
   // An aggregator URL wraps someone else's posting, and a landing page is
   // shared by many postings, so neither identifies a job.

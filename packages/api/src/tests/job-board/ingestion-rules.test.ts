@@ -25,6 +25,7 @@ import {
 } from "../../utils/job-board/normalize";
 
 const source = { provider: "github", boardKey: "simplify/internships" };
+const SOURCE_KEY = 'source:["github","simplify/internships","row-1"]';
 
 function keysFor(applyUrl: string) {
   return identityKeys({ ...source, applyUrl, externalId: "row-1" });
@@ -48,7 +49,7 @@ describe("job identity", () => {
     expect(keysFor("https://boards.greenhouse.io/acme/jobs/123")).toEqual([
       "ats:greenhouse:123",
       "url:https://boards.greenhouse.io/acme/jobs/123",
-      "source:github:simplify/internships:row-1",
+      SOURCE_KEY,
     ]);
     expect(keysFor("https://acme.com/careers?gh_jid=987")[0]).toBe(
       "ats:greenhouse:987",
@@ -67,22 +68,32 @@ describe("job identity", () => {
   });
 
   it("never uses an aggregator URL as an identity", () => {
-    expect(keysFor("https://jobright.ai/jobs/info/abc")).toEqual([
-      "source:github:simplify/internships:row-1",
-    ]);
+    expect(keysFor("https://jobright.ai/jobs/info/abc")).toEqual([SOURCE_KEY]);
   });
 
   it("never uses a shared careers landing page as an identity", () => {
     for (const landing of [
       "https://acme.com/careers",
+      "https://acme.com/careers?year=2026",
       "https://acme.wd1.myworkdayjobs.com/en-US/Careers",
     ]) {
-      expect(keysFor(landing)).toEqual([
-        "source:github:simplify/internships:row-1",
-      ]);
+      expect(keysFor(landing)).toEqual([SOURCE_KEY]);
     }
     expect(keysFor("https://acme.com/careers?jobId=42")[0]).toBe(
       "url:https://acme.com/careers?jobId=42",
+    );
+  });
+
+  it("keeps source key parts apart when they contain colons", () => {
+    const key = (boardKey: string, externalId: string) =>
+      identityKeys({
+        provider: "github",
+        boardKey,
+        externalId,
+        applyUrl: "https://acme.com/careers",
+      }).at(-1);
+    expect(key("acme:engineering", "17")).not.toBe(
+      key("acme", "engineering:17"),
     );
   });
 
@@ -218,6 +229,7 @@ describe("locations", () => {
       "ON-SITE - Austin, TX",
       "Austin, TX (ON SITE)",
       "London, KY",
+      "London, ky",
       "Mexico, MO",
       "Austin, TX or Toronto, ON",
     ]) {

@@ -189,27 +189,39 @@ async function ingestListing(
         })
         .onConflictDoNothing({ target: Job.identityHash })
         .returning();
-      // A concurrent ingest inserted the same identity first; use its row.
-      job = inserted ?? (await findJob(tx, sourceId, listing));
-      if (!job)
-        throw new Error(
-          `Job ${identityKey} vanished after an insert conflict.`,
-        );
-      created = Boolean(inserted);
-    } else {
+      if (inserted) {
+        job = inserted;
+        created = true;
+      } else {
+        // A concurrent ingest inserted the same identity first. Its row may
+        // already be stale or closed, so it goes through the update below.
+        job = await findJob(tx, sourceId, listing);
+        if (!job)
+          throw new Error(
+            `Job ${identityKey} vanished after an insert conflict.`,
+          );
+      }
+    }
+
+    if (!created) {
       // Track and first-seen never change; a reactivated job is not reposted.
-      // A snapshot fetched before the job closed is stale and must not reopen it.
+      // A snapshot fetched before the job closed is stale and must not reopen
+      // it, and one fetched before the job was last seen must not replace its
+      // details with older ones.
       const reopen = job.inactiveAt === null || job.inactiveAt < seenAt;
+      const fresh = seenAt >= job.lastSeenAt;
       await tx
         .update(Job)
         .set({
-          title: listing.title,
-          category: listing.category,
-          applyUrl: preferredApplyUrl(job.applyUrl, listing.applyUrl),
-          description: listing.description ?? job.description,
-          compensation: listing.compensation ?? job.compensation,
-          workArrangement: listing.workArrangement ?? job.workArrangement,
-          postedAt: listing.postedAt ?? job.postedAt,
+          ...(fresh && {
+            title: listing.title,
+            category: listing.category,
+            applyUrl: preferredApplyUrl(job.applyUrl, listing.applyUrl),
+            description: listing.description ?? job.description,
+            compensation: listing.compensation ?? job.compensation,
+            workArrangement: listing.workArrangement ?? job.workArrangement,
+            postedAt: listing.postedAt ?? job.postedAt,
+          }),
           companyId: job.companyId ?? companyId,
           lastSeenAt: sql`greatest(${Job.lastSeenAt}, ${seenAt})`,
           ...(reopen && { active: true, inactiveAt: null }),
@@ -266,17 +278,38 @@ async function ingestListing(
 
 /** Closes this source's observations missing from a full inventory, then their jobs. */
 async function closeMissing(sourceId: string, seenAt: Date) {
+  const missing = and(
+    eq(JobObservation.sourceId, sourceId),
+    isNull(JobObservation.inactiveAt),
+    lt(JobObservation.lastSeenAt, seenAt),
+  );
   return db.transaction(async (tx) => {
+    const candidates = await tx
+      .selectDistinct({ jobId: JobObservation.jobId })
+      .from(JobObservation)
+      .where(missing);
+    if (candidates.length === 0) return 0;
+
+    // Lock the jobs first, in a statement of their own and in id order, like
+    // the listing transactions do. Two sources closing the last two open
+    // observations of one job then run one after the other, so the second
+    // sees the first's closure and deactivates the job.
+    await tx
+      .select({ id: Job.id })
+      .from(Job)
+      .where(
+        inArray(
+          Job.id,
+          candidates.map((row) => row.jobId),
+        ),
+      )
+      .orderBy(Job.id)
+      .for("update");
+
     const closed = await tx
       .update(JobObservation)
       .set({ inactiveAt: seenAt })
-      .where(
-        and(
-          eq(JobObservation.sourceId, sourceId),
-          isNull(JobObservation.inactiveAt),
-          lt(JobObservation.lastSeenAt, seenAt),
-        ),
-      )
+      .where(missing)
       .returning({ jobId: JobObservation.jobId });
     const jobIds = [...new Set(closed.map((row) => row.jobId))];
     if (jobIds.length === 0) return 0;

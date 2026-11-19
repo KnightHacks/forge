@@ -146,7 +146,9 @@ function hasUsEvidence(text: string) {
   return (
     EXPLICIT_US.test(text) ||
     US_ABBREVIATION.test(text) ||
-    US_STATE_CODE.test(text)
+    US_STATE_CODE.test(text) ||
+    // "City, st" in any case: a state in the city/state slot, not prose.
+    parseCityState(text) !== null
   );
 }
 

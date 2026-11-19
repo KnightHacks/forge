@@ -51,10 +51,11 @@ for cron. Nothing in Blade imports it.
 - Candidate keys, strongest first:
   - `ats:greenhouse:<id>`, `ats:lever:<id>`, `ats:ashby:<id>`, `ats:workday:<tenant>:<req>` from the apply URL;
   - `url:<cleaned apply URL>`, only when the URL identifies one posting (a digit
-    in its last path segment or in a query value). A shared careers landing page
+    in its last path segment, or in an ID-named query parameter such as `jobId`). A shared careers landing page
     or an aggregator URL is never an identity. A Workday key needs a
     `_<requisition>` suffix;
-  - `source:<provider>:<boardKey>:<externalId>`.
+  - `source:["<provider>","<boardKey>","<externalId>"]` (JSON, so a `:` inside
+    a part can't make two keys equal).
 - A new job's `identityKey` is the strongest key it has. Lookup tries every key, so
   a later source with a stronger key still finds the job.
 - Lookups compare the hash column (Node SHA-256 of the UTF-8 key, which matches
