@@ -94,8 +94,11 @@ function atsKeys(url: URL): string[] {
     host.includes("myworkdayjobs.com") ||
     host.includes("myworkdaysite.com")
   ) {
+    // Only a posting URL ends in `<title>_<requisition>`; landing pages don't.
     const tenant = host.split(".")[0];
-    const requisition = parts.at(-1)?.split("_").at(-1)?.toLowerCase();
+    const requisition = /_([a-z0-9-]*[0-9][a-z0-9-]*)$/i
+      .exec(parts.at(-1) ?? "")?.[1]
+      ?.toLowerCase();
     if (tenant && requisition) {
       keys.push(`ats:workday:${tenant}:${requisition}`);
     }
@@ -104,19 +107,39 @@ function atsKeys(url: URL): string[] {
 }
 
 /**
+ * Whether a URL points at one posting rather than a careers landing page that
+ * many listings share. A posting URL carries an ID: a digit in its last path
+ * segment or in a query value.
+ */
+function identifiesPosting(url: URL) {
+  const last = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
+  return (
+    /[0-9]/.test(last) ||
+    [...url.searchParams.values()].some((value) => /[0-9]/.test(value))
+  );
+}
+
+/**
  * Every identity a listing can be matched by, strongest first. The first entry
- * becomes a new job's `identityKey`; lookups try all of them.
+ * becomes a new job's `identityKey`; lookups try all of them. The source key
+ * is always last, so there is always at least one.
  */
 export function identityKeys(input: {
   applyUrl: string;
   provider: string;
   boardKey: string;
   externalId: string;
-}): string[] {
-  const keys = atsKeys(new URL(input.applyUrl));
-  // An aggregator URL wraps someone else's posting, so it identifies nothing.
-  if (!isAggregatorUrl(input.applyUrl)) keys.push(`url:${input.applyUrl}`);
-  keys.push(`source:${input.provider}:${input.boardKey}:${input.externalId}`);
+}): [string, ...string[]] {
+  const url = new URL(input.applyUrl);
+  const keys: [string, ...string[]] = [
+    `source:${input.provider}:${input.boardKey}:${input.externalId}`,
+  ];
+  // An aggregator URL wraps someone else's posting, and a landing page is
+  // shared by many postings, so neither identifies a job.
+  if (!isAggregatorUrl(input.applyUrl) && identifiesPosting(url)) {
+    keys.unshift(`url:${input.applyUrl}`);
+  }
+  keys.unshift(...atsKeys(url));
   return keys;
 }
 
@@ -128,8 +151,10 @@ export function identityHash(key: string) {
   return createHash("sha256").update(key, "utf8").digest("hex");
 }
 
-/** Grouping key for a company label; falls back to the raw label when it has no ASCII. */
+/**
+ * Grouping key for a company label, valid for `companyKeySchema`. Empty when
+ * the label has no ASCII letters or digits, which leaves nothing to group by.
+ */
 export function companyKey(label: string) {
-  const normalized = normalizeCompanyName(label) || label.trim().toLowerCase();
-  return normalized.slice(0, 120);
+  return normalizeCompanyName(label).slice(0, 120).trim();
 }

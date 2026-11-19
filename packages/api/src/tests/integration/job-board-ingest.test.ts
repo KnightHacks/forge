@@ -10,12 +10,13 @@ import {
 
 import type { db } from "@forge/db/client";
 import type * as JobBoardSchema from "@forge/db/schemas/job-board";
+import type * as KnightHacksSchema from "@forge/db/schemas/knight-hacks";
 import type { DisposableDatabase } from "@forge/db/testing";
 import type {
   CareerJobListing,
   CareerJobSourceSnapshot,
 } from "@forge/validators";
-import { eq, sql } from "@forge/db";
+import { sql } from "@forge/db";
 import {
   canRunDatabaseTests,
   provisionDisposableDatabase,
@@ -61,6 +62,7 @@ const greenhouse = { provider: "greenhouse", boardKey: "acme", label: "Acme" };
 describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
   let client: typeof db;
   let schema: typeof JobBoardSchema;
+  let Company: typeof KnightHacksSchema.Company;
   let database: DisposableDatabase;
   let ingest: typeof IngestJobSnapshot;
 
@@ -73,19 +75,23 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
     ingest({ ...value, fetchedAt: new Date((clock += 60_000)) }, destinations);
 
   const jobs = () => client.select().from(schema.Job);
+  const observations = () => client.select().from(schema.JobObservation);
+  const board = (listings: CareerJobListing[]) =>
+    snapshot(listings, { source: greenhouse, inventory: "full" });
 
   beforeAll(async () => {
     database = await provisionDisposableDatabase("forge_job_ingest");
     vi.stubEnv("DATABASE_URL", database.url);
     ({ db: client } = await import("@forge/db/client"));
     schema = await import("@forge/db/schemas/job-board");
+    ({ Company } = await import("@forge/db/schemas/knight-hacks"));
     ({ ingestJobSnapshot: ingest } =
       await import("../../utils/job-board/ingest"));
   }, 120_000);
 
   beforeEach(async () => {
     await client.execute(
-      sql`TRUNCATE ${schema.JobLocation}, ${schema.JobObservation}, ${schema.Job}, ${schema.JobSource} CASCADE`,
+      sql`TRUNCATE ${schema.JobLocation}, ${schema.JobObservation}, ${schema.Job}, ${schema.JobSource}, ${Company} CASCADE`,
     );
   });
 
@@ -183,20 +189,65 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
   });
 
   it("TC-014/TC-016 closes jobs missing from a full inventory and reopens them silently", async () => {
-    const board = (listings: CareerJobListing[]) =>
-      snapshot(listings, { source: greenhouse, inventory: "full" });
-    await run(board([listing()]));
+    const destinations = { internship: INTERN_CHANNEL };
+    await run(board([]));
+    await run(board([listing()]), destinations);
+    expect((await jobs())[0]).toMatchObject({ deliveryState: "pending" });
 
     const closed = await run(board([]));
     expect(closed.deactivated).toBe(1);
-    expect((await jobs())[0]).toMatchObject({ active: false });
+    expect((await jobs())[0]?.active).toBe(false);
+    expect((await jobs())[0]?.inactiveAt).not.toBeNull();
+    expect((await observations())[0]?.inactiveAt).not.toBeNull();
 
-    await run(board([listing()]), { internship: INTERN_CHANNEL });
+    await run(board([listing()]), destinations);
     expect((await jobs())[0]).toMatchObject({
       active: true,
       inactiveAt: null,
-      deliveryState: "suppressed",
+      deliveryState: "pending",
     });
+    expect((await observations())[0]?.inactiveAt).toBeNull();
+
+    // Reopened observations can close again.
+    expect((await run(board([]))).deactivated).toBe(1);
+  });
+
+  it("does not let a stale snapshot reopen a job a newer run closed", async () => {
+    await run(board([listing()]));
+    const stale = new Date(clock + 30_000);
+    await run(board([]));
+    await ingest({ ...board([listing()]), fetchedAt: stale }, {});
+    expect((await jobs())[0]?.active).toBe(false);
+    expect((await observations())[0]?.inactiveAt).not.toBeNull();
+  });
+
+  it("keeps stored details when a sparser feed sees the job again", async () => {
+    await run(
+      board([
+        listing({
+          description: "Build compilers.",
+          compensation: "$40/hr",
+          postedAt: new Date(Date.UTC(2026, 9, 1)),
+        }),
+      ]),
+    );
+    await run(snapshot([listing()]));
+    expect((await jobs())[0]).toMatchObject({
+      description: "Build compilers.",
+      compensation: "$40/hr",
+      postedAt: new Date(Date.UTC(2026, 9, 1)),
+    });
+  });
+
+  it("keeps separate jobs that share a careers landing page", async () => {
+    const landing = "https://acme.com/careers";
+    await run(
+      snapshot([
+        listing({ externalId: "1", applyUrl: landing }),
+        listing({ externalId: "2", applyUrl: landing, title: "Data Intern" }),
+      ]),
+    );
+    expect(await jobs()).toHaveLength(2);
   });
 
   it("TC-015 never closes jobs missing from a rolling feed", async () => {
@@ -252,7 +303,6 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
   });
 
   it("TC-019 links an approved Guild company by alias without creating one", async () => {
-    const { Company } = await import("@forge/db/schemas/knight-hacks");
     const [company] = await client
       .insert(Company)
       .values({
@@ -266,18 +316,37 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
     await run(snapshot([listing()]));
     expect((await jobs())[0]?.companyId).toBe(company?.id);
     expect(await client.select().from(Company)).toHaveLength(1);
-    await client.delete(Company).where(eq(Company.id, company?.id ?? ""));
   });
 
-  it("counts rejected listings by reason", async () => {
+  it("counts rejected listings by reason and still ingests the rest", async () => {
+    const malformed = { ...listing({ externalId: "blank" }), title: " " };
     const result = await run(
       snapshot([
         listing({ externalId: "senior", title: "Senior Engineer" }),
         listing({ externalId: "uk", locationTexts: ["London, UK"] }),
+        listing({
+          externalId: "creds",
+          applyUrl: "https://user:pw@acme.com/jobs/9",
+        }),
+        malformed,
+        listing(),
       ]),
     );
-    expect(result.rejected).toEqual({ not_student_role: 1, non_us: 1 });
-    expect(await jobs()).toHaveLength(0);
+    expect(result.rejected).toEqual({
+      not_student_role: 1,
+      non_us: 1,
+      invalid_apply_url: 1,
+      invalid_listing: 1,
+    });
+    expect(result.created).toBe(1);
+    expect(await jobs()).toHaveLength(1);
+  });
+
+  it("rejects a destination that is not a Discord ID before writing", async () => {
+    await expect(
+      run(snapshot([listing()]), { internship: "#internships" }),
+    ).rejects.toThrow(/not a Discord ID/);
+    expect(await client.select().from(schema.JobSource)).toHaveLength(0);
   });
 
   it("TC-NEG-001 rejects an incomplete snapshot before writing", async () => {
@@ -287,17 +356,22 @@ describe.skipIf(!canRunDatabaseTests())("job board ingestion", () => {
     expect(await client.select().from(schema.JobSource)).toHaveLength(0);
   });
 
-  it("TC-NEG-002 creates one job when two sources ingest the same identity at once", async () => {
-    await Promise.all([
-      run(snapshot([listing()])),
-      run(
-        snapshot([listing({ externalId: "gh" })], {
-          source: greenhouse,
-          inventory: "full",
-        }),
+  it("TC-NEG-002 creates one job when several sources ingest the same identity at once", async () => {
+    const sources = ["a", "b", "c", "d"].map((boardKey) => ({
+      provider: "greenhouse",
+      boardKey,
+      label: boardKey,
+    }));
+    // Create the sources first so the runs reach the job insert together.
+    await Promise.all(sources.map((source) => run(snapshot([], { source }))));
+    const results = await Promise.all(
+      sources.map((source) =>
+        run(snapshot([listing({ externalId: source.boardKey })], { source })),
       ),
-    ]);
+    );
+    expect(results.reduce((sum, result) => sum + result.created, 0)).toBe(1);
+    expect(results.reduce((sum, result) => sum + result.updated, 0)).toBe(3);
     expect(await jobs()).toHaveLength(1);
-    expect(await client.select().from(schema.JobObservation)).toHaveLength(2);
+    expect(await observations()).toHaveLength(4);
   });
 });

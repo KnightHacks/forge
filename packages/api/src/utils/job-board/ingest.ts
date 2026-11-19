@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { JOB_BOARD } from "@forge/consts";
 import type { CareerJobSourceSnapshot } from "@forge/validators";
 import { and, eq, inArray, isNull, lt, notExists, sql } from "@forge/db";
@@ -10,14 +12,14 @@ import {
 } from "@forge/db/schemas/job-board";
 import { Company } from "@forge/db/schemas/knight-hacks";
 import {
+  careerJobListingSchema,
   careerJobSourceSnapshotSchema,
-  normalizeCompanyName,
 } from "@forge/validators";
 
 import type { TransactionDb } from "../db";
 import type { ListingRejection, PreparedListing } from "./listing";
 import { prepareListing } from "./listing";
-import { identityHash, preferredApplyUrl } from "./normalize";
+import { companyKey, identityHash, preferredApplyUrl } from "./normalize";
 
 /** Discord channel per track, read by cron from the Career config keys (#648). */
 export type JobDestinations = Partial<
@@ -34,6 +36,12 @@ export interface JobIngestResult {
 }
 
 const DISCORD_ID = /^[0-9]{17,20}$/;
+
+// The snapshot envelope is checked whole; each listing is checked on its own
+// so one malformed listing is counted as rejected instead of failing the board.
+const snapshotEnvelopeSchema = careerJobSourceSnapshotSchema.extend({
+  listings: z.array(z.unknown()),
+});
 
 /** A hash collision on a different raw key: never overwrite, always surface. */
 class IdentityMismatchError extends Error {}
@@ -76,12 +84,14 @@ async function loadCompanyIds() {
   const ids = new Map<string, string>();
   for (const company of companies) {
     for (const alias of company.aliases) {
-      ids.set(normalizeCompanyName(alias), company.id);
+      const key = companyKey(alias);
+      if (key) ids.set(key, company.id);
     }
   }
   // Display names win over aliases that collide with them.
   for (const company of companies) {
-    ids.set(company.normalizedDisplayName, company.id);
+    const key = companyKey(company.normalizedDisplayName);
+    if (key) ids.set(key, company.id);
   }
   return ids;
 }
@@ -157,7 +167,7 @@ async function ingestListing(
               discordChannelId: channel,
             }
           : {};
-      const identityKey = listing.identityKeys[0] ?? listing.externalId;
+      const identityKey = listing.identityKeys[0];
       const [inserted] = await tx
         .insert(Job)
         .values({
@@ -188,6 +198,8 @@ async function ingestListing(
       created = Boolean(inserted);
     } else {
       // Track and first-seen never change; a reactivated job is not reposted.
+      // A snapshot fetched before the job closed is stale and must not reopen it.
+      const reopen = job.inactiveAt === null || job.inactiveAt < seenAt;
       await tx
         .update(Job)
         .set({
@@ -200,8 +212,7 @@ async function ingestListing(
           postedAt: listing.postedAt ?? job.postedAt,
           companyId: job.companyId ?? companyId,
           lastSeenAt: sql`greatest(${Job.lastSeenAt}, ${seenAt})`,
-          active: true,
-          inactiveAt: null,
+          ...(reopen && { active: true, inactiveAt: null }),
         })
         .where(eq(Job.id, job.id));
     }
@@ -225,7 +236,8 @@ async function ingestListing(
           sourceData: listing.sourceData,
           postedAt: listing.postedAt,
           lastSeenAt: sql`greatest(${JobObservation.lastSeenAt}, ${seenAt})`,
-          inactiveAt: null,
+          // Same stale-snapshot rule as the job: reopen only if seen after closing.
+          inactiveAt: sql`case when ${JobObservation.inactiveAt} < ${seenAt} then null else ${JobObservation.inactiveAt} end`,
         },
       });
 
@@ -302,7 +314,7 @@ export async function ingestJobSnapshot(
   input: CareerJobSourceSnapshot,
   destinations: JobDestinations,
 ): Promise<JobIngestResult> {
-  const snapshot = careerJobSourceSnapshotSchema.parse(input);
+  const snapshot = snapshotEnvelopeSchema.parse(input);
   if (!snapshot.complete) {
     throw new Error(
       `Job source ${snapshot.source.provider}:${snapshot.source.boardKey} sent an incomplete snapshot.`,
@@ -332,7 +344,11 @@ export async function ingestJobSnapshot(
   };
 
   for (const raw of snapshot.listings) {
-    const prepared = prepareListing(raw, source);
+    const parsed = careerJobListingSchema.safeParse(raw);
+    // A rejected listing counts as unseen, so a full inventory closes its job.
+    const prepared = parsed.success
+      ? prepareListing(parsed.data, source)
+      : { ok: false as const, reason: "invalid_listing" as const };
     if (!prepared.ok) {
       result.rejected[prepared.reason] =
         (result.rejected[prepared.reason] ?? 0) + 1;

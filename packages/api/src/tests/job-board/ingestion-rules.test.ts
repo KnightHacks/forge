@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { CareerJobListing } from "@forge/validators";
-import { careerJobSourceSnapshotSchema } from "@forge/validators";
+import {
+  careerJobSourceSnapshotSchema,
+  companyKeySchema,
+} from "@forge/validators";
 
 import { findUsCity } from "../../utils/career/us-cities";
 import {
@@ -9,9 +12,13 @@ import {
   classifyTrack,
 } from "../../utils/job-board/classify";
 import { prepareListing } from "../../utils/job-board/listing";
-import { parseLocation } from "../../utils/job-board/locations";
+import {
+  isForeignLocation,
+  parseLocation,
+} from "../../utils/job-board/locations";
 import {
   cleanApplyUrl,
+  companyKey,
   identityHash,
   identityKeys,
   preferredApplyUrl,
@@ -65,6 +72,20 @@ describe("job identity", () => {
     ]);
   });
 
+  it("never uses a shared careers landing page as an identity", () => {
+    for (const landing of [
+      "https://acme.com/careers",
+      "https://acme.wd1.myworkdayjobs.com/en-US/Careers",
+    ]) {
+      expect(keysFor(landing)).toEqual([
+        "source:github:simplify/internships:row-1",
+      ]);
+    }
+    expect(keysFor("https://acme.com/careers?jobId=42")[0]).toBe(
+      "url:https://acme.com/careers?jobId=42",
+    );
+  });
+
   it("TC-002 strips tracking params, fragments, and a trailing /apply", () => {
     expect(
       cleanApplyUrl(
@@ -80,6 +101,12 @@ describe("job identity", () => {
     const aggregator = "https://simplify.jobs/p/1";
     expect(preferredApplyUrl(aggregator, employer)).toBe(employer);
     expect(preferredApplyUrl(employer, aggregator)).toBe(employer);
+  });
+
+  it("builds company keys that company filters accept", () => {
+    const long = `${"a".repeat(119)} corp`;
+    expect(companyKeySchema.safeParse(companyKey(long)).success).toBe(true);
+    expect(companyKey("株式会社")).toBe("");
   });
 
   it("hashes keys as SHA-256 hex of UTF-8", () => {
@@ -151,6 +178,9 @@ describe("locations", () => {
       state: "TX",
     });
     expect(parseLocation("Remote - US")).toMatchObject({ kind: "remote_us" });
+    expect(parseLocation("Remote - join us")).toMatchObject({
+      kind: "unknown",
+    });
     expect(parseLocation("Remote")).toMatchObject({
       kind: "unknown",
       sourceText: "Remote",
@@ -182,6 +212,21 @@ describe("locations", () => {
       kind: "city",
     });
   });
+
+  it("keeps U.S. places that look foreign", () => {
+    for (const text of [
+      "ON-SITE - Austin, TX",
+      "Austin, TX (ON SITE)",
+      "London, KY",
+      "Mexico, MO",
+      "Austin, TX or Toronto, ON",
+    ]) {
+      expect(isForeignLocation(text)).toBe(false);
+    }
+    for (const text of ["Toronto, ON", "London, UK", "Remote - Canada"]) {
+      expect(isForeignLocation(text)).toBe(true);
+    }
+  });
 });
 
 describe("prepared listing", () => {
@@ -192,6 +237,12 @@ describe("prepared listing", () => {
       ok: false,
       reason: "not_student_role",
     });
+  });
+
+  it("rejects a company label with nothing to group by", () => {
+    expect(
+      prepareListing(listing({ companyLabel: "株式会社" }), source),
+    ).toEqual({ ok: false, reason: "invalid_listing" });
   });
 
   it("keeps a listing with no locations", () => {

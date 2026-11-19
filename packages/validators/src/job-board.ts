@@ -292,7 +292,11 @@ export const careerJobListingSchema = z
     title: nonBlankText(500),
     applyUrl: z.url({ protocol: /^https?$/ }).max(4_096),
     postedAt: z.date().optional(),
-    description: z.string().max(20_000).optional(),
+    // Truncated, not rejected: long HTML job bodies are common on ATS boards.
+    description: z
+      .string()
+      .transform((value) => value.slice(0, 20_000))
+      .optional(),
     compensation: z.string().trim().max(200).optional(),
     locationTexts: z.array(z.string().trim().min(1).max(500)).max(100),
     sourceUrl: z.url({ protocol: /^https?$/ }).max(4_096),

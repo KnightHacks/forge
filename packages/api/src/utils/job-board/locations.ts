@@ -67,10 +67,12 @@ const CITY_ALIASES: Record<string, { city: string; state: string }> = {
 };
 
 const EXPLICIT_US = new RegExp(
-  String.raw`\bUnited States\b|\bUSA\b|\bU\.S\.(?=\s|$|[,)\]-])|\bUS\b|\bNYC\b|\bSF\b|\b(?:${STATE_NAMES})\b`,
+  String.raw`\bUnited States\b|\bUSA\b|\bNYC\b|\bSF\b|\b(?:${STATE_NAMES})\b`,
   "i",
 );
-// Case-sensitive: case-insensitive `IN`/`OR` would turn prose into U.S. evidence.
+// Case-sensitive: a case-insensitive `us`, `IN` or `OR` would turn prose
+// ("join us") into U.S. evidence.
+const US_ABBREVIATION = /\bUS\b|\bU\.S\.(?=\s|$|[,)\]-])/;
 const US_STATE_CODE = new RegExp(
   String.raw`(?:,\s*|\b)(?:${[...STATE_CODES].join("|")})\b`,
 );
@@ -84,8 +86,8 @@ const FOREIGN = new RegExp(
     String.raw`South Africa|Argentina|Chile|Colombia|Peru)\b`,
   "i",
 );
-const CANADIAN_PROVINCE =
-  /(?:,\s*|\b)(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\b/;
+// Only after a comma: a bare `ON` is usually "ON-SITE", not Ontario.
+const CANADIAN_PROVINCE = /,\s*(?:AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\b/;
 const COUNTRY_SUFFIX = /,?\s*\b(?:united states(?: of america)?|usa|us)\.?$/i;
 const COUNTRY_PREFIX = /^(?:united states|usa|us)\s*[,-]\s*/i;
 
@@ -140,9 +142,22 @@ function parseCityState(text: string) {
   return null;
 }
 
-/** Whether a location's text is explicitly outside the U.S. */
+function hasUsEvidence(text: string) {
+  return (
+    EXPLICIT_US.test(text) ||
+    US_ABBREVIATION.test(text) ||
+    US_STATE_CODE.test(text)
+  );
+}
+
+/**
+ * Whether a location's text is explicitly outside the U.S. Any U.S. evidence
+ * wins, so "London, KY" and "Austin, TX or Toronto, ON" stay in scope.
+ */
 export function isForeignLocation(text: string) {
-  return FOREIGN.test(text) || CANADIAN_PROVINCE.test(text);
+  return (
+    (FOREIGN.test(text) || CANADIAN_PROVINCE.test(text)) && !hasUsEvidence(text)
+  );
 }
 
 /**
@@ -159,8 +174,7 @@ export function parseLocation(sourceText: string): ParsedLocation {
   };
 
   if (/\bremote\b/i.test(text)) {
-    const usEvidence = EXPLICIT_US.test(text) || US_STATE_CODE.test(text);
-    return usEvidence ? { ...unknown, kind: "remote_us" } : unknown;
+    return hasUsEvidence(text) ? { ...unknown, kind: "remote_us" } : unknown;
   }
 
   const stripped = text

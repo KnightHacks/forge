@@ -1,6 +1,6 @@
 # Career job ingestion Status
 
-Current phase: Implemented, awaiting human review (not committed)
+Current phase: Implemented; review fixes applied, awaiting human review (fixes not committed)
 
 > This file is the maintained progress tracker for the feature/change. Keep it current whenever decisions, tasks, validation, or open questions change.
 
@@ -11,10 +11,13 @@ Current phase: Implemented, awaiting human review (not committed)
 - 2026-11-13: Listings whose only locations are explicitly outside the U.S. are rejected. Location text that can't be parsed is kept as `unknown`.
 - 2026-11-13: Before a source's first successful run finishes, its jobs stay `suppressed`. After that, new jobs become `pending` with a frozen track and the channel that cron passes in. A track with no channel stays `suppressed`.
 - 2026-11-17: A closed job that reappears becomes active again with no second Discord post, following #647's one-post-per-job rule. The user first picked "repost", then chose to follow #647 because of spam risk from flaky boards.
-- 2026-11-17: When sources disagree on track, the track from the first accepted listing stays unless employer evidence says otherwise. A changed track never causes a repost.
+- 2026-11-17: When sources disagree on track, the track from the first accepted listing stays. A changed track never causes a repost.
 - 2026-11-17: Title, description and compensation update from the latest listing. Apply links prefer the employer's own page over an aggregator. Track and first-seen date never change.
 - 2026-11-17: No officer view of ingest results. Ingestion returns counts, including rejections by reason, to cron, and #653 decides how to report them.
 - 2026-11-17: Build on the `CareerJobSourceSnapshot` shape from the #652 branch instead of a separate draft.
+- 2026-11-19: forge-review (standard) fixes: landing-page and generic Workday URLs are no identity; stale snapshots don't reopen closed jobs; U.S. evidence beats foreign words; each listing is validated alone (`invalid_listing`); long descriptions truncate; company keys always pass `companyKeySchema`.
+- 2026-11-19: A listing rejected this run counts as unseen, so a full inventory closes its job.
+- 2026-11-19: Known limit: one identity key per job. An aggregator-first job and a later employer listing of the same posting aren't matched. A per-job key table would fix it (schema change, out of #649).
 
 ## Open questions
 

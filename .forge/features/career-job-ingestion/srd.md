@@ -29,9 +29,11 @@ for cron. Nothing in Blade imports it.
    `careerJobSourceSnapshotSchema` validator checks.
 2. Cron reads channel IDs from the #648 config keys and calls
    `ingestJobSnapshot(snapshot, destinations)`.
-3. Ingestion rejects the snapshot if `complete` is false. Otherwise it finds or
+3. Ingestion rejects the snapshot if `complete` is false, or if the snapshot's
+   envelope (source, fetchedAt, inventory) is invalid. Otherwise it finds or
    creates the `JobSource` row by (provider, boardKey).
-4. Each listing goes through a pure prepare step: clean the apply URL, decide the
+4. Each listing is validated on its own (an invalid one is counted as
+   `invalid_listing`, and the rest still ingest), then goes through a pure prepare step: clean the apply URL, decide the
    track, parse locations, classify the category, and build the company key and
    the identity keys. A rejected listing is counted by reason.
 5. Each accepted listing then runs in its own transaction:
@@ -41,14 +43,17 @@ for cron. Nothing in Blade imports it.
    - Refresh the job's fields and add any new location rows.
 6. If `inventory = "full"`, observations missing from this run close. A job with
    no open observations goes inactive.
-7. A successful run sets `baselineCompletedAt` (if unset), `lastSuccessAt`, and
-   `lastAttemptAt`.
+7. A successful run sets `baselineCompletedAt` (if unset) and `lastSuccessAt`.
+   Attempts and errors (`lastAttemptAt`, `lastError`) belong to #653.
 
 ### Identity
 
 - Candidate keys, strongest first:
   - `ats:greenhouse:<id>`, `ats:lever:<id>`, `ats:ashby:<id>`, `ats:workday:<tenant>:<req>` from the apply URL;
-  - `url:<cleaned apply URL>`;
+  - `url:<cleaned apply URL>`, only when the URL identifies one posting (a digit
+    in its last path segment or in a query value). A shared careers landing page
+    or an aggregator URL is never an identity. A Workday key needs a
+    `_<requisition>` suffix;
   - `source:<provider>:<boardKey>:<externalId>`.
 - A new job's `identityKey` is the strongest key it has. Lookup tries every key, so
   a later source with a stronger key still finds the job.
@@ -58,6 +63,10 @@ for cron. Nothing in Blade imports it.
 - A job insert uses `ON CONFLICT (identity_hash) DO NOTHING` and selects the row
   again, so two concurrent ingests produce one job.
 - Company and title never form an identity.
+- Known limit: a job stores only one identity key, taken from its first listing.
+  If an aggregator listing (source key only) creates the job and an employer
+  board later lists the same posting, they don't match, and the job is posted
+  twice. Fixing that needs a per-job key table (a schema change); not in #649.
 
 ### Field rules
 
@@ -72,7 +81,10 @@ for cron. Nothing in Blade imports it.
   normalized alias, following `mergedIntoCompanyId`. Ingestion never inserts a
   `Company`.
 - A job that reappears gets `active = true` and `inactiveAt = null`. Its delivery
-  state stays as it was, so it isn't posted again.
+  state stays as it was, so it isn't posted again. A snapshot fetched before the
+  job (or observation) closed is stale and doesn't reopen it.
+- A listing rejected this run counts as unseen, so a full inventory closes its
+  job.
 
 ### Delivery state on insert
 
@@ -86,7 +98,12 @@ for cron. Nothing in Blade imports it.
 - `not_student_role`: there's no adapter track, the title has no internship or
   new-grad signal, or the title carries a seniority signal (senior, staff,
   principal, director, vp, architect).
-- `non_us`: every location is explicitly outside the U.S.
+- `non_us`: every location is explicitly outside the U.S. Any U.S. evidence (a
+  state code, state name, or "US") keeps a text in scope, so "London, KY" and
+  "ON-SITE - Austin, TX" stay. A province code counts only after a comma.
+- `invalid_apply_url`: the URL has credentials or isn't http(s).
+- `invalid_listing`: the listing fails the schema, or its company label has no
+  ASCII letters or digits to build a company key from.
 - No locations, or unparsed text, keeps the job with an `unknown` location.
 
 ## tRPC/API behavior
@@ -101,8 +118,10 @@ No procedures. `ingestJobSnapshot` returns:
 
 Add `careerJobSourceSnapshotSchema` and its inferred type to
 `packages/validators/src/job-board.ts`. The fields are the ones agreed in #633:
-`source`, `fetchedAt`, `complete`, `inventory`, and `listings[]` with an optional
-`track`.
+`source`, `fetchedAt`, `complete`, `inventory`, and `listings[]` with optional
+`track`, `postedAt`, `description`, and `compensation`. Listings are strict (an
+unknown field rejects that listing). A description longer than 20,000
+characters is truncated, not rejected.
 
 ## Data / migration / compatibility
 

@@ -12,13 +12,14 @@ import {
 import { cleanApplyUrl, companyKey, identityKeys } from "./normalize";
 
 export type ListingRejection =
+  | "invalid_listing"
   | "invalid_apply_url"
   | "not_student_role"
   | "non_us";
 
 export interface PreparedListing {
   externalId: string;
-  identityKeys: string[];
+  identityKeys: [string, ...string[]];
   track: JOB_BOARD.JobTrack;
   category: JOB_BOARD.JobCategory;
   companyLabel: string;
@@ -43,6 +44,9 @@ export function prepareListing(
   | { ok: false; reason: ListingRejection } {
   const applyUrl = cleanApplyUrl(listing.applyUrl);
   if (!applyUrl) return { ok: false, reason: "invalid_apply_url" };
+  // A label with no ASCII letters or digits leaves no key to group or filter by.
+  const key = companyKey(listing.companyLabel);
+  if (!key) return { ok: false, reason: "invalid_listing" };
 
   const track = classifyTrack(listing.title, listing.track);
   if (!track) return { ok: false, reason: "not_student_role" };
@@ -68,7 +72,7 @@ export function prepareListing(
       track,
       category: classifyCategory(listing.title, description),
       companyLabel: listing.companyLabel,
-      companyKey: companyKey(listing.companyLabel),
+      companyKey: key,
       title: listing.title,
       applyUrl,
       description: description || null,
