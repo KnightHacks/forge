@@ -54,6 +54,22 @@ export function searchUsCities(query: string, limit: number) {
     .slice(0, Math.max(0, limit));
 }
 
+// A few Census places share a name within a state; the first listed wins.
+const citiesByNameAndState = new Map<string, UsCity>();
+for (const city of cities) {
+  const key = `${normalizeSearch(city.name)}|${city.state}`;
+  if (!citiesByNameAndState.has(key)) citiesByNameAndState.set(key, city);
+}
+
+/** Exact lookup by city name and two-letter state code, ignoring case/punctuation. */
+export function findUsCity(name: string, state: string) {
+  return (
+    citiesByNameAndState.get(
+      `${normalizeSearch(name)}|${state.toUpperCase()}`,
+    ) ?? null
+  );
+}
+
 export function getUsCity(key: string) {
   return citiesByKey.get(key) ?? null;
 }

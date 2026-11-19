@@ -276,3 +276,59 @@ export type AlertPreferenceInput = z.infer<
   typeof alertPreferenceCreateInputSchema
 >;
 export type DigestOptInInput = z.infer<typeof digestOptInInputSchema>;
+
+const nonBlankText = (max: number) => z.string().trim().min(1).max(max);
+
+/**
+ * One parsed listing as a cron source adapter hands it to ingestion. `track` is
+ * set only when the source itself is scoped to one track (e.g. a GitHub
+ * internship list); otherwise the API classifies it from the title.
+ */
+export const careerJobListingSchema = z
+  .object({
+    externalId: nonBlankText(2_048),
+    track: jobTrackSchema.optional(),
+    companyLabel: nonBlankText(200),
+    title: nonBlankText(500),
+    applyUrl: z.url({ protocol: /^https?$/ }).max(4_096),
+    postedAt: z.date().optional(),
+    // Truncated, not rejected: long HTML job bodies are common on ATS boards.
+    description: z
+      .string()
+      .transform((value) => value.slice(0, 20_000))
+      .optional(),
+    compensation: z.string().trim().max(200).optional(),
+    locationTexts: z.array(z.string().trim().min(1).max(500)).max(100),
+    sourceUrl: z.url({ protocol: /^https?$/ }).max(4_096),
+    sourceData: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
+/**
+ * Contract between cron source adapters (#652) and `@forge/api` ingestion
+ * (#649), agreed in #633. `complete` means the whole response parsed;
+ * `inventory` says whether missing listings may be closed.
+ */
+export const careerJobSourceSnapshotSchema = z
+  .object({
+    source: z
+      .object({
+        provider: z
+          .string()
+          .max(64)
+          .regex(/^[a-z][a-z0-9_]*$/),
+        boardKey: nonBlankText(2_048),
+        label: nonBlankText(200),
+      })
+      .strict(),
+    fetchedAt: z.date(),
+    complete: z.boolean(),
+    inventory: z.enum(JOB_BOARD.JOB_SOURCE_INVENTORIES),
+    listings: z.array(careerJobListingSchema),
+  })
+  .strict();
+
+export type CareerJobListing = z.infer<typeof careerJobListingSchema>;
+export type CareerJobSourceSnapshot = z.infer<
+  typeof careerJobSourceSnapshotSchema
+>;
