@@ -16,13 +16,14 @@ Current phase: Implemented; review fixes applied, awaiting human review (fixes n
 - 2026-11-17: No officer view of ingest results. Ingestion returns counts, including rejections by reason, to cron, and #653 decides how to report them.
 - 2026-11-17: Build on the `CareerJobSourceSnapshot` shape from the #652 branch instead of a separate draft.
 - 2026-11-19: forge-review (standard) fixes: landing-page and generic Workday URLs are no identity; stale snapshots don't reopen closed jobs; U.S. evidence beats foreign words; each listing is validated alone (`invalid_listing`); long descriptions truncate; company keys always pass `companyKeySchema`.
+- 2026-11-19: Spec amended after review: aggregator-first duplicate limit, null-safe detail updates, and four new acceptance criteria (landing-page links, rejected listings close, stale runs don't reopen, malformed listings don't block a source).
 - 2026-11-19: A listing rejected this run counts as unseen, so a full inventory closes its job.
-- 2026-11-19: Known limit: one identity key per job. An aggregator-first job and a later employer listing of the same posting aren't matched. A per-job key table would fix it (schema change, out of #649).
+- 2026-11-19: Known limit: an aggregator-first job and a later employer listing of the same posting share no ID, so they aren't matched. No change in #649 fixes it: a per-job key table wouldn't help, and in-place key upgrades rarely fire because #652 uses the apply URL as `externalId` when a row has no ID. Mitigations to propose: employer links from adapters (#652) and a company + title posting guard (#654).
 
 ## Open questions
 
 - Resolved 2026-11-17: #652 owner replied "LGTM" to the contract (https://github.com/KnightHacks/forge/issues/633#issuecomment-6961617503): split `complete` into `complete` plus `inventory: "full" | "rolling"`, look up or create `JobSource` by provider and boardKey, make `track` optional, and move the zod schema into `@forge/validators`.
-- Should upstream's "recent catch-up" posting of jobs from the first run be ported? Currently skipped.
+- Resolved 2026-11-19: upstream's "recent catch-up" posting of first-run jobs is not ported; the baseline stays fully silent, matching #649's "silent first-run baseline".
 
 ## Task list
 

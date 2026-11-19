@@ -63,10 +63,13 @@ for cron. Nothing in Blade imports it.
 - A job insert uses `ON CONFLICT (identity_hash) DO NOTHING` and selects the row
   again, so two concurrent ingests produce one job.
 - Company and title never form an identity.
-- Known limit: a job stores only one identity key, taken from its first listing.
-  If an aggregator listing (source key only) creates the job and an employer
-  board later lists the same posting, they don't match, and the job is posted
-  twice. Fixing that needs a per-job key table (a schema change); not in #649.
+- Known limit: if an aggregator listing (source key only) creates a job and an
+  employer board later lists the same posting, the two share no ID, so they
+  don't match and the job is posted twice. Storing more keys per job wouldn't
+  help, and upgrading a job's key in place rarely fires because #652 falls back
+  to the apply URL as `externalId`. Mitigations live outside #649: adapters
+  send the employer link when a feed row has one (#652), and a company + title
+  posting guard (#654, needs lead sign-off).
 
 ### Field rules
 
@@ -151,4 +154,4 @@ None.
 
 ## Open questions
 
-- Should upstream's recent catch-up of baseline jobs be ported? Currently skipped.
+- Resolved 2026-11-19: upstream's recent catch-up of baseline jobs is not ported.

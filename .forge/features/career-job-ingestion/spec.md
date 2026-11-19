@@ -1,6 +1,6 @@
 # Career job ingestion
 
-Status: Approved (2026-11-17)
+Status: Approved (2026-11-17), amended 2026-11-19 after review (pending approval)
 
 ## User-facing purpose
 
@@ -58,7 +58,8 @@ and apply link. Adds no UI of its own.
 
 ## Acceptance criteria
 
-- The same opening from two sources appears as one job.
+- The same opening from two sources appears as one job, except when the first
+  listing has only an aggregator link (known limit, see SRD).
 - Rerunning an unchanged source changes nothing a member can see.
 - Listings that are neither internship nor new grad, or that are only outside
   the U.S., never appear.
@@ -69,11 +70,19 @@ and apply link. Adds no UI of its own.
 - A closed job that reappears is active again, with no second Discord post.
 - When sources disagree on track, the first accepted track stays, and a track
   change never causes another post.
-- Title, description, posted date and compensation follow the latest listing.
-  The employer's own apply link wins over an aggregator's.
+- Title, description, posted date and compensation follow the latest listing
+  that provides them; a feed without them doesn't erase them. The employer's own
+  apply link wins over an aggregator's.
+- Two postings that share a generic careers link stay two jobs.
+- A job whose listing no longer qualifies (for example, its title becomes
+  "Senior…") goes inactive on a full inventory.
+- An older, delayed run never reopens a job a newer run closed.
+- One malformed listing doesn't block the rest of its source.
 - A new source's first run posts nothing. New jobs after that are queued for
   Discord once, and only if that track has a channel configured.
 
 ## Open questions
 
-- Should upstream's "recent catch-up" of baseline jobs be ported? Currently skipped.
+- None. Resolved 2026-11-19: upstream's "recent catch-up" of baseline jobs is not
+  ported. A new source's first run stays fully silent; those jobs are still
+  searchable.
