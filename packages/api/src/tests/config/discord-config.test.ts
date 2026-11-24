@@ -228,7 +228,7 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
     expect(result.rows[kinds.indexOf("role")]?.key).toBe("officer_role");
   });
 
-  it("marks the Career and other unread keys with an empty consumer list", async () => {
+  it("shows the digest role consumers and keeps unread keys empty", async () => {
     mocks.permissionRows = [{ permissions: permissionBitstring("IS_OFFICER") }];
 
     const result = await createCaller().list();
@@ -244,8 +244,6 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
       "admin_role",
       "volunteer_role",
       "vip_role",
-      "career_internship_digest_role",
-      "career_new_grad_digest_role",
     ]);
     expect(
       result.rows
@@ -254,6 +252,8 @@ describe("discordConfig procedures (TC-002, TC-019)", () => {
         .sort(),
     ).toEqual([
       "alumni_role",
+      "career_internship_digest_role",
+      "career_new_grad_digest_role",
       "design_director_role",
       "development_director_role",
       "guild",
