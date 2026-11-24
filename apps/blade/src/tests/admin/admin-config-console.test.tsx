@@ -377,8 +377,6 @@ describe("TC-004: inert keys are structurally distinct from live keys", () => {
       "admin_role",
       "volunteer_role",
       "vip_role",
-      "career_internship_digest_role",
-      "career_new_grad_digest_role",
     ]);
     expect([...DISCORD.LIVE_CONFIG_KEYS]).toEqual([
       "guild",
@@ -391,6 +389,8 @@ describe("TC-004: inert keys are structurally distinct from live keys", () => {
       "sponsorship_director_role",
       "workshops_director_role",
       "projects_mentorship_director_role",
+      "career_internship_digest_role",
+      "career_new_grad_digest_role",
     ]);
   });
 
