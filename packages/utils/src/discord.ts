@@ -41,6 +41,31 @@ export async function removeRoleFromMember(
   );
 }
 
+/** Traverse guild member pages and propagate incomplete reads to callers. */
+export async function* listGuildMemberPages(guildId: string) {
+  const limit = 1000;
+  let after: string | undefined;
+  while (true) {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (after) params.set("after", after);
+    const members = (await api.get(
+      `${Routes.guildMembers(guildId)}?${params.toString()}`,
+    )) as APIGuildMember[];
+
+    if (members.length < limit) {
+      yield members;
+      return;
+    }
+
+    const next = members.at(-1)?.user.id;
+    if (!next || (after && BigInt(next) <= BigInt(after))) {
+      throw new Error("Discord guild member pagination did not advance.");
+    }
+    yield members;
+    after = next;
+  }
+}
+
 async function addMemberToServer(
   discordUserId: string,
   accessToken: string,

@@ -88,8 +88,12 @@ export const CONFIG_KEY_CONSUMERS = {
   career_internship_channel: [],
   career_new_grad_channel: [],
   career_source_health_channel: [],
-  career_internship_digest_role: [],
-  career_new_grad_digest_role: [],
+  career_internship_digest_role: [
+    "Internship digest subscriptions and role repair",
+  ],
+  career_new_grad_digest_role: [
+    "New-grad digest subscriptions and role repair",
+  ],
   alumni_role: ["Nightly alumni grant/revoke cron"],
   officer_role: [],
   admin_role: [],

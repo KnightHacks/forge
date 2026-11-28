@@ -103,13 +103,8 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
     try {
       const guildId = await getKnightHacksGuildId();
       const usersByRole = new Map<string, Set<string>>();
-      let after: string | undefined;
-      for (let page = 0; page < 100; page += 1) {
-        const params = new URLSearchParams({ limit: "1000" });
-        if (after) params.set("after", after);
-        const members = (await discord.api.get(
-          `${Routes.guildMembers(guildId)}?${params.toString()}`,
-        )) as APIGuildMember[];
+      let pages = 0;
+      for await (const members of discord.listGuildMemberPages(guildId)) {
         for (const member of members) {
           const userId = member.user.id;
           for (const roleId of member.roles) {
@@ -118,9 +113,7 @@ export const liveRoleDiscordGateway: RoleDiscordGateway = {
             usersByRole.set(roleId, users);
           }
         }
-        if (members.length < 1000) break;
-        after = members.at(-1)?.user.id;
-        if (!after) break;
+        if (++pages === 100) break;
       }
       const counts = Object.fromEntries(
         [...usersByRole].map(([roleId, users]) => [roleId, users.size]),
