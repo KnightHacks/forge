@@ -140,9 +140,53 @@ const applicationNotesSchema = z
   )
   .transform((value) => (value.trim().length > 0 ? value : null));
 
+const applicationInterviewLabelSchema = z
+  .string()
+  .trim()
+  .max(
+    JOB_BOARD.MAX_APPLICATION_INTERVIEW_LABEL_LENGTH,
+    `Use ${JOB_BOARD.MAX_APPLICATION_INTERVIEW_LABEL_LENGTH} characters or fewer.`,
+  )
+  .transform((value) => (value.length > 0 ? value : null));
+
+/**
+ * When the stage change actually happened, for progress logged after the fact.
+ * Omit it to use the time of saving.
+ */
+const applicationOccurredAtSchema = z.coerce
+  .date()
+  .refine(
+    (value) => value.getTime() <= Date.now(),
+    "Use a date that is not in the future.",
+  );
+
+const INTERVIEW_ONLY_FIELDS = [
+  ["round", "Rounds apply only while interviewing."],
+  ["interviewLabel", "Interview labels apply only while interviewing."],
+] as const;
+
+/** Rejects a round or interview label on a stage that is known not to allow one. */
+function checkInterviewOnlyFields(
+  input: {
+    interviewLabel?: string | null;
+    round?: number | null;
+    stage?: JOB_BOARD.ApplicationStage;
+  },
+  context: z.RefinementCtx,
+) {
+  if (input.stage === undefined || stageAllowsRound(input.stage)) return;
+  for (const [field, message] of INTERVIEW_ONLY_FIELDS) {
+    if (input[field] != null) {
+      context.addIssue({ code: "custom", message, path: [field] });
+    }
+  }
+}
+
 export const applicationSaveInputSchema = z
   .object({
+    interviewLabel: applicationInterviewLabelSchema.nullable().optional(),
     jobId: z.string().uuid(),
+    occurredAt: applicationOccurredAtSchema.optional(),
     privateNotes: applicationNotesSchema.nullable().optional(),
     round: applicationRoundSchema.nullable().optional(),
     stage: applicationStageSchema.default("saved"),
@@ -151,28 +195,24 @@ export const applicationSaveInputSchema = z
     ),
   })
   .strict()
-  .superRefine((input, context) => {
-    if (input.round != null && !stageAllowsRound(input.stage)) {
-      context.addIssue({
-        code: "custom",
-        message: "Rounds apply only while interviewing.",
-        path: ["round"],
-      });
-    }
-  })
+  .superRefine(checkInterviewOnlyFields)
   .transform((input) => ({
     ...input,
+    interviewLabel: input.interviewLabel ?? null,
     privateNotes: input.privateNotes ?? null,
     round: input.round ?? null,
   }));
 
 /**
- * Partial update. When `stage` is omitted the API checks `round` against the
- * stored stage, so this schema can only reject combinations it can see.
+ * Partial update. When `stage` is omitted the API checks `round` and
+ * `interviewLabel` against the stored stage, so this schema can only reject
+ * combinations it can see.
  */
 export const applicationUpdateInputSchema = z
   .object({
     applicationId: z.string().uuid(),
+    interviewLabel: applicationInterviewLabelSchema.nullable().optional(),
+    occurredAt: applicationOccurredAtSchema.optional(),
     privateNotes: applicationNotesSchema.nullable().optional(),
     round: applicationRoundSchema.nullable().optional(),
     stage: applicationStageSchema.optional(),
@@ -181,6 +221,7 @@ export const applicationUpdateInputSchema = z
   .strict()
   .superRefine((input, context) => {
     const changesSomething =
+      input.interviewLabel !== undefined ||
       input.privateNotes !== undefined ||
       input.round !== undefined ||
       input.stage !== undefined ||
@@ -192,17 +233,7 @@ export const applicationUpdateInputSchema = z
         path: [],
       });
     }
-    if (
-      input.stage !== undefined &&
-      input.round != null &&
-      !stageAllowsRound(input.stage)
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "Rounds apply only while interviewing.",
-        path: ["round"],
-      });
-    }
+    checkInterviewOnlyFields(input, context);
   });
 
 export const applicationIdInputSchema = z

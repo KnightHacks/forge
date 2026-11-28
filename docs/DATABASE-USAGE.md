@@ -218,6 +218,12 @@ Do not return raw application rows: private notes are always private, including
 when application visibility is community. No end-user row authorization is implied
 by these foreign keys.
 
+`JobApplicationHistory` rows are written by the `jobBoard` application mutations
+in the same transaction as the `JobApplication` change, one per change to stage,
+round or interview label. `changedAt` is when the member says the change
+happened, which may be earlier than when the row was saved; order timelines by
+it and do not treat it as a write timestamp.
+
 ### Identifier fingerprints
 
 `Job.identityHash`, `JobSource.boardKeyHash` and `JobObservation.externalIdHash` are
