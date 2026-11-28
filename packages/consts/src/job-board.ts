@@ -198,3 +198,12 @@ export type JobDeliveryState = (typeof JOB_DELIVERY_STATES)[number];
 export const JOB_SEARCH_DEFAULT_LIMIT = 25;
 export const JOB_SEARCH_MAX_LIMIT = 50;
 export const JOB_SEARCH_MAX_QUERY_LENGTH = 120;
+
+/**
+ * Whether a source snapshot lists every open role. Only a `full` inventory can
+ * close a listing that disappears; a `rolling` feed (e.g. a GitHub list) drops
+ * roles for other reasons, so absence there proves nothing.
+ */
+export const JOB_SOURCE_INVENTORIES = ["full", "rolling"] as const;
+
+export type JobSourceInventory = (typeof JOB_SOURCE_INVENTORIES)[number];

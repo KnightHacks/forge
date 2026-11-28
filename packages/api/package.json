@@ -17,6 +17,10 @@
       "types": "./src/discord-archive.server.ts",
       "default": "./src/discord-archive.server.ts"
     },
+    "./job-board.server": {
+      "types": "./src/job-board.server.ts",
+      "default": "./src/job-board.server.ts"
+    },
     "./resume-bundle.server": {
       "types": "./src/resume-bundle.server.ts",
       "default": "./src/resume-bundle.server.ts"
