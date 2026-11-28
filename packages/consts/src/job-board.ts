@@ -162,6 +162,9 @@ export const APPLICATION_ROUND_STAGES = [
 
 export const MAX_APPLICATION_ROUND = 10;
 
+/** Free-text description of an interview round, such as "Behavioral". */
+export const MAX_APPLICATION_INTERVIEW_LABEL_LENGTH = 120;
+
 export const APPLICATION_VISIBILITIES = ["community", "private"] as const;
 
 export type ApplicationVisibility = (typeof APPLICATION_VISIBILITIES)[number];
